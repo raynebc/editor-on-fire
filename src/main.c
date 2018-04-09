@@ -3871,6 +3871,7 @@ int eof_load_data(void)
 		return 0;
 	}
 
+	//Load images
 	eof_image[EOF_IMAGE_TAB0] = load_pcx("eof.dat#tab0.pcx", eof_palette);
 	eof_image[EOF_IMAGE_TAB1] = load_pcx("eof.dat#tab1.pcx", NULL);
 	eof_image[EOF_IMAGE_TAB2] = load_pcx("eof.dat#tab2.pcx", NULL);
@@ -3970,6 +3971,22 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO] = load_pcx("eof.dat#note_ghl_barre_sp_hopo.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT] = load_pcx("eof.dat#note_ghl_barre_sp_hopo_hit.pcx", NULL);
 
+	//Scale down the HOPO images
+	eof_image[EOF_IMAGE_NOTE_HGREEN] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HGREEN], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HRED] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HRED], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HYELLOW] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HYELLOW], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HBLUE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HBLUE], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HPURPLE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HPURPLE], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HWHITE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HWHITE], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HGREEN_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HGREEN_HIT], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HRED_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HRED_HIT], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HBLUE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HBLUE_HIT], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HWHITE_HIT], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HORANGE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HORANGE], 0.75);
+	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HORANGE_HIT], 0.75);
+
 	//Load and process fonts
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
 	if(!eof_font)
@@ -4044,6 +4061,23 @@ int eof_load_data(void)
 	agup_init(awin95_theme);
 
 	return 1;
+}
+
+BITMAP *eof_scale_image(BITMAP *source, double value)
+{
+	BITMAP *new_bitmap;
+
+	if(!source)
+		return source;	//Invalid parameter
+
+	new_bitmap = create_bitmap(source->w * value, source->h * value);
+	if(!new_bitmap)
+		return source;	//Failed to create bitmap
+
+	stretch_blit(source, new_bitmap, 0, 0, source->w, source->h, 0, 0, new_bitmap->w, new_bitmap->h);
+	destroy_bitmap(source);
+
+	return new_bitmap;
 }
 
 void eof_destroy_data(void)

@@ -1167,18 +1167,13 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			#define EOF_GHL_3D_IMAGE_HEIGHT 72
 
 			unsigned lanenum = ctr;	//For non GHL modes, each fret generally get its own lane
-			unsigned long half_image_width = EOF_HALF_3D_IMAGE_WIDTH;
-			unsigned long image_height = EOF_3D_IMAGE_HEIGHT;
+			unsigned long half_image_width;
+			unsigned long image_height;
 
 			if(eof_track_is_ghl_mode(eof_song, track))
 			{	//If rendering a Guitar Hero Live style track
 				lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6, open notes are rendered with the if(drawline) block above
 
-				if(!(noteflags & EOF_NOTE_FLAG_HOPO))
-				{	//If this is not a HOPO note
-					half_image_width = EOF_GHL_HALF_3D_IMAGE_WIDTH;
-					image_height = EOF_GHL_3D_IMAGE_HEIGHT;
-				}
 				if(noteflags & EOF_NOTE_FLAG_SP)
 				{	//If this is a SP note
 					if(ctr < 3)
@@ -1331,6 +1326,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				}//If the appropriate 3D image wasn't determined yet
 			}//If rendering a normal note
 
+			//Render the note
+			image_height = eof_image[imagenum]->h;
+			half_image_width = eof_image[imagenum]->w / 2;
 			ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[lanenum] - half_image_width - xoffset, 200 - image_height, npos);
 
 			if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))

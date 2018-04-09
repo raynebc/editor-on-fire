@@ -626,6 +626,9 @@ void eof_render_3d_window(void);
 void eof_render_extended_ascii_fonts(void);	//A test function that prints prints each Unicode converted extended ASCII character to test that the eof_font has glyphs mapped appropriately
 void eof_render_note_window(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
+BITMAP *eof_scale_image(BITMAP *source, double value);
+	//Builds a new bitmap containing the input bitmap scaled by the specified value (ie. 0.5 to decrease to half size)
+	//Destroys the input bitmap and returns the new bitmap on success, or simply returns the input bitmap on error
 void eof_destroy_data(void);	//Frees graphics and fonts from memory
 char * eof_get_tone_name(int tone);	//Returns the name of the given note number (ie. C# or Db) based on the value of eof_display_flats
 void eof_all_midi_notes_off(void);	//Sends a channel mode message to turn off all active notes, as per MIDI specification
