@@ -4220,7 +4220,7 @@ unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned lon
 	return 0;	//Return error
 }
 
-unsigned short eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned long eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
@@ -5862,7 +5862,7 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 	}
 }
 
-void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned short tflags)
+void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long tflags)
 {
 // 	eof_log("eof_set_note_flags() entered");
 

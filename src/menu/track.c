@@ -4580,7 +4580,6 @@ int eof_menu_track_repair_grid_snap(void)
 	{	//For each note in the active track
 		unsigned long notepos;
 
-		eof_selection.multi[ctr] = 1;		//Update the selection array to indicate this note is selected, for use with the tech note auto adjust logic
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
 
 		if(!eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
@@ -4599,8 +4598,6 @@ int eof_menu_track_repair_grid_snap(void)
 				threshold = offset;
 			}
 		}
-
-		eof_selection.multi[ctr] = 0;		//Deselect this note
 	}
 
 	//Prompt the user
@@ -4618,7 +4615,6 @@ int eof_menu_track_repair_grid_snap(void)
 	{	//For each note in the active track
 		unsigned long notepos;
 
-		eof_selection.multi[ctr] = 1;		//Update the selection array to indicate this note is selected, for use with the tech note auto adjust logic
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
 
 		if(!eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
@@ -4644,13 +4640,13 @@ int eof_menu_track_repair_grid_snap(void)
 					undo_made = 1;
 				}
 
+				eof_selection.multi[ctr] = 1;		//Update the selection array to indicate this note is selected, for use with the tech note auto adjust logic
 				tncount += eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, direction, &undo_made);	//Move this note's tech notes accordingly
 				eof_set_note_pos(eof_song, eof_selected_track, ctr, closestpos);
+				eof_selection.multi[ctr] = 0;		//Deselect this note
 				count++;
 			}
 		}
-
-		eof_selection.multi[ctr] = 0;		//Deselect this note
 	}
 
 	if(undo_made)

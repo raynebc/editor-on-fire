@@ -3167,7 +3167,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 
 			if(eof_get_effective_ts(eof_song, &num, &den, beatnum))
 			{	//If the time signature of the target position's beat was obtained
-				unsigned long beatlegth_delta = EOF_DEFAULT_TIME_DIVISION * 4 / den;	//One beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
+				unsigned long beatlength_delta = EOF_DEFAULT_TIME_DIVISION * 4 / den;	//One beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
 				unsigned long beat_deltapos = eof_song->beat[beatnum]->midi_pos;
 
 				if(beat_deltapos < ULONG_MAX)
@@ -3176,7 +3176,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 					{	//Check all of the possible supported grid snap intervals
 						double snaplength;
 
-						if(beatlegth_delta % interval != 0)
+						if(beatlength_delta % interval != 0)
 							continue;	//If the beat's delta length isn't divisible by this interval, skip it
 
 						snaplength = beatlength / (double) interval;	//Determine the real time length of one such grid snap interval
@@ -3184,7 +3184,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 						{	//For each instance of that grid snap
 							if(realtimeint == (unsigned long)((eof_song->beat[beatnum]->fpos + (double)gridsnapnum * snaplength) + 0.5))
 							{	//If the target timestamp matches this grid snap position
-								return beat_deltapos + (gridsnapnum * beatlegth_delta / interval);
+								return beat_deltapos + (gridsnapnum * beatlength_delta / interval);
 							}
 						}
 					}

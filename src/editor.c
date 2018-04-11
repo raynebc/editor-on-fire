@@ -3239,8 +3239,8 @@ if(eof_key_code == KEY_PAUSE)
 						{	//If the user is editing an existing note
 							if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 							{	//If a legacy guitar track is being edited
-								if(bitmask == 32)
-								{	//If an open note (GHL mode or otherwise) is being toggled on/off
+								if((bitmask == 32) && !eof_track_is_ghl_mode(eof_song, eof_selected_track))
+								{	//If an open note is being toggled on/off (skip this logic for GHL tracks, which use lane 6 for the black 3 gem instead of open strum)
 									if(!eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
 									{	//As long as the user isn't trying to delete a GHL open note by toggling it off
 										eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace the old note

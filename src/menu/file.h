@@ -57,6 +57,7 @@ int eof_menu_file_preferences(void);
 int eof_menu_file_import_export_preferences(void);
 int eof_menu_file_display(void);
 int eof_set_display_width(void);			//Overrides the current program window width with a user defined value
+int eof_set_3d_hopo_scale_size(void);		//Sets the scale size for non-GHL 3D HOPO gems
 int eof_redraw_display(void);				//Rebuilds the program window with the current window size
 int eof_menu_file_controllers(void);
 int eof_menu_file_song_folder(void);

@@ -46,9 +46,9 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_text_events;
 int eof_import_bpm_count = 0;
 
 //Returns the value as if eof_ConvertToRealTime() was called, and the result was rounded up to the nearest unsigned long
-static inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset)
+static inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset, unsigned int *gridsnap)
 {
-	return eof_ConvertToRealTime(absolutedelta, anchorlist, tslist, timedivision, offset) + 0.5;
+	return eof_ConvertToRealTime(absolutedelta, anchorlist, tslist, timedivision, offset, gridsnap) + 0.5;
 }
 
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
@@ -258,7 +258,7 @@ static void eof_midi_import_add_sysex_event(EOF_IMPORT_MIDI_EVENT_LIST * events,
 //	}
 }
 
-double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset)
+double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset, unsigned int *gridsnap)
 {
 //	eof_log("eof_ConvertToRealTime() entered");
 
@@ -266,8 +266,12 @@ double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *a
 	double time = 0.0;
 	unsigned long reldelta = 0;
 	double tstime = 0.0;			//Stores the realtime position of the closest TS change before the specified realtime
-	unsigned long tsdelta = 0;	//Stores the delta time position of the closest TS change before the specified realtime
-	unsigned long ctr = 0;
+	unsigned long tsdelta = 0;		//Stores the delta time position of the closest TS change before the specified realtime
+	unsigned long ctr = 0, interval = 0;
+
+	//Variables for detecting grid snap
+	unsigned long den = 4;			//The default time signature is 4/4 if none are defined at/before the specified delta time
+	unsigned long beatlength_delta, beat_delta_pos, snaplength;
 
 //Find the last time signature change at or before the target delta time
 	if((tslist != NULL) && (tslist->changes > 0))
@@ -278,6 +282,35 @@ double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *a
 			{	//If the TS change is at or before the target delta time
 				tstime = tslist->change[ctr]->realtime;		//Store the realtime position
 				tsdelta = tslist->change[ctr]->pos;			//Store the delta time position
+				den = tslist->change[ctr]->den;				//Store the denominator for grid snap detection
+			}
+		}
+	}
+
+//If the calling function wanted to do so, track whether this delta time should be considered a grid snap position
+	if(gridsnap)
+	{
+		*gridsnap = 0;	//Unless found otherwise, assume this delta time is NOT a grid snap position
+		beatlength_delta = timedivision * 4 / den;	//One beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
+		for(beat_delta_pos = tsdelta; beat_delta_pos + beatlength_delta <= absolutedelta; beat_delta_pos += beatlength_delta);	//Obtain the delta time of the beat immediately at/before the delta time being converted
+		if(beat_delta_pos <= absolutedelta)
+		{	//As long as a valid delta time for that beat was determined
+			for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
+			{	//Check all of the possible supported grid snap intervals
+				if(beatlength_delta % interval != 0)
+					continue;	//If the beat's delta length isn't divisible by this interval, skip it
+
+				snaplength = beatlength_delta / interval;	//Determine the number of ticks in one such grid snap interval
+				for(ctr = 0; ctr < interval; ctr++)
+				{	//For each instance of that grid snap
+					if(beat_delta_pos + (ctr * snaplength) == absolutedelta)
+					{	//If the target delta time matches this grid snap delta time
+						*gridsnap = 1;							//Signal this to the calling function
+						break;
+					}
+				}
+				if(*gridsnap == 1)
+					break;
 			}
 		}
 	}
@@ -303,6 +336,13 @@ double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *a
 //reldelta is the amount of deltas we need to find a relative time for, and add to the absolute real time of the nearest preceding tempo/TS change
 //At this point, we have reached the tempo change that absolutedelta resides within, find the realtime
 	time += (double)reldelta / (double)timedivision * (60000.0 / (temp->BPM));
+
+///FOR DEBUGGING
+//if(gridsnap && (*gridsnap == 1))
+//{
+//	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDelta timing grid snap:  %lu deltas -> %fms (%lu * 1/%lu into a beat)", absolutedelta, time+offset, ctr, interval);
+//	eof_log(eof_log_string, 1);
+//}
 
 	return time + offset;
 }
@@ -1253,7 +1293,7 @@ set_window_title(debugtext);
 	/* apply any key signatures parsed in the MIDI */
 	for(ctr = 0; ctr < eof_import_ks_events->events; ctr++)
 	{	//For each key signature parsed
-		event_realtime = eof_ConvertToRealTimeInt(eof_import_ks_events->event[ctr]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+		event_realtime = eof_ConvertToRealTimeInt(eof_import_ks_events->event[ctr]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset, NULL);
 		eof_chart_length = event_realtime;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 		beat = eof_get_beat(sp, event_realtime);
 		if(eof_beat_num_valid(sp, beat))
@@ -1358,6 +1398,7 @@ set_window_title(debugtext);
 		for(j = 0; j < eof_import_events[i]->events; j++)
 		{	//For each event in this track
 			int midinote;
+			unsigned int gridsnap;	//Used to track whether the event's delta time is a grid snap position
 
 			if(key[KEY_ESC])
 			{	/* clean up and return */
@@ -1381,7 +1422,7 @@ set_window_title(debugtext);
 				set_window_title(ttit);
 			}
 
-			event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+			event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset, &gridsnap);
 			eof_track_resize(sp, picked_track, note_count[picked_track] + 1);	//Ensure the track can accommodate another note
 
 			if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") != eof_import_events[i]->event[j]->text))
@@ -1435,6 +1476,8 @@ set_window_title(debugtext);
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->note = midinote;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
+							if(gridsnap)
+								sp->vocal_track[0]->lyric[note_count[picked_track]]->tflags |= EOF_NOTE_TFLAG_RESNAP;	//Track that the lyric is expected to be grid snapped after MIDI import completes
 							note_count[picked_track]++;
 						}
 						else
@@ -1963,6 +2006,8 @@ set_window_title(debugtext);
 							eof_set_note_length(sp, picked_track, notenum, 0);				//The length will be kept at 0 until the end of the note is found
 							eof_set_note_flags(sp, picked_track, notenum, 0);				//Clear the flag here so that the flag can be set later (ie. if it's an Expert+ double bass note)
 							eof_set_note_type(sp, picked_track, notenum, diff);				//Apply the determined difficulty
+							if(gridsnap)
+								eof_set_note_tflags(sp, picked_track, notenum, EOF_NOTE_TFLAG_RESNAP);	//Track that the note is expected to be grid snapped after MIDI import completes
 							note_count[picked_track]++;
 #ifdef EOF_DEBUG
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
@@ -2697,6 +2742,8 @@ set_window_title(debugtext);
 							{	//Otherwise ensure the note has an empty name string
 								eof_set_note_name(sp, picked_track, notenum, "");
 							}
+							if(gridsnap)
+								eof_set_note_tflags(sp, picked_track, notenum, EOF_NOTE_TFLAG_RESNAP);	//Track that the note is expected to be grid snapped after MIDI import completes
 							note_count[picked_track]++;
 #ifdef EOF_DEBUG
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
@@ -3313,7 +3360,7 @@ eof_log("\tThird pass complete", 1);
 		if(eof_ini_sysex_open_bass_present || !(sp->legacy_track[tracknum]->note[i]->note & 1) || !(sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
 			continue;	//If Sysex open strum notation is present, or this note has a forced HOPO in lane one, skip this note
 
-		//Otheriwse prompt the user how to handle them
+		//Otherwise prompt the user how to handle them
 		eof_cursor_visible = 0;
 		eof_pen_visible = 0;
 		eof_show_mouse(screen);
@@ -3397,7 +3444,7 @@ eof_log("\tThird pass complete", 1);
 	{
 		if(eof_import_text_events->event[i]->type == 0x01)
 		{
-			tp = eof_ConvertToRealTimeInt(eof_import_text_events->event[i]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+			tp = eof_ConvertToRealTimeInt(eof_import_text_events->event[i]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset, NULL);
 			b = eof_import_closest_beat(sp, tp);
 			if(b >= 0)
 			{
@@ -3481,4 +3528,38 @@ eof_log("\tMIDI import complete", 1);
 
 //	eof_log_level |= 2;	//Enable verbose logging
 	return sp;
+}
+
+unsigned long eof_repair_midi_import_grid_snap(void)
+{
+	unsigned long ctr, ctr2, closestpos;
+
+	if(!eof_song_loaded || !eof_song)
+		return 0;	//Invalid parameters
+
+	eof_log("eof_repair_midi_import_grid_snap() entered", 1);
+	eof_log("Enforcing grid snap for imported notes", 1);
+
+	for(ctr = 1; ctr < eof_song->tracks; ctr++)
+	{	//For each track in the project
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tChecking %s", eof_song->track[ctr]->name);
+		eof_log(eof_log_string, 1);
+		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
+		{	//For each note in the track
+			unsigned long tflags = eof_get_note_tflags(eof_song, ctr, ctr2);
+			if(tflags & EOF_NOTE_TFLAG_RESNAP)
+			{	//If this note was flagged as being grid snapped during MIDI import
+				if(!eof_is_any_grid_snap_position(eof_get_note_pos(eof_song, ctr, ctr2), NULL, NULL, NULL, &closestpos))
+				{	//If the note is no longer grid snapped
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCorrecting note position from %lums to %lums", eof_get_note_pos(eof_song, ctr, ctr2), closestpos);
+					eof_log(eof_log_string, 1);
+					eof_set_note_pos(eof_song, ctr, ctr2, closestpos);	//Set it to what was just determined the nearest grid snap for it
+				}
+				tflags &= ~EOF_NOTE_TFLAG_RESNAP;			//Clear this temporary flag
+				eof_set_note_tflags(eof_song, ctr, ctr2, tflags);	//Update the note's temporary flags
+			}
+		}
+	}
+
+	return 1;
 }

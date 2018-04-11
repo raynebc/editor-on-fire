@@ -50,6 +50,7 @@ MENU eof_file_display_menu[] =
 	{"x2 &Zoom", eof_toggle_display_zoom, NULL, 0, NULL},
 	{"&Redraw\tShift+F5", eof_redraw_display, NULL, 0, NULL},
 	{"Benchmark image sequence", eof_benchmark_image_sequence, NULL, 0, NULL},
+	{"Set &3D HOPO image scale size", eof_set_3d_hopo_scale_size, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1093,6 +1094,10 @@ int eof_menu_file_midi_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
+			if(!eof_repair_midi_import_grid_snap())
+			{
+				eof_log("\tGrid snap correction failed.", 1);
+			}
 			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);
@@ -4843,6 +4848,54 @@ int eof_set_display_width(void)
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
+
+	return D_O_K;
+}
+
+DIALOG eof_set_3d_hopo_scale_size_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)   (d1) (d2) (dp)                     (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   48,  224, 124, 2,   23,   0,      0,      0,   0,   "Set 3D HOPO image scale size",NULL, NULL },
+	{ d_agup_text_proc,      12,  76,  64,  8,   2,   23,   0,      0,      0,   0,   "To this % of normal sized gems:", NULL, NULL },
+	{ d_agup_text_proc,      12,  92,  64,  8,   2,   23,   0,      0,      0,   0,   "(Must be between 10 and 200)", NULL, NULL },
+	{ eof_verified_edit_proc,12,  110, 100, 20,  2,   23,   0,      0,      4,   0,   eof_etext2,         "0123456789", NULL },
+	{ d_agup_button_proc,    17,  136, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",               NULL, NULL },
+	{ d_agup_button_proc,    113, 136, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_set_3d_hopo_scale_size(void)
+{
+	unsigned long percent;
+
+	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_3d_hopo_scale_size);
+	eof_color_dialog(eof_set_3d_hopo_scale_size_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_set_3d_hopo_scale_size_dialog);
+	if(eof_popup_dialog(eof_set_3d_hopo_scale_size_dialog, 3) == 4)	//User hit OK
+	{
+		if(eof_etext2[0] != '\0')
+		{	//If a percentage was specified
+			eof_log("Changing 3D HOPO scale size.", 1);
+			percent = atol(eof_etext2);
+
+			if((percent < 10) || (percent > 200))
+			{
+				allegro_message("Invalid scale size.");
+				return 0;
+			}
+
+			eof_3d_hopo_scale_size = percent;
+			if(!eof_load_and_scale_hopo_images((double)eof_3d_hopo_scale_size / 100.0))
+			{
+				allegro_message("Error reloading HOPO images.  EOF must exit, please save if necessary.");
+				eof_menu_file_exit();
+			}
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	eof_render();
 
 	return D_O_K;
 }

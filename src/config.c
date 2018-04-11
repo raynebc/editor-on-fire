@@ -10,11 +10,11 @@
 #include "memwatch.h"
 #endif
 
-static void set_default_config(void);	//Applies the default controller settings, and overwrites settings from a loaded configuration where applicable
+static void set_default_controller_config(void);	//Applies the default controller settings, and overwrites settings from a loaded configuration where applicable
 
-void set_default_config(void)
+void set_default_controller_config(void)
 {
-	eof_log("set_default_config() entered", 1);
+	eof_log("set_default_controller_config() entered", 1);
 
 	eof_guitar.button[0].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 	eof_guitar.button[0].key = KEY_ENTER;
@@ -57,7 +57,7 @@ void eof_load_config(char * fn)
 	{
 		return;
 	}
-	set_default_config();
+	set_default_controller_config();
 	set_config_file(fn);
 
 	/* read configuration */
@@ -210,6 +210,11 @@ void eof_load_config(char * fn)
 	eof_warn_missing_bass_fhps = get_config_int("preferences", "eof_warn_missing_bass_fhps", 1);
 	eof_fingering_checks_include_mutes = get_config_int("preferences", "eof_fingering_checks_include_mutes", 0);
 	eof_ghl_conversion_swaps_bw_gems = get_config_int("preferences", "eof_ghl_conversion_swaps_bw_gems", 0);
+	eof_3d_hopo_scale_size = get_config_int("preferences", "eof_3d_hopo_scale_size", 75);
+	if((eof_3d_hopo_scale_size < 10) || (eof_3d_hopo_scale_size > 200))
+	{
+		eof_3d_hopo_scale_size = 75;
+	}
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -411,6 +416,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_warn_missing_bass_fhps", eof_warn_missing_bass_fhps);
 	set_config_int("preferences", "eof_fingering_checks_include_mutes", eof_fingering_checks_include_mutes);
 	set_config_int("preferences", "eof_ghl_conversion_swaps_bw_gems", eof_ghl_conversion_swaps_bw_gems);
+	set_config_int("preferences", "eof_3d_hopo_scale_size", eof_3d_hopo_scale_size);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

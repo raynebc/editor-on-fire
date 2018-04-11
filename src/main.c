@@ -174,6 +174,7 @@ int         eof_5_fret_range = 0;				//Defines the lowest fret number at which t
 int         eof_6_fret_range = 0;				//Defines the lowest fret number at which the fret hand has a range of 6 frets, for fret hand position generation (the default value of 0 indicates this range is undefined)
 int         eof_fingering_checks_include_mutes = 0;	//If nonzero, various functions that validate/complete chord fingerings will not dismiss strings with string mute status
 int         eof_ghl_conversion_swaps_bw_gems = 0;	//If nonzero, toggling GHL mode on/off or copying between GHL and non GHL tracks will remap lanes 1-3 as the black GHL gems instead the white gems as per the default behavior
+int         eof_3d_hopo_scale_size = 75;		//The percentage of full size to which the 3D HOPO gem images are scaled
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -3893,18 +3894,6 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_BLUE_HIT] = load_pcx("eof.dat#note_blue_hit.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_PURPLE_HIT] = load_pcx("eof.dat#note_purple_hit.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_WHITE_HIT] = load_pcx("eof.dat#note_white_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HGREEN] = load_pcx("eof.dat#note_green_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HRED] = load_pcx("eof.dat#note_red_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HYELLOW] = load_pcx("eof.dat#note_yellow_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HBLUE] = load_pcx("eof.dat#note_blue_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HPURPLE] = load_pcx("eof.dat#note_purple_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HWHITE] = load_pcx("eof.dat#note_white_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HGREEN_HIT] = load_pcx("eof.dat#note_green_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HRED_HIT] = load_pcx("eof.dat#note_red_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT] = load_pcx("eof.dat#note_yellow_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HBLUE_HIT] = load_pcx("eof.dat#note_blue_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT] = load_pcx("eof.dat#note_purple_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] = load_pcx("eof.dat#note_white_hopo_hit.pcx", NULL);
 	eof_image[EOF_IMAGE_CONTROLS_BASE] = load_pcx("eof.dat#controls0.pcx", NULL);
 	eof_image[EOF_IMAGE_CONTROLS_0] = load_pcx("eof.dat#controls1.pcx", NULL);
 	eof_image[EOF_IMAGE_CONTROLS_1] = load_pcx("eof.dat#controls2.pcx", NULL);
@@ -3928,8 +3917,6 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT] = load_pcx("eof.dat#note_white_hit_cymbal.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_ORANGE] = load_pcx("eof.dat#note_orange.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_ORANGE_HIT] = load_pcx("eof.dat#note_orange_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HORANGE] = load_pcx("eof.dat#note_orange_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = load_pcx("eof.dat#note_orange_hopo_hit.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_GREEN_ARROW] = load_pcx("eof.dat#note_green_arrow.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_RED_ARROW] = load_pcx("eof.dat#note_red_arrow.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_YELLOW_ARROW] = load_pcx("eof.dat#note_yellow_arrow.pcx", NULL);
@@ -3971,21 +3958,12 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO] = load_pcx("eof.dat#note_ghl_barre_sp_hopo.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT] = load_pcx("eof.dat#note_ghl_barre_sp_hopo_hit.pcx", NULL);
 
-	//Scale down the HOPO images
-	eof_image[EOF_IMAGE_NOTE_HGREEN] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HGREEN], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HRED] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HRED], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HYELLOW] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HYELLOW], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HBLUE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HBLUE], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HPURPLE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HPURPLE], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HWHITE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HWHITE], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HGREEN_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HGREEN_HIT], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HRED_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HRED_HIT], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HBLUE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HBLUE_HIT], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HWHITE_HIT], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HORANGE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HORANGE], 0.75);
-	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HORANGE_HIT], 0.75);
+	//Load and scale the non-GHL HOPO images, using the scale size in user preferences
+	if(!eof_load_and_scale_hopo_images((double)eof_3d_hopo_scale_size / 100.0))
+	{
+		allegro_message("Error loading and scaling 3D HOPO images!");
+		return 0;
+	}
 
 	//Load and process fonts
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
@@ -4570,8 +4548,6 @@ int eof_initialize(int argc, char * argv[])
 					allegro_message("Could not import song!");
 					return 0;
 				}
-
-				//!This will need to be updated to scan for lyric tracks and fix them
 				eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rba"))
@@ -4675,6 +4651,10 @@ int eof_initialize(int argc, char * argv[])
 	if(eof_song_loaded)
 	{	//The command line load succeeded (or a project was recovered), perform some common initialization
 		eof_init_after_load(0);	//Initialize variables
+		if(!eof_repair_midi_import_grid_snap())
+		{
+			eof_log("\tGrid snap correction failed.", 1);
+		}
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		show_mouse(NULL);
@@ -5912,6 +5892,95 @@ void eof_add_extended_ascii_glyphs(void)
 		}
 	}
 	eof_free_ucode_table();
+}
+
+int eof_load_and_scale_hopo_images(double value)
+{
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;
+	}
+	if(!exists("eof.dat"))
+	{
+		allegro_message("DAT file missing.  If using a hotfix, make sure you extract the appropriate EOF release candidate first and then extract the hotfix on top of it (replacing with files in the hotfix).");
+		return 0;
+	}
+
+	//Destroy and reload each relevant image
+	if(eof_image[EOF_IMAGE_NOTE_HGREEN])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HGREEN]);
+	eof_image[EOF_IMAGE_NOTE_HGREEN] = load_pcx("eof.dat#note_green_hopo.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HRED])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HRED]);
+	eof_image[EOF_IMAGE_NOTE_HRED] = load_pcx("eof.dat#note_red_hopo.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HYELLOW])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HYELLOW]);
+	eof_image[EOF_IMAGE_NOTE_HYELLOW] = load_pcx("eof.dat#note_yellow_hopo.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HBLUE])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HBLUE]);
+	eof_image[EOF_IMAGE_NOTE_HBLUE] = load_pcx("eof.dat#note_blue_hopo.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HPURPLE])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HPURPLE]);
+	eof_image[EOF_IMAGE_NOTE_HPURPLE] = load_pcx("eof.dat#note_purple_hopo.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HWHITE])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HWHITE]);
+	eof_image[EOF_IMAGE_NOTE_HWHITE] = load_pcx("eof.dat#note_white_hopo.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HGREEN_HIT])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HGREEN_HIT]);
+	eof_image[EOF_IMAGE_NOTE_HGREEN_HIT] = load_pcx("eof.dat#note_green_hopo_hit.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HRED_HIT])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HRED_HIT]);
+	eof_image[EOF_IMAGE_NOTE_HRED_HIT] = load_pcx("eof.dat#note_red_hopo_hit.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT]);
+	eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT] = load_pcx("eof.dat#note_yellow_hopo_hit.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HBLUE_HIT])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HBLUE_HIT]);
+	eof_image[EOF_IMAGE_NOTE_HBLUE_HIT] = load_pcx("eof.dat#note_blue_hopo_hit.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT]);
+	eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT] = load_pcx("eof.dat#note_purple_hopo_hit.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HWHITE_HIT])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HWHITE_HIT]);
+	eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] = load_pcx("eof.dat#note_white_hopo_hit.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HORANGE])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HORANGE]);
+	eof_image[EOF_IMAGE_NOTE_HORANGE] = load_pcx("eof.dat#note_orange_hopo.pcx", NULL);
+
+	if(eof_image[EOF_IMAGE_NOTE_HORANGE_HIT])
+		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HORANGE_HIT]);
+	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = load_pcx("eof.dat#note_orange_hopo_hit.pcx", NULL);
+
+	//Scale each image
+	eof_image[EOF_IMAGE_NOTE_HGREEN] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HGREEN], value);
+	eof_image[EOF_IMAGE_NOTE_HRED] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HRED], value);
+	eof_image[EOF_IMAGE_NOTE_HYELLOW] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HYELLOW], value);
+	eof_image[EOF_IMAGE_NOTE_HBLUE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HBLUE], value);
+	eof_image[EOF_IMAGE_NOTE_HPURPLE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HPURPLE], value);
+	eof_image[EOF_IMAGE_NOTE_HWHITE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HWHITE], value);
+	eof_image[EOF_IMAGE_NOTE_HGREEN_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HGREEN_HIT], value);
+	eof_image[EOF_IMAGE_NOTE_HRED_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HRED_HIT], value);
+	eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT], value);
+	eof_image[EOF_IMAGE_NOTE_HBLUE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HBLUE_HIT], value);
+	eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT], value);
+	eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HWHITE_HIT], value);
+	eof_image[EOF_IMAGE_NOTE_HORANGE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HORANGE], value);
+	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HORANGE_HIT], value);
+
+	return 1;
 }
 
 END_OF_MAIN()

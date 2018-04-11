@@ -105,6 +105,7 @@
 #define EOF_NOTE_TFLAG_LN        8192	//This flag will indicate that the affected chord has chordify status and the chord tag should RS2 export with the linknext tag overridden to be enabled, which will cause the chord to link to the temporary single notes written for the chord
 #define EOF_NOTE_TFLAG_HD       16384	//This flag will indicate that the affected chord should export with high density regardless of the value of the regular high density flag
 #define EOF_NOTE_TFLAG_GHL_B3   32768	//This flag will indicate that the affected note is a "N 8 #" black 3 note being imported from a Feedback file instead of "N 5 #" toggle HOPO notation
+#define EOF_NOTE_TFLAG_RESNAP   65536	//This flag will indicate that a note was defined as grid snapped in the imported MIDI, and that it should be resnapped if rounding errors result in it not being grid snapped after import
 
 
 ///Extended note flags
@@ -152,7 +153,7 @@ typedef struct
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;		//Stores various note statuses
-	unsigned short tflags;		//Stores various temporary statuses
+	unsigned long tflags;		//Stores various temporary statuses
 
 } EOF_NOTE;
 
@@ -174,7 +175,7 @@ typedef struct
 	unsigned char bendstrength;	//The amount this note bends (0 if undefined or not applicable for regular notes, can be 0 for tech notes as that defines the release of a bend).  If the MSB is set, the value specifies quarter steps, otherwise it specifies half steps
 	unsigned char slideend;		//The fret at which this slide ends (0 if undefined or not applicable)
 	unsigned char unpitchend;	//The fret at which this unpitched slide ends (0 if undefined or not applicable)
-	unsigned short tflags;		//Stores various temporary statuses (not written to project file)
+	unsigned long tflags;		//Stores various temporary statuses (not written to project file)
 
 } EOF_PRO_GUITAR_NOTE;
 
@@ -215,7 +216,7 @@ typedef struct
 	unsigned long pos;
 	long length;			//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;
-	unsigned short tflags;	//Stores various temporary statuses
+	unsigned long tflags;	//Stores various temporary statuses
 
 } EOF_LYRIC;
 
@@ -635,8 +636,8 @@ long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note);
 void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, long length);	//Sets the length of the specified track's note/lyric
 unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets the flags of the specified track's note/lyric
-unsigned short eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the temporary flags of the specified track's note/lyric, or 0 on error
-void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned short tflags);	//Sets the temporary flags of the specified track's note/lyric
+unsigned long eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the temporary flags of the specified track's note/lyric, or 0 on error
+void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long tflags);	//Sets the temporary flags of the specified track's note/lyric
 unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the extended flags of the specified pro guitar note, or 0 on error
 void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char eflags);	//Sets the extended flags of the specified pro guitar note
 unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error

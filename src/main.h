@@ -10,7 +10,7 @@
 #include "editor.h"
 
 #define EOF_VERSION_STRING "EOF v1.8RC12"
-#define EOF_COPYRIGHT_STRING "(c)2008-2017 T^3 Software."
+#define EOF_COPYRIGHT_STRING "(c)2008-2018 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #ifdef ALLEGRO_MACOSX
@@ -380,6 +380,7 @@ extern int         eof_5_fret_range;
 extern int         eof_6_fret_range;
 extern int         eof_fingering_checks_include_mutes;
 extern int         eof_ghl_conversion_swaps_bw_gems;
+extern int         eof_3d_hopo_scale_size;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;
@@ -718,5 +719,9 @@ int eof_validate_temp_folder(void);
 void eof_add_extended_ascii_glyphs(void);
 	//Merges the glyphs for extended ASCII characters 128 through 159 into the UTF-8 code points of eof_font so that these characters will
 	//display properly when an extended ASCII string is converted to UTF-8
+
+int eof_load_and_scale_hopo_images(double value);
+	//Loads the images for the (non-GHL) HOPO gems scaled to the given value (ie. 0.50 for half size) from eof.dat into eof_image[]
+	//Returns zero on error
 
 #endif
