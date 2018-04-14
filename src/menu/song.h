@@ -148,7 +148,7 @@ int eof_menu_catalog_find_prev(void);
 int eof_menu_catalog_find_next(void);
 	//Performs a find next operation on the current catalog entry
 int eof_menu_catalog_toggle_full_width(void);
-	//Toggles whether the fret catalog will be rendered the full width of EOF's program window
+	//Toggles whether the fret catalog will be rendered at the full width of EOF's program window
 int eof_menu_song_seek_bookmark_help(int b);
 	//Seeks to the specified bookmark.  Returns nonzero on success
 int eof_is_number(char * buffer);

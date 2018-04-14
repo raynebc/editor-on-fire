@@ -1779,6 +1779,8 @@ if(eof_key_code == KEY_PAUSE)
 			if(!KEY_EITHER_SHIFT)
 			{	//CTRL is held but SHIFT is not
 				eof_disable_info_panel = 1 - eof_disable_info_panel;
+				(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient
+				eof_rebuild_notes_panel();	//Recreate the notes panel
 			}
 			else
 			{	//Both CTRL and SHIFT are held

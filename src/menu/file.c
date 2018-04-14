@@ -51,6 +51,7 @@ MENU eof_file_display_menu[] =
 	{"&Redraw\tShift+F5", eof_redraw_display, NULL, 0, NULL},
 	{"Benchmark image sequence", eof_benchmark_image_sequence, NULL, 0, NULL},
 	{"Set &3D HOPO image scale size", eof_set_3d_hopo_scale_size, NULL, 0, NULL},
+	{"Enable &Notes panel", eof_display_notes_panel, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -341,6 +342,23 @@ void eof_prepare_file_menu(void)
 		eof_file_import_menu[0].flags = D_DISABLED; // Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = D_DISABLED; // Import>Lyric
 		eof_file_display_menu[4].flags = D_DISABLED;	//Benchmark image sequence
+	}
+
+	if(eof_screen_zoom)
+	{	//If x2 zoom is enabled
+		eof_file_display_menu[2].flags = D_SELECTED;
+	}
+	else
+	{
+		eof_file_display_menu[2].flags = 0;
+	}
+	if(eof_enable_notes_panel)
+	{	//If the notes panel is enabled
+		eof_file_display_menu[6].flags = D_SELECTED;
+	}
+	else
+	{
+		eof_file_display_menu[6].flags = 0;
 	}
 }
 
@@ -1398,6 +1416,8 @@ int eof_menu_file_preferences(void)
 	{	//If the input mode was changed
 		eof_seek_selection_start = eof_seek_selection_end = 0;	//Clear the seek selection
 	}
+	(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient
+	eof_rebuild_notes_panel();	//Recreate the notes panel
 	return 1;
 }
 
@@ -1516,6 +1536,10 @@ int eof_menu_file_display(void)
 		eof_soft_cursor = (eof_display_dialog[1].flags & D_SELECTED) ? 1 : 0;
 		eof_desktop = (eof_display_dialog[2].flags & D_SELECTED) ? 0 : 1;
 		eof_apply_display_settings(eof_display_dialog[4].d1);
+		if(eof_screen_width < eof_get_display_panel_count() * EOF_SCREEN_PANEL_WIDTH)
+		{	//If the current screen width isn't sufficient to display all enabled panels
+			eof_enable_notes_panel = 0;	//Disable the notes panel
+		}
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -4849,6 +4873,11 @@ int eof_set_display_width(void)
 	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
 
+	if(eof_screen_width < eof_get_display_panel_count() * EOF_SCREEN_PANEL_WIDTH)
+	{	//If the current screen width isn't sufficient to display all enabled panels
+		eof_enable_notes_panel = 0;	//Disable the notes panel
+	}
+
 	return D_O_K;
 }
 
@@ -4927,6 +4956,7 @@ int eof_toggle_display_zoom(void)
 	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
 	eof_render();
+	eof_prepare_file_menu();		//The checkmark indicating the status of this feature doesn't reliably update when activating/de-activating by keyboard, force it to update
 	return D_O_K;
 }
 
@@ -5573,5 +5603,61 @@ int eof_menu_file_export_guitar_pro(void)
 	(void) delete_file(temppath2);
 	(void) delete_file(temppath3);
 	(void) delete_file(temppath4);
+	return 1;
+}
+
+void eof_rebuild_notes_panel(void)
+{
+	unsigned long available_width = eof_screen_width;	//Allocate all width that isn't taken up by the info panel or 3D preview to the notes panel
+
+	if(eof_window_notes)
+		eof_window_destroy(eof_window_notes);
+	eof_window_notes = NULL;
+
+	if(!eof_disable_info_panel)
+		available_width -= EOF_SCREEN_PANEL_WIDTH;	//This amount of space is unavailable
+	if(!eof_disable_3d_rendering)
+		available_width -= EOF_SCREEN_PANEL_WIDTH;	//This amount of space is unavailable
+	if(eof_disable_info_panel)
+	{	//If the info panel is disabled, the notes panel will render in its place
+		eof_window_notes = eof_window_create(0, eof_screen_height / 2, available_width, eof_screen_height / 2, eof_screen);
+	}
+	else
+	{	//Otherwise it will render one panel to the right of it
+		eof_window_notes = eof_window_create(EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, available_width, eof_screen_height / 2, eof_screen);
+	}
+	if(!eof_window_notes)
+	{
+		allegro_message("Unable to create notes window!");
+		eof_enable_notes_panel = 0;
+	}
+}
+
+int eof_display_notes_panel(void)
+{
+	eof_enable_notes_panel = 1 - eof_enable_notes_panel;	//Toggle the notes panel on/off
+
+	if(eof_notes_text)
+	{	//If the notes panel text file was already loaded into memory
+		free(eof_notes_text);
+		eof_notes_text = NULL;
+	}
+
+	if(eof_enable_notes_panel)
+	{	//If the notes panel was just enabled, see if the program window needs to resize
+		eof_increase_display_width_to_panel_count(0);	//Resize the program window if necessary, disable notes panel on failure
+
+		if(eof_enable_notes_panel)
+		{	//If the program window is wide enough
+			eof_rebuild_notes_panel();
+		}
+		eof_notes_text = eof_buffer_file("notes.txt", 1);	//Buffer the notes panel text file into memory, appending a NULL terminator
+		if(eof_notes_text == NULL)
+		{	//Could not buffer file
+			allegro_message("Error reading notes.txt");
+			eof_enable_notes_panel = 0;
+		}
+	}
+
 	return 1;
 }

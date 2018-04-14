@@ -1,0 +1,23 @@
+Note controls:
+   Change note length:  Scroll wheel or [ and ]
+   Toggle lanes: SHIFT+#
+   Star power: CTRL+W  Tremolo: CTRL+SHIFT+O
+   Crazy: T   HO: H   PO: P  Slider: SHIFT+S
+Drum controls:
+   Mark drum roll: CTRL+SHIFT+O
+   Toggle Y/B/G cymbal: CTRL+Y/B/G
+   Toggle Expert+ bass: CTRL+E
+   Toggle Y Open/Pedal/Sizzle hi hat: SHIFT+O/P/S
+   Toggle R rim shot: SHIFT+R
+Lyric controls:
+   Edit: L    Split: SHIFT+S  Freestyle: F
+   Mark lyric line: CTRL+M or CTRL+X
+Pro guitar controls:
+   Set fret # for selected gems:  CTRL+#, CTRL+F#
+   Edit note:  N    Edit fingering: F
+   Tap: CTRL+T    Bend: CTRL+B     P. mute: CTRL+M
+   Harm.: CTRL+H  Vibrato: SHIFT+V  Ghost: CTRL+G
+   S. mute: SHIFT+X        Unpitch. slide:  CTRL+U
+   Pop: CTRL+SHIFT+P      Slap: CTRL+SHIFT+S
+   Accent: CTRL+SHIFT+A  P. Harm: SHIFT+H
+   Ignore: CTRL+SHIFT+I    Linknext: SHIFT+N

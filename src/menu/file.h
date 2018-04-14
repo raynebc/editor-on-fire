@@ -173,4 +173,7 @@ int eof_toggle_display_zoom(void);
 int eof_menu_file_sonic_visualiser_import(void);
 	//Imports beat timings from a user specified Sonic Visualiser file
 
+void eof_rebuild_notes_panel(void);	//Destroys and rebuilds the notes panel window at the appropriate coordinates depending on whether the Info panel is being rendered
+int eof_display_notes_panel(void);	//Frees and reloads the notes.txt file from memory appropriately, enables or disables the display of the notes panel
+
 #endif

@@ -91,10 +91,11 @@ int         eof_global_volume = 255;
 
 EOF_WINDOW * eof_window_editor = NULL;
 EOF_WINDOW * eof_window_editor2 = NULL;
-EOF_WINDOW * eof_window_note = NULL;
+EOF_WINDOW * eof_window_info = NULL;
 EOF_WINDOW * eof_window_note_lower_left = NULL;
 EOF_WINDOW * eof_window_note_upper_left = NULL;
 EOF_WINDOW * eof_window_3d = NULL;
+EOF_WINDOW * eof_window_notes = NULL;
 
 /* configuration */
 char        eof_fof_executable_path[1024] = {0};
@@ -126,6 +127,8 @@ int         eof_disable_sound_processing = 0;
 int         eof_disable_3d_rendering = 0;
 int         eof_disable_2d_rendering = 0;
 int         eof_disable_info_panel = 0;
+int         eof_enable_notes_panel = 0;
+char *      eof_notes_text = NULL;				//A pointer to address the contents of the notes panel text file buffered to memory
 int         eof_paste_erase_overlap = 0;
 int         eof_write_fof_files = 1;			//If nonzero, files are written during save that are used for Frets on Fire, Guitar Hero and Phase Shift authoring
 int         eof_write_rb_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rock Band customs
@@ -773,6 +776,11 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		eof_window_destroy(eof_window_3d);
 		eof_window_3d = NULL;
 	}
+	if(eof_window_notes)
+	{
+		eof_window_destroy(eof_window_notes);
+		eof_window_notes = NULL;
+	}
 	if(eof_screen)
 	{
 		destroy_bitmap(eof_screen);
@@ -866,13 +874,13 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 				eof_screen_zoom = 0;	//Disable x2 zoom
 				eof_set_display_mode(width, height);
 				allegro_message("Warning:  Failed to enable x2 zoom.\nTry setting a smaller program window size first.");
-				return 1;
+				return 2;
 			}
 			if(width != eof_screen_width_default)
 			{	//If the custom width failed to be applied, revert to the default width for this window height
 				eof_set_display_mode(eof_screen_width_default, height);
 				allegro_message("Warning:  Failed to set custom display width, reverted to default.\nTry setting a different width.");
-				return 1;
+				return 2;
 			}
 			if(set_gfx_mode(GFX_SAFE, width, eof_screen_height, 0, 0))
 			{	//If the window size could not be set at all
@@ -907,7 +915,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		allegro_message("Unable to create information windows!");
 		return 0;
 	}
-	eof_window_3d = eof_window_create(eof_screen_width - (eof_screen_width_default / 2), eof_screen_height / 2, eof_screen_width_default / 2, eof_screen_height / 2, eof_screen);
+	eof_window_3d = eof_window_create(eof_screen_width - EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, eof_screen);
 	if(!eof_window_3d)
 	{
 		allegro_message("Unable to create 3D preview window!");
@@ -2320,7 +2328,7 @@ void eof_note_logic(void)
 		eof_scaled_mouse_y = mouse_y / 2;
 	}
 
-	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < 90) && (eof_scaled_mouse_y > 40 + eof_window_note->y) && (eof_scaled_mouse_y < 40 + 18 + eof_window_note->y))
+	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < 90) && (eof_scaled_mouse_y > 40 + eof_window_info->y) && (eof_scaled_mouse_y < 40 + 18 + eof_window_info->y))
 	{
 		eof_cselected_control = eof_scaled_mouse_x / 30;
 		if(!eof_full_screen_3d && (mouse_b & 1))
@@ -2351,7 +2359,7 @@ void eof_note_logic(void)
 	{
 		eof_cselected_control = -1;
 	}
-	if((eof_scaled_mouse_y >= eof_window_note->y) && (eof_scaled_mouse_y < eof_window_note->y + 12) && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
+	if((eof_scaled_mouse_y >= eof_window_info->y) && (eof_scaled_mouse_y < eof_window_info->y + 12) && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
 	{
 		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
@@ -2570,18 +2578,18 @@ void eof_render_extended_ascii_fonts(void)
 		buffer[5] = '\0';
 		eof_convert_from_extended_ascii(buffer, 200);
 
-		textprintf_ex(eof_window_note->screen, font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
-	//	textprintf_ex(eof_window_note->screen, eof_allegro_font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
-	//	textprintf_ex(eof_window_note->screen, eof_mono_font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
+		textprintf_ex(eof_window_info->screen, font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
+	//	textprintf_ex(eof_window_info->screen, eof_allegro_font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
+	//	textprintf_ex(eof_window_info->screen, eof_mono_font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
 	}
 	eof_free_ucode_table();
 
 	return;
 }
 
-void eof_render_note_window(void)
+void eof_render_info_window(void)
 {
-//	eof_log("eof_render_note_window() entered");
+//	eof_log("eof_render_info_window() entered");
 
 	unsigned long i, bitmask, index;
 	int pos;
@@ -2604,12 +2612,12 @@ void eof_render_note_window(void)
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	if(eof_full_screen_3d)
 	{	//If full screen 3D view is in effect
-		eof_window_note = eof_window_note_upper_left;	//Render info panel at the top left of EOF's program window
+		eof_window_info = eof_window_note_upper_left;	//Render info panel at the top left of EOF's program window
 	}
 	else
 	{
-		eof_window_note = eof_window_note_lower_left;	//Render info panel at the lower left of EOF's program window
-		clear_to_color(eof_window_note->screen, eof_color_gray);
+		eof_window_info = eof_window_note_lower_left;	//Render info panel at the lower left of EOF's program window
+		clear_to_color(eof_window_info->screen, eof_color_gray);
 	}
 
 	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
@@ -2619,29 +2627,29 @@ void eof_render_note_window(void)
 			return;	//If this is NULL for some reason (broken track array or corrupt catalog entry, abort rendering it
 
 		tracknum = eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->tracknum;	//Information about the active fret catalog entry is going to be displayed
-		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Fret Catalog");
-		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "-------------------");
+		textprintf_ex(eof_window_info->screen, font, 2, 0, eof_info_color, -1, "Fret Catalog");
+		textprintf_ex(eof_window_info->screen, font, 2, 12, eof_color_white, -1, "-------------------");
 		if(eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0')
 		{	//If the active fret catalog has a defined name
-			textprintf_ex(eof_window_note->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu: %s", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries, eof_song->catalog->entry[eof_selected_catalog_entry].name);
+			textprintf_ex(eof_window_info->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu: %s", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries, eof_song->catalog->entry[eof_selected_catalog_entry].name);
 		}
 		else
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+			textprintf_ex(eof_window_info->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		}
 		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
 			(void) snprintf(temp, sizeof(temp) - 1, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name);
-			textout_ex(eof_window_note->screen, font, temp, 2, 53, eof_color_white, -1);
+			textout_ex(eof_window_info->screen, font, temp, 2, 53, eof_color_white, -1);
 		}
 
 		if(eof_cselected_control < 0)
 		{
-			draw_sprite(eof_window_note->screen, eof_image[EOF_IMAGE_CCONTROLS_BASE], 0, 40);
+			draw_sprite(eof_window_info->screen, eof_image[EOF_IMAGE_CCONTROLS_BASE], 0, 40);
 		}
 		else
 		{
-			draw_sprite(eof_window_note->screen, eof_image[EOF_IMAGE_CCONTROLS_0 + eof_cselected_control], 0, 40);
+			draw_sprite(eof_window_info->screen, eof_image[EOF_IMAGE_CCONTROLS_0 + eof_cselected_control], 0, 40);
 		}
 
 		/* render catalog entry */
@@ -2661,20 +2669,20 @@ void eof_render_note_window(void)
 				lpos = 20 - (pos - 140);
 			}
 			/* draw fretboard area */
-			rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_note->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
+			rectfill(eof_window_info->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_info->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
 			/* draw fretboard area */
 			for(i = 0; i < numlanes; i++)
 			{
 				if(!i || (i + 1 >= numlanes))
 				{	//Ensure the top and bottom lines extend to the left of the piano roll
-					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
+					hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 				}
 				else if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
 				{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
+					hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 				}
 			}
-			vline(eof_window_note->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
+			vline(eof_window_info->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
 
 			/* render information about the entry */
 			if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format != EOF_VOCAL_TRACK_FORMAT)
@@ -2693,7 +2701,7 @@ void eof_render_note_window(void)
 					difficulty_name = eof_note_type_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].type];
 				}
 			}
-			textprintf_ex(eof_window_note->screen, font, 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 10, eof_color_white, -1, "%s , %s , %lums - %lums", eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name, difficulty_name + 1, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
+			textprintf_ex(eof_window_info->screen, font, 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 10, eof_color_white, -1, "%s , %s , %lums - %lums", eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name, difficulty_name + 1, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
 			/* draw beat lines */
 			if(pos < 140)
 			{
@@ -2706,20 +2714,20 @@ void eof_render_note_window(void)
 			for(i = 0; i < eof_song->beats; i++)
 			{
 				xcoord = npos + eof_song->beat[i]->pos / eof_zoom;
-				if(xcoord >= eof_window_note->screen->w)
+				if(xcoord >= eof_window_info->screen->w)
 				{	//If this beat line would render off the edge of the screen
 					break;	//Stop rendering them
 				}
 				if(xcoord >= 0)
 				{	//If this beat line would render visibly, render it
-					vline(eof_window_note->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
+					vline(eof_window_info->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 				}
 			}
 			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
 			{	//If drawing a vocal catalog entry
 				/* clear lyric text area */
-				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_note->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
-				hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_white);
+				rectfill(eof_window_info->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_info->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
+				hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 
 				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 				{	//For each lyric
@@ -2729,7 +2737,7 @@ void eof_render_note_window(void)
 					}
 					if(eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos)
 					{	//If this lyric is in the catalog entry, render it
-						if(eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], i == eof_hover_note_2 ? 2 : 0, eof_window_note) > 0)
+						if(eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], i == eof_hover_note_2 ? 2 : 0, eof_window_info) > 0)
 							break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 					}
 				}
@@ -2746,7 +2754,7 @@ void eof_render_note_window(void)
 					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_get_note_type(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i)) &&
 					  (notepos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
 					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is in the catalog entry
-						(void) eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].track, i, i == eof_hover_note_2 ? 2 : 0, eof_window_note);
+						(void) eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].track, i, i == eof_hover_note_2 ? 2 : 0, eof_window_info);
 					}
 				}
 			}//If drawing a non vocal catalog entry
@@ -2755,11 +2763,11 @@ void eof_render_note_window(void)
 			{
 				if(pos < 140)
 				{
-					vline(eof_window_note->screen, 20 + pos - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+					vline(eof_window_info->screen, 20 + pos - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 				}
 				else
 				{
-					vline(eof_window_note->screen, 20 + 140 - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+					vline(eof_window_info->screen, 20 + 140 - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 				}
 			}
 		}//if(eof_song->catalog->entries > 0)
@@ -2773,8 +2781,8 @@ void eof_render_note_window(void)
 		int isn = eof_count_selected_notes(&itn);
 
 		tracknum = eof_song->track[eof_selected_track]->tracknum;	//Information about the active track is going to be displayed
-		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
-		textprintf_ex(eof_window_note->screen, font, 2, 6, eof_color_white, -1, "----------------------------");
+		textprintf_ex(eof_window_info->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
+		textprintf_ex(eof_window_info->screen, font, 2, 6, eof_color_white, -1, "----------------------------");
 		ypos = 16;
 
 		//Display the difficulties associated with the active track
@@ -2813,41 +2821,41 @@ void eof_render_note_window(void)
 		{	//Otherwise truncate the extra difficulty strings
 			difficulty2[0] = '\0';
 		}
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Track difficulty: %s %s", difficulty1, difficulty2);
+		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Track difficulty: %s %s", difficulty1, difficulty2);
 		ypos += 12;
 
 		if(!eof_disable_sound_processing)
 		{	//If the user didn't disable sound processing, display the sound cue statuses
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Tones: %s mTones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off", eof_mix_midi_tones_enabled ? "On" : "Off");
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Tones: %s mTones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off", eof_mix_midi_tones_enabled ? "On" : "Off");
 		}
 		else
 		{	//Otherwise indicate they are disabled
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "(Sound cues are currently disabled)");
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "(Sound cues are currently disabled)");
 		}
 		ypos += 12;
 		if(eof_beat_num_valid(eof_song, eof_hover_beat))
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f : Hover = %ld", eof_selected_beat, 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f : Hover = %ld", eof_selected_beat, 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
 		}
 		else
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f", eof_selected_beat, 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f", eof_selected_beat, 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		}
 ///Keep for debugging
 //#ifdef EOF_DEBUG
 //		ypos += 12;
-//		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Beat pos = %lu : fpos = %f", eof_song->beat[eof_selected_beat]->pos, eof_song->beat[eof_selected_beat]->fpos);
+//		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "#Beat pos = %lu : fpos = %f", eof_song->beat[eof_selected_beat]->pos, eof_song->beat[eof_selected_beat]->fpos);
 //#endif
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Key : %s maj (%s min) : Fpos = %f", eof_get_key_signature(eof_song, eof_selected_beat, 1, 0), eof_get_key_signature(eof_song, eof_selected_beat, 1, 1), eof_song->beat[eof_selected_beat]->fpos);
+		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Key : %s maj (%s min) : Fpos = %f", eof_get_key_signature(eof_song, eof_selected_beat, 1, 0), eof_get_key_signature(eof_song, eof_selected_beat, 1, 1), eof_song->beat[eof_selected_beat]->fpos);
 		ypos += 12;
 		if(eof_song->beat[eof_selected_beat]->has_ts)
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = %ld (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Measure = %ld (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
 		}
 		else
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = (TS undefined)");
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Measure = (TS undefined)");
 		}
 		ypos += 12;
 
@@ -2855,35 +2863,35 @@ void eof_render_note_window(void)
 		{	//If the vocal track is active
 			if(eof_selection.current < eof_song->vocal_track[tracknum]->lyrics)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->length);
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->length);
 				ypos += 12;
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note, (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != 0) ? eof_get_tone_name(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note) : "none");
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note, (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != 0) ? eof_get_tone_name(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note) : "none");
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric = None");
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric = None");
 			}
 			ypos += 12;
 			if(eof_hover_note >= 0)
 			{
 				if(eof_seek_hover_note >= 0)
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = %d : Seek = %d", eof_hover_note, eof_seek_hover_note);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = %d : Seek = %d", eof_hover_note, eof_seek_hover_note);
 				}
 				else
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric Hover = %d : Seek = None", eof_hover_note);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric Hover = %d : Seek = None", eof_hover_note);
 				}
 			}
 			else
 			{
 				if(eof_seek_hover_note >= 0)
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = None : Seek = %d", eof_seek_hover_note);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = None : Seek = %d", eof_seek_hover_note);
 				}
 				else
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = None : Seek = None");
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = None : Seek = None");
 				}
 			}
 		}//If the vocal track is active
@@ -2891,16 +2899,16 @@ void eof_render_note_window(void)
 		{	//If a non vocal track is active
 			if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
 			{	//If a note is selected
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
 ///Keep for debugging
 //#ifdef EOF_DEBUG
 //				ypos += 12;
-//				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Mask=%d : Flags=%lu : Eflags=%Xx : Tflags=%Xx", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_tflags(eof_song, eof_selected_track, eof_selection.current));
+//				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "#Mask=%d : Flags=%lu : Eflags=%Xx : Tflags=%Xx", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_tflags(eof_song, eof_selected_track, eof_selection.current));
 //#endif
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = None");
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note = None");
 			}
 
 			//Display some pro guitar note specific items like fretting, chord naming, fingering, note pitches included, fret hand position, tone name
@@ -2923,7 +2931,7 @@ void eof_render_note_window(void)
 					{	//If the note's frets can be represented in string format
 						if(tp->note[eof_selection.current]->name[0] != '\0')
 						{	//If this note was manually given a name, display it in addition to the fretting
-							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : %s", fret_string, tp->note[eof_selection.current]->name);
+							textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s : %s", fret_string, tp->note[eof_selection.current]->name);
 							eof_enable_chord_cache = 0;	//When a manually-named note is selected, reset this variable so that previous/next chord name cannot be used
 						}
 						else
@@ -2948,16 +2956,16 @@ void eof_render_note_window(void)
 								}
 								if(!isslash)
 								{	//If it's a normal chord
-									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s] %s%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string, chord_tuning_mode);
+									textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s] %s%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string, chord_tuning_mode);
 								}
 								else
 								{	//If it's a slash chord
-									textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s%s] %s%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string, chord_tuning_mode);
+									textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s%s] %s%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string, chord_tuning_mode);
 								}
 							}
 							else
 							{	//Otherwise just display the fretting
-								textout_ex(eof_window_note->screen, font, fret_string, 2, ypos, eof_color_white, -1);
+								textout_ex(eof_window_info->screen, font, fret_string, 2, ypos, eof_color_white, -1);
 								eof_chord_lookup_note = eof_get_pro_guitar_note_note(tp, eof_selection.current);		//Cache the failed, looked up note's details
 								memcpy(eof_chord_lookup_frets, tp->note[eof_selection.current]->frets, 6);
 								eof_cached_chord_lookup_retval = 0;	//Cache a failed lookup result
@@ -2975,13 +2983,13 @@ void eof_render_note_window(void)
 						if(eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current) & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
 						{	//If this note has fingerless status
 							ypos += 12;
-							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "(no fingering) : %s", tone_string);
+							textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "(no fingering) : %s", tone_string);
 							ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
 						}
 						else if(eof_get_pro_guitar_note_finger_string(tp, eof_selection.current, finger_string))
 						{	//If the note's fingering can be represented in string format
 							ypos += 12;
-							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s (fingering) : %s", finger_string, tone_string);
+							textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s (fingering) : %s", finger_string, tone_string);
 							ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
 						}
 					}
@@ -3013,7 +3021,7 @@ void eof_render_note_window(void)
 						snprintf(tonestring, sizeof(tonestring) - 1, "Tone : (None)");
 					}
 				}
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s%s", fhpstring, tonestring);
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s%s", fhpstring, tonestring);
 			}//Display information specific to pro guitar tracks
 			ypos += 12;
 
@@ -3021,22 +3029,22 @@ void eof_render_note_window(void)
 			{
 				if(eof_seek_hover_note >= 0)
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = %d : Seek = %d", eof_hover_note, eof_seek_hover_note);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = %d : Seek = %d", eof_hover_note, eof_seek_hover_note);
 				}
 				else
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = %d : Seek = None", eof_hover_note);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = %d : Seek = None", eof_hover_note);
 				}
 			}
 			else
 			{
 				if(eof_seek_hover_note >= 0)
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = None : Seek = %d", eof_seek_hover_note);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = None : Seek = %d", eof_seek_hover_note);
 				}
 				else
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = None : Seek = None");
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = None : Seek = None");
 				}
 			}
 		}//If a non vocal track is active
@@ -3045,17 +3053,17 @@ void eof_render_note_window(void)
 		{	//If the seek position is to be displayed as minutes:seconds
 			ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
 			iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d : %s Selected = %d/%lu", ism, iss, isms, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d : %s Selected = %d/%lu", ism, iss, isms, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 		}
 		else
 		{	//If the seek position is to be displayed as seconds
 			iss = (eof_music_pos - eof_av_delay) / 1000;
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %d.%03ds : %s Selected = %d/%lu", iss, isms, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %d.%03ds : %s Selected = %d/%lu", iss, isms, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 		}
 		ypos += 12;
 		if(eof_seek_selection_start != eof_seek_selection_end)
 		{	//If there is a seek selection
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek selection start = %lu : stop = %lu", eof_seek_selection_start, eof_seek_selection_end);
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Seek selection start = %lu : stop = %lu", eof_seek_selection_start, eof_seek_selection_end);
 			ypos += 12;
 		}
 		if((eof_song->tags->start_point != ULONG_MAX) || (eof_song->tags->end_point != ULONG_MAX))
@@ -3064,20 +3072,20 @@ void eof_render_note_window(void)
 			{	//Start point is defined
 				if(eof_song->tags->end_point != ULONG_MAX)
 				{	//Both the start and end points are defined
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Start point = %lu : end = %lu", eof_song->tags->start_point, eof_song->tags->end_point);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Start point = %lu : end = %lu", eof_song->tags->start_point, eof_song->tags->end_point);
 				}
 				else
 				{	//Only the start point is defined
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Start point = %lu", eof_song->tags->start_point);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Start point = %lu", eof_song->tags->start_point);
 				}
 			}
 			else
 			{	//Only the end point is defined
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "End point = %lu", eof_song->tags->end_point);
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "End point = %lu", eof_song->tags->end_point);
 			}
 			ypos += 12;
 		}
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Input Mode: %s : Playback Speed: %d%%", eof_input_name[eof_input_mode], eof_playback_speed / 10);
+		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Input Mode: %s : Playback Speed: %d%%", eof_input_name[eof_input_mode], eof_playback_speed / 10);
 		ypos += 12;
 
 		if((eof_selected_catalog_entry < eof_song->catalog->entries) && (eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0'))
@@ -3089,23 +3097,23 @@ void eof_render_note_window(void)
 			snprintf(grid_snap_string, sizeof(grid_snap_string) - 1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		}
 		if(eof_snap_mode != EOF_SNAP_CUSTOM)
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s : %s", eof_snap_name[(int)eof_snap_mode], grid_snap_string);
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s : %s", eof_snap_name[(int)eof_snap_mode], grid_snap_string);
 		else
 		{
 			if(eof_custom_snap_measure == 0)
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d beat) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, grid_snap_string);
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d beat) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, grid_snap_string);
 			else
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d measure) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, grid_snap_string);
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d measure) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, grid_snap_string);
 		}
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: %s", eof_silence_loaded ? "(None)" : eof_song->tags->ogg[eof_selected_ogg].filename);
+		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "OGG File: %s", eof_silence_loaded ? "(None)" : eof_song->tags->ogg[eof_selected_ogg].filename);
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks
 			ypos += 12;
 			if(!eof_pro_guitar_fret_bitmask || (eof_pro_guitar_fret_bitmask == 63))
 			{	//If the fret shortcut bitmask is set to no strings or all 6 strings
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to %s strings", (eof_pro_guitar_fret_bitmask == 0) ? "no" : "all");
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to %s strings", (eof_pro_guitar_fret_bitmask == 0) ? "no" : "all");
 			}
 			else
 			{	//Build a string to indicate which strings the bitmask pertains to
@@ -3124,11 +3132,11 @@ void eof_render_note_window(void)
 				fret_string[index] = '\0';	//Terminate the string
 				if(fret_string[1] != '\0')
 				{	//If there are at least two strings denoted
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to strings %s", fret_string);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to strings %s", fret_string);
 				}
 				else
 				{	//There's only one string denoted, use a shortcut to just display the one character
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to string %c", fret_string[0]);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to string %c", fret_string[0]);
 				}
 			}
 		}//Display information specific to pro guitar tracks
@@ -3136,16 +3144,16 @@ void eof_render_note_window(void)
 ///Keep for debugging
 ///#ifdef EOF_DEBUG
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "CTRL:%c ALT:%c SHIFT:%c CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', KEY_EITHER_SHIFT ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);
+		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "CTRL:%c ALT:%c SHIFT:%c CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', KEY_EITHER_SHIFT ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);
 ///#endif
 	}//If show catalog is disabled
 
 	if(!eof_full_screen_3d)
 	{	//If full screen 3D view is not in effect, render a border around the info panel
-		rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, eof_color_dark_silver);
-		rect(eof_window_note->screen, 1, 1, eof_window_note->w - 2, eof_window_note->h - 2, eof_color_black);
-		hline(eof_window_note->screen, 1, eof_window_note->h - 2, eof_window_note->w - 2, eof_color_white);
-		vline(eof_window_note->screen, eof_window_note->w - 2, 1, eof_window_note->h - 2, eof_color_white);
+		rect(eof_window_info->screen, 0, 0, eof_window_info->w - 1, eof_window_info->h - 1, eof_color_dark_silver);
+		rect(eof_window_info->screen, 1, 1, eof_window_info->w - 2, eof_window_info->h - 2, eof_color_black);
+		hline(eof_window_info->screen, 1, eof_window_info->h - 2, eof_window_info->w - 2, eof_color_white);
+		vline(eof_window_info->screen, eof_window_info->w - 2, 1, eof_window_info->h - 2, eof_color_white);
 	}
 }
 
@@ -3358,6 +3366,7 @@ void eof_render_lyric_window(void)
 	}
 	eof_render_lyric_preview(eof_window_3d->screen);
 
+	//Draw a border around the edge of the lyric window
 	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, eof_color_dark_silver);
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
 	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
@@ -3707,6 +3716,7 @@ void eof_render_3d_window(void)
 		}
 	}
 
+	//Draw a border around the edge of the 3D window
 	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, eof_color_dark_silver);
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
 	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
@@ -3718,6 +3728,55 @@ void eof_render_3d_window(void)
 		eof_hover_note = temphover;				//Restore the hover note
 		eof_selection.track = temptrack;		//Restore the selection track
 	}
+}
+
+void eof_render_notes_window(void)
+{
+	int ypos;
+	char buffer[1025];
+	unsigned long src_index, dst_index;
+
+	if(!eof_enable_notes_panel || !eof_window_notes || !eof_notes_text)	//If the notes panel isn't enabled
+		return;			//Return immediately
+
+	clear_to_color(eof_window_notes->screen, eof_color_gray);
+
+	textprintf_ex(eof_window_notes->screen, font, 2, 0, eof_info_color, -1, "Notes Panel");
+	textprintf_ex(eof_window_notes->screen, font, 2, 6, eof_color_white, -1, "------------------");
+	ypos = 16;
+
+	//Parse the contents of the buffered file one line at a time and print each to the screen
+	src_index = dst_index = 0;	//Reset these indexes
+	while(eof_notes_text[src_index] != '\0')
+	{	//Until the end of the text file is reached
+		char thischar = eof_notes_text[src_index++];	//Read one character from the source buffer
+
+		if((thischar == '\r') && (eof_notes_text[src_index] == '\n'))
+		{	//Carriage return and line feed characters represent a new line
+			buffer[dst_index] = '\0';	//NULL terminate the buffer
+			textout_ex(eof_window_notes->screen, font, buffer, 2, ypos, eof_color_white, -1);	//Print this line to the screen
+			ypos +=12;
+			dst_index = 0;	//Reset the destination buffer index
+			src_index++;	//Seek past the line feed character in the source buffer
+		}
+		else
+		{
+			if(dst_index >= 1024)
+				return;	//Don't support lines longer than 1024 characters, plus one character for the NULL terminator
+			buffer[dst_index++] = thischar;	//Append the character to the destination buffer
+		}
+	}
+	if(dst_index && (dst_index < 1024))
+	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
+		buffer[dst_index] = '\0';	//NULL terminate the buffer
+		textout_ex(eof_window_notes->screen, font, buffer, 2, ypos, eof_color_white, -1);	//Print this line to the screen
+	}
+
+	//Draw a border around the edge of the notes panel
+	rect(eof_window_notes->screen, 0, 0, eof_window_notes->w - 1, eof_window_notes->h - 1, eof_color_dark_silver);
+	rect(eof_window_notes->screen, 1, 1, eof_window_notes->w - 2, eof_window_notes->h - 2, eof_color_black);
+	hline(eof_window_notes->screen, 1, eof_window_notes->h - 2, eof_window_notes->w - 2, eof_color_white);
+	vline(eof_window_notes->screen, eof_window_notes->w - 2, 1, eof_window_notes->h - 2, eof_color_white);
 }
 
 void eof_render(void)
@@ -3756,11 +3815,12 @@ void eof_render(void)
 		}
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render the note window yet, it will just be overwritten by the 3D window
-			eof_render_note_window();	//Otherwise render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
+			eof_render_info_window();	//Otherwise render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
 		}
 		eof_render_editor_window(eof_window_editor);	//Render the primary piano roll
 		eof_render_editor_window_2();	//Render the secondary piano roll if applicable
 		eof_render_3d_window();
+		eof_render_notes_window();
 	}
 	else
 	{	//If no project is loaded, just draw a blank screen and the menu
@@ -3782,9 +3842,9 @@ void eof_render(void)
 
 	if(eof_full_screen_3d && eof_song_loaded)
 	{	//If the user enabled full screen 3D view, scale it to fill the program window
-		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, eof_screen_width_default / 2, eof_screen_height / 2, 0, 0, eof_screen_width_default, eof_screen_height);
-		eof_window_note->y = 0;	//Re-position the note window to the top left corner of EOF's program window
-		eof_render_note_window();
+		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, 0, 0, eof_screen_width_default, eof_screen_height);
+		eof_window_info->y = 0;	//Re-position the note window to the top left corner of EOF's program window
+		eof_render_info_window();
 		if(!eof_screen_zoom)
 		{	//If x2 zoom is not enabled, render the menu now
 			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
@@ -3796,7 +3856,7 @@ void eof_render(void)
 				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 			}
 		}
-		eof_window_note->y = eof_screen_height / 2;	//Re-position the note window to the bottom left corner of EOF's program window
+		eof_window_info->y = eof_screen_height / 2;	//Re-position the note window to the bottom left corner of EOF's program window
 	}
 
 	if(!eof_disable_vsync)
@@ -4208,7 +4268,7 @@ int eof_initialize(int argc, char * argv[])
 		}
 		return 0;
 	}
-	eof_window_note = eof_window_note_lower_left;	//By default, the info panel is at the lower left corner
+	eof_window_info = eof_window_note_lower_left;	//By default, the info panel is at the lower left corner
 	eof_menu_edit_zoom_level(eof_zoom_backup);	//Apply the zoom level loaded from the config file
 
 	if(!eof_load_data())
@@ -4769,6 +4829,12 @@ void eof_exit(void)
 	eof_window_destroy(eof_window_note_lower_left);
 	eof_window_destroy(eof_window_note_upper_left);
 	eof_window_destroy(eof_window_3d);
+	eof_window_destroy(eof_window_notes);
+	if(eof_notes_text)
+	{	//If the notes panel text file was loaded into memory
+		free(eof_notes_text);
+		eof_notes_text = NULL;
+	}
 
 	eof_destroy_shape_definitions();
 
@@ -5980,6 +6046,51 @@ int eof_load_and_scale_hopo_images(double value)
 	eof_image[EOF_IMAGE_NOTE_HORANGE] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HORANGE], value);
 	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HORANGE_HIT], value);
 
+	return 1;
+}
+
+unsigned int eof_get_display_panel_count(void)
+{
+	unsigned int count = 0;
+
+	if(!eof_disable_info_panel)
+		count++;	//If the info panel isn't disabled, count it
+	if(!eof_disable_3d_rendering)
+		count++;	//If the 3D preview isn't disabled, count it
+	if(eof_enable_notes_panel)
+		count++;	//If the notes panel is enabled, count it
+
+	return count;
+}
+
+int eof_increase_display_width_to_panel_count(int prompt)
+{
+	unsigned long needed_width = eof_get_display_panel_count() * EOF_SCREEN_PANEL_WIDTH;
+	int retval;
+
+	if(eof_screen_width < needed_width)
+	{	//If the current screen width isn't sufficient to display all enabled panels
+		eof_clear_input();
+		if(prompt)
+		{	//If the calling function specified to prompt the user
+			retval = alert(NULL, "Resize the program window to fit all panels?", NULL, "&Yes", "&No", 'y', 'n');
+
+			if(retval != 1)
+			{	//If the user declined to resize
+				eof_enable_notes_panel = 0;	//Disable the notes panel
+				return 1;
+			}
+		}
+
+		if(eof_set_display_mode(needed_width, eof_screen_height) != 1)
+		{	//If the program window couldn't be resized to the appropriate width, disable the non-default panels (info, 3d preview)
+			eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+			eof_enable_notes_panel = 0;		//Disable the notes panel
+			return 0;
+		}
+	}
+
+	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	return 1;
 }
 

@@ -332,7 +332,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}
 	}
 
-	if(window == eof_window_note)
+	if(window == eof_window_info)
 	{	//If rendering to the fret catalog
 		position = eof_music_catalog_pos;
 		leftcoord = 140;
@@ -685,7 +685,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 	if((track == 0) || eof_hide_note_names)
 		return 0;	//If the pen note is being drawn, or the user opted to hide note names, skip the logic below
-	if((window != eof_window_note) && (eof_2d_render_top_option != 5))
+	if((window != eof_window_info) && (eof_2d_render_top_option != 5))
 		return 0;	//If not rendering to the fret catalog or to the 2D window with the option to display note names, skip the logic below
 
 	notename[0] = prevnotename[0] = '\0';	//Empty these strings
@@ -718,7 +718,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			nameptr = prevnotename;
 		}
 	}
-	if(window == eof_window_note)
+	if(window == eof_window_info)
 	{	//If rendering to the note window
 		textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
 	}
@@ -754,7 +754,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	if((np == NULL) || (window == NULL))	//If this is not a valid lyric or window pointer
 		return 1;			//Stop rendering
 
-	if(window == eof_window_note)
+	if(window == eof_window_info)
 	{	//If rendering to the fret catalog
 		position = eof_music_catalog_pos;
 		leftcoord = 140;
@@ -880,7 +880,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 				np2=eof_song->vocal_track[0]->lyric[notenum+1];
 				sliderect[0]=npos + np->length / eof_zoom;	//X1 (X coordinate of the end of this lyric's rectangle)
 				sliderect[1]=note_y;						//Y1 (Y coordinate of the bottom of this lyric's rectangle)
-				if(window == eof_window_note)
+				if(window == eof_window_info)
 				{	//If rendering to the fret catalog
 					leftcoord2 = 140;
 				}

@@ -109,7 +109,7 @@ MENU eof_track_selected_menu[EOF_TRACKS_MAX] =
 MENU eof_catalog_menu[] =
 {
 	{"&Show\tQ", eof_menu_catalog_show, NULL, 0, NULL},
-	{"Double &Width\tSHIFT+Q", eof_menu_catalog_toggle_full_width, NULL, 0, NULL},
+	{"Full &Width\tSHIFT+Q", eof_menu_catalog_toggle_full_width, NULL, 0, NULL},
 	{"&Edit Name", eof_menu_catalog_edit_name, NULL, 0, NULL},
 	{"Edit &Timing", eof_menu_song_catalog_edit, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},

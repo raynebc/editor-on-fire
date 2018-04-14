@@ -166,6 +166,7 @@
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1
 #define EOF_DISPLAY_1024            2
+#define EOF_SCREEN_PANEL_WIDTH (eof_screen_width_default / 2)
 
 #define EOF_INPUT_NAME_NUM			7
 	//The number of defined input methods
@@ -258,10 +259,11 @@ extern int         eof_global_volume;
 
 extern EOF_WINDOW * eof_window_editor;
 extern EOF_WINDOW * eof_window_editor2;
-extern EOF_WINDOW * eof_window_note;	//Will be set to either the lower left or upper left variants below depending on whether full screen 3D view is in effect
+extern EOF_WINDOW * eof_window_info;	//The info panel, will be set to either the lower left or upper left variants below depending on whether full screen 3D view is in effect
 extern EOF_WINDOW * eof_window_note_lower_left;
 extern EOF_WINDOW * eof_window_note_upper_left;
 extern EOF_WINDOW * eof_window_3d;
+extern EOF_WINDOW * eof_window_notes;
 
 extern char        eof_last_frettist[256];
 extern int         eof_zoom;
@@ -332,6 +334,8 @@ extern int         eof_disable_sound_processing;
 extern int         eof_disable_3d_rendering;
 extern int         eof_disable_2d_rendering;
 extern int         eof_disable_info_panel;
+extern int         eof_enable_notes_panel;
+extern char *      eof_notes_text;
 extern int         eof_paste_erase_overlap;
 extern int         eof_write_fof_files;
 extern int         eof_write_rb_files;
@@ -606,7 +610,9 @@ int eof_figure_part(void);	//Returns the active track number in terms of FoF's c
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);
 int eof_set_display_mode_preset(int mode);	//Sets one of the pre-set window sizes by calling eof_set_display_mode()
 int eof_set_display_mode_preset_custom_width(int mode, unsigned long width);	//Sets one of pre-set window heights and uses the specified width
-int eof_set_display_mode(unsigned long width, unsigned long height);	//Sets the program window size, rebuilds sub-windows and sets related variables
+int eof_set_display_mode(unsigned long width, unsigned long height);
+	//Sets the program window size, rebuilds sub-windows and sets related variables
+	//Returns 0 on error, 1 on success or 2 if a display alteration (enabling x2 zoom or setting a custom window width) fails
 void eof_set_3d_projection(void);	//Sets the 3d projection by calling ocd3d_set_projection() with the screen dimensions and vanishing coordinate
 void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
 	//Re-applies the HOPO, SP, trill and tremolo status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
@@ -624,8 +630,9 @@ void eof_render_lyric_window(void);
 void eof_render_3d_window(void);
 	//Renders the 3D preview
 	//Calls eof_render_lyric_window() instead if a vocal track is to be rendered
+void eof_render_notes_window(void);
 void eof_render_extended_ascii_fonts(void);	//A test function that prints prints each Unicode converted extended ASCII character to test that the eof_font has glyphs mapped appropriately
-void eof_render_note_window(void);
+void eof_render_info_window(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 BITMAP *eof_scale_image(BITMAP *source, double value);
 	//Builds a new bitmap containing the input bitmap scaled by the specified value (ie. 0.5 to decrease to half size)
@@ -722,6 +729,14 @@ void eof_add_extended_ascii_glyphs(void);
 
 int eof_load_and_scale_hopo_images(double value);
 	//Loads the images for the (non-GHL) HOPO gems scaled to the given value (ie. 0.50 for half size) from eof.dat into eof_image[]
+	//Returns zero on error
+
+unsigned int eof_get_display_panel_count(void);
+	//Returns the number of panels that are enabled for display (info panel, 3D preview, notes panel)
+int eof_increase_display_width_to_panel_count(int prompt);
+	//Increases the program window size to the minimum needed to fit the active number of panels, if necessary
+	//If prompt is nonzero, the user is asked whether to perform the window resize
+	//If the user declines that prompt, or if the window resize fails, the non-default panels are disabled
 	//Returns zero on error
 
 #endif
