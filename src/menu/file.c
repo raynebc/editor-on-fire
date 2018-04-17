@@ -5651,10 +5651,12 @@ int eof_display_notes_panel(void)
 		{	//If the program window is wide enough
 			eof_rebuild_notes_panel();
 		}
+		eof_validate_temp_folder();							//Reset the current working directory to EOF's program folder
 		eof_notes_text = eof_buffer_file("notes.txt", 1);	//Buffer the notes panel text file into memory, appending a NULL terminator
 		if(eof_notes_text == NULL)
 		{	//Could not buffer file
 			allegro_message("Error reading notes.txt");
+			eof_log_cwd();
 			eof_enable_notes_panel = 0;
 		}
 	}

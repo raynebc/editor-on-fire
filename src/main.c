@@ -36,6 +36,7 @@
 #include "gh_import.h"
 #include "window.h"
 #include "note.h"
+#include "notes.h"
 #include "beat.h"
 #include "event.h"
 #include "editor.h"
@@ -2880,7 +2881,7 @@ void eof_render_info_window(void)
 				}
 				else
 				{
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric Hover = %d : Seek = None", eof_hover_note);
+					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = %d : Seek = None", eof_hover_note);
 				}
 			}
 			else
@@ -3733,9 +3734,12 @@ void eof_render_3d_window(void)
 void eof_render_notes_window(void)
 {
 	int ypos;
-	char buffer[1025];
+	char buffer[1024], buffer2[1024];
 	unsigned long src_index, dst_index;
+	int retval;
 
+	if(!eof_song_loaded || !eof_song)	//If a project isn't loaded
+		return;			//Return immediately
 	if(!eof_enable_notes_panel || !eof_window_notes || !eof_notes_text)	//If the notes panel isn't enabled
 		return;			//Return immediately
 
@@ -3754,22 +3758,41 @@ void eof_render_notes_window(void)
 		if((thischar == '\r') && (eof_notes_text[src_index] == '\n'))
 		{	//Carriage return and line feed characters represent a new line
 			buffer[dst_index] = '\0';	//NULL terminate the buffer
-			textout_ex(eof_window_notes->screen, font, buffer, 2, ypos, eof_color_white, -1);	//Print this line to the screen
-			ypos +=12;
+			retval = eof_expand_notes_window_text(buffer, buffer2, 1024);
+			if(!retval)
+			{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
+				eof_enable_notes_panel = 0;
+				return;
+			}
+			if((retval == 2) || (buffer2[0] != '\0'))
+			{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
+				textout_ex(eof_window_notes->screen, font, buffer2, 2, ypos, eof_color_white, -1);	//Print this line to the screen
+				ypos +=12;
+			}
 			dst_index = 0;	//Reset the destination buffer index
 			src_index++;	//Seek past the line feed character in the source buffer
 		}
 		else
 		{
-			if(dst_index >= 1024)
-				return;	//Don't support lines longer than 1024 characters, plus one character for the NULL terminator
+			if(dst_index >= 1023)
+				return;	//Don't support lines longer than 1023 characters, plus one character for the NULL terminator
 			buffer[dst_index++] = thischar;	//Append the character to the destination buffer
 		}
 	}
-	if(dst_index && (dst_index < 1024))
+	if(dst_index && (dst_index < 1023))
 	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
 		buffer[dst_index] = '\0';	//NULL terminate the buffer
-		textout_ex(eof_window_notes->screen, font, buffer, 2, ypos, eof_color_white, -1);	//Print this line to the screen
+		retval = eof_expand_notes_window_text(buffer, buffer2, 1024);
+		if(!retval)
+		{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
+			eof_enable_notes_panel = 0;
+			return;
+		}
+		if((retval == 2) || (buffer2[0] != '\0'))
+		{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
+			textout_ex(eof_window_notes->screen, font, buffer2, 2, ypos, eof_color_white, -1);	//Print this line to the screen
+			ypos +=12;
+		}
 	}
 
 	//Draw a border around the edge of the notes panel

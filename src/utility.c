@@ -69,9 +69,13 @@ void * eof_buffer_file(const char * fn, char appendnull)
 
 	if(fn == NULL)
 		return NULL;
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuffering file:  \"%s\"", fn);
+	eof_log(eof_log_string, 1);
 	fp = pack_fopen(fn, "r");
 	if(fp == NULL)
 	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCannot open specified file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
 		return NULL;
 	}
 	filesize = buffersize = file_size_ex(fn);
@@ -81,7 +85,11 @@ void * eof_buffer_file(const char * fn, char appendnull)
 	}
 	data = (char *)malloc(buffersize);
 	if(data == NULL)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCannot allocate %lu bytes of memory.", (unsigned long)buffersize);
+		eof_log(eof_log_string, 1);
 		return NULL;
+	}
 
 	(void) pack_fread(data, (long)filesize, fp);
 	if(appendnull)

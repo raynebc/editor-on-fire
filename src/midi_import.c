@@ -794,6 +794,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 										{
 											ghl_bass_present = 1;	//Track that the GHL bass track was imported
 											ghl_bass_track = i;		//And record its track number
+											sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Configure the track as a GHL track
+											sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
 										}
 										else
 										{
@@ -1377,7 +1379,7 @@ set_window_title(debugtext);
 		{	//If the track name was defined instead of just assumed
 			if(eof_import_events[i]->game == 0)
 			{	//Rock Band format MIDI track
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"", eof_midi_tracks[picked_track].name);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track \"%s\"%s", eof_midi_tracks[picked_track].name, isghl ? " (GHL format)" : "");
 			}
 			else if(eof_import_events[i]->game == 1)
 			{	//Power Gig format MIDI track

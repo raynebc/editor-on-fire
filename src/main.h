@@ -630,9 +630,9 @@ void eof_render_lyric_window(void);
 void eof_render_3d_window(void);
 	//Renders the 3D preview
 	//Calls eof_render_lyric_window() instead if a vocal track is to be rendered
-void eof_render_notes_window(void);
 void eof_render_extended_ascii_fonts(void);	//A test function that prints prints each Unicode converted extended ASCII character to test that the eof_font has glyphs mapped appropriately
 void eof_render_info_window(void);
+void eof_render_notes_window(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 BITMAP *eof_scale_image(BITMAP *source, double value);
 	//Builds a new bitmap containing the input bitmap scaled by the specified value (ie. 0.5 to decrease to half size)

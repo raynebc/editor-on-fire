@@ -429,8 +429,8 @@ void eof_mix_init(void)
 	{
 		allegro_message("Couldn't load seek sound!");
 	}
-	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
-	{	//Load piano tones
+	for(i = 36; i < 85; i++)
+	{	//Load piano tones (only tones numbered 36 through 84 are included in the DAT file
 		(void) snprintf(fbuffer, sizeof(fbuffer) - 1, "eof.dat#piano.esp/NOTE_%02d_OGG", i);
 		eof_sound_note[i] = eof_mix_load_ogg_sample(fbuffer);
 	}
