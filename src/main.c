@@ -3758,7 +3758,7 @@ void eof_render_notes_window(void)
 		if((thischar == '\r') && (eof_notes_text[src_index] == '\n'))
 		{	//Carriage return and line feed characters represent a new line
 			buffer[dst_index] = '\0';	//NULL terminate the buffer
-			retval = eof_expand_notes_window_text(buffer, buffer2, 1024);
+			retval = eof_expand_notes_window_text(buffer, buffer2, 1024, &ypos);
 			if(!retval)
 			{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
 				eof_enable_notes_panel = 0;
@@ -3782,7 +3782,7 @@ void eof_render_notes_window(void)
 	if(dst_index && (dst_index < 1023))
 	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
 		buffer[dst_index] = '\0';	//NULL terminate the buffer
-		retval = eof_expand_notes_window_text(buffer, buffer2, 1024);
+		retval = eof_expand_notes_window_text(buffer, buffer2, 1024, &ypos);
 		if(!retval)
 		{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
 			eof_enable_notes_panel = 0;

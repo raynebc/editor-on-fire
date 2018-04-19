@@ -8,12 +8,14 @@
 #include "song.h"
 #include "tuning.h"
 #include "foflc/Lyric_storage.h"
+#include "menu/track.h"	//For eof_menu_pro_guitar_track_get_tech_view_state()
+#include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
 #endif
 
-int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned long dest_buffer_size)
+int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned long dest_buffer_size, int *ypos)
 {
 	unsigned long src_index = 0, dest_index = 0, macro_index;
 	char src_char, macro[1024], expanded_macro[1024];
@@ -47,7 +49,13 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 					macro[macro_index] = '\0';	//Terminate the macro string
 					macro_status = eof_expand_notes_window_macro(macro, expanded_macro, 1024);	//Convert the macro to static text
 
-					if((macro_status == 2) || (macro_status == 3))
+					if(macro_status == 1)
+					{	//Otherwise if the macro was successfully converted to static text
+						strncat(dest_buffer, expanded_macro, dest_buffer_size - strlen(dest_buffer) - 1);	//Append the converted macro text to the destination buffer
+						dest_index = strlen(dest_buffer);	//Update the destination buffer index
+						break;	//Exit macro parse while loop
+					}
+					else if((macro_status == 2) || (macro_status == 3))
 					{	//If this was a conditional macro
 						char *ifptr, *elseptr, *endifptr, *nextptr;	//Used to track conditional macro handling
 						char *eraseptr = NULL;						//Used to erase ELSE condition when the condition was true
@@ -223,11 +231,11 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 					else if(macro_status == 4)
 					{	//An %EMPTY% macro was parsed
 						allowempty = 1;
+						break;	//Exit macro parse while loop
 					}
-					else if(macro_status == 1)
-					{	//Otherwise if the macro was successfully converted to static text
-						strncat(dest_buffer, expanded_macro, dest_buffer_size - strlen(dest_buffer) - 1);	//Append the converted macro text to the destination buffer
-						dest_index = strlen(dest_buffer);	//Update the destination buffer index
+					else if(macro_status == 5)
+					{	//A %MOVE_DOWN_ONE_PIXEL% macro was parsed
+						(*ypos)++;	//Move the text output position down one pixel
 						break;	//Exit macro parse while loop
 					}
 					else
@@ -263,6 +271,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	///CONDITIONAL TEST MACROS
+	///The conditional macro handling requires that all conditional macros other than %ELSE% and %ENDIF% begin with %IF_
 	//A beat marker is hovered over by the mouse
 	if(!ustricmp(macro, "IF_HOVER_BEAT"))
 	{
@@ -311,7 +320,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	//The pro guitar track is active
+	//A pro guitar track is active
 	if(!ustricmp(macro, "IF_IS_PRO_GUITAR_TRACK"))
 	{
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -323,7 +332,41 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	//The pro guitar track is not active
+	//A pro guitar track is active and tech view is in effect
+	if(!ustricmp(macro, "IF_IS_TECH_VIEW"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+
+			if(eof_menu_pro_guitar_track_get_tech_view_state(tp))
+			{	//If tech view is in effect
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	//Tech view is not in effect, regardless of which track is active
+	if(!ustricmp(macro, "IF_IS_NOT_TECH_VIEW"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+
+			if(eof_menu_pro_guitar_track_get_tech_view_state(tp))
+			{	//If tech view is in effect
+				dest_buffer[0] = '\0';
+				return 2;	//False
+			}
+		}
+
+		return 3;	//True
+	}
+
+	//A pro guitar track is not active
 	if(!ustricmp(macro, "IF_IS_NOT_PRO_GUITAR_TRACK"))
 	{
 		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -388,21 +431,36 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	//A pro guitar note is selected and its fret values can be written to a string
-	if(!ustricmp(macro, "IF_CAN_DISPLAY_PRO_GUITAR_NOTE_FRETTING"))
+	//A pro guitar chord is selected and its has at least one chord name lookup match
+	if(!ustricmp(macro, "IF_CAN_LOOKUP_SELECTED_CHORD_NAME"))
 	{
 		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
 		{	//If a note is selected
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a pro guitar track is active
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
-				char fret_string[30];
 
-				if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, fret_string))
-				{	//If the note's frets can be represented in string format
+				if(eof_count_chord_lookup_matches(tp, eof_selected_track, eof_selection.current))
+				{	//If there's at least one chord lookup match
 					dest_buffer[0] = '\0';
 					return 3;	//True
 				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	//If this track's tuning is not being reflected in chord name lookups
+	if(!ustricmp(macro, "IF_TUNING_IGNORED"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+			if(tp->ignore_tuning)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
 			}
 		}
 
@@ -418,11 +476,20 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 
 	///CONTROL MACROS
-	//Allow a blank line to be printer
+	//Allow a blank line to be printed
 	if(!ustricmp(macro, "EMPTY"))
 	{
+		dest_buffer[0] = '\0';
 		return 4;
 	}
+
+	//Move the text output down one pixel
+	if(!ustricmp(macro, "MOVE_DOWN_ONE_PIXEL"))
+	{
+		dest_buffer[0] = '\0';
+		return 5;
+	}
+
 
 	///EXPANSION MACROS
 	//Percent sign
@@ -632,13 +699,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{
 			unsigned char tone = eof_get_note_note(eof_song, eof_selected_track, eof_selection.current);
 
-			if(!tone)
-				snprintf(dest_buffer, dest_buffer_size, "None");
-			else
+			if(tone)
+			{
 				snprintf(dest_buffer, dest_buffer_size, "%s", eof_get_tone_name(tone));
+				return 1;
+			}
 		}
-		else
-			snprintf(dest_buffer, dest_buffer_size, "None");
+		snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
 	}
 
@@ -662,7 +729,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
-	//Pro guitar note fretting
+	//Selected pro guitar note fretting
 	if(!ustricmp(macro, "PRO_GUITAR_NOTE_FRETTING"))
 	{
 		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
@@ -677,10 +744,155 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					snprintf(dest_buffer, dest_buffer_size, "%s", fret_string);
 					return 1;
 				}
+				else
+				{
+					snprintf(dest_buffer, dest_buffer_size, "(Error)");
+					return 1;
+				}
 			}
 		}
-		snprintf(dest_buffer, dest_buffer_size, "(Error)");
+		snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
 
+	//Pro guitar selected chord name lookup
+	if(!ustricmp(macro, "SELECTED_CHORD_NAME_LOOKUP"))
+	{
+		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		{	//If a note is selected
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If a pro guitar track is active
+				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+				unsigned long matchcount;
+				char chord_match_string[30] = {0};
+				int scale = 0, chord = 0, isslash = 0, bassnote = 0;
+
+				matchcount = eof_count_chord_lookup_matches(tp, eof_selected_track, eof_selection.current);
+				if(matchcount)
+				{	//If there's at least one chord lookup match, obtain the user's selected match
+					eof_lookup_chord(tp, eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote, eof_selected_chord_lookup, 1);	//Run a cache-able lookup
+					scale %= 12;	//Ensure this is a value from 0 to 11
+					bassnote %= 12;
+					if(matchcount > 1)
+					{	//If there's more than one match
+						(void) snprintf(chord_match_string, sizeof(chord_match_string) - 1, " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
+					}
+					if(!isslash)
+					{	//If it's a normal chord
+						snprintf(dest_buffer, dest_buffer_size, "[%s%s]%s", eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string);
+					}
+					else
+					{	//If it's a slash chord
+						snprintf(dest_buffer, dest_buffer_size, "[%s%s%s]%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string);
+					}
+
+					return 1;
+				}
+			}
+		}
+		snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
+	//Selected pro guitar note fingering
+	if(!ustricmp(macro, "PRO_GUITAR_NOTE_FINGERING"))
+	{
+		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		{	//If a note is selected
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If a pro guitar track is active
+				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+				char finger_string[30] = {0};
+
+				if(eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current) & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+				{	//If this note has fingerless status
+					snprintf(dest_buffer, dest_buffer_size, "None");
+				}
+				else if(eof_get_pro_guitar_note_finger_string(tp, eof_selection.current, finger_string))
+				{	//If the note's fingering can be represented in string format
+					snprintf(dest_buffer, dest_buffer_size, "%s", finger_string);
+				}
+				else
+				{
+					snprintf(dest_buffer, dest_buffer_size, "(Error)");
+				}
+
+				return 1;
+			}
+		}
+		snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
+	//Selected pro guitar note tones
+	if(!ustricmp(macro, "PRO_GUITAR_NOTE_TONES"))
+	{
+		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		{	//If a note is selected
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If a pro guitar track is active
+				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+				char tone_string[30] = {0};
+
+				if(eof_get_pro_guitar_note_tone_string(tp, eof_selection.current, tone_string))
+				{	//If the note's tones can be represented in string format
+					snprintf(dest_buffer, dest_buffer_size, "%s", tone_string);
+				}
+				else
+				{
+					snprintf(dest_buffer, dest_buffer_size, "(Error)");
+				}
+
+				return 1;
+			}
+		}
+		snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
+	//The fret hand position in effect at the pro guitar track's current seek position
+	if(!ustricmp(macro, "PRO_GUITAR_TRACK_EFFECTIVE_FHP"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+			unsigned char position;
+
+			position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
+			if(position)
+			{	//If a fret hand position is in effect
+				snprintf(dest_buffer, dest_buffer_size, "%u", position);
+				return 1;
+			}
+		}
+		snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
+	//The tone in effect at the pro guitar track's current seek position
+	if(!ustricmp(macro, "PRO_GUITAR_TRACK_EFFECTIVE_TONE"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+			unsigned long tone;
+
+			tone = eof_pro_guitar_track_find_effective_tone(tp, eof_music_pos - eof_av_delay);	//Find if there's a tone change in effect
+			if(tone < EOF_MAX_PHRASES)
+			{	//If a tone change is in effect
+				snprintf(dest_buffer, dest_buffer_size, "%s", tp->tonechange[tone].name);
+				return 1;
+			}
+			else
+			{
+				if(tp->defaulttone[0] != '\0')
+				{	//If a default tone is defined for the track
+					snprintf(dest_buffer, dest_buffer_size, "(%s)", tp->defaulttone);
+					return 1;
+				}
+			}
+		}
+		snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
 	}
 

@@ -130,7 +130,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	struct dbTrack * current_track;
 	int track;
 	int difficulty;
-	unsigned long lastchartpos = 0, lastlastchartpos = 0;	//Used to track HOPO notation
+	unsigned long lastchartpos = 0;
 	unsigned long b = 0;
 	double solo_on = 0.0, solo_off = 0.0;
 	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
@@ -543,10 +543,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 								}
 							}
 							prev_note = new_note;		//Track the last created note
-							if(lastlastchartpos != lastchartpos)
-							{	//If this gem was at a different timestamp
-								lastlastchartpos = lastchartpos;		//Track information for HOPO purposes
-							}
 							lastchartpos = current_note->chartpos;	//Track the position of the gem for HOPO tracking
 						}
 					}
@@ -554,7 +550,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{	//Otherwise add a gem to the previously created note
 						if(new_note)
 						{
-							new_note->note |= (1 << current_note->gemcolor);
+							if(current_note->gemcolor == 8)
+							{	//If this is a B3 gem
+								new_note->note |= 32;	//Add a gem on lane 6
+								new_note->tflags |= EOF_NOTE_TFLAG_GHL_B3;	//Apply this flag to reflect that this lane 6 gem is a B3 note and not a toggle HOPO marker
+							}
+							else
+							{	//Otherwise treat it as a normal gem
+								new_note->note |= (1 << current_note->gemcolor);
+							}
 						}
 					}
 					lastpos = current_note->chartpos;
@@ -589,9 +593,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 						}
 					}
 				}
-				if(tp->note[ctr]->note != 32)
-				{	//Disregard the toggle HOPO marker for comparing a note bitmask to the previous one to determine if it's a HOPO
-					prev_note = tp->note[ctr];
+				if((tp->note[ctr]->note != 32) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_GHL_B3))
+				{	//As long as this isn't a toggle HOPO marker (a lane 6 gem without the temporary flag indicating it is a B3 gem)
+					prev_note = tp->note[ctr];		//Track this note to compare it with the next one and set its HOPO status appropriately
 				}
 			}
 		}//If the track is valid
