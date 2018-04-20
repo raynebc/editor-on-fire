@@ -2,14 +2,15 @@
 #ifdef ALLEGRO_WINDOWS
 	#include <winalleg.h>
 #endif
+#include "beat.h"		//For eof_get_measure()
 #include "main.h"
 #include "mix.h"
 #include "notes.h"
+#include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position()
 #include "song.h"
 #include "tuning.h"
 #include "foflc/Lyric_storage.h"
 #include "menu/track.h"	//For eof_menu_pro_guitar_track_get_tech_view_state()
-#include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -467,6 +468,54 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//If sound effects are disabled in preferences
+	if(!ustricmp(macro, "IF_SOUND_CUES_DISABLED"))
+	{
+		if(eof_disable_sound_processing)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the start point is defined
+	if(!ustricmp(macro, "IF_START_POINT_DEFINED"))
+	{
+		if(eof_song->tags->start_point != ULONG_MAX)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the end point is defined
+	if(!ustricmp(macro, "IF_END_POINT_DEFINED"))
+	{
+		if(eof_song->tags->end_point != ULONG_MAX)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the selected fret catalog entry is named
+	if(!ustricmp(macro, "IF_SELECTED_CATALOG_ENTRY_NAMED"))
+	{
+		if((eof_selected_catalog_entry < eof_song->catalog->entries) && (eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0'))
+		{	//If the active fret catalog has a defined name
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -893,6 +942,206 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			}
 		}
 		snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
+	//Hover note
+	if(!ustricmp(macro, "HOVER_NOTE"))
+	{
+		if(eof_hover_note >= 0)
+			snprintf(dest_buffer, dest_buffer_size, "%d", eof_hover_note);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
+	//Seek position (honoring the seek timing format specified in user preferences)
+	if(!ustricmp(macro, "SEEK_POSITION"))
+	{
+		int min, sec, ms;
+
+		ms = (eof_music_pos - eof_av_delay) % 1000;
+		if(!eof_display_seek_pos_in_seconds)
+		{	//If the seek position is to be displayed as minutes:seconds
+			min = ((eof_music_pos - eof_av_delay) / 1000) / 60;
+			sec = ((eof_music_pos - eof_av_delay) / 1000) % 60;
+			snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
+		}
+		else
+		{	//If the seek position is to be displayed as seconds
+			sec = (eof_music_pos - eof_av_delay) / 1000;
+			snprintf(dest_buffer, dest_buffer_size, "%d.%03ds", sec, ms);
+		}
+		return 1;
+	}
+
+	//Seek position in seconds.milliseconds format
+	if(!ustricmp(macro, "SEEK_POSITION_SEC"))
+	{
+		int sec, ms;
+
+		sec = (eof_music_pos - eof_av_delay) / 1000;
+		ms = (eof_music_pos - eof_av_delay) % 1000;
+		snprintf(dest_buffer, dest_buffer_size, "%d.%03ds", sec, ms);
+
+		return 1;
+	}
+
+	//Seek position in minutes:seconds.milliseconds format
+	if(!ustricmp(macro, "SEEK_POSITION_MIN_SEC"))
+	{
+		int min, sec, ms;
+
+		min = ((eof_music_pos - eof_av_delay) / 1000) / 60;
+		sec = ((eof_music_pos - eof_av_delay) / 1000) % 60;
+		ms = (eof_music_pos - eof_av_delay) % 1000;
+		snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
+
+		return 1;
+	}
+
+	//Number of notes selected
+	if(!ustricmp(macro, "COUNT_NOTES_SELECTED"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%lu", eof_count_selected_notes(NULL));	//Count the number of selected notes, don't track the count of notes in the active track difficulty
+
+		return 1;
+	}
+
+	//Number of notes selected
+	if(!ustricmp(macro, "TRACK_DIFF_NOTE_COUNT"))
+	{
+		unsigned long count = 0;
+
+		(void) eof_count_selected_notes(&count);	//Count the number of notes in the active track difficulty
+		snprintf(dest_buffer, dest_buffer_size, "%lu", count);	//Count the number of selected notes, don't track the count of notes in the active track difficulty
+		return 1;
+	}
+
+	//The defined start point
+	if(!ustricmp(macro, "START_POINT"))
+	{
+		if(eof_song->tags->start_point != ULONG_MAX)
+			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_song->tags->start_point);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
+	//The defined start point
+	if(!ustricmp(macro, "END_POINT"))
+	{
+		if(eof_song->tags->end_point != ULONG_MAX)
+			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_song->tags->end_point);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
+	//The name of the current input mode
+	if(!ustricmp(macro, "INPUT_MODE_NAME"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_input_name[eof_input_mode]);
+
+		return 1;
+	}
+
+	//The current playback speed
+	if(!ustricmp(macro, "PLAYBACK_SPEED"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%d", eof_playback_speed / 10);
+
+		return 1;
+	}
+
+	//The current grid snap setting
+	if(!ustricmp(macro, "GRID_SNAP_SETTING"))
+	{
+		if(eof_snap_mode != EOF_SNAP_CUSTOM)
+			snprintf(dest_buffer, dest_buffer_size, "%s", eof_snap_name[(int)eof_snap_mode]);
+		else
+		{
+			if(eof_custom_snap_measure == 0)
+				snprintf(dest_buffer, dest_buffer_size, "%s (1/%d beat)", eof_snap_name[(int)eof_snap_mode], eof_snap_interval);
+			else
+				snprintf(dest_buffer, dest_buffer_size, "%s (1/%d measure)", eof_snap_name[(int)eof_snap_mode], eof_snap_interval);
+		}
+
+		return 1;
+	}
+
+	//The selected fret catalog entry
+	if(!ustricmp(macro, "SELECTED_CATALOG_ENTRY"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		return 1;
+	}
+
+	//The selected fret catalog entry's named
+	if(!ustricmp(macro, "SELECTED_CATALOG_ENTRY_NAME"))
+	{
+		if((eof_selected_catalog_entry < eof_song->catalog->entries) && (eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0'))
+		{	//If the active fret catalog has a defined name
+			snprintf(dest_buffer, dest_buffer_size, "%s", eof_song->catalog->entry[eof_selected_catalog_entry].name);
+			return 1;
+		}
+
+		snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
+	//The file name of the loaded chart audio
+	if(!ustricmp(macro, "LOADED_OGG_NAME"))
+	{
+		if(!eof_silence_loaded)
+			snprintf(dest_buffer, dest_buffer_size, "%s", eof_song->tags->ogg[eof_selected_ogg].filename);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "None");
+
+		return 1;
+	}
+
+	//The strings that are currently affected by fret value shortcuts
+	if(!ustricmp(macro, "FRET_VALUE_SHORTCUTS_SETTING"))
+	{
+		char shortcut_string[55] = {0};
+
+		if(eof_get_pro_guitar_fret_shortcuts_string(shortcut_string))
+		{	//If the note's fingering can be represented in string format
+			snprintf(dest_buffer, dest_buffer_size, "%s", shortcut_string);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "(Error)");
+		}
+
+		return 1;
+	}
+
+	//The status of modifier keys and the last keypress's scan and ASCII codes
+	if(!ustricmp(macro, "KEY_INPUT_STATUS"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "CTRL:%c ALT:%c SHIFT:%c CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', KEY_EITHER_SHIFT ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);
+		return 1;
+	}
+
+	//The number of beats in the project
+	if(!ustricmp(macro, "BEAT_COUNT"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%lu", eof_song->beats - 1);
+		return 1;
+	}
+
+	//The number of beats in the project
+	if(!ustricmp(macro, "MEASURE_COUNT"))
+	{
+		unsigned long measurecount = eof_get_measure(0, 1);	//Count the number of measures
+
+		if(measurecount)
+			snprintf(dest_buffer, dest_buffer_size, "%lu", measurecount);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "(No TS)");
+
 		return 1;
 	}
 

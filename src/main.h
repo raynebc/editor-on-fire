@@ -548,6 +548,8 @@ extern char        eof_track_diff_populated_status[256];	//For each of the 255 p
 extern char        eof_track_diff_populated_tech_note_status[256];	//Same as eof_track_diff_populated_status[], but for tech notes
 extern char        eof_track_diff_highlighted_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if any of its notes are highlighted
 extern char        eof_track_diff_highlighted_tech_note_status[256];	//Same as eof_track_diff_highlighted_status[], but for tech notes
+extern char      * eof_snap_name[11];
+extern char      * eof_input_name[EOF_INPUT_NAME_NUM + 1];
 
 extern char        eof_supports_mp3;
 extern char        eof_supports_oggcat;
@@ -579,6 +581,8 @@ extern int eof_key_char;
 extern int eof_key_uchar;
 extern int eof_key_code;
 extern int eof_key_shifts;
+extern int eof_last_key_char;
+extern int eof_last_key_code;
 
 extern DIALOG eof_import_to_track_dialog[];
 

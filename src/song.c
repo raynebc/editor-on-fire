@@ -7441,6 +7441,50 @@ int eof_get_pro_guitar_note_tone_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	return 1;	//Return success
 }
 
+int eof_get_pro_guitar_fret_shortcuts_string(char *shortcut_string)
+{
+	unsigned long i, bitmask, index;
+	char fret_string[30];
+
+	if(!shortcut_string)
+		return 0;	//Invalid parameter
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		snprintf(shortcut_string, 55, "Fret value shortcuts not applicable in this track");
+	}
+	else if(!eof_pro_guitar_fret_bitmask || (eof_pro_guitar_fret_bitmask == 63))
+	{	//If the fret shortcut bitmask is set to no strings or all 6 strings
+		snprintf(shortcut_string, 55, "Fret value shortcuts apply to %s strings", (eof_pro_guitar_fret_bitmask == 0) ? "no" : "all");
+	}
+	else
+	{	//Build a string to indicate which strings the bitmask pertains to
+		for(i = 6, bitmask = 32, index = 0; i > 0; i--, bitmask>>=1)
+		{	//For each of the 6 usable strings, starting with the highest pitch string
+			if(eof_pro_guitar_fret_bitmask & bitmask)
+			{	//If the bitmask applies to this string
+				if(index != 0)
+				{	//If another string number was already written to this string
+					fret_string[index++] = ',';	//Insert a comma
+					fret_string[index++] = ' ';	//And a space
+				}
+				fret_string[index++] = '7' - i;	//'0' + # is converts a number of value # to a text character representation
+			}
+		}
+		fret_string[index] = '\0';	//Terminate the string
+		if(fret_string[1] != '\0')
+		{	//If there are at least two strings denoted
+			snprintf(shortcut_string, 55, "Fret value shortcuts apply to strings %s", fret_string);
+		}
+		else
+		{	//There's only one string denoted, use a shortcut to just display the one character
+			snprintf(shortcut_string, 55, "Fret value shortcuts apply to string %c", fret_string[0]);
+		}
+	}
+
+	return 1;
+}
+
 int eof_five_lane_drums_enabled(void)
 {
 	return (eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_SIX_LANES);

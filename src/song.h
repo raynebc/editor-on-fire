@@ -907,6 +907,10 @@ int eof_get_pro_guitar_note_tone_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	//Writes a string representation of the specified pro guitar/bass note's played tones into finger_string[], which must be at least
 	//3 * # of strings number of bytes long in order to store the maximum length string
 	//Returns 0 on error or 1 on success
+int eof_get_pro_guitar_fret_shortcuts_string(char *shortcut_string);
+	//Writes a string representation of the strings that are currently affected by the fret value shortcuts (ie. CTRL+#)
+	// into shortcut_string[], which must be at least 55 characters long to store the maximum length string
+	//Returns 0 on error or 1 on success
 
 int eof_five_lane_drums_enabled(void);
 	//A simple function returning nonzero if PART DRUM has the fifth lane enabled

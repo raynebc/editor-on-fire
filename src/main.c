@@ -2592,7 +2592,7 @@ void eof_render_info_window(void)
 {
 //	eof_log("eof_render_info_window() entered");
 
-	unsigned long i, bitmask, index;
+	unsigned long i;
 	int pos;
 	int lpos, npos, ypos;
 	unsigned long tracknum;
@@ -2600,7 +2600,7 @@ void eof_render_info_window(void)
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	char temp[1024] = {0};
 	unsigned long notepos;
-	char fret_string[30] = {0}, grid_snap_string[30] = {0};
+	char fret_string[30] = {0}, catalog_string[30] = {0};
 	char difficulty1[20] = {0}, difficulty2[50] = {0};
 	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
@@ -3091,54 +3091,32 @@ void eof_render_info_window(void)
 
 		if((eof_selected_catalog_entry < eof_song->catalog->entries) && (eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0'))
 		{	//If the active fret catalog has a defined name
-			snprintf(grid_snap_string, sizeof(grid_snap_string) - 1, "Catalog: %lu of %lu: %s", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries, eof_song->catalog->entry[eof_selected_catalog_entry].name);
+			snprintf(catalog_string, sizeof(catalog_string) - 1, "Catalog: %lu of %lu: %s", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries, eof_song->catalog->entry[eof_selected_catalog_entry].name);
 		}
 		else
 		{
-			snprintf(grid_snap_string, sizeof(grid_snap_string) - 1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+			snprintf(catalog_string, sizeof(catalog_string) - 1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		}
 		if(eof_snap_mode != EOF_SNAP_CUSTOM)
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s : %s", eof_snap_name[(int)eof_snap_mode], grid_snap_string);
+			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s : %s", eof_snap_name[(int)eof_snap_mode], catalog_string);
 		else
 		{
 			if(eof_custom_snap_measure == 0)
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d beat) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, grid_snap_string);
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d beat) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, catalog_string);
 			else
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d measure) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, grid_snap_string);
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d measure) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, catalog_string);
 		}
 		ypos += 12;
 		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "OGG File: %s", eof_silence_loaded ? "(None)" : eof_song->tags->ogg[eof_selected_ogg].filename);
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks
-			ypos += 12;
-			if(!eof_pro_guitar_fret_bitmask || (eof_pro_guitar_fret_bitmask == 63))
-			{	//If the fret shortcut bitmask is set to no strings or all 6 strings
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to %s strings", (eof_pro_guitar_fret_bitmask == 0) ? "no" : "all");
-			}
-			else
-			{	//Build a string to indicate which strings the bitmask pertains to
-				for(i = 6, bitmask = 32, index = 0; i > 0; i--, bitmask>>=1)
-				{	//For each of the 6 usable strings, starting with the highest pitch string
-					if(eof_pro_guitar_fret_bitmask & bitmask)
-					{	//If the bitmask applies to this string
-						if(index != 0)
-						{	//If another string number was already written to this string
-							fret_string[index++] = ',';	//Insert a comma
-							fret_string[index++] = ' ';	//And a space
-						}
-						fret_string[index++] = '7' - i;	//'0' + # is converts a number of value # to a text character representation
-					}
-				}
-				fret_string[index] = '\0';	//Terminate the string
-				if(fret_string[1] != '\0')
-				{	//If there are at least two strings denoted
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to strings %s", fret_string);
-				}
-				else
-				{	//There's only one string denoted, use a shortcut to just display the one character
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to string %c", fret_string[0]);
-				}
+			char shortcut_string[55] = {0};
+
+			if(eof_get_pro_guitar_fret_shortcuts_string(shortcut_string))
+			{	//If the note's fingering can be represented in string format
+				ypos += 12;
+				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s", shortcut_string);
 			}
 		}//Display information specific to pro guitar tracks
 
