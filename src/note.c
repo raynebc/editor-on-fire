@@ -719,7 +719,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}
 	}
 	if(window == eof_window_info)
-	{	//If rendering to the note window
+	{	//If rendering to the info window
 		textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
 	}
 	else

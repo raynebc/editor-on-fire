@@ -5662,7 +5662,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	int bcol, bscol, bhcol;
 	char buffer[16] = {0};
 	char *ksname;
-	char capo = 0;		//Is set to nonzero if a capo position was rendered, causing the first second marker to not be rendered
+	char capo = 0;			//Is set to nonzero if a capo position was rendered, causing the first second marker to not be rendered
+	int ismeasuremarker;	//Tracks whether the beat marker being rendered is the first beat in a measure and is to be rendered thicker due to the "2D render RS piano roll" preference
 
 	if(!eof_song_loaded || !window)
 		return;
@@ -6052,6 +6053,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		{	//The beat would render visibly
 			int beatlinecol;
 
+			ismeasuremarker = 0;
 			if(i == eof_selected_beat)
 			{	//Draw selected beat's tempo
 				current_bpm = 60000000.0 / (double)eof_song->beat[i]->ppqn;
@@ -6072,6 +6074,10 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 
 			//Only render vertical lines if the x position is visible on-screen, otherwise the entire line will not be visible anyway
+			if((eof_song->beat[i]->beat_within_measure == 0) && eof_render_2d_rs_piano_roll)
+			{	//This is the first beat in a measure, and if the RS piano roll preference is enabled
+				ismeasuremarker = 1;	//Track this condition
+			}
 			if(i == eof_hover_beat)
 			{	//If this beat is hovered over
 				beatlinecol = bhcol;	//Render the beat line in green
@@ -6083,13 +6089,17 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			else
 			{	//Otherwise render it in gray (if it's not the start of a measure) or in white
 				beatlinecol = (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : col;
+				if(ismeasuremarker)
+				{	//This is the first beat in a measure, and if the RS piano roll preference is enabled
+					beatlinecol = makecol(218, 165, 32);	//Draw the beat line in Goldenrod instead
+				}
 			}
-			if((eof_song->beat[i]->beat_within_measure == 0) && eof_render_2d_rs_piano_roll)
-			{	//This is the first beat in a measure, and if the RS piano roll preference is enabled, draw in a different color with a thicker line
-				beatlinecol = makecol(218, 165, 32);	//Goldenrod
+			if(ismeasuremarker)
+			{	//If the beat marker is to be drawn thicker than normally
 				vline(window->screen, xcoord - 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
 				vline(window->screen, xcoord + 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
 			}
+
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)

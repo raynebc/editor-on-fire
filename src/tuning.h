@@ -90,7 +90,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 	//3 is returned (and isslash is set to nonzero) if both the scale and bass note are identified, in which case bassnote will have the appropriate note
 	//Zero is returned on error or if no match is found
 	//If skipctr is nonzero, then the first [skipctr] number of matches are ignored during the lookup process, allowing alternate forms of chords to be returned
-	//If cache is nonzero, then a successful match is cached through global variables (for use with the note window's functionality for displaying multiple names for a chord)
+	//If cache is nonzero, then a successful match is cached through global variables (for use with the info window's functionality for displaying multiple names for a chord)
 
 unsigned long eof_count_chord_lookup_matches(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note);
 	//Returns the number of chord lookup matches found for the specified note

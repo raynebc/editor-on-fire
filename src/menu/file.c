@@ -4868,6 +4868,12 @@ int eof_set_display_width(void)
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
 
+	if(eof_enable_notes_panel)
+	{	//If the notes window must be rebuilt
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+		(void) eof_display_notes_panel();
+	}
+
 	//Update coordinate related items
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
@@ -5651,7 +5657,14 @@ int eof_display_notes_panel(void)
 		{	//If the program window is wide enough
 			eof_rebuild_notes_panel();
 		}
-		eof_validate_temp_folder();							//Reset the current working directory to EOF's program folder
+		if(eof_validate_temp_folder())
+		{	//Ensure the correct working directory and presence of the temporary folder
+			eof_log("\tCould not validate working directory and temp folder", 1);
+			eof_log_cwd();
+			eof_enable_notes_panel = 0;
+
+			return 1;
+		}
 		eof_notes_text = eof_buffer_file("notes.txt", 1);	//Buffer the notes panel text file into memory, appending a NULL terminator
 		if(eof_notes_text == NULL)
 		{	//Could not buffer file

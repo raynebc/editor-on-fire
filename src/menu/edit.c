@@ -127,6 +127,7 @@ MENU eof_edit_speed_menu[] =
 	{"&Slow", eof_menu_edit_speed_slow, NULL, D_SELECTED, NULL},
 	{"&Medium", eof_menu_edit_speed_medium, NULL, 0, NULL},
 	{"&Fast", eof_menu_edit_speed_fast, NULL, 0, NULL},
+	{"&Hyper", eof_menu_edit_speed_hyper, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -446,9 +447,9 @@ void eof_prepare_edit_menu(void)
 		{
 			eof_edit_playback_menu[0].flags = D_SELECTED;
 		}
-		for(i = 0; i < 3; i++)
+		for(i = 0; i < 4; i++)
 		{
-			eof_edit_speed_menu[i].flags = 0;
+			eof_edit_speed_menu[i].flags = 0;	//Erase checkmarks from all 3D preview speeds
 		}
 		switch(eof_zoom_3d)
 		{
@@ -465,6 +466,11 @@ void eof_prepare_edit_menu(void)
 			case 2:
 			{
 				eof_edit_speed_menu[2].flags = D_SELECTED;
+				break;
+			}
+			case 1:
+			{
+				eof_edit_speed_menu[3].flags = D_SELECTED;
 				break;
 			}
 			default:
@@ -2122,7 +2128,7 @@ int eof_menu_edit_speed_slow(void)
 	{
 		eof_edit_speed_menu[i].flags = 0;
 	}
-	eof_edit_speed_menu[0].flags = D_SELECTED;
+
 	return 1;
 }
 
@@ -2134,7 +2140,7 @@ int eof_menu_edit_speed_medium(void)
 	{
 		eof_edit_speed_menu[i].flags = 0;
 	}
-	eof_edit_speed_menu[1].flags = D_SELECTED;
+
 	return 1;
 }
 
@@ -2146,7 +2152,19 @@ int eof_menu_edit_speed_fast(void)
 	{
 		eof_edit_speed_menu[i].flags = 0;
 	}
-	eof_edit_speed_menu[2].flags = D_SELECTED;
+
+	return 1;
+}
+
+int eof_menu_edit_speed_hyper(void)
+{
+	int i;
+	eof_zoom_3d = 1;
+	for(i = 0; i < 3; i++)
+	{
+		eof_edit_speed_menu[i].flags = 0;
+	}
+
 	return 1;
 }
 

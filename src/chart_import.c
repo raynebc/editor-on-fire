@@ -831,7 +831,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	PACKFILE *inf=NULL;
 	char songparsed=0,syncparsed=0,eventsparsed=0;
 		//Flags to indicate whether each of the mentioned sections had already been parsed
-	char currentsection=0;					//Will be set to 1 for [Song], 2 for [SyncTrack], 3 for [Events] or 4 for an instrument section
+	unsigned char currentsection=0;			//Will be set to 1 for [Song], 2 for [SyncTrack], 3 for [Events], 4 for an instrument section or 0xFF for an unrecognized section
 	size_t maxlinelength=0;					//I will count the length of the longest line (including NULL char/newline) in the
 	char *buffer=NULL,*buffer2=NULL;		//Will be an array large enough to hold the largest line of text from input file
 	unsigned long index=0,index2=0;			//Indexes for buffer and buffer2, respectively
@@ -969,7 +969,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				currentsection=1;	//Track that we're parsing [Song]
 			}
 			else
-			{
+			{	//Not a [Song] section
 				substring=strcasestr_spec(buffer,"SyncTrack");
 				if(substring && (substring <= substring2))	//If this line contained "SyncTrack" followed by "]"
 				{
@@ -988,7 +988,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					currentsection=2;	//Track that we're parsing [SyncTrack]
 				}
 				else
-				{
+				{	//Not a [SyncTrack] section
 					substring=strcasestr_spec(buffer,"Events");
 					if(substring && (substring <= substring2))	//If this line contained "Events" followed by "]"
 					{
@@ -1011,39 +1011,37 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 						temp=(void *)Validate_dB_instrument(buffer);
 						if(temp == NULL)					//Not a valid Feedback instrument section name
 						{
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Invalid instrument section \"%s\"", chart->linesprocessed, buffer);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Invalid instrument section \"%s\" on line #%lu.  Ignoring.", buffer, chart->linesprocessed);
 							eof_log(eof_log_string, 1);
-							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-							if(error)
-								*error=8;
-							free(buffer);
-							free(buffer2);
-							return NULL;					//Invalid instrument section, return error
-						}
-						currentsection=4;
-						chart->tracksloaded++;	//Keep track of how many instrument tracks are loaded
-
-					//Create and insert instrument link in the instrument list
-						if(chart->tracks == NULL)					//If the list is empty
-						{
-							chart->tracks=(struct dbTrack *)temp;	//Point head of list to this link
-							curtrack=chart->tracks;					//Point conductor to this link
+							currentsection = 0xFF;	//This section will be ignored
 						}
 						else
-						{
-							assert(curtrack != NULL);				//Put an assertion here to resolve a false positive with Coverity
-							curtrack->next=(struct dbTrack *)temp;	//Conductor points forward to this link
-							curtrack=curtrack->next;				//Point conductor to this link
+						{	//This is a valid Feedback instrument section name
+							currentsection=4;
+							chart->tracksloaded++;	//Keep track of how many instrument tracks are loaded
+
+							//Create and insert instrument link in the instrument list
+							if(chart->tracks == NULL)					//If the list is empty
+							{
+								chart->tracks=(struct dbTrack *)temp;	//Point head of list to this link
+								curtrack=chart->tracks;					//Point conductor to this link
+							}
+							else
+							{
+								assert(curtrack != NULL);				//Put an assertion here to resolve a false positive with Coverity
+								curtrack->next=(struct dbTrack *)temp;	//Conductor points forward to this link
+								curtrack=curtrack->next;				//Point conductor to this link
+							}
+
+							//Initialize instrument link
+							curnote=NULL;			//Reset the conductor for the track's note list
+
+							chart->guitartypes |= curtrack->isguitar;	//Cumulatively track the presence of 5 and 6 lane guitar tracks
+							chart->basstypes |= curtrack->isbass;		//Ditto for 5 and 6 lane bass tracks
 						}
-
-					//Initialize instrument link
-						curnote=NULL;			//Reset the conductor for the track's note list
-
-						chart->guitartypes |= curtrack->isguitar;	//Cumulatively track the presence of 5 and 6 lane guitar tracks
-						chart->basstypes |= curtrack->isbass;		//Ditto for 5 and 6 lane bass tracks
 					}
-				}
-			}
+				}//Not a [SyncTrack] section
+			}//Not a [Song] section
 
 			(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;				//Skip ahead to the next line
@@ -1069,17 +1067,20 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 		}
 
 //Process normal line input
-		substring=strchr(buffer,'=');		//Any line within the section is expected to contain an equal sign
-		if(substring == NULL)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Malformed item (missing equal sign)", chart->linesprocessed);
-			eof_log(eof_log_string, 1);
-			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-			if(error)
-				*error=10;
-			free(buffer);
-			free(buffer2);
-			return NULL;					//Invalid section entry, return error
+		if(currentsection != 0xFF)
+		{	//If this section isn't being processed
+			substring=strchr(buffer,'=');		//Any line within the section is expected to contain an equal sign
+			if(substring == NULL)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Malformed item (missing equal sign)", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=10;
+				free(buffer);
+				free(buffer2);
+				return NULL;					//Invalid section entry, return error
+			}
 		}
 
 	//Process [Song]
@@ -1586,8 +1587,8 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 		}//Process instrument tracks
 
 	//Error: Content in file outside of a defined section
-		else
-		{
+		else if(currentsection != 0xFF)
+		{	//If this isn't a section that is being ignored
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Malformed file (item defined outside of track)", chart->linesprocessed);
 			eof_log(eof_log_string, 1);
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents

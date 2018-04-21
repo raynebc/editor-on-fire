@@ -105,6 +105,7 @@ void eof_load_config(char * fn)
 	eof_disable_3d_rendering = get_config_int("preferences", "eof_disable_3d_rendering", 0);
 	eof_disable_2d_rendering = get_config_int("preferences", "eof_disable_2d_rendering", 0);
 	eof_disable_info_panel = get_config_int("preferences", "eof_disable_info_panel", 0);
+	eof_enable_notes_panel = get_config_int("preferences", "eof_enable_notes_panel", 0);
 	eof_chart_volume = get_config_int("preferences", "eof_chart_volume", 100);
 	if((eof_chart_volume < 0) || (eof_chart_volume > 100))
 	{	//Correct the value if it is out of bounds
@@ -261,7 +262,7 @@ void eof_load_config(char * fn)
 	}
 	eof_custom_snap_measure = get_config_int("editor", "snap_measure", 0);
 	eof_zoom_3d = get_config_int("editor", "preview_speed", 5);
-	if((eof_zoom_3d < 2) || (eof_zoom_3d > 5))
+	if((eof_zoom_3d < 1) || (eof_zoom_3d > 5))
 	{
 		eof_zoom_3d = 5;
 	}
@@ -357,6 +358,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_disable_3d_rendering", eof_disable_3d_rendering);
 	set_config_int("preferences", "eof_disable_2d_rendering", eof_disable_2d_rendering);
 	set_config_int("preferences", "eof_disable_info_panel", eof_disable_info_panel);
+	set_config_int("preferences", "eof_enable_notes_panel", eof_enable_notes_panel);
 	set_config_int("preferences", "eof_chart_volume", eof_chart_volume);
 	set_config_int("preferences", "eof_clap_volume", eof_clap_volume);
 	set_config_int("preferences", "eof_tick_volume", eof_tick_volume);

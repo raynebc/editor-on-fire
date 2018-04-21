@@ -3718,8 +3718,10 @@ void eof_render_notes_window(void)
 
 	if(!eof_song_loaded || !eof_song)	//If a project isn't loaded
 		return;			//Return immediately
-	if(!eof_enable_notes_panel || !eof_window_notes || !eof_notes_text)	//If the notes panel isn't enabled
+	if(!eof_enable_notes_panel || !eof_window_notes || !eof_notes_text)	//If the notes panel isn't enabled, the note window isn't created or the notes panel text file isn't loaded
 		return;			//Return immediately
+	if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the panels that display on the bottom half of the program window
+		return;							//Return immediately
 
 	clear_to_color(eof_window_notes->screen, eof_color_gray);
 
@@ -3815,13 +3817,16 @@ void eof_render(void)
 			eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild them (from the perspective of the specified track)
 		}
 		if(!eof_full_screen_3d)
-		{	//In full screen 3D view, don't render the note window yet, it will just be overwritten by the 3D window
-			eof_render_info_window();	//Otherwise render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
+		{	//In full screen 3D view, don't render the info window yet, it will just be overwritten by the 3D window
+			eof_render_info_window();	//Otherwise render the info window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
 		}
-		eof_render_editor_window(eof_window_editor);	//Render the primary piano roll
-		eof_render_editor_window_2();	//Render the secondary piano roll if applicable
 		eof_render_3d_window();
-		eof_render_notes_window();
+		if(!eof_full_screen_3d)
+		{	//In full screen 3D view, don't render these windows
+			eof_render_editor_window(eof_window_editor);	//Render the primary piano roll
+			eof_render_editor_window_2();	//Render the secondary piano roll if applicable
+			eof_render_notes_window();		//Render the notes panel if applicable
+		}
 	}
 	else
 	{	//If no project is loaded, just draw a blank screen and the menu
@@ -3844,7 +3849,8 @@ void eof_render(void)
 	if(eof_full_screen_3d && eof_song_loaded)
 	{	//If the user enabled full screen 3D view, scale it to fill the program window
 		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, 0, 0, eof_screen_width_default, eof_screen_height);
-		eof_window_info->y = 0;	//Re-position the note window to the top left corner of EOF's program window
+		rectfill(eof_screen, EOF_SCREEN_PANEL_WIDTH * 2 + 1, 0, eof_screen->w - 1, eof_screen->h - 1, eof_color_gray);	//Erase the portion to the right of the scaled 3D preview (2 panel widths), in case the window width was increased, otherwise the normal sized 3D preview will be visible
+		eof_window_info->y = 0;	//Re-position the info window to the top left corner of EOF's program window
 		eof_render_info_window();
 		if(!eof_screen_zoom)
 		{	//If x2 zoom is not enabled, render the menu now
@@ -3857,7 +3863,7 @@ void eof_render(void)
 				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 			}
 		}
-		eof_window_info->y = eof_screen_height / 2;	//Re-position the note window to the bottom left corner of EOF's program window
+		eof_window_info->y = eof_screen_height / 2;	//Re-position the info window to the bottom left corner of EOF's program window
 	}
 
 	if(!eof_disable_vsync)
@@ -4736,6 +4742,13 @@ int eof_initialize(int argc, char * argv[])
 
 	//Load FFTW wisdom from disk
 	(void) fftw_import_wisdom_from_filename("FFTW.wisdom");
+
+	//Initialize the notes window if it was enabled via config file
+	if(eof_enable_notes_panel)
+	{
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+		(void) eof_display_notes_panel();
+	}
 
 	return 1;
 }

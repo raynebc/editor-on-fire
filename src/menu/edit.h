@@ -184,6 +184,7 @@ int eof_menu_edit_playback_custom(void);	//Allow user to specify custom playback
 int eof_menu_edit_speed_slow(void);
 int eof_menu_edit_speed_medium(void);
 int eof_menu_edit_speed_fast(void);
+int eof_menu_edit_speed_hyper(void);
 
 int eof_menu_edit_paste_from_supaeasy(void);
 int eof_menu_edit_paste_from_easy(void);
