@@ -5318,7 +5318,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 						}
 						timectr += lastbeatlen;	//Advance the time counter by one beat length
 						eof_song->beat[beatctr]->fpos = timectr;
-						eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+						eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;	//Round up to nearest ms
 						beatctr++;
 					}
 					if(error)
@@ -5340,7 +5340,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 					}
 				}
 				eof_song->beat[beatctr]->fpos = frametime;
-				eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+				eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;	//Round up to nearest ms
 				beatctr++;
 				timectr = frametime;	//Track the position of the last processed beat
 				lastbeatlen = beatlen;	//Track the beat length of the last processed point tag
@@ -5368,7 +5368,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 		while((beatctr > 0) && (beatctr < eof_song->beats))
 		{	//While there are beats whose timings weren't covered by the imported file
 			eof_song->beat[beatctr]->fpos = eof_song->beat[beatctr - 1]->fpos + beatlen;	//Apply the beat length defined by the last point frame
-			eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;
+			eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;				//Round up to nearest ms
 			beatctr++;
 		}
 	}

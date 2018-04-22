@@ -7644,6 +7644,11 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	unsigned long highestfret = 0, currentfret;	//Used to find if any pasted notes would use a higher fret than the active track supports
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 
+	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
+	int gridsnapbeat = 0;
+	char gridsnapvalue = 0;
+	unsigned char gridsnapnum = 0;
+
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid
 		return 0;
@@ -7666,6 +7671,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 		for(i = 0; i < copy_notes; i++)
 		{	//For each note in the clipboard file
 			eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
+			eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
 			for(j = 0, bitmask = 1; j < 6; j++, bitmask <<= 1)
 			{	//For each of the 6 usable strings
 				if(temp_note.note & bitmask)
@@ -7692,6 +7698,11 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	unsigned long highestlane = 0;	//Used to find if any pasted notes would use a higher lane than the active track supports
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
 
+	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
+	int gridsnapbeat = 0;
+	char gridsnapvalue = 0;
+	unsigned char gridsnapnum = 0;
+
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid
 		return 0;
@@ -7712,6 +7723,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
 		eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
+		eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
 		for(j = 1, bitmask = 1; j < 9; j++, bitmask<<=1)
 		{	//For each of the 8 bits in the bitmask
 			if(temp_note.note & bitmask)
@@ -7914,7 +7926,7 @@ void eof_truncate_chart(EOF_SONG *sp)
 			}
 		}
 		beat_length = eof_calc_beat_length(sp, targetbeat);				//Get the length of the beat
-		targetpos = sp->beat[targetbeat]->pos + beat_length + beat_length + 0.5;	//The chart length will be resized to last to the end of the last beat that has contents/audio, and another beat further for padding
+		targetpos = sp->beat[targetbeat]->fpos + beat_length + beat_length + 0.5;	//The chart length will be resized to last to the end of the last beat that has contents/audio, and another beat further for padding
 		eof_chart_length = targetpos;	//Resize the chart length accordingly
 
 		//Truncate empty beats

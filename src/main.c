@@ -446,10 +446,8 @@ double eof_get_porpos(unsigned long pos)
 
 double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos)
 {
-	double porpos = 0.0;
+	double porpos = 0.0, blength, rpos;
 	unsigned long beat;
-	int blength;
-	unsigned long rpos;
 
 	eof_log("eof_get_porpos() entered", 2);
 
@@ -463,14 +461,14 @@ double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos)
 	}
 	if(beat < sp->beats - 1)
 	{
-		blength = sp->beat[beat + 1]->pos - sp->beat[beat]->pos;
+		blength = sp->beat[beat + 1]->fpos - sp->beat[beat]->fpos;
 	}
 	else
 	{
-		blength = sp->beat[sp->beats - 1]->pos - sp->beat[sp->beats - 2]->pos;
+		blength = sp->beat[sp->beats - 1]->fpos - sp->beat[sp->beats - 2]->fpos;
 	}
-	rpos = pos - sp->beat[beat]->pos;
-	porpos = ((double)rpos / (double)blength) * 100.0;
+	rpos = (double)pos - sp->beat[beat]->fpos;
+	porpos = (rpos / blength) * 100.0;
 	return porpos;
 }
 
@@ -484,13 +482,13 @@ long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double o
 	double fporpos = porpos + offset;
 	unsigned long cbeat = beat;
 
-	eof_log("eof_put_porpos() entered", 2);
+	eof_log("eof_put_porpos_sp() entered", 2);
 
 	if(!sp)
 		return -1;	//Invalid parameters
 
 	if(fporpos <= -1.0)
-	{
+	{	//If the target offset is behind the specified beat number
 //		allegro_message("a - %f", fporpos);	//Debug
 		while(fporpos < 0.0)
 		{	//If the position within the beat to find is negative, scale up to a positive number
@@ -504,9 +502,9 @@ long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double o
 		return ((sp->beat[cbeat]->fpos + (eof_get_beat_length(sp, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 	}
 	else if(fporpos >= 100.0)
-	{
+	{	//If the target offset is more than 100% of a beat ahead of the specified beat number
 //		allegro_message("b - %f", fporpos);	//Debug
-		while(fporpos >= 1.0)
+		while(fporpos >= 100.0)
 		{
 			fporpos -= 100.0;
 			cbeat++;

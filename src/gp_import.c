@@ -5593,9 +5593,9 @@ char eof_copy_notes_in_beat_range(EOF_SONG *ssp, EOF_PRO_GUITAR_TRACK *source, u
 			eof_chart_length = dsp->beat[dsp->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 		}
 
-		notepos = eof_get_porpos_sp(ssp, source->note[ctr]->pos);								//Get the note's position as a percentage within its beat
+		notepos = eof_get_porpos_sp(ssp, source->note[ctr]->pos);									//Get the note's position as a percentage within its beat
 		noteendpos = eof_get_porpos_sp(ssp, source->note[ctr]->pos + source->note[ctr]->length);	//Get the note end's end position as a percentage within its beat
-		newpos = eof_put_porpos_sp(dsp, destbeat + beatnum - startbeat, notepos, 0.0);			//Get the position for the copied note
+		newpos = eof_put_porpos_sp(dsp, destbeat + beatnum - startbeat, notepos, 0.0);				//Get the position for the copied note
 		newend = eof_put_porpos_sp(dsp, destbeat + endbeatnum - startbeat, noteendpos, 0.0);		//Get the end position for the copied note
 		if((newpos < 0) || (newend < 0))
 		{	//If the positioning for the copied note couldn't be determined

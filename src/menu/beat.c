@@ -811,7 +811,7 @@ void eof_menu_beat_delete_logic(unsigned long beat)
 	eof_song_delete_beat(eof_song, beat);
 	if((eof_song->beat[beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_song->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR))
 	{
-		double beats_length = eof_song->beat[beat]->pos - eof_song->beat[beat - 1]->pos;
+		double beats_length = eof_song->beat[beat]->fpos - eof_song->beat[beat - 1]->fpos;
 		double newbpm = 60000.0 / beats_length;
 		double newppqn = 60000000.0 / newbpm;
 		eof_song->beat[beat - 1]->ppqn = newppqn;
@@ -968,7 +968,7 @@ int eof_menu_beat_reset_offset(void)
 		eof_song->beat[0]->pos = eof_song->beat[0]->fpos = 0;
 		eof_song->beat[0]->flags = eof_song->beat[1]->flags;	//Copy the flags (ie. Time Signature) of the original first beat marker
 		eof_song->tags->ogg[eof_selected_ogg].midi_offset = 0;
-		newbpm = 60000.0 / eof_song->beat[1]->pos;	//60000ms / length of new beat (the MIDI delay) = Tempo
+		newbpm = 60000.0 / eof_song->beat[1]->fpos;	//60000ms / length of new beat (the MIDI delay) = Tempo
 		eof_song->beat[0]->ppqn = 60000000.0 / newbpm;	//60000000usec_per_minute / tempo = PPQN
 		eof_move_text_events(eof_song, 0, 1, 1);
 		if(eof_song->beat[1]->ppqn != eof_song->beat[0]->ppqn)

@@ -315,7 +315,7 @@ void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat)
 	beats = next_anchor - last_anchor;	//The number of beats between the previous and next anchor
 
 	/* figure out what the new BPM should be */
-	beats_length = sp->beat[next_anchor]->pos - sp->beat[last_anchor]->pos;
+	beats_length = sp->beat[next_anchor]->fpos - sp->beat[last_anchor]->fpos;
 	if(sp->tags->accurate_ts)
 	{	//If the user enabled the accurate time signatures song property
 		unsigned num = 4, den = 4;

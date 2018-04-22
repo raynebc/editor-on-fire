@@ -727,6 +727,7 @@ int eof_menu_edit_copy_vocal(void)
 
 		/* write lyric data to disk */
 		eof_write_clipboard_note(fp, eof_song, EOF_TRACK_VOCALS, i, first_pos);
+		eof_write_clipboard_position_snap_data(fp, eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, i));	//Write the grid snap position data for this lyric's position
 	}
 	(void) pack_fclose(fp);
 	if(note_selection_updated)
@@ -754,6 +755,11 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	PACKFILE * fp;
 	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste lyrics starting at the seek position instead of the original in-beat positions
 	char clipboard_path[50];
+
+	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
+	int gridsnapbeat = 0;
+	char gridsnapvalue = 0;
+	unsigned char gridsnapnum = 0;
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
@@ -787,6 +793,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	{
 		/* read the note */
 		eof_read_clipboard_note(fp, &temp_lyric, EOF_MAX_LYRIC_LENGTH + 1);
+		eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
 
 		if(eof_music_pos + temp_lyric.pos - eof_av_delay >= eof_chart_length)
 			continue;	//If this lyric doesn't fit within the chart, skip it
@@ -802,6 +809,18 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 				newpasteoffset = newpasteoffset - temp_lyric.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
 			}
 			new_pos = eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, newpasteoffset);
+			if(gridsnapvalue)
+			{	//If the source lyric was grid snapped
+				unsigned long closestpos = new_pos;
+
+				(void) eof_is_any_grid_snap_position(new_pos, NULL, NULL, NULL, &closestpos);	//Get the grid snap position nearest the destination position
+				if(closestpos != new_pos)
+				{	//If they aren't the same position
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting lyric paste position from %lums to %lums", new_pos, closestpos);
+					eof_log(eof_log_string, 1);
+					new_pos = closestpos;	//Update the destination timestamp for the note;
+				}
+			}
 			new_end_pos = eof_put_porpos(temp_lyric.endbeat - first_beat + this_beat, temp_lyric.porendpos, newpasteoffset);
 		}
 		else
@@ -1383,6 +1402,7 @@ int eof_menu_edit_copy(void)
 
 		/* write note data to disk */
 		eof_write_clipboard_note(fp, eof_song, eof_selected_track, i, first_pos);
+		eof_write_clipboard_position_snap_data(fp, eof_get_note_pos(eof_song, eof_selected_track, i));	//Write the grid snap position data for this note's position
 	}
 	(void) pack_fclose(fp);
 	if(note_selection_updated)
@@ -1416,6 +1436,11 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	char clipboard_path[50];
 	int warning = 0;
 	char isghl;	//Set to nonzero if the clipboard's source track had GHL mode enabled, which changes the interpretation of lane 6 gems
+
+	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
+	int gridsnapbeat = 0;
+	char gridsnapvalue = 0;
+	unsigned char gridsnapnum = 0;
 
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
@@ -1486,10 +1511,12 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		unsigned long clear_start, clear_end;
 
 		eof_read_clipboard_note(fp, &first_note, EOF_NAME_LENGTH + 1);	//Read the first note on the clipboard
+		eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
 		memcpy(&last_note, &first_note, sizeof(first_note));	//Clone the first clipboard note into last_note in case there aren't any other notes on the clipboard
 		for(i = 1; i < copy_notes; i++)
 		{	//For each remaining note on the clipboard
 			eof_read_clipboard_note(fp, &last_note, EOF_NAME_LENGTH + 1);	//Read the note
+			eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
 		}
 		//At this point, last_note contains the data for the last note on the clipboard.  Determine the time span of notes that would need to be cleared
 		if(!oldpaste)
@@ -1529,6 +1556,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		EOF_PRO_GUITAR_NOTE *np;
 
 		eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
+		eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
 
 		//Add enough beats to encompass the pasted note if necessary
 		while(1)
@@ -1572,6 +1600,18 @@ int eof_menu_edit_paste_logic(int oldpaste)
 				newpasteoffset = newpasteoffset - temp_note.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
 			}
 			newnotepos = eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, newpasteoffset);
+			if(gridsnapvalue)
+			{	//If the source note was grid snapped
+				unsigned long closestpos = newnotepos;
+
+				(void) eof_is_any_grid_snap_position(newnotepos, NULL, NULL, NULL, &closestpos);	//Get the grid snap position nearest the destination position
+				if(closestpos != newnotepos)
+				{	//If they aren't the same position
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting note paste position from %lums to %lums", newnotepos, closestpos);
+					eof_log(eof_log_string, 1);
+					newnotepos = closestpos;	//Update the destination timestamp for the note;
+				}
+			}
 			newnotelength = eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, newpasteoffset) - newnotepos;
 		}
 		else
@@ -1695,7 +1735,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		{	//For each note in the active track
 			if((eof_get_note_type(eof_song, eof_selected_track, j) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, j) == paste_pos[i]))
 			{
-				eof_selection.multi[j] = 1;
+				eof_selection.multi[j] = 1;	//Add the pasted note to the selection
 				break;
 			}
 		}
