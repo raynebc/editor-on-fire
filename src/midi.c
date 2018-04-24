@@ -2843,7 +2843,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 
 			/* determine the track name */
 			arrangement_name = sp->track[j]->name;	//By default, the track's native name will be used
-			if(sp->track[j]->altname[0] != '\0')
+			if((sp->track[j]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[j]->altname[0] != '\0'))
 			{	//If this track has an alternate name defined
 				arrangement_name = sp->track[j]->altname;	//Use it
 			}

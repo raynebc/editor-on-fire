@@ -333,6 +333,18 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//One of the drum tracks is active
+	if(!ustricmp(macro, "IF_IS_DRUM_TRACK"))
+	{
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//A pro guitar track is active and tech view is in effect
 	if(!ustricmp(macro, "IF_IS_TECH_VIEW"))
 	{
@@ -558,7 +570,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track alternate name
 	if(!ustricmp(macro, "TRACK_ALT_NAME"))
 	{
-		snprintf(dest_buffer, dest_buffer_size, "%s", eof_song->track[eof_selected_track]->altname);
+		if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (eof_song->track[eof_selected_track]->altname[0] != '\0'))
+			snprintf(dest_buffer, dest_buffer_size, "%s", eof_song->track[eof_selected_track]->altname);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
 	}
 
@@ -744,7 +759,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected note/lyric value/tone
 	if(!ustricmp(macro, "SELECTED_LYRIC_TONE_NAME"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_vocals_selected && (eof_selection.current < eof_get_track_size(eof_song, eof_selected_track)))
 		{
 			unsigned char tone = eof_get_note_note(eof_song, eof_selected_track, eof_selection.current);
 
@@ -942,16 +957,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			}
 		}
 		snprintf(dest_buffer, dest_buffer_size, "None");
-		return 1;
-	}
-
-	//Hover note
-	if(!ustricmp(macro, "HOVER_NOTE"))
-	{
-		if(eof_hover_note >= 0)
-			snprintf(dest_buffer, dest_buffer_size, "%d", eof_hover_note);
-		else
-			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
 	}
 

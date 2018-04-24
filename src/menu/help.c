@@ -34,6 +34,12 @@ DIALOG eof_help_dialog[] =
 
 int eof_menu_help_keys(void)
 {
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		return 1;
+	}
 	eof_help_text = eof_buffer_file("keys.txt", 1);	//Buffer the help file into memory, appending a NULL terminator
 	if(eof_help_text == NULL)
 	{	//Could not buffer file
@@ -60,7 +66,12 @@ int eof_menu_help_keys(void)
 
 int eof_menu_help_manual(void)
 {
-	eof_log_cwd();
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		return 1;
+	}
 
 	#ifdef ALLEGRO_WINDOWS
 		(void) eof_system("start manual\\index.htm");
@@ -76,7 +87,12 @@ int eof_menu_help_manual(void)
 
 int eof_menu_help_tutorial(void)
 {
-	eof_log_cwd();
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		return 1;
+	}
 
 	#ifdef ALLEGRO_WINDOWS
 		(void) eof_system("start tutorial\\index.htm");
@@ -92,7 +108,12 @@ int eof_menu_help_tutorial(void)
 
 int eof_menu_help_vocals_tutorial(void)
 {
-	eof_log_cwd();
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		return 1;
+	}
 
 	#ifdef ALLEGRO_WINDOWS
 		(void) eof_system("start vocaltutorial\\index.htm");
@@ -108,7 +129,12 @@ int eof_menu_help_vocals_tutorial(void)
 
 int eof_menu_help_pro_guitar_tutorial(void)
 {
-	eof_log_cwd();
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		return 1;
+	}
 
 	#ifdef ALLEGRO_WINDOWS
 		(void) eof_system("start proguitartutorial\\index.htm");

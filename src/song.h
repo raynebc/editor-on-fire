@@ -324,7 +324,7 @@ typedef struct
 	char track_type;					//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
 	unsigned long tracknum;				//Specifies which number of that type this track is, used as an index into the type-specific track arrays
 	char name[EOF_NAME_LENGTH + 1];		//Specifies the name of the track
-	char altname[EOF_NAME_LENGTH + 1];	//Specifies the alternate name of the track (for RS export)
+	char altname[EOF_NAME_LENGTH + 1];	//Specifies the alternate name of the track (for RS export and MIDI export of GHL tracks)
 	unsigned char difficulty;			//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty).  0xFF means the difficulty is undefined
 	unsigned char numdiffs;				//Specifies the number of difficulties usable in this track, including BRE (is set to 5 unless the track's EOF_TRACK_FLAG_UNLIMITED_DIFFS flag is set)
 	unsigned long flags;				//Various flags.  In the case of the normal drum track and the vocal track, the low nibble of the most significant byte stores the difficulty level (or 0xF if undefined)

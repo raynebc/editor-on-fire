@@ -1,0 +1,446 @@
+<HTML>
+<HEAD>
+<TITLE>EOF Manual - Notes panel macros</TITLE>
+<STYLE TYPE="text/css">
+p {text-indent: 1cm}
+</STYLE>
+</head></STYLE>
+</HEAD>
+<BODY BGCOLOR="313131" TEXT="FFFFFF" LINK="FFFFFF" VLINK="FFFFFF" ALINK="FFFFFF" >
+
+<center><IMG SRC="logo.png" ALT="Logo" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+<center>A song editor for "Frets On Fire"</center><br>
+
+<a href="index.htm">Table of Contents</a>
+
+<h1><a name="Edit">What is this?</a></h1>
+<blockquote>
+The Notes panel is an additional informational panel that is meant for users to customize to display whatever information is wanted.  This is achieved by defining static text as well as various macros that will translate dynamically to text.  For the sake of this documentation, "printed" text will refer to the text that is written to the Notes panel.  Some of these macros are conditional, so you can control whether text or macros are displayed at all, such as to define content that will display only for the vocal track, or for content that will only display if a note is currently selected.  Content is defined line by line, where one line in the text file corresponds to a single line in the Notes panel.  Macros are case insensitive (you can use any amount of upper or lower case letters to type them), but it's recommended to use upper case to make it more easy to identify where macros occur int the notes.txt file.  It's also generally more traditional to type macros in all capital letters.<br>
+</blockquote>
+
+
+<h1>Using the Notes panel</h1>
+<blockquote>
+A default notes.txt file is provided with EOF.  It is a simple text file which can be viewed or edited in a text editor such as the Notepad utility that comes with Windows.  Keep in mind that this file is expected to be written in Windows format:  Line breaks are CR LF format (a carriage return character followed by a line feed character).  Decent text editors should allow you to save edits in this format, just make sure it isn't converted to Linux (line breaks only have a line feed character) or Unix (line breaks only have a carraige return character) format or it won't work properly.  To display or hide the Notes panel, use the <a href=functions.htm#enablenotespanel>File>Display>Enable Notes panel</a> function.  If it is shown, EOF will automatically resize the program window if doing so is needed to make enough space to display the panel.  If the Info panel or 3D preview are already being hidden (ie. from <a href=functions.htm#preferences>File>Preferences>Preferences</a>), EOF will use that empty space for the Notes panel and will prompt to resize the program window if the disabled Info/3D panels are re-enabled from Preferences while the Notes panel is being displayed (or if the Info panel is re-enabled via keyboard shortcut, EOF will resize the program window without prompting).  The Notes panel's contents are kept in EOF's memory to avoid having to read it from the computer's hard drive repeatedly, so if you make edits to the Notes panel, you can make them take effect in EOF by hiding the Notes panel and showing it again.  This causes EOF to re-load the notes.txt file into memory.  Keep in mind that text that runs over the right edge of the Notes Window and into the 3D preview or the edge of the program window unless you either hide the 3D preview window or resize the program window (<a href=functions.htm#setdisplaywidth>File>Display>Set display width</a>).
+</blockquote>
+
+
+<h1>Printing static text</h1>
+<blockquote>
+The simplest thing to display would be static text, which prints exactly as typed in the notes.txt file.  Alphabetical characters, numerical characters and spaces are supported.  Other characters aren't guaranteed to work.  Control characters like the tab character, for example, do not display.  Static text is mostly useful to display notes, to-do items, keyboard shortcuts, etc.
+</blockquote>
+
+
+<h1>Printing dynamic text</h1>
+<blockquote>
+Dynamic text is text that will change due to various defined conditions such as whether notes are selected, what kind of track is being displayed in the editor, etc.  For the Notes panel, this is achieved by using a "macro", which is basically a placeholder for what will eventually be "printed" to the Notes panel.  You can use this to display statuses of notes, conditions that may be in effect and other pieces of information.  EOF's macros always begin with a % (percent sign), end with % and never include any spaces.  If you want to print a percent sign to the Notes panel, a <b>%PERCENT%</b> macro can be used.  If there is an error in the notes.txt file, the notes panel will indicate there was and unrecognized macro in that line.  If the unrecognized macro is specified as being <b>%ELSE%</b>, it's probably an error that needs to be corrected in EOF, otherwise it's most likely a typo in the notes.txt file or a macro is being used that isn't supported by the version of EOF that you're using.  A complete list of all macros that EOF supports are defined <a href="macros.htm#macrolist">further down in this document</a>.  Feel free to request new macros to print specific items, which can be added to EOF if they would be useful or at least reasonably simple to implement.
+</blockquote>
+
+
+<h1>Conditional macros</h1>
+<blockquote>
+There are times where you may want to only display a certain piece of content under certain conditions.  For example, say you only wanted to print the shortcuts for toggling cymbal status when the drum track was active.  You could do this by adding the following text to the notes.txt file:
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td><b>%IF_IS_DRUM_TRACK%</b>Toggle Y/B/G cymbal: CTRL+Y/B/G  Expert+ bass: CTRL+E</td>
+</tr>
+</tbody>
+</table>
+Everything after the <b>%IF_IS_DRUM_TRACK%</b> will only print if that macro's condition is true:  That a drum track (either the normal one or the Phase Shift drum track) is the active track.  This way, you can display the shortcuts only when relevant and when a non drum track is active, that space can be used to display something else.  You can consider the part of the line that will print when the macro is evaluated as true as being the macro's "scope", which in this case is everything after the <b>%IF_IS_DRUM_TRACK%</b> macro up until the end of the line.<br><br>
+
+In the previous example, everything after the <b>%IF_IS_DRUM_TRACK%</b> macro up until the end of the line in the notes.txt file was conditional on the active track being a drum track and thus the macro being evaluated as being true.  A more complicated example is one where only part of a line is conditional.  An <b>%ENDIF%</b> macro can be placed after an <b>%IF...</b> macro to end its scope, stopping the conditional processing of the line in the notes.txt file.  For example:
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td><b>%IF_NOTE_IS_SELECTED%</b>Note is selected at <b>%SELECTED_NOTE_POS%</b>.  <b>%ENDIF%</b>Seek position is <b>%SEEK_POSITION%</b>.</td>
+</tr>
+</tbody>
+</table>
+In this example, the "Note is selected at (position)" text is only printed if a note is selected.  The <b>%ENDIF%</b> macro indicates the end of the content that only prints if a note is selected, so the seek position is displayed regardless of whether a note is selected.  After conditional printing of a line is ended with <b>%ENDIF%</b>, another conditional macro can be used if desired.  For example:
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td><b>%IF_NOTE_IS_SELECTED%</b>Note selected.  <b>%ENDIF%</b>Seek position is <b>%SEEK_POSITION%</b>.  <b>%IF_NOTE_IS_SELECTED%</b>Selected note is at <b>%SELECTED_NOTE_POS%</b>.</td>
+</tr>
+</tbody>
+</table>
+In this example.  "Note selected."  only prints if a note is selected.  Then the seek position is printed regardless of whether a note is selected.  Then the selected note's position is printed only if a note is selected.  Keep in mind that some macros are only relevant in some conditions.  If the <b>%SELECTED_NOTE_POS%</b> macro is printed when no note is selected, the text "None" would be printed, and that might not always be what you want.  Conditionally printing such macros can be preferable if that's the result you're wanting to achieve.<br><br>
+
+An even more complicated use of conditional macros is printing text when the conditional macro evaluates as false.  Similarly to <b>%ENDIF%</b>, the <b>%ELSE%</b> macro ends the scope of a conditional macro that evaluated as true.  However, everything in the scope of the <b>%ELSE%</b> macro is printed only if the previous conditional macro evaluated as false.  For example:
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td><b>%COUNT_NOTES_SELECTED%</b> <b>%IF_IS_VOCAL_TRACK%</b>Lyrics<b>%ELSE%</b>Notes<b>%ENDIF%</b> are selected.</td>
+</tr>
+</tbody>
+</table>
+In this example, the number of notes/lyrics that are selected is printed, followed by a space.  Then if the vocal track is active, the text "Lyrics" is printed.  The <b>%ELSE%</b> macro defines what to print if the <b>%IF_IS_VOCAL_TRACK%</b> condition was not true, so the text "Notes" is printed if the vocal track is not active.  As with previous examples, <b>%ENDIF%</b> ends the scope of the <b>%ELSE%</b> macro and defines where the true/false conditional printing stops and normal printing resumes, so the text " are selected." is then printed no matter which track is active.  Keep in mind that the printing of spaces can also be conditional, so place them either inside or outside conditional macro statements as appropriate.<br><br>
+
+The most complex use of conditional macros is when a conditional macro is used inside the scope of another conditional macro.  This is known as "nesting" the conditional macros.  For example:
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td><b>%IF_IS_VOCAL_TRACK%</b><b>%IF_NOTE_IS_SELECTED%</b>At least one lyric is selected.<b>%ELSE%</b>No lyrics are selected.</td>
+</tr>
+</tbody>
+</table>
+In this example, the first if macro is evaluated, and then only if it is true, the second if macro (which is nested one "level" deeper) is evaluated.  So if a vocal track is active, text will be printed indicating whether or not any lyrics are selected.  If a vocal track is not active, nothing is printed.  You can generally nest conditional macros as many levels as you want, just make sure to use the correct number and placement of %ENDIF% and %ELSE% macros to control the scope to get the desired results.  If you wanted to print text after the previous example even if the vocal track was not active, the scope of both conditional macros would have to be ended.  For example:
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td><b>%IF_IS_VOCAL_TRACK%</b><b>%IF_NOTE_IS_SELECTED%</b>At least one lyric is selected.  <b>%ELSE%</b>No lyrics are selected.  <b>%ENDIF%</b><b>%ENDIF%</b>This text always prints.</td>
+</tr>
+</tbody>
+</table>
+The first <b>%ENDIF%</b> macro ended the scope of <b>%IF_NOTE_IS_SELECTED%</b> that occurred immediately before it, and the second <b>%ENDIF%</b> macro ended the scope of the <b>%IF_IS_VOCAL_TRACK%</b> macro even earlier.  Ultimately, "This text always prints." will be printed regardless of whether any lyrics are selected or whether the vocal track is even active.
+</blockquote>
+
+
+<h1>Printing empty lines</h1>
+<blockquote>
+If a defined line is empty or if none of its conditional macro requirements are met, nothing will display for it in the Notes panel, not even an empty line.  The text output position in the Notes panel will not advance, meaning the next line of content will be displayed immediately below the previous line of content that was written.  For example:
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td><b>%IF_IS_VOCAL_TRACK%</b>This is a vocal track</td>
+</tr>
+<tr>
+<td>This is the next line</td>
+</tr>
+</tbody>
+</table>
+If the current track is the vocal track, two lines will be written to the Notes panel ("This is a vocal track" and "This is the next line"), otherwise only the second of those two lines will be written and there will be no empty line.<br><br>
+
+If you want to allow a line that results in no text (due to either being empty in the notes.txt file or by no conditions being successfully met) to be written as an empty line in the Notes panel, use an <b>%EMPTY%</b> macro anywhere in will be sure to be processed instead of being within the scope of a macro that might not be used (before conditional macros or after all conditional macros were ended with <b>%ENDIF%</b>.  If you change it as follows:
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td><b>%IF_IS_VOCAL_TRACK%</b>This is a vocal track<b>%ENDIF%</b><b>%EMPTY%</b></td>
+</tr>
+<tr>
+<td>This is the next line</td>
+</tr>
+</tbody>
+</table>
+Everything from the <b>%IF_IS_VOCAL_TRACK%</b> macro until the end of the line in the Notes.txt file will only be processed if that condition (the current track is the vocal track) is met, or until an <b>%ELSE%</b> or <b>%ENDIF%</b> macro is reached on the same line.  Using <b>%ENDIF%</b> in this example allows the rest of the line to be processed so if the current track is the vocal track, the <b>%EMPTY%</b> macro is processed.  Since no text is being written for this line (none of it pertained to non vocal tracks), nothing is to be written for this line in the Notes panel, and the <b>%EMPTY%</b> macro that was processed indicates that the line is explicitly written to be empty in the panel so that the next text to be written to the panel will do so after a blank row.
+</blockquote>
+
+
+<a name="macrolist"><h1>Macro list</h1>
+<blockquote>
+These are all of the macros that can be used with the Notes panel.<br><br>
+<b><u>Tip:</u></b>  Some web browsers will allow you to hold CTRL and left click on the macro name to highlight the entire name.  This makes it easier to copy to the clipboard and paste into the notes.txt file in order to change what is to be displayed in the Notes panel.  CTRL+click the macro name again or click someplace else on the page in order to deselect it.
+<blockquote>
+
+<h1>Conditional macros</h1>
+See the detailed explanation earlier in this document for instructions on how to use conditional macros.
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td>Macro name</td>
+<td>Purpose</td>
+</tr>
+<tr>
+<td>%IF_HOVER_BEAT%</td>
+<td>Evaluates as true if the mouse is currently hovering over a beat marker.</td>
+</tr>
+<tr>
+<td>%IF_SELECTED_BEAT_HAS_TS%</td>
+<td>Evaluates as true if there is a time signature in effect at the selected beat (a time signature change is placed at or before the selected beat).</td>
+</tr>
+<tr>
+<td>%IF_IS_VOCAL_TRACK%</td>
+<td>Evaluates as true if the active track is the vocal track.</td>
+</tr>
+<tr>
+<td>%IF_IS_NOT_VOCAL_TRACK%</td>
+<td>Evaluates as true if the active track is NOT the vocal track.</td>
+</tr>
+<tr>
+<td>%IF_IS_PRO_GUITAR_TRACK%</td>
+<td>Evaluates as true if the active track is a pro guitar track.</td>
+</tr>
+<tr>
+<td>%IF_IS_DRUM_TRACK%</td>
+<td>Evaluates as true if the active track is either of the drum tracks:  The normal one (PART DRUMS) or the Phase Shift one (PART REAL_DRUMS_PS).</td>
+</tr>
+<tr>
+<td>%IF_IS_TECH_VIEW%</td>
+<td>Evaluates as true if the active track is a pro guitar track AND tech view is in effect.</td>
+</tr>
+<tr>
+<td>%IF_IS_NOT_TECH_VIEW%</td>
+<td>Evaluates as true if tech view is not in effect.  This will always evaluate as true if the active track is not a pro guitar track.</td>
+</tr>
+<tr>
+<td>%IF_IS_NOT_PRO_GUITAR_TRACK%</td>
+<td>Evaluates as true if the active track is NOT a pro guitar track.</td>
+</tr>
+<tr>
+<td>%IF_NOTE_IS_SELECTED%</td>
+<td>Evaluates as true if a note is currently selected.</td>
+</tr>
+<tr>
+<td>%IF_HOVER_NOTE%</td>
+<td>Evaluates as true if the mouse is currently hovered over a note.</td>
+</tr>
+<tr>
+<td>%IF_SEEK_HOVER_NOTE%</td>
+<td>Evaluates as true if Feedback input mode is in effect AND there is a note at the current seek position (making it the target for various modifications such as toggling gems, deletion, etc).</td>
+</tr>
+<tr>
+<td>%IF_SELECTED_NOTE_IS_NAMED%</td>
+<td>Evaluates as true if a note is currently selected AND that note has been given a name (ie. by <a href="functions.htm#editname">Note>Edit Name</a>).</td>
+</tr>
+<tr>
+<td>%IF_CAN_LOOKUP_SELECTED_CHORD_NAME%</td>
+<td>Evaluates as true if the active track is a pro guitar track, a chord is selected and the chord lookup logic found a name for it.</td>
+</tr>
+<tr>
+<td>%IF_TUNING_IGNORED%</td>
+<td>Evaluates as true if the active track is a pro guitar track, and its <a href="functions.htm#ignoretuning">Track>Pro Guitar>Ignore tuning/capo</a> option is enabled.</td>
+</tr>
+<tr>
+<td>%IF_SOUND_CUES_DISABLED%</td>
+<td>Evaluates as true if the "Disable sound FX" preference is enabled.</td>
+</tr>
+<tr>
+<td>%IF_START_POINT_DEFINED%</td>
+<td>Evaluates as true if the start point (see <a href="functions.htm#setstartpoint">Edit>Set start point</a>) has been defined.</td>
+</tr>
+<tr>
+<td>%IF_END_POINT_DEFINED%</td>
+<td>Evaluates as true if the end point (see <a href="functions.htm#setstartpoint">Edit>Set start point</a>) has been defined.</td>
+</tr>
+<tr>
+<td>%IF_SELECTED_CATALOG_ENTRY_NAMED%</td>
+<td>Evaluates as true if there is a fret catalog entry, and the currently selected catalog entry has a name defined for it (see <a href="functions.htm#catalog">Song>Catalog</a>).</td>
+</tr>
+</tbody>
+</table><br>
+
+
+<h1>Control macros</h1>
+These macros are for special uses, such as affecting how text will be printed to the Notes panel.
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td>Macro name</td>
+<td>Purpose</td>
+</tr>
+<tr>
+<td>%EMPTY%</td>
+<td>If the line in notes.txt did not result in any text to print for the line in the Notes panel, this macro allows an empty line to be printed to the Notes panel and the print position to be lowered so that the next line of printed text occurs below the empty space.</td>
+</tr>
+<tr>
+<td>%MOVE_DOWN_ONE_PIXEL%</td>
+<td>Lowers the print position in the Notes panel by one pixel, to allow better spacing in case two lines of printed text are too close and overlap each other.</td>
+</tr>
+</tbody>
+</table><br>
+
+
+<h1>Expansion macros</h1>
+These macros are "expanded" into (replaced with) appropriate text which is printed in the Notes panel.
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td>Macro name</td>
+<td>Purpose</td>
+</tr>
+<tr>
+<td>%PERCENT%</td>
+<td>Prints the percent sign.  This is the only way to print a percent sign because percent signs are otherwise used to name macros.</td>
+</tr>
+<tr>
+<td>%TRACK_NAME%</td>
+<td>Prints the name of the active track (ie. PART GUITAR).</td>
+</tr>
+<tr>
+<td>%TRACK_ALT_NAME%</td>
+<td>Prints the alternate name of the active track (the name that was defined with <a href="functions.htm#renametrack">Track>Rename</a>).  If no such name is defined for the active track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFFICULTY%</td>
+<td>Prints the difficulty level of the active track (which is set in <a href="functions.htm#difficulty">Track>Set difficulty</a>).  If no difficulty is defined for the active track, "(Undefined)" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_SECONDARY_DIFFICULTY%</td>
+<td>If the active track is one of the tracks that has a second difficulty level (drums or vocals, see <a href="functions.htm#difficulty">Track>Set difficulty</a>), prints that level along with some text identifying what the difficulty type ("(Pro: " for pro drum difficulty or "(Harmony: " for harmony difficulty).  If the active drum/vocal track has no secondary difficulty level defined, "Undefined" is printed after the dificulty type.  If the active track is not a drum/vocal track, no text is printed.</td>
+</tr>
+<tr>
+<td>%METRONOME_STATUS%</td>
+<td>Prints "On" if the metronome sound cue (see <a href="functions.htm#metronome">Edit>Metronome</a>) is currently enabled, otherwise prints "Off".</td>
+</tr>
+<tr>
+<td>%CLAPS_STATUS%</td>
+<td>Prints "On" if the claps sound cue (see <a href="functions.htm#claps">Edit>Claps</a>) is currently enabled, otherwise prints "Off".</td>
+</tr>
+<tr>
+<td>%VOCAL_TONES_STATUS%</td>
+<td>Prints "On" if the vocal tones sound cue (see <a href="functions.htm#tones">Edit>Vocal tones</a>) is currently enabled, otherwise prints "Off".</td>
+</tr>
+<tr>
+<td>%MIDI_TONES_STATUS%</td>
+<td>Prints "On" if the MIDI tones sound cue (see <a href="functions.htm#miditones">Edit>MIDI tones</a>) is currently enabled, otherwise prints "Off".</td>
+</tr>
+<tr>
+<td>%SELECTED_BEAT%</td>
+<td>Prints the selected beat's number.  The first beat in a project is always number 0.</td>
+</tr>
+<tr>
+<td>%SELECTED_BEAT_TEMPO%</td>
+<td>Prints the tempo of the selected beat.  Only the number is printed, you must add the text "BPM" if that is what you want.</td>
+</tr>
+<tr>
+<td>%HOVER_BEAT%</td>
+<td>Prints the number of the beat that the mouse is currently hovering over.  If no beat is being hovered over, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_BEAT_KEY_SIGNATURE%</td>
+<td>Prints the major key signature defined on the selected beat, followed by the  minor key signature in parentheses.  If no key signature is defined on the selected beat, "None maj (None min)" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_BEAT_POS%</td>
+<td>Prints the position of the selected beat.</td>
+</tr>
+<tr>
+<td>%SELECTED_BEAT_MEASURE%</td>
+<td>Prints the measure number the selected beat is in.  If no time signature is in effect at the selected beat's position (<a href="functions.htm#timesignature">Beat>Time signature</a> was not used to define a time signature on that or any previous beat), "(TS undefined)" is printed.</td>
+</tr>
+<tr>
+<td>%BEAT_POSITION_IN_MEASURE%</td>
+<td>Prints the beat number within a measure the selected beat is.  If no time signature is in effect at the selected beat's position (<a href="functions.htm#timesignature">Beat>Time signature</a> was not used to define a time signature on that or any previous beat), "(TS undefined)" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_NOTE%</td>
+<td>Prints the selected note's/beat's number.  The first note in a track is always number 0, but the numbering is shared among all difficulties in the track, so the first note in a difficulty will not be 0 if there's an earlier note in another difficulty in the same track.  If no note is selected, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_NOTE_POS%</td>
+<td>Prints the position of the selected note.  If no note is selected, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_NOTE_LENGTH%</td>
+<td>Prints the length of the selected note.  If no note is selected, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_NOTE_NAME%</td>
+<td>Prints the name (ie. defined by <a href="functions.htm#editname">Note>Edit Name</a>) of the selected note.  If the selected note has no defined name, no text is printed.  If no note is selected, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_NOTE_VALUE%</td>
+<td>Prints the internal note value of the selected note.  If the active track is the vocal track, this value is the pitch of the selected lyric.  If the active track is not a vocal track, this is a bitmask defining which lanes the note uses.  If no note is selected, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_LYRIC_TONE_NAME%</td>
+<td>Prints the proper note name for the pitch, ie. C# or Db (taking the <a href="functions.htm#semitones">Song>Display semitones as flat</a> setting into account).  If no lyric is selected, or the active track is not the vocal track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%HOVER_NOTE%</td>
+<td>Prints the number of the note that the mouse is currently hovering over.  If no note is being hovered over, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SEEK_HOVER_NOTE%</td>
+<td>Prints the number of the note that is at the seek position and would be altered by various modifications in Feedback input mode.  If Feedback input mode is not in use or if the seek position is not at a note position, "None" is printed.</td>
+</tr>
+<tr>
+<td>%PRO_GUITAR_NOTE_FRETTING%</td>
+<td>Prints a string defining the fret number used on each string by the selected pro guitar note.  If no note is selected or the active track is not a pro guitar track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_CHORD_NAME_LOOKUP%</td>
+<td>Prints a string indicating what chord name the selected note is detected to have, and what match number out of the total number of lookup matches the result is.  If no note is selected, or there are no chord name matches found or the active track is not a pro guitar track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%PRO_GUITAR_NOTE_FINGERING%</td>
+<td>Prints a string defining the finger number used on each string by the selected pro guitar note (see <a href="functions.htm#editfretsfingering">Note>Rocksmith>Edit frets/fingering</a>).  If no note is selected, or the active track is not a pro guitar track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%PRO_GUITAR_NOTE_TONES%</td>
+<td>Prints a string defining the note name played on each string by the selected pro guitar note.  If no note is selected or the active track is not a pro guitar track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%PRO_GUITAR_TRACK_EFFECTIVE_FHP%</td>
+<td>Prints the fret hand position in effect at the current seek position.  If there is no fret hand position defined at or before the seek position, or if the active track is not a pro guitar track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%PRO_GUITAR_TRACK_EFFECTIVE_TONE%</td>
+<td>Prints the name of the tone that is in effect at the current seek position of the active track.  If there is no tone change at or before the current seek position, but there is a default tone defined, that tone name is printed in parentheses.  If there is no tone change defined at/before the current seek position and no default tone defined, or if the active track is not a pro guitar track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SEEK_POSITION%</td>
+<td>Prints the current seek position in minutes:seconds.milliseconds format (or in seconds.milliseconds format if the "Display seek pos. in seconds" preference is enabled).</td>
+</tr>
+<tr>
+<td>%SEEK_POSITION_SEC%</td>
+<td>Prints the current seek position in seconds.milliseconds format, regardless of the current setting of the "Display seek pos. in seconds" preference.</td>
+</tr>
+<tr>
+<td>%SEEK_POSITION_MIN_SEC%</td>
+<td>Prints the current seek position in minutes:seconds.milliseconds format, regardless of the current setting of the "Display seek pos. in seconds" preference.</td>
+</tr>
+<tr>
+<td>%COUNT_NOTES_SELECTED%</td>
+<td>Prints the number of selected notes that are in the active track difficulty.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_NOTE_COUNT%</td>
+<td>Prints the number of notes that exist in the active track difficulty.</td>
+</tr>
+<tr>
+<td>%START_POINT%</td>
+<td>Prints the position of the start point (see <a href="functions.htm#setstartpoint">Edit>Set start point</a>).  If no start point has been defined, "None" is printed.</td>
+</tr>
+<tr>
+<td>%END_POINT%</td>
+<td>Prints the position of the end point (see <a href="functions.htm#setstartpoint">Edit>Set start point</a>).  If no end point has been defined, "None" is printed.</td>
+</tr>
+<tr>
+<td>%INPUT_MODE_NAME%</td>
+<td>Prints the name of the input mode currently in use (Defined in File>Preferences>Preferences), the default setting of which is "Piano Roll".</td>
+</tr>
+<tr>
+<td>%PLAYBACK_SPEED%</td>
+<td>Prints the playback speed in percent (the percent sign is not printed).</td>
+</tr>
+<tr>
+<td>%GRID_SNAP_SETTING%</td>
+<td>Prints the current grid snap setting.  If a custom grid snap setting is in use, the number of intervals per-beat or per-measure is displayed as appropriate.</td>
+</tr>
+<tr>
+<td>%SELECTED_CATALOG_ENTRY%</td>
+<td>Prints the currently selected fret catalog entry number out of the total catalog entry count.  If there are no catalog entries, "0 of 0" is printed.</td>
+</tr>
+<tr>
+<td>%SELECTED_CATALOG_ENTRY_NAME%</td>
+<td>Prints the name of the currently selected fret catalog entry.  If there are no catalog entries, or the active entry does not have a defined name, "None" is printed.</td>
+</tr>
+<tr>
+<td>%LOADED_OGG_NAME%</td>
+<td>Prints the relative file name (excludes the folder path) of the currently loaded OGG file.  If no audio is loaded, "None" is printed.</td>
+</tr>
+<tr>
+<td>%FRET_VALUE_SHORTCUTS_SETTING%</td>
+<td>Prints a string indicating which strings will be affected by the keyboard functions to set/increment/decrement the fret number or toggle the ghost status of selected pro guitar notes.</td>
+</tr>
+<tr>
+<td>%KEY_INPUT_STATUS%</td>
+<td>Prints the key status of CTRL, ALT and SHIFT (displays an asterisk * if the key is detected as being held), as well as the scan code and ASCII code of the last pressed key.</td>
+</tr>
+<tr>
+<td>%BEAT_COUNT%</td>
+<td>Prints the number of beats present in the current project.</td>
+</tr>
+<tr>
+<td>%MEASURE_COUNT%</td>
+<td>Prints the number of measures present in the current project.  If there are no time signatures defined in the project, "(No TS)" is printed.</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+</blockquote>
+
+</BODY>
+</HTML>
