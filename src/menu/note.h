@@ -51,7 +51,16 @@ int eof_menu_note_transpose_up(void);
 int eof_menu_note_transpose_down(void);
 int eof_menu_note_transpose_down_octave(void);	//Moves selected lyrics down one octave if possible
 int eof_menu_note_transpose_up_octave(void);	//Moves selected lyrics up one octave if possible
+
+int eof_menu_note_resnap_logic(int any);
+	//Resnaps notes, tech notes and phrases to grid snap positions
+	//If any is zero, the items snap to the nearest snap position of the current grid snap
+	//If any is nonzero, the items snap to the nearest snap position of ANY grid size (Note>Grid snap>Resnap auto)
 int eof_menu_note_resnap(void);
+	//Uses eof_menu_note_resnap_logic() to resnap selected notes to the nearest snap position of the current grid snap
+int eof_menu_note_resnap_auto(void);
+	//Uses eof_menu_note_resnap_logic() to resnap selected notes to the nearest snap position of ANY grid snap
+
 int eof_menu_note_toggle_crazy(void);				//Toggles the crazy status on selected notes
 int eof_menu_note_remove_crazy(void);				//Removes the crazy status on selected notes
 int eof_menu_note_toggle_double_bass(void);			//Toggles the Expert+ double bass flag on selected expert bass drum notes

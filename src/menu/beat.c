@@ -1117,19 +1117,25 @@ int eof_menu_beat_toggle_anchor(void)
 	return 1;
 }
 
-int eof_menu_beat_delete_anchor(void)
+int eof_menu_beat_delete_anchor_logic(char *undo_made)
 {
 	unsigned long cppqn, i;
 
 	if(!eof_song)
-		return 1;
+		return 1;	//Invalid parameter
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
+	if(!undo_made)
+		return 0;	//Invalid parameter
 
 	cppqn = eof_song->beat[eof_selected_beat]->ppqn;
 	if((eof_selected_beat > 0) && eof_beat_is_anchor(eof_song, eof_selected_beat))
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(*undo_made == 0)
+		{	//If an undo state needs to be made
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			*undo_made = 1;
+		}
 		for(i = eof_selected_beat; i < eof_song->beats; i++)
 		{
 			if(eof_song->beat[i]->ppqn == cppqn)
@@ -1155,6 +1161,13 @@ int eof_menu_beat_delete_anchor(void)
 	}
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	return 1;
+}
+
+int eof_menu_beat_delete_anchor(void)
+{
+	char undo_made = 0;
+
+	return eof_menu_beat_delete_anchor_logic(&undo_made);
 }
 
 int eof_menu_beat_reset_bpm(void)

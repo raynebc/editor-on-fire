@@ -837,7 +837,7 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* rewind (R) */
-	/* resnap notes (CTRL+SHIFT+R) */
+	/* resnap auto (CTRL+SHIFT+R) */
 	if(eof_key_char == 'r')
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
@@ -847,7 +847,7 @@ if(eof_key_code == KEY_PAUSE)
 		}
 		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//If both CTRL and SHIFT are held
-			(void) eof_menu_note_resnap();
+			(void) eof_menu_note_resnap_auto();
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_use_key();
 		}
@@ -2309,8 +2309,8 @@ if(eof_key_code == KEY_PAUSE)
 			{	//If CTRL is held but SHIFT is not
 				char undo_made = 0;
 
-				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, -1, &undo_made);		//Move sections accordingly by one grid snap
-				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, -1, &undo_made);	//Move tech notes accordingly by one grid snap
+				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, -1, 0, &undo_made);		//Move sections accordingly by one grid snap
+				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, -1, 0, &undo_made);	//Move tech notes accordingly by one grid snap
 				(void) eof_menu_note_move_by_grid_snap(-1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
@@ -2353,8 +2353,8 @@ if(eof_key_code == KEY_PAUSE)
 			{	//If CTRL is held but SHIFT is not
 				char undo_made = 0;
 
-				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 1, &undo_made);	//Move sections accordingly by one grid snap
-				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 1, &undo_made);	//Move tech notes accordingly by one grid snap
+				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 1, 0, &undo_made);	//Move sections accordingly by one grid snap
+				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 1, 0, &undo_made);	//Move tech notes accordingly by one grid snap
 				(void) eof_menu_note_move_by_grid_snap(1, &undo_made);
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
@@ -4141,8 +4141,8 @@ void eof_editor_logic(void)
 					}
 					if(move_offset)
 					{
-						eof_auto_adjust_sections(eof_song, eof_selected_track, move_offset, move_direction, &undo_made);	//Move sections accordingly
-						(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, move_offset, move_direction, &undo_made);	//Move tech notes accordingly
+						eof_auto_adjust_sections(eof_song, eof_selected_track, move_offset, move_direction, 0, &undo_made);	//Move sections accordingly
+						(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, move_offset, move_direction, 0, &undo_made);	//Move tech notes accordingly
 					}
 					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{	//For each note in the active track
@@ -4957,7 +4957,7 @@ void eof_vocal_editor_logic(void)
 						}
 					}
 					if(move_offset)
-						eof_auto_adjust_sections(eof_song, EOF_TRACK_VOCALS, move_offset, move_direction, &undo_made);	//Move lyric sections accordingly
+						eof_auto_adjust_sections(eof_song, EOF_TRACK_VOCALS, move_offset, move_direction, 0, &undo_made);	//Move lyric sections accordingly
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 					{	//For each lyric in the track
 						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
@@ -6783,6 +6783,9 @@ void eof_editor_logic_common(void)
 					{	//If moving a beat marker other than the first
 						if(!eof_song->tags->tempo_map_locked)
 						{	//If the tempo map is not locked
+							unsigned long was_already_anchored = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;	//Track if the selected beat was already an anchor
+							char no_undo = 1;
+
 							if(!eof_undo_toggle)
 							{
 								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -6809,7 +6812,18 @@ void eof_editor_logic_common(void)
 							{	//Update beat timings to reflect the beat being clicked and drug
 								eof_recalculate_beats(eof_song, eof_selected_beat);
 							}
-							eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
+							if(KEY_EITHER_CTRL && !was_already_anchored && eof_selected_beat)
+							{	//If the beat that was just moved wasn't already an anchor, and CTRL was held, and verifying again that the selected beat is not the first beat
+								if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
+								{	//If there are no anchors after the selected beat, reset this beat so that it doesn't stay an anchor, leaving only the previous anchor's tempo as modified
+									(void) eof_menu_beat_delete_anchor_logic(&no_undo);	//Remove the anchoring from the beat, recalculate other beats, do not create an undo state
+									eof_song->beat[eof_selected_beat]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag
+								}
+							}
+							else
+							{	//Otherwise ensure it is an anchor
+								eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
+							}
 							eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 							eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 						}//If the tempo map is not locked

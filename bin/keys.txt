@@ -153,6 +153,14 @@ Note and Beat Editing:
         the beat markers. Useful if you are beat syncing someone elses songs, for instance. Shift
         has opposite effect when the "Note Auto-Adjust" preference is turned off.
     
+        Hold Ctrl when dragging the first beat marker to leave all other beats in their current
+        position.
+    
+        Hold Ctrl when dragging a beat marker that is both after the first beat marker and
+        having no anchors after it in order to change the tempo of the anchor before it and
+        leave the selected beat un-anchored.  This can be handy for syncing a beat map against
+        the waveform graph.
+    
 
     Right-Click (beats):
 

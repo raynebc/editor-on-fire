@@ -1049,16 +1049,18 @@ int eof_length_is_shorter_than(long length, long threshold);	//Returns nonzero i
 int eof_length_is_longer_than(long length, long threshold);		//Returns nonzero if the length parameter is longer than the threshold parameter
 int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if both parameters are equal
 
-void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made);
+void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char any, char *undo_made);
 	//Examines all sections in the specified track, and for those which have notes that are all selected, their positions are moved
 	//Returns with no changes made if the "Auto-Adjust sections/FHPs" preference is not enabled
 	//If dir is negative, applicable sections are moved the specified offset number of ms earlier
 	// otherwise applicable sections are moved the specified offset number of ms later
 	//If offset is zero, applicable sections are moved in one grid snap in the specified direction instead of by a specific number of ms
 	//If both offset AND dir are zero, applicable sections are re-snapped to the nearest grid snap positions
+	//If any if zero, selection of a grid snap position is only based on the current grid snap setting
+	//If any is nonzero, selection of a grid snap position is based on the nearest grid snap position of any grid size and ALL notes in the track are affected instead of just the selected ones
 	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first section being moved, and *undo_made is set to nonzero
 
-unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made);
+unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char any, char *undo_made);
 	//Examines all tech notes in the specified pro guitar track, and for those that are fully applied to notes that are selected, their positions are moved
 	//All gems in a tech note must be applied to selected note(s) in order to be moved this way
 	//Returns with no changes if the "Auto-Adjust tech notes" preference is not enabled
@@ -1066,6 +1068,8 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 	// otherwise applicable sections are moved the specified offset number of ms later
 	//If offset is zero, applicable sections are moved in one grid snap in the specified direction instead of by a specific number of ms
 	//If both offset AND dir are zero, applicable sections are re-snapped to the nearest grid snap positions
+	//If any if zero, selection of a grid snap position is only based on the current grid snap setting
+	//If any is nonzero, selection of a grid snap position is based on the nearest grid snap position of any grid size and ALL notes in the track are affected instead of just the selected ones
 	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first section being moved, and *undo_made is set to nonzero
 	//Returns the number of tech notes that were moved, or 0 if none were or upon error
 

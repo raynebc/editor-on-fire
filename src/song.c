@@ -9277,7 +9277,7 @@ int eof_length_is_equal_to(long length, long threshold)
 	return 0;
 }
 
-void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made)
+void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char any, char *undo_made)
 {
 	unsigned long sectiontype, sectioncount = 0, ctr, ctr2, notepos;
 	EOF_PHRASE_SECTION *sections = NULL;
@@ -9340,8 +9340,8 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 					continue;	//If this note isn't in the section's effective difficulty, skip it
 
 				//At this point, the note has been determined to be within the section's scope
-				if(eof_selection.multi[ctr2])
-				{	//If the note is selected
+				if(eof_selection.multi[ctr2] || any)
+				{	//If the note is selected, or this function was called to affect all notes in the track
 					applicable = 1;
 				}
 				else
@@ -9390,29 +9390,39 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 			else
 			{	//If moving by grid snap
 				unsigned long newstart = 0, newend = 0;
-				if(eof_find_grid_snap(sections[ctr].start_pos, dir, &newstart))
-				{	//If the appropriate grid snap before/nearest/after the section's current start position was found
-					if((sectiontype == EOF_FRET_HAND_POS_SECTION) || eof_find_grid_snap(sections[ctr].end_pos, dir, &newend))
-					{	//If there is no applicable end position, or the appropriate grid snap before/after the section's current end position was found
-						if(undo_made && (*undo_made == 0))
-						{	//If an undo state needs to be made
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							*undo_made = 1;
-						}
-
-						sections[ctr].start_pos = newstart;	//Move the section
-						if(sectiontype != EOF_FRET_HAND_POS_SECTION)
-						{	//Fret hand positions don't define an end position
-							sections[ctr].end_pos = newend;
-						}
+				if(!any)
+				{	//If taking only the current grid snap setting into account
+					if(!eof_find_grid_snap(sections[ctr].start_pos, dir, &newstart))	//If the appropriate grid snap before/nearest/after the section's current start position was not found
+						continue;	//Skip it
+					if((sectiontype != EOF_FRET_HAND_POS_SECTION) && !eof_find_grid_snap(sections[ctr].end_pos, dir, &newend))
+					{	//If this section requires an end position, and the appropriate grid snap before/after the section's current end position was not found
+						continue;	//Skip it
 					}
 				}
-			}
-		}
-	}
+				else
+				{	//If using the closest grid snap setting of ANY grid size
+					(void) eof_is_any_grid_snap_position(sections[ctr].start_pos, NULL, NULL, NULL, &newstart);
+					if(sectiontype != EOF_FRET_HAND_POS_SECTION)
+					{	//Fret hand positions don't define an end position
+						(void) eof_is_any_grid_snap_position(sections[ctr].end_pos, NULL, NULL, NULL, &newend);
+					}
+				}
+				if(undo_made && (*undo_made == 0))
+				{	//If an undo state needs to be made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+				sections[ctr].start_pos = newstart;	//Move the section
+				if(sectiontype != EOF_FRET_HAND_POS_SECTION)
+				{	//Fret hand positions don't define an end position
+					sections[ctr].end_pos = newend;
+				}
+			}//If moving by grid snap
+		}//For each instance of this section type in the track
+	}//For each type of section that exists
 }
 
-unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char *undo_made)
+unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char any, char *undo_made)
 {
 	unsigned long ctr, note_num = 0, stringnum, bitmask, count = 0;
 	int applicable, missing;
@@ -9439,8 +9449,8 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 				continue;	//Skip it
 			if(eof_pro_guitar_tech_note_overlaps_a_note(tp, ctr, bitmask, &note_num))
 			{	//If this gem of the tech note overlaps any normal note
-				if(eof_selection.multi[note_num])
-				{	//If that overlapped normal note is selected
+				if(eof_selection.multi[note_num] || any)
+				{	//If that overlapped normal note is selected, or this function was called to affect all notes in the track
 					applicable = 1;
 				}
 				else
@@ -9487,16 +9497,22 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 		else
 		{	//If moving by grid snap
 			unsigned long newstart = 0;
-			if(eof_find_grid_snap(tp->technote[ctr]->pos, dir, &newstart))
-			{	//If the appropriate grid snap before/nearest/after the tech note's current position was found
-				if(undo_made && (*undo_made == 0))
-				{	//If an undo state needs to be made
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					*undo_made = 1;
-				}
 
-				tp->technote[ctr]->pos = newstart;	//Move the tech note
+			if(!any)
+			{	//If taking only the current grid snap setting into account
+				if(!eof_find_grid_snap(tp->technote[ctr]->pos, dir, &newstart))	//If the appropriate grid snap before/nearest/after the tech note's current position was not found
+					continue;	//Skip it
 			}
+			else
+			{	//If using the closest grid snap setting of ANY grid size
+				(void) eof_is_any_grid_snap_position(tp->technote[ctr]->pos, NULL, NULL, NULL, &newstart);
+			}
+			if(undo_made && (*undo_made == 0))
+			{	//If an undo state needs to be made
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
+			}
+			tp->technote[ctr]->pos = newstart;	//Move the tech note
 		}
 
 		count++;	//Track how many tech notes were moved

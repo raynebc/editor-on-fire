@@ -64,7 +64,13 @@ int eof_menu_beat_push_offset_back(char *undo_made);
 int eof_menu_beat_push_offset_back_menu(void);	//Calls eof_menu_beat_push_offset_back() with the option of making an undo state
 int eof_menu_beat_push_offset_up(void);
 int eof_menu_beat_toggle_anchor(void);
+
+int eof_menu_beat_delete_anchor_logic(char *undo_made);
+	//Deletes the currently selected beat's anchor status, assigning it the previous anchor's tempo and updating beat positions
+	//If *undo_made is zero, an undo state is made before altering the chart and *undo_made is set to nonzero
 int eof_menu_beat_delete_anchor(void);
+	//Calls eof_menu_beat_delete_anchor_logic() so that an undo state is performed
+
 int eof_menu_beat_calculate_bpm(void);
 int eof_menu_beat_reset_bpm(void);		//Applies the first beat's tempo to all beats in the project
 int eof_menu_beat_remove_ts(void);		//Removes all time signature changes from the project

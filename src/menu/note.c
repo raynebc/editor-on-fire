@@ -450,7 +450,8 @@ MENU eof_note_highlight_menu[] =
 
 MENU eof_note_grid_snap_menu[] =
 {
-	{"&Resnap\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
+	{"&Resnap to this grid", eof_menu_note_resnap, NULL, 0, NULL},
+	{"Resnap &Auto\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap_auto, NULL, 0, NULL},
 	{"&Move grid snap", NULL, eof_note_move_grid_snap_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -1396,9 +1397,9 @@ int eof_menu_note_transpose_down_octave(void)
 	return 1;
 }
 
-int eof_menu_note_resnap(void)
+int eof_menu_note_resnap_logic(int any)
 {
-	unsigned long i, x, notepos;
+	unsigned long i, x, notepos, newnotepos, tailpos;
 	unsigned long oldnotes;
 	char undo_made = 0;
 	int note_selection_updated, user_warned = 0, cancel = 0;
@@ -1412,8 +1413,8 @@ int eof_menu_note_resnap(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	oldnotes = eof_get_track_size(eof_song, eof_selected_track);
 	undo_made = 1;
-	eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 0, &undo_made);	//Move sections to nearest grid snap
-	(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 0, &undo_made);	//Move tech notes to nearest grid snap
+	eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 0, any, &undo_made);		//Move sections to nearest appropriate grid snap
+	(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 0, any, &undo_made);	//Move tech notes to nearest appropriate grid snap
 	for(i = 0; i < oldnotes; i++)
 	{	//For each note in the active track
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
@@ -1421,14 +1422,22 @@ int eof_menu_note_resnap(void)
 
 		/* snap the note itself */
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-		eof_snap_logic(&eof_tail_snap, notepos);
+		if(!any)
+		{	//If the calling function wants to reposition the notes to the nearest snap position of the current grid snap setting
+			eof_snap_logic(&eof_tail_snap, notepos);
+			newnotepos = eof_tail_snap.pos;
+		}
+		else
+		{
+			(void) eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &newnotepos);	//Store the closest grid snap position of any size into newnotepos
+		}
 		if(!user_warned)
 		{	//If the user hasn't been warned about resnapped notes overlapping and combining
 			for(x = 0; x < oldnotes; x++)
 			{	//For each note in the active track
 				char note1ghosted = 0, note2ghosted = 0;
 
-				if((eof_get_note_type(eof_song, eof_selected_track, x) != eof_note_type) || (eof_tail_snap.pos != eof_get_note_pos(eof_song, eof_selected_track, x)) || (x == i))
+				if((eof_get_note_type(eof_song, eof_selected_track, x) != eof_note_type) || (newnotepos != eof_get_note_pos(eof_song, eof_selected_track, x)) || (x == i))
 					continue;	//If this note is not in the active track difficulty or isn't at the same position as where the resnapped note will be moved or the note is being compared to itself, skip it
 
 				if(eof_get_note_note(eof_song, eof_selected_track, i) == eof_get_note_ghost(eof_song, eof_selected_track, i))
@@ -1456,15 +1465,25 @@ int eof_menu_note_resnap(void)
 		{	//If the user canceled
 			break;
 		}
-		eof_set_note_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
+		eof_set_note_pos(eof_song, eof_selected_track, i, newnotepos);
 
 		/* snap the tail */
+		tailpos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
+		if(!any)
+		{	//If the calling function wants to reposition the notes to the nearest snap position of the current grid snap setting
+			eof_snap_logic(&eof_tail_snap, tailpos);
+			newnotepos = eof_tail_snap.pos;
+		}
+		else
+		{
+			(void) eof_is_any_grid_snap_position(tailpos, NULL, NULL, NULL, &newnotepos);	//Store the closest grid snap position of any size into newnotepos
+		}
 		eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
 		eof_snap_length_logic(&eof_tail_snap);
 		if(eof_get_note_length(eof_song, eof_selected_track, i) > 1)
 		{
 			eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-			eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
+			eof_note_set_tail_pos(eof_song, eof_selected_track, i, newnotepos);
 		}
 	}
 	eof_track_sort_notes(eof_song, eof_selected_track);
@@ -1476,6 +1495,16 @@ int eof_menu_note_resnap(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;
+}
+
+int eof_menu_note_resnap(void)
+{
+	return eof_menu_note_resnap_logic(0);
+}
+
+int eof_menu_note_resnap_auto(void)
+{
+	return eof_menu_note_resnap_logic(1);
 }
 
 int eof_menu_note_delete(void)

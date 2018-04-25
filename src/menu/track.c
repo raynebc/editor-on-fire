@@ -4564,6 +4564,7 @@ DIALOG eof_menu_track_repair_grid_snap_dialog[] =
 int eof_menu_track_repair_grid_snap(void)
 {
 	unsigned long ctr, closestpos = 0, count = 0, tncount = 0;
+	unsigned long oldnotecount, newnotecount;
 	long threshold = 0;
 	char undo_made = 0;
 	unsigned long offset;
@@ -4610,6 +4611,11 @@ int eof_menu_track_repair_grid_snap(void)
 	if(threshold <= 0)
 		return 1;	//If the specified value is not valid, return immediately
 
+	oldnotecount = eof_get_track_size_all(eof_song, eof_selected_track);	//Store the number of notes (and tech notes if applicable) for later comparison
+
+	eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 0, 1, &undo_made);			//Move sections to nearest grid snap of ANY grid size
+	(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 0, 1, &undo_made);	//Move tech notes to nearest grid snap of ANY grid size
+
 	//Process notes
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the active track
@@ -4641,7 +4647,7 @@ int eof_menu_track_repair_grid_snap(void)
 				}
 
 				eof_selection.multi[ctr] = 1;		//Update the selection array to indicate this note is selected, for use with the tech note auto adjust logic
-				tncount += eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, direction, &undo_made);	//Move this note's tech notes accordingly
+				tncount += eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, direction, 0, &undo_made);	//Move this note's tech notes accordingly by the same number of ms as the normal note
 				eof_set_note_pos(eof_song, eof_selected_track, ctr, closestpos);
 				eof_selection.multi[ctr] = 0;		//Deselect this note
 				count++;
@@ -4668,6 +4674,11 @@ int eof_menu_track_repair_grid_snap(void)
 			tncountplurality = singular;
 
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Update highlighting
+		newnotecount = eof_get_track_size_all(eof_song, eof_selected_track);	//Read the number of note (and tech notes if applicable)
+		if(oldnotecount > newnotecount)
+		{	//If one or more notes were lost (ie. merged) since the changes
+			allegro_message("Warning:  %lu notes were lost (ie. merged with other notes) during the repair.  Please undo if this is unwanted.", oldnotecount - newnotecount);
+		}
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
 			if(eof_technote_auto_adjust)
