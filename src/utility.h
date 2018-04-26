@@ -32,6 +32,11 @@ int rs_lyric_substitute_char_utf8(int character, int function);
 int eof_string_has_non_ascii(char *str);	//Returns nonzero if any characters in the UTF-8 encoded string have non ASCII characters (any character valued over 127)
 int eof_string_has_non_alphanumeric(char *str);	//Returns nonzero if any characters in the UTF-8 encoded string have non alphanumeric ASCII characters
 void eof_sanitize_string(char *str);		//Replaces any non-printable or non ASCII (characters numbered higher than 127) characters with spaces
+int eof_char_is_hex(int c);
+	//Returns nonzero if c is a numerical digit or an upper/lower case letter A, B, C, D, E or F
+int eof_string_is_hexadecimal(char *string);
+	//Returns nonzero if all characters in the provided string are hexadecimal characters
+	//Returns 0 on error
 
 int eof_is_illegal_filename_character(char c);	//Returns nonzero if the specified character is not legal for use in a filename in Windows
 

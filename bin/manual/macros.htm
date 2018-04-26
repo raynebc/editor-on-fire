@@ -185,7 +185,7 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_NOTE_IS_SELECTED%</td>
-<td>Evaluates as true if a note is currently selected.</td>
+<td>Evaluates as true if a note is currently selected by mouse click.  Using select functions does not count towards this condition.</td>
 </tr>
 <tr>
 <td>%IF_HOVER_NOTE%</td>
@@ -243,12 +243,28 @@ These macros are for special uses, such as affecting how text will be printed to
 <td>%MOVE_DOWN_ONE_PIXEL%</td>
 <td>Lowers the print position in the Notes panel by one pixel, to allow better spacing in case two lines of printed text are too close and overlap each other.</td>
 </tr>
+<tr>
+<td>%FLUSH%</td>
+<td>Prints the content of the line that has been processed up to this point, then resumes processing the line.  Use this to print a line in progress so that a control macro such as %MOVE_DOWN_ONE_PIXEL% can take effect mid-line.</td>
+</tr>
+<tr>
+<td>%TEXT_COLOR_[COLORNAME]%</td>
+<td>Changes the text color of newly printed text to [COLORNAME], which can be BLACK, WHITE, GRAY, RED, GREEN, BLUE, TURQUOISE, YELLOW, PURPLE, ORANGE, SILVER, CYAN or a 6 digit RGB code.  For example:  %TEXT_COLOR_RED% and %TEXT_COLOR_DAA520%.  This color change is permanent until it is changed again.</td>
+</tr>
+<tr>
+<td>%TEXT_BACKGROUND_COLOR_[COLORNAME]%</td>
+<td>Similar to the %TEXT_COLOR_...% macro, changes the background color of newly printed text to [COLORNAME].  This color change is permanent until it is changed again.  The default background color can be restored with %TEXT_BACKGROUND_COLOR_NONE%.</td>
+</tr>
+<tr>
+<td>%TEXT_BACKGROUND_COLOR_NONE%</td>
+<td>Removes the text background color, making it transparent as it is by default.</td>
+</tr>
 </tbody>
 </table><br>
 
 
-<h1>Expansion macros</h1>
-These macros are "expanded" into (replaced with) appropriate text which is printed in the Notes panel.
+<h1>Symbol macros</h1>
+These macros each result in a single symbol being printed to the Notes panel.
 <table border="1" cellpadding="3">
 <tbody>
 <tr>
@@ -258,6 +274,62 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%PERCENT%</td>
 <td>Prints the percent sign.  This is the only way to print a percent sign because percent signs are otherwise used to name macros.</td>
+</tr>
+<tr>
+<td>%BEND%</td>
+<td>Prints the bend symbol.</td>
+</tr>
+<tr>
+<td>%HARMONIC%</td>
+<td>Prints the harmonic symbol.</td>
+</tr>
+<tr>
+<td>%DOWNSTRUM%</td>
+<td>Prints the down strum symbol.</td>
+</tr>
+<tr>
+<td>%UPSTRUM%</td>
+<td>Prints the up strum symbol.</td>
+</tr>
+<tr>
+<td>%TREMOLO%</td>
+<td>Prints the tremolo symbol.</td>
+</tr>
+<tr>
+<td>%PHARMONIC%</td>
+<td>Prints the pinch harmonic symbol.</td>
+</tr>
+<tr>
+<td>%LINKNEXT%</td>
+<td>Prints the linknext symbol.</td>
+</tr>
+<tr>
+<td>%USLIDEUP%</td>
+<td>Prints the unpitched slide up symbol.</td>
+</tr>
+<tr>
+<td>%USLIDEDOWN%</td>
+<td>Prints the unpitched slide down symbol.</td>
+</tr>
+<tr>
+<td>%STOP%</td>
+<td>Prints the stop symbol.</td>
+</tr>
+<tr>
+<td>%PREBEND%</td>
+<td>Prints the pre-bend symbol.</td>
+</tr>
+</tbody>
+</table><br>
+
+
+<h1>Expansion macros</h1>
+These macros are "expanded" into (replaced with) appropriate text which is printed to the Notes panel.
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td>Macro name</td>
+<td>Purpose</td>
 </tr>
 <tr>
 <td>%TRACK_NAME%</td>

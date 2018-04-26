@@ -9,6 +9,7 @@
 #include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position()
 #include "song.h"
 #include "tuning.h"
+#include "utility.h"	//For eof_char_is_hex() and eof_string_is_hexadecimal()
 #include "foflc/Lyric_storage.h"
 #include "menu/track.h"	//For eof_menu_pro_guitar_track_get_tech_view_state()
 
@@ -16,14 +17,13 @@
 #include "memwatch.h"
 #endif
 
-int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned long dest_buffer_size, int *ypos)
+int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned long dest_buffer_size, EOF_NOTES_PANEL_CONTROLS *controls)
 {
 	unsigned long src_index = 0, dest_index = 0, macro_index;
-	char src_char, macro[1024], expanded_macro[1024];
+	char src_char, macro[2048], expanded_macro[2048];
 	int macro_status;
-	int allowempty = 0;	//Tracks whether an %EMPTY% macro was parsed
 
-	if(!src_buffer || !dest_buffer || (dest_buffer_size < 1))
+	if(!src_buffer || !dest_buffer || (dest_buffer_size < 1) || !controls)
 		return 0;	//Invalid parameters
 
 	dest_buffer[0] = '\0';		//Empty the destination buffer
@@ -48,12 +48,34 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 				if(src_char == '%')
 				{	//The closing percent sign of the macro was reached
 					macro[macro_index] = '\0';	//Terminate the macro string
-					macro_status = eof_expand_notes_window_macro(macro, expanded_macro, 1024);	//Convert the macro to static text
+					macro_status = eof_expand_notes_window_macro(macro, expanded_macro, 2048, controls);	//Convert the macro to static text
 
 					if(macro_status == 1)
 					{	//Otherwise if the macro was successfully converted to static text
 						strncat(dest_buffer, expanded_macro, dest_buffer_size - strlen(dest_buffer) - 1);	//Append the converted macro text to the destination buffer
 						dest_index = strlen(dest_buffer);	//Update the destination buffer index
+
+						if(controls->flush)
+						{	//If the %FLUSH% macro was just parsed, print the current contents of the output buffer and update the print coordinates
+							textout_ex(controls->screen, font, dest_buffer, controls->xpos, controls->ypos, controls->color, controls->bgcolor);	//Print this line to the screen
+							controls->xpos += text_length(font, dest_buffer);	//Increase the print x coordinate by the number of pixels the output buffer took to render
+							controls->flush = 0;	//Reset this condition
+							if(dest_buffer[0] != '\0')
+							{	//If the output buffer wasn't empty
+								controls->contentprinted = 1;	//Track this in case no other content for the line is printed
+							}
+							if(controls->symbol)
+							{	//If a symbol font character is to be printed
+								dest_buffer[0] = controls->symbol;
+								dest_buffer[1] = '\0';	//Build a string containing just that character
+								textout_ex(controls->screen, eof_symbol_font, dest_buffer, controls->xpos, controls->ypos, controls->color, controls->bgcolor);	//Print this symbol glyph to the screen
+								controls->xpos += text_length(eof_symbol_font, dest_buffer);	//Increase the print x coordinate by the number of pixels the glyph took to render
+								controls->symbol = 0;
+								controls->contentprinted = 1;
+							}
+							dest_buffer[0] = '\0';	//Empty the destination buffer
+							dest_index = 0;
+						}
 						break;	//Exit macro parse while loop
 					}
 					else if((macro_status == 2) || (macro_status == 3))
@@ -229,16 +251,6 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 						}//Process conditional macros until the correct branching is handled
 						break;	//Exit macro parse while loop
 					}//If this was a conditional macro
-					else if(macro_status == 4)
-					{	//An %EMPTY% macro was parsed
-						allowempty = 1;
-						break;	//Exit macro parse while loop
-					}
-					else if(macro_status == 5)
-					{	//A %MOVE_DOWN_ONE_PIXEL% macro was parsed
-						(*ypos)++;	//Move the text output position down one pixel
-						break;	//Exit macro parse while loop
-					}
 					else
 					{	//Macro failed to convert
 						snprintf(dest_buffer, dest_buffer_size, "Unrecognized macro \"%s\"", macro);
@@ -255,16 +267,14 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 
 	dest_buffer[dest_index] = '\0';	//Terminate the destination buffer
 
-	if(allowempty)	//If an %EMPTY% macro was parsed
-		return 2;	//Signal to the calling function that an expanded line is allowed to print if it is empty
 	return 1;
 }
 
-int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size)
+int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_NOTES_PANEL_CONTROLS *controls)
 {
 	unsigned long tracknum;
 
-	if(!macro || !dest_buffer || (dest_buffer_size < 1))
+	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !controls)
 		return 0;	//Invalid parameters
 	if(!eof_song)
 		return 0;	//No chart loaded
@@ -541,14 +551,161 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "EMPTY"))
 	{
 		dest_buffer[0] = '\0';
-		return 4;
+		controls->allowempty = 1;	//Signal this to the calling function
+		return 1;
 	}
 
 	//Move the text output down one pixel
 	if(!ustricmp(macro, "MOVE_DOWN_ONE_PIXEL"))
 	{
 		dest_buffer[0] = '\0';
-		return 5;
+		controls->ypos++;	//Update the y coordinate for Notes panel printing
+		return 1;
+	}
+
+	//Print the current content of the destination buffer, then resume parsing macros in that line
+	if(!ustricmp(macro, "FLUSH"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		return 1;
+	}
+
+	//Change the printed text color
+	if(strcasestr_spec(macro, "TEXT_COLOR_"))
+	{
+		int newcolor;
+		char *color_string = strcasestr_spec(macro, "TEXT_COLOR_");	//Get a pointer to the text that is expected to be the color name
+
+		if(eof_read_macro_color(color_string, &newcolor))
+		{	//If the color was successfully parsed
+			dest_buffer[0] = '\0';
+			controls->color = newcolor;
+			return 1;
+		}
+	}
+
+	//Clear the printed text background color
+	if(strcasestr_spec(macro, "TEXT_BACKGROUND_COLOR_NONE"))
+	{
+		dest_buffer[0] = '\0';
+		controls->bgcolor = -1;
+		return 1;
+	}
+
+	//Change the printed text background color
+	if(strcasestr_spec(macro, "TEXT_BACKGROUND_COLOR_"))
+	{
+		int newcolor;
+		char *color_string = strcasestr_spec(macro, "TEXT_BACKGROUND_COLOR_");	//Get a pointer to the text that is expected to be the color name
+
+		if(eof_read_macro_color(color_string, &newcolor))
+		{	//If the color was successfully parsed
+			dest_buffer[0] = '\0';
+			controls->bgcolor = newcolor;
+			return 1;
+		}
+	}
+
+
+	///SYMBOL MACROS
+	//Bend character
+	if(!ustricmp(macro, "BEND"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'a';	//In the symbols font, a is the bend character
+		return 1;
+	}
+
+	//Harmonic character
+	if(!ustricmp(macro, "HARMONIC"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'b';	//In the symbols font, b is the harmonic character
+		return 1;
+	}
+
+	//Down strum character
+	if(!ustricmp(macro, "DOWNSTRUM"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'c';	//In the symbols font, c is the down strum character
+		return 1;
+	}
+
+	//Up strum character
+	if(!ustricmp(macro, "UPSTRUM"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'd';	//In the symbols font, d is the up strum character
+		return 1;
+	}
+
+	//Tremolo character
+	if(!ustricmp(macro, "TREMOLO"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'e';	//In the symbols font, e is the tremolo character
+		return 1;
+	}
+
+	//Pinch harmonic character
+	if(!ustricmp(macro, "PHARMONIC"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'f';	//In the symbols font, f is the pinch harmonic character
+		return 1;
+	}
+
+	//Linknext character
+	if(!ustricmp(macro, "LINKNEXT"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'g';	//In the symbols font, f is the linknext indicator
+		return 1;
+	}
+
+	//Unpitched slide up character
+	if(!ustricmp(macro, "USLIDEUP"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'i';	//In the symbols font, i is the unpitched slide up indicator
+		return 1;
+	}
+
+	//Unpitched slide down character
+	if(!ustricmp(macro, "USLIDEDOWN"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'j';	//In the symbols font, j is the unpitched slide down indicator
+		return 1;
+	}
+
+	//Stop character
+	if(!ustricmp(macro, "STOP"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'k';	//In the symbols font, k is the stop status indicator
+		return 1;
+	}
+
+	//Pre-bend character
+	if(!ustricmp(macro, "PREBEND"))
+	{
+		dest_buffer[0] = '\0';
+		controls->flush = 1;
+		controls->symbol = 'l';	//In the symbols font, l is the pre-bend character
+		return 1;
 	}
 
 
@@ -1151,4 +1308,55 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	return 0;	//Macro not supported
+}
+
+int eof_read_macro_color(char *string, int *color)
+{
+	if(!string || !color)
+		return 0;	//Invalid parameters
+
+	if(!ustricmp(string, "BLACK"))
+		*color = eof_color_black;
+	else if(!ustricmp(string, "WHITE"))
+		*color = eof_color_white;
+	else if(!ustricmp(string, "GRAY"))
+		*color = eof_color_gray2;
+	else if(!ustricmp(string, "RED"))
+		*color = eof_color_red;
+	else if(!ustricmp(string, "GREEN"))
+		*color = eof_color_green;
+	else if(!ustricmp(string, "BLUE"))
+		*color = eof_color_blue;
+	else if(!ustricmp(string, "TURQUOISE"))
+		*color = eof_color_turquoise;
+	else if(!ustricmp(string, "YELLOW"))
+		*color = eof_color_yellow;
+	else if(!ustricmp(string, "PURPLE"))
+		*color = eof_color_purple;
+	else if(!ustricmp(string, "ORANGE"))
+		*color = eof_color_orange;
+	else if(!ustricmp(string, "SILVER"))
+		*color = eof_color_silver;
+	else if(!ustricmp(string, "CYAN"))
+		*color = eof_color_cyan;
+	else if((ustrlen(string) == 6) && eof_string_is_hexadecimal(string))
+	{	//If this is a 6 digit hexadecimal string
+		int r, g, b;
+		char hex[3] = {0};
+
+		hex[0] = string[0];
+		hex[1] = string[1];
+		r = (int) strtol(hex, NULL, 16);	//Convert these two hex characters into decimal
+		hex[0] = string[2];
+		hex[1] = string[3];
+		g = (int) strtol(hex, NULL, 16);	//Convert these two hex characters into decimal
+		hex[0] = string[4];
+		hex[1] = string[5];
+		b = (int) strtol(hex, NULL, 16);	//Convert these two hex characters into decimal
+		*color = makecol(r, g, b);
+	}
+	else
+		return 0;	//Not a valid color
+
+	return 1;
 }

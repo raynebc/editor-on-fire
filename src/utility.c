@@ -458,3 +458,35 @@ int eof_remake_color(int hexrgb)
 
 	return makecol(r, g, b);
 }
+
+int eof_char_is_hex(int c)
+{
+	int upper;
+
+	if(isdigit(c))		//Numerical digits are valid hexadecimal characters
+		return 1;
+	if(!isalpha(c))		//Otherwise they must be alphabetical
+		return 0;
+
+	upper = toupper(c);
+	if((upper == 'A') || (upper == 'B') || (upper == 'C') || (upper == 'D') || (upper == 'E') || (upper == 'F'))
+		return 1;	//And be A, B, C, D, E or F
+
+	return 0;		//No other characters are valid hexadecimal characters
+}
+
+int eof_string_is_hexadecimal(char *string)
+{
+	unsigned long index;
+
+	if(!string)
+		return 0;	//Invalid parameter
+
+	for(index = 0; string[index] != '\0'; index++)
+	{	//For each character in the string
+		if(!eof_char_is_hex(string[index]))
+			return 0;
+	}
+
+	return 1;	//No non-hexadecimal characters were encountered
+}

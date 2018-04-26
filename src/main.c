@@ -3709,10 +3709,10 @@ void eof_render_3d_window(void)
 
 void eof_render_notes_window(void)
 {
-	int ypos;
-	char buffer[1024], buffer2[1024];
+	char buffer[2048], buffer2[2048];
 	unsigned long src_index, dst_index;
 	int retval;
+	EOF_NOTES_PANEL_CONTROLS controls;
 
 	if(!eof_song_loaded || !eof_song)	//If a project isn't loaded
 		return;			//Return immediately
@@ -3725,7 +3725,15 @@ void eof_render_notes_window(void)
 
 	textprintf_ex(eof_window_notes->screen, font, 2, 0, eof_info_color, -1, "Notes Panel");
 	textprintf_ex(eof_window_notes->screen, font, 2, 6, eof_color_white, -1, "------------------");
-	ypos = 16;
+
+	//Initialize the controls array
+	controls.ypos = 16;
+	controls.xpos = 2;
+	controls.color = eof_color_white;
+	controls.bgcolor = -1;	//Transparent background for text
+	controls.screen = eof_window_notes->screen;	//Text will output to the Notes panel
+	controls.allowempty = 0;
+	controls.contentprinted = 0;
 
 	//Parse the contents of the buffered file one line at a time and print each to the screen
 	src_index = dst_index = 0;	//Reset these indexes
@@ -3736,16 +3744,20 @@ void eof_render_notes_window(void)
 		if((thischar == '\r') && (eof_notes_text[src_index] == '\n'))
 		{	//Carriage return and line feed characters represent a new line
 			buffer[dst_index] = '\0';	//NULL terminate the buffer
-			retval = eof_expand_notes_window_text(buffer, buffer2, 1024, &ypos);
+			retval = eof_expand_notes_window_text(buffer, buffer2, 2048, &controls);
 			if(!retval)
 			{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
 				eof_enable_notes_panel = 0;
 				return;
 			}
-			if((retval == 2) || (buffer2[0] != '\0'))
+			if(controls.allowempty || controls.contentprinted || (buffer2[0] != '\0'))
 			{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
-				textout_ex(eof_window_notes->screen, font, buffer2, 2, ypos, eof_color_white, -1);	//Print this line to the screen
-				ypos +=12;
+				//If content was printed earlier in the line and flushed to the Notes panel, allow the coordinates to reset to the next line
+				textout_ex(controls.screen, font, buffer2, controls.xpos, controls.ypos, controls.color, controls.bgcolor);	//Print this line to the screen
+				controls.allowempty = 0;	//Reset this condition, it has to be enabled per-line
+				controls.xpos = 2;			//Reset the x coordinate to the beginning of the line
+				controls.ypos +=12;
+				controls.contentprinted = 0;
 			}
 			dst_index = 0;	//Reset the destination buffer index
 			src_index++;	//Seek past the line feed character in the source buffer
@@ -3757,10 +3769,12 @@ void eof_render_notes_window(void)
 			buffer[dst_index++] = thischar;	//Append the character to the destination buffer
 		}
 	}
+
+	//Print any remaining content in the output buffer
 	if(dst_index && (dst_index < 1023))
 	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
 		buffer[dst_index] = '\0';	//NULL terminate the buffer
-		retval = eof_expand_notes_window_text(buffer, buffer2, 1024, &ypos);
+		retval = eof_expand_notes_window_text(buffer, buffer2, 2048, &controls);
 		if(!retval)
 		{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
 			eof_enable_notes_panel = 0;
@@ -3768,8 +3782,8 @@ void eof_render_notes_window(void)
 		}
 		if((retval == 2) || (buffer2[0] != '\0'))
 		{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
-			textout_ex(eof_window_notes->screen, font, buffer2, 2, ypos, eof_color_white, -1);	//Print this line to the screen
-			ypos +=12;
+			textout_ex(controls.screen, font, buffer2, controls.xpos, controls.ypos, controls.color, controls.bgcolor);	//Print this line to the screen
+			controls.ypos +=12;
 		}
 	}
 
