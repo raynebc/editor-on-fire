@@ -178,6 +178,15 @@ void eof_load_config(char * fn)
 	eof_render_3d_rs_chords = get_config_int("preferences", "eof_render_3d_rs_chords", 0);
 	eof_render_2d_rs_piano_roll = get_config_int("preferences", "eof_render_2d_rs_piano_roll", 0);
 	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
+	if(eof_min_note_distance > 999)
+	{	//If the minimum note distance is invalid (more than 3 digits)
+		eof_min_note_distance = 3;	//Reset it to default
+	}
+	eof_min_note_distance_intervals = get_config_int("preferences", "eof_min_note_distance_intervals", 0);
+	if(eof_min_note_distance_intervals > 2)
+	{	//If the minimum note distance setting isn't ms, 1/# measure or 1/# beat
+		eof_min_note_distance_intervals = 0;	//Reset it to ms
+	}
 	eof_enforce_chord_density = get_config_int("preferences", "eof_enforce_chord_density", 0);
 	eof_imports_recall_last_path = get_config_int("preferences", "eof_imports_recall_last_path", 0);
 	eof_rewind_at_end = get_config_int("preferences", "eof_rewind_at_end", 1);
@@ -185,10 +194,6 @@ void eof_load_config(char * fn)
 	eof_display_seek_pos_in_seconds = get_config_int("preferences", "eof_display_seek_pos_in_seconds", 0);
 	eof_note_tails_clickable = get_config_int("preferences", "eof_note_tails_clickable", 0);
 	eof_render_grid_lines = get_config_int("preferences", "eof_render_grid_lines", 0);
-	if(eof_min_note_distance > 999)
-	{	//If the minimum note distance is invalid (more than 3 digits)
-		eof_min_note_distance = 3;	//Reset it to default
-	}
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
 	eof_vanish_y = get_config_int("preferences", "eof_vanish_y", 0);
 	if((eof_vanish_y < -500) || (eof_vanish_y > 260))
@@ -398,6 +403,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_enforce_chord_density", eof_enforce_chord_density);
 	set_config_int("preferences", "eof_chord_density_threshold", eof_chord_density_threshold);
 	set_config_int("preferences", "eof_min_note_distance", eof_min_note_distance);
+	set_config_int("preferences", "eof_min_note_distance_intervals", eof_min_note_distance_intervals);
 	set_config_int("preferences", "eof_render_bass_drum_in_lane", eof_render_bass_drum_in_lane);
 	set_config_int("preferences", "eof_vanish_y", eof_vanish_y);
 	set_config_int("preferences", "eof_playback_time_stretch", eof_playback_time_stretch);

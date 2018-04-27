@@ -730,6 +730,12 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 	//that of the next note in the track difficulty.
 	//enforcegap should be given as nonzero unless the note has linknext status, which forces a mandatory distance between notes to be ignored
 	//0 is returned on error, LONG_MAX is returned if there is no note that follows (indicating the note's length is only limited by its variable capacity)
+unsigned eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned long track, unsigned long notenum);
+	//Examines the specified note and determines the effective minimum note distance between this note and the next,
+	// based on the current settings of eof_min_note_distance and eof_min_note_distance_intervals
+	//Returns 0 if there is no applicable limit to the specified note's length
+	//Returns UINT_MAX on error
+
 void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char diff, char diffonly);
 	//If diffonly is zero, the entire specified track has its contents deleted
 	//If diffonly is nonzero, only the content from the specified track difficulty is deleted
@@ -1026,7 +1032,7 @@ unsigned long eof_pro_guitar_lookup_combined_tech_flags(EOF_PRO_GUITAR_TRACK *tp
 	// *flags and *eflags are reset to 0 in the event no applicable tech notes are found
 	//Returns 0 on error
 
-void eof_pro_guitar_track_enforce_chord_density(EOF_PRO_GUITAR_TRACK *tp);
+void eof_pro_guitar_track_enforce_chord_density(EOF_SONG *sp, unsigned long track);
 	//If the "Apply crazy to repeated chords separated by a rest" preference is enabled,
 	//and if any chords are repeats of non-selected notes, and those chords are more than the
 	//configured minimum note distance apart from the preceding notes (or 2ms, whichever is

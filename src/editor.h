@@ -36,6 +36,7 @@ typedef struct
 	double measure_length;
 	int length;
 	int numerator, denominator;
+	double snap_length;	//The length of the calculated grid snap size in ms
 	double grid_pos[EOF_MAX_GRID_SNAP_INTERVALS];
 	double grid_distance[EOF_MAX_GRID_SNAP_INTERVALS];
 	unsigned long pos, previous_snap, next_snap;
@@ -79,6 +80,11 @@ int eof_find_grid_snap_position(unsigned long beat, char gridsnapvalue, unsigned
 	//Determines the real time position of the specified grid snap
 	//Depends on eof_chart_length being large enough to reflect the last beat time stamp
 	//If it exists, it is returned through gridpos and nonzero is returned
+unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int intervals, int per_measure);
+	//Returns the position that is one full grid snap earlier than pos (not just the earliest grid snap occurrence), where the grid snap size is 1/# beat, or
+	// 1/# measure if per_measure is nonzero
+	//Returns ULONG_MAX if the position is not found
+
 void eof_read_editor_keys(void);
 void eof_editor_logic(void);
 void eof_editor_drum_logic(void);	//The drum record mode logic

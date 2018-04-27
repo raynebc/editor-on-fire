@@ -359,6 +359,7 @@ extern int         eof_min_note_length;
 extern int         eof_enforce_chord_density;
 extern unsigned    eof_chord_density_threshold;
 extern unsigned    eof_min_note_distance;
+extern unsigned    eof_min_note_distance_intervals;
 extern int         eof_render_bass_drum_in_lane;
 extern int         eof_inverted_chords_slash;
 extern int         eof_click_changes_dialog_focus;

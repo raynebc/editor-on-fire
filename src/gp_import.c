@@ -4145,7 +4145,17 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										pgnp->note = 1 << convertednum;	//Determine the note bitmask of this string
 										if(bendstruct.bendpos[ctr5] == 60)
 										{	//If this bend point is at the end of the note
-											length = lastendpos - laststartpos - eof_min_note_distance;	//Take the minimum padding between notes into account to ensure it doesn't overlap the next note
+											unsigned effective_min_note_distance;
+
+											if(eof_min_note_distance_intervals)
+											{	//Per beat/measure min. note distance could be too drastic of a padding to add to bend notes when the next note position isn't known yet
+												effective_min_note_distance = 0;
+											}
+											else
+											{
+												effective_min_note_distance = eof_min_note_distance;
+											}
+											length = lastendpos - laststartpos - effective_min_note_distance;	//Take the minimum padding between notes into account to ensure it doesn't overlap the next note
 										}
 										else
 										{	//Otherwise use the normal note length

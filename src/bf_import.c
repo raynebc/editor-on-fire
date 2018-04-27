@@ -141,9 +141,19 @@ EOF_SONG *eof_load_bf(char * fn)
 	unsigned long curtimems;					//Used to build the tempo map
 	unsigned long lastitem = 0;					//Used to track the realtime position of the last item in the chart, used to build the tempo map
 	unsigned long lyrstart, temp;				//Used to correct lyric line positions
+	unsigned effective_min_note_distance;
 
 	eof_log("\tImporting Bandfuse file", 1);
 	eof_log("eof_load_bf() entered", 1);
+
+	if(eof_min_note_distance_intervals)
+	{	//Per beat/measure min. note distance isn't supported when a chart isn't already loaded
+		effective_min_note_distance = 0;
+	}
+	else
+	{
+		effective_min_note_distance = eof_min_note_distance;
+	}
 
 	//Initialize pointers and handles
 	if(!fn)
@@ -905,7 +915,7 @@ EOF_SONG *eof_load_bf(char * fn)
 									tnp2->note = 1 << stringnum;
 									tnp2->frets[stringnum] = fret;
 									tnp2->finger[stringnum] = finger;
-									tnp2->pos = np->pos + np->length - eof_min_note_distance;	//Place this tech note at the end of the imported note containing the bend
+									tnp2->pos = np->pos + np->length - effective_min_note_distance;	//Place this tech note at the end of the imported note containing the bend
 									tnp2->length = 1;
 									tnp2->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 									tnp2->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;

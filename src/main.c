@@ -153,6 +153,7 @@ int         eof_min_note_length = 0;			//Specifies the user-configured minimum l
 int         eof_enforce_chord_density = 0;		//Specifies whether repeated chords that are separated by a rest automatically have crazy status applied to force RS export as low density chords
 unsigned    eof_chord_density_threshold = 10000;	//Specifies the maximum distance between repeated chords that allows them to be marked as high density (repeat lines)
 unsigned    eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
+unsigned    eof_min_note_distance_intervals = 0;	//If 0, the minimum distance between notes is observed to be in ms.  If 1, it's observed to be /# measure.  If 2, it's observed to be 1/# beat.
 int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering will draw bass drum gems in a lane instead of as a bar spanning all lanes
 int         eof_click_changes_dialog_focus = 1;	//If nonzero, eof_verified_proc will not change dialog focus on mouse-over, it requires an explicit mouse click
 int         eof_stop_playback_leave_focus = 1;	//If nonzero, EOF stops playback when it is not in the foreground
@@ -221,7 +222,7 @@ int         eof_music_pos;
 int         eof_music_pos2 = -1;		//The position to display in the secondary piano roll (-1 means it will initialize to the current track when it is enabled)
 int         eof_sync_piano_rolls = 1;	//If nonzero, the secondary piano roll will render with the current chart position instead of its own
 unsigned long eof_music_actual_pos;
-unsigned long eof_music_rewind_pos;
+unsigned long eof_music_rewind_pos = 0;
 int         eof_music_catalog_pos;
 unsigned long eof_music_end_pos;
 int         eof_music_paused = 1;
@@ -3734,6 +3735,7 @@ void eof_render_notes_window(void)
 	controls.screen = eof_window_notes->screen;	//Text will output to the Notes panel
 	controls.allowempty = 0;
 	controls.contentprinted = 0;
+	controls.symbol = 0;
 
 	//Parse the contents of the buffered file one line at a time and print each to the screen
 	src_index = dst_index = 0;	//Reset these indexes

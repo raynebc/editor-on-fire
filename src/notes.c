@@ -1307,6 +1307,18 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The current minimum note distance setting
+	if(!ustricmp(macro, "NOTE_GAP"))
+	{
+		if(!eof_min_note_distance_intervals)
+			snprintf(dest_buffer, dest_buffer_size, "%u ms", eof_min_note_distance);
+		else if(eof_min_note_distance_intervals == 1)
+			snprintf(dest_buffer, dest_buffer_size, "1/%u measure", eof_min_note_distance);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "1/%u beat", eof_min_note_distance);
+		return 1;
+	}
+
 	return 0;	//Macro not supported
 }
 

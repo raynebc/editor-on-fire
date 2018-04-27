@@ -123,17 +123,17 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 423, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
-	{ d_agup_button_proc,12,  431, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  431, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 431, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
-	{ d_agup_text_proc,  16,  186, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
-	{ d_agup_radio_proc, 161, 186, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
-	{ d_agup_radio_proc, 224, 186, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
-	{ d_agup_radio_proc, 301, 186, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
-	{ d_agup_radio_proc, 384, 186, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
-	{ d_agup_radio_proc, 161, 202, 143, 16,  2,   23,  0,    0,      1,   0,   "RS sections+Phrases", NULL, NULL },
-	{ d_agup_radio_proc, 301, 202,  60, 16,  2,   23,  0,    0,      1,   0,   "Tones",               NULL, NULL },
+	{ d_agup_window_proc,0,   48,  482, 444, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_button_proc,12,  452, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  452, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 452, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_text_proc,  16,  207, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
+	{ d_agup_radio_proc, 161, 207, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
+	{ d_agup_radio_proc, 224, 207, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
+	{ d_agup_radio_proc, 301, 207, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
+	{ d_agup_radio_proc, 384, 207, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
+	{ d_agup_radio_proc, 161, 223, 143, 16,  2,   23,  0,    0,      1,   0,   "RS sections+Phrases", NULL, NULL },
+	{ d_agup_radio_proc, 301, 223,  60, 16,  2,   23,  0,    0,      1,   0,   "Tones",               NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
 	{ d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
 	{ d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -146,35 +146,38 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  123, 116, 16,  2,   23,  0,    0,      1,   0,   "Hide info panel",NULL, NULL },
 	{ d_agup_check_proc, 150, 123, 148, 16,  2,   23,  0,    0,      1,   0,   "Paste erases overlap",NULL, NULL },
 	{ d_agup_check_proc, 306, 123, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
-	{ d_agup_check_proc, 16,  282, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
+	{ d_agup_check_proc, 16,  303, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
 	{ d_agup_text_proc,  16,  144, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,170,144,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
-	{ d_agup_text_proc,  248, 144, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
-	{ eof_verified_edit_proc,392,144,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
-	{ d_agup_check_proc, 248, 314, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
-	{ d_agup_check_proc, 248, 234, 156, 16,  2,   23,  0,    0,      1,   0,   "dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  298, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-	{ d_agup_list_proc,  16,  315, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
-	{ d_agup_text_proc,  150, 315, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-	{ d_agup_list_proc,  129, 330, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
-	{ d_agup_check_proc, 248, 165, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
-	{ d_agup_check_proc, 248, 250, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
-	{ d_agup_check_proc, 248, 266, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
-	{ d_agup_check_proc, 248, 282, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
-	{ d_agup_check_proc, 16,  250, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
-	{ d_agup_check_proc, 16,  266, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
-	{ d_agup_check_proc, 16,  234, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
-	{ d_agup_check_proc, 248, 298, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
-	{ d_agup_text_proc,  16,  165, 200, 12,  0,   0,   0,    0,      0,   0,   "Chord density threshold (ms):",NULL,NULL },
-	{ eof_verified_edit_proc,204,165,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
-	{ d_agup_check_proc, 16,  218, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
-	{ d_agup_check_proc, 248, 330, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
-	{ d_agup_check_proc, 248, 346, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
-	{ d_agup_check_proc, 248, 362, 184, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust sections/FHPs",NULL, NULL },
-	{ d_agup_check_proc, 248, 378, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
-	{ d_agup_check_proc, 248, 394, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
-	{ d_agup_check_proc, 248, 410, 230, 16,  2,   23,  0,    0,      1,   0,   "GHL conversion swaps B/W gems",NULL, NULL },
-	{ d_agup_check_proc, 248, 426, 230, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
+	{ d_agup_text_proc,  16,  165, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
+	{ eof_verified_edit_proc,160,165,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
+	{ d_agup_check_proc, 248, 335, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+	{ d_agup_check_proc, 248, 255, 156, 16,  2,   23,  0,    0,      1,   0,   "dB style seek controls",NULL, NULL },
+	{ d_agup_text_proc,  24,  319, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_list_proc,  16,  336, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
+	{ d_agup_text_proc,  150, 336, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+	{ d_agup_list_proc,  129, 351, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
+	{ d_agup_check_proc, 248, 186, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
+	{ d_agup_check_proc, 248, 271, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
+	{ d_agup_check_proc, 248, 287, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
+	{ d_agup_check_proc, 248, 303, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
+	{ d_agup_check_proc, 16,  271, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
+	{ d_agup_check_proc, 16,  287, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+	{ d_agup_check_proc, 16,  255, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
+	{ d_agup_check_proc, 248, 319, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
+	{ d_agup_text_proc,  16,  186, 200, 12,  0,   0,   0,    0,      0,   0,   "Chord density threshold (ms):",NULL,NULL },
+	{ eof_verified_edit_proc,204,186,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
+	{ d_agup_check_proc, 16,  239, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
+	{ d_agup_check_proc, 248, 351, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
+	{ d_agup_check_proc, 248, 367, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
+	{ d_agup_check_proc, 248, 383, 184, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust sections/FHPs",NULL, NULL },
+	{ d_agup_check_proc, 248, 399, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
+	{ d_agup_check_proc, 248, 415, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
+	{ d_agup_check_proc, 248, 431, 230, 16,  2,   23,  0,    0,      1,   0,   "GHL conversion swaps B/W gems",NULL, NULL },
+	{ d_agup_check_proc, 248, 447, 230, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
+	{ d_agup_radio_proc, 200, 144, 40,  16,  2,   23,  0,    0,      2,   0,   "ms",          NULL, NULL },
+	{ d_agup_radio_proc, 240, 144, 92,  16,  2,   23,  0,    0,      2,   0,   "1/# measure", NULL, NULL },
+	{ d_agup_radio_proc, 332, 144, 68,  16,  2,   23,  0,    0,      2,   0,   "1/# beat",    NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1243,6 +1246,19 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[49].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;	//Fingering checks include mutes
 	eof_preferences_dialog[50].flags = eof_ghl_conversion_swaps_bw_gems ? D_SELECTED : 0;	//GHL conversion swaps B/W gems
 	eof_preferences_dialog[51].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;		//2D render RS piano roll
+	eof_preferences_dialog[52].flags = eof_preferences_dialog[53].flags = eof_preferences_dialog[54].flags = 0;	//Clear the min. note distance radio buttons
+	if(!eof_min_note_distance_intervals)
+	{	//If the min. note distance is ms
+		eof_preferences_dialog[52].flags = D_SELECTED;	//Select the "ms" radio button
+	}
+	else if(eof_min_note_distance_intervals == 1)
+	{
+		eof_preferences_dialog[53].flags = D_SELECTED;	//Select the "1/# measure" radio button
+	}
+	else
+	{
+		eof_preferences_dialog[54].flags = D_SELECTED;	//Select the "1/# beat" radio button
+	}
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1347,8 +1363,8 @@ int eof_menu_file_preferences(void)
 			{
 				eof_chord_density_threshold = 0;
 			}
-			if((original_eof_min_note_distance != eof_min_note_distance) || (original_eof_chord_density_threshold != eof_chord_density_threshold))
-			{	//If the minimum note distance or chord density threshold values were changes
+			if(!eof_min_note_distance_intervals && ((original_eof_min_note_distance != eof_min_note_distance) || (original_eof_chord_density_threshold != eof_chord_density_threshold)))
+			{	//If the minimum note distance or chord density threshold values were changes, and the minimum note distance setting is in ms
 				if(eof_chord_density_threshold < eof_min_note_distance)
 				{	//If EOF is configured to truncate note tails to enforce a distance longer than the chord density threshold
 					allegro_message("Warning:  Configuring the minimum note distance to be longer than the chord density\nthreshold will eliminate chord repeat lines for all chords that aren't close enough to\neach others' start positions.");
@@ -1362,6 +1378,18 @@ int eof_menu_file_preferences(void)
 			eof_fingering_checks_include_mutes = (eof_preferences_dialog[49].flags == D_SELECTED ? 1 : 0);
 			eof_ghl_conversion_swaps_bw_gems = (eof_preferences_dialog[50].flags == D_SELECTED ? 1 : 0);
 			eof_render_2d_rs_piano_roll = (eof_preferences_dialog[51].flags == D_SELECTED ? 1 : 0);
+			if(eof_preferences_dialog[52].flags == D_SELECTED)
+			{	//min. note distance is in ms
+				eof_min_note_distance_intervals = 0;
+			}
+			else if(eof_preferences_dialog[53].flags == D_SELECTED)
+			{	//min. note distance is 1/# measure
+				eof_min_note_distance_intervals = 1;
+			}
+			else
+			{	//min. note distance is 1/# beat
+				eof_min_note_distance_intervals = 2;
+			}
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}//If the user clicked OK
@@ -1406,6 +1434,9 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[49].flags = 0;					//Fingering checks include mutes
 			eof_preferences_dialog[50].flags = 0;					//GHL conversion swaps B/W gems
 			eof_preferences_dialog[51].flags = 0;					//2D render RS piano roll
+			eof_preferences_dialog[52].flags = D_SELECTED;			//min. note distance is in ms
+			eof_preferences_dialog[53].flags = 0;					//min. note distance is 1/# measure
+			eof_preferences_dialog[54].flags = 0;					//min. note distance is 1/# beat
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2867,19 +2898,21 @@ int eof_save_helper_checks(void)
 		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
 		{	//For each note in the track
 			long next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
-			long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2, 1);	//Get the maximum length of this note
+			unsigned effective_note_distance;
+			unsigned long thisnotepos = eof_get_note_pos(eof_song, ctr, ctr2);
 
 			if(next <= 0)
 				continue;	//If this note doesn't have a note that follows, skip it
-			if(eof_get_note_length(eof_song, ctr, ctr2) <= maxlength)
-				continue;	//If this note is not longer than its maximum length, skip it
-			if(eof_get_note_pos(eof_song, ctr, next) - eof_get_note_pos(eof_song, ctr, ctr2) >= eof_min_note_distance)
-				continue;	//If this note and the next are placed too closely to allow enforcing the minimum note distance, skip it
+			effective_note_distance = eof_get_effective_minimum_note_distance(eof_song, ctr, ctr2);
+			if(effective_note_distance == UINT_MAX)
+				continue;	//If the effective minimum note distance for this note couldn't be determined, skip it
+			if(eof_get_note_pos(eof_song, ctr, next) - thisnotepos >= effective_note_distance)
+				continue;	//If this note and the next are placed far away enough to allow enforcing the minimum note distance, skip it
 
 			eof_clear_input();
 			if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opted to seek to the first offending note (only prompt once per call)
-				eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), eof_get_note_pos(eof_song, ctr, ctr2));
+				eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), thisnotepos);
 				return 1;	//Return cancellation
 			}
 			note_distance_warned = 1;

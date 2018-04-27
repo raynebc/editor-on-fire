@@ -178,7 +178,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			for(i = 0; i < eof_song->beats - 1; i++)
 			{
 				if((sp->pos >= eof_song->beat[i]->pos) && (sp->pos < eof_song->beat[i + 1]->pos))
-				{
+				{	//If this is the beat the target position is in
 					sp->beat = i;
 					break;
 				}
@@ -337,6 +337,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 			/* find the snap positions */
 			snaplength = sp->measure_length / (double)interval;
+			sp->snap_length = snaplength;
 			sp->grid_pos[0] = eof_song->beat[sp->measure_beat]->fpos;	//Set first grid position
 			for(i = 1; i < interval; i++)
 			{
@@ -383,16 +384,17 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		{	//If performing snap by beat logic
 			//Find the snap positions
 			snaplength = sp->beat_length / (double)interval;
+			sp->snap_length = snaplength;
 			sp->grid_pos[0] = eof_song->beat[sp->beat]->fpos;	//Set the first grid position
 			for(i = 1; i < interval; i++)
-			{
+			{	//For each of the remaining intervals
 				sp->grid_pos[i] = eof_song->beat[sp->beat]->fpos + (snaplength * (double)i);	//Set grid snap positions
 			}
 			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos;	//Record the position of the last grid snap, which is the next beat
 
 			//see which one we snap to
 			for(i = 0; i < interval + 1; i++)
-			{
+			{	//Calculate the distance between the grid snap and the target position
 				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
 			}
 			sp->previous_snap = sp->grid_pos[0] + 0.5;		//Initialize these values
@@ -542,7 +544,7 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 
 unsigned long eof_next_grid_snap(unsigned long pos)
 {
-	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
 	unsigned long beat;
 
 	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
@@ -626,7 +628,7 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 
 int eof_is_grid_snap_position(unsigned long pos)
 {
-	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
 	unsigned long beat;
 
 	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
@@ -646,7 +648,7 @@ int eof_is_grid_snap_position(unsigned long pos)
 
 int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapvalue, unsigned char *gridsnapnum, unsigned long *closestgridpos)
 {
-	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
 	unsigned long beatnum;
 	int retval = 0, ctr, lastsnap = EOF_SNAP_CUSTOM;
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
@@ -720,7 +722,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapv
 
 int eof_find_grid_snap_position(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
 {
-	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
 
 	if(!eof_song || (beat >= eof_song->beats) || !gridpos)
@@ -737,6 +739,36 @@ int eof_find_grid_snap_position(unsigned long beat, char gridsnapvalue, unsigned
 
 	*gridpos = temp.grid_pos[gridsnapnum] + 0.5;	//Store the grid snap's real time position, rounded up to the nearest millisecond
 	return 1;	//Return success
+}
+
+unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int intervals, int per_measure)
+{
+	char eof_snap_mode_bak, eof_custom_snap_measure_bak;
+	int eof_snap_interval_bak;
+
+	//Back up current grid snap settings
+	eof_snap_mode_bak = eof_snap_mode;
+	eof_custom_snap_measure_bak = eof_custom_snap_measure;
+	eof_snap_interval_bak = eof_snap_interval;
+
+	//Configure grid snap settings
+	eof_snap_mode = EOF_SNAP_CUSTOM;
+	eof_custom_snap_measure = per_measure;	//Selects either per-beat or per-measure grid snap
+	eof_snap_interval = intervals;	//The number of intervals per beat/measure
+
+	eof_snap_logic(&eof_tail_snap, pos);	//Find note gap size
+
+	//Restore original grid snap settings
+	eof_snap_mode = eof_snap_mode_bak;
+	eof_custom_snap_measure = eof_custom_snap_measure_bak;
+	eof_snap_interval = eof_snap_interval_bak;
+
+	if(eof_tail_snap.snap_length > pos)
+	{	//If the position one note gap before the specified position is not valid
+		return ULONG_MAX;	//Position not found
+	}
+
+	return ((double)pos - eof_tail_snap.snap_length) + 0.5;	//Round to nearest ms
 }
 
 void eof_read_editor_keys(void)
@@ -4565,7 +4597,7 @@ void eof_vocal_editor_logic(void)
 
 	unsigned long i, notepos;
 	unsigned long tracknum;
-	EOF_SNAP_DATA drag_snap = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0}; // help with dragging across snap locations
+	EOF_SNAP_DATA drag_snap = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0}; // help with dragging across snap locations
 	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(!eof_song_loaded)

@@ -2609,7 +2609,7 @@ int eof_menu_edit_select_by_note_length_logic(int (*check)(long, long), int func
 
 		if(!threshold)
 		{	//The threshold is one grid snap length
-			EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+			EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
 
 			eof_snap_logic(&temp, eof_get_note_pos(eof_song, eof_selected_track, i));	//Calculate grid snap data about the note's position
 			eof_snap_length_logic(&temp);
@@ -2753,7 +2753,7 @@ int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function)
 		}
 		else
 		{	//The threshold is one grid snap length
-			EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, {0.0}, {0.0}, 0, 0, 0, 0};
+			EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
 
 			eof_snap_logic(&temp, notepos);	//Calculate grid snap data about the note's position
 			eof_snap_length_logic(&temp);
