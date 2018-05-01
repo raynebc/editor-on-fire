@@ -816,7 +816,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 				(void) eof_is_any_grid_snap_position(new_pos, NULL, NULL, NULL, &closestpos);	//Get the grid snap position nearest the destination position
 				if(closestpos != new_pos)
 				{	//If they aren't the same position
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting lyric paste position from %lums to %lums", new_pos, closestpos);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting lyric paste position from %ldms to %lums", new_pos, closestpos);
 					eof_log(eof_log_string, 1);
 					new_pos = closestpos;	//Update the destination timestamp for the note;
 				}

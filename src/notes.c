@@ -17,13 +17,48 @@
 #include "memwatch.h"
 #endif
 
-int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned long dest_buffer_size, EOF_NOTES_PANEL_CONTROLS *controls)
+EOF_TEXT_PANEL *eof_create_text_panel(char *filename)
+{
+	EOF_TEXT_PANEL *panel;
+
+	if(!filename)
+		return NULL;	//Invalid parameter
+
+	panel = malloc(sizeof(EOF_TEXT_PANEL));
+	if(!panel)
+		return NULL;	//Couldn't allocate memory
+
+	(void) ustrncpy(panel->filename, filename, sizeof(panel->filename) - 1);	//Copy the input file name
+	panel->text = eof_buffer_file(filename, 1);	//Buffer the specified file into memory, appending a NULL terminator
+	if(panel->text == NULL)
+	{	//Could not buffer file
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error loading:  Cannot open input text file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+///		allegro_message(eof_log_string);
+		free(panel);
+		return NULL;
+	}
+
+	return panel;
+}
+
+void eof_destroy_text_panel(EOF_TEXT_PANEL *panel)
+{
+	if(panel)
+	{
+		if(panel->text)
+			free(panel->text);
+		free(panel);
+	}
+}
+
+int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel)
 {
 	unsigned long src_index = 0, dest_index = 0, macro_index;
 	char src_char, macro[2048], expanded_macro[2048];
 	int macro_status;
 
-	if(!src_buffer || !dest_buffer || (dest_buffer_size < 1) || !controls)
+	if(!src_buffer || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
 
 	dest_buffer[0] = '\0';		//Empty the destination buffer
@@ -48,30 +83,30 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 				if(src_char == '%')
 				{	//The closing percent sign of the macro was reached
 					macro[macro_index] = '\0';	//Terminate the macro string
-					macro_status = eof_expand_notes_window_macro(macro, expanded_macro, 2048, controls);	//Convert the macro to static text
+					macro_status = eof_expand_notes_window_macro(macro, expanded_macro, 2048, panel);	//Convert the macro to static text
 
 					if(macro_status == 1)
 					{	//Otherwise if the macro was successfully converted to static text
 						strncat(dest_buffer, expanded_macro, dest_buffer_size - strlen(dest_buffer) - 1);	//Append the converted macro text to the destination buffer
 						dest_index = strlen(dest_buffer);	//Update the destination buffer index
 
-						if(controls->flush)
+						if(panel->flush)
 						{	//If the %FLUSH% macro was just parsed, print the current contents of the output buffer and update the print coordinates
-							textout_ex(controls->screen, font, dest_buffer, controls->xpos, controls->ypos, controls->color, controls->bgcolor);	//Print this line to the screen
-							controls->xpos += text_length(font, dest_buffer);	//Increase the print x coordinate by the number of pixels the output buffer took to render
-							controls->flush = 0;	//Reset this condition
+							textout_ex(panel->window->screen, font, dest_buffer, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
+							panel->xpos += text_length(font, dest_buffer);	//Increase the print x coordinate by the number of pixels the output buffer took to render
+							panel->flush = 0;	//Reset this condition
 							if(dest_buffer[0] != '\0')
 							{	//If the output buffer wasn't empty
-								controls->contentprinted = 1;	//Track this in case no other content for the line is printed
+								panel->contentprinted = 1;	//Track this in case no other content for the line is printed
 							}
-							if(controls->symbol)
+							if(panel->symbol)
 							{	//If a symbol font character is to be printed
-								dest_buffer[0] = controls->symbol;
+								dest_buffer[0] = panel->symbol;
 								dest_buffer[1] = '\0';	//Build a string containing just that character
-								textout_ex(controls->screen, eof_symbol_font, dest_buffer, controls->xpos, controls->ypos, controls->color, controls->bgcolor);	//Print this symbol glyph to the screen
-								controls->xpos += text_length(eof_symbol_font, dest_buffer);	//Increase the print x coordinate by the number of pixels the glyph took to render
-								controls->symbol = 0;
-								controls->contentprinted = 1;
+								textout_ex(panel->window->screen, eof_symbol_font, dest_buffer, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this symbol glyph to the screen
+								panel->xpos += text_length(eof_symbol_font, dest_buffer);	//Increase the print x coordinate by the number of pixels the glyph took to render
+								panel->symbol = 0;
+								panel->contentprinted = 1;
 							}
 							dest_buffer[0] = '\0';	//Empty the destination buffer
 							dest_index = 0;
@@ -270,11 +305,11 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 	return 1;
 }
 
-int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_NOTES_PANEL_CONTROLS *controls)
+int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel)
 {
 	unsigned long tracknum;
 
-	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !controls)
+	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
 	if(!eof_song)
 		return 0;	//No chart loaded
@@ -538,6 +573,42 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//If the program window height is 480
+	if(!ustricmp(macro, "IF_WINDOW_HEIGHT_IS_480"))
+	{
+		if(eof_screen_height == 480)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the program window height is 600
+	if(!ustricmp(macro, "IF_WINDOW_HEIGHT_IS_600"))
+	{
+		if(eof_screen_height == 600)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the program window height is 768
+	if(!ustricmp(macro, "IF_WINDOW_HEIGHT_IS_768"))
+	{
+		if(eof_screen_height == 768)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -551,7 +622,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "EMPTY"))
 	{
 		dest_buffer[0] = '\0';
-		controls->allowempty = 1;	//Signal this to the calling function
+		panel->allowempty = 1;	//Signal this to the calling function
+		return 1;
+	}
+
+	//Move the text output up one pixel
+	if(!ustricmp(macro, "MOVE_UP_ONE_PIXEL"))
+	{
+		dest_buffer[0] = '\0';
+		if(panel->ypos)
+			panel->ypos--;	//Update the y coordinate for Notes panel printing
 		return 1;
 	}
 
@@ -559,7 +639,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "MOVE_DOWN_ONE_PIXEL"))
 	{
 		dest_buffer[0] = '\0';
-		controls->ypos++;	//Update the y coordinate for Notes panel printing
+		panel->ypos++;	//Update the y coordinate for Notes panel printing
 		return 1;
 	}
 
@@ -567,7 +647,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "FLUSH"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
+		panel->flush = 1;
 		return 1;
 	}
 
@@ -580,7 +660,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_read_macro_color(color_string, &newcolor))
 		{	//If the color was successfully parsed
 			dest_buffer[0] = '\0';
-			controls->color = newcolor;
+			panel->color = newcolor;
 			return 1;
 		}
 	}
@@ -589,7 +669,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(strcasestr_spec(macro, "TEXT_BACKGROUND_COLOR_NONE"))
 	{
 		dest_buffer[0] = '\0';
-		controls->bgcolor = -1;
+		panel->bgcolor = -1;
 		return 1;
 	}
 
@@ -602,7 +682,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_read_macro_color(color_string, &newcolor))
 		{	//If the color was successfully parsed
 			dest_buffer[0] = '\0';
-			controls->bgcolor = newcolor;
+			panel->bgcolor = newcolor;
 			return 1;
 		}
 	}
@@ -613,8 +693,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "BEND"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'a';	//In the symbols font, a is the bend character
+		panel->flush = 1;
+		panel->symbol = 'a';	//In the symbols font, a is the bend character
 		return 1;
 	}
 
@@ -622,8 +702,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "HARMONIC"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'b';	//In the symbols font, b is the harmonic character
+		panel->flush = 1;
+		panel->symbol = 'b';	//In the symbols font, b is the harmonic character
 		return 1;
 	}
 
@@ -631,8 +711,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DOWNSTRUM"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'c';	//In the symbols font, c is the down strum character
+		panel->flush = 1;
+		panel->symbol = 'c';	//In the symbols font, c is the down strum character
 		return 1;
 	}
 
@@ -640,8 +720,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "UPSTRUM"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'd';	//In the symbols font, d is the up strum character
+		panel->flush = 1;
+		panel->symbol = 'd';	//In the symbols font, d is the up strum character
 		return 1;
 	}
 
@@ -649,8 +729,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "TREMOLO"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'e';	//In the symbols font, e is the tremolo character
+		panel->flush = 1;
+		panel->symbol = 'e';	//In the symbols font, e is the tremolo character
 		return 1;
 	}
 
@@ -658,8 +738,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "PHARMONIC"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'f';	//In the symbols font, f is the pinch harmonic character
+		panel->flush = 1;
+		panel->symbol = 'f';	//In the symbols font, f is the pinch harmonic character
 		return 1;
 	}
 
@@ -667,8 +747,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "LINKNEXT"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'g';	//In the symbols font, f is the linknext indicator
+		panel->flush = 1;
+		panel->symbol = 'g';	//In the symbols font, f is the linknext indicator
 		return 1;
 	}
 
@@ -676,8 +756,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "USLIDEUP"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'i';	//In the symbols font, i is the unpitched slide up indicator
+		panel->flush = 1;
+		panel->symbol = 'i';	//In the symbols font, i is the unpitched slide up indicator
 		return 1;
 	}
 
@@ -685,8 +765,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "USLIDEDOWN"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'j';	//In the symbols font, j is the unpitched slide down indicator
+		panel->flush = 1;
+		panel->symbol = 'j';	//In the symbols font, j is the unpitched slide down indicator
 		return 1;
 	}
 
@@ -694,8 +774,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "STOP"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'k';	//In the symbols font, k is the stop status indicator
+		panel->flush = 1;
+		panel->symbol = 'k';	//In the symbols font, k is the stop status indicator
 		return 1;
 	}
 
@@ -703,8 +783,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "PREBEND"))
 	{
 		dest_buffer[0] = '\0';
-		controls->flush = 1;
-		controls->symbol = 'l';	//In the symbols font, l is the pre-bend character
+		panel->flush = 1;
+		panel->symbol = 'l';	//In the symbols font, l is the pre-bend character
 		return 1;
 	}
 
@@ -887,7 +967,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "SELECTED_NOTE_LENGTH"))
 	{
 		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
-			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
+			snprintf(dest_buffer, dest_buffer_size, "%ld", eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
@@ -1319,6 +1399,27 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The current program window height
+	if(!ustricmp(macro, "WINDOW_HEIGHT"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%lu", eof_screen_height);
+		return 1;
+	}
+
+	//The current program window width
+	if(!ustricmp(macro, "WINDOW_WIDTH"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%lu", eof_screen_width);
+		return 1;
+	}
+
+	//The relative file name of the panel's text file
+	if(!ustricmp(macro, "TEXT_FILE"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", get_filename(panel->filename));
+		return 1;
+	}
+
 	return 0;	//Macro not supported
 }
 
@@ -1371,4 +1472,89 @@ int eof_read_macro_color(char *string, int *color)
 		return 0;	//Not a valid color
 
 	return 1;
+}
+
+void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
+{
+	char buffer[2048], buffer2[2048];
+	unsigned long src_index, dst_index;
+	int retval;
+
+	if(!eof_song_loaded || !eof_song)	//If a project isn't loaded
+		return;			//Return immediately
+	if(!panel || !panel->window || !panel->text)	//If the provided panel isn't valid
+		return;			//Invalid parameter
+
+	if(opaque)
+		clear_to_color(panel->window->screen, eof_color_gray);
+
+	//Initialize the panel array
+	panel->ypos = 0;
+	panel->xpos = 2;
+	panel->color = eof_color_white;
+	panel->bgcolor = -1;	//Transparent background for text
+	panel->allowempty = 0;
+	panel->contentprinted = 0;
+	panel->symbol = 0;
+
+	//Parse the contents of the buffered file one line at a time and print each to the screen
+	src_index = dst_index = 0;	//Reset these indexes
+	while(panel->text[src_index] != '\0')
+	{	//Until the end of the text file is reached
+		char thischar = panel->text[src_index++];	//Read one character from the source buffer
+
+		if((thischar == '\r') && (panel->text[src_index] == '\n'))
+		{	//Carriage return and line feed characters represent a new line
+			buffer[dst_index] = '\0';	//NULL terminate the buffer
+			retval = eof_expand_notes_window_text(buffer, buffer2, 2048, panel);
+			if(!retval)
+			{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
+				eof_enable_notes_panel = 0;
+				return;
+			}
+			if(panel->allowempty || panel->contentprinted || (buffer2[0] != '\0'))
+			{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
+				//If content was printed earlier in the line and flushed to the Notes panel, allow the coordinates to reset to the next line
+				textout_ex(panel->window->screen, font, buffer2, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
+				panel->allowempty = 0;	//Reset this condition, it has to be enabled per-line
+				panel->xpos = 2;			//Reset the x coordinate to the beginning of the line
+				panel->ypos +=12;
+				panel->contentprinted = 0;
+			}
+			dst_index = 0;	//Reset the destination buffer index
+			src_index++;	//Seek past the line feed character in the source buffer
+		}
+		else
+		{
+			if(dst_index >= 1023)
+				return;	//Don't support lines longer than 1023 characters, plus one character for the NULL terminator
+			buffer[dst_index++] = thischar;	//Append the character to the destination buffer
+		}
+	}
+
+	//Print any remaining content in the output buffer
+	if(dst_index && (dst_index < 1023))
+	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
+		buffer[dst_index] = '\0';	//NULL terminate the buffer
+		retval = eof_expand_notes_window_text(buffer, buffer2, 2048, panel);
+		if(!retval)
+		{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
+			eof_enable_notes_panel = 0;
+			return;
+		}
+		if((retval == 2) || (buffer2[0] != '\0'))
+		{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
+			textout_ex(panel->window->screen, font, buffer2, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
+			panel->ypos +=12;
+		}
+	}
+
+	//Draw a border around the edge of the notes panel
+	if(opaque)
+	{	//But only if this panel wasn't meant to obscure whatever it's drawn on top of
+		rect(panel->window->screen, 0, 0, panel->window->w - 1, panel->window->h - 1, eof_color_dark_silver);
+		rect(panel->window->screen, 1, 1, panel->window->w - 2, panel->window->h - 2, eof_color_black);
+		hline(panel->window->screen, 1, panel->window->h - 2, panel->window->w - 2, eof_color_white);
+		vline(panel->window->screen, panel->window->w - 2, 1, panel->window->h - 2, eof_color_white);
+	}
 }

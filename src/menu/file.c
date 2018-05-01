@@ -1194,7 +1194,7 @@ int eof_menu_file_settings(void)
 
 int eof_menu_file_preferences(void)
 {
-	int retval, original_input_mode;
+	int retval, original_input_mode, original_eof_disable_info_panel = eof_disable_info_panel;
 	unsigned original_eof_min_note_distance = eof_min_note_distance, original_eof_chord_density_threshold = eof_chord_density_threshold;
 
 	if(eof_song_loaded)
@@ -1447,8 +1447,13 @@ int eof_menu_file_preferences(void)
 	{	//If the input mode was changed
 		eof_seek_selection_start = eof_seek_selection_end = 0;	//Clear the seek selection
 	}
+	if(original_eof_disable_info_panel != eof_disable_info_panel)
+	{	//If the hiding of the information panel was changed
+		eof_disable_info_panel = 1 - eof_disable_info_panel;	//Toggle this because the function call below will toggle it again
+		eof_display_info_panel();	//Create/destroy the information panel instance accordingly
+	}
 	(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient
-	eof_rebuild_notes_panel();	//Recreate the notes panel
+	eof_rebuild_notes_window();	//Recreate the notes panel window
 	return 1;
 }
 
@@ -3548,8 +3553,8 @@ int eof_save_helper_checks(void)
 
 				startbeat = eof_get_beat(eof_song, start);	//Find the beat in which this note starts
 				stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
-				if(eof_beat_num_valid(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
-				{	//If the note extends up to and ends on the beat
+				if((stopbeat > 0) && eof_beat_num_valid(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
+				{	//If the note extends up to and ends on the beat (check stopbeat for equality to zero to resolve a false positive in Coverity)
 					stopbeat--;	//Interpret it as ending at the previous beat instead of surpassing it
 				}
 				if(!eof_beat_num_valid(eof_song, startbeat) || !eof_beat_num_valid(eof_song, stopbeat) || (startbeat == stopbeat))
@@ -5645,7 +5650,7 @@ int eof_menu_file_export_guitar_pro(void)
 	return 1;
 }
 
-void eof_rebuild_notes_panel(void)
+void eof_rebuild_notes_window(void)
 {
 	unsigned long available_width = eof_screen_width;	//Allocate all width that isn't taken up by the info panel or 3D preview to the notes panel
 
@@ -5676,10 +5681,10 @@ int eof_display_notes_panel(void)
 {
 	eof_enable_notes_panel = 1 - eof_enable_notes_panel;	//Toggle the notes panel on/off
 
-	if(eof_notes_text)
-	{	//If the notes panel text file was already loaded into memory
-		free(eof_notes_text);
-		eof_notes_text = NULL;
+	if(eof_notes_panel)
+	{	//If a notes panel instance already exists
+		eof_destroy_text_panel(eof_notes_panel);
+		eof_notes_panel = NULL;
 	}
 
 	if(eof_enable_notes_panel)
@@ -5688,7 +5693,7 @@ int eof_display_notes_panel(void)
 
 		if(eof_enable_notes_panel)
 		{	//If the program window is wide enough
-			eof_rebuild_notes_panel();
+			eof_rebuild_notes_window();
 		}
 		if(eof_validate_temp_folder())
 		{	//Ensure the correct working directory and presence of the temporary folder
@@ -5698,13 +5703,14 @@ int eof_display_notes_panel(void)
 
 			return 1;
 		}
-		eof_notes_text = eof_buffer_file("notes.txt", 1);	//Buffer the notes panel text file into memory, appending a NULL terminator
-		if(eof_notes_text == NULL)
+		eof_notes_panel = eof_create_text_panel("notes.txt");	//Reload the Notes panel
+		if(eof_notes_panel == NULL)
 		{	//Could not buffer file
-			allegro_message("Error reading notes.txt");
-			eof_log_cwd();
+			allegro_message("Error opening Notes panel file");
 			eof_enable_notes_panel = 0;
+			return 1;
 		}
+		eof_notes_panel->window = eof_window_notes;	//Associate the notes window with this panel instance
 	}
 
 	return 1;

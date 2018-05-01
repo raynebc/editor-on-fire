@@ -8842,7 +8842,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, eof_filename, "Import GP format lyric text file", eof_filter_text_files);
+	returnedfn = ncd_file_select(0, eof_filename, "Import GP format lyric text file", eof_filter_gp_lyric_text_files);
 	eof_clear_input();
 	if(!returnedfn)
 		return 0;	//User didn't select a file

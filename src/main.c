@@ -77,7 +77,7 @@ NCDFS_FILTER_LIST * eof_filter_lyrics_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_dB_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gh_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gp_files = NULL;
-NCDFS_FILTER_LIST * eof_filter_text_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_gp_lyric_text_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_rs_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_bf_files = NULL;
@@ -129,7 +129,8 @@ int         eof_disable_3d_rendering = 0;
 int         eof_disable_2d_rendering = 0;
 int         eof_disable_info_panel = 0;
 int         eof_enable_notes_panel = 0;
-char *      eof_notes_text = NULL;				//A pointer to address the contents of the notes panel text file buffered to memory
+EOF_TEXT_PANEL *eof_notes_panel = NULL;			//The text panel instance defining the Notes panel
+EOF_TEXT_PANEL *eof_info_panel = NULL;			//The text panel instance defining the Information panel
 int         eof_paste_erase_overlap = 0;
 int         eof_write_fof_files = 1;			//If nonzero, files are written during save that are used for Frets on Fire, Guitar Hero and Phase Shift authoring
 int         eof_write_rb_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rock Band customs
@@ -2589,19 +2590,7 @@ void eof_render_extended_ascii_fonts(void)
 
 void eof_render_info_window(void)
 {
-//	eof_log("eof_render_info_window() entered");
-
-	unsigned long i;
-	int pos;
-	int lpos, npos, ypos;
-	unsigned long tracknum;
-	int xcoord;
-	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
-	char temp[1024] = {0};
-	unsigned long notepos;
-	char fret_string[30] = {0}, catalog_string[30] = {0};
-	char difficulty1[20] = {0}, difficulty2[50] = {0};
-	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
+	int opacity = 1;			//Unless full screen 3D preview is in effect, the Info panel will be opaque
 
 	if(eof_disable_info_panel)	//If the user disabled the info panel's rendering
 		return;					//Return immediately without rendering anything
@@ -2609,10 +2598,10 @@ void eof_render_info_window(void)
 	if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the 3D preview
 		return;							//Return immediately
 
-	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	if(eof_full_screen_3d)
 	{	//If full screen 3D view is in effect
 		eof_window_info = eof_window_note_upper_left;	//Render info panel at the top left of EOF's program window
+		opacity = 0;
 	}
 	else
 	{
@@ -2620,6 +2609,40 @@ void eof_render_info_window(void)
 		clear_to_color(eof_window_info->screen, eof_color_gray);
 	}
 
+	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
+	{	//If show catalog is selected and there's at least one entry
+		eof_render_fret_catalog_window();	//Render the fret catalog
+		return;
+	}
+
+	if(!eof_info_panel)
+	{	//If the info panel isn't properly initialized
+		eof_disable_info_panel = 1;		//Properly disable the panel
+		return;
+	}
+
+	eof_info_panel->window = eof_window_info;
+	eof_render_text_panel(eof_info_panel, opacity);
+}
+
+void eof_render_fret_catalog_window(void)
+{
+	unsigned long i;
+	int pos;
+	int lpos, npos;
+	unsigned long tracknum;
+	int xcoord;
+	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
+	char temp[1024] = {0};
+	unsigned long notepos;
+
+	if(eof_disable_info_panel)	//If the user disabled the info panel's rendering
+		return;					//Return immediately without rendering anything
+
+	if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the info panel
+		return;							//Return immediately
+
+	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
 	{//If show catalog is selected and there's at least one entry
 		eof_set_2D_lane_positions(eof_selected_track);	//Update the ychart[] array
@@ -2652,7 +2675,7 @@ void eof_render_info_window(void)
 			draw_sprite(eof_window_info->screen, eof_image[EOF_IMAGE_CCONTROLS_0 + eof_cselected_control], 0, 40);
 		}
 
-		/* render catalog entry */
+		// render catalog entry
 		if(eof_song->catalog->entries > 0)
 		{
 			char emptystring[2] = "", *difficulty_name = emptystring;	//The empty string will be 2 characters, so that the first can (used to define populated status of each track) be skipped
@@ -2668,9 +2691,9 @@ void eof_render_info_window(void)
 			{
 				lpos = 20 - (pos - 140);
 			}
-			/* draw fretboard area */
+			// draw fretboard area
 			rectfill(eof_window_info->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_info->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
-			/* draw fretboard area */
+			// draw fretboard area
 			for(i = 0; i < numlanes; i++)
 			{
 				if(!i || (i + 1 >= numlanes))
@@ -2684,7 +2707,7 @@ void eof_render_info_window(void)
 			}
 			vline(eof_window_info->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
 
-			/* render information about the entry */
+			// render information about the entry
 			if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format != EOF_VOCAL_TRACK_FORMAT)
 			{	//If the catalog entry is not from a vocal track, determine the name of the active difficulty
 				if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
@@ -2702,7 +2725,7 @@ void eof_render_info_window(void)
 				}
 			}
 			textprintf_ex(eof_window_info->screen, font, 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 10, eof_color_white, -1, "%s , %s , %lums - %lums", eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name, difficulty_name + 1, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
-			/* draw beat lines */
+			// draw beat lines
 			if(pos < 140)
 			{
 				npos = 20;
@@ -2725,7 +2748,7 @@ void eof_render_info_window(void)
 			}
 			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
 			{	//If drawing a vocal catalog entry
-				/* clear lyric text area */
+				// clear lyric text area
 				rectfill(eof_window_info->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_info->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
 				hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 
@@ -2758,7 +2781,7 @@ void eof_render_info_window(void)
 					}
 				}
 			}//If drawing a non vocal catalog entry
-			/* draw the current position */
+			// draw the current position
 			if(pos > zoom)
 			{
 				if(pos < 140)
@@ -2772,367 +2795,51 @@ void eof_render_info_window(void)
 			}
 		}//if(eof_song->catalog->entries > 0)
 	}//If show catalog is selected
-	else
-	{	//If show catalog is disabled
-		int ism;
-		int iss;
-		int isms = ((eof_music_pos - eof_av_delay) % 1000);	//Get the number of milliseconds in the seek position, which is used the same regardless of which timing format is selected by the user
-		unsigned long itn = 0;
-		int isn = eof_count_selected_notes(&itn);
+}
 
-		tracknum = eof_song->track[eof_selected_track]->tracknum;	//Information about the active track is going to be displayed
-		textprintf_ex(eof_window_info->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
-		textprintf_ex(eof_window_info->screen, font, 2, 6, eof_color_white, -1, "----------------------------");
-		ypos = 16;
+void eof_display_info_panel(void)
+{
+	eof_disable_info_panel = 1 - eof_disable_info_panel;	//Toggle the info panel on/off
 
-		//Display the difficulties associated with the active track
-		if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
-		{	//If the active track has a defined difficulty
-			(void) snprintf(difficulty1, sizeof(difficulty1) - 1, "%u", eof_song->track[eof_selected_track]->difficulty);
-		}
-		else
-		{
-			(void) snprintf(difficulty1, sizeof(difficulty1) - 1, "(Undefined)");
-		}
-		difficulty2[0] = '\0';
-		if(eof_selected_track == EOF_TRACK_DRUM)
-		{	//Write the difficulty string to display for pro drums
-			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
-			{	//If the pro drum difficulty is defined
-				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Pro: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);	//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
-			}
-			else
-			{
-				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Pro: Undefined)");
-			}
-		}
-		else if(eof_selected_track == EOF_TRACK_VOCALS)
-		{	//Write the difficulty string to display for vocal harmony
-			if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
-			{	//If the harmony difficulty is defined
-				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
-			}
-			else
-			{
-				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Harmony: Undefined)");
-			}
-		}
-		else
-		{	//Otherwise truncate the extra difficulty strings
-			difficulty2[0] = '\0';
-		}
-		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Track difficulty: %s %s", difficulty1, difficulty2);
-		ypos += 12;
-
-		if(!eof_disable_sound_processing)
-		{	//If the user didn't disable sound processing, display the sound cue statuses
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Tones: %s mTones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off", eof_mix_midi_tones_enabled ? "On" : "Off");
-		}
-		else
-		{	//Otherwise indicate they are disabled
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "(Sound cues are currently disabled)");
-		}
-		ypos += 12;
-		if(eof_beat_num_valid(eof_song, eof_hover_beat))
-		{
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f : Hover = %ld", eof_selected_beat, 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
-		}
-		else
-		{
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f", eof_selected_beat, 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
-		}
-///Keep for debugging
-//#ifdef EOF_DEBUG
-//		ypos += 12;
-//		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "#Beat pos = %lu : fpos = %f", eof_song->beat[eof_selected_beat]->pos, eof_song->beat[eof_selected_beat]->fpos);
-//#endif
-		ypos += 12;
-		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Key : %s maj (%s min) : Fpos = %f", eof_get_key_signature(eof_song, eof_selected_beat, 1, 0), eof_get_key_signature(eof_song, eof_selected_beat, 1, 1), eof_song->beat[eof_selected_beat]->fpos);
-		ypos += 12;
-		if(eof_song->beat[eof_selected_beat]->has_ts)
-		{
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Measure = %ld (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
-		}
-		else
-		{
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Measure = (TS undefined)");
-		}
-		ypos += 12;
-
-		if(eof_vocals_selected)
-		{	//If the vocal track is active
-			if(eof_selection.current < eof_song->vocal_track[tracknum]->lyrics)
-			{
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->length);
-				ypos += 12;
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note, (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != 0) ? eof_get_tone_name(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note) : "none");
-			}
-			else
-			{
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric = None");
-			}
-			ypos += 12;
-			if(eof_hover_note >= 0)
-			{
-				if(eof_seek_hover_note >= 0)
-				{
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = %d : Seek = %d", eof_hover_note, eof_seek_hover_note);
-				}
-				else
-				{
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = %d : Seek = None", eof_hover_note);
-				}
-			}
-			else
-			{
-				if(eof_seek_hover_note >= 0)
-				{
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = None : Seek = %d", eof_seek_hover_note);
-				}
-				else
-				{
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = None : Seek = None");
-				}
-			}
-		}//If the vocal track is active
-		else
-		{	//If a non vocal track is active
-			if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
-			{	//If a note is selected
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
-///Keep for debugging
-//#ifdef EOF_DEBUG
-//				ypos += 12;
-//				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "#Mask=%d : Flags=%lu : Eflags=%Xx : Tflags=%Xx", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current), eof_get_note_tflags(eof_song, eof_selected_track, eof_selection.current));
-//#endif
-			}
-			else
-			{
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note = None");
-			}
-
-			//Display some pro guitar note specific items like fretting, chord naming, fingering, note pitches included, fret hand position, tone name
-			tracknum = eof_song->track[eof_selected_track]->tracknum;
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//Display information specific to pro guitar tracks
-				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
-				unsigned char position;
-				char fhpstring[25] = {0};
-				unsigned long tone;
-				char tonestring[EOF_SECTION_NAME_LENGTH + 11] = {0};
-
-				if((eof_selection.current < tp->notes) && (eof_selection.track == eof_selected_track))
-				{	//If a note in the active track is selected, display line with its fretting and fingering information
-					char finger_string[30] = {0};
-					char tone_string[30] = {0};
-
-					ypos += 12;
-					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, fret_string))
-					{	//If the note's frets can be represented in string format
-						if(tp->note[eof_selection.current]->name[0] != '\0')
-						{	//If this note was manually given a name, display it in addition to the fretting
-							textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s : %s", fret_string, tp->note[eof_selection.current]->name);
-							eof_enable_chord_cache = 0;	//When a manually-named note is selected, reset this variable so that previous/next chord name cannot be used
-						}
-						else
-						{
-							unsigned long matchcount;
-							char chord_match_string[30] = {0};
-							char chord_tuning_mode[20] = {0};
-
-							matchcount = eof_count_chord_lookup_matches(tp, eof_selected_track, eof_selection.current);
-							if(matchcount)
-							{	//If there's at least one chord lookup match, obtain the user's selected match
-								eof_lookup_chord(tp, eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote, eof_selected_chord_lookup, 1);	//Run a cache-able lookup
-								scale %= 12;	//Ensure this is a value from 0 to 11
-								bassnote %= 12;
-								if(matchcount > 1)
-								{	//If there's more than one match
-									(void) snprintf(chord_match_string, sizeof(chord_match_string) - 1, "(match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
-								}
-								if(tp->ignore_tuning)
-								{	//If this track's tuning is not being reflected in chord names
-									(void) snprintf(chord_tuning_mode, sizeof(chord_tuning_mode) - 1, "(Tuning ignored)");
-								}
-								if(!isslash)
-								{	//If it's a normal chord
-									textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s] %s%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string, chord_tuning_mode);
-								}
-								else
-								{	//If it's a slash chord
-									textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s : [%s%s%s] %s%s", fret_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string, chord_tuning_mode);
-								}
-							}
-							else
-							{	//Otherwise just display the fretting
-								textout_ex(eof_window_info->screen, font, fret_string, 2, ypos, eof_color_white, -1);
-								eof_chord_lookup_note = eof_get_pro_guitar_note_note(tp, eof_selection.current);		//Cache the failed, looked up note's details
-								memcpy(eof_chord_lookup_frets, tp->note[eof_selection.current]->frets, 6);
-								eof_cached_chord_lookup_retval = 0;	//Cache a failed lookup result
-							}
-						}
-					}
-					ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
-
-					if(eof_get_pro_guitar_note_tone_string(tp, eof_selection.current, tone_string))
-					{	//If the note's tones can be represented in string format
-						if(eof_menu_pro_guitar_track_get_tech_view_state(tp))
-						{	//If tech view is in effect
-							tone_string[0] = '\0';	//Empty the tone string, as tech note gems do not have a defined pitch
-						}
-						if(eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current) & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
-						{	//If this note has fingerless status
-							ypos += 12;
-							textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "(no fingering) : %s", tone_string);
-							ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
-						}
-						else if(eof_get_pro_guitar_note_finger_string(tp, eof_selection.current, finger_string))
-						{	//If the note's fingering can be represented in string format
-							ypos += 12;
-							textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s (fingering) : %s", finger_string, tone_string);
-							ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
-						}
-					}
-				}//If a note in the active track is selected, display a line with its fretting information
-
-				ypos += 12;
-				position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
-				if(position)
-				{	//If a fret hand position is in effect
-					snprintf(fhpstring, sizeof(fhpstring) - 1, "Effective FHP : %u : ", position);
-				}
-				else
-				{
-					snprintf(fhpstring, sizeof(fhpstring) - 1, "Effective FHP : None : ");
-				}
-				tone = eof_pro_guitar_track_find_effective_tone(tp, eof_music_pos - eof_av_delay);	//Find if there's a tone change in effect
-				if(tone < EOF_MAX_PHRASES)
-				{	//If a tone change is in effect
-					snprintf(tonestring, sizeof(tonestring) - 1, "Tone : %s", tp->tonechange[tone].name);
-				}
-				else
-				{
-					if(tp->defaulttone[0] != '\0')
-					{	//If a default tone is defined for the track
-						snprintf(tonestring, sizeof(tonestring) - 1, "Tone : (%s)", tp->defaulttone);
-					}
-					else
-					{
-						snprintf(tonestring, sizeof(tonestring) - 1, "Tone : (None)");
-					}
-				}
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s%s", fhpstring, tonestring);
-			}//Display information specific to pro guitar tracks
-			ypos += 12;
-
-			if(eof_hover_note >= 0)
-			{
-				if(eof_seek_hover_note >= 0)
-				{
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = %d : Seek = %d", eof_hover_note, eof_seek_hover_note);
-				}
-				else
-				{
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = %d : Seek = None", eof_hover_note);
-				}
-			}
-			else
-			{
-				if(eof_seek_hover_note >= 0)
-				{
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = None : Seek = %d", eof_seek_hover_note);
-				}
-				else
-				{
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = None : Seek = None");
-				}
-			}
-		}//If a non vocal track is active
-		ypos += 12;
-		if(!eof_display_seek_pos_in_seconds)
-		{	//If the seek position is to be displayed as minutes:seconds
-			ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
-			iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d : %s Selected = %d/%lu", ism, iss, isms, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
-		}
-		else
-		{	//If the seek position is to be displayed as seconds
-			iss = (eof_music_pos - eof_av_delay) / 1000;
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %d.%03ds : %s Selected = %d/%lu", iss, isms, eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
-		}
-		ypos += 12;
-		if(eof_seek_selection_start != eof_seek_selection_end)
-		{	//If there is a seek selection
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Seek selection start = %lu : stop = %lu", eof_seek_selection_start, eof_seek_selection_end);
-			ypos += 12;
-		}
-		if((eof_song->tags->start_point != ULONG_MAX) || (eof_song->tags->end_point != ULONG_MAX))
-		{	//If either the start or end point is defined
-			if(eof_song->tags->start_point != ULONG_MAX)
-			{	//Start point is defined
-				if(eof_song->tags->end_point != ULONG_MAX)
-				{	//Both the start and end points are defined
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Start point = %lu : end = %lu", eof_song->tags->start_point, eof_song->tags->end_point);
-				}
-				else
-				{	//Only the start point is defined
-					textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Start point = %lu", eof_song->tags->start_point);
-				}
-			}
-			else
-			{	//Only the end point is defined
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "End point = %lu", eof_song->tags->end_point);
-			}
-			ypos += 12;
-		}
-		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Input Mode: %s : Playback Speed: %d%%", eof_input_name[eof_input_mode], eof_playback_speed / 10);
-		ypos += 12;
-
-		if((eof_selected_catalog_entry < eof_song->catalog->entries) && (eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0'))
-		{	//If the active fret catalog has a defined name
-			snprintf(catalog_string, sizeof(catalog_string) - 1, "Catalog: %lu of %lu: %s", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries, eof_song->catalog->entry[eof_selected_catalog_entry].name);
-		}
-		else
-		{
-			snprintf(catalog_string, sizeof(catalog_string) - 1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
-		}
-		if(eof_snap_mode != EOF_SNAP_CUSTOM)
-			textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s : %s", eof_snap_name[(int)eof_snap_mode], catalog_string);
-		else
-		{
-			if(eof_custom_snap_measure == 0)
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d beat) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, catalog_string);
-			else
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d measure) : %s", eof_snap_name[(int)eof_snap_mode], eof_snap_interval, catalog_string);
-		}
-		ypos += 12;
-		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "OGG File: %s", eof_silence_loaded ? "(None)" : eof_song->tags->ogg[eof_selected_ogg].filename);
-
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//Display information specific to pro guitar tracks
-			char shortcut_string[55] = {0};
-
-			if(eof_get_pro_guitar_fret_shortcuts_string(shortcut_string))
-			{	//If the note's fingering can be represented in string format
-				ypos += 12;
-				textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "%s", shortcut_string);
-			}
-		}//Display information specific to pro guitar tracks
-
-///Keep for debugging
-///#ifdef EOF_DEBUG
-		ypos += 12;
-		textprintf_ex(eof_window_info->screen, font, 2, ypos, eof_color_white, -1, "CTRL:%c ALT:%c SHIFT:%c CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', KEY_EITHER_SHIFT ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);
-///#endif
-	}//If show catalog is disabled
-
-	if(!eof_full_screen_3d)
-	{	//If full screen 3D view is not in effect, render a border around the info panel
-		rect(eof_window_info->screen, 0, 0, eof_window_info->w - 1, eof_window_info->h - 1, eof_color_dark_silver);
-		rect(eof_window_info->screen, 1, 1, eof_window_info->w - 2, eof_window_info->h - 2, eof_color_black);
-		hline(eof_window_info->screen, 1, eof_window_info->h - 2, eof_window_info->w - 2, eof_color_white);
-		vline(eof_window_info->screen, eof_window_info->w - 2, 1, eof_window_info->h - 2, eof_color_white);
+	if(eof_info_panel)
+	{	//If an Info panel instance already exists
+		eof_destroy_text_panel(eof_info_panel);
+		eof_info_panel = NULL;
 	}
+
+	if(!eof_disable_info_panel)
+	{	//If the Info panel was just enabled
+		if(eof_validate_temp_folder())
+		{	//Ensure the correct working directory and presence of the temporary folder
+			eof_log("\tCould not validate working directory and temp folder", 1);
+			eof_log_cwd();
+			eof_disable_info_panel = 1;
+
+			return;
+		}
+		if(!exists("info.panel.txt"))
+		{	//If the info panel definition file is missing
+			if(!eof_copy_file("eof.dat#info.panel.txt", "info.panel.txt") || !exists("info.panel.txt"))
+			{	//If the file couldn't be recovered from eof.dat
+				eof_log("\tCould not recreate Info panel file from eof.dat", 1);
+				allegro_message("Could not open Information panel");
+				eof_disable_info_panel = 1;
+
+				return;
+			}
+		}
+
+		eof_info_panel = eof_create_text_panel("info.panel.txt");	//Reload the Info panel
+		if(!eof_info_panel)
+		{
+			allegro_message("Could not open Information panel");
+			eof_disable_info_panel = 1;
+
+			return;
+		}
+	}
+
+	return;
 }
 
 #define MAX_LYRIC_PREVIEW_LENGTH 512
@@ -3710,90 +3417,17 @@ void eof_render_3d_window(void)
 
 void eof_render_notes_window(void)
 {
-	char buffer[2048], buffer2[2048];
-	unsigned long src_index, dst_index;
-	int retval;
-	EOF_NOTES_PANEL_CONTROLS controls;
-
-	if(!eof_song_loaded || !eof_song)	//If a project isn't loaded
-		return;			//Return immediately
-	if(!eof_enable_notes_panel || !eof_window_notes || !eof_notes_text)	//If the notes panel isn't enabled, the note window isn't created or the notes panel text file isn't loaded
+	if(!eof_enable_notes_panel || !eof_window_notes)	//If the notes panel isn't enabled, the note window isn't created or the notes panel text file isn't loaded
 		return;			//Return immediately
 	if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the panels that display on the bottom half of the program window
 		return;							//Return immediately
-
-	clear_to_color(eof_window_notes->screen, eof_color_gray);
-
-	textprintf_ex(eof_window_notes->screen, font, 2, 0, eof_info_color, -1, "Notes Panel");
-	textprintf_ex(eof_window_notes->screen, font, 2, 6, eof_color_white, -1, "------------------");
-
-	//Initialize the controls array
-	controls.ypos = 16;
-	controls.xpos = 2;
-	controls.color = eof_color_white;
-	controls.bgcolor = -1;	//Transparent background for text
-	controls.screen = eof_window_notes->screen;	//Text will output to the Notes panel
-	controls.allowempty = 0;
-	controls.contentprinted = 0;
-	controls.symbol = 0;
-
-	//Parse the contents of the buffered file one line at a time and print each to the screen
-	src_index = dst_index = 0;	//Reset these indexes
-	while(eof_notes_text[src_index] != '\0')
-	{	//Until the end of the text file is reached
-		char thischar = eof_notes_text[src_index++];	//Read one character from the source buffer
-
-		if((thischar == '\r') && (eof_notes_text[src_index] == '\n'))
-		{	//Carriage return and line feed characters represent a new line
-			buffer[dst_index] = '\0';	//NULL terminate the buffer
-			retval = eof_expand_notes_window_text(buffer, buffer2, 2048, &controls);
-			if(!retval)
-			{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
-				eof_enable_notes_panel = 0;
-				return;
-			}
-			if(controls.allowempty || controls.contentprinted || (buffer2[0] != '\0'))
-			{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
-				//If content was printed earlier in the line and flushed to the Notes panel, allow the coordinates to reset to the next line
-				textout_ex(controls.screen, font, buffer2, controls.xpos, controls.ypos, controls.color, controls.bgcolor);	//Print this line to the screen
-				controls.allowempty = 0;	//Reset this condition, it has to be enabled per-line
-				controls.xpos = 2;			//Reset the x coordinate to the beginning of the line
-				controls.ypos +=12;
-				controls.contentprinted = 0;
-			}
-			dst_index = 0;	//Reset the destination buffer index
-			src_index++;	//Seek past the line feed character in the source buffer
-		}
-		else
-		{
-			if(dst_index >= 1023)
-				return;	//Don't support lines longer than 1023 characters, plus one character for the NULL terminator
-			buffer[dst_index++] = thischar;	//Append the character to the destination buffer
-		}
+	if(!eof_notes_panel)
+	{	//If the notes panel isn't properly loaded
+		eof_enable_notes_panel = 0;		//Properly disable the panel's display option
+		return;
 	}
 
-	//Print any remaining content in the output buffer
-	if(dst_index && (dst_index < 1023))
-	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
-		buffer[dst_index] = '\0';	//NULL terminate the buffer
-		retval = eof_expand_notes_window_text(buffer, buffer2, 2048, &controls);
-		if(!retval)
-		{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
-			eof_enable_notes_panel = 0;
-			return;
-		}
-		if((retval == 2) || (buffer2[0] != '\0'))
-		{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
-			textout_ex(controls.screen, font, buffer2, controls.xpos, controls.ypos, controls.color, controls.bgcolor);	//Print this line to the screen
-			controls.ypos +=12;
-		}
-	}
-
-	//Draw a border around the edge of the notes panel
-	rect(eof_window_notes->screen, 0, 0, eof_window_notes->w - 1, eof_window_notes->h - 1, eof_color_dark_silver);
-	rect(eof_window_notes->screen, 1, 1, eof_window_notes->w - 2, eof_window_notes->h - 2, eof_color_black);
-	hline(eof_window_notes->screen, 1, eof_window_notes->h - 2, eof_window_notes->w - 2, eof_color_white);
-	vline(eof_window_notes->screen, eof_window_notes->w - 2, 1, eof_window_notes->h - 2, eof_color_white);
+	eof_render_text_panel(eof_notes_panel, 1);
 }
 
 void eof_render(void)
@@ -4344,13 +3978,13 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_gp_files, "gp5;gp4;gp3;xml", "Guitar Pro (*.gp?), Go PlayAlong (*.xml)", 1);
 
-	eof_filter_text_files = ncdfs_filter_list_create();
-	if(!eof_filter_text_files)
+	eof_filter_gp_lyric_text_files = ncdfs_filter_list_create();
+	if(!eof_filter_gp_lyric_text_files)
 	{
 		allegro_message("Could not create file list filter (*.txt)!");
 		return 0;
 	}
-	ncdfs_filter_list_add(eof_filter_text_files, "txt", "Guitar Pro lyric text files (*.txt)", 1);
+	ncdfs_filter_list_add(eof_filter_gp_lyric_text_files, "txt", "Guitar Pro lyric text files (*.txt)", 1);
 
 	eof_filter_rs_files = ncdfs_filter_list_create();
 	if(!eof_filter_rs_files)
@@ -4757,7 +4391,14 @@ int eof_initialize(int argc, char * argv[])
 	//Load FFTW wisdom from disk
 	(void) fftw_import_wisdom_from_filename("FFTW.wisdom");
 
-	//Initialize the notes window if it was enabled via config file
+	//Initialize the Information panel if it is enabled
+	if(!eof_disable_info_panel)
+	{
+		eof_disable_info_panel = 1;	//Toggle this because the function call below will toggle it back to off
+		eof_display_info_panel();
+	}
+
+	//Initialize the notes panel if it was enabled via config file
 	if(eof_enable_notes_panel)
 	{
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
@@ -4820,8 +4461,8 @@ void eof_exit(void)
 	eof_filter_gh_files = NULL;
 	free(eof_filter_gp_files);
 	eof_filter_gp_files = NULL;
-	free(eof_filter_text_files);
-	eof_filter_text_files = NULL;
+	free(eof_filter_gp_lyric_text_files);
+	eof_filter_gp_lyric_text_files = NULL;
 	free(eof_filter_rs_files);
 	eof_filter_rs_files = NULL;
 	free(eof_filter_sonic_visualiser_files);
@@ -4858,10 +4499,15 @@ void eof_exit(void)
 	eof_window_destroy(eof_window_note_upper_left);
 	eof_window_destroy(eof_window_3d);
 	eof_window_destroy(eof_window_notes);
-	if(eof_notes_text)
-	{	//If the notes panel text file was loaded into memory
-		free(eof_notes_text);
-		eof_notes_text = NULL;
+	if(eof_notes_panel)
+	{	//If the notes panel instance was created
+		eof_destroy_text_panel(eof_notes_panel);
+		eof_notes_panel = NULL;
+	}
+	if(eof_info_panel)
+	{	//If the info panel instance was created
+		eof_destroy_text_panel(eof_info_panel);
+		eof_info_panel = NULL;
 	}
 
 	eof_destroy_shape_definitions();

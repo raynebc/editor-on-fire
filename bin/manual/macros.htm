@@ -33,13 +33,13 @@ The simplest thing to display would be static text, which prints exactly as type
 
 <h1>Printing dynamic text</h1>
 <blockquote>
-Dynamic text is text that will change due to various defined conditions such as whether notes are selected, what kind of track is being displayed in the editor, etc.  For the Notes panel, this is achieved by using a "macro", which is basically a placeholder for what will eventually be "printed" to the Notes panel.  You can use this to display statuses of notes, conditions that may be in effect and other pieces of information.  EOF's macros always begin with a % (percent sign), end with % and never include any spaces.  If you want to print a percent sign to the Notes panel, a <b>%PERCENT%</b> macro can be used.  If there is an error in the notes.txt file, the notes panel will indicate there was and unrecognized macro in that line.  If the unrecognized macro is specified as being <b>%ELSE%</b>, it's probably an error that needs to be corrected in EOF, otherwise it's most likely a typo in the notes.txt file or a macro is being used that isn't supported by the version of EOF that you're using.  A complete list of all macros that EOF supports are defined <a href="macros.htm#macrolist">further down in this document</a>.  Feel free to request new macros to print specific items, which can be added to EOF if they would be useful or at least reasonably simple to implement.
+Dynamic text is text that will change due to various defined conditions such as whether notes are selected, what kind of track is being displayed in the editor, etc.  For the Notes panel, this is achieved by using a "macro", which is basically a placeholder for what will eventually be "printed" to the Notes panel.  You can use this to display statuses of notes, conditions that may be in effect and other pieces of information.  EOF's macros always begin with a % (percent sign), end with % and never include any spaces.  If you want to print a percent sign to the Notes panel, a <b>%PERCENT%</b> macro can be used.  If there is an error in the notes.txt file, the notes panel will indicate there was an unrecognized macro in that line.  If the unrecognized macro is specified as being <b>%ELSE%</b>, it's probably an error that needs to be corrected in EOF, otherwise it's most likely a typo in the notes.txt file or a macro is being used that isn't supported by the version of EOF that you're using.  A complete list of all macros that EOF supports are defined <a href="macros.htm#macrolist">further down in this document</a>.  Feel free to request new macros to print specific items, which can be added to EOF if they would be useful or at least reasonably simple to implement.
 </blockquote>
 
 
 <h1>Comments</h1>
 <blockquote>
-Any line in notes.txt that begins with a semicolon ; will be treated as a comment and no text or macros will be processed.  No blank line will be printed, even if there is an %EMPTY% macro in the line.
+Any line in notes.txt that begins with a semicolon ; will be treated as a comment and no text or macros will be processed for that line.  No blank line will be printed, even if there is an %EMPTY% macro in the line.
 </blockquote>
 
 
@@ -105,7 +105,7 @@ The first <b>%ENDIF%</b> macro ended the scope of <b>%IF_NOTE_IS_SELECTED%</b> t
 
 <h1>Printing empty lines</h1>
 <blockquote>
-If a defined line is empty or if none of its conditional macro requirements are met, nothing will display for it in the Notes panel, not even an empty line.  The text output position in the Notes panel will not advance, meaning the next line of content will be displayed immediately below the previous line of content that was written.  For example:
+If a defined line is empty or if all of the macros are conditional and none of the applicable requirements are met, nothing will display for it in the Notes panel, not even an empty line.  The text output position in the Notes panel will not advance, meaning the next line of content will be displayed immediately below the previous line of content that was written.  For example:
 <table border="1" cellpadding="3">
 <tbody>
 <tr>
@@ -118,7 +118,7 @@ If a defined line is empty or if none of its conditional macro requirements are 
 </table>
 If the current track is the vocal track, two lines will be written to the Notes panel ("This is a vocal track" and "This is the next line"), otherwise only the second of those two lines will be written and there will be no empty line.<br><br>
 
-If you want to allow a line that results in no text (due to either being empty in the notes.txt file or by no conditions being successfully met) to be written as an empty line in the Notes panel, use an <b>%EMPTY%</b> macro anywhere in will be sure to be processed instead of being within the scope of a macro that might not be used (before conditional macros or after all conditional macros were ended with <b>%ENDIF%</b>.  If you change it as follows:
+If you want to allow a line that results in no text (due to either being empty in the notes.txt file or by no conditions being successfully met) to be written as an empty line in the Notes panel, use an <b>%EMPTY%</b> macro anywhere it will be sure to be processed instead of being within the scope of a macro that might not be used (before conditional macros or after all conditional macros were ended with <b>%ENDIF%</b>.  If you change it as follows:
 <table border="1" cellpadding="3">
 <tbody>
 <tr>
@@ -129,7 +129,7 @@ If you want to allow a line that results in no text (due to either being empty i
 </tr>
 </tbody>
 </table>
-Everything from the <b>%IF_IS_VOCAL_TRACK%</b> macro until the end of the line in the Notes.txt file will only be processed if that condition (the current track is the vocal track) is met, or until an <b>%ELSE%</b> or <b>%ENDIF%</b> macro is reached on the same line.  Using <b>%ENDIF%</b> in this example allows the rest of the line to be processed so if the current track is the vocal track, the <b>%EMPTY%</b> macro is processed.  Since no text is being written for this line (none of it pertained to non vocal tracks), nothing is to be written for this line in the Notes panel, and the <b>%EMPTY%</b> macro that was processed indicates that the line is explicitly written to be empty in the panel so that the next text to be written to the panel will do so after a blank row.
+Everything from the <b>%IF_IS_VOCAL_TRACK%</b> macro until the end of the line in the Notes.txt file will only be processed if that condition (the current track is the vocal track) is met, or until an <b>%ELSE%</b> or <b>%ENDIF%</b> macro is reached on the same line.  Using <b>%ENDIF%</b> in this example allows the rest of the line to be processed so if the current track is NOT the vocal track, the <b>%EMPTY%</b> macro is still processed.  Since no text is being written for this line (none of it pertained to non vocal tracks), nothing is to be written for this line in the Notes panel, and the <b>%EMPTY%</b> macro that was processed indicates that the line is explicitly written to be empty in the panel so that the next text to be written to the panel will do so after a blank row.
 </blockquote>
 
 
@@ -223,6 +223,18 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>%IF_SELECTED_CATALOG_ENTRY_NAMED%</td>
 <td>Evaluates as true if there is a fret catalog entry, and the currently selected catalog entry has a name defined for it (see <a href="functions.htm#catalog">Song>Catalog</a>).</td>
 </tr>
+<tr>
+<td>%IF_WINDOW_HEIGHT_IS_480%</td>
+<td>Evaluates as true if the EOF's window height (set in <a href="functions.htm#displaysettings">File>Display>Display</a>) is 480.</td>
+</tr>
+<tr>
+<td>%IF_WINDOW_HEIGHT_IS_600%</td>
+<td>Evaluates as true if the EOF's window height (set in <a href="functions.htm#displaysettings">File>Display>Display</a>) is 600.</td>
+</tr>
+<tr>
+<td>%IF_WINDOW_HEIGHT_IS_768%</td>
+<td>Evaluates as true if the EOF's window height (set in <a href="functions.htm#displaysettings">File>Display>Display</a>) is 768.</td>
+</tr>
 </tbody>
 </table><br>
 
@@ -238,6 +250,10 @@ These macros are for special uses, such as affecting how text will be printed to
 <tr>
 <td>%EMPTY%</td>
 <td>If the line in notes.txt did not result in any text to print for the line in the Notes panel, this macro allows an empty line to be printed to the Notes panel and the print position to be lowered so that the next line of printed text occurs below the empty space.</td>
+</tr>
+<tr>
+<td>%MOVE_UP_ONE_PIXEL%</td>
+<td>Raises the print position in the Notes panel by one pixel, to remove spacing, such as if you want to use hyphens to underline the previous printed line of text.</td>
 </tr>
 <tr>
 <td>%MOVE_DOWN_ONE_PIXEL%</td>
@@ -514,6 +530,22 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%MEASURE_COUNT%</td>
 <td>Prints the number of measures present in the current project.  If there are no time signatures defined in the project, "(No TS)" is printed.</td>
+</tr>
+<tr>
+<td>%NOTE_GAP%</td>
+<td>Prints the current "Min. note length" preference.</td>
+</tr>
+<tr>
+<td>%WINDOW_HEIGHT%</td>
+<td>Prints EOF's current program window height (set in <a href="functions.htm#displaysettings">File>Display>Display</a>).</td>
+</tr>
+<tr>
+<td>%WINDOW_WIDTH%</td>
+<td>Prints EOF's current program window width (a default width set in <a href="functions.htm#displaysettings">File>Display>Display</a> or a custom width set in <a href="functions.htm#setdisplaywidth">File>Display>Set display width</a>).</td>
+</tr>
+<tr>
+<td>%TEXT_FILE%</td>
+<td>Prints relative path (not including the folder path) of the text file loaded for display in the Notes panel.</td>
 </tr>
 </tbody>
 </table>

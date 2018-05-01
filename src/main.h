@@ -6,6 +6,7 @@
 #include "modules/wfsel.h"
 #include "window.h"
 #include "note.h"
+#include "notes.h"
 #include "control.h"
 #include "editor.h"
 
@@ -250,7 +251,7 @@ extern NCDFS_FILTER_LIST * eof_filter_lyrics_files;
 extern NCDFS_FILTER_LIST * eof_filter_dB_files;
 extern NCDFS_FILTER_LIST * eof_filter_gh_files;
 extern NCDFS_FILTER_LIST * eof_filter_gp_files;
-extern NCDFS_FILTER_LIST * eof_filter_text_files;
+extern NCDFS_FILTER_LIST * eof_filter_gp_lyric_text_files;
 extern NCDFS_FILTER_LIST * eof_filter_rs_files;
 extern NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files;
 extern NCDFS_FILTER_LIST * eof_filter_bf_files;
@@ -335,7 +336,8 @@ extern int         eof_disable_3d_rendering;
 extern int         eof_disable_2d_rendering;
 extern int         eof_disable_info_panel;
 extern int         eof_enable_notes_panel;
-extern char *      eof_notes_text;
+extern EOF_TEXT_PANEL *eof_notes_panel;
+extern EOF_TEXT_PANEL *eof_info_panel;
 extern int         eof_paste_erase_overlap;
 extern int         eof_write_fof_files;
 extern int         eof_write_rb_files;
@@ -636,7 +638,14 @@ void eof_render_3d_window(void);
 	//Renders the 3D preview
 	//Calls eof_render_lyric_window() instead if a vocal track is to be rendered
 void eof_render_extended_ascii_fonts(void);	//A test function that prints prints each Unicode converted extended ASCII character to test that the eof_font has glyphs mapped appropriately
+
 void eof_render_info_window(void);
+void eof_render_fret_catalog_window(void);	//Renders the fret catalog in the Information panel window
+void eof_display_info_panel(void);
+	//Toggles the Information panel on/off, either initializing or destroying the eof_info_panel instance appropriately
+	//If info.panel.txt does not exist in the program folder when the panel is being enabled, that file is copied out of eof.dat
+	//If the file can't be restored from eof.dat or cannot be opened, the panel is disabled
+
 void eof_render_notes_window(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 BITMAP *eof_scale_image(BITMAP *source, double value);
