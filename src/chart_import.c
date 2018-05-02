@@ -155,20 +155,23 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 	threshold = (chart->resolution * (66.0 / 192.0)) + 0.5;	//This is the tick distance at which notes become forced strums instead of HOPOs (66/192 beat or further)
 
-	/* backup "song.ini" if it exists in the folder with the imported MIDI
-	as it will be overwritten upon save */
-	(void) replace_filename(eof_temp_filename, fn, "song.ini", 1024);
-	if(exists(eof_temp_filename))
-	{
-		/* do not overwrite an existing backup, this prevents the original backed up song.ini from
-		being overwritten if the user imports the MIDI again */
-		(void) replace_filename(backup_filename, fn, "song.ini.backup", 1024);
-		if(!exists(backup_filename))
+	if(!eof_disable_backups)
+	{	//If the user did not disable automatic backups
+		/* backup "song.ini" if it exists in the folder with the imported MIDI
+		as it will be overwritten upon save */
+		(void) replace_filename(eof_temp_filename, fn, "song.ini", 1024);
+		if(exists(eof_temp_filename))
 		{
-			(void) eof_copy_file(eof_temp_filename, backup_filename);
+			/* do not overwrite an existing backup, this prevents the original backed up song.ini from
+			being overwritten if the user imports the MIDI again */
+			(void) replace_filename(backup_filename, fn, "song.ini.backup", 1024);
+			if(!exists(backup_filename))
+			{
+				(void) eof_copy_file(eof_temp_filename, backup_filename);
+			}
 		}
+		memcpy(backup_filename, fn, 1024);	//Back up the filename that is passed, if the calling function passed the file selection dialog's return path, that buffer will be clobbered if a file dialog to select the audio is launched
 	}
-	memcpy(backup_filename, fn, 1024);	//Back up the filename that is passed, if the calling function passed the file selection dialog's return path, that buffer will be clobbered if a file dialog to select the audio is launched
 
 	/* load audio */
 	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path

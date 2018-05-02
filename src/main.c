@@ -144,7 +144,8 @@ int         eof_write_bf_files = 0;				//If nonzero, an extra XML file is writte
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
-int         eof_new_note_length_1ms;			//If nonzero, newly created notes are initialized to a length of 1ms instead of the regular grid snap based logic
+int         eof_new_note_length_1ms = 0;		//If nonzero, newly created notes are initialized to a length of 1ms instead of the regular grid snap based logic
+int         eof_new_note_forced_strum = 0;		//If nonzero, newly created notes are given forced HOPO off status
 int         eof_gp_import_preference_1 = 0;		//If nonzero during GP import, beat texts with qualifying strings are imported as RS sections, section markers as RS phrases.
 int         eof_gp_import_truncate_short_notes = 1;	//If nonzero during GP import, single notes shorter than one quarter note are set to the minimum length of 1ms
 int         eof_gp_import_truncate_short_chords = 1;	//If nonzero during GP import, chords shorter than one quarter note are set to the minimum length of 1ms
@@ -181,6 +182,7 @@ int         eof_6_fret_range = 0;				//Defines the lowest fret number at which t
 int         eof_fingering_checks_include_mutes = 0;	//If nonzero, various functions that validate/complete chord fingerings will not dismiss strings with string mute status
 int         eof_ghl_conversion_swaps_bw_gems = 0;	//If nonzero, toggling GHL mode on/off or copying between GHL and non GHL tracks will remap lanes 1-3 as the black GHL gems instead the white gems as per the default behavior
 int         eof_3d_hopo_scale_size = 75;		//The percentage of full size to which the 3D HOPO gem images are scaled
+int         eof_disable_backups = 0;			//If nonzero, .eof.bak files (created during undo and save operations) and .backup files (created during MIDI/GH/Feedback import) are not created
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -1085,8 +1087,8 @@ void eof_prepare_undo(int type)
 	eof_undo_toggle = 1;
 	eof_fix_window_title();	//Redraw the window title to reflect the chart is modified
 	eof_window_title_dirty = 1;	//Indicate that the window title will need to be redrawn during the next normal render, to reflect whatever change is to follow this undo state
-	if(eof_change_count % 10 == 0)
-	{
+	if(!eof_disable_backups && (eof_change_count % 10 == 0))
+	{	//If automatic backups are not disabled, backup the EOF project every 10 saves
 		(void) replace_extension(fn, eof_filename, "backup.eof.bak", 1024);
 		eof_log("\tSaving periodic backup", 1);
 		if(!eof_save_song(eof_song, fn))

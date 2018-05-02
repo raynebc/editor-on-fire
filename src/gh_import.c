@@ -1167,16 +1167,19 @@ EOF_SONG * eof_import_gh(const char * fn)
 		unsigned long tracknum;
 		unsigned long ctr;
 
-		/* backup "song.ini" if it exists in the folder with the imported file
-		as it will be overwritten upon save */
-		if(exists(inifn))
-		{
-			/* do not overwrite an existing backup, this prevents the original backed up song.ini from
-			being overwritten if the user imports the MIDI again */
-			(void) replace_filename(backup_filename, inifn, "song.ini.backup", 1024);
-			if(!exists(backup_filename))
+		if(!eof_disable_backups)
+		{	//If the user did not disable automatic backups
+			/* backup "song.ini" if it exists in the folder with the imported file
+			as it will be overwritten upon save */
+			if(exists(inifn))
 			{
-				(void) eof_copy_file(eof_temp_filename, backup_filename);
+				/* do not overwrite an existing backup, this prevents the original backed up song.ini from
+				being overwritten if the user imports the MIDI again */
+				(void) replace_filename(backup_filename, inifn, "song.ini.backup", 1024);
+				if(!exists(backup_filename))
+				{
+					(void) eof_copy_file(eof_temp_filename, backup_filename);
+				}
 			}
 		}
 

@@ -170,6 +170,7 @@ void eof_load_config(char * fn)
 		eof_chord_density_threshold = 10000;
 	}
 	eof_new_note_length_1ms = get_config_int("preferences", "eof_new_note_length_1ms", 0);
+	eof_new_note_forced_strum = get_config_int("preferences", "eof_new_note_forced_strum", 0);
 	eof_gp_import_preference_1 = get_config_int("preferences", "eof_gp_import_preference_1", 0);
 	eof_gp_import_truncate_short_notes = get_config_int("preferences", "eof_gp_import_truncate_short_notes", 1);
 	eof_gp_import_truncate_short_chords = get_config_int("preferences", "eof_gp_import_truncate_short_chords", 1);
@@ -177,6 +178,7 @@ void eof_load_config(char * fn)
 	eof_gp_import_replaces_track = get_config_int("preferences", "eof_gp_import_nat_harmonics_only", 0);
 	eof_render_3d_rs_chords = get_config_int("preferences", "eof_render_3d_rs_chords", 0);
 	eof_render_2d_rs_piano_roll = get_config_int("preferences", "eof_render_2d_rs_piano_roll", 0);
+	eof_disable_backups = get_config_int("preferences", "eof_disable_backups", 0);
 	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
 	if(eof_min_note_distance > 999)
 	{	//If the minimum note distance is invalid (more than 3 digits)
@@ -392,6 +394,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", eof_drum_modifiers_affect_all_difficulties);
 	set_config_int("preferences", "eof_fb_seek_controls", eof_fb_seek_controls);
 	set_config_int("preferences", "eof_new_note_length_1ms", eof_new_note_length_1ms);
+	set_config_int("preferences", "eof_new_note_forced_strum", eof_new_note_forced_strum);
 	set_config_int("preferences", "eof_gp_import_preference_1", eof_gp_import_preference_1);
 	set_config_int("preferences", "eof_gp_import_truncate_short_notes", eof_gp_import_truncate_short_notes);
 	set_config_int("preferences", "eof_gp_import_truncate_short_chords", eof_gp_import_truncate_short_chords);
@@ -399,6 +402,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_gp_import_nat_harmonics_only", eof_gp_import_nat_harmonics_only);
 	set_config_int("preferences", "eof_render_3d_rs_chords", eof_render_3d_rs_chords);
 	set_config_int("preferences", "eof_render_2d_rs_piano_roll", eof_render_2d_rs_piano_roll);
+	set_config_int("preferences", "eof_disable_backups", eof_disable_backups);
 	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
 	set_config_int("preferences", "eof_enforce_chord_density", eof_enforce_chord_density);
 	set_config_int("preferences", "eof_chord_density_threshold", eof_chord_density_threshold);

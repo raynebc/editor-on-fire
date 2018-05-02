@@ -178,6 +178,8 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_radio_proc, 200, 144, 40,  16,  2,   23,  0,    0,      2,   0,   "ms",          NULL, NULL },
 	{ d_agup_radio_proc, 240, 144, 92,  16,  2,   23,  0,    0,      2,   0,   "1/# measure", NULL, NULL },
 	{ d_agup_radio_proc, 332, 144, 68,  16,  2,   23,  0,    0,      2,   0,   "1/# beat",    NULL, NULL },
+	{ d_agup_check_proc, 248, 463, 230, 16,  2,   23,  0,    0,      1,   0,   "Disable automatic backups",NULL, NULL },
+	{ d_agup_check_proc, 248, 170, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1276,6 +1278,8 @@ int eof_menu_file_preferences(void)
 	{
 		eof_etext3[0] = '\0';	//Otherwise empty the string
 	}
+	eof_preferences_dialog[55].flags = eof_disable_backups ? D_SELECTED : 0;		//Disable automatic backups
+	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;	//New notes are force strum
 
 	do
 	{	//Run the dialog
@@ -1390,6 +1394,8 @@ int eof_menu_file_preferences(void)
 			{	//min. note distance is 1/# beat
 				eof_min_note_distance_intervals = 2;
 			}
+			eof_disable_backups = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
+			eof_new_note_forced_strum = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}//If the user clicked OK
@@ -1437,6 +1443,8 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[52].flags = D_SELECTED;			//min. note distance is in ms
 			eof_preferences_dialog[53].flags = 0;					//min. note distance is 1/# measure
 			eof_preferences_dialog[54].flags = 0;					//min. note distance is 1/# beat
+			eof_preferences_dialog[55].flags = 0;					//Disable automatic backups
+			eof_preferences_dialog[56].flags = 0;					//New notes are force strum
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -3644,36 +3652,39 @@ int eof_save_helper(char *destfilename, char silent)
 	}
 
 	/* rotate out the last save file (filename).previous_save.eof.bak */
-	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", (int) sizeof(eof_temp_filename));	//Ensure the chart's file path has a .eof extension
-	(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof.bak", 1024);	//(filename).previous_save.eof.bak will be store the last save operation
-	if(exists(tempfilename2))
-	{	//If the lastsave file exists
-		(void) delete_file(tempfilename2);	//Delete it
+	if(!eof_disable_backups)
+	{	//Only do this if the user did not disable automatic backups
+		(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", (int) sizeof(eof_temp_filename));	//Ensure the chart's file path has a .eof extension
+		(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof.bak", 1024);	//(filename).previous_save.eof.bak will be store the last save operation
 		if(exists(tempfilename2))
-		{	//Make sure it's gone
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not delete the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
-			eof_log(eof_log_string, 1);
-			allegro_message("%s", eof_log_string);
-			return 5;	//Return failure:  Error deleting lastsave file
+		{	//If the lastsave file exists
+			(void) delete_file(tempfilename2);	//Delete it
+			if(exists(tempfilename2))
+			{	//Make sure it's gone
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not delete the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
+				eof_log(eof_log_string, 1);
+				allegro_message("%s", eof_log_string);
+				return 5;	//Return failure:  Error deleting lastsave file
+			}
 		}
-	}
-	if(exists(eof_temp_filename))
-	{	//If the target of the save operation already exists
-		(void) eof_copy_file(eof_temp_filename, tempfilename2);	//Back it up as (filename).previous_save.eof.bak
-		if(!exists(tempfilename2))
-		{	//Make sure it was created
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not create the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
-			eof_log(eof_log_string, 1);
-			allegro_message("%s", eof_log_string);
-			return 6;	//Return failure:  Could not create previous_save backup file
-		}
-		(void) delete_file(eof_temp_filename);	//Delete the target file name
 		if(exists(eof_temp_filename))
-		{	//Make sure it was deleted
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not delete the last save file.  Aborting save.  Please use \"Save as\" to save to a new location.");
-			eof_log(eof_log_string, 1);
-			allegro_message("%s", eof_log_string);
-			return 7;	//Return failure:  Could not delete the last save file
+		{	//If the target of the save operation already exists
+			(void) eof_copy_file(eof_temp_filename, tempfilename2);	//Back it up as (filename).previous_save.eof.bak
+			if(!exists(tempfilename2))
+			{	//Make sure it was created
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not create the previous_save backup file.  Aborting save.  Please use \"Save as\" to save to a new location.");
+				eof_log(eof_log_string, 1);
+				allegro_message("%s", eof_log_string);
+				return 6;	//Return failure:  Could not create previous_save backup file
+			}
+			(void) delete_file(eof_temp_filename);	//Delete the target file name
+			if(exists(eof_temp_filename))
+			{	//Make sure it was deleted
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Could not delete the last save file.  Aborting save.  Please use \"Save as\" to save to a new location.");
+				eof_log(eof_log_string, 1);
+				allegro_message("%s", eof_log_string);
+				return 7;	//Return failure:  Could not delete the last save file
+			}
 		}
 	}
 
@@ -4872,11 +4883,12 @@ char * eof_gp_tracks_list(int index, int * size)
 DIALOG eof_set_display_width_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)   (d1) (d2) (dp)                 (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   48,  214, 106, 2,   23,   0,      0,      0,   0,   "Set display width",NULL, NULL },
-	{ d_agup_text_proc,      12,  84,  64,  8,   2,   23,   0,      0,      0,   0,   "Width:",           NULL, NULL },
-	{ eof_verified_edit_proc,60,  80,  100, 20,  2,   23,   0,      0,      4,   0,   eof_etext2,         "0123456789", NULL },
-	{ d_agup_button_proc,    17,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",               NULL, NULL },
-	{ d_agup_button_proc,    113, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ d_agup_window_proc,    0,   48,  214, 116, 2,   23,   0,      0,      0,   0,   "Set display width",NULL, NULL },
+	{ d_agup_text_proc,      12,  76,  64,  8,   2,   23,   0,      0,      0,   0,   eof_etext3,          NULL, NULL },
+	{ d_agup_text_proc,      12,  98,  64,  8,   2,   23,   0,      0,      0,   0,   "Width:",           NULL, NULL },
+	{ eof_verified_edit_proc,60,  94,  100, 20,  2,   23,   0,      0,      4,   0,   eof_etext2,         "0123456789", NULL },
+	{ d_agup_button_proc,    17,  122, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",               NULL, NULL },
+	{ d_agup_button_proc,    113, 122, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -4887,10 +4899,11 @@ int eof_set_display_width(void)
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Set display width (>= %lu)", eof_screen_width_default);
 	eof_set_display_width_dialog[0].dp = eof_etext;	//Update the dialog window's title
 
+	(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "(Currently set to %lu)", eof_screen_width);
 	eof_etext2[0] = '\0';
 	eof_color_dialog(eof_set_display_width_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_set_display_width_dialog);
-	if(eof_popup_dialog(eof_set_display_width_dialog, 2) == 3)	//User hit OK
+	if(eof_popup_dialog(eof_set_display_width_dialog, 3) == 4)	//User hit OK
 	{
 		if(eof_etext2[0] != '\0')
 		{	//If a width was specified

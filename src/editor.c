@@ -1937,17 +1937,22 @@ if(eof_key_code == KEY_PAUSE)
 				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos - eof_av_delay, notelen, eof_note_type, NULL);
 				if(new_note)
 				{
+					unsigned long newnotenum = eof_get_track_size(eof_song, eof_selected_track) - 1;
 					if(eof_mark_drums_as_cymbal)
 					{	//If the user opted to make all new drum notes cymbals automatically
-						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,newnotenum);
 					}
 					if(eof_mark_drums_as_double_bass)
 					{	//If the user opted to make all new expert bass drum notes as double bass automatically
-						eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+						eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,newnotenum);
 					}
 					if(eof_mark_drums_as_hi_hat)
 					{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-						eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+						eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,newnotenum);
+					}
+					if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+					{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
+						eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
 					}
 					(void) eof_detect_difficulties(eof_song, eof_selected_track);
 					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
@@ -3373,23 +3378,28 @@ if(eof_key_code == KEY_PAUSE)
 							new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, targetpos, notelen, eof_note_type, NULL);
 							if(new_note)
 							{
+								unsigned long newnotenum = eof_get_track_size(eof_song, eof_selected_track) - 1;
 								if(ghl_open)
 								{	//If a GHL open note was placed
 									eof_song->legacy_track[tracknum]->note[eof_song->legacy_track[tracknum]->notes - 1]->flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Set its GHL open note status
 								}
 								if(eof_mark_drums_as_cymbal)
 								{	//If the user opted to make all new drum notes cymbals automatically
-									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,newnotenum);
 								}
 								if(eof_mark_drums_as_double_bass)
 								{	//If the user opted to make all new expert bass drum notes as double bass automatically
-									eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+									eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,newnotenum);
 								}
 								if(eof_mark_drums_as_hi_hat)
 								{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-									eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+									eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,newnotenum);
 								}
-								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);	//Get the position of the last note that was added
+								if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+								{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
+									eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
+								}
+								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, newnotenum);	//Get the position of the last note that was added
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
 								eof_selection.track = eof_selected_track;
@@ -3892,6 +3902,11 @@ void eof_editor_logic(void)
 						if(new_note)
 						{	//If the note was created
 							new_note->flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
+
+							if(eof_new_note_forced_strum)
+							{	//If the user opted to make all new notes forced strum notes
+								new_note->flags |= EOF_NOTE_FLAG_NO_HOPO;
+							}
 						}
 						eof_track_sort_notes(eof_song, eof_selected_track);
 					}
@@ -4319,17 +4334,22 @@ void eof_editor_logic(void)
 									}
 									if(eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note), notelen, eof_note_type, NULL))
 									{	//If the new note was created successfully
+										unsigned long newnotenum = eof_get_track_size(eof_song, eof_selected_track) - 1;
 										if(eof_mark_drums_as_cymbal)
 										{	//If the user opted to make all new drum notes cymbals automatically
-											eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+											eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,newnotenum);
 										}
 										if(eof_mark_drums_as_double_bass)
 										{	//If the user opted to make all new expert bass drum notes as double bass automatically
-											eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+											eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,newnotenum);
 										}
 										if(eof_mark_drums_as_hi_hat)
 										{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-											eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+											eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,newnotenum);
+										}
+										if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+										{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
+											eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
 										}
 										eof_track_sort_notes(eof_song, eof_selected_track);
 									}
@@ -4364,17 +4384,22 @@ void eof_editor_logic(void)
 						}
 						if(new_note)
 						{
+							unsigned long newnotenum = eof_get_track_size(eof_song, eof_selected_track) - 1;
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
-								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,newnotenum);
 							}
 							if(eof_mark_drums_as_double_bass)
 							{	//If the user opted to make all new expert bass drum notes as double bass automatically
-								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,newnotenum);
 							}
 							if(eof_mark_drums_as_hi_hat)
 							{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-								eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+								eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,newnotenum);
+							}
+							if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+							{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
+								eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
 							}
 							eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
 							eof_selection.range_pos_1 = eof_selection.current_pos;

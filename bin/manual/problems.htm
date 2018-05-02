@@ -14,8 +14,13 @@ p {text-indent: 1cm}
 <h1><a name="tutorial">Common Problems</a></h1>
 
 <b>Problem:</b><br>
+EOF doesn't work on Mac.  Opening EOF from the command line gives an error like "Warning once: This application, or a library it uses, is using NSQuickDrawView, which has been deprecated. Apps should cease use of QuickDraw and move to Quartz."<br>
+<b>Solution:</b><br>
+Around the release of Mac OS X High Sierra, the OS deprecated certain features that broke compatibility with Allegro 4 (the game library that EOF is built with).  There's no simple fix for this as EOF eventually has to be ported to Allegro 5, which is significantly different.  If you have the ability to keep a pre High Sierra version of Mac OS to use, that's the most reliable option.<br><br>
+
+<b>Problem:</b><br>
 The mouse doesn't appear very responsive, especially to small movements.  Changing the "Use Software Cursor" in File>Display doesn't lead to any improvement.<br>
-<b>Solution:</b></b>
+<b>Solution:</b></br>
 Some higher end mice (one example being the Logitech G500) may have problems working well with Allegro depending on their settings.  For example, it's been reported that with the Logitech G500, using the mouse's management utility to lower the polling rate helped.  If making setting changes to the mouse doesn't resolve the problem, it may ultimately be easiest to just try connecting and using an additional cheap mouse.<br><br>
 
 <b>Problem:</b><br>

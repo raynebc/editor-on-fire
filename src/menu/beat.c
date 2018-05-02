@@ -3081,21 +3081,77 @@ int eof_menu_beat_estimate_bpm(void)
 {
 	unsigned long ctr, ppqn;
 	double result;
+	unsigned long startbeat;	//The first beat to which the detected tempo will be applied if user accepts the offer to do so
+	int portion = 0;
 
 	if(!eof_song || !eof_music_track)
 		return D_O_K;
 
+	eof_bpm_estimator_sample_count = 0;	//Reset this counter for debugging purposes
 	set_window_title("Estimating tempo...");
-	result = eof_estimate_bpm(eof_music_track);
-	eof_fix_window_title();
-	allegro_message("Estimated tempo is %fBPM", result);
-	if(eof_song->tags->tempo_map_locked || (alert(NULL, "Would you like to apply this tempo to the first beat?", NULL, "&Yes", "&No", 'y', 'n') != 1))
-		return D_O_K;	//If the tempo map is locked or the user does not opt to apply the estimated tempo, return immediately
 
+	if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
+	{	//If start/end markers are defined
+		eof_clear_input();
+		if(alert(NULL, "Estimate tempo of the entire song or just the portion between the start and end markers?", NULL, "&All", "&Portion", 'a', 'p') == 2)
+		{	//If the user opts to estimate just between the start and end markers
+			portion = 1;
+		}
+	}
+
+	if(portion)
+	{	//If just estimating between the start and end markers
+		double start, end;
+
+		start = (double)eof_song->tags->start_point / 1000.0;
+		end = (double)eof_song->tags->end_point / 1000.0;
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Estimating tempo from %f seconds to %f seconds", start, end);
+		eof_log(eof_log_string, 1);
+
+		result = eof_estimate_bpm(eof_music_track, start, end);
+		eof_fix_window_title();
+
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMiniBPM processed %lu samples and determined a tempo of %fBPM", eof_bpm_estimator_sample_count, result);
+		eof_log(eof_log_string, 1);
+		allegro_message("Estimated tempo of the selection is %fBPM", result);
+
+		startbeat = eof_get_beat(eof_song, eof_song->tags->start_point);
+		if(eof_beat_num_valid(eof_song, startbeat))
+		{	//If the beat in which the selection start begins was found
+			if(eof_song->beat[startbeat]->pos == eof_song->tags->start_point)
+			{	//If the selection starts on that beat marker exactly
+				eof_clear_input();
+				if(eof_song->tags->tempo_map_locked || (alert(NULL, "Would you like to apply this tempo to the beat at which the selection starts?", NULL, "&Yes", "&No", 'y', 'n') != 1))
+					return D_O_K;	//If the tempo map is locked or the user does not opt to apply the estimated tempo, return immediately
+			}
+			else
+				return D_O_K;	//Don't perform any more processing
+
+		}
+	}
+	else
+	{
+		eof_log("Estimating tempo of entire song", 1);
+
+		result = eof_estimate_bpm(eof_music_track, 0, 0);
+		eof_fix_window_title();
+
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMiniBPM processed %lu samples and determined a tempo of %fBPM", eof_bpm_estimator_sample_count, result);
+		eof_log(eof_log_string, 1);
+		allegro_message("Estimated tempo of the song is %fBPM", result);
+
+		eof_clear_input();
+		if(eof_song->tags->tempo_map_locked || (alert(NULL, "Would you like to apply this tempo to the first beat?", NULL, "&Yes", "&No", 'y', 'n') != 1))
+			return D_O_K;	//If the tempo map is locked or the user does not opt to apply the estimated tempo, return immediately
+
+		startbeat = 0;		//The tempo will apply starting with the first beat marker
+	}
+
+	//Apply the detected tempo to the applicable beat and all subsequent beats until the next anchor is found
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	ppqn = 60000000.0 / result;
-	eof_song->beat[0]->ppqn = ppqn;	//Apply the tempo to the first beat
-	for(ctr = 1; ctr < eof_song->beats; ctr++)
+	eof_song->beat[startbeat]->ppqn = ppqn;	//Apply the tempo to the first beat in the applicable range of beats
+	for(ctr = startbeat + 1; ctr < eof_song->beats; ctr++)
 	{	//For the remaining beats in the project
 		if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{	//If this beat is an anchor
