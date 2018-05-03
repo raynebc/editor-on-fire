@@ -27,8 +27,9 @@ typedef struct
 
 } EOF_TEXT_PANEL;
 
-EOF_TEXT_PANEL *eof_create_text_panel(char *filename);
+EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin);
 	//Creates a text panel and buffers the specified filename into its text variable
+	//If builtin is nonzero, the function will attempt to recover the specified file from eof.dat if it is missing from the CWD (which is expected to be EOF's program folder)
 void eof_destroy_text_panel(EOF_TEXT_PANEL *panel);
 	//Frees panel->text and frees panel
 int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel);

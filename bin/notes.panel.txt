@@ -1,0 +1,8 @@
+  (%TEXT_FILE%)
+%EMPTY%
+  See the Notes panel macros tutorial
+  (Help>Manual>Notes panel macros) for details
+  about customizing the content displayed here.
+%EMPTY%
+  Use File>Display>Notes panel> to choose
+  another panel for display.

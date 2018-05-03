@@ -1,0 +1,47 @@
+Note Controls Panel (%TEXT_FILE%)
+%MOVE_UP_ONE_PIXEL%%MOVE_UP_ONE_PIXEL%%MOVE_UP_ONE_PIXEL%%MOVE_UP_ONE_PIXEL%%MOVE_UP_ONE_PIXEL%%MOVE_UP_ONE_PIXEL%
+-------------------------------
+Change note length:  Scroll wheel or [ and ]
+Move forward/back 1 grid snap: CTRL+[ / CTRL+]
+Toggle lanes: SHIFT+#   Del: Delete selected notes
+Star power: CTRL+W  Tremolo: CTRL+SHIFT+O
+Crazy: T   HO: H   PO: P  Slider: SHIFT+S
+Lower or increase grid snap size:  , or .
+Use up/down arrow keys to transpose notes.
+%EMPTY%
+
+;Drum track specific controls
+%IF_IS_DRUM_TRACK%Drum controls:
+%IF_IS_DRUM_TRACK%   Mark drum roll: CTRL+SHIFT+O
+%IF_IS_DRUM_TRACK%   Toggle Y/B/G cymbal: CTRL+Y/B/G
+%IF_IS_DRUM_TRACK%   Toggle Expert+ bass: CTRL+E
+%IF_IS_DRUM_TRACK%   Toggle Y Open/Pedal/Sizzle hi hat: SHIFT+O/P/S
+%IF_IS_DRUM_TRACK%   Toggle R rim shot: SHIFT+R
+
+;Vocal track specific controls
+%IF_IS_VOCAL_TRACK%Lyric controls:
+%IF_IS_VOCAL_TRACK%   Edit: L    Split: SHIFT+S  Freestyle: F
+%IF_IS_VOCAL_TRACK%   Mark lyric line: CTRL+M or CTRL+X
+%IF_IS_VOCAL_TRACK%   Play tone being moused over in piano roll: P
+%IF_IS_VOCAL_TRACK%   Place percussion note: Backspace
+%IF_IS_VOCAL_TRACK%   Middle click to edit moused over lyric.
+%IF_IS_VOCAL_TRACK%   Left click on preview piano key to play it.
+%IF_IS_VOCAL_TRACK%   Right click preview piano to move piano roll.
+%IF_IS_VOCAL_TRACK%   Move piano roll up/down:  SHIFT+Up/Dn.
+
+;Pro guitar track specific controls
+%IF_IS_PRO_GUITAR_TRACK%Pro guitar controls:
+%IF_IS_PRO_GUITAR_TRACK%   Set fret # for selected gems: CTRL+#, CTRL+F#
+%IF_IS_PRO_GUITAR_TRACK%   Edit note:  N    Edit fingering: F
+%IF_IS_PRO_GUITAR_TRACK%   Tap: CTRL+T  Bend: CTRL+B  P. mute: CTRL+M
+%IF_IS_PRO_GUITAR_TRACK%   Harm.: CTRL+H  Vib.: SHIFT+V  Ghost: CTRL+G
+%IF_IS_PRO_GUITAR_TRACK%   S. mute: SHIFT+X       Unpitch. slide:  CTRL+U
+%IF_IS_PRO_GUITAR_TRACK%   Pop: CTRL+SHIFT+P      Slap: CTRL+SHIFT+S
+%IF_IS_PRO_GUITAR_TRACK%   Accent: CTRL+SHIFT+A  P. Harm: SHIFT+H
+%IF_IS_PRO_GUITAR_TRACK%   Ignore: CTRL+SHIFT+I    Linknext: SHIFT+N
+%IF_IS_PRO_GUITAR_TRACK%   Middle click when mousing over a note to edit it.
+;This is the limit of what can be displayed in the 480 window height
+
+;GHL track specific controls
+%IF_IS_GHL_TRACK%GHL controls:
+%IF_IS_GHL_TRACK%  Toggle open strum note:  7 or middle click

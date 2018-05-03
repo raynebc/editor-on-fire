@@ -81,6 +81,7 @@ NCDFS_FILTER_LIST * eof_filter_gp_lyric_text_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_rs_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_bf_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_note_panel_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -250,6 +251,8 @@ char        eof_last_gp_path[1024] = {0};				//The path to the folder containing
 char        eof_last_rs_path[1024] = {0};				//The path to the folder containing the last imported Rocksmith XML file
 char        eof_last_sonic_visualiser_path[1024] = {0};	//The path to the folder containing the last imported Sonic Visualiser file
 char        eof_last_bf_path[1024] = {0};				//The path to the folder containing the last imported Bandfuse file
+char        eof_last_browsed_notes_panel_path[1024] = {0};		//The full path of the last Notes panel text file that the user manually browsed to
+char        eof_current_notes_panel_path[1024] = {0};	//The path to the current text file to display in the Notes panel (any non full path is expected to be relative to EOF's program folder)
 char        eof_loaded_song_name[1024] = {0};			//The file name (minus the folder path) of the active project
 char        eof_loaded_ogg_name[1024] = {0};			//The full path of the loaded OGG file
 char        eof_window_title[4096] = {0};
@@ -2819,19 +2822,7 @@ void eof_display_info_panel(void)
 
 			return;
 		}
-		if(!exists("info.panel.txt"))
-		{	//If the info panel definition file is missing
-			if(!eof_copy_file("eof.dat#info.panel.txt", "info.panel.txt") || !exists("info.panel.txt"))
-			{	//If the file couldn't be recovered from eof.dat
-				eof_log("\tCould not recreate Info panel file from eof.dat", 1);
-				allegro_message("Could not open Information panel");
-				eof_disable_info_panel = 1;
-
-				return;
-			}
-		}
-
-		eof_info_panel = eof_create_text_panel("info.panel.txt");	//Reload the Info panel
+		eof_info_panel = eof_create_text_panel("info.panel.txt", 1);	//Reload the Info panel, recover the panel file from eof.dat if necessary
 		if(!eof_info_panel)
 		{
 			allegro_message("Could not open Information panel");
@@ -4012,6 +4003,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_bf_files, "rif", "Bandfuse chart files (*.rif)", 1);
 
+	eof_filter_note_panel_files = ncdfs_filter_list_create();
+	if(!eof_filter_note_panel_files)
+	{
+		allegro_message("Could not create file list filter (*.panel.txt)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_note_panel_files, "panel.txt", "Notes panel text (*.panel.txt)", 1);
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -4471,6 +4470,8 @@ void eof_exit(void)
 	eof_filter_sonic_visualiser_files = NULL;
 	free(eof_filter_bf_files);
 	eof_filter_bf_files = NULL;
+	free(eof_filter_note_panel_files);
+	eof_filter_note_panel_files = NULL;
 
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS

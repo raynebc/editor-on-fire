@@ -255,6 +255,7 @@ extern NCDFS_FILTER_LIST * eof_filter_gp_lyric_text_files;
 extern NCDFS_FILTER_LIST * eof_filter_rs_files;
 extern NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files;
 extern NCDFS_FILTER_LIST * eof_filter_bf_files;
+extern NCDFS_FILTER_LIST * eof_filter_note_panel_files;
 
 extern int         eof_global_volume;
 
@@ -307,6 +308,8 @@ extern char        eof_last_gp_path[1024];
 extern char        eof_last_rs_path[1024];
 extern char        eof_last_sonic_visualiser_path[1024];
 extern char        eof_last_bf_path[1024];
+extern char        eof_last_browsed_notes_panel_path[1024];
+extern char        eof_current_notes_panel_path[1024];
 extern char        eof_loaded_song_name[1024];
 extern char        eof_loaded_ogg_name[1024];
 extern int         eof_quit;

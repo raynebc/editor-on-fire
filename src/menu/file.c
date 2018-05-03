@@ -43,6 +43,18 @@ struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local
 char lyricdetectionstring[1024] = {0};		//The display name given to the detection when displayed in the list box
 static int redefine_index = -1;
 
+MENU eof_file_notes_panel_menu[] =
+{
+	{"&Notes", eof_menu_file_notes_panel_notes, NULL, 0, NULL},
+	{"N&Ote controls", eof_menu_file_notes_panel_note_controls, NULL, 0, NULL},
+	{"&Information panel", eof_menu_file_notes_panel_information, NULL, 0, NULL},
+	{eof_etext, eof_menu_file_notes_panel_user, NULL, 0, NULL},
+	{"&Browse", eof_menu_file_notes_panel_browse, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Enable", eof_display_notes_panel, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_file_display_menu[] =
 {
 	{"&Display", eof_menu_file_display, NULL, 0, NULL},
@@ -51,7 +63,7 @@ MENU eof_file_display_menu[] =
 	{"&Redraw\tShift+F5", eof_redraw_display, NULL, 0, NULL},
 	{"Benchmark image sequence", eof_benchmark_image_sequence, NULL, 0, NULL},
 	{"Set &3D HOPO image scale size", eof_set_3d_hopo_scale_size, NULL, 0, NULL},
-	{"Enable &Notes panel", eof_display_notes_panel, NULL, 0, NULL},
+	{"&Notes panel", NULL, eof_file_notes_panel_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -357,13 +369,23 @@ void eof_prepare_file_menu(void)
 	{
 		eof_file_display_menu[2].flags = 0;
 	}
+
+	//Notes panel stuff
 	if(eof_enable_notes_panel)
 	{	//If the notes panel is enabled
-		eof_file_display_menu[6].flags = D_SELECTED;
+		eof_file_notes_panel_menu[6].flags = D_SELECTED;	//File>Display>Notes Panel>Enable
 	}
 	else
 	{
-		eof_file_display_menu[6].flags = 0;
+		eof_file_notes_panel_menu[6].flags = 0;
+	}
+	if(exists(eof_last_browsed_notes_panel_path))
+	{	//If the last browsed Notes panel file path is valid, display the relative file name for the user's reference
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "&User defined (%s)", get_filename(eof_last_browsed_notes_panel_path));
+	}
+	else
+	{
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "&User defined");
 	}
 }
 
@@ -5690,9 +5712,11 @@ void eof_rebuild_notes_window(void)
 	}
 }
 
-int eof_display_notes_panel(void)
+int eof_display_notes_panel_logic(int builtin)
 {
 	eof_enable_notes_panel = 1 - eof_enable_notes_panel;	//Toggle the notes panel on/off
+	char *default_target = "notes.panel.txt";	//Unless eof_current_notes_panel_path is defined, the default notes panel file will be displayed
+	char *effective_target;
 
 	if(eof_notes_panel)
 	{	//If a notes panel instance already exists
@@ -5704,6 +5728,15 @@ int eof_display_notes_panel(void)
 	{	//If the notes panel was just enabled, see if the program window needs to resize
 		eof_increase_display_width_to_panel_count(0);	//Resize the program window if necessary, disable notes panel on failure
 
+		if((eof_current_notes_panel_path[0] != '\0') && exists(eof_current_notes_panel_path))
+		{	//If the Notes panel file path is defined, and it still exists, use it instead of the default panel file
+			effective_target = eof_current_notes_panel_path;
+		}
+		else
+		{	//Otherwise revert to the notes.panel.txt file
+			effective_target = default_target;
+			builtin = 1;	//And that file will be recovered from eof.dat if necessary
+		}
 		if(eof_enable_notes_panel)
 		{	//If the program window is wide enough
 			eof_rebuild_notes_window();
@@ -5716,7 +5749,7 @@ int eof_display_notes_panel(void)
 
 			return 1;
 		}
-		eof_notes_panel = eof_create_text_panel("notes.txt");	//Reload the Notes panel
+		eof_notes_panel = eof_create_text_panel(effective_target, builtin);	//Reload the active Notes panel file, recover panel file from eof.dat if necessary
 		if(eof_notes_panel == NULL)
 		{	//Could not buffer file
 			allegro_message("Error opening Notes panel file");
@@ -5727,4 +5760,119 @@ int eof_display_notes_panel(void)
 	}
 
 	return 1;
+}
+
+int eof_display_notes_panel(void)
+{
+	return eof_display_notes_panel_logic(0);	//Display the currently configured Notes panel file
+}
+
+int eof_menu_file_notes_panel_notes(void)
+{
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		eof_enable_notes_panel = 0;
+
+		return 1;
+	}
+
+	if(eof_enable_notes_panel)
+	{	//If the notes window was already open
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+	}
+	(void) ustrcpy(eof_current_notes_panel_path, "notes.panel.txt");
+	return eof_display_notes_panel_logic(1);	//Load the default notes.panel.txt file, recover panel file from eof.dat if necessary
+}
+
+int eof_menu_file_notes_panel_note_controls(void)
+{
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		eof_enable_notes_panel = 0;
+
+		return 1;
+	}
+
+	if(eof_enable_notes_panel)
+	{	//If the notes window was already open
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+	}
+	(void) ustrcpy(eof_current_notes_panel_path, "note_controls.panel.txt");
+	return eof_display_notes_panel_logic(1);	//Load the note_controls.panel.txt file, recover panel file from eof.dat if necessary
+}
+
+int eof_menu_file_notes_panel_information(void)
+{
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		eof_enable_notes_panel = 0;
+
+		return 1;
+	}
+
+	if(eof_enable_notes_panel)
+	{	//If the notes window was already open
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+	}
+	(void) ustrcpy(eof_current_notes_panel_path, "info.panel.txt");
+	return eof_display_notes_panel_logic(1);	//Load the info.panel.txt file, recover panel file from eof.dat if necessary
+}
+
+int eof_menu_file_notes_panel_user(void)
+{
+	if((eof_last_browsed_notes_panel_path[0] == '\0') || !exists(eof_last_browsed_notes_panel_path))
+		return eof_menu_file_notes_panel_browse();	//If the last browsed panel file path is undefined or is no longer valid, have the user browse for a file
+
+	(void) ustrcpy(eof_current_notes_panel_path, eof_last_browsed_notes_panel_path);	//This is the file that eof_display_notes_panel() will load
+	if(eof_enable_notes_panel)
+	{	//If the notes window was already open
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+	}
+	(void) eof_display_notes_panel();
+	eof_render();
+
+	return D_O_K;
+}
+
+int eof_menu_file_notes_panel_browse(void)
+{
+	char *returnedfn = NULL, initial[1024];
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+
+	if(!eof_song || !eof_song_loaded)
+	{	//If no project is loaded
+		return 1;
+	}
+
+	eof_log("Browsing for Notes panel file", 1);
+	(void) replace_filename(initial, eof_last_browsed_notes_panel_path, "", 1024);	//Get the initial folder path for the browse dialog
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tInitializing browse dialog to \"%s\"", initial);
+	eof_log(eof_log_string, 1);
+
+	returnedfn = ncd_file_select(0, initial, "Load Notes panel file", eof_filter_note_panel_files);
+	eof_clear_input();
+	if(returnedfn)
+	{	//If a file was selected for load
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading Notes panel file:  %s", returnedfn);
+		eof_log(eof_log_string, 1);
+		(void) ustrcpy(eof_current_notes_panel_path, returnedfn);	//This is the file that eof_display_notes_panel() will load
+		(void) ustrcpy(eof_last_browsed_notes_panel_path, returnedfn);		//Track this as the last notes panel file the user browsed to
+		if(eof_enable_notes_panel)
+		{	//If the notes window was already open
+			eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+		}
+		(void) eof_display_notes_panel();
+	}
+	eof_render();
+
+	return D_O_K;
 }

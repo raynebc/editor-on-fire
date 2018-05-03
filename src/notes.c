@@ -17,13 +17,30 @@
 #include "memwatch.h"
 #endif
 
-EOF_TEXT_PANEL *eof_create_text_panel(char *filename)
+EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
 	EOF_TEXT_PANEL *panel;
+	char recoverypath[1024] = {0};
 
 	if(!filename)
 		return NULL;	//Invalid parameter
 
+	if(!exists(filename))
+	{	//If the file doesn't exist
+		if(builtin)
+		{	//If the calling function wanted to recover the file from eof.dat in this scenario
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRecreating panel file (%s) from eof.dat", filename);
+			eof_log(eof_log_string, 1);
+			(void) snprintf(recoverypath, sizeof(recoverypath) - 1, "eof.dat#%s", filename);	//The path into eof.dat from which the file should be recovered
+			if(!eof_copy_file(recoverypath, filename) || !exists(filename))
+			{	//If the file couldn't be recovered from eof.dat
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCould not recreate panel file (%s) from eof.dat", filename);
+				eof_log(eof_log_string, 1);
+
+				return NULL;
+			}
+		}
+	}
 	panel = malloc(sizeof(EOF_TEXT_PANEL));
 	if(!panel)
 		return NULL;	//Couldn't allocate memory
@@ -378,10 +395,34 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//A pro guitar track is not active
+	if(!ustricmp(macro, "IF_IS_NOT_PRO_GUITAR_TRACK"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//One of the drum tracks is active
 	if(!ustricmp(macro, "IF_IS_DRUM_TRACK"))
 	{
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//A GHL format track is active
+	if(!ustricmp(macro, "IF_IS_GHL_TRACK"))
+	{
+		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -422,18 +463,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 
 		return 3;	//True
-	}
-
-	//A pro guitar track is not active
-	if(!ustricmp(macro, "IF_IS_NOT_PRO_GUITAR_TRACK"))
-	{
-		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		{
-			dest_buffer[0] = '\0';
-			return 3;	//True
-		}
-
-		return 2;	//False
 	}
 
 	//A note/lyric is selected

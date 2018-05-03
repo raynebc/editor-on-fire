@@ -106,10 +106,25 @@ Note and Beat Editing:
 
     Middle-Click (notes):
 
+        Pro guitar track:
+
         Open the selected pro guitar notes in the edit pro guitar
         note dialog.  If no notes are selected, the note under
         the mouse when the middle click is performed is opened in
         the dialog.
+
+        GHL track:
+
+        If the mouse is hovering over an existing note, that note
+        is converted to an open note if it isn't already one (if
+        it is already one, the note is toggled off).  If the mouse
+        is not hovering over an existing note, a new open note is
+        placed.
+
+        Vocal track:
+
+        If the mouse is hovering over a lyric, the Edit Lyric
+        dialog is opened for that lyric.
 
     Left-Click+Drag (notes):
 
@@ -184,7 +199,14 @@ Note and Beat Editing:
 
     Ctrl+G:
 
+        Drum track:
+
         Toggle the Pro drum cymbal notation for selected green drum notes.
+
+        Pro guitar track:
+
+        Enables ghost status for all gems of all selected notes.  This note mechanic is used for
+        authoring real guitar transcriptions for Rock Band 3 and Phase Shift.
 
 
     Ctrl+Y:
@@ -227,12 +249,6 @@ Note and Beat Editing:
         (Ctrl+1 through 0), or 11 through 22 (Ctrl+F1 through F12), or X (Ctrl+X, to denote string
         mutes).  These shortcuts are used for authoring real guitar transcriptions for Rock Band
         3, Phase Shift and Rocksmith.
-
-
-    Ctrl+G:
-
-        Enables ghost status for all gems of all selected notes.  This note mechanic is used for
-        authoring real guitar transcriptions for Rock Band 3 and Phase Shift.
 
 
     Comma/Period:

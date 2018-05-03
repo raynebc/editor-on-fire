@@ -254,6 +254,8 @@ void eof_load_config(char * fn)
 	(void) ustrcpy(eof_last_rs_path, get_config_string("paths", "rs_path", ""));
 	(void) ustrcpy(eof_last_sonic_visualiser_path, get_config_string("paths", "sonic_visualiser_path", ""));
 	(void) ustrcpy(eof_last_bf_path, get_config_string("paths", "bf_path", ""));
+	(void) ustrcpy(eof_last_browsed_notes_panel_path, get_config_string("paths", "eof_last_browsed_notes_panel_path", ""));
+	(void) ustrcpy(eof_current_notes_panel_path, get_config_string("paths", "eof_current_notes_panel_path", ""));
 
 	/* read editor settings */
 	(void) ustrcpy(eof_last_frettist, get_config_string("editor", "frettist", ""));
@@ -454,6 +456,8 @@ void eof_save_config(char * fn)
 	set_config_string("paths", "rs_path", eof_last_rs_path);
 	set_config_string("paths", "sonic_visualiser_path", eof_last_sonic_visualiser_path);
 	set_config_string("paths", "bf_path", eof_last_bf_path);
+	set_config_string("paths", "eof_last_browsed_notes_panel_path", eof_last_browsed_notes_panel_path);
+	set_config_string("paths", "eof_current_notes_panel_path", eof_current_notes_panel_path);
 
 	/* write editor settings */
 	set_config_string("editor", "frettist", eof_last_frettist);

@@ -15,37 +15,37 @@ p {text-indent: 1cm}
 
 <h1><a name="Edit">What is this?</a></h1>
 <blockquote>
-The Notes panel is an additional informational panel that is meant for users to customize to display whatever information is wanted.  This is achieved by defining static text as well as various macros that will translate dynamically to text.  For the sake of this documentation, "printed" text will refer to the text that is written to the Notes panel.  Some of these macros are conditional, so you can control whether text or macros are displayed at all, such as to define content that will display only for the vocal track, or for content that will only display if a note is currently selected.  Content is defined line by line, where one line in the text file corresponds to a single line in the Notes panel.  Macros are case insensitive (you can use any amount of upper or lower case letters to type them), but it's recommended to use upper case to make it more easy to identify where macros occur int the notes.txt file.  It's also generally more traditional to type macros in all capital letters.<br>
+The Notes panel is an additional informational panel that is meant for users to customize to display whatever information is wanted.  This is achieved by defining static text as well as various macros that will translate dynamically to text.  For the sake of this documentation, "printed" text will refer to the text that is written to the Notes panel.  Some of these macros are conditional, so you can control whether text or macros are displayed at all, such as to define content that will display only for the vocal track, or for content that will only display if a note is currently selected.  Content is defined line by line, where one line in the text file corresponds to a single line in the Notes panel.  Macros are case insensitive (you can use any amount of upper or lower case letters to type them), but it's recommended to use upper case to make it more easy to identify where macros occur int the notes.panel.txt file.  It's also generally more traditional to type macros in all capital letters.<br>
 </blockquote>
 
 
 <h1>Using the Notes panel</h1>
 <blockquote>
-A default notes.txt file is provided with EOF.  It is a simple text file which can be viewed or edited in a text editor such as the Notepad utility that comes with Windows.  Keep in mind that this file is expected to be written in Windows format:  Line breaks are CR LF format (a carriage return character followed by a line feed character).  Decent text editors should allow you to save edits in this format, just make sure it isn't converted to Linux (line breaks only have a line feed character) or Unix (line breaks only have a carraige return character) format or it won't work properly.  To display or hide the Notes panel, use the <a href=functions.htm#enablenotespanel>File>Display>Enable Notes panel</a> function.  If it is shown, EOF will automatically resize the program window if doing so is needed to make enough space to display the panel.  If the Info panel or 3D preview are already being hidden (ie. from <a href=functions.htm#preferences>File>Preferences>Preferences</a>), EOF will use that empty space for the Notes panel and will prompt to resize the program window if the disabled Info/3D panels are re-enabled from Preferences while the Notes panel is being displayed (or if the Info panel is re-enabled via keyboard shortcut, EOF will resize the program window without prompting).  The Notes panel's contents are kept in EOF's memory to avoid having to read it from the computer's hard drive repeatedly, so if you make edits to the Notes panel, you can make them take effect in EOF by hiding the Notes panel and showing it again.  This causes EOF to re-load the notes.txt file into memory.  Keep in mind that text that runs over the right edge of the Notes Window and into the 3D preview or the edge of the program window unless you either hide the 3D preview window or resize the program window (<a href=functions.htm#setdisplaywidth>File>Display>Set display width</a>).
+A default notes.panel.txt file is provided with EOF.  It is a simple text file which can be viewed or edited in a text editor such as the Notepad utility that comes with Windows.  Keep in mind that this file is expected to be written in Windows format:  Line breaks are CR LF format (a carriage return character followed by a line feed character).  Decent text editors should allow you to save edits in this format, just make sure it isn't converted to Linux (line breaks only have a line feed character) or Unix (line breaks only have a carraige return character) format or it won't work properly.  To display or hide the Notes panel, use the <a href=functions.htm#enablenotespanel>File>Display>Enable Notes panel</a> function.  If it is shown, EOF will automatically resize the program window if doing so is needed to make enough space to display the panel.  If the Info panel or 3D preview are already being hidden (ie. from <a href=functions.htm#preferences>File>Preferences>Preferences</a>), EOF will use that empty space for the Notes panel and will prompt to resize the program window if the disabled Info/3D panels are re-enabled from Preferences while the Notes panel is being displayed (or if the Info panel is re-enabled via keyboard shortcut, EOF will resize the program window without prompting).  The Notes panel's contents are kept in EOF's memory to avoid having to read it from the computer's hard drive repeatedly, so if you make edits to the Notes panel, you can make them take effect in EOF by hiding the Notes panel and showing it again.  This causes EOF to re-load the notes.panel.txt file into memory.  Keep in mind that text that runs over the right edge of the Notes Window and into the 3D preview or the edge of the program window unless you either hide the 3D preview window or resize the program window (<a href=functions.htm#setdisplaywidth>File>Display>Set display width</a>).
 </blockquote>
 
 
 <h1>Printing static text</h1>
 <blockquote>
-The simplest thing to display would be static text, which prints exactly as typed in the notes.txt file.  Alphabetical characters, numerical characters and spaces are supported.  Other characters aren't guaranteed to work.  Control characters like the tab character, for example, do not display.  Static text is mostly useful to display notes, to-do items, keyboard shortcuts, etc.
+The simplest thing to display would be static text, which prints exactly as typed in the notes.panel.txt file.  Alphabetical characters, numerical characters and spaces are supported.  Other characters aren't guaranteed to work.  Control characters like the tab character, for example, do not display.  Static text is mostly useful to display notes, to-do items, keyboard shortcuts, etc.
 </blockquote>
 
 
 <h1>Printing dynamic text</h1>
 <blockquote>
-Dynamic text is text that will change due to various defined conditions such as whether notes are selected, what kind of track is being displayed in the editor, etc.  For the Notes panel, this is achieved by using a "macro", which is basically a placeholder for what will eventually be "printed" to the Notes panel.  You can use this to display statuses of notes, conditions that may be in effect and other pieces of information.  EOF's macros always begin with a % (percent sign), end with % and never include any spaces.  If you want to print a percent sign to the Notes panel, a <b>%PERCENT%</b> macro can be used.  If there is an error in the notes.txt file, the notes panel will indicate there was an unrecognized macro in that line.  If the unrecognized macro is specified as being <b>%ELSE%</b>, it's probably an error that needs to be corrected in EOF, otherwise it's most likely a typo in the notes.txt file or a macro is being used that isn't supported by the version of EOF that you're using.  A complete list of all macros that EOF supports are defined <a href="macros.htm#macrolist">further down in this document</a>.  Feel free to request new macros to print specific items, which can be added to EOF if they would be useful or at least reasonably simple to implement.
+Dynamic text is text that will change due to various defined conditions such as whether notes are selected, what kind of track is being displayed in the editor, etc.  For the Notes panel, this is achieved by using a "macro", which is basically a placeholder for what will eventually be "printed" to the Notes panel.  You can use this to display statuses of notes, conditions that may be in effect and other pieces of information.  EOF's macros always begin with a % (percent sign), end with % and never include any spaces.  If you want to print a percent sign to the Notes panel, a <b>%PERCENT%</b> macro can be used.  If there is an error in the notes.panel.txt file, the notes panel will indicate there was an unrecognized macro in that line.  If the unrecognized macro is specified as being <b>%ELSE%</b>, it's probably an error that needs to be corrected in EOF, otherwise it's most likely a typo in the notes.panel.txt file or a macro is being used that isn't supported by the version of EOF that you're using.  A complete list of all macros that EOF supports are defined <a href="macros.htm#macrolist">further down in this document</a>.  Feel free to request new macros to print specific items, which can be added to EOF if they would be useful or at least reasonably simple to implement.
 </blockquote>
 
 
 <h1>Comments</h1>
 <blockquote>
-Any line in notes.txt that begins with a semicolon ; will be treated as a comment and no text or macros will be processed for that line.  No blank line will be printed, even if there is an %EMPTY% macro in the line.
+Any line in notes.panel.txt that begins with a semicolon ; will be treated as a comment and no text or macros will be processed for that line.  No blank line will be printed, even if there is an %EMPTY% macro in the line.
 </blockquote>
 
 
 <h1>Conditional macros</h1>
 <blockquote>
-There are times where you may want to only display a certain piece of content under certain conditions.  For example, say you only wanted to print the shortcuts for toggling cymbal status when the drum track was active.  You could do this by adding the following text to the notes.txt file:
+There are times where you may want to only display a certain piece of content under certain conditions.  For example, say you only wanted to print the shortcuts for toggling cymbal status when the drum track was active.  You could do this by adding the following text to the notes.panel.txt file:
 <table border="1" cellpadding="3">
 <tbody>
 <tr>
@@ -55,7 +55,7 @@ There are times where you may want to only display a certain piece of content un
 </table>
 Everything after the <b>%IF_IS_DRUM_TRACK%</b> will only print if that macro's condition is true:  That a drum track (either the normal one or the Phase Shift drum track) is the active track.  This way, you can display the shortcuts only when relevant and when a non drum track is active, that space can be used to display something else.  You can consider the part of the line that will print when the macro is evaluated as true as being the macro's "scope", which in this case is everything after the <b>%IF_IS_DRUM_TRACK%</b> macro up until the end of the line.<br><br>
 
-In the previous example, everything after the <b>%IF_IS_DRUM_TRACK%</b> macro up until the end of the line in the notes.txt file was conditional on the active track being a drum track and thus the macro being evaluated as being true.  A more complicated example is one where only part of a line is conditional.  An <b>%ENDIF%</b> macro can be placed after an <b>%IF...</b> macro to end its scope, stopping the conditional processing of the line in the notes.txt file.  For example:
+In the previous example, everything after the <b>%IF_IS_DRUM_TRACK%</b> macro up until the end of the line in the notes.panel.txt file was conditional on the active track being a drum track and thus the macro being evaluated as being true.  A more complicated example is one where only part of a line is conditional.  An <b>%ENDIF%</b> macro can be placed after an <b>%IF...</b> macro to end its scope, stopping the conditional processing of the line in the notes.panel.txt file.  For example:
 <table border="1" cellpadding="3">
 <tbody>
 <tr>
@@ -118,7 +118,7 @@ If a defined line is empty or if all of the macros are conditional and none of t
 </table>
 If the current track is the vocal track, two lines will be written to the Notes panel ("This is a vocal track" and "This is the next line"), otherwise only the second of those two lines will be written and there will be no empty line.<br><br>
 
-If you want to allow a line that results in no text (due to either being empty in the notes.txt file or by no conditions being successfully met) to be written as an empty line in the Notes panel, use an <b>%EMPTY%</b> macro anywhere it will be sure to be processed instead of being within the scope of a macro that might not be used (before conditional macros or after all conditional macros were ended with <b>%ENDIF%</b>.  If you change it as follows:
+If you want to allow a line that results in no text (due to either being empty in the notes.panel.txt file or by no conditions being successfully met) to be written as an empty line in the Notes panel, use an <b>%EMPTY%</b> macro anywhere it will be sure to be processed instead of being within the scope of a macro that might not be used (before conditional macros or after all conditional macros were ended with <b>%ENDIF%</b>.  If you change it as follows:
 <table border="1" cellpadding="3">
 <tbody>
 <tr>
@@ -129,14 +129,14 @@ If you want to allow a line that results in no text (due to either being empty i
 </tr>
 </tbody>
 </table>
-Everything from the <b>%IF_IS_VOCAL_TRACK%</b> macro until the end of the line in the Notes.txt file will only be processed if that condition (the current track is the vocal track) is met, or until an <b>%ELSE%</b> or <b>%ENDIF%</b> macro is reached on the same line.  Using <b>%ENDIF%</b> in this example allows the rest of the line to be processed so if the current track is NOT the vocal track, the <b>%EMPTY%</b> macro is still processed.  Since no text is being written for this line (none of it pertained to non vocal tracks), nothing is to be written for this line in the Notes panel, and the <b>%EMPTY%</b> macro that was processed indicates that the line is explicitly written to be empty in the panel so that the next text to be written to the panel will do so after a blank row.
+Everything from the <b>%IF_IS_VOCAL_TRACK%</b> macro until the end of the line in the notes.panel.txt file will only be processed if that condition (the current track is the vocal track) is met, or until an <b>%ELSE%</b> or <b>%ENDIF%</b> macro is reached on the same line.  Using <b>%ENDIF%</b> in this example allows the rest of the line to be processed so if the current track is NOT the vocal track, the <b>%EMPTY%</b> macro is still processed.  Since no text is being written for this line (none of it pertained to non vocal tracks), nothing is to be written for this line in the Notes panel, and the <b>%EMPTY%</b> macro that was processed indicates that the line is explicitly written to be empty in the panel so that the next text to be written to the panel will do so after a blank row.
 </blockquote>
 
 
 <a name="macrolist"><h1>Macro list</h1>
 <blockquote>
 These are all of the macros that can be used with the Notes panel.<br><br>
-<b><u>Tip:</u></b>  Some web browsers will allow you to hold CTRL and left click on the macro name to highlight the entire name.  This makes it easier to copy to the clipboard and paste into the notes.txt file in order to change what is to be displayed in the Notes panel.  CTRL+click the macro name again or click someplace else on the page in order to deselect it.
+<b><u>Tip:</u></b>  Some web browsers will allow you to hold CTRL and left click on the macro name to highlight the entire name.  This makes it easier to copy to the clipboard and paste into the notes.panel.txt file in order to change what is to be displayed in the Notes panel.  CTRL+click the macro name again or click someplace else on the page in order to deselect it.
 <blockquote>
 
 <h1>Conditional macros</h1>
@@ -168,8 +168,16 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active track is a pro guitar track.</td>
 </tr>
 <tr>
+<td>%IF_IS_NOT_PRO_GUITAR_TRACK%</td>
+<td>Evaluates as true if the active track is NOT a pro guitar track.</td>
+</tr>
+<tr>
 <td>%IF_IS_DRUM_TRACK%</td>
 <td>Evaluates as true if the active track is either of the drum tracks:  The normal one (PART DRUMS) or the Phase Shift one (PART REAL_DRUMS_PS).</td>
+</tr>
+<tr>
+<td>%IF_IS_GHL_TRACK%</td>
+<td>Evaluates as true if the active track has GHL mode enabled.</td>
 </tr>
 <tr>
 <td>%IF_IS_TECH_VIEW%</td>
@@ -178,10 +186,6 @@ See the detailed explanation earlier in this document for instructions on how to
 <tr>
 <td>%IF_IS_NOT_TECH_VIEW%</td>
 <td>Evaluates as true if tech view is not in effect.  This will always evaluate as true if the active track is not a pro guitar track.</td>
-</tr>
-<tr>
-<td>%IF_IS_NOT_PRO_GUITAR_TRACK%</td>
-<td>Evaluates as true if the active track is NOT a pro guitar track.</td>
 </tr>
 <tr>
 <td>%IF_NOTE_IS_SELECTED%</td>
@@ -249,7 +253,7 @@ These macros are for special uses, such as affecting how text will be printed to
 </tr>
 <tr>
 <td>%EMPTY%</td>
-<td>If the line in notes.txt did not result in any text to print for the line in the Notes panel, this macro allows an empty line to be printed to the Notes panel and the print position to be lowered so that the next line of printed text occurs below the empty space.</td>
+<td>If the line in notes.panel.txt did not result in any text to print for the line in the Notes panel, this macro allows an empty line to be printed to the Notes panel and the print position to be lowered so that the next line of printed text occurs below the empty space.</td>
 </tr>
 <tr>
 <td>%MOVE_UP_ONE_PIXEL%</td>

@@ -173,7 +173,16 @@ int eof_toggle_display_zoom(void);
 int eof_menu_file_sonic_visualiser_import(void);
 	//Imports beat timings from a user specified Sonic Visualiser file
 
-void eof_rebuild_notes_window(void);	//Destroys and rebuilds the window for the notes panel at the appropriate coordinates depending on whether the Info panel is being rendered
-int eof_display_notes_panel(void);	//Frees and reloads the notes.txt file from memory appropriately, enables or disables the display of the notes panel
+void eof_rebuild_notes_window(void);		//Destroys and rebuilds the window for the notes panel at the appropriate coordinates depending on whether the Info panel is being rendered
+int eof_display_notes_panel(void);			//Frees and reloads the notes.panel.txt file from memory appropriately, enables or disables the display of the notes panel
+int eof_menu_file_notes_panel_notes(void);			//Reloads the Notes panel with the built-in notes.panel.txt file
+int eof_menu_file_notes_panel_note_controls(void);	//Reloads the Notes panel with the built-in note_controls.panel.txt file
+int eof_menu_file_notes_panel_information(void);	//Reloads the Notes panel with the built-in info.panel.txt file
+int eof_menu_file_notes_panel_user(void);
+	//Reloads the Notes panel with the last text file the user manually browsed to
+	//If no such browse has been done, or if that file no longer exists, eof_menu_file_notes_panel_browse() is called instead
+int eof_menu_file_notes_panel_browse(void);
+	//Prompts the user to browse for a panel.txt file to display in the Notes panel
+	//Stores the selected path into eof_last_browsed_notes_panel_path() and reloads the Notes panel appropriately
 
 #endif
