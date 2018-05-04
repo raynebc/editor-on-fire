@@ -89,6 +89,8 @@ MENU eof_beat_events_menu[] =
 	{"&Events", eof_menu_beat_events, NULL, 0, NULL},
 	{"Clear all events", eof_menu_beat_clear_events, NULL, 0, NULL},
 	{"Place &Section\tShift+E", eof_menu_beat_add_section, NULL, 0, NULL},
+	{"&Copy events\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_events, NULL, 0, NULL},
+	{"&Paste events\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_events, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -106,6 +108,7 @@ MENU eof_beat_menu[] =
 	{"Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
 	{"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
 	{"De&Lete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
+	{"Anchor measures", eof_menu_beat_anchor_measures, NULL, 0, NULL},
 	{"Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
 	{"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
 	{"Estimate BPM", eof_menu_beat_estimate_bpm, NULL, 0, NULL},
@@ -116,8 +119,6 @@ MENU eof_beat_menu[] =
 	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
 	{"Place &Trainer event", eof_menu_beat_trainer_event, NULL, 0, NULL},
-	{"Copy events\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_events, NULL, 0, NULL},
-	{"&Paste events\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_events, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -276,11 +277,12 @@ void eof_prepare_beat_menu(void)
 		eof_beat_menu[9].flags = 0;		//Anchor
 		eof_beat_menu[10].flags = 0;	//Toggle anchor
 		eof_beat_menu[11].flags = 0;	//Delete anchor
-		eof_beat_menu[12].flags = 0;	//Reset BPM
-		eof_beat_menu[13].flags = 0;	//Calculate BPM
-		eof_beat_menu[15].flags = 0;	//Double BPM
-		eof_beat_menu[16].flags = 0;	//Halve BPM
-		eof_beat_menu[17].flags = 0;	//Adjust tempo for RBN
+		eof_beat_menu[12].flags = 0;	//Anchor measures
+		eof_beat_menu[13].flags = 0;	//Reset BPM
+		eof_beat_menu[14].flags = 0;	//Calculate BPM
+		eof_beat_menu[16].flags = 0;	//Double BPM
+		eof_beat_menu[17].flags = 0;	//Halve BPM
+		eof_beat_menu[18].flags = 0;	//Adjust tempo for RBN
 
 		//Ditto for time signature sub menu items
 		eof_beat_time_signature_menu[0].flags = 0;	//4/4
@@ -363,20 +365,20 @@ void eof_prepare_beat_menu(void)
 		}
 		if(i == eof_song->beats)
 		{	//If there are no tempo changes throughout the entire chart, disable Beat>Reset BPM, as it would have no effect
-			eof_beat_menu[12].flags = D_DISABLED;
+			eof_beat_menu[13].flags = D_DISABLED;
 		}
 		else
 		{
-			eof_beat_menu[12].flags = 0;	//Reset BPM
+			eof_beat_menu[13].flags = 0;	//Reset BPM
 		}
 //Beat>Estimate validation
 		if(eof_silence_loaded || !eof_music_track)
 		{	//If no chart audio is loaded
-			eof_beat_menu[14].flags = D_DISABLED;
+			eof_beat_menu[15].flags = D_DISABLED;
 		}
 		else
 		{
-			eof_beat_menu[14].flags = 0;	//Estimate BPM
+			eof_beat_menu[15].flags = 0;	//Estimate BPM
 		}
 //Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
@@ -392,20 +394,20 @@ void eof_prepare_beat_menu(void)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
-			eof_beat_menu[20].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[21].flags = 0;	//Beat>Rocksmith>
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
-				eof_beat_menu[21].flags = D_DISABLED;
+				eof_beat_menu[22].flags = D_DISABLED;
 			}
 			else
 			{
-				eof_beat_menu[21].flags = 0;	//Place Trainer Event
+				eof_beat_menu[22].flags = 0;	//Place Trainer Event
 			}
 		}
 		else
 		{
-			eof_beat_menu[20].flags = D_DISABLED;
 			eof_beat_menu[21].flags = D_DISABLED;
+			eof_beat_menu[22].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -503,11 +505,12 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[9].flags = D_DISABLED;	//Anchor
 			eof_beat_menu[10].flags = D_DISABLED;	//Toggle anchor
 			eof_beat_menu[11].flags = D_DISABLED;	//Delete anchor
-			eof_beat_menu[12].flags = D_DISABLED;	//Reset BPM
-			eof_beat_menu[13].flags = D_DISABLED;	//Calculate BPM
-			eof_beat_menu[15].flags = D_DISABLED;	//Double BPM
-			eof_beat_menu[16].flags = D_DISABLED;	//Halve BPM
-			eof_beat_menu[17].flags = D_DISABLED;	//Adjust tempo for RBN
+			eof_beat_menu[12].flags = D_DISABLED;	//Anchor measures
+			eof_beat_menu[13].flags = D_DISABLED;	//Reset BPM
+			eof_beat_menu[14].flags = D_DISABLED;	//Calculate BPM
+			eof_beat_menu[16].flags = D_DISABLED;	//Double BPM
+			eof_beat_menu[17].flags = D_DISABLED;	//Halve BPM
+			eof_beat_menu[18].flags = D_DISABLED;	//Adjust tempo for RBN
 
 			//Also disable time signature functions that can change beat positions
 			eof_beat_time_signature_menu[0].flags = D_DISABLED;	//4/4
@@ -1168,6 +1171,60 @@ int eof_menu_beat_delete_anchor(void)
 	char undo_made = 0;
 
 	return eof_menu_beat_delete_anchor_logic(&undo_made);
+}
+
+int eof_menu_beat_anchor_measures(void)
+{
+	char undo_made = 0;
+	unsigned long ctr;
+
+	if(!eof_song)	//If no chart is loaded, abort
+		return 1;
+
+	if(eof_note_auto_adjust)
+	{	//If the user has enabled the Note Auto-Adjust preference
+		(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+	}
+
+	//Anchor all first beats in a measure
+	for(ctr = 1; ctr < eof_song->beats; ctr++)
+	{	//For each beat after the first (which is always an anchor)
+		if(eof_song->beat[ctr]->has_ts)
+		{	//If a time signature is in effect at this beat
+			if(!eof_song->beat[ctr]->beat_within_measure)
+			{	//And this is the first beat in a measure
+				if(!(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR))
+				{	//If this beat isn't already an anchor
+					if(undo_made == 0)
+					{	//If an undo state needs to be made
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eof_song->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Turn it into one
+				}
+			}
+		}
+	}
+
+	//Delete anchors from all other beats in a measure
+	for(ctr = 1; ctr < eof_song->beats; ctr++)
+	{	//For each beat after the first (which is always an anchor)
+		if(eof_song->beat[ctr]->has_ts)
+		{	//If a time signature is in effect at this beat
+			if(eof_song->beat[ctr]->beat_within_measure)
+			{	//And this is NOT the first beat in a measure
+				eof_selected_beat = ctr;	//Select the beat
+				(void) eof_menu_beat_delete_anchor_logic(&undo_made);	//Perform "Beat>Delete Anchor" on the beat, creating an undo state if necessary
+			}
+		}
+	}
+
+	if(eof_note_auto_adjust)
+	{	//If the user has enabled the Note Auto-Adjust preference
+		(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+	}
+
+	return 1;
 }
 
 int eof_menu_beat_reset_bpm(void)
@@ -3118,6 +3175,9 @@ int eof_menu_beat_estimate_bpm(void)
 		startbeat = eof_get_beat(eof_song, eof_song->tags->start_point);
 		if(eof_beat_num_valid(eof_song, startbeat))
 		{	//If the beat in which the selection start begins was found
+			if(startbeat == ULONG_MAX)	//Redundant check to satisfy Coverity
+				return D_O_K;
+
 			if(eof_song->beat[startbeat]->pos == eof_song->tags->start_point)
 			{	//If the selection starts on that beat marker exactly
 				eof_clear_input();
@@ -3126,7 +3186,6 @@ int eof_menu_beat_estimate_bpm(void)
 			}
 			else
 				return D_O_K;	//Don't perform any more processing
-
 		}
 	}
 	else

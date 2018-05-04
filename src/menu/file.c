@@ -43,12 +43,13 @@ struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local
 char lyricdetectionstring[1024] = {0};		//The display name given to the detection when displayed in the list box
 static int redefine_index = -1;
 
+char eof_file_notes_panel_menu_string[1024];
 MENU eof_file_notes_panel_menu[] =
 {
 	{"&Notes", eof_menu_file_notes_panel_notes, NULL, 0, NULL},
 	{"N&Ote controls", eof_menu_file_notes_panel_note_controls, NULL, 0, NULL},
 	{"&Information panel", eof_menu_file_notes_panel_information, NULL, 0, NULL},
-	{eof_etext, eof_menu_file_notes_panel_user, NULL, 0, NULL},
+	{eof_file_notes_panel_menu_string, eof_menu_file_notes_panel_user, NULL, 0, NULL},
 	{"&Browse", eof_menu_file_notes_panel_browse, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Enable", eof_display_notes_panel, NULL, 0, NULL},
@@ -96,7 +97,8 @@ MENU eof_file_menu[] =
 	{"&Quick save\t" CTRL_NAME "+Q", eof_menu_file_quick_save, NULL, D_DISABLED, NULL},
 	{"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
 	{"&Import", NULL, eof_file_import_menu, 0, NULL},
-	{"&Export time range", eof_menu_file_export_time_range, NULL, D_DISABLED, NULL},
+	{"&Export chart range", eof_menu_file_export_chart_range, NULL, D_DISABLED, NULL},
+	{"Export audio range", eof_menu_file_export_audio_range, NULL, D_DISABLED, NULL},
 	{"Export &Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
@@ -329,10 +331,11 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[4].flags = 0; // Quick save
 		eof_file_menu[5].flags = 0; // Load OGG
 		eof_file_menu[7].flags = 0;	// Export time range
+		eof_file_menu[8].flags = 0;	// Export audio range
 		#ifdef ALLEGRO_WINDOWS
-			eof_file_menu[8].flags = 0;	// Export guitar pro
+			eof_file_menu[9].flags = 0;	// Export guitar pro
 		#else
-			eof_file_menu[8].flags = D_DISABLED;	// Export guitar pro
+			eof_file_menu[9].flags = D_DISABLED;	// Export guitar pro
 		#endif
 		eof_file_import_menu[0].flags = 0; // Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = 0; // Import>Lyric
@@ -355,7 +358,8 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[4].flags = D_DISABLED; // Quick save
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
 		eof_file_menu[7].flags = D_DISABLED; // Export time range
-		eof_file_menu[8].flags = D_DISABLED;	// Export guitar pro
+		eof_file_menu[8].flags = D_DISABLED; // Export audio range
+		eof_file_menu[9].flags = D_DISABLED;	// Export guitar pro
 		eof_file_import_menu[0].flags = D_DISABLED; // Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = D_DISABLED; // Import>Lyric
 		eof_file_display_menu[4].flags = D_DISABLED;	//Benchmark image sequence
@@ -381,11 +385,11 @@ void eof_prepare_file_menu(void)
 	}
 	if(exists(eof_last_browsed_notes_panel_path))
 	{	//If the last browsed Notes panel file path is valid, display the relative file name for the user's reference
-		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "&User defined (%s)", get_filename(eof_last_browsed_notes_panel_path));
+		(void) snprintf(eof_file_notes_panel_menu_string, sizeof(eof_file_notes_panel_menu_string) - 1, "&User defined (%s)", get_filename(eof_last_browsed_notes_panel_path));
 	}
 	else
 	{
-		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "&User defined");
+		(void) snprintf(eof_file_notes_panel_menu_string, sizeof(eof_file_notes_panel_menu_string) - 1, "&User defined");
 	}
 }
 
@@ -656,7 +660,7 @@ int eof_menu_file_load(void)
 		eof_song_loaded = 1;
 		eof_chart_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 		eof_init_after_load(0);
-		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+		eof_fixup_notes(eof_song);
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting
 	}//If the user selected a file
 	eof_show_mouse(NULL);
@@ -3583,7 +3587,7 @@ int eof_save_helper_checks(void)
 
 				startbeat = eof_get_beat(eof_song, start);	//Find the beat in which this note starts
 				stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
-				if((stopbeat > 0) && eof_beat_num_valid(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
+				if((stopbeat < ULONG_MAX) && eof_beat_num_valid(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
 				{	//If the note extends up to and ends on the beat (check stopbeat for equality to zero to resolve a false positive in Coverity)
 					stopbeat--;	//Interpret it as ending at the previous beat instead of surpassing it
 				}
@@ -5527,7 +5531,7 @@ int eof_menu_file_bf_import(void)
 	return D_O_K;
 }
 
-int eof_menu_file_export_time_range(void)
+int eof_menu_file_export_chart_range(void)
 {
 	char oggpath[1024] = {0};
 	char temppath[1024] = {0};
@@ -5540,7 +5544,13 @@ int eof_menu_file_export_time_range(void)
 	if(!eof_song)
 		return 0;	//No chart open
 
-	eof_log("eof_menu_file_export_time_range() entered", 1);
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 1;
+	}
+
+	eof_log("eof_menu_file_export_chart_range() entered", 1);
 
 	//Initialize start and end timestamps
 	end = eof_determine_chart_length(eof_song);	//By default, start and end encompass all chart content
@@ -5594,7 +5604,7 @@ int eof_menu_file_export_time_range(void)
 		{	//If chart audio is loaded
 			eof_log("\tSaving audio excerpt.", 1);
 			(void) replace_extension(temppath, temppath, "wav", 1024);
-			eof_export_audio_time_range(eof_music_track, start / 1000.0, end / 1000.0, temppath);	//Build the preview WAV file
+			eof_export_audio_time_range(eof_music_track, start / 1000.0, end / 1000.0, temppath);	//Build the WAV file
 			if(exists(temppath))
 			{	//If the WAV file was created, convert it to OGG
 				(void) delete_file(oggpath);	//Delete any existing OGG file with the same name
@@ -5604,11 +5614,84 @@ int eof_menu_file_export_time_range(void)
 					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], temppath, oggpath);
 				#endif
 				(void) eof_system(syscommand);
+				(void) delete_file(temppath);	//Delete the temporary WAV file
 			}
 		}
 	}
 
 	eof_destroy_song(csp);
+	return 1;
+}
+
+int eof_menu_file_export_audio_range(void)
+{
+	char oggpath[1024] = {0};
+	char wavpath[1024] = {0};
+	char syscommand[1024] = {0};
+	char * returnedfn = NULL;
+	unsigned long start = 0, end;
+
+	if(!eof_song)
+		return 0;	//No chart open
+	if(eof_silence_loaded)
+		return 0;	//No audio loaded
+
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 1;
+	}
+
+	eof_log("eof_menu_file_export_audio_range() entered", 1);
+
+	//Initialize start and end timestamps
+	end = eof_determine_chart_length(eof_song);	//By default, start and end encompass all chart content
+	if(eof_seek_selection_start != eof_seek_selection_end)
+	{	//If there is a seek selection
+		start = eof_seek_selection_start;
+		end = eof_seek_selection_end;
+	}
+	else if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
+	{	//If both the start and end points are defined with different timestamps
+		start = eof_song->tags->start_point;
+		end = eof_song->tags->end_point;
+	}
+
+	strncpy(eof_etext, "Export audio range", sizeof(eof_etext) - 1);	//Set the title of the eof_menu_song_time_range_dialog dialog
+	if(!eof_run_time_range_dialog(&start, &end))	//If a valid time range isn't provided by the user
+		return 0;									//Cancel
+
+	returnedfn = ncd_file_select(1, eof_last_eof_path, "Export Audio As", eof_filter_ogg_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		(void) replace_extension(oggpath, returnedfn, "ogg", 1024);		//Ensure the file is saved with a .ogg extension
+		if(exists(oggpath))
+		{	//If the specified file path already exists
+			eof_clear_input();
+			if(alert(NULL, "The specified audio file already exists.  Overwrite?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+			{	//If the user does not opt to overwrite the file
+				return 0;	//Cancel
+			}
+		}
+
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSaving audio excerpt to \"%s\"", oggpath);
+		eof_log(eof_log_string, 1);
+		(void) replace_extension(wavpath, oggpath, "wav", 1024);
+		eof_export_audio_time_range(eof_music_track, start / 1000.0, end / 1000.0, wavpath);	//Build the WAV file
+		if(exists(wavpath))
+		{	//If the WAV file was created, convert it to OGG
+			(void) delete_file(oggpath);	//Delete any existing OGG file with the same name
+			#ifdef ALLEGRO_WINDOWS
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], wavpath, oggpath);
+			#else
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], wavpath, oggpath);
+			#endif
+			(void) eof_system(syscommand);
+			(void) delete_file(wavpath);	//Delete the temporary WAV file
+		}
+	}
+
 	return 1;
 }
 
@@ -5716,7 +5799,7 @@ int eof_display_notes_panel_logic(int builtin)
 {
 	eof_enable_notes_panel = 1 - eof_enable_notes_panel;	//Toggle the notes panel on/off
 	char *default_target = "notes.panel.txt";	//Unless eof_current_notes_panel_path is defined, the default notes panel file will be displayed
-	char *effective_target;
+	char *effective_target = eof_current_notes_panel_path;	//Unless the target note panel is missing, it will be the file opened
 
 	if(eof_notes_panel)
 	{	//If a notes panel instance already exists
@@ -5728,14 +5811,13 @@ int eof_display_notes_panel_logic(int builtin)
 	{	//If the notes panel was just enabled, see if the program window needs to resize
 		eof_increase_display_width_to_panel_count(0);	//Resize the program window if necessary, disable notes panel on failure
 
-		if((eof_current_notes_panel_path[0] != '\0') && exists(eof_current_notes_panel_path))
-		{	//If the Notes panel file path is defined, and it still exists, use it instead of the default panel file
-			effective_target = eof_current_notes_panel_path;
-		}
-		else
-		{	//Otherwise revert to the notes.panel.txt file
-			effective_target = default_target;
-			builtin = 1;	//And that file will be recovered from eof.dat if necessary
+		if(!builtin)
+		{	//If the panel being loaded is NOT a built-in one
+			if((eof_current_notes_panel_path[0] == '\0') || !exists(eof_current_notes_panel_path))
+			{	//If the Notes panel file path is undefined, or the path does not exist
+				effective_target = default_target;	//Resort to loading the standard Notes panel file
+				builtin = 1;						//And recovered that file from eof.dat if necessary
+			}
 		}
 		if(eof_enable_notes_panel)
 		{	//If the program window is wide enough

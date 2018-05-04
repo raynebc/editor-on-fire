@@ -23,7 +23,7 @@ EOF contains many useful functions which can be accessed through various menus. 
 
 
 <blockquote>
-[ <a href="functions.htm#new">New</a> ] [ <a href="functions.htm#load">Load</a> ] [ <a href="functions.htm#save">Save</a> ] [ <a href="functions.htm#saveas">Save As</a> ] [ <a href="functions.htm#quicksave">Quick save</a> ] [ <a href="functions.htm#loadogg">Load OGG</a> ] [ <a href="functions.htm#import">Import</a> ] [ <a href="functions.htm#exporttimerange">Export time range</a> ] [ <a href="functions.htm#exportguitarpro">Export Guitar Pro</a> ]<br>
+[ <a href="functions.htm#new">New</a> ] [ <a href="functions.htm#load">Load</a> ] [ <a href="functions.htm#save">Save</a> ] [ <a href="functions.htm#saveas">Save As</a> ] [ <a href="functions.htm#quicksave">Quick save</a> ] [ <a href="functions.htm#loadogg">Load OGG</a> ] [ <a href="functions.htm#import">Import</a> ] [ <a href="functions.htm#exportchartrange">Export chart range</a> ] [ <a href="functions.htm#exportaudiorange">Export audio range</a> ] [ <a href="functions.htm#exportguitarpro">Export Guitar Pro</a> ]<br>
 [ <a href="functions.htm#settings">Settings</a> ] [ <a href="functions.htm#preferences">Preferences</a> ] [ <a href="functions.htm#display">Display</a> ] [ <a href="functions.htm#controllers">Controllers</a> ] [ <a href="functions.htm#songfolder">Song Folder</a> ] [ <a href="functions.htm#linktofof">Link To FOF</a> ] [ <a href="functions.htm#linktops">Link To Phase Shift</a> ] [ <a href="functions.htm#linktorstotab">Link to RocksmithToTab</a> ] [ <a href="functions.htm#exit">Exit</a> ]
 <h1><a name="new">New</a></h1>
 Create a new EOF project. You will select an audio file (in OGG, WAV or MP3 format), choose a destination for the new project, and enter some information about the song. If the selected audio file contains tag information, the song artist, title and year will be automatically entered into the song's properties from the audio file's ID3v1/ID3v2 tag or OGG Vorbis tag comments if available. The album information will be similarly read into an INI setting if it is available. When choosing a destination for your project you have three options. "Use Existing Folder" requires you to point to an existing folder where EOF will create your project files. "Use OGG Folder" will place the project files in the folder with the audio file you selected. "Create New Folder" will create the folder you specify in EOF's own song folder (see <a href=functions.htm#songfolder>File>Song Folder</a>).<br><br>
@@ -82,8 +82,11 @@ Create a new EOF project from an existing Bandfuse chart file.  This type of fil
 </blockquote>
 
 
-<h1><a name="exporttimerange">Export time range</a></h1>
+<h1><a name="exportchartrange">Export chart range</a></h1>
 Saves a user-defined portion of the active project as a new project file, with the corresponding portion of the chart audio being exported as a new OGG file.  For best results, use the <a href="functions.htm#setstartpoint">Set start point</a> and <a href="functions.htm#setendpoint">Set end point</a> functions to mark the part of the project you want to export.<br>
+
+<h1><a name="exportaudiorange">Export audio range</a></h1>
+Similar to "Export chart range", but just exports an OGG file to the specified name and location.  For best results, use the <a href="functions.htm#setstartpoint">Set start point</a> and <a href="functions.htm#setendpoint">Set end point</a> functions to mark the part of the project you want to export.<br>
 
 <h1><a name="exportguitarpro">Export Guitar Pro</a></h1>
 Uses the command line RocksmithToTab utility (available at <a href="http://www.rocksmithtotab.de/">http://www.rocksmithtotab.de/</a>) to be used to create a GP5 file of the active project in the project's folder.  This function requires you to have installed the utility and linked EOF to it (see <a href="functions.htm#linktorstotab">File>Link to RocksmithToTab</a>).
@@ -190,7 +193,7 @@ Select or deselect notes based on various criteria.<br><br>
 
 <h1><a name="setstartpoint">Set start point</a><br>
 <a name="setendpoint">Set end point</a></h1>
-Defines the current seek position as the start or end points for the <a href="functions.htm#preview">Create preview audio</a> and <a href="functions.htm#exporttimerange">Export time range</a> functions
+Defines the current seek position as the start or end points for the <a href="functions.htm#preview">Create preview audio</a>, <a href="functions.htm#exportchartrange">Export chart range</a> and <a href="functions.htm#exportaudiorange">Export audio range</a> functions.
 </blockquote>
 
 <h1><a name="song">Song</a></h1>

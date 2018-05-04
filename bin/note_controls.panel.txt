@@ -31,11 +31,11 @@ Use up/down arrow keys to transpose notes.
 
 ;Pro guitar track specific controls
 %IF_IS_PRO_GUITAR_TRACK%Pro guitar controls:
-%IF_IS_PRO_GUITAR_TRACK%   Set fret # for selected gems: CTRL+#, CTRL+F#
+%IF_IS_PRO_GUITAR_TRACK%   Set fret #: CTRL+#, CTRL+F#  S. mute: SHIFT+X
 %IF_IS_PRO_GUITAR_TRACK%   Edit note:  N    Edit fingering: F
 %IF_IS_PRO_GUITAR_TRACK%   Tap: CTRL+T  Bend: CTRL+B  P. mute: CTRL+M
 %IF_IS_PRO_GUITAR_TRACK%   Harm.: CTRL+H  Vib.: SHIFT+V  Ghost: CTRL+G
-%IF_IS_PRO_GUITAR_TRACK%   S. mute: SHIFT+X       Unpitch. slide:  CTRL+U
+%IF_IS_PRO_GUITAR_TRACK%   Slide Up/Dn: Ctrl+Up/Dn Unpitch. slide: CTRL+U
 %IF_IS_PRO_GUITAR_TRACK%   Pop: CTRL+SHIFT+P      Slap: CTRL+SHIFT+S
 %IF_IS_PRO_GUITAR_TRACK%   Accent: CTRL+SHIFT+A  P. Harm: SHIFT+H
 %IF_IS_PRO_GUITAR_TRACK%   Ignore: CTRL+SHIFT+I    Linknext: SHIFT+N

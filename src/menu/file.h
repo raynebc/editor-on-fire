@@ -49,7 +49,8 @@ int eof_menu_file_lyrics_import(void);
 int eof_menu_file_feedback_import(void);	//Prompt for a .chart file and import it
 int eof_menu_file_save_as(void);
 int eof_menu_file_load_ogg(void);
-int eof_menu_file_export_time_range(void);	//Exports a set time range of the project to a new project file
+int eof_menu_file_export_chart_range(void);	//Exports a set time range of the project to a new project file
+int eof_menu_file_export_audio_range(void);	//Similar to eof_menu_file_export_chart_range(), but just exports the audio for the selected range to a user specified OGG file
 int eof_menu_file_export_guitar_pro(void);	//Calls the third party RocksmithToTab program to create a GP5 file of the project's guitar/bass arrangements
 int eof_menu_file_midi_import(void);
 int eof_menu_file_settings(void);

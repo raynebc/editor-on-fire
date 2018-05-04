@@ -21,11 +21,12 @@ int eof_menu_edit_undo(void);
 int eof_menu_edit_redo(void);
 int eof_menu_edit_copy(void);
 int eof_menu_edit_cut(unsigned long anchor, int option);
-	//Stores "Auto adjust" data to "eof.autoadjust"
-	//If option is 1, the function stores data for all notes up until 1ms before the last beat marker (auto-adjust when dragging anchors),
-	// otherwise data for notes up until the next anchor are stored (tempo change/increment/decrement applied to beat marker)
+	//Stores "Auto adjust" data to "eof.autoadjust" from the first anchor before the specified beat number up to a one of two positions specified by the option variable
+	//If option is 1, the function stores data for all notes up until 1ms before the last beat marker (tempo change/increment/decrement applied to beat marker),
+	// otherwise data for notes up until the next anchor are stored (auto-adjust when dragging anchors)
 int eof_menu_edit_cut_paste(unsigned long anchor, int option);
 	//Performs "Auto adjust" logic (ie. when anchors are manipulated) to write the notes that were stored in "eof.autoadjust"
+	//option should be the same value as when the eof.autoadjust data was created
 	//The affected notes are deleted and then recreated with those in the autoadjust file
 int eof_menu_edit_paste_logic(int oldpaste);	//If oldpaste is nonzero, uses old paste logic (notes paste to positions relative to each other), otherwise uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
 int eof_menu_edit_paste(void);					//Calls eof_menu_edit_paste_logic() to use new paste logic
@@ -61,9 +62,10 @@ int eof_menu_edit_select_rest(void);
 int eof_menu_edit_select_previous(void);			//Selects all notes before the last selected note
 int eof_menu_edit_invert_selection(void);			//Inverts the note selection (notes that aren't selected become selected and vice versa)
 
-int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_bitmask);
+int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_bitmask, unsigned long cymbal_match_bitmask);
 	//Examines the specified note and returns nonzero if it matches the conditions selected in eof_menu_edit_conditional_selection_dialog[]
 	//match_bitmask is a bitmask reflecting the checked lane numbers in the dialog
+	//cymbal_match_bitmask is a bitmask reflecting the checked cymbal numbers in the dialog
 int eof_menu_edit_conditional_selection_logic(int function);
 	//If function is zero, notes in the active track are deselected based on the criteria set in eof_menu_edit_conditional_selection_dialog[]
 	//otherwise such notes are selected
