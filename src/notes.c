@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <ctype.h>
 #ifdef ALLEGRO_WINDOWS
 	#include <winalleg.h>
 #endif
@@ -16,6 +17,8 @@
 #ifdef USEMEMWATCH
 #include "memwatch.h"
 #endif
+
+#define TEXT_PANEL_BUFFER_SIZE 2047
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -72,7 +75,7 @@ void eof_destroy_text_panel(EOF_TEXT_PANEL *panel)
 int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel)
 {
 	unsigned long src_index = 0, dest_index = 0, macro_index;
-	char src_char, macro[2048], expanded_macro[2048];
+	char src_char, macro[TEXT_PANEL_BUFFER_SIZE+1], expanded_macro[TEXT_PANEL_BUFFER_SIZE+1];
 	int macro_status;
 
 	if(!src_buffer || !dest_buffer || (dest_buffer_size < 1) || !panel)
@@ -100,7 +103,7 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 				if(src_char == '%')
 				{	//The closing percent sign of the macro was reached
 					macro[macro_index] = '\0';	//Terminate the macro string
-					macro_status = eof_expand_notes_window_macro(macro, expanded_macro, 2048, panel);	//Convert the macro to static text
+					macro_status = eof_expand_notes_window_macro(macro, expanded_macro, TEXT_PANEL_BUFFER_SIZE, panel);	//Convert the macro to static text
 
 					if(macro_status == 1)
 					{	//Otherwise if the macro was successfully converted to static text
@@ -383,6 +386,30 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//The active track is a legacy guitar track
+	if(!ustricmp(macro, "IF_IS_LEGACY_GUITAR_TRACK"))
+	{
+		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//The active track is not a legacy guitar track
+	if(!ustricmp(macro, "IF_IS_NOT_LEGACY_GUITAR_TRACK"))
+	{
+		if(!eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//A pro guitar track is active
 	if(!ustricmp(macro, "IF_IS_PRO_GUITAR_TRACK"))
 	{
@@ -423,6 +450,18 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_IS_GHL_TRACK"))
 	{
 		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//A GHL format track is not active
+	if(!ustricmp(macro, "IF_IS_NOT_GHL_TRACK"))
+	{
+		if(!eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -636,6 +675,89 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 
 		return 2;	//False
+	}
+
+	//If the active difficulty level is a specific number
+	if(strcasestr_spec(macro, "IF_ACTIVE_DIFFICULTY_IS_NUMBER_"))
+	{
+		unsigned long diff;
+		char *number_string = strcasestr_spec(macro, "IF_ACTIVE_DIFFICULTY_IS_NUMBER_");	//Get a pointer to the text that is expected to be the difficulty number
+
+		if(eof_read_macro_number(number_string, &diff))
+		{	//If the difficulty number was successfully parsed
+			if(eof_note_type == diff)
+			{	//If the number is the active difficulty number
+				return 3;	//True
+			}
+
+			return 2;	//False
+		}
+	}
+
+	//If the active difficulty is Easy (Rock Band difficulty labeling)
+	if(!ustricmp(macro, "IF_ACTIVE_DIFFICULTY_IS_EASY"))
+	{
+		if(eof_note_type == 0)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the active difficulty is Medium (Rock Band difficulty labeling)
+	if(!ustricmp(macro, "IF_ACTIVE_DIFFICULTY_IS_MEDIUM"))
+	{
+		if(eof_note_type == 1)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the active difficulty is Hard (Rock Band difficulty labeling)
+	if(!ustricmp(macro, "IF_ACTIVE_DIFFICULTY_IS_HARD"))
+	{
+		if(eof_note_type == 2)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the active difficulty is Expert (Rock Band difficulty labeling)
+	if(!ustricmp(macro, "IF_ACTIVE_DIFFICULTY_IS_EXPERT"))
+	{
+		if(eof_note_type == 3)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the active difficulty has notes with a specific gem count
+	if(strcasestr_spec(macro, "IF_TRACK_DIFF_HAS_NOTES_WITH_GEM_COUNT_"))
+	{
+		unsigned long gemcount;
+		char *count_string = strcasestr_spec(macro, "IF_TRACK_DIFF_HAS_NOTES_WITH_GEM_COUNT_");	//Get a pointer to the text that is expected to be the gem count
+
+		if(eof_read_macro_number(count_string, &gemcount))
+		{	//If the gem count was successfully parsed
+			if(eof_count_num_notes_with_gem_count(gemcount))
+			{	//If there's at least one note in this track difficulty with the specified number of gems
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+
+			return 2;	//False
+		}
 	}
 
 	//Resumes normal macro parsing after a failed conditional macro test
@@ -1449,6 +1571,65 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The active difficulty number
+	if(!ustricmp(macro, "ACTIVE_DIFFICULTY_NUMBER"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%u", eof_note_type);
+		return 1;
+	}
+
+	//The active difficulty name
+	if(!ustricmp(macro, "ACTIVE_DIFFICULTY_NAME"))
+	{
+		if(eof_note_type < 5)
+		{	//If one of the named difficulties is active
+			snprintf(dest_buffer, dest_buffer_size, "%s", &eof_note_type_name[eof_note_type][1]);	//Skip the leading space in the difficulty name string (used to mark difficulty populated status)
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "(Unnamed)");
+		}
+		return 1;
+	}
+
+	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific gem count
+	if(strcasestr_spec(macro, "TRACK_DIFF_NUMBER_NOTES_WITH_GEM_COUNT_"))
+	{
+		unsigned long count, gemcount, totalnotecount = 0;
+		char *count_string = strcasestr_spec(macro, "TRACK_DIFF_NUMBER_NOTES_WITH_GEM_COUNT_");	//Get a pointer to the text that is expected to be the gem count
+
+		if(eof_read_macro_number(count_string, &gemcount))
+		{	//If the gem count was successfully parsed
+			double percent;
+
+			count = eof_count_num_notes_with_gem_count(gemcount);		//Determine how many such notes are in the active track difficulty
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			percent = (double)count * 100.0 / (double)totalnotecount;
+			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+
+			return 1;
+		}
+	}
+
+	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific gem combination
+	if(strcasestr_spec(macro, "TRACK_NOTE_COUNT_INSTANCES_"))
+	{
+		unsigned long count, gems, totalnotecount = 0;
+		char *gem_string = strcasestr_spec(macro, "TRACK_NOTE_COUNT_INSTANCES_");	//Get a pointer to the text that is expected to be the gem count
+
+		if(eof_read_macro_gem_designations(gem_string, &gems))
+		{	//If the gem designations were successfully parsed
+			double percent;
+
+			count = eof_count_num_notes_with_gem_designation(gems);		//Determine how many such notes are in the active track difficulty
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			percent = (double)count * 100.0 / (double)totalnotecount;
+			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+
+			return 1;
+		}
+	}
+
 	return 0;	//Macro not supported
 }
 
@@ -1503,9 +1684,150 @@ int eof_read_macro_color(char *string, int *color)
 	return 1;
 }
 
+int eof_read_macro_number(char *string, unsigned long *number)
+{
+	unsigned long index, value = 0;
+	int ch;
+
+	if(!string || !number)
+		return 0;	//Invalid parameters
+
+	for(index = 0; string[index] != '\0'; index++)
+	{	//For each character in the string
+		ch = string[index];	//Read the character
+
+		if(!isdigit(ch))	//If this isn't a numerical character
+			return 0;		//Not a valid number macro
+
+		value *= 10;		//Another digit was read, meaning the previous ones are worth ten times as much
+		value += ch - '0';	//Add the numerical conversion of this digit
+	}
+
+	if(!index)	//If there were no digits parsed
+		return 0;	//Not a valid number macro
+
+	*number = value;
+	return 1;		//Return success
+}
+
+int eof_read_macro_gem_designations(char *string, unsigned long *bitmask)
+{
+	unsigned long index, mask = 0;
+	int ch;
+
+	if(!string || !bitmask)
+		return 0;	//Invalid parameters
+
+	for(index = 0; string[index] != '\0'; index++)
+	{	//For each character in the string
+		ch = string[index];	//Read the character
+
+		if(!isalnum(ch))	//If this isn't an alphabetical or numerical character
+			return 0;		//Not a valid gem designation
+		if(isalpha(ch))
+			ch = toupper(ch);	//Convert letters to uppercase
+
+		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+		{	//GHL tracks have these gem designations:  "W1" = lane 1, "W2" = lane 2, "W3" = lane 3, "B1" = lane 4, "B2" = lane 5, "B3" = lane 6, 'S' = open strum
+			if(ch == 'W')
+			{	//One of the white gems
+				index++;	//Iterate to next character
+				ch = string[index];	//Read the character
+
+				if(ch == '1')
+				{
+					mask |= 1;
+				}
+				else if(ch == '2')
+				{
+					mask |= 2;
+				}
+				else if(ch == '3')
+				{
+					mask |= 4;
+				}
+				else
+				{
+					return 0;	//Invalid gem designation
+				}
+			}
+			else if(ch == 'B')
+			{	//One of the black gems
+				index++;	//Iterate to next character
+				ch = string[index];	//Read the character
+
+				if(ch == '1')
+				{
+					mask |= 8;
+				}
+				else if(ch == '2')
+				{
+					mask |= 16;
+				}
+				else if(ch == '3')
+				{
+					mask |= 32;
+				}
+				else
+				{
+					return 0;	//Invalid gem designation
+				}
+			}
+			else if(ch == 'S')
+			{
+				*bitmask = 255;	//Any inclusion of open strum designation will cause it to override any other content in the string
+				return 1;		//Return success
+			}
+			else
+			{
+				return 0;	//Invalid gem designation
+			}
+		}
+		else
+		{	//Non GHL tracks have these gem designations:  'G' = lane 1, 'R' = lane 2, 'Y' = lane 3, 'B' = lane 4, 'O' = lane 5, 'P' = lane 6, 'S' = open strum
+			if(ch == 'G')
+			{
+				mask |= 1;
+			}
+			else if(ch == 'R')
+			{
+				mask |= 2;
+			}
+			else if(ch == 'Y')
+			{
+				mask |= 4;
+			}
+			else if(ch == 'B')
+			{
+				mask |= 8;
+			}
+			else if(ch == 'O')
+			{
+				mask |= 16;
+			}
+			else if(ch == 'P')
+			{
+				mask |= 32;
+			}
+			else if(ch == 'S')
+			{
+				*bitmask = 255;	//Any inclusion of open strum designation will cause it to override any other content in the string
+				return 1;		//Return success
+			}
+			else
+			{
+				return 0;	//Invalid gem designation
+			}
+		}
+	}
+
+	*bitmask = mask;
+	return 1;	//Return success
+}
+
 void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 {
-	char buffer[2048], buffer2[2048];
+	char buffer[TEXT_PANEL_BUFFER_SIZE+1], buffer2[TEXT_PANEL_BUFFER_SIZE+1];
 	unsigned long src_index, dst_index;
 	int retval;
 
@@ -1535,7 +1857,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		if((thischar == '\r') && (panel->text[src_index] == '\n'))
 		{	//Carriage return and line feed characters represent a new line
 			buffer[dst_index] = '\0';	//NULL terminate the buffer
-			retval = eof_expand_notes_window_text(buffer, buffer2, 2048, panel);
+			retval = eof_expand_notes_window_text(buffer, buffer2, TEXT_PANEL_BUFFER_SIZE, panel);
 			if(!retval)
 			{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
 				eof_enable_notes_panel = 0;
@@ -1555,17 +1877,17 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		}
 		else
 		{
-			if(dst_index >= 1023)
-				return;	//Don't support lines longer than 1023 characters, plus one character for the NULL terminator
+			if(dst_index > TEXT_PANEL_BUFFER_SIZE)
+				return;	//Don't support lines longer than the buffer will hold
 			buffer[dst_index++] = thischar;	//Append the character to the destination buffer
 		}
 	}
 
 	//Print any remaining content in the output buffer
-	if(dst_index && (dst_index < 1023))
+	if(dst_index && (dst_index < TEXT_PANEL_BUFFER_SIZE))
 	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
 		buffer[dst_index] = '\0';	//NULL terminate the buffer
-		retval = eof_expand_notes_window_text(buffer, buffer2, 2048, panel);
+		retval = eof_expand_notes_window_text(buffer, buffer2, TEXT_PANEL_BUFFER_SIZE, panel);
 		if(!retval)
 		{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
 			eof_enable_notes_panel = 0;
@@ -1586,4 +1908,72 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		hline(panel->window->screen, 1, panel->window->h - 2, panel->window->w - 2, eof_color_white);
 		vline(panel->window->screen, panel->window->w - 2, 1, panel->window->h - 2, eof_color_white);
 	}
+}
+
+unsigned long eof_count_num_notes_with_gem_count(unsigned long gemcount)
+{
+	unsigned long ctr, count, notenum;
+
+	if(!eof_song)
+		return 0;	//Error
+
+	notenum = eof_get_track_size(eof_song, eof_selected_track);	//Store this count
+	for(ctr = 0, count = 0; ctr < notenum; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)	//If this note isn't in the active difficulty
+			continue;	//Skip it
+
+		if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, ctr))
+		{	//If this is an open note
+			if(!gemcount)	//If the function is meant to count open notes
+				count++;
+			continue;		//Skip the rest of the processing for this note
+		}
+		else
+		{	//This is not an open note
+			if(!gemcount)	//If the function is meant to count open notes
+				continue;	//Skip this note
+		}
+
+		if(eof_note_count_colors_bitmask(eof_get_note_note(eof_song, eof_selected_track, ctr)) == gemcount)
+		{	//If this note has the target number of gems
+			count++;
+		}
+	}
+
+	return count;
+}
+
+unsigned long eof_count_num_notes_with_gem_designation(unsigned long gems)
+{
+	unsigned long ctr, count, notenum;
+
+	if(!eof_song)
+		return 0;	//Error
+
+	notenum = eof_get_track_size(eof_song, eof_selected_track);	//Store this count
+	for(ctr = 0, count = 0; ctr < notenum; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)	//If this note isn't in the active difficulty
+			continue;	//Skip it
+
+		if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, ctr))
+		{	//If this is an open note
+			if(gems == 255)	//If the function is meant to count open notes
+				count++;
+			continue;		//Skip the rest of the processing for this note
+		}
+		else
+		{	//This is not an open note
+			if(gems == 255)	//If the function is meant to count open notes
+				continue;	//Skip this note
+		}
+
+		if(eof_get_note_note(eof_song, eof_selected_track, ctr) == gems)
+		{	//If this note has the target bitmask
+			count++;
+		}
+	}
+
+	return count;
 }

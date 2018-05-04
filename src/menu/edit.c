@@ -619,6 +619,22 @@ void eof_prepare_edit_menu(void)
 		/* MIDI tones */
 		if(!eof_midi_initialized)
 			eof_edit_menu[18].flags = D_DISABLED;
+
+		/* Update "Paste From" difficulty labeling */
+		if(eof_use_fof_difficulty_naming)
+		{	//If the user preference is to use Frets on Fire difficulty labeling
+			eof_edit_paste_from_menu[0].text = "&Supaeasy";
+			eof_edit_paste_from_menu[1].text = "&Easy";
+			eof_edit_paste_from_menu[2].text = "&Medium";
+			eof_edit_paste_from_menu[3].text = "&Amazing";
+		}
+		else
+		{
+			eof_edit_paste_from_menu[0].text = "&Easy";
+			eof_edit_paste_from_menu[1].text = "&Medium";
+			eof_edit_paste_from_menu[2].text = "&Hard";
+			eof_edit_paste_from_menu[3].text = "E&Xpert";
+		}
 	}//If a chart is loaded
 }
 

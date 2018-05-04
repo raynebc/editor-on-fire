@@ -63,45 +63,6 @@ unsigned long eof_note_count_colors_bitmask(unsigned long notemask)
 	return count;
 }
 
-unsigned long eof_note_count_set_bits(unsigned long notemask)
-{
-	unsigned long count = 0;
-
-	if(notemask & 1)
-	{
-		count++;
-	}
-	if(notemask & 2)
-	{
-		count++;
-	}
-	if(notemask & 4)
-	{
-		count++;
-	}
-	if(notemask & 8)
-	{
-		count++;
-	}
-	if(notemask & 16)
-	{
-		count++;
-	}
-	if(notemask & 32)
-	{
-		count++;
-	}
-	if(notemask & 64)
-	{
-		count++;
-	}
-	if(notemask & 128)
-	{
-		count++;
-	}
-	return count;
-}
-
 unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigned long note, char target)
 {
 	unsigned long ctr, bitmask, tracknum, count = 0, notenote;

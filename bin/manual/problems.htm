@@ -14,6 +14,11 @@ p {text-indent: 1cm}
 <h1><a name="tutorial">Common Problems</a></h1>
 
 <b>Problem:</b><br>
+EOF hangs intermittently.<br>
+<b>Solution:</b><br>
+Try disabling the "Use software cursor" option in File>Display>Display.<br><br>
+
+<b>Problem:</b><br>
 EOF doesn't work on Mac.  Opening EOF from the command line gives an error like "Warning once: This application, or a library it uses, is using NSQuickDrawView, which has been deprecated. Apps should cease use of QuickDraw and move to Quartz."<br>
 <b>Solution:</b><br>
 Around the release of Mac OS X High Sierra, the OS deprecated certain features that broke compatibility with Allegro 4 (the game library that EOF is built with).  There's no simple fix for this as EOF eventually has to be ported to Allegro 5, which is significantly different.  If you have the ability to keep a pre High Sierra version of Mac OS to use, that's the most reliable option.<br><br>

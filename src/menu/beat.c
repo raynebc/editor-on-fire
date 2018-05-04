@@ -844,6 +844,7 @@ int eof_menu_beat_delete(void)
 	{	//Only process this function if a beat other than beat 0 is selected, and there is at least one anchor after the selected beat
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_menu_beat_delete_logic(eof_selected_beat);
+		eof_fixup_notes(eof_song);
 	}
 	return 1;
 }
@@ -1169,8 +1170,20 @@ int eof_menu_beat_delete_anchor_logic(char *undo_made)
 int eof_menu_beat_delete_anchor(void)
 {
 	char undo_made = 0;
+	int retval;
 
-	return eof_menu_beat_delete_anchor_logic(&undo_made);
+	if(eof_note_auto_adjust)
+	{	//If the user has enabled the Note Auto-Adjust preference
+		(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+	}
+	retval = eof_menu_beat_delete_anchor_logic(&undo_made);
+	eof_fixup_notes(eof_song);
+	if(eof_note_auto_adjust)
+	{	//If the user has enabled the Note Auto-Adjust preference
+		(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+	}
+
+	return retval;
 }
 
 int eof_menu_beat_anchor_measures(void)

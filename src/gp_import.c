@@ -4071,7 +4071,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									return NULL;
 								}
 								//Don't mark entire chords with bend status, Guitar Pro defines which strings are to be bent
-								if(eof_note_count_set_bits(usedstrings) == 1)
+								if(eof_note_count_colors_bitmask(usedstrings) == 1)
 								{	//If the note being parsed is not a chord
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 									notebends = 1;

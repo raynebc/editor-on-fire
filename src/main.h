@@ -356,6 +356,7 @@ extern int         eof_drum_modifiers_affect_all_difficulties;
 extern int         eof_fb_seek_controls;
 extern int         eof_new_note_length_1ms;
 extern int         eof_new_note_forced_strum;
+extern int         eof_use_fof_difficulty_naming;
 extern int         eof_gp_import_preference_1;
 extern int         eof_gp_import_truncate_short_notes;
 extern int         eof_gp_import_truncate_short_chords;
@@ -549,7 +550,9 @@ extern FONT *      eof_allegro_font;
 extern FONT *      eof_font;
 extern FONT *      eof_mono_font;
 extern FONT *      eof_symbol_font;	//A font where the 0, 1, 2, 3 and 4 glyphs have been replaced with guitar tab notation characters
-extern char        eof_note_type_name[5][32];
+extern char        eof_note_type_name_fof[5][10];
+extern char        eof_note_type_name_rb[5][10];
+extern char        (*eof_note_type_name)[10];	//Will point to either eof_note_type_name_fof or eof_note_type_name_rb based on user preference
 extern char        eof_vocal_tab_name[5][32];
 extern char        eof_dance_tab_name[5][32];
 extern char        eof_track_diff_populated_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if populated
@@ -608,6 +611,7 @@ void eof_fix_catalog_selection(void);	//Ensures that a valid catalog entry is ac
 unsigned long eof_count_selected_notes(unsigned long *total);
 	//Returns the number of notes selected in the active track difficulty, sets values in the eof_selection structure
 	//If total is not NULL, its value is incremented once for each note in the active difficulty, regardless of whether it's selected (to count the number of notes in the active difficulty)
+	//Reset *total to 0 before calling if the intention is to get a count of all notes in the active track difficulty
 unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned long *sel_end, char function);
 	//Returns the number of notes in the selected note range that are explicitly selected, allowing an easy way to check if more than one note is selected
 	//If sel_start and sel_end are not NULL, information about the first and last selected note are returned through them

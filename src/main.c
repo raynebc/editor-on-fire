@@ -58,7 +58,9 @@
 #include "memwatch.h"
 #endif
 
-char        eof_note_type_name[EOF_MAX_DIFFICULTIES][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
+char        eof_note_type_name_fof[EOF_MAX_DIFFICULTIES][10] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
+char        eof_note_type_name_rb[EOF_MAX_DIFFICULTIES][10] = {" Easy", " Medium", " Hard", " Expert", " BRE"};
+char        (*eof_note_type_name)[10] = eof_note_type_name_rb;	//By default, use Rock Band difficulty names
 char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][32] = {" Lyrics", " ", " ", " ", " "};
 char        eof_dance_tab_name[EOF_MAX_DIFFICULTIES][32] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
 char        eof_track_diff_populated_status[256] = {0};
@@ -147,6 +149,7 @@ int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum
 int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
 int         eof_new_note_length_1ms = 0;		//If nonzero, newly created notes are initialized to a length of 1ms instead of the regular grid snap based logic
 int         eof_new_note_forced_strum = 0;		//If nonzero, newly created notes are given forced HOPO off status
+int         eof_use_fof_difficulty_naming = 0;	//If nonzero, the difficulties are labeled Supaeasy, Easy, Medium and Amazing instead of the Rock Band naming (Easy, Medium, Hard, Expert)
 int         eof_gp_import_preference_1 = 0;		//If nonzero during GP import, beat texts with qualifying strings are imported as RS sections, section markers as RS phrases.
 int         eof_gp_import_truncate_short_notes = 1;	//If nonzero during GP import, single notes shorter than one quarter note are set to the minimum length of 1ms
 int         eof_gp_import_truncate_short_chords = 1;	//If nonzero during GP import, chords shorter than one quarter note are set to the minimum length of 1ms

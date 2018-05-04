@@ -171,7 +171,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_list_proc,  16,  336, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
 	{ d_agup_text_proc,  150, 336, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
 	{ d_agup_list_proc,  129, 351, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
-	{ d_agup_check_proc, 248, 186, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
+	{ d_agup_check_proc, 248, 191, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
 	{ d_agup_check_proc, 248, 271, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
 	{ d_agup_check_proc, 248, 287, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
 	{ d_agup_check_proc, 248, 303, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
@@ -193,7 +193,8 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_radio_proc, 240, 144, 92,  16,  2,   23,  0,    0,      2,   0,   "1/# measure", NULL, NULL },
 	{ d_agup_radio_proc, 332, 144, 68,  16,  2,   23,  0,    0,      2,   0,   "1/# beat",    NULL, NULL },
 	{ d_agup_check_proc, 248, 463, 230, 16,  2,   23,  0,    0,      1,   0,   "Disable automatic backups",NULL, NULL },
-	{ d_agup_check_proc, 248, 170, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
+	{ d_agup_check_proc, 248, 175, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
+	{ d_agup_check_proc, 248, 159, 206, 16,  2,   23,  0,    0,      1,   0,   "Use FoF difficulty naming",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1304,8 +1305,9 @@ int eof_menu_file_preferences(void)
 	{
 		eof_etext3[0] = '\0';	//Otherwise empty the string
 	}
-	eof_preferences_dialog[55].flags = eof_disable_backups ? D_SELECTED : 0;		//Disable automatic backups
-	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;	//New notes are force strum
+	eof_preferences_dialog[55].flags = eof_disable_backups ? D_SELECTED : 0;			//Disable automatic backups
+	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;		//New notes are force strum
+	eof_preferences_dialog[57].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;	//Use FoF difficulty naming
 
 	do
 	{	//Run the dialog
@@ -1422,6 +1424,15 @@ int eof_menu_file_preferences(void)
 			}
 			eof_disable_backups = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
 			eof_new_note_forced_strum = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
+			eof_use_fof_difficulty_naming = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
+			if(eof_use_fof_difficulty_naming)
+			{
+				eof_note_type_name = eof_note_type_name_fof;
+			}
+			else
+			{
+				eof_note_type_name = eof_note_type_name_rb;
+			}
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}//If the user clicked OK
@@ -1471,6 +1482,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[54].flags = 0;					//min. note distance is 1/# beat
 			eof_preferences_dialog[55].flags = 0;					//Disable automatic backups
 			eof_preferences_dialog[56].flags = 0;					//New notes are force strum
+			eof_preferences_dialog[57].flags = 0;					//Use FoF difficulty naming
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

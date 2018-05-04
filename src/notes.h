@@ -53,9 +53,28 @@ int eof_read_macro_color(char *string, int *color);
 	//If no match is found, but the string is composed of 6 hexadecimal characters,
 	//  it is treated as an RGB color code and that color is created and returned through *color
 	//Returns 0 if no color was determined or upon error
+int eof_read_macro_number(char *string, unsigned long *number);
+	//Accepts a string and converts the decimal number representation and stores it into *number
+	//Returns 0 if no number was parsed or upon error
+int eof_read_macro_gem_designations(char *string, unsigned long *bitmask);
+	//Accepts a string and converts the gem designations into a bitmask
+	//For non GHL tracks:  'G' = lane 1, 'R' = lane 2, 'Y' = lane 3, 'B' = lane 4, 'O' = lane 5, 'P' = lane 6, 'S' = open strum
+	//For GHL tracks:  "W1" = lane 1, "W2" = lane 2, "W3" = lane 3, "B1" = lane 4, "B2" = lane 5, "B3" = lane 6, 'S' = open strum
+	//For both types of tracks, an open strum is returned as value 255
+	//If the string contains an open strum designation in addition to other gems, open strum takes precedence and 255 is returned through *bitmask
 void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque);
 	//Processes the specified panel's text file and renders it to the panel's configured EOF_WINDOW instance
 	//If opaque is nonzero, the specified panel's window is cleared to dark gray and a window border is drawn
 	//Set opaque to zero in the event that full screen 3D preview is in use, so that it doesn't obscure the 3D preview
+
+unsigned long eof_count_num_notes_with_gem_count(unsigned long gemcount);
+	//Examines all notes in the active track difficulty
+	//Returns the number of those notes that have the specified number of gems (ie. 1 for single notes or >1 for chords)
+	//For the sake of the Notes panel, legacy guitar track open notes do not count as having a gem
+	//  calling this function with a gem count of 0 will count the open notes in the active legacy guitar track
+unsigned long eof_count_num_notes_with_gem_designation(unsigned long gems);
+	//Examines all notes in the active track difficulty
+	//Returns the number of those that have the specified note gem bitmask (as created by eof_read_macro_gem_designations() )
+	//A gem bitmask of 255 indicates an open note
 
 #endif

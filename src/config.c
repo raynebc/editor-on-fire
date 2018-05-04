@@ -170,6 +170,11 @@ void eof_load_config(char * fn)
 		eof_chord_density_threshold = 10000;
 	}
 	eof_new_note_length_1ms = get_config_int("preferences", "eof_new_note_length_1ms", 0);
+	eof_use_fof_difficulty_naming = get_config_int("preferences", "eof_use_fof_difficulty_naming", 0);
+	if(eof_use_fof_difficulty_naming)
+	{
+		eof_note_type_name = eof_note_type_name_fof;
+	}
 	eof_new_note_forced_strum = get_config_int("preferences", "eof_new_note_forced_strum", 0);
 	eof_gp_import_preference_1 = get_config_int("preferences", "eof_gp_import_preference_1", 0);
 	eof_gp_import_truncate_short_notes = get_config_int("preferences", "eof_gp_import_truncate_short_notes", 1);
@@ -397,6 +402,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_fb_seek_controls", eof_fb_seek_controls);
 	set_config_int("preferences", "eof_new_note_length_1ms", eof_new_note_length_1ms);
 	set_config_int("preferences", "eof_new_note_forced_strum", eof_new_note_forced_strum);
+	set_config_int("preferences", "eof_use_fof_difficulty_naming", eof_use_fof_difficulty_naming);
 	set_config_int("preferences", "eof_gp_import_preference_1", eof_gp_import_preference_1);
 	set_config_int("preferences", "eof_gp_import_truncate_short_notes", eof_gp_import_truncate_short_notes);
 	set_config_int("preferences", "eof_gp_import_truncate_short_chords", eof_gp_import_truncate_short_chords);

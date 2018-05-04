@@ -12,8 +12,6 @@ unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned 
 unsigned long eof_note_count_colors_bitmask(unsigned long notemask);
 	//Performs bit masking to determine the number of gems the specified note bitmask defines being present
 	//Lanes higher than 7 are checked for the sake of Feedback import, files for which can use lane 8 for open strum notes
-unsigned long eof_note_count_set_bits(unsigned long notemask);
-	//Similar to eof_note_count_colors_bitmask but returns the number of bits that are set among all 8 bits of the least significant byte of the given notemask
 unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigned long note, char target);
 	//Returns the number of gems the specified note contains that can be exported for the target game
 	//If target is 1, then Rocksmith 1 authoring rules are also followed and lanes that are string muted or ghosted are not counted
