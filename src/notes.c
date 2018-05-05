@@ -1727,7 +1727,34 @@ int eof_read_macro_gem_designations(char *string, unsigned long *bitmask)
 		if(isalpha(ch))
 			ch = toupper(ch);	//Convert letters to uppercase
 
-		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+		//Check for lane number designations
+		if(ch == '1')
+		{
+			mask |= 1;
+		}
+		else if(ch == '2')
+		{
+			mask |= 2;
+		}
+		else if(ch == '3')
+		{
+			mask |= 4;
+		}
+		else if(ch == '4')
+		{
+			mask |= 8;
+		}
+		else if(ch == '5')
+		{
+			mask |= 16;
+		}
+		else if(ch == '6')
+		{
+			mask |= 32;
+		}
+
+		//Check for GHL lane color designations
+		else if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{	//GHL tracks have these gem designations:  "W1" = lane 1, "W2" = lane 2, "W3" = lane 3, "B1" = lane 4, "B2" = lane 5, "B3" = lane 6, 'S' = open strum
 			if(ch == 'W')
 			{	//One of the white gems
@@ -1783,8 +1810,11 @@ int eof_read_macro_gem_designations(char *string, unsigned long *bitmask)
 				return 0;	//Invalid gem designation
 			}
 		}
+
+		//Check for non GHL lane color designations
 		else
 		{	//Non GHL tracks have these gem designations:  'G' = lane 1, 'R' = lane 2, 'Y' = lane 3, 'B' = lane 4, 'O' = lane 5, 'P' = lane 6, 'S' = open strum
+			//Or:  '1' = lane 1, '2' = lane 2, '3' = lane 3, '4' = lane 4, '5' = lane 5, '6' = lane 6
 			if(ch == 'G')
 			{
 				mask |= 1;

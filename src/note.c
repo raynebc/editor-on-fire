@@ -1950,6 +1950,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{	//An GHL open note
 			buffer[index++] = 'O';
 		}
+		if(flags & EOF_NOTE_FLAG_F_HOPO)
+		{
+			buffer[index++] = 'h';
+		}
 	}
 
 	if(flags & EOF_NOTE_FLAG_IS_TRILL)

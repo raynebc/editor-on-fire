@@ -60,6 +60,8 @@ int eof_read_macro_gem_designations(char *string, unsigned long *bitmask);
 	//Accepts a string and converts the gem designations into a bitmask
 	//For non GHL tracks:  'G' = lane 1, 'R' = lane 2, 'Y' = lane 3, 'B' = lane 4, 'O' = lane 5, 'P' = lane 6, 'S' = open strum
 	//For GHL tracks:  "W1" = lane 1, "W2" = lane 2, "W3" = lane 3, "B1" = lane 4, "B2" = lane 5, "B3" = lane 6, 'S' = open strum
+	//Lane numbers can be designated by number instead of color:  '1' = lane 1, '2' = lane 2, '3' = lane 3, '4' = lane 4, '5' = lane 5, '6' = lane 6
+	//  which would be more convenient for use with pro guitar tracks.  '6' will not refer to open strum notes.
 	//For both types of tracks, an open strum is returned as value 255
 	//If the string contains an open strum designation in addition to other gems, open strum takes precedence and 255 is returned through *bitmask
 void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque);

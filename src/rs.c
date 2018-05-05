@@ -1389,7 +1389,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 		else
 		{	//There are no anchors in this difficulty, write an empty anchors tag
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during MIDI export.", ctr2, fn);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during RS1 export.", ctr2, fn);
 			allegro_message("%s", eof_log_string);
 			eof_log(eof_log_string, 1);
 			(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
@@ -1573,6 +1573,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 	char match;		//Used for testing whether partially ghosted chords are inside of arpeggio phrases
 	char highlight_bad_slides = 0;	//Set to nonzero if the user opts to highlight notes that slide to or above fret 25
+	int original_eof_display_second_piano_roll;	//Used to store the status of the second piano roll. which must be disabled during this export to prevent problems caused when eof_detect_difficulties() is called various times during export
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 
@@ -1638,6 +1639,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 
 	//Count the number of populated difficulties in the track
+	original_eof_display_second_piano_roll = eof_display_second_piano_roll;	//Store the secondary piano roll status
+	eof_display_second_piano_roll = 0;										//Disable the secondary piano roll
 	(void) eof_detect_difficulties(sp, track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
 	if((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
 	{	//If the track is using the traditional 5 difficulty system
@@ -1666,6 +1669,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			*user_warned |= 1024;
 		}
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+		eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 		return 0;	//Return failure
 	}
 
@@ -1685,6 +1689,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{
 		eof_log("\tError saving:  Cannot open file for writing", 1);
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+		eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 		return 0;	//Return failure
 	}
 
@@ -1935,6 +1940,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//If there was an error adding temporary phrases, sections, beats tot he project and writing the phrases to file
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		(void) pack_fclose(fp);
+		eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 		return 0;	//Return error
 	}
 
@@ -1998,6 +2004,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				(void) pack_fclose(fp);
+				eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 				return 0;	//Return error
 			}
 		}//For each of the 6 supported strings
@@ -2039,6 +2046,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				(void) pack_fclose(fp);
+				eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 				return 0;	//Return error
 			}
 		}//For each of the 6 supported strings
@@ -2143,6 +2151,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				(void) pack_fclose(fp);
+				eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 				return 0;	//Return error
 			}
 		}//For each of the 6 supported strings
@@ -2262,6 +2271,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 					(void) pack_fclose(fp);
+					eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 					return 0;	//Return error
 				}
 			}//For each of the 6 supported strings
@@ -2339,6 +2349,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 			eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 			(void) pack_fclose(fp);
+			eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 			return 0;	//Return error
 		}
 	}//For each note in the active pro guitar track
@@ -2801,6 +2812,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 					(void) pack_fclose(fp);
+					eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 					return 0;	//Return error
 				}
 				flags = tp->note[ctr3]->flags;	//Simplify
@@ -2963,7 +2975,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 		else
 		{	//There are no anchors in this difficulty, write an empty anchors tag
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during MIDI export.", ctr2, fn);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during RS2 export.", ctr2, fn);
 			allegro_message("%s", eof_log_string);
 			eof_log(eof_log_string, 1);
 			(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
@@ -3048,6 +3060,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 					eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore status from notes
 					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 					(void) pack_fclose(fp);
+					eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 					return 0;	//Return error
 				}
 				handshapestart = eof_get_note_pos(sp, track, ctr3);	//Use this chord's start position, unless the loop below finds it is inside an arpeggio/handshape
@@ -3170,6 +3183,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_sort_events(sp);	//Re-sort events
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
+	eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
 	return 1;	//Return success
 }
 
