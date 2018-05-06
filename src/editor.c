@@ -3593,10 +3593,10 @@ if(eof_key_code == KEY_PAUSE)
 			eof_use_key();
 		}
 
-	/* old paste (CTRL+P) */
+	/* toggle Notes panel (CTRL+P) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'p'))
 		{	//If CTRL is held and SHIFT is not
-			(void) eof_menu_edit_old_paste();
+			(void) eof_display_notes_panel();
 			eof_use_key();
 		}
 	}//If the chart is paused and no catalog entries are playing

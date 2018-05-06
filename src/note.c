@@ -1951,8 +1951,14 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			buffer[index++] = 'O';
 		}
 		if(flags & EOF_NOTE_FLAG_F_HOPO)
-		{
+		{	//If the note is a forced HOPO
 			buffer[index++] = 'h';
+		}
+		else if(flags & EOF_NOTE_FLAG_HOPO)
+		{	//Otherwise if the note is still a HOPO (was determined to be a HOPO based on the current "Preview HOPO" setting)
+			buffer[index++] = '(';
+			buffer[index++] = 'h';
+			buffer[index++] = ')';
 		}
 	}
 

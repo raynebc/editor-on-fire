@@ -52,7 +52,7 @@ MENU eof_file_notes_panel_menu[] =
 	{eof_file_notes_panel_menu_string, eof_menu_file_notes_panel_user, NULL, 0, NULL},
 	{"&Browse", eof_menu_file_notes_panel_browse, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Enable", eof_display_notes_panel, NULL, 0, NULL},
+	{"&Enable\t" CTRL_NAME "+P", eof_display_notes_panel, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

@@ -446,6 +446,18 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//One of the drum tracks is not active
+	if(!ustricmp(macro, "IF_IS_NOT_DRUM_TRACK"))
+	{
+		if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//A GHL format track is active
 	if(!ustricmp(macro, "IF_IS_GHL_TRACK"))
 	{
@@ -463,6 +475,60 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(!eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//A non GHL mode legacy guitar track
+	if(!ustricmp(macro, "IF_IS_FIVE_BUTTON_GUITAR_TRACK"))
+	{
+		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
+		{	//If the active track is a guitar track
+			if(!eof_track_is_ghl_mode(eof_song, eof_selected_track) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	//A GHL mode legacy guitar track or a pro guitar track is active
+	if(!ustricmp(macro, "IF_IS_NON_FIVE_BUTTON_GUITAR_TRACK"))
+	{
+		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
+		{	//If the active track is a guitar track
+			if(eof_track_is_ghl_mode(eof_song, eof_selected_track) || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	//A legacy, GHL or pro guitar track is active
+	if(!ustricmp(macro, "IF_IS_ANY_GUITAR_TRACK"))
+	{
+		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
+		{	//If the active track is a guitar track
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//A legacy, GHL or pro guitar track is not active
+	if(!ustricmp(macro, "IF_IS_NOT_ANY_GUITAR_TRACK"))
+	{
+		if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
+		{	//If the active track is not a guitar track
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -786,12 +852,86 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Move the text output up by a given number of pixels
+	if(strcasestr_spec(macro, "MOVE_UP_PIXELS_"))
+	{
+		unsigned long pixelcount;
+		char *count_string = strcasestr_spec(macro, "MOVE_UP_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
+
+		if(eof_read_macro_number(count_string, &pixelcount))
+		{	//If the gem count was successfully parsed
+			dest_buffer[0] = '\0';
+			if(panel->ypos)
+				panel->ypos -= pixelcount;	//Update the y coordinate for Notes panel printing
+			return 1;
+		}
+	}
+
 	//Move the text output down one pixel
 	if(!ustricmp(macro, "MOVE_DOWN_ONE_PIXEL"))
 	{
 		dest_buffer[0] = '\0';
 		panel->ypos++;	//Update the y coordinate for Notes panel printing
 		return 1;
+	}
+
+	//Move the text output down by a given number of pixels
+	if(strcasestr_spec(macro, "MOVE_DOWN_PIXELS_"))
+	{
+		unsigned long pixelcount;
+		char *count_string = strcasestr_spec(macro, "MOVE_DOWN_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
+
+		if(eof_read_macro_number(count_string, &pixelcount))
+		{	//If the gem count was successfully parsed
+			dest_buffer[0] = '\0';
+			panel->ypos += pixelcount;	//Update the y coordinate for Notes panel printing
+			return 1;
+		}
+	}
+
+	//Move the text output left one pixel
+	if(!ustricmp(macro, "MOVE_LEFT_ONE_PIXEL"))
+	{
+		dest_buffer[0] = '\0';
+		panel->xpos--;	//Update the x coordinate for Notes panel printing
+		return 1;
+	}
+
+	//Move the text output left by a given number of pixels
+	if(strcasestr_spec(macro, "MOVE_LEFT_PIXELS_"))
+	{
+		unsigned long pixelcount;
+		char *count_string = strcasestr_spec(macro, "MOVE_LEFT_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
+
+		if(eof_read_macro_number(count_string, &pixelcount))
+		{	//If the gem count was successfully parsed
+			dest_buffer[0] = '\0';
+			if(panel->xpos)
+				panel->xpos -= pixelcount;	//Update the x coordinate for Notes panel printing
+			return 1;
+		}
+	}
+
+	//Move the text output left one pixel
+	if(!ustricmp(macro, "MOVE_RIGHT_ONE_PIXEL"))
+	{
+		dest_buffer[0] = '\0';
+		panel->xpos++;	//Update the x coordinate for Notes panel printing
+		return 1;
+	}
+
+	//Move the text output right by a given number of pixels
+	if(strcasestr_spec(macro, "MOVE_RIGHT_PIXELS_"))
+	{
+		unsigned long pixelcount;
+		char *count_string = strcasestr_spec(macro, "MOVE_RIGHT_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
+
+		if(eof_read_macro_number(count_string, &pixelcount))
+		{	//If the gem count was successfully parsed
+			dest_buffer[0] = '\0';
+			panel->xpos += pixelcount;	//Update the x coordinate for Notes panel printing
+			return 1;
+		}
 	}
 
 	//Print the current content of the destination buffer, then resume parsing macros in that line
@@ -1977,6 +2117,7 @@ unsigned long eof_count_num_notes_with_gem_count(unsigned long gemcount)
 unsigned long eof_count_num_notes_with_gem_designation(unsigned long gems)
 {
 	unsigned long ctr, count, notenum;
+	int is_open;
 
 	if(!eof_song)
 		return 0;	//Error
@@ -1984,11 +2125,28 @@ unsigned long eof_count_num_notes_with_gem_designation(unsigned long gems)
 	notenum = eof_get_track_size(eof_song, eof_selected_track);	//Store this count
 	for(ctr = 0, count = 0; ctr < notenum; ctr++)
 	{	//For each note in the active track
+		is_open = 0;
+
 		if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)	//If this note isn't in the active difficulty
 			continue;	//Skip it
 
-		if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, ctr))
-		{	//If this is an open note
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			if(eof_pro_guitar_note_highest_fret(eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum], ctr) == 0)
+			{	//If no gems in this note had a fret value defined (open note)
+				if(gems == 255)
+				{	//If the function is meant to count open notes
+					count++;
+					continue;		//Skip the rest of the processing for this note
+				}
+			}
+		}
+		else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, ctr))
+		{	//If this is an open note in a legacy track
+			is_open = 1;
+		}
+		if(is_open)
+		{	//If this is an pro guitar open note
 			if(gems == 255)	//If the function is meant to count open notes
 				count++;
 			continue;		//Skip the rest of the processing for this note

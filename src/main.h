@@ -705,7 +705,7 @@ void eof_set_color_set(void);	//Updates the eof_colors[] array with color data b
 void eof_switch_out_callback(void);	//Performs some logic that needs to occur when EOF loses foreground focus
 void eof_switch_in_callback(void);	//Performs some logic that needs to occur when EOF gains foreground focus
 long eof_get_previous_note(long cnote);	//Returns the note that exists immediately before the specified note in the active track difficulty, or -1 if no such note exists
-int eof_note_is_hopo(unsigned long cnote);	//Returns nonzero if the specified note in the active track difficulty should be rendered as a HOPO, based on the current HOPO preview setting
+int eof_note_is_hopo(unsigned long cnote);	//Returns nonzero if the specified note in the active track should be rendered as a HOPO, based on the current HOPO preview setting
 void eof_read_global_keys(void);	//Reads and acts on various keyboard combinations, only if the chart is paused
 void eof_lyric_logic(void);	//Performs various vocal editor logic
 void eof_note_logic(void);	//Performs various note catalog logic

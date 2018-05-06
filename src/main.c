@@ -1642,20 +1642,26 @@ int eof_load_ogg_quick(char * filename)
 
 	if(eof_music_data)
 	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", filename);
+		eof_log(eof_log_string, 1);
 		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
 		if(eof_music_track)
 		{
 			loaded = 1;
 			if(!eof_silence_loaded)
 			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(!eof_write_rs_files && !eof_write_rs2_files && !eof_write_bf_files)
-				{	//If not authoring for Rocksmith or Bandfuse
-					if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
+				if(eof_write_fof_files)
+				{	//If authoring for Frets on Fire style games
+					int rate = alogg_get_wave_freq_ogg(eof_music_track);
+					if(rate != 44100)
 					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnsupported sample rate detected:  %d", rate);
+						eof_log(eof_log_string, 1);
 						allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
 					}
 					if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
 					{
+						eof_log("\t\tUnsupported mono channel audio detected", 1);
 						allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
 					}
 				}
@@ -1735,20 +1741,26 @@ int eof_load_ogg(char * filename, char silence_failover)
 		{
 			eof_silence_loaded = 0;
 		}
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", filename);
+		eof_log(eof_log_string, 1);
 		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
 		if(eof_music_track)
 		{
 			loaded = 1;
 			if(!eof_silence_loaded)
 			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(!eof_write_rs_files && !eof_write_rs2_files && !eof_write_bf_files)
-				{	//If not authoring for Rocksmith or Bandfuse
-					if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
+				if(eof_write_fof_files)
+				{	//If authoring for Frets on Fire style games
+					int rate = alogg_get_wave_freq_ogg(eof_music_track);
+					if(rate != 44100)
 					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnsupported sample rate detected:  %d", rate);
+						eof_log(eof_log_string, 1);
 						allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
 					}
 					if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
 					{
+						eof_log("\t\tUnsupported mono channel audio detected", 1);
 						allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
 					}
 				}

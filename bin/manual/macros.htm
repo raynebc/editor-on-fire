@@ -184,12 +184,32 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active track is either of the drum tracks:  The normal one (PART DRUMS) or the Phase Shift one (PART REAL_DRUMS_PS).</td>
 </tr>
 <tr>
+<td>%IF_IS_NOT_DRUM_TRACK%</td>
+<td>Evaluates as true if the active track is not one of the drum tracks.</td>
+</tr>
+<tr>
 <td>%IF_IS_GHL_TRACK%</td>
 <td>Evaluates as true if the active track has GHL mode enabled.</td>
 </tr>
 <tr>
 <td>%IF_IS_NOT_GHL_TRACK%</td>
 <td>Evaluates as true if the active track does NOT have GHL mode enabled, regardless of whether or not GHL mode is compatible with the active track.</td>
+</tr>
+<tr>
+<td>%IF_IS_FIVE_BUTTON_GUITAR_TRACK%</td>
+<td>Evaluates as true if the active track is one designed for use with a five button guitar controller (not a GHL mode guitar track and is not a pro guitar track).</td>
+</tr>
+<tr>
+<td>%IF_IS_NON_FIVE_BUTTON_GUITAR_TRACK%</td>
+<td>Evaluates as true if the active track is one designed for use with one designed for use with a guitar controller with more than five buttons (a GHL mode guitar track or a pro guitar track).</td>
+</tr>
+<tr>
+<td>%IF_IS_ANY_GUITAR_TRACK%</td>
+<td>Evaluates as true if the active track is a guitar/bass track of any kind (normal, GHL, pro guitar).</td>
+</tr>
+<tr>
+<td>%IF_IS_NOT_ANY_GUITAR_TRACK%</td>
+<td>Evaluates as true if the active track is anything besides a guitar/bass track.</td>
 </tr>
 <tr>
 <td>%IF_IS_TECH_VIEW%</td>
@@ -296,8 +316,32 @@ These macros are for special uses, such as affecting how text will be printed to
 <td>Raises the print position in the Notes panel by one pixel, to remove spacing, such as if you want to use hyphens to underline the previous printed line of text.</td>
 </tr>
 <tr>
+<td>%MOVE_UP_PIXELS_[NUMBER]%</td>
+<td>Raises the print position in the Notes panel by [NUMBER] pixels, to remove spacing, such as if you want to use hyphens to underline the previous printed line of text.</td>
+</tr>
+<tr>
 <td>%MOVE_DOWN_ONE_PIXEL%</td>
 <td>Lowers the print position in the Notes panel by one pixel, to allow better spacing in case two lines of printed text are too close and overlap each other.</td>
+</tr>
+<tr>
+<td>%MOVE_DOWN_PIXELS_[NUMBER]%</td>
+<td>Lowers the print position in the Notes panel by [NUMBER] pixels, to remove spacing, such as if you want to use hyphens to underline the previous printed line of text.</td>
+</tr>
+<tr>
+<td>%MOVE_LEFT_ONE_PIXEL%</td>
+<td>Moves the print position in the Notes panel left by one pixel, such as to allow better alignment of items in different lines.</td>
+</tr>
+<tr>
+<td>%MOVE_LEFT_PIXELS_[NUMBER]%</td>
+<td>Moves the print position in the Notes panel left by [NUMBER] pixels, such as to allow better alignment of items in different lines.</td>
+</tr>
+<tr>
+<td>%MOVE_RIGHT_ONE_PIXEL%</td>
+<td>Moves the print position in the Notes panel right by one pixel, such as to allow better alignment of items in different lines.</td>
+</tr>
+<tr>
+<td>%MOVE_RIGHT_PIXELS_[NUMBER]%</td>
+<td>Moves the print position in the Notes panel right by [NUMBER] pixels, such as to allow better alignment of items in different lines.</td>
 </tr>
 <tr>
 <td>%FLUSH%</td>
@@ -537,7 +581,7 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 <tr>
 <td>%TRACK_NOTE_COUNT_INSTANCES_[COMBINATION]%</td>
-<td>Prints the number of notes in the track difficulty that have the specified [COMBINATION] of gems, and the percentage of the track difficulty's total note count that represents.  Standard GRYBO gem colors can be specified (G is lane 1, R is lane 2, Y is lane 3, B is lane 4, O is lane 5, ie. %TRACK_NOTE_COUNT_INSTANCES_GR% counts green+red chords), and S is for open strum.  For pro guitar tracks, 'P' can be used to represent lane 6 (lane 6 gems are drawn in purple for Rock Band, Guitar Hero and Rocksmith color sets).  For GHL tracks, the gem designations are B1, B2, B3, W1, W2, W3 and S for open strum.  Lane numbers can also be designated by number instead of color ('1' is lane 1, '2' is lane 2, '3' is lane 3, '4' is lane 4, '5' is lane 5, '6' is lane 6).</td>
+<td>Prints the number of notes in the track difficulty that have the specified [COMBINATION] of gems, and the percentage of the track difficulty's total note count that represents.  Standard GRYBO gem colors can be specified (G is lane 1, R is lane 2, Y is lane 3, B is lane 4, O is lane 5, ie. %TRACK_NOTE_COUNT_INSTANCES_GR% counts green+red chords), and S is for open strum.  For pro guitar tracks, 'P' can be used to represent lane 6 (lane 6 gems are drawn in purple for Rock Band, Guitar Hero and Rocksmith color sets).  For GHL tracks, the gem designations are B1, B2, B3, W1, W2, W3 and S for open strum.  Lane numbers can also be designated by number instead of color ('1' is lane 1, '2' is lane 2, '3' is lane 3, '4' is lane 4, '5' is lane 5, '6' is lane 6).  A pro guitar note being an open note doesn't prevent it from being detected as having gems on lanes, ie. an open E single note will be counted by both %TRACK_NOTE_COUNT_INSTANCES_S% and %TRACK_NOTE_COUNT_INSTANCES_1%.</td>
 </tr>
 
 <tr>
