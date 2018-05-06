@@ -511,6 +511,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 				/* import regular note */
 				else
 				{
+					unsigned char note;
+
 					if((current_note->gemcolor == 5) || (current_note->gemcolor == 6))
 					{	//If this gem is inverted HOPO or slider notation
 						gemtype = 2;	//This gem is a technique marker
@@ -518,6 +520,42 @@ EOF_SONG * eof_import_chart(const char * fn)
 					else
 					{
 						gemtype = 1;	//Otherwise it's a normal note
+					}
+
+					if(sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE)
+					{	//The gem color has to be appropriately remapped for GHL tracks
+						if(current_note->gemcolor == 0)
+						{
+							note = 8;	//W1 is mapped to lane 4
+						}
+						else if(current_note->gemcolor == 1)
+						{
+							note = 16;	//W2 is mapped to lane 5
+						}
+						else if(current_note->gemcolor == 2)
+						{
+							note = 32;	//W3 is mapped to lane 6
+						}
+						else if(current_note->gemcolor == 3)
+						{
+							note = 1;	//B1 is mapped to lane 1
+						}
+						else if(current_note->gemcolor == 4)
+						{
+							note = 2;	//B2 is mapped to lane 2
+						}
+						else if(current_note->gemcolor == 8)
+						{
+							note = 4;	//B3 is mapped to lane 3
+						}
+						else
+						{	//Other values are for various notations
+							note = 1 << current_note->gemcolor;
+						}
+					}
+					else
+					{	//Otherwise it's a simple bit shift
+						note = 1 << current_note->gemcolor;
 					}
 
 					if((current_note->chartpos != lastpos) || (gemtype == 2) || (gemtype != lastgemtype))
@@ -528,15 +566,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 							new_note->midi_pos = current_note->chartpos;	//Track the note's original chart position to more reliably apply HOPO status
 							new_note->pos = chartpos_to_msec(chart, current_note->chartpos) + 0.5;	//Round up
 							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - (double)new_note->pos + 0.5;	//Round up
-							if((sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE) && (current_note->gemcolor == 8))
-							{	//If this is a black 3 GHL gem
-								new_note->note = 32;
-								new_note->tflags |= EOF_NOTE_TFLAG_GHL_B3;	//Track that this lane 6 note will be treated as a gem on that lane instead of as a toggle HOPO marker
+							if((sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE) && (current_note->gemcolor == 2))
+							{	//If this is a white 3 GHL gem
+								new_note->tflags |= EOF_NOTE_TFLAG_GHL_W3;	//Track that this lane 6 note will be treated as a gem on that lane instead of as a toggle HOPO marker
 							}
-							else
-							{
-								new_note->note = 1 << current_note->gemcolor;
-							}
+							new_note->note = note;			//Set the translated note bitmask
 							new_note->type = difficulty;
 							if(prev_note)
 							{	//If a previous gem was imported
@@ -553,15 +587,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{	//Otherwise add a gem to the previously created note
 						if(new_note)
 						{
-							if(current_note->gemcolor == 8)
-							{	//If this is a B3 gem
-								new_note->note |= 32;	//Add a gem on lane 6
-								new_note->tflags |= EOF_NOTE_TFLAG_GHL_B3;	//Apply this flag to reflect that this lane 6 gem is a B3 note and not a toggle HOPO marker
+							if(current_note->gemcolor == 2)
+							{	//If this is a W3 gem
+								new_note->tflags |= EOF_NOTE_TFLAG_GHL_W3;	//Apply this flag to reflect that this lane 6 gem is a W3 note and not a toggle HOPO marker
 							}
-							else
-							{	//Otherwise treat it as a normal gem
-								new_note->note |= (1 << current_note->gemcolor);
-							}
+							new_note->note |= note;			//Add the translated note bitmask
 						}
 					}
 					lastpos = current_note->chartpos;
@@ -596,8 +626,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 						}
 					}
 				}
-				if((tp->note[ctr]->note != 32) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_GHL_B3))
-				{	//As long as this isn't a toggle HOPO marker (a lane 6 gem without the temporary flag indicating it is a B3 gem)
+				if((tp->note[ctr]->note != 32) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_GHL_W3))
+				{	//As long as this isn't a toggle HOPO marker (a lane 6 gem without the temporary flag indicating it is a W3 gem)
 					prev_note = tp->note[ctr];		//Track this note to compare it with the next one and set its HOPO status appropriately
 				}
 			}
@@ -686,9 +716,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 			if(!(eof_get_note_note(sp, ctr, ctr2) & 32))
 				continue;	//If this note does not use lane 6 (a "N 5 #" .chart entry), skip it
 			tflags = eof_get_note_tflags(sp, ctr, ctr2);
-			if(tflags & EOF_NOTE_TFLAG_GHL_B3)
-			{	//If this note is meant to be on lane 6 (a black 3 GHL note)
-				eof_set_note_tflags(sp, ctr, ctr2, tflags & ~EOF_NOTE_TFLAG_GHL_B3);	//Clear that flag
+			if(tflags & EOF_NOTE_TFLAG_GHL_W3)
+			{	//If this note is meant to be on lane 6 (a white 3 GHL note)
+				eof_set_note_tflags(sp, ctr, ctr2, tflags & ~EOF_NOTE_TFLAG_GHL_W3);	//Clear that flag
 				continue;	//And skip this note
 			}
 

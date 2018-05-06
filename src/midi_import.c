@@ -1650,11 +1650,38 @@ set_window_title(debugtext);
 						{	//Easy difficulty (Notes 58-66)
 							if(midinote == 58)
 							{	//Open note
-								lane = 10;	//Use this value as a placeholder for open note (which will use lane 6 plus a status flag
+								lane = 10;	//Use this value as a placeholder for open note (which will use lane 6 plus a status flag)
 							}
 							else
 							{
-								lane = midinote - 59;	//Lane 1 maps to 59
+								if(midinote == 59)
+								{
+									lane = 3;			//59 maps to W1
+								}
+								else if(midinote == 60)
+								{
+									lane = 4;			//60 maps to W2
+								}
+								else if(midinote == 61)
+								{
+									lane = 5;			//61 maps to W3
+								}
+								else if(midinote == 62)
+								{
+									lane = 0;			//62 maps to B1
+								}
+								else if(midinote == 63)
+								{
+									lane = 1;			//63 maps to B2
+								}
+								else if(midinote == 64)
+								{
+									lane = 2;			//64 maps to B3
+								}
+								else
+								{	//HOPO notations
+									lane = midinote - 59;
+								}
 							}
 							diff = EOF_NOTE_SUPAEASY;
 						}
@@ -1662,11 +1689,38 @@ set_window_title(debugtext);
 						{	//Medium difficulty (Notes 70-78)
 							if(midinote == 70)
 							{	//Open note
-								lane = 10;	//Use this value as a placeholder for open note (which will use lane 6 plus a status flag
+								lane = 10;	//Use this value as a placeholder for open note (which will use lane 6 plus a status flag)
 							}
 							else
 							{
-								lane = midinote - 71;	//Lane 1 maps to 71
+								if(midinote == 71)
+								{
+									lane = 3;			//71 maps to W1
+								}
+								else if(midinote == 72)
+								{
+									lane = 4;			//72 maps to W2
+								}
+								else if(midinote == 73)
+								{
+									lane = 5;			//73 maps to W3
+								}
+								else if(midinote == 74)
+								{
+									lane = 0;			//74 maps to B1
+								}
+								else if(midinote == 75)
+								{
+									lane = 1;			//75 maps to B2
+								}
+								else if(midinote == 76)
+								{
+									lane = 2;			//76 maps to B3
+								}
+								else
+								{	//HOPO notations
+									lane = midinote - 71;
+								}
 							}
 							diff = EOF_NOTE_EASY;
 						}
@@ -1674,11 +1728,38 @@ set_window_title(debugtext);
 						{	//Hard difficulty (Notes 82-90)
 							if(midinote == 82)
 							{	//Open note
-								lane = 10;	//Use this value as a placeholder for open note (which will use lane 6 plus a status flag
+								lane = 10;	//Use this value as a placeholder for open note (which will use lane 6 plus a status flag)
 							}
 							else
 							{
-								lane = midinote - 83;	//Lane 1 maps to 83
+								if(midinote == 83)
+								{
+									lane = 3;			//83 maps to W1
+								}
+								else if(midinote == 84)
+								{
+									lane = 4;			//84 maps to W2
+								}
+								else if(midinote == 85)
+								{
+									lane = 5;			//85 maps to W3
+								}
+								else if(midinote == 86)
+								{
+									lane = 0;			//86 maps to B1
+								}
+								else if(midinote == 87)
+								{
+									lane = 1;			//87 maps to B2
+								}
+								else if(midinote == 88)
+								{
+									lane = 2;			//88 maps to B3
+								}
+								else
+								{	//HOPO notations
+									lane = midinote - 83;
+								}
 							}
 							diff = EOF_NOTE_MEDIUM;
 						}
@@ -1686,15 +1767,42 @@ set_window_title(debugtext);
 						{	//Expert difficulty (Notes 94-102)
 							if(midinote == 94)
 							{	//Open note
-								lane = 10;	//Use this value as a placeholder for open note (which will use lane 6 plus a status flag
+								lane = 10;	//Use this value as a placeholder for open note (which will use lane 6 plus a status flag)
 							}
 							else
 							{
-								lane = midinote - 95;	//Lane 1 maps to 95
+								if(midinote == 95)
+								{
+									lane = 3;			//95 maps to W1
+								}
+								else if(midinote == 96)
+								{
+									lane = 4;			//96 maps to W2
+								}
+								else if(midinote == 97)
+								{
+									lane = 5;			//97 maps to W3
+								}
+								else if(midinote == 98)
+								{
+									lane = 0;			//98 maps to B1
+								}
+								else if(midinote == 99)
+								{
+									lane = 1;			//99 maps to B2
+								}
+								else if(midinote == 100)
+								{
+									lane = 2;			//100 maps to B3
+								}
+								else
+								{	//HOPO notations
+									lane = midinote - 95;
+								}
 							}
 							diff = EOF_NOTE_AMAZING;
 						}
-					}
+					}//If this is a GHL mode track
 					else if(picked_track == EOF_TRACK_DANCE)
 					{	//This is the dance track
 						if((midinote >= 48) && (midinote < 60))

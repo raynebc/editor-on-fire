@@ -5192,7 +5192,7 @@ int eof_track_menu_enable_ghl_mode(void)
 			unsigned long note = eof_get_note_note(eof_song, eof_selected_track, ctr);
 
 			if(!(eof_get_note_flags(eof_song, eof_selected_track, ctr) & EOF_GUITAR_NOTE_FLAG_GHL_OPEN) && (note & 32) && (note != 32))
-			{	//If this note contains a gem on lane 6 and isn't an open note (a lane 3 black gem) and contains a gem on another lane as well
+			{	//If this note contains a gem on lane 6 and isn't an open note (a lane 3 white gem) and contains a gem on another lane as well
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//The conversion of this note below will be lossy, make an undo state
 				break;
 			}
@@ -5208,11 +5208,11 @@ int eof_track_menu_enable_ghl_mode(void)
 	}
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the active track
-		if(eof_note_convert_ghl_authoring(eof_song, eof_selected_track, ctr))	//Convert lane 3 black GHL gem and open string notation accordingly
-		{	//If the conversion of a chord containing a lane 3 black gem caused a loss of original authoring
+		if(eof_note_convert_ghl_authoring(eof_song, eof_selected_track, ctr))	//Convert lane 3 white GHL gem and open string notation accordingly
+		{	//If the conversion of a chord containing a lane 3 white gem caused a loss of original authoring
 			if(!warning)
 			{	//If the user wasn't already warned about this
-				allegro_message("Warning:  Chords containing lane 3 black GHL gems can't be authored in a non GHL track");
+				allegro_message("Warning:  Chords containing lane 3 white GHL gems can't be authored in a non GHL track");
 				warning = 1;
 			}
 		}

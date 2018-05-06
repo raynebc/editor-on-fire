@@ -1138,7 +1138,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				if(noteflags & EOF_NOTE_FLAG_SP)
 				{	//If this is a SP note
 					if(ctr < 3)
-					{	//The first three lanes are white notes
+					{	//The first three lanes are black notes
 						unsigned long barremask = mask | (mask << 3);	//This represents the note mask of the gem and a gem 3 lanes higher
 
 						if((notenote & barremask) == barremask)
@@ -1155,22 +1155,22 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 						}
 						else if(noteflags & EOF_NOTE_FLAG_HOPO)
 						{	//If this is a HOPO note
-							imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO;
-						}
-						else
-						{	//This is not a HOPO note
-							imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP;
-						}
-					}
-					else
-					{	//The next three lanes are black notes
-						if(noteflags & EOF_NOTE_FLAG_HOPO)
-						{	//If this is a HOPO note
 							imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO;
 						}
 						else
 						{	//This is not a HOPO note
 							imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP;
+						}
+					}
+					else
+					{	//The next three lanes are white notes
+						if(noteflags & EOF_NOTE_FLAG_HOPO)
+						{	//If this is a HOPO note
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO;
+						}
+						else
+						{	//This is not a HOPO note
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP;
 						}
 					}
 				}
@@ -1202,7 +1202,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 						}
 					}
 				}
-			}
+			}//If rendering a Guitar Hero Live style track
 			else if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If rendering a drum note
 				if(((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
@@ -1431,7 +1431,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//Special case:  5 lane guitar/bass tracks can use a sixth lane but its 3D representation still only draws 5 lanes
 		numlanes = 5;
 	}
-	rz = npos < -100 ? -100 : npos + 10;
+	rz = npos < -100 ? -100 : npos + 6;
 	ez = npos + notelength / eof_zoom_3d > 600 ? 600 : npos + notelength / eof_zoom_3d + 6;
 	for(ctr=0,mask=1; ctr < eof_count_track_lanes(eof_song, track); ctr++,mask=mask<<1)
 	{	//For each of the lanes in this track
@@ -2451,11 +2451,11 @@ int eof_note_convert_ghl_authoring(EOF_SONG *sp, unsigned long track, unsigned l
 		{	//If this note is a 5 lane chord
 			if(eof_ghl_conversion_swaps_bw_gems)
 			{	//If the user enabled the preference to swap black and white GHL gems during this conversion
-				tp->note[note]->note = 4;	//Convert to a lane 3 gem (white 3)
+				tp->note[note]->note = 4;	//Convert to a lane 3 gem (black 3)
 			}
 			else
 			{
-				tp->note[note]->note = 32;	//Otherwise convert to a lane 6 gem (black 3) instead
+				tp->note[note]->note = 32;	//Otherwise convert to a lane 6 gem (white 3) instead
 			}
 		}
 		else if(tp->note[note]->note == 32)
@@ -2464,11 +2464,11 @@ int eof_note_convert_ghl_authoring(EOF_SONG *sp, unsigned long track, unsigned l
 		}
 		else if(eof_ghl_conversion_swaps_bw_gems)
 		{	//If the user enabled the preference to swap black and white GHL gems during this conversion
-			whitegems = tp->note[note]->note & 7;			//Lanes 1-3 will be remapped to lanes 4-6 to reflect the black GHL gems
-			blackgems = (tp->note[note]->note >> 3) & 3;	//Lanes 4-5 will be remapped to lanes 1-2 to reflect white GHL gems
+			blackgems = tp->note[note]->note & 7;			//Lanes 1-3 will be remapped to lanes 4-6 to reflect the white GHL gems
+			whitegems = (tp->note[note]->note >> 3) & 3;	//Lanes 4-5 will be remapped to lanes 1-2 to reflect black GHL gems
 			tp->note[note]->note &= ~63;					//Clear lanes 1-6
-			tp->note[note]->note |= (whitegems << 3);		//Add the remapped gems from lanes 1-3
-			tp->note[note]->note |= blackgems;				//Add the remapped gems from lanes 4-5
+			tp->note[note]->note |= (blackgems << 3);		//Add the remapped gems from lanes 1-3
+			tp->note[note]->note |= whitegems;				//Add the remapped gems from lanes 4-5
 		}
 	}
 	else
@@ -2479,7 +2479,7 @@ int eof_note_convert_ghl_authoring(EOF_SONG *sp, unsigned long track, unsigned l
 			tp->note[note]->note = 32;				//Convert to a lane 6 gem (open note)
 		}
 		else if((tp->note[note]->note & 32) && !eof_ghl_conversion_swaps_bw_gems)
-		{	//If this note has a lane 6 (black 3) gem and it is be converted to a 5 lane chord as per the default logic
+		{	//If this note has a lane 6 (white 3) gem and it is be converted to a 5 lane chord as per the default logic
 			if(tp->note[note]->note != 32)
 			{	//If it also has a gem on any other lane
 				tp->note[note]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
@@ -2488,7 +2488,7 @@ int eof_note_convert_ghl_authoring(EOF_SONG *sp, unsigned long track, unsigned l
 			tp->note[note]->note = 31;	//Convert to a 5 lane chord
 		}
 		else if((tp->note[note]->note & 4) && eof_ghl_conversion_swaps_bw_gems)
-		{	//If this note has a lane 3 (white 3) gem and it is to be converted to a 5 lane chord (user enabled the preference to swap black and white gems during GHL conversion)
+		{	//If this note has a lane 3 (black 3) gem and it is to be converted to a 5 lane chord (user enabled the preference to swap black and white gems during GHL conversion)
 			if(tp->note[note]->note != 4)
 			{	//If it also has a gem on any other lane
 				tp->note[note]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
@@ -2498,11 +2498,11 @@ int eof_note_convert_ghl_authoring(EOF_SONG *sp, unsigned long track, unsigned l
 		}
 		else if(eof_ghl_conversion_swaps_bw_gems)
 		{	//If the user enabled the preference to swap black and white GHL gems during this conversion
-			whitegems = tp->note[note]->note & 3;			//White gems 1-2 will be remapped to lanes 4-6
-			blackgems = (tp->note[note]->note >> 3) & 7;	//Black gems 1-3 will be remapped to lanes 1-3 to reflect white GHL gems
+			blackgems = tp->note[note]->note & 3;			//Black gems 1-2 will be remapped to lanes 4-6
+			whitegems = (tp->note[note]->note >> 3) & 7;	//White gems 1-3 will be remapped to lanes 1-3 to reflect black GHL gems
 			tp->note[note]->note &= ~63;					//Clear lanes 1-6
-			tp->note[note]->note |= (whitegems << 3);		//Add the remapped gems from lanes 1-2
-			tp->note[note]->note |= blackgems;				//Add the remapped gems from lanes 3-5
+			tp->note[note]->note |= (blackgems << 3);		//Add the remapped gems from lanes 1-2
+			tp->note[note]->note |= whitegems;				//Add the remapped gems from lanes 3-5
 		}
 	}
 

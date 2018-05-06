@@ -2308,6 +2308,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				break;
 			}
 		}//For each custom data block in the track
+		(void) eof_track_convert_ghl_lane_ordering(sp, track_ctr);	//Convert the GHL lane ordering if applicable
 	}//For each track in the project
 	sp->tags->unshare_drum_phrasing = unshare_drum_phrasing;	//After all tracks have been formally loaded, store this value into the project to optionally override drum phrase handling
 	return 1;	//Return success
@@ -7548,6 +7549,55 @@ int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track)
 	}
 
 	return 0;
+}
+
+int eof_track_convert_ghl_lane_ordering(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long ctr;
+	unsigned char original, converted;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+	if(!eof_track_is_ghl_mode(sp, track))
+		return 0;	//Not a GHL track
+	if(sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE_MS)
+		return 0;	//GHL track already converted
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Converting GHL lane order of track  \"%s\"", sp->track[track]->name);
+	eof_log(eof_log_string, 1);
+
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the track
+		original = eof_get_note_note(sp, track, ctr);
+		converted = 0;
+
+		if(original & 1)		//W1 was previously lane 1
+			converted |= 8;		//Convert to lane 4
+		if(original & 2)		//W2 was previously lane 2
+			converted |= 16;	//Convert to lane 5
+		if(original & 4)		//W3 was previously lane 3
+			converted |= 32;	//Convert to lane 6
+		if(original & 8)		//B1 was previously lane 4
+			converted |= 1;		//Convert to lane 1
+		if(original & 16)		//B2 was previously lane 5
+			converted |= 2;		//Convert to lane 2
+		if(original & 32)
+		{
+			if(eof_get_note_flags(sp, track, ctr) & EOF_GUITAR_NOTE_FLAG_GHL_OPEN)
+			{	//If it's an open note
+				converted |= 32;	//Leave it as a lane 6 gem
+			}
+			else
+			{						//B3 was previously lane 6
+				converted |= 4;		//Convert to lane 3
+			}
+		}
+
+		eof_set_note_note(sp, track, ctr, converted);	//Update the note bitmask
+	}
+
+	sp->track[track]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Set this flag to denote the track was converted
+	return 1;
 }
 
 char eof_search_for_note_near(EOF_SONG *sp, unsigned long track, unsigned long targetpos, unsigned long delta, char type, unsigned long *match)

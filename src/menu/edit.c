@@ -1665,7 +1665,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 					{	//If this paste had a lossy conversion from GHL to non GHL format
 						if(!warning)
 						{	//If the user wasn't already warned about this during this paste operation
-							allegro_message("Chords containing lane 3 black GHL gems can't be authored in a non GHL track");
+							allegro_message("Chords containing lane 3 white GHL gems can't be authored in a non GHL track");
 							warning = 1;
 						}
 					}

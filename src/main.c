@@ -5293,12 +5293,12 @@ void eof_set_color_set(void)
 
 	if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 	{	//Guitar Hero Live only uses two gem colors
-		eof_colors[0] = eof_color_ghl_white_struct;
-		eof_colors[1] = eof_color_ghl_white_struct;
-		eof_colors[2] = eof_color_ghl_white_struct;
-		eof_colors[3] = eof_color_ghl_black_struct;
-		eof_colors[4] = eof_color_ghl_black_struct;
-		eof_colors[5] = eof_color_ghl_black_struct;
+		eof_colors[0] = eof_color_ghl_black_struct;		//Lane 1 is B1
+		eof_colors[1] = eof_color_ghl_black_struct;
+		eof_colors[2] = eof_color_ghl_black_struct;
+		eof_colors[3] = eof_color_ghl_white_struct;		//Lane 4 is W1
+		eof_colors[4] = eof_color_ghl_white_struct;
+		eof_colors[5] = eof_color_ghl_white_struct;
 	}
 	else if(eof_color_set == EOF_COLORS_DEFAULT)
 	{	//If user is using the original EOF color set

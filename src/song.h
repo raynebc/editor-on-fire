@@ -104,7 +104,7 @@
 #define EOF_NOTE_TFLAG_MINLENGTH 4096	//This flag will indicate that a temporary ignored note added for the chordnote mechanism needs to RS2 export with a minimum length of 1ms
 #define EOF_NOTE_TFLAG_LN        8192	//This flag will indicate that the affected chord has chordify status and the chord tag should RS2 export with the linknext tag overridden to be enabled, which will cause the chord to link to the temporary single notes written for the chord
 #define EOF_NOTE_TFLAG_HD       16384	//This flag will indicate that the affected chord should export with high density regardless of the value of the regular high density flag
-#define EOF_NOTE_TFLAG_GHL_B3   32768	//This flag will indicate that the affected note is a "N 8 #" black 3 note being imported from a Feedback file instead of "N 5 #" toggle HOPO notation
+#define EOF_NOTE_TFLAG_GHL_W3   32768	//This flag will indicate that the affected note is a "N 2 #" white 3 note being imported from a Feedback file instead of "N 5 #" toggle HOPO notation, since they are both stored as a lane 6 bitmask
 #define EOF_NOTE_TFLAG_RESNAP   65536	//This flag will indicate that a note was defined as grid snapped in the imported MIDI, and that it should be resnapped if rounding errors result in it not being grid snapped after import
 
 
@@ -304,6 +304,8 @@ typedef struct
 	//Specifies a legacy guitar behavior track as having Guitar Hero Live characteristics (6 lanes plus an additional open note status)
 #define EOF_TRACK_FLAG_RS_BONUS_ARR    16
 	//Specifies that a pro guitar track is to be presented in Rocksmith as a bonus arrangement
+#define EOF_TRACK_FLAG_GHL_MODE_MS     32
+	//Specifies that if the track is in GHL mode, the lane order has been changed to EOF's newer system, to match the order in Moonscraper (1=B1,2=B2,3=B3,4=W1,5=W2,6=W3)
 
 
 ///Difficulty numbers
@@ -315,6 +317,7 @@ typedef struct
 #define EOF_NOTE_CHALLENGE   4
 #define EOF_MAX_DIFFICULTIES 5
 	//Note: EOF_NOTE_SPECIAL references the same difficulty that the dance track uses for "Challenge" difficulty
+
 
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
@@ -927,6 +930,10 @@ int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a legacy guitar track
 int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track has GHL mode enabled
+int eof_track_convert_ghl_lane_ordering(EOF_SONG *sp, unsigned long track);
+	//If the specified track is a GHL track in the old lane numbering (1=W1,2=W2,3=W3,4=B1,5=B2,6=B3), converts to the new lane numbering (1=B1,2=B2,3=B3,4=W1,5=W2,6=W3)
+	//Open strum notes remain unchanged as lane 6 gems with the EOF_GUITAR_NOTE_FLAG_GHL_OPEN flag
+	//Returns nonzero if the track was converted
 
 char eof_search_for_note_near(EOF_SONG *sp, unsigned long track, unsigned long targetpos, unsigned long delta, char type, unsigned long *match);
 	//Looks for one or more notes within [delta] number of milliseconds of the specified position of the specified track difficulty

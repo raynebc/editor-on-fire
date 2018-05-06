@@ -2207,7 +2207,7 @@ if(eof_key_code == KEY_PAUSE)
 				}
 				if(eof_open_strum_enabled(eof_selected_track) && !eof_snote && (eof_guitar.button[0].held || eof_guitar.button[1].held))
 				{	//If the strum is being held up/down with no frets, and open strumming is enabled
-					eof_snote = 32;	//The strum note is lane 6
+					eof_snote = 32;	//The open strum note is lane 6
 					if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 					{	//If GHL mode is in effect, open notes are represented as lane 6 gems that have the GHL open status flag
 						is_open = 1;	//Track that this flag needs to be applied after note creation

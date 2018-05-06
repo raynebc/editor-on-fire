@@ -637,22 +637,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//This is a GHL track
 					switch(type)
 					{
-						case EOF_NOTE_AMAZING:	//Notes 94-102 (Lane 1 maps to 95)
+						case EOF_NOTE_AMAZING:	//Notes 94-102 (Lane 4, W1, maps to 95)
 						{
 							midi_note_offset = 95;
 							break;
 						}
-						case EOF_NOTE_MEDIUM:	//Notes 82-90 (Lane 1 maps to 83)
+						case EOF_NOTE_MEDIUM:	//Notes 82-90 (Lane 4, W1, maps to 83)
 						{
 							midi_note_offset = 83;
 							break;
 						}
-						case EOF_NOTE_EASY:		//Notes 70-78 (Lane 1 maps to 71)
+						case EOF_NOTE_EASY:		//Notes 70-78 (Lane 4, W1, maps to 71)
 						{
 							midi_note_offset = 71;
 							break;
 						}
-						case EOF_NOTE_SUPAEASY:	//Notes 58-66 (Lane 1 maps to 59)
+						case EOF_NOTE_SUPAEASY:	//Notes 58-66 (Lane 4, W1, maps to 59)
 						{
 							midi_note_offset = 59;
 							break;
@@ -777,18 +777,26 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write green note */
 				if(note & 1)
 				{
-					if(!((noteflags & EOF_DRUM_NOTE_FLAG_DBASS) && sp->tags->double_bass_drum_disabled))
-					{	//If this is not an expert+ bass drum note that would be skipped due to such notes being disabled
-						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (type == 3) && (noteflags & EOF_DRUM_NOTE_FLAG_DBASS) && !featurerestriction)
-						{	//If the track being written is a drum track, this note is in expert difficulty and marked for Expert+ double bass, and not writing a RB3 compliant MIDI
-							eof_add_midi_event(deltapos, 0x90, 95, vel, 0);		//Note 95 is used for Expert+ bass notes
-							eof_add_midi_event(deltapos + deltalength, 0x80, 95, vel, 0);
-							expertplus = 1;
-						}
-						else	//Otherwise write a normal green gem
-						{
-							eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);
-							eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+					if(isghl)
+					{	//Write B1 GHL gem
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 3, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 3, vel, 0);
+					}
+					else
+					{
+						if(!((noteflags & EOF_DRUM_NOTE_FLAG_DBASS) && sp->tags->double_bass_drum_disabled))
+						{	//If this is not an expert+ bass drum note that would be skipped due to such notes being disabled
+							if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (type == 3) && (noteflags & EOF_DRUM_NOTE_FLAG_DBASS) && !featurerestriction)
+							{	//If the track being written is a drum track, this note is in expert difficulty and marked for Expert+ double bass, and not writing a RB3 compliant MIDI
+								eof_add_midi_event(deltapos, 0x90, 95, vel, 0);		//Note 95 is used for Expert+ bass notes
+								eof_add_midi_event(deltapos + deltalength, 0x80, 95, vel, 0);
+								expertplus = 1;
+							}
+							else	//Otherwise write a normal green gem
+							{
+								eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);
+								eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+							}
 						}
 					}
 				}
@@ -796,21 +804,29 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write red note */
 				if(note & 2)
 				{
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 1, vel, 0);
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 1, vel, 0);
-					if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-					{	//If this is a drum track, prepare to write drum specific Sysex phrases if necessary
-						if(noteflags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
-						{	//If this note is marked as a rim shot
-							if(featurerestriction == 0)
-							{	//Only write this notation if not writing a Rock Band compliant MIDI
-								phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-								phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-								phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-								phase_shift_sysex_phrase[5] = 7;	//Store the phrase ID (7 = Snare rim shot)
-								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom rim shot start marker
-								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom rim shot phrase stop marker
+					if(isghl)
+					{	//Write B2 GHL gem
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 4, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 4, vel, 0);
+					}
+					else
+					{
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 1, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 1, vel, 0);
+						if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+						{	//If this is a drum track, prepare to write drum specific Sysex phrases if necessary
+							if(noteflags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
+							{	//If this note is marked as a rim shot
+								if(featurerestriction == 0)
+								{	//Only write this notation if not writing a Rock Band compliant MIDI
+									phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+									phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+									phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+									phase_shift_sysex_phrase[5] = 7;	//Store the phrase ID (7 = Snare rim shot)
+									eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom rim shot start marker
+									phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+									eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom rim shot phrase stop marker
+								}
 							}
 						}
 					}
@@ -819,14 +835,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write yellow note */
 				if(note & 4)
 				{
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
-					if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
-					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
-						if(type == EOF_NOTE_AMAZING)
-						{	//Write a pro yellow tom marker only if this is an Expert difficulty note (ie. not a BRE note)
-							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
-							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
+					if(isghl)
+					{	//Write B3 GHL gem
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+					}
+					else
+					{
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+						{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
+							if(type == EOF_NOTE_AMAZING)
+							{	//Write a pro yellow tom marker only if this is an Expert difficulty note (ie. not a BRE note)
+								eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
+								eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
+							}
 						}
 					}
 				}
@@ -877,58 +901,74 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write blue note */
 				if(note & 8)
 				{
-					if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL))
-					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
-						if(type == EOF_NOTE_AMAZING)
-						{	//Write a pro blue tom marker only if this is an Expert difficulty note (ie. not a BRE note)
-							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
-							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
-						}
+					if(isghl)
+					{	//Write W1 GHL gem
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset, vel, 0);
 					}
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 3, vel, 0);
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 3, vel, 0);
-					if(noteflags & EOF_DRUM_NOTE_FLAG_B_COMBO)
-					{	//If this note is marked as a blue tom/cymbal combo
-						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-						phase_shift_sysex_phrase[5] = 18;	//Store the phrase ID (18 = blue tom+cymbal)
-						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
-						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+					else
+					{
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+						{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
+							if(type == EOF_NOTE_AMAZING)
+							{	//Write a pro blue tom marker only if this is an Expert difficulty note (ie. not a BRE note)
+								eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
+								eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
+							}
+						}
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 3, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 3, vel, 0);
+						if(noteflags & EOF_DRUM_NOTE_FLAG_B_COMBO)
+						{	//If this note is marked as a blue tom/cymbal combo
+							phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+							phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+							phase_shift_sysex_phrase[5] = 18;	//Store the phrase ID (18 = blue tom+cymbal)
+							phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
+							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+						}
 					}
 				}
 
 				/* write purple note */
 				if(note & 16)
 				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
-					if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL))
-					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
-						if(type == EOF_NOTE_AMAZING)
-						{	//Write a pro green tom marker only if this is an Expert difficulty note (ie. not a BRE note)
-							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
-							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
-						}
+					if(isghl)
+					{	//Write W2 GHL gem
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 1, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 1, vel, 0);
 					}
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 4, vel, 0);
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 4, vel, 0);
-					if(noteflags & EOF_DRUM_NOTE_FLAG_G_COMBO)
-					{	//If this note is marked as a green tom/cymbal combo
-						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-						phase_shift_sysex_phrase[5] = 19;	//Store the phrase ID (19 = green tom+cymbal)
-						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
-						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+					else
+					{
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+						{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
+							if(type == EOF_NOTE_AMAZING)
+							{	//Write a pro green tom marker only if this is an Expert difficulty note (ie. not a BRE note)
+								eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
+								eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
+							}
+						}
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 4, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 4, vel, 0);
+						if(noteflags & EOF_DRUM_NOTE_FLAG_G_COMBO)
+						{	//If this note is marked as a green tom/cymbal combo
+							phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+							phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+							phase_shift_sysex_phrase[5] = 19;	//Store the phrase ID (19 = green tom+cymbal)
+							phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
+							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+						}
 					}
 				}
 
-				/* write lane 3 black GHL gem */
+				/* write W3 GHL gem */
 				if(isghl && (note & 32) && !eof_legacy_guitar_note_is_open(sp, j, i))
 				{	//If this is a lane 6 gem (without the GHL open note status) and the track is exporting as a GHL track
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 				}
 
 				/* write open strum note marker, if the feature was enabled during save */
