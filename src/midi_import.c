@@ -764,6 +764,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 											ghl_guitar_present = 1;	//Track that the GHL guitar track was imported
 											ghl_guitar_track = i;	//And record its track number
 											sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Configure the track as a GHL track
+											sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
 											sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
 										}
 										else
@@ -780,6 +781,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 												eof_log("\t\tUser opted to import the normal guitar track.", 1);
 												eof_import_events[ghl_guitar_track]->type = -1;	//Mark the GHL guitar track as one to be skipped during note import
 												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags &= ~(EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES);	//Reconfigure the guitar track accordingly
+												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags &= ~EOF_TRACK_FLAG_GHL_MODE_MS;
 												sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 5;
 											}
 											else
@@ -787,6 +789,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 												eof_log("\t\tUser opted to import the GHL guitar track.", 1);
 												eof_import_events[guitar_track]->type = -1;	//Mark the normal guitar track as one to be skipped during note import
 												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Reconfigure the guitar track accordingly
+												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
 												sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
 											}
 										}
@@ -798,6 +801,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 											ghl_bass_present = 1;	//Track that the GHL bass track was imported
 											ghl_bass_track = i;		//And record its track number
 											sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Configure the track as a GHL track
+											sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
 											sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
 										}
 										else
@@ -814,6 +818,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 												eof_log("\t\tUser opted to import the normal bass track.", 1);
 												eof_import_events[ghl_bass_track]->type = -1;	//Mark the GHL bass track as one to be skipped during note import
 												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags &= ~(EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES);	//Reconfigure the bass track accordingly
+												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags &= ~EOF_TRACK_FLAG_GHL_MODE_MS;
 												sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 5;
 											}
 											else
@@ -821,6 +826,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 												eof_log("\t\tUser opted to import the GHL bass track.", 1);
 												eof_import_events[bass_track]->type = -1;	//Mark the normal bass track as one to be skipped during note import
 												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Reconfigure the bass track accordingly
+												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
 												sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
 											}
 										}

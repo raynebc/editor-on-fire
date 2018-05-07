@@ -930,6 +930,12 @@ int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a legacy guitar track
 int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track has GHL mode enabled
+int eof_note_swap_ghl_black_white_gems(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//If the specified track is a GHL track, modifies the specified note so that the white and black gems are swapped
+	//A GHL open note is left as a lane 6 gem
+	//If the note isn't in a GHL track, no changes are made
+	//Returns nonzero on success
+	//The calling function is responsible for creating an undo state if applicable
 int eof_track_convert_ghl_lane_ordering(EOF_SONG *sp, unsigned long track);
 	//If the specified track is a GHL track in the old lane numbering (1=W1,2=W2,3=W3,4=B1,5=B2,6=B3), converts to the new lane numbering (1=B1,2=B2,3=B3,4=W1,5=W2,6=W3)
 	//Open strum notes remain unchanged as lane 6 gems with the EOF_GUITAR_NOTE_FLAG_GHL_OPEN flag
@@ -1089,7 +1095,7 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 /*@unused@ Avoid complaints from Splint*/
 static inline int eof_beat_num_valid(EOF_SONG *sp, unsigned long beatnum)
 {
-	return (sp && (beatnum < sp->beats));
+	return (sp && (beatnum < EOF_MAX_BEATS) && (beatnum < sp->beats));
 }
 
 void eof_convert_all_lyrics_from_extended_ascii(EOF_VOCAL_TRACK *tp);	//Uses eof_convert_from_extended_ascii() to convert all lyrics in the specified chart

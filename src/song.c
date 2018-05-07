@@ -69,10 +69,10 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 16] =
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM_PS, 0, "PART REAL_DRUMS_PS", "", 0xFF, 5, 0},
 
 	//These tracks are GHL variants that are authored in the normal 5 lane guitar/bass tracks
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, 0, "PART GUITAR GHL", "", 0xFF, 5, EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_BASS, 0, "PART BASS GHL", "", 0xFF, 5, EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, 0, "PART GUITAR COOP GHL", "", 0xFF, 5, EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_RHYTHM, 0, "PART RHYTHM GHL", "", 0xFF, 5, EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, 0, "PART GUITAR GHL", "", 0xFF, 5, EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES | EOF_TRACK_FLAG_GHL_MODE_MS},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_BASS, 0, "PART BASS GHL", "", 0xFF, 5, EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES | EOF_TRACK_FLAG_GHL_MODE_MS},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, 0, "PART GUITAR COOP GHL", "", 0xFF, 5, EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES | EOF_TRACK_FLAG_GHL_MODE_MS},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_RHYTHM, 0, "PART RHYTHM GHL", "", 0xFF, 5, EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES | EOF_TRACK_FLAG_GHL_MODE_MS},
 
 	//These tracks are not supported for import yet, but these entries describe the tracks' details
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_X", "", EOF_NOTE_AMAZING, 5, 0},
@@ -7551,10 +7551,49 @@ int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track)
 	return 0;
 }
 
+int eof_note_swap_ghl_black_white_gems(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long original, converted = 0;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+	if(!eof_track_is_ghl_mode(sp, track))
+		return 0;	//Not a GHL track
+	if(note >= eof_get_track_size(sp, track))
+		return 0;	//Invalid parameters
+
+	original = eof_get_note_note(sp, track, note);
+
+	if(original & 1)		//W1 was previously lane 1
+		converted |= 8;		//Convert to lane 4
+	if(original & 2)		//W2 was previously lane 2
+		converted |= 16;	//Convert to lane 5
+	if(original & 4)		//W3 was previously lane 3
+		converted |= 32;	//Convert to lane 6
+	if(original & 8)		//B1 was previously lane 4
+		converted |= 1;		//Convert to lane 1
+	if(original & 16)		//B2 was previously lane 5
+		converted |= 2;		//Convert to lane 2
+	if(original & 32)
+	{
+		if(eof_get_note_flags(sp, track, note) & EOF_GUITAR_NOTE_FLAG_GHL_OPEN)
+		{	//If it's an open note
+			converted |= 32;	//Leave it as a lane 6 gem
+		}
+		else
+		{						//B3 was previously lane 6
+			converted |= 4;		//Convert to lane 3
+		}
+	}
+
+	eof_set_note_note(sp, track, note, converted);	//Update the note bitmask
+
+	return 1;
+}
+
 int eof_track_convert_ghl_lane_ordering(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long ctr;
-	unsigned char original, converted;
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
@@ -7568,32 +7607,7 @@ int eof_track_convert_ghl_lane_ordering(EOF_SONG *sp, unsigned long track)
 
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
-		original = eof_get_note_note(sp, track, ctr);
-		converted = 0;
-
-		if(original & 1)		//W1 was previously lane 1
-			converted |= 8;		//Convert to lane 4
-		if(original & 2)		//W2 was previously lane 2
-			converted |= 16;	//Convert to lane 5
-		if(original & 4)		//W3 was previously lane 3
-			converted |= 32;	//Convert to lane 6
-		if(original & 8)		//B1 was previously lane 4
-			converted |= 1;		//Convert to lane 1
-		if(original & 16)		//B2 was previously lane 5
-			converted |= 2;		//Convert to lane 2
-		if(original & 32)
-		{
-			if(eof_get_note_flags(sp, track, ctr) & EOF_GUITAR_NOTE_FLAG_GHL_OPEN)
-			{	//If it's an open note
-				converted |= 32;	//Leave it as a lane 6 gem
-			}
-			else
-			{						//B3 was previously lane 6
-				converted |= 4;		//Convert to lane 3
-			}
-		}
-
-		eof_set_note_note(sp, track, ctr, converted);	//Update the note bitmask
+		eof_note_swap_ghl_black_white_gems(sp, track, ctr);	//Swap the white and black gems
 	}
 
 	sp->track[track]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Set this flag to denote the track was converted

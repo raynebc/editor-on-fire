@@ -5205,6 +5205,11 @@ int eof_track_menu_enable_ghl_mode(void)
 	{	//If the GHL mode flag is now enabled
 		eof_song->legacy_track[ep->tracknum]->numlanes = 6;
 		ep->flags |= EOF_TRACK_FLAG_SIX_LANES;		//Set the open strum flag
+		ep->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
+	}
+	else
+	{	//GHL mode was just disabled
+		ep->flags &= ~EOF_TRACK_FLAG_GHL_MODE_MS;	//Clear this flag since it's only applicable for GHL tracks
 	}
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the active track

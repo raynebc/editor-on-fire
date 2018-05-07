@@ -580,8 +580,20 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <td>Prints the number of notes in the track difficulty that have the specified [NUMBER] of gems, and the percentage of the track difficulty's total note count that represents.  Specify 0 to print information for open strum notes.</td>
 </tr>
 <tr>
-<td>%TRACK_NOTE_COUNT_INSTANCES_[COMBINATION]%</td>
-<td>Prints the number of notes in the track difficulty that have the specified [COMBINATION] of gems, and the percentage of the track difficulty's total note count that represents.  Standard GRYBO gem colors can be specified (G is lane 1, R is lane 2, Y is lane 3, B is lane 4, O is lane 5, ie. %TRACK_NOTE_COUNT_INSTANCES_GR% counts green+red chords), and S is for open strum.  For pro guitar tracks, 'P' can be used to represent lane 6 (lane 6 gems are drawn in purple for Rock Band, Guitar Hero and Rocksmith color sets).  For GHL tracks, the gem designations are W1, W2, W3, B1, B2, B3 and S for open strum.  Lane numbers can also be designated by number instead of color ('1' is lane 1, '2' is lane 2, '3' is lane 3, '4' is lane 4, '5' is lane 5, '6' is lane 6).  A pro guitar note being an open note doesn't prevent it from being detected as having gems on lanes, ie. an open E single note will be counted by both %TRACK_NOTE_COUNT_INSTANCES_S% and %TRACK_NOTE_COUNT_INSTANCES_1%.</td>
+<td>%TRACK_DIFF_NOTE_COUNT_INSTANCES_[COMBINATION]%</td>
+<td>Prints the number of notes in the track difficulty that have the specified [COMBINATION] of gems.  Standard GRYBO gem colors can be specified (G is lane 1, R is lane 2, Y is lane 3, B is lane 4, O is lane 5, ie. %TRACK_DIFF_NOTE_COUNT_INSTANCES_GR% counts green+red chords), and S is for open strum.  For pro guitar tracks, 'P' can be used to represent lane 6 (lane 6 gems are drawn in purple for Rock Band, Guitar Hero and Rocksmith color sets).  For GHL tracks, the gem designations are W1, W2, W3, B1, B2, B3 and S for open strum.  Lane numbers can also be designated by number instead of color ('1' is lane 1, '2' is lane 2, '3' is lane 3, '4' is lane 4, '5' is lane 5, '6' is lane 6).  A pro guitar note being an open note doesn't prevent it from being detected as having gems on lanes, ie. an open E single note will be counted by both %TRACK_DIFF_NOTE_COUNT_INSTANCES_S% and %TRACK_DIFF_NOTE_COUNT_INSTANCES_1%.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_[COMBINATION]%</td>
+<td>Similar to %TRACK_DIFF_NOTE_COUNT_INSTANCES_[COMBINATION]%, but also prints the percentage of all notes in the active track difficulty that matching notes represent.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_COUNT_AND_RATIO_OPEN_CHORDS%</td>
+<td>Prints the number of open chords (chords with at least one open string, at least one fretted string, and no frets higher than 3) in the active pro guitar track difficulty, and the percentage of the track difficulty's total note count that represents.  If the active track is not a pro guitar track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_COUNT_AND_RATIO_BARRE_CHORDS%</td>
+<td>Prints the number of barre chords (chords where the lowest used fret is played on multiple non-contiguous strings, with no strings played open between the lowest fret instances) in the active pro guitar track difficulty, and the percentage of the track difficulty's total note count that represents.  If the active track is not a pro guitar track, "None" is printed.</td>
 </tr>
 
 <tr>

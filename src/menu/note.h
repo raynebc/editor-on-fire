@@ -368,5 +368,7 @@ int eof_menu_note_move_forward_grid_snap(void);
 
 int eof_menu_note_convert_to_ghl_open(void);
 	//If a legacy guitar track is active and GHL mode is enabled, changes all selected notes to GHL open notes
+int eof_menu_note_swap_ghl_black_white_gems(void);
+	//Uses eof_note_swap_ghl_black_white_gems() to swap the black and white gems for all selected GHL notes in the active track difficulty
 
 #endif

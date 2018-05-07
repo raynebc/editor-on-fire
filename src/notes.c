@@ -1744,18 +1744,39 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 			count = eof_count_num_notes_with_gem_count(gemcount);		//Determine how many such notes are in the active track difficulty
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
-			percent = (double)count * 100.0 / (double)totalnotecount;
-			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			if(totalnotecount)
+			{	//If there's at least one note in the active track difficulty
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+			return 1;
+		}
+	}
+
+	//Display the number of notes in the active track difficulty with a specific gem combination
+	if(strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_"))
+	{
+		unsigned long count, gems;
+		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_");	//Get a pointer to the text that is expected to be the gem count
+
+		if(eof_read_macro_gem_designations(gem_string, &gems))
+		{	//If the gem designations were successfully parsed
+			count = eof_count_num_notes_with_gem_designation(gems);		//Determine how many such notes are in the active track difficulty
+			snprintf(dest_buffer, dest_buffer_size, "%lu", count);
 
 			return 1;
 		}
 	}
 
 	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific gem combination
-	if(strcasestr_spec(macro, "TRACK_NOTE_COUNT_INSTANCES_"))
+	if(strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_"))
 	{
 		unsigned long count, gems, totalnotecount = 0;
-		char *gem_string = strcasestr_spec(macro, "TRACK_NOTE_COUNT_INSTANCES_");	//Get a pointer to the text that is expected to be the gem count
+		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_");	//Get a pointer to the text that is expected to be the gem count
 
 		if(eof_read_macro_gem_designations(gem_string, &gems))
 		{	//If the gem designations were successfully parsed
@@ -1763,10 +1784,115 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 			count = eof_count_num_notes_with_gem_designation(gems);		//Determine how many such notes are in the active track difficulty
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
-			percent = (double)count * 100.0 / (double)totalnotecount;
-			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			if(totalnotecount)
+			{	//If there's at least one note in the active track difficulty
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
 
 			return 1;
+		}
+	}
+
+	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_OPEN_CHORDS"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 0; ctr < tp->pgnotes; ctr++)
+				{	//For each normal note in the pro guitar track
+					if((tp->note[ctr]->type == eof_note_type) && eof_pro_guitar_note_is_open_chord(tp, ctr))
+						count++;	//Count the number of notes in the active difficulty that are open chords
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+
+			return 1;
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+	}
+
+	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_BARRE_CHORDS"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 0; ctr < tp->pgnotes; ctr++)
+				{	//For each normal note in the pro guitar track
+					if((tp->note[ctr]->type == eof_note_type) && eof_pro_guitar_note_is_barre_chord(tp, ctr))
+						count++;	//Count the number of notes in the active difficulty that are barre chords
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+
+			return 1;
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+	}
+
+	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_STRING_MUTES"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each note in the track
+					if((eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && eof_is_string_muted(eof_song, eof_selected_track, ctr))
+						count++;	//Count the number of notes in the active difficulty that are fully string muted
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+
+			return 1;
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
 		}
 	}
 
@@ -2024,6 +2150,11 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	{	//Until the end of the text file is reached
 		char thischar = panel->text[src_index++];	//Read one character from the source buffer
 
+		if(dst_index >= TEXT_PANEL_BUFFER_SIZE)
+		{	//If the output buffer is full
+			buffer[TEXT_PANEL_BUFFER_SIZE] = '\0';	//NULL terminate the buffer at its last byte
+			return;
+		}
 		if((thischar == '\r') && (panel->text[src_index] == '\n'))
 		{	//Carriage return and line feed characters represent a new line
 			buffer[dst_index] = '\0';	//NULL terminate the buffer

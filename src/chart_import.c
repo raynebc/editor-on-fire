@@ -482,6 +482,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			{	//If this is a GHL guitar or bass track, configure the track accordingly
 				EOF_TRACK_ENTRY *ep = sp->track[track];		//Simplify
 				ep->flags |= EOF_TRACK_FLAG_GHL_MODE;
+				ep->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
 				tp->numlanes = 6;
 				ep->flags |= EOF_TRACK_FLAG_SIX_LANES;		//Set the open strum flag
 			}

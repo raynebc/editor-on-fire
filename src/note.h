@@ -100,6 +100,8 @@ unsigned char eof_pro_guitar_note_is_barre_chord(EOF_PRO_GUITAR_TRACK *tp, unsig
 	//Returns nonzero if the specified note is a barre chord (the lowest used fret is played on multiple non-contiguous strings, with no strings played open between the lowest fret instances)
 unsigned char eof_pro_guitar_note_is_double_stop(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns nonzero if the specified note is a double stop (only two contiguous strings played)
+char eof_pro_guitar_note_is_open_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
+	//Returns nonzero if the specified note is an open chord (at least one open string, at least one fretted string, and no strings fretted higher than fret 3)
 
 void eof_build_trill_phrases(EOF_PRO_GUITAR_TRACK *tp);
 	//Creates trill phrases for the specified track by checking which notes have the EOF_NOTE_FLAG_IS_TRILL flag set

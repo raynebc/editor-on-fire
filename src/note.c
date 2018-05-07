@@ -2251,6 +2251,7 @@ unsigned char eof_pro_guitar_note_is_barre_chord(EOF_PRO_GUITAR_TRACK *tp, unsig
 	lowest = eof_pro_guitar_note_lowest_fret(tp, note);	//Get the lowest used fret in this chord
 
 	//Determine if the lowest used fret is used on multiple, non-contiguous strings
+	//Find the first string using this fret
 	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
 	{	//For each string this track supports
 		if((tp->note[note]->note & bitmask) && (tp->note[note]->frets[ctr] == lowest))
@@ -2306,6 +2307,38 @@ unsigned char eof_pro_guitar_note_is_double_stop(EOF_PRO_GUITAR_TRACK *tp, unsig
 	}
 
 	return 1;	//This is a double stop
+}
+
+char eof_pro_guitar_note_is_open_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	unsigned long ctr, bitmask, opencount = 0, frettedcount = 0, highestfret = 0;
+
+	if(!tp || (note >= tp->notes))
+		return 0;	//Invalid parameters
+
+	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+	{	//For each string this track supports
+		if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))
+		{	//If the string is played and is not muted
+			if(tp->note[note]->frets[ctr] != 0)
+			{	//If this string is fretted
+				frettedcount++;	//Track how many fretted strings are played
+				if(tp->note[note]->frets[ctr] > highestfret)
+					highestfret = tp->note[note]->frets[ctr];	//Track the highest used fret
+			}
+			else
+			{	//The string is open
+				opencount++;	//Track how many open strings are played
+			}
+		}
+	}
+
+	if(opencount && frettedcount && (highestfret < 4))
+	{	//If there's at least one open string, at least one fretted string, and no strings fretted higher than fret 3
+		return 1;	//This is an open chord
+	}
+
+	return 0;	//This is not an open chord
 }
 
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer)

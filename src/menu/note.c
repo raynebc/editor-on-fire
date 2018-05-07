@@ -456,6 +456,14 @@ MENU eof_note_grid_snap_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_ghl_menu[] =
+{
+	{"Convert GHL &Open\t" CTRL_NAME "+G", eof_menu_note_convert_to_ghl_open, NULL, 0, NULL},
+	{"&Swap B/W gems", eof_menu_note_swap_ghl_black_white_gems, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+char eof_note_menu_pro_guitar_menu_string[13] = "Pro &Guitar";	//Unless a GHL track is active, the G accelerator is given to the "Pro guitar" submenu
 MENU eof_note_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
@@ -475,13 +483,13 @@ MENU eof_note_menu[] =
 	{"Slid&Er", NULL, eof_slider_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Drum", NULL, eof_note_drum_menu, 0, NULL},
-	{"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
+	{eof_note_menu_pro_guitar_menu_string, NULL, eof_note_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_note_rocksmith_menu, 0, NULL},
 	{"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
 	{"Re&Flect", NULL, eof_note_reflect_menu, 0, NULL},
+	{"&GHL", NULL, eof_note_ghl_menu, 0, NULL},
 	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
 	{"Simplif&Y chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
-	{"Co&Nvert GHL open", eof_menu_note_convert_to_ghl_open, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1170,14 +1178,16 @@ void eof_prepare_note_menu(void)
 			eof_selection.current = EOF_MAX_NOTES - 1;
 		}
 
-		/* Convert GHL open */
+		/* GHL */
 		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{	//If a legacy guitar track is active and GHL mode is enabled
-			eof_note_menu[23].flags = 0;		//Note>Convert GHL open
+			snprintf(eof_note_menu_pro_guitar_menu_string, sizeof(eof_note_menu_pro_guitar_menu_string) - 1, "Pro guitar");		//Remove the G accelerator key from the "Pro guitar" submenu
+			eof_note_menu[21].flags = 0;		//Note>GHL>
 		}
 		else
 		{
-			eof_note_menu[23].flags = D_DISABLED;
+			snprintf(eof_note_menu_pro_guitar_menu_string, sizeof(eof_note_menu_pro_guitar_menu_string) - 1, "Pro &Guitar");	//Add the G accelerator key to the "Pro guitar" submenu
+			eof_note_menu[21].flags = D_DISABLED;
 		}
 	}//if(eof_song && eof_song_loaded)
 }
@@ -9485,6 +9495,40 @@ int eof_menu_note_convert_to_ghl_open(void)
 				}
 				eof_set_note_note(eof_song, eof_selected_track, i, 32);	//Change to a lane 6 gem
 				eof_set_note_flags(eof_song, eof_selected_track, i, eof_get_note_flags(eof_song, eof_selected_track, i) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN);	//Set the GHL open note flag
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+
+	return 1;
+}
+
+int eof_menu_note_swap_ghl_black_white_gems(void)
+{
+	unsigned long i;
+	char undo_made = 0;
+	int note_selection_updated;
+
+	if(!eof_track_is_ghl_mode(eof_song, eof_selected_track))
+		return 1;	//Do not allow this function to run unless a legacy guitar track with GHL mode enabled is active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
+			if(!eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, i))
+			{	//If this note isn't an open note (which is not modified by this function
+				if(!undo_made)
+				{	//If an undo state needs to be made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				(void) eof_note_swap_ghl_black_white_gems(eof_song, eof_selected_track, i);	//Modify the note
 			}
 		}
 	}

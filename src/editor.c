@@ -1051,6 +1051,7 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* toggle green cymbal (CTRL+G in a drum track) */
+	/* convert GHL open (CTRL+G in a legacy guitar track) */
 	/* toggle grid snap (G) */
 	/* display grid lines (SHIFT+G) */
 	if(eof_key_char == 'g')
@@ -1060,6 +1061,11 @@ if(eof_key_code == KEY_PAUSE)
 			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a drum track is active
 				(void) eof_menu_note_toggle_rb3_cymbal_green();
+				eof_use_key();
+			}
+			else if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+			{	//If a legacy guitar track is active
+				(void) eof_menu_note_convert_to_ghl_open();
 				eof_use_key();
 			}
 		}
@@ -2700,7 +2706,7 @@ if(eof_key_code == KEY_PAUSE)
 			}
 
 	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
-	/* toggle pro guitar ghost status (CTRL+G) */
+	/* toggle ghost status (CTRL+G in a pro guitar track) */
 	/* Mark/Remark arpeggio (CTRL+SHIFT+G in a pro guitar track) */
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
@@ -3276,17 +3282,33 @@ if(eof_key_code == KEY_PAUSE)
 						}
 						if(effective_hover_note >= 0)
 						{	//If the user is editing an existing note
-							if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+							if(ghl_open)
+							{	//If a GHL open note is being toggled
+								if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, effective_hover_note))
+								{	//If the note being modified is already an open note
+									eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag, the note will be toggled off
+								}
+								else
+								{	//If the note being modified is not an open note
+									eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Set the GHL open note flag
+									eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace existing gems
+								}
+							}
+							else if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 							{	//If a legacy guitar track is being edited
-								if((bitmask == 32) && !eof_track_is_ghl_mode(eof_song, eof_selected_track))
-								{	//If an open note is being toggled on/off (skip this logic for GHL tracks, which use lane 6 for the black 3 gem instead of open strum)
-									if(!eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
-									{	//As long as the user isn't trying to delete a GHL open note by toggling it off
-										eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace the old note
-										if(ghl_open)
-										{	//If a GHL open note is being placed
-											eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Set the GHL open note flag
+								if(bitmask == 32)
+								{	//If a lane 6 note (black 3 in a GHL track, open strum in a non GHL track) is being toggled on/off
+									if(!eof_track_is_ghl_mode(eof_song, eof_selected_track))
+									{	//If this isn't a GHL track, the 6 key can toggle open strum
+										if(!eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
+										{	//As long as the user isn't trying to delete an open note by toggling it off
+											eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace the old note
 										}
+									}
+									else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, effective_hover_note))
+									{	//Otherwise 6 will convert an open strum GHL note to a lane 6 note
+										eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag, the note will be toggled off
+										eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace the old note
 									}
 								}
 								else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, effective_hover_note))

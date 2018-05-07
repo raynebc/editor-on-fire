@@ -45,3 +45,4 @@ Use up/down arrow keys to transpose notes.
 ;GHL track specific controls
 %IF_IS_GHL_TRACK%GHL controls:
 %IF_IS_GHL_TRACK%  Toggle open strum note:  7 or middle click
+%IF_IS_GHL_TRACK%  Convert to open strum:  CTRL+G

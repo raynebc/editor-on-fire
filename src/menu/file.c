@@ -3599,8 +3599,8 @@ int eof_save_helper_checks(void)
 
 				startbeat = eof_get_beat(eof_song, start);	//Find the beat in which this note starts
 				stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
-				if((stopbeat < ULONG_MAX) && eof_beat_num_valid(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
-				{	//If the note extends up to and ends on the beat (check stopbeat for equality to zero to resolve a false positive in Coverity)
+				if(eof_beat_num_valid(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
+				{	//If the note extends up to and ends on the beat
 					stopbeat--;	//Interpret it as ending at the previous beat instead of surpassing it
 				}
 				if(!eof_beat_num_valid(eof_song, startbeat) || !eof_beat_num_valid(eof_song, stopbeat) || (startbeat == stopbeat))
