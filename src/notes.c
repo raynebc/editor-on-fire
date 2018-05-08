@@ -2233,6 +2233,34 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific gem count
+	if(strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_"))
+	{
+		unsigned long ctr, count = 0, pitch;
+		char *count_string = strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_");	//Get a pointer to the text that is expected to be the gem count
+
+		if(eof_vocals_selected)
+		{	//If the vocal track is active
+			if(eof_read_macro_number(count_string, &pitch))
+			{	//If the gem count was successfully parsed
+				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each lyric
+					if(eof_get_note_note(eof_song, eof_selected_track, ctr) == pitch)
+					{	//If the lyric has the target pitch
+						count++;
+					}
+				}
+				snprintf(dest_buffer, dest_buffer_size, "%lu", count);
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
 	return 0;	//Macro not supported
 }
 

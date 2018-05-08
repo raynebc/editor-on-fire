@@ -49,6 +49,7 @@ MENU eof_file_notes_panel_menu[] =
 	{"&Notes", eof_menu_file_notes_panel_notes, NULL, 0, NULL},
 	{"N&Ote controls", eof_menu_file_notes_panel_note_controls, NULL, 0, NULL},
 	{"&Information panel", eof_menu_file_notes_panel_information, NULL, 0, NULL},
+	{"Note &Counts", eof_menu_file_notes_panel_note_counts, NULL, 0, NULL},
 	{eof_file_notes_panel_menu_string, eof_menu_file_notes_panel_user, NULL, 0, NULL},
 	{"&Browse", eof_menu_file_notes_panel_browse, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
@@ -378,11 +379,11 @@ void eof_prepare_file_menu(void)
 	//Notes panel stuff
 	if(eof_enable_notes_panel)
 	{	//If the notes panel is enabled
-		eof_file_notes_panel_menu[6].flags = D_SELECTED;	//File>Display>Notes Panel>Enable
+		eof_file_notes_panel_menu[7].flags = D_SELECTED;	//File>Display>Notes Panel>Enable
 	}
 	else
 	{
-		eof_file_notes_panel_menu[6].flags = 0;
+		eof_file_notes_panel_menu[7].flags = 0;
 	}
 	if(exists(eof_last_browsed_notes_panel_path))
 	{	//If the last browsed Notes panel file path is valid, display the relative file name for the user's reference
@@ -5916,6 +5917,25 @@ int eof_menu_file_notes_panel_information(void)
 	}
 	(void) ustrcpy(eof_current_notes_panel_path, "info.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the info.panel.txt file, recover panel file from eof.dat if necessary
+}
+
+int eof_menu_file_notes_panel_note_counts(void)
+{
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		eof_enable_notes_panel = 0;
+
+		return 1;
+	}
+
+	if(eof_enable_notes_panel)
+	{	//If the notes window was already open
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+	}
+	(void) ustrcpy(eof_current_notes_panel_path, "note_counts.panel.txt");
+	return eof_display_notes_panel_logic(1);	//Load the note_counts.panel.txt, recover panel file from eof.dat if necessary
 }
 
 int eof_menu_file_notes_panel_user(void)
