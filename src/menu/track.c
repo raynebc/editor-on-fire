@@ -4228,6 +4228,10 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 			memcpy(sp->legacy_track[dtracknum], sp->legacy_track[stracknum], sizeof(EOF_LEGACY_TRACK));
 			sp->legacy_track[dtracknum]->parent = parent;	//Restore this pointer
 			sp->legacy_track[dtracknum]->notes = 0;			//Clear the note count
+			if(desttrack == EOF_TRACK_KEYS)
+			{	//The keys track must be forced to remain at 5 lanes
+				sp->legacy_track[dtracknum]->numlanes = 5;
+			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
@@ -4280,6 +4284,7 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
 	eof_set_color_set();
 	(void) eof_detect_difficulties(sp, eof_selected_track);
+	eof_fixup_notes(sp);		//Run fixup logic (ie. to apply crazy status to notes cloned into the keys track)
 
 	return 1;
 }
@@ -4984,7 +4989,10 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	}
 	else if(d_track_format == EOF_LEGACY_TRACK_FORMAT)
 	{	//If cloning to a legacy track
-		eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->numlanes = lanecount;
+		if(eof_selected_track != EOF_TRACK_KEYS)
+		{	//Except for when cloning to the keys track, which doesn't support a sixth lane
+			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->numlanes = lanecount;	//Apply the source track's lane count
+		}
 	}
 
 	//Process notes

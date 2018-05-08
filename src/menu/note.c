@@ -6,9 +6,9 @@
 #include "../dialog/proc.h"
 #include "../player.h"
 #include "../utility.h"
-#include "../foflc/Lyric_storage.h"
 #include "../main.h"
 #include "../mix.h"
+#include "../note.h"
 #include "../rs.h"	//For eof_is_string_muted()
 #include "edit.h"
 #include "note.h"
@@ -3591,11 +3591,11 @@ int eof_transpose_possible(int dir)
 					{	//Cannot transpose a pitchless lyric or a vocal percussion note
 						retval = 0;
 					}
-					else if(eof_get_note_note(eof_song, eof_selected_track, i) - dir < MINPITCH)
+					else if(eof_get_note_note(eof_song, eof_selected_track, i) - dir < EOF_LYRIC_PITCH_MIN)
 					{
 						retval = 0;
 					}
-					else if(eof_get_note_note(eof_song, eof_selected_track, i) - dir > MAXPITCH)
+					else if(eof_get_note_note(eof_song, eof_selected_track, i) - dir > EOF_LYRIC_PITCH_MAX)
 					{
 						retval = 0;
 					}

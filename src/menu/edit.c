@@ -2852,74 +2852,20 @@ DIALOG eof_menu_edit_conditional_selection_dialog[] =
 int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_bitmask, unsigned long cymbal_match_bitmask)
 {
 	int match = 0;	//This will be set to nonzero if the user's criteria apply to the note, and will ultimately be checked against the "Do" or "Do not" criterion
-	unsigned long flags, ctr, bitmask;
-	unsigned long note;			//The non cymbal gems contained by this note
-	unsigned long cymbal = 0;	//The cymbal gems contained by this note
+	unsigned long ctr, bitmask;
+	unsigned char note;			//The non cymbal gems contained by this note
+	unsigned char cymbal = 0;	//The cymbal gems contained by this note
 
 	if(!sp || (track >= sp->tracks) || !track)
 		return 0;	//Invalid parameters
 
-	note = eof_get_note_note(eof_song, eof_selected_track, notenum);
-	flags = eof_get_note_flags(eof_song, eof_selected_track, notenum);
-	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	note = eof_get_note_note(sp, track, notenum);
+	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 	{	//If a drum track is active
-		unsigned long tom = 0;	//Used to find the non cymbal gems contained by this note
-
-		tom |= (note & (1 | 2));	//Track lane 1 and 2 gems
-		//Determine which tom gems and which cymbal gems the note contains
-		if(note & 4)
-		{	//If the specified note has a gem on lane 3
-			if(flags & EOF_DRUM_NOTE_FLAG_Y_COMBO)
-			{	//This is both a tom and a cymbal
-				tom |= 4;
-				cymbal |= 4;
-			}
-			else if(flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
-			{	//This is a cymbal
-				cymbal |= 4;
-			}
-			else
-			{	//This is a tom
-				tom |= 4;
-			}
-		}
-		if(note & 8)
-		{	//If the specified note has a gem on lane 4
-			if(flags & EOF_DRUM_NOTE_FLAG_B_COMBO)
-			{	//This is both a tom and a cymbal
-				tom |= 8;
-				cymbal |= 8;
-			}
-			else if(flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
-			{	//This is a cymbal
-				cymbal |= 8;
-			}
-			else
-			{	//This is a tom
-				tom |= 8;
-			}
-		}
-		if(note & 16)
-		{	//If the specified note has a gem on lane 5
-			if(flags & EOF_DRUM_NOTE_FLAG_G_COMBO)
-			{	//This is both a tom and a cymbal
-				tom |= 16;
-				cymbal |= 16;
-			}
-			else if(flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
-			{	//This is a cymbal
-				cymbal |= 16;
-			}
-			else
-			{	//This is a tom
-				tom |= 16;
-			}
-		}
-
-		note = tom;	//The note bitmask comparison will be against toms, and the cymbal bitmask will be checked separately
+		(void) eof_get_drum_note_masks(sp, track, notenum, &note, &cymbal);	//Get a bitmask each to define which cymbal gems and non-cymbal gems the note contains
 	}
-	else if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{
+	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the specified track is a pro guitar track
 		EOF_PRO_GUITAR_NOTE *np = sp->pro_guitar_track[sp->track[track]->tracknum]->note[notenum];
 
 		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)

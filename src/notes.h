@@ -24,6 +24,8 @@ typedef struct
 					// and then resume parsing the current line of text
 	int contentprinted;	//Set to nonzero if content was printed for a line, such as by using %FLUSH% even if the output buffer is empty when the end of line is parsed
 	int symbol;		//After a flush, this character will be printed to the Notes panel using the symbol font (ie. to print guitar tab characters)
+	int endline;	//After a flush, a nonzero value for this variable will end processing of the current line
+	int endpanel;	//After a flush, a nonzero value for this variable will end processing of the entire panel
 
 } EOF_TEXT_PANEL;
 
@@ -56,10 +58,14 @@ int eof_read_macro_color(char *string, int *color);
 int eof_read_macro_number(char *string, unsigned long *number);
 	//Accepts a string and converts the decimal number representation and stores it into *number
 	//Returns 0 if no number was parsed or upon error
-int eof_read_macro_gem_designations(char *string, unsigned long *bitmask);
-	//Accepts a string and converts the gem designations into a bitmask
+int eof_read_macro_gem_designations(char *string, unsigned char *bitmask, unsigned char *tomsmask, unsigned char *cymbalsmask);
+	//Accepts a string and converts the gem designations into bitmasks
 	//For non GHL tracks:  'G' = lane 1, 'R' = lane 2, 'Y' = lane 3, 'B' = lane 4, 'O' = lane 5, 'P' = lane 6, 'S' = open strum
 	//For GHL tracks:  "B1" = lane 1, "B2" = lane 2, "B3" = lane 3, "W1" = lane 4, "W2" = lane 5, "W3" = lane 6, 'S' = open strum
+	//For drum tracks:  "T3" = lane 3 tom, "T4" = lane 4 tom, "T5" = lane 5 tom, "C3" = lane 3 cymbal, "C4" = lane 4 cymbal, "C5" = lane 5 cymbal
+	//  The toms and cymbals bitmasks are set accordingly if a drum track is active, otherwise *toms and *cymbals are reset to 0 to indicate they
+	//  needn't be met as comparison criteria.  Tom and cymbal designations are additive, ie. a designation of 3T5 will be specify any drum chord
+	//  with a cymbal or tom on lane 3 and a tom on lane 5.
 	//Lane numbers can be designated by number instead of color:  '1' = lane 1, '2' = lane 2, '3' = lane 3, '4' = lane 4, '5' = lane 5, '6' = lane 6
 	//  which would be more convenient for use with pro guitar tracks.  '6' will not refer to open strum notes.
 	//For both types of tracks, an open strum is returned as value 255
@@ -74,9 +80,10 @@ unsigned long eof_count_num_notes_with_gem_count(unsigned long gemcount);
 	//Returns the number of those notes that have the specified number of gems (ie. 1 for single notes or >1 for chords)
 	//For the sake of the Notes panel, legacy guitar track open notes do not count as having a gem
 	//  calling this function with a gem count of 0 will count the open notes in the active legacy guitar track
-unsigned long eof_count_num_notes_with_gem_designation(unsigned long gems);
+unsigned long eof_count_num_notes_with_gem_designation(unsigned char gems, unsigned char toms, unsigned char cymbals);
 	//Examines all notes in the active track difficulty
 	//Returns the number of those that have the specified note gem bitmask (as created by eof_read_macro_gem_designations() )
+	//If the track is a drum track, the note must have the specified toms and the specified cymbals to be counted as a match
 	//A gem bitmask of 255 indicates an open note
 
 #endif

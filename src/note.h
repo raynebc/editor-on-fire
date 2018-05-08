@@ -4,6 +4,8 @@
 #include "song.h"
 
 #define EOF_MAX_FRETS 6
+#define EOF_LYRIC_PITCH_MIN 36
+#define EOF_LYRIC_PITCH_MAX 84
 #define EOF_LYRIC_PERCUSSION 96
 
 

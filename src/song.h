@@ -831,11 +831,12 @@ int eof_is_freestyle(char *ptr);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)
 	//Returns 0 if the specified lyric contains no freestyle character
 	//Returns -1 on error, such as if the pointer is NULL
-
 int eof_lyric_is_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)
 	//Returns 0 if the specified lyric contains no freestyle character
 	//Returns -1 on error, such as if the specified lyric does not exist
+int eof_lyric_is_pitched(EOF_VOCAL_TRACK *tp, unsigned long lyricnumber);
+	//Returns nonzero if the specified lyric is not a percussion note, is pitched and is not freestyle
 
 void eof_fix_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 	//Ensures that the string is properly terminated and any existing freestyle character is placed properly at the end of the string
@@ -1103,5 +1104,10 @@ void eof_convert_all_lyrics_from_extended_ascii(EOF_VOCAL_TRACK *tp);	//Uses eof
 struct eof_MIDI_data_track *eof_song_has_stored_tempo_track(EOF_SONG * sp);
 	//Returns a pointer to the specified chart's stored tempo track
 	//Returns NULL if no such track is stored or upon error
+
+int eof_get_drum_note_masks(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned char *match_bitmask, unsigned char *cymbal_match_bitmask);
+	//For the specified drum note, updates the *match_bitmask to indicate the note's non-cymbals gems and *cymbal_match_bitmask to indicate the note's cymbal gems
+	//If the note is not a drum note, *match_bitmask and *cymbal_match_bitmask are set to 0
+	//Returns 0 on error
 
 #endif

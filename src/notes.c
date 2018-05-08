@@ -111,7 +111,7 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 						dest_index = strlen(dest_buffer);	//Update the destination buffer index
 
 						if(panel->flush)
-						{	//If the %FLUSH% macro was just parsed, print the current contents of the output buffer and update the print coordinates
+						{	//If the flush attribute was set (such as by the %FLUSH% or %BEND% macros), print the current contents of the output buffer and update the print coordinates
 							textout_ex(panel->window->screen, font, dest_buffer, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
 							panel->xpos += text_length(font, dest_buffer);	//Increase the print x coordinate by the number of pixels the output buffer took to render
 							panel->flush = 0;	//Reset this condition
@@ -130,6 +130,15 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 							}
 							dest_buffer[0] = '\0';	//Empty the destination buffer
 							dest_index = 0;
+							if(panel->endline)
+							{	//If the printing of this line was signaled to end
+								panel->endline = 0;	//Reset this condition
+								return 1;
+							}
+							if(panel->endpanel)
+							{	//If the printing of this panel was signaled to end
+								return 1;
+							}
 						}
 						break;	//Exit macro parse while loop
 					}
@@ -488,7 +497,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		{	//If the active track is a guitar track
 			if(!eof_track_is_ghl_mode(eof_song, eof_selected_track) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-			{
+			{	//If it's not a GHL track or a pro guitar track
 				dest_buffer[0] = '\0';
 				return 3;	//True
 			}
@@ -504,6 +513,21 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the active track is a guitar track
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track) || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	//A non GHL mode legacy guitar track, or the keys track
+	if(!ustricmp(macro, "IF_IS_FIVE_BUTTON_GUITAR_OR_KEYS_TRACK"))
+	{
+		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_selected_track == EOF_TRACK_KEYS))
+		{	//If the active track is a guitar track, or the keys track
+			if(!eof_track_is_ghl_mode(eof_song, eof_selected_track) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If it's not a GHL track or a pro guitar track
 				dest_buffer[0] = '\0';
 				return 3;	//True
 			}
@@ -529,6 +553,54 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		{	//If the active track is not a guitar track
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//The dance track is active
+	if(!ustricmp(macro, "IF_IS_DANCE_TRACK"))
+	{
+		if(eof_selected_track == EOF_TRACK_DANCE)
+		{	//If the active track is the dance track
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//The dance track is not active
+	if(!ustricmp(macro, "IF_IS_NOT_DANCE_TRACK"))
+	{
+		if(eof_selected_track != EOF_TRACK_DANCE)
+		{	//If the active track is not the dance track
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//The keys track is active
+	if(!ustricmp(macro, "IF_IS_KEYS_TRACK"))
+	{
+		if(eof_selected_track == EOF_TRACK_KEYS)
+		{	//If the active track is the dance track
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//The keys track is not active
+	if(!ustricmp(macro, "IF_IS_NOT_KEYS_TRACK"))
+	{
+		if(eof_selected_track != EOF_TRACK_KEYS)
+		{	//If the active track is not the dance track
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -826,6 +898,31 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 	}
 
+	if(!ustricmp(macro, "IF_TRACK_DIFF_HAS_INVALID_DRUM_CHORDS"))
+	{
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If either drum track is active
+			unsigned long ctr;
+
+			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+			{	//For each note in the track
+				if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+				{	//If the note is in the active difficulty
+					unsigned char mask = eof_get_note_note(eof_song, eof_selected_track, ctr);
+
+					mask &= ~1;	//Clear any gem on lane 1, since it is not played with the players hands
+					if(eof_note_count_colors_bitmask(mask) > 2)
+					{	//If this drum note would take more than two hands to play
+						dest_buffer[0] = '\0';
+						return 3;	//True
+					}
+				}
+			}
+
+			return 2;	//False
+		}
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -978,6 +1075,23 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 	}
 
+	//End printing of the current line
+	if(!ustricmp(macro, "ENDLINE"))
+	{
+		dest_buffer[0] = '\0';
+		panel->flush = 1;
+		panel->endline = 1;
+		return 1;
+	}
+
+	//End printing of the entire panel
+	if(!ustricmp(macro, "ENDPANEL"))
+	{
+		dest_buffer[0] = '\0';
+		panel->flush = 1;
+		panel->endpanel = 1;
+		return 1;
+	}
 
 	///SYMBOL MACROS
 	//Bend character
@@ -1760,12 +1874,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of notes in the active track difficulty with a specific gem combination
 	if(strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_"))
 	{
-		unsigned long count, gems;
+		unsigned long count;
+		unsigned char gems, toms, cymbals;
 		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_");	//Get a pointer to the text that is expected to be the gem count
 
-		if(eof_read_macro_gem_designations(gem_string, &gems))
+		if(eof_read_macro_gem_designations(gem_string, &gems, &toms, &cymbals))
 		{	//If the gem designations were successfully parsed
-			count = eof_count_num_notes_with_gem_designation(gems);		//Determine how many such notes are in the active track difficulty
+			count = eof_count_num_notes_with_gem_designation(gems, toms, cymbals);		//Determine how many such notes are in the active track difficulty
 			snprintf(dest_buffer, dest_buffer_size, "%lu", count);
 
 			return 1;
@@ -1775,15 +1890,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific gem combination
 	if(strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_"))
 	{
-		unsigned long count, gems, totalnotecount = 0;
+		unsigned long count, totalnotecount = 0;
+		unsigned char gems, cymbals, toms;
 		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_");	//Get a pointer to the text that is expected to be the gem count
 
-		if(eof_read_macro_gem_designations(gem_string, &gems))
+		if(eof_read_macro_gem_designations(gem_string, &gems, &toms, &cymbals))
 		{	//If the gem designations were successfully parsed
 			double percent;
 
-			count = eof_count_num_notes_with_gem_designation(gems);		//Determine how many such notes are in the active track difficulty
-			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			count = eof_count_num_notes_with_gem_designation(gems, toms, cymbals);		//Determine how many such notes are in the active track difficulty
+			(void) eof_count_selected_notes(&totalnotecount);							//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{	//If there's at least one note in the active track difficulty
 				percent = (double)count * 100.0 / (double)totalnotecount;
@@ -1798,6 +1914,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 	}
 
+	//Display the number of open chords (and the corresponding percentage that is of all notes) in the active pro guitar track difficulty
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_OPEN_CHORDS"))
 	{
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1822,15 +1939,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
 			}
-
-			return 1;
 		}
 		else
 		{
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		}
+
+		return 1;
 	}
 
+	//Display the number of barre chords (and the corresponding percentage that is of all notes) in the active pro guitar track difficulty
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_BARRE_CHORDS"))
 	{
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1855,15 +1973,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
 			}
-
-			return 1;
 		}
 		else
 		{
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		}
+
+		return 1;
 	}
 
+	//Display the number of fully string muted notes/chords (and the corresponding percentage that is of all notes) in the active pro guitar track difficulty
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_STRING_MUTES"))
 	{
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1887,13 +2006,231 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
 			}
-
-			return 1;
 		}
 		else
 		{
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		}
+
+		return 1;
+	}
+
+	//Display the number of notes containing expert+ bass drum (and the corresponding percentage that is of all notes) in the active expert drum difficulty
+	if(!ustricmp(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_EXPERT_PLUS_BASS"))
+	{
+		if((eof_note_type == EOF_NOTE_AMAZING) && (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+		{	//If the expert difficulty in either drum track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each note in the track
+					if((eof_get_note_type(eof_song, eof_selected_track, ctr) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, ctr) & 1))
+					{	//If the note is in the expert difficulty and has a gem on lane 1 (bass drum)
+						if(eof_get_note_flags(eof_song, eof_selected_track, ctr) & EOF_DRUM_NOTE_FLAG_DBASS)
+						{	//If the note has the expert+ double bass status
+							count++;
+						}
+					}
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
+	//Display the number of pitched lyrics (and the corresponding percentage that is of all notes) in the active vocal track
+	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_PITCHED_LYRIC"))
+	{
+		if(eof_vocals_selected)
+		{	//If the vocal track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each lyric in the track
+					if(eof_lyric_is_pitched(tp, ctr))
+					{	//If the lyric has a valid pitch and isn't freestyle
+						count++;
+					}
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
+	//Display the number of unpitched lyrics (and the corresponding percentage that is of all notes) in the active vocal track
+	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_UNPITCHED_LYRIC"))
+	{
+		if(eof_vocals_selected)
+		{	//If the vocal track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each lyric in the track
+					if(tp->lyric[ctr]->note == 0)
+					{	//If the lyric has no defined pitch
+						count++;
+					}
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
+	//Display the number of vocal percussion lyrics (and the corresponding percentage that is of all notes) in the active vocal track
+	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_PERCUSSION_LYRIC"))
+	{
+		if(eof_vocals_selected)
+		{	//If the vocal track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each lyric in the track
+					if(tp->lyric[ctr]->note == EOF_LYRIC_PERCUSSION)
+					{	//If the lyric is percussion
+						count++;
+					}
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
+	//Display the number of freestyle lyrics (and the corresponding percentage that is of all notes) in the active vocal track
+	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_FREESTYLE_LYRIC"))
+	{
+		if(eof_vocals_selected)
+		{	//If the vocal track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each lyric in the track
+					if(eof_lyric_is_freestyle(tp, ctr) == 1)
+					{	//If the lyric has a freestyle marker (# or ^)
+						count++;
+					}
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
+	//Display the number of pitch shifts (and the corresponding percentage that is of all notes) in the active vocal track
+	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_PITCH_SHIFT_LYRIC"))
+	{
+		if(eof_vocals_selected)
+		{	//If the vocal track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 1; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each lyric in the track after the first
+					if(tp->lyric[ctr]->text[0] == '+')
+					{	//If the lyric's text begins with a + sign
+						count++;
+					}
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
 	}
 
 	return 0;	//Macro not supported
@@ -1976,17 +2313,19 @@ int eof_read_macro_number(char *string, unsigned long *number)
 	return 1;		//Return success
 }
 
-int eof_read_macro_gem_designations(char *string, unsigned long *bitmask)
+int eof_read_macro_gem_designations(char *string, unsigned char *bitmask, unsigned char *tomsmask, unsigned char *cymbalsmask)
 {
-	unsigned long index, mask = 0;
+	unsigned long index;
+	unsigned char mask = 0, toms = 0, cymbals = 0, oldmask;
 	int ch;
 
-	if(!string || !bitmask)
+	if(!string || !bitmask || !tomsmask || !cymbalsmask)
 		return 0;	//Invalid parameters
 
 	for(index = 0; string[index] != '\0'; index++)
 	{	//For each character in the string
 		ch = string[index];	//Read the character
+		oldmask = mask;		//Back up the mask string to determine if the mask was altered in each loop iteration
 
 		if(!isalnum(ch))	//If this isn't an alphabetical or numerical character
 			return 0;		//Not a valid gem designation
@@ -2018,9 +2357,11 @@ int eof_read_macro_gem_designations(char *string, unsigned long *bitmask)
 		{
 			mask |= 32;
 		}
+		if(mask != oldmask)	//If the mask was updated
+			continue;		//Skip the rest of the checks for this character
 
-		//Check for GHL lane color designations
-		else if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+		//Check for lane color designations
+		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{	//GHL tracks have these gem designations:  "B1" = lane 1, "B2" = lane 2, "B3" = lane 3, "W1" = lane 4, "W2" = lane 5, "W3" = lane 6, 'S' = open strum
 			if(ch == 'W')
 			{	//One of the white gems
@@ -2071,13 +2412,7 @@ int eof_read_macro_gem_designations(char *string, unsigned long *bitmask)
 				*bitmask = 255;	//Any inclusion of open strum designation will cause it to override any other content in the string
 				return 1;		//Return success
 			}
-			else
-			{
-				return 0;	//Invalid gem designation
-			}
 		}
-
-		//Check for non GHL lane color designations
 		else
 		{	//Non GHL tracks have these gem designations:  'G' = lane 1, 'R' = lane 2, 'Y' = lane 3, 'B' = lane 4, 'O' = lane 5, 'P' = lane 6, 'S' = open strum
 			//Or:  '1' = lane 1, '2' = lane 2, '3' = lane 3, '4' = lane 4, '5' = lane 5, '6' = lane 6
@@ -2110,14 +2445,69 @@ int eof_read_macro_gem_designations(char *string, unsigned long *bitmask)
 				*bitmask = 255;	//Any inclusion of open strum designation will cause it to override any other content in the string
 				return 1;		//Return success
 			}
-			else
-			{
-				return 0;	//Invalid gem designation
+		}
+		if(mask != oldmask)	//If the mask was updated
+			continue;		//Skip the rest of the checks for this character
+
+		//Check for drum track specific tom/cymbal designations
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//Drum tracks have these cymbal and tom designations:  "T3" = lane 3 tom, "T4" = lane 4 tom, "T5" = lane 5 tom, "C3" = lane 3 cymbal, "C4" = lane 4 cymbal, "C5" = lane 5 cymbal
+			if(ch == 'T')
+			{	//One of the tom gems
+				index++;	//Iterate to next character
+				ch = string[index];	//Read the character
+
+				if(ch == '3')
+				{
+					mask |= 4;
+					toms |= 4;
+				}
+				else if(ch == '4')
+				{
+					mask |= 8;
+					toms |= 8;
+				}
+				else if(ch == '5')
+				{
+					mask |= 16;
+					toms |= 16;
+				}
+				else
+				{
+					return 0;	//Invalid gem designation
+				}
+			}
+			else if(ch == 'C')
+			{	//One of the cymbal gems
+				index++;	//Iterate to next character
+				ch = string[index];	//Read the character
+
+				if(ch == '3')
+				{
+					mask |= 4;
+					cymbals |= 4;
+				}
+				else if(ch == '4')
+				{
+					mask |= 8;
+					cymbals |= 8;
+				}
+				else if(ch == '5')
+				{
+					mask |= 16;
+					cymbals |= 16;
+				}
+				else
+				{
+					return 0;	//Invalid gem designation
+				}
 			}
 		}
-	}
+	}//For each character in the string
 
 	*bitmask = mask;
+	*tomsmask = toms;
+	*cymbalsmask = cymbals;
 	return 1;	//Return success
 }
 
@@ -2141,8 +2531,11 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	panel->color = eof_color_white;
 	panel->bgcolor = -1;	//Transparent background for text
 	panel->allowempty = 0;
+	panel->flush = 0;
 	panel->contentprinted = 0;
 	panel->symbol = 0;
+	panel->endline = 0;
+	panel->endpanel = 0;
 
 	//Parse the contents of the buffered file one line at a time and print each to the screen
 	src_index = dst_index = 0;	//Reset these indexes
@@ -2173,6 +2566,11 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 				panel->ypos +=12;
 				panel->contentprinted = 0;
 			}
+			if(panel->endpanel)
+			{	//If the printing of this panel was signaled to end
+				break;	//Break from while loop
+			}
+
 			dst_index = 0;	//Reset the destination buffer index
 			src_index++;	//Seek past the line feed character in the source buffer
 		}
@@ -2245,7 +2643,7 @@ unsigned long eof_count_num_notes_with_gem_count(unsigned long gemcount)
 	return count;
 }
 
-unsigned long eof_count_num_notes_with_gem_designation(unsigned long gems)
+unsigned long eof_count_num_notes_with_gem_designation(unsigned char gems, unsigned char toms, unsigned char cymbals)
 {
 	unsigned long ctr, count, notenum;
 	int is_open;
@@ -2286,6 +2684,17 @@ unsigned long eof_count_num_notes_with_gem_designation(unsigned long gems)
 		{	//This is not an open note
 			if(gems == 255)	//If the function is meant to count open notes
 				continue;	//Skip this note
+		}
+
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active, check if the tom and cymbal criteria are met
+			unsigned char thistoms, thiscymbals;
+
+			(void) eof_get_drum_note_masks(eof_song, eof_selected_track, ctr, &thistoms, &thiscymbals);	//Look up the toms and cymbals used by this note
+			if(((toms & thistoms) != toms) || ((cymbals & thiscymbals) != cymbals))
+			{	//If this note does not have the required toms or cymbals
+				continue;	//Skip it
+			}
 		}
 
 		if(eof_get_note_note(eof_song, eof_selected_track, ctr) == gems)

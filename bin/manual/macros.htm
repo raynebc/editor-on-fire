@@ -185,7 +185,7 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_IS_NOT_DRUM_TRACK%</td>
-<td>Evaluates as true if the active track is not one of the drum tracks.</td>
+<td>Evaluates as true if the active track is NOT one of the drum tracks.</td>
 </tr>
 <tr>
 <td>%IF_IS_GHL_TRACK%</td>
@@ -204,6 +204,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active track is one designed for use with one designed for use with a guitar controller with more than five buttons (a GHL mode guitar track or a pro guitar track).</td>
 </tr>
 <tr>
+<td>%IF_IS_FIVE_BUTTON_GUITAR_OR_KEYS_TRACK%</td>
+<td>Evaluates as true if the active track is one designed for use with a five button guitar controller (not a GHL mode guitar track and is not a pro guitar track), or is the keys track (which has similar functionality being a 5 lane track).</td>
+</tr>
+<tr>
 <td>%IF_IS_ANY_GUITAR_TRACK%</td>
 <td>Evaluates as true if the active track is a guitar/bass track of any kind (normal, GHL, pro guitar).</td>
 </tr>
@@ -212,12 +216,28 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active track is anything besides a guitar/bass track.</td>
 </tr>
 <tr>
+<td>%IF_IS_DANCE_TRACK%</td>
+<td>Evaluates as true if the active track is the dance track.</td>
+</tr>
+<tr>
+<td>%IF_IS_NOT_DANCE_TRACK%</td>
+<td>Evaluates as true if the active track is NOT the dance track.</td>
+</tr>
+<tr>
+<td>%IF_IS_KEYS_TRACK%</td>
+<td>Evaluates as true if the active track is the keys track.</td>
+</tr>
+<tr>
+<td>%IF_IS_NOT_KEYS_TRACK%</td>
+<td>Evaluates as true if the active track is NOT the keys track.</td>
+</tr>
+<tr>
 <td>%IF_IS_TECH_VIEW%</td>
 <td>Evaluates as true if the active track is a pro guitar track AND tech view is in effect.</td>
 </tr>
 <tr>
 <td>%IF_IS_NOT_TECH_VIEW%</td>
-<td>Evaluates as true if tech view is not in effect.  This will always evaluate as true if the active track is not a pro guitar track.</td>
+<td>Evaluates as true if tech view is NOT in effect.  This will always evaluate as true if the active track is not a pro guitar track.</td>
 </tr>
 <tr>
 <td>%IF_NOTE_IS_SELECTED%</td>
@@ -293,7 +313,11 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_TRACK_DIFF_HAS_NOTES_WITH_GEM_COUNT_[NUMBER]%</td>
-<td>Evaluates as true if the active track difficulty has at least one note with the specified [NUMBER] of gems.  Specify 0 to check for open strum notes.</td>
+<td>Evaluates as true if the active track difficulty has at least one note with the specified [NUMBER] of gems.  Specify 0 to check for open strum notes.  This can be used to quality check a chart by looking for the presence of 4 or 5 lane chords.</td>
+</tr>
+<tr>
+<td>%IF_TRACK_DIFF_HAS_INVALID_DRUM_CHORDS%</td>
+<td>Evaluates as true if the drum track is active and the active difficulty has at least one chord that is unplayable in a Rock Band style game (which has no support for mechanisms like hi hat pedals) in that it requires more than two hands to play.</td>
 </tr>
 </tbody>
 </table><br>
@@ -345,7 +369,7 @@ These macros are for special uses, such as affecting how text will be printed to
 </tr>
 <tr>
 <td>%FLUSH%</td>
-<td>Prints the content of the line that has been processed up to this point, then resumes processing the line.  Use this to print a line in progress so that a control macro such as %MOVE_DOWN_ONE_PIXEL% can take effect mid-line.</td>
+<td>Prints the content of the line that has been processed up to this point, then resumes processing the line.  Use this to print a line in progress so that a control macro that comes after the %FLUSH% statement, such as %TEXT_COLOR_[COLORNAME]%, can take effect mid-line.</td>
 </tr>
 <tr>
 <td>%TEXT_COLOR_[COLORNAME]%</td>
@@ -358,6 +382,14 @@ These macros are for special uses, such as affecting how text will be printed to
 <tr>
 <td>%TEXT_BACKGROUND_COLOR_NONE%</td>
 <td>Removes the text background color, making it transparent as it is by default.</td>
+</tr>
+<tr>
+<td>%ENDLINE%</td>
+<td>Ends printing for the current line.</td>
+</tr>
+<tr>
+<td>%ENDPANEL%</td>
+<td>Ends printing for the entire panel.</td>
 </tr>
 </tbody>
 </table><br>
@@ -581,7 +613,7 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 <tr>
 <td>%TRACK_DIFF_NOTE_COUNT_INSTANCES_[COMBINATION]%</td>
-<td>Prints the number of notes in the track difficulty that have the specified [COMBINATION] of gems.  Standard GRYBO gem colors can be specified (G is lane 1, R is lane 2, Y is lane 3, B is lane 4, O is lane 5, ie. %TRACK_DIFF_NOTE_COUNT_INSTANCES_GR% counts green+red chords), and S is for open strum.  For pro guitar tracks, 'P' can be used to represent lane 6 (lane 6 gems are drawn in purple for Rock Band, Guitar Hero and Rocksmith color sets).  For GHL tracks, the gem designations are W1, W2, W3, B1, B2, B3 and S for open strum.  Lane numbers can also be designated by number instead of color ('1' is lane 1, '2' is lane 2, '3' is lane 3, '4' is lane 4, '5' is lane 5, '6' is lane 6).  A pro guitar note being an open note doesn't prevent it from being detected as having gems on lanes, ie. an open E single note will be counted by both %TRACK_DIFF_NOTE_COUNT_INSTANCES_S% and %TRACK_DIFF_NOTE_COUNT_INSTANCES_1%.</td>
+<td>Prints the number of notes in the track difficulty that have the specified [COMBINATION] of gems.  Standard GRYBO gem colors can be specified (G is lane 1, R is lane 2, Y is lane 3, B is lane 4, O is lane 5, ie. %TRACK_DIFF_NOTE_COUNT_INSTANCES_GR% counts green+red chords), and S is for open strum.  For pro guitar tracks, 'P' can be used to represent lane 6 (lane 6 gems are drawn in purple for Rock Band, Guitar Hero and Rocksmith color sets).  For GHL tracks, the gem designations are W1, W2, W3, B1, B2, B3 and S for open strum.  For drum tracks, cymbals/toms that must be present to be counted are available:  "T3" = lane 3 tom, "T4" = lane 4 tom, "T5" = lane 5 tom, "C3" = lane 3 cymbal, "C4" = lane 4 cymbal, "C5" = lane 5 cymbal.  These tom/cymbal designations are additive, ie. a designation of 3T5 will be specify any drum chord with a cymbal or tom on lane 3 and a tom on lane 5, and 3C3 will have the same result as C3 because both indicate a note where there must be cymbal on lane 3, which requires there to be a gem on lane 3.  Lane numbers can also be designated by number instead of color ('1' is lane 1, '2' is lane 2, '3' is lane 3, '4' is lane 4, '5' is lane 5, '6' is lane 6).  A pro guitar note being an open note doesn't prevent it from being detected as having gems on lanes, ie. an open E single note will be counted by both %TRACK_DIFF_NOTE_COUNT_INSTANCES_S% and %TRACK_DIFF_NOTE_COUNT_INSTANCES_1%.</td>
 </tr>
 <tr>
 <td>%TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_[COMBINATION]%</td>
@@ -594,6 +626,34 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%TRACK_DIFF_COUNT_AND_RATIO_BARRE_CHORDS%</td>
 <td>Prints the number of barre chords (chords where the lowest used fret is played on multiple non-contiguous strings, with no strings played open between the lowest fret instances) in the active pro guitar track difficulty, and the percentage of the track difficulty's total note count that represents.  If the active track is not a pro guitar track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_COUNT_AND_RATIO_STRING_MUTES%</td>
+<td>Prints the number of fully string muted chords in the active pro guitar track difficulty, and the percentage of the track difficulty's total note count that represents.  If the active track is not a pro guitar track, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_NOTE_COUNT_AND_RATIO_EXPERT_PLUS_BASS%</td>
+<td>Prints the number of expert+ bass notes in the active track difficulty, and the percentage of the track difficulty's total note count that represents.  If the active track difficulty is not Expert in either of the drum tracks, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_COUNT_AND_RATIO_PITCHED_LYRIC%</td>
+<td>Prints the number of pitched lyrics (lyrics with a pitch between 36 and 84 whose text does not include a freestyle marker), and the percentage of the track difficulty's total note count that represents.  If the vocal track is not active, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_COUNT_AND_RATIO_UNPITCHED_LYRIC%</td>
+<td>Prints the number of unpitched lyrics (lyrics with no defined pitch, not including pitched lyrics with a freestyle marker), and the percentage of the track difficulty's total note count that represents.  If the vocal track is not active, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_COUNT_AND_RATIO_PERCUSSION_LYRIC%</td>
+<td>Prints the number of percussion lyrics, and the percentage of the track difficulty's total note count that represents.  If the vocal track is not active, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_COUNT_AND_RATIO_FREESTYLE_LYRIC%</td>
+<td>Prints the number of freestyle lyrics (those whose text include a # or ^ freestyle marker), and the percentage of the track difficulty's total note count that represents.  If the vocal track is not active, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_COUNT_AND_RATIO_PITCH_SHIFT_LYRIC%</td>
+<td>Prints the number of pitch shift lyrics (those whose text begins with the + pitch shift marker), and the percentage of the track difficulty's total note count that represents.  If the vocal track is not active, "None" is printed.</td>
 </tr>
 
 <tr>

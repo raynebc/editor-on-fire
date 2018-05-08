@@ -8,7 +8,6 @@
 #include "menu/help.h"
 #include "menu/context.h"
 #include "modules/ocd3d.h"
-#include "foflc/Lyric_storage.h"
 #include "dialog.h"
 #include "beat.h"
 #include "editor.h"
@@ -1488,9 +1487,9 @@ if(eof_key_code == KEY_PAUSE)
 				{	//Only SHIFT is held and feedback input mode is in use
 					(void) eof_menu_song_seek_next_grid_snap();
 				}
-				if(eof_vocals_offset > MAXPITCH - 12)
+				if(eof_vocals_offset > EOF_LYRIC_PITCH_MAX - 12)
 				{	//Don't allow the offset to go higher than the last usable octave
-					eof_vocals_offset = MAXPITCH - 12;
+					eof_vocals_offset = EOF_LYRIC_PITCH_MAX - 12;
 				}
 			}
 			else
@@ -1587,9 +1586,9 @@ if(eof_key_code == KEY_PAUSE)
 				{	//Only SHIFT is held, the chart is paused and feedback input mode is in use
 					(void) eof_menu_song_seek_previous_grid_snap();
 				}
-				if(eof_vocals_offset < MINPITCH)
+				if(eof_vocals_offset < EOF_LYRIC_PITCH_MIN)
 				{
-					eof_vocals_offset = MINPITCH;
+					eof_vocals_offset = EOF_LYRIC_PITCH_MIN;
 				}
 			}
 			else
@@ -3114,25 +3113,25 @@ if(eof_key_code == KEY_PAUSE)
 				if(eof_key_char == '1')	//Change mini piano focus to first usable octave
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_vocals_offset = MINPITCH;
+					eof_vocals_offset = EOF_LYRIC_PITCH_MIN;
 					eof_use_key();
 				}
 				else if(eof_key_char == '2')	//Change mini piano focus to second usable octave
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_vocals_offset = MINPITCH+12;
+					eof_vocals_offset = EOF_LYRIC_PITCH_MIN+12;
 					eof_use_key();
 				}
 				else if(eof_key_char == '3')	//Change mini piano focus to third usable octave
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_vocals_offset = MINPITCH+24;
+					eof_vocals_offset = EOF_LYRIC_PITCH_MIN+24;
 					eof_use_key();
 				}
 				else if(eof_key_char == '4')	//Change mini piano focus to fourth usable octave
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_vocals_offset = MINPITCH+36;
+					eof_vocals_offset = EOF_LYRIC_PITCH_MIN+36;
 					eof_use_key();
 				}
 			}

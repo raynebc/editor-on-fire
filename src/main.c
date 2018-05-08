@@ -24,7 +24,6 @@
 #include "menu/track.h"
 #include "menu/help.h"
 #include "menu/note.h"	//For pitch macros
-#include "foflc/Lyric_storage.h"
 #include "main.h"
 #include "utility.h"
 #include "player.h"
@@ -2260,7 +2259,7 @@ void eof_lyric_logic(void)
 					{
 						if((eof_scaled_mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width) && (eof_scaled_mouse_x - eof_window_3d->x <= (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1))
 						{
-							eof_hover_key = MINPITCH + (i / 7) * 12 + bnote[k];
+							eof_hover_key = EOF_LYRIC_PITCH_MIN + (i / 7) * 12 + bnote[k];
 							break;
 						}
 					}
@@ -2275,7 +2274,7 @@ void eof_lyric_logic(void)
 					k = i % 7;
 					if((eof_scaled_mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width) && (eof_scaled_mouse_x - eof_window_3d->x < i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width - 1))
 					{
-						eof_hover_key = MINPITCH + (i / 7) * 12 + note[k];
+						eof_hover_key = EOF_LYRIC_PITCH_MIN + (i / 7) * 12 + note[k];
 						break;
 					}
 				}
@@ -2309,13 +2308,13 @@ void eof_lyric_logic(void)
 					{
 						eof_vocals_offset = (eof_hover_key / 12) * 12;
 					}
-					if(eof_vocals_offset < MINPITCH)
+					if(eof_vocals_offset < EOF_LYRIC_PITCH_MIN)
 					{
-						eof_vocals_offset = MINPITCH;
+						eof_vocals_offset = EOF_LYRIC_PITCH_MIN;
 					}
-					else if(eof_vocals_offset > MAXPITCH - eof_screen_layout.vocal_view_size + 1)
+					else if(eof_vocals_offset > EOF_LYRIC_PITCH_MIN - eof_screen_layout.vocal_view_size + 1)
 					{
-						eof_vocals_offset = MAXPITCH - eof_screen_layout.vocal_view_size + 1;
+						eof_vocals_offset = EOF_LYRIC_PITCH_MIN - eof_screen_layout.vocal_view_size + 1;
 					}
 				}
 			}
@@ -2987,7 +2986,7 @@ void eof_render_lyric_window(void)
 	/* render the 29 white keys */
 	for(i = 0; i < 29; i++)
 	{
-		n = (i / 7) * 12 + note[i % 7] + MINPITCH;
+		n = (i / 7) * 12 + note[i % 7] + EOF_LYRIC_PITCH_MIN;
 		if(n == eof_hover_key)
 		{
 			if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
@@ -3022,7 +3021,7 @@ void eof_render_lyric_window(void)
 	/* render black keys over white keys */
 	for(i = 0; i < 28; i++)
 	{
-		n = (i / 7) * 12 + bnote[i % 7] + MINPITCH;
+		n = (i / 7) * 12 + bnote[i % 7] + EOF_LYRIC_PITCH_MIN;
 		k = n % 12;
 		if((k != 1) && (k != 3) && (k != 6) && (k != 8) && (k != 10))
 			continue;	//If this isn't a black key, skip this rendering logic

@@ -1,13 +1,13 @@
 #include <allegro.h>
 #include <assert.h>
 #include "event.h"
-#include "foflc/Lyric_storage.h"
 #include "ini_import.h"
 #include "main.h"
 #include "midi_data_import.h"
 #include "midi_import.h"
 #include "menu/beat.h"
 #include "menu/note.h"
+#include "note.h"
 #include "song.h"	//Include before beat.h for EOF_SONG struct definition
 #include "utility.h"
 #include "beat.h"
@@ -1472,7 +1472,7 @@ set_window_title(debugtext);
 					{
 						overdrive_pos = event_realtime;
 					}
-					else if((midinote == 96) || (midinote == 97) || ((midinote >= MINPITCH) && (midinote <= MAXPITCH)))
+					else if((midinote == 96) || (midinote == 97) || ((midinote >= EOF_LYRIC_PITCH_MIN) && (midinote <= EOF_LYRIC_PITCH_MAX)))
 					{	//If this is a vocal percussion note (96 or 97) or if it is a valid vocal pitch
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
@@ -1528,7 +1528,7 @@ set_window_title(debugtext);
 					else if((midinote == 96) || (midinote == 97))
 					{
 					}
-					else if((midinote >= MINPITCH) && (midinote <= MAXPITCH))
+					else if((midinote >= EOF_LYRIC_PITCH_MIN) && (midinote <= EOF_LYRIC_PITCH_MAX))
 					{
 						if(note_count[picked_track] > 0)
 						{

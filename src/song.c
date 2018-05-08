@@ -531,6 +531,11 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 	{	//If this is a drum track or the bass track, ensure that at least 6 lanes are allowed to be kept
 		maxlane = 6;
 	}
+	if(tp->parent->track_type == EOF_TRACK_KEYS)
+	{	//The keys track can only have 5 lanes, force this limitation in case it was overridden
+		tp->numlanes = 5;
+		maxlane = 5;
+	}
 	maxbitmask = (1 << maxlane) - 1;
 	for(i = tp->notes; i > 0; i--)
 	{	//For each note (in reverse order)
@@ -569,6 +574,11 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;
 				}
 			}
+		}
+
+		if(tp->parent->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
+		{	//If this is a keys track
+			tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Force its notes to have crazy status in case the status wasn't applied (such as in a track clone operation)
 		}
 
 		if(eof_min_note_length && (tp->parent->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR))
@@ -1179,6 +1189,22 @@ int eof_is_freestyle(char *ptr)
 	}
 
 	return 0;	//Return not freestyle
+}
+
+int eof_lyric_is_pitched(EOF_VOCAL_TRACK *tp, unsigned long lyricnumber)
+{
+	if((tp == NULL) || (lyricnumber >= tp->lyrics))
+		return -1;	//Return error
+
+	if(!eof_lyric_is_freestyle(tp, lyricnumber))
+	{	//If the lyric isn't freestyle
+		if((tp->lyric[lyricnumber]->note >= EOF_LYRIC_PITCH_MIN) && (tp->lyric[lyricnumber]->note <= EOF_LYRIC_PITCH_MAX))
+		{	//If the lyric has a valid pitch (ie. isn't pitchless)
+			return 1;	//Pitched
+		}
+	}
+
+	return 0;	//Not pitched
 }
 
 void eof_set_freestyle(char *ptr, char status)
@@ -9675,4 +9701,77 @@ struct eof_MIDI_data_track *eof_song_has_stored_tempo_track(EOF_SONG * sp)
 	}
 
 	return NULL;	//No stored tempo track was found
+}
+
+int eof_get_drum_note_masks(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned char *match_bitmask, unsigned char *cymbal_match_bitmask)
+{
+	unsigned char tom = 0;		//The non cymbal gems contained by this note
+	unsigned char cymbal = 0;	//The cymbal gems contained by this note
+
+	if(!sp || (track >= sp->tracks) || !track || !match_bitmask || !cymbal_match_bitmask)
+		return 0;	//Invalid parameters
+
+	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If the specified track is a drum track
+		unsigned char note;
+		unsigned long flags;
+
+		note = eof_get_note_note(sp, track, notenum);
+		flags = eof_get_note_flags(sp, track, notenum);
+
+		//Determine which tom gems and which cymbal gems the note contains
+		tom |= (note & (1 | 2));	//Track lane 1 and 2 gems
+		if(note & 4)
+		{	//If the specified note has a gem on lane 3
+			if(flags & EOF_DRUM_NOTE_FLAG_Y_COMBO)
+			{	//This is both a tom and a cymbal
+				tom |= 4;
+				cymbal |= 4;
+			}
+			else if(flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
+			{	//This is a cymbal
+				cymbal |= 4;
+			}
+			else
+			{	//This is a tom
+				tom |= 4;
+			}
+		}
+		if(note & 8)
+		{	//If the specified note has a gem on lane 4
+			if(flags & EOF_DRUM_NOTE_FLAG_B_COMBO)
+			{	//This is both a tom and a cymbal
+				tom |= 8;
+				cymbal |= 8;
+			}
+			else if(flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
+			{	//This is a cymbal
+				cymbal |= 8;
+			}
+			else
+			{	//This is a tom
+				tom |= 8;
+			}
+		}
+		if(note & 16)
+		{	//If the specified note has a gem on lane 5
+			if(flags & EOF_DRUM_NOTE_FLAG_G_COMBO)
+			{	//This is both a tom and a cymbal
+				tom |= 16;
+				cymbal |= 16;
+			}
+			else if(flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
+			{	//This is a cymbal
+				cymbal |= 16;
+			}
+			else
+			{	//This is a tom
+				tom |= 16;
+			}
+		}
+	}
+
+	*match_bitmask = tom;
+	*cymbal_match_bitmask = cymbal;
+	return 1;
 }
