@@ -64,6 +64,7 @@ char *eof_help_text = NULL;
 char eof_ctext[8][1024] = {{0}};
 
 static int eof_keyboard_shortcut = 0;
+static int eof_main_menu_activated = 0;
 int eof_close_menu = 0;
 
 char eof_menu_track_names[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
@@ -179,6 +180,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 			if((eof_key_char == 'f') || (eof_key_char == 'e') || (eof_key_char == 's') || (eof_key_char == 't') || (eof_key_char == 'n') || (eof_key_char == 'b') || (eof_key_char == 'h'))
 			{
 				eof_keyboard_shortcut = 1;
+				eof_main_menu_activated = 1;
 				player->mouse_obj = 0;
 			}
 			else if(!eof_keyboard_shortcut && ((eof_key_code == KEY_M) || (eof_key_code == KEY_V) || (eof_key_code == KEY_C) || (eof_key_code == KEY_D)))
@@ -191,29 +193,25 @@ int eof_popup_dialog(DIALOG * dp, int n)
 			}
 
 			/* detect if menu was activated with a click */
-			if(mouse_b & 1)
+			if((mouse_b & 1) || (mouse_b & 2))
 			{
 				eof_keyboard_shortcut = 2;
+				eof_main_menu_activated = 1;
 			}
 
 			/* allow menu to be closed if mouse button released after it was
 			 * opened with a click */
-			if((eof_keyboard_shortcut == 2) && !(mouse_b & 1))
+			if((eof_keyboard_shortcut == 2) && !(mouse_b & 1) && !(mouse_b & 2))
 			{
-				eof_keyboard_shortcut = 0;
-			}
-
-			/* if mouse isn't hovering over the menu, try and deactivate it */
-			if(player->mouse_obj < 0)
-			{
-				/* if the user isn't about to press a menu shortcut */
-				if(!KEY_EITHER_ALT && !eof_keyboard_shortcut)
-				{
-					break;
+				if(player->mouse_obj < 0)
+				{	//If the mouse isn't hovering over the menu anymore
+					eof_main_menu_activated = 0;
+					eof_keyboard_shortcut = 0;
 				}
 			}
-			else if(!KEY_EITHER_ALT && !eof_keyboard_shortcut)
-			{	//Otherwise if ALT isn't held anymore and no menu was opened
+
+			if(!KEY_EITHER_ALT && !eof_main_menu_activated)
+			{	//If ALT isn't held and the menu hasn't been activated
 				break;	//Escape from the menu system
 			}
 		}
@@ -263,6 +261,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	gametime_reset();
 	eof_show_mouse(NULL);
 	eof_keyboard_shortcut = 0;
+	eof_main_menu_activated = 0;
 
 	return ret;
 }

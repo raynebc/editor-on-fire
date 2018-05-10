@@ -807,7 +807,8 @@ if(eof_key_code == KEY_PAUSE)
 	eof_use_key();
 	//Debug action here
 }
-if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
+///ALT handling testing
+/*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
 {
 	if(KEY_EITHER_SHIFT)
 	{	//SHIFT is held
@@ -837,6 +838,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 {
 	allegro_message("ALT+V captured!");
 }
+*/
 
 
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */
