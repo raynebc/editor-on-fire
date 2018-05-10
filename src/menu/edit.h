@@ -148,6 +148,10 @@ int eof_menu_edit_snap_twenty_fourth(void);
 int eof_menu_edit_snap_forty_eighth(void);
 int eof_menu_edit_snap_sixty_forth(void);
 int eof_menu_edit_snap_ninty_sixth(void);
+int eof_custom_grid_snap_edit_proc(int msg, DIALOG *d, int c);
+	//If the user types the letter b, sets the "beat" radio button in eof_custom_snap_dialog[]
+	//If the user types the letter m, sets the "measure" radio button in eof_custom_snap_dialog[]
+	//All other input is filtered through eof_verified_edit_proc()
 int eof_menu_edit_snap_custom(void);
 int eof_menu_edit_toggle_grid_lines(void);
 

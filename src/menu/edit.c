@@ -63,9 +63,9 @@ MENU eof_edit_snap_menu[] =
 	{"1/48", eof_menu_edit_snap_forty_eighth, NULL, 0, NULL},
 	{"1/96", eof_menu_edit_snap_ninty_sixth, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Custom", eof_menu_edit_snap_custom, NULL, 0, NULL},
+	{"&Custom\tG", eof_menu_edit_snap_custom, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"Off\tG", eof_menu_edit_snap_off, NULL, D_SELECTED, NULL},
+	{"&Off", eof_menu_edit_snap_off, NULL, D_SELECTED, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Display grid lines\tShift+G", eof_menu_edit_toggle_grid_lines, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -190,7 +190,7 @@ MENU eof_edit_selection_menu[] =
 {
 	{"&Select", NULL, eof_edit_selection_select_menu, 0, NULL},
 	{"Select &All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
-	{"&Conditional select", eof_menu_edit_select_conditional, NULL, 0, NULL},
+	{"&Conditional select\tALT+C", eof_menu_edit_select_conditional, NULL, 0, NULL},
 	{"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
 	{"&Precise select like\tShift+L", eof_menu_edit_precise_select_like, NULL, 0, NULL},
 	{"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
@@ -198,7 +198,7 @@ MENU eof_edit_selection_menu[] =
 	{"", NULL, NULL, 0, NULL},
 	{"&Deselect", NULL, eof_edit_selection_deselect_menu, 0, NULL},
 	{"Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
-	{"Conditional d&Eselect", eof_menu_edit_deselect_conditional, NULL, 0, NULL},
+	{"Conditional d&Eselect\tALT+D", eof_menu_edit_deselect_conditional, NULL, 0, NULL},
 	{"Invert selection", eof_menu_edit_invert_selection, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -237,9 +237,9 @@ DIALOG eof_custom_snap_dialog[] =
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)         (dp2) (dp3) */
 	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
 	{ d_agup_text_proc,		 56,  84,  64,  8,   2,    23,  0,    0,      0,   0,   "Intervals:",NULL, NULL },
-	{ eof_verified_edit_proc,112, 80,  66,  20,  2,    23,  0,    0,      2,   0,   eof_etext2,  "0123456789", NULL },
-	{ d_agup_radio_proc,     42,  105, 68,  15,  2,    23,  0,    0,      0,   0,   "beat",      NULL, NULL },
-	{ d_agup_radio_proc,     120, 105, 68,  15,  2,    23,  0,    0,      0,   0,   "measure",   NULL, NULL },
+	{ eof_custom_grid_snap_edit_proc,112, 80, 66, 20,  2,   23,   0,      0,   2,   0,    eof_etext2,  "0123456789", NULL },
+	{ d_agup_radio_proc,     42,  105, 68,  15,  2,    23,  0,    0,      0,   0,   "&Beat",      NULL, NULL },
+	{ d_agup_radio_proc,     120, 105, 68,  15,  2,    23,  0,    0,      0,   0,   "&Measure",   NULL, NULL },
 	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT, 0,   0,   "OK",        NULL, NULL },
 	{ d_agup_button_proc,    120, 125, 68,  28,  2,    23,  0,    D_EXIT, 0,   0,   "Cancel",    NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -328,6 +328,7 @@ void eof_prepare_edit_menu(void)
 			eof_edit_selection_menu[8].flags = 0;	//deselect>
 			eof_edit_selection_menu[9].flags = 0;	//deselect all
 			eof_edit_selection_menu[10].flags = 0;	//conditional deselect
+			eof_edit_selection_menu[11].flags = 0;	//invert selection
 			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a drum track is active
 				eof_edit_selection_deselect_menu[2].flags = 0;	//deselect>Toms
@@ -349,6 +350,7 @@ void eof_prepare_edit_menu(void)
 			eof_edit_selection_menu[8].flags = D_DISABLED;	//deselect>
 			eof_edit_selection_menu[9].flags = D_DISABLED;	//deselect all
 			eof_edit_selection_menu[10].flags = D_DISABLED;	//conditional deselect
+			eof_edit_selection_menu[11].flags = D_DISABLED;	//invert selection
 		}
 
 		/* paste, old paste */
@@ -389,13 +391,15 @@ void eof_prepare_edit_menu(void)
 		{
 			if(eof_track_diff_populated_status[eof_note_type])
 			{	//If the active track has one or more notes
-				eof_edit_selection_menu[0].flags = 0;
-				eof_edit_selection_menu[1].flags = 0;
+				eof_edit_selection_menu[0].flags = 0;	//Select
+				eof_edit_selection_menu[1].flags = 0;	//Select all
+				eof_edit_selection_menu[2].flags = 0;	//Conditional select
 			}
 			else
 			{
 				eof_edit_selection_menu[0].flags = D_DISABLED;
 				eof_edit_selection_menu[1].flags = D_DISABLED;
+				eof_edit_selection_menu[2].flags = D_DISABLED;
 			}
 		}
 
@@ -1823,6 +1827,34 @@ int eof_menu_edit_snap_ninty_sixth(void)
 	return 1;
 }
 
+int eof_custom_grid_snap_edit_proc(int msg, DIALOG *d, int c)
+{
+	//Check ASCII code input
+	if(msg == MSG_CHAR)
+	{
+		unsigned c2 = (c & 255);	//The lower 8 bits is the scan code of the key press
+
+		if((c2 == 'b') || (c2 == 'B'))
+		{	//The user pressed b
+			eof_custom_snap_dialog[3].flags = D_SELECTED;	//Select the beat radio button
+			eof_custom_snap_dialog[4].flags = 0;			//Clear the measure radio button
+			(void) object_message(&eof_custom_snap_dialog[3], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
+			(void) object_message(&eof_custom_snap_dialog[4], MSG_DRAW, 0);
+			return D_USED_CHAR;	//Input processed
+		}
+		else if((c2 == 'm') || (c2 == 'M'))
+		{	//The user pressed m
+			eof_custom_snap_dialog[4].flags = D_SELECTED;	//Select the measure radio button
+			eof_custom_snap_dialog[3].flags = 0;			//Clear the beat radio button
+			(void) object_message(&eof_custom_snap_dialog[3], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
+			(void) object_message(&eof_custom_snap_dialog[4], MSG_DRAW, 0);
+			return D_USED_CHAR;	//Input processed
+		}
+	}
+
+	return eof_verified_edit_proc(msg, d, c);	//Allow the rest of the input to be filtered normally
+}
+
 int eof_menu_edit_snap_custom(void)
 {
 	int last_interval = eof_snap_interval;
@@ -2226,7 +2258,15 @@ int eof_menu_edit_speed_hyper(void)
 
 int eof_menu_edit_snap_off(void)
 {
-	eof_snap_mode = EOF_SNAP_OFF;
+	if(eof_snap_mode == EOF_SNAP_OFF)
+	{	//Toggle grid snap on and restore the last snap setting in use
+		eof_snap_mode = eof_last_snap_mode;
+	}
+	else
+	{	//Store the grid snap setting in use and toggle grid snap off
+		eof_last_snap_mode = eof_snap_mode;
+		eof_snap_mode = EOF_SNAP_OFF;
+	}
 	return 1;
 }
 

@@ -59,6 +59,7 @@ char eof_etext5[1024] = {0};
 char eof_etext6[1024] = {0};
 char eof_etext7[1024] = {0};
 char eof_etext8[1024] = {0};
+char eof_etext9[1024] = {0};
 char *eof_help_text = NULL;
 char eof_ctext[8][1024] = {{0}};
 
@@ -180,6 +181,14 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				eof_keyboard_shortcut = 1;
 				player->mouse_obj = 0;
 			}
+			else if(!eof_keyboard_shortcut && ((eof_key_code == KEY_M) || (eof_key_code == KEY_V) || (eof_key_code == KEY_C) || (eof_key_code == KEY_D)))
+			{	///Experimental:  User pressed a different ALT+key combination, seems like eof_key_code must be tested instead of eof_key_char,
+				/// possibly because only the characters associated with the main menu accelerators (ie. &F for the File menu) are sent to this
+				/// dialog for processing, but scan codes for other keys are still sent
+				///If a menu wasn't already opened, allow these key codes to exit the main menu
+				player->mouse_obj = 0;	///Not needed, but GDB isn't honoring the break point on the break statement
+				break;	//Escape from the menu system so the other key shortcut handling logic can process this
+			}
 
 			/* detect if menu was activated with a click */
 			if(mouse_b & 1)
@@ -203,15 +212,19 @@ int eof_popup_dialog(DIALOG * dp, int n)
 					break;
 				}
 			}
+			else if(!KEY_EITHER_ALT && !eof_keyboard_shortcut)
+			{	//Otherwise if ALT isn't held anymore and no menu was opened
+				break;	//Escape from the menu system
+			}
 		}
 
 		/* special handling of the song properties box */
 		if(dp == eof_song_properties_dialog)
 		{
-			if(ustrlen(eof_song_properties_dialog[16].dp) != oldlen)
+			if(ustrlen(eof_song_properties_dialog[18].dp) != oldlen)
 			{	//If the loading text field was altered
-				(void) object_message(&eof_song_properties_dialog[18], MSG_DRAW, 0);	//Redraw the loading text preview
-				oldlen = ustrlen(eof_song_properties_dialog[18].dp);
+				(void) object_message(&eof_song_properties_dialog[20], MSG_DRAW, 0);	//Redraw the loading text preview
+				oldlen = ustrlen(eof_song_properties_dialog[20].dp);
 			}
 		}
 
@@ -246,7 +259,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	ret = shutdown_dialog(player);
 
 //	ret = popup_dialog(dp, n);
-	eof_clear_input();
+///	eof_clear_input();	//////Experimental:  Leave the input variables intact to allow ALT+key shortcuts to be processed outside this function
 	gametime_reset();
 	eof_show_mouse(NULL);
 	eof_keyboard_shortcut = 0;

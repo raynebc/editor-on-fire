@@ -807,6 +807,37 @@ if(eof_key_code == KEY_PAUSE)
 	eof_use_key();
 	//Debug action here
 }
+if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
+{
+	if(KEY_EITHER_SHIFT)
+	{	//SHIFT is held
+		if(KEY_EITHER_CTRL)
+		{	//CTRL and SHIFT are held
+			allegro_message("CTRL+ALT+SHIFT+M captured!");
+		}
+		else
+		{	//Only SHIFT is held
+			allegro_message("ALT+SHIFT+M captured!");
+		}
+		eof_shift_used = 1;	//Track that the SHIFT key was used
+	}
+	else
+	{	//SHIFT is not held
+		if(KEY_EITHER_CTRL)
+		{	//CTRL is held
+			allegro_message("CTRL+ALT+M captured!");
+		}
+		else
+		{	//Neither CTRL nor SHIFT are held
+			allegro_message("ALT+M captured!");
+		}
+	}
+}
+if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
+{
+	allegro_message("ALT+V captured!");
+}
+
 
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */
 
@@ -871,8 +902,8 @@ if(eof_key_code == KEY_PAUSE)
 	/* resnap auto (CTRL+SHIFT+R) */
 	if(eof_key_char == 'r')
 	{
-		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
-		{	//If neither CTRL nor SHIFT are held
+		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && !KEY_EITHER_WIN)
+		{	//If neither CTRL nor SHIFT are held, and the Windows key isn't being held
 			(void) eof_menu_song_seek_rewind();
 			eof_use_key();
 		}
@@ -1051,7 +1082,7 @@ if(eof_key_code == KEY_PAUSE)
 
 	/* toggle green cymbal (CTRL+G in a drum track) */
 	/* convert GHL open (CTRL+G in a legacy guitar track) */
-	/* toggle grid snap (G) */
+	/* custom grid snap (G) */
 	/* display grid lines (SHIFT+G) */
 	if(eof_key_char == 'g')
 	{
@@ -1078,15 +1109,7 @@ if(eof_key_code == KEY_PAUSE)
 			}
 			else
 			{	//Neither SHIFT nor CTRL are held
-				if(eof_snap_mode == EOF_SNAP_OFF)
-				{
-					eof_snap_mode = eof_last_snap_mode;
-				}
-				else
-				{
-					eof_last_snap_mode = eof_snap_mode;
-					eof_snap_mode = EOF_SNAP_OFF;
-				}
+				(void) eof_menu_edit_snap_custom();
 				eof_use_key();
 			}
 		}
@@ -1739,25 +1762,54 @@ if(eof_key_code == KEY_PAUSE)
 	}
 
 	/* toggle claps (C) */
+	/* copy (CTRL+C) */
 	/* paste from catalog (SHIFT+C) */
-	/* copy events (CTRL+SHIFT+C)*/
+	/* copy events (CTRL+SHIFT+C) */
+	/* conditional select (ALT+C) */
 	if(eof_key_char == 'c')
 	{
-		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
-		{	//Neither CTRL nor SHIFT held
-			(void) eof_menu_edit_claps();
-			eof_use_key();
+		if(KEY_EITHER_CTRL)
+		{	//CTRL is held
+			if(KEY_EITHER_SHIFT)
+			{	//CTRL and SHIFT are held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_beat_copy_events();
+				eof_use_key();
+			}
+			else
+			{	//Only CTRL is held
+				(void) eof_menu_edit_copy();
+				eof_use_key();
+			}
 		}
-		else if(!KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-		{	//If only SHIFT is held
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			(void) eof_menu_edit_paste_from_catalog();
-			eof_use_key();
+		else
+		{	//CTRL is not held
+			if(KEY_EITHER_SHIFT)
+			{	//Only SHIFT is held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_edit_paste_from_catalog();
+				eof_use_key();
+			}
+			else
+			{	//Neither CTRL nor SHIFT are held
+				if(!KEY_EITHER_ALT)
+				{	//No key modifiers are held
+					(void) eof_menu_edit_claps();
+					eof_use_key();
+				}
+			}
 		}
-		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-		{	//If both CTRL and SHIFT are held
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			(void) eof_menu_beat_copy_events();
+	}
+	if(eof_key_code == KEY_C)
+	{
+		if(!KEY_EITHER_CTRL && KEY_EITHER_ALT && !KEY_EITHER_SHIFT)
+		{	//If only ALT is held
+			unsigned long totalnotecount = 0;
+			(void) eof_count_selected_notes(&totalnotecount);
+			if(totalnotecount)
+			{	//If there are any notes in the active track difficulty
+				(void) eof_menu_edit_select_conditional();
+			}
 			eof_use_key();
 		}
 	}
@@ -2489,17 +2541,39 @@ if(eof_key_code == KEY_PAUSE)
 
 	/* deselect all (CTRL+D) */
 	/* double BPM (CTRL+SHIFT+D) */
-		if(KEY_EITHER_CTRL && (eof_key_char == 'd'))
+	/* conditional deselect (ALT+D) */
+		if(eof_key_char == 'd')
 		{
-			if(!KEY_EITHER_SHIFT)
-			{	//If CTRL is held but SHIFT is not
-				(void) eof_menu_edit_deselect_all();
-				eof_use_key();
+			if(KEY_EITHER_CTRL)
+			{	//If CTRL is held
+				if(KEY_EITHER_SHIFT)
+				{	//Both CTRL and SHIFT are held
+					(void) eof_menu_beat_double_tempo();
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					eof_use_key();
+				}
 			}
 			else
-			{	//Both CTRL and SHIFT are held
-				eof_shift_used = 1;	//Track that the SHIFT key was used
-				(void) eof_menu_beat_double_tempo();
+			{	//CTRL is not held
+				if(KEY_EITHER_SHIFT)
+				{	//SHIFT is held
+					if(eof_count_selected_notes(NULL))
+					{	//If any notes in the active track difficulty are selected
+						(void) eof_menu_edit_deselect_conditional();
+					}
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					eof_use_key();
+				}
+			}
+		}
+		if(eof_key_code == KEY_D)
+		{
+			if(!KEY_EITHER_CTRL && KEY_EITHER_ALT && !KEY_EITHER_SHIFT)
+			{	//If only ALT is held
+				if(eof_count_selected_notes(NULL))
+				{	//If any notes in the active track difficulty are selected
+					(void) eof_menu_edit_deselect_conditional();
+				}
 				eof_use_key();
 			}
 		}
@@ -3599,13 +3673,6 @@ if(eof_key_code == KEY_PAUSE)
 				eof_use_key();
 			}
 		}//If SHIFT is not held
-
-	/* copy (CTRL+C) */
-		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'c'))
-		{
-			(void) eof_menu_edit_copy();
-			eof_use_key();
-		}
 
 	/* paste (CTRL+V) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'v'))

@@ -16,7 +16,7 @@ MENU eof_right_click_menu_normal[] =
 	{"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
 	{"&Full screen 3D view\t" CTRL_NAME "+F", eof_enable_full_screen_3d, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"Selection", NULL, eof_edit_selection_menu, 0, NULL},
+	{"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -30,7 +30,7 @@ MENU eof_right_click_menu_note[] =
 	{"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
 	{"&Full screen 3D view\t" CTRL_NAME "+F", eof_enable_full_screen_3d, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"Selection", NULL, eof_edit_selection_menu, 0, NULL},
+	{"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

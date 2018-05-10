@@ -205,6 +205,7 @@ EOF_SONG * eof_create_song(void)
 	(void) ustrcpy(sp->tags->year, "");
 	(void) ustrcpy(sp->tags->loading_text, "");
 	(void) ustrcpy(sp->tags->album, "");
+	(void) ustrcpy(sp->tags->genre, "");
 	sp->tags->lyrics = 0;
 	sp->tags->eighth_note_hopo = 0;
 	sp->tags->eof_fret_hand_pos_1_pg = 0;
@@ -1699,9 +1700,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	EOF_TRACK_ENTRY temp={0, 0, 0, 0, "", "", 0, 5, 0};
 	char name[EOF_SECTION_NAME_LENGTH + 1];	//Used to load note/section names (section names are currently longer)
 
-	#define EOFNUMINISTRINGTYPES 9
+	#define EOFNUMINISTRINGTYPES 10
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
-	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256};
+	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256,256};
 		//Store the buffer information of each of the INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 	#define EOFNUMINIBOOLEANTYPES 14
@@ -1734,6 +1735,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	inistringbuffer[6] = sp->tags->year;
 	inistringbuffer[7] = sp->tags->loading_text;
 	inistringbuffer[8] = sp->tags->album;
+	inistringbuffer[9] = sp->tags->genre;
 	inibooleanbuffer[1] = &sp->tags->lyrics;
 	inibooleanbuffer[2] = &sp->tags->eighth_note_hopo;
 	inibooleanbuffer[3] = &sp->tags->eof_fret_hand_pos_1_pg;
@@ -2833,7 +2835,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
 
-	#define EOFNUMINISTRINGTYPES 9
+	#define EOFNUMINISTRINGTYPES 10
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
@@ -2869,6 +2871,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	inistringbuffer[6] = sp->tags->year;
 	inistringbuffer[7] = sp->tags->loading_text;
 	inistringbuffer[8] = sp->tags->album;
+	inistringbuffer[9] = sp->tags->genre;
 	inibooleanbuffer[1] = &sp->tags->lyrics;
 	inibooleanbuffer[2] = &sp->tags->eighth_note_hopo;
 	inibooleanbuffer[3] = &sp->tags->eof_fret_hand_pos_1_pg;
@@ -6934,14 +6937,26 @@ int eof_create_image_sequence(char benchmark_only)
 	char filename[20] = {0};
 	clock_t starttime = 0, endtime = 0;
 	char *function = "Exporting";
+	unsigned long startpos, endpos, numms;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 
+	startpos = 0;				//By default, the processing will begin from at the start of the chart audio
+	endpos = eof_music_length;	//And cease at the end of the chart audio
 	eof_log("eof_create_image_sequence() entered", 1);
 	if(!benchmark_only)
 	{	//If saving the image sequence to disk
 		eof_log("\tCreating image sequence", 1);
+
+		if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
+		{	//If both the start and end points are defined with different timestamps
+			if(alert(NULL, "Sequence only the start->end position?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to only create an image sequence for only the selected portion of the chart
+				startpos = eof_song->tags->start_point;
+				endpos = eof_song->tags->end_point + eof_av_delay;
+			}
+		}
 
 		/* check to make sure \sequence folder exists */
 		(void) ustrcpy(eof_temp_filename, eof_song_path);
@@ -6971,12 +6986,13 @@ int eof_create_image_sequence(char benchmark_only)
 		eof_log("\tBenchmarking rendering performance", 1);
 	}
 
-	alogg_seek_abs_msecs_ogg_ul(eof_music_track, 0);
+	alogg_seek_abs_msecs_ogg_ul(eof_music_track, startpos);
 	eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 	eof_music_pos = eof_music_actual_pos + eof_av_delay;
 	clear_to_color(eof_screen, eof_color_light_gray);
 	blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-	while(eof_music_pos <  eof_music_length)
+	numms = endpos - startpos;	//The number of milliseconds to process
+	while(eof_music_pos <  endpos)
 	{
 		if(key[KEY_ESC])
 			break;
@@ -6986,7 +7002,7 @@ int eof_create_image_sequence(char benchmark_only)
 		//Update EOF's window title to provide a status
 			curtime = clock();	//Get the current time
 			fps = (double)(framectr - lastpollctr) / ((double)(curtime - lastpolltime) / (double)CLOCKS_PER_SEC);	//Find the number of FPS rendered since the last poll
-			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "%s image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",function, (double)eof_music_pos/(double)eof_music_length * 100.0, fps);
+			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "%s image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",function, (double)eof_music_pos/(double)numms * 100.0, fps);
 			set_window_title(windowtitle);
 			refreshctr -= 10;
 			lastpolltime = curtime;

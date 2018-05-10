@@ -76,6 +76,13 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		(void) ustrcat(ini_string, sp->tags->album);
 	}
 
+	/* write genre */
+	if(ustrlen(sp->tags->genre) > 0)
+	{
+		(void) ustrcat(ini_string, "\r\ngenre = ");
+		(void) ustrcat(ini_string, sp->tags->genre);
+	}
+
 	/* write midi offset */
 	(void) ustrcat(ini_string, "\r\ndelay = ");
 	(void) snprintf(buffer, sizeof(buffer) - 1, "%ld", sp->tags->ogg[eof_selected_ogg].midi_offset);

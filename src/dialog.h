@@ -18,6 +18,7 @@ extern char eof_etext5[1024];
 extern char eof_etext6[1024];
 extern char eof_etext7[1024];
 extern char eof_etext8[1024];
+extern char eof_etext9[1024];
 extern char *eof_help_text;
 extern char eof_ctext[8][1024];
 extern char eof_menu_track_names[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE];
