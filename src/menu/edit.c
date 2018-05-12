@@ -161,6 +161,8 @@ MENU eof_edit_selection_select_menu[] =
 	{"O&Ff Beat notes", eof_menu_edit_select_off_beat_notes, NULL, 0, NULL},
 	{"&Highlighted", eof_menu_edit_select_highlighted_notes, NULL, 0, NULL},
 	{"Not h&Ighlighted", eof_menu_edit_select_non_highlighted_notes, NULL, 0, NULL},
+	{"Open notes", eof_menu_edit_select_open_notes, NULL, 0, NULL},
+	{"Non open notes", eof_menu_edit_select_non_open_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_select_note_number_in_sequence, NULL, 0, NULL},
 	{"Neighbor &Proximity", eof_menu_edit_select_note_within_threshhold_of_next_note, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -181,6 +183,8 @@ MENU eof_edit_selection_deselect_menu[] =
 	{"O&Ff Beat notes", eof_menu_edit_deselect_off_beat_notes, NULL, 0, NULL},
 	{"&Highlighted", eof_menu_edit_deselect_highlighted_notes, NULL, 0, NULL},
 	{"Not h&Ighlighted", eof_menu_edit_deselect_non_highlighted_notes, NULL, 0, NULL},
+	{"Open notes", eof_menu_edit_deselect_open_notes, NULL, 0, NULL},
+	{"Non open notes", eof_menu_edit_deselect_non_open_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
 	{"Neighbor &Proximity", eof_menu_edit_deselect_note_within_threshhold_of_next_note, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -3183,6 +3187,16 @@ int eof_menu_edit_select_non_highlighted_notes(void)
 	return eof_menu_edit_select_logic(eof_note_is_not_highlighted);
 }
 
+int eof_menu_edit_select_open_notes(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_open_note);
+}
+
+int eof_menu_edit_select_non_open_notes(void)
+{
+	return eof_menu_edit_select_logic(eof_note_is_not_open_note);
+}
+
 int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long))
 {
 	unsigned long ctr;
@@ -3251,6 +3265,16 @@ int eof_menu_edit_deselect_highlighted_notes(void)
 int eof_menu_edit_deselect_non_highlighted_notes(void)
 {
 	return eof_menu_edit_deselect_logic(eof_note_is_not_highlighted);
+}
+
+int eof_menu_edit_deselect_open_notes(void)
+{
+	return eof_menu_edit_deselect_logic(eof_note_is_open_note);
+}
+
+int eof_menu_edit_deselect_non_open_notes(void)
+{
+	return eof_menu_edit_deselect_logic(eof_note_is_not_open_note);
 }
 
 int eof_menu_edit_invert_selection(void)

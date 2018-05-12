@@ -414,7 +414,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	memset(notetempname, 0, sizeof(notetempname));	//Init this memory to 0
 	eof_log("eof_export_midi() entered", 1);
 
-//	eof_log_level &= ~2;	//Disable verbose logging
 	if(!sp || !fn)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
@@ -2561,7 +2560,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 	eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 
-//	eof_log_level |= 2;	//Enable verbose logging
 	return 1;	//Return success
 }
 

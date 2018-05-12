@@ -1871,7 +1871,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			{	//CTRL is held but SHIFT is not
 				eof_display_info_panel();	//Toggle the info panel on/off and create/destroy eof_info_panel accordingly
 				(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient
-				eof_rebuild_notes_window();	//Recreate the notes panel window
+				eof_rebuild_notes_window();					//Recreate the notes panel window
 			}
 			else
 			{	//Both CTRL and SHIFT are held
@@ -5571,6 +5571,7 @@ void eof_render_editor_window(EOF_WINDOW *window)
 	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the user disabled the 2D window's rendering (or enabled full screen 3D view)
 		return;											//Return immediately
 
+	eof_log("\tRendering piano roll.", 3);
 	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 	{	//If this is a vocal track
 		eof_render_vocal_editor_window(window);
@@ -5719,6 +5720,7 @@ void eof_render_editor_window_2(void)
 
 	if(eof_display_second_piano_roll)
 	{	//If the secondary piano roll is to be displayed
+		eof_log("\tRendering secondary piano roll.", 3);
 		if(eof_note_type2 > 255)
 		{	//If the difficulty hasn't been initialized
 			eof_note_type2 = eof_note_type;

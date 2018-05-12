@@ -84,6 +84,8 @@ int eof_menu_edit_select_grid_snapped_notes(void);		//Selects notes that are on 
 int eof_menu_edit_select_non_grid_snapped_notes(void);	//Selects notes that are not on grid snap positions
 int eof_menu_edit_select_highlighted_notes(void);		//Selects notes that are highlighted
 int eof_menu_edit_select_non_highlighted_notes(void);	//Selects notes that are not highlighted
+int eof_menu_edit_select_open_notes(void);				//Selects notes that are open notes
+int eof_menu_edit_select_non_open_notes(void);			//Selects notes that are not open notes
 
 int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long));
 	//Passes notes in the active track difficulty to the specified function that returns nonzero if it meets the conditions being checked, removing those that do from the current note selection
@@ -96,6 +98,8 @@ int eof_menu_edit_deselect_grid_snapped_notes(void);		//Deselects notes that are
 int eof_menu_edit_deselect_non_grid_snapped_notes(void);	//Deselects notes that are not on grid snap positions
 int eof_menu_edit_deselect_highlighted_notes(void);		//Deselects notes that are highlighted
 int eof_menu_edit_deselect_non_highlighted_notes(void);	//Deselects notes that are not highlighted
+int eof_menu_edit_deselect_open_notes(void);			//Deselects notes that are open notes
+int eof_menu_edit_deselect_non_open_notes(void);		//Deselects notes that are not open notes
 
 int eof_menu_edit_select_on_or_off_beat_note_logic(int function, int position);
 	//Alters the note selection based on notes in the active track difficulty that are either on a beat marker (position is nonzero) or not on a beat marker (position is zero)

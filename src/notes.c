@@ -28,6 +28,8 @@ EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 	if(!filename)
 		return NULL;	//Invalid parameter
 
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Creating text panel from file \"%s\"", filename);
+	eof_log(eof_log_string, 2);
 	if(!exists(filename))
 	{	//If the file doesn't exist
 		if(builtin)
@@ -66,6 +68,8 @@ void eof_destroy_text_panel(EOF_TEXT_PANEL *panel)
 {
 	if(panel)
 	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Destroying text panel for file \"%s\"", panel->filename);
+		eof_log(eof_log_string, 2);
 		if(panel->text)
 			free(panel->text);
 		free(panel);
@@ -342,6 +346,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 0;	//Invalid parameters
 	if(!eof_song)
 		return 0;	//No chart loaded
+
+	if(eof_log_level > 2)
+	{	//If exhaustive logging is in effect
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tProcessing Notes macro \"%s\"", macro);
+		eof_log(eof_log_string, 3);
+	}
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 
@@ -1927,8 +1937,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				double percent;
 
-				for(ctr = 0; ctr < tp->pgnotes; ctr++)
-				{	//For each normal note in the pro guitar track
+				for(ctr = 0; ctr < tp->notes; ctr++)
+				{	//For each note in the pro guitar track
 					if((tp->note[ctr]->type == eof_note_type) && eof_pro_guitar_note_is_open_chord(tp, ctr))
 						count++;	//Count the number of notes in the active difficulty that are open chords
 				}
@@ -1961,8 +1971,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				double percent;
 
-				for(ctr = 0; ctr < tp->pgnotes; ctr++)
-				{	//For each normal note in the pro guitar track
+				for(ctr = 0; ctr < tp->notes; ctr++)
+				{	//For each note in the pro guitar track
 					if((tp->note[ctr]->type == eof_note_type) && eof_pro_guitar_note_is_barre_chord(tp, ctr))
 						count++;	//Count the number of notes in the active difficulty that are barre chords
 				}
@@ -2102,7 +2112,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				double percent;
 
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				for(ctr = 0; ctr < tp->lyrics; ctr++)
 				{	//For each lyric in the track
 					if(tp->lyric[ctr]->note == 0)
 					{	//If the lyric has no defined pitch
@@ -2138,7 +2148,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				double percent;
 
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				for(ctr = 0; ctr < tp->lyrics; ctr++)
 				{	//For each lyric in the track
 					if(tp->lyric[ctr]->note == EOF_LYRIC_PERCUSSION)
 					{	//If the lyric is percussion
@@ -2210,7 +2220,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				double percent;
 
-				for(ctr = 1; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				for(ctr = 1; ctr < tp->lyrics; ctr++)
 				{	//For each lyric in the track after the first
 					if(tp->lyric[ctr]->text[0] == '+')
 					{	//If the lyric's text begins with a + sign
@@ -2542,7 +2552,7 @@ int eof_read_macro_gem_designations(char *string, unsigned char *bitmask, unsign
 void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 {
 	char buffer[TEXT_PANEL_BUFFER_SIZE+1], buffer2[TEXT_PANEL_BUFFER_SIZE+1];
-	unsigned long src_index, dst_index;
+	unsigned long src_index, dst_index, linectr = 1;
 	int retval;
 
 	if(!eof_song_loaded || !eof_song)	//If a project isn't loaded
@@ -2550,10 +2560,18 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	if(!panel || !panel->window || !panel->text)	//If the provided panel isn't valid
 		return;			//Invalid parameter
 
+	if(eof_log_level > 2)
+	{	//If exhaustive logging is enabled
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRendering text panel for file \"%s\"", panel->filename);
+		eof_log(eof_log_string, 3);
+	}
+
+	eof_log("\t\tClearing window to gray", 3);
 	if(opaque)
 		clear_to_color(panel->window->screen, eof_color_gray);
 
 	//Initialize the panel array
+	eof_log("\t\tInitializing panel variables", 3);
 	panel->ypos = 0;
 	panel->xpos = 2;
 	panel->color = eof_color_white;
@@ -2565,6 +2583,12 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	panel->endline = 0;
 	panel->endpanel = 0;
 
+	if(eof_log_level > 2)
+	{	//If exhaustive logging is enabled
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text beginning with line:  %.20s", panel->text);
+		eof_log(eof_log_string, 3);
+	}
+
 	//Parse the contents of the buffered file one line at a time and print each to the screen
 	src_index = dst_index = 0;	//Reset these indexes
 	while(panel->text[src_index] != '\0')
@@ -2574,6 +2598,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		if(dst_index >= TEXT_PANEL_BUFFER_SIZE)
 		{	//If the output buffer is full
 			buffer[TEXT_PANEL_BUFFER_SIZE] = '\0';	//NULL terminate the buffer at its last byte
+			eof_log("\t\t\tBuffer full", 3);
 			return;
 		}
 		if((thischar == '\r') && (panel->text[src_index] == '\n'))
@@ -2583,16 +2608,19 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 			if(!retval)
 			{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
 				eof_enable_notes_panel = 0;
+				eof_log("\t\t\tMacro expansion error", 3);
 				return;
 			}
 			if(panel->allowempty || panel->contentprinted || (buffer2[0] != '\0'))
 			{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
 				//If content was printed earlier in the line and flushed to the Notes panel, allow the coordinates to reset to the next line
+				eof_log("\t\t\tPrinting line", 3);
 				textout_ex(panel->window->screen, font, buffer2, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
 				panel->allowempty = 0;	//Reset this condition, it has to be enabled per-line
 				panel->xpos = 2;			//Reset the x coordinate to the beginning of the line
 				panel->ypos +=12;
 				panel->contentprinted = 0;
+				eof_log("\t\t\tLine printed", 3);
 			}
 			if(panel->endpanel)
 			{	//If the printing of this panel was signaled to end
@@ -2601,11 +2629,12 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 
 			dst_index = 0;	//Reset the destination buffer index
 			src_index++;	//Seek past the line feed character in the source buffer
+			linectr++;		//Track the line number being processed for debugging purposes
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text line #%lu", linectr);
+			eof_log(eof_log_string, 3);
 		}
 		else
 		{
-			if(dst_index > TEXT_PANEL_BUFFER_SIZE)
-				return;	//Don't support lines longer than the buffer will hold
 			buffer[dst_index++] = thischar;	//Append the character to the destination buffer
 		}
 	}
@@ -2613,21 +2642,26 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	//Print any remaining content in the output buffer
 	if(dst_index && (dst_index < TEXT_PANEL_BUFFER_SIZE))
 	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
+		eof_log("\t\tProcessing remainder of buffer", 3);
 		buffer[dst_index] = '\0';	//NULL terminate the buffer
 		retval = eof_expand_notes_window_text(buffer, buffer2, TEXT_PANEL_BUFFER_SIZE, panel);
 		if(!retval)
 		{	//If the buffer's content was not successfully parsed to expand macros, disable the notes panel
 			eof_enable_notes_panel = 0;
+			eof_log("\t\t\tMacro expansion error", 3);
 			return;
 		}
 		if((retval == 2) || (buffer2[0] != '\0'))
 		{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
+			eof_log("\t\t\tPrinting line", 3);
 			textout_ex(panel->window->screen, font, buffer2, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
 			panel->ypos +=12;
+			eof_log("\t\t\tLine printed", 3);
 		}
 	}
 
 	//Draw a border around the edge of the notes panel
+	eof_log("\t\tPrinting completed.  Rendering panel border", 3);
 	if(opaque)
 	{	//But only if this panel wasn't meant to obscure whatever it's drawn on top of
 		rect(panel->window->screen, 0, 0, panel->window->w - 1, panel->window->h - 1, eof_color_dark_silver);
@@ -2635,6 +2669,8 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		hline(panel->window->screen, 1, panel->window->h - 2, panel->window->w - 2, eof_color_white);
 		vline(panel->window->screen, panel->window->w - 2, 1, panel->window->h - 2, eof_color_white);
 	}
+
+	eof_log("\t\tText panel render complete.", 3);
 }
 
 unsigned long eof_count_num_notes_with_gem_count(unsigned long gemcount)

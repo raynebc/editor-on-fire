@@ -145,7 +145,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 	{
 		return NULL;
 	}
-//	eof_log_level &= ~2;	//Disable verbose logging
 	chart = ImportFeedback(fn, &err);
 	if(chart == NULL)
 	{	//Import failed
@@ -856,7 +855,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
 	eof_log("\tFeedback import completed", 1);
-//	eof_log_level |= 2;	//Enable verbose logging
+
 	return sp;
 }
 

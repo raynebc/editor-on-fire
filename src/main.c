@@ -1130,7 +1130,7 @@ int eof_note_is_hopo(unsigned long cnote)
 	double bpm;
 	double scale;	//Scales the proximity threshold for the given beat's tempo
 
-	eof_log("eof_note_is_hopo() entered", 2);
+	eof_log("eof_note_is_hopo() entered", 3);
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		return 0;	//Only guitar/bass tracks can have HOPO notes
@@ -3441,9 +3441,12 @@ void eof_render(void)
 {
 //	eof_log("eof_render() entered");
 
+	eof_log("eof_render() entered.", 3);
+
 	/* don't draw if window is out of focus */
 	if(!eof_has_focus)
 	{	//If EOF is not in the foreground
+		eof_log("\tEOF is in background, ending render.", 3);
 		if(eof_music_paused && !eof_music_catalog_playback)
 		{	//If neither the chart nor the catalog are playing (depending on user preference, playback is allowed when EOF is not in the foreground)
 			return;
@@ -3451,6 +3454,7 @@ void eof_render(void)
 	}
 	if(eof_song_loaded)
 	{	//If a project is loaded
+		eof_log("\tProject is loaded.", 3);
 		if(eof_window_title_dirty)
 		{	//If the window title needs to be redrawn
 			eof_fix_window_title();
@@ -3469,12 +3473,15 @@ void eof_render(void)
 		}
 		if(!eof_beat_stats_cached)
 		{	//If the cached beat statistics are not current
+			eof_log("\tRebuilding beat stats.", 3);
 			eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild them (from the perspective of the specified track)
 		}
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render the info window yet, it will just be overwritten by the 3D window
+			eof_log("\tRendering Information panel.", 3);
 			eof_render_info_window();	//Otherwise render the info window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
 		}
+		eof_log("\tRendering 3D preview.", 3);
 		eof_render_3d_window();
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render these windows
@@ -3485,6 +3492,7 @@ void eof_render(void)
 	}
 	else
 	{	//If no project is loaded, just draw a blank screen and the menu
+		eof_log("\tProject is not loaded.", 3);
 		clear_to_color(eof_screen, eof_color_gray);
 		if(eof_screen_zoom)
 		{	//If x2 zoom is enabled, stretch blit the menu
@@ -3496,13 +3504,17 @@ void eof_render(void)
 		}
 	}
 
+	eof_log("\tSub-windows rendered", 3);
+
 	if(eof_cursor_visible && eof_soft_cursor)
 	{	//If rendering the software mouse cursor, do so at the actual screen coordinates
+		eof_log("\tRendering software cursor.", 3);
 		draw_sprite(eof_screen, mouse_sprite, mouse_x - 1, mouse_y - 1);
 	}
 
 	if(eof_full_screen_3d && eof_song_loaded)
 	{	//If the user enabled full screen 3D view, scale it to fill the program window
+		eof_log("\tRendering full screen 3D preview.", 3);
 		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, 0, 0, eof_screen_width_default, eof_screen_height);
 		rectfill(eof_screen, EOF_SCREEN_PANEL_WIDTH * 2 + 1, 0, eof_screen->w - 1, eof_screen->h - 1, eof_color_gray);	//Erase the portion to the right of the scaled 3D preview (2 panel widths), in case the window width was increased, otherwise the normal sized 3D preview will be visible
 		eof_window_info->y = 0;	//Re-position the info window to the top left corner of EOF's program window
@@ -3523,6 +3535,7 @@ void eof_render(void)
 
 	if(!eof_disable_vsync)
 	{	//Wait for vsync unless this was disabled
+		eof_log("\tWaiting for vsync.", 3);
 		IdleUntilVSync();
 		vsync();
 		DoneVSync();
@@ -3532,6 +3545,7 @@ void eof_render(void)
 		//Blitting straight to screen causes flickery menus
 		//Drawing the menu half size and then stretching it to full size makes it unreadable, but that may be better than not rendering them at all
 		//The highest quality (and most memory wasteful) solution would require another large bitmap to render the x2 program window and then the x1 menus on top, which would then be blit to screen
+		eof_log("\tPerforming x2 blit.", 3);
 		if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
 		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
 			stretch_blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU_FULL]->w, eof_image[EOF_IMAGE_MENU_FULL]->h, 0, 0, eof_image[EOF_IMAGE_MENU_FULL]->w / 2, eof_image[EOF_IMAGE_MENU_FULL]->h / 2);
@@ -3544,8 +3558,11 @@ void eof_render(void)
 	}
 	else
 	{
+		eof_log("\tPerforming normal blit.", 3);
 		blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);	//Render the screen normally
 	}
+
+	eof_log("eof_render() completed.", 3);
 }
 
 static int work_around_fsel_bug = 0;
@@ -4803,7 +4820,7 @@ void eof_start_logging(void)
 		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
 		(void) replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
 		eof_log_fp = fopen(log_filename, "w");
-		eof_log_level |= 1;	//Set the logging enabled bit
+		eof_log_level = EOF_LOGGING_LEVEL;	//Enable logging at the defined level
 
 		if(eof_log_fp == NULL)
 		{
@@ -4838,15 +4855,15 @@ void eof_stop_logging(void)
 	{
 		(void) fclose(eof_log_fp);
 		eof_log_fp = NULL;
-		eof_log_level &= ~1;	//Disable the logging enabled bit
+		eof_log_level = 0;	//Disable logging
 	}
 }
 
 char eof_log_string[2048] = {0};
 void eof_log(const char *text, int level)
 {
-	if(text && eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
-	{	//If the log file is open, logging is enabled and the current logging level is high enough
+	if(text && eof_log_fp && (eof_log_level >= level))
+	{	//If the log file is open and the current logging level is high enough
 		if(fprintf(eof_log_fp, "%03u: %s\n", eof_log_id, text) > 0)	//Prefix the log text with this EOF instance's logging ID
 		{	//If the log line was successfully written
 			(void) fflush(eof_log_fp);	//Explicitly commit the write to disk
@@ -5768,14 +5785,17 @@ int eof_increase_display_width_to_panel_count(int prompt)
 
 			if(retval != 1)
 			{	//If the user declined to resize
+				eof_log("User declined window resize.  Disabling Notes panel.", 2);
 				eof_enable_notes_panel = 0;	//Disable the notes panel
 				return 1;
 			}
 		}
 
+		eof_log("Resizing window to fit Notes panel.", 2);
 		if(eof_set_display_mode(needed_width, eof_screen_height) != 1)
 		{	//If the program window couldn't be resized to the appropriate width, disable the non-default panels (info, 3d preview)
 			eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+			eof_log("Couldn't resize window.  Disabling Notes panel.", 2);
 			eof_enable_notes_panel = 0;		//Disable the notes panel
 			return 0;
 		}

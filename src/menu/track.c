@@ -4421,10 +4421,12 @@ int eof_menu_track_toggle_tech_view(void)
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 	if(tp->note == tp->technote)
 	{	//If tech view is already in effect for the active track
+		eof_log("Disabling tech view.", 2);
 		eof_menu_pro_guitar_track_disable_tech_view(tp);
 	}
 	else
 	{	//Otherwise put the tech note array into effect
+		eof_log("Enabling tech view.", 2);
 		eof_menu_pro_guitar_track_enable_tech_view(tp);
 	}
 	(void) eof_menu_edit_deselect_all();	//Clear the note selection

@@ -10,6 +10,8 @@
 #include "control.h"
 #include "editor.h"
 
+#define EOF_LOGGING_LEVEL 1
+	//Logging level 1 is normal logging, 2 is verbose logging, 3 is exhaustive logging
 #define EOF_VERSION_STRING "EOF v1.8RC12"
 #define EOF_COPYRIGHT_STRING "(c)2008-2018 T^3 Software."
 
@@ -692,7 +694,6 @@ void eof_log(const char *text, int level);
 	//If the log is open, writes the string to the log file, followed by a newline character, and flushes the I/O stream
 	//Level indicates the minimum level of logging that must be in effect to log the message (ie. 1 = on, 2 = verbose)
 	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions
-	//The logging verbosity can be altered by toggling bit 1, as bit 0 must be also set in order to log
 void eof_log_notes(EOF_SONG *sp, unsigned long track);
 	//Debug function that logs the position and length of each note in the specified track
 extern char eof_log_string[2048];	//A string reserved for use with eof_log()

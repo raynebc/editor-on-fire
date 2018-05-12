@@ -1066,6 +1066,8 @@ int eof_note_is_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned long no
 int eof_note_is_not_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note exists and is not on a grid snap position
 int eof_note_is_highlighted(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note has either the static or dynamic highlight flags set
 int eof_note_is_not_highlighted(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note exists and is not highlighted
+int eof_note_is_open_note(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note is an open strum (or in the case of a pro guitar note, none of the used strings having a defined fret value)
+int eof_note_is_not_open_note(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note is not determined by eof_note_is_open_note() to be an open note
 int eof_length_is_shorter_than(long length, long threshold);	//Returns nonzero if the length parameter is shorter than the threshold parameter
 int eof_length_is_longer_than(long length, long threshold);		//Returns nonzero if the length parameter is longer than the threshold parameter
 int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if both parameters are equal

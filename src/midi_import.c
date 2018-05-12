@@ -434,7 +434,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 	{
 		return 0;
 	}
-//	eof_log_level &= ~2;	//Disable verbose logging
 
 	if(!eof_disable_backups)
 	{	//If the user did not disable automatic backups
@@ -3645,7 +3644,6 @@ eof_log("\tThird pass complete", 1);
 eof_log("\tMIDI import complete", 1);
 //#endif
 
-//	eof_log_level |= 2;	//Enable verbose logging
 	return sp;
 }
 

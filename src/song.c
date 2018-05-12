@@ -276,7 +276,6 @@ void eof_destroy_song(EOF_SONG * sp)
 		eof_spectrogram_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
 	}
 
-// 	eof_log_level &= ~2;	//Disable verbose logging
 	for(ctr = sp->tracks; ctr > 0; ctr--)
 	{	//For each entry in the track array, empty and then free it
 		eof_song_empty_track(sp, ctr - 1);
@@ -309,7 +308,6 @@ void eof_destroy_song(EOF_SONG * sp)
 		eof_silence_loaded = 0;	//Reset this condition so that if another project is being loaded, its playback will be allowed to work if audio is present
 	}
 	free(sp);
-//	eof_log_level |= 2;	//Enable verbose logging
 }
 
 EOF_SONG * eof_load_song(const char * fn)
@@ -334,7 +332,7 @@ EOF_SONG * eof_load_song(const char * fn)
 		eof_log(eof_log_string, 1);
 		return 0;
 	}
-//	eof_log_level &= ~2;	//Disable verbose logging
+
 	(void) pack_fread(rheader, 16, fp);
 	if(!ustricmp(rheader, header))
 	{	//Current project format
@@ -423,7 +421,7 @@ EOF_SONG * eof_load_song(const char * fn)
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 
 	eof_log("\tProject loaded", 1);
-//	eof_log_level |= 2;	//Enable verbose logging
+
 	return sp;
 }
 
@@ -1056,6 +1054,8 @@ void eof_fixup_notes(EOF_SONG *sp)
 			eof_track_fixup_notes(sp, j, 1);
 		}
 	}
+
+ 	eof_log("eof_fixup_notes() completed", 2);
 }
 
 void eof_sort_notes(EOF_SONG *sp)
@@ -2530,7 +2530,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
 	unsigned long ctr;
 
- 	eof_log("eof_track_add_section() entered", 2);
+ 	eof_log("eof_track_add_section() entered", 3);
 
 	if((sp == NULL) || ((track != 0) && (track >= sp->tracks)))
 		return 0;	//Return error
@@ -3926,7 +3926,7 @@ void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_track_add_note() entered", 2);	//Only log this if verbose logging is on
+ 	eof_log("eof_track_add_note() entered", 3);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;
@@ -3954,7 +3954,7 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_track_delete_note() entered", 2);	//Only log this if verbose logging is on
+ 	eof_log("eof_track_delete_note() entered", 3);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
@@ -4821,7 +4821,8 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
- 	eof_log("eof_track_fixup_notes() entered", 2);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "eof_track_fixup_notes() entered for track %lu", track);
+	eof_log(eof_log_string, 2);
 
 	if((sp == NULL) || !track || (track >= sp->tracks) || !sp->tags)
 		return;
@@ -4852,6 +4853,7 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		if(sp->tags->highlight_arpeggios)
 			eof_song_highlight_arpeggios(sp, track);	//Re-create the arpeggio highlighting as appropriate
 	}
+	eof_log("\teof_track_fixup_notes() completed", 2);
 }
 
 void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp)
@@ -4901,7 +4903,7 @@ int eof_song_qsort_phrases_diff_timestamp(const void * e1, const void * e2)
 
 void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
 {
- 	eof_log("eof_pro_guitar_track_sort_fret_hand_positions() entered", 2);
+ 	eof_log("eof_pro_guitar_track_sort_fret_hand_positions() entered", 3);
 
 	if(tp)
 	{
@@ -4911,7 +4913,7 @@ void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
 
 void eof_pro_guitar_track_sort_arpeggios(EOF_PRO_GUITAR_TRACK* tp)
 {
- 	eof_log("eof_pro_guitar_track_sort_arpeggios() entered", 2);
+ 	eof_log("eof_pro_guitar_track_sort_arpeggios() entered", 3);
 
 	if(tp)
 	{
@@ -9404,6 +9406,36 @@ int eof_note_is_not_highlighted(EOF_SONG *sp, unsigned long track, unsigned long
 {
 	if(eof_get_note_note(sp, track, notenum) && !eof_note_is_highlighted(sp, track, notenum))
 	{	//If the note exists and is not highlighted
+		return 1;
+	}
+
+	return 0;
+}
+
+int eof_note_is_open_note(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(!sp || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If a pro guitar track is active
+		if(eof_pro_guitar_note_highest_fret(eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum], notenum) == 0)
+		{	//If no gems in this note had a fret value defined (open note)
+			return 1;
+		}
+	}
+	else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, notenum))
+	{	//If this is an open note in a legacy track
+		return 1;
+	}
+
+	return 0;
+}
+
+int eof_note_is_not_open_note(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(!eof_note_is_open_note(sp, track, notenum))
+	{	//If the specified note is not determined to be an open note
 		return 1;
 	}
 

@@ -175,7 +175,9 @@ int eof_toggle_display_zoom(void);
 int eof_menu_file_sonic_visualiser_import(void);
 	//Imports beat timings from a user specified Sonic Visualiser file
 
-void eof_rebuild_notes_window(void);		//Destroys and rebuilds the window for the notes panel at the appropriate coordinates depending on whether the Info panel is being rendered
+void eof_rebuild_notes_window(void);
+	//Destroys and rebuilds the window for the notes panel at the appropriate coordinates depending on whether the Info panel is being rendered
+	//If eof_notes_panel is initialized, its window pointer is set to the newly allocated Window, otherwise it must be manually set later
 int eof_display_notes_panel(void);			//Frees and reloads the notes.panel.txt file from memory appropriately, enables or disables the display of the notes panel
 int eof_menu_file_notes_panel_notes(void);			//Reloads the Notes panel with the built-in notes.panel.txt file
 int eof_menu_file_notes_panel_note_controls(void);	//Reloads the Notes panel with the built-in note_controls.panel.txt file

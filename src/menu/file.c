@@ -1228,6 +1228,8 @@ int eof_menu_file_preferences(void)
 	int retval, original_input_mode, original_eof_disable_info_panel = eof_disable_info_panel;
 	unsigned original_eof_min_note_distance = eof_min_note_distance, original_eof_chord_density_threshold = eof_chord_density_threshold;
 
+	eof_log("Preferences logic starting", 2);
+
 	if(eof_song_loaded)
 	{
 		if(!eof_music_paused)
@@ -1311,11 +1313,15 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;		//New notes are force strum
 	eof_preferences_dialog[57].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;	//Use FoF difficulty naming
 
+	eof_log("\tLaunching preferences dialog", 2);
+
 	do
 	{	//Run the dialog
 		retval = eof_popup_dialog(eof_preferences_dialog, 0);	//Run the dialog
 		if(retval == 1)
 		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
+			eof_log("\t\"OK\" clicked.  Applying changes if any.", 2);
+
 			if(eof_preferences_dialog[5].flags == D_SELECTED)
 			{	//User opted to display note names at top of 2D panel
 				eof_2d_render_top_option = 5;
@@ -1440,6 +1446,8 @@ int eof_menu_file_preferences(void)
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
+			eof_log("\t\"Default\" clicked.  Applying default settings.", 2);
+
 			eof_preferences_dialog[5].flags = D_SELECTED;			//Display note names at top of 2D panel
 			eof_preferences_dialog[6].flags = eof_preferences_dialog[7].flags = eof_preferences_dialog[8].flags = eof_preferences_dialog[9].flags = eof_preferences_dialog[10].flags = 0;
 			eof_preferences_dialog[11].flags = 0;					//Inverted notes
@@ -1487,6 +1495,9 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[57].flags = 0;					//Use FoF difficulty naming
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
+
+	eof_log("\tPreferences dialog closed.  Cleaning up.", 2);
+
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -1497,11 +1508,14 @@ int eof_menu_file_preferences(void)
 	}
 	if(original_eof_disable_info_panel != eof_disable_info_panel)
 	{	//If the hiding of the information panel was changed
+		eof_log("\tToggling info panel", 2);
 		eof_disable_info_panel = 1 - eof_disable_info_panel;	//Toggle this because the function call below will toggle it again
 		eof_display_info_panel();	//Create/destroy the information panel instance accordingly
 	}
 	(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient
-	eof_rebuild_notes_window();	//Recreate the notes panel window
+	eof_rebuild_notes_window();					//Recreate the notes panel window to fill all available space in the bottom half of the program window
+
+	eof_log("Preferences logic exiting.", 2);
 	return 1;
 }
 
@@ -3666,8 +3680,6 @@ int eof_save_helper(char *destfilename, char silent)
 	if(!eof_song_loaded || !eof_song)
 		return 2;	//Return failure:  Invalid parameters
 
-//	eof_log_level &= ~2;	//Disable verbose logging
-
 	/* sort notes so they are in order of position */
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
@@ -4086,7 +4098,6 @@ int eof_save_helper(char *destfilename, char silent)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 
-//	eof_log_level |= 2;	//Enable verbose logging
 	eof_log("\tSave completed", 1);
 
 	return 0;	//Return success
@@ -5860,6 +5871,12 @@ void eof_rebuild_notes_window(void)
 		allegro_message("Unable to create notes window!");
 		eof_enable_notes_panel = 0;
 	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNew notes panel window instance:  0x%p", eof_window_notes);
+	eof_log(eof_log_string, 1);
+	if(eof_notes_panel)
+	{	//If the Notes panel instance exists
+		eof_notes_panel->window = eof_window_notes;	//Update the Notes panel instance with the new window
+	}
 }
 
 int eof_display_notes_panel_logic(int builtin)
@@ -5867,6 +5884,8 @@ int eof_display_notes_panel_logic(int builtin)
 	eof_enable_notes_panel = 1 - eof_enable_notes_panel;	//Toggle the notes panel on/off
 	char *default_target = "notes.panel.txt";	//Unless eof_current_notes_panel_path is defined, the default notes panel file will be displayed
 	char *effective_target = eof_current_notes_panel_path;	//Unless the target note panel is missing, it will be the file opened
+
+	eof_log("\tLoading Notes panel file.", 2);
 
 	if(eof_notes_panel)
 	{	//If a notes panel instance already exists
@@ -5886,10 +5905,6 @@ int eof_display_notes_panel_logic(int builtin)
 				builtin = 1;						//And recovered that file from eof.dat if necessary
 			}
 		}
-		if(eof_enable_notes_panel)
-		{	//If the program window is wide enough
-			eof_rebuild_notes_window();
-		}
 		if(eof_validate_temp_folder())
 		{	//Ensure the correct working directory and presence of the temporary folder
 			eof_log("\tCould not validate working directory and temp folder", 1);
@@ -5905,7 +5920,11 @@ int eof_display_notes_panel_logic(int builtin)
 			eof_enable_notes_panel = 0;
 			return 1;
 		}
-		eof_notes_panel->window = eof_window_notes;	//Associate the notes window with this panel instance
+		if(eof_enable_notes_panel)
+		{	//If the program window is wide enough
+			eof_log("\tRebuilding notes window.", 2);
+			eof_rebuild_notes_window();
+		}
 	}
 
 	return 1;
@@ -5918,6 +5937,8 @@ int eof_display_notes_panel(void)
 
 int eof_menu_file_notes_panel_notes(void)
 {
+	eof_log("Switching Notes Panel to default Notes.", 1);
+
 	if(eof_validate_temp_folder())
 	{	//Ensure the correct working directory and presence of the temporary folder
 		eof_log("\tCould not validate working directory and temp folder", 1);
@@ -5937,6 +5958,8 @@ int eof_menu_file_notes_panel_notes(void)
 
 int eof_menu_file_notes_panel_note_controls(void)
 {
+	eof_log("Switching Notes Panel to Note Controls.", 1);
+
 	if(eof_validate_temp_folder())
 	{	//Ensure the correct working directory and presence of the temporary folder
 		eof_log("\tCould not validate working directory and temp folder", 1);
@@ -5956,6 +5979,8 @@ int eof_menu_file_notes_panel_note_controls(void)
 
 int eof_menu_file_notes_panel_information(void)
 {
+	eof_log("Switching Notes Panel to Information panel.", 1);
+
 	if(eof_validate_temp_folder())
 	{	//Ensure the correct working directory and presence of the temporary folder
 		eof_log("\tCould not validate working directory and temp folder", 1);
@@ -5975,6 +6000,8 @@ int eof_menu_file_notes_panel_information(void)
 
 int eof_menu_file_notes_panel_note_counts(void)
 {
+	eof_log("Switching Notes Panel to Note Counts.", 1);
+
 	if(eof_validate_temp_folder())
 	{	//Ensure the correct working directory and presence of the temporary folder
 		eof_log("\tCould not validate working directory and temp folder", 1);
@@ -5994,6 +6021,8 @@ int eof_menu_file_notes_panel_note_counts(void)
 
 int eof_menu_file_notes_panel_user(void)
 {
+	eof_log("Switching Notes Panel to user-defined file.", 1);
+
 	if((eof_last_browsed_notes_panel_path[0] == '\0') || !exists(eof_last_browsed_notes_panel_path))
 		return eof_menu_file_notes_panel_browse();	//If the last browsed panel file path is undefined or is no longer valid, have the user browse for a file
 

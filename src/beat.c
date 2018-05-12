@@ -443,7 +443,7 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 {
- 	eof_log("eof_song_add_beat() entered", 2);
+ 	eof_log("eof_song_add_beat() entered", 3);
 
  	if(sp == NULL)
 		return NULL;
