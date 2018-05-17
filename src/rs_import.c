@@ -830,7 +830,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	{	//Until there was an error reading from the file or end of file is reached
 		#ifdef RS_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
-			eof_log(eof_log_string, 1);
+			eof_log(eof_log_string, 2);
 		#endif
 
 		//Separate the line into the opening XML tag (buffer) and the content between the opening and closing tag (buffer2)

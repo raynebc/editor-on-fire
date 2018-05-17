@@ -227,6 +227,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  210, 214, 16,  2,   23,  0,    0,      1,   0,   "Warn about missing bass FHPs",NULL, NULL },
 	{ d_agup_check_proc, 248, 210, 202, 16,  2,   23,  0,    0,      1,   0,   "Abridged Rocksmith 2 export",NULL, NULL },
 	{ d_agup_check_proc, 16,  225, 220, 16,  2,   23,  0,    0,      1,   0,   "Allow RS2 extended ASCII lyrics",NULL, NULL },
+	{ d_agup_check_proc, 248, 225, 224, 16,  2,   23,  0,    0,      1,   0,   "Don't warn about INI differences",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -577,6 +578,11 @@ int eof_menu_file_load(void)
 	eof_clear_input();
 	if(returnedfn)
 	{	//If the user selected a file
+		int warn = 1;	//By default, warn about differences in the INI file
+
+		if(eof_disable_ini_difference_warnings)
+			warn = 0;	//Unless the user enabled the preference to disable the warnings
+
 		/* free the current project */
 		if(eof_song)
 		{
@@ -600,7 +606,7 @@ int eof_menu_file_load(void)
 
 		/* check song.ini and prompt user to load any external edits */
 		(void) replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
-		(void) eof_import_ini(eof_song, temp_filename, 1);	//Read song.ini and prompt to replace values of existing settings in the project if they are different
+		(void) eof_import_ini(eof_song, temp_filename, warn);	//Read song.ini and prompt to replace values of existing settings in the project if they are different (unless user preference suppresses the prompts)
 
 		/* attempt to load the OGG profile OGG */
 		(void) replace_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
@@ -1557,6 +1563,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[21].flags = eof_warn_missing_bass_fhps ? D_SELECTED : 0;			//Warn about missing bass FHPs
 	eof_import_export_preferences_dialog[22].flags = eof_abridged_rs2_export ? D_SELECTED : 0;				//Abridged Rocksmith 2 export
 	eof_import_export_preferences_dialog[23].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;	//Allow RS2 extended ASCII lyrics
+	eof_import_export_preferences_dialog[24].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;	//Don't warn about INI differences
 
 	do
 	{	//Run the dialog
@@ -1583,6 +1590,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_warn_missing_bass_fhps = (eof_import_export_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
 			eof_abridged_rs2_export = (eof_import_export_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
 			eof_rs2_export_extended_ascii_lyrics = (eof_import_export_preferences_dialog[23].flags == D_SELECTED ? 1 : 0);
+			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[24].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1606,6 +1614,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[21].flags = D_SELECTED;	//Warn about missing bass FHPs
 			eof_import_export_preferences_dialog[22].flags = D_SELECTED;	//Abridged Rocksmith 2 export
 			eof_import_export_preferences_dialog[23].flags = D_SELECTED;	//Allow RS2 extended ASCII lyrics
+			eof_import_export_preferences_dialog[24].flags = 0;				//Don't warn about INI differences
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -5371,7 +5380,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 	{	//Until there was an error reading from the file or end of file is reached
 		#ifdef RS_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
-			eof_log(eof_log_string, 1);
+			eof_log(eof_log_string, 2);
 		#endif
 
 		//Separate the line into the opening XML tag (buffer) and the content between the opening and closing tag (buffer2)

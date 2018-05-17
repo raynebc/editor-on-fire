@@ -706,6 +706,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		{	//If this is the drum track
 			continue;	//Skip it, lane 6 for the drum track indicates a sixth lane and not HOPO
 		}
+		eof_track_sort_notes(sp, ctr);	//Sort the notes so the logic can assume they're in chronological order
 		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 		{	//For each note in the track
 			unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);

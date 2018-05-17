@@ -144,7 +144,7 @@ DIALOG eof_events_dialog[] =
 char eof_all_events_dialog_string[20] = {0};	//The title string for the All Events dialog
 DIALOG eof_all_events_dialog[] =
 {
-	/* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
+	/* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
 	{ d_agup_window_proc,         0,   48,  500, 266, 2,   23,  0,    0,      0,   0,   eof_all_events_dialog_string, NULL, NULL },
 	{ d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list_all,  NULL, NULL },
 	{ d_agup_button_proc,         12,  275, 70,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",                NULL, NULL },
@@ -155,9 +155,9 @@ DIALOG eof_all_events_dialog[] =
 	{ eof_all_events_radio_proc,  340, 259, 152, 15,  2,   23,  0,    0,      0,   0,   "Sections (RS phrases)",(void *)7,    NULL },
 	{ eof_all_events_radio_proc,  340, 275, 152, 15,  2,   23,  0,    0,      0,   0,   "RS sections",          (void *)8,    NULL },
 	{ eof_all_events_radio_proc,  340, 291, 152, 15,  2,   23,  0,    0,      0,   0,   "RS events",            (void *)9,    NULL },
-	{ d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,                NULL, NULL },	//Used to display "A stored MIDI track will override chart-wide text events" warning if applicable
-	{ d_agup_button_proc,         12,  243, 70,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",                 NULL, NULL },
-	{ d_agup_button_proc,         95,  243, 70,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",                NULL, NULL },
+	{ d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,               NULL, NULL },	//Used to display "A stored MIDI track will override chart-wide text events" warning if applicable
+	{ d_agup_button_proc,         12,  243, 70,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",                NULL, NULL },
+	{ d_agup_button_proc,         95,  243, 70,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",               NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 

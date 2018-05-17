@@ -2554,16 +2554,9 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_use_key();
 				}
-			}
-			else
-			{	//CTRL is not held
-				if(KEY_EITHER_SHIFT)
-				{	//SHIFT is held
-					if(eof_count_selected_notes(NULL))
-					{	//If any notes in the active track difficulty are selected
-						(void) eof_menu_edit_deselect_conditional();
-					}
-					eof_shift_used = 1;	//Track that the SHIFT key was used
+				else
+				{	//Only CTRL is held
+					(void) eof_menu_edit_deselect_all();
 					eof_use_key();
 				}
 			}
@@ -5862,6 +5855,13 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	/* draw fretboard area */
 	rectfill(window->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, window->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
 
+	/* draw start/end point marking */
+	if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
+	{	//If both the start and end points are defined with different timestamps
+		if((eof_song->tags->end_point >= start) && (eof_song->tags->start_point <= stop))	//If the start/end marker would render between the left and right edges of the piano roll, render a light gray rectangle beneath the beat markers
+			rectfill(window->screen, lpos + eof_song->tags->start_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET - 4, lpos + eof_song->tags->end_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, eof_color_light_red);
+	}
+
 	/* draw solo sections */
 	if(eof_selected_track != EOF_TRACK_VOCALS)
 	{	//If the vocal track is not active
@@ -6034,13 +6034,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	{	//If there is a seek selection
 		if((eof_seek_selection_end >= start) && (eof_seek_selection_start <= stop))	//If the selection would render between the left and right edges of the piano roll, render a red rectangle from the top most lane to the bottom most lane
 			rectfill(window->screen, lpos + eof_seek_selection_start / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0], lpos + eof_seek_selection_end / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_red);
-	}
-
-	/* draw start/end point marking */
-	if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
-	{	//If both the start and end points are defined with different timestamps
-		if((eof_song->tags->end_point >= start) && (eof_song->tags->start_point <= stop))	//If the start/end marker would render between the left and right edges of the piano roll, render a light gray rectangle beneath the beat markers
-			rectfill(window->screen, lpos + eof_song->tags->start_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET - 4, lpos + eof_song->tags->end_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, eof_color_light_red);
 	}
 
 	/* draw trill and tremolo sections */

@@ -142,6 +142,7 @@ int         eof_write_rs2_files = 0;			//If nonzero, extra files are written dur
 int         eof_abridged_rs2_export = 1;		//If nonzero, default XML attributes are omitted from RS2 export
 int         eof_abridged_rs2_export_warning_suppressed = 0;	//Set to nonzero if the user has suppressed the warning that abridged RS2 files require a version of the toolkit >= 2.8.2.0
 int         eof_rs2_export_extended_ascii_lyrics = 0;	//If nonzero, a larger set of text characters are allowed to export to RS2 lyrics
+int         eof_disable_ini_difference_warnings = 0;	//If nonzero, warnings will be given during project load if there are tags in song.ini that don't match the contents of the EOF project
 int         eof_write_bf_files = 0;				//If nonzero, an extra XML file is written during save that is used for authoring Bandfuse customs
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
@@ -440,7 +441,7 @@ int eof_color_highlight2;		//The color used for dynamic highlighting
 
 void eof_show_mouse(BITMAP * bp)
 {
-	eof_log("eof_show_mouse() entered", 2);
+	eof_log("eof_show_mouse() entered", 3);
 
 	if(bp && eof_soft_cursor)
 	{
@@ -535,7 +536,7 @@ long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double o
 
 void eof_reset_lyric_preview_lines(void)
 {
-	eof_log("eof_reset_lyric_preview_lines() entered", 2);
+	eof_log("eof_reset_lyric_preview_lines() entered", 3);
 
 	eof_preview_line[0] = 0;
 	eof_preview_line[1] = 0;
@@ -4265,6 +4266,11 @@ int eof_initialize(int argc, char * argv[])
 		{	//If the argument is not one of EOF's native command line parameters and no file is loaded yet
 			if(!ustricmp(get_extension(argv[i]), "eof"))
 			{
+				int warn = 1;	//By default, warn about differences in the INI file
+
+				if(eof_disable_ini_difference_warnings)
+					warn = 0;	//Unless the user enabled the preference to disable the warnings
+
 				/* load the specified project */
 				eof_song = eof_load_song(argv[i]);
 				if(!eof_song)
@@ -4275,7 +4281,7 @@ int eof_initialize(int argc, char * argv[])
 
 				/* check song.ini and prompt user to load any external edits */
 				(void) replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
-				(void) eof_import_ini(eof_song, temp_filename, 1);	//Read song.ini and prompt to replace values of existing settings in the project if they are different
+				(void) eof_import_ini(eof_song, temp_filename, warn);	//Read song.ini and prompt to replace values of existing settings in the project if they are different (unless user preference suppresses the prompts)
 
 				/* attempt to load the OGG profile OGG */
 				(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);

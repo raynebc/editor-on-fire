@@ -2018,6 +2018,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			continue;	//If this note would not export as a chord, skip it
 		if(!(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) || (tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY))
 			continue;	//If this chord doesn't have split status or if it has chordify status, skip it
+		if(tp->note[ctr]->tflags & EOF_NOTE_TFLAG_IGNORE)
+			continue;	//If this chord is being ignored (ie. it was already broken up by the linknext handling logic above), skip it
 
 		for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 		{	//For each of the 6 supported strings
