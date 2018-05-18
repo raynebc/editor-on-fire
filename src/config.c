@@ -150,7 +150,16 @@ void eof_load_config(char * fn)
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	eof_click_changes_dialog_focus = get_config_int("preferences", "eof_click_changes_dialog_focus", 1);
 	eof_stop_playback_leave_focus = get_config_int("preferences", "eof_stop_playback_leave_focus", 1);
-	enable_logging = get_config_int("preferences", "enable_logging", 1);
+	eof_enable_logging = get_config_int("preferences", "eof_enable_logging", 1);
+	eof_log_level = get_config_int("preferences", "eof_log_level", 1);
+	if(eof_enable_logging && !eof_log_level)
+	{	//If logging is enabled, but the logging level was zero for some reason
+		eof_log_level = 1;
+	}
+	if((eof_log_level < 0) || (eof_log_level > 3))
+	{	//If the logging level is invalid
+		eof_log_level = 1;
+	}
 	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 5);
 	if((eof_2d_render_top_option < 5) || (eof_2d_render_top_option > 10))
 	{	//If eof_2d_render_top_option is invalid
@@ -396,7 +405,8 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_inverted_chords_slash", eof_inverted_chords_slash);
 	set_config_int("preferences", "eof_click_changes_dialog_focus", eof_click_changes_dialog_focus);
 	set_config_int("preferences", "eof_stop_playback_leave_focus", eof_stop_playback_leave_focus);
-	set_config_int("preferences", "enable_logging", enable_logging);
+	set_config_int("preferences", "eof_enable_logging", eof_enable_logging);
+	set_config_int("preferences", "eof_log_level", eof_log_level);
 	set_config_int("preferences", "eof_color_set", eof_color_set);
 	set_config_int("preferences", "eof_2d_render_top_option", eof_2d_render_top_option);
 	set_config_int("preferences", "eof_add_new_notes_to_selection", eof_add_new_notes_to_selection);

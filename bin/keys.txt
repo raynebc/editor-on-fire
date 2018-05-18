@@ -324,6 +324,10 @@ Miscellaneous Controls:
 
         Increase/decrease the AV delay.
 
+    Ctrl + +/- (Numpad):
+
+        Increase/decrease the 3D preview speed.
+
     Ctrl+I:
 
         Toggle the rendering of the Info panel on/off.

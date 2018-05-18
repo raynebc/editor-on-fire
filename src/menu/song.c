@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <ctype.h>	//For isdigit()
 #include <math.h>	//For sqrt()
 #include <string.h>	//For memcpy()
 #include "../agup/agup.h"
@@ -57,21 +58,28 @@ char eof_seek_menu_prev_anchor_text1[] = "Previous Anchor\t" CTRL_NAME "+Shift+P
 char eof_seek_menu_next_anchor_text1[] = "Next Anchor\t" CTRL_NAME "+Shift+PGDN";
 char eof_seek_menu_prev_anchor_text2[] = "Previous Anchor";
 char eof_seek_menu_next_anchor_text2[] = "Next Anchor";
+
+MENU eof_song_seek_note_menu[] =
+{
+	{"&First\t" CTRL_NAME "+Home", eof_menu_song_seek_first_note, NULL, 0, NULL},
+	{"&Last\t" CTRL_NAME "+End", eof_menu_song_seek_last_note, NULL, 0, NULL},
+	{"&Previous\tShift+PGUP", eof_menu_song_seek_previous_note, NULL, 0, NULL},
+	{"&Next\tShift+PGDN", eof_menu_song_seek_next_note, NULL, 0, NULL},
+	{"Pr&Evious h.l.\t" CTRL_NAME "+Shift+Y", eof_menu_song_seek_previous_highlighted_note, NULL, 0, NULL},
+	{"Ne&Xt h.l.\tShift+Y", eof_menu_song_seek_next_highlighted_note, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_song_seek_menu[] =
 {
 	{"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
+	{"&Note", NULL, eof_song_seek_note_menu, 0, NULL},
 	{"Start\tHome", eof_menu_song_seek_start, NULL, 0, NULL},
 	{"End of audio\tEnd", eof_menu_song_seek_end, NULL, 0, NULL},
 	{"End of chart\t" CTRL_NAME "+Shift+End", eof_menu_song_seek_chart_end, NULL, 0, NULL},
 	{"&Catalog entry", eof_menu_song_seek_catalog_entry, NULL, 0, NULL},
 	{"Rewind\tR", eof_menu_song_seek_rewind, NULL, 0, NULL},
-	{"", NULL, NULL, 0, NULL},
-	{"First Note\t" CTRL_NAME "+Home", eof_menu_song_seek_first_note, NULL, 0, NULL},
-	{"Last Note\t" CTRL_NAME "+End", eof_menu_song_seek_last_note, NULL, 0, NULL},
-	{"Previous Note\tShift+PGUP", eof_menu_song_seek_previous_note, NULL, 0, NULL},
-	{"Next Note\tShift+PGDN", eof_menu_song_seek_next_note, NULL, 0, NULL},
-	{"Previous h.l. note\t" CTRL_NAME "+Shift+Y", eof_menu_song_seek_previous_highlighted_note, NULL, 0, NULL},
-	{"Next h.l. note\tShift+Y", eof_menu_song_seek_next_highlighted_note, NULL, 0, NULL},
+	{"&Timestamp", eof_menu_song_seek_timestamp, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Previous Screen\t" CTRL_NAME "+PGUP", eof_menu_song_seek_previous_screen, NULL, 0, NULL},
 	{"Next Screen\t" CTRL_NAME "+PGDN", eof_menu_song_seek_next_screen, NULL, 0, NULL},
@@ -254,20 +262,24 @@ DIALOG eof_song_properties_dialog[] =
 
 void eof_prepare_song_menu(void)
 {
-	unsigned long i, tracknum;
+	unsigned long i;
 	long firstnote = -1;
 	long lastnote = -1;
-	long noted[4] = {0};
 	int seekp = 0, seekph = 0, seekn = 0, seeknh = 0;
+	unsigned long totalnotecount = 0;
 
 	if(eof_song && eof_song_loaded)
 	{//If a chart is loaded
 		char bmcount = 0;
 
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
-			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
+			unsigned char type;
+			unsigned long pos;
+
+			type = eof_get_note_type(eof_song, eof_selected_track, i);	//Simplify
+			pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+			if(type == eof_note_type)
 			{
 				if(firstnote < 0)
 				{
@@ -275,11 +287,7 @@ void eof_prepare_song_menu(void)
 				}
 				lastnote = i;
 			}
-			if(eof_get_note_type(eof_song, eof_selected_track, i) < 4)
-			{
-				noted[(unsigned)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;	//Type cast to avoid a nag warning about indexing with a char type
-			}
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
+			if((type == eof_note_type) && (pos < ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 			{	//If the note is earlier than the seek position
 				seekp = 1;
 				if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
@@ -287,7 +295,7 @@ void eof_prepare_song_menu(void)
 					seekph = 1;
 				}
 			}
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
+			if((type == eof_note_type) && (pos > ((eof_music_pos >= eof_av_delay) ? eof_music_pos - eof_av_delay : 0)))
 			{	//If the note is later than the seek position
 				seekn = 1;
 				if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
@@ -318,25 +326,32 @@ void eof_prepare_song_menu(void)
 		/* seek start */
 		if(eof_music_pos == eof_av_delay)
 		{	//If the seek position is already at the start of the chart
-			eof_song_seek_menu[1].flags = D_DISABLED;	//Seek start
-			eof_song_seek_menu[20].flags = D_DISABLED;	//Previous beat
+			eof_song_seek_menu[2].flags = D_DISABLED;	//Seek start
+			eof_song_seek_menu[15].flags = D_DISABLED;	//Previous beat
 		}
 		else
 		{
-			eof_song_seek_menu[1].flags = 0;
-			eof_song_seek_menu[20].flags = 0;
+			eof_song_seek_menu[2].flags = 0;
+			eof_song_seek_menu[15].flags = 0;
 		}
 
 		/* seek end */
 		if(eof_music_pos >= eof_music_length - 1)
 		{	//If the seek position is already at the end of the chart
-			eof_song_seek_menu[2].flags = D_DISABLED;	//Seek end
-			eof_song_seek_menu[21].flags = D_DISABLED;	//Next beat
+			eof_song_seek_menu[3].flags = D_DISABLED;	//Seek end
 		}
 		else
 		{
-			eof_song_seek_menu[2].flags = 0;
-			eof_song_seek_menu[21].flags = 0;
+			eof_song_seek_menu[3].flags = 0;
+		}
+
+		if(eof_music_pos - eof_av_delay < eof_song->beat[eof_song->beats - 1]->pos)
+		{	//If the seek position is before the last beat marker
+			eof_song_seek_menu[16].flags = 0;	//Next beat
+		}
+		else
+		{
+			eof_song_seek_menu[16].flags = D_DISABLED;	//Next beat
 		}
 
 		/* show catalog */
@@ -347,160 +362,130 @@ void eof_prepare_song_menu(void)
 			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
 			eof_catalog_menu[2].flags = 0;		//Enable "Edit name"
 			eof_catalog_menu[3].flags = 0;		//Enable "Edit timing"
-			eof_song_seek_menu[4].flags = 0;	//Enable Seek>Catalog entry
+			eof_song_seek_menu[5].flags = 0;	//Enable Seek>Catalog entry
 		}
 		else
 		{
 			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
 			eof_catalog_menu[2].flags = D_DISABLED;	//Disable "Edit name"
 			eof_catalog_menu[3].flags = D_DISABLED;	//Disable "Edit timing"
-			eof_song_seek_menu[4].flags = D_DISABLED;	//Disable Seek>Catalog entry
+			eof_song_seek_menu[5].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
 		/* rewind */
 		if(eof_music_pos == eof_music_rewind_pos)
 		{
-			eof_song_seek_menu[5].flags = D_DISABLED;	//Rewind
+			eof_song_seek_menu[6].flags = D_DISABLED;	//Rewind
 		}
 		else
 		{
-			eof_song_seek_menu[5].flags = 0;
+			eof_song_seek_menu[6].flags = 0;
 		}
-		if(eof_vocals_selected)
-		{
-			if(eof_song->vocal_track[tracknum]->lyrics)
-			{
-				/* seek first note */
-				if(eof_song->vocal_track[tracknum]->lyric[0]->pos == eof_music_pos - eof_av_delay)
-				{
-					eof_song_seek_menu[7].flags = D_DISABLED;	//First note
-				}
-				else
-				{
-					eof_song_seek_menu[7].flags = 0;
-				}
 
-				/* seek last note */
-				if(eof_song->vocal_track[tracknum]->lyric[eof_song->vocal_track[tracknum]->lyrics - 1]->pos == eof_music_pos - eof_av_delay)
-				{
-					eof_song_seek_menu[8].flags = D_DISABLED;	//Last note
-				}
-				else
-				{
-					eof_song_seek_menu[8].flags = 0;
-				}
+		(void) eof_count_selected_notes(&totalnotecount);	//Count the number of notes in the active track difficulty
+
+		if(totalnotecount)
+		{	//If there are any notes in the active track difficulty
+			/* seek first note */
+			if((firstnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, firstnote) == eof_music_pos - eof_av_delay))
+			{	//If the seek position is already at the first note
+				eof_song_seek_note_menu[0].flags = D_DISABLED;	//Note>First note
 			}
 			else
 			{
-				eof_song_seek_menu[7].flags = D_DISABLED;
-				eof_song_seek_menu[8].flags = D_DISABLED;
+				eof_song_seek_note_menu[0].flags = 0;
+			}
+
+			/* seek last note */
+			if((lastnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, lastnote) == eof_music_pos - eof_av_delay))
+			{
+				eof_song_seek_note_menu[1].flags = D_DISABLED;	//Note>Last note
+			}
+			else
+			{
+				eof_song_seek_note_menu[1].flags = 0;
 			}
 		}
 		else
 		{
-			if(noted[eof_note_type])
-			{
-				/* seek first note */
-				if((firstnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, firstnote) == eof_music_pos - eof_av_delay))
-				{
-					eof_song_seek_menu[7].flags = D_DISABLED;	//First note
-				}
-				else
-				{
-					eof_song_seek_menu[7].flags = 0;
-				}
-
-				/* seek last note */
-				if((lastnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, lastnote) == eof_music_pos - eof_av_delay))
-				{
-					eof_song_seek_menu[8].flags = D_DISABLED;	//Last note
-				}
-				else
-				{
-					eof_song_seek_menu[8].flags = 0;
-				}
-			}
-			else
-			{
-				eof_song_seek_menu[7].flags = D_DISABLED;
-				eof_song_seek_menu[8].flags = D_DISABLED;
-			}
+			eof_song_seek_note_menu[0].flags = D_DISABLED;
+			eof_song_seek_note_menu[1].flags = D_DISABLED;
 		}
 
 		/* seek previous note */
 		if(seekp)
 		{
-			eof_song_seek_menu[9].flags = 0;	//Previous note
+			eof_song_seek_note_menu[2].flags = 0;	//Note>Previous note
 		}
 		else
 		{
-			eof_song_seek_menu[9].flags = D_DISABLED;
+			eof_song_seek_note_menu[2].flags = D_DISABLED;
 		}
 
 		/* seek next note */
 		if(seekn)
 		{
-			eof_song_seek_menu[10].flags = 0;	//Next note
+			eof_song_seek_note_menu[3].flags = 0;	//Note>Next note
 		}
 		else
 		{
-			eof_song_seek_menu[10].flags = D_DISABLED;
+			eof_song_seek_note_menu[3].flags = D_DISABLED;
 		}
 
 		/* seek previous highlighed note */
 		if(seekph)
 		{
-			eof_song_seek_menu[11].flags = 0;	//Previous note
+			eof_song_seek_note_menu[4].flags = 0;	//Note>Previous h.l. note
 		}
 		else
 		{
-			eof_song_seek_menu[11].flags = D_DISABLED;
+			eof_song_seek_note_menu[4].flags = D_DISABLED;
 		}
 
 		/* seek next highlighted note */
 		if(seeknh)
 		{
-			eof_song_seek_menu[12].flags = 0;	//Next note
+			eof_song_seek_note_menu[5].flags = 0;	//Note>Next h.l. note
 		}
 		else
 		{
-			eof_song_seek_menu[12].flags = D_DISABLED;
+			eof_song_seek_note_menu[5].flags = D_DISABLED;
 		}
 
 		/* seek previous screen */
 		if(eof_music_pos <= eof_av_delay)
 		{
-			eof_song_seek_menu[14].flags = D_DISABLED;	//Previous screen
+			eof_song_seek_menu[9].flags = D_DISABLED;	//Previous screen
 		}
 		else
 		{
-			eof_song_seek_menu[14].flags = 0;
+			eof_song_seek_menu[9].flags = 0;
 		}
 
 		/* seek next screen */
 		if(eof_music_pos >= eof_music_length - 1)
 		{
-			eof_song_seek_menu[15].flags = D_DISABLED;	//Next screen
+			eof_song_seek_menu[10].flags = D_DISABLED;	//Next screen
 		}
 		else
 		{
-			eof_song_seek_menu[15].flags = 0;
+			eof_song_seek_menu[10].flags = 0;
 		}
 
 		/* previous/next grid snap/anchor */
 		if(eof_snap_mode == EOF_SNAP_OFF)
 		{	//If grid snap is disabled
-			eof_song_seek_menu[16].flags = D_DISABLED;	//Previous grid snap
-			eof_song_seek_menu[17].flags = D_DISABLED;	//Next grid snap
-			eof_song_seek_menu[22].text = eof_seek_menu_prev_anchor_text1;	//Display the previous anchor menu item with the shortcut
-			eof_song_seek_menu[23].text = eof_seek_menu_next_anchor_text1;	//Display the next anchor menu item with the shortcut
+			eof_song_seek_menu[11].flags = D_DISABLED;	//Previous grid snap
+			eof_song_seek_menu[12].flags = D_DISABLED;	//Next grid snap
+			eof_song_seek_menu[17].text = eof_seek_menu_prev_anchor_text1;	//Display the previous anchor menu item with the shortcut
+			eof_song_seek_menu[18].text = eof_seek_menu_next_anchor_text1;	//Display the next anchor menu item with the shortcut
 		}
 		else
 		{
-			eof_song_seek_menu[16].flags = 0;			//Previous grid snap
-			eof_song_seek_menu[17].flags = 0;			//Next grid snap
-			eof_song_seek_menu[22].text = eof_seek_menu_prev_anchor_text2;	//Display the previous anchor menu item with no shortcut
-			eof_song_seek_menu[23].text = eof_seek_menu_next_anchor_text2;	//Display the next anchor menu item with no shortcut
+			eof_song_seek_menu[11].flags = 0;			//Previous grid snap
+			eof_song_seek_menu[12].flags = 0;			//Next grid snap
+			eof_song_seek_menu[17].text = eof_seek_menu_prev_anchor_text2;	//Display the previous anchor menu item with no shortcut
+			eof_song_seek_menu[18].text = eof_seek_menu_next_anchor_text2;	//Display the next anchor menu item with no shortcut
 		}
 
 		/* seek bookmark # */
@@ -3386,6 +3371,223 @@ int eof_menu_song_seek_catalog_entry(void)
 	{	//If a catalog entry is selected
 		eof_set_seek_position(eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay);
 	}
+	return 1;
+}
+
+DIALOG eof_song_seek_timestamp_dialog[] =
+{
+	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg)  (key)   (flags) (d1) (d2) (dp)       (dp2)             (dp3) */
+	{ d_agup_window_proc,     0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Seek to", NULL,             NULL },
+	{ eof_verified_edit_proc, 12,  80,  254, 20,  2,   23,   0,      0,      15,  0,   eof_etext, "0123456789ms:.", NULL },
+	{ d_agup_button_proc,     67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",      NULL,             NULL },
+	{ d_agup_button_proc,     163, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",  NULL,             NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_song_seek_timestamp(void)
+{
+	unsigned long sum = 0, number = 0, digit, leadingzeroes = 0, index, nonzero;
+	char ch, invalid = 0, period = 0, colon = 0;
+	char m_encountered = 0, s_encountered = 0, ms_encountered = 0;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+
+	eof_render();
+	eof_color_dialog(eof_song_seek_timestamp_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_song_seek_timestamp_dialog);
+	eof_etext[0] = '\0';	//Empty the input field
+
+	if(eof_popup_dialog(eof_song_seek_timestamp_dialog, 1) == 2)
+	{	//User clicked OK
+		for(index = 0; eof_etext[index] != '\0'; index++)
+		{	//For each character in the input field
+			ch = eof_etext[index];	//Simplify
+
+			if(isdigit(ch))
+			{	//If this is a numerical character
+				digit = ch - '0';	//Convert to numerical value
+				number *= 10;		//Another digit means the previously read digits are worth ten times as much
+				number += digit;	//Add to the value of this digit to the number being parsed
+				if(period)
+				{	//If tracking the number after a period, count any leading zeroes
+					if(digit)
+					{	//If this is a nonzero digit
+						nonzero = 1;	//Track that there are no more leading zeroes after the period
+					}
+					else if(!nonzero)
+					{	//If it's a zero digit and no nonzero digits have been encountered since the period
+						leadingzeroes++;
+						if(leadingzeroes > 2)
+						{	//More than 2 leading zeroes is not valid
+							invalid = 1;
+							break;
+						}
+					}
+				}
+			}
+			else
+			{	//This is a separator
+				if(period && (ch == 's') && (eof_etext[index + 1] == '\0'))
+				{	//If this is a seconds separator that followed a period separator and is at the end of the input
+					break;	//End the parsing since #.# will be treated as seconds anyway
+				}
+				period = 0;	//Reset these conditions
+				colon = 0;
+				if(ch == 'm')
+				{	//Either minutes or milliseconds designation
+					if(eof_etext[index + 1] == 's')
+					{	//If there's another character and it is 's', it's a milliseconds designation
+						if(ms_encountered)
+						{	//If a milliseconds separator was already reached, the timestamp is invalid
+							invalid = 1;
+							break;
+						}
+						ms_encountered = 1;
+						index++;	//Seek past the 's' for the next loop iteration
+						sum += number;	//Add this number of milliseconds to the sum
+						number = 0;	//Reset the value of the number being parsed
+					}
+					else
+					{	//It's a minutes designation
+						if(m_encountered)
+						{	//If a minutes separator was already reached, the timestamp is invalid
+							invalid = 1;
+							break;
+						}
+						m_encountered = 1;
+						sum += (number * 60000);	//Add this number of minutes' worth of milliseconds to the sum
+						number = 0;	//Reset the value of the number being parsed
+					}
+				}
+				else if((ch == 's') || (ch == '.'))
+				{	//Seconds designation
+					if(s_encountered)
+					{	//If a seconds separator was already reached, the timestamp is invalid
+						invalid = 1;
+						break;
+					}
+					s_encountered = 1;
+					if(ch == '.')
+					{	//If this is a period
+						if(ms_encountered)
+						{	//The period removes the ability to separately specify milliseconds.  If a milliseconds separator was already reached, the timestamp is invalid
+							invalid = 1;
+							break;
+						}
+						ms_encountered = 1;
+						period = 1;	//The next number that is parsed will have special handling unless it also has a separator
+						leadingzeroes = nonzero = 0;	//Used to track the number of leading zeroes between a decimal and the next non-zero digit
+					}
+					sum += (number * 1000);		//Add this number of seconds' worth of milliseconds to the sum
+					number = 0;	//Reset the value of the number being parsed
+				}
+				else if(ch == ':')
+				{	//Minutes designation
+					if(m_encountered)
+					{	//If a minutes separator was already reached, the timestamp is invalid
+						invalid = 1;
+						break;
+					}
+					m_encountered = 1;
+					if(s_encountered)
+					{	//If a seconds separator was already reached, the timestamp is invalid
+						invalid = 1;
+						break;
+					}
+					colon = 1;	//The next number that is parsed will be treated as seconds instead of milliseconds
+					sum += (number * 60000);	//Add this number of minutes' worth of milliseconds to the sum
+					number = 0;	//Reset the value of the number being parsed
+				}
+				else
+				{	//Invalid character
+					invalid = 1;
+					break;
+				}
+			}
+		}
+
+		//Handle any remaining number that didn't end with a designation
+		if(period)
+		{	//If the previous number ended with a period separator, the remaining number is a variable fraction of a second
+			if(number < 10)
+			{	//A single digit number
+				if(leadingzeroes == 2)
+				{	//If there are two leading zeroes (#.00#), this single digit is the number of milliseconds
+					sum += number;
+				}
+				else if(leadingzeroes == 1)
+				{	//If there is one leading zero (#.0#), this single digit is tens of milliseconds
+					sum+= (number * 10);
+				}
+				else
+				{	//A single digit number after a period with no leading zeroes (#.#) is hundreds of milliseconds
+					sum += (number * 100);
+				}
+			}
+			else if(number < 100)
+			{	//A two digit number
+				if(leadingzeroes == 2)
+				{	//Four digit designations (#.00##) are invalid
+					invalid = 1;
+				}
+				else if(leadingzeroes == 1)
+				{	//If there is one leading zero (#.0##), these two digits are the number of milliseconds
+					sum += number;
+				}
+				else
+				{	//A two digit number after a period (#.##) is tens of milliseconds
+					sum += (number * 10);
+				}
+			}
+			else if(number < 1000)
+			{	//A three digit number
+				if(leadingzeroes)
+				{	//Four or more digit designations (#.00###) and (#.0###) are not valid
+					invalid = 1;
+				}
+				else
+				{	//A three digit number after a period (#.###) is milliseconds
+					sum += number;
+				}
+			}
+			else
+			{	//Any other number of digits is not valid
+				invalid = 1;
+			}
+		}
+		else if(colon)
+		{	//If the previous number ended with a colon separator, the remaining number is in seconds
+			sum += (number * 1000);
+		}
+		else
+		{	//Otherwise it's just the number of milliseconds
+			sum += number;
+		}
+	}
+	else
+	{	//User cancelled
+		invalid = 1;	//Avoid seeking
+	}
+
+	if(!invalid)
+	{	//If the input was considered valid
+		if(eof_song->beats > 0)
+		{
+			unsigned long lastbeat, lastpos;
+
+			lastbeat = eof_song->beats - 1;
+			lastpos = eof_song->beat[lastbeat]->pos + eof_get_beat_length(eof_song, lastbeat);
+			if(sum <= lastpos)
+			{	//If the specified timestamp is within the chart
+				eof_set_seek_position(sum + eof_av_delay);	//Seek to the specified timestamp
+			}
+		}
+	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
 	return 1;
 }
 

@@ -927,6 +927,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			if(!KEY_EITHER_SHIFT && !(eof_key_code == KEY_BACKSLASH))
 			{	//If neither SHIFT nor backslash are being held either
 				(void) eof_menu_edit_zoom_helper_in();
+				eof_use_key();
 			}
 			else
 			{	//SHIFT is being held, CTRL is not
@@ -938,17 +939,32 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
 				eof_set_3d_projection();
+				eof_use_key();
 			}
 		}
-		else if(KEY_EITHER_SHIFT)
-		{	//CTRL and SHIFT are both being held
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_av_delay++;
+		else
+		{	//CTRL is held
+			if(KEY_EITHER_SHIFT)
+			{	//CTRL and SHIFT are both being held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				eof_av_delay++;
+				eof_use_key();
+			}
+			else
+			{	//Only CTRL is held
+				if(eof_zoom_3d > EOF_ZOOM_3D_MIN)
+				{	//If the preview speed isn't already at the maximum setting
+					if(eof_zoom_3d == 5)
+						eof_zoom_3d--;		//EOF isn't currently using a zoom 3d value of 4, make sure it cycles from 5 to 3
+					eof_menu_edit_speed_number(eof_zoom_3d - 1);	//Raise it
+					eof_use_key();
+				}
+			}
 		}
-		eof_use_key();
 	}
 
 	/* zoom out (- on numpad) */
+	/* decrease preview speed (CTRL+(minus) on numpad) */
 	/* decrement AV delay (CTRL+SHIFT+(minus) on numpad) */
 	/* raise 3D camera angle (SHIFT+(minus) on numpad) or SHIFT+BACKSLASH */
 	if((eof_key_code == KEY_MINUS_PAD) || ((eof_key_code == KEY_BACKSLASH) && KEY_EITHER_SHIFT && !KEY_EITHER_CTRL))
@@ -958,6 +974,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			if(!KEY_EITHER_SHIFT)
 			{	//If SHIFT is not being held either
 				(void) eof_menu_edit_zoom_helper_out();
+				eof_use_key();
 			}
 			else
 			{	//SHIFT is being held, CTRL is not
@@ -969,17 +986,31 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
 				eof_set_3d_projection();
+				eof_use_key();
 			}
 		}
-		else if(KEY_EITHER_SHIFT)
-		{	//CTRL and SHIFT are both being held
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			if(eof_av_delay > 0)
-			{
-				eof_av_delay--;
+		else
+		{	//CTRL is held
+			if(KEY_EITHER_SHIFT)
+			{	//CTRL and SHIFT are both being held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				if(eof_av_delay > 0)
+				{
+					eof_av_delay--;
+				}
+				eof_use_key();
+			}
+			else
+			{	//Only CTRL is held
+				if(eof_zoom_3d < EOF_ZOOM_3D_MAX)
+				{	//If the preview speed isn't already at the slowest setting
+					if(eof_zoom_3d == 3)
+						eof_zoom_3d++;		//EOF isn't currently using a zoom 3d value of 4, make sure it cycles from 3 to 5
+					eof_menu_edit_speed_number(eof_zoom_3d + 1);	//Lower it
+					eof_use_key();
+				}
 			}
 		}
-		eof_use_key();
 	}
 
 	/* reset 3D camera angle (SHIFT+Enter on numpad or CTRL+BACKSLASH) */
@@ -6452,9 +6483,9 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 		lpos = 20 - (pos - 300);
 	}
 
-	/* draw the end of song position if necessary*/
-	if(eof_chart_length != eof_music_length)
-	{
+	/* draw the end of audio position if necessary*/
+	if((eof_chart_length != eof_music_length) && !eof_silence_loaded)
+	{	//If the chart length and audio length are different, and there is audio loaded
 		vline(window->screen, lpos + (eof_music_length / eof_zoom), EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
 	}
 

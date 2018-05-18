@@ -70,6 +70,7 @@ int eof_menu_song_seek_previous_measure(void);		//Seeks to the previous measure
 int eof_menu_song_seek_next_measure(void);			//Seeks to the next measure
 int eof_menu_song_seek_beat_measure(void);			//Seeks to the specified beat or measure
 int eof_menu_song_seek_catalog_entry(void);			//Seeks to the current fret catalog entry
+int eof_menu_song_seek_timestamp(void);				//Seeks to a user specified timestamp
 
 int eof_menu_song_file_info(void);
 int eof_menu_song_ini_settings(void);

@@ -869,7 +869,14 @@ int eof_menu_file_load_ogg(void)
 
 int eof_menu_file_save(void)
 {
+	eof_log("File>Save selected", 1);
 	return eof_menu_file_save_logic(0);
+}
+
+int eof_menu_file_quick_save(void)
+{
+	eof_log("\"File>Quick save\" selected", 1);
+	return eof_menu_file_save_logic(1);
 }
 
 int eof_menu_file_save_logic(char silent)
@@ -902,7 +909,11 @@ int eof_menu_file_save_logic(char silent)
 
 	/* check to see if the project file still exists */
 	if((eof_song_path[0] == '\0') || (eof_loaded_song_name[0] == '\0'))
-		return 1;	//Project path strings are invalid
+	{
+		eof_log("Song and project paths not initialized.  Save failed.", 1);
+		allegro_message("Save failed, please try \"Save as\".");
+		return 2;	//Project path strings are invalid
+	}
 	(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_temp_filename));	//Get full project path
 	if(!exists(eof_temp_filename))
 	{	//If the project file doesn't exist, check to see if song folder still exists
@@ -922,7 +933,7 @@ int eof_menu_file_save_logic(char silent)
 				eof_show_mouse(NULL);
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
-				return 1;
+				return 2;
 			}
 			err = eof_mkdir(eof_temp_filename);
 			if(err)
@@ -934,7 +945,7 @@ int eof_menu_file_save_logic(char silent)
 				eof_show_mouse(NULL);
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
-				return 1;
+				return 2;
 			}
 		}
 	}
@@ -964,11 +975,6 @@ int eof_menu_file_save_logic(char silent)
 	eof_pen_visible = 1;
 	eof_render();
 	return retval;
-}
-
-int eof_menu_file_quick_save(void)
-{
-	return eof_menu_file_save_logic(1);
 }
 
 int eof_menu_file_lyrics_import(void)
@@ -1254,7 +1260,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[11].flags = eof_inverted_notes ? D_SELECTED : 0;					//Inverted notes
 	eof_preferences_dialog[12].flags = eof_lefty_mode ? D_SELECTED : 0;						//Lefty mode
 	eof_preferences_dialog[13].flags = eof_note_auto_adjust ? D_SELECTED : 0;				//Note auto adjust
-	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;						//Enable logging
+	eof_preferences_dialog[14].flags = eof_enable_logging ? D_SELECTED : 0;					//Enable logging
 	eof_preferences_dialog[15].flags = eof_hide_drum_tails ? D_SELECTED : 0;				//Hide drum note tails
 	eof_preferences_dialog[16].flags = eof_hide_note_names ? D_SELECTED : 0;				//Hide note names
 	eof_preferences_dialog[17].flags = eof_disable_sound_processing ? D_SELECTED : 0;		//Disable sound effects
@@ -1355,7 +1361,7 @@ int eof_menu_file_preferences(void)
 			eof_inverted_notes = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
 			eof_lefty_mode = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
 			eof_note_auto_adjust = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
-			enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
+			eof_enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
 			eof_hide_drum_tails = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
 			eof_hide_note_names = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
 			eof_disable_sound_processing = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
@@ -1870,8 +1876,8 @@ int eof_menu_file_exit(void)
 			ret = alert3(NULL, "Quick save changes before quitting?", NULL, "&Yes", "&No", "Cancel", 'y', 'n', 0);
 			if(ret == 1)
 			{
-				if(eof_menu_file_quick_save() == 2)
-				{
+				if(eof_menu_file_quick_save() > 1)
+				{	//If the result was anything other than success or user cancellation
 					eof_clear_input();
 					ret2 = alert3(NULL, "Quick save failed! Exit without saving?", NULL, "&Yes", "&No", NULL, 'y', 'n', 0);
 				}

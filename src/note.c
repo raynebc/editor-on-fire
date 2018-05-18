@@ -1438,12 +1438,13 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		unsigned long nextnotenum;
 		long npos2, rz2;
 		unsigned long notepos2, nextnotenote, ctr2, mask2;		//Used for slide note rendering
-		unsigned lanenum;
+		unsigned lanenum, lanenum2;
 
 		assert(ctr < EOF_MAX_FRETS);	//Put an assertion here to resolve a false positive with Coverity
 		if(!(notenote & mask))
 			continue;	//If this lane does not have a gem to render, skip it
 
+		lanenum = ctr;	//By default, each gem gets its own lane number
 		if(!eof_track_is_ghl_mode(eof_song, track) && (ctr == 5) && eof_track_is_legacy_guitar(eof_song, track))
 		{	//If this is NOT a GHL style track and if drawing the tail of a gem on lane 6 of a legacy guitar track
 			if(eof_open_strum_enabled(track))
@@ -1490,10 +1491,6 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				}
 
 				lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6
-			}
-			else
-			{	//Otherwise each gem gets its own lane number
-				lanenum = ctr;
 			}
 			point[0] = ocd3d_project_x(xchart[lanenum] - 10, rz);
 			point[1] = ocd3d_project_y(200, rz);
@@ -1584,11 +1581,20 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
 		rz2 = npos2 < -100 ? -100 : npos2 + 10;
 
+		if(eof_track_is_ghl_mode(eof_song, track))
+		{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
+			lanenum2 = ctr2 % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6
+		}
+		else
+		{
+			lanenum2 = ctr2;		//Otherwise each gem uses its own lane
+		}
+
 		//Define the slide rectangle coordinates in clockwise order
-		point[0] = ocd3d_project_x(xchart[ctr], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
-		point[1] = ocd3d_project_y(200, rz);			//Y1 (Y coordinate of the front end of the slide): The Y position of this note
-		point[2] = ocd3d_project_x(xchart[ctr2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
-		point[3] = ocd3d_project_y(200, rz2);			//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
+		point[0] = ocd3d_project_x(xchart[lanenum], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
+		point[1] = ocd3d_project_y(200, rz);				//Y1 (Y coordinate of the front end of the slide): The Y position of this note
+		point[2] = ocd3d_project_x(xchart[lanenum2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
+		point[3] = ocd3d_project_y(200, rz2);				//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
 
 		point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
 		point[5] = point[3];							//Y3 (Y coordinate of the back end of the slide)

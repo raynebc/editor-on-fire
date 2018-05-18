@@ -56,7 +56,6 @@ EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 	{	//Could not buffer file
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error loading:  Cannot open input text file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
-///		allegro_message(eof_log_string);
 		free(panel);
 		return NULL;
 	}

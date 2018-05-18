@@ -405,8 +405,8 @@ struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
 char eof_midi_initialized = 0;			//Specifies whether Allegro was able to set up a MIDI device
 
 FILE *eof_log_fp = NULL;	//Is set to NULL if logging is disabled
-char eof_log_level = 0;		//Is set to 0 if logging is disabled
-char enable_logging = 1;	//Is set to 0 if logging is disabled
+char eof_log_level = 0;		//The logging level is set in the config file (1 = normal, 2 = verbose, 3 = exhaustive)
+char eof_enable_logging = 1;	//Is set to 0 if logging is disabled
 
 int eof_custom_zoom_level = 0;	//Tracks any user-defined custom zoom level
 int eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note names containing flats.  By default, display as sharps instead
@@ -642,7 +642,7 @@ void eof_find_lyric_preview_lines(void)
 
 void eof_emergency_stop_music(void)
 {
-	eof_log("eof_emergency_stop_music() entered", 1);
+	eof_log("eof_emergency_stop_music() entered", 2);
 
 	if(eof_song_loaded)
 	{
@@ -666,7 +666,7 @@ void eof_emergency_stop_music(void)
 
 void eof_switch_out_callback(void)
 {
-	eof_log("eof_switch_out_callback() entered", 1);
+	eof_log("eof_switch_out_callback() entered", 2);
 
 	if(eof_stop_playback_leave_focus)
 	{	//If the user preference is to stop playback when EOF leaves the foreground
@@ -681,7 +681,7 @@ void eof_switch_out_callback(void)
 
 void eof_switch_in_callback(void)
 {
-	eof_log("eof_switch_in_callback() entered", 1);
+	eof_log("eof_switch_in_callback() entered", 2);
 
 	eof_clear_input();
 	eof_read_keyboard_input(1);	//Update the keyboard input variables when EOF regains focus
@@ -3836,6 +3836,7 @@ int eof_initialize(int argc, char * argv[])
 	char temp_filename[1024] = {0}, eof_recover_on_path[50], eof_recover_path[50], recovered = 0;
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
+	char *logging_level[] = {"NULL", "normal", "verbose", "exhaustive"};
 
 	eof_log("eof_initialize() entered", 1);
 
@@ -3905,12 +3906,21 @@ int eof_initialize(int argc, char * argv[])
 	seconds = time(NULL);
 	caltime = localtime(&seconds);
 	(void) strftime(eof_log_string, sizeof(eof_log_string) - 1, "Logging started during program initialization at %c", caltime);
-	eof_log(eof_log_string, 1);
-	eof_log(EOF_VERSION_STRING, 1);
+	eof_log(eof_log_string, 0);
+	eof_log(EOF_VERSION_STRING, 0);
 
 	InitIdleSystem();
 	show_mouse(NULL);
 	eof_load_config("eof.cfg");
+	if((eof_log_level >= 0) && (eof_log_level <= 3))
+	{	//If the logging level is valid
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Logging level set to %s", logging_level[(unsigned)eof_log_level]);
+		eof_log(eof_log_string, 0);
+	}
+	if(eof_disable_backups)
+	{
+		eof_log("File backups are disabled", 1);
+	}
 	eof_load_chord_shape_definitions("chordshapes.xml");
 
 	/* reset songs path */
@@ -4818,7 +4828,7 @@ void eof_start_logging(void)
 {
 	char log_filename[1024] = {0};
 
-	if((eof_log_fp == NULL) && enable_logging)
+	if((eof_log_fp == NULL) && eof_enable_logging)
 	{	//If logging isn't alredy running, and logging isn't disabled
 		srand(time(NULL));	//Seed the random number generator with the current time
 		// coverity[dont_call]
@@ -4826,7 +4836,6 @@ void eof_start_logging(void)
 		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
 		(void) replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
 		eof_log_fp = fopen(log_filename, "w");
-		eof_log_level = EOF_LOGGING_LEVEL;	//Enable logging at the defined level
 
 		if(eof_log_fp == NULL)
 		{
@@ -4861,7 +4870,6 @@ void eof_stop_logging(void)
 	{
 		(void) fclose(eof_log_fp);
 		eof_log_fp = NULL;
-		eof_log_level = 0;	//Disable logging
 	}
 }
 

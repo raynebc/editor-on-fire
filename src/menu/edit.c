@@ -2212,52 +2212,36 @@ int eof_menu_edit_playback_custom(void)
 	return 1;
 }
 
+int eof_menu_edit_speed_number(int value)
+{
+	if((value < EOF_ZOOM_3D_MIN) || (value > EOF_ZOOM_3D_MAX))
+		return 0;	//Invalid parameter
+
+	if(value == 4)	//EOF isn't currently using a zoom 3d value of 4
+		value = 3;
+
+	eof_zoom_3d = value;
+	return 1;
+}
+
 int eof_menu_edit_speed_slow(void)
 {
-	int i;
-	eof_zoom_3d = 5;
-	for(i = 0; i < 3; i++)
-	{
-		eof_edit_speed_menu[i].flags = 0;
-	}
-
-	return 1;
+	return eof_menu_edit_speed_number(5);
 }
 
 int eof_menu_edit_speed_medium(void)
 {
-	int i;
-	eof_zoom_3d = 3;
-	for(i = 0; i < 3; i++)
-	{
-		eof_edit_speed_menu[i].flags = 0;
-	}
-
-	return 1;
+	return eof_menu_edit_speed_number(3);
 }
 
 int eof_menu_edit_speed_fast(void)
 {
-	int i;
-	eof_zoom_3d = 2;
-	for(i = 0; i < 3; i++)
-	{
-		eof_edit_speed_menu[i].flags = 0;
-	}
-
-	return 1;
+	return eof_menu_edit_speed_number(2);
 }
 
 int eof_menu_edit_speed_hyper(void)
 {
-	int i;
-	eof_zoom_3d = 1;
-	for(i = 0; i < 3; i++)
-	{
-		eof_edit_speed_menu[i].flags = 0;
-	}
-
-	return 1;
+	return eof_menu_edit_speed_number(1);
 }
 
 int eof_menu_edit_snap_off(void)
