@@ -334,7 +334,7 @@ int eof_convert_to_extended_ascii(char * buffer, int size)
 
 int rs_lyric_substitute_char_utf8(int character, int function)
 {
-	char string[6];
+	char string[6] = {0};
 
 	(void) usetat(string, 0, character);	//Build a terminated string containing just the input character
 	(void) usetat(string, 1, '\0');

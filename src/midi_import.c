@@ -1408,7 +1408,7 @@ set_window_title(debugtext);
 		for(j = 0; j < eof_import_events[i]->events; j++)
 		{	//For each event in this track
 			int midinote;
-			unsigned int gridsnap;	//Used to track whether the event's delta time is a grid snap position
+			unsigned int gridsnap = 0;	//Used to track whether the event's delta time is a grid snap position
 
 			if(key[KEY_ESC])
 			{	/* clean up and return */
@@ -3620,7 +3620,7 @@ eof_log("\tMIDI import complete", 1);
 
 unsigned long eof_repair_midi_import_grid_snap(void)
 {
-	unsigned long ctr, ctr2, closestpos;
+	unsigned long ctr, ctr2, closestpos = 0;
 
 	if(!eof_song_loaded || !eof_song)
 		return 0;	//Invalid parameters

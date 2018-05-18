@@ -7507,11 +7507,11 @@ int eof_get_pro_guitar_fret_shortcuts_string(char *shortcut_string)
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		snprintf(shortcut_string, 55, "Fret value shortcuts not applicable in this track");
+		(void) snprintf(shortcut_string, 55, "Fret value shortcuts not applicable in this track");
 	}
 	else if(!eof_pro_guitar_fret_bitmask || (eof_pro_guitar_fret_bitmask == 63))
 	{	//If the fret shortcut bitmask is set to no strings or all 6 strings
-		snprintf(shortcut_string, 55, "Fret value shortcuts apply to %s strings", (eof_pro_guitar_fret_bitmask == 0) ? "no" : "all");
+		(void) snprintf(shortcut_string, 55, "Fret value shortcuts apply to %s strings", (eof_pro_guitar_fret_bitmask == 0) ? "no" : "all");
 	}
 	else
 	{	//Build a string to indicate which strings the bitmask pertains to
@@ -7530,11 +7530,11 @@ int eof_get_pro_guitar_fret_shortcuts_string(char *shortcut_string)
 		fret_string[index] = '\0';	//Terminate the string
 		if(fret_string[1] != '\0')
 		{	//If there are at least two strings denoted
-			snprintf(shortcut_string, 55, "Fret value shortcuts apply to strings %s", fret_string);
+			(void) snprintf(shortcut_string, 55, "Fret value shortcuts apply to strings %s", fret_string);
 		}
 		else
 		{	//There's only one string denoted, use a shortcut to just display the one character
-			snprintf(shortcut_string, 55, "Fret value shortcuts apply to string %c", fret_string[0]);
+			(void) snprintf(shortcut_string, 55, "Fret value shortcuts apply to string %c", fret_string[0]);
 		}
 	}
 
@@ -7651,7 +7651,7 @@ int eof_track_convert_ghl_lane_ordering(EOF_SONG *sp, unsigned long track)
 
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
-		eof_note_swap_ghl_black_white_gems(sp, track, ctr);	//Swap the white and black gems
+		(void) eof_note_swap_ghl_black_white_gems(sp, track, ctr);	//Swap the white and black gems
 	}
 
 	sp->track[track]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Set this flag to denote the track was converted

@@ -1181,12 +1181,12 @@ void eof_prepare_note_menu(void)
 		/* GHL */
 		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{	//If a legacy guitar track is active and GHL mode is enabled
-			snprintf(eof_note_menu_pro_guitar_menu_string, sizeof(eof_note_menu_pro_guitar_menu_string) - 1, "Pro guitar");		//Remove the G accelerator key from the "Pro guitar" submenu
+			(void) snprintf(eof_note_menu_pro_guitar_menu_string, sizeof(eof_note_menu_pro_guitar_menu_string) - 1, "Pro guitar");		//Remove the G accelerator key from the "Pro guitar" submenu
 			eof_note_menu[21].flags = 0;		//Note>GHL>
 		}
 		else
 		{
-			snprintf(eof_note_menu_pro_guitar_menu_string, sizeof(eof_note_menu_pro_guitar_menu_string) - 1, "Pro &Guitar");	//Add the G accelerator key to the "Pro guitar" submenu
+			(void) snprintf(eof_note_menu_pro_guitar_menu_string, sizeof(eof_note_menu_pro_guitar_menu_string) - 1, "Pro &Guitar");	//Add the G accelerator key to the "Pro guitar" submenu
 			eof_note_menu[21].flags = D_DISABLED;
 		}
 	}//if(eof_song && eof_song_loaded)
@@ -1409,7 +1409,7 @@ int eof_menu_note_transpose_down_octave(void)
 
 int eof_menu_note_resnap_logic(int any)
 {
-	unsigned long i, x, notepos, newnotepos, tailpos;
+	unsigned long i, x, notepos, newnotepos = 0, tailpos;
 	unsigned long oldnotes;
 	char undo_made = 0;
 	int note_selection_updated, user_warned = 0, cancel = 0;

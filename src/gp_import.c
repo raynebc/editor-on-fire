@@ -1703,7 +1703,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char parse_gpa = 0;		//Will be set to nonzero if the specified file is detected to be XML, in which case, the Go PlayAlong file will be parsed
 	size_t maxlinelength;
 	unsigned long linectr = 2, num_sync_points = 0, raw_num_sync_points = 0;
-	struct eof_gpa_sync_point *sync_points = NULL, temp_sync_point = {0, 0, 0.0, 0.0, 0.0, 0.0, 0};
+	struct eof_gpa_sync_point *sync_points = NULL, temp_sync_point = {0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0};
 	char error = 0;
 	char *musical_symbols[19] = {"Coda", "Double Coda", "Segno", "Segno Segno", "Fine", "Da Capo", "Da Capo al Coda", "Da Capo al double Coda", "Da Capo al Fine", "Da Segno", "Da Segno al Coda", "Da Segno al double Coda", "Da Segno al Fine", "Da Segno Segno", "Da Segno Segno al Coda", "Da Segno Segno al double Coda", "Da Segno Segno al Fine", "Da Coda", "Da double Coda"};
 	unsigned char unpitchend;	//Tracks the end position for imported notes that slide in/out with no formal slide definition

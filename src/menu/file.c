@@ -5032,7 +5032,7 @@ int eof_set_3d_hopo_scale_size(void)
 {
 	unsigned long percent;
 
-	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_3d_hopo_scale_size);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_3d_hopo_scale_size);
 	eof_color_dialog(eof_set_3d_hopo_scale_size_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_set_3d_hopo_scale_size_dialog);
 	if(eof_popup_dialog(eof_set_3d_hopo_scale_size_dialog, 3) == 4)	//User hit OK
@@ -5052,7 +5052,7 @@ int eof_set_3d_hopo_scale_size(void)
 			if(!eof_load_and_scale_hopo_images((double)eof_3d_hopo_scale_size / 100.0))
 			{
 				allegro_message("Error reloading HOPO images.  EOF must exit, please save if necessary.");
-				eof_menu_file_exit();
+				(void) eof_menu_file_exit();
 			}
 		}
 	}
@@ -5896,10 +5896,10 @@ void eof_rebuild_notes_window(void)
 
 int eof_display_notes_panel_logic(int builtin)
 {
-	eof_enable_notes_panel = 1 - eof_enable_notes_panel;	//Toggle the notes panel on/off
 	char *default_target = "notes.panel.txt";	//Unless eof_current_notes_panel_path is defined, the default notes panel file will be displayed
 	char *effective_target = eof_current_notes_panel_path;	//Unless the target note panel is missing, it will be the file opened
 
+	eof_enable_notes_panel = 1 - eof_enable_notes_panel;	//Toggle the notes panel on/off
 	eof_log("\tLoading Notes panel file.", 2);
 
 	if(eof_notes_panel)
@@ -5910,7 +5910,7 @@ int eof_display_notes_panel_logic(int builtin)
 
 	if(eof_enable_notes_panel)
 	{	//If the notes panel was just enabled, see if the program window needs to resize
-		eof_increase_display_width_to_panel_count(0);	//Resize the program window if necessary, disable notes panel on failure
+		(void) eof_increase_display_width_to_panel_count(0);	//Resize the program window if necessary, disable notes panel on failure
 
 		if(!builtin)
 		{	//If the panel being loaded is NOT a built-in one
@@ -6054,7 +6054,7 @@ int eof_menu_file_notes_panel_user(void)
 
 int eof_menu_file_notes_panel_browse(void)
 {
-	char *returnedfn = NULL, initial[1024];
+	char *returnedfn = NULL, initial[1024] = {0};
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;

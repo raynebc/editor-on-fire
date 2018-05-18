@@ -3386,9 +3386,9 @@ DIALOG eof_song_seek_timestamp_dialog[] =
 
 int eof_menu_song_seek_timestamp(void)
 {
-	unsigned long sum = 0, number = 0, digit, leadingzeroes = 0, index, nonzero;
+	unsigned long sum = 0, number = 0, digit, leadingzeroes = 0, index, nonzero = 0;
 	char ch, invalid = 0, period = 0, colon = 0;
-	char m_encountered = 0, s_encountered = 0, ms_encountered = 0;
+	char min_encountered = 0, sec_encountered = 0, ms_encountered = 0;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
@@ -3450,24 +3450,24 @@ int eof_menu_song_seek_timestamp(void)
 					}
 					else
 					{	//It's a minutes designation
-						if(m_encountered)
+						if(min_encountered)
 						{	//If a minutes separator was already reached, the timestamp is invalid
 							invalid = 1;
 							break;
 						}
-						m_encountered = 1;
+						min_encountered = 1;
 						sum += (number * 60000);	//Add this number of minutes' worth of milliseconds to the sum
 						number = 0;	//Reset the value of the number being parsed
 					}
 				}
 				else if((ch == 's') || (ch == '.'))
 				{	//Seconds designation
-					if(s_encountered)
+					if(sec_encountered)
 					{	//If a seconds separator was already reached, the timestamp is invalid
 						invalid = 1;
 						break;
 					}
-					s_encountered = 1;
+					sec_encountered = 1;
 					if(ch == '.')
 					{	//If this is a period
 						if(ms_encountered)
@@ -3484,13 +3484,13 @@ int eof_menu_song_seek_timestamp(void)
 				}
 				else if(ch == ':')
 				{	//Minutes designation
-					if(m_encountered)
+					if(min_encountered)
 					{	//If a minutes separator was already reached, the timestamp is invalid
 						invalid = 1;
 						break;
 					}
-					m_encountered = 1;
-					if(s_encountered)
+					min_encountered = 1;
+					if(sec_encountered)
 					{	//If a seconds separator was already reached, the timestamp is invalid
 						invalid = 1;
 						break;

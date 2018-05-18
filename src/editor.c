@@ -956,7 +956,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//If the preview speed isn't already at the maximum setting
 					if(eof_zoom_3d == 5)
 						eof_zoom_3d--;		//EOF isn't currently using a zoom 3d value of 4, make sure it cycles from 5 to 3
-					eof_menu_edit_speed_number(eof_zoom_3d - 1);	//Raise it
+					(void) eof_menu_edit_speed_number(eof_zoom_3d - 1);	//Raise it
 					eof_use_key();
 				}
 			}
@@ -1006,7 +1006,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//If the preview speed isn't already at the slowest setting
 					if(eof_zoom_3d == 3)
 						eof_zoom_3d++;		//EOF isn't currently using a zoom 3d value of 4, make sure it cycles from 3 to 5
-					eof_menu_edit_speed_number(eof_zoom_3d + 1);	//Lower it
+					(void) eof_menu_edit_speed_number(eof_zoom_3d + 1);	//Lower it
 					eof_use_key();
 				}
 			}
@@ -3530,7 +3530,6 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 								}
 								eof_track_sort_notes(eof_song, eof_selected_track);
 								eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
-								eof_determine_phrase_status(eof_song, eof_selected_track);
 								eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
 								(void) eof_detect_difficulties(eof_song, eof_selected_track);
 							}
@@ -3539,7 +3538,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					}//If user has pressed any key from 1 through 6
 				}//If a vocal track is not active
 			}//If the mouse is in the fretboard area
-		}//If CTRL is not held down and the input method is rex mundi
+		}//If CTRL is not held down and the input method is rex mundi or Feedback
 
 	/* delete note (Del) */
 	/* delete beat (CTRL+Del) */
@@ -4525,7 +4524,6 @@ void eof_editor_logic(void)
 							}
 							eof_track_sort_notes(eof_song, eof_selected_track);
 							eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
-							eof_determine_phrase_status(eof_song, eof_selected_track);
 							eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
 							(void) eof_detect_difficulties(eof_song, eof_selected_track);
 						}
