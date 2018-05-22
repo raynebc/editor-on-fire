@@ -57,16 +57,23 @@ MENU eof_file_notes_panel_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_file_3d_preview_menu[] =
+{
+	{"Set &HOPO image scale size", eof_set_3d_hopo_scale_size, NULL, 0, NULL},
+	{"Set &Camera angle", eof_set_3d_camera_angle, NULL, 0, NULL},
+	{"&Full height", eof_3d_preview_toggle_full_height, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_file_display_menu[] =
 {
+	{"&Notes panel", NULL, eof_file_notes_panel_menu, 0, NULL},
+	{"&3D preview", NULL, eof_file_3d_preview_menu, 0, NULL},
 	{"&Display", eof_menu_file_display, NULL, 0, NULL},
 	{"Set display &Width", eof_set_display_width, NULL, 0, NULL},
 	{"x2 &Zoom", eof_toggle_display_zoom, NULL, 0, NULL},
 	{"&Redraw\tShift+F5", eof_redraw_display, NULL, 0, NULL},
 	{"Benchmark image sequence", eof_benchmark_image_sequence, NULL, 0, NULL},
-	{"Set &3D HOPO image scale size", eof_set_3d_hopo_scale_size, NULL, 0, NULL},
-	{"Set 3D &Camera angle", eof_set_3d_camera_angle, NULL, 0, NULL},
-	{"&Notes panel", NULL, eof_file_notes_panel_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -353,7 +360,7 @@ void eof_prepare_file_menu(void)
 			eof_file_import_menu[5].flags = D_DISABLED;
 			eof_file_import_menu[6].flags = D_DISABLED;
 		}
-		eof_file_display_menu[4].flags = 0;	//Benchmark image sequence
+		eof_file_display_menu[6].flags = 0;	//Benchmark image sequence
 	}
 	else
 	{
@@ -366,16 +373,16 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[9].flags = D_DISABLED;	// Export guitar pro
 		eof_file_import_menu[0].flags = D_DISABLED; // Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = D_DISABLED; // Import>Lyric
-		eof_file_display_menu[4].flags = D_DISABLED;	//Benchmark image sequence
+		eof_file_display_menu[6].flags = D_DISABLED;	//Benchmark image sequence
 	}
 
 	if(eof_screen_zoom)
 	{	//If x2 zoom is enabled
-		eof_file_display_menu[2].flags = D_SELECTED;
+		eof_file_display_menu[4].flags = D_SELECTED;
 	}
 	else
 	{
-		eof_file_display_menu[2].flags = 0;
+		eof_file_display_menu[4].flags = 0;
 	}
 
 	//Notes panel stuff
@@ -5133,6 +5140,7 @@ int eof_toggle_display_zoom(void)
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
 	eof_render();
 	eof_prepare_file_menu();		//The checkmark indicating the status of this feature doesn't reliably update when activating/de-activating by keyboard, force it to update
+	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 	return D_O_K;
 }
 
@@ -5950,6 +5958,34 @@ int eof_display_notes_panel(void)
 	return eof_display_notes_panel_logic(0);	//Display the currently configured Notes panel file
 }
 
+int eof_3d_preview_toggle_full_height(void)
+{
+	eof_full_height_3d_preview ^= 1;	//Toggle this feature on/off
+	if(!eof_set_display_mode(eof_screen_width, eof_screen_height))
+	{	//If the windows couldn't be rebuilt
+		eof_full_height_3d_preview = 0;	//Disable the feature
+		eof_set_display_mode(eof_screen_width, eof_screen_height);	//Retry rebuilding the windows
+	}
+
+	if(eof_enable_notes_panel)
+	{	//If the notes window must be rebuilt
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+		(void) eof_display_notes_panel();
+	}
+	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+
+	//Change the 3D preview depth
+	if(eof_full_height_3d_preview)
+	{	//If full height 3D preview is in effect
+		eof_3d_max_depth = 1200;
+	}
+	else
+	{
+		eof_3d_max_depth = 600;
+	}
+	return 1;
+}
+
 int eof_menu_file_notes_panel_notes(void)
 {
 	eof_log("Switching Notes Panel to default Notes.", 1);
@@ -6048,6 +6084,7 @@ int eof_menu_file_notes_panel_user(void)
 	}
 	(void) eof_display_notes_panel();
 	eof_render();
+	eof_close_menu = 1;		//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 
 	return D_O_K;
 }

@@ -131,6 +131,7 @@ int         eof_disable_3d_rendering = 0;
 int         eof_disable_2d_rendering = 0;
 int         eof_disable_info_panel = 0;
 int         eof_enable_notes_panel = 0;
+int         eof_full_height_3d_preview = 0;
 EOF_TEXT_PANEL *eof_notes_panel = NULL;			//The text panel instance defining the Notes panel
 EOF_TEXT_PANEL *eof_info_panel = NULL;			//The text panel instance defining the Information panel
 int         eof_paste_erase_overlap = 0;
@@ -218,6 +219,9 @@ int         eof_window_title_dirty = 0;	//This is set to true when an undo state
 int         eof_change_count = 0;	//Counts the number of undo states created since the last save operation
 int         eof_zoom = 10;			//The width of one pixel in the editor window in ms (smaller = higher zoom)
 int         eof_zoom_3d = 5;
+int         eof_3d_min_depth = -100;
+int         eof_3d_max_depth = 600;
+
 char        eof_changes = 0;		//Tracks whether the chart has been modified since the last save operation
 ALOGG_OGG * eof_music_track = NULL;
 void      * eof_music_data = NULL;	//A memory buffer of the current chart audio's OGG file
@@ -756,6 +760,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 {
 	int mode;
 	unsigned long effectiveheight = height, effectivewidth = width;
+	unsigned long editorwidth;
 
 	eof_log("eof_set_display_mode() entered", 1);
 
@@ -905,26 +910,41 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	{
 		return 0;
 	}
-	eof_window_editor = eof_window_create(0, 20, eof_screen_width, (eof_screen_height / 2) - 20, eof_screen);
+	if(eof_full_height_3d_preview)
+	{	//If the 3D preview is expanded to take the full program window height
+		editorwidth = eof_screen_width - EOF_SCREEN_PANEL_WIDTH;	//It will use one panel's worth of the editor window's space
+	}
+	else
+	{
+		editorwidth = eof_screen_width;	//Otherwise the editor windows will be full window width
+	}
+	eof_window_editor = eof_window_create(0, 20, editorwidth, (eof_screen_height / 2) - 20, eof_screen);
 	if(!eof_window_editor)
 	{
 		allegro_message("Unable to create editor window!");
 		return 0;
 	}
-	eof_window_editor2 = eof_window_create(0, (eof_screen_height / 2) + 1, eof_screen_width, eof_screen_height, eof_screen);
+	eof_window_editor2 = eof_window_create(0, (eof_screen_height / 2) + 1, editorwidth, eof_screen_height, eof_screen);
 	if(!eof_window_editor2)
 	{
 		allegro_message("Unable to create second editor window!");
 		return 0;
 	}
-	eof_window_note_lower_left = eof_window_create(0, eof_screen_height / 2, eof_screen_width, eof_screen_height / 2, eof_screen);	//Make the window full width
-	eof_window_note_upper_left = eof_window_create(0, 20, eof_screen_width, eof_screen_height / 2, eof_screen);	//Make the window full width
+	eof_window_note_lower_left = eof_window_create(0, eof_screen_height / 2, editorwidth, eof_screen_height / 2, eof_screen);	//Make the note window the same width as the editor window
+	eof_window_note_upper_left = eof_window_create(0, 20, editorwidth, eof_screen_height / 2, eof_screen);
 	if(!eof_window_note_lower_left || !eof_window_note_upper_left)
 	{
 		allegro_message("Unable to create information windows!");
 		return 0;
 	}
-	eof_window_3d = eof_window_create(eof_screen_width - EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, eof_screen);
+	if(eof_full_height_3d_preview)
+	{	//If the 3D preview is expanded to take the full program window height
+		eof_window_3d = eof_window_create(eof_screen_width - EOF_SCREEN_PANEL_WIDTH, 20, EOF_SCREEN_PANEL_WIDTH, eof_screen_height, eof_screen);
+	}
+	else
+	{
+		eof_window_3d = eof_window_create(eof_screen_width - EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, eof_screen);
+	}
 	if(!eof_window_3d)
 	{
 		allegro_message("Unable to create 3D preview window!");
@@ -3088,8 +3108,10 @@ void eof_render_3d_window(void)
 	long obx, oby, oex, oey;
 	long bz;
 	float y_projection;
+	static float seek_y_projection, seek_x1_projection, seek_x2_projection;
 	char ts_text[16] = {0}, tempo_text[16] = {0};
 	long tr;
+	int offset_y_3d = 0;	//If full height 3D preview is in effect, y coordinates will be shifted down by one panel height, otherwise will shift by 0
 
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
@@ -3100,8 +3122,8 @@ void eof_render_3d_window(void)
 		if(eof_disable_3d_rendering)	//If the user wanted to disable the rendering of the 3D window to improve performance
 			return;						//Return immediately
 
-		if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the 3D preview
-			return;							//Return immediately
+		if(eof_display_second_piano_roll && !eof_full_height_3d_preview)	//If a second piano roll is being rendered and full height 3D preview isn't enabled
+			return;															//Return immediately
 	}
 
 	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_catalog_menu[1].flags == D_SELECTED))
@@ -3147,16 +3169,25 @@ void eof_render_3d_window(void)
 		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane, 0 (unless user enabled the preference to render bass drum in its own lane)
 	}
 
+	if(eof_full_height_3d_preview)
+	{
+		offset_y_3d = eof_screen_height / 2;	//Y coordinates will be lowered by one panel height so that the bottom of the 3D fret board is at the bottom of the program window
+	}
+
 	if(!eof_3d_fretboard_coordinates_cached)
 	{	//If the appropriate 3D->2D coordinate projections for the 3D fretboard aren't cached yet
-		fretboardpoint[0] = ocd3d_project_x(20, 600);
-		fretboardpoint[1] = ocd3d_project_y(200, 600);
-		fretboardpoint[2] = ocd3d_project_x(300, 600);
+		fretboardpoint[0] = ocd3d_project_x(20, eof_3d_max_depth);
+		fretboardpoint[1] = ocd3d_project_y(200 + offset_y_3d, eof_3d_max_depth);
+		fretboardpoint[2] = ocd3d_project_x(300, eof_3d_max_depth);
 		fretboardpoint[3] = fretboardpoint[1];
-		fretboardpoint[4] = ocd3d_project_x(300, -100);
-		fretboardpoint[5] = ocd3d_project_y(200, -100);
-		fretboardpoint[6] = ocd3d_project_x(20, -100);
+		fretboardpoint[4] = ocd3d_project_x(300, eof_3d_min_depth);
+		fretboardpoint[5] = ocd3d_project_y(200 + offset_y_3d, eof_3d_min_depth);
+		fretboardpoint[6] = ocd3d_project_x(20, eof_3d_min_depth);
 		fretboardpoint[7] = fretboardpoint[5];
+		seek_y_projection = ocd3d_project_y(200 + offset_y_3d, 0);
+		seek_x1_projection = ocd3d_project_x(48, 0);
+		seek_x2_projection = ocd3d_project_x(48 + 4 * 56, 0);
+		eof_3d_fretboard_coordinates_cached = 1;
 	}
 	polygon(eof_window_3d->screen, 4, fretboardpoint, eof_color_black);
 
@@ -3170,16 +3201,16 @@ void eof_render_3d_window(void)
 
 		sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 		sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-		if((-100 <= sez) && (600 >= sz))
+		if((eof_3d_min_depth <= sez) && (eof_3d_max_depth >= sz))
 		{
-			spz = sz < -100 ? -100 : sz;
-			spez = sez > 600 ? 600 : sez;
+			spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
+			spez = sez > eof_3d_max_depth ? eof_3d_max_depth : sez;
 			point[0] = ocd3d_project_x(20, spez);
-			point[1] = ocd3d_project_y(200, spez);
+			point[1] = ocd3d_project_y(200 + offset_y_3d, spez);
 			point[2] = ocd3d_project_x(300, spez);
 			point[3] = point[1];
 			point[4] = ocd3d_project_x(300, spz);
-			point[5] = ocd3d_project_y(200, spz);
+			point[5] = ocd3d_project_y(200 + offset_y_3d, spz);
 			point[6] = ocd3d_project_x(20, spz);
 			point[7] = point[5];
 			polygon(eof_window_3d->screen, 4, point, eof_color_dark_blue);
@@ -3200,7 +3231,7 @@ void eof_render_3d_window(void)
 
 			sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 			sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-			if((-100 > sez) || (600 < sz))
+			if((eof_3d_min_depth > sez) || (eof_3d_max_depth < sz))
 				continue;	//If the arpeggio section would not render visibly, skip it
 
 			//Otherwise fill the topmost lane with the appropriate color
@@ -3209,14 +3240,14 @@ void eof_render_3d_window(void)
 			{	//If this arpeggio is configured to export as a normal handshape
 				arpeggiocolor = eof_color_lighter_blue;
 			}
-			spz = sz < -100 ? -100 : sz;
-			spez = sez > 600 ? 600 : sez;
+			spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
+			spez = sez > eof_3d_max_depth ? eof_3d_max_depth : sez;
 			point[0] = ocd3d_project_x(20, spez);
-			point[1] = ocd3d_project_y(200, spez);
+			point[1] = ocd3d_project_y(200 + offset_y_3d, spez);
 			point[2] = ocd3d_project_x(300, spez);
 			point[3] = point[1];
 			point[4] = ocd3d_project_x(300, spz);
-			point[5] = ocd3d_project_y(200, spz);
+			point[5] = ocd3d_project_y(200 + offset_y_3d, spz);
 			point[6] = ocd3d_project_x(20, spz);
 			point[7] = point[5];
 			polygon(eof_window_3d->screen, 4, point, arpeggiocolor);	//Fill with a turquoise or light blue color
@@ -3229,16 +3260,16 @@ void eof_render_3d_window(void)
 	{	//If there is a seek selection
 		sz = (long)(eof_seek_selection_start + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 		sez = (long)(eof_seek_selection_end + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-		if((-100 <= sez) && (600 >= sz))
+		if((eof_3d_min_depth <= sez) && (eof_3d_max_depth >= sz))
 		{
-			spz = sz < -100 ? -100 : sz;
-			spez = sez > 600 ? 600 : sez;
+			spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
+			spez = sez > eof_3d_max_depth ? eof_3d_max_depth : sez;
 			point[0] = ocd3d_project_x(xchart[0], spez);
-			point[1] = ocd3d_project_y(200, spez);
+			point[1] = ocd3d_project_y(200 + offset_y_3d, spez);
 			point[2] = ocd3d_project_x(xchart[lastlane], spez);
 			point[3] = point[1];
 			point[4] = ocd3d_project_x(xchart[lastlane], spz);
-			point[5] = ocd3d_project_y(200, spz);
+			point[5] = ocd3d_project_y(200 + offset_y_3d, spz);
 			point[6] = ocd3d_project_x(xchart[0], spz);
 			point[7] = point[5];
 			polygon(eof_window_3d->screen, 4, point, eof_color_red);
@@ -3293,9 +3324,9 @@ void eof_render_3d_window(void)
 				}
 				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-				spz = sz < -100 ? -100 : sz;
-				spez = sez > 600 ? 600 : sez;
-				if((-100 > sez) || (600 < sz))
+				spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
+				spez = sez > eof_3d_max_depth ? eof_3d_max_depth : sez;
+				if((eof_3d_min_depth > sez) || (eof_3d_max_depth < sz))
 					continue;	//If the section would not render to the visible portion of the screen, skip it
 
 				usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
@@ -3304,11 +3335,11 @@ void eof_render_3d_window(void)
 					if(usedlanes & bitmask)
 					{	//If this lane is used in the phrase and the lane is active
 						point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spez);	//Offset drum lanes by drawing them one lane further left than other tracks
-						point[1] = ocd3d_project_y(200, spez);
+						point[1] = ocd3d_project_y(200 + offset_y_3d, spez);
 						point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spez);
 						point[3] = point[1];
 						point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spz);
-						point[5] = ocd3d_project_y(200, spz);
+						point[5] = ocd3d_project_y(200 + offset_y_3d, spz);
 						point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spz);
 						point[7] = point[5];
 						polygon(eof_window_3d->screen, 4, point, eof_colors[ctr].lightcolor);
@@ -3322,9 +3353,9 @@ void eof_render_3d_window(void)
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
 		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-		if((bz >= -100) && (bz <= 600))
+		if((bz >= eof_3d_min_depth) && (bz <= eof_3d_max_depth))
 		{	//If the beat is visible
-			y_projection = ocd3d_project_y(200, bz);
+			y_projection = ocd3d_project_y(200 + offset_y_3d, bz);
 			hline(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : eof_color_dark_silver);
 			if(eof_song->beat[i]->contains_tempo_change || eof_song->beat[i]->contains_ts_change)
 			{	//If this beat contains either a tempo or TS change
@@ -3340,7 +3371,7 @@ void eof_render_3d_window(void)
 				textprintf_ex(eof_window_3d->screen, eof_font, ocd3d_project_x(48 + 4 * 56 + 4, bz), y_projection - 12, eof_color_white, -1, "%s%s", tempo_text, ts_text);	//Render the tempo and time signature to the right of the beat marker
 			}
 		}
-		else if(bz > 600)
+		else if(bz > eof_3d_max_depth)
 		{	//If this beat wasn't visible
 			break;	//None of the remaining ones will be either, so stop rendering them
 		}
@@ -3349,17 +3380,16 @@ void eof_render_3d_window(void)
 	//Draw fret lanes
 	for(i = 0; i < numlanes; i++)
 	{
-		obx = ocd3d_project_x(xchart[i], -100);
-		oex = ocd3d_project_x(xchart[i], 600);
-		oby = ocd3d_project_y(200, -100);
-		oey = ocd3d_project_y(200, 600);
+		obx = ocd3d_project_x(xchart[i], eof_3d_min_depth);
+		oex = ocd3d_project_x(xchart[i], eof_3d_max_depth);
+		oby = fretboardpoint[5];	//This is the front edge of the 3D piano roll
+		oey = fretboardpoint[1];	//This is the back edge of the 3D piano roll
 
 		line(eof_window_3d->screen, obx, oby, oex, oey, eof_color_white);
 	}
 
 	/* draw the position marker */
-	y_projection = ocd3d_project_y(200, 0);
-	line(eof_window_3d->screen, ocd3d_project_x(48, 0), y_projection, ocd3d_project_x(48 + 4 * 56, 0), y_projection, eof_color_green);
+	line(eof_window_3d->screen, seek_x1_projection, seek_y_projection, seek_x2_projection, seek_y_projection, eof_color_green);
 
 //	int first_note = -1;	//Used for debugging
 //	int last_note = 0;		//Used for debugging
@@ -3410,10 +3440,13 @@ void eof_render_3d_window(void)
 	}
 
 	//Draw a border around the edge of the 3D window
-	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, eof_color_dark_silver);
-	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
-	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
-	vline(eof_window_3d->screen, eof_window_3d->w - 2, 1, eof_window_3d->h - 2, eof_color_white);
+	if(!eof_full_screen_3d)
+	{	//Skip drawing a border if the 3D preview is going to take up the full program window already
+		rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, eof_color_dark_silver);
+		rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
+		hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
+		vline(eof_window_3d->screen, eof_window_3d->w - 2, 1, eof_window_3d->h - 2, eof_color_white);
+	}
 
 	if(tp && restore_tech_view)
 	{	//If tech view needs to be re-enabled
@@ -3515,8 +3548,28 @@ void eof_render(void)
 
 	if(eof_full_screen_3d && eof_song_loaded)
 	{	//If the user enabled full screen 3D view, scale it to fill the program window
+		BITMAP *temp_3d;	//A temporary copy of the 3D preview, so eof_screen doesn't have to blit on top of itself
+
 		eof_log("\tRendering full screen 3D preview.", 3);
-		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, 0, 0, eof_screen_width_default, eof_screen_height);
+
+		temp_3d = create_bitmap(eof_window_3d->screen->w, eof_window_3d->screen->h);
+		if(!temp_3d)
+			return;	//Failed to create temporary bitmap
+
+		blit(eof_window_3d->screen, temp_3d, 0, 0, 0, 0, temp_3d->w, temp_3d->h);	//Make a copy of the 3D preview
+
+		if(!eof_full_height_3d_preview)
+		{	//If a normal size 3D preview is to be scaled to take up the entire program window
+			stretch_blit(temp_3d, eof_screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_screen_height / 2, 0, 0, eof_screen_width_default, eof_screen_height);
+		}
+		else
+		{	//If the 3D preview is already the full height of the program window, draw it along the right edge of the screen to allow space for the info panel
+			int xpos = EOF_SCREEN_PANEL_WIDTH / 6;
+
+			clear_to_color(eof_screen, eof_color_gray);
+			stretch_blit(temp_3d, eof_screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_screen_height, xpos, 20, EOF_SCREEN_PANEL_WIDTH * 2, eof_screen_height);
+		}
+		destroy_bitmap(temp_3d);	//Destroy the copy of the 3D preview
 		rectfill(eof_screen, EOF_SCREEN_PANEL_WIDTH * 2 + 1, 0, eof_screen->w - 1, eof_screen->h - 1, eof_color_gray);	//Erase the portion to the right of the scaled 3D preview (2 panel widths), in case the window width was increased, otherwise the normal sized 3D preview will be visible
 		eof_window_info->y = 0;	//Re-position the info window to the top left corner of EOF's program window
 		eof_render_info_window();
@@ -5427,7 +5480,29 @@ void eof_set_color_set(void)
 
 void eof_set_3d_projection(void)
 {
-	ocd3d_set_projection((float)eof_screen_width_default / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
+	float scale_x, scale_y;
+
+	if(eof_full_height_3d_preview)
+	{	//If the 3D preview is twice as tall as usual, use different logic to define the y scale value to ensure the seek position is on-screen
+		if(eof_screen_height == 480)
+		{	//640 x 480
+			scale_y = (float)eof_screen_height / 480.0;
+		}
+		else if(eof_screen_height == 600)
+		{	//800 x 600
+			scale_y = (float)eof_screen_height / 600.0;
+		}
+		else
+		{	//1024 x 768
+			scale_y = (float)eof_screen_height / 768.0;
+		}
+	}
+	else
+	{
+		scale_y = (float)eof_screen_height / 480.0;
+	}
+	scale_x = (float)eof_screen_width_default / 640.0;
+	ocd3d_set_projection(scale_x, scale_y, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 }
 
 void eof_seek_and_render_position(unsigned long track, unsigned char diff, unsigned long pos)

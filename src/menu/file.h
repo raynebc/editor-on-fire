@@ -190,4 +190,7 @@ int eof_menu_file_notes_panel_browse(void);
 	//Prompts the user to browse for a panel.txt file to display in the Notes panel
 	//Stores the selected path into eof_last_browsed_notes_panel_path() and reloads the Notes panel appropriately
 
+int eof_3d_preview_toggle_full_height(void);
+	//Changes whether the 3D preview will take one panel's or two panels' worth of height
+
 #endif

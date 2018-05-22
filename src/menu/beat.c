@@ -1406,6 +1406,7 @@ int eof_menu_beat_calculate_bpm(void)
 	eof_calculate_beats(eof_song);
 	eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+
 	return 1;
 }
 

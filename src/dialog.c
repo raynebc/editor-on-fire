@@ -183,7 +183,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				eof_main_menu_activated = 1;
 				player->mouse_obj = 0;
 			}
-			else if(!eof_keyboard_shortcut && ((eof_key_code == KEY_M) || (eof_key_code == KEY_V) || (eof_key_code == KEY_C) || (eof_key_code == KEY_D)))
+			else if(!eof_keyboard_shortcut && ((eof_key_code == KEY_M) || (eof_key_code == KEY_V) || (eof_key_code == KEY_C) || (eof_key_code == KEY_D) || (eof_key_code == KEY_PLUS_PAD) || (eof_key_code == KEY_MINUS_PAD)))
 			{	///Experimental:  User pressed a different ALT+key combination, seems like eof_key_code must be tested instead of eof_key_char,
 				/// possibly because only the characters associated with the main menu accelerators (ie. &F for the File menu) are sent to this
 				/// dialog for processing, but scan codes for other keys are still sent
@@ -257,7 +257,11 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	ret = shutdown_dialog(player);
 
 //	ret = popup_dialog(dp, n);
-///	eof_clear_input();	//////Experimental:  Leave the input variables intact to allow ALT+key shortcuts to be processed outside this function
+	if(!KEY_EITHER_ALT)
+	{	//If ALT is still being held
+		eof_clear_input();	//One of the monitored key scan codes must have triggered this, allow the key code to survive to be detected in the editor logic
+	}
+
 	gametime_reset();
 	eof_show_mouse(NULL);
 	eof_keyboard_shortcut = 0;

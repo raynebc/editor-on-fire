@@ -46,14 +46,14 @@ void Export_RS(FILE *outf)
 	{	//The extended ASCII variants are in windows-1252
 		fputs_err("<?xml version='1.0' encoding='windows-1252'?>\n",outf);
 	}
-#ifdef EOF_BUILD	//In the EOF code base, put a comment line indicating the program version
-	fputs_err("<!-- " EOF_VERSION_STRING " -->\n", outf);	//Write EOF's version in an XML comment
-#endif
 	if(fprintf(outf,"<vocals count=\"%lu\">\n", Lyrics.piececount) < 0)
 	{
 		printf("Error writing to XML file: %s\nAborting\n",strerror(errno));
 		exit_wrapper(2);
 	}
+#ifdef EOF_BUILD	//In the EOF code base, put a comment line indicating the program version
+	fputs_err("<!-- " EOF_VERSION_STRING " -->\n", outf);	//Write EOF's version in an XML comment
+#endif
 
 //Export the lyric pieces
 	if(Lyrics.verbose)	(void) puts("Writing lyrics");
@@ -742,6 +742,13 @@ void RS_Load(FILE *inf)
 			processedctr++;
 			while(!feof(inf))
 			{	//Until there was an error reading from the file or end of file is reached
+				if(strstr(buffer, "<!"))
+				{	//If the line contains an XML comment, skip it and read the next line of text into the buffer
+					(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+					processedctr++;
+					continue;
+				}
+
 				if(strcasestr_spec(buffer, "</vocals>"))	//If the end of the vocals XML tag is reached
 					break;									//Stop processing lines
 

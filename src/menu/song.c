@@ -1755,6 +1755,7 @@ int eof_menu_song_waveform(void)
 	if(eof_music_paused)
 		eof_render();
 	eof_fix_window_title();
+	eof_close_menu = 1;		//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 
 	return 0;	//Return success
 }
@@ -1794,6 +1795,7 @@ int eof_menu_song_spectrogram(void)
 	if(eof_music_paused)
 		eof_render();
 	eof_fix_window_title();
+	eof_close_menu = 1;		//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 
 	return 0;	//Return success
 }

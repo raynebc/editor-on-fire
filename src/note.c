@@ -947,6 +947,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	long xoffset = 0;	//This will be used to draw bitmaps half a lane further left when the bass drum isn't rendering in a lane and drum gems render centered over fret lines instead of between them
 	int drawline;		//Set to nonzero if a bass drum style line is to be drawn for the gem, set to 2 if a smaller rectangle is to be drawn in the center of the larger one, to denote HOPO open notes
 	int linecol = eof_color_red;		//The color of the line to be drawn
+	int offset_y_3d = 0;	//If full height 3D preview is in effect, y coordinates will be shifted down by one panel height, otherwise will shift by 0
 
 	//These variables are used for the name rendering logic
 	long x3d, y3d, z3d;			//The coordinate at which to draw the name string (right aligned)
@@ -973,6 +974,10 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	noteflags = eof_get_note_flags(eof_song, track, notenum);
 	notenote = eof_get_note_note(eof_song, track, notenum);
 
+	if(eof_full_height_3d_preview)
+	{
+		offset_y_3d = eof_screen_height / 2;	//Y coordinates will be lowered by one panel height so that the bottom of the 3D fret board is at the bottom of the program window
+	}
 	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
 	{	//If the catalog entry is a pro guitar note and the active track is not, or the user specified to display pro guitar notes as legacy notes
 		if(eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask != 0)
@@ -986,11 +991,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}
 
 	npos = (long)(notepos + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
-	if(npos + notelength / eof_zoom_3d < -100)
+	if(npos + notelength / eof_zoom_3d < eof_3d_min_depth)
 	{				//If the note would render entirely before the visible area
 		return -1;	//Return status:  Clipping before the viewing window
 	}
-	else if(npos > 600)
+	else if(npos > eof_3d_max_depth)
 	{				//If the note would render entirely after the visible area
 		return 1;	//Return status:  Clipping after the viewing window
 	}
@@ -1087,9 +1092,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			rz = npos;
 			ez = npos + 14;
 			point[0] = ocd3d_project_x(bx - 10, rz);
-			point[1] = ocd3d_project_y(200, rz);
+			point[1] = ocd3d_project_y(200 + offset_y_3d, rz);
 			point[2] = ocd3d_project_x(bx - 10, ez);
-			point[3] = ocd3d_project_y(200, ez);
+			point[3] = ocd3d_project_y(200 + offset_y_3d, ez);
 			point[4] = ocd3d_project_x(bx + 232, ez);
 			point[5] = point[3];
 			point[6] = ocd3d_project_x(bx + 232, rz);
@@ -1104,9 +1109,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				rz = npos + 5;
 				ez = npos + 9;
 				point[0] = ocd3d_project_x(bx - 10 + 15, rz);
-				point[1] = ocd3d_project_y(200, rz);
+				point[1] = ocd3d_project_y(200 + offset_y_3d, rz);
 				point[2] = ocd3d_project_x(bx - 10 + 15, ez);
-				point[3] = ocd3d_project_y(200, ez);
+				point[3] = ocd3d_project_y(200 + offset_y_3d, ez);
 				point[4] = ocd3d_project_x(bx + 232 - 15, ez);
 				point[5] = point[3];
 				point[6] = ocd3d_project_x(bx + 232 - 15, rz);
@@ -1290,14 +1295,14 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			//Render the note
 			image_height = eof_image[imagenum]->h;
 			half_image_width = eof_image[imagenum]->w / 2;
-			ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[lanenum] - half_image_width - xoffset, 200 - image_height, npos);
+			ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
 
 			if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
 				BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Allow one extra character's width for padding
 				if(fretbmp != NULL)
 				{	//Render the bitmap on top of the 3D note and then destroy the bitmap
-					ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[lanenum] - 8, 200 - (image_height / 2), npos);
+					ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[lanenum] - 8, 200 - (image_height / 2) + offset_y_3d, npos);
 					destroy_bitmap(fretbmp);
 				}
 			}
@@ -1309,7 +1314,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				{	//If the gem just drawn is a tom/cymbal combo
 					int x, y, x2;
 					x = ocd3d_project_x(xchart[lanenum] - xoffset, npos);
-					y = ocd3d_project_y(200 - (image_height / 4), npos);
+					y = ocd3d_project_y(200 - (image_height / 4) + offset_y_3d, npos);
 					x2 = ocd3d_project_x(xchart[lanenum] + (xchart[1] - xchart[0]) - xoffset, npos);	//The x coordinate one lane over
 					if((x != -65536) && (y != -65536))
 					{	//If none of the coordinate projections failed
@@ -1354,9 +1359,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}
 	}
 	z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
-	z3d = z3d < -100 ? -100 : z3d;
+	z3d = z3d < eof_3d_min_depth ? eof_3d_min_depth : z3d;
 	x3d = ocd3d_project_x(20 - 4, z3d);
-	y3d = ocd3d_project_y(200, z3d);
+	y3d = ocd3d_project_y(200 + offset_y_3d, z3d);
 	textout_right_ex(eof_window_3d->screen, font, nameptr, x3d, y3d, eof_color_white, -1);
 
 	return 0;	//Return status:  Note was not clipped in its entirety
@@ -1368,6 +1373,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	int point[8];
 	int rz, ez;
 	unsigned long numlanes, ctr, mask, tracknum;
+	int offset_y_3d = 0;	//If full height 3D preview is in effect, y coordinates will be shifted down by one panel height, otherwise will shift by 0
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -1390,6 +1396,10 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	if(eof_track_is_ghl_mode(eof_song, track) && (noteflags & EOF_GUITAR_NOTE_FLAG_GHL_OPEN))
 		return 0;	//Don't render tails on GHL open notes
 
+	if(eof_full_height_3d_preview)
+	{
+		offset_y_3d = eof_screen_height / 2;	//Y coordinates will be lowered by one panel height so that the bottom of the 3D fret board is at the bottom of the program window
+	}
 	if(eof_render_3d_rs_chords && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_note_count_colors(eof_song, track, notenum) > 1))
 	{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar/bass chord
 		if(!eof_get_rs_techniques(eof_song, track, notenum, 0, NULL, 2, 1))
@@ -1412,11 +1422,11 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}
 
 	npos = (long)(notepos + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
-	if(npos + notelength / eof_zoom_3d < -100)
+	if(npos + notelength / eof_zoom_3d < eof_3d_min_depth)
 	{
 		return -1;
 	}
-	else if(npos > 600)
+	else if(npos > eof_3d_max_depth)
 	{
 		return 1;
 	}
@@ -1431,8 +1441,8 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//Special case:  5 lane guitar/bass tracks can use a sixth lane but its 3D representation still only draws 5 lanes
 		numlanes = 5;
 	}
-	rz = npos < -100 ? -100 : npos + 6;
-	ez = npos + notelength / eof_zoom_3d > 600 ? 600 : npos + notelength / eof_zoom_3d + 6;
+	rz = npos < eof_3d_min_depth ? eof_3d_min_depth : npos + 6;
+	ez = npos + notelength / eof_zoom_3d > eof_3d_max_depth ? eof_3d_max_depth : npos + notelength / eof_zoom_3d + 6;
 	for(ctr=0,mask=1; ctr < eof_count_track_lanes(eof_song, track); ctr++,mask=mask<<1)
 	{	//For each of the lanes in this track
 		unsigned long nextnotenum;
@@ -1450,9 +1460,9 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			if(eof_open_strum_enabled(track))
 			{	//And open strum notes are enabled, render open strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
 				point[0] = ocd3d_project_x(xchart[1] - 10, rz);
-				point[1] = ocd3d_project_y(200, rz);
+				point[1] = ocd3d_project_y(200 + offset_y_3d, rz);
 				point[2] = ocd3d_project_x(xchart[1] - 10, ez);
-				point[3] = ocd3d_project_y(200, ez);
+				point[3] = ocd3d_project_y(200 + offset_y_3d, ez);
 				point[4] = ocd3d_project_x(xchart[3] + 10, ez);
 				point[5] = point[3];
 				point[6] = ocd3d_project_x(xchart[3] + 10, rz);
@@ -1493,9 +1503,9 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6
 			}
 			point[0] = ocd3d_project_x(xchart[lanenum] - 10, rz);
-			point[1] = ocd3d_project_y(200, rz);
+			point[1] = ocd3d_project_y(200 + offset_y_3d, rz);
 			point[2] = ocd3d_project_x(xchart[lanenum] - 10, ez);
-			point[3] = ocd3d_project_y(200, ez);
+			point[3] = ocd3d_project_y(200 + offset_y_3d, ez);
 			point[4] = ocd3d_project_x(xchart[lanenum] + 10, ez);
 			point[5] = point[3];
 			point[6] = ocd3d_project_x(xchart[lanenum] + 10, rz);
@@ -1528,7 +1538,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 			notepos2 = notepos + notelength;	//Find the position of the end of the note
 			npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
-			rz2 = npos2 < -100 ? -100 : npos2 + 10;
+			rz2 = npos2 < eof_3d_min_depth ? eof_3d_min_depth : npos2 + 10;
 
 			//Define the slide rectangle coordinates in clockwise order
 			#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D 4
@@ -1540,7 +1550,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			{	//Otherwise start the slide line at the right of this note
 				point[0] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
 			}
-			point[1] = ocd3d_project_y(200, rz);	//Y1 (Y coordinate of the front end of the slide)
+			point[1] = ocd3d_project_y(200 + offset_y_3d, rz);	//Y1 (Y coordinate of the front end of the slide)
 			if(up)
 			{	//If this note slides up (3D view from left to right), end the slide line at the right of the next note
 				point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
@@ -1549,7 +1559,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			{	//Otherwise end the slide line at the left of the next note
 				point[2] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
 			}
-			point[3] = ocd3d_project_y(200, rz2);	//Y2 (Y coordinate of the back end of the slide
+			point[3] = ocd3d_project_y(200 + offset_y_3d, rz2);	//Y2 (Y coordinate of the back end of the slide
 			point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
 			point[5] = point[3];	//Y3 (Y coordinate of the back end of the slide)
 			point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
@@ -1579,7 +1589,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 		notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
 		npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
-		rz2 = npos2 < -100 ? -100 : npos2 + 10;
+		rz2 = npos2 < eof_3d_min_depth ? eof_3d_min_depth : npos2 + 10;
 
 		if(eof_track_is_ghl_mode(eof_song, track))
 		{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
@@ -1592,9 +1602,9 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 		//Define the slide rectangle coordinates in clockwise order
 		point[0] = ocd3d_project_x(xchart[lanenum], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
-		point[1] = ocd3d_project_y(200, rz);				//Y1 (Y coordinate of the front end of the slide): The Y position of this note
+		point[1] = ocd3d_project_y(200 + offset_y_3d, rz);				//Y1 (Y coordinate of the front end of the slide): The Y position of this note
 		point[2] = ocd3d_project_x(xchart[lanenum2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
-		point[3] = ocd3d_project_y(200, rz2);				//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
+		point[3] = ocd3d_project_y(200 + offset_y_3d, rz2);				//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
 
 		point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
 		point[5] = point[3];							//Y3 (Y coordinate of the back end of the slide)

@@ -2270,6 +2270,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The current 3D maximum depth
+	if(!ustricmp(macro, "3D_MAX_DEPTH"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%d", eof_3d_max_depth);
+		return 1;
+	}
+
 	return 0;	//Macro not supported
 }
 
