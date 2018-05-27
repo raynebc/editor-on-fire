@@ -155,7 +155,7 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation, un
 	}
 }
 
-void eof_add_sysex_event(unsigned long pos, int size, void *data)
+void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 	void *datacopy = NULL;
 
@@ -180,6 +180,7 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data)
 					eof_midi_event[eof_midi_events]->filtered = 0;
 					eof_midi_event[eof_midi_events]->on = 0;
 					eof_midi_event[eof_midi_events]->off = 0;
+					eof_midi_event[eof_midi_events]->sysexon = sysexon;
 					eof_midi_events++;
 				}
 			}
@@ -245,7 +246,7 @@ void WriteVarLen(unsigned long value, PACKFILE * fp)
 	}
 }
 
-/* sorter for MIDI events so I can ouput proper MTrk data */
+/* sorter for MIDI events so I can output proper MTrk data */
 int qsort_helper3(const void * e1, const void * e2)
 {
 //	eof_log("qsort_helper3() entered");
@@ -265,20 +266,32 @@ int qsort_helper3(const void * e1, const void * e2)
 
 	/* Logical order of custom Sysex markers:  Phrase on, note on, note off, Phrase off */
 	if(((*thing1)->type == 0xF0) && ((*thing2)->type == 0x90))
-	{
-		return -1;
+	{	//Sort a Sysex event and a Note on event
+		if((*thing1)->sysexon)
+			return -1;	//This is a Sysex phrase on marker
+		else
+			return 1;	//This is a phrase off marker or some other Sysex message
 	}
 	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0xF0))
-	{
-		return 1;
+	{	//Sort a Note on event and a Sysex event
+		if((*thing2)->sysexon)
+			return 1;	//The latter is a Sysex phrase on marker
+		else
+			return -1;	//The latter is a phrase off marker or some other Sysex message
 	}
 	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0xF0))
-	{
-		return -1;
+	{	//Sort a Note off event and a Sysex event
+		if((*thing2)->sysexon)
+			return 1;	//The latter is a Sysex phrase on marker
+		else
+			return -1;	//The latter is a phrase off marker or some other Sysex message
 	}
 	if(((*thing1)->type == 0xF0) && ((*thing2)->type == 0x80))
-	{
-		return 1;
+	{	//Sort a Sysex event and a Note off event
+		if((*thing1)->sysexon)
+			return -1;	//This is a Sysex phrase on marker
+		else
+			return 1;	//This is a phrase off marker or some other Sysex message
 	}
 
 	/* Logical order of lyric markings:  Overdrive on, solo on, lyric on, lyric, lyric pitch, ..., lyric off, solo off, overdrive off */
@@ -822,9 +835,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 									phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 									phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
 									phase_shift_sysex_phrase[5] = 7;	//Store the phrase ID (7 = Snare rim shot)
-									eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom rim shot start marker
+									eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom rim shot start marker
 									phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-									eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom rim shot phrase stop marker
+									eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom rim shot phrase stop marker
 								}
 							}
 						}
@@ -867,31 +880,31 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN)
 							{	//If this note is marked as an open hi hat note
 								phase_shift_sysex_phrase[5] = 5;	//Store the phrase ID (5 = Open Hi Hat)
-								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open hi hat start marker
+								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom open hi hat start marker
 								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open hi hat stop marker
+								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom open hi hat stop marker
 							}
 							else if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
 							{	//If this note is marked as a pedal controlled hi hat note
 								phase_shift_sysex_phrase[5] = 6;	//Store the phrase ID (6 = Pedal Controlled Hi Hat)
-								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pedal controlled hi hat start marker
+								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pedal controlled hi hat start marker
 								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pedal controlled hi hat phrase stop marker
+								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pedal controlled hi hat phrase stop marker
 							}
 							else if(noteflags & EOF_DRUM_NOTE_FLAG_Y_SIZZLE)
 							{	//If this note is marked as a sizzle hi hat note
 								phase_shift_sysex_phrase[5] = 8;	//Store the phrase ID (8 = Sizzle Hi Hat)
-								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom sizzle hi hat start marker
+								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom sizzle hi hat start marker
 								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom sizzle hi hat phrase stop marker
+								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom sizzle hi hat phrase stop marker
 							}
 							if(noteflags & EOF_DRUM_NOTE_FLAG_Y_COMBO)
 							{	//If this note is marked as a yellow tom/cymbal combo
 								phase_shift_sysex_phrase[5] = 17;	//Store the phrase ID (17 = yellow tom+cymbal)
 								phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
+								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom combo start marker
 								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom combo stop marker
 							}
 						}//Only write these notations if not writing a Rock Band compliant MIDI
 					}
@@ -923,9 +936,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 							phase_shift_sysex_phrase[5] = 18;	//Store the phrase ID (18 = blue tom+cymbal)
 							phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
+							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom combo start marker
 							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom combo stop marker
 						}
 					}
 				}
@@ -956,9 +969,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 							phase_shift_sysex_phrase[5] = 19;	//Store the phrase ID (19 = green tom+cymbal)
 							phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom combo start marker
+							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom combo start marker
 							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom combo stop marker
+							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom combo stop marker
 						}
 					}
 				}
@@ -986,9 +999,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 1;	//Store the phrase ID (1 = Open Strum Bass)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom open bass phrase start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom open bass phrase stop marker
 					}
 				}
 
@@ -1182,9 +1195,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom slider start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom slider start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom slider stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom slider stop marker
 					}
 				}
 			}
@@ -1783,9 +1796,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							phase_shift_sysex_phrase[5] = 3;	//Store the phrase ID (3 = Pro guitar slide down)
 						}
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pro guitar slide start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pro guitar slide stop marker
 					}
 
 					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
@@ -1813,9 +1826,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 9;	//Store the phrase ID (9 = Pro guitar palm mute)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar palm mute start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pro guitar palm mute start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar palm mute stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pro guitar palm mute stop marker
 					}
 				}
 
@@ -1828,9 +1841,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 10;	//Store the phrase ID (10 = Pro guitar vibrato)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar vibrato start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pro guitar vibrato start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar vibrato stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pro guitar vibrato stop marker
 					}
 				}
 
@@ -1843,9 +1856,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 11;	//Store the phrase ID (11 = Pro guitar harmonic)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar harmonic start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pro guitar harmonic start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar harmonic stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pro guitar harmonic stop marker
 					}
 				}
 
@@ -1858,9 +1871,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 12;	//Store the phrase ID (12 = Pro guitar pinch harmonic)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar pinch harmonic start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pro guitar pinch harmonic start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar pinch harmonic stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pro guitar pinch harmonic stop marker
 					}
 				}
 
@@ -1873,9 +1886,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 13;	//Store the phrase ID (13 = Pro guitar bend)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar bend start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pro guitar bend start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar bend stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pro guitar bend stop marker
 					}
 				}
 
@@ -1888,9 +1901,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 14;	//Store the phrase ID (14 = Pro guitar accent)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar accent start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pro guitar accent start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar accent stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pro guitar accent stop marker
 					}
 				}
 
@@ -1903,9 +1916,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 15;	//Store the phrase ID (15 = Pro guitar pop)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar pop start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pro guitar pop start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar pop stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pro guitar pop stop marker
 					}
 				}
 
@@ -1918,9 +1931,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 16;	//Store the phrase ID (16 = Pro guitar slap)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slap start marker
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom pro guitar slap start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slap stop marker
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom pro guitar slap stop marker
 					}
 				}
 
@@ -2459,7 +2472,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open ouput MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;	//Return failure
 	}
@@ -3042,7 +3055,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open ouput MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;	//Return failure
 	}

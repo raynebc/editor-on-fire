@@ -27,6 +27,7 @@ typedef struct
 	char on;				//Simplifies the use of running status by indicating if this is a note on event
 	char off;				//Simplifies the use of running status by indicating if this is a note off event
 	unsigned long index;	//For text events, a tie in the sorting order will be broken by whichever has the lower index number
+	char sysexon;			//If this is a Sysex marker, tracks whether this is a start of Sysex marker, for quicksort purposes
 } EOF_MIDI_EVENT;
 
 
@@ -160,8 +161,9 @@ void eof_write_tempo_track(char *trackname, struct Tempo_change *anchorlist, EOF
 	//Writes a tempo track to the given file stream, including all set tempo, set time signature and set key signature events and an end of track event
 	//If trackname is not NULL, a track name MIDI event is written accordingly
 
-void eof_add_sysex_event(unsigned long pos, int size, void *data);
+void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon);
 	//Stores a copy of the Sysex message data (used for custom phrase markers in Phase Shift) to eof_midi_event[]
+	//sysexon indicates whether the message is a Sysex phrase on marker, to be used for sorting purposes
 void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision);
 	//Write all stored MIDI track data from sp->midi_data_head to the output file
 int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistptr, EOF_MIDI_TS_LIST **tslistptr, unsigned long *timedivision);

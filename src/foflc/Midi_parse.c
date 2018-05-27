@@ -2103,7 +2103,7 @@ int MIDI_Build_handler(struct TEPstruct *data)
 		fseek_err(data->inf,data->eventindex,SEEK_SET);
 		buffer=ReadMetaEventString(data->inf,eventlength);	//Read event into an allocated buffer
 
-		//Write the memory buffer to the ouput file
+		//Write the memory buffer to the output file
 		if((data->eventtype < 0xF0) && ((data->eventtype>>4) == data->lastwritteneventtype) && !data->runningstatus)
 		{	//If this event is not a Meta/SysEx event as is the same as the last such event that was written
 			//and this event isn't already running status, convert to running status by omitting event status byte

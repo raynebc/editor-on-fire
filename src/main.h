@@ -12,6 +12,7 @@
 
 #define EOF_LOGGING_LEVEL 1
 	//Logging level 1 is normal logging, 2 is verbose logging, 3 is exhaustive logging
+	///This macro is deprecated as the logging level is now set in the config file
 #define EOF_VERSION_STRING "EOF v1.8RC12"
 #define EOF_COPYRIGHT_STRING "(c)2008-2018 T^3 Software."
 

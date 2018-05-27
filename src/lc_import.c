@@ -508,7 +508,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 		case KAR_FORMAT:	//Export as unofficial KAR.  Default export track is "Melody"
 			if(Lyrics.outputtrack == NULL)
 			{
-				(void) puts("\aNo ouput track name for KAR file was given.  A track named \"Melody\" will be used by default");
+				(void) puts("\aNo output track name for KAR file was given.  A track named \"Melody\" will be used by default");
 				Lyrics.outputtrack = DuplicateString("Melody");
 			}
 			Export_MIDI(outf);
