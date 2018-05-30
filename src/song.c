@@ -1079,7 +1079,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	unsigned char numdiffs = 5, note_type;
 	EOF_PRO_GUITAR_TRACK *tp;
 
- 	eof_log("eof_detect_difficulties() entered", 2);
+ 	eof_log("eof_detect_difficulties() entered", 3);
 
  	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
@@ -4761,7 +4761,7 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum, tflags, ctr;
 
- 	eof_log("eof_track_sort_notes() entered", 2);
+ 	eof_log("\teof_track_sort_notes() entered", 3);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
@@ -4853,7 +4853,7 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		if(sp->tags->highlight_arpeggios)
 			eof_song_highlight_arpeggios(sp, track);	//Re-create the arpeggio highlighting as appropriate
 	}
-	eof_log("\teof_track_fixup_notes() completed", 2);
+	eof_log("\teof_track_fixup_notes() completed", 3);
 }
 
 void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp)
@@ -4924,7 +4924,7 @@ void eof_pro_guitar_track_sort_arpeggios(EOF_PRO_GUITAR_TRACK* tp)
 void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
 {
 	unsigned long ctr;
- 	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 2);
+ 	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 3);
 
 	if(tp && (index < tp->handpositions))
 	{
@@ -6676,7 +6676,7 @@ void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_set_num_sliders() entered", 1);
+ 	eof_log("eof_set_num_sliders() entered", 3);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;

@@ -68,6 +68,10 @@ int eof_menu_song_seek_previous_beat(void);			//Seeks to the previous beat
 int eof_menu_song_seek_next_beat(void);				//Seeks to the next beat
 int eof_menu_song_seek_previous_measure(void);		//Seeks to the previous measure
 int eof_menu_song_seek_next_measure(void);			//Seeks to the next measure
+int eof_custom_seek_beat_measure_edit_proc(int msg, DIALOG *d, int c);
+	//If the user types the letter b, sets the "beat" radio button in eof_seek_beat_measure_dialog[]
+	//If the user types the letter m, sets the "measure" radio button in eof_seek_beat_measure_dialog[]
+	//All other input is filtered through eof_verified_edit_proc()
 int eof_menu_song_seek_beat_measure(void);			//Seeks to the specified beat or measure
 int eof_menu_song_seek_catalog_entry(void);			//Seeks to the current fret catalog entry
 int eof_menu_song_seek_timestamp(void);				//Seeks to a user specified timestamp

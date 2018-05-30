@@ -3268,11 +3268,39 @@ DIALOG eof_seek_beat_measure_dialog[] =
 	{ d_agup_radio_proc,	16,	100,110,15,	2,   23,  0,    0,      0,	0,	eof_etext,				NULL, NULL },
 	{ d_agup_radio_proc,	16,	120,160,15,	2,   23,  0,    0,      0,	0,	eof_etext2,				NULL, NULL },
 	{ d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Number:",				NULL, NULL },
-	{ eof_verified_edit_proc,70, 140,66,20,  2,   23,  0, D_GOTFOCUS,4,  0,  eof_etext3,           	"1234567890", NULL },
+	{ eof_custom_seek_beat_measure_edit_proc,70,140,66,20,2,23,0,D_GOTFOCUS,4,0,eof_etext3,			"1234567890", NULL },
 	{ d_agup_button_proc,	16,	164,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             		NULL, NULL },
 	{ d_agup_button_proc,	96, 164,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         		NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
+
+int eof_custom_seek_beat_measure_edit_proc(int msg, DIALOG *d, int c)
+{
+	//Check ASCII code input
+	if(msg == MSG_CHAR)
+	{
+		unsigned c2 = (c & 255);	//The lower 8 bits is the scan code of the key press
+
+		if((c2 == 'b') || (c2 == 'B'))
+		{	//The user pressed b
+			eof_seek_beat_measure_dialog[2].flags = D_SELECTED;	//Select the beat radio button
+			eof_seek_beat_measure_dialog[3].flags = 0;			//Clear the measure radio button
+			(void) object_message(&eof_seek_beat_measure_dialog[2], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
+			(void) object_message(&eof_seek_beat_measure_dialog[3], MSG_DRAW, 0);
+			return D_USED_CHAR;	//Input processed
+		}
+		else if((c2 == 'm') || (c2 == 'M'))
+		{	//The user pressed m
+			eof_seek_beat_measure_dialog[3].flags = D_SELECTED;	//Select the measure radio button
+			eof_seek_beat_measure_dialog[2].flags = 0;			//Clear the beat radio button
+			(void) object_message(&eof_seek_beat_measure_dialog[2], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
+			(void) object_message(&eof_seek_beat_measure_dialog[3], MSG_DRAW, 0);
+			return D_USED_CHAR;	//Input processed
+		}
+	}
+
+	return eof_verified_edit_proc(msg, d, c);	//Allow the rest of the input to be filtered normally
+}
 
 int eof_menu_song_seek_beat_measure(void)
 {
@@ -3293,15 +3321,15 @@ int eof_menu_song_seek_beat_measure(void)
 	eof_seek_beat_measure_dialog[3].flags = 0;
 	measurecount = eof_get_measure(0, 1);	//Count the number of measures
 	eof_etext3[0] = '\0';	//Empty the input field
-	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Beat [0 - %lu]", eof_song->beats - 1);
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "&Beat [0 - %lu]", eof_song->beats - 1);
 	if(measurecount)
 	{	//If there is at least one measure
-		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "Measure [1 - %lu]", measurecount);
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "&Measure [1 - %lu]", measurecount);
 		eof_seek_beat_measure_dialog[3].flags = 0;	//Enable the measure radio button
 	}
 	else
 	{
-		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "Measure (no TS)");
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "&Measure (no TS)");
 		lastselected = 2;	//Have the beat option selected instead
 		eof_seek_beat_measure_dialog[3].flags = D_DISABLED;	//Disable the measure radio button
 	}

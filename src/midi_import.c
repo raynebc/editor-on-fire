@@ -1207,7 +1207,7 @@ set_window_title(debugtext);
 	if(midbeatchangefound)
 	{	//If a mid beat tempo or TS change was found
 		eof_clear_input();
-		if(alert("Warning:  There were one or more mid beat tempo/TS changes.", "Store the tempo track into the project?", "(Recommended if creating RB3 upgrades)", "&Yes", "&No", 'y', 'n') == 1)
+		if(alert("Warning:  There were one or more mid beat tempo/TS changes.", "Store the tempo track into the project?", "(Recommended if creating RB3 upgrades, otherwise not recommended)", "&Yes", "&No", 'y', 'n') == 1)
 		{	//If the user opts to import the tempo track
 			struct eof_MIDI_data_track *ptr;
 			char *tempotrackname = "(TEMPO)";
@@ -1969,7 +1969,7 @@ set_window_title(debugtext);
 
 #ifdef EOF_DEBUG
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
-					eof_log(eof_log_string, 1);
+					eof_log(eof_log_string, 2);
 #endif
 
 					if(eof_import_events[i]->game == 0)
@@ -2129,7 +2129,7 @@ set_window_title(debugtext);
 							note_count[picked_track]++;
 #ifdef EOF_DEBUG
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
-							eof_log(eof_log_string, 1);
+							eof_log(eof_log_string, 3);
 #endif
 						}
 						else
@@ -2137,7 +2137,7 @@ set_window_title(debugtext);
 							notenum = k - 1;
 #ifdef EOF_DEBUG
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %d to %d", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
-							eof_log(eof_log_string, 1);
+							eof_log(eof_log_string, 3);
 #endif
 							eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
 						}
@@ -2193,7 +2193,7 @@ set_window_title(debugtext);
 				{
 #ifdef EOF_DEBUG
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
-					eof_log(eof_log_string, 1);
+					eof_log(eof_log_string, 2);
 #endif
 
 					if(eof_import_events[i]->game == 0)
@@ -2335,7 +2335,7 @@ set_window_title(debugtext);
 							{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //									allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
-								eof_log(eof_log_string, 2);
+								eof_log(eof_log_string, 3);
 
 								eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
 								if(eof_get_note_length(sp, picked_track, k - 1) <= 0)
@@ -2374,7 +2374,7 @@ set_window_title(debugtext);
 												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 												{	//If the note is in the same difficulty as the open strum phrase, and its timestamp falls between the phrase on and phrase off marker
 													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to have a note mask of 33", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1));
-													eof_log(eof_log_string, 2);
+													eof_log(eof_log_string, 3);
 
 													eof_set_note_note(sp, picked_track, k - 1, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
 													sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
@@ -2851,21 +2851,21 @@ set_window_title(debugtext);
 							note_count[picked_track]++;
 
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
-							eof_log(eof_log_string, 2);
+							eof_log(eof_log_string, 3);
 						}
 						else
 						{	//Otherwise just modify the existing note by adding a gem
 							notenum = k - 1;
 
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %d to %d", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
-							eof_log(eof_log_string, 2);
+							eof_log(eof_log_string, 3);
 
 							eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
 						}
 						if(eof_import_events[i]->event[j]->d2 < 100)
 						{	//Some other editors may have an invalid velocity defined
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from velocity %d to 100", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_import_events[i]->event[j]->d2);
-							eof_log(eof_log_string, 2);
+							eof_log(eof_log_string, 3);
 
 							eof_import_events[i]->event[j]->d2 = 100;	//In which case, revert the velocity to the lowest usable value
 						}
@@ -3105,7 +3105,7 @@ set_window_title(debugtext);
 							if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
 							{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
-								eof_log(eof_log_string, 2);
+								eof_log(eof_log_string, 3);
 
 								eof_set_note_length(sp, picked_track, k - 1, event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
 								if(eof_get_note_length(sp, picked_track, k - 1) <= 0)

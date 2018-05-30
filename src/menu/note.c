@@ -312,6 +312,7 @@ MENU eof_note_drum_accent_menu[] =
 
 MENU eof_note_drum_menu[] =
 {
+	{"&Toggle cymbal\t" CTRL_NAME "+ALT+C", eof_menu_note_toggle_rb3_cymbal_all, NULL, 0, NULL},
 	{"Toggle Yellow cymbal\t" CTRL_NAME "+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
 	{"Toggle Blue cymbal\t" CTRL_NAME "+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
 	{"Toggle Green cymbal\t" CTRL_NAME "+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
@@ -950,38 +951,38 @@ void eof_prepare_note_menu(void)
 
 				if(eof_selected_track == EOF_TRACK_DRUM_PS)
 				{	//If the PS drum track is active
-					eof_note_drum_menu[8].flags = 0;	//Enable toggle Y note as open hi hat
-					eof_note_drum_menu[9].flags = 0;	//Enable toggle Y note as pedal hi hat
-					eof_note_drum_menu[10].flags = 0;	//Enable toggle Y note as sizzle hi hat
-					eof_note_drum_menu[12].flags = 0;	//Enable mark new Y notes as submenu
-					eof_note_drum_menu[13].flags = 0;	//Enable toggle R note as rim shot
-					eof_note_drum_menu[14].flags = 0;	//Enable remove rim shot status
-					eof_note_drum_menu[15].flags = 0;	//Enable toggle Y cymbal+tom
-					eof_note_drum_menu[16].flags = 0;	//Enable toggle B cymbal+tom
-					eof_note_drum_menu[17].flags = 0;	//Enable toggle G cymbal+tom
+					eof_note_drum_menu[9].flags = 0;	//Enable toggle Y note as open hi hat
+					eof_note_drum_menu[10].flags = 0;	//Enable toggle Y note as pedal hi hat
+					eof_note_drum_menu[11].flags = 0;	//Enable toggle Y note as sizzle hi hat
+					eof_note_drum_menu[13].flags = 0;	//Enable mark new Y notes as submenu
+					eof_note_drum_menu[14].flags = 0;	//Enable toggle R note as rim shot
+					eof_note_drum_menu[15].flags = 0;	//Enable remove rim shot status
+					eof_note_drum_menu[16].flags = 0;	//Enable toggle Y cymbal+tom
+					eof_note_drum_menu[17].flags = 0;	//Enable toggle B cymbal+tom
+					eof_note_drum_menu[18].flags = 0;	//Enable toggle G cymbal+tom
 				}
 				else
 				{
-					eof_note_drum_menu[8].flags = D_DISABLED;
 					eof_note_drum_menu[9].flags = D_DISABLED;
 					eof_note_drum_menu[10].flags = D_DISABLED;
-					eof_note_drum_menu[12].flags = D_DISABLED;
+					eof_note_drum_menu[11].flags = D_DISABLED;
 					eof_note_drum_menu[13].flags = D_DISABLED;
 					eof_note_drum_menu[14].flags = D_DISABLED;
 					eof_note_drum_menu[15].flags = D_DISABLED;
 					eof_note_drum_menu[16].flags = D_DISABLED;
 					eof_note_drum_menu[17].flags = D_DISABLED;
+					eof_note_drum_menu[18].flags = D_DISABLED;
 				}
 			}
 
 			/* toggle Expert+ bass drum */
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (eof_note_type == EOF_NOTE_AMAZING))
 			{	//If the Amazing difficulty of a drum track is active
-				eof_note_drum_menu[5].flags = 0;			//Note>Drum>Toggle Expert+ Bass Drum
+				eof_note_drum_menu[6].flags = 0;			//Note>Drum>Toggle Expert+ Bass Drum
 			}
 			else
 			{
-				eof_note_drum_menu[5].flags = D_DISABLED;
+				eof_note_drum_menu[6].flags = D_DISABLED;
 			}
 
 			/* HOPO */
@@ -2569,11 +2570,11 @@ int eof_menu_note_remove_double_bass(void)
 	return 1;
 }
 
-int eof_menu_note_toggle_rb3_cymbal_green_logic(int function)
+int eof_menu_note_toggle_rb3_cymbal_green_logic(int function, char *undo_made)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	long u = 0;
+	long u = 0;		//Tracks whether this function call made any changes, to call fixup logic accordingly
 	int note_selection_updated;
 	EOF_LEGACY_TRACK *tp;
 
@@ -2581,6 +2582,8 @@ int eof_menu_note_toggle_rb3_cymbal_green_logic(int function)
 		return 1;	//Do not allow this function to run when a drum track is not active
 	if(function && (eof_selected_track != EOF_TRACK_DRUM_PS))
 		return 1;	//Do not allow this function to apply tom/cymbal combo status except in the Phase Shift drum track
+	if(!undo_made)
+		return 1;	//Invalid parameter
 
 	tp = eof_song->legacy_track[tracknum];
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
@@ -2593,28 +2596,30 @@ int eof_menu_note_toggle_rb3_cymbal_green_logic(int function)
 
 		if(!function)
 		{	//Toggle green cymbal status
-			if(!u)
-			{	//Make a back up before changing the first note
+			if(!*undo_made)
+			{	//If an undo state hasn't been made yet
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
+				*undo_made = 1;
 			}
 			eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_G_CYMBAL,2,0);	//Toggle the green cymbal flag on all drum notes at this position in all difficulties
+			u = 1;
 		}
 		else
 		{	//Toggle green tom/cymbal combo status
 			if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
 			{	//If this note is already a cymbal
-				if(!u)
-				{	//Make a back up before changing the first note
+				if(!*undo_made)
+				{	//If an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
+					*undo_made = 1;
 				}
 				tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_G_COMBO;						//Toggle the green tom/cymbal combo flag on this note only
+				u = 1;
 			}
 		}
 	}
 	if(u)
-	{	//If changes were made
+	{	//If changes were made in this function call
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Remove tom+cymbal combo status from notes that are no longer cymbals
 	}
 	if(note_selection_updated)
@@ -2627,19 +2632,21 @@ int eof_menu_note_toggle_rb3_cymbal_green_logic(int function)
 
 int eof_menu_note_toggle_rb3_cymbal_green(void)
 {
-	return eof_menu_note_toggle_rb3_cymbal_green_logic(0);	//Toggle normal cymbal status
+	char undo_made = 0;
+	return eof_menu_note_toggle_rb3_cymbal_green_logic(0, &undo_made);	//Toggle normal cymbal status
 }
 
 int eof_menu_note_toggle_rb3_cymbal_combo_green(void)
 {
-	return eof_menu_note_toggle_rb3_cymbal_green_logic(1);	//Toggle tom/cymbal combo status
+	char undo_made = 0;
+	return eof_menu_note_toggle_rb3_cymbal_green_logic(1, &undo_made);	//Toggle tom/cymbal combo status
 }
 
-int eof_menu_note_toggle_rb3_cymbal_yellow_logic(int function)
+int eof_menu_note_toggle_rb3_cymbal_yellow_logic(int function, char *undo_made)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	long u = 0;
+	long u = 0;		//Tracks whether this function call made any changes, to call fixup logic accordingly
 	int note_selection_updated;
 	EOF_LEGACY_TRACK *tp;
 
@@ -2647,6 +2654,8 @@ int eof_menu_note_toggle_rb3_cymbal_yellow_logic(int function)
 		return 1;	//Do not allow this function to run when a drum track is not active
 	if(function && (eof_selected_track != EOF_TRACK_DRUM_PS))
 		return 1;	//Do not allow this function to apply tom/cymbal combo status except in the Phase Shift drum track
+	if(!undo_made)
+		return 1;	//Invalid parameter
 
 	tp = eof_song->legacy_track[tracknum];
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
@@ -2659,28 +2668,30 @@ int eof_menu_note_toggle_rb3_cymbal_yellow_logic(int function)
 
 		if(!function)
 		{	//Toggle yellow cymbal status
-			if(!u)
-			{	//Make a back up before changing the first note
+			if(!*undo_made)
+			{	//If an undo state hasn't been made yet
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
+				*undo_made = 1;
 			}
 			eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL,2,0);	//Toggle the yellow cymbal flag on all drum notes at this position
+			u = 1;
 		}
 		else
 		{	//Toggle yellow tom/cymbal combo status
 			if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
 			{	//If this note is already a cymbal
-				if(!u)
-				{	//Make a back up before changing the first note
+				if(!*undo_made)
+				{	//If an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
+					*undo_made = 1;
 				}
 				tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_Y_COMBO;					//Toggle the yellow tom/cymbal combo flag on this note only
+				u = 1;
 			}
 		}
 	}
 	if(u)
-	{	//If changes were made
+	{	//If changes were made in this function call
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Remove tom+cymbal combo status from notes that are no longer cymbals
 	}
 	if(note_selection_updated)
@@ -2693,15 +2704,17 @@ int eof_menu_note_toggle_rb3_cymbal_yellow_logic(int function)
 
 int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 {
-	return eof_menu_note_toggle_rb3_cymbal_yellow_logic(0);	//Toggle normal cymbal status
+	char undo_made = 0;
+	return eof_menu_note_toggle_rb3_cymbal_yellow_logic(0, &undo_made);	//Toggle normal cymbal status
 }
 
 int eof_menu_note_toggle_rb3_cymbal_combo_yellow(void)
 {
-	return eof_menu_note_toggle_rb3_cymbal_yellow_logic(1);	//Toggle tom/cymbal combo status
+	char undo_made = 0;
+	return eof_menu_note_toggle_rb3_cymbal_yellow_logic(1, &undo_made);	//Toggle tom/cymbal combo status
 }
 
-int eof_menu_note_toggle_rb3_cymbal_blue_logic(int function)
+int eof_menu_note_toggle_rb3_cymbal_blue_logic(int function, char *undo_made)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2713,6 +2726,8 @@ int eof_menu_note_toggle_rb3_cymbal_blue_logic(int function)
 		return 1;	//Do not allow this function to run when a drum track is not active
 	if(function && (eof_selected_track != EOF_TRACK_DRUM_PS))
 		return 1;	//Do not allow this function to apply tom/cymbal combo status except in the Phase Shift drum track
+	if(!undo_made)
+		return 1;	//Invalid parameter
 
 	tp = eof_song->legacy_track[tracknum];
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
@@ -2725,28 +2740,30 @@ int eof_menu_note_toggle_rb3_cymbal_blue_logic(int function)
 
 		if(!function)
 		{	//Toggle blue cymbal status
-			if(!u)
-			{	//Make a back up before changing the first note
+			if(!*undo_made)
+			{	//If an undo state hasn't been made yet
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
+				*undo_made = 1;
 			}
 			eof_set_flags_at_legacy_note_pos(tp,i,EOF_DRUM_NOTE_FLAG_B_CYMBAL,2,0);	//Toggle the blue cymbal flag on all drum notes at this position
+			u = 1;
 		}
 		else
 		{	//Toggle blue tom/cymbal combo status
 			if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
 			{	//If this note is already a cymbal
-				if(!u)
-				{	//Make a back up before changing the first note
+				if(!*undo_made)
+				{	//If an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					u = 1;
+					*undo_made = 1;
 				}
 				tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_B_COMBO;					//Toggle the blue tom/cymbal combo flag on this note only
+				u = 1;
 			}
 		}
 	}
 	if(u)
-	{	//If changes were made
+	{	//If changes were made in this function call
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Remove tom+cymbal combo status from notes that are no longer cymbals
 	}
 	if(note_selection_updated)
@@ -2759,12 +2776,22 @@ int eof_menu_note_toggle_rb3_cymbal_blue_logic(int function)
 
 int eof_menu_note_toggle_rb3_cymbal_blue(void)
 {
-	return eof_menu_note_toggle_rb3_cymbal_blue_logic(0);	//Toggle normal cymbal status
+	char undo_made = 0;
+	return eof_menu_note_toggle_rb3_cymbal_blue_logic(0, &undo_made);	//Toggle normal cymbal status
 }
 
 int eof_menu_note_toggle_rb3_cymbal_combo_blue(void)
 {
-	return eof_menu_note_toggle_rb3_cymbal_blue_logic(1);	//Toggle tom/cymbal combo status
+	char undo_made = 0;
+	return eof_menu_note_toggle_rb3_cymbal_blue_logic(1, &undo_made);	//Toggle tom/cymbal combo status
+}
+
+int eof_menu_note_toggle_rb3_cymbal_all(void)
+{
+	char undo_made = 0;
+	(void) eof_menu_note_toggle_rb3_cymbal_green_logic(0, &undo_made);	//Toggle normal green cymbal status
+	(void) eof_menu_note_toggle_rb3_cymbal_yellow_logic(0, &undo_made);	//Toggle normal yellow cymbal status
+	return eof_menu_note_toggle_rb3_cymbal_blue_logic(0, &undo_made);	//Toggle normal blue cymbal status
 }
 
 int eof_menu_note_remove_cymbal(void)
@@ -2819,12 +2846,12 @@ int eof_menu_note_default_cymbal(void)
 	if(eof_mark_drums_as_cymbal)
 	{
 		eof_mark_drums_as_cymbal = 0;
-		eof_note_drum_menu[4].flags = 0;
+		eof_note_drum_menu[5].flags = 0;
 	}
 	else
 	{
 		eof_mark_drums_as_cymbal = 1;
-		eof_note_drum_menu[4].flags = D_SELECTED;
+		eof_note_drum_menu[5].flags = D_SELECTED;
 	}
 	return 1;
 }
@@ -2834,12 +2861,12 @@ int eof_menu_note_default_double_bass(void)
 	if(eof_mark_drums_as_double_bass)
 	{
 		eof_mark_drums_as_double_bass = 0;
-		eof_note_drum_menu[7].flags = 0;
+		eof_note_drum_menu[8].flags = 0;
 	}
 	else
 	{
 		eof_mark_drums_as_double_bass = 1;
-		eof_note_drum_menu[7].flags = D_SELECTED;
+		eof_note_drum_menu[8].flags = D_SELECTED;
 	}
 	return 1;
 }

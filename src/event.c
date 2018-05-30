@@ -137,6 +137,27 @@ void eof_sort_events(EOF_SONG * sp)
 	}
 }
 
+void eof_delete_blank_events(EOF_SONG *sp)
+{
+	unsigned long ctr, deletecount;
+
+ 	eof_log("eof_delete_blank_events() entered", 1);
+
+	if(sp)
+	{
+		for(ctr = sp->text_events, deletecount = 0; ctr > 0; ctr--)
+		{	//For each text event in the project, in reverse order
+			if(sp->text_event[ctr - 1]->text[0] == '\0')
+			{	//If the text event has no actual text
+				eof_song_delete_text_event(sp, ctr - 1);	//Remove it
+				deletecount++;
+			}
+		}
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRemoved %lu empty text event%s", deletecount, (deletecount == 1) ? "" : "s");
+		eof_log(eof_log_string, 1);
+	}
+}
+
 int eof_song_qsort_events(const void * e1, const void * e2)
 {
 	EOF_TEXT_EVENT ** thing1 = (EOF_TEXT_EVENT **)e1;

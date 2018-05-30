@@ -3152,7 +3152,7 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta, double realtime,
 	struct Tempo_change *temp;
 	struct Tempo_change *cond = NULL;	//A conductor for the linked list
 
-	eof_log("eof_add_to_tempo_list() entered", 2);	//Only log this if verbose logging is on
+	eof_log("eof_add_to_tempo_list() entered", 3);
 
 //Allocate and initialize new link
 	temp = (struct Tempo_change *)malloc(sizeof(struct Tempo_change));

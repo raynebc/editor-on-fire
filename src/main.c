@@ -1129,7 +1129,7 @@ long eof_get_previous_note(long cnote)
 {
 	long i;
 
-	eof_log("eof_get_previous_note() entered", 2);
+	eof_log("eof_get_previous_note() entered", 3);
 
 	for(i = cnote - 1; i >= 0; i--)
 	{
@@ -2323,7 +2323,7 @@ void eof_lyric_logic(void)
 					eof_last_tone = -1;
 				}
 				if(!eof_full_screen_3d && ((mouse_b & 2) || (eof_key_code == KEY_INSERT)))
-				{
+				{	//Right click or Insert key changes the mini piano visible area
 					eof_vocals_offset = eof_hover_key - eof_screen_layout.vocal_view_size / 2;
 					if(KEY_EITHER_CTRL)
 					{
@@ -2333,9 +2333,9 @@ void eof_lyric_logic(void)
 					{
 						eof_vocals_offset = EOF_LYRIC_PITCH_MIN;
 					}
-					else if(eof_vocals_offset > EOF_LYRIC_PITCH_MIN - eof_screen_layout.vocal_view_size + 1)
+					else if(eof_vocals_offset > EOF_LYRIC_PITCH_MAX - eof_screen_layout.vocal_view_size + 1)
 					{
-						eof_vocals_offset = EOF_LYRIC_PITCH_MIN - eof_screen_layout.vocal_view_size + 1;
+						eof_vocals_offset = EOF_LYRIC_PITCH_MAX - eof_screen_layout.vocal_view_size + 1;
 					}
 				}
 			}
@@ -4727,6 +4727,7 @@ void eof_init_after_load(char initaftersavestate)
 	eof_fix_window_title();
 	eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
 	eof_sort_events(eof_song);
+	eof_delete_blank_events(eof_song);
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 
 	eof_log("\tInitialization after load complete", 1);

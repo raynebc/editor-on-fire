@@ -1867,6 +1867,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* paste from catalog (SHIFT+C) */
 	/* copy events (CTRL+SHIFT+C) */
 	/* conditional select (ALT+C) */
+	/* toggle cymbal (CTRL+ALT+C) */
 	if(eof_key_char == 'c')
 	{
 		if(KEY_EITHER_CTRL)
@@ -1902,16 +1903,24 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 	}
 	if(eof_key_code == KEY_C)
-	{
-		if(!KEY_EITHER_CTRL && KEY_EITHER_ALT && !KEY_EITHER_SHIFT)
-		{	//If only ALT is held
-			unsigned long totalnotecount = 0;
-			(void) eof_count_selected_notes(&totalnotecount);
-			if(totalnotecount)
-			{	//If there are any notes in the active track difficulty
-				(void) eof_menu_edit_select_conditional();
+	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
+		if(KEY_EITHER_ALT && !KEY_EITHER_SHIFT)
+		{	//ALT is held and SHIFT is not held
+			if(KEY_EITHER_CTRL)
+			{	//CTRL and ALT are held
+				(void) eof_menu_note_toggle_rb3_cymbal_all();
+				eof_use_key();
 			}
-			eof_use_key();
+			else if(!KEY_EITHER_SHIFT)
+			{	//Only ALT is held
+				unsigned long totalnotecount = 0;
+				(void) eof_count_selected_notes(&totalnotecount);
+				if(totalnotecount)
+				{	//If there are any notes in the active track difficulty
+					(void) eof_menu_edit_select_conditional();
+				}
+				eof_use_key();
+			}
 		}
 	}
 
@@ -2661,7 +2670,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 		if(eof_key_code == KEY_D)
-		{
+		{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
 			if(!KEY_EITHER_CTRL && KEY_EITHER_ALT && !KEY_EITHER_SHIFT)
 			{	//If only ALT is held
 				if(eof_count_selected_notes(NULL))

@@ -71,6 +71,7 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void);		//Toggles the RB3 Pro blue cymb
 int eof_menu_note_toggle_rb3_cymbal_combo_green(void);	//Toggles the green tom+cymbal combo flag on selected purple drum notes (which correspond to green notes in RB)
 int eof_menu_note_toggle_rb3_cymbal_combo_yellow(void);	//Toggles the yellow tom+cymbal combo flag on selected yellow drum notes
 int eof_menu_note_toggle_rb3_cymbal_combo_blue(void);	//Toggles the blue tom+cymbal combo flag on selected yellow drum notes
+int eof_menu_note_toggle_rb3_cymbal_all(void);		//Toggles the green, yellow and blue cymbal flags appropriate on all selected green, yellow and blue drum notes
 int eof_menu_note_remove_cymbal(void);				//Removes cymbal notation from selected drum notes
 int eof_menu_note_default_cymbal(void);				//Toggles whether newly-placed blue, yellow or green drum notes are marked as cymbals automatically
 int eof_menu_note_default_double_bass(void);		//Toggles whether newly-placed expert bass drum notes are marked as expert+ automatically

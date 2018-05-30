@@ -20,6 +20,8 @@ int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events);
 	//Grows or shrinks the text events array to fit the specified number of notes by allocating/freeing EOF_LYRIC structures.  Return zero on error
 void eof_sort_events(EOF_SONG * sp);
 	//Performs a quicksort of the specified song's events array
+void eof_delete_blank_events(EOF_SONG *sp);
+	//Deletes any text events in the specified chart that have no text
 int eof_song_qsort_events(const void * e1, const void * e2);
 	//The comparitor function used to quicksort the events array
 char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific);
