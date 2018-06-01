@@ -474,6 +474,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 			EOF_NOTE * new_note = NULL;
 			EOF_NOTE * prev_note = NULL;
 			char gemtype = 0, lastgemtype = 0;	//Tracks whether the current and previously added gems are normal notes or technique markers
+			unsigned long ch_solo_pos = 0;	//Tracks the start position of the last Clone Hero solo event
+			char ch_solo_on = 0;			//Tracks whether a Clone Hero solo event is in progress
 
 			tracknum = sp->track[track]->tracknum;
 			tp = sp->legacy_track[tracknum];
@@ -497,6 +499,27 @@ EOF_SONG * eof_import_chart(const char * fn)
 						current_note->duration -= 2;	//Shorten the duration of the phrase
 					}
 					(void) eof_legacy_track_add_star_power(tp, chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
+				}
+
+				/* import Clone Hero star power */
+				else if(current_note->gemcolor == 'S')
+				{	//The start of a solo
+					if(difficulty == EOF_NOTE_AMAZING)
+					{	//This event is only respected when defined in a track's expert difficulty
+						ch_solo_pos = current_note->chartpos;
+						ch_solo_on = 1;
+					}
+				}
+				else if(current_note->gemcolor == 'E')
+				{	//The end of a solo
+					if(difficulty == EOF_NOTE_AMAZING)
+					{	//This event is only respected when defined in a track's expert difficulty
+						if(ch_solo_on)
+						{	//If the start of solo was defined earlier
+							(void) eof_legacy_track_add_solo(tp, chartpos_to_msec(chart, ch_solo_pos), chartpos_to_msec(chart, current_note->chartpos));
+							ch_solo_on = 0;
+						}
+					}
 				}
 
 				/* skip face-off sections for now */
@@ -1497,7 +1520,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					index++; 	//Increment index past N or S identifier
 				break;
 
-				case 'E':		//Text event, skip it unless it is unofficial toggle HOPO notation (E *)
+				case 'E':		//Text event
 					if(strstr(&substring[index + 1], "*"))
 					{	//If the E is followed by an asterisk
 						notetype=2;	//This is a toggle HOPO marker
@@ -1505,6 +1528,14 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					else if(strstr(&substring[index + 1], "O"))
 					{	//If the E is followed by the letter O
 						notetype=3;	//This is an open strum marker
+					}
+					else if(strcasestr_spec(substring, "= E soloend"))
+					{
+						notetype='E';	//This is a Clone Hero end of solo marker
+					}
+					else if(strcasestr_spec(substring, "= E solo"))
+					{
+						notetype='S';	//This is a Clone Hero start of solo marker
 					}
 					else
 					{
@@ -1535,9 +1566,21 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				C=0;
 			}
 			else if(notetype == 3)
-			{	//if this is an open strum marker, treat it as a note authored as "N 7 0"
+			{	//If this is an open strum marker, treat it as a note authored as "N 7 0"
 				notetype=0;
 				B=7;
+				C=0;
+			}
+			else if(notetype == 'S')
+			{	//If this is a Clone Hero start of solo marker
+				notetype=0;
+				B='S';
+				C=0;
+			}
+			else if(notetype == 'E')
+			{	//If this is a Clone Hero end of solo marker
+				notetype=0;
+				B='E';
 				C=0;
 			}
 			else

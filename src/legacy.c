@@ -37,6 +37,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 	{
 		return NULL;
 	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProject file format version '%c'", version);
+	eof_log(eof_log_string, 2);
 	switch(version)
 	{
 		case 'G':
@@ -131,6 +133,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				}
 				lastppqn = sp->beat[i]->ppqn;
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 			}
 
 			/* read tracks */
@@ -188,6 +191,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -232,6 +236,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -276,6 +281,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -330,8 +336,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
-//				allegro_message("beat[%d]\nppqn = %d\npos = %d", i, sp->beat[i]->ppqn, sp->beat[i]->pos);	//Debug
 			}
 
 			/* read events info */
@@ -407,6 +413,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -483,6 +490,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -562,6 +570,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -632,6 +641,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -716,6 +726,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -832,6 +843,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -947,6 +959,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 
@@ -1080,6 +1093,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->fpos = sp->beat[i]->pos;
 				sp->beat[i]->flags = pack_igetl(fp);
 			}
 

@@ -26,7 +26,10 @@ struct dbText
 struct dbNote
 {
 	unsigned long chartpos;
-	unsigned char gemcolor;	//This is 0-4 for a note definition, 5 for inverted HOPO notation, 6 is for slider notation, '0' for a Player 1 section, '1' for a Player 2 section or '2' for a Star Power section
+	unsigned char gemcolor;
+		//This is 0-4 for a note definition, 5 for inverted HOPO notation, 6 is for slider notation,
+		// 7 is for open strum, 'S' for a start of solo section, 'E' for an end of solo section
+		// '0' for a Player 1 section, '1' for a Player 2 section or '2' for a Star Power section
 	unsigned long duration;
 	struct dbNote *next;
 };

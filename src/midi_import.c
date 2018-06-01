@@ -401,8 +401,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned char lane_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};	//Maps each lane to a note bitmask value
 	unsigned long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	unsigned long first_note;
-	unsigned long hopopos[4] = {0};		//Used for forced HOPO On/Off parsing
-	char hopotype[4] = {0};				//Used for forced HOPO On/Off parsing
+	unsigned long hopo_on_pos[4] = {0};		//Used for forced HOPO On parsing
+	unsigned long hopo_off_pos[4] = {0};	//Used for forced HOPO Off parsing
 	int hopodiff;						//Used for forced HOPO On/Off parsing
 	unsigned long strumpos[4] = {0};	//Used for pro guitar strum direction parsing
 	char strumtype[4] = {0};			//Used for pro guitar strum direction parsing
@@ -1997,51 +1997,43 @@ set_window_title(debugtext);
 							if(midinote == 60 + 5)
 							{
 								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[0] = event_realtime;
-								hopotype[0] = 0;
+								hopo_on_pos[0] = event_realtime;
 							}
 							else if(midinote == 72 + 5)
 							{
 								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[1] = event_realtime;
-								hopotype[1] = 0;
+								hopo_on_pos[1] = event_realtime;
 							}
 							else if(midinote == 84 + 5)
 							{
 								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[2] = event_realtime;
-								hopotype[2] = 0;
+								hopo_on_pos[2] = event_realtime;
 							}
 							else if(midinote == 96 + 5)
 							{
 								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[3] = event_realtime;
-								hopotype[3] = 0;
+								hopo_on_pos[3] = event_realtime;
 							}
 							//Forced HOPO off are marked as lane 1 + 6
 							else if(midinote == 60 + 6)
 							{
 								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[0] = event_realtime;
-								hopotype[0] = 1;
+								hopo_off_pos[0] = event_realtime;
 							}
 							else if(midinote == 72 + 6)
 							{
 								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[1] = event_realtime;
-								hopotype[1] = 1;
+								hopo_off_pos[1] = event_realtime;
 							}
 							else if(midinote == 84 + 6)
 							{
 								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[2] = event_realtime;
-								hopotype[2] = 1;
+								hopo_off_pos[2] = event_realtime;
 							}
 							else if(midinote == 96 + 6)
 							{
 								diff = -1;	//HOPO Markers will not be processed as regular gems
-								hopopos[3] = event_realtime;
-								hopotype[3] = 1;
+								hopo_off_pos[3] = event_realtime;
 							}
 						}//store forced HOPO marker
 
@@ -2203,54 +2195,58 @@ set_window_title(debugtext);
 						}
 						else
 						{	/* detect forced HOPO */
-							hopodiff = -1;
+							unsigned long *hopo_pos = NULL;	//Will be set to point to hopo_on_pos[] or hopo_off_pos[] if appropriate
+
+							//Forced HOPO on are marked as lane 1 + 5
 							if(midinote == 60 + 5)
 							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopo_pos = hopo_on_pos;
 								hopodiff = 0;
 							}
 							else if(midinote == 72 + 5)
 							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopo_pos = hopo_on_pos;
 								hopodiff = 1;
 							}
 							else if(midinote == 84 + 5)
 							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopo_pos = hopo_on_pos;
 								hopodiff = 2;
 							}
 							else if(midinote == 96 + 5)
 							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopo_pos = hopo_on_pos;
 								hopodiff = 3;
 							}
+							//Forced HOPO off are marked as lane 1 + 6
 							else if(midinote == 60 + 6)
 							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopo_pos = hopo_off_pos;
 								hopodiff = 0;
 							}
 							else if(midinote == 72 + 6)
 							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopo_pos = hopo_off_pos;
 								hopodiff = 1;
 							}
 							else if(midinote == 84 + 6)
 							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopo_pos = hopo_off_pos;
 								hopodiff = 2;
 							}
 							else if(midinote == 96 + 6)
 							{
-								diff = -1;	//HOPO Markers will not be processed as regular gems
+								hopo_pos = hopo_off_pos;
 								hopodiff = 3;
 							}
-							if(hopodiff >= 0)
-							{
+							if(hopo_pos)
+							{	//If the note off event was associated with the ending of a HOPO on/off marker
+								diff = -1;	//HOPO Markers will not be processed as regular gems
 								for(k = note_count[picked_track]; k > first_note; k--)
 								{	//Check (in reverse) for each note that has been imported
-									if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-									{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
-										if(hopotype[hopodiff] == 0)
+									if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopo_pos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+									{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On/Off marker
+										if(hopo_pos == hopo_on_pos)
 										{	//Forced HOPO on
 											eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_NOTE_FLAG_F_HOPO);
 										}
@@ -2667,23 +2663,19 @@ set_window_title(debugtext);
 					//Pro guitar forced Ho/Po are both marked as lane 1 + 6
 					if(midinote == 24 + 6)
 					{
-						hopopos[0] = event_realtime;
-						hopotype[0] = 1;
+						hopo_on_pos[0] = event_realtime;
 					}
 					else if(midinote == 48 + 6)
 					{
-						hopopos[1] = event_realtime;
-						hopotype[1] = 1;
+						hopo_on_pos[1] = event_realtime;
 					}
 					else if(midinote == 72 + 6)
 					{
-						hopopos[2] = event_realtime;
-						hopotype[2] = 1;
+						hopo_on_pos[2] = event_realtime;
 					}
 					else if(midinote == 96 + 6)
 					{
-						hopopos[3] = event_realtime;
-						hopotype[3] = 1;
+						hopo_on_pos[3] = event_realtime;
 					}
 
 					/* store slide marker, when the note off for this marker occurs, search for notes within the phrase and apply the status to them */
@@ -2942,7 +2934,7 @@ set_window_title(debugtext);
 					{
 						for(k = note_count[picked_track]; k > first_note; k--)
 						{	//Check (in reverse) for each note that has been imported
-							if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+							if((eof_get_note_type(sp, picked_track, k - 1) == hopodiff) && (eof_get_note_pos(sp, picked_track, k - 1) >= hopo_on_pos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
 							{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls within the Ho/Po marker
 								eof_set_note_flags(sp, picked_track, k - 1, eof_get_note_flags(sp, picked_track, k - 1) | EOF_PRO_GUITAR_NOTE_FLAG_HO);	//RB3 marks forced hammer ons the same as forced pull offs
 							}

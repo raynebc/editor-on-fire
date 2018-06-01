@@ -62,10 +62,12 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		(void) ustrcat(ini_string, "Untitled");
 	}
 
-	/* write frettist name */
+	/* write frettist/charter name */
 	if(ustrlen(sp->tags->frettist) > 0)
 	{
 		(void) ustrcat(ini_string, "\r\nfrets = ");
+		(void) ustrcat(ini_string, sp->tags->frettist);
+		(void) ustrcat(ini_string, "\r\ncharter = ");		//Newer games like Phase Shift and Clone Hero also support this tag
 		(void) ustrcat(ini_string, sp->tags->frettist);
 	}
 

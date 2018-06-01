@@ -208,4 +208,7 @@ int qsort_helper3(const void * e1, const void * e2);
 void eof_write_ghwt_drum_animations(EOF_SONG *sp, char *fn);
 	//Writes a text file containing timestamps and codes for the specified chart, for use with authoring drum animations for Guitar Hero World Tour
 
+void eof_log_midi_event_list(void);
+	//Exhaustive logs the contents of eof_midi_event[]
+
 #endif

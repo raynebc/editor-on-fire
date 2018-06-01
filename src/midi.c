@@ -32,7 +32,8 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 	char note_off = 0;	//Will be set to non zero if this is a note off event
 	char note_on = 0;	//Will be set to non zero if this is a note on event
 
-	eof_log("eof_add_midi_event() entered", 2);	//Only log this if verbose logging is on
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding MIDI event:  Pos = %lu, type = 0x%X, note = %d, vel = %d, ch = %d", pos, type, note, velocity, channel);
+	eof_log(eof_log_string, 2);
 
 	if(enddelta && (pos > enddelta))
 		return;	//If attempting to write an event that exceeds a user-defined end event, don't do it
@@ -310,6 +311,15 @@ int qsort_helper3(const void * e1, const void * e2)
 			return -1;	//Left hand position note (pro guitar) written before gem notes
 		if((*thing2)->note == 108)
 			return 1;	//Left hand position note (pro guitar) written before gem notes
+
+		//If two note on events occur at the same time for the same note, but one of them has a velocity of 0 (note off), sort the note on to be first
+		if((*thing1)->note == (*thing2)->note)
+		{	//If both note on events pertain to the same note
+			if((*thing1)->velocity && !(*thing2)->velocity)	//Thing 1 is a note on, thing 2 is a note off
+				return -1;
+			if((*thing2)->velocity && !(*thing1)->velocity)	//Thing 2 is a note on, thing 1 is a note off
+				return 1;
+		}
 	}
 
 	/* put lyric events first, except for a lyric phrase on marker */
@@ -348,11 +358,17 @@ int qsort_helper3(const void * e1, const void * e2)
 	   This requires that all notes/phrases are at least 1 delta/ms long */
 	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x80))
 	{
-		return 1;
+		if((*thing1)->note == (*thing2)->note)
+			return -1;	//Unless the note on and off are for the same note (intentionally being used for 0 length HOPO markers), in which case sort the note on to be first
+		else
+			return 1;
 	}
 	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0x90))
 	{
-		return -1;
+		if((*thing1)->note == (*thing2)->note)
+			return 1;	//Unless the note on and off are for the same note (intentionally being used for 0 length HOPO markers), in which case sort the note on to be first
+		else
+			return -1;
 	}
 
 	/* if two text events are at the same position, their index number determines their sort order */
@@ -1033,11 +1049,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				/* write forced HOPO */
 				if(noteflags & EOF_NOTE_FLAG_F_HOPO)
-				{
+				{	//Write a 0 delta length marker to ensure overlapping notes of opposing HOPO status can work
 					if(isghl)
 					{	//If writing a GHL format track
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, vel, 0);
+						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 6, vel, 0);
 					}
 					else if(format == 1)
 					{	//If writing the GHWT MIDI variant
@@ -1067,17 +1083,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 6, vel, 0);	//Place a HOPO off end marker 1 delta before this just in case a HOPO off phrase is in effect (the overlap logic will filter this if it isn't necessary)
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 5, vel, 0);
 					}
 				}
 
 				/* write forced non-HOPO */
 				else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
-				{
+				{	//Write a 0 delta length marker to ensure overlapping notes of opposing HOPO status can work
 					if(isghl)
 					{	//If writing a GHL format track
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, vel, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, vel, 0);
+						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 7, vel, 0);
 					}
 					else if(format == 1)
 					{	//If writing the GHWT MIDI variant
@@ -1090,7 +1106,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							}
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, vel, 0);	//Explicitly write this marker using the MIDI note 9 higher than lane 1 gems (ie. 105 for expert difficulty)
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, vel, 0);
+						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 9, vel, 0);
 					}
 					else
 					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
@@ -1099,7 +1115,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 5, vel, 0);	//Place a HOPO on end marker 1 delta before this just in case a HOPO on phrase is in effect (the overlap logic will filter this if it isn't necessary)
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, vel, 0);
+						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 6, vel, 0);
 					}
 				}
 			}//For each note in the track
@@ -1238,9 +1254,20 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				return 0;	//Return failure
 			}
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Post-sort event content:  %lu events", eof_midi_events);
+			eof_log(eof_log_string, 3);
+			eof_log_midi_event_list();
+
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 			eof_check_for_hopo_phrase_overlap();	//Ensure that no HOPO on/off phrases start/end at the same delta position as each other
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Post-overlap removal event content:  %lu events", eof_midi_events);
+			eof_log(eof_log_string, 3);
+			eof_log_midi_event_list();
+
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Re-sort, since the previous function may have changed the events' order
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Post-sort event content:  %lu events", eof_midi_events);
+			eof_log(eof_log_string, 3);
+			eof_log_midi_event_list();
 //			allegro_message("break1");
 
 			for(trackctr = 0; trackctr <= expertplus; trackctr++)
@@ -4335,4 +4362,20 @@ void eof_write_ghwt_drum_animations(EOF_SONG *sp, char *fn)
 	}
 
 	(void) pack_fclose(fp);
+}
+
+void eof_log_midi_event_list(void)
+{
+	unsigned long ctr;
+	EOF_MIDI_EVENT **ptr;
+
+	if(eof_log_level < 3)	//Only perform this logic for the sake of exhaustive logging or higher
+		return;
+
+	for(ctr = 0; ctr < eof_midi_events; ctr++)
+	{	//For each event in the list
+		ptr = &eof_midi_event[ctr];
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMIDI event:  Pos = %lu, type = 0x%X, note = %d, vel = %d, ch = %d", (*ptr)->pos, (*ptr)->type, (*ptr)->note, (*ptr)->velocity, (*ptr)->channel);
+		eof_log(eof_log_string, 3);
+	}
 }

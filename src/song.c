@@ -1763,6 +1763,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 
 	/* read song properties */
 	count = pack_igetw(fp);			//Read the number of INI strings
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tINI string count:  %lu", count);
+	eof_log(eof_log_string, 2);
 	for(ctr=0; ctr<count; ctr++)
 	{	//For each INI string in the project
 		inputc = pack_getc(fp);		//Read the type of INI string
@@ -1781,6 +1783,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	}
 
 	count = pack_igetw(fp);			//Read the number of INI booleans
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tINI boolean count:  %lu", count);
+	eof_log(eof_log_string, 2);
 	for(ctr=0; ctr<count; ctr++)
 	{	//For each INI boolean in the project
 		inputc = pack_getc(fp);		//Read the type of INI boolean
@@ -1791,6 +1795,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	}
 
 	count = pack_igetw(fp);			//Read the number of INI numbers
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tINI number count:  %lu", count);
+	eof_log(eof_log_string, 2);
 	for(ctr=0; ctr<count; ctr++)
 	{	//For each INI number in the project
 		inputc = pack_getc(fp);		//Read the type of INI number
@@ -1803,6 +1809,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 
 	/* read chart data */
 	count = pack_igetw(fp);			//Read the number of OGG profiles
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOGG profile count:  %lu", count);
+	eof_log(eof_log_string, 2);
 	sp->tags->oggs = 0;
 	for(ctr=0; ctr<count; ctr++)
 	{	//For each OGG profile in the project
@@ -1818,6 +1826,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	}
 
 	count = pack_igetl(fp);					//Read the number of beats
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBeat count:  %lu", count);
+	eof_log(eof_log_string, 2);
 	if(!eof_song_resize_beats(sp, count))	//Resize the beat array accordingly
 	{
 		eof_log("Error:  Couldn't resize beat array", 1);
@@ -1833,6 +1843,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	}
 
 	count = pack_igetl(fp);				//Read the number of text events
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tText event count:  %lu", count);
+	eof_log(eof_log_string, 2);
 	if(!eof_song_resize_text_events(sp, count))	//Resize the text event array accordingly
 	{
 		eof_log("Error:  Couldn't resize text event array", 1);
@@ -1847,6 +1859,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	}
 
 	custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCustom data block count:  %lu", custom_data_count);
+	eof_log(eof_log_string, 2);
 	sp->tags->start_point = sp->tags->end_point = ULONG_MAX;	//These will both be considered undefined unless the project being loaded defines them
 	for(custom_data_ctr = 0; custom_data_ctr < custom_data_count; custom_data_ctr++)
 	{	//For each custom data block in the project
@@ -2015,6 +2029,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 
 	/* read track data */
 	track_count = pack_igetl(fp);		//Read the number of tracks
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tTrack count:  %lu", track_count);
+	eof_log(eof_log_string, 2);
 	for(track_ctr=0; track_ctr<track_count; track_ctr++)
 	{	//For each track in the project
 		(void) eof_load_song_string_pf(temp.name,fp,sizeof(temp.name));	//Read the track name

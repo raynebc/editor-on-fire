@@ -45,6 +45,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 	char status = 0;
 	long value = 0, original;
 	int func = 0;
+	char charterparsed = 0;
 
 	eof_log("eof_import_ini() entered", 1);
 
@@ -163,12 +164,24 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 				return 0;
 			}
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "frets"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "charter"))
 		{
 			if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, &function, eof_import_ini_setting[i].type))
 			{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 				free(textbuffer);	//Free buffered INI file from memory
 				return 0;
+			}
+			charterparsed = 1;	//Track that this tag was read, which will cause the parsing of the frets tag to be skipped
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "frets"))
+		{
+			if(!charterparsed)
+			{	//If this information wasn't already parsed from the charter INI tag
+				if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, &function, eof_import_ini_setting[i].type))
+				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
+					free(textbuffer);	//Free buffered INI file from memory
+					return 0;
+				}
 			}
 		}
 		else if(!ustricmp(eof_import_ini_setting[i].type, "album"))
