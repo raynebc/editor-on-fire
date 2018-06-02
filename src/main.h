@@ -603,6 +603,20 @@ extern int eof_key_shifts;
 extern int eof_last_key_char;
 extern int eof_last_key_code;
 
+#define EOF_GP_DRUM_MAPPING_COUNT 50
+extern unsigned char gp_drum_import_lane_1[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_2[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_2_rimshot[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_3[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_3_cymbal[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_3_hi_hat_pedal[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_3_hi_hat_open[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_4[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_4_cymbal[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_5[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_5_cymbal[EOF_GP_DRUM_MAPPING_COUNT];
+extern unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT];
+
 extern DIALOG eof_import_to_track_dialog[];
 
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used

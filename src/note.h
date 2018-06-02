@@ -8,6 +8,8 @@
 #define EOF_LYRIC_PITCH_MAX 84
 #define EOF_LYRIC_PERCUSSION 96
 
+extern char eof_last_tab_notation[65];
+
 
 unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Uses eof_note_count_colors_bitmask() to determine the number of gems the specified note defines being present

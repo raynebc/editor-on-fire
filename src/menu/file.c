@@ -9,6 +9,7 @@
 #include "../lc_import.h"
 #include "../midi_import.h"
 #include "../chart_import.h"
+#include "../config.h"	//For eof_lookup_drum_mapping()
 #include "../gh_import.h"
 #include "../gp_import.h"
 #include "../player.h"
@@ -4313,6 +4314,7 @@ DIALOG eof_gp_import_dialog[] =
 int eof_gp_import_drum_track(int importvoice, int function)
 {
 	unsigned long populated = 0, populated2 = 0, bitmask, ctr, ctr2, selected;
+	char fivelane = 0;		//Set to nonzero if a lane 6 drum note (based on mappings in gp_drum_import_lane_6[] ) causes the destination drum track(s) to be converted to 5 lane
 
 	eof_log("\tImporting as a drum track", 1);
 	selected = eof_gp_import_dialog[1].d1;
@@ -4370,64 +4372,82 @@ int eof_gp_import_drum_track(int importvoice, int function)
 				continue;	//If this string does not have a gem, skip it
 
 			fret = gnp->frets[ctr2] & 0x7F;
-			switch(fret)
-			{
-				case 35:	//Bass drum
-				case 36:
-					note = 1;
-				break;
-
-				case 37:	//Snare
-				case 38:
-					note = 2;
-					if(fret == 37)
-						psflags |= EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
-				break;
-
-				case 47:	//Yellow tom
-					note = 4;
-				break;
-
-				case 42:	//Yellow cymbal
-				case 44:
-				case 46:
-				case 54:
-					note = 4;
-					flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
-					if(fret == 44)
-						psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
-					else if(fret == 46)
-						psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
-				break;
-
-				case 45:	//Blue tom
-					note = 8;
-				break;
-
-				case 51:	//Blue cymbal
-				case 53:
-				case 56:
-				case 59:
-					note = 8;
-					flags |= EOF_DRUM_NOTE_FLAG_B_CYMBAL;
-				break;
-
-				case 41:	//Green tom
-				case 43:
-					note = 16;
-				break;
-
-				case 49:	//Green cymbal
-				case 52:
-				case 55:
-				case 57:
-					note = 16;
-					flags |= EOF_DRUM_NOTE_FLAG_G_CYMBAL;
-				break;
-
-				default:
-				break;
+			if(eof_lookup_drum_mapping(gp_drum_import_lane_1, fret))
+			{	//Maps to the bass drum
+				note = 1;
 			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_2, fret))
+			{	//Maps to snare
+				note = 2;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_2_rimshot, fret))
+			{	//Maps to rim shot
+				note = 2;
+				psflags |= EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_3, fret))
+			{	//Maps to yellow tom
+				note = 4;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_3_cymbal, fret))
+			{	//Maps to yellow cymbal
+				note = 4;
+				flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_3_hi_hat_pedal, fret))
+			{	//Maps to pedal hi hat
+				note = 4;
+				flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
+				psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_3_hi_hat_open, fret))
+			{	//Maps to open hi hat
+				note = 4;
+				flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
+				psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_4, fret))
+			{	//Maps to blue tom
+				note = 8;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_4_cymbal, fret))
+			{	//Maps to blue cymbal
+				note = 8;
+				flags |= EOF_DRUM_NOTE_FLAG_B_CYMBAL;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_5, fret))
+			{	//Maps to green tom
+				note = 16;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_5_cymbal, fret))
+			{	//Maps to green cymbal
+				note = 16;
+				flags |= EOF_DRUM_NOTE_FLAG_G_CYMBAL;
+			}
+			else if(eof_lookup_drum_mapping(gp_drum_import_lane_6, fret))
+			{
+				if(!fivelane)
+				{	//If this is the first lane 6 drum note parsed
+					fivelane = 1;
+				}
+				note = 32;
+			}
+
+			if(fivelane == 1)
+			{	//If the sixth lane hasn't been enabled for the destination track(s) yet
+				if(function & 1)
+				{	//Import into normal drum track
+					eof_song->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;					//Set the six lane flag
+					eof_song->legacy_track[eof_song->track[EOF_TRACK_DRUM]->tracknum]->numlanes = 6;	//Set the lane count
+				}
+				if(function & 2)
+				{	//Import into Phase Shift drum track
+					eof_song->track[EOF_TRACK_DRUM_PS]->flags |= EOF_TRACK_FLAG_SIX_LANES;				//Set the six lane flag
+					eof_song->legacy_track[eof_song->track[EOF_TRACK_DRUM_PS]->tracknum]->numlanes = 6;	//Set the lane count
+				}
+				fivelane = 2;
+			}
+
 			if(function & 1)
 			{	//Import into normal drum track
 				np = eof_track_add_create_note(eof_song, EOF_TRACK_DRUM, note, gnp->pos, 1, EOF_NOTE_AMAZING, NULL);

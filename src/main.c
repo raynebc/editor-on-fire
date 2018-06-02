@@ -443,6 +443,20 @@ int eof_color_highlight2_raw;
 int eof_color_highlight1;		//The color used for static highlighting
 int eof_color_highlight2;		//The color used for dynamic highlighting
 
+/* GP import drum note mappings */
+unsigned char gp_drum_import_lane_1[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_2[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_2_rimshot[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_3[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_3_cymbal[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_3_hi_hat_pedal[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_3_hi_hat_open[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_4[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_4_cymbal[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_5[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_5_cymbal[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+
 void eof_show_mouse(BITMAP * bp)
 {
 	eof_log("eof_show_mouse() entered", 3);

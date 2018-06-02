@@ -12,6 +12,8 @@
 #include "memwatch.h"
 #endif
 
+char eof_last_tab_notation[65] = {0};	//Used to store a copy of the results of the last call to eof_get_note_notation(), so repeated notation can be summarized
+
 unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	eof_log("eof_note_count_colors() entered", 3);
@@ -232,6 +234,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	char samename[] = "/";		//This is what a repeated note name will display as
 	char samenameauto[] = "[/]";	//This is what a repeated note for an non manually-named note will display as
 	char notename[EOF_NAME_LENGTH+1] = {0}, prevnotename[EOF_NAME_LENGTH+1] = {0}, namefound;	//Used for name display
+	static int lastx2 = 0;		//Tracks the right edge of the last non-summarized tab notation rendering
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -429,7 +432,44 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 		//Render tab notations before the note, so that the former doesn't render a solid background over the latter
 		eof_get_note_notation(notation, track, notenum, 1);	//Get the tab playing notation for this note
-		textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_red, eof_color_black);
+		if(notation[0] != '\0')
+		{	//If the note has notations
+			if(!strcmp(notation, eof_last_tab_notation))
+			{	//If the notation is identical to the previously rendered note's tab notation
+				notation[0] = '.';	//Replace the notation string with a period
+				notation[1] = '\0';
+			}
+			else
+			{	//Otherwise keep a copy of this string to be compared with the next note
+				strncpy(eof_last_tab_notation, notation, sizeof(eof_last_tab_notation) - 1);
+			}
+		}
+		else
+		{
+			eof_last_tab_notation[0] = '\0';	//Otherwise erase this string, only consecutive notes can have their notation summarized
+		}
+		if(notation[0] == '.')
+		{	//If the notation is being summarized, try to ensure it doesn't render on top of the full notation
+			if(x < lastx2)
+			{	//If this summarized notation would render on top of the fully notation
+				notation[0] = '\0';	//Empty the string to avoid this and to ensure the full notation remains visible
+			}
+		}
+		if(notation[0] != '\0')
+		{	//If the notation hasn't been suppressed
+			int half_notation_length = text_length(eof_symbol_font, notation) / 2;
+
+			if(x - half_notation_length < 0)
+			{	//If the notation would render off-screen, render the notation in left alignment
+				textout_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_red, eof_color_black);
+				lastx2 = x + half_notation_length + half_notation_length + 2;	//Store the x coordinate position of the end of this notation rendering, add an extra couple pixels of padding
+			}
+			else
+			{	//Otherwise, center the notation below the note
+				textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_red, eof_color_black);
+				lastx2 = x + half_notation_length + 2;	//Store the x coordinate position of the end of this notation rendering, add an extra couple pixels of padding
+			}
+		}
 	}//If rendering an existing note instead of the pen note, draw tab notation
 
 	//Render note, tail, slide indicator, etc.
@@ -1705,9 +1745,8 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck)
 {
-	unsigned long index = 0, flags = 0, eflags = 0, prevnoteflags = 0;
+	unsigned long index = 0, flags = 0, eflags = 0;
 	char buffer2[5] = {0};
-	long prevnotenum;
 
 	if(!track || (track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
 	{
@@ -1719,12 +1758,6 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	}
 	flags = eof_get_note_flags(eof_song, track, note);
 	eflags = eof_get_note_eflags(eof_song, track, note);
-
-	prevnotenum = eof_get_prev_note_type_num(eof_song, track, note);	//Get the index of the previous note in this track difficulty
-	if(prevnotenum >= 0)
-	{	//If there is a previous note in this track difficulty
-		prevnoteflags = eof_get_note_flags(eof_song, track, prevnotenum);	//Store its flags
-	}
 
 	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//Check pro guitar statuses
@@ -1818,15 +1851,8 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 		{
-			if((prevnotenum >= 0) && (prevnoteflags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
-			{	//If there is a previous note that was also a palm mute
-				buffer[index++] = '-';	//Write a palm mute continuation character
-			}
-			else
-			{
-				buffer[index++] = 'P';
-				buffer[index++] = 'M';
-			}
+			buffer[index++] = 'P';
+			buffer[index++] = 'M';
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
 		{
@@ -1980,43 +2006,29 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 
 	if(flags & EOF_NOTE_FLAG_IS_TRILL)
 	{
-		if((prevnotenum >= 0) && (prevnoteflags & EOF_NOTE_FLAG_IS_TRILL))
-		{	//If there is a previous note that was also in a trill
-			buffer[index++] = '~';	//Write a trill continuation character
+		if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If this is a drum track, white the notation for special drum roll
+			buffer[index++] = 'S';
+			buffer[index++] = 'D';
+			buffer[index++] = 'R';
 		}
 		else
-		{
-			if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If this is a drum track, white the notation for special drum roll
-				buffer[index++] = 'S';
-				buffer[index++] = 'D';
-				buffer[index++] = 'R';
-			}
-			else
-			{	//Otherwise assume a guitar track, write the notation for a trill
-				buffer[index++] = 'T';
-				buffer[index++] = 'R';
-			}
+		{	//Otherwise assume a guitar track, write the notation for a trill
+			buffer[index++] = 'T';
+			buffer[index++] = 'R';
 		}
 	}
 
 	if(flags & EOF_NOTE_FLAG_IS_TREMOLO)
 	{
-		if((prevnotenum >= 0) && (prevnoteflags & EOF_NOTE_FLAG_IS_TREMOLO))
-		{	//If there is a previous note that was also in a tremolo
-			buffer[index++] = '/';	//Write a tremolo continuation character
+		if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If this is a drum track, white the notation for drum roll
+			buffer[index++] = 'D';
+			buffer[index++] = 'R';
 		}
 		else
-		{
-			if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If this is a drum track, white the notation for drum roll
-				buffer[index++] = 'D';
-				buffer[index++] = 'R';
-			}
-			else
-			{	//Otherwise assume a guitar track, write the notation for a tremolo
-				buffer[index++] = 'e';	//In the symbols font, e is the tremolo character
-			}
+		{	//Otherwise assume a guitar track, write the notation for a tremolo
+			buffer[index++] = 'e';	//In the symbols font, e is the tremolo character
 		}
 	}
 

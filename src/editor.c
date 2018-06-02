@@ -5628,6 +5628,7 @@ void eof_render_editor_notes(EOF_WINDOW *window)
 	{	//Cache the results of the check for whether the hover note should be drawn highlighted
 		drawhighlight = 1;
 	}
+	eof_last_tab_notation[0] = '\0';	//Erase the tab notation summary string to ensure the first rendered notes has its notation fully displayed
 	for(i = 0; i < numnotes; i++)
 	{	//Render all visible notes in the list
 		if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) >= start))

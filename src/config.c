@@ -1,5 +1,6 @@
 #include <allegro.h>
-#include <math.h>
+#include <ctype.h>	//For isdigit()
+#include <math.h>	//For sqrt()
 #include "config.h"
 #include "main.h"
 #include "mix.h"
@@ -51,6 +52,8 @@ void set_default_controller_config(void)
 
 void eof_load_config(char * fn)
 {
+	char gp_drum_mappings[1024] = {0};
+
 	eof_log("eof_load_config() entered", 1);
 
 	if(!fn)
@@ -329,6 +332,120 @@ void eof_load_config(char * fn)
 	eof_5_fret_range = get_config_int("other", "eof_5_fret_range", 0);
 	eof_6_fret_range = get_config_int("other", "eof_6_fret_range", 0);
 
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_1", "35,36"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_1, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {35,36,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_1 from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_1, default_mapping, sizeof(default_mapping));
+	}
+
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_2", "38,40"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_2, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {38,40,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_2 from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_2, default_mapping, sizeof(default_mapping));
+	}
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_2_rimshot", "37"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_2_rimshot, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {37,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_2_rimshot from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_2_rimshot, default_mapping, sizeof(default_mapping));
+	}
+
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3", "47,50"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_3, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {47,50,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_3 from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_3, default_mapping, sizeof(default_mapping));
+	}
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3_cymbal", "42,54,92"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_3_cymbal, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {42,54,92,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_3_cymbal from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_3_cymbal, default_mapping, sizeof(default_mapping));
+	}
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3_hi_hat_pedal", "44"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_3_hi_hat_pedal, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {44,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_3_hi_hat_pedal from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_3_hi_hat_pedal, default_mapping, sizeof(default_mapping));
+	}
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3_hi_hat_open", "46"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_3_hi_hat_open, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {46,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_3_hi_hat_open from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_3_hi_hat_open, default_mapping, sizeof(default_mapping));
+	}
+
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_4", "45,48"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_4, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {45,48,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_4 from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_4, default_mapping, sizeof(default_mapping));
+	}
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_4_cymbal", "51,53,56,59"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_4_cymbal, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {51,53,56,59,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_4_cymbal from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_4_cymbal, default_mapping, sizeof(default_mapping));
+	}
+
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_5", "41,43"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_5, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {41,43,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_5 from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_5, default_mapping, sizeof(default_mapping));
+	}
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_5_cymbal", "49,52,55,57"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_5_cymbal, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {49,52,55,57,0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_5_cymbal from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_5_cymbal, default_mapping, sizeof(default_mapping));
+	}
+
+	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_6", "0"));
+	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_6, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
+	{	//If the drum mappings couldn't be parsed and stored
+		unsigned char default_mapping[] = {0};
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_6 from the config file, resetting to defaults.");
+		eof_log(eof_log_string, 1);
+		allegro_message(eof_log_string);
+		memcpy(gp_drum_import_lane_6, default_mapping, sizeof(default_mapping));
+	}
+
 	//Convert MIDI tones to zero numbering
 	if(eof_midi_synth_instrument_guitar > 0)
 		eof_midi_synth_instrument_guitar--;
@@ -342,6 +459,8 @@ void eof_load_config(char * fn)
 
 void eof_save_config(char * fn)
 {
+	char gp_drum_mappings[1024] = {0};
+
 	eof_log("eof_save_config() entered", 1);
 
 	if(!fn)
@@ -507,4 +626,131 @@ void eof_save_config(char * fn)
 	set_config_int("other", "eof_4_fret_range", eof_4_fret_range);
 	set_config_int("other", "eof_5_fret_range", eof_5_fret_range);
 	set_config_int("other", "eof_6_fret_range", eof_6_fret_range);
+
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_1);
+	set_config_string("other", "gp_drum_import_lane_1", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_2);
+	set_config_string("other", "gp_drum_import_lane_2", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_2_rimshot);
+	set_config_string("other", "gp_drum_import_lane_2_rimshot", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_3);
+	set_config_string("other", "gp_drum_import_lane_3", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_3_cymbal);
+	set_config_string("other", "gp_drum_import_lane_3_cymbal", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_3_hi_hat_pedal);
+	set_config_string("other", "gp_drum_import_lane_3_hi_hat_pedal", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_3_hi_hat_open);
+	set_config_string("other", "gp_drum_import_lane_3_hi_hat_open", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_4);
+	set_config_string("other", "gp_drum_import_lane_4", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_4_cymbal);
+	set_config_string("other", "gp_drum_import_lane_4_cymbal", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_5);
+	set_config_string("other", "gp_drum_import_lane_5", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_5_cymbal);
+	set_config_string("other", "gp_drum_import_lane_5_cymbal", gp_drum_mappings);
+	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_6);
+	set_config_string("other", "gp_drum_import_lane_6", gp_drum_mappings);
+}
+
+void eof_build_gp_drum_mapping_string(char *destination, size_t size, unsigned char *mapping_list)
+{
+	unsigned long ctr, writecount = 0;
+	char str[10] = {0};
+
+	if(!destination || !mapping_list || (size < 2))
+		return;	//Invalid parameters
+
+	destination[0] = '\0';	//Empty the string
+	for(ctr = 0; ctr < EOF_GP_DRUM_MAPPING_COUNT; ctr++)
+	{	//For each element in the drum mapping list
+		if(mapping_list[ctr] == 0)
+			break;	//All defined mappings have been checked
+
+		if(writecount)
+		{	//If this isn't the first number written
+			strncat(destination, ",", size - 1);	//Separate with a comma
+		}
+		snprintf(str, sizeof(str) - 1, "%d", mapping_list[ctr]);	//Convert the number to ASCII
+		strncat(destination, str, size - 1);						//Append it to the destination string
+		writecount++;
+	}
+	if(!writecount)
+	{	//If the mapping list is empty, write a string of "0"
+		destination[0] = '0';
+		destination[1] = '\0';
+	}
+}
+
+unsigned long eof_parse_gp_drum_mappings(unsigned char *destination, char *input, unsigned countlimit)
+{
+	unsigned long number = 0, digit, index, parsecount = 0;
+	char ch, parsed = 0;
+
+	if(!destination || !input || !countlimit)
+		return 0;	//Invalid parameters
+
+	for(index = 0; input[index] != '\0'; index++)
+	{	//For each character in the input string
+		ch = input[index];	//Simplify
+
+		if(isdigit(ch))
+		{	//If this is a numerical character
+			digit = ch - '0';	//Convert to numerical value
+			number *= 10;		//Another digit means the previously read digits are worth ten times as much
+			number += digit;	//Add to the value of this digit to the number being parsed
+			parsed = 1;			//Track that a number has been parsed
+		}
+		else if((input[index] == ',') || (input[index] == ' '))
+		{	//This is a separator, store the parsed number into the destination array
+			if(number > 255)
+				return 0;	//Input number too large
+			if(parsecount >= countlimit)
+				return 0;	//Too many input numbers
+
+			destination[parsecount] = number;
+			parsecount++;
+			number = parsed = 0;
+		}
+		else
+		{
+			return 0;	//Invalid input
+		}
+	}
+
+	//Store any number that was parsed but not followed by a delimiter other than the NULL terminator
+	if(parsed)
+	{	//If a number has been parsed
+		if(number > 255)
+			return 0;	//Input number too large
+		if(parsecount >= countlimit)
+			return 0;	//Too many input numbers
+
+		destination[parsecount] = number;
+		parsecount++;
+	}
+
+	//If there is space in the destination buffer, append a 0 value to indicate the end of the number list
+	if(parsecount  < countlimit)
+		destination[parsecount] = 0;
+
+	return parsecount;	//Return number of parsed entries
+}
+
+int eof_lookup_drum_mapping(unsigned char *mapping_list, unsigned char value)
+{
+	unsigned long ctr;
+
+	if(!mapping_list || !value)
+		return 0;
+
+	for(ctr = 0; ctr < EOF_GP_DRUM_MAPPING_COUNT; ctr++)
+	{	//For each element in the drum mapping list
+		if(mapping_list[ctr] == 0)
+			break;	//All defined mappings have been checked
+		if(mapping_list[ctr] == value)
+			return 1;	//A match was found
+	}
+
+	return 0;	//No match was found
 }
