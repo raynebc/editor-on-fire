@@ -206,6 +206,7 @@ EOF_SONG * eof_create_song(void)
 	(void) ustrcpy(sp->tags->loading_text, "");
 	(void) ustrcpy(sp->tags->album, "");
 	(void) ustrcpy(sp->tags->genre, "");
+	(void) ustrcpy(sp->tags->tracknumber, "");
 	sp->tags->lyrics = 0;
 	sp->tags->eighth_note_hopo = 0;
 	sp->tags->eof_fret_hand_pos_1_pg = 0;
@@ -1700,9 +1701,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	EOF_TRACK_ENTRY temp={0, 0, 0, 0, "", "", 0, 5, 0};
 	char name[EOF_SECTION_NAME_LENGTH + 1];	//Used to load note/section names (section names are currently longer)
 
-	#define EOFNUMINISTRINGTYPES 10
+	#define EOFNUMINISTRINGTYPES 11
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
-	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256,256};
+	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256,256,32};
 		//Store the buffer information of each of the INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 	#define EOFNUMINIBOOLEANTYPES 14
@@ -1736,6 +1737,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	inistringbuffer[7] = sp->tags->loading_text;
 	inistringbuffer[8] = sp->tags->album;
 	inistringbuffer[9] = sp->tags->genre;
+	inistringbuffer[10] = sp->tags->tracknumber;
 	inibooleanbuffer[1] = &sp->tags->lyrics;
 	inibooleanbuffer[2] = &sp->tags->eighth_note_hopo;
 	inibooleanbuffer[3] = &sp->tags->eof_fret_hand_pos_1_pg;
@@ -2851,7 +2853,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
 
-	#define EOFNUMINISTRINGTYPES 10
+	#define EOFNUMINISTRINGTYPES 11
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
@@ -2888,6 +2890,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	inistringbuffer[7] = sp->tags->loading_text;
 	inistringbuffer[8] = sp->tags->album;
 	inistringbuffer[9] = sp->tags->genre;
+	inistringbuffer[10] = sp->tags->tracknumber;
 	inibooleanbuffer[1] = &sp->tags->lyrics;
 	inibooleanbuffer[2] = &sp->tags->eighth_note_hopo;
 	inibooleanbuffer[3] = &sp->tags->eof_fret_hand_pos_1_pg;

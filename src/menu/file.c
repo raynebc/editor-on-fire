@@ -2633,6 +2633,7 @@ int eof_new_chart(char * filename)
 	char year[32] = {0};
 	char album[256] = {0};
 	char genre[256] = {0};
+	char tracknumber[32] = {0};
 	char oggfilename[1024] = {0};
 	char * returnedfolder = NULL;
 	int ret = 0;
@@ -2679,6 +2680,7 @@ int eof_new_chart(char * filename)
 				(void) alogg_get_ogg_comment(temp_ogg, "ALBUM", album);
 				(void) alogg_get_ogg_comment(temp_ogg, "DATE", eof_etext3);
 				(void) alogg_get_ogg_comment(temp_ogg, "GENRE", genre);
+				(void) alogg_get_ogg_comment(temp_ogg, "TRACKNUMBER", tracknumber);
 				strncpy(year, eof_etext3, sizeof(year) - 1);	//Truncate the string to fit
 			}
 		}
@@ -2700,7 +2702,8 @@ int eof_new_chart(char * filename)
 				eof_sanitize_string(year);			//Filter out unprintable and extended ASCII
 				(void) GrabID3TextFrame(&tag,"TALB",album,(unsigned long)(sizeof(album)/sizeof(char)));				//Store the Album info in album[]
 				eof_sanitize_string(album);			//Filter out unprintable and extended ASCII
-				(void) GrabID3TextFrame(&tag,"TCON",genre,(unsigned long)(sizeof(genre)/sizeof(char)));				//Store the Genre info in album[]
+				(void) GrabID3TextFrame(&tag,"TCON",genre,(unsigned long)(sizeof(genre)/sizeof(char)));				//Store the Genre info in genre[]
+				eof_sanitize_string(album);			//Filter out unprintable and extended ASCII
 				if((genre[0] != '\0') && (genre[1] == '\0'))
 				{	//If the genre string is a single byte long, it is a genre number instead of a string
 					genre[0] = '\0';	//Ignore it
@@ -2709,6 +2712,8 @@ int eof_new_chart(char * filename)
 				{	//Otherwise
 					eof_sanitize_string(album);			//Filter out unprintable and extended ASCII
 				}
+				(void) GrabID3TextFrame(&tag,"TRCK",tracknumber,(unsigned long)(sizeof(tracknumber)/sizeof(char)));	//Store the track number info in tracknumber[]
+				eof_sanitize_string(album);			//Filter out unprintable and extended ASCII
 			}
 
 			//If any of the information was not found in the ID3v2 tag, check for it from an ID3v1 tag
@@ -2854,6 +2859,7 @@ int eof_new_chart(char * filename)
 	(void) ustrcpy(eof_song->tags->year, year);	//The year tag that was read from an MP3 (if applicable)
 	(void) ustrcpy(eof_song->tags->album, album);
 	(void) ustrcpy(eof_song->tags->genre, genre);
+	(void) ustrcpy(eof_song->tags->tracknumber, tracknumber);
 	(void) ustrcpy(oggfilename, filename);
 	(void) replace_filename(eof_last_ogg_path, oggfilename, "", 1024);
 

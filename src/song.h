@@ -475,6 +475,7 @@ typedef struct
 	char frettist[256];
 	char album[256];
 	char genre[256];
+	char tracknumber[32];
 	char year[32];
 	char loading_text[512];
 	char lyrics;

@@ -60,6 +60,7 @@ char eof_etext6[1024] = {0};
 char eof_etext7[1024] = {0};
 char eof_etext8[1024] = {0};
 char eof_etext9[1024] = {0};
+char eof_etext10[1024] = {0};
 char *eof_help_text = NULL;
 char eof_ctext[8][1024] = {{0}};
 
@@ -219,10 +220,10 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		/* special handling of the song properties box */
 		if(dp == eof_song_properties_dialog)
 		{
-			if(ustrlen(eof_song_properties_dialog[18].dp) != oldlen)
+			if(ustrlen(eof_song_properties_dialog[20].dp) != oldlen)
 			{	//If the loading text field was altered
-				(void) object_message(&eof_song_properties_dialog[20], MSG_DRAW, 0);	//Redraw the loading text preview
-				oldlen = ustrlen(eof_song_properties_dialog[20].dp);
+				(void) object_message(&eof_song_properties_dialog[22], MSG_DRAW, 0);	//Redraw the loading text preview
+				oldlen = ustrlen(eof_song_properties_dialog[22].dp);
 			}
 		}
 
