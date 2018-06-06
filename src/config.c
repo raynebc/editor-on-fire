@@ -244,8 +244,9 @@ void eof_load_config(char * fn)
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
-	eof_screen_width = get_config_int("display", "eof_screen_width", 0);	//If this value is 0, eof_set_display_mode() will correct it
-	if((eof_screen_layout.mode < 0) || (eof_screen_layout.mode > 2))
+	eof_screen_width = get_config_int("display", "eof_screen_width", 640);
+	eof_screen_height = get_config_int("display", "eof_screen_height", 480);
+	if((eof_screen_layout.mode < 0) || (eof_screen_layout.mode > 3))
 	{
 		eof_screen_layout.mode = 0;
 	}
@@ -572,6 +573,7 @@ void eof_save_config(char * fn)
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);
 	set_config_int("display", "eof_screen_width", eof_screen_width);
+	set_config_int("display", "eof_screen_height", eof_screen_height);
 	set_config_int("display", "note_auto_adjust", eof_note_auto_adjust);
 	set_config_int("display", "software_mouse", eof_soft_cursor);
 	set_config_int("display", "true_color", eof_desktop);

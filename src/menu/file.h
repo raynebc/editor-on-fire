@@ -11,6 +11,7 @@ extern MENU eof_file_menu[];
 extern DIALOG eof_settings_dialog[];
 extern DIALOG eof_preferences_dialog[];
 extern DIALOG eof_display_dialog[];
+extern DIALOG eof_custom_display_size_dialog[];
 extern DIALOG eof_ogg_settings_dialog[];
 extern DIALOG eof_controller_settings_dialog[];
 extern DIALOG eof_file_new_dialog[];

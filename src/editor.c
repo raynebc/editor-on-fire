@@ -5919,6 +5919,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	char *ksname;
 	char capo = 0;			//Is set to nonzero if a capo position was rendered, causing the first second marker to not be rendered
 	int ismeasuremarker;	//Tracks whether the beat marker being rendered is the first beat in a measure and is to be rendered thicker due to the "2D render RS piano roll" preference
+	int bottomlane_y;		//Used to store the y coordinate of the bottom-most fret lane
 
 	if(!eof_song_loaded || !window)
 		return;
@@ -5929,6 +5930,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		numlanes = 5;
 	}
 	eof_set_2D_lane_positions(eof_selected_track);	//Update the ychart[] array
+	bottomlane_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1];	//Store this for multiple uses
 
 	if(eof_display_second_piano_roll)
 	{	//If the secondary piano roll is being displayed
@@ -6211,8 +6213,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 
 						if(y1 < EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0])
 							y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
-						if(y2 > EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1])
-							y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1];	//Ensure that the phrase cannot render below the bottom most lane
+						if(y2 > bottomlane_y)
+							y2 = bottomlane_y;	//Ensure that the phrase cannot render below the bottom most lane
 						rectfill(window->screen, x1, y1, x2, y2, eof_colors[ctr].lightcolor);	//Draw a rectangle one lane high centered over that lane's fret line
 					}
 				}
@@ -6247,7 +6249,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			hline(window->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, string_color);
 		}
 	}
-	vline(window->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
+	vline(window->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, bottomlane_y, eof_color_white);	//Render a line at the end of the chart
 
 	/* draw second markers */
 	roundedstart = start / 1000;
@@ -6265,7 +6267,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			if(xcoord < 0)
 				continue;	//If this second marker would not be visible, skip it
 
-			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 9, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_gray);
+			vline(window->screen, xcoord, bottomlane_y + 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_gray);
 			if(j == 0)
 			{	//Each second marker is drawn taller
 				if(!capo)
@@ -6291,7 +6293,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			textprintf_centre_ex(window->screen, eof_mono_font, lpos + (msec / eof_zoom), EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%ds", psec);
 		}
 	}
-	vline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
+	vline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, bottomlane_y + 1, eof_color_white);
 
 	/* draw beat lines */
 	bcol = makecol(128, 128, 128);
@@ -6354,11 +6356,11 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 			if(ismeasuremarker)
 			{	//If the beat marker is to be drawn thicker than normally
-				vline(window->screen, xcoord - 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
-				vline(window->screen, xcoord + 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
+				vline(window->screen, xcoord - 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, beatlinecol);	//Render from the top fret lane to the bottom one
+				vline(window->screen, xcoord + 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, beatlinecol);
 			}
 
-			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
+			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, beatlinecol);
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 			{
@@ -6478,7 +6480,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		{	//If a grid snap position was identified and it renders before the right edge of the screen
 			unsigned long lastgridpos = gridpos;
 			xcoord = lpos + gridpos / eof_zoom;
-			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, eof_color_yellow);
+			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, eof_color_yellow);
 			gridpos = eof_next_grid_snap(gridpos);	//Find the next grid snap
 			if(gridpos == lastgridpos)
 			{	//If the grid snap logic couldn't find another grid snap position
@@ -6512,7 +6514,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				}
 				if(xcoord >= -25)
 				{	//If the hand position renders close enough to or after the left edge of the screen, consider it visible
-					vline(window->screen, xcoord, 25 + 5 + 14, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_red);
+					vline(window->screen, xcoord, 25 + 5 + 14, bottomlane_y, eof_color_red);
 					textprintf_centre_ex(window->screen, eof_font, xcoord , 25 + 5, eof_color_red, eof_color_black, "%lu", tp->handposition[i].end_pos);	//Display it
 				}
 			}
@@ -6533,7 +6535,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 			if(xcoord >= -25)
 			{	//If the tone change renders close enough to or after the left edge of the screen, consider it visible
-				vline(window->screen, xcoord, 25 + 5 + 14, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_red);
+				vline(window->screen, xcoord, 25 + 5 + 14, bottomlane_y, eof_color_red);
 				textprintf_centre_ex(window->screen, eof_font, xcoord , 25 + 5, eof_color_red, eof_color_black, "%s", tp->tonechange[i].name);	//Display it
 			}
 		}

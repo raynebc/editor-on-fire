@@ -740,6 +740,10 @@ int eof_set_display_mode_preset(int mode)
 			eof_set_display_mode(1024, 768);
 		break;
 
+		case EOF_DISPLAY_CUSTOM:
+			eof_set_display_mode(eof_screen_width, eof_screen_height);
+		break;
+
 		default:
 		return 0;	//Invalid display mode
 	}
@@ -761,6 +765,10 @@ int eof_set_display_mode_preset_custom_width(int mode, unsigned long width)
 
 		case EOF_DISPLAY_1024:
 			eof_set_display_mode(width, 768);
+		break;
+
+		case EOF_DISPLAY_CUSTOM:
+			eof_set_display_mode(width, eof_screen_height);
 		break;
 
 		default:
@@ -841,7 +849,6 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 			eof_screen_layout.anti_hopo_note_dot_size = 4;
 			eof_screen_layout.note_marker_size = 10;
 			eof_screen_layout.note_tail_size = 3;
-			eof_screen_layout.note_kick_size = 2;
 		break;
 
 		case 600:
@@ -861,7 +868,6 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 			eof_screen_layout.anti_hopo_note_dot_size = 5;
 			eof_screen_layout.note_marker_size = 12;
 			eof_screen_layout.note_tail_size = 4;
-			eof_screen_layout.note_kick_size = 3;
 		break;
 
 		case 768:
@@ -881,11 +887,50 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 			eof_screen_layout.anti_hopo_note_dot_size = 7;
 			eof_screen_layout.note_marker_size = 15;
 			eof_screen_layout.note_tail_size = 5;
-			eof_screen_layout.note_kick_size = 4;
 		break;
 
 		default:
-		return 0;	//Invalid display mode
+			if(height < 480)
+				return 0;	//Invalid display mode
+			mode = EOF_DISPLAY_CUSTOM;
+
+			//Find a suitable default width based on 4:3 aspect ratio
+			if(height % 3 == 0)									//If the height is divisible by 3
+				eof_screen_width_default = (height / 3) * 4;	//Keep a 4:3 aspect ratio for the default width
+			else if(height >= 1536)
+				eof_screen_width_default = 2048;
+			else if(height >= 1440)
+				eof_screen_width_default = 1920;
+			else if(height >= 1392)
+				eof_screen_width_default = 1856;
+			else if(height >= 1200)
+				eof_screen_width_default = 1600;
+			else if(height >= 1080)
+				eof_screen_width_default = 1440;
+			else if(height >= 1050)
+				eof_screen_width_default = 1400;
+			else if(height >= 960)
+				eof_screen_width_default = 1280;
+			else if(height >= 720)
+				eof_screen_width_default = 960;
+			else
+				eof_screen_width_default = 640;
+
+			eof_screen_width = width;
+			eof_screen_height = height;
+			eof_screen_layout.string_space_unscaled = ((eof_screen_height / 2) - 80 - 60) / 5;	//Half the program window height, minus the empty space above and below the fretboard area, divided into 5 lanes
+			eof_screen_layout.vocal_y = height / 5;
+			eof_screen_layout.vocal_tail_size = height / 120;
+			eof_screen_layout.lyric_view_bkey_width = height / 160;
+			eof_screen_layout.note_size = height / 80;
+			eof_screen_layout.hopo_note_size = height / 120;
+			eof_screen_layout.anti_hopo_note_size = height / 60;
+			eof_screen_layout.note_dot_size = eof_screen_layout.note_size / 3;
+			eof_screen_layout.hopo_note_dot_size = eof_screen_layout.note_dot_size / 2;
+			eof_screen_layout.anti_hopo_note_dot_size = eof_screen_layout.note_dot_size * 2;
+			eof_screen_layout.note_marker_size = eof_screen_layout.string_space_unscaled / 3;
+			eof_screen_layout.note_tail_size = height / 160;
+		break;
 	}
 	if(eof_screen_width < eof_screen_width_default)
 	{	//If the specified width is invalid
@@ -938,12 +983,16 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		allegro_message("Unable to create editor window!");
 		return 0;
 	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilt eof_window_editor:  x = %d, y = %d, w = %d, h = %d", eof_window_editor->x, eof_window_editor->y, eof_window_editor->w, eof_window_editor->h);
+	eof_log(eof_log_string, 2);
 	eof_window_editor2 = eof_window_create(0, (eof_screen_height / 2) + 1, editorwidth, eof_screen_height, eof_screen);
 	if(!eof_window_editor2)
 	{
 		allegro_message("Unable to create second editor window!");
 		return 0;
 	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilt eof_window_editor2:  x = %d, y = %d, w = %d, h = %d", eof_window_editor2->x, eof_window_editor2->y, eof_window_editor2->w, eof_window_editor2->h);
+	eof_log(eof_log_string, 2);
 	eof_window_note_lower_left = eof_window_create(0, eof_screen_height / 2, editorwidth, eof_screen_height / 2, eof_screen);	//Make the note window the same width as the editor window
 	eof_window_note_upper_left = eof_window_create(0, 20, editorwidth, eof_screen_height / 2, eof_screen);
 	if(!eof_window_note_lower_left || !eof_window_note_upper_left)
@@ -951,6 +1000,10 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		allegro_message("Unable to create information windows!");
 		return 0;
 	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilt eof_window_note_lower_left:  x = %d, y = %d, w = %d, h = %d", eof_window_note_lower_left->x, eof_window_note_lower_left->y, eof_window_note_lower_left->w, eof_window_note_lower_left->h);
+	eof_log(eof_log_string, 2);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilt eof_window_note_upper_left:  x = %d, y = %d, w = %d, h = %d", eof_window_note_upper_left->x, eof_window_note_upper_left->y, eof_window_note_upper_left->w, eof_window_note_upper_left->h);
+	eof_log(eof_log_string, 2);
 	if(eof_full_height_3d_preview)
 	{	//If the 3D preview is expanded to take the full program window height
 		eof_window_3d = eof_window_create(eof_screen_width - EOF_SCREEN_PANEL_WIDTH, 20, EOF_SCREEN_PANEL_WIDTH, eof_screen_height, eof_screen);
@@ -964,6 +1017,8 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		allegro_message("Unable to create 3D preview window!");
 		return 0;
 	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilt eof_window_3d:  x = %d, y = %d, w = %d, h = %d", eof_window_3d->x, eof_window_3d->y, eof_window_3d->w, eof_window_3d->h);
+	eof_log(eof_log_string, 2);
 	eof_screen_layout.scrollbar_y = (eof_screen_height / 2) - 37;
 	eof_scale_fretboard(5);	//Set the eof_screen_layout.note_y[] array based on a 5 lane track, for setting the fretboard height below
 	eof_screen_layout.lyric_y = 20;
@@ -971,8 +1026,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	eof_screen_layout.lyric_view_key_width = eof_window_3d->screen->w / 29;
 	eof_screen_layout.lyric_view_key_height = eof_screen_layout.lyric_view_key_width * 4;
 	eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
-	eof_screen_layout.fretboard_h = eof_screen_layout.note_y[4] + 25;
-	eof_screen_layout.buffered_preview = 0;
+	eof_screen_layout.fretboard_h = eof_screen_layout.note_y[4] + 10 + (2 * eof_screen_layout.anti_hopo_note_size);	//Make enough of a gap below the lowest fret line so that a HOPO off note doesn't obscure tab notation
 	eof_screen_layout.controls_x = eof_screen_width - 197;
 	eof_screen_layout.mode = mode;
 	eof_vanish_x = 160;
@@ -4021,9 +4075,14 @@ int eof_initialize(int argc, char * argv[])
 		allegro_message("Unable to set display mode, reverting to default width!");
 		if(!eof_set_display_mode_preset(eof_screen_layout.mode))
 		{
-			allegro_message("Unable to set display mode!");
+			allegro_message("Unable to set display mode, reverting to default resolution!");
+			eof_screen_layout.mode = 0;
+			if(!eof_set_display_mode_preset(eof_screen_layout.mode))
+			{
+				allegro_message("Unable to set display mode!");
+				return 0;
+			}
 		}
-		return 0;
 	}
 	eof_window_info = eof_window_note_lower_left;	//By default, the info panel is at the lower left corner
 	eof_menu_edit_zoom_level(eof_zoom_backup);	//Apply the zoom level loaded from the config file

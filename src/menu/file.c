@@ -242,12 +242,25 @@ DIALOG eof_import_export_preferences_dialog[] =
 DIALOG eof_display_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                  (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  200, 196, 2,   23,  0,    0,      0,   0,   "Display Settings",   NULL, NULL },
+	{ d_agup_window_proc, 0,   48,  200, 212, 2,   23,  0,    0,      0,   0,   "Display Settings",   NULL, NULL },
 	{ d_agup_check_proc,  16,  80,  160, 16,  2,   23,  0,    0,      1,   0,   "Use Software Cursor",NULL, NULL },
 	{ d_agup_check_proc,  16,  100, 128, 16,  2,   23,  0,    0,      1,   0,   "Force 8-Bit Color",  NULL, NULL },
 	{ d_agup_text_proc,   56,  124, 48,  8,   2,   23,  0,    0,      0,   0,   "Window Size",        NULL, NULL },
-	{ d_agup_list_proc,   43,  140, 110, 49,  2,   23,  0,    0,      0,   0,   (void *)eof_display_list, NULL, NULL },
-	{ d_agup_button_proc, 12,  202, 174, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
+	{ d_agup_list_proc,   12,  140, 174, 65,  2,   23,  0,    0,      0,   0,   (void *)eof_display_list, NULL, NULL },
+	{ d_agup_button_proc, 12,  218, 174, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_custom_display_size_dialog[] =
+{
+	/* (proc)                (x) (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)                   (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   48,  200, 146, 2,   23,  0,   0,       0,   0,   "Custom display size", NULL, NULL },
+	{ d_agup_text_proc,      12,  76,  64,  8,   2,   23,  0,   0,       0,   0,   eof_etext,             NULL, NULL },
+	{ d_agup_text_proc,      12,  98,  64,  8,   2,   23,  0,   0,       0,   0,   "Width:",              NULL, NULL },
+	{ eof_verified_edit_proc,60,  94,  100, 20,  2,   23,  0,   0,       4,   0,   eof_etext2,            "0123456789", NULL },
+	{ d_agup_text_proc,      12,  128, 64,  8,   2,   23,  0,   0,       0,   0,   "Height:",             NULL, NULL },
+	{ eof_verified_edit_proc,60,  124, 100, 20,  2,   23,  0,   0,       4,   0,   eof_etext3,            "0123456789", NULL },
+	{ d_agup_button_proc,    12,  154, 174, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1656,7 +1669,32 @@ int eof_menu_file_display(void)
 	{	//User clicked OK
 		eof_soft_cursor = (eof_display_dialog[1].flags & D_SELECTED) ? 1 : 0;
 		eof_desktop = (eof_display_dialog[2].flags & D_SELECTED) ? 0 : 1;
-		eof_apply_display_settings(eof_display_dialog[4].d1);
+		if(eof_display_dialog[4].d1 == EOF_DISPLAY_CUSTOM)
+		{	//User selected "Custom" window size
+			(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "(Currently set to %lu x %lu)", eof_screen_width, eof_screen_height);
+			eof_etext2[0] = '\0';	//Empty these input fields
+			eof_etext3[0] = '\0';
+			eof_color_dialog(eof_custom_display_size_dialog, gui_fg_color, gui_bg_color);
+			centre_dialog(eof_custom_display_size_dialog);
+			if(eof_popup_dialog(eof_custom_display_size_dialog, 3) == 6)
+			{	//User clicked OK
+				unsigned long width, height;
+
+				width = atol(eof_etext2);
+				height = atol(eof_etext3);
+				if((width >= 640) && (height >= 480))
+				{
+					if(!eof_set_display_mode(width, height))
+					{	//If EOF failed to set that display size
+						(void) eof_set_display_mode(eof_screen_width, eof_screen_height);	//Revert to the previous resolution in use
+					}
+				}
+			}
+		}
+		else
+		{	//Use a pre-set window size
+			eof_apply_display_settings(eof_display_dialog[4].d1);
+		}
 		if(eof_screen_width < eof_get_display_panel_count() * EOF_SCREEN_PANEL_WIDTH)
 		{	//If the current screen width isn't sufficient to display all enabled panels
 			eof_enable_notes_panel = 0;	//Disable the notes panel
@@ -1680,7 +1718,11 @@ void eof_apply_display_settings(int mode)
 	{
 		set_color_depth(8);
 	}
-	(void) eof_set_display_mode_preset(mode);
+	if(!eof_set_display_mode_preset(mode))
+	{
+		allegro_message("Unable to set display mode, reverting!");
+		(void) eof_set_display_mode_preset(eof_screen_layout.mode);
+	}
 	set_palette(eof_palette);
 	if(!eof_soft_cursor)
 	{
@@ -2143,12 +2185,14 @@ char * eof_drum_list(int index, int * size)
 
 char * eof_display_list(int index, int * size)
 {
+	static char custom[20] = {0};
+
 	switch(index)
 	{
 		case -1:
 		{
 			if(size)
-				*size = 3;
+				*size = 4;
 			break;
 		}
 		case EOF_DISPLAY_640:
@@ -2162,6 +2206,11 @@ char * eof_display_list(int index, int * size)
 		case EOF_DISPLAY_1024:
 		{
 			return "1024x768";
+		}
+		case EOF_DISPLAY_CUSTOM:
+		{
+			snprintf(custom, sizeof(custom) - 1, "Custom (%lux%lu)", eof_screen_width, eof_screen_height);
+			return custom;
 		}
 
 		default:

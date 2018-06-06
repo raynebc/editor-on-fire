@@ -2277,6 +2277,38 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The current mouse x coordinate
+	if(!ustricmp(macro, "MOUSE_X"))
+	{
+		char name[20] = {0};
+		EOF_WINDOW *ptr = eof_coordinates_identify_window(mouse_x, mouse_y, name);	//Determine which subwindow the mouse is in
+		if(ptr)
+		{	//If it is in a subwindow
+			snprintf(dest_buffer, dest_buffer_size, "%d (%s: %d)", mouse_x, name, mouse_x - ptr->x);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "%d", mouse_x);
+		}
+		return 1;
+	}
+
+	//The current mouse y coordinate
+	if(!ustricmp(macro, "MOUSE_Y"))
+	{
+		char name[20] = {0};
+		EOF_WINDOW *ptr = eof_coordinates_identify_window(mouse_x, mouse_y, name);	//Determine which subwindow the mouse is in
+		if(ptr)
+		{	//If it is in a subwindow
+			snprintf(dest_buffer, dest_buffer_size, "%d (%s: %d)", mouse_y, name, mouse_y - ptr->y);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "%d", mouse_y);
+		}
+		return 1;
+	}
+
 	return 0;	//Macro not supported
 }
 

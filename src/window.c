@@ -36,3 +36,30 @@ void eof_window_destroy(EOF_WINDOW * wp)
 		free(wp);
 	}
 }
+
+EOF_WINDOW *eof_coordinates_identify_window(int x, int y, char *name)
+{
+	EOF_WINDOW *window_list[4] = {eof_window_editor, eof_window_3d, eof_window_notes, eof_window_info};	//Order the info window last because it takes the entire bottom of the program window
+	char *window_name[4] = {"eof_window_editor", "eof_window_3d", "eof_window_notes", "eof_window_info"};
+	unsigned long ctr;
+
+	if(!name)
+		return NULL;	//Invalid parameter
+
+	for(ctr = 0; ctr < 4; ctr++)
+	{	//For each of the windows being checked
+		if(window_list[ctr] == NULL)
+			return NULL;	//Logic error
+
+		if((x >= window_list[ctr]->x) && (x <= window_list[ctr]->x + window_list[ctr]->w))
+		{	//If the x coordinate is within the boundaries of this window
+			if((y >= window_list[ctr]->y) && (y <= window_list[ctr]->y + window_list[ctr]->h))
+			{	//If the y coordinate is within the boundaries of this window
+				strcpy(name, window_name[ctr]);
+				return window_list[ctr];
+			}
+		}
+	}
+
+	return NULL;	//Window not found
+}

@@ -171,6 +171,7 @@
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1
 #define EOF_DISPLAY_1024            2
+#define EOF_DISPLAY_CUSTOM          3
 #define EOF_SCREEN_PANEL_WIDTH (eof_screen_width_default / 2)
 
 #define EOF_INPUT_NAME_NUM			7
@@ -179,32 +180,31 @@
 typedef struct
 {
 
-	int mode;
+	int mode;					//If this is EOF_DISPLAY_CUSTOM, eof_screen_height is the screen height instead of a preset
 
 	/* rendering offsets */
 	int scrollbar_y;
-	int string_space, string_space_unscaled;	//string_space_unscaled is set by the display size, string_space is set by eof_scale_fretboard()
+	int string_space, string_space_unscaled;	//Defines the amount of vertical space between each lane in the piano roll when 5 lanes are in effect
+												//string_space_unscaled is set by the display size, string_space is set by eof_scale_fretboard() to account for 6 lane modes
 	int note_y[EOF_MAX_FRETS];
-	int lyric_y;
-	int vocal_y;
-	int vocal_tail_size;
-	int vocal_view_size;
-	int lyric_view_key_width;
-	int lyric_view_key_height;
-	int lyric_view_bkey_width;
-	int lyric_view_bkey_height;
-	int note_size;
-	int hopo_note_size;			//The size of a note that has HOPO forced on
-	int anti_hopo_note_size;	//The size of a note that has HOPO forced off
-	int note_dot_size;
-	int hopo_note_dot_size;
-	int anti_hopo_note_dot_size;
-	int note_marker_size;
-	int note_tail_size;
-	int note_kick_size;
-	int fretboard_h;
-	int buffered_preview;
-	int controls_x;
+	int lyric_y;				//A constant y coordinate offset (EOF_EDITOR_RENDER_OFFSET + 15 + lyric_y is the y position of the top-most lane line in the editor window)
+	int vocal_y;				//The y coordinate at which lyrics text is drawn in the editor window
+	int vocal_tail_size;		//The height of a lyric note rectangle
+	int vocal_view_size;		//A constant representing the number of piano keys to display in the left edge of the piano roll when the vocal track is active
+	int lyric_view_key_width;	//How far apart each black line is rendered to separate the white piano keys in the vocal track 3D preview (1/29 the 3D preview window)
+	int lyric_view_key_height;	//The height of the white keys are in the vocal track 3D preview (4 * lyric_view_key_width)
+	int lyric_view_bkey_width;	//The width of the black keys in the vocal track 3D preview
+	int lyric_view_bkey_height;	//The height of the black keys in the vocal track 3D preview (3 * lyric_view_bkey_width)
+	int note_size;				//The radius of circular gems rendered in the editor window
+	int hopo_note_size;			//The radius of forced HOPO circular gems rendered in the editor window
+	int anti_hopo_note_size;	//The radius of forced HOPO off circular gems rendered in the editor window
+	int note_dot_size;			//The radius of the circle rendered inside of circular gems in the editor window
+	int hopo_note_dot_size;		//The radius of the circle rendered inside of HOPO circular gems in the editor window
+	int anti_hopo_note_dot_size;	//The radius of the circle rendered inside of HOPO off circular gems in the editor window
+	int note_marker_size;		//Half the height of the line segment rendered to mark the start position of each note/lyric in the editor window
+	int note_tail_size;			//Half the height of a note/lyric tail rendered in the editor window
+	int fretboard_h;			//A y coordinate offset (EOF_EDITOR_RENDER_OFFSET + fretboard_h is the bottom of the fretboard portion of the piano roll)
+	int controls_x;				//The x coordinate to which the playback controls are rendered in the editor window (197 pixels from the right edge of the program window)
 
 	/* editor mouse click areas */
 
@@ -646,8 +646,12 @@ void eof_prepare_undo(int type);	//Adds an undo state, creating a backup of the 
 int eof_figure_difficulty(void);	//Returns -1 if the active track difficulty has no notes or pitched lyrics.  If the vocal track is active and has at least one pitched lyric, 0 is returned, otherwise the number of notes is returned
 int eof_figure_part(void);	//Returns the active track number in terms of FoF's command line play functionality, or -1 on error
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);
-int eof_set_display_mode_preset(int mode);	//Sets one of the pre-set window sizes by calling eof_set_display_mode()
-int eof_set_display_mode_preset_custom_width(int mode, unsigned long width);	//Sets one of pre-set window heights and uses the specified width
+int eof_set_display_mode_preset(int mode);
+	//Sets one of the pre-set window sizes by calling eof_set_display_mode()
+	//If mode is EOF_DISPLAY_CUSTOM, the resolution is set to eof_screen_width x eof_screen_height
+int eof_set_display_mode_preset_custom_width(int mode, unsigned long width);
+	//Sets one of pre-set window heights and uses the specified width
+	//If mode is EOF_DISPLAY_CUSTOM, the height is set to eof_screen_height instead of a preset height
 int eof_set_display_mode(unsigned long width, unsigned long height);
 	//Sets the program window size, rebuilds sub-windows and sets related variables
 	//Returns 0 on error, 1 on success or 2 if a display alteration (enabling x2 zoom or setting a custom window width) fails
