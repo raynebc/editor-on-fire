@@ -2209,7 +2209,7 @@ char * eof_display_list(int index, int * size)
 		}
 		case EOF_DISPLAY_CUSTOM:
 		{
-			snprintf(custom, sizeof(custom) - 1, "Custom (%lux%lu)", eof_screen_width, eof_screen_height);
+			(void) snprintf(custom, sizeof(custom) - 1, "Custom (%lux%lu)", eof_screen_width, eof_screen_height);
 			return custom;
 		}
 
@@ -6039,7 +6039,7 @@ int eof_3d_preview_toggle_full_height(void)
 	if(!eof_set_display_mode(eof_screen_width, eof_screen_height))
 	{	//If the windows couldn't be rebuilt
 		eof_full_height_3d_preview = 0;	//Disable the feature
-		eof_set_display_mode(eof_screen_width, eof_screen_height);	//Retry rebuilding the windows
+		(void) eof_set_display_mode(eof_screen_width, eof_screen_height);	//Retry rebuilding the windows
 	}
 
 	if(eof_enable_notes_panel)

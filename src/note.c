@@ -1333,9 +1333,26 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			}//If rendering a normal note
 
 			//Render the note
-			image_height = eof_image[imagenum]->h;
-			half_image_width = eof_image[imagenum]->w / 2;
-			ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
+			if(eof_full_height_3d_preview)
+			{	//If full height 3D preview is in effect, stretch the gems to double height to make them look less squished
+				BITMAP *temp_bitmap;
+
+				image_height = eof_image[imagenum]->h * 2;
+				half_image_width = eof_image[imagenum]->w / 2;
+				temp_bitmap = create_bitmap(eof_image[imagenum]->w, image_height);
+				if(temp_bitmap)
+				{	//If the bitmap was created
+					stretch_blit(eof_image[imagenum], temp_bitmap, 0, 0, eof_image[imagenum]->w, eof_image[imagenum]->h, 0, 0, temp_bitmap->w, temp_bitmap->h);
+					ocd3d_draw_bitmap(eof_window_3d->screen, temp_bitmap, xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
+					destroy_bitmap(temp_bitmap);
+				}
+			}
+			else
+			{	//Normal logic
+				image_height = eof_image[imagenum]->h;
+				half_image_width = eof_image[imagenum]->w / 2;
+				ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
+			}
 
 			if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note

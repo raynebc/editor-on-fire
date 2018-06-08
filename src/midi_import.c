@@ -403,7 +403,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned long first_note;
 	unsigned long hopo_on_pos[4] = {0};		//Used for forced HOPO On parsing
 	unsigned long hopo_off_pos[4] = {0};	//Used for forced HOPO Off parsing
-	int hopodiff;						//Used for forced HOPO On/Off parsing
+	int hopodiff = 0;						//Used for forced HOPO On/Off parsing
 	unsigned long strumpos[4] = {0};	//Used for pro guitar strum direction parsing
 	char strumtype[4] = {0};			//Used for pro guitar strum direction parsing
 	int strumdiff;						//Used for pro guitar strum direction parsing

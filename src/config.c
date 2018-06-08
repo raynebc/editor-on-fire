@@ -339,7 +339,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {35,36,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_1 from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_1, default_mapping, sizeof(default_mapping));
 	}
 
@@ -349,7 +349,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {38,40,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_2 from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_2, default_mapping, sizeof(default_mapping));
 	}
 	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_2_rimshot", "37"));
@@ -358,7 +358,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {37,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_2_rimshot from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_2_rimshot, default_mapping, sizeof(default_mapping));
 	}
 
@@ -368,7 +368,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {47,50,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_3 from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_3, default_mapping, sizeof(default_mapping));
 	}
 	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3_cymbal", "42,54,92"));
@@ -377,7 +377,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {42,54,92,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_3_cymbal from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_3_cymbal, default_mapping, sizeof(default_mapping));
 	}
 	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3_hi_hat_pedal", "44"));
@@ -386,7 +386,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {44,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_3_hi_hat_pedal from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_3_hi_hat_pedal, default_mapping, sizeof(default_mapping));
 	}
 	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3_hi_hat_open", "46"));
@@ -395,7 +395,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {46,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_3_hi_hat_open from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_3_hi_hat_open, default_mapping, sizeof(default_mapping));
 	}
 
@@ -405,7 +405,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {45,48,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_4 from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_4, default_mapping, sizeof(default_mapping));
 	}
 	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_4_cymbal", "51,53,56,59"));
@@ -414,7 +414,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {51,53,56,59,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_4_cymbal from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_4_cymbal, default_mapping, sizeof(default_mapping));
 	}
 
@@ -424,7 +424,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {41,43,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_5 from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_5, default_mapping, sizeof(default_mapping));
 	}
 	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_5_cymbal", "49,52,55,57"));
@@ -433,7 +433,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {49,52,55,57,0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_5_cymbal from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_5_cymbal, default_mapping, sizeof(default_mapping));
 	}
 
@@ -443,7 +443,7 @@ void eof_load_config(char * fn)
 		unsigned char default_mapping[] = {0};
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error processing gp_drum_import_lane_6 from the config file, resetting to defaults.");
 		eof_log(eof_log_string, 1);
-		allegro_message(eof_log_string);
+		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_6, default_mapping, sizeof(default_mapping));
 	}
 
@@ -673,7 +673,7 @@ void eof_build_gp_drum_mapping_string(char *destination, size_t size, unsigned c
 		{	//If this isn't the first number written
 			strncat(destination, ",", size - 1);	//Separate with a comma
 		}
-		snprintf(str, sizeof(str) - 1, "%d", mapping_list[ctr]);	//Convert the number to ASCII
+		(void) snprintf(str, sizeof(str) - 1, "%d", mapping_list[ctr]);	//Convert the number to ASCII
 		strncat(destination, str, size - 1);						//Append it to the destination string
 		writecount++;
 	}
