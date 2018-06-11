@@ -1050,10 +1050,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write forced HOPO */
 				if(noteflags & EOF_NOTE_FLAG_F_HOPO)
 				{	//Write a 0 delta length marker to ensure overlapping notes of opposing HOPO status can work
+					unsigned long markerlength = deltalength;	//By default, a forced HOPO marker will be the length of the affected note
+
+					if(noteflags & EOF_NOTE_FLAG_CRAZY)
+						markerlength = 0;	//But if the note has crazy status, the marker will be 0 ticks, ensuring it can overlap notes without affecting their HOPO status
+
 					if(isghl)
 					{	//If writing a GHL format track
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
-						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 6, vel, 0);
+						eof_add_midi_event(deltapos + markerlength, 0x80, midi_note_offset + 6, vel, 0);
 					}
 					else if(format == 1)
 					{	//If writing the GHWT MIDI variant
@@ -1083,17 +1088,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 6, vel, 0);	//Place a HOPO off end marker 1 delta before this just in case a HOPO off phrase is in effect (the overlap logic will filter this if it isn't necessary)
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
-						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos + markerlength, 0x80, midi_note_offset + 5, vel, 0);
 					}
 				}
 
 				/* write forced non-HOPO */
 				else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
 				{	//Write a 0 delta length marker to ensure overlapping notes of opposing HOPO status can work
+					unsigned long markerlength = deltalength;	//By default, a forced HOPO off marker will be the length of the affected note
+
+					if(noteflags & EOF_NOTE_FLAG_CRAZY)
+						markerlength = 0;	//But if the note has crazy status, the marker will be 0 ticks, ensuring it can overlap notes without affecting their HOPO status
+
 					if(isghl)
 					{	//If writing a GHL format track
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, vel, 0);
-						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 7, vel, 0);
+						eof_add_midi_event(deltapos + markerlength, 0x80, midi_note_offset + 7, vel, 0);
 					}
 					else if(format == 1)
 					{	//If writing the GHWT MIDI variant
@@ -1106,7 +1116,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							}
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, vel, 0);	//Explicitly write this marker using the MIDI note 9 higher than lane 1 gems (ie. 105 for expert difficulty)
-						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 9, vel, 0);
+						eof_add_midi_event(deltapos + markerlength, 0x80, midi_note_offset + 9, vel, 0);
 					}
 					else
 					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
@@ -1115,7 +1125,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 5, vel, 0);	//Place a HOPO on end marker 1 delta before this just in case a HOPO on phrase is in effect (the overlap logic will filter this if it isn't necessary)
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
-						eof_add_midi_event(deltapos, 0x80, midi_note_offset + 6, vel, 0);
+						eof_add_midi_event(deltapos + markerlength, 0x80, midi_note_offset + 6, vel, 0);
 					}
 				}
 			}//For each note in the track

@@ -1688,6 +1688,9 @@ int eof_menu_file_display(void)
 					{	//If EOF failed to set that display size
 						(void) eof_set_display_mode(eof_screen_width, eof_screen_height);	//Revert to the previous resolution in use
 					}
+					eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+					eof_set_2D_lane_positions(0);	//Update ychart[]
+					eof_set_3D_lane_positions(0);	//Update xchart[]
 				}
 			}
 		}

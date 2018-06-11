@@ -1335,16 +1335,35 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			//Render the note
 			if(eof_full_height_3d_preview)
 			{	//If full height 3D preview is in effect, stretch the gems to double height to make them look less squished
-				BITMAP *temp_bitmap;
+				BITMAP **dest_bitmap;	//This will refer to either stretch_bitmap or hopo_stretch_bitmap accordingly
 
+				//Re-use either the normal or HOPO size bitmaps from a previous call to eof_note_draw_3d() where possible to reduce overhead
+				if(noteflags & EOF_NOTE_FLAG_HOPO)
+				{	//If the note being rendered is a HOPO note
+					dest_bitmap = &eof_hopo_stretch_bitmap;
+				}
+				else
+				{
+					dest_bitmap = &eof_stretch_bitmap;
+				}
 				image_height = eof_image[imagenum]->h * 2;
+				if(eof_full_screen_3d)
+				{	//The full screen 3D feature makes the notes look even more squished
+					image_height *= 2;	//Make the notes even taller
+				}
 				half_image_width = eof_image[imagenum]->w / 2;
-				temp_bitmap = create_bitmap(eof_image[imagenum]->w, image_height);
-				if(temp_bitmap)
-				{	//If the bitmap was created
-					stretch_blit(eof_image[imagenum], temp_bitmap, 0, 0, eof_image[imagenum]->w, eof_image[imagenum]->h, 0, 0, temp_bitmap->w, temp_bitmap->h);
-					ocd3d_draw_bitmap(eof_window_3d->screen, temp_bitmap, xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
-					destroy_bitmap(temp_bitmap);
+				if(((*dest_bitmap) == NULL) || ((*dest_bitmap)->w != eof_image[imagenum]->w) || ((*dest_bitmap)->h != image_height))
+				{	//If the temporary bitmap must be recreated to store the image
+					if(*dest_bitmap != NULL)
+						destroy_bitmap(*dest_bitmap);
+					*dest_bitmap = create_bitmap(eof_image[imagenum]->w, image_height);
+					eof_log("\t\tRebuilding 3D stretched image cache", 3);
+				}
+
+				if(*dest_bitmap)
+				{	//If the bitmap was created or can be reused
+					stretch_blit(eof_image[imagenum], *dest_bitmap, 0, 0, eof_image[imagenum]->w, eof_image[imagenum]->h, 0, 0, (*dest_bitmap)->w, (*dest_bitmap)->h);
+					ocd3d_draw_bitmap(eof_window_3d->screen, *dest_bitmap, xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
 				}
 			}
 			else

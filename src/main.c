@@ -86,6 +86,8 @@ NCDFS_FILTER_LIST * eof_filter_note_panel_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
+BITMAP *    eof_stretch_bitmap = NULL;
+BITMAP *    eof_hopo_stretch_bitmap = NULL;
 FONT *      eof_allegro_font = NULL;
 FONT *      eof_font = NULL;
 FONT *      eof_mono_font = NULL;
@@ -3933,6 +3935,16 @@ void eof_destroy_data(void)
 			destroy_bitmap(eof_image[i]);
 			eof_image[i] = NULL;
 		}
+	}
+	if(eof_stretch_bitmap)
+	{
+		destroy_bitmap(eof_stretch_bitmap);
+		eof_stretch_bitmap = NULL;
+	}
+	if(eof_hopo_stretch_bitmap)
+	{
+		destroy_bitmap(eof_hopo_stretch_bitmap);
+		eof_hopo_stretch_bitmap = NULL;
 	}
 	if(eof_font)
 	{	//If the main font was loaded
