@@ -171,8 +171,8 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 150, 123, 148, 16,  2,   23,  0,    0,      1,   0,   "Paste erases overlap",NULL, NULL },
 	{ d_agup_check_proc, 306, 123, 174, 16,  2,   23,  0,    0,      1,   0,   "Make note tails clickable",NULL, NULL },
 	{ d_agup_check_proc, 16,  303, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
-	{ d_agup_text_proc,  16,  144, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance (ms):",NULL,NULL },
-	{ eof_verified_edit_proc,170,144,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
+	{ d_agup_text_proc,  16,  144, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance:",NULL,NULL },
+	{ eof_verified_edit_proc,160,144,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_text_proc,  16,  165, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,160,165,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 335, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
@@ -199,9 +199,9 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 415, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
 	{ d_agup_check_proc, 248, 431, 230, 16,  2,   23,  0,    0,      1,   0,   "GHL conversion swaps B/W gems",NULL, NULL },
 	{ d_agup_check_proc, 248, 447, 230, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
-	{ d_agup_radio_proc, 200, 144, 40,  16,  2,   23,  0,    0,      2,   0,   "ms",          NULL, NULL },
-	{ d_agup_radio_proc, 240, 144, 92,  16,  2,   23,  0,    0,      2,   0,   "1/# measure", NULL, NULL },
-	{ d_agup_radio_proc, 332, 144, 68,  16,  2,   23,  0,    0,      2,   0,   "1/# beat",    NULL, NULL },
+	{ d_agup_radio_proc, 190, 144, 40,  16,  2,   23,  0,    0,      2,   0,   "ms",          NULL, NULL },
+	{ d_agup_radio_proc, 230, 144, 92,  16,  2,   23,  0,    0,      2,   0,   "1/# measure", NULL, NULL },
+	{ d_agup_radio_proc, 322, 144, 68,  16,  2,   23,  0,    0,      2,   0,   "1/# beat",    NULL, NULL },
 	{ d_agup_check_proc, 248, 463, 230, 16,  2,   23,  0,    0,      1,   0,   "Disable automatic backups",NULL, NULL },
 	{ d_agup_check_proc, 248, 175, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
 	{ d_agup_check_proc, 248, 159, 206, 16,  2,   23,  0,    0,      1,   0,   "Use FoF difficulty naming",NULL, NULL },
@@ -1678,15 +1678,17 @@ int eof_menu_file_display(void)
 			centre_dialog(eof_custom_display_size_dialog);
 			if(eof_popup_dialog(eof_custom_display_size_dialog, 3) == 6)
 			{	//User clicked OK
-				unsigned long width, height;
+				unsigned long width, height, oldwidth, oldheight;
 
 				width = atol(eof_etext2);
 				height = atol(eof_etext3);
+				oldwidth = eof_screen_width;
+				oldheight = eof_screen_height;
 				if((width >= 640) && (height >= 480))
 				{
 					if(!eof_set_display_mode(width, height))
 					{	//If EOF failed to set that display size
-						(void) eof_set_display_mode(eof_screen_width, eof_screen_height);	//Revert to the previous resolution in use
+						(void) eof_set_display_mode(oldwidth, oldheight);	//Revert to the previous resolution in use
 					}
 					eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 					eof_set_2D_lane_positions(0);	//Update ychart[]

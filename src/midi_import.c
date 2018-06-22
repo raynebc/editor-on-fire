@@ -775,7 +775,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 										{	//If both a normal and a GHL guitar track have been encountered
 											eof_log("\t\tNormal AND GHL guitar tracks detected.", 1);
 											eof_clear_input();
-											if(alert("Both normal AND GHL guitar tracks were found.", "Import which one?", NULL, "&Normal", "&GHL", 'y', 'n') == 1)
+											if(alert("Both normal AND GHL guitar tracks were found.", "Import which one?", NULL, "&Normal", "&GHL", 'n', 'g') == 1)
 											{	//If the user opts to import the normal guitar track
 												eof_log("\t\tUser opted to import the normal guitar track.", 1);
 												eof_import_events[ghl_guitar_track]->type = -1;	//Mark the GHL guitar track as one to be skipped during note import
@@ -812,7 +812,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 										{	//If both a normal and a GHL bass track have been encountered
 											eof_log("\t\tNormal AND GHL bass tracks detected.", 1);
 											eof_clear_input();
-											if(alert("Both normal AND GHL bass tracks were found.", "Import which one?", NULL, "&Normal", "&GHL", 'y', 'n') == 1)
+											if(alert("Both normal AND GHL bass tracks were found.", "Import which one?", NULL, "&Normal", "&GHL", 'n', 'g') == 1)
 											{	//If the user opts to import the normal bass track
 												eof_log("\t\tUser opted to import the normal bass track.", 1);
 												eof_import_events[ghl_bass_track]->type = -1;	//Mark the GHL bass track as one to be skipped during note import

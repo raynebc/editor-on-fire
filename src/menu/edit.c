@@ -165,6 +165,7 @@ MENU eof_edit_selection_select_menu[] =
 	{"Non open notes", eof_menu_edit_select_non_open_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_select_note_number_in_sequence, NULL, 0, NULL},
 	{"Neighbor &Proximity", eof_menu_edit_select_note_within_threshhold_of_next_note, NULL, 0, NULL},
+	{"Gem count", eof_menu_edit_select_gem_count, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -187,6 +188,7 @@ MENU eof_edit_selection_deselect_menu[] =
 	{"Non open notes", eof_menu_edit_deselect_non_open_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
 	{"Neighbor &Proximity", eof_menu_edit_deselect_note_within_threshhold_of_next_note, NULL, 0, NULL},
+	{"Gem count", eof_menu_edit_deselect_gem_count, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -3261,6 +3263,123 @@ int eof_menu_edit_deselect_non_open_notes(void)
 	return eof_menu_edit_deselect_logic(eof_note_is_not_open_note);
 }
 
+char eof_menu_edit_select_gem_count_dialog_string[25];
+DIALOG eof_menu_edit_select_gem_count_dialog[] =
+{
+	/*	(proc)              (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)     (d1) (d2) (dp)                   (dp2) (dp3) */
+	{d_agup_window_proc,    0,   0,   216, 140,2,   23,  0,    0,          0,   0,   eof_menu_edit_select_gem_count_dialog_string, NULL, NULL },
+	{d_agup_radio_proc,	    16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                   NULL, NULL },
+	{d_agup_radio_proc,	    72,  32,  62,  16, 2,   23,  0,    0,          1,   0,   "Do not",               NULL, NULL },
+	{d_agup_text_proc,      16,  52,  44,  8,  2,   23,  0,    0,          0,   0,   "Have exactly this many gems:",       NULL, NULL },
+	{eof_verified_edit_proc,16,  72,  28,  20, 2,   23,  0,    0,          1,   0,   eof_etext, "123456", NULL },
+	{d_agup_button_proc,    12,  100, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
+	{d_agup_button_proc,    130, 100, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
+	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_edit_select_gem_count_logic(int function)
+{
+	unsigned long targetcount, ctr, gemcount;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+	if(!function && (eof_selection.track != eof_selected_track))
+		return 1;	//No notes in the active track are selected so none can become deselected
+
+	//Set up and run dialog
+	if(!function)
+	{	//Perform conditional deselection
+		strncpy(eof_menu_edit_select_gem_count_dialog_string, "Deselect notes that", sizeof(eof_menu_edit_select_gem_count_dialog_string) - 1);
+	}
+	else
+	{	//Perform conditional selection
+		strncpy(eof_menu_edit_select_gem_count_dialog_string, "Select notes that", sizeof(eof_menu_edit_select_gem_count_dialog_string) - 1);
+	}
+	eof_etext[0] = '\0';
+	eof_color_dialog(eof_menu_edit_select_gem_count_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_select_gem_count_dialog);
+	if(eof_popup_dialog(eof_menu_edit_select_gem_count_dialog, 4) != 5)
+		return 1;	//If the user did not click OK, return immediately
+	targetcount = atol(eof_etext);
+	if(!targetcount)
+		return 0;	//Couldn't convert the string to a number
+
+	//Process notes
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active track difficulty
+			gemcount = eof_note_count_colors(eof_song, eof_selected_track, ctr);	//Determine how many gems this note has
+
+			if(eof_menu_edit_select_gem_count_dialog[1].flags == D_SELECTED)
+			{	//User specified to select/deselect notes that have a specified gem count
+				if(!function)
+				{	//User specified to deselect applicable notes
+					if(gemcount == targetcount)
+					{	//If this note meets the deselection criteria
+						eof_selection.multi[ctr] = 0;	//Deselect it
+					}
+				}
+				else
+				{	//user specified to select applicable notes
+					if(gemcount == targetcount)
+					{	//If this note meets the selection criteria
+						if(eof_selection.track != eof_selected_track)
+						{	//If no notes in the current track are currently selected
+							(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+							eof_selection.track = eof_selected_track;	//Indicate that the active track is the one with notes selected
+						}
+						eof_selection.multi[ctr] = 1;	//Select the note
+					}
+				}
+			}
+			else
+			{	//User specified to select/deselect notes that DO NOT have a specified gem count
+				if(!function)
+				{	//User specified to deselect applicable notes
+					if(gemcount != targetcount)
+					{	//If this note meets the deselection criteria
+						eof_selection.multi[ctr] = 0;	//Deselect it
+					}
+				}
+				else
+				{	//user specified to select applicable notes
+					if(gemcount != targetcount)
+					{	//If this note meets the selection criteria
+						if(eof_selection.track != eof_selected_track)
+						{	//If no notes in the current track are currently selected
+							(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+							eof_selection.track = eof_selected_track;	//Indicate that the active track is the one with notes selected
+						}
+						eof_selection.multi[ctr] = 1;	//Select the note
+					}
+				}
+			}
+		}
+	}
+
+	//Clean up
+	if(!function && (eof_selection.current != EOF_MAX_NOTES - 1))
+	{	//If there was a last selected note
+		if(eof_selection.multi[eof_selection.current] == 0)
+		{	//And it's not selected anymore
+			eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_edit_select_gem_count(void)
+{
+	return eof_menu_edit_select_gem_count_logic(1);
+}
+
+int eof_menu_edit_deselect_gem_count(void)
+{
+	return eof_menu_edit_select_gem_count_logic(0);
+}
+
 int eof_menu_edit_invert_selection(void)
 {
 	unsigned long i;
@@ -4185,10 +4304,12 @@ int eof_menu_edit_select_note_number_in_sequence_logic(int function)
 	if(!function)
 	{
 		strncpy(eof_etext, "Deselect note #:", sizeof(eof_etext) - 1);
+		strncpy(eof_etext4, "selected notes", sizeof(eof_etext4) - 1);
 	}
 	else
 	{
 		strncpy(eof_etext, "Select note #:", sizeof(eof_etext) - 1);
+		strncpy(eof_etext4, "notes", sizeof(eof_etext4) - 1);
 	}
 	eof_etext2[0] = '\0';	//Empty this field
 	eof_etext3[0] = '\0';	//Empty this field
@@ -4250,15 +4371,11 @@ int eof_menu_edit_select_note_number_in_sequence_logic(int function)
 
 int eof_menu_edit_select_note_number_in_sequence(void)
 {
-	strncpy(eof_etext, "Select note #:", sizeof(eof_etext) - 1);
-	strncpy(eof_etext4, "notes", sizeof(eof_etext4) - 1);
 	return eof_menu_edit_select_note_number_in_sequence_logic(1);
 }
 
 int eof_menu_edit_deselect_note_number_in_sequence(void)
 {
-	strncpy(eof_etext, "Deselect note #:", sizeof(eof_etext) - 1);
-	strncpy(eof_etext4, "selected notes", sizeof(eof_etext4) - 1);
 	return eof_menu_edit_select_note_number_in_sequence_logic(0);
 }
 

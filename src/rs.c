@@ -1986,6 +1986,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				new_note->flags = tp->note[ctr]->flags;					//Clone the flags
 				new_note->eflags = tp->note[ctr]->eflags;				//Clone the extended flags
 				new_note->tflags |= EOF_NOTE_TFLAG_TEMP;				//Mark the note as temporary
+				new_note->tflags |= EOF_NOTE_TFLAG_SPLIT_CHORD;			//Track that this note was created from a chord
 				new_note->bendstrength = tp->note[ctr]->bendstrength;	//Copy the bend strength
 				new_note->frets[ctr3] = tp->note[ctr]->frets[ctr3];		//And this string's fret value
 				if(tp->note[ctr]->slideend && (tech.slideto >= 0))
@@ -2031,6 +2032,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			if(new_note)
 			{	//If the new note was created
 				new_note->tflags |= EOF_NOTE_TFLAG_TEMP;		//Mark the note as temporary
+				new_note->tflags |= EOF_NOTE_TFLAG_SPLIT_CHORD;	//Track that this note was created from a chord
 				new_note->note = bitmask;						//Turn the cloned chord into a single note on the appropriate string
 				if(tp->note[ctr]->slideend && (tech.slideto >= 0))
 				{	//If this note has slide technique and a valid slide end position was found
@@ -3125,8 +3127,15 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						else
 						{	//The next note (if any) is not a repeat of this note and is not completely string muted
-							handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-							break;	//Break from while loop
+							if(eof_get_note_tflags(sp, track, nextnote) & EOF_NOTE_TFLAG_SPLIT_CHORD)
+							{	//If this note was created from a chord due to linknext or split statuses, it is to be ignored so the handshape can encompass it where appropriate
+								ctr3 = nextnote;	//Iterate to the next note
+							}
+							else
+							{
+								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+								break;	//Break from while loop
+							}
 						}
 					}
 				}
@@ -5563,17 +5572,18 @@ void eof_rs_export_cleanup(EOF_SONG * sp, unsigned long track)
 			eof_track_delete_note(sp, track, ctr - 1);	//Delete it
 			continue;	//Skip clearing flags for the note because it no longer exists
 		}
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_IGNORE;	//Clear the ignore flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP;		//Clear the arpeggio flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HAND;		//Clear the handshape flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;	//Clear the first in arpeggio flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_GHOST_HS;	//Clear the ghost handshape flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_TWIN;		//Clear the partial ghosted chord twin flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_COMBINE;	//Clear the note/chordnote combine flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_NO_LN;		//Clear the ignore linknext flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_MINLENGTH;	//Clear the minimum 1ms length flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_LN;		//Clear the forced linknext flag
-		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HD;		//Clear the forced high density flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_IGNORE;		//Clear the ignore flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP;			//Clear the arpeggio flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HAND;			//Clear the handshape flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_ARP_FIRST;		//Clear the first in arpeggio flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_GHOST_HS;		//Clear the ghost handshape flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_TWIN;			//Clear the partial ghosted chord twin flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_COMBINE;		//Clear the note/chordnote combine flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_NO_LN;			//Clear the ignore linknext flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_MINLENGTH;		//Clear the minimum 1ms length flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_LN;			//Clear the forced linknext flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_HD;			//Clear the forced high density flag
+		tp->note[ctr - 1]->tflags &= ~EOF_NOTE_TFLAG_SPLIT_CHORD;	//Clear the single note created from a chord flag
 	}
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 }

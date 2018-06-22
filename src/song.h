@@ -89,23 +89,24 @@
 
 ///Temporary note flags
 //The following temporary flags are maintained internally and do not save to file (even during project save, clipboard, auto-adjust, etc.)
-#define EOF_NOTE_TFLAG_TEMP         1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
-#define EOF_NOTE_TFLAG_IGNORE       2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
-#define EOF_NOTE_TFLAG_ARP          4	//This flag will represent a note that is within an arpeggio, for RS export of arpeggio/handshape phrases as handshape tags
-#define EOF_NOTE_TFLAG_HAND         8	//This flag will represent a note that is within a handshape phrase, which is treated as a variation of an arpeggio, affecting export to RS2 XML
-#define EOF_NOTE_TFLAG_ARP_FIRST   16	//This flag will represent a note that is the first note within its arpeggio phrase
-#define EOF_NOTE_TFLAG_SORT        32	//This flag is applied to selected notes by eof_track_sort_notes() to allow it to recreate the note selection after sorting
-#define EOF_NOTE_TFLAG_GHOST_HS    64	//This flag will represent a note that is added during RS2 export that is observed during the chord list building and handshape exports, but ignored otherwise
-#define EOF_NOTE_TFLAG_TWIN       128	//This flag will represent a note that is either the original or ghost gem-less clone of a partial ghosted chord that is created during RS2 export
-#define EOF_NOTE_TFLAG_COMBINE    256	//This flag will represent a note that was marked as ignored because its sustain is to be combined with that of a chordnote during RS2 export
-#define EOF_NOTE_TFLAG_NO_LN      512	//This flag will indicate that the linknext status of the affected note is to be interpreted to be not set, due to how chordnotes and linked single notes can be combined, during RS2 export
-#define EOF_NOTE_TFLAG_CCHANGE   1024	//This flag will indicate that a note is a chord change from RS import's perspective (for determining manually defined handshape phrases)
-#define EOF_NOTE_TFLAG_HIGHLIGHT 2048	//This flag will represent a note that is highlighted (in cyan by default, instead of the yellow used for static highlighting) in the editor window (non permanent, such as for toggleable highlighting options)
-#define EOF_NOTE_TFLAG_MINLENGTH 4096	//This flag will indicate that a temporary ignored note added for the chordnote mechanism needs to RS2 export with a minimum length of 1ms
-#define EOF_NOTE_TFLAG_LN        8192	//This flag will indicate that the affected chord has chordify status and the chord tag should RS2 export with the linknext tag overridden to be enabled, which will cause the chord to link to the temporary single notes written for the chord
-#define EOF_NOTE_TFLAG_HD       16384	//This flag will indicate that the affected chord should export with high density regardless of the value of the regular high density flag
-#define EOF_NOTE_TFLAG_GHL_W3   32768	//This flag will indicate that the affected note is a "N 2 #" white 3 note being imported from a Feedback file instead of "N 5 #" toggle HOPO notation, since they are both stored as a lane 6 bitmask
-#define EOF_NOTE_TFLAG_RESNAP   65536	//This flag will indicate that a note was defined as grid snapped in the imported MIDI, and that it should be resnapped if rounding errors result in it not being grid snapped after import
+#define EOF_NOTE_TFLAG_TEMP             1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
+#define EOF_NOTE_TFLAG_IGNORE           2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
+#define EOF_NOTE_TFLAG_ARP              4	//This flag will represent a note that is within an arpeggio, for RS export of arpeggio/handshape phrases as handshape tags
+#define EOF_NOTE_TFLAG_HAND             8	//This flag will represent a note that is within a handshape phrase, which is treated as a variation of an arpeggio, affecting export to RS2 XML
+#define EOF_NOTE_TFLAG_ARP_FIRST       16	//This flag will represent a note that is the first note within its arpeggio phrase
+#define EOF_NOTE_TFLAG_SORT            32	//This flag is applied to selected notes by eof_track_sort_notes() to allow it to recreate the note selection after sorting
+#define EOF_NOTE_TFLAG_GHOST_HS        64	//This flag will represent a note that is added during RS2 export that is observed during the chord list building and handshape exports, but ignored otherwise
+#define EOF_NOTE_TFLAG_TWIN           128	//This flag will represent a note that is either the original or ghost gem-less clone of a partial ghosted chord that is created during RS2 export
+#define EOF_NOTE_TFLAG_COMBINE        256	//This flag will represent a note that was marked as ignored because its sustain is to be combined with that of a chordnote during RS2 export
+#define EOF_NOTE_TFLAG_NO_LN          512	//This flag will indicate that the linknext status of the affected note is to be interpreted to be not set, due to how chordnotes and linked single notes can be combined, during RS2 export
+#define EOF_NOTE_TFLAG_CCHANGE       1024	//This flag will indicate that a note is a chord change from RS import's perspective (for determining manually defined handshape phrases)
+#define EOF_NOTE_TFLAG_HIGHLIGHT     2048	//This flag will represent a note that is highlighted (in cyan by default, instead of the yellow used for static highlighting) in the editor window (non permanent, such as for toggleable highlighting options)
+#define EOF_NOTE_TFLAG_MINLENGTH     4096	//This flag will indicate that a temporary ignored note added for the chordnote mechanism needs to RS2 export with a minimum length of 1ms
+#define EOF_NOTE_TFLAG_LN            8192	//This flag will indicate that the affected chord has chordify status and the chord tag should RS2 export with the linknext tag overridden to be enabled, which will cause the chord to link to the temporary single notes written for the chord
+#define EOF_NOTE_TFLAG_HD           16384	//This flag will indicate that the affected chord should export with high density regardless of the value of the regular high density flag
+#define EOF_NOTE_TFLAG_GHL_W3       32768	//This flag will indicate that the affected note is a "N 2 #" white 3 note being imported from a Feedback file instead of "N 5 #" toggle HOPO notation, since they are both stored as a lane 6 bitmask
+#define EOF_NOTE_TFLAG_RESNAP       65536	//This flag will indicate that a note was defined as grid snapped in the imported MIDI, and that it should be resnapped if rounding errors result in it not being grid snapped after import
+#define EOF_NOTE_TFLAG_SPLIT_CHORD 131072	//This flag will represent a note that was created during RS2 export due to a chord that was broken up into single notes by effect of the linknext or split statuses
 
 
 ///Extended note flags

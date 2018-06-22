@@ -101,6 +101,12 @@ int eof_menu_edit_deselect_non_highlighted_notes(void);	//Deselects notes that a
 int eof_menu_edit_deselect_open_notes(void);			//Deselects notes that are open notes
 int eof_menu_edit_deselect_non_open_notes(void);		//Deselects notes that are not open notes
 
+int eof_menu_edit_select_gem_count_logic(int function);
+	//If function is zero, notes in the active track are deselected based on whether notes do or don't have a specified number of gems
+	//otherwise such notes are selected
+int eof_menu_edit_select_gem_count(void);	//Calls eof_menu_edit_select_gem_count_logic() with the option to select notes
+int eof_menu_edit_deselect_gem_count(void);	//Calls eof_menu_edit_select_gem_count_logic() with the option to deselect notes
+
 int eof_menu_edit_select_on_or_off_beat_note_logic(int function, int position);
 	//Alters the note selection based on notes in the active track difficulty that are either on a beat marker (position is nonzero) or not on a beat marker (position is zero)
 	//If function is nonzero such notes are deselected, otherwise such notes are selected
@@ -115,7 +121,7 @@ int eof_menu_edit_select_note_number_in_sequence_logic(int function);
 	//If function is zero, note # (sequence number) of every (sequence length) number of notes that are already selected becomes deselected
 	//If function is nonzero, note # (sequence number) of every (sequence length) number of notes become selected, regardless of their current selection status
 int eof_menu_edit_select_note_number_in_sequence(void);		//Calls eof_menu_edit_select_note_number_in_sequence_logic() with the option to select notes
-int eof_menu_edit_deselect_note_number_in_sequence(void);	//eof_menu_edit_select_note_number_in_sequence_logic with the option to deselect notes
+int eof_menu_edit_deselect_note_number_in_sequence(void);	//Calls eof_menu_edit_select_note_number_in_sequence_logic() with the option to deselect notes
 
 int eof_menu_edit_select_by_note_length_logic(int (*check)(long, long), int function);
 	//Prompts the user to enter a threshold time using eof_menu_edit_select_by_note_length_dialog[]

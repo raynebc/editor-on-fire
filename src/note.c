@@ -1175,6 +1175,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			unsigned lanenum = ctr;	//For non GHL modes, each fret generally get its own lane
 			unsigned long half_image_width;
 			unsigned long image_height;
+			double height_scale = 1.0;
 
 			if(eof_track_is_ghl_mode(eof_song, track))
 			{	//If rendering a Guitar Hero Live style track
@@ -1346,7 +1347,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				{
 					dest_bitmap = &eof_stretch_bitmap;
 				}
-				image_height = eof_image[imagenum]->h * 2;
+				height_scale = (double)eof_window_3d->screen->h / eof_window_3d->screen->w;
+				image_height = ((double)eof_image[imagenum]->h * height_scale) + 0.5;	//Scale the image height based on the 3D window dimensions to try to retain a correct aspect ratio
+
 				if(eof_full_screen_3d)
 				{	//The full screen 3D feature makes the notes look even more squished
 					image_height *= 2;	//Make the notes even taller
@@ -1378,6 +1381,16 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Allow one extra character's width for padding
 				if(fretbmp != NULL)
 				{	//Render the bitmap on top of the 3D note and then destroy the bitmap
+					if(eof_full_height_3d_preview)
+					{	//If the fret number bitmap should be scaled also
+						BITMAP *scaledbmp = create_bitmap(fretbmp->w, (double)fretbmp->h * height_scale);
+						if(scaledbmp)
+						{	//If the scaled bitmap was created
+							stretch_blit(fretbmp, scaledbmp, 0, 0, fretbmp->w, fretbmp->h, 0, 0, scaledbmp->w, scaledbmp->h);
+							destroy_bitmap(fretbmp);
+							fretbmp = scaledbmp;
+						}
+					}
 					ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[lanenum] - 8, 200 - (image_height / 2) + offset_y_3d, npos);
 					destroy_bitmap(fretbmp);
 				}
