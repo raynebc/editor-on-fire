@@ -192,6 +192,12 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				player->mouse_obj = 0;	///Not needed, but GDB isn't honoring the break point on the break statement
 				break;	//Escape from the menu system so the other key shortcut handling logic can process this
 			}
+			else if(eof_mouse_z != mouse_z)
+			{	///Also allow ALT+scroll wheel to exit the main menu
+				eof_mickey_z = eof_mouse_z - mouse_z;	//Update eof_mickey_z so the scrolling can immediately be detected by eof_editor_logic_common()
+				player->mouse_obj = 0;	///Not needed, but GDB isn't honoring the break point on the break statement
+				break;	//Escape from the menu system so the other key shortcut handling logic can process this
+			}
 
 			/* detect if menu was activated with a click */
 			if((mouse_b & 1) || (mouse_b & 2))

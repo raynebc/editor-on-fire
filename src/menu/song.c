@@ -913,6 +913,34 @@ int eof_menu_song_seek_next_screen(void)
 	return 1;
 }
 
+void eof_song_seek_partial_screen(int direction)
+{
+	unsigned long amount = ((double)SCREEN_W * (double)eof_zoom) / 20.0;	//Seek 1/20 of one screen
+
+	if(direction < 0)
+	{	//Seek backward
+		if(eof_music_pos - eof_av_delay < amount)
+		{	//Cannot seek back by this amount
+			(void) eof_menu_song_seek_start();
+		}
+		else
+		{
+			eof_set_seek_position(eof_music_pos - amount);
+		}
+	}
+	else
+	{	//Seek forward
+		if(eof_music_pos + amount >= eof_chart_length)
+		{	//Cannot seek forward by this amount
+			eof_set_seek_position(eof_chart_length + eof_av_delay);	//Seek to the end of the chart
+		}
+		else
+		{
+			eof_set_seek_position(eof_music_pos + amount);
+		}
+	}
+}
+
 int eof_menu_song_seek_bookmark_help(int b)
 {
 	if(b >= EOF_MAX_BOOKMARK_ENTRIES)

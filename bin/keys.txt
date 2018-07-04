@@ -52,13 +52,19 @@ Playback and Seek controls:
         
         (If Feedback input method is active, Pg Up/Dn seeks one measure back/forward
          if there is a time signature in effect.)
-        
+
+
     Numpad 0-9:
     
         Seek to the desired bookmark
         
         Hold Ctrl while pressing to place the desired bookmark at the current position
-    
+
+
+    Alt+Scroll wheel:
+
+        Seek 5% of one screen forward or backward
+
 
     M:
 

@@ -1679,6 +1679,7 @@ int eof_menu_file_display(void)
 			if(eof_popup_dialog(eof_custom_display_size_dialog, 3) == 6)
 			{	//User clicked OK
 				unsigned long width, height, oldwidth, oldheight;
+				int cancelled = 0;
 
 				width = atol(eof_etext2);
 				height = atol(eof_etext3);
@@ -1686,8 +1687,27 @@ int eof_menu_file_display(void)
 				oldheight = eof_screen_height;
 				if((width >= 640) && (height >= 480))
 				{
-					if(!eof_set_display_mode(width, height))
-					{	//If EOF failed to set that display size
+					if(width % 4 != 0)
+					{	//Allegro requires the window width to be a multiple of 4
+						unsigned long suggestion1, suggestion2;
+						char string1[10], string2[10];
+						int ret;
+
+						suggestion1 = width - (width % 4);	//The nearest multiple of 4 before the user specified width
+						suggestion2 = suggestion1 + 4;		//The next multiple of 4 after that
+						(void) snprintf(string1, sizeof(string1) - 1, "%lu", suggestion1);
+						(void) snprintf(string2, sizeof(string1) - 1, "%lu", suggestion2);
+						ret = alert3(NULL, "The window width must be a multiple of 4.", "Try one of these suggested widths.", string1, string2, "Cancel", 0, 0, 0);
+						if(ret == 1)
+							width = suggestion1;
+						else if(ret == 2)
+							width = suggestion2;
+						else
+							cancelled = 1;
+					}
+
+					if(!cancelled && !eof_set_display_mode(width, height))
+					{	//If the user didn't cancel the operation, and EOF failed to set that display size
 						(void) eof_set_display_mode(oldwidth, oldheight);	//Revert to the previous resolution in use
 					}
 					eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track

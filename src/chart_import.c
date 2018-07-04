@@ -50,7 +50,7 @@ char *eof_chart_import_return_code_list[] = {
 };
 
 /* convert Feedback chart time to milliseconds for use with EOF */
-static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
+static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos, unsigned int *gridsnap)
 {
 //	eof_log("chartpos_to_msec() entered");
 
@@ -65,6 +65,36 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	{
 		return 0;
 	}
+
+//If the calling function wanted to do so, track whether this chart position should be considered a grid snap position
+	if(gridsnap)
+	{
+		unsigned long beat_chart_pos;						//The chart position of the beat in which the specified chart position is
+		unsigned long beatlength_ticks = chart->resolution;	//The resolution defined in the .chart file is the number of ticks in one beat
+		unsigned long ctr, interval, snaplength;
+
+		*gridsnap = 0;	//Unless found otherwise, assume this delta time is NOT a grid snap position
+		beat_chart_pos = chartpos - (chartpos % beatlength_ticks);
+
+		for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
+		{	//Check all of the possible supported grid snap intervals
+			if(beatlength_ticks % interval != 0)
+				continue;	//If the beat's tick length isn't divisible by this interval, skip it
+
+			snaplength = beatlength_ticks / interval;	//Determine the number of ticks in one such grid snap interval
+			for(ctr = 0; ctr < interval; ctr++)
+			{	//For each instance of that grid snap
+				if(beat_chart_pos + (ctr * snaplength) == chartpos)
+				{	//If the target chart position matches this grid snap's chart position
+					*gridsnap = 1;	//Signal this to the calling function
+					break;			//Stop checking instances of this grid snap
+				}
+			}
+			if(*gridsnap == 1)
+				break;		//If this chart position was found to be a grid snap position, stop checking grid snaps
+		}
+	}
+
 	current_anchor = chart->anchors;
 	offset = chart->offset * 1000.0;
 	curpos = offset;
@@ -108,7 +138,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 EOF_SONG * eof_import_chart(const char * fn)
 {
 	struct FeedbackChart * chart = NULL;
-	EOF_SONG * sp = NULL;
+	EOF_SONG * sp = NULL, *eof_song_backup;
 	int err=0;
 	char oggfn[1024] = {0};
 	char searchpath[1024] = {0};
@@ -137,6 +167,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	unsigned long ctr, ctr2, ctr3, tracknum;
 	char importguitartypes = 0, importbasstypes = 0;	//Tracks whether 5 or 6 lane guitar and bass types are to be imported (default is whichever one type is encountered, otherwise user is prompted)
 	unsigned long threshold;
+	unsigned int gridsnap = 0;
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -226,6 +257,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 		DestroyFeedbackChart(chart, 1);
 		return NULL;
 	}
+
+	/* backup the current value of eof_song and assign sp to it so that grid snap logic can be performed during note creation */
+	eof_song_backup = eof_song;
+	eof_song = sp;
 
 	/* copy tags */
 	if(chart->name)
@@ -371,6 +406,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 
 	/* fill in notes */
+	eof_log("\tImporting notes", 1);
 	current_track = chart->tracks;
 	while(current_track)
 	{	//For each track
@@ -476,6 +512,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			char gemtype = 0, lastgemtype = 0;	//Tracks whether the current and previously added gems are normal notes or technique markers
 			unsigned long ch_solo_pos = 0;	//Tracks the start position of the last Clone Hero solo event
 			char ch_solo_on = 0;			//Tracks whether a Clone Hero solo event is in progress
+			unsigned long notepos, closestpos = 0;
 
 			tracknum = sp->track[track]->tracknum;
 			tp = sp->legacy_track[tracknum];
@@ -491,6 +528,14 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 			while(current_note)
 			{	//For each note in the track
+				notepos = chartpos_to_msec(chart, current_note->chartpos, &gridsnap) + 0.5;	//Round up
+				if(gridsnap && !eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
+				{	//If this chart position should be a grid snap, but the timing conversion did not result in this
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCorrecting chart position from %lums to %lums", notepos, closestpos);
+					eof_log(eof_log_string, 1);
+					notepos = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
+				}
+
 				/* import star power */
 				if(current_note->gemcolor == '2')
 				{
@@ -498,7 +543,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{	//If this star power phrase is at least 3 ticks long and it ends on a beat marker, it's likely that the author of this .chart file improperly ended the phrase at another note's start position and didn't intend to mark that note
 						current_note->duration -= 2;	//Shorten the duration of the phrase
 					}
-					(void) eof_legacy_track_add_star_power(tp, chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
+					(void) eof_legacy_track_add_star_power(tp, notepos, chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL));
 				}
 
 				/* import Clone Hero star power */
@@ -506,7 +551,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				{	//The start of a solo
 					if(difficulty == EOF_NOTE_AMAZING)
 					{	//This event is only respected when defined in a track's expert difficulty
-						ch_solo_pos = current_note->chartpos;
+						ch_solo_pos = notepos;
 						ch_solo_on = 1;
 					}
 				}
@@ -516,7 +561,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{	//This event is only respected when defined in a track's expert difficulty
 						if(ch_solo_on)
 						{	//If the start of solo was defined earlier
-							(void) eof_legacy_track_add_solo(tp, chartpos_to_msec(chart, ch_solo_pos), chartpos_to_msec(chart, current_note->chartpos));
+							(void) eof_legacy_track_add_solo(tp, ch_solo_pos, chartpos_to_msec(chart, current_note->chartpos, NULL));
 							ch_solo_on = 0;
 						}
 					}
@@ -588,8 +633,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 						if(new_note)
 						{
 							new_note->midi_pos = current_note->chartpos;	//Track the note's original chart position to more reliably apply HOPO status
-							new_note->pos = chartpos_to_msec(chart, current_note->chartpos) + 0.5;	//Round up
-							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - (double)new_note->pos + 0.5;	//Round up
+							new_note->pos = notepos;
+							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL) - (double)new_note->pos + 0.5;	//Round up
 							if((sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE) && (current_note->gemcolor == 2))
 							{	//If this is a white 3 GHL gem
 								new_note->tflags |= EOF_NOTE_TFLAG_GHL_W3;	//Track that this lane 6 note will be treated as a gem on that lane instead of as a toggle HOPO marker
@@ -664,19 +709,25 @@ EOF_SONG * eof_import_chart(const char * fn)
 	current_event = chart->events;
 	while(current_event)
 	{	//For each text event from the chart file
+		unsigned long closestpos = 0;
+
 		b = current_event->chartpos / chart->resolution;
 		if(b >= sp->beats)
 		{
 			b = sp->beats - 1;
 		}
 		if(!ustricmp(current_event->text, "[solo_on]") && !solo_status)
-		{	//If this is a solo on event (and a solo_off event isn't expected)
-			solo_on = chartpos_to_msec(chart, current_event->chartpos);	//Store the real timestamp associated with the start of the phrase
+		{	//If this is a solo on event (and a solo_off event is expected)
+			solo_on = chartpos_to_msec(chart, current_event->chartpos, &gridsnap) + 0.5;	//Store the real timestamp associated with the start of the phrase, rounded up to nearest millisecond
+			if(gridsnap && !eof_is_any_grid_snap_position(solo_on, NULL, NULL, NULL, &closestpos))
+			{	//If this chart position should be a grid snap, but the timing conversion did not result in this
+				solo_on = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
+			}
 			solo_status = 1;
 		}
 		else if(!ustricmp(current_event->text, "[solo_off]") && solo_status)
 		{	//If this is a solo off event (and a solo_off event is expected), add it to the guitar and lead guitar tracks (FoF's original behavior for these events)
-			solo_off = chartpos_to_msec(chart, current_event->chartpos);	//Store the real timestamp associated with the end of the phrase
+			solo_off = chartpos_to_msec(chart, current_event->chartpos, NULL);	//Store the real timestamp associated with the end of the phrase
 			solo_status = 0;
 			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the guitar track
 			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR_COOP, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the lead guitar track
@@ -880,6 +931,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
 	eof_log("\tFeedback import completed", 1);
+
+	/* restore the original value of eof_song in case the calling function needed it */
+	eof_song = eof_song_backup;
 
 	return sp;
 }

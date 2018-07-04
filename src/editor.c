@@ -3789,6 +3789,13 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			(void) eof_display_notes_panel();
 			eof_use_key();
 		}
+
+	/* scroll by partial screen (ALT+scroll wheel) */
+		if(KEY_EITHER_ALT && eof_mickey_z)
+		{
+			eof_song_seek_partial_screen(eof_mickey_z);
+			eof_use_key();
+		}
 	}//If the chart is paused and no catalog entries are playing
 	else if(!eof_music_catalog_playback)
 	{	//If the chart is playing

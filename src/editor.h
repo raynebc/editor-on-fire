@@ -70,7 +70,7 @@ unsigned long eof_next_grid_snap(unsigned long pos);
 int eof_is_grid_snap_position(unsigned long pos);
 	//Returns nonzero if the specified timestamp is a grid snap position based on the current grid snap setting
 int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapvalue, unsigned char *gridsnapnum, unsigned long *closestgridpos);
-	//Returns nonzero if the specified timestamp is a grid snap position for ANY built in grid snap setting
+	//Returns nonzero if the specified timestamp is a grid snap position for ANY built in grid snap setting for the currently loaded project
 	//If a custom grid snap setting is in effect, its position is also compared
 	//If beat is not NULL, the beat number the grid snap position is in is returned through it, or -1 if the specified position is invalid
 	//If gridsnapvalue is not NULL, the grid snap setting of the matching position is returned through it, or 0 is if no match is found
