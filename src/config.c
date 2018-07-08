@@ -70,6 +70,11 @@ void eof_load_config(char * fn)
 	eof_midi_synth_instrument_guitar_muted = get_config_int("config", "eof_midi_synth_instrument_guitar_muted", 29);
 	eof_midi_synth_instrument_guitar_harm = get_config_int("config", "eof_midi_synth_instrument_guitar_harm", 32);
 	eof_midi_synth_instrument_bass = get_config_int("config", "eof_midi_synth_instrument_bass", 34);
+	eof_scroll_seek_percent = get_config_int("config", "eof_scroll_seek_percent", 5);
+	if((eof_scroll_seek_percent < 1) || (eof_scroll_seek_percent > 500))
+	{
+		eof_scroll_seek_percent = 5;
+	}
 	eof_buffer_size = get_config_int("config", "buffer_size", 6144);
 	eof_smooth_pos = get_config_int("config", "smooth_playback", 1);
 	eof_disable_windows = get_config_int("config", "disable_windows_fs", 0);
@@ -477,6 +482,7 @@ void eof_save_config(char * fn)
 	set_config_int("config", "eof_midi_synth_instrument_guitar_muted", eof_midi_synth_instrument_guitar_muted + 1);
 	set_config_int("config", "eof_midi_synth_instrument_guitar_harm", eof_midi_synth_instrument_guitar_harm + 1);
 	set_config_int("config", "eof_midi_synth_instrument_bass", eof_midi_synth_instrument_bass + 1);
+	set_config_int("config", "eof_scroll_seek_percent", eof_scroll_seek_percent);
 	set_config_int("config", "buffer_size", eof_buffer_size);
 	set_config_int("config", "smooth_playback", eof_smooth_pos);
 	set_config_int("config", "disable_windows_fs", eof_disable_windows);

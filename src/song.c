@@ -2645,7 +2645,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				}
 				sp->pro_guitar_track[tracknum]->arpeggio[count].difficulty = difficulty;
 				sp->pro_guitar_track[tracknum]->arpeggios++;
-				return 1;
+				return 1;	//Return success
 			}
 		break;
 
@@ -2679,6 +2679,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					(void) ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
 				}
 				sp->legacy_track[tracknum]->sliders++;
+				return 1;	//Return success
 			}
 		break;
 		case EOF_FRET_HAND_POS_SECTION:	//Fret hand position
@@ -2727,7 +2728,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					(void) ustrcpy(sp->pro_guitar_track[tracknum]->popupmessage[count].name, name);
 				}
 				sp->pro_guitar_track[tracknum]->popupmessages++;
-				return 1;
+				return 1;	//Return success
 			}
 		break;
 		case EOF_RS_TONE_CHANGE:	//Tone change
@@ -2754,8 +2755,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					strncpy(sp->pro_guitar_track[tracknum]->defaulttone, sp->pro_guitar_track[tracknum]->tonechange[count].name, EOF_SECTION_NAME_LENGTH);
 				}
 				sp->pro_guitar_track[tracknum]->tonechanges++;
-
-				return 1;
+				return 1;	//Return success
 			}
 		break;
 

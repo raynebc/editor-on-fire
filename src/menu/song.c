@@ -915,8 +915,10 @@ int eof_menu_song_seek_next_screen(void)
 
 void eof_song_seek_partial_screen(int direction)
 {
-	unsigned long amount = ((double)SCREEN_W * (double)eof_zoom) / 20.0;	//Seek 1/20 of one screen
+	unsigned long amount = ((double)SCREEN_W * (double)eof_zoom);	//The seek amount for one full screen
 
+	amount *= (double)eof_scroll_seek_percent / 100.0;	//Adjust the seek to be the user defined percentage of one screen
+	amount *= labs(direction);	//Scale the seek by the number of ticks the scroll wheel was moved
 	if(direction < 0)
 	{	//Seek backward
 		if(eof_music_pos - eof_av_delay < amount)

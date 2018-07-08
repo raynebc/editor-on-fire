@@ -120,6 +120,7 @@ int         eof_midi_synth_instrument_guitar = 28;	//Electric Guitar (clean) MID
 int         eof_midi_synth_instrument_guitar_muted = 29;	//An alternate MIDI instrument to play for palm muted guitar notes
 int         eof_midi_synth_instrument_guitar_harm = 32;		//An alternate MIDI instrument to play for harmonic guitar notes
 int         eof_midi_synth_instrument_bass = 34;	//Electric bass (fingered) MIDI instrument
+int         eof_scroll_seek_percent = 5;	//The amount of one screen that ALT+scroll will seek
 int         eof_buffer_size = 4096;
 int         eof_audio_fine_tune = 0;
 int         eof_inverted_notes = 0;
@@ -512,7 +513,7 @@ long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double o
 	double fporpos = porpos + offset;
 	unsigned long cbeat = beat;
 
-	eof_log("eof_put_porpos_sp() entered", 2);
+	eof_log("eof_put_porpos_sp() entered", 3);
 
 	if(!sp)
 		return -1;	//Invalid parameters
@@ -529,7 +530,11 @@ long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double o
 			}
 			cbeat--;
 		}
-		return ((sp->beat[cbeat]->fpos + (eof_get_beat_length(sp, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+		if(cbeat < sp->beats)
+		{
+			return ((sp->beat[cbeat]->fpos + (eof_get_beat_length(sp, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+		}
+		return -1;
 	}
 	else if(fporpos >= 100.0)
 	{	//If the target offset is more than 100% of a beat ahead of the specified beat number

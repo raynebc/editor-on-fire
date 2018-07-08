@@ -332,6 +332,7 @@ extern int         eof_midi_synth_instrument_guitar;
 extern int         eof_midi_synth_instrument_guitar_muted;
 extern int         eof_midi_synth_instrument_guitar_harm;
 extern int         eof_midi_synth_instrument_bass;
+extern int         eof_scroll_seek_percent;
 extern int         eof_buffer_size;
 extern int         eof_audio_fine_tune;
 extern int         eof_inverted_notes;

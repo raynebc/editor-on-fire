@@ -4827,6 +4827,10 @@ int eof_menu_track_clone_track_to_clipboard(void)
 			{	//Fret hand positions store the fret number as the end position
 				(void) pack_iputl(phrase[sectionnum].end_pos, fp);
 			}
+			else if(sectiontype == EOF_RS_TONE_CHANGE)
+			{	//Tone changes don't use the end position variable
+				(void) pack_iputl(0, fp);	//Write dummy data
+			}
 			else
 			{	//Other sections have an end position variable to adjust
 				(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].end_pos), fp);	//Write the beat number in which this section ends
@@ -4879,6 +4883,7 @@ int eof_menu_track_clone_track_to_clipboard(void)
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tClone to clipboard succeeded.  Recorded %lu notes, %lu tech notes, %lu sections and %lu events.", notes, technotes, sections, events);
 	eof_log(eof_log_string, 1);
+	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 	return 0;	//Success
 }
 
@@ -5017,6 +5022,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 				if(!eof_song_append_beats(eof_song, 1))
 				{	//If there was an error adding a beat
 					eof_log("\tError adding beat.  Aborting", 1);
+					allegro_message("Error adding beat.  Aborting");
 					eof_erase_track(eof_song, eof_selected_track);
 					return 6;
 				}
@@ -5046,6 +5052,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			if(!np)
 			{	//If the note was not created
 				eof_log("\tError adding note.  Aborting", 1);
+				allegro_message("Error adding note.  Aborting");
 				eof_erase_track(eof_song, eof_selected_track);
 				return 7;
 			}
@@ -5077,6 +5084,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 	{	//For each type of section that exists
 		unsigned long sectionnum, sectioncount, junk = 0, start, end;
+		long endbeat;
 		EOF_PHRASE_SECTION *phrase = NULL;
 		char name[EOF_SECTION_NAME_LENGTH + 1];
 		unsigned char sectiondiff, sectionflags;
@@ -5084,19 +5092,39 @@ int eof_menu_track_clone_track_from_clipboard(void)
 		long beat;
 
 		sectioncount = pack_igetl(fp);	//Read the number of instances of this section type
+		if(sectioncount)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing %lu instances of section type %lu", sectioncount, sectiontype);
+			eof_log(eof_log_string, 2);
+		}
 		for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
 		{	//For each instance of this type of section in the track
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCloning section instance %lu", sectionnum + 1);
+			eof_log(eof_log_string, 2);
+
 			beat = pack_igetl(fp);	//Read the beat number in which this section starts
 			(void) pack_fread(&pos, (long)sizeof(double), fp);	//Read the percentage into the beat at which this section starts
 			start = eof_put_porpos(beat, pos, 0.0);
 
+			endbeat = pack_igetl(fp);
+			if((beat < 0) || (endbeat < 0))
+			{	//If an invalid value was read
+				eof_log("\tError determining phrase timing.  Aborting", 1);
+				allegro_message("Error determining phrase timing.  Aborting");
+				(void) pack_fclose(fp);
+				return 8;	//Return error
+			}
 			if(sectiontype == EOF_FRET_HAND_POS_SECTION)
 			{	//Fret hand positions store the fret number as the end position
-				end = pack_igetl(fp);
+				end = endbeat;
+			}
+			else if(sectiontype == EOF_RS_TONE_CHANGE)
+			{	//Tone changes don't use the end position variable
+				end = 0;
 			}
 			else
 			{	//Other sections have an end position variable to adjust
-				beat = pack_igetl(fp);	//Read the beat number in which this section ends
+				beat = endbeat;	//This is he beat number in which this section ends
 				(void) pack_fread(&pos, (long)sizeof(double), fp);	//Read the percentage into the beat at which this section ends
 				end = eof_put_porpos(beat, pos, 0.0);
 			}
@@ -5117,8 +5145,10 @@ int eof_menu_track_clone_track_from_clipboard(void)
 				if(!eof_song_append_beats(eof_song, 1))
 				{	//If there was an error adding a beat
 					eof_log("\tError adding beat.  Aborting", 1);
+					allegro_message("Error adding beat.  Aborting");
 					eof_erase_track(eof_song, eof_selected_track);
-					return 7;
+					(void) pack_fclose(fp);
+					return 9;
 				}
 				eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 				beats++;					//Track how many beats were appended to the project
@@ -5127,8 +5157,10 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			if(!eof_track_add_section(eof_song, eof_selected_track, sectiontype, sectiondiff, start, end, sectionflags, name))
 			{	//If the section couldn't be added
 				eof_log("\tError adding section.  Aborting", 1);
+				allegro_message("Error adding section.  Aborting");
 				eof_erase_track(eof_song, eof_selected_track);
-				return 8;
+				(void) pack_fclose(fp);
+				return 10;
 			}
 			sections++;		//Track how many sections are cloned from the clipboard
 		}
@@ -5152,8 +5184,10 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			if(!eof_song_append_beats(eof_song, 1))
 			{	//If there was an error adding a beat
 				eof_log("\tError adding beat.  Aborting", 1);
+				allegro_message("Error adding beat.  Aborting");
 				eof_erase_track(eof_song, eof_selected_track);
-				return 9;
+				(void) pack_fclose(fp);
+				return 11;
 			}
 			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 			beats++;					//Track how many beats were appended to the project
@@ -5162,8 +5196,10 @@ int eof_menu_track_clone_track_from_clipboard(void)
 		if(!eof_song_add_text_event(eof_song, beatnum, text, eof_selected_track, eventflags, 0))
 		{	//If the event couldn't be added
 			eof_log("\tError adding event.  Aborting", 1);
+			allegro_message("Error adding event.  Aborting");
 			eof_erase_track(eof_song, eof_selected_track);
-			return 10;
+			(void) pack_fclose(fp);
+			return 12;
 		}
 		events++;
 	}
@@ -5172,6 +5208,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update note/technote populated identifiers
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	eof_set_2D_lane_positions(0);					//Update ychart[] to reflect a different number of lanes being represented in the editor window
 	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
 	eof_set_color_set();
 	eof_sort_events(eof_song);
@@ -5180,6 +5217,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tClone from clipboard succeeded.  Added %lu beats.  Cloned %lu notes, %lu tech notes, %lu sections and %lu events.", beats, notes, technotes, sections, events);
 	eof_log(eof_log_string, 1);
 	eof_render();
+	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 	return 0;	//Success
 }
 
