@@ -162,12 +162,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 	int difficulty;
 	unsigned long lastchartpos = 0;
 	unsigned long b = 0;
-	double solo_on = 0.0, solo_off = 0.0;
-	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
 	unsigned long ctr, ctr2, ctr3, tracknum;
 	char importguitartypes = 0, importbasstypes = 0;	//Tracks whether 5 or 6 lane guitar and bass types are to be imported (default is whichever one type is encountered, otherwise user is prompted)
 	unsigned long threshold;
 	unsigned int gridsnap = 0;
+	char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
+	double solo_on = 0.0, solo_off = 0.0;
+	char lyric_status = 0;	//0 = Off and awaiting a phrase start marker, 1 = On and awaiting a phrase end marker
+	double lyric_on = 0.0, lyric_off = 0.0;
+	unsigned long pos, closestpos = 0;
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -709,28 +712,31 @@ EOF_SONG * eof_import_chart(const char * fn)
 	current_event = chart->events;
 	while(current_event)
 	{	//For each text event from the chart file
-		unsigned long closestpos = 0;
-
-		b = current_event->chartpos / chart->resolution;
+		//Determine the beat marker associated with the event, for text events
+		b = current_event->chartpos / chart->resolution;	//Assign the event to the beat immediately at/before the event's position
 		if(b >= sp->beats)
 		{
 			b = sp->beats - 1;
 		}
+
+		//Determine the realtime position associated with the event, for solos, lyric lines and lyrics
+		pos = chartpos_to_msec(chart, current_event->chartpos, &gridsnap) + 0.5;	//Store the real timestamp associated with the event, rounded up to nearest millisecond
+		if(gridsnap && !eof_is_any_grid_snap_position(pos, NULL, NULL, NULL, &closestpos))
+		{	//If this chart position should be a grid snap, but the timing conversion did not result in this
+			pos = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
+		}
+
 		if(!ustricmp(current_event->text, "[solo_on]") && !solo_status)
-		{	//If this is a solo on event (and a solo_off event is expected)
-			solo_on = chartpos_to_msec(chart, current_event->chartpos, &gridsnap) + 0.5;	//Store the real timestamp associated with the start of the phrase, rounded up to nearest millisecond
-			if(gridsnap && !eof_is_any_grid_snap_position(solo_on, NULL, NULL, NULL, &closestpos))
-			{	//If this chart position should be a grid snap, but the timing conversion did not result in this
-				solo_on = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
-			}
+		{	//If this is a solo on event (and a solo definition isn't already in progress)
+			solo_on = pos;
 			solo_status = 1;
 		}
 		else if(!ustricmp(current_event->text, "[solo_off]") && solo_status)
 		{	//If this is a solo off event (and a solo_off event is expected), add it to the guitar and lead guitar tracks (FoF's original behavior for these events)
 			solo_off = chartpos_to_msec(chart, current_event->chartpos, NULL);	//Store the real timestamp associated with the end of the phrase
 			solo_status = 0;
-			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the guitar track
-			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR_COOP, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the lead guitar track
+			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR, solo_on, solo_off + 0.5);	//Add the solo to the guitar track
+			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR_COOP, solo_on, solo_off + 0.5);	//Add the solo to the lead guitar track
 		}
 		else if(eof_text_is_section_marker(current_event->text))
 		{	//If this is a section event, rebuild the string to ensure it's in the proper format
@@ -750,9 +756,48 @@ EOF_SONG * eof_import_chart(const char * fn)
 			buffer[index++] = '\0';	//Terminate the string
 			(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 		}
+		else if(!ustricmp(current_event->text, "phrase_start") && !lyric_status)
+		{	//If this is a Clone Hero start of lyric line marker (and a lyric line definition isn't already in progress)
+			lyric_on = pos;
+			lyric_status = 1;
+		}
+		else if(!ustricmp(current_event->text, "phrase_end") && lyric_status)
+		{	//If this is a Clone Hero end of lyric line marker (and such a marker is expected), add the lyric line definition to the vocal track
+			lyric_off = chartpos_to_msec(chart, current_event->chartpos, NULL);	//Store the real timestamp associated with the end of the lyric line
+			lyric_status = 0;
+			(void) eof_vocal_track_add_line(sp->vocal_track[0], lyric_on, lyric_off + 0.5, 0xFF);
+		}
 		else
-		{	//Otherwise copy the string as-is
-			(void) eof_song_add_text_event(sp, b, current_event->text, 0, 0, 0);
+		{
+			char *ptr = strcasestr_spec(current_event->text, "lyric ");	//Check for this text string
+///Unicode lyrics aren't importing properly at this point
+///			char *ptr = ustrstr(current_event->text, "lyric ");	//Check for this text string
+
+			if(ptr)
+			{	//If this is a Clone Hero lyric definition
+				EOF_LYRIC *temp = eof_vocal_track_add_lyric(sp->vocal_track[0]);
+
+				if(temp)
+				{	//If a lyric structure was successfully created
+///					unsigned index1 = 6, index2 = 0;	//index1 is the sixth character into the imported string, just after the "lyric " substring
+///					int uchar;
+
+					temp->note = 0;	//Clone Hero lyrics do not define pitch
+					temp->pos = pos;
+					temp->length = 1;	//Clone Hero lyrics do not define duration
+					ustrncpy(temp->text, ptr, sizeof(temp->text) - 1);	//Copy the event string that is expected to be the lyric text
+/*					do
+					{
+						uchar = ugetat(current_event->text, index1++);	//Read a character from the imported string
+						usetat(temp->text, index2++, uchar);			//Append it to the new lyric string
+					}while(uchar != '\0');	//Until the NULL terminator was appended
+*/
+				}
+			}
+			else
+			{	//This is a normal text event, copy the string as-is
+				(void) eof_song_add_text_event(sp, b, current_event->text, 0, 0, 0);
+			}
 		}
 		current_event = current_event->next;	//Iterate to the next text event
 	}//For each event from the chart file

@@ -1204,10 +1204,10 @@ set_window_title(debugtext);
 	}//Add new beats until enough have been added to encompass the last MIDI event
 
 	/* If a mid beat tempo or TS change was found, offer to store the tempo map and the BEAT track into the project */
-	if(midbeatchangefound)
-	{	//If a mid beat tempo or TS change was found
+	if(midbeatchangefound && eof_write_rb_files)
+	{	//If a mid beat tempo or TS change was found, and Rock Band export is enabled
 		eof_clear_input();
-		if(alert("Warning:  There were one or more mid beat tempo/TS changes.", "Store the tempo track into the project?", "(Recommended if creating RB3 upgrades, otherwise not recommended)", "&Yes", "&No", 'y', 'n') == 1)
+		if(alert("Warning:  There were one or more mid beat tempo/TS changes.", "Store the tempo track into the project?", "(Only recommended if creating RB3 upgrades)", "&Yes", "&No", 'y', 'n') == 1)
 		{	//If the user opts to import the tempo track
 			struct eof_MIDI_data_track *ptr;
 			char *tempotrackname = "(TEMPO)";

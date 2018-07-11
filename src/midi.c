@@ -439,6 +439,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	char stored_beat_track = 0;	//Will be set to nonzero if there is found to be a stored BEAT track in the project
 	char slideup, slidedown;	//Will track whether a note has an upward/downward slide or unpitched slide
 	char *accentstrings[6] = {"[1]", "[2]", "[3]", "[4]", "[5]", "[6]"};	//Used to export text events for accent notes
+	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
 
 	memset(notetempname, 0, sizeof(notetempname));	//Init this memory to 0
 	eof_log("eof_export_midi() entered", 1);
@@ -490,6 +491,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	}
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
+	has_stored_tempo = eof_song_has_stored_tempo_track(sp) ? 1 : 0;	//Store this status
 
 	//Search for a user-defined end event
 	enddelta = endbeatnum = 0;	//Assume there is no user-defined end event until one is found
@@ -500,7 +502,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEnd position located at %lums", sp->beat[sp->text_event[i]->beat]->pos);
 			eof_log(eof_log_string, 1);
 			endbeatnum = sp->text_event[i]->beat;
-			enddelta = eof_ConvertToDeltaTime(sp->beat[endbeatnum]->pos,anchorlist,tslist,timedivision,0);	//Get the delta time of this event
+			enddelta = eof_ConvertToDeltaTime(sp->beat[endbeatnum]->pos, anchorlist, tslist, timedivision, 0, has_stored_tempo);	//Get the delta time of this event
 			break;
 		}
 	}
@@ -613,7 +615,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If the text event's beat number is invalid
 					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
 				}
-				deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,timedivision,1);	//Store the tick position of the beat
+				deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the beat
 				eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 			}
 		}
@@ -643,7 +645,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						{	//For each lane in the note
 							if(accent & accentmask)
 							{	//If this lane is accented
-								deltapos = eof_ConvertToDeltaTime(eof_get_note_pos(sp, j, i), anchorlist, tslist, timedivision, 1);	//Store the tick position of the note
+								deltapos = eof_ConvertToDeltaTime(eof_get_note_pos(sp, j, i), anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
 								eof_add_midi_text_event(deltapos, accentstrings[accentctr], 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 							}
 						}
@@ -756,11 +758,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 				}
 
-				deltapos = eof_ConvertToDeltaTime(notepos,anchorlist,tslist,timedivision,1);	//Store the tick position of the note
-				deltalength = eof_ConvertToDeltaTime(notepos + length,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the note's length
+				deltapos = eof_ConvertToDeltaTime(notepos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
+				deltalength = eof_ConvertToDeltaTime(notepos + length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the note's length
 				if(i + 1 < eof_get_track_size(sp, j))
 				{	//If there is another note
-					nextdeltapos = eof_ConvertToDeltaTime(eof_get_note_pos(sp, j, i + 1), anchorlist, tslist, timedivision, 1);	//Store its tick position
+					nextdeltapos = eof_ConvertToDeltaTime(eof_get_note_pos(sp, j, i + 1), anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store its tick position
 				}
 				else
 				{
@@ -1136,8 +1138,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				int marker = 116;	//In Rock Band, star power is marked with note 116
 
 				sectionptr = eof_get_star_power_path(sp, j, i);
-				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -1156,8 +1158,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				for(i = 0; i < eof_get_num_solos(sp, j); i++)
 				{	//For each solo in the track
 					sectionptr = eof_get_solo(sp, j, i);
-					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 					if(deltalength < 1)
 					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 						deltalength = 1;
@@ -1173,8 +1175,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				sectionptr = eof_get_tremolo(sp, j, i);
 				if(sectionptr->difficulty == 0xFF)
 				{	//Only export a tremolo section to MIDI if it applies to all difficulties
-					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 					if(deltalength < 1)
 					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 						deltalength = 1;
@@ -1188,8 +1190,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			for(i = 0; i < eof_get_num_trills(sp, j); i++)
 			{	//For each trill in the track
 				sectionptr = eof_get_trill(sp, j, i);
-				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -1204,8 +1206,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				for(i = 0; i < eof_get_num_sliders(sp, j); i++)
 				{	//For each slider in the track
 					sectionptr = eof_get_slider(sp, j, i);
-					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 					if(deltalength < 1)
 					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 						deltalength = 1;
@@ -1408,13 +1410,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					//Otherwise write the MIDI events for a line phrase to envelop it
 					if(!phrase_in_progress)
 					{	//If a note on for the phrase hasn't been added already
-						phrase_start = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
+						phrase_start = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
 						eof_add_midi_event(phrase_start, 0x90, 105, vel, 0);
 						phrase_in_progress = 1;
 					}
 					if(!((ctr + 1 < sp->vocal_track[tracknum]->lyrics) && (eof_find_lyric_line(ctr + 1) == NULL)))
 					{	//Only if there isn't a next lyric that is also missing a vocal phrase, write the note off for the phrase
-						deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos + sp->vocal_track[tracknum]->lyric[ctr]->length,anchorlist,tslist,timedivision,0) - phrase_start;	//Store the number of delta ticks representing the phrase's length
+						deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos + sp->vocal_track[tracknum]->lyric[ctr]->length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - phrase_start;	//Store the number of delta ticks representing the phrase's length
 						if(deltalength < 1)
 						{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 							deltalength = 1;
@@ -1443,8 +1445,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				sp->vocal_track[tracknum]->lyric[i]->text[EOF_MAX_LYRIC_LENGTH] = '\0';	//Guarantee that the lyric string is terminated
 				memcpy(tempstring,sp->vocal_track[tracknum]->lyric[i]->text,sizeof(sp->vocal_track[tracknum]->lyric[i]->text));	//Copy to new array
 
-				deltapos = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,timedivision,1);
-				deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos + sp->vocal_track[tracknum]->lyric[i]->length,anchorlist,tslist,timedivision,0) - deltapos;
+				deltapos = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+				deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos + sp->vocal_track[tracknum]->lyric[i]->length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -1463,7 +1465,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				//Write the string, which was only corrected if fixvoxpitches was nonzero and the pitch was not defined
 				if(sp->vocal_track[tracknum]->lyric[i]->note != VOCALPERCUSSION)
 				{	//Do not write a lyric string for vocal percussion notes
-					eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,timedivision,1), tempstring, 1);	//Track that the lyric text was dynamically allocated
+					eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos, anchorlist, tslist, timedivision, 1, has_stored_tempo), tempstring, 1);	//Track that the lyric text was dynamically allocated
 				}
 				else
 				{
@@ -1474,8 +1476,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			/* fill in lyric lines */
 			for(i = 0; i < sp->vocal_track[tracknum]->lines; i++)
 			{
-				deltapos = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].start_pos,anchorlist,tslist,timedivision,1);
-				deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].end_pos,anchorlist,tslist,timedivision,0) - deltapos;
+				deltapos = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+				deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -1484,8 +1486,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				eof_add_midi_event(deltapos + deltalength, 0x80, 105, vel, 0);
 				if(sp->vocal_track[tracknum]->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE)
 				{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
-					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].start_pos,anchorlist,tslist,timedivision,1), 0x90, 116, vel, 0);
-					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].end_pos,anchorlist,tslist,timedivision,0), 0x80, 116, vel, 0);
+					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo), 0x90, 116, vel, 0);
+					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo), 0x80, 116, vel, 0);
 				}
 			}
 
@@ -1729,8 +1731,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
 				currentname = eof_get_note_name(sp, j, i);
 
-				deltapos = eof_ConvertToDeltaTime(notepos,anchorlist,tslist,timedivision,1);	//Store the tick position of the note
-				deltalength = eof_ConvertToDeltaTime(notepos + length,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the note's length
+				deltapos = eof_ConvertToDeltaTime(notepos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
+				deltalength = eof_ConvertToDeltaTime(notepos + length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the note's length
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -2076,8 +2078,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			for(i = 0; i < eof_get_num_arpeggios(sp, j); i++)
 			{	//For each arpeggio in the track
 				sectionptr = eof_get_arpeggio(sp, j, i);
-				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -2117,8 +2119,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			for(i = 0; i < eof_get_num_solos(sp, j); i++)
 			{	//For each solo in the track
 				sectionptr = eof_get_solo(sp, j, i);
-				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -2131,8 +2133,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			for(i = 0; i < eof_get_num_star_power_paths(sp, j); i++)
 			{	//For each star power path in the track
 				sectionptr = eof_get_star_power_path(sp, j, i);
-				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -2147,8 +2149,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				sectionptr = eof_get_tremolo(sp, j, i);
 				if(sectionptr->difficulty == 0xFF)
 				{	//Only export a tremolo section to MIDI if it applies to all difficulties
-					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 					if(deltalength < 1)
 					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 						deltalength = 1;
@@ -2162,8 +2164,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			for(i = 0; i < eof_get_num_trills(sp, j); i++)
 			{	//For each trill in the track
 				sectionptr = eof_get_trill(sp, j, i);
-				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,timedivision,1);	//Store the tick position of the phrase
-				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,timedivision,0) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -2360,7 +2362,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//If the text event is corrupted
 						sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
 					}
-					delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,timedivision,1);
+					delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
 					eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
 					lastdelta = delta;					//Store this event's absolute delta time
 				}
@@ -2378,7 +2380,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//If the last beat ends after the audio,
 						delta = sp->beat[sp->beats - 1]->pos + 1;	//Prepare to write the end event after it instead
 					}
-					delta = eof_ConvertToDeltaTime(delta,anchorlist,tslist,timedivision,1);
+					delta = eof_ConvertToDeltaTime(delta, anchorlist, tslist, timedivision, 1, has_stored_tempo);
 					eof_write_text_event(delta - lastdelta, "[end]", fp);
 					lastdelta = delta;					//Store this event's absolute delta time
 				}
@@ -2463,8 +2465,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			length_to_write = (double)sp->beat[i]->ppqn / 1000.0 / 4.0 + 0.5;	//Round up to nearest millisecond
 
 			//Write the note on event
-			delta = eof_ConvertToDeltaTime(sp->beat[i]->pos,anchorlist,tslist,timedivision,1);
-			delta2 = eof_ConvertToDeltaTime(sp->beat[i]->pos + length_to_write,anchorlist,tslist,timedivision,0);
+			delta = eof_ConvertToDeltaTime(sp->beat[i]->pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+			delta2 = eof_ConvertToDeltaTime(sp->beat[i]->pos + length_to_write, anchorlist, tslist, timedivision, 0, has_stored_tempo);
 			if(!enddelta || ((delta <= enddelta) && (delta2 <= enddelta)))
 			{	//Only write this beat marker if it starts and stops before the end event
 				WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
@@ -2674,6 +2676,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	char eventstrackwritten = 0;			//Tracks whether an events track has been written
 	char *arrangement_name;
 	unsigned long numpasses = 1, passnum;
+	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
 
 	eof_log("eof_export_music_midi() entered", 1);
 
@@ -2694,6 +2697,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 		eof_log("\tCould not build beat delta positions", 1);
 		return 0;	//Return failure
 	}
+
+	has_stored_tempo = eof_song_has_stored_tempo_track(sp) ? 1 : 0;	//Store this status
 
 	//Build tempo and TS lists
 	if(!eof_build_tempo_and_ts_lists(sp, &anchorlist, &tslist, &timedivision))
@@ -2763,7 +2768,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 					{	//If the text event's beat number is invalid
 						sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
 					}
-					deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,timedivision,1);	//Store the tick position of the note
+					deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
 					eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 				}
 			}
@@ -2810,8 +2815,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 					continue;	//If no pitches would be exported for this note/lyric, skip it
 
 				//Write note/lyric pitches
-				deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1);
-				deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0) - deltapos;
+				deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+				deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
 				if(deltalength < 1)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
@@ -3070,7 +3075,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 				{	//If the text event is corrupted
 					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
 				}
-				delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,timedivision,1);
+				delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
 				eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
 				lastdelta = delta;					//Store this event's absolute delta time
 			}
@@ -3228,7 +3233,7 @@ void eof_destroy_tempo_list(struct Tempo_change *ptr)
 	}
 }
 
-unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, char snaptobeat)
+unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, char snaptobeat, char disablequantize)
 {	//Uses the Tempo Changes list to calculate the absolute delta time of the specified realtime
 //	eof_log("eof_ConvertToDeltaTime() entered");
 
@@ -3245,34 +3250,37 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 
 	//Determine if a clean delta value can be obtained with integer math, depending on whether the specified timestamp falls within
 	//a 1/# beat interval where the beat's delta length is divisible by #
-	beatnum = eof_get_beat(eof_song, realtime);
-	if(beatnum < eof_song->beats)
-	{	//If the beat containing this timestamp was identified
-		double beatlength = eof_calc_beat_length(eof_song, beatnum);
-		if(beatlength >= 1.0)
-		{	//If a suitable beat length was obtained
-			unsigned num = 4, den = 4;
+	if(!disablequantize)
+	{	//Only do this if the calling function didn't prevent it
+		beatnum = eof_get_beat(eof_song, realtime);
+		if(beatnum < eof_song->beats)
+		{	//If the beat containing this timestamp was identified
+			double beatlength = eof_calc_beat_length(eof_song, beatnum);
+			if(beatlength >= 1.0)
+			{	//If a suitable beat length was obtained
+				unsigned num = 4, den = 4;
 
-			if(eof_get_effective_ts(eof_song, &num, &den, beatnum))
-			{	//If the time signature of the target position's beat was obtained
-				unsigned long beatlength_delta = EOF_DEFAULT_TIME_DIVISION * 4 / den;	//One beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
-				unsigned long beat_deltapos = eof_song->beat[beatnum]->midi_pos;
+				if(eof_get_effective_ts(eof_song, &num, &den, beatnum))
+				{	//If the time signature of the target position's beat was obtained
+					unsigned long beatlength_delta = EOF_DEFAULT_TIME_DIVISION * 4 / den;	//One beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
+					unsigned long beat_deltapos = eof_song->beat[beatnum]->midi_pos;
 
-				if(beat_deltapos < ULONG_MAX)
-				{	//If the delta time of the target position's beat was found
-					for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
-					{	//Check all of the possible supported grid snap intervals
-						double snaplength;
+					if(beat_deltapos < ULONG_MAX)
+					{	//If the delta time of the target position's beat was found
+						for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
+						{	//Check all of the possible supported grid snap intervals
+							double snaplength;
 
-						if(beatlength_delta % interval != 0)
-							continue;	//If the beat's delta length isn't divisible by this interval, skip it
+							if(beatlength_delta % interval != 0)
+								continue;	//If the beat's delta length isn't divisible by this interval, skip it
 
-						snaplength = beatlength / (double) interval;	//Determine the real time length of one such grid snap interval
-						for(gridsnapnum = 0; gridsnapnum < interval; gridsnapnum++)
-						{	//For each instance of that grid snap
-							if(realtimeint == (unsigned long)((eof_song->beat[beatnum]->fpos + (double)gridsnapnum * snaplength) + 0.5))
-							{	//If the target timestamp matches this grid snap position
-								return beat_deltapos + (gridsnapnum * beatlength_delta / interval);
+							snaplength = beatlength / (double) interval;	//Determine the real time length of one such grid snap interval
+							for(gridsnapnum = 0; gridsnapnum < interval; gridsnapnum++)
+							{	//For each instance of that grid snap
+								if(realtimeint == (unsigned long)((eof_song->beat[beatnum]->fpos + (double)gridsnapnum * snaplength) + 0.5))
+								{	//If the target timestamp matches this grid snap position
+									return beat_deltapos + (gridsnapnum * beatlength_delta / interval);
+								}
 							}
 						}
 					}
@@ -3859,6 +3867,7 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 	char tempfname[30];
 	PACKFILE *tempf;
 	unsigned long lastdelta, deltapos, track_length, ctr;
+	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
 
 	if(!sp || !outf || !anchorlist || !sp->midi_data_head)
 		return;
@@ -3870,6 +3879,8 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 		eof_log("\tCould not validate working directory and temp folder", 1);
 		return;
 	}
+
+	has_stored_tempo = eof_song_has_stored_tempo_track(sp) ? 1 : 0;	//Store this status
 
 	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)
 	{	//For each raw MIDI track
@@ -3884,7 +3895,7 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 		lastdelta = 0;
 		for(eventptr = trackptr->events; eventptr != NULL; eventptr = eventptr->next)
 		{	//For each event in the track
-			deltapos = eof_ConvertToDeltaTime(eventptr->realtime + anchorlist->realtime, anchorlist, tslist, timedivision, 0);	//Store the tick position of the event (accounting for the MIDI delay of the active beat map)
+			deltapos = eof_ConvertToDeltaTime(eventptr->realtime + anchorlist->realtime, anchorlist, tslist, timedivision, 0, has_stored_tempo);	//Store the tick position of the event (accounting for the MIDI delay of the active beat map)
 			WriteVarLen(deltapos - lastdelta, tempf);		//Write this event's relative delta time
 			if((eventptr->size == 2) && (((unsigned char *)eventptr->data)[0] == 0xFF) && (((unsigned char *)eventptr->data)[1] == 0x2F))
 			{	//If this is an end of track event that is missing the length field

@@ -102,10 +102,11 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta, double realtime,
 void eof_destroy_tempo_list(struct Tempo_change *ptr);
 	//If ptr is not NULL, de-allocates all memory consumed by the tempo linked list
 
-unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, char snaptobeat);
+unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, char snaptobeat, char disablequantize);
 	//An adaptation of the ConvertToDeltaTime() function from the FoFLC source
 	//The specified real time position is checked against grid snap positions and a quantized delta time is returned when possible
 	//This logic expects that eof_calculate_beat_delta_positions() was called by the calling MIDI export function to initialize the chart's beat delta timings
+	//This logic is also incompatible with a stored tempo track, so disablequantize must be specified as nonzero if a stored tempo track is in use
 	//Otherwise, the timing is converted formulaically and can be vulnerable to floating point math/rounding errors
 	//Parses a linked list of anchors and returns the delta time of the specified realtime
 	//tslist is allowed to be NULL, but anchorlist must contain at least one tempo change
