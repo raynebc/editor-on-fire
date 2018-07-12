@@ -756,10 +756,19 @@ EOF_SONG * eof_import_chart(const char * fn)
 			buffer[index++] = '\0';	//Terminate the string
 			(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 		}
-		else if(!ustricmp(current_event->text, "phrase_start") && !lyric_status)
+		else if(!ustricmp(current_event->text, "phrase_start"))
 		{	//If this is a Clone Hero start of lyric line marker (and a lyric line definition isn't already in progress)
-			lyric_on = pos;
-			lyric_status = 1;
+			if(!lyric_status)
+			{	//If a lyric line definition isn't already in progress, handle this normally
+				lyric_on = pos;
+				lyric_status = 1;
+			}
+			else
+			{	//Otherwise consider this an ending to the previous line in progress and the beginning of a new line
+				lyric_off = chartpos_to_msec(chart, current_event->chartpos, NULL) - 1.0;	//End the previous line 1ms before the beginning of this line
+				(void) eof_vocal_track_add_line(sp->vocal_track[0], lyric_on, lyric_off, 0xFF);
+				lyric_on = pos;
+			}
 		}
 		else if(!ustricmp(current_event->text, "phrase_end") && lyric_status)
 		{	//If this is a Clone Hero end of lyric line marker (and such a marker is expected), add the lyric line definition to the vocal track
@@ -770,8 +779,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 		else
 		{
 			char *ptr = strcasestr_spec(current_event->text, "lyric ");	//Check for this text string
-///Unicode lyrics aren't importing properly at this point
-///			char *ptr = ustrstr(current_event->text, "lyric ");	//Check for this text string
 
 			if(ptr)
 			{	//If this is a Clone Hero lyric definition
@@ -779,19 +786,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 				if(temp)
 				{	//If a lyric structure was successfully created
-///					unsigned index1 = 6, index2 = 0;	//index1 is the sixth character into the imported string, just after the "lyric " substring
-///					int uchar;
-
 					temp->note = 0;	//Clone Hero lyrics do not define pitch
 					temp->pos = pos;
 					temp->length = 1;	//Clone Hero lyrics do not define duration
 					ustrncpy(temp->text, ptr, sizeof(temp->text) - 1);	//Copy the event string that is expected to be the lyric text
-/*					do
-					{
-						uchar = ugetat(current_event->text, index1++);	//Read a character from the imported string
-						usetat(temp->text, index2++, uchar);			//Append it to the new lyric string
-					}while(uchar != '\0');	//Until the NULL terminator was appended
-*/
 				}
 			}
 			else
@@ -989,7 +987,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	char songparsed=0,syncparsed=0,eventsparsed=0;
 		//Flags to indicate whether each of the mentioned sections had already been parsed
 	unsigned char currentsection=0;			//Will be set to 1 for [Song], 2 for [SyncTrack], 3 for [Events], 4 for an instrument section or 0xFF for an unrecognized section
-	size_t maxlinelength=0;					//I will count the length of the longest line (including NULL char/newline) in the
+	size_t maxlinelength=1024;
 	char *buffer=NULL,*buffer2=NULL;		//Will be an array large enough to hold the largest line of text from input file
 	unsigned long index=0,index2=0;			//Indexes for buffer and buffer2, respectively
 	char *substring=NULL,*substring2=NULL;	//Used with strstr() to find tag strings in the input file
@@ -998,6 +996,8 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	char anchortype=0;						//The achor type being read in [SyncTrack]
 	char notetype=0;						//The note type being read in the instrument track
 	char *string1=NULL,*string2=NULL;		//Used to hold strings parsed with Read_dB_string()
+	char *textbuffer;
+	char BOM[]={0xEF,0xBB,0xBF};
 
 //Feedback chart structure variables
 	struct FeedbackChart *chart=NULL;
@@ -1033,35 +1033,38 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	*chart=emptychart;		//Reliably set all member variables to 0/NULL
 	chart->resolution=192;	//Default this to 192
 
-//Allocate memory buffers large enough to hold any line in this file
-	maxlinelength=(size_t)FindLongestLineLength_ALLEGRO(filename,1);
-	if(!maxlinelength)
-	{
-		eof_log("\tError finding the largest line in the file.  Aborting", 1);
-		(void) pack_fclose(inf);
-		free(chart);
-		return NULL;
-	}
-	buffer=(char *)malloc_err(maxlinelength);
-	buffer2=(char *)malloc_err(maxlinelength);
+	buffer2=(char *)malloc_err(maxlinelength);	//For now, assume that any string parsed from one of the lines in the chart file will fitin this buffer
 
-//Read first line of text, capping it to prevent buffer overflow
-	if(!pack_fgets(buffer,(int)maxlinelength,inf))
-	{	//I/O error
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Unable to read from file:  \"%s\"", chart->linesprocessed, strerror(errno));
-		eof_log(eof_log_string, 1);
-		if(error)
-			*error=2;
-		(void) pack_fclose(inf);
-		free(buffer);
-		free(buffer2);
-		free(chart);
+	eof_log("\tBuffering Feedback chart file into memory", 1);
+	textbuffer = (char *)eof_buffer_file(filename, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
+	if(!buffer2 || !textbuffer)
+	{
+		eof_log("\tCannot allocate memory.", 1);
 		return NULL;
 	}
 
 //Parse the contents of the file
-	while(!pack_feof(inf))		//Until end of file is reached
-	{
+	while(1)
+	{	//While the buffered file hasn't been exhausted
+		if(!chart->linesprocessed)
+		{	//First line being read
+			buffer = ustrtok(textbuffer, "\r\n");	//Initialize the tokenization and get first tokenized line
+
+		//Skip Byte Order Mark if one is found on the first line
+			if((buffer[0] == BOM[0]) && (buffer[1] == BOM[1]) && (buffer[2] == BOM[2]))
+			{
+				eof_log("\tSkipping byte order mark on line 1", 1);
+				buffer[0] = buffer[1] = buffer[2] = ' ';	//Overwrite the BOM with spaces
+			}
+		}
+		else
+		{	//Subsequent lines
+			buffer = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+		}
+
+		if(!buffer)	//If a tokenized line of the file was obtained
+			break;
+
 		chart->linesprocessed++;	//Track which line number is being parsed
 
 //Skip leading whitespace
@@ -1074,9 +1077,8 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				break;
 		}
 
-		if((buffer[index] == '\n') || (buffer[index] == '\r') || (buffer[index] == '\0') || (buffer[index] == '{'))
+		if((buffer[index] == '\0') || (buffer[index] == '{'))
 		{	//If this line was empty, or contained characters we're ignoring
-			(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;							//Skip ahead to the next line
 		}
 
@@ -1091,7 +1093,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=3;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Malformed section header, return error
 			}
@@ -1103,7 +1105,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=4;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Malformed file, return error
 			}
@@ -1118,7 +1120,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=5;
-					free(buffer);
+					free(textbuffer);
 					free(buffer2);
 					return NULL;					//Multiple [song] sections, return error
 				}
@@ -1137,7 +1139,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=6;
-						free(buffer);
+						free(textbuffer);
 						free(buffer2);
 						return NULL;					//Multiple [SyncTrack] sections, return error
 					}
@@ -1156,7 +1158,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 							if(error)
 								*error=7;
-							free(buffer);
+							free(textbuffer);
 							free(buffer2);
 							return NULL;					//Multiple [Events] sections, return error
 						}
@@ -1200,7 +1202,6 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				}//Not a [SyncTrack] section
 			}//Not a [Song] section
 
-			(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;				//Skip ahead to the next line
 		}//If the line begins an open bracket...
 
@@ -1214,12 +1215,11 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=9;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Malformed file, return error
 			}
 			currentsection=0;
-			(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;							//Skip ahead to the next line
 		}
 
@@ -1234,7 +1234,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=10;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Invalid section entry, return error
 			}
@@ -1268,7 +1268,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=11;
-						free(buffer);
+						free(textbuffer);
 						free(buffer2);
 						free(string1);
 						free(string2);
@@ -1301,7 +1301,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=12;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
@@ -1324,7 +1324,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=13;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;				//Invalid SyncTrack entry, return error
 			}
@@ -1350,7 +1350,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=14;
-					free(buffer);
+					free(textbuffer);
 					free(buffer2);
 					return NULL;					//Invalid anchor type, return error
 				}
@@ -1363,7 +1363,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=15;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Invalid anchor type, return error
 			}
@@ -1377,7 +1377,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=16;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
@@ -1398,7 +1398,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					DestroyFeedbackChart(chart,1);
 					if(error)
 						*error=17;
-					free(buffer);
+					free(textbuffer);
 					free(buffer2);
 					return NULL;			//Invalid anchor type, return error
 				}
@@ -1442,7 +1442,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=18;
-					free(buffer);
+					free(textbuffer);
 					free(buffer2);
 					return NULL;			//Invalid anchor type, return error
 				}
@@ -1461,7 +1461,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=19;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
@@ -1484,7 +1484,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=20;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;				//Invalid Event entry, return error
 			}
@@ -1511,7 +1511,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=21;
-					free(buffer);
+					free(textbuffer);
 					free(buffer2);
 					return NULL;					//Invalid Event entry, return error
 				}
@@ -1528,7 +1528,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=22;
-						free(buffer);
+						free(textbuffer);
 						free(buffer2);
 						return NULL;					//Invalid Event entry, return error
 					}
@@ -1574,7 +1574,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=23;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
@@ -1597,7 +1597,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=24;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;				//Invalid instrument entry, return error
 			}
@@ -1638,7 +1638,6 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					}
 					else
 					{
-						(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 						continue;
 					}
 				break;
@@ -1653,7 +1652,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=25;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;		//Invalid instrument entry, return error
 			}
@@ -1693,7 +1692,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=26;
-					free(buffer);
+					free(textbuffer);
 					free(buffer2);
 					return NULL;					//Invalid number, return error
 				}
@@ -1707,7 +1706,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=27;
-					free(buffer);
+					free(textbuffer);
 					free(buffer2);
 					return NULL;					//Invalid number, return error
 				}
@@ -1721,7 +1720,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=28;
-				free(buffer);
+				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Malformed file, return error
 			}
@@ -1754,7 +1753,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=29;
-					free(buffer);
+					free(textbuffer);
 					free(buffer2);
 					return NULL;					//Invalid player section marker, return error
 				}
@@ -1771,18 +1770,16 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 			if(error)
 				*error=30;
-			free(buffer);
+			free(textbuffer);
 			free(buffer2);
 			return NULL;					//Malformed file, return error
 		}
-
-		(void) pack_fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//Until end of file is reached
 
 	if(error)
 		*error=0;
 
-	free(buffer);
+	free(textbuffer);
 	free(buffer2);
 	(void) pack_fclose(inf);
 
