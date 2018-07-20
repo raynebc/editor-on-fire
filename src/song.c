@@ -2660,8 +2660,8 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		return eof_track_add_tremolo(sp, track, start, end, difficulty);
 
 		case EOF_SLIDER_SECTION:
-			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
-			{	//Only legacy guitar tracks are able to use this type of section
+			if(((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (track == EOF_TRACK_KEYS))
+			{	//Only legacy guitar tracks and the keys track are able to use this type of section
 				count = sp->legacy_track[tracknum]->sliders;
 				if(count >= EOF_MAX_PHRASES)	//If EOF cannot store another slider section
 					return 1;
@@ -9138,6 +9138,13 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void)
 			eof_song->beat[ctr - 1]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear the flag
 			if(eof_imports_drop_mid_beat_tempos)
 			{	//If the user set the preference to delete such tempo changes
+				if(ctr >= 2)
+				{	//If there is a previous event
+					if(eof_song->beat[ctr - 2]->flags & EOF_BEAT_FLAG_MIDBEAT)
+					{	//If it is also a mid-beat tempo change
+						continue;	//Skip deletion of this beat and delete the previous beat instead
+					}
+				}
 				eof_menu_beat_delete_logic(ctr - 1);
 			}
 		}

@@ -3216,7 +3216,7 @@ void eof_rs_utf8_expand_xml_text(char *buffer, size_t size, const char *input, u
 		{
 			if(rs_filter < 3)
 			{	//Normal filtering
-				if(rs_filter_char(uchar, rs_filter, 1, 0))	//Allow the ASCII characters that are exclusively supported for lyrics
+				if(rs_filter_char(uchar, rs_filter, 1, 0, 0))	//Allow the ASCII characters that are exclusively supported for lyrics
 					continue;	//If filtering out characters for Rocksmith, omit affected characters
 			}
 			else if(rs_filter == 3)

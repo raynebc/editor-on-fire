@@ -1657,8 +1657,8 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
 
 		//Render slider note slide if applicable
-		if((eof_song->track[track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || !(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
-			continue;	//If the note isn't in a guitar track or isn't in a slider, skip the remaining logic that renders slider phrases
+		if(((eof_song->track[track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track != EOF_TRACK_KEYS)) || !(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+			continue;	//If the note isn't in a guitar/keys track or isn't in a slider, skip the remaining logic that renders slider phrases
 		if(eof_track_fixup_next_note(eof_song, track, notenum) < 0)
 			continue;	//If there isn't another note in this difficulty, don't render a slider phrase for a single note
 

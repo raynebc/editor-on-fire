@@ -15,6 +15,7 @@
 //AUDIOSTREAM * eof_mix_stream = NULL;
 SAMPLE *    eof_sound_clap = NULL;
 SAMPLE *    eof_sound_metronome = NULL;
+SAMPLE *    eof_sound_metronome_low = NULL;
 SAMPLE *    eof_sound_grid_snap = NULL;
 SAMPLE *    eof_sound_note[EOF_MAX_VOCAL_TONES] = {NULL};
 SAMPLE *    eof_sound_chosen_percussion = NULL;	//The user-selected percussion sound
@@ -53,8 +54,9 @@ int eof_clap_volume = 100;	//Stores the volume level for the clap cue, specified
 int eof_tick_volume = 100;	//Stores the volume level for the tick cue, specified as a percentage
 int eof_tone_volume = 100;	//Stores the volume level for the tone cue, specified as a percentage
 int eof_percussion_volume = 100;	//Stores the volume level for the vocal percussion cue, specified as a percentage
-int eof_clap_for_mutes = 1;		//Specifies whether fully string muted notes trigger the clap sound cue
-int eof_clap_for_ghosts = 1;	//Specifies whether ghosted pro guitar notes trigger the clap sound cue
+int eof_clap_for_mutes = 1;			//Specifies whether fully string muted notes trigger the clap sound cue
+int eof_clap_for_ghosts = 1;		//Specifies whether ghosted pro guitar notes trigger the clap sound cue
+int eof_multi_pitch_metronome = 1;	//Specifies whether the metronome will use a lower tick for beats that aren't the first in a measure
 
 int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
@@ -63,6 +65,7 @@ double        eof_mix_sample_increment = 1.0;
 unsigned long eof_mix_next_guitar_note;
 unsigned long eof_mix_next_clap;
 unsigned long eof_mix_next_metronome;
+char eof_mix_next_metronome_pitch;
 unsigned long eof_mix_next_note;
 unsigned long eof_mix_next_percussion;
 
@@ -89,6 +92,7 @@ int eof_mix_notes = 0;
 int eof_mix_current_note = 0;
 
 unsigned long eof_mix_metronome_pos[EOF_MAX_BEATS] = {0};
+char eof_mix_metronome_pos_pitch[EOF_MAX_BEATS] = {0};	//Will track whether the pitch of each beat's metronome tick should be high (nonzero, first beat in a measure) or low (zero, any other beat)
 int eof_mix_metronomes = 0;
 int eof_mix_current_metronome = 0;
 
@@ -120,13 +124,21 @@ void eof_mix_callback_common(void)
 	{
 		if(eof_mix_metronome_enabled)
 		{
-			eof_voice[1].sp = eof_sound_metronome;
+			if(eof_mix_next_metronome_pitch || !eof_multi_pitch_metronome)
+			{	//If this beat was determined to be the first beat in its measure, or if multi-pitched metronome isn't enabled
+				eof_voice[1].sp = eof_sound_metronome;	//Use the high pitch metronome tick
+			}
+			else
+			{	//Low pitch metronome tick
+				eof_voice[1].sp = eof_sound_metronome_low;
+			}
 			eof_voice[1].pos = 0;
 			eof_voice[1].fpos = 0.0;
 			eof_voice[1].playing = 1;
 		}
 		eof_mix_current_metronome++;
 		eof_mix_next_metronome = eof_mix_metronome_pos[eof_mix_current_metronome];
+		eof_mix_next_metronome_pitch = eof_mix_metronome_pos_pitch[eof_mix_current_metronome];
 	}
 
 	//Mix vocal tones
@@ -346,7 +358,14 @@ void eof_mix_find_claps(void)
 	eof_mix_current_metronome = 0;
 	for(i = 0; i < eof_song->beats; i++)
 	{
+		char pitch = 1;	//By default, the standard metronome tick sound will be used
+
 		eof_mix_metronome_pos[eof_mix_metronomes] = eof_mix_msec_to_sample(eof_song->beat[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
+		if(eof_song->beat[i]->has_ts && eof_song->beat[i]->beat_within_measure)
+		{	//If there is a time signature in effect at this beat and this is NOT the first beat in its measure
+			pitch = 0;	//Use the low pitched metronome tick sound
+		}
+		eof_mix_metronome_pos_pitch[eof_mix_metronomes] = pitch;
 		eof_mix_metronomes++;
 	}
 
@@ -424,6 +443,11 @@ void eof_mix_init(void)
 	{
 		allegro_message("Couldn't load metronome sound!");
 	}
+	eof_sound_metronome_low = load_wav("eof.dat#metronome_low.wav");
+	if(!eof_sound_metronome_low)
+	{
+		allegro_message("Couldn't load low pitched metronome sound!");
+	}
 	eof_sound_grid_snap = load_wav("eof.dat#gridsnap.wav");
 	if(!eof_sound_grid_snap)
 	{
@@ -496,6 +520,8 @@ void eof_mix_exit(void)
 	eof_sound_clap=NULL;
 	destroy_sample(eof_sound_metronome);
 	eof_sound_metronome=NULL;
+	destroy_sample(eof_sound_metronome_low);
+	eof_sound_metronome_low=NULL;
 	destroy_sample(eof_sound_grid_snap);
 	eof_sound_grid_snap=NULL;
 	destroy_sample(eof_sound_cowbell);
@@ -578,6 +604,7 @@ void eof_mix_start_helper(void)
 		{
 			eof_mix_current_metronome = i;
 			eof_mix_next_metronome = eof_mix_metronome_pos[i];
+			eof_mix_next_metronome_pitch = eof_mix_metronome_pos_pitch[i];	//Track which pitch the metronome tick should be
 			break;
 		}
 	}
@@ -697,6 +724,7 @@ void eof_mix_seek(unsigned long pos)
 		{
 			eof_mix_current_metronome = i;
 			eof_mix_next_metronome = eof_mix_metronome_pos[i];
+			eof_mix_next_metronome_pitch = eof_mix_metronome_pos_pitch[i];	//Track which pitch the metronome tick should be
 			break;
 		}
 	}

@@ -1167,7 +1167,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				(void) eof_menu_next_chord_result();
 				eof_use_key();
 			}
-			else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+			else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && !KEY_EITHER_WIN)
 			{	//E will cycle to the next catalog entry
 				(void) eof_menu_catalog_next();
 				eof_use_key();
@@ -1848,8 +1848,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_pro_guitar_toggle_strum_mid();
 			}
-			else
-			{	//M without SHIFT or CTRL toggles metronome
+			else if(!KEY_EITHER_WIN)
+			{	//M without SHIFT, CTRL or Windows key toggles metronome
 				(void) eof_menu_edit_metronome();
 			}
 		}
@@ -2582,8 +2582,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					eof_use_key();
 				}
 			}
-			else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-			{	//If neither SHIFT nor CTRL are held
+			else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && !KEY_EITHER_WIN)
+			{	//If neither SHIFT nor CTRL nor Windows key are held
 				(void) eof_menu_note_toggle_crazy();
 				eof_use_key();
 			}
@@ -2625,8 +2625,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 			else if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics))
 			{	//If PART VOCALS is active, and one of its lyrics is the current selected lyric
-				if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-				{	//Neither SHIFT nor CTRL are held
+				if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && !KEY_EITHER_WIN)
+				{	//Neither SHIFT nor CTRL nor Windows key are held
 					(void) eof_edit_lyric_dialog();
 					eof_use_key();
 				}
@@ -2643,7 +2643,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 
 	/* toggle freestyle (F in a vocal track) */
-		if((eof_key_char == 'f') && !KEY_EITHER_CTRL && eof_vocals_selected)
+		if((eof_key_char == 'f') && !KEY_EITHER_CTRL && !KEY_EITHER_WIN && eof_vocals_selected)
 		{
 			(void) eof_menu_toggle_freestyle();
 			eof_use_key();
@@ -2742,8 +2742,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		{	//If a pro guitar track is active
 			if(eof_key_char == 'p')
 			{
-				if(!KEY_EITHER_CTRL && !KEY_EITHER_ALT && !KEY_EITHER_SHIFT)
-				{	//If none of CTRL, ALT or SHIFT are held
+				if(!KEY_EITHER_CTRL && !KEY_EITHER_ALT && !KEY_EITHER_SHIFT && !KEY_EITHER_WIN)
+				{	//If none of CTRL, ALT, SHIFT or Windows key are held
 					(void) eof_menu_pro_guitar_toggle_pull_off();
 					eof_use_key();
 				}
@@ -2851,7 +2851,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 
 	/* edit pro guitar fret/finger values (F in a pro guitar track) */
-			if((eof_key_char == 'f') && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+			if((eof_key_char == 'f') && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && !KEY_EITHER_WIN)
 			{
 				(void) eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
 				eof_use_key();
@@ -3019,7 +3019,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					eof_set_pro_guitar_fret_number(1,0);	//Increment fret value
 					eof_use_key();
 				}
-				else if(eof_key_char == 'g')
+				else if(eof_key_char == 'g')				//CTRL+G toggles ghost status
 				{
 					(void) eof_menu_note_toggle_ghost();
 					eof_use_key();
@@ -5450,8 +5450,8 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 			}
-			if((eof_key_char == 'p') && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
-			{	//P is held, but neither CTRL nor SHIFT are
+			if((eof_key_char == 'p') && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && !KEY_EITHER_WIN)
+			{	//P is held, but neither CTRL nor SHIFT nor Windows key are
 				if(eof_pen_lyric.note != eof_last_tone)
 				{
 					eof_last_tone = eof_pen_lyric.note;
@@ -6099,7 +6099,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		else
 		{	//If a non pro guitar/bass track is active
 			/* draw slider sections */
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR)
+			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_selected_track == EOF_TRACK_KEYS))
 			{	//If this is a legacy guitar track
 				numsections = eof_get_num_sliders(eof_song, eof_selected_track);
 				for(i = 0; i < numsections; i++)

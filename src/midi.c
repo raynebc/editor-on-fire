@@ -94,6 +94,9 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text, char allocation)
 
 	if(text)
 	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding lyric:  pos: %lums\ttext: %s", pos, text);
+		eof_log(eof_log_string, 2);
+
 		if(eof_midi_events < EOF_MAX_MIDI_EVENTS)
 		{	//If eof_midi_event[] is able to store more events
 			eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));

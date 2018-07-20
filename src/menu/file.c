@@ -3395,7 +3395,7 @@ int eof_save_helper_checks(void)
 				eof_2d_render_top_option = 5;					//Change the user preference to render note names at the top of the piano roll
 				eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
 				eof_clear_input();
-				if(!user_prompted && alert("At least one chord has an unaccepted character: ( } ,  \\  : { \" )", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+				if(!user_prompted && alert("At least one chord has an unaccepted character: } , \\ : { \"", "This can cause Rocksmith to crash or hang and will be removed.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user hasn't already answered this prompt, and opts to correct the issue
 					eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 					return 1;	//Return cancellation

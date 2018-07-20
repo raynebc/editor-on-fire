@@ -925,6 +925,7 @@ int eof_menu_beat_reset_offset(void)
 	int i;
 	double newbpm;
 	char undo_made = 0;
+	unsigned long last_pos;
 
 	if(!eof_song)
 		return 1;
@@ -951,12 +952,22 @@ int eof_menu_beat_reset_offset(void)
 		{	//If user opts to insert evenly spaced beats
 			while(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
 			{	//While the MIDI delay is still large enough to be moved back one beat
+				last_pos = eof_song->beat[0]->pos;	//Track this in case floating point beat positional rounding up would cause this loop to get stuck indefinitely
 				if(!eof_menu_beat_push_offset_back(&undo_made))
 				{	//If pushing back the chart by one beat failed
 					break;	//Break from this loop and attempt to finish the normal reset offset logic
 				}
+				if(last_pos == eof_song->beat[0]->pos)
+				{	//If the first beat's position did not move from the last call to eof_menu_beat_push_offset_back()
+					break;
+				}
 			}
 		}
+	}
+
+	if(eof_song->beat[0]->pos == 0)
+	{	//If the beat push back completely filled the offset and the first beat marker is now at 0ms
+		return 1;	//No more changes are needed
 	}
 
 	if(!undo_made)

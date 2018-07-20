@@ -684,8 +684,8 @@ void eof_prepare_note_menu(void)
 
 			eof_note_menu[5].flags = 0;	//Note>Solos> submenu
 			eof_note_menu[6].flags = 0; //Note>Star Power> submenu
-			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
-			{	//If a legacy guitar note is selected
+			if(((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (eof_selected_track == EOF_TRACK_KEYS))
+			{	//If a legacy guitar or keys note is selected
 				eof_note_menu[14].flags = 0;		//Note>Slider> submenu
 			}
 			else
@@ -6503,8 +6503,8 @@ int eof_menu_slider_mark(void)
 	EOF_PHRASE_SECTION *sectionptr;
 	int note_selection_updated;
 
-	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
-		return 1;	//Do not allow this function to run unless a legacy guitar track is active
+	if(((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_selected_track != EOF_TRACK_KEYS)) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run unless a legacy guitar track or the keys track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty

@@ -2072,7 +2072,7 @@ char eof_percussion_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
 DIALOG eof_audio_cues_dialog[] =
 {
 /*	(proc)					(x)   (y)  (w)	(h) (fg) (bg) (key) (flags) (d1) (d2) (dp)                         (dp2) (dp3) */
-	{ d_agup_window_proc,	0,	  48, 310, 350,   2,  23,    0,      0,   0,   0, "Audio cues",                 NULL, NULL },
+	{ d_agup_window_proc,	0,	  48, 310, 370,   2,  23,    0,      0,   0,   0, "Audio cues",                 NULL, NULL },
 	{ d_agup_text_proc,		16,	  88,  64,   8,   2,  23,    0,      0,   0,   0, "Chart volume",               NULL, NULL },
 	{ d_agup_slider_proc,	176,  88,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_chart_volume_string },
 	{ d_agup_text_proc,		275,  88,  30,  16,   2,  23,    0,      0, 100,   0, eof_chart_volume_string,      NULL, NULL },
@@ -2111,8 +2111,9 @@ DIALOG eof_audio_cues_dialog[] =
 	{ d_agup_radio_proc,	160, 288,  30,  15,   2,  23,    0,      0,   0,   0, "4",                          NULL, NULL },
 	{ d_agup_check_proc,	16,  308, 178,  16,   2,  23,    0,      0,   1,   0, "String mutes trigger clap",  NULL, NULL },
 	{ d_agup_check_proc,	16,  328, 178,  16,   2,  23,    0,      0,   2,   0, "Ghost notes trigger clap",   NULL, NULL },
-	{ d_agup_button_proc,	44,  354,  68,  28,   2,  23, '\r', D_EXIT,   0,   0, "OK",                         NULL, NULL },
-	{ d_agup_button_proc,	172, 354,  68,  28,   2,  23,    0, D_EXIT,   0,   0, "Cancel",                     NULL, NULL },
+	{ d_agup_check_proc,	16,  348, 182,  16,   2,  23,    0,      0,   3,   0, "Use multi-pitch metronome",  NULL, NULL },
+	{ d_agup_button_proc,	44,  374,  68,  28,   2,  23, '\r', D_EXIT,   0,   0, "OK",                         NULL, NULL },
+	{ d_agup_button_proc,	172, 374,  68,  28,   2,  23,    0, D_EXIT,   0,   0, "Cancel",                     NULL, NULL },
 	{ NULL,                   0,   0,   0,   0,   0,   0,    0,      0,   0,   0, NULL,                         NULL, NULL }
 };
 
@@ -2156,6 +2157,7 @@ int eof_menu_audio_cues(void)
 
 	eof_audio_cues_dialog[37].flags = eof_clap_for_mutes ? D_SELECTED : 0;	//Update the "String mutes trigger clap" option
 	eof_audio_cues_dialog[38].flags = eof_clap_for_ghosts ? D_SELECTED : 0;	//Update the "Ghost notes trigger clap" option
+	eof_audio_cues_dialog[39].flags = eof_multi_pitch_metronome ? D_SELECTED : 0;	//Update the "Use multi-pitch metronome" option
 
 	//Rebuild the volume slider strings, as they are not guaranteed to be all 100% on launch of EOF since EOF stores the user's last-configured volumes in the config file
 	(void) eof_set_cue_volume(eof_chart_volume_string, eof_chart_volume);
@@ -2164,7 +2166,7 @@ int eof_menu_audio_cues(void)
 	(void) eof_set_cue_volume(eof_tone_volume_string, eof_tone_volume);
 	(void) eof_set_cue_volume(eof_percussion_volume_string, eof_percussion_volume);
 
-	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 39)			//User clicked OK
+	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 40)			//User clicked OK
 	{
 		eof_chart_volume = eof_audio_cues_dialog[2].d2;				//Store the volume set by the chart volume slider
 		eof_chart_volume_multiplier = sqrt(eof_chart_volume/100.0);	//Store this math so it only needs to be performed once
@@ -2174,6 +2176,7 @@ int eof_menu_audio_cues(void)
 		eof_percussion_volume = eof_audio_cues_dialog[14].d2;		//Store the volume set by the vocal percussion cue volume slider
 		eof_clap_for_mutes = eof_audio_cues_dialog[37].flags == D_SELECTED ? 1 : 0;	//Store the "String mutes trigger clap" option
 		eof_clap_for_ghosts = eof_audio_cues_dialog[38].flags == D_SELECTED ? 1 : 0;	//Store the "Ghost notes trigger clap" option
+		eof_multi_pitch_metronome = eof_audio_cues_dialog[39].flags == D_SELECTED ? 1 : 0;	//Store the "Use multi-pitch metronome" option
 
 		for(x = 17; x <= 36; x++)
 		{	//Search for the selected vocal percussion cue

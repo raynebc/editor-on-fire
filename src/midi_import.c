@@ -1409,6 +1409,7 @@ set_window_title(debugtext);
 		{	//For each event in this track
 			int midinote;
 			unsigned int gridsnap = 0;	//Used to track whether the event's delta time is a grid snap position
+			int text_event_imported = 0;	//Set to nonzero if this event is a text event that was imported as a lyric
 
 			if(key[KEY_ESC])
 			{	/* clean up and return */
@@ -1434,18 +1435,6 @@ set_window_title(debugtext);
 
 			event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset, &gridsnap);
 			eof_track_resize(sp, picked_track, note_count[picked_track] + 1);	//Ensure the track can accommodate another note
-
-			if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") != eof_import_events[i]->event[j]->text))
-			{	//If this is a track specific text event (chord names excluded, that will be handled by track specific logic)
-				for(k = 0; k + 1 < sp->beats; k++)
-				{	//For each beat
-					if(event_realtime < sp->beat[k + 1]->pos)
-					{	//If the text event is earlier than the next beat
-						break;	//Stop parsing beats
-					}
-				}	//k now refers to the appropriate beat this event is assigned to
-				(void) eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0, 0);	//Store this as a text event specific to the track being parsed
-			}
 
 			midinote = eof_import_events[i]->event[j]->d1;	//Simplify
 			if(eof_midi_tracks[picked_track].track_format == EOF_VOCAL_TRACK_FORMAT)
@@ -1538,7 +1527,7 @@ set_window_title(debugtext);
 
 				/* lyric */
 				else if(((eof_import_events[i]->event[j]->type == 0x05) || (eof_import_events[i]->event[j]->type == 0x01)) && (eof_import_events[i]->event[j]->text[0] != '['))
-				{	//!Note: The text event import puts all text events in a global list instead of the track event list, so it's not currently possible for EOF to import text events as lyrics
+				{	//A lyric or text event not beginning with an open bracket
 					if(eof_import_events[i]->game == 1)
 					{	//If a Power Gig MIDI is being imported
 						unsigned long len = ustrlen(eof_import_events[i]->event[j]->text);
@@ -1617,6 +1606,7 @@ set_window_title(debugtext);
 								linetrack = 1;
 							}
 						}
+						text_event_imported = 1;	//Track that this was imported as a lyric, to prevent it from also importing as a text event
 					}//Only import the lyric if it isn't a newline character, which some Power Gig MIDIs use in addition to carriage return
 				}//Lyric event
 
@@ -3367,6 +3357,22 @@ set_window_title(debugtext);
 					eof_import_events[i]->event[j]->dp = NULL;
 				}//Sysex event
 			}//If parsing a pro guitar track
+
+			if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") != eof_import_events[i]->event[j]->text))
+			{	//If this is a track specific text event (chord names excluded, that will be handled by track specific logic)
+				if(!text_event_imported)
+				{	//If this text event wasn't already imported as a lyric
+					for(k = 0; k + 1 < sp->beats; k++)
+					{	//For each beat
+						if(event_realtime < sp->beat[k + 1]->pos)
+						{	//If the text event is earlier than the next beat
+							break;	//Stop parsing beats
+						}
+					}	//k now refers to the appropriate beat this event is assigned to
+					(void) eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0, 0);	//Store this as a text event specific to the track being parsed
+				}
+			}
+
 			pticker++;
 		}//For each event in this track
 

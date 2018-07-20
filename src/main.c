@@ -1366,8 +1366,8 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			flags &= (~EOF_NOTE_FLAG_SP);
 			flags &= (~EOF_NOTE_FLAG_IS_TRILL);
 			flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
-			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
-			{	//Only clear the is slider flag if this is a legacy guitar track
+			if(((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (track == EOF_TRACK_KEYS))
+			{	//Only clear the is slider flag if this is a legacy guitar or keys track
 				flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
 			}
 
@@ -1451,8 +1451,8 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			}
 
 			/* mark and check sliders */
-			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
-			{	//Only check the is slider flag if this is a legacy guitar track
+			if(((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (track == EOF_TRACK_KEYS))
+			{	//Only check the is slider flag if this is a legacy guitar or keys track
 				numphrases = eof_get_num_sliders(sp, track);
 				for(j = 0; j < numphrases; j++)
 				{	//For each slider section in the active track

@@ -120,10 +120,12 @@ void Export_RS(FILE *outf)
 	if(Lyrics.verbose)	printf("\nRocksmith XML export complete.  %lu lyrics written",Lyrics.piececount);
 }
 
-int rs_filter_char(int character, char rs_filter, int islyric, int isphrase_section)
+int rs_filter_char(int character, char rs_filter, int islyric, int isphrase_section, int ischordname)
 {
 	if((rs_filter > 1) && (character == '/'))
 		return 1;
+	if(ischordname && ((character == '(') || (character == ')')))
+		return 0;
 	if(!islyric)
 	{	//XML strings don't allow the following characters except for lyric text
 		if((character == '(') || (character == '}') || (character == ',') || (character == '\\') || (character == ':') || (character == '{') || (character == '"') || (character == ')'))
@@ -383,7 +385,7 @@ int rs_filter_string(char *string, char rs_filter)
 
 	for(ctr = 0; string[ctr] != '\0'; ctr++)
 	{	//For each character in the string until the terminator is reached
-		if(rs_filter_char(string[ctr], rs_filter, 0, 0))	//If the character is rejected by the filter, not allowing the ASCII characters exclusively usable for lyrics
+		if(rs_filter_char(string[ctr], rs_filter, 0, 0, 1))	//If the character is rejected by the filter, not allowing the ASCII characters exclusively usable for lyrics
 			return 1;
 	}
 
@@ -430,7 +432,7 @@ void expand_xml_text(char *buffer, size_t size, const char *input, size_t warnsi
 			{
 				if(rs_filter < 3)
 				{	//Normal filtering (1 or 2)
-					if(rs_filter_char(character, rs_filter, islyric, isphrase_section))
+					if(rs_filter_char(character, rs_filter, islyric, isphrase_section, 0))
 						continue;	//If filtering out characters for Rocksmith, omit affected characters
 				}
 				else if(rs_filter == 3)
