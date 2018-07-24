@@ -254,13 +254,14 @@ DIALOG eof_display_dialog[] =
 DIALOG eof_custom_display_size_dialog[] =
 {
 	/* (proc)                (x) (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   48,  200, 146, 2,   23,  0,   0,       0,   0,   "Custom display size", NULL, NULL },
+	{ d_agup_window_proc,    0,   48,  200, 166, 2,   23,  0,   0,       0,   0,   "Custom display size", NULL, NULL },
 	{ d_agup_text_proc,      12,  76,  64,  8,   2,   23,  0,   0,       0,   0,   eof_etext,             NULL, NULL },
-	{ d_agup_text_proc,      12,  98,  64,  8,   2,   23,  0,   0,       0,   0,   "Width:",              NULL, NULL },
-	{ eof_verified_edit_proc,60,  94,  100, 20,  2,   23,  0,   0,       4,   0,   eof_etext2,            "0123456789", NULL },
-	{ d_agup_text_proc,      12,  128, 64,  8,   2,   23,  0,   0,       0,   0,   "Height:",             NULL, NULL },
-	{ eof_verified_edit_proc,60,  124, 100, 20,  2,   23,  0,   0,       4,   0,   eof_etext3,            "0123456789", NULL },
-	{ d_agup_button_proc,    12,  154, 174, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_text_proc,      12,  96,  64,  8,   2,   23,  0,   0,       0,   0,   eof_etext2,             NULL, NULL },
+	{ d_agup_text_proc,      12,  118, 64,  8,   2,   23,  0,   0,       0,   0,   "Width:",              NULL, NULL },
+	{ eof_verified_edit_proc,60,  114, 100, 20,  2,   23,  0,   0,       4,   0,   eof_etext3,            "0123456789", NULL },
+	{ d_agup_text_proc,      12,  148, 64,  8,   2,   23,  0,   0,       0,   0,   "Height:",             NULL, NULL },
+	{ eof_verified_edit_proc,60,  144, 100, 20,  2,   23,  0,   0,       4,   0,   eof_etext4,            "0123456789", NULL },
+	{ d_agup_button_proc,    12,  174, 174, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1657,6 +1658,7 @@ int eof_menu_file_import_export_preferences(void)
 
 int eof_menu_file_display(void)
 {
+	int maxwidth = 0, maxheight = 0;
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -1671,23 +1673,37 @@ int eof_menu_file_display(void)
 		eof_desktop = (eof_display_dialog[2].flags & D_SELECTED) ? 0 : 1;
 		if(eof_display_dialog[4].d1 == EOF_DISPLAY_CUSTOM)
 		{	//User selected "Custom" window size
-			(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "(Currently set to %lu x %lu)", eof_screen_width, eof_screen_height);
-			eof_etext2[0] = '\0';	//Empty these input fields
-			eof_etext3[0] = '\0';
+			(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Currently set to %lux%lu", eof_screen_width, eof_screen_height);
+			if(!get_desktop_resolution(&maxwidth, &maxheight))
+			{	//If the desktop resolution could be read
+				(void) snprintf(eof_etext2, sizeof(eof_etext) - 1, "Screen resolution is %dx%d", maxwidth, maxheight);
+			}
+			else
+			{
+				eof_etext2[0] = '\0';	//Empty this string
+				maxwidth = maxheight = INT_MAX;	//Set these to be high enough that they won't limit the user's input
+			}
+			eof_etext3[0] = '\0';	//Empty these input fields
+			eof_etext4[0] = '\0';
 			eof_color_dialog(eof_custom_display_size_dialog, gui_fg_color, gui_bg_color);
 			centre_dialog(eof_custom_display_size_dialog);
-			if(eof_popup_dialog(eof_custom_display_size_dialog, 3) == 6)
+			if(eof_popup_dialog(eof_custom_display_size_dialog, 4) == 7)
 			{	//User clicked OK
 				unsigned long width, height, oldwidth, oldheight;
 				int cancelled = 0;
 
-				width = atol(eof_etext2);
-				height = atol(eof_etext3);
+				width = atol(eof_etext3);
+				height = atol(eof_etext4);
 				oldwidth = eof_screen_width;
 				oldheight = eof_screen_height;
 				if((width >= 640) && (height >= 480))
-				{
-					if(width % 4 != 0)
+				{	//If a sufficiently high width and height were specified
+					if((width >= maxwidth) || (height >= maxheight))
+					{	//User specified a resolution that won't fit on screen
+						allegro_message("Must specify a width and height smaller than the screen resolution (%d x %d)", maxwidth, maxheight);
+						cancelled = 1;
+					}
+					else if(width % 4 != 0)
 					{	//Allegro requires the window width to be a multiple of 4
 						unsigned long suggestion1, suggestion2;
 						char string1[10], string2[10];
@@ -1706,9 +1722,13 @@ int eof_menu_file_display(void)
 							cancelled = 1;
 					}
 
-					if(!cancelled && !eof_set_display_mode(width, height))
-					{	//If the user didn't cancel the operation, and EOF failed to set that display size
-						(void) eof_set_display_mode(oldwidth, oldheight);	//Revert to the previous resolution in use
+					if(!cancelled)
+					{	//If the user didn't cancel the operation
+						if(!eof_set_display_mode(width, height) || (eof_screen_width != width) || (eof_screen_height != height))
+						{	//If the user specified display size could not be set
+							eof_apply_display_settings(EOF_DISPLAY_640);		//Formally reload this resolution
+							(void) eof_set_display_mode(oldwidth, oldheight);	//Revert to the previous resolution in use
+						}
 					}
 					eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 					eof_set_2D_lane_positions(0);	//Update ychart[]
@@ -1968,6 +1988,7 @@ int eof_menu_file_exit(void)
 		}
 		eof_clear_input();
 	}
+	eof_close_button_clicked = 0;	//User either canceled the close or eof_quit has been set
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -4395,6 +4416,7 @@ int eof_gp_import_drum_track(int importvoice, int function)
 {
 	unsigned long populated = 0, populated2 = 0, bitmask, ctr, ctr2, selected;
 	char fivelane = 0;		//Set to nonzero if a lane 6 drum note (based on mappings in gp_drum_import_lane_6[] ) causes the destination drum track(s) to be converted to 5 lane
+	int combo = 0;			//Track whether any cymbal+tom notes were imported
 
 	eof_log("\tImporting as a drum track", 1);
 	selected = eof_gp_import_dialog[1].d1;
@@ -4436,6 +4458,8 @@ int eof_gp_import_drum_track(int importvoice, int function)
 	for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->notes; ctr++)
 	{	//For each note in the GP track
 		EOF_PRO_GUITAR_NOTE *gnp;
+		unsigned long lastflags = 0;
+		unsigned char lastnote = 0;
 
 		if(!(importvoice & (eof_parsed_gp_file->track[selected]->note[ctr]->type + 1)))
 			continue;	//If this voice was not chosen for import, skip it
@@ -4467,40 +4491,80 @@ int eof_gp_import_drum_track(int importvoice, int function)
 			}
 			else if(eof_lookup_drum_mapping(gp_drum_import_lane_3, fret))
 			{	//Maps to yellow tom
+				if((lastnote & 4) && (lastflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+				{	//If one of the other strings for this note already defined a yellow cymbal
+					flags |= EOF_DRUM_NOTE_FLAG_Y_COMBO;	//This yellow gem will be treated as a yellow cymbal+tom
+					combo = 1;
+				}
 				note = 4;
 			}
 			else if(eof_lookup_drum_mapping(gp_drum_import_lane_3_cymbal, fret))
 			{	//Maps to yellow cymbal
+				if((lastnote & 4) && !(lastflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+				{	//If one of the other strings for this note already defined a yellow tom
+					flags |= EOF_DRUM_NOTE_FLAG_Y_COMBO;	//This yellow gem will be treated as a yellow cymbal+tom
+					combo = 1;
+				}
 				note = 4;
 				flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
 			}
 			else if(eof_lookup_drum_mapping(gp_drum_import_lane_3_hi_hat_pedal, fret))
 			{	//Maps to pedal hi hat
+				if((lastnote & 4) && !(lastflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+				{	//If one of the other strings for this note already defined a yellow tom
+					flags |= EOF_DRUM_NOTE_FLAG_Y_COMBO;	//This yellow gem will be treated as a yellow cymbal+tom
+					combo = 1;
+				}
 				note = 4;
 				flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
 				psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
 			}
 			else if(eof_lookup_drum_mapping(gp_drum_import_lane_3_hi_hat_open, fret))
 			{	//Maps to open hi hat
+				if((lastnote & 4) && !(lastflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+				{	//If one of the other strings for this note already defined a yellow tom
+					flags |= EOF_DRUM_NOTE_FLAG_Y_COMBO;	//This yellow gem will be treated as a yellow cymbal+tom
+					combo = 1;
+				}
 				note = 4;
 				flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;
 				psflags |= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
 			}
 			else if(eof_lookup_drum_mapping(gp_drum_import_lane_4, fret))
 			{	//Maps to blue tom
+				if((lastnote & 8) && (lastflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+				{	//If one of the other strings for this note already defined a blue cymbal
+					flags |= EOF_DRUM_NOTE_FLAG_B_COMBO;	//This blue gem will be treated as a blue cymbal+tom
+					combo = 1;
+				}
 				note = 8;
 			}
 			else if(eof_lookup_drum_mapping(gp_drum_import_lane_4_cymbal, fret))
 			{	//Maps to blue cymbal
+				if((lastnote & 8) && !(lastflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+				{	//If one of the other strings for this note already defined a blue tom
+					flags |= EOF_DRUM_NOTE_FLAG_B_COMBO;	//This blue gem will be treated as a blue cymbal+tom
+					combo = 1;
+				}
 				note = 8;
 				flags |= EOF_DRUM_NOTE_FLAG_B_CYMBAL;
 			}
 			else if(eof_lookup_drum_mapping(gp_drum_import_lane_5, fret))
 			{	//Maps to green tom
+				if((lastnote & 16) && (lastflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+				{	//If one of the other strings for this note already defined a green cymbal
+					flags |= EOF_DRUM_NOTE_FLAG_G_COMBO;	//This green gem will be treated as a green cymbal+tom
+					combo = 1;
+				}
 				note = 16;
 			}
 			else if(eof_lookup_drum_mapping(gp_drum_import_lane_5_cymbal, fret))
 			{	//Maps to green cymbal
+				if((lastnote & 16) && !(lastflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+				{	//If one of the other strings for this note already defined a green tom
+					flags |= EOF_DRUM_NOTE_FLAG_G_COMBO;	//This green gem will be treated as a green cymbal+tom
+					combo = 1;
+				}
 				note = 16;
 				flags |= EOF_DRUM_NOTE_FLAG_G_CYMBAL;
 			}
@@ -4550,9 +4614,22 @@ int eof_gp_import_drum_track(int importvoice, int function)
 				}
 				np->flags = flags | psflags;
 			}
+			lastflags = flags | psflags;
+			lastnote = note;
 		}
 	}
 
+	if(combo)
+	{	//If one or more cymbal+tom notes were imported
+		if(function == 3)
+		{	//If the drum notes were imported into both the normal and the Phase Shift drum tracks
+			allegro_message("Note:  The imported drum track contains cymbal+tom notes, but these notes are only compatible with the Phase Shift drum track.  This status was retained for the notes imported into the Phase Shift drum track, but not the ones imported into the normal drum track.");
+		}
+		else if(!(function & 2))
+		{	//If the drum notes were only imported into the normal drum track
+			allegro_message("Note:  The imported drum track contains cymbal+tom notes, but these notes are only compatible with the Phase Shift drum track.  Re-import the Guitar Pro file into that drum track is this notation is wanted.");
+		}
+	}
 	eof_fixup_notes(eof_song);
 	eof_log("\t\tImport complete", 1);
 	return D_CLOSE;

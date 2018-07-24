@@ -328,9 +328,9 @@ MENU eof_note_drum_menu[] =
 	{"&Mark new Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
 	{"Toggle R note as rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
 	{"Remove &Rim shot status", eof_menu_note_remove_rimshot, NULL, 0, NULL},
-	{"Toggle &Y cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
-	{"Toggle &B cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
-	{"Toggle &G cymbal+tom", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
+	{"Toggle &Y cymbal+tom\t" CTRL_NAME "+ALT+Y", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
+	{"Toggle &B cymbal+tom\t" CTRL_NAME "+ALT+B", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
+	{"Toggle &G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
 	{"&Accent", NULL, eof_note_drum_accent_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -451,8 +451,8 @@ MENU eof_note_highlight_menu[] =
 
 MENU eof_note_grid_snap_menu[] =
 {
-	{"&Resnap to this grid", eof_menu_note_resnap, NULL, 0, NULL},
-	{"Resnap &Auto\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap_auto, NULL, 0, NULL},
+	{"&Resnap to this grid\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
+	{"Resnap &Auto\tALT+R", eof_menu_note_resnap_auto, NULL, 0, NULL},
 	{"&Move grid snap", NULL, eof_note_move_grid_snap_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };

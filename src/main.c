@@ -423,6 +423,7 @@ int eof_key_pressed = 0;
 int eof_key_char = 0;
 int eof_key_uchar = 0;
 int eof_key_code = 0;
+int eof_close_button_clicked = 0;
 int eof_key_shifts = 0;
 
 ///DEBUG
@@ -712,6 +713,13 @@ void eof_switch_in_callback(void)
 	eof_read_keyboard_input(1);	//Update the keyboard input variables when EOF regains focus
 	eof_has_focus = 2;			//Signal EOF has just regained focus
 	gametime_reset();
+}
+
+void eof_close_button_callback(void)
+{
+	eof_log("eof_close_button_callback() entered", 2);
+
+	eof_close_button_clicked = 1;
 }
 
 void eof_fix_catalog_selection(void)
@@ -1041,6 +1049,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	set_display_switch_mode(SWITCH_BACKGROUND);
 	set_display_switch_callback(SWITCH_OUT, eof_switch_out_callback);
 	set_display_switch_callback(SWITCH_IN, eof_switch_in_callback);
+	set_close_button_callback(eof_close_button_callback);
 	PrepVSyncIdle();
 	return 1;
 }
@@ -2051,8 +2060,8 @@ void eof_read_global_keys(void)
 {
 //	eof_log("eof_read_global_keys() entered");
 
-	/* exit program (Esc) */
-	if((eof_key_code == KEY_ESC) && !KEY_EITHER_SHIFT)
+	/* exit program (Esc or close button) */
+	if((eof_key_code == KEY_ESC) || eof_close_button_clicked)
 	{	//Use the key code for Escape instead of the ASCII char, since CTLR+[ triggers the same ASCII character value of 27
 		eof_menu_file_exit();
 		eof_use_key(); //If user cancelled quitting, make sure these keys are cleared

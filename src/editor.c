@@ -904,7 +904,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	}
 
 	/* rewind (R) */
-	/* resnap auto (CTRL+SHIFT+R) */
+	/* resnap to this grid (CTRL+SHIFT+R) */
+	/* resnap auto (ALT+R) */
 	if(eof_key_char == 'r')
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && !KEY_EITHER_WIN)
@@ -914,8 +915,16 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//If both CTRL and SHIFT are held
-			(void) eof_menu_note_resnap_auto();
+			(void) eof_menu_note_resnap();
 			eof_shift_used = 1;	//Track that the SHIFT key was used
+			eof_use_key();
+		}
+	}
+	if(eof_key_code == KEY_R)
+	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
+		if(KEY_EITHER_ALT)
+		{	//ALT is held
+			(void) eof_menu_note_resnap_auto();
 			eof_use_key();
 		}
 	}
@@ -1185,10 +1194,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* convert GHL open (CTRL+G in a legacy guitar track) */
 	/* custom grid snap (G) */
 	/* display grid lines (SHIFT+G) */
+	/* toggle green cymbal+tom (CTRL+ALT+G in the PS drum track) */
 	if(eof_key_char == 'g')
 	{
 		if(KEY_EITHER_CTRL)
-		{
+		{	//CTRL is held
 			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a drum track is active
 				(void) eof_menu_note_toggle_rb3_cymbal_green();
@@ -1215,10 +1225,19 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 	}
+	if(eof_key_code == KEY_G)
+	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
+		if(KEY_EITHER_CTRL && KEY_EITHER_ALT)
+		{	//CTRL and ALT are held
+			(void) eof_menu_note_toggle_rb3_cymbal_combo_green();
+			eof_use_key();
+		}
+	}
 
 	/* toggle yellow cymbal (CTRL+Y) */
 	/* seek to next highlighted note (SHIFT+Y) */
 	/* seek to previous highlighted note (CTRL+SHIFT+Y) */
+	/* toggle yellow cymbal+tom (CTRL+ALT+Y in the PS drum track) */
 	if(eof_key_char == 'y')
 	{	//CTRL+Y will toggle Pro yellow cymbal notation
 		if(KEY_EITHER_CTRL)
@@ -1245,11 +1264,20 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 	}
+	if(eof_key_code == KEY_Y)
+	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
+		if(KEY_EITHER_CTRL && KEY_EITHER_ALT)
+		{	//CTRL and ALT are held
+			(void) eof_menu_note_toggle_rb3_cymbal_combo_yellow();
+			eof_use_key();
+		}
+	}
 
 	/* toggle blue cymbal (CTRL+B in the drum track) */
 	/* toggle bend (CTRL+B in a pro guitar track) */
 	/* set bend strength (SHIFT+B in a pro guitar track) */
 	/* seek to beat/measure (CTRL+SHIFT+B) */
+	/* toggle blue cymbal+tom (CTRL+ALT+B in the PS drum track) */
 	if(eof_key_char == 'b')
 	{
 		if(KEY_EITHER_CTRL)
@@ -1278,6 +1306,14 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		{	//If only SHIFT is held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_pro_guitar_note_bend_strength_save();
+			eof_use_key();
+		}
+	}
+	if(eof_key_code == KEY_B)
+	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
+		if(KEY_EITHER_CTRL && KEY_EITHER_ALT)
+		{	//CTRL and ALT are held
+			(void) eof_menu_note_toggle_rb3_cymbal_combo_blue();
 			eof_use_key();
 		}
 	}

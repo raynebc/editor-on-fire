@@ -602,6 +602,7 @@ extern int eof_key_pressed;
 extern int eof_key_char;
 extern int eof_key_uchar;
 extern int eof_key_code;
+extern int eof_close_button_clicked;
 extern int eof_key_shifts;
 extern int eof_last_key_char;
 extern int eof_last_key_code;
@@ -732,6 +733,7 @@ void eof_init_colors(void);		//Initializes the color structures, to be called af
 void eof_set_color_set(void);	//Updates the eof_colors[] array with color data based on the current track and the user color set preference
 void eof_switch_out_callback(void);	//Performs some logic that needs to occur when EOF loses foreground focus
 void eof_switch_in_callback(void);	//Performs some logic that needs to occur when EOF gains foreground focus
+void eof_close_button_callback(void);	//Sets eof_close_button_clicked to track that the close button was clicked
 long eof_get_previous_note(long cnote);	//Returns the note that exists immediately before the specified note in the active track difficulty, or -1 if no such note exists
 int eof_note_is_hopo(unsigned long cnote);	//Returns nonzero if the specified note in the active track should be rendered as a HOPO, based on the current HOPO preview setting
 void eof_read_global_keys(void);	//Reads and acts on various keyboard combinations, only if the chart is paused
