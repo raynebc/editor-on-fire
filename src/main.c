@@ -461,6 +461,8 @@ unsigned char gp_drum_import_lane_5[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 unsigned char gp_drum_import_lane_5_cymbal[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 
+char *ogg_profile_name = NULL;	//This pointer is used by eof_load_ogg to set the file name in the current OGG profile
+
 void eof_show_mouse(BITMAP * bp)
 {
 	eof_log("eof_show_mouse() entered", 3);
@@ -1791,16 +1793,18 @@ int eof_load_ogg_quick(char * filename)
 	return loaded;
 }
 
-int eof_load_ogg(char * filename, char silence_failover)
+int eof_load_ogg(char * filename, char function)
 {
 	char * returnedfn = NULL;
 	char * ptr = filename;	//Used to refer to the OGG file that was processed from memory buffer
-	char directory[1024] = {0};
+	char output[1024] = {0};
 	int loaded = 0;
 	char load_silence = 0;
 	char * emptystring = "";
+	char dest_filename[20] = {0};
 
 	eof_log("eof_load_ogg() entered", 1);
+	strncpy(dest_filename, "guitar.ogg", sizeof(dest_filename) - 1);	//This will be the default file name of the chart audio
 
 	if(!filename)
 	{
@@ -1811,28 +1815,49 @@ int eof_load_ogg(char * filename, char silence_failover)
 	eof_music_data_size = file_size_ex(filename);
 	if(!eof_music_data)
 	{	//If the referenced file couldn't be buffered to memory, have the user browse for another file
-		(void) replace_filename(directory, filename, "", 1024);	//Get the path of the target file's parent directory
-		returnedfn = ncd_file_select(0, directory, "Select Music File", eof_filter_music_files);
+		(void) replace_filename(output, filename, "", 1024);	//Get the path of the target file's parent directory (the project folder)
+		returnedfn = ncd_file_select(0, output, "Select Music File", eof_filter_music_files);
 		eof_clear_input();
 		if(returnedfn)
 		{	//User selected an OGG, WAV or MP3 file, write guitar.ogg into the chart's destination folder accordingly
 			ptr = returnedfn;
-			(void) replace_filename(directory, filename, "", 1024);	//Store the path of the file's parent folder
-			if(!eof_audio_to_ogg(returnedfn, directory))			//Create guitar.ogg in the folder
-			{	//If the copy or conversion to create guitar.ogg succeeded
-				(void) replace_filename(returnedfn, filename, "guitar.ogg", 1024);	//guitar.ogg is the expected file
+			(void) replace_filename(output, filename, "", 1024);	//Store the path of the file's parent folder
+			if(function == 2)
+			{	//If the calling function wants to retain the user selected OGG file's original name if it's suitable
+				char *src_filename = get_filename(returnedfn);
+
+				if(!ustricmp(src_filename, "guitar.ogg") || !ustricmp(src_filename, "song.ogg") || !ustricmp(src_filename, "drums.ogg") || !ustricmp(src_filename, "rhythm.ogg") || !ustricmp(src_filename, "vocals.ogg"))
+				{	//If the input file's name is suitable for use with rhythm games
+					(void) strncpy(dest_filename, src_filename, sizeof(dest_filename) - 1);	//Allow this file name to be kept for the chart audio
+				}
+
+				//Copy the OGG file to the appropriate folder
+				(void) replace_filename(output, filename, dest_filename, 1024);	//Store the path of the output file
+				(void) eof_copy_file(returnedfn, output);						//Copy the user selected file to that file name
+				(void) strncpy(filename, output, 1024);							//Update the target audio file path for use in the remainder of this function
+
+				//Buffer the copied file into memory
 				eof_music_data = (void *)eof_buffer_file(returnedfn, 0);
 				eof_music_data_size = file_size_ex(returnedfn);
 			}
+			else
+			{	//Attempt to create guitar.ogg in the specified file's parent folder
+				if(!eof_audio_to_ogg(returnedfn, output))
+				{	//If the file copy or conversion to create guitar.ogg succeeded
+					(void) replace_filename(returnedfn, filename, dest_filename, 1024);
+					eof_music_data = (void *)eof_buffer_file(returnedfn, 0);
+					eof_music_data_size = file_size_ex(returnedfn);
+				}
+			}
 		}
-		else if(silence_failover)
+		else if(function)
 		{	//If the user canceled loading audio, and the calling function allows defaulting to second_of_silence.ogg
 			load_silence = 1;
 			ptr = emptystring;
-			get_executable_name(directory, 1024);	//Get EOF's executable path
-			(void) replace_filename(directory, directory, "second_of_silence.ogg", 1024);
-			eof_music_data = (void *)eof_buffer_file(directory, 0);
-			eof_music_data_size = file_size_ex(directory);
+			get_executable_name(output, 1024);	//Get EOF's executable path
+			(void) replace_filename(output, output, "second_of_silence.ogg", 1024);
+			eof_music_data = (void *)eof_buffer_file(output, 0);
+			eof_music_data_size = file_size_ex(output);
 		}
 	}
 	if(eof_music_data)
@@ -1844,6 +1869,16 @@ int eof_load_ogg(char * filename, char silence_failover)
 		else
 		{
 			eof_silence_loaded = 0;
+
+			if(function == 2)
+			{	//If the calling function allowed to use an OGG named something other than guitar.ogg for the chart audio
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tApplying name \"%s\" to OGG profile", dest_filename);
+				eof_log(eof_log_string, 1);
+				if(ogg_profile_name)
+				{	//This pointer should refer to the file name string in the default OGG profile
+					(void) ustrcpy(ogg_profile_name, dest_filename);		//Update the OGG profile with the appropriate file name
+				}
+			}
 		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", filename);
 		eof_log(eof_log_string, 1);

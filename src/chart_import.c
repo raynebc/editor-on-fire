@@ -245,14 +245,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 	(void) replace_filename(oggfn, oggfn, "guitar.ogg", 1024);	//guitar.ogg is the expected file
 
-	if(!eof_load_ogg(oggfn, 1))	//If user does not provide audio, fail over to using silent audio
-	{
-		DestroyFeedbackChart(chart, 1);
-		(void) ustrcpy(eof_last_ogg_path, oldoggpath); // remember previous OGG directory if we fail
-		return NULL;
-	}
-	eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
-
 	/* create empty song */
 	sp = eof_create_song_populated();
 	if(!sp)
@@ -260,6 +252,17 @@ EOF_SONG * eof_import_chart(const char * fn)
 		DestroyFeedbackChart(chart, 1);
 		return NULL;
 	}
+
+	/* Load audio */
+	ogg_profile_name = sp->tags->ogg[0].filename;	//Store the pointer to the OGG profile filename to be updated by eof_load_ogg()
+	if(!eof_load_ogg(oggfn, 2))	//If user does not provide audio, fail over to using silent audio
+	{
+		DestroyFeedbackChart(chart, 1);
+		eof_destroy_song(sp);
+		(void) ustrcpy(eof_last_ogg_path, oldoggpath); // remember previous OGG directory if we fail
+		return NULL;
+	}
+	eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 
 	/* backup the current value of eof_song and assign sp to it so that grid snap logic can be performed during note creation */
 	eof_song_backup = eof_song;

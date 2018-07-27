@@ -1189,7 +1189,8 @@ EOF_SONG *eof_load_bf(char * fn)
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
 	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
-	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
+	ogg_profile_name = sp->tags->ogg[0].filename;	//Store the pointer to the OGG profile filename to be updated by eof_load_ogg()
+	if(!eof_load_ogg(nfn, 2))	//If user does not provide audio, fail over to using silent audio
 	{
 		eof_destroy_song(sp);
 		return NULL;

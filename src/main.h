@@ -623,6 +623,8 @@ extern unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT];
 
 extern DIALOG eof_import_to_track_dialog[];
 
+extern char *ogg_profile_name;
+
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
 double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
 double eof_get_porpos(unsigned long pos);	//Calls eof_get_porpos_sp() against eof_song
@@ -665,9 +667,14 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
 void eof_cat_track_difficulty_string(char *str);	//Concatenates the current track name and difficulty name/number to the specified string
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
-int eof_load_ogg(char * filename, char silence_failover);
+int eof_load_ogg(char * filename, char function);
 	//Loads the specified OGG file, or if it does not exist, have the user browse for an audio file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
-	//If silence_failover is nonzero, if the user cancels loading audio, "second_of_silence.ogg" is loaded instead, and nonzero is returned.
+	//If function is 1, and the user cancels loading audio, "second_of_silence.ogg" is loaded instead, and nonzero is returned.
+	//If function is 2, the browsed file name is allowed to keep its original filename (instead of being forcibly renamed to guitar.ogg) if it has one of the following names:
+	//  song.ogg, drums.ogg, rhythm.ogg, vocals.ogg
+	//  This would generally be used after a file import
+	//If function is 2 and ogg_profile_name is not NULL, the file name for the loaded OGG file is written to the pointer
+	//  This is to ensure that the OGG profile for the new project created from a file import has the user-selected OGG file name
 int eof_load_complete_song(char * filename);
 int eof_destroy_ogg(void);	//Frees chart audio
 int eof_save_ogg(char * fn);	//Writes the memory buffered chart audio OGG (eof_music_data) to the specified file

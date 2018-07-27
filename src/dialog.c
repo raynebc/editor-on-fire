@@ -184,12 +184,17 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				eof_main_menu_activated = 1;
 				player->mouse_obj = 0;
 			}
-			else if(!eof_keyboard_shortcut && ((eof_key_code == KEY_M) || (eof_key_code == KEY_V) || (eof_key_code == KEY_C) || (eof_key_code == KEY_D) || (eof_key_code == KEY_PLUS_PAD) || (eof_key_code == KEY_MINUS_PAD) || (eof_key_code == KEY_R) || (eof_key_code == KEY_Y) || (eof_key_code == KEY_B) || (eof_key_code == KEY_G)))
+			else if(!eof_keyboard_shortcut && ((eof_key_code == KEY_M) || (eof_key_code == KEY_V) || (eof_key_code == KEY_C) || (eof_key_code == KEY_D) || (eof_key_code == KEY_PLUS_PAD) || (eof_key_code == KEY_MINUS_PAD) || (eof_key_code == KEY_R) || (eof_key_code == KEY_Y) || (eof_key_code == KEY_G)))
 			{	///Experimental:  User pressed a different ALT+key combination, seems like eof_key_code must be tested instead of eof_key_char,
 				/// possibly because only the characters associated with the main menu accelerators (ie. &F for the File menu) are sent to this
 				/// dialog for processing, but scan codes for other keys are still sent
 				///If a menu wasn't already opened, allow these key codes to exit the main menu
 				player->mouse_obj = 0;	///Not needed, but GDB isn't honoring the break point on the break statement
+				break;	//Escape from the menu system so the other key shortcut handling logic can process this
+			}
+			else if(!eof_keyboard_shortcut && (eof_key_code == KEY_B) && (KEY_EITHER_CTRL))
+			{	//Allow CTRL+ALT+B to break from the menu system
+				player->mouse_obj = 0;
 				break;	//Escape from the menu system so the other key shortcut handling logic can process this
 			}
 			else if(eof_mouse_z != mouse_z)

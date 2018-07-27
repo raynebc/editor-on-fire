@@ -1212,7 +1212,8 @@ EOF_SONG * eof_import_gh(const char * fn)
 		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
-		if(!eof_load_ogg(oggfn, 1))	//If user does not provide audio, fail over to using silent audio
+		ogg_profile_name = sp->tags->ogg[0].filename;	//Store the pointer to the OGG profile filename to be updated by eof_load_ogg()
+		if(!eof_load_ogg(oggfn, 2))	//If user does not provide audio, fail over to using silent audio
 		{
 			eof_destroy_song(sp);
 			eof_free_ucode_table();

@@ -1126,8 +1126,9 @@ int eof_menu_file_lyrics_import(void)
 
 int eof_menu_file_midi_import(void)
 {
-	char * returnedfn = NULL, *initial;
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
 	char tempfilename[1024] = {0};
+	char *initial;
 
 	eof_log("eof_menu_file_midi_import() entered", 1);
 
@@ -1155,6 +1156,7 @@ int eof_menu_file_midi_import(void)
 	if(returnedfn)
 	{
 		eof_log("\tImporting MIDI", 1);
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
 
 		if(eof_song)
 		{
@@ -1187,7 +1189,7 @@ int eof_menu_file_midi_import(void)
 			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);
-			(void) replace_filename(eof_last_midi_path, returnedfn, "", 1024);	//Set the last loaded MIDI file path
+			(void) replace_filename(eof_last_midi_path, returnedfn_path, "", 1024);	//Set the last loaded MIDI file path
 		}
 		else
 		{
@@ -2488,7 +2490,8 @@ int eof_test_controller_conflict(EOF_CONTROLLER *controller, int start, int stop
 
 int eof_menu_file_feedback_import(void)
 {
-	char * returnedfn = NULL, *initial;
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
+	char *initial;
 	int jumpcode = 0;
 
 	eof_log("eof_menu_file_feedback_import() entered", 1);
@@ -2516,6 +2519,7 @@ int eof_menu_file_feedback_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
 		(void) ustrcpy(eof_filename, returnedfn);
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
@@ -2543,7 +2547,7 @@ int eof_menu_file_feedback_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			(void) replace_filename(eof_last_db_path, returnedfn, "", 1024);	//Set the last loaded Feedback file path
+			(void) replace_filename(eof_last_db_path, returnedfn_path, "", 1024);	//Set the last loaded Feedback file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 		}
@@ -4303,7 +4307,8 @@ int eof_menu_prompt_save_changes(void)
 
 int eof_menu_file_gh_import(void)
 {
-	char * returnedfn = NULL, *initial;
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
+	char *initial;
 
 	eof_log("eof_menu_file_gh_import() entered", 1);
 
@@ -4330,6 +4335,8 @@ int eof_menu_file_gh_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
+
 		/* destroy loaded song */
 		if(eof_song)
 		{
@@ -4345,7 +4352,7 @@ int eof_menu_file_gh_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			(void) replace_filename(eof_last_gh_path, returnedfn, "", 1024);	//Set the last loaded GH file path
+			(void) replace_filename(eof_last_gh_path, returnedfn_path, "", 1024);	//Set the last loaded GH file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 		}
 		else
@@ -4979,8 +4986,6 @@ int eof_gp_import_common(const char *fn)
 		free(eof_parsed_gp_file->instrument_types);
 		free(eof_parsed_gp_file);
 
-		(void) replace_filename(eof_last_gp_path, fn, "", 1024);	//Set the last loaded GP file path
-
 		if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
 		{	//If the track's difficulty limit is in place
 			for(ctr2 = 0; ctr2 < eof_get_num_tremolos(eof_song, eof_selected_track); ctr2++)
@@ -5020,7 +5025,8 @@ int eof_gp_import_common(const char *fn)
 
 int eof_menu_file_gp_import(void)
 {
-	char * returnedfn = NULL, *initial;
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
+	char *initial;
 	char newchart = 0;	//Is set to nonzero if a new chart is created to store the imported RS file
 
 	if(!eof_song || !eof_song_loaded)
@@ -5053,6 +5059,8 @@ int eof_menu_file_gp_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{	//If a file was selected for import
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
+
 		if(newchart)
 		{	//If a project wasn't already opened when the import was started
 			if(!eof_command_line_gp_import(returnedfn))
@@ -5071,6 +5079,7 @@ int eof_menu_file_gp_import(void)
 		{	//A project was already open
 			(void) eof_gp_import_common(returnedfn);
 		}
+		(void) replace_filename(eof_last_gp_path, returnedfn_path, "", 1024);	//Set the last loaded GP file path
 	}
 	eof_render();
 
@@ -5349,7 +5358,6 @@ int eof_rs_import_common(char *fn)
 			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the tech notes
 			eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Activate the normal note set
 			(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
-			(void) replace_filename(eof_last_rs_path, fn, "", 1024);	//Set the last loaded Rocksmith file path
 		}
 		else
 		{
@@ -5367,7 +5375,8 @@ int eof_rs_import_common(char *fn)
 
 int eof_menu_file_rs_import(void)
 {
-	char * returnedfn = NULL, *initial;
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
+	char *initial;
 	char newchart = 0;	//Is set to nonzero if a new chart is created to store the imported RS file
 
 	eof_cursor_visible = 0;
@@ -5406,6 +5415,8 @@ int eof_menu_file_rs_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{	//If a file was selected for import
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
+
 		if(newchart)
 		{	//If a project wasn't already opened when the import was started
 			if(!eof_command_line_rs_import(returnedfn))
@@ -5424,6 +5435,7 @@ int eof_menu_file_rs_import(void)
 		{	//A project was already open
 			(void) eof_rs_import_common(returnedfn);	//Import the specified Rocksmith XML file into the active pro guitar/bass track
 		}
+		(void) replace_filename(eof_last_rs_path, returnedfn_path, "", 1024);	//Set the last loaded Rocksmith file path
 	}
 	eof_render();
 
@@ -5741,7 +5753,8 @@ int eof_menu_file_sonic_visualiser_import(void)
 
 int eof_menu_file_bf_import(void)
 {
-	char * returnedfn = NULL, *initial;
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
+	char *initial;
 
 	eof_log("eof_menu_file_bf_import() entered", 1);
 
@@ -5769,6 +5782,7 @@ int eof_menu_file_bf_import(void)
 	if(returnedfn)
 	{
 		eof_log("\tImporting Bandfuse", 1);
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
 
 		if(eof_song)
 		{
@@ -5790,7 +5804,7 @@ int eof_menu_file_bf_import(void)
 			eof_sort_notes(eof_song);
 			eof_fixup_notes(eof_song);
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);
-			(void) replace_filename(eof_last_bf_path, returnedfn, "", 1024);	//Set the last loaded Bandfuse file path
+			(void) replace_filename(eof_last_bf_path, returnedfn_path, "", 1024);	//Set the last loaded Bandfuse file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_log("\tImport complete", 1);
 		}
