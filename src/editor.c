@@ -653,7 +653,10 @@ int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapv
 	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
 	char foundgridsnapvalue = 0, foundgridsnapnum = 0;
 	unsigned long closestpos = 0, closestdiff = 0, diff;
-	int foundbeat = -1;
+	long foundbeat = -1;
+
+	if(closestgridpos)
+		*closestgridpos = ULONG_MAX;	//Unless this function returns successfully, this pointer will store an error value
 
 	if(!eof_song)
 		return 0;

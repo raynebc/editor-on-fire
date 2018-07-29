@@ -135,6 +135,78 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	return curpos;
 }
 
+void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long ctr2, ctr3;
+
+	if(!sp || (track >= sp->tracks))
+		return;	//Invalid parameters
+
+	if(track == EOF_TRACK_DRUM)
+	{	//If this is the drum track
+		return;	//Skip it, lane 6 for the drum track indicates a sixth lane and not HOPO, and drum notes can't be slider notes
+	}
+
+	eof_track_sort_notes(sp, track);	//Sort the notes so the logic can assume they're in chronological order
+	for(ctr2 = eof_get_track_size(sp, track); ctr2 > 0; ctr2--)
+	{	//For each note in the track, in reverse order
+		unsigned long pos = eof_get_note_pos(sp, track, ctr2 - 1);
+		long len = eof_get_note_length(sp, track, ctr2 - 1);
+		unsigned char type = eof_get_note_type(sp, track, ctr2 - 1);
+		unsigned long tflags;
+
+		if(!(eof_get_note_note(sp, track, ctr2 - 1) & 32))
+			continue;	//If this note does not use lane 6 (a "N 5 #" .chart entry), skip it
+		tflags = eof_get_note_tflags(sp, track, ctr2 - 1);
+		if(tflags & EOF_NOTE_TFLAG_GHL_W3)
+		{	//If this note is meant to be on lane 6 (a white 3 GHL note)
+			eof_set_note_tflags(sp, track, ctr2 - 1, tflags & ~EOF_NOTE_TFLAG_GHL_W3);	//Clear that flag
+			continue;	//And skip this note
+		}
+
+		for(ctr3 = 0; ctr3 < eof_get_track_size(sp, track); ctr3++)
+		{	//For each note in the track
+			unsigned long pos2 = eof_get_note_pos(sp, track, ctr3);
+
+			if(pos2 > pos + len)
+			{	//If this note occurs after the span of the HOPO notation
+				break;	//Break from inner loop
+			}
+			if((pos2 >= pos) && (eof_get_note_type(sp, track, ctr3) == type))
+			{	//If this note is within the span of the HOPO notation and is in the same difficulty
+				eof_set_note_flags(sp, track, ctr3, (eof_get_note_flags(sp, track, ctr3) ^ EOF_NOTE_FLAG_F_HOPO));	//Toggle the forced HOPO flag for this note
+			}
+		}
+		eof_track_delete_note(sp, track, ctr2 - 1);	//Delete the gem
+	}
+
+	/* check if unofficial "N 6 #" slider notation was found */
+	//Mark notes that have slider status
+	for(ctr2 = eof_get_track_size(sp, track); ctr2 > 0; ctr2--)
+	{	//For each note in the track, in reverse order
+		unsigned long pos = eof_get_note_pos(sp, track, ctr2 - 1);
+		long len = eof_get_note_length(sp, track, ctr2 - 1);
+		unsigned char type = eof_get_note_type(sp, track, ctr2 - 1);
+
+		if(!(eof_get_note_note(sp, track, ctr2 - 1) & 64))
+			continue;	//If this note does not use lane 7 (a "N 6 #" .chart entry), skip it
+
+		for(ctr3 = 0; ctr3 < eof_get_track_size(sp, track); ctr3++)
+		{	//For each note in the track
+			unsigned long pos2 = eof_get_note_pos(sp, track, ctr3);
+
+			if(pos2 > pos + len)
+			{	//If this note occurs after the span of the HOPO notation
+				break;	//Break from inner loop
+			}
+			if((pos2 >= pos) && (eof_get_note_type(sp, track, ctr3) == type))
+			{	//If this note is within the span of the HOPO notation and is in the same difficulty
+				eof_set_note_flags(sp, track, ctr3, (eof_get_note_flags(sp, track, ctr3) | EOF_GUITAR_NOTE_FLAG_IS_SLIDER));	//Set the slider flag for this note
+			}
+		}
+	}
+}
+
 EOF_SONG * eof_import_chart(const char * fn)
 {
 	struct FeedbackChart * chart = NULL;
@@ -146,7 +218,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char oldoggpath[1024] = {0};
 	struct al_ffblk info = {0, 0, 0, {0}, NULL}; // for file search
 	int ret=0;
-	struct dBAnchor * current_anchor;
 	struct dbText * current_event;
 	unsigned long chartpos, max_chartpos;
 	EOF_BEAT_MARKER * new_beat = NULL;
@@ -162,7 +233,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	int difficulty;
 	unsigned long lastchartpos = 0;
 	unsigned long b = 0;
-	unsigned long ctr, ctr2, ctr3, tracknum;
+	unsigned long ctr, ctr2, tracknum;
 	char importguitartypes = 0, importbasstypes = 0;	//Tracks whether 5 or 6 lane guitar and bass types are to be imported (default is whichever one type is encountered, otherwise user is prompted)
 	unsigned long threshold;
 	unsigned int gridsnap = 0;
@@ -171,6 +242,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char lyric_status = 0;	//0 = Off and awaiting a phrase start marker, 1 = On and awaiting a phrase end marker
 	double lyric_on = 0.0, lyric_off = 0.0;
 	unsigned long pos, closestpos = 0;
+	char limit_warned = 0;
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -288,28 +360,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 	/* set up beat markers */
 	sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
-	current_anchor = chart->anchors;
 	current_event = chart->events;
 	chartpos = max_chartpos = 0;
 
 	/* find the highest chartpos for beat markers */
-	while(current_anchor)
-	{
-		if(current_anchor->chartpos > max_chartpos)
-		{
-			max_chartpos = current_anchor->chartpos;
-		}
-
-		current_anchor = current_anchor->next;
-	}
-	while(current_event)
-	{
-		if(current_event->chartpos > max_chartpos)
-		{
-			max_chartpos = current_event->chartpos;
-		}
-		current_event = current_event->next;
-	}
+	max_chartpos = chart->chart_length;	//ImportFeedback() tracked the highest used chart position
 
 	/* create beat markers */
 	beatlength = chart->resolution;
@@ -519,6 +574,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			unsigned long ch_solo_pos = 0;	//Tracks the start position of the last Clone Hero solo event
 			char ch_solo_on = 0;			//Tracks whether a Clone Hero solo event is in progress
 			unsigned long notepos, closestpos = 0;
+			unsigned long notes_created = 0, notes_combined = 0;	//Statistics for debugging
 
 			tracknum = sp->track[track]->tracknum;
 			tp = sp->legacy_track[tracknum];
@@ -656,6 +712,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 							}
 							prev_note = new_note;		//Track the last created note
 							lastchartpos = current_note->chartpos;	//Track the position of the gem for HOPO tracking
+							notes_created++;
+						}
+						else if(!limit_warned)
+						{	//If the note failed to be created
+							if((tp->notes == EOF_MAX_NOTES) && !limit_warned)
+							{	//The note limit was reached, and the user wasn't warned about this yet
+								allegro_message("Warning:  At least one instrument track being imported exceeds EOF's note limit and cannot be imported in its entirety.  You can try to work around this by importing a copy of the chart that has had one or more other difficulties deleted from it.");
+								limit_warned = 1;
+							}
 						}
 					}
 					else
@@ -667,6 +732,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 								new_note->tflags |= EOF_NOTE_TFLAG_GHL_W3;	//Apply this flag to reflect that this lane 6 gem is a W3 note and not a toggle HOPO marker
 							}
 							new_note->note |= note;			//Add the translated note bitmask
+							notes_combined++;
 						}
 					}
 					lastpos = current_note->chartpos;
@@ -674,6 +740,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 				}
 				current_note = current_note->next;
 			}//For each note in the track
+
+			eof_chart_import_process_note_markers(sp, track);	//Process and remove toggle HOPO and slider marker gems where applicable so they no longer count against the track's note limit
+
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImported track \"%s\" difficulty %d:  %lu notes created, %lu gems combined to form chords", sp->track[track]->name, difficulty, notes_created, notes_combined);
+			eof_log(eof_log_string, 2);
 
 			//Apply HOPO status to notes within the threshold
 			for(ctr = 0, prev_note = NULL; ctr < tp->notes; ctr++)
@@ -829,74 +900,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
-	/* check if unofficial toggle HOPO notation was found */
+	//Create slider phrases
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
-		if(ctr == EOF_TRACK_DRUM)
-		{	//If this is the drum track
-			continue;	//Skip it, lane 6 for the drum track indicates a sixth lane and not HOPO
-		}
-		eof_track_sort_notes(sp, ctr);	//Sort the notes so the logic can assume they're in chronological order
-		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
-		{	//For each note in the track
-			unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
-			long len = eof_get_note_length(sp, ctr, ctr2);
-			unsigned char type = eof_get_note_type(sp, ctr, ctr2);
-			unsigned long tflags;
-
-			if(!(eof_get_note_note(sp, ctr, ctr2) & 32))
-				continue;	//If this note does not use lane 6 (a "N 5 #" .chart entry), skip it
-			tflags = eof_get_note_tflags(sp, ctr, ctr2);
-			if(tflags & EOF_NOTE_TFLAG_GHL_W3)
-			{	//If this note is meant to be on lane 6 (a white 3 GHL note)
-				eof_set_note_tflags(sp, ctr, ctr2, tflags & ~EOF_NOTE_TFLAG_GHL_W3);	//Clear that flag
-				continue;	//And skip this note
-			}
-
-			for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
-			{	//For each note in the track
-				unsigned long pos2 = eof_get_note_pos(sp, ctr, ctr3);
-
-				if(pos2 > pos + len)
-				{	//If this note occurs after the span of the HOPO notation
-					break;	//Break from inner loop
-				}
-				if((pos2 >= pos) && (eof_get_note_type(sp, ctr, ctr3) == type))
-				{	//If this note is within the span of the HOPO notation and is in the same difficulty
-					eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) ^ EOF_NOTE_FLAG_F_HOPO));	//Toggle the forced HOPO flag for this note
-				}
-			}
-			eof_set_note_note(sp, ctr, ctr2, 0);	//Clear the gem so it will be removed by the cleanup logic and not be allowed to also import as an open strum note (gem on lane 6) if any 5 lane chords are converted to open strum notes
-		}
-	}
-
-	/* check if unofficial "N 6 #" slider notation was found */
-	for(ctr = 1; ctr < sp->tracks; ctr++)
-	{	//For each track
-		//Mark notes that have slider status
-		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
-		{	//For each note in the track
-			unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);
-			long len = eof_get_note_length(sp, ctr, ctr2);
-			unsigned char type = eof_get_note_type(sp, ctr, ctr2);
-
-			if(!(eof_get_note_note(sp, ctr, ctr2) & 64))
-				continue;	//If this note does not use lane 7 (a "N 6 #" .chart entry), skip it
-
-			for(ctr3 = 0; ctr3 < eof_get_track_size(sp, ctr); ctr3++)
-			{	//For each note in the track
-				unsigned long pos2 = eof_get_note_pos(sp, ctr, ctr3);
-
-				if(pos2 > pos + len)
-				{	//If this note occurs after the span of the HOPO notation
-					break;	//Break from inner loop
-				}
-				if((pos2 >= pos) && (eof_get_note_type(sp, ctr, ctr3) == type))
-				{	//If this note is within the span of the HOPO notation and is in the same difficulty
-					eof_set_note_flags(sp, ctr, ctr3, (eof_get_note_flags(sp, ctr, ctr3) | EOF_GUITAR_NOTE_FLAG_IS_SLIDER));	//Set the slider flag for this note
-				}
-			}
-		}
 		//Add slider phrases to encompass marked notes
 		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 		{	//For each note in the track
@@ -1022,6 +1028,8 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	static struct dBAnchor emptyanchor;
 	static struct dbText emptytext;
 	static struct dbNote emptynote;
+
+	unsigned long gemcount = 0;		//Used to count and log the number of gems parsed for each instrument section
 
 	eof_log("ImportFeedback() entered", 1);
 
@@ -1184,6 +1192,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					}
 					else
 					{	//This is an instrument section
+						gemcount = 0;	//Reset this counter
 						temp=(void *)Validate_dB_instrument(buffer);
 						if(temp == NULL)					//Not a valid Feedback instrument section name
 						{
@@ -1235,6 +1244,11 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				free(textbuffer);
 				free(buffer2);
 				return NULL;					//Malformed file, return error
+			}
+			if(currentsection == 4)
+			{	//If this was an instrument track
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsed instrument section \"%s\":  %lu gems", curtrack->trackname, gemcount);
+				eof_log(eof_log_string, 2);
 			}
 			currentsection=0;
 			continue;							//Skip ahead to the next line
@@ -1322,6 +1336,8 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
+			if(A > chart->chart_length)
+				chart->chart_length = A;		//Track the highest used chart position
 
 		//Skip whitespace and parse to equal sign
 			index=0;	//Reset index, to parse an int from after the equal sign
@@ -1482,6 +1498,8 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
+			if(A > chart->chart_length)
+				chart->chart_length = A;		//Track the highest used chart position
 
 		//Skip whitespace and parse to equal sign
 			index=0;	//Reset index, to parse an int from after the equal sign
@@ -1595,6 +1613,8 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				free(buffer2);
 				return NULL;					//Invalid number, return error
 			}
+			if(A > chart->chart_length)
+				chart->chart_length = A;		//Track the highest used chart position
 
 		//Skip whitespace and parse to equal sign
 			index=0;	//Reset index, to parse an int from after the equal sign
@@ -1777,6 +1797,9 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2', ...
 			}
 			curnote->duration=C;			//The third number read is the note duration
+			if(A + C > chart->chart_length)
+				chart->chart_length = A + C;		//Track the highest used chart position
+			gemcount++;						//Track the number of gems parsed and stored into the list
 		}//Process instrument tracks
 
 	//Error: Content in file outside of a defined section
@@ -1799,6 +1822,9 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	free(textbuffer);
 	free(buffer2);
 	(void) pack_fclose(inf);
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEnd of import.  Highest used chart position detected as %lu", chart->chart_length);
+	eof_log(eof_log_string, 2);
 
 	return chart;
 }

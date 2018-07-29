@@ -67,6 +67,8 @@ struct FeedbackChart
 	struct dBAnchor *anchors;	//Linked list of anchors
 	struct dbText *events;		//Linked list of text events
 	struct dbTrack *tracks;		//Linked list of note tracks
+
+	unsigned long chart_length;	//The highest chart position used in the imported chart (including note lengths)
 };
 
 int Read_dB_string(char *source, char **str1, char **str2);
@@ -102,6 +104,8 @@ unsigned long FindLongestLineLength_ALLEGRO(const char *filename, char exit_on_e
 	//An adaptation of FoFLC's FindLongestLineLength() function that uses Allegro's file I/O routines in order to
 	//avoid problems with the standard C functions being unable to handle filenames with special characters
 	//Returns 0 on error
+void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track);
+	//Processes and deletes toggle HOPO markers and slider markers from the specified track to remove them and help an imported track from avoid exceeding EOF_MAX_NOTES
 EOF_SONG * eof_import_chart(const char * fn);
 	//Invokes ImportFeedback() and transfers the chart data to EOF
 
