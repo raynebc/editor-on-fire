@@ -4592,18 +4592,21 @@ int eof_menu_track_repair_grid_snap(void)
 
 		if(!eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
 		{	//If this note is not grid snapped
-			if(closestpos < notepos)
-			{	//If the closest grid snap is earlier than the note
-				offset = notepos - closestpos;
-			}
-			else
-			{	//The closest grid snap is later than the note
-				offset = closestpos - notepos;
-			}
+			if(closestpos != ULONG_MAX)
+			{	//If the nearest grid snap position was determined
+				if(closestpos < notepos)
+				{	//If the closest grid snap is earlier than the note
+					offset = notepos - closestpos;
+				}
+				else
+				{	//The closest grid snap is later than the note
+					offset = closestpos - notepos;
+				}
 
-			if(offset > threshold)
-			{	//If this is the most out of grid-snap note found so far
-				threshold = offset;
+				if(offset > threshold)
+				{	//If this is the most out of grid-snap note found so far
+					threshold = offset;
+				}
 			}
 		}
 	}
@@ -4632,32 +4635,35 @@ int eof_menu_track_repair_grid_snap(void)
 
 		if(!eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
 		{	//If this note is not grid snapped
-			char direction;
+			if(closestpos != ULONG_MAX)
+			{	//If the nearest grid snap position was determined
+				char direction;
 
-			if(closestpos < notepos)
-			{	//If the closest grid snap is earlier than the note
-				direction = -1;
-				offset = notepos - closestpos;
-			}
-			else
-			{	//The closest grid snap is later than the note
-				direction = 1;
-				offset = closestpos - notepos;
-			}
-
-			if(offset <= threshold)
-			{	//If the note is within the specified threshold distance from the closest grid snap
-				if(!undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
+				if(closestpos < notepos)
+				{	//If the closest grid snap is earlier than the note
+					direction = -1;
+					offset = notepos - closestpos;
+				}
+				else
+				{	//The closest grid snap is later than the note
+					direction = 1;
+					offset = closestpos - notepos;
 				}
 
-				eof_selection.multi[ctr] = 1;		//Update the selection array to indicate this note is selected, for use with the tech note auto adjust logic
-				tncount += eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, direction, 0, &undo_made);	//Move this note's tech notes accordingly by the same number of ms as the normal note
-				eof_set_note_pos(eof_song, eof_selected_track, ctr, closestpos);
-				eof_selection.multi[ctr] = 0;		//Deselect this note
-				count++;
+				if(offset <= threshold)
+				{	//If the note is within the specified threshold distance from the closest grid snap
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+
+					eof_selection.multi[ctr] = 1;		//Update the selection array to indicate this note is selected, for use with the tech note auto adjust logic
+					tncount += eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, direction, 0, &undo_made);	//Move this note's tech notes accordingly by the same number of ms as the normal note
+					eof_set_note_pos(eof_song, eof_selected_track, ctr, closestpos);
+					eof_selection.multi[ctr] = 0;		//Deselect this note
+					count++;
+				}
 			}
 		}
 	}

@@ -9617,9 +9617,13 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 				else
 				{	//If using the closest grid snap setting of ANY grid size
 					(void) eof_is_any_grid_snap_position(sections[ctr].start_pos, NULL, NULL, NULL, &newstart);
+					if(newstart == ULONG_MAX)	//If the nearest grid snap position for the section beginning was not found
+						continue;	//Skip it
 					if(sectiontype != EOF_FRET_HAND_POS_SECTION)
 					{	//Fret hand positions don't define an end position
 						(void) eof_is_any_grid_snap_position(sections[ctr].end_pos, NULL, NULL, NULL, &newend);
+						if(newend == ULONG_MAX)	//If the nearest grid snap position for the section ending was not found
+							continue;	//Skip it
 					}
 				}
 				if(undo_made && (*undo_made == 0))
@@ -9721,6 +9725,8 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 			else
 			{	//If using the closest grid snap setting of ANY grid size
 				(void) eof_is_any_grid_snap_position(tp->technote[ctr]->pos, NULL, NULL, NULL, &newstart);
+				if(newstart == ULONG_MAX)	//If the nearest grid snap position was not found
+					continue;	//Skip it
 			}
 			if(undo_made && (*undo_made == 0))
 			{	//If an undo state needs to be made

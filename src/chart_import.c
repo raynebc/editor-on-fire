@@ -593,9 +593,12 @@ EOF_SONG * eof_import_chart(const char * fn)
 				notepos = chartpos_to_msec(chart, current_note->chartpos, &gridsnap) + 0.5;	//Round up
 				if(gridsnap && !eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
 				{	//If this chart position should be a grid snap, but the timing conversion did not result in this
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCorrecting chart position from %lums to %lums", notepos, closestpos);
-					eof_log(eof_log_string, 1);
-					notepos = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
+					if(closestpos != ULONG_MAX)
+					{	//If the nearest grid snap position was determined
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCorrecting chart position from %lums to %lums", notepos, closestpos);
+						eof_log(eof_log_string, 1);
+						notepos = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
+					}
 				}
 
 				/* import star power */
@@ -806,7 +809,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 		pos = chartpos_to_msec(chart, current_event->chartpos, &gridsnap) + 0.5;	//Store the real timestamp associated with the event, rounded up to nearest millisecond
 		if(gridsnap && !eof_is_any_grid_snap_position(pos, NULL, NULL, NULL, &closestpos))
 		{	//If this chart position should be a grid snap, but the timing conversion did not result in this
-			pos = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
+			if(closestpos != ULONG_MAX)
+			{	//If the nearest grid snap position was determined
+				pos = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
+			}
 		}
 
 		if(!ustricmp(current_event->text, "[solo_on]") && !solo_status)

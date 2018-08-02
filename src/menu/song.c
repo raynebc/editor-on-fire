@@ -1503,7 +1503,10 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 		eof_set_3D_lane_positions(0);
 		eof_set_2D_lane_positions(0);
-		eof_determine_phrase_status(eof_song, eof_selected_track);
+		if(updatetitle)
+		{	//If the program window title was updated, the active track was changed instead of just changed in the background (ie. for secondary piano roll rendering)
+			eof_determine_phrase_status(eof_song, eof_selected_track);
+		}
 		eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
 		eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
 	}

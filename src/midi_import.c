@@ -3638,9 +3638,12 @@ unsigned long eof_repair_midi_import_grid_snap(void)
 			{	//If this note was flagged as being grid snapped during MIDI import
 				if(!eof_is_any_grid_snap_position(eof_get_note_pos(eof_song, ctr, ctr2), NULL, NULL, NULL, &closestpos))
 				{	//If the note is no longer grid snapped
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCorrecting note position from %lums to %lums", eof_get_note_pos(eof_song, ctr, ctr2), closestpos);
-					eof_log(eof_log_string, 1);
-					eof_set_note_pos(eof_song, ctr, ctr2, closestpos);	//Set it to what was just determined the nearest grid snap for it
+					if(closestpos != ULONG_MAX)
+					{	//If the nearest grid snap position was determined
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCorrecting note position from %lums to %lums", eof_get_note_pos(eof_song, ctr, ctr2), closestpos);
+						eof_log(eof_log_string, 1);
+						eof_set_note_pos(eof_song, ctr, ctr2, closestpos);	//Set it to what was just determined the nearest grid snap for it
+					}
 				}
 				tflags &= ~EOF_NOTE_TFLAG_RESNAP;			//Clear this temporary flag
 				eof_set_note_tflags(eof_song, ctr, ctr2, tflags);	//Update the note's temporary flags

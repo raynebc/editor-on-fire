@@ -708,6 +708,9 @@ void eof_mix_seek(unsigned long pos)
 	eof_mix_next_note = -1;
 	eof_mix_next_percussion = -1;
 
+	if(eof_disable_sound_processing)	//If sound cues are disabled
+		return;							//Don't do anything here
+
 	eof_mix_sample_count = eof_mix_msec_to_sample(pos, alogg_get_wave_freq_ogg(eof_music_track));
 	for(i = 0; i < eof_mix_claps; i++)
 	{

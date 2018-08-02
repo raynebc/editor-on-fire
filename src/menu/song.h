@@ -111,6 +111,7 @@ int eof_menu_track_selected_14(void);
 int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle);
 	//Changes to the specified track number
 	//If updatetitle is nonzero, EOF's program window title is set (it should not be updated when used to render the second piano roll)
+	//If updatetitle is zero, eof_determine_phrase_status() is not called because this parameter value is currently only used for secondary piano roll rendering, where phrases don't need rebuilding
 
 int eof_menu_song_waveform_settings(void);
 int eof_menu_song_waveform(void);	//Toggle the display of the waveform on/off, generating the waveform data if necessary

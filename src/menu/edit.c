@@ -842,9 +842,12 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 				(void) eof_is_any_grid_snap_position(new_pos, NULL, NULL, NULL, &closestpos);	//Get the grid snap position nearest the destination position
 				if(closestpos != new_pos)
 				{	//If they aren't the same position
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting lyric paste position from %ldms to %lums", new_pos, closestpos);
-					eof_log(eof_log_string, 1);
-					new_pos = closestpos;	//Update the destination timestamp for the note;
+					if(closestpos != ULONG_MAX)
+					{	//If the nearest grid snap position was determined
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting lyric paste position from %ldms to %lums", new_pos, closestpos);
+						eof_log(eof_log_string, 1);
+						new_pos = closestpos;	//Update the destination timestamp for the note;
+					}
 				}
 			}
 			new_end_pos = eof_put_porpos(temp_lyric.endbeat - first_beat + this_beat, temp_lyric.porendpos, newpasteoffset);
@@ -1633,9 +1636,12 @@ int eof_menu_edit_paste_logic(int oldpaste)
 				(void) eof_is_any_grid_snap_position(newnotepos, NULL, NULL, NULL, &closestpos);	//Get the grid snap position nearest the destination position
 				if(closestpos != newnotepos)
 				{	//If they aren't the same position
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting note paste position from %lums to %lums", newnotepos, closestpos);
-					eof_log(eof_log_string, 1);
-					newnotepos = closestpos;	//Update the destination timestamp for the note;
+					if(closestpos != ULONG_MAX)
+					{	//If the nearest grid snap position was determined
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting note paste position from %lums to %lums", newnotepos, closestpos);
+						eof_log(eof_log_string, 1);
+						newnotepos = closestpos;	//Update the destination timestamp for the note;
+					}
 				}
 			}
 			newnotelength = eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, newpasteoffset) - newnotepos;

@@ -1441,6 +1441,10 @@ int eof_menu_note_resnap_logic(int any)
 		else
 		{
 			(void) eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &newnotepos);	//Store the closest grid snap position of any size into newnotepos
+			if(newnotepos == ULONG_MAX)
+			{	//If the nearest grid snap position was NOT determined
+				newnotepos = notepos;	//Have the note retain its current timestamp
+			}
 		}
 		if(!user_warned)
 		{	//If the user hasn't been warned about resnapped notes overlapping and combining
@@ -1488,6 +1492,10 @@ int eof_menu_note_resnap_logic(int any)
 		else
 		{
 			(void) eof_is_any_grid_snap_position(tailpos, NULL, NULL, NULL, &newnotepos);	//Store the closest grid snap position of any size into newnotepos
+			if(newnotepos == ULONG_MAX)
+			{	//If the nearest grid snap position was NOT determined
+				newnotepos = tailpos;	//Have the tail retain its current ending timestamp
+			}
 		}
 		eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
 		eof_snap_length_logic(&eof_tail_snap);
