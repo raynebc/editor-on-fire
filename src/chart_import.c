@@ -361,7 +361,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	/* set up beat markers */
 	sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
 	current_event = chart->events;
-	chartpos = max_chartpos = 0;
+	chartpos = 0;
 
 	/* find the highest chartpos for beat markers */
 	max_chartpos = chart->chart_length;	//ImportFeedback() tracked the highest used chart position
@@ -906,6 +906,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 
+	eof_sort_notes(sp);	//Ensure the notes are sorted as the slider phrase creation logic will expect
+
 	//Create slider phrases
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
@@ -916,11 +918,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 			{	//If this note is a slider note
 				unsigned long end = 0;
 				unsigned long start = eof_get_note_pos(sp, ctr, ctr2);	//Track the start position of this run of slider notes
+
 				while(ctr2 + 1 < eof_get_track_size(sp, ctr))
 				{	//While there are additional notes to check
-					if(!(eof_get_note_flags(sp, ctr, ctr2 + 1) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+					long next = eof_track_fixup_next_note(sp, ctr, ctr2);	//Determine if there's another note in this track difficulty
+					if(next <= 0)
+						break;	//If there are no other notes, exit inner loop
+					if(!(eof_get_note_flags(sp, ctr, next) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
 						break;	//If the next note isn't a slider note, exit inner loop
-					if(eof_get_note_pos(sp, ctr, ctr2 + 1) > eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2) + 1000)
+					if(eof_get_note_pos(sp, ctr, next) > eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2) + 1000)
 						break;	//If the next note begins more than a second after this one ends, exit inner loop
 					ctr2++;		//Otherwise include this note in the slider note phrase
 				}
@@ -1059,7 +1065,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	*chart=emptychart;		//Reliably set all member variables to 0/NULL
 	chart->resolution=192;	//Default this to 192
 
-	buffer2=(char *)malloc_err(maxlinelength);	//For now, assume that any string parsed from one of the lines in the chart file will fitin this buffer
+	buffer2=(char *)malloc_err(maxlinelength);	//For now, assume that any string parsed from one of the lines in the chart file will fit in this buffer
 
 	eof_log("\tBuffering Feedback chart file into memory", 1);
 	textbuffer = (char *)eof_buffer_file(filename, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer

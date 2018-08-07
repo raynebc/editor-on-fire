@@ -1713,8 +1713,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 			}
 			if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION))
-			{
-				eof_mix_play_note(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note);
+			{	//The up arrow key transposes the selected lyric, and should trigger the vocal tones cue
+				if(eof_input_mode != EOF_INPUT_FEEDBACK)
+				{	//Except for Feedback input mode, which performs a seeks instead of a transpose
+					eof_mix_play_note(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note);
+				}
 			}
 		}
 		key[KEY_UP] = 0;
@@ -1813,8 +1816,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 			}
 			if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION))
-			{
-				eof_mix_play_note(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note);
+			{	//The down arrow key transposes the selected lyric, and should trigger the vocal tones cue
+				if(eof_input_mode != EOF_INPUT_FEEDBACK)
+				{	//Except for Feedback input mode, which performs a seeks instead of a transpose
+					eof_mix_play_note(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note);
+				}
 			}
 		}
 		key[KEY_DOWN] = 0;

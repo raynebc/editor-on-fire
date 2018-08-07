@@ -2598,7 +2598,11 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		case EOF_LYRIC_PHRASE_SECTION:	//Lyric Phrase section
 			if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 			{	//Lyric phrases are only valid for vocal tracks
-				return eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, difficulty);
+				int retval = eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, difficulty);
+				if(retval)
+				{	//The lyric line was added
+					sp->vocal_track[tracknum]->line[sp->vocal_track[tracknum]->lines - 1].flags = flags;	//Apply overdrive if applicable
+				}
 			}
 		return 0;	//Return error
 
