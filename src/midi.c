@@ -315,13 +315,13 @@ int qsort_helper3(const void * e1, const void * e2)
 		if((*thing2)->note == 108)
 			return 1;	//Left hand position note (pro guitar) written before gem notes
 
-		//If two note on events occur at the same time for the same note, but one of them has a velocity of 0 (note off), sort the note on to be first
+		//If two note on events occur at the same time for the same note, but one of them has a velocity of 0 (note off), sort the note off to be first
 		if((*thing1)->note == (*thing2)->note)
 		{	//If both note on events pertain to the same note
 			if((*thing1)->velocity && !(*thing2)->velocity)	//Thing 1 is a note on, thing 2 is a note off
-				return -1;
-			if((*thing2)->velocity && !(*thing1)->velocity)	//Thing 2 is a note on, thing 1 is a note off
 				return 1;
+			if((*thing2)->velocity && !(*thing1)->velocity)	//Thing 2 is a note on, thing 1 is a note off
+				return -1;
 		}
 	}
 
@@ -361,17 +361,11 @@ int qsort_helper3(const void * e1, const void * e2)
 	   This requires that all notes/phrases are at least 1 delta/ms long */
 	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x80))
 	{
-		if((*thing1)->note == (*thing2)->note)
-			return -1;	//Unless the note on and off are for the same note (intentionally being used for 0 length HOPO markers), in which case sort the note on to be first
-		else
-			return 1;
+		return 1;
 	}
 	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0x90))
 	{
-		if((*thing1)->note == (*thing2)->note)
-			return 1;	//Unless the note on and off are for the same note (intentionally being used for 0 length HOPO markers), in which case sort the note on to be first
-		else
-			return -1;
+		return -1;
 	}
 
 	/* if two text events are at the same position, their index number determines their sort order */
@@ -1054,11 +1048,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				/* write forced HOPO */
 				if(noteflags & EOF_NOTE_FLAG_F_HOPO)
-				{	//Write a 0 delta length marker to ensure overlapping notes of opposing HOPO status can work
+				{
 					unsigned long markerlength = deltalength;	//By default, a forced HOPO marker will be the length of the affected note
 
 					if(noteflags & EOF_NOTE_FLAG_CRAZY)
-						markerlength = 0;	//But if the note has crazy status, the marker will be 0 ticks, ensuring it can overlap notes without affecting their HOPO status
+						markerlength = 1;	//But if the note has crazy status, the marker will be 1 tick, ensuring it can overlap notes without affecting their HOPO status
 
 					if(isghl)
 					{	//If writing a GHL format track
@@ -1099,11 +1093,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				/* write forced non-HOPO */
 				else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
-				{	//Write a 0 delta length marker to ensure overlapping notes of opposing HOPO status can work
+				{
 					unsigned long markerlength = deltalength;	//By default, a forced HOPO off marker will be the length of the affected note
 
 					if(noteflags & EOF_NOTE_FLAG_CRAZY)
-						markerlength = 0;	//But if the note has crazy status, the marker will be 0 ticks, ensuring it can overlap notes without affecting their HOPO status
+						markerlength = 1;	//But if the note has crazy status, the marker will be 1 ticks, ensuring it can overlap notes without affecting their HOPO status
 
 					if(isghl)
 					{	//If writing a GHL format track

@@ -1085,12 +1085,14 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 				(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].start_pos), fp);
 				tfloat = eof_get_porpos(phrase[sectionnum].start_pos);
 				(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
+				eof_write_clipboard_position_snap_data(fp, phrase[sectionnum].start_pos);		//Write the grid snap position data for this section's start position
 
 				if(sectiontype != EOF_FRET_HAND_POS_SECTION)
 				{	//Each of the auto adjusted phrase types have an end position variable to adjust, except for fret hand positions, which instead store the fret number with that value
 					(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].end_pos), fp);
 					tfloat = eof_get_porpos(phrase[sectionnum].end_pos);
 					(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);
+					eof_write_clipboard_position_snap_data(fp, phrase[sectionnum].end_pos);		//Write the grid snap position data for this section's end position
 				}
 			}
 		}
@@ -1320,14 +1322,25 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			{	//For each instance of this type of section in the track
 				/* which beat */
 				b = pack_igetl(fp);
-				(void) pack_fread(&tfloat, (long)sizeof(double), fp);
+				(void) pack_fread(&tfloat, (long)sizeof(double), fp);								//Read the floating point position of the section's start position
+				eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);		//Read the grid snap position data for the section's start position
+
 				phrase[sectionnum].start_pos = eof_put_porpos(b, tfloat, 0.0);
+				if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
+				{	//If the adjusted grid snap position can be calculated
+					phrase[sectionnum].start_pos = gridpos;	//Update the adjusted position for the section
+				}
 
 				if(sectiontype != EOF_FRET_HAND_POS_SECTION)
 				{	//Each of the auto adjusted phrase types have an end position variable to adjust, except for fret hand positions, which instead store the fret number with that value
 					b = pack_igetl(fp);
-					(void) pack_fread(&tfloat, (long)sizeof(double), fp);
+					(void) pack_fread(&tfloat, (long)sizeof(double), fp);								//Read the floating point position of the section's end position
+					eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);		//Read the grid snap position data for the section's end position
 					phrase[sectionnum].end_pos = eof_put_porpos(b, tfloat, 0.0);
+					if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
+					{	//If the adjusted grid snap position can be calculated
+						phrase[sectionnum].end_pos = gridpos;	//Update the adjusted position for the section
+					}
 				}
 			}
 		}

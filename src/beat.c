@@ -105,7 +105,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	beat_length = eof_calc_beat_length(sp, 0);
 	sp->beat[0]->flags |= EOF_BEAT_FLAG_ANCHOR;	//The first beat is always an anchor
 	for(i = 1; i < sp->beats; i++)
-	{
+	{	//For each beat
 		curpos += beat_length;
 		sp->beat[i]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
 		sp->beat[i]->pos = sp->beat[i]->fpos + 0.5;	//Round up

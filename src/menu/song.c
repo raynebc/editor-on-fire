@@ -1150,7 +1150,7 @@ int eof_menu_song_properties(void)
 			allegro_message("Invalid MIDI offset.");
 		}
 		if(eof_song->beat[0]->pos != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
-		{
+		{	//If the first beat's position changed
 			for(i = 0; i < eof_song->beats; i++)
 			{
 				eof_song->beat[i]->fpos += (double)(eof_song->tags->ogg[eof_selected_ogg].midi_offset - old_offset);
@@ -1202,7 +1202,6 @@ int eof_menu_song_properties(void)
 				}
 			}
 		}
-		eof_calculate_beats(eof_song);
 		eof_truncate_chart(eof_song);
 		eof_fixup_notes(eof_song);
 		eof_fix_window_title();
