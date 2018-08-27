@@ -575,7 +575,7 @@ int eof_menu_beat_bpm_change(void)
 		if(eof_bpm_change_dialog[4].flags == D_SELECTED)
 		{	//If the "Adjust Notes" option was selected
 			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure the selected beat is anchored before calling the auto-adjust logic
-			(void) eof_menu_edit_cut(eof_selected_beat + 1, 1);
+			(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
 			eof_song->beat[eof_selected_beat]->flags = old_flags;
 		}
 		newppqn = 60000000.0 / bpm;
@@ -605,10 +605,11 @@ int eof_menu_beat_bpm_change(void)
 
 		if(eof_bpm_change_dialog[4].flags == D_SELECTED)
 		{	//If the "Adjust Notes" option was selected
-			(void) eof_menu_edit_cut_paste(eof_selected_beat + 1, 1);
+			(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
 		}
 		eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate, but only after the notes are optionally auto-adjusted
-		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+		eof_detect_difficulties(eof_song, eof_selected_track);	//Update note highlighting
 	}//If the user activated the "OK" button
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;

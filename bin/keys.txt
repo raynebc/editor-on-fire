@@ -181,7 +181,10 @@ Note and Beat Editing:
         having no anchors after it in order to change the tempo of the anchor before it and
         leave the selected beat un-anchored.  This can be handy for syncing a beat map against
         the waveform graph.
-    
+
+        Hold Ctrl when dragging the first beat marker to move the first beat marker's position
+        while leaving the second beat marker's position unchanged (ie. resize the first beat).
+
 
     Right-Click (beats):
 

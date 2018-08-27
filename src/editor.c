@@ -7085,7 +7085,7 @@ void eof_editor_logic_common(void)
 									}
 								}
 								else
-								{
+								{	//CTRL+click and dragging the first beat marker resizes the first beat without moving the other beats
 									eof_song->beat[0]->fpos += rdiff;
 									eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round up to nearest ms
 								}
@@ -7105,14 +7105,14 @@ void eof_editor_logic_common(void)
 									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 									eof_moving_anchor = 1;
 									eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-									eof_adjusted_anchor = 1;
+									eof_adjusted_anchor = 1;	//Track that a beat is being moved
 									if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 									{
 										if(KEY_EITHER_SHIFT)
 										{
 											eof_shift_used = 1;	//Track that the SHIFT key was used
 										}
-										(void) eof_menu_edit_cut(eof_selected_beat, 0);
+										(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
 									}
 								}
 								eof_song->beat[eof_selected_beat]->fpos += eof_mickeys_x * eof_zoom;
@@ -7126,7 +7126,7 @@ void eof_editor_logic_common(void)
 								{	//Update beat timings to reflect the beat being clicked and drug
 									eof_recalculate_beats(eof_song, eof_selected_beat);
 								}
-								if(KEY_EITHER_CTRL && !was_already_anchored && eof_selected_beat)
+								if(KEY_EITHER_CTRL && !was_already_anchored && eof_selected_beat)	//CTRL+click and dragging a beat marker after the first changes the previous anchor's tempo
 								{	//If the beat that was just moved wasn't already an anchor, and CTRL was held, and verifying again that the selected beat is not the first beat
 									if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
 									{	//If there are no anchors after the selected beat, reset this beat so that it doesn't stay an anchor, leaving only the previous anchor's tempo as modified
@@ -7167,14 +7167,14 @@ void eof_editor_logic_common(void)
 						}
 					}
 					if(eof_adjusted_anchor)
-					{
+					{	//If a beat was moved
 						if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 						{	//Auto-adjust the notes after clicking, dragging and releasing a beat
 							if(KEY_EITHER_SHIFT)
 							{
 								eof_shift_used = 1;	//Track that the SHIFT key was used
 							}
-							(void) eof_menu_edit_cut_paste(eof_selected_beat, 0);
+							(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
 							eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 						}
 						eof_fixup_notes(eof_song);										//Update note highlighting

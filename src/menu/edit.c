@@ -244,8 +244,8 @@ DIALOG eof_custom_snap_dialog[] =
 	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
 	{ d_agup_text_proc,		 56,  84,  64,  8,   2,    23,  0,    0,      0,   0,   "Intervals:",NULL, NULL },
 	{ eof_custom_grid_snap_edit_proc,112, 80, 66, 20,  2,   23,   0,      0,   2,   0,    eof_etext2,  "0123456789", NULL },
-	{ d_agup_radio_proc,     42,  105, 68,  15,  2,    23,  0,    0,      0,   0,   "&Beat",      NULL, NULL },
-	{ d_agup_radio_proc,     120, 105, 68,  15,  2,    23,  0,    0,      0,   0,   "&Measure",   NULL, NULL },
+	{ d_agup_radio_proc,     42,  105, 60,  15,  2,    23,  0,    0,      0,   0,   "&Beat",      NULL, NULL },
+	{ d_agup_radio_proc,     120, 105, 80,  15,  2,    23,  0,    0,      0,   0,   "&Measure",   NULL, NULL },
 	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT, 0,   0,   "OK",        NULL, NULL },
 	{ d_agup_button_proc,    120, 125, 68,  28,  2,    23,  0,    D_EXIT, 0,   0,   "Cancel",    NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
