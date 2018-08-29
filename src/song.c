@@ -2602,6 +2602,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				if(retval)
 				{	//The lyric line was added
 					sp->vocal_track[tracknum]->line[sp->vocal_track[tracknum]->lines - 1].flags = flags;	//Apply overdrive if applicable
+					return 1;	//Return success
 				}
 			}
 		return 0;	//Return error
@@ -7800,6 +7801,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	{	//If the clipboard couldn't be opened
 		return 0;
 	}
+	(void) pack_igetl(fp);			//Read the source EOF instance number
 	sourcetrack = pack_igetl(fp);	//Read the source track of the clipboard data
 	(void) pack_getc(fp);			//Read the GHL mode status
 	copy_notes = pack_igetl(fp);	//Read the number of notes on the clipboard
@@ -7854,6 +7856,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	{	//If the clipboard couldn't be opened
 		return 0;
 	}
+	(void) pack_igetl(fp);			//Read the source EOF instance number
 	(void) pack_igetl(fp);			//Read the source track of the clipboard data
 	(void) pack_getc(fp);			//Read the GHL mode status
 	copy_notes = pack_igetl(fp);	//Read the number of notes on the clipboard

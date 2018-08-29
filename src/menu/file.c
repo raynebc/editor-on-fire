@@ -3814,8 +3814,14 @@ int eof_save_helper(char *destfilename, char silent)
 
 	if(!silent)
 	{	//If warning messages aren't suppressed
+		unsigned long seektrack = eof_selected_track;	//Used to store the active track difficulty and seek position to be restored after prompts to cancel save are declined
+		unsigned long seekdiff = eof_note_type;
+		unsigned long seekpos = eof_music_pos - eof_av_delay;
+
 		if(eof_save_helper_checks())	//If the user cancels the save via one of the prompts
 			return 1;	//Return cancellation
+
+		eof_seek_and_render_position(seektrack, seekdiff, seekpos);	//Restore the active track and seek position from before the checks
 	}
 
 	/* build the target file name */

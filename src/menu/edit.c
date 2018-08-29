@@ -723,11 +723,12 @@ int eof_menu_edit_copy_vocal(void)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
+	(void) pack_iputl(eof_log_id, fp);		//Store the source EOF instance number
 	(void) pack_iputl(copy_notes, fp);
 	(void) pack_iputl(first_beat, fp);
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
+	{	//For each lyric
 		if((eof_selection.track != EOF_TRACK_VOCALS) || !eof_selection.multi[i])
 			continue;	//If the lyric isn't selected, skip it
 
@@ -754,7 +755,7 @@ int eof_menu_edit_copy_vocal(void)
 		/* write lyric data to disk */
 		eof_write_clipboard_note(fp, eof_song, EOF_TRACK_VOCALS, i, first_pos);
 		eof_write_clipboard_position_snap_data(fp, eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, i));	//Write the grid snap position data for this lyric's position
-	}
+	}//For each lyric
 	(void) pack_fclose(fp);
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -781,6 +782,8 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	PACKFILE * fp;
 	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste lyrics starting at the seek position instead of the original in-beat positions
 	char clipboard_path[50];
+	unsigned long source_id = 0;
+	unsigned long lastlinenum = 0xFFFFFFFF, linestart = 0, lineend = 0;	//Used to create lyric lines
 
 	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
 	int gridsnapbeat = 0;
@@ -805,6 +808,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
+	source_id = pack_igetl(fp);			//Read the source EOF instance number
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
@@ -816,7 +820,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 		newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);
 	}
 	for(i = 0; i < copy_notes; i++)
-	{
+	{	//For each lyric in the clipboard file
 		/* read the note */
 		eof_read_clipboard_note(fp, &temp_lyric, EOF_MAX_LYRIC_LENGTH + 1);
 		eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
@@ -875,6 +879,36 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 		{
 			paste_pos[paste_count] = new_lyric->pos;
 			paste_count++;
+		}
+
+		if(source_id == eof_log_id)
+		{	//If the copy/paste is being performed within the same EOF instance
+			if(temp_lyric.phrasenum != lastlinenum)
+			{	//If this pasted lyric's source line number is different from that of the previous pasted lyric
+				if(lastlinenum != 0xFFFFFFFF)
+				{	//If the previous pasted lyric's source lyric was in a line
+					if(lastlinenum < eof_song->vocal_track[0]->lines)
+					{	//Bounds check
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, eof_song->vocal_track[0]->line[lastlinenum].flags, NULL);
+					}
+				}
+				linestart = new_lyric->pos;	//Track start of new line
+			}
+			if(temp_lyric.phrasenum != 0xFFFFFFFF)
+			{	//If this pasted lyric's source lyric is in a line
+				lineend = new_lyric->pos + new_lyric->length;	//Track end position of line
+			}
+			lastlinenum = temp_lyric.phrasenum;
+		}
+	}//For each lyric in the clipboard file
+	if(source_id == eof_log_id)
+	{	//If the copy/paste is being performed within the same EOF instance
+		if(lastlinenum != 0xFFFFFFFF)
+		{	//If a lyric line was in progress when the last of the lyrics were pasted, add the line now
+			if(lastlinenum < eof_song->vocal_track[0]->lines)
+			{	//Bounds check
+				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, eof_song->vocal_track[0]->line[lastlinenum].flags, NULL);
+			}
 		}
 	}
 	(void) pack_fclose(fp);
@@ -1412,6 +1446,7 @@ int eof_menu_edit_copy(void)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
+	(void) pack_iputl(eof_log_id, fp);			//Store the source EOF instance number
 	(void) pack_iputl(eof_selected_track, fp);	//Store the source track number
 	(void) pack_putc(eof_track_is_ghl_mode(eof_song, eof_selected_track), fp);	//Store the GHL mode status
 	(void) pack_iputl(copy_notes, fp);			//Store the number of notes that will be stored to clipboard
@@ -1483,6 +1518,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	int gridsnapbeat = 0;
 	char gridsnapvalue = 0;
 	unsigned char gridsnapnum = 0;
+	unsigned long source_id = 0;
 
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
@@ -1501,6 +1537,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	{	//If new paste logic is being used, return from function if the first note would paste after the last beat
 		return 1;
 	}
+	source_id = pack_igetl(fp);			//Read the source EOF instance number
 	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
 	srctracknum = eof_song->track[sourcetrack]->tracknum;
 	isghl = pack_getc(fp);				//Read the GHL mode status
@@ -1581,6 +1618,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			allegro_message("Error re-opening clipboard");
 			return 1;
 		}
+		source_id = pack_igetl(fp);			//Read the source EOF instance number
 		sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
 		isghl = pack_getc(fp);				//Read the GHL mode status
 		copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
@@ -1736,30 +1774,36 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			continue;	//If the source track isn't a pro guitar track, skip the logic below
 
 		//Otherwise paste arpeggio/handshape phrasing
-		if(temp_note.arpeggnum != lastarpeggnum)
-		{	//If this pasted note's source arpeggio is different from that of the previous pasted note
+		if(source_id == eof_log_id)
+		{	//If the copy/paste is being performed within the same EOF instance
+			if(temp_note.phrasenum != lastarpeggnum)
+			{	//If this pasted note's source arpeggio is different from that of the previous pasted note
+				if(lastarpeggnum != 0xFFFFFFFF)
+				{	//If the previous pasted note's source note was in an arpeggio/handshape
+					if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
+					{	//Bounds check
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].flags, NULL);
+					}
+				}
+				arpeggstart = np->pos;	//Track start of new arpeggio
+			}
+			if(temp_note.phrasenum != 0xFFFFFFFF)
+			{	//If this pasted note's source note is in an arpeggio/handshape
+				arpeggend = np->pos + np->length;	//Track end position of arpeggio
+			}
+			lastarpeggnum = temp_note.phrasenum;
+		}
+	}//For each note in the clipboard file
+	if(source_id == eof_log_id)
+	{	//If the copy/paste is being performed within the same EOF instance
+		if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If copying from a pro guitar track and pasting into a pro guitar track
 			if(lastarpeggnum != 0xFFFFFFFF)
-			{	//If the previous pasted note's source note was in an arpeggio/handshape
+			{	//If an arpeggio phrase was in progress when the last of the notes were pasted, add the phrase now
 				if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
 				{	//Bounds check
 					(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].flags, NULL);
 				}
-			}
-			arpeggstart = np->pos;	//Track start of new arpeggio
-		}
-		if(temp_note.arpeggnum != 0xFFFFFFFF)
-		{	//If this pasted note's source note is in an arpeggio/handshape
-			arpeggend = np->pos + np->length;	//Track end position of arpeggio
-		}
-		lastarpeggnum = temp_note.arpeggnum;
-	}//For each note in the clipboard file
-	if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-	{	//If copying from a pro guitar track and pasting into a pro guitar track
-		if(lastarpeggnum != 0xFFFFFFFF)
-		{	//If an arpeggio phrase was in progress when the last of the notes were pasted, add the phrase now
-			if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
-			{	//Bounds check
-				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].flags, NULL);
 			}
 		}
 	}
@@ -4061,7 +4105,7 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	temp_note->bendstrength = pack_getc(fp);	//Read the note's bend strength
 	temp_note->slideend = pack_getc(fp);		//Read the note's slide end position
 	temp_note->unpitchend = pack_getc(fp);		//Read the note's unpitched slide end position
-	temp_note->arpeggnum = pack_igetl(fp);		//Read the arpeggio/handshape number the note is in
+	temp_note->phrasenum = pack_igetl(fp);		//Read the arpeggio/handshape/lyric phrase number the note is in
 }
 
 void eof_read_clipboard_position_snap_data(PACKFILE *fp, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum)
@@ -4080,9 +4124,12 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	double tfloat;
 	unsigned char frets[8] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
 	unsigned char finger[8] = {0};	//Used to store NULL finger data to support copying legacy notes to a pro guitar track
+	unsigned long tracknum, ctr;
 
 	if(!fp || !sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || !track)
 		return;	//Invalid parameters
+
+	tracknum = sp->track[track]->tracknum;
 
 	/* write the note */
 	(void) eof_save_song_string_pf(eof_get_note_name(sp, track, note), fp);		//Write the note's name
@@ -4100,11 +4147,10 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);	//Write the percent representing the note's end position within a beat
 	(void) pack_iputl(eof_get_note_flags(sp, track, note), fp);	//Write the note's flags
 
-	/* Write pro guitar specific data to disk, or zeroed data */
+	/* Write pro guitar specific data to disk */
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If this is a pro guitar note
-		unsigned long arpeggnum = 0xFFFFFFFF, ctr;
-		unsigned long tracknum = sp->track[track]->tracknum;
+		unsigned long arpeggnum = 0xFFFFFFFF;
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
 		EOF_PRO_GUITAR_NOTE *np = tp->note[note];	//Simplify
 
@@ -4128,6 +4174,23 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	}
 	else
 	{
+		unsigned long linenum = 0xFFFFFFFF;	//If a lyric is being copied to the clipboard, and it is in a lyric line, this number will change to reflect that line number
+
+		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		{	//If this is a lyric, obtain lyric line data to be written to the clipboard
+			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[tracknum];
+			unsigned long pos = eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, note);
+
+			for(ctr = 0; ctr < tp->lines; ctr++)
+			{	//For each lyric line in this track
+				if((pos >= tp->line[ctr].start_pos) && (pos <= tp->line[ctr].end_pos))
+				{	//If the lyric being written to the clipboard is inside the lyric line
+					linenum = ctr;	//Record this lyric line number
+					break;
+				}
+			}
+		}
+
 		(void) pack_iputl(0, fp);			//Write a blank extended track flag (for now, only pro guitar tracks will use these)
 		(void) pack_putc(0, fp);			//Write a legacy bitmask indicating that the original note bitmask is to be used
 		(void) pack_fwrite(frets, (long)sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
@@ -4136,7 +4199,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 		(void) pack_putc(0, fp);			//Write a blank bend strength
 		(void) pack_putc(0, fp);			//Write a blank slide end position
 		(void) pack_putc(0, fp);			//Write a blank unpitched slide end position
-		(void) pack_iputl(0xFFFFFFFF, fp);	//Write an undefined arpeggio/handshape phrase number
+		(void) pack_iputl(linenum, fp);		//Write the lyric line number associated with this lyric, if any
 	}
 }
 

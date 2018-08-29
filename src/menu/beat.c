@@ -539,9 +539,19 @@ int eof_menu_beat_bpm_change(void)
 	unsigned long cppqn, newppqn, i;
 	int old_flags;
 	double oldbpm;
+	static int first_launch = 1;
 
 	if(eof_song->tags->tempo_map_locked || (eof_selected_beat >= eof_song->beats))	//If the chart's tempo map is locked, or an invalid beat is selected
 		return 1;							//Return without making changes
+
+	if(first_launch)
+	{	//On first launch of this dialog in an EOF session
+		if(eof_note_auto_adjust)
+		{	//If the note auto-adjust preference is enabled
+			eof_bpm_change_dialog[4].flags = D_SELECTED;	//Check the "adjust notes" checkbox automatically
+		}
+		first_launch = 0;
+	}
 
 	cppqn = eof_song->beat[eof_selected_beat]->ppqn;
 	old_flags = eof_song->beat[eof_selected_beat]->flags;
