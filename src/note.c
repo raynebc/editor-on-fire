@@ -696,8 +696,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 	//Otherwise prepare it for rendering
 	(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
-	if(!ustricmp(notename, prevnotename))
-	{	//If this note and the previous one have the same name
+	if(!ustrcmp(notename, prevnotename))
+	{	//If this note and the previous one have the same name (case sensitive)
 		if(namefound == 1)
 		{	//If the name for this note was manually assigned
 			nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
@@ -1424,7 +1424,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	//Otherwise prepare the name for rendering
 	(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
-	if(!ustricmp(notename, prevnotename))
+	if(!ustrcmp(notename, prevnotename))
 	{	//If this note and the previous one have the same name
 		if(namefound == 1)
 		{	//If the name for this note was manually assigned

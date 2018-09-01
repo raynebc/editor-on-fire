@@ -242,7 +242,8 @@ int eof_menu_note_clear_accent_purple(void);	//Clears the accent bit on lane 5 (
 int eof_menu_note_clear_accent_orange(void);	//Clears the accent bit on lane 6 (originally colored orange)
 
 int eof_menu_split_lyric(void);
-int eof_menu_note_edit_name(void);				//Enables the name for selected notes to be altered
+int eof_menu_note_edit_name(void);		//Enables the name for selected notes to be altered
+int eof_name_search_replace(void);		//Performs search and replace for lyric text or note names
 
 int eof_menu_copy_solos_track_1(void);
 int eof_menu_copy_solos_track_2(void);

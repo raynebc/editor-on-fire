@@ -405,11 +405,12 @@ MENU eof_note_rocksmith_menu[] =
 MENU eof_note_lyrics_menu[] =
 {
 	{"&Edit Lyric\tL", eof_edit_lyric_dialog, NULL, 0, NULL},
-	{"&Split Lyric\tShift+S", eof_menu_split_lyric, NULL, 0, NULL},
+	{"Split Lyric\tShift+S", eof_menu_split_lyric, NULL, 0, NULL},
 	{"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
 	{"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
 	{"Import GP style lyric text", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
-	{"Remove pitch", eof_menu_lyric_remove_pitch, NULL, 0, NULL},
+	{"&Remove pitch", eof_menu_lyric_remove_pitch, NULL, 0, NULL},
+	{"&Search and replace", eof_name_search_replace, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -425,6 +426,13 @@ MENU eof_note_move_grid_snap_menu[] =
 {
 	{"&Backward\t" CTRL_NAME "+[", eof_menu_note_move_back_grid_snap, NULL, 0, NULL},
 	{"&Forward\t" CTRL_NAME "+]", eof_menu_note_move_forward_grid_snap, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_name_menu[] =
+{
+	{"&Edit", eof_menu_note_edit_name, NULL, 0, NULL},
+	{"&Search and replace", eof_name_search_replace, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -475,7 +483,7 @@ MENU eof_note_menu[] =
 	{"&Solos", NULL, eof_solo_menu, 0, NULL},
 	{"Star &Power", NULL, eof_star_power_menu, 0, NULL},
 	{"Delete", NULL, eof_menu_delete, 0, NULL},
-	{"Edit na&Me", eof_menu_note_edit_name, NULL, 0, NULL},
+	{"&Name", NULL, eof_note_name_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Cra&Zy", NULL, eof_note_crazy_menu, 0, NULL},
 	{"H&OPO", NULL, eof_legacy_hopo_menu, 0, NULL},
@@ -524,6 +532,21 @@ DIALOG eof_note_name_dialog[] =
 	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      EOF_NAME_LENGTH, 0,   eof_etext,        NULL, NULL },
 	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,               0,   "OK",             NULL, NULL },
 	{ d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,               0,   "Cancel",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_name_search_replace_dialog[] =
+{
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48,  314, 162, 2,   23,  0,    0,      0,   0,   "Search and replace", NULL, NULL },
+	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Replace:",   NULL, NULL },
+	{ d_agup_edit_proc,   70,  80,  230, 20,  2,   23,  0,    0,      255, 0,   eof_etext,    NULL, NULL },
+	{ d_agup_text_proc,   12,  110, 64,  8,   2,   23,  0,    0,      0,   0,   "With:",      NULL, NULL },
+	{ d_agup_edit_proc,   70,  106, 230, 20,  2,   23,  0,    0,      255, 0,   eof_etext2,   NULL, NULL },
+	{ d_agup_check_proc,  12,  130, 90,  16,  2,   23,  0,    0,      0,   0,   "Match case", NULL, NULL },
+	{ d_agup_check_proc,  12,  146, 220, 16,  2,   23,  0,    D_SELECTED,0,0,   "Retain first letter capitalization", NULL, NULL },
+	{ d_agup_button_proc, 67,  168, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",         NULL, NULL },
+	{ d_agup_button_proc, 163, 168, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",     NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -6837,6 +6860,86 @@ int eof_menu_note_edit_name(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
+	return D_O_K;
+}
+
+int eof_name_search_replace(void)
+{
+	unsigned long ctr, count = 0;
+	int note_selection_updated, focus;
+	char undo_made = 0, *ptr;
+	int result;
+
+	//Initialize the dialog
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+	{	//If a specific note/lyric is selected (ie. via click)
+		strncpy(eof_etext, eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), sizeof(eof_etext) - 1);	//Populate the "Replace" field with the note's/lyric's text
+		focus = 4;	//And set initial focus to the "With" field
+	}
+	else
+	{	//Otherwise empty the "Replace" field and set initial focus to it
+		eof_etext[0] = '\0';
+		focus = 2;
+	}
+	eof_etext2[0] = '\0';	//Empty the "With" field
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_name_search_replace_dialog);
+
+	if(eof_popup_dialog(eof_name_search_replace_dialog, focus) == 7)
+	{	//If the user clicked OK
+		if((eof_etext[0] != '\0') && (eof_etext2[0] != '\0') && strcmp(eof_etext, eof_etext2))
+		{	//If the "Replace" and "With" fields are both populated and aren't the same
+			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+			{	//For each note in the active track
+				if(eof_name_search_replace_dialog[5].flags == D_SELECTED)
+				{	//The user specified a case-sensitive search and replace
+					result = strcmp(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_etext);
+				}
+				else
+				{
+					result = strcmpi(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_etext);
+				}
+				if(!result)
+				{	//If the lyric matches the specified text (with the specified case sensitivity)
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					if(eof_name_search_replace_dialog[6].flags == D_SELECTED)
+					{	//The user specified to apply the replaced word's first letter capitalization
+						if(isalpha(eof_etext[0]) && isalpha(eof_etext2[0]))
+						{	//If the first letters of the search and replace terms are both alphabetical
+							ptr = eof_get_note_name(eof_song, eof_selected_track, ctr);
+							if(isupper(ptr[0]))
+							{	//If the first letter of the lyric instance being replaced is upper case
+								eof_etext2[0] = toupper(eof_etext2[0]);	//Force the first letter of the replace string to upper case
+							}
+							else
+							{	//Otherwise force the first letter of the replace string to lower case
+								eof_etext2[0] = tolower(eof_etext2[0]);
+							}
+						}
+					}
+					eof_set_note_name(eof_song, eof_selected_track, ctr, eof_etext2);	//Apply the "With" text to the lyric
+					count++;
+				}
+			}
+
+			allegro_message("%lu %s made.", count, ((count == 1) ? "replacement" : "replacements"));
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
 	return D_O_K;
 }
 
