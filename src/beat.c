@@ -213,7 +213,7 @@ void eof_change_accurate_ts(EOF_SONG * sp, char function)
 
 int eof_beat_is_anchor(EOF_SONG * sp, unsigned long cbeat)
 {
-	eof_log("eof_beat_is_anchor() entered", 2);
+	eof_log("eof_beat_is_anchor() entered", 3);
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
@@ -297,7 +297,7 @@ void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat)
 	double newppqn;
 	double multiplier = 1.0;	//This is the multiplier used to convert between beat lengths and quarter note lengths, depending on whether the accurate TS chart property is enabled
 
-	eof_log("eof_realign_beats() entered", 1);
+	eof_log("eof_realign_beats() entered", 3);
 	if(!sp)
 	{
 		return;
@@ -486,7 +486,7 @@ void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat)
 {
 	unsigned long i;
 
- 	eof_log("eof_song_delete_beat() entered", 2);
+ 	eof_log("eof_song_delete_beat() entered", 3);
 
 	if(sp && (beat < sp->beats))
 	{

@@ -573,7 +573,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			char gemtype = 0, lastgemtype = 0;	//Tracks whether the current and previously added gems are normal notes or technique markers
 			unsigned long ch_solo_pos = 0;	//Tracks the start position of the last Clone Hero solo event
 			char ch_solo_on = 0;			//Tracks whether a Clone Hero solo event is in progress
-			unsigned long notepos, closestpos = 0;
+			unsigned long notepos;
 			unsigned long notes_created = 0, notes_combined = 0;	//Statistics for debugging
 
 			tracknum = sp->track[track]->tracknum;
@@ -768,7 +768,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 								{	//If the previous note and the one before it aren't identical in which lanes they use, GH3's HOPO criteria have been met
 									if(!current_track->isdrums)
 									{	//If it isn't a drum track being imported
-										tp->note[ctr]->flags |= EOF_NOTE_FLAG_F_HOPO;	//The note is a hammer on note
+										tp->note[ctr]->flags ^= EOF_NOTE_FLAG_F_HOPO;	//The note is a hammer on note (toggle, since a toggle HOPO marker may have already been processed for this note and this would lead to the correct result)
 									}
 								}
 							}
@@ -867,9 +867,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 		else
 		{
-			char *ptr = strcasestr_spec(current_event->text, "lyric ");	//Check for this text string
+			char *lptr = strcasestr_spec(current_event->text, "lyric ");	//Check for this text string
 
-			if(ptr)
+			if(lptr)
 			{	//If this is a Clone Hero lyric definition
 				EOF_LYRIC *temp = eof_vocal_track_add_lyric(sp->vocal_track[0]);
 
@@ -878,7 +878,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					temp->note = 0;	//Clone Hero lyrics do not define pitch
 					temp->pos = pos;
 					temp->length = 1;	//Clone Hero lyrics do not define duration
-					ustrncpy(temp->text, ptr, sizeof(temp->text) - 1);	//Copy the event string that is expected to be the lyric text
+					(void) ustrncpy(temp->text, lptr, (int)sizeof(temp->text) - 1);	//Copy the event string that is expected to be the lyric text
 				}
 			}
 			else

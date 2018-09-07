@@ -211,10 +211,10 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 240, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  245, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  245, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 245, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_window_proc,0,   48,  482, 255, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  260, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  260, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 260, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248, 75,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
 	{ d_agup_check_proc, 16,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -236,6 +236,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 210, 202, 16,  2,   23,  0,    0,      1,   0,   "Abridged Rocksmith 2 export",NULL, NULL },
 	{ d_agup_check_proc, 16,  225, 220, 16,  2,   23,  0,    0,      1,   0,   "Allow RS2 extended ASCII lyrics",NULL, NULL },
 	{ d_agup_check_proc, 248, 225, 224, 16,  2,   23,  0,    0,      1,   0,   "Don't warn about INI differences",NULL, NULL },
+	{ d_agup_check_proc, 16,  240, 202, 16,  2,   23,  0,    0,      1,   0,   "Render mid beat tempos blue",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1594,6 +1595,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[22].flags = eof_abridged_rs2_export ? D_SELECTED : 0;				//Abridged Rocksmith 2 export
 	eof_import_export_preferences_dialog[23].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;	//Allow RS2 extended ASCII lyrics
 	eof_import_export_preferences_dialog[24].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;	//Don't warn about INI differences
+	eof_import_export_preferences_dialog[25].flags = eof_render_mid_beat_tempos_blue ? D_SELECTED : 0;		//Render mid beat tempos blue
 
 	do
 	{	//Run the dialog
@@ -1621,6 +1623,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_abridged_rs2_export = (eof_import_export_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
 			eof_rs2_export_extended_ascii_lyrics = (eof_import_export_preferences_dialog[23].flags == D_SELECTED ? 1 : 0);
 			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[24].flags == D_SELECTED ? 1 : 0);
+			eof_render_mid_beat_tempos_blue = (eof_import_export_preferences_dialog[25].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1645,6 +1648,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[22].flags = D_SELECTED;	//Abridged Rocksmith 2 export
 			eof_import_export_preferences_dialog[23].flags = D_SELECTED;	//Allow RS2 extended ASCII lyrics
 			eof_import_export_preferences_dialog[24].flags = 0;				//Don't warn about INI differences
+			eof_import_export_preferences_dialog[25].flags = D_SELECTED;	//Render mid beat tempos blue
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -6024,7 +6028,7 @@ int eof_menu_file_export_guitar_pro(void)
 
 	//Create temporary XML files
 	original_eof_abridged_rs2_export = eof_abridged_rs2_export;	//Back up the original setting of this user preference
-	eof_abridged_rs2_export = 0;	//Force unabridged RS2 export, as RocksmithToTab doesn't current support that XML variation
+	eof_abridged_rs2_export = 0;	//Force unabridged RS2 export, as RocksmithToTab doesn't currently support that XML variation
 	strncpy(temppath1, eof_temp_path_s, sizeof(temppath1) - 1);
 	strncpy(temppath2, eof_temp_path_s, sizeof(temppath2) - 1);
 	strncpy(temppath3, eof_temp_path_s, sizeof(temppath3) - 1);

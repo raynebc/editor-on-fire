@@ -795,7 +795,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write the phrases and do other setup common to both Rocksmith exports
 	originalbeatcount = sp->beats;	//Store the original beat count
-	if(!eof_rs_export_common(sp, track, fp, user_warned))
+	if(!eof_rs_export_common(sp, track, fp, user_warned, 1))
 	{	//If there was an error adding temporary phrases, sections, beats tot he project and writing the phrases to file
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		(void) pack_fclose(fp);
@@ -1936,7 +1936,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write the phrases and do other setup common to both Rocksmith exports
 	originalbeatcount = sp->beats;	//Store the original beat count
-	if(!eof_rs_export_common(sp, track, fp, user_warned))
+	if(!eof_rs_export_common(sp, track, fp, user_warned, 2))
 	{	//If there was an error adding temporary phrases, sections, beats tot he project and writing the phrases to file
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		(void) pack_fclose(fp);
@@ -5829,7 +5829,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	}//If the note is a bend, write the bendValues subtag and close the note tag
 }
 
-int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsigned short *user_warned)
+int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsigned short *user_warned, int target)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long *sectionlist = NULL, sectionlistsize, ctr, ctr2, numsections, phraseid = 0;
@@ -5984,9 +5984,12 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		//Write the phrase definition using the highest difficulty found among all instances of the phrase
 		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32, 2, 0, 1, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Filter out characters suspected of causing the game to crash (do not allow forward slash).  Filter non alphanumeric characters
 		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase name=\"%s\" maxDifficulty=\"%u\" ", buffer2, ongoingmaxdiff);
-		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "disparity", 0, 0);
-		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "ignore", 0, 0);
-		eof_conditionally_append_xml_long(buffer, sizeof(buffer), "solo", is_solo, 0);
+		if(target == 2)
+		{	//RS2 XMLs have these additional phrase attributes
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "disparity", 0, 0);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "ignore", 0, 0);
+			eof_conditionally_append_xml_long(buffer, sizeof(buffer), "solo", is_solo, 0);
+		}
 		(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
 		(void) pack_fputs(buffer, fp);
 	}//For each of the entries in the unique section (RS phrase) list

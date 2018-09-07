@@ -234,6 +234,7 @@ void eof_load_config(char * fn)
 	{	//If the deprecated eof_db_import_drop_mid_beat_tempos variable was not read, look for the variable's replacement
 		eof_imports_drop_mid_beat_tempos = get_config_int("preferences", "eof_imports_drop_mid_beat_tempos", 0);
 	}
+	eof_render_mid_beat_tempos_blue = get_config_int("preferences", "eof_render_mid_beat_tempos_blue", 1);
 	eof_db_import_suppress_5nc_conversion = get_config_int("preferences", "eof_db_import_suppress_5nc_conversion", 0);
 	eof_dont_auto_name_double_stops = get_config_int("preferences", "eof_dont_auto_name_double_stops", 0);
 	eof_section_auto_adjust = get_config_int("preferences", "eof_section_auto_adjust", 1);
@@ -568,6 +569,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_auto_complete_fingering", eof_auto_complete_fingering);
 	set_config_int("preferences", "eof_rbn_export_slider_hopo", eof_rbn_export_slider_hopo);
 	set_config_int("preferences", "eof_imports_drop_mid_beat_tempos", eof_imports_drop_mid_beat_tempos);
+	set_config_int("preferences", "eof_render_mid_beat_tempos_blue", eof_render_mid_beat_tempos_blue);
 	set_config_int("preferences", "eof_db_import_suppress_5nc_conversion", eof_db_import_suppress_5nc_conversion);
 	set_config_int("preferences", "eof_dont_auto_name_double_stops", eof_dont_auto_name_double_stops);
 	set_config_int("preferences", "eof_section_auto_adjust", eof_section_auto_adjust);

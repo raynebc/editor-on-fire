@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include <ctype.h>
+#include <string.h>
 #include "../agup/agup.h"
 #include "../undo.h"
 #include "../dialog.h"
@@ -6900,7 +6901,7 @@ int eof_name_search_replace(void)
 				}
 				else
 				{
-					result = strcmpi(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_etext);
+					result = ustricmp(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_etext);
 				}
 				if(!result)
 				{	//If the lyric matches the specified text (with the specified case sensitivity)

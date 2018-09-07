@@ -619,7 +619,7 @@ int eof_menu_beat_bpm_change(void)
 		}
 		eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate, but only after the notes are optionally auto-adjusted
 		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
-		eof_detect_difficulties(eof_song, eof_selected_track);	//Update note highlighting
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update note highlighting
 	}//If the user activated the "OK" button
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -824,11 +824,11 @@ void eof_menu_beat_delete_logic(unsigned long beat)
 	flags = eof_song->beat[beat]->flags;
 	eof_song_delete_beat(eof_song, beat);
 	if((eof_song->beat[beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_song->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR))
-	{
+	{	//If the beat after the newly deleted beat is an anchor, and the previous beat is also an anchor
 		double beats_length = eof_song->beat[beat]->fpos - eof_song->beat[beat - 1]->fpos;
 		double newbpm = 60000.0 / beats_length;
 		double newppqn = 60000000.0 / newbpm;
-		eof_song->beat[beat - 1]->ppqn = newppqn;
+		eof_song->beat[beat - 1]->ppqn = newppqn;	//Change the tempo on the previous beat
 	}
 	else if(eof_song->beat[beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR)
 	{
@@ -2558,7 +2558,7 @@ int eof_menu_beat_set_RBN_tempos(void)
 	unsigned long loop_ctr = 0;
 	unsigned long i;
 
-	eof_log("eof_move_text_events() entered", 1);
+	eof_log("eof_menu_beat_set_RBN_tempos() entered", 1);
 
 	if(!eof_song)
 		return 1;

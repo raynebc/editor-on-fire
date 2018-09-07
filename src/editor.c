@@ -6406,6 +6406,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					beatlinecol = makecol(218, 165, 32);	//Draw the beat line in Goldenrod instead
 				}
 			}
+
 			if(ismeasuremarker)
 			{	//If the beat marker is to be drawn thicker than normally
 				vline(window->screen, xcoord - 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, beatlinecol);	//Render from the top fret lane to the bottom one
@@ -6414,14 +6415,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, beatlinecol);
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
-			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
-			{
-				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
-			}
-			else
-			{
-				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : col2);
-			}
 		}//The beat would render visibly
 
 		//Render section names and event markers
@@ -6508,8 +6501,22 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{	//Draw anchor marker
-			line(window->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
-			line(window->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
+			int anchor_color = eof_color_red;	//By default, this arrow will draw in red
+
+			if((eof_song->beat[i]->flags & EOF_BEAT_FLAG_MIDBEAT) && eof_render_mid_beat_tempos_blue)
+			{	//If the beat was inserted during an import due to a mid beat tempo change, this status was retained and the "Render mid beat tempos blue" preference is enabled
+				anchor_color = eof_color_cyan;	//The anchor marker will draw in blue
+			}
+			line(window->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, anchor_color);
+			line(window->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, anchor_color);
+			if(xcoord >= 0)
+			{	//If the beat line would render visibly
+				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, anchor_color);
+			}
+		}
+		else if(xcoord >= 0)
+		{	//Draw normal beat line if the beat line would render visibly
+			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : col2);
 		}
 		ksname = eof_get_key_signature(eof_song, i, 0, 0);
 		if(ksname)

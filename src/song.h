@@ -132,7 +132,7 @@
 #define EOF_BEAT_FLAG_START_6_4   32
 #define EOF_BEAT_FLAG_CUSTOM_TS   64	//If this is nonzero, indicates that the first and second most significant bytes of the beat's flags store the TS numerator and denominator, respectively
 #define EOF_BEAT_FLAG_KEY_SIG    128
-#define EOF_BEAT_FLAG_MIDBEAT    256	//If this is nonzero, indicates that a beat was inserted to accommodate a mid-beat tempo change (during Feedback import)
+#define EOF_BEAT_FLAG_MIDBEAT    256	//If this is nonzero, indicates that a beat was inserted to accommodate a mid-beat tempo change (during Feedback/MIDI import)
 #define EOF_BEAT_FLAG_START_2_4  512
 #define EOF_BEAT_FLAG_EXTENDED 32768	//Reserve the highest unused bit to allow for another beat flag to be conditionally present
 
@@ -1055,6 +1055,8 @@ void eof_pro_guitar_track_enforce_chord_density(EOF_SONG *sp, unsigned long trac
 	//configured minimum note distance apart from the preceding notes (or 2ms, whichever is
 	//larger) crazy status is applied so that the chords in question export as high density
 
+int eof_length_within_target_range(unsigned long target, unsigned long length, double ratio);
+	//Returns nonzero if the specified length is within (target * ratio) of the given target length
 void eof_song_enforce_mid_beat_tempo_change_removal(void);
 	//If the "Imports drop mid beat tempos" preference is enabled, this function deletes beats that have the EOF_BEAT_FLAG_MIDBEAT flag
 	//Regardless of that preference's setting, the flag is removed from all beats in the project

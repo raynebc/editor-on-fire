@@ -233,7 +233,7 @@ void eof_music_rewind(void)
 void eof_music_forward(void)
 {
 	unsigned long amount = 0, target;
-	eof_log("eof_music_forward() entered", 2);
+	eof_log("eof_music_forward() entered", 3);
 
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)

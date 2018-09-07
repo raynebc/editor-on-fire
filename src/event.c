@@ -42,7 +42,7 @@ void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offse
 {
 	unsigned long i;
 
-	eof_log("eof_move_text_events() entered", 1);
+	eof_log("eof_move_text_events() entered", 3);
 
 	if(!sp)
 	{

@@ -182,6 +182,7 @@ int         eof_technote_auto_adjust = 1;		//If nonzero, tech note positions are
 int         eof_top_of_2d_pane_cycle_count_2 = 0;	//If nonzero, the SHIFT+F11 shortcut cycles between just hand positions and RS sections+phrases instead of also including chord names and tone changes
 int         eof_rbn_export_slider_hopo = 0;		//If nonzero, notes in slider phrases will be exported to RBN MIDI as forced HOPO notes
 int         eof_imports_drop_mid_beat_tempos = 0;	//If nonzero, any beats inserted due to mid beat tempo changes during Feedback and MIDI import are deleted after the import
+int         eof_render_mid_beat_tempos_blue = 0;	//If nonzero, any beats that were inserted during Feedback/MIDI import due to mid beat tempo changes retain the EOF_BEAT_FLAG_MIDBEAT flag and have some special 2D rendering logic
 int         eof_db_import_suppress_5nc_conversion = 0;	//If nonzero, five note chords are not converted to open notes during Feedback import
 int         eof_warn_missing_bass_fhps = 1;		//If nonzero, the Rocksmith export checks will complain about FHPs not being defined for bass arrangements
 int         eof_4_fret_range = 1;				//Defines the lowest fret number at which the fret hand has a range of 4 frets, for fret hand position generation (the default value of 1 indicates this range for the entire fretboard)
@@ -694,7 +695,7 @@ void eof_emergency_stop_music(void)
 
 void eof_switch_out_callback(void)
 {
-	eof_log("eof_switch_out_callback() entered", 2);
+	eof_log("eof_switch_out_callback() entered", 3);
 
 	if(eof_stop_playback_leave_focus)
 	{	//If the user preference is to stop playback when EOF leaves the foreground
@@ -709,7 +710,7 @@ void eof_switch_out_callback(void)
 
 void eof_switch_in_callback(void)
 {
-	eof_log("eof_switch_in_callback() entered", 2);
+	eof_log("eof_switch_in_callback() entered", 3);
 
 	eof_clear_input();
 	eof_read_keyboard_input(1);	//Update the keyboard input variables when EOF regains focus
@@ -1170,7 +1171,7 @@ void eof_clear_input(void)
 {
 	int i;
 
-	eof_log("eof_clear_input() entered", 2);
+	eof_log("eof_clear_input() entered", 3);
 
 	clear_keybuf();
 	for(i = 0; i < KEY_MAX; i++)
@@ -4771,7 +4772,7 @@ void eof_exit(void)
 
 void eof_all_midi_notes_off(void)
 {
-	eof_log("eof_all_midi_notes_off() entered", 2);
+	eof_log("eof_all_midi_notes_off() entered", 3);
 
 	if(midi_driver)
 	{
@@ -4787,7 +4788,7 @@ void eof_stop_midi(void)
 {
 	if(eof_midi_initialized)
 	{
-		eof_log("eof_stop_midi() entered", 2);
+		eof_log("eof_stop_midi() entered", 3);
 
 		eof_all_midi_notes_off();
 	}
@@ -5821,7 +5822,7 @@ int eof_validate_temp_folder(void)
 	#endif
 
 	//Change CWD if necessary
-	if(stricmp(correct_wd, cwd))
+	if(ustricmp(correct_wd, cwd))
 	{	//There's a discrepancy
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDetected working directory:  %s", cwd);
 		eof_log(eof_log_string, 1);

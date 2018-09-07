@@ -876,30 +876,30 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, 0, temp_lyric.name);
 		}
 		if(new_lyric)
-		{
+		{	//If the lyric was successfully created
 			paste_pos[paste_count] = new_lyric->pos;
 			paste_count++;
-		}
 
-		if(source_id == eof_log_id)
-		{	//If the copy/paste is being performed within the same EOF instance
-			if(temp_lyric.phrasenum != lastlinenum)
-			{	//If this pasted lyric's source line number is different from that of the previous pasted lyric
-				if(lastlinenum != 0xFFFFFFFF)
-				{	//If the previous pasted lyric's source lyric was in a line
-					if(lastlinenum < eof_song->vocal_track[0]->lines)
-					{	//Bounds check
-						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, eof_song->vocal_track[0]->line[lastlinenum].flags, NULL);
+			if(source_id == eof_log_id)
+			{	//If the copy/paste is being performed within the same EOF instance
+				if(temp_lyric.phrasenum != lastlinenum)
+				{	//If this pasted lyric's source line number is different from that of the previous pasted lyric
+					if(lastlinenum != 0xFFFFFFFF)
+					{	//If the previous pasted lyric's source lyric was in a line
+						if(lastlinenum < eof_song->vocal_track[0]->lines)
+						{	//Bounds check
+							(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, eof_song->vocal_track[0]->line[lastlinenum].flags, NULL);
+						}
 					}
+					linestart = new_lyric->pos;	//Track start of new line
 				}
-				linestart = new_lyric->pos;	//Track start of new line
+				if(temp_lyric.phrasenum != 0xFFFFFFFF)
+				{	//If this pasted lyric's source lyric is in a line
+					lineend = new_lyric->pos + new_lyric->length;	//Track end position of line
+				}
+				lastlinenum = temp_lyric.phrasenum;
 			}
-			if(temp_lyric.phrasenum != 0xFFFFFFFF)
-			{	//If this pasted lyric's source lyric is in a line
-				lineend = new_lyric->pos + new_lyric->length;	//Track end position of line
-			}
-			lastlinenum = temp_lyric.phrasenum;
-		}
+		}//If the lyric was successfully created
 	}//For each lyric in the clipboard file
 	if(source_id == eof_log_id)
 	{	//If the copy/paste is being performed within the same EOF instance

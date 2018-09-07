@@ -9131,29 +9131,140 @@ void eof_pro_guitar_track_enforce_chord_density(EOF_SONG *sp, unsigned long trac
 	}
 }
 
+int eof_length_within_target_range(unsigned long target, unsigned long length, double ratio)
+{
+	unsigned long diff, target_length;
+
+	diff = (target > length) ? (target - length) : (length - target);
+	target_length = target * ratio + 0.5;	//The maximum allowed difference between the specified length and target
+
+	if(diff <= target_length)
+		return 1;	//The given length is within the specified range of the target length
+
+	return 0;	//The given length is outside the specified range of the target length
+}
+
 void eof_song_enforce_mid_beat_tempo_change_removal(void)
 {
-	unsigned long ctr;
+	unsigned long ctr, last_normal_beat_length = 0, ongoing_beat_length = 0, this_beat_length, consecutive_count = 0, delete_count = 0;
 
-	if(!eof_song)
+	if(!eof_song || (eof_song->beats < 2))
 		return;
 
-	for(ctr = eof_song->beats; ctr > 0; ctr--)
-	{	//For each beat (in reverse order)
-		if(eof_song->beat[ctr - 1]->flags & EOF_BEAT_FLAG_MIDBEAT)
-		{	//If this beat was flagged as a mid-beat tempo change during an import
-			eof_song->beat[ctr - 1]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear the flag
-			if(eof_imports_drop_mid_beat_tempos)
-			{	//If the user set the preference to delete such tempo changes
-				if(ctr >= 2)
-				{	//If there is a previous event
-					if(eof_song->beat[ctr - 2]->flags & EOF_BEAT_FLAG_MIDBEAT)
+	//Pass 1:  Use Beat>Delete and "Beat>Delete Anchor" to combine/remove beats inserted due to mid-beat tempo changes
+	if(eof_imports_drop_mid_beat_tempos)
+	{	//If the user set the preference to delete mid beat tempo changes
+		for(ctr = 0; ctr < eof_song->beats - 1; ctr++)
+		{	//For each beat except the last
+			this_beat_length = eof_get_beat_length(eof_song, ctr);	//Store the beat length for reference
+
+			if(ctr && (eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_MIDBEAT))
+			{	//If this isn't the first beat, and the beat was flagged as a mid-beat tempo change during an import
+///Case 1:  A normal beat followed by a mid beat tempo change, where deleting the latter brings the former into a desired tempo
+				if(!(eof_song->beat[ctr - 1]->flags & EOF_BEAT_FLAG_MIDBEAT) && last_normal_beat_length &&
+					 eof_length_within_target_range(eof_get_beat_length(eof_song, ctr - 1) + eof_get_beat_length(eof_song, ctr), last_normal_beat_length, 0.15))
+				{	//If the previous beat is not a mid beat tempo change, but the sum of its length and this beat's length would be more appropriate for one beat length
+						eof_log("\tCase 1:  Removing mid beat tempo change:", 2);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeleting beat #%lu", ctr + delete_count);
+						eof_log(eof_log_string, 2);
+						eof_menu_beat_delete_logic(ctr);	//Delete the beat
+						ctr--;								//Rewind one beat to compensate for the increment at the end of the loop
+						delete_count++;	//Track the number of deleted beats so the native beat numbers can be logged
+				}
+				else if(ctr + 1 < eof_song->beats)
+				{	//If there is a next beat
+					if(eof_song->beat[ctr + 1]->flags & EOF_BEAT_FLAG_MIDBEAT)
 					{	//If it is also a mid-beat tempo change
-						continue;	//Skip deletion of this beat and delete the previous beat instead
+						ongoing_beat_length += this_beat_length;	//Add this beat's length to the ongoing count
+
+						//Compare the last normal beat length with the combined lengths of consecutive mid-tempo-change beats
+///Case 2:  Multiple consecutive mid beat tempo changes, where deleting one or more of them will result in a single beat in a desired tempo
+						if(eof_length_within_target_range(last_normal_beat_length, ongoing_beat_length, 0.15))
+						{	//If it's within the target length, this is a good set of beats to delete
+							unsigned long temp = consecutive_count;	//Store this
+
+							eof_log("\tCase 2:  Combining mid beat tempo changes:", 2);
+							while(consecutive_count)
+							{	//For as many beats as were determined to be good deletion candidates
+								if(ctr > 1)
+								{	//Bounds check
+									ctr--;								//Rewind one beat
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeleting beat #%lu", ctr + delete_count);
+									eof_log(eof_log_string, 2);
+									eof_menu_beat_delete_logic(ctr);	//Delete it
+									consecutive_count--;				//One less beat to delete
+								}
+							}
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRemoving mid beat flag from beat #%lu", ctr - 1 + delete_count);
+							eof_log(eof_log_string, 2);
+							delete_count += temp;	//Track the number of deleted beats so the native beat numbers can be logged
+							eof_song->beat[ctr - 1]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear the mid beat tempo flag from this combined beat
+							last_normal_beat_length = eof_get_beat_length(eof_song, ctr - 1);	//The combined beats' length is now the normal length
+							ongoing_beat_length = 0;	//Reset this sum
+						}
+
+///Case 3:  Multiple consecutive mid beat tempo changes, but it's more suitable to delete one of the anchors
+						else if(ongoing_beat_length > last_normal_beat_length)
+						{	//If the beats' combined length is longer than the target beat length
+							char undo_made = 1;
+
+							eof_log("\tCase 3:  Deleting anchor:", 2);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeleting anchor #%lu", ctr - 1 + delete_count);
+							eof_log(eof_log_string, 2);
+							eof_selected_beat = ctr - 1;	//Target the previous beat
+							eof_menu_beat_delete_anchor_logic(&undo_made);	//Use "Beat>Delete anchor" to effectively remove its tempo change so that the beat assumes the previous tempo
+							ongoing_beat_length = 0;	//Reset this sum
+						}
+						else
+						{
+							consecutive_count++;	//Keep track of how many beats in a row are being considered to be deleted together
+						}
+						continue;	//Skip deletion of this beat and consider deletion of the next beat instead
+					}
+					else
+					{	//This is a mid beat tempo change with a normal beat that follows it
+///Case 4:  One mid beat tempo change followed by a normal beat
+						eof_log("\tCase 4:  Removing mid beat tempo change:", 2);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeleting beat #%lu", ctr + delete_count);
+						eof_log(eof_log_string, 2);
+						eof_menu_beat_delete_logic(ctr);	//Delete the beat
+						ctr--;								//Rewind one beat to compensate for the increment at the end of the loop
+
+						//Clear the mid beat flag from the now longer beat if the beat before it is a normal length
+						if(ctr > 1)
+						{	//Bounds check
+							if(eof_length_within_target_range(last_normal_beat_length, eof_get_beat_length(eof_song, ctr - 1), 0.15))
+							{	//If it's within the target length, it won't need any further processing later in this function
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRemoving mid beat flag from beat #%lu", ctr + delete_count);
+								eof_log(eof_log_string, 2);
+								eof_song->beat[ctr]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear the mid beat tempo flag from this combined beat
+							}
+						}
+						ongoing_beat_length = 0;			//Reset this sum
+						consecutive_count = 0;				//Reset this counter
+						delete_count++;	//Track the number of deleted beats so the native beat numbers can be logged
+					}
+				}//If there is a next beat
+			}//If this isn't the first beat, and the beat was flagged as a mid-beat tempo change during an import
+			else
+			{
+				if(ctr + 1 < eof_song->beats)
+				{	//If there is a next beat
+					if(!(eof_song->beat[ctr + 1]->flags & EOF_BEAT_FLAG_MIDBEAT))
+					{	//If it is also NOT a mid-beat tempo change
+						last_normal_beat_length = this_beat_length;	//Otherwise track the length of the last beat that didn't have a mid beat tempo change
 					}
 				}
-				eof_menu_beat_delete_logic(ctr - 1);
 			}
+		}//For each beat except the last
+	}//If the user set the preference to delete mid beat tempo changes
+
+	//Pass 2:  Remove mid beat flags if the "Render mid beat tempos blue" import preference is not enabled
+	if(!eof_render_mid_beat_tempos_blue)
+	{	//If that preference is not enabled
+		for(ctr = 0; ctr < eof_song->beats; ctr++)
+		{	//For each beat
+			eof_song->beat[ctr]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear the mid beat tempo flag
 		}
 	}
 }
