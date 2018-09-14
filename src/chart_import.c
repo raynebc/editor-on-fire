@@ -568,6 +568,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		{	//If the track is valid
 			struct dbNote * current_note = current_track->notes;
 			unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)
+			unsigned long lastduration = -1;
 			EOF_NOTE * new_note = NULL;
 			EOF_NOTE * prev_note = NULL;
 			char gemtype = 0, lastgemtype = 0;	//Tracks whether the current and previously added gems are normal notes or technique markers
@@ -692,14 +693,19 @@ EOF_SONG * eof_import_chart(const char * fn)
 						note = 1 << current_note->gemcolor;
 					}
 
-					if((current_note->chartpos != lastpos) || (gemtype == 2) || (gemtype != lastgemtype))
+					if((current_note->chartpos != lastpos) || (gemtype == 2) || (gemtype != lastgemtype) || (current_note->duration != lastduration))
 					{	//If this note was at a different position than the last, if it represents a technique marker or if it's a different gem type than the previous one
+						// or if this gem has a different length than the previous gem
 						new_note = eof_legacy_track_add_note(tp);
 						if(new_note)
 						{
 							new_note->midi_pos = current_note->chartpos;	//Track the note's original chart position to more reliably apply HOPO status
 							new_note->pos = notepos;
 							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL) - (double)new_note->pos + 0.5;	//Round up
+							if((current_note->chartpos == lastpos) && (current_note->duration != lastduration))
+							{	//If this gem has and the previous one start at the same time but have different lengths
+								new_note->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to the new note
+							}
 							if((sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE) && (current_note->gemcolor == 2))
 							{	//If this is a white 3 GHL gem
 								new_note->tflags |= EOF_NOTE_TFLAG_GHL_W3;	//Track that this lane 6 note will be treated as a gem on that lane instead of as a toggle HOPO marker
@@ -729,7 +735,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					else
 					{	//Otherwise add a gem to the previously created note
 						if(new_note)
-						{
+						{	//Validate that a previous note has been created
 							if(current_note->gemcolor == 2)
 							{	//If this is a W3 gem
 								new_note->tflags |= EOF_NOTE_TFLAG_GHL_W3;	//Apply this flag to reflect that this lane 6 gem is a W3 note and not a toggle HOPO marker
@@ -740,6 +746,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					}
 					lastpos = current_note->chartpos;
 					lastgemtype = gemtype;
+					lastduration = current_note->duration;
 				}
 				current_note = current_note->next;
 			}//For each note in the track

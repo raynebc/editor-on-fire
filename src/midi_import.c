@@ -2078,51 +2078,26 @@ set_window_title(debugtext);
 					}//If the MIDI is in Rock Band/FoF/Phase Shift notation
 
 					if(diff != -1)
-					{	//If a note difficulty was identified above
-						char match = 0;	//Is set to nonzero if this note on is matched with a previously added note
-
-						k = 0;
-						if(note_count[picked_track] > 0)
-						{	//If at least one note has been added already
-							for(k = note_count[picked_track]; k > first_note; k--)
-							{	//Traverse the note list in reverse order to identify the appropriate note to modify
-								if((eof_get_note_pos(sp, picked_track, k - 1) == event_realtime) && (eof_get_note_type(sp, picked_track, k - 1) == diff))
-								{	//If the note is at the same timestamp and difficulty
-									match = 1;
-									break;	//End the search, as a match was found
-								}
-							}
+					{	//If a note difficulty was identified above, import the gem as a new note
+						//The note off handling will apply disjointed status where appropriate and the fixup logic will combine notes without disjointed status where appropriate
+						notenum = note_count[picked_track];
+						if(notenum >= EOF_MAX_NOTES)
+						{
+							allegro_message("Error:  The maximum number of notes is exceeded by track \"%s\".  Truncating track.", eof_midi_tracks[picked_track].name);
+							break;	//Exit outer for loop
 						}
-						if(!match)
-						{	//If the note doesn't match the same time and difficulty as an existing note, this MIDI event represents a new note, initialize it now and increment the note count
-							notenum = note_count[picked_track];
-							if(notenum >= EOF_MAX_NOTES)
-							{
-								allegro_message("Error:  The maximum number of notes is exceeded by track \"%s\".  Truncating track.", eof_midi_tracks[picked_track].name);
-								break;	//Exit outer for loop
-							}
-							eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
-							eof_set_note_pos(sp, picked_track, notenum, event_realtime);
-							eof_set_note_length(sp, picked_track, notenum, 0);				//The length will be kept at 0 until the end of the note is found
-							eof_set_note_flags(sp, picked_track, notenum, 0);				//Clear the flag here so that the flag can be set later (ie. if it's an Expert+ double bass note)
-							eof_set_note_type(sp, picked_track, notenum, diff);				//Apply the determined difficulty
-							if(gridsnap)
-								eof_set_note_tflags(sp, picked_track, notenum, EOF_NOTE_TFLAG_RESNAP);	//Track that the note is expected to be grid snapped after MIDI import completes
-							note_count[picked_track]++;
+						eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
+						eof_set_note_pos(sp, picked_track, notenum, event_realtime);
+						eof_set_note_length(sp, picked_track, notenum, 0);				//The length will be kept at 0 until the end of the note is found
+						eof_set_note_flags(sp, picked_track, notenum, 0);				//Clear the flag here so that the flag can be set later (ie. if it's an Expert+ double bass note)
+						eof_set_note_type(sp, picked_track, notenum, diff);				//Apply the determined difficulty
+						if(gridsnap)
+							eof_set_note_tflags(sp, picked_track, notenum, EOF_NOTE_TFLAG_RESNAP);	//Track that the note is expected to be grid snapped after MIDI import completes
+						note_count[picked_track]++;
 #ifdef EOF_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
-							eof_log(eof_log_string, 3);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
+						eof_log(eof_log_string, 3);
 #endif
-						}
-						else
-						{	//Otherwise just modify the existing note by adding a gem
-							notenum = k - 1;
-#ifdef EOF_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %d to %d", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
-							eof_log(eof_log_string, 3);
-#endif
-							eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
-						}
 						if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
 						{
 							if(doublebass)
@@ -2322,6 +2297,8 @@ set_window_title(debugtext);
 								if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //										allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
+									unsigned long pos, length1, length2, diff, eflags;	//Variables used to compare the lengths between notes for application of disjointed status
+
 									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
 									eof_log(eof_log_string, 3);
 
@@ -2329,6 +2306,30 @@ set_window_title(debugtext);
 									if(eof_get_note_length(sp, picked_track, k - 1) <= 0)
 									{	//If the note somehow received a zero or negative length
 										eof_set_note_length(sp, picked_track, k - 1, 1);
+									}
+
+									//Look for presence of other notes in this track difficulty that start at the same timestamp but have a different length, and apply disjointed status when those criteria are met
+									pos = eof_get_note_pos(sp, picked_track, k - 1);
+									length1 = eof_get_note_length(sp, picked_track, k - 1);
+									for(ctr = 0; ctr < eof_get_track_size(sp, picked_track); ctr++)
+									{	//For each imported note
+										if((eof_get_note_type(sp, picked_track, ctr) == eof_get_note_type(sp, picked_track, k - 1)) && (eof_get_note_pos(sp, picked_track, ctr) == pos))
+										{	//If the note is in the same difficulty and starts at the same time as the note that was just imported
+											length2 = eof_get_note_length(sp, picked_track, ctr);
+											diff = (length1 > length2) ? (length1 - length2) : (length2 - length1);	//Determine the difference between the note lengths
+
+											if((length2 != 0) && (diff > 1))
+											{	//If the note has had its length determined and it's more than 1ms different from the note that was just imported
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tApplying disjointed status to note #%lu and #%lu", ctr, k - 1);
+												eof_log(eof_log_string, 2);
+
+												eflags = eof_get_note_eflags(sp, picked_track, ctr) | EOF_NOTE_EFLAG_DISJOINTED;
+												eof_set_note_eflags(sp, picked_track, ctr, eflags);	//Add the disjointed status to the pre-existing note
+												eflags = eof_get_note_eflags(sp, picked_track, k - 1) | EOF_NOTE_EFLAG_DISJOINTED;
+												eof_set_note_eflags(sp, picked_track, k - 1, eflags);	//Add the disjointed status to the note that was just imported
+												break;
+											}
+										}
 									}
 									break;
 								}

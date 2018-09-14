@@ -1212,16 +1212,20 @@ void eof_prepare_undo(int type)
 	}
 }
 
-long eof_get_previous_note(long cnote)
+long eof_get_previous_note(long cnote, int function)
 {
 	long i;
 
 	eof_log("eof_get_previous_note() entered", 3);
 
 	for(i = cnote - 1; i >= 0; i--)
-	{
+	{	//For each note before the specified note
 		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_get_note_type(eof_song, eof_selected_track, cnote))
-		{
+		{	//If the note is in the same difficulty
+			if(function && (eof_get_note_pos(eof_song, eof_selected_track, i) == eof_get_note_pos(eof_song, eof_selected_track, cnote)))
+			{	//If the calling function also requires the previous note to be at a different timestamp, but this condition is not met
+				continue;	//Skip this note
+			}
 			return i;
 		}
 	}
@@ -1278,7 +1282,7 @@ int eof_note_is_hopo(unsigned long cnote)
 	if(cnote == 0)
 		return 0;	//Otherwise if the specified note isn't at least the second note in the track, it can't be a HOPO
 
-	pnote = eof_get_previous_note(cnote);
+	pnote = eof_get_previous_note(cnote, 1);
 	if(pnote < 0)
 	{
 		return 0;

@@ -2309,6 +2309,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The currently hovered over lane
+	if(!ustricmp(macro, "EOF_HOVER_PIECE"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%d", eof_hover_piece);
+		return 1;
+	}
+
 	return 0;	//Macro not supported
 }
 

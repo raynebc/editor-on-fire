@@ -373,4 +373,8 @@ int eof_menu_note_convert_to_ghl_open(void);
 int eof_menu_note_swap_ghl_black_white_gems(void);
 	//Uses eof_note_swap_ghl_black_white_gems() to swap the black and white gems for all selected GHL notes in the active track difficulty
 
+int eof_menu_note_remove_disjointed(void);
+int eof_menu_note_toggle_disjointed(void);
+	//Removes or toggles disjointed status for selected legacy notes
+
 #endif

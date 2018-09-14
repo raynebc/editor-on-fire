@@ -12,7 +12,8 @@ typedef struct
 
 	/* the current selection */
 	unsigned long current;	//EOF_MAX_NOTES - 1 is used to represent no notes selected
-	unsigned long current_pos;
+	unsigned long current_pos;	//The position of the last selected note
+	unsigned long notemask;	//The bitmask of the last edited/created note, for the purpose of ensuring the fixup logic correctly re-assigns eof_selection.current (applicable when adding a gem to a disjointed note, since the gem is another note at the same position)
 
 	/* the previous selection */
 	unsigned long last;

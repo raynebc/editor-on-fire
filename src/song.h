@@ -122,6 +122,9 @@
 #define EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS 32	//This flag specifies that a chord has no defined fingering and will RS export reflecting as such
 #define EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND   64	//This flag specifies that a bend tech note is to be interpreted as a pre-bend even if it's not at the start position of the normal note it affects
 
+//The following extended flag pertains to legacy notes
+#define EOF_NOTE_EFLAG_DISJOINTED 128	//This flag specifies that affected notes will not be merged by fixup logic even when they are at the same timestamp, unless they have lanes in common
+
 
 ///Beat flags
 #define EOF_BEAT_FLAG_ANCHOR       1
@@ -154,6 +157,7 @@ typedef struct
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;		//Stores various note statuses
+	unsigned long eflags;		//Stores extended note statuses
 	unsigned long tflags;		//Stores various temporary statuses
 
 } EOF_NOTE;

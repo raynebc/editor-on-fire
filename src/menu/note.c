@@ -466,18 +466,25 @@ MENU eof_note_grid_snap_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_note_ghl_menu[] =
+MENU eof_note_clone_hero_disjointed_menu[] =
 {
-	{"Convert GHL &Open\t" CTRL_NAME "+G", eof_menu_note_convert_to_ghl_open, NULL, 0, NULL},
-	{"&Swap B/W gems", eof_menu_note_swap_ghl_black_white_gems, NULL, 0, NULL},
+	{"&Toggle", eof_menu_note_toggle_disjointed, NULL, 0, NULL},
+	{"&Remove", eof_menu_note_remove_disjointed, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_note_menu_pro_guitar_menu_string[13] = "Pro &Guitar";	//Unless a GHL track is active, the G accelerator is given to the "Pro guitar" submenu
+MENU eof_note_clone_hero_menu[] =
+{
+	{"&Disjointed", NULL, eof_note_clone_hero_disjointed_menu, 0, NULL},
+	{"Convert GHL &Open\t" CTRL_NAME "+G", eof_menu_note_convert_to_ghl_open, NULL, 0, NULL},
+	{"&Swap GHL B/W gems", eof_menu_note_swap_ghl_black_white_gems, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
-	{"&Clear", NULL, eof_note_clear_menu, 0, NULL},
+	{"Clear", NULL, eof_note_clear_menu, 0, NULL},
 	{"Tr&Anspose", NULL, eof_note_transpose_menu, 0, NULL},
 	{"&Highlight", NULL, eof_note_highlight_menu, 0, NULL},
 	{"Gr&Id snap", NULL, eof_note_grid_snap_menu, 0, NULL},
@@ -493,11 +500,11 @@ MENU eof_note_menu[] =
 	{"Slid&Er", NULL, eof_slider_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Drum", NULL, eof_note_drum_menu, 0, NULL},
-	{eof_note_menu_pro_guitar_menu_string, NULL, eof_note_proguitar_menu, 0, NULL},
+	{"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_note_rocksmith_menu, 0, NULL},
 	{"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
 	{"Re&Flect", NULL, eof_note_reflect_menu, 0, NULL},
-	{"&GHL", NULL, eof_note_ghl_menu, 0, NULL},
+	{"&Clone Hero", NULL, eof_note_clone_hero_menu, 0, NULL},
 	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
 	{"Simplif&Y chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -1203,16 +1210,25 @@ void eof_prepare_note_menu(void)
 			eof_selection.current = EOF_MAX_NOTES - 1;
 		}
 
-		/* GHL */
-		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
-		{	//If a legacy guitar track is active and GHL mode is enabled
-			(void) snprintf(eof_note_menu_pro_guitar_menu_string, sizeof(eof_note_menu_pro_guitar_menu_string) - 1, "Pro guitar");		//Remove the G accelerator key from the "Pro guitar" submenu
-			eof_note_menu[21].flags = 0;		//Note>GHL>
+		/* Note>Clone Hero */
+		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS))
+		{	//If a legacy guitar or the keys track is active
+			eof_note_menu[21].flags = 0;	//Note>Clone Hero>
+
+			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+			{	//If GHL mode is enabled
+				eof_note_clone_hero_menu[1].flags = 0;	//Note>Clone Hero>Convert GHL Open
+				eof_note_clone_hero_menu[2].flags = 0;	//Note>Clone Hero>Swap GHL B/W gems
+			}
+			else
+			{
+				eof_note_clone_hero_menu[1].flags = D_DISABLED;
+				eof_note_clone_hero_menu[2].flags = D_DISABLED;
+			}
 		}
 		else
 		{
-			(void) snprintf(eof_note_menu_pro_guitar_menu_string, sizeof(eof_note_menu_pro_guitar_menu_string) - 1, "Pro &Guitar");	//Add the G accelerator key to the "Pro guitar" submenu
-			eof_note_menu[21].flags = D_DISABLED;
+			eof_note_menu[21].flags = D_DISABLED;	//Note>Clone Hero>
 		}
 	}//if(eof_song && eof_song_loaded)
 }
@@ -9676,6 +9692,63 @@ int eof_menu_note_swap_ghl_black_white_gems(void)
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+
+	return 1;
+}
+
+int eof_menu_note_remove_disjointed(void)
+{
+	int note_selection_updated, undo_made = 0;
+	unsigned long ctr, ctr2, eflags;
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the active track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type))
+			continue;	//If this note isn't selected, skip it
+
+		eflags = eof_get_note_eflags(eof_song, eof_selected_track, ctr);
+		if((eflags & EOF_NOTE_EFLAG_DISJOINTED) && !undo_made)
+		{	//If this selected note has disjointed status and an undo state hasn't been made yet
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
+		}
+		eflags &= ~EOF_NOTE_EFLAG_DISJOINTED;
+		eof_set_note_eflags(eof_song, eof_selected_track, ctr, eflags);	//Clear the selected note's disjointed status
+
+		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
+		{	//For each note in the active track
+			if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_get_note_type(eof_song, eof_selected_track, ctr2))
+			{	//If this note is in the same difficulty as the one from the selected note identified in the outer loop
+				if(eof_get_note_pos(eof_song, eof_selected_track, ctr) == eof_get_note_pos(eof_song, eof_selected_track, ctr2))
+				{	//If both notes also start at the same timestamp
+					eflags = eof_get_note_eflags(eof_song, eof_selected_track, ctr2);
+					if((eflags & EOF_NOTE_EFLAG_DISJOINTED) && !undo_made)
+					{	//If this inner loop's note has disjointed status and an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eflags &= ~EOF_NOTE_EFLAG_DISJOINTED;
+					eof_set_note_eflags(eof_song, eof_selected_track, ctr2, eflags);	//Clear the inner loop's note's disjointed status
+				}
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+
+	eof_legacy_track_fixup_notes(eof_song, eof_selected_track, 1);
+
+	return 1;
+}
+
+int eof_menu_note_toggle_disjointed(void)
+{
+	(void) eof_menu_note_toggle_flag(1, EOF_LEGACY_TRACK_FORMAT, EOF_NOTE_EFLAG_DISJOINTED);
+	eof_legacy_track_fixup_notes(eof_song, eof_selected_track, 1);
 
 	return 1;
 }

@@ -2053,6 +2053,11 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 	}
 
+	if((eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (eflags & EOF_NOTE_EFLAG_DISJOINTED))
+	{	//If the note is a legacy note and has disjointed status
+		buffer[index++] = 'D';
+	}
+
 	if(flags & EOF_NOTE_FLAG_IS_TRILL)
 	{
 		if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)

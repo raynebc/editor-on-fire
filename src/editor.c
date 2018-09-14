@@ -3594,12 +3594,14 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
 								eof_selection.track = eof_selected_track;
-								eof_selection.multi[eof_selection.current] = 1;
 								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
+								eof_selection.notemask = bitmask;	//Try to ensure the fixup logic will only make one of the added gems the selected note in the case of disjointed notes
+								eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to re-assign eof_selection.current appropriately
+								eof_selection.multi[eof_selection.current] = 1;	//Add edited note (or the new disjointed gem) to the selection if applicable
 							}
-						}
+						}//If the user is editing an existing note
 						else
 						{	//If the user created a new note
 							unsigned long targetpos;
@@ -3651,6 +3653,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
 								eof_track_sort_notes(eof_song, eof_selected_track);
+								eof_selection.notemask = eof_pen_note.note;
 								eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 								eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
 								(void) eof_detect_difficulties(eof_song, eof_selected_track);
@@ -4084,7 +4087,7 @@ void eof_editor_logic(void)
 					if(!eof_mouse_drug)
 					{
 						eof_pen_note.pos = eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note);
-						eof_pen_note.note |= eof_find_pen_note_mask();	//Set the appropriate bits
+						eof_pen_note.note |= 1 << (unsigned)eof_hover_piece;	//Set the appropriate bits for the pen note based on which lane the mouse is currently hovered over
 					}
 				}//If a note is being moused over
 				else
@@ -4096,7 +4099,7 @@ void eof_editor_logic(void)
 					/* calculate piece for piano roll mode */
 					else if(eof_input_mode == EOF_INPUT_PIANO_ROLL)
 					{
-						eof_pen_note.note = eof_find_pen_note_mask();	//Find eof_hover_piece and set the appropriate bits in the pen note
+						eof_pen_note.note = 1 << (unsigned)eof_hover_piece;	//Set the pen note to whichever lane the mouse is currently hovered over
 					}
 
 					if(KEY_EITHER_SHIFT)
@@ -4520,7 +4523,7 @@ void eof_editor_logic(void)
 					{	//If altering an existing note
 						if(eof_input_mode == EOF_INPUT_PIANO_ROLL)
 						{	//Piano roll input method must use special logic to determine the lane ordering for the pen note
-							bitmask = eof_find_pen_note_mask();	//Set the appropriate bits
+							bitmask = 1 << (unsigned)eof_hover_piece;	//Set the pen note to whichever lane the mouse is currently hovered over
 						}
 						else
 						{	//The other two use the pen note bitmask normally
@@ -4607,13 +4610,14 @@ void eof_editor_logic(void)
 							if(note != 0)
 							{	//Cleanup edited/added note
 								eof_selection.track = eof_selected_track;
-								eof_selection.multi[eof_selection.current] = 1;
 								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
+								eof_selection.notemask = bitmask;	//Try to ensure the fixup logic will only make one of the added gems the selected note in the case of disjointed notes
 								eof_track_fixup_notes(eof_song, eof_selected_track, 0);	//Run cleanup to prevent open bass<->lane 1 conflicts
+								eof_selection.multi[eof_selection.current] = 1;	//Add new/edited note to the selection
 							}
-						}
+						}//If a valid pen bitmask was obtained
 					}//If altering an existing note
 					else
 					{	//If creating a new note
@@ -4655,13 +4659,14 @@ void eof_editor_logic(void)
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							eof_track_sort_notes(eof_song, eof_selected_track);
+							eof_selection.notemask = eof_pen_note.note;
 							eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 							eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
 							(void) eof_detect_difficulties(eof_song, eof_selected_track);
 						}
 					}
 					eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
-				}
+				}//All three of these input methods toggle gems when clicking on the right mouse button
 			}//Full screen 3D view is not in effect, right mouse click or Insert key pressed, and the pen note is valid
 			if(!(mouse_b & 2) && !(eof_key_code == KEY_INSERT))
 			{
@@ -4955,7 +4960,7 @@ void eof_vocal_editor_logic(void)
 			}
 			eof_pen_visible = 1;
 
-			eof_hover_note = eof_find_hover_note(lpos, x_tolerance, 1);	//Find the mouse hover note
+			eof_hover_note = eof_find_hover_note(lpos, x_tolerance, 1);	//Find the mouse hover lyric
 			if(eof_input_mode == EOF_INPUT_FEEDBACK)
 			{	//If Feedback input method is in effect
 				x_tolerance = 2;	//The hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
@@ -6981,7 +6986,7 @@ unsigned char eof_find_pen_note_mask(void)
 	/* see if we are inverting the lanes */
 	if(eof_inverted_notes || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the user opted to invert the notes in the piano roll, or if the current track is a pro guitar/bass track, return the appropriate inverted pen mask
-		return ((1 << (lanecount - 1)) >> (unsigned)eof_hover_piece);	//This finds the appropriate invert mask, where mousing over the bottom most lane activates lane 1 for the pen mask (cast to unsigned because splint is too stupid to take into account that it was already checked for negativity)
+		eof_hover_piece = lanecount - 1 - eof_hover_piece;	//Invert the hover piece number accordingly
 	}
 
 	return (1 << (unsigned)eof_hover_piece);	//Return the normal pen mask, where mousing over the top most lane activates lane 1 for the pen mask
@@ -7273,7 +7278,7 @@ void eof_editor_logic_common(void)
 				npos = eof_get_note_pos(eof_song, examined_track, i) / eof_zoom;
 				if((examined_pos - zoom > npos) && (examined_pos - zoom < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100) / eof_zoom))
 				{
-					eof_hover_note = i;
+					eof_hover_note = i;	//Set the hover note to be the note at the playback position
 					if(eof_vocals_selected)
 					{	//If the lyric track is active, set the lyric pen note
 						eof_pen_lyric.note = eof_get_note_note(eof_song, examined_track, i);
@@ -7382,6 +7387,8 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 {
 	unsigned long i, npos, leftboundary, hoverlane = 0;
 	long nlen;
+	int candidate;
+
 	if(targetpos < 0)
 	{
 		targetpos = 0;
@@ -7393,15 +7400,17 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 		eof_pen_note.pos = eof_snap.pos;
 		eof_pen_visible = 1;
 	}
+	(void) eof_find_pen_note_mask();	//Set eof_hover_piece to reflect whichever lane the mouse is over
 	if(eof_note_tails_clickable)
 	{	//If the user enabled the preference to include note tails in the clickable area for notes
-		hoverlane = eof_find_pen_note_mask();	//Find which lane the mouse is currently hovering over
+		hoverlane = 1 << (unsigned)eof_hover_piece;	//Get the bitmask reflecting the lane the mouse is currently hovering over
 	}
 	for(i = 0; (i < eof_get_track_size(eof_song, eof_selected_track)); i++)
 	{	//For each note in the active track, until a hover note is found
 		if(eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type)
 			continue;	//If the note is not in the active difficulty, skip it
 
+		candidate = 0;	//Reset this status
 		npos = eof_get_note_pos(eof_song, eof_selected_track, i);
 		if(npos < x_tolerance)
 		{	//Avoid an underflow here
@@ -7443,10 +7452,21 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 		}
 		if((targetpos >= leftboundary) && (targetpos <= npos + nlen + x_tolerance))
 		{
-			return i;
+			candidate = 1;	//This is a likely hover note
 		}
 		else if(snaplogic && ((eof_pen_note.pos >= npos - x_tolerance) && (eof_pen_note.pos <= npos + nlen + x_tolerance)))
 		{	//If the position wasn't close enough to a note, but snaplogic is enabled, check the position's closest grid snap
+			candidate = 1;	//This is a likely hover note
+		}
+		if(candidate)
+		{	//If the above logic identified the mouse's X coordinate is within the range suitable for this note
+			if(eof_get_note_eflags(eof_song, eof_selected_track, i) & EOF_NOTE_EFLAG_DISJOINTED)
+			{	//If the candidate note has disjointed status
+				if(!(eof_get_note_note(eof_song, eof_selected_track, i) & (1 << (unsigned)eof_hover_piece)))
+				{	//If the mouse's Y coordinate isn't also hovering over the candidate note's gem
+					continue;	//This hover note candidate is rejected
+				}
+			}
 			return i;
 		}
 	}

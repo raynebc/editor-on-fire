@@ -506,11 +506,12 @@ long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 
 void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
-	unsigned long i;
-	long next;
+	unsigned long i, ctr, bitmask;
+	long next, prev;
 	unsigned long maxbitmask,maxlane;	//Used to find the highest usable bitmask for the track (based on numlanes).  The drum and bass tracks will be allowed to keep lane 6 automatically
 	unsigned long tracknum;
 	EOF_LEGACY_TRACK * tp;
+	int notes_added = 0;	//Set to nonzero if a disjointed chord is broken up into multiple notes, which would necessitate a note sort
 
 	if(!sp || !track || (track >= sp->tracks))
 	{
@@ -537,11 +538,79 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		maxlane = 5;
 	}
 	maxbitmask = (1 << maxlane) - 1;
+
+	//Process disjointed status by breaking up affected chords into single gem notes, apply the status to notes at the same difficulty and timestamp
+	for(i = tp->notes; i > 0; i--)
+	{	//For each note (in reverse order)
+		if(tp->note[i-1]->eflags & EOF_NOTE_EFLAG_DISJOINTED)
+		{	//If this note has disjointed status
+			tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Add crazy status to ensure other editor logic allows the overlapping notes with minimal interference
+
+			//Force any other notes at the same timestamp to have this status as well
+			next = eof_fixup_next_legacy_note(tp, i-1);		//See if there's a next note in this track difficulty
+			prev = eof_fixup_previous_legacy_note(tp, i-1);	//See if there's a previous note in this track difficulty
+			while(prev >= 0)
+			{	//Until all such previous notes are exhausted
+				if(tp->note[i-1]->pos != tp->note[prev]->pos)
+				{	//If the previous note is not at the same timestamp as the note being processed
+					break;	//Stop looking at earlier notes
+				}
+				next = prev;	//Otherwise make that previous note the first note the statuses are applied to below
+				prev = eof_fixup_previous_legacy_note(tp, prev);	//See if there's a previous note in this track difficulty
+			}
+			while(next >= 0)
+			{	//If there are notes that may need the statuses applied
+				if(tp->note[i-1]->pos != tp->note[next]->pos)
+				{	//If the note isn't at the same timestamp as the one being processed
+					break;	//No other applicable notes to apply the statuses to
+				}
+				tp->note[next]->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//The next note is at the same timestamp, so ensure it has disjointed status
+				tp->note[next]->flags |= EOF_NOTE_FLAG_CRAZY;			//As well as crazy status
+				next = eof_fixup_next_legacy_note(tp, next);			//See if there's a next note in this track difficulty
+			}
+
+			//Break up disjointed chords into multiple single gem notes
+			if(eof_note_count_colors_bitmask(tp->note[i-1]->note) > 1)
+			{	//If this note has more than one gem
+				char first_found = 0;
+
+				for(ctr = 0, bitmask = 1; ctr < tp->numlanes; ctr++, bitmask <<= 1)
+				{	//For each lane in the track
+					if(tp->note[i-1]->note & bitmask)
+					{	//If the note has a gem on this lane
+						if(!first_found)
+						{	//If this is the first gem in the note
+							first_found = 1;	//Track this, it will be left in this note
+						}
+						else
+						{	//Otherwise it will be split off into a new note
+							EOF_NOTE *np = eof_track_add_create_note(sp, track, bitmask, tp->note[i-1]->pos, tp->note[i-1]->length, tp->note[i-1]->type, NULL);	//Initialize a new single note at this position
+
+							if(np)
+							{	//If the new note was created
+								tp->note[i-1]->note &= ~bitmask;		//Remove this gem from the original note
+								np->flags = tp->note[i-1]->flags;		//Clone the flags
+								np->eflags = tp->note[i-1]->eflags;		//Clone the extended flags (this will include the disjointed status flag)
+								notes_added = 1;						//Track that the notes will now need to be re-sorted
+							}
+						}
+					}
+				}
+			}//If this note has more than one gem
+		}//If this note has disjointed status
+	}//For each note (in reverse order)
+
+	if(notes_added)
+	{	//If any disjointed chords were broken up into multiple notes
+		eof_track_sort_notes(sp, track);	//Sort the notes
+	}
+
+	//Clear invalid gems, enforce status flag requirements, minimum note length, minimum note distance, merge notes that start at the same time if appropriate
 	for(i = tp->notes; i > 0; i--)
 	{	//For each note (in reverse order)
 		/* fix selections */
-		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.current_pos))
-		{
+		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.current_pos) && (tp->note[i-1]->note & eof_selection.notemask))
+		{	//If the note is in the active difficulty, at the last selection position and matches the bitmask of the last created/edited note
 			eof_selection.current = i-1;
 		}
 		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.last_pos))
@@ -615,11 +684,15 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 			if(next >= 0)
 			{	//If there is a note after this note
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
-				{	//And it is at the same position as this note, merge them both
-					unsigned long flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, tp->parent->track_behavior, tp->note[next]->note);	//Get a flag bitmask where all lane specific flags for lanes that the next (merging) note uses have been cleared
-					tp->note[i-1]->note |= tp->note[next]->note;	//Merge the note bitmasks
-					tp->note[i-1]->flags = flags | tp->note[next]->flags;	//Merge the flags
-					eof_legacy_track_delete_note(tp, next);			//Delete the next note, as it has been merged with this note
+				{	//And it is at the same position as this note
+					if(!(tp->note[i-1]->eflags & EOF_NOTE_EFLAG_DISJOINTED))
+					{	//If one of them (and thus neither) have disjointed status, merge them both
+						unsigned long flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, tp->parent->track_behavior, tp->note[next]->note);	//Get a flag bitmask where all lane specific flags for lanes that the next (merging) note uses have been cleared
+						tp->note[i-1]->note |= tp->note[next]->note;			//Merge the note bitmasks
+						tp->note[i-1]->flags = flags | tp->note[next]->flags;	//Merge the flags
+						tp->note[i-1]->eflags |= tp->note[next]->eflags;		//Merge the extended flags
+						eof_legacy_track_delete_note(tp, next);					//Delete the next note, as it has been merged with this note
+					}
 				}
 				else
 				{	//Otherwise ensure on doesn't overlap the other improperly
@@ -2073,12 +2146,18 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_track_resize(sp, sp->tracks-1,count);	//Resize the note array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
-					(void) eof_load_song_string_pf(sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->pos = pack_igetl(fp);		//Read note position
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->length = pack_igetl(fp);	//Read note length
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->flags = pack_igetl(fp);	//Read note flags
+					EOF_NOTE *ptr = sp->legacy_track[sp->legacy_tracks-1]->note[ctr];	//Simplify
+					(void) eof_load_song_string_pf(ptr->name,fp,EOF_NAME_LENGTH);	//Read the note's name
+					ptr->type = pack_getc(fp);		//Read the note's difficulty
+					ptr->note = pack_getc(fp);		//Read note bitflags
+					ptr->pos = pack_igetl(fp);		//Read note position
+					ptr->length = pack_igetl(fp);	//Read note length
+					ptr->flags = pack_igetl(fp);	//Read note flags
+					if(ptr->flags & EOF_NOTE_FLAG_EXTENDED)
+					{	//If this note has an additional flags variable
+						ptr->eflags = pack_igetl(fp);			//Read extended flags
+						ptr->flags &= ~EOF_NOTE_FLAG_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
+					}
 				}
 			break;
 			case EOF_VOCAL_TRACK_FORMAT:	//Vocal
@@ -3271,12 +3350,28 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					(void) pack_iputl(sp->legacy_track[tracknum]->notes, fp);		//Write the number of notes in this track
 					for(ctr=0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
 					{	//For each note in this track
-						(void) eof_save_song_string_pf(sp->legacy_track[tracknum]->note[ctr]->name, fp);	//Write the note's name
-						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->type, fp);		//Write the note's difficulty
-						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->note, fp);		//Write the note's bitflags
-						(void) pack_iputl(sp->legacy_track[tracknum]->note[ctr]->pos, fp);		//Write the note's position
-						(void) pack_iputl(sp->legacy_track[tracknum]->note[ctr]->length, fp);	//Write the note's length
-						(void) pack_iputl(sp->legacy_track[tracknum]->note[ctr]->flags, fp);	//Write the note's flags
+						EOF_NOTE *ptr = sp->legacy_track[tracknum]->note[ctr];	//Simplify
+						(void) eof_save_song_string_pf(ptr->name, fp);	//Write the note's name
+						(void) pack_putc(ptr->type, fp);				//Write the note's difficulty
+						(void) pack_putc(ptr->note, fp);				//Write the note's bitflags
+						(void) pack_iputl(ptr->pos, fp);				//Write the note's position
+						(void) pack_iputl(ptr->length, fp);				//Write the note's length
+
+						if(ptr->eflags)
+						{	//If this note uses any extended flags
+							ptr->flags |= EOF_NOTE_FLAG_EXTENDED;	//Set this flag
+						}
+						else
+						{
+							ptr->flags &= ~EOF_NOTE_FLAG_EXTENDED;	//Clear this flag
+						}
+						(void) pack_iputl(ptr->flags, fp);	//Write the note's flags
+
+						if(ptr->flags & EOF_NOTE_FLAG_EXTENDED)
+						{	//If this note uses any extended flags
+							(void) pack_iputl(ptr->eflags, fp);		//Write the note's extended track flags
+							ptr->flags &= ~EOF_NOTE_FLAG_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
+						}
 					}
 					//Write the section type chunk
 					if(sp->legacy_track[tracknum]->solos)
@@ -4331,7 +4426,11 @@ unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned lo
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-		return 0;	//Legacy tracks do not use extended flags yet
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->eflags;
+			}
+		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
 		return 0;	//Vocal tracks do not use extended flags yet
@@ -5972,12 +6071,24 @@ void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	switch(sp->track[track]->track_format)
 	{
-		if(note < sp->pro_guitar_track[tracknum]->notes)
-		{
-			sp->pro_guitar_track[tracknum]->note[note]->eflags = eflags;
-		}
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->eflags = eflags;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				sp->pro_guitar_track[tracknum]->note[note]->eflags = eflags;
+			}
+		break;
+
+		default:
+		break;
 	}
 }
 
