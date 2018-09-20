@@ -5063,6 +5063,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 				return 7;
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
+			eof_set_note_eflags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.eflags);
 			eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
 
 			if(noteset == 0)
@@ -5080,7 +5081,6 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 			np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 			np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
-			np->eflags = temp_note.eflags;									//Copy the extended track flags
 		}//For each note for this note set in the clipboard file
 	}//For each note set in the clipboard file
 	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view for the active track

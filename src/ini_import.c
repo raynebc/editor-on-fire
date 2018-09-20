@@ -369,6 +369,54 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		}
 		else if(!ustricmp(eof_import_ini_setting[i].type, "diff_guitarghl") || !ustricmp(eof_import_ini_setting[i].type, "diff_bassghl"))
 		{	//Used by Clone Hero
+			if(atoi(value_index) >= 0)
+			{	//Only store the difficulty if it isn't negative (-1 means empty track)
+				char *target_name = "PART GUITAR GHL";		//The MIDI track associated with the guitar GHL difficulty tag
+				unsigned long target_number = ULONG_MAX;	//The project's track number associated with the GHL difficulty tag
+				int is_bass = 0;
+
+				if(!ustricmp(eof_import_ini_setting[i].type, "diff_bassghl"))
+				{	//If this is the bass GHL difficulty tag
+					target_name = "PART BASS GHL";	//Associate it with the bass GHL track
+					is_bass = 1;
+				}
+
+				//Search for the track number to associate with this difficulty tag
+				for(j = 1; j < sp->tracks; j++)
+				{	//For each track, excluding the global track
+					if(eof_track_is_ghl_mode(sp, j) && !ustricmp(sp->track[j]->altname, target_name))
+					{	//If this track is a GHL track and was manually given the track name associated with this tag
+						target_number = j;	//Record this track number
+						break;
+					}
+				}
+				if(target_number == ULONG_MAX)
+				{	//If the difficulty tag wasn't associated with a manually named GHL track
+					if(is_bass)
+					{	//Associate the GHL bass difficulty tag with the regular bass track
+						target_number = EOF_TRACK_BASS;
+					}
+					else
+					{	//Associate the GHL guitar difficulty tag with the regular guitar track
+						target_number = EOF_TRACK_GUITAR;
+					}
+				}
+
+				//Store the difficulty value into the appropriate track structure
+				original = sp->track[target_number]->difficulty;
+				if(original == 0xFF)
+				{	//If the project does not have this difficulty defined
+					original = -1;	//Convert it to -1 so it can be accurately compared to the value in the INI file
+				}
+				if(eof_compare_set_ini_integer(&value, original, value_index, &function, eof_import_ini_setting[i].type))
+				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
+					free(textbuffer);	//Free buffered INI file from memory
+					return 0;
+				}
+				if((value < 0) || (value > 6))		//If the difficulty is invalid
+					value = 0xFF;					//Reset to undefined
+				sp->track[target_number]->difficulty = value;
+			}
 		}
 
 		/* for custom settings or difficulty strings */

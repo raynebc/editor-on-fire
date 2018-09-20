@@ -139,6 +139,7 @@ EOF_TEXT_PANEL *eof_notes_panel = NULL;			//The text panel instance defining the
 EOF_TEXT_PANEL *eof_info_panel = NULL;			//The text panel instance defining the Information panel
 int         eof_paste_erase_overlap = 0;
 int         eof_write_fof_files = 1;			//If nonzero, files are written during save that are used for Frets on Fire, Guitar Hero and Phase Shift authoring
+int         eof_write_gh_files = 0;				//If nonzero, extra GH3 and GHWT MIDIs are written, as well as the GHWT drum animations file
 int         eof_write_rb_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rock Band customs
 int         eof_write_music_midi = 0;			//If nonzero, an extra MIDI file is written during save that contains normal MIDI pitches and can be used for other MIDI based games like Songs2See and Synthesia
 int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
@@ -1219,7 +1220,7 @@ long eof_get_previous_note(long cnote, int function)
 	eof_log("eof_get_previous_note() entered", 3);
 
 	for(i = cnote - 1; i >= 0; i--)
-	{	//For each note before the specified note
+	{	//For each note before the specified note, in reverse order
 		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_get_note_type(eof_song, eof_selected_track, cnote))
 		{	//If the note is in the same difficulty
 			if(function && (eof_get_note_pos(eof_song, eof_selected_track, i) == eof_get_note_pos(eof_song, eof_selected_track, cnote)))
@@ -1256,9 +1257,19 @@ int eof_note_is_hopo(unsigned long cnote)
 		}
 		return 0;
 	}
+	if(eof_hopo_view == EOF_HOPO_GH3)
+	{	//If GH3 HOPO preview is in effect, forced HOPO on/off is observed
+		if(forcedhopo)
+			return 1;
+		if(eof_get_note_flags(eof_song, eof_selected_track, cnote) & EOF_NOTE_FLAG_NO_HOPO)
+			return 0;
+	}
+	if(cnote == 0)
+		return 0;	//Otherwise if the specified note isn't at least the second note in the track, it can't be a HOPO
+
 	cnotepos = eof_get_note_pos(eof_song, eof_selected_track, cnote);
 	for(i = 0; i < eof_song->beats - 1; i++)
-	{
+	{	//Find the beat that cnote is in
 		if((eof_song->beat[i]->pos <= cnotepos) && (eof_song->beat[i + 1]->pos > cnotepos))
 		{
 			beat = i;
@@ -1271,16 +1282,6 @@ int eof_note_is_hopo(unsigned long cnote)
 	}
 	bpm = 60000000.0 / (double)eof_song->beat[beat]->ppqn;
 	scale = 120.0 / bpm;
-
-	if(eof_hopo_view == EOF_HOPO_GH3)
-	{	//If GH3 HOPO preview is in effect, forced HOPO on/off is observed
-		if(forcedhopo)
-			return 1;
-		if(eof_get_note_flags(eof_song, eof_selected_track, cnote) & EOF_NOTE_FLAG_NO_HOPO)
-			return 0;
-	}
-	if(cnote == 0)
-		return 0;	//Otherwise if the specified note isn't at least the second note in the track, it can't be a HOPO
 
 	pnote = eof_get_previous_note(cnote, 1);
 	if(pnote < 0)

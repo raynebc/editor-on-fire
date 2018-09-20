@@ -351,6 +351,7 @@ extern EOF_TEXT_PANEL *eof_notes_panel;
 extern EOF_TEXT_PANEL *eof_info_panel;
 extern int         eof_paste_erase_overlap;
 extern int         eof_write_fof_files;
+extern int         eof_write_gh_files;
 extern int         eof_write_rb_files;
 extern int         eof_write_music_midi;
 extern int         eof_write_rs_files;

@@ -124,18 +124,37 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		diff_tag = eof_difficulty_ini_tags[i];	//By default, write a non GHL specific difficulty tag
 		if(eof_track_is_ghl_mode(sp, i))
 		{	//If this track has GHL mode enabled
-			if(i == EOF_TRACK_BASS)
-			{	//If this is the bass track
-				diff_tag = "diff_bassghl";	//Write the bass GHL difficulty tag
+			if(sp->track[i]->altname[0] != '\0')
+			{	//If this GHL track is manually named, that name supersedes its native name
+				if(!ustricmp(sp->track[i]->altname, "PART GUITAR GHL"))
+				{	//Manually named to represent the GHL guitar track
+					if(guitar_ghl_diff_written)
+					{	//If a GHL mode guitar difficulty tag was already written
+						continue;	//Skip writing a tag for this track instead of writing a conflicting difficulty tag
+					}
+					diff_tag = "diff_guitarghl";	//Write the guitar GHL difficulty tag
+					guitar_ghl_diff_written = 1;
+				}
+				else if(!ustricmp(sp->track[i]->altname, "PART BASS GHL"))
+				{	//Manually named to represent the GHL bass track
+					diff_tag = "diff_bassghl";	//Write the bass GHL difficulty tag
+				}
 			}
 			else
-			{	//This is a guitar track
-				if(guitar_ghl_diff_written)
-				{	//If a GHL mode guitar difficulty tag was already written
-					continue;	//Skip writing a tag for this track instead of writing a conflicting difficulty tag
+			{	//Otherwise base the difficulty tags on the track's native name
+				if(i == EOF_TRACK_BASS)
+				{	//If this is the bass track
+					diff_tag = "diff_bassghl";	//Write the bass GHL difficulty tag
 				}
-				diff_tag = "diff_guitarghl";	//Write the guitar GHL difficulty tag
-				guitar_ghl_diff_written = 1;
+				else
+				{	//This is a guitar track
+					if(guitar_ghl_diff_written)
+					{	//If a GHL mode guitar difficulty tag was already written
+						continue;	//Skip writing a tag for this track instead of writing a conflicting difficulty tag
+					}
+					diff_tag = "diff_guitarghl";	//Write the guitar GHL difficulty tag
+					guitar_ghl_diff_written = 1;
+				}
 			}
 		}
 

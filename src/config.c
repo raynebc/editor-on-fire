@@ -147,6 +147,7 @@ void eof_load_config(char * fn)
 	eof_set_percussion_cue(eof_selected_percussion_cue);
 	eof_paste_erase_overlap = get_config_int("preferences", "eof_paste_erase_overlap", 0);
 	eof_write_fof_files = get_config_int("preferences", "eof_write_fof_files", 1);
+	eof_write_gh_files = get_config_int("preferences", "eof_write_gh_files", 0);
 	eof_write_rb_files = get_config_int("preferences", "eof_write_rb_files", 0);
 	eof_write_music_midi = get_config_int("preferences", "eof_write_music_midi", 0);
 	eof_write_rs_files = get_config_int("preferences", "eof_write_rs_files", 0);
@@ -522,6 +523,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_multi_pitch_metronome", eof_multi_pitch_metronome);
 	set_config_int("preferences", "eof_paste_erase_overlap", eof_paste_erase_overlap);
 	set_config_int("preferences", "eof_write_fof_files", eof_write_fof_files);
+	set_config_int("preferences", "eof_write_gh_files", eof_write_gh_files);
 	set_config_int("preferences", "eof_write_rb_files", eof_write_rb_files);
 	set_config_int("preferences", "eof_write_music_midi", eof_write_music_midi);
 	set_config_int("preferences", "eof_write_rs_files", eof_write_rs_files);

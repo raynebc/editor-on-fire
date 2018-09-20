@@ -1244,7 +1244,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 				if(new_note)
 				{	//If the note was successfully created
 					notenum = eof_get_track_size(eof_song, j) - 1;	//Get the index of the note that was just created
-					eof_set_note_flags(eof_song, j, notenum, temp_note.flags);	//Set the last created note's flags
+					eof_set_note_flags(eof_song, j, notenum, temp_note.flags);		//Set the last created note's flags
+					eof_set_note_eflags(eof_song, j, notenum, temp_note.eflags);	//Set the last created note's extended flags
 					eof_set_note_accent(eof_song, j, notenum, temp_note.accent);	//Set the last created note's accent bitmask
 
 					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1258,7 +1259,6 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 						np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 						np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 						np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
-						np->eflags = temp_note.eflags;									//Copy the extended track flags
 					}
 				}
 			}
@@ -1631,7 +1631,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	}
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
-		unsigned long newnotepos, match = 0, flags;
+		unsigned long newnotepos, match = 0, flags, eflags;
 		long newnotelength;
 		EOF_PRO_GUITAR_NOTE *np;
 
@@ -1707,9 +1707,13 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			//Erase any lane specific flags in the matching note that correspond with used lanes in the note being pasted
 			flags = eof_prepare_note_flag_merge(eof_get_note_flags(eof_song, eof_selected_track, match), eof_song->track[eof_selected_track]->track_behavior, temp_note.note);
 				//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
-
 			flags |= temp_note.flags;	//Merge the pasted note's flags
 			eof_set_note_flags(eof_song, eof_selected_track, match, flags);	//Apply the updated flags to the overlapped note
+
+			eflags = eof_get_note_eflags(eof_song, eof_selected_track, match);
+			eflags |= temp_note.eflags;
+			eof_set_note_eflags(eof_song, eof_selected_track, match, eflags);	//Marge the extended flags
+
 			eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);	//Merge the note bitmask
 			eof_set_note_accent(eof_song, eof_selected_track, match, eof_get_note_accent(eof_song, eof_selected_track, match) | temp_note.accent);	//Merge the accent bitmask
 			//Erase ghost and legacy flags
@@ -1725,6 +1729,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			if(new_note)
 			{
 				eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
+				eof_set_note_eflags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.eflags);
 				eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
 				if(isghl != eof_track_is_ghl_mode(eof_song, eof_selected_track))
 				{	//If the source and destination tracks for this paste didn't have matching GHL mode status, convert the note
@@ -1759,7 +1764,6 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			temp_note.eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_STOP;		//Clear these tech note only statuses
 			temp_note.eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
 		}
-		np->eflags = temp_note.eflags;									//Copy the extended track flags
 		if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a non pro guitar note is being pasted into a pro guitar track
 			unsigned char legacymask = temp_note.note & 31;	//Determine the appropriate legacy mask to apply (drop lane 6)
@@ -4145,7 +4149,8 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);	//Write the percent representing the note's start position within a beat
 	tfloat = eof_get_porpos(eof_get_note_pos(sp, track, note) + note_len);
 	(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);	//Write the percent representing the note's end position within a beat
-	(void) pack_iputl(eof_get_note_flags(sp, track, note), fp);	//Write the note's flags
+	(void) pack_iputl(eof_get_note_flags(sp, track, note), fp);		//Write the note's flags
+	(void) pack_iputl(eof_get_note_eflags(sp, track, note), fp);	//Write the extended flags
 
 	/* Write pro guitar specific data to disk */
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -4162,7 +4167,6 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 				break;
 			}
 		}
-		(void) pack_iputl(np->eflags, fp);						//Write the note's extended track flags
 		(void) pack_putc(np->legacymask, fp);					//Write the pro guitar note's legacy bitmask
 		(void) pack_fwrite(np->frets, (long)sizeof(frets), fp);	//Write the note's fret array
 		(void) pack_fwrite(np->finger, (long)sizeof(finger), fp);//Write the note's finger array
@@ -4191,7 +4195,6 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 			}
 		}
 
-		(void) pack_iputl(0, fp);			//Write a blank extended track flag (for now, only pro guitar tracks will use these)
 		(void) pack_putc(0, fp);			//Write a legacy bitmask indicating that the original note bitmask is to be used
 		(void) pack_fwrite(frets, (long)sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
 		(void) pack_fwrite(finger, (long)sizeof(finger), fp);	//Write 0 data for the note's finger array (legacy notes pasted into a pro guitar track will have no fingering by default)

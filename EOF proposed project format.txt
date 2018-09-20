@@ -240,7 +240,7 @@ Custom track data block definitions
 		1 byte:		Note pitch
 		4 bytes:	Lyric position (in milliseconds or delta ticks)
 		4 bytes:	Lyric length (in milliseconds or delta ticks)
-*		2 bytes:	Lyric flags
+*		4 bytes:	Lyric flags
 		[4 bytes:]	Extended lyric flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
 	}
 

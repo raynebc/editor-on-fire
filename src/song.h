@@ -221,6 +221,7 @@ typedef struct
 	unsigned long pos;
 	long length;			//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;
+	unsigned long eflags;
 	unsigned long tflags;	//Stores various temporary statuses
 
 } EOF_LYRIC;
@@ -649,7 +650,7 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 unsigned long eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the temporary flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long tflags);	//Sets the temporary flags of the specified track's note/lyric
 unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the extended flags of the specified pro guitar note, or 0 on error
-void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char eflags);	//Sets the extended flags of the specified pro guitar note
+void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char eflags);	//Sets the extended flags of the specified pro guitar or legacy note
 unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the ghost bitflag of the specified pro guitar track's note/lyric, or 0 on error or if the specified track isn't a pro guitar track
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);

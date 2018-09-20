@@ -2173,12 +2173,18 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_track_resize(sp, sp->tracks-1,count);	//Resize the lyrics array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each lyric in this track
-					(void) eof_load_song_string_pf(sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->text,fp,EOF_MAX_LYRIC_LENGTH);	//Read the lyric text
+					EOF_LYRIC *ptr = sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr];	//Simplify
+					(void) eof_load_song_string_pf(ptr->text,fp,EOF_MAX_LYRIC_LENGTH);	//Read the lyric text
 					(void) pack_getc(fp);	//Read lyric set number (not supported yet)
-					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->note = pack_getc(fp);		//Read lyric pitch
-					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->pos = pack_igetl(fp);		//Read lyric position
-					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->length = pack_igetl(fp);	//Read lyric length
-					(void) pack_igetl(fp);	//Read lyric flags (not supported yet)
+					ptr->note = pack_getc(fp);		//Read lyric pitch
+					ptr->pos = pack_igetl(fp);		//Read lyric position
+					ptr->length = pack_igetl(fp);	//Read lyric length
+					ptr->flags = pack_igetl(fp);	//Read lyric flags (not supported yet)
+					if(ptr->flags & EOF_NOTE_FLAG_EXTENDED)
+					{	//If this note has an additional flags variable
+						ptr->eflags = pack_igetl(fp);			//Read extended flags
+						ptr->flags &= ~EOF_NOTE_FLAG_EXTENDED;	//Clear this flag, it won't be updated again until the project is saved/loaded
+					}
 				}
 			break;
 			case EOF_PRO_KEYS_TRACK_FORMAT:	//Pro Keys
@@ -6935,7 +6941,7 @@ char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note)
 void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sourcenote, EOF_SONG *dsp, unsigned long desttrack, unsigned long pos, long length, char type)
 {
 	unsigned long sourcetracknum, desttracknum, newnotenum;
-	unsigned long note, flags;
+	unsigned long note, flags, eflags;
 	char *text;
 	void *result = NULL;
 
@@ -6955,6 +6961,7 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	note = eof_get_note_note(ssp, sourcetrack, sourcenote);
 	text = eof_get_note_name(ssp, sourcetrack, sourcenote);
 	flags = eof_get_note_flags(ssp, sourcetrack, sourcenote);
+	eflags = eof_get_note_eflags(ssp, sourcetrack, sourcenote);
 
 	if(desttrack == EOF_TRACK_VOCALS)
 	{	//If copying from PART VOCALS
@@ -6975,7 +6982,8 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 		return NULL;	//If the note was not successfully created, return error
 
 	newnotenum = eof_get_track_size(dsp, desttrack) - 1;		//The index of the new note
-	eof_set_note_flags(dsp, desttrack, newnotenum, flags);	//Copy the source note's flags to the newly created note
+	eof_set_note_flags(dsp, desttrack, newnotenum, flags);		//Copy the source note's flags to the newly created note
+	eof_set_note_eflags(dsp, desttrack, newnotenum, eflags);	//Copy the source note's extended flags to the newly created note
 	if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
 		memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
@@ -6985,7 +6993,6 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
 		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
 		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
-		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->eflags = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->eflags;				//Copy the extended flags
 	}
 
 	return result;

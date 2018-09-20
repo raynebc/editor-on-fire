@@ -793,7 +793,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 											}
 										}
 									}
-									if(eof_import_events[i]->type == EOF_TRACK_BASS)
+									else if(eof_import_events[i]->type == EOF_TRACK_BASS)
 									{	//If this is the bass track
 										if(isghl)
 										{
@@ -828,6 +828,15 @@ EOF_SONG * eof_import_midi(const char * fn)
 												sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
 												sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
 											}
+										}
+									}
+									else if((eof_import_events[i]->type == EOF_TRACK_GUITAR_COOP) || (eof_import_events[i]->type == EOF_TRACK_RHYTHM))
+									{	//If this is either of the other two legacy guitar tracks
+										if(isghl)
+										{
+											sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Configure the track as a GHL track
+											sp->track[(unsigned)eof_midi_tracks[j].track_type]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
+											sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
 										}
 									}
 								}
@@ -2320,7 +2329,7 @@ set_window_title(debugtext);
 
 											if((length2 != 0) && (diff > 1))
 											{	//If the note has had its length determined and it's more than 1ms different from the note that was just imported
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tApplying disjointed status to note #%lu and #%lu", ctr, k - 1);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tApplying disjointed status to note #%lu and #%lu at %lums in difficulty %d", ctr, k - 1, pos, eof_get_note_type(sp, picked_track, ctr));
 												eof_log(eof_log_string, 2);
 
 												eflags = eof_get_note_eflags(sp, picked_track, ctr) | EOF_NOTE_EFLAG_DISJOINTED;
@@ -3385,7 +3394,7 @@ set_window_title(debugtext);
 		{	//If this is not a Power Gig formatted MIDI, only allow one MIDI track to import into each track in the project
 			if(eof_get_track_size(sp, picked_track) > 0)
 			{	//If at least one note was imported
-				eof_track_find_crazy_notes(sp, picked_track, 0);
+				eof_track_find_crazy_notes(sp, picked_track, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status or merge into chords as appropriate)
 				used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
 			}
 		}
