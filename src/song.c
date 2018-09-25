@@ -9375,6 +9375,10 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void)
 				}
 			}
 		}//For each beat except the last
+		if(delete_count)
+		{	//If any beats were deleted
+			allegro_message("One or more mid-beat tempo changes were altered during import due to the \"Import drops mid beat tempos\" preference being enabled.  Make sure to review the tempo map and note sync and re-import after disabling that preference if you are unsatisfied with the results.");
+		}
 	}//If the user set the preference to delete mid beat tempo changes
 
 	//Pass 2:  Remove mid beat flags if the "Render mid beat tempos blue" import preference is not enabled

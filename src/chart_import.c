@@ -135,7 +135,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	return curpos;
 }
 
-void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track)
+void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track, unsigned char difficulty)
 {
 	unsigned long ctr2, ctr3;
 
@@ -155,6 +155,8 @@ void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track)
 		unsigned char type = eof_get_note_type(sp, track, ctr2 - 1);
 		unsigned long tflags;
 
+		if(eof_get_note_type(sp, track, ctr2 - 1) != difficulty)
+			continue;	//If this note is not in the target difficulty, skip it
 		if(!(eof_get_note_note(sp, track, ctr2 - 1) & 32))
 			continue;	//If this note does not use lane 6 (a "N 5 #" .chart entry), skip it
 		tflags = eof_get_note_tflags(sp, track, ctr2 - 1);
@@ -575,10 +577,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 			unsigned long ch_solo_pos = 0;	//Tracks the start position of the last Clone Hero solo event
 			char ch_solo_on = 0;			//Tracks whether a Clone Hero solo event is in progress
 			unsigned long notepos;
-			unsigned long notes_created = 0, notes_combined = 0;	//Statistics for debugging
+			unsigned long notes_imported = 0, notes_created = 0, notes_combined = 0;	//Statistics for debugging
 
 			tracknum = sp->track[track]->tracknum;
 			tp = sp->legacy_track[tracknum];
+
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack:  \"%s\" difficulty %d", sp->track[track]->name, difficulty);
+			eof_log(eof_log_string, 2);
 
 			if((current_track->isguitar > 1) || (current_track->isbass > 1))
 			{	//If this is a GHL guitar or bass track, configure the track accordingly
@@ -587,16 +592,19 @@ EOF_SONG * eof_import_chart(const char * fn)
 				ep->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
 				tp->numlanes = 6;
 				ep->flags |= EOF_TRACK_FLAG_SIX_LANES;		//Set the open strum flag
+				eof_log("\t\t\tImporting as GHL track", 2);
 			}
 
 			while(current_note)
 			{	//For each note in the track
 				notepos = chartpos_to_msec(chart, current_note->chartpos, &gridsnap) + 0.5;	//Round up
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Pos = %lums  Gem value = %d", notes_imported++, notepos, current_note->gemcolor);
+				eof_log(eof_log_string, 1);
 				if(gridsnap && !eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
 				{	//If this chart position should be a grid snap, but the timing conversion did not result in this
 					if(closestpos != ULONG_MAX)
 					{	//If the nearest grid snap position was determined
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCorrecting chart position from %lums to %lums", notepos, closestpos);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tCorrecting chart position from %lums to %lums", notepos, closestpos);
 						eof_log(eof_log_string, 1);
 						notepos = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
 					}
@@ -751,9 +759,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 				current_note = current_note->next;
 			}//For each note in the track
 
-			eof_chart_import_process_note_markers(sp, track);	//Process and remove toggle HOPO and slider marker gems where applicable so they no longer count against the track's note limit
+			eof_chart_import_process_note_markers(sp, track, difficulty);	//Process and remove toggle HOPO and slider marker gems where applicable so they no longer count against the track's note limit
 
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImported track \"%s\" difficulty %d:  %lu notes created, %lu gems combined to form chords", sp->track[track]->name, difficulty, notes_created, notes_combined);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImported track difficulty:  %lu notes created, %lu gems combined to form chords", notes_created, notes_combined);
 			eof_log(eof_log_string, 2);
 
 			//Apply HOPO status to notes within the threshold
@@ -772,7 +780,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 							if(eof_note_count_colors_bitmask(tp->note[ctr]->note) == 1)
 							{	//If the later of the two notes is not a chord
 								if(tp->note[ctr]->note != prev_note->note)
-								{	//If the previous note and the one before it aren't identical in which lanes they use, GH3's HOPO criteria have been met
+								{	//If this note and the one before it aren't identical in which lanes they use, GH3's HOPO criteria have been met
 									if(!current_track->isdrums)
 									{	//If it isn't a drum track being imported
 										tp->note[ctr]->flags ^= EOF_NOTE_FLAG_F_HOPO;	//The note is a hammer on note (toggle, since a toggle HOPO marker may have already been processed for this note and this would lead to the correct result)

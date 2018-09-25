@@ -718,7 +718,7 @@ void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long i
 void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified arpeggio phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified slider phrase and moves all phrases that follow back in the array one position
 unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track);	//Returns the number of lyric sections in the specified track, or 0 on error
-EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, unsigned long sectionnum);	//Returns a pointer to the specified lyric section, or NULL on error
+EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, unsigned long sectionnum);	//Returns a pointer to the specified lyric section, or NULL on error.  This is an index into the vocal_track[] array and is not limited to the vocal track's current lyric line count
 void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sourcenote, EOF_SONG *dsp, unsigned long desttrack, unsigned long pos, long length, char type);
 	//Copies the specified note from the specified source project track as a new note in the specified project track, returning a pointer to the newly created note structure, or NULL on error
 	//Temporary flags are not copied

@@ -745,7 +745,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	long nplace;
 	long note_y;
 	long native = 0;
-	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
+	int pcol = p == 1 ? eof_color_red : p == 2 ? makecol(224, 255, 224) : 0;
 	int ncol = 0;
 	EOF_PHRASE_SECTION *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
 	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background

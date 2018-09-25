@@ -5498,6 +5498,10 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		{
 			ptr->ignore = 0;
 		}
+		if((target == 2) && (fret > 22))
+		{	//If Rocksmith 2 export is in effect and this string's fret value is over 22
+			ptr->ignore = 1;	//Export it with ignore status since the game will not score this anyway
+		}
 		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (target == 2))
 		{	//If the note's extended flags indicate the sustain status is applied and Rocksmith 2 export is in effect
 			ptr->sustain = 1;
