@@ -441,8 +441,9 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char isebtuning = 1;	//Will track whether all strings are tuned to -1
 	char notename[EOF_NAME_LENGTH+1] = {0};	//String large enough to hold any chord name supported by EOF
 	int scale = 0, chord = 0, isslash = 0, bassnote = 0;	//Used for power chord detection
-	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0;	//Used for technique detection
+	int represent, standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0;	//Used for technique detection
 	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
+	char is_picked_bass = 0;	//Is set to nonzero if the specified track is to be considered a picked bass arrangement
 	unsigned long chordid = 0, handshapectr = 0, handshapeloop;
 	unsigned long handshapestart = 0, handshapeend = 0;
 	long nextnote;
@@ -638,6 +639,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 	is_bass = eof_track_is_bass_arrangement(tp, track);
+	if(is_bass && (sp->track[track]->flags & EOF_TRACK_FLAG_RS_PICKED_BASS))
+	{	//If this is a bass arrangement, and its picked bass flag is set
+		is_picked_bass = 1;
+	}
 	if(isebtuning && !(is_bass && (tp->numstrings > 4)))
 	{	//If all strings were tuned down a half step (except for bass tracks with more than 4 strings, since in those cases, the lowest string is not tuned to E)
 		tuning = eb;	//Remap 4 or 5 string Eb tuning as {-1,-1,-1,-1,-1,-1}
@@ -665,6 +670,14 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs(buffer, fp);
 
 	//Determine arrangement properties
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_RS_ALT_ARR) || (sp->track[track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR))
+	{	//If the track has the RS alternate or bonus arrangement flag
+		represent = 0;	//Export it as an alternate arrangement
+	}
+	else
+	{
+		represent = 1;	//Otherwise export it as the representative arrangement
+	}
 	if(!memcmp(tuning, standard, 6))
 	{	//All unused strings had their tuning set to 0, so if all bytes of this array are 0, the track is in standard tuning
 		standard_tuning = 1;
@@ -790,7 +803,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 		double_stops = 0;
 	}
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"1\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"0\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"0\" />\n", standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"%d\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"0\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"%d\" />\n", represent, standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves, is_picked_bass);
 	(void) pack_fputs(buffer, fp);
 
 	//Write the phrases and do other setup common to both Rocksmith exports
@@ -1562,8 +1575,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char tuning[6] = {0};
 	char notename[EOF_NAME_LENGTH+1] = {0};	//String large enough to hold any chord name supported by EOF
 	int scale = 0, chord = 0, isslash = 0, bassnote = 0;	//Used for power chord detection
-	int is_bonus = 0, standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0, sustains = 0, pinch= 0;	//Used for technique detection
+	int is_bonus, represent, standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0, sustains = 0, pinch= 0;	//Used for technique detection
 	int is_lead = 0, is_rhythm = 0, is_bass = 0;	//Is set to nonzero if the specified track is to be considered any of these arrangement types
+	char is_picked_bass = 0;	//Is set to nonzero if the specified track is to be considered a picked bass arrangement
 	unsigned long chordid = 0, handshapectr = 0;
 	unsigned long handshapestart = 0, handshapeend = 0;
 	long nextnote, prevnote;
@@ -1747,6 +1761,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}
 	is_bass = eof_track_is_bass_arrangement(tp, track);
+	if(is_bass && (sp->track[track]->flags & EOF_TRACK_FLAG_RS_PICKED_BASS))
+	{	//If this is a bass arrangement, and its picked bass flag is set
+		is_picked_bass = 1;
+	}
 	if(tp->arrangement == 2)
 	{	//Rhythm arrangement
 		is_rhythm = 1;
@@ -1794,6 +1812,17 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	if(sp->track[track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR)
 	{	//If the track has the RS bonus arrangement flag
 		is_bonus = 1;
+		represent = 0;
+	}
+	else if(sp->track[track]->flags & EOF_TRACK_FLAG_RS_ALT_ARR)
+	{	//If the track has the RS alternate arrangement flag
+		is_bonus = 0;
+		represent = 0;
+	}
+	else
+	{	//Otherwise this is the normal "representative" arrangement for this instrument
+		is_bonus = 0;
+		represent = 1;
 	}
 	if(!memcmp(tuning, standard, 6))
 	{	//All unused strings had their tuning set to 0, so if all bytes of this array are 0, the track is in standard tuning
@@ -1931,7 +1960,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 		double_stops = 0;
 	}
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"1\" bonusArr=\"%d\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"%d\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"0\" sustain=\"%d\" pathLead=\"%d\" pathRhythm=\"%d\" pathBass=\"%d\" />\n", is_bonus, standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, pinch, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves, sustains, is_lead, is_rhythm, is_bass);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"%d\" bonusArr=\"%d\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"%d\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"%d\" sustain=\"%d\" pathLead=\"%d\" pathRhythm=\"%d\" pathBass=\"%d\" />\n", represent, is_bonus, standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, pinch, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves, is_picked_bass, sustains, is_lead, is_rhythm, is_bass);
 	(void) pack_fputs(buffer, fp);
 
 	//Write the phrases and do other setup common to both Rocksmith exports
@@ -5738,6 +5767,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	if(tech.bend)
 	{	//If the note is a bend, write the bendValues subtag and close the note tag
 		unsigned long bendpoints, firstbend = 0, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported note
+		unsigned long bendpointswritten = 0;	//Used to track how many bend points are written, to prevent more than 22 being written for any one note/chordnote
 		long nextnote;
 
 		bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, notenum, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string
@@ -5791,10 +5821,11 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 				eof_conditionally_append_xml_float(buffer, sizeof(buffer), "step", (double)bendstrength_q / 2.0, 0.0);
 				(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
 				(void) pack_fputs(buffer, fp);
+				bendpointswritten++;
 			}
 
-			for(ctr = firstbend; ctr < tp->technotes; ctr++)
-			{	//For all tech notes, starting with the first applicable bend tech note
+			for(ctr = firstbend; (ctr < tp->technotes) && (bendpointswritten < 32); ctr++)
+			{	//For all tech notes, starting with the first applicable bend tech note, write up to 32 bend points (more would cause Rocksmith 2 to crash)
 				if(tp->technote[ctr]->pos > notepos + notelen)
 				{	//If this tech note (and all those that follow) are after the end position of this note
 					break;	//Break from loop, no more overlapping notes will be found
@@ -5823,6 +5854,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 					eof_conditionally_append_xml_float(buffer, sizeof(buffer), "step", (double)bendstrength_q / 2.0, 0.0);
 					(void) strncat(buffer, "/>\n", sizeof(buffer) - strlen(buffer) - 1);	//Append the tag ending
 					(void) pack_fputs(buffer, fp);
+					bendpointswritten++;
 				}
 			}
 		}

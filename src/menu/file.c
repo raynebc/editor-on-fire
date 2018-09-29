@@ -3705,7 +3705,7 @@ int eof_save_helper_checks(void)
 				eof_menu_pro_guitar_track_set_tech_view_state(tp, 1);	//Activate the tech note set
 				eof_seek_and_render_position(ctr, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
 				eof_clear_input();
-				if(!user_prompted && alert("At least one note has 33 or more bend tech notes", "This can cause Rocksmith 2014 to crash.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+				if(!user_prompted && alert("At least one note has 33 or more bend tech notes", "This would cause Rocksmith 2014 to crash so only the first 32 bend points will export.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user hasn't already answered this prompt, and opts to correct the issue
 					return 1;	//Return cancellation
 				}

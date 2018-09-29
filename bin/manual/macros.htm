@@ -319,6 +319,30 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>%IF_TRACK_DIFF_HAS_INVALID_DRUM_CHORDS%</td>
 <td>Evaluates as true if the drum track is active and the active difficulty has at least one chord that is unplayable in a Rock Band style game (which has no support for mechanisms like hi hat pedals) in that it requires more than two hands to play.</td>
 </tr>
+<tr>
+<td>%IF_NONZERO_MIDI_DELAY%</td>
+<td>Evaluates as true if chart has a nonzero delay/offset, which isn't supported in some rhythm games like Clone Hero and Rock Band.</td>
+</tr>
+<tr>
+<td>%IF_TRACK_HAS_NO_SOLOS%</td>
+<td>Evaluates as true if the active track does not have any solo sections.</td>
+</tr>
+<tr>
+<td>%IF_TRACK_HAS_NO_STAR_POWER%</td>
+<td>Evaluates as true if the active track does not have any star power sections.</td>
+</tr>
+<tr>
+<td>%IF_NO_LOADING_TEXT%</td>
+<td>Evaluates as true if the project has no loading text defined or the text that is defined is just whitespace.</td>
+</tr>
+<tr>
+<td>%IF_NO_PREVIEW_START_TIME%</td>
+<td>Evaluates as true if the project has no preview start time INI entry defined either manually or by using <a href="functions.htm#preview">Song>Create preview audio</a>.</td>
+</tr>
+<tr>
+<td>%IF_NOTE_GAP_IS_IN_MS%</td>
+<td>Evaluates as true if EOF's configured <a href="configure.htm#notegap">Min. note distance</a> setting (analogous to the note gap setting in Moonscraper) in File>Preferences>Preferences is set to # ms instead of a 1/# beat or measure interval as is typically recommended for Clone Hero authoring.</td>
+</tr>
 </tbody>
 </table><br>
 
@@ -482,6 +506,38 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%TRACK_SECONDARY_DIFFICULTY%</td>
 <td>If the active track is one of the tracks that has a second difficulty level (drums or vocals, see <a href="functions.htm#difficulty">Track>Set difficulty</a>), prints that level along with some text identifying what the difficulty type ("(Pro: " for pro drum difficulty or "(Harmony: " for harmony difficulty).  If the active drum/vocal track has no secondary difficulty level defined, "Undefined" is printed after the dificulty type.  If the active track is not a drum/vocal track, no text is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_SOLO_COUNT%</td>
+<td>Prints the number of solo sections in the active track.  If there aren't any, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_SOLO_NOTE_COUNT%</td>
+<td>Prints the number of notes in the active track that are in solo sections, and the percentage of the track's total note count that represents.  If there aren't any, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_SOLO_NOTE_STATS%</td>
+<td>Prints statistics about the number of notes in the active track's solo sections:  The minimum number among all solo sections, the maximum number among all solo sections and the mean number (the total number of solo notes divided by the number of solo sections).  If there aren't any, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_SP_COUNT%</td>
+<td>Prints the number of star power sections in the active track.  If there aren't any, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_SP_NOTE_COUNT%</td>
+<td>Prints the number of star power notes in the active track, and the percentage of the track's total note count that represents.  If there aren't any, "None" is printed.</td>
+</tr>
+<tr>
+<td>%SP_LYRIC_LINE_COUNT%</td>
+<td>Prints the number of star power lyric lines in the vocal track, and the percentage of the vocal track's total lyric line count that represents.  If there aren't any, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_SP_NOTE_STATS%</td>
+<td>Prints statistics about the number of notes in the active track's star power sections:  The minimum number among all star power sections, the maximum number among all star power sections and the mean number (the total number of star power notes divided by the number of star power sections).  If there aren't any, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_SLIDER_NOTE_COUNT%</td>
+<td>Prints the number of slider notes in the active track, and the percentage of the track's total note count that represents.  If there aren't any, "None" is printed.</td>
 </tr>
 
 <tr>
@@ -690,6 +746,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%SEEK_POSITION_MIN_SEC%</td>
 <td>Prints the current seek position in minutes:seconds.milliseconds format, regardless of the current setting of the "Display seek pos. in seconds" preference.</td>
+</tr>
+<tr>
+<td>%SEEK_POSITION_PERCENT%</td>
+<td>Prints the current seek position as a percentage of the chart's total length.</td>
 </tr>
 <tr>
 <td>%START_POINT%</td>

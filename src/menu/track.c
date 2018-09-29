@@ -112,6 +112,10 @@ MENU eof_track_rocksmith_arrangement_menu[] =
 	{"&Rhythm", eof_track_rocksmith_arrangement_rhythm, NULL, 0, NULL},
 	{"&Lead", eof_track_rocksmith_arrangement_lead, NULL, 0, NULL},
 	{"&Bass", eof_track_rocksmith_arrangement_bass, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"&Normal", eof_menu_track_rs_normal_arrangement, NULL, 0, NULL},
+	{"B&Onus", eof_menu_track_rs_bonus_arrangement, NULL, 0, NULL},
+	{"&Alternate", eof_menu_track_rs_alternate_arrangement, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -151,11 +155,27 @@ void eof_prepare_track_menu(void)
 
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If the active track has already had the difficulty limit removed
-				eof_track_rocksmith_menu[6].flags = D_SELECTED;	//Track>Rocksmith>Remove difficulty limit
+				eof_track_rocksmith_menu[5].flags = D_SELECTED;	//Track>Rocksmith>Remove difficulty limit
 			}
 			else
 			{
-				eof_track_rocksmith_menu[6].flags = 0;
+				eof_track_rocksmith_menu[5].flags = 0;
+			}
+
+			if(eof_song->pro_guitar_track[tracknum]->arrangement == 4)
+			{	//If this track's arrangement type is bass
+				if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_PICKED_BASS)
+				{	//If the track is defined as a picked bass track
+					eof_track_rocksmith_menu[10].flags = D_SELECTED;
+				}
+				else
+				{
+					eof_track_rocksmith_menu[10].flags = 0;
+				}
+			}
+			else
+			{	//Otherwise disable the picked bass option
+				eof_track_rocksmith_menu[10].flags = D_DISABLED;
 			}
 
 			//Update checkmarks on the arrangement type submenu
@@ -171,13 +191,18 @@ void eof_prepare_track_menu(void)
 				}
 			}
 
+			eof_track_rocksmith_arrangement_menu[6].flags = eof_track_rocksmith_arrangement_menu[7].flags = eof_track_rocksmith_arrangement_menu[8].flags = 0;
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR)
 			{	//If the active track has the RS bonus arrangement flag
-				eof_track_rocksmith_menu[4].flags = D_SELECTED;	//Track>Rocksmith>Bonus arrangement
+				eof_track_rocksmith_arrangement_menu[7].flags = D_SELECTED;	//Track>Rocksmith>Arrangement type>Bonus
+			}
+			else if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_ALT_ARR)
+			{	//If the active track has the RS alternate arrangement flag
+				eof_track_rocksmith_arrangement_menu[8].flags = D_SELECTED;	//Track>Rocksmith>Arrangement type>Alternate
 			}
 			else
-			{
-				eof_track_rocksmith_menu[4].flags = 0;
+			{	//The active track is a normal RS arrangement
+				eof_track_rocksmith_arrangement_menu[6].flags = D_SELECTED;	//Track>Rocksmith>Arrangement type>Normal
 			}
 		}
 		else
@@ -2377,13 +2402,13 @@ MENU eof_track_rocksmith_menu[] =
 	{"Fret &Hand positions", NULL, eof_track_proguitar_fret_hand_menu, 0, NULL},
 	{"&Popup messages", NULL, eof_track_rocksmith_popup_menu, 0, NULL},
 	{"&Arrangement type", NULL, eof_track_rocksmith_arrangement_menu, 0, NULL},
-	{"&Bonus arrangement", eof_menu_track_rs_bonus_arrangement, NULL, 0, NULL},
 	{"&Tone change", NULL, eof_track_rocksmith_tone_change_menu, 0, NULL},
 	{"Remove difficulty limit", eof_track_rocksmith_toggle_difficulty_limit, NULL, 0, NULL},
 	{"Insert new difficulty", eof_track_rocksmith_insert_difficulty, NULL, 0, NULL},
 	{"&Manage RS phrases\t" CTRL_NAME "+Shift+M", eof_track_manage_rs_phrases, NULL, 0, NULL},
 	{"Flatten this difficulty", eof_track_flatten_difficulties, NULL, 0, NULL},
 	{"Un-flatten track", eof_track_unflatten_difficulties, NULL, 0, NULL},
+	{"Picked &Bass", eof_menu_track_rs_picked_bass_arrangement, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2401,6 +2426,10 @@ int eof_track_rocksmith_arrangement_set(unsigned char num)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->pro_guitar_track[tracknum]->arrangement = num;
+	if(num != 4)
+	{	//If the arrangement type was changed to anything other than bass
+		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_PICKED_BASS;	//Clear the picked bass flag
+	}
 	return 1;
 }
 
@@ -5295,14 +5324,69 @@ int eof_menu_track_rs_bonus_arrangement(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Only allow this function to run for pro guitar/bass tracks
 
+	if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR))
+	{	//If this track doesn't already have the RS bonus arrangement flag
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_RS_BONUS_ARR;	//Set the bonus flag
+		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_ALT_ARR;	//And clear the alternate flag
+	}
+
+	return 1;
+}
+
+int eof_menu_track_rs_alternate_arrangement(void)
+{
+	if(!eof_song)
+		return 1;
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Only allow this function to run for pro guitar/bass tracks
+
+	if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_ALT_ARR))
+	{	//If this track doesn't already have the RS alternate arrangement flag
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_RS_ALT_ARR;	//Set the alternate flag
+		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_BONUS_ARR;	//And clear the bonus flag
+	}
+
+	return 1;
+
+	return 1;
+}
+
+int eof_menu_track_rs_normal_arrangement(void)
+{
+	if(!eof_song)
+		return 1;
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Only allow this function to run for pro guitar/bass tracks
+
+	if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR) || (eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_ALT_ARR))
+	{	//If this track has either the RS bonus or alternate arrangement flag
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_ALT_ARR;	//Clear the alternate flag
+		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_BONUS_ARR;	//And clear the bonus flag
+	}
+
+	return 1;
+
+	return 1;
+}
+
+int eof_menu_track_rs_picked_bass_arrangement(void)
+{
+	if(!eof_song)
+		return 1;
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Only allow this function to run for pro guitar/bass tracks
+
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR)
-	{	//If this track already has the RS bonus arrangement flag
-		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_BONUS_ARR;	//Clear the flag
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_PICKED_BASS)
+	{	//If this track already has the RS picked bass arrangement flag
+		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_PICKED_BASS;	//Clear the flag
 	}
 	else
 	{
-		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_RS_BONUS_ARR;	//Otherwise set the flag
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_RS_PICKED_BASS;	//Otherwise set the flag
 	}
 
 	return 1;

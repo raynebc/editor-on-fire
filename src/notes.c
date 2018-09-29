@@ -4,6 +4,7 @@
 	#include <winalleg.h>
 #endif
 #include "beat.h"		//For eof_get_measure()
+#include "ini_import.h"
 #include "main.h"
 #include "mix.h"
 #include "notes.h"
@@ -932,6 +933,106 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 	}
 
+	if(!ustricmp(macro, "IF_NONZERO_MIDI_DELAY"))
+	{
+		if(eof_song->beat[0]->pos != 0)
+		{	//If the first beat marker is at any timestamp other than 0ms
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_TRACK_HAS_NO_SOLOS"))
+	{
+		if(!eof_get_num_solos(eof_song, eof_selected_track))
+		{	//If there are no solos in the active track
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_TRACK_HAS_NO_STAR_POWER"))
+	{
+		if(eof_selected_track == EOF_TRACK_VOCALS)
+		{	//The vocals track handles star power on a per lyric line basis
+			unsigned long ctr;
+			for(ctr = 0; ctr < eof_get_num_lyric_sections(eof_song, eof_selected_track); ctr++)
+			{	//For each lyric line
+				EOF_PHRASE_SECTION *ptr = eof_get_lyric_section(eof_song, eof_selected_track, ctr);
+
+				if(ptr && (ptr->flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE))
+				{	//If the lyric line was found and it has overdrive status
+					return 2;	//False
+				}
+			}
+		}
+		else if(eof_get_num_star_power_paths(eof_song, eof_selected_track))
+		{	//If there are star power phrases in the active track
+			return 2;	//False
+		}
+
+		dest_buffer[0] = '\0';
+		return 3;	//True
+	}
+
+	if(!ustricmp(macro, "IF_NO_LOADING_TEXT"))
+	{
+		if(!eof_check_string(eof_song->tags->loading_text))
+		{	//If there is no loading text defined or it is just space characters
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_NO_PREVIEW_START_TIME"))
+	{
+		unsigned long entrynum = 0, ctr;
+		char *ptr, *temp;
+		int nonzeroes = 0;
+
+		ptr = eof_find_ini_setting_tag(eof_song, &entrynum, "preview_start_time");
+		if(ptr)
+		{	//If there is a preview_start_time INI entry
+			for(temp = ptr; *temp == ' '; temp++);	//Skip past any leading whitespace in the value portion of the INI setting
+			//Manually check if the string is just zeroes, because strtoul() returns zero on error and also zero if the converted number is zero
+			for(ctr = 0; temp[ctr] != '\0'; ctr++)
+			{	//For each character until the end of the string
+				if(temp[ctr] != '0')
+				{	//If it's a character other than zero
+					nonzeroes = 1;	//Track this
+				}
+			}
+			if(!nonzeroes)
+			{	//If the only characters in the string were the digit zero, this counts as a preview start time
+				return 2;	//False
+			}
+			if(strtoul(temp, NULL, 10))
+			{	//If the string was converted to a number that wasn't zero, this counts as a preview start time
+				return 2;	//False
+			}
+		}
+
+		dest_buffer[0] = '\0';
+		return 3;	//True
+	}
+
+	if(!ustricmp(macro, "IF_NOTE_GAP_IS_IN_MS"))
+	{
+		if(!eof_min_note_distance_intervals)
+		{	//If the configured note gap is in milliseconds instead of a per beat/measure interval
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -1102,6 +1203,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+
 	///SYMBOL MACROS
 	//Bend character
 	if(!ustricmp(macro, "BEND"))
@@ -1234,7 +1336,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_song->track[eof_selected_track]->difficulty == 0xFF)
 			snprintf(dest_buffer, dest_buffer_size, "(Undefined)");
 		else
-		snprintf(dest_buffer, dest_buffer_size, "%u", eof_song->track[eof_selected_track]->difficulty);
+			snprintf(dest_buffer, dest_buffer_size, "%u", eof_song->track[eof_selected_track]->difficulty);
 		return 1;
 	}
 
@@ -1266,6 +1368,165 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		else
 		{	//There is no secondary difficulty for the active track
 			dest_buffer[0] = '\0';	//Empty the output buffer
+		}
+		return 1;
+	}
+
+	//Track solo count
+	if(!ustricmp(macro, "TRACK_SOLO_COUNT"))
+	{
+		unsigned long count = eof_get_num_solos(eof_song, eof_selected_track);
+
+		if(count)
+		{	//If there are any solos in the active track
+			snprintf(dest_buffer, dest_buffer_size, "%lu", count);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//Track solo count
+	if(!ustricmp(macro, "TRACK_SOLO_NOTE_COUNT"))
+	{
+		unsigned long count;
+
+		count = eof_notes_panel_count_section_stats(EOF_SOLO_SECTION, NULL, NULL);
+
+		if(count)
+		{	//If there are any solo notes in the active track
+			double percent;
+
+			percent = (double)count * 100.0 / eof_get_track_size(eof_song, eof_selected_track);
+			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//Track solo note stats
+	if(!ustricmp(macro, "TRACK_SOLO_NOTE_STATS"))
+	{
+		unsigned long count, min = 0, max = 0;
+
+		count = eof_notes_panel_count_section_stats(EOF_SOLO_SECTION, &min, &max);
+
+		if(count)
+		{	//If there are any solo notes in the active track
+			snprintf(dest_buffer, dest_buffer_size, "%lu/%lu/%.2f (min/max/mean)", min, max, (double)count/eof_get_num_solos(eof_song, eof_selected_track));
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//Track star power count
+	if(!ustricmp(macro, "TRACK_SP_COUNT"))
+	{
+		unsigned long count = eof_get_num_star_power_paths(eof_song, eof_selected_track);
+
+		if(count)
+		{	//If there are any star power sections in the active track
+			snprintf(dest_buffer, dest_buffer_size, "%lu", count);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//Track star power note count
+	if(!ustricmp(macro, "TRACK_SP_NOTE_COUNT"))
+	{
+		unsigned long count;
+
+		count = eof_notes_panel_count_section_stats(EOF_SP_SECTION, NULL, NULL);
+
+		if(count)
+		{	//If there are any star power sections in the active track
+			double percent;
+
+			percent = (double)count * 100.0 / eof_get_track_size(eof_song, eof_selected_track);
+			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//Star power lyric line count
+	if(!ustricmp(macro, "SP_LYRIC_LINE_COUNT"))
+	{
+		unsigned long ctr, count = 0;
+
+		for(ctr = 0; ctr < eof_get_num_lyric_sections(eof_song, EOF_TRACK_VOCALS); ctr++)
+		{	//For each lyric line
+			EOF_PHRASE_SECTION *ptr = eof_get_lyric_section(eof_song, EOF_TRACK_VOCALS, ctr);
+
+			if(ptr && (ptr->flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE))
+			{	//If the lyric line was found and it has overdrive status
+				count++;
+			}
+		}
+		if(count)
+		{
+			double percent;
+
+			percent = (double)count * 100.0 / eof_get_num_lyric_sections(eof_song, EOF_TRACK_VOCALS);
+			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//Track solo note stats
+	if(!ustricmp(macro, "TRACK_SP_NOTE_STATS"))
+	{
+		unsigned long count, min = 0, max = 0;
+
+		count = eof_notes_panel_count_section_stats(EOF_SP_SECTION, &min, &max);
+
+		if(count)
+		{	//If there are any star power notes in the active track
+			snprintf(dest_buffer, dest_buffer_size, "%lu/%lu/%.2f (min/max/mean)", min, max, (double)count/eof_get_num_star_power_paths(eof_song, eof_selected_track));
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//Track slider note count
+	if(!ustricmp(macro, "TRACK_SLIDER_NOTE_COUNT"))
+	{
+		unsigned long count;
+
+		count = eof_notes_panel_count_section_stats(EOF_SLIDER_SECTION, NULL, NULL);
+
+		if(count)
+		{	//If there are any slider sections in the active track
+			double percent;
+
+			percent = (double)count * 100.0 / eof_get_track_size(eof_song, eof_selected_track);
+			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
 		}
 		return 1;
 	}
@@ -1652,6 +1913,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		sec = ((eof_music_pos - eof_av_delay) / 1000) % 60;
 		ms = (eof_music_pos - eof_av_delay) % 1000;
 		snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
+
+		return 1;
+	}
+
+	//Seek position as a percentage of the chart's total length
+	if(!ustricmp(macro, "SEEK_POSITION_PERCENT"))
+	{
+		double percent = (double)(eof_music_pos - eof_av_delay) * 100.0 / eof_chart_length;
+
+		snprintf(dest_buffer, dest_buffer_size, "%.2f", percent);
 
 		return 1;
 	}
@@ -2667,13 +2938,13 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 				panel->contentprinted = 0;
 				eof_log("\t\t\tLine printed", 3);
 			}
+
+			dst_index = 0;	//Reset the destination buffer index
+			src_index++;	//Seek past the line feed character in the source buffer
 			if(panel->endpanel)
 			{	//If the printing of this panel was signaled to end
 				break;	//Break from while loop
 			}
-
-			dst_index = 0;	//Reset the destination buffer index
-			src_index++;	//Seek past the line feed character in the source buffer
 			linectr++;		//Track the line number being processed for debugging purposes
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text line #%lu", linectr);
 			eof_log(eof_log_string, 3);
@@ -2813,4 +3084,52 @@ unsigned long eof_count_num_notes_with_gem_designation(unsigned char gems, unsig
 	}
 
 	return count;
+}
+
+unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, unsigned long *minptr, unsigned long *maxptr)
+{
+	unsigned long ctr, ctr2, totalcount = 0, thiscount, tracknotecount, sectioncount, min = 0, max = 0;
+	EOF_PHRASE_SECTION *phrase = NULL;
+
+	if(!eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &sectioncount, &phrase) || !phrase)
+	{	//If there was an error looking up how many of this section type are present in the active track
+		sectioncount = 0;	//Ensure this is zero
+	}
+	tracknotecount = eof_get_track_size(eof_song, eof_selected_track);
+
+	for(ctr = 0; ctr < sectioncount; ctr++)
+	{	//For each section of this type in the track
+		EOF_PHRASE_SECTION *ptr = &phrase[ctr];	//Get a pointer to this section instance
+
+		thiscount = 0;	//Reset this counter
+		for(ctr2 = 0; ctr2 < tracknotecount; ctr2++)
+		{	//For each note in the track
+			unsigned long notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr2);
+
+			if(notepos > ptr->end_pos)	//If this note and all others are past the end of the section being examined
+				break;					//Stop looking for notes in this section
+
+			if(notepos >= ptr->start_pos)
+			{	//If this note is not after the section, and starts at or after the section's beginning, it's in the section
+				thiscount++;	//Count the number of notes in this section
+				totalcount++;	//Count the number of notes in all solos
+			}
+		}
+		if(!min || (thiscount < min))
+		{	//If this section has the least number of notes among all examined so far
+			min = thiscount;
+		}
+		if(!max || (thiscount > max))
+		{	//If this section has the most notes among all examined so far
+			max = thiscount;
+		}
+	}
+
+	//Return min and max values by reference if applicable
+	if(minptr)
+		*minptr = min;
+	if(maxptr)
+		*maxptr = max;
+
+	return totalcount;
 }

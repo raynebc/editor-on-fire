@@ -86,4 +86,10 @@ unsigned long eof_count_num_notes_with_gem_designation(unsigned char gems, unsig
 	//If the track is a drum track, the note must have the specified toms and the specified cymbals to be counted as a match
 	//A gem bitmask of 255 indicates an open note
 
+unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, unsigned long *minptr, unsigned long *maxptr);
+	//Examines the number of notes in the active track's sections of the specified type (ie. EOF_SOLO_SECTION or EOF_SP_SECTION)
+	//The note count in the section with the fewest notes is returned via *min if minptr is not NULL
+	//The note count in the section with the most notes is returned via *max if maxptr is not NULL
+	//Returns the total number of section notes in the active track, or 0 on error
+
 #endif

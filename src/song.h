@@ -312,6 +312,10 @@ typedef struct
 	//Specifies that a pro guitar track is to be presented in Rocksmith as a bonus arrangement
 #define EOF_TRACK_FLAG_GHL_MODE_MS     32
 	//Specifies that if the track is in GHL mode, the lane order has been changed to EOF's newer system, to match the order in Moonscraper (1=B1,2=B2,3=B3,4=W1,5=W2,6=W3)
+#define EOF_TRACK_FLAG_RS_ALT_ARR      64
+	//Specifies that a pro guitar track is to be presented in Rocksmith as an alternate arrangement
+#define EOF_TRACK_FLAG_RS_PICKED_BASS 128
+	//Specifies that a bass pro guitar track is to be presented in Rocksmith as a picked bass arrangement instead of a fingered bass arrangement
 
 
 ///Difficulty numbers
