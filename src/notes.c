@@ -1412,13 +1412,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track solo note stats
 	if(!ustricmp(macro, "TRACK_SOLO_NOTE_STATS"))
 	{
-		unsigned long count, min = 0, max = 0;
+		unsigned long count, solocount, min = 0, max = 0;
 
 		count = eof_notes_panel_count_section_stats(EOF_SOLO_SECTION, &min, &max);
+		solocount = eof_get_num_solos(eof_song, eof_selected_track);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
 
-		if(count)
+		if(count && solocount)
 		{	//If there are any solo notes in the active track
-			snprintf(dest_buffer, dest_buffer_size, "%lu/%lu/%.2f (min/max/mean)", min, max, (double)count/eof_get_num_solos(eof_song, eof_selected_track));
+			snprintf(dest_buffer, dest_buffer_size, "%lu/%lu/%.2f (min/max/mean)", min, max, (double)count/solocount);
 		}
 		else
 		{
@@ -1467,9 +1468,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Star power lyric line count
 	if(!ustricmp(macro, "SP_LYRIC_LINE_COUNT"))
 	{
-		unsigned long ctr, count = 0;
+		unsigned long ctr, count = 0, linecount;
 
-		for(ctr = 0; ctr < eof_get_num_lyric_sections(eof_song, EOF_TRACK_VOCALS); ctr++)
+		linecount = eof_get_num_lyric_sections(eof_song, EOF_TRACK_VOCALS);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
+		for(ctr = 0; ctr < linecount; ctr++)
 		{	//For each lyric line
 			EOF_PHRASE_SECTION *ptr = eof_get_lyric_section(eof_song, EOF_TRACK_VOCALS, ctr);
 
@@ -1478,11 +1480,11 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				count++;
 			}
 		}
-		if(count)
+		if(count && linecount)
 		{
 			double percent;
 
-			percent = (double)count * 100.0 / eof_get_num_lyric_sections(eof_song, EOF_TRACK_VOCALS);
+			percent = (double)count * 100.0 / linecount;
 			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
 		}
 		else
@@ -1495,13 +1497,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track solo note stats
 	if(!ustricmp(macro, "TRACK_SP_NOTE_STATS"))
 	{
-		unsigned long count, min = 0, max = 0;
+		unsigned long count, min = 0, max = 0, spcount;
 
 		count = eof_notes_panel_count_section_stats(EOF_SP_SECTION, &min, &max);
+		spcount = eof_get_num_star_power_paths(eof_song, eof_selected_track);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
 
-		if(count)
+		if(count && spcount)
 		{	//If there are any star power notes in the active track
-			snprintf(dest_buffer, dest_buffer_size, "%lu/%lu/%.2f (min/max/mean)", min, max, (double)count/eof_get_num_star_power_paths(eof_song, eof_selected_track));
+			snprintf(dest_buffer, dest_buffer_size, "%lu/%lu/%.2f (min/max/mean)", min, max, (double)count/spcount);
 		}
 		else
 		{

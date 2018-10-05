@@ -5391,3 +5391,170 @@ int eof_menu_track_rs_picked_bass_arrangement(void)
 
 	return 1;
 }
+
+int eof_menu_track_find_ch_sp_path(void)
+{
+	EOF_SP_PATH_SOLUTION *best, *testing;
+	unsigned long note_count = 0;				//The number of notes in the active track difficulty, which will be the size of the various note arrays
+	double *note_measure_positions;				//The position of each note in the active track difficulty defined in measures
+	double *note_beat_lengths;					//The length of each note in the active track difficulty defined in beats
+	unsigned char *deploybest, *deploytesting;	//The status of star power deployment at each note in the active track difficulty
+	unsigned long worst_score;					//The estimated maximum score when no star power is deployed
+	unsigned long first_deploy;					//The first note that occurs after the end of the second star power phrase, and is thus the first note at which star power can be deployed
+	unsigned long ctr, ctr2, index, tracksize, count, numsolos;
+	EOF_PHRASE_SECTION *sectionptr;
+
+ 	eof_log("eof_menu_track_find_ch_sp_path() entered", 1);
+
+	///Initialize arrays and structures
+	(void) eof_count_selected_notes(&note_count);	//Count the number of notes in the active track difficulty
+
+	if(!note_count)
+		return 1;	//Don't both doing anything if there are no notes in the active track difficulty
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEvaluating CH path solution for \"%s\" difficulty %u", eof_song->track[eof_selected_track]->name, eof_note_type);
+	eof_log(eof_log_string, 2);
+
+	note_measure_positions = malloc(sizeof(double) * note_count);
+	note_beat_lengths = malloc(sizeof(double) * note_count);
+	deploybest = malloc(sizeof(unsigned char) * note_count);
+	deploytesting = malloc(sizeof(unsigned char) * note_count);
+	best = malloc(sizeof(EOF_SP_PATH_SOLUTION));
+	testing = malloc(sizeof(EOF_SP_PATH_SOLUTION));
+
+	if(!note_measure_positions || !note_beat_lengths || !deploybest || !deploytesting || !best || !testing)
+	{	//If any of those failed to allocate
+		if(note_measure_positions)
+			free(note_measure_positions);
+		if(note_beat_lengths)
+			free(note_beat_lengths);
+		if(deploybest)
+			free(deploybest);
+		if(deploytesting)
+			free(deploytesting);
+		if(best)
+			free(best);
+		if(testing)
+			free(testing);
+
+		eof_log("\tFailed to allocate memory", 1);
+		return 1;
+	}
+
+	memset(deploybest, 0, sizeof(unsigned char) * note_count);
+	best->deploy = deploybest;
+	best->note_measure_positions = note_measure_positions;
+	best->note_beat_lengths = note_beat_lengths;
+	best->note_count = note_count;
+	best->track = eof_selected_track;
+	best->diff = eof_note_type;
+
+	memset(deploytesting, 0, sizeof(unsigned char) * note_count);
+	testing->deploy = deploytesting;
+	best->note_measure_positions = note_measure_positions;
+	best->note_beat_lengths = note_beat_lengths;
+	best->note_count = note_count;
+	best->track = eof_selected_track;
+	best->diff = eof_note_type;
+
+	///Calculate the measure position and beat length of each note in the active track difficulty
+	///Find the first note at which star power can be deployed
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
+	for(ctr = 0, index = 0, count = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active difficulty
+			unsigned long notepos, notelength;
+			double start, end;
+
+			if(index >= note_count)
+			{	//Bounds check
+				free(note_measure_positions);
+				free(note_beat_lengths);
+				free(deploybest);
+				free(deploytesting);
+				free(best);
+				free(testing);
+				eof_log("\tNotes miscounted", 1);
+
+				return 1;	//Logic error
+			}
+
+			//Set position and length information
+			note_measure_positions[index] = eof_get_measure_position(notepos);	//Store the measure position of the note
+			notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+			notelength = eof_get_note_length(eof_song, eof_selected_track, ctr);
+			start = eof_get_beat(eof_song, notepos) + eof_get_porpos(notepos);	//The floating point beat position of the start of the note
+			end = eof_get_beat(eof_song, notepos + notelength) + eof_get_porpos(notepos + notelength);	//The floating point beat position of the end of the note
+			note_beat_lengths[index] = end - start;		//Store the floating point beat length of the note
+
+			//Count star power phrases to find the first available point of star power deployment
+			if(eof_note_is_last_in_sp_phrase(eof_song, eof_selected_track, ctr))
+			{	//If this is the last note in a star power phrase
+				count++;	//Keep count
+				if(count == 2)
+				{	//If this was the end of the second star power phrase
+					first_deploy = index + 1;	//The next note (if any) will be the first one where star power can be deployed
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tStar power is first deployable at note index #%lu", first_deploy);
+					eof_log(eof_log_string, 2);
+				}
+			}
+
+			index++;
+		}
+	}
+
+	///Mark all notes that are in solo phrases with a temporary flag
+	numsolos = eof_get_num_solos(eof_song, eof_selected_track);
+	for(ctr = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		unsigned long tflags, notepos;
+
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)
+			continue;	//If it's not in the active track difficulty, skip it
+
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+		tflags = eof_get_note_tflags(eof_song, eof_selected_track, ctr);
+		tflags &= ~EOF_NOTE_TFLAG_GENERIC;	//Clear this temporary flag
+		for(ctr2 = 0; ctr2 < numsolos; ctr2++)
+		{	//For each solo phrase in the active track
+			sectionptr = eof_get_solo(eof_song, eof_selected_track, ctr2);
+			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+			{	//If the note is in this solo phrase
+				tflags |= EOF_NOTE_TFLAG_GENERIC;	//Set the temporary flag that will track this note being in a solo
+				break;
+			}
+		}
+		eof_set_note_tflags(eof_song, eof_selected_track, ctr, tflags);
+	}
+
+	///Determine the maximum score when no star power is deployed
+	if(!eof_evaluate_ch_sp_path_solution(best))
+	{	//Populate the "best" solution with the worst scoring solution, so any better solution will replace it
+		eof_log("\tError scoring no star power usage", 1);
+		allegro_message("Error scoring no star power usage");
+	}
+	else
+	{
+		worst_score = best->score;
+
+		allegro_message("Estimated maximum score without deploying star power is %lu.  First possible star power deployment is at note %lu in this track.", worst_score, first_deploy);
+	}
+
+	///Cleanup
+	free(note_measure_positions);
+	free(note_beat_lengths);
+	free(deploybest);
+	free(deploytesting);
+	free(best);
+	free(testing);
+
+	for(ctr = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		unsigned long tflags = eof_get_note_tflags(eof_song, eof_selected_track, ctr);
+		tflags &= ~EOF_NOTE_TFLAG_GENERIC;	//Clear this temporary flag
+		eof_set_note_tflags(eof_song, eof_selected_track, ctr, tflags);
+	}
+
+	return 1;
+}

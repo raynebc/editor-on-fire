@@ -131,4 +131,23 @@ int eof_legacy_guitar_note_is_open(EOF_SONG *sp, unsigned long track, unsigned l
 	//  1.  The note is in a GHL mode track and has EOF_GUITAR_NOTE_FLAG_GHL_OPEN status
 	//  2.  The note is in a non GHL mode track and contains a gem on lane 6
 
+int eof_note_is_last_longest_gem(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns nonzero if the note is the longest gem at its position (ie. for identifying the longest gem in a disjointed chord)
+	//Returns nonzero if the note does not have disjointed status, as it is the longest note at its position
+	//In the event of a tie between this gem and a later one being the same length, zero is returned
+	//This allows SP pathing logic to only score SP bonus for one representative gem in a disjointed chord
+	//Assumes all notes are sorted
+	//Return zero on error
+
+unsigned long eof_note_count_gems_extending_to_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);
+	//Returns the number of notes starting at the specified note's timestamp which extend to or beyond the specified position
+	//Returns 1 if the specified note does not have disjointed status
+	//Assumes all notes are sorted
+	//Returns 0 on error
+
+int eof_note_is_last_in_sp_phrase(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns nonzero if the specified note has star power and either of the following is true:
+	// 1.  There is not another note that follows it
+	// 2.  There is another note that follows it, and it does not have star power
+
 #endif

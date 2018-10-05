@@ -745,7 +745,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	long nplace;
 	long note_y;
 	long native = 0;
-	int pcol = p == 1 ? eof_color_red : p == 2 ? makecol(224, 255, 224) : 0;
+	int pcol = p == 1 ? eof_color_blue : p == 2 ? makecol(224, 255, 224) : 0;
 	int ncol = 0;
 	EOF_PHRASE_SECTION *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
 	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
@@ -2642,6 +2642,121 @@ int eof_legacy_guitar_note_is_open(EOF_SONG *sp, unsigned long track, unsigned l
 	{	//The specified note is in a non GHL track
 		if(eof_get_note_note(sp, track, note) & 32)
 			return 1;	//A note containing a gem on lane 6 is considered an open note
+	}
+
+	return 0;
+}
+
+int eof_note_is_last_longest_gem(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long notepos, index, longestnote;
+	long prevnote, nextnote, thislength, longestlength;
+
+	if(!sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
+		return 0;	//Invalid parameters
+	if(!(eof_get_note_eflags(sp, track, note) & EOF_NOTE_EFLAG_DISJOINTED))
+		return 1;	//If the note doesn't have disjointed status, it's the longest note at this track difficulty and position
+
+	notepos = eof_get_note_pos(sp, track, note);
+	index = note;		//Unless found otherwise, the specified note is the first note at its position
+	longestnote = note;	//And it will be considered the longest note at this position
+	longestlength = eof_get_note_length(sp, track, note);
+	while(1)
+	{	//Find the first note in this track difficulty at this note's position
+		prevnote = eof_track_fixup_previous_note(sp, track, index);
+
+		if(prevnote < 0)
+			break;	//No earlier notes
+		if(eof_get_note_pos(sp, track, prevnote) != notepos)
+			break;	//No earlier notes at the same position
+
+		index = prevnote;	//Track the earliest note at this position
+	}
+
+	while(1)
+	{	//Compare length among all notes at this position
+		thislength = eof_get_note_length(sp, track, index);
+		if(thislength >= longestlength)
+		{	//If this note is at least as long as the longest one encountered so far
+			longestnote = index;
+			longestlength = thislength;
+		}
+
+		nextnote = eof_track_fixup_next_note(sp, track, index);
+
+		if(nextnote < 0)
+			break;	//No later notes
+		if(eof_get_note_pos(sp, track, nextnote) != notepos)
+			break;	//No later notes at the same position
+	}
+
+	if(longestnote == note)	//If no notes at this note's position were longer
+		return 1;			//Return true
+
+	return 0;	//Return false
+}
+
+unsigned long eof_note_count_gems_extending_to_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos)
+{
+	unsigned long notepos, index, count = 0, targetlength;
+	long prevnote, nextnote;
+
+	if(!sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
+		return 0;	//Invalid parameters
+
+	notepos = eof_get_note_pos(sp, track, note);
+	if(notepos > pos)
+		return 0;	//Target position is before that of specified note, there will be no matches
+
+	targetlength = pos - notepos;	//This will be the minimum length of notes to be a match
+	index = note;		//Unless found otherwise, the specified note is the first note at its position
+	while(1)
+	{	//Find the first note in this track difficulty at this note's position
+		prevnote = eof_track_fixup_previous_note(sp, track, index);
+
+		if(prevnote < 0)
+			break;	//No earlier notes
+		if(eof_get_note_pos(sp, track, prevnote) != notepos)
+			break;	//No earlier notes at the same position
+
+		index = prevnote;	//Track the earliest note at this position
+	}
+
+	while(1)
+	{	//Compare length among all notes at this position with the target length
+		if(eof_get_note_length(sp, track, index) >= targetlength)
+		{	//If this note is long enough to meet the input criteria
+			count++;
+		}
+
+		nextnote = eof_track_fixup_next_note(sp, track, index);
+
+		if(nextnote < 0)
+			break;	//No later notes
+		if(eof_get_note_pos(sp, track, nextnote) != notepos)
+			break;	//No later notes at the same position
+	}
+
+	return count;
+}
+
+int eof_note_is_last_in_sp_phrase(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	if(eof_get_note_flags(sp, track, note) & EOF_NOTE_FLAG_SP)
+	{	//If this note has star power
+		long nextnote = eof_track_fixup_next_note(sp, track, note);
+
+		if(nextnote > 0)
+		{	//If there's another note in the same track difficulty
+			if(!(eof_get_note_flags(sp, track, nextnote) & EOF_NOTE_FLAG_SP))
+			{	//If that next note does not have star power
+				return 1;
+			}
+		}
+		else
+		{	//The note is the last in its track difficulty
+			return 1;
+		}
 	}
 
 	return 0;

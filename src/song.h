@@ -107,6 +107,7 @@
 #define EOF_NOTE_TFLAG_GHL_W3       32768	//This flag will indicate that the affected note is a "N 2 #" white 3 note being imported from a Feedback file instead of "N 5 #" toggle HOPO notation, since they are both stored as a lane 6 bitmask
 #define EOF_NOTE_TFLAG_RESNAP       65536	//This flag will indicate that a note was defined as grid snapped in the imported MIDI, and that it should be resnapped if rounding errors result in it not being grid snapped after import
 #define EOF_NOTE_TFLAG_SPLIT_CHORD 131072	//This flag will represent a note that was created during RS2 export due to a chord that was broken up into single notes by effect of the linknext or split statuses
+#define EOF_NOTE_TFLAG_GENERIC     262144	//This flag is used for generic purposes, such as marking which notes are in solo sections during star power pathing
 
 
 ///Extended note flags
@@ -610,6 +611,20 @@ typedef struct
 	char fpbeattimes;	//Is set to nonzero if floating point beat timings were read from the project file during load, allowing a precision lossy call to eof_calculate_beats() to be avoided in eof_init_after_load()
 
 } EOF_SONG;
+
+typedef struct
+{
+	//These arrays are sized to only store data about the target track difficulty's notes and not all of the track's notes
+	unsigned char *deploy;				//The star power deployment status at each note in the processed track difficulty (nonzero means star power is deployed at immediately at/before this note)
+	double *note_measure_positions;		//An array of double floats the defines the position (defined in measures) of each note in the specified track difficulty
+	double *note_beat_lengths;			//An array of double floats defining the length (defined in beats) of each note in the specified track difficulty
+	unsigned long note_count;			//The number of elements in the above arrays and the number of notes in the target track difficulty, used for bounds checking
+
+	unsigned long track;				//The track number being processed
+	unsigned char diff;					//The difficulty number being processed
+	unsigned long score;				//The estimated score if all notes in the processed track difficulty are hit, and all sustain star power notes are whammied for bonus star power
+	unsigned long deployment_notes;		//The number of notes played during star power deployment
+} EOF_SP_PATH_SOLUTION;
 
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure
 void eof_destroy_song(EOF_SONG * sp);	//De-allocates the memory used by the EOF_SONG structure.  If eof_undo_in_progress is nonzero, the spectrogram and waveform data are destroyed if applicable.
@@ -1125,5 +1140,11 @@ int eof_get_drum_note_masks(EOF_SONG *sp, unsigned long track, unsigned long not
 	//For the specified drum note, updates the *match_bitmask to indicate the note's non-cymbals gems and *cymbal_match_bitmask to indicate the note's cymbal gems
 	//If the note is not a drum note, *match_bitmask and *cymbal_match_bitmask are set to 0
 	//Returns 0 on error
+
+int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution);
+	//Determines the validity of the proposed star path solution for the specified track difficulty, setting the score and deployment_notes value in the passed structure
+	//The score is calculated with scoring rules for Clone Hero
+	//The solution's score and deployment_notes variables are modified to contain the values calculated for the solution
+	//Returns zero if the proposed solution is invalid (ie. calling for star power deployment while it is already deployed, or when there is insufficient star power)
 
 #endif

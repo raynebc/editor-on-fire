@@ -812,6 +812,7 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
+	(void)eof_menu_track_find_ch_sp_path();
 }
 ///ALT handling testing
 /*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))

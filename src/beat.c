@@ -819,3 +819,28 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 
 	eof_beat_stats_cached = 1;
 }
+
+double eof_get_measure_position(unsigned long pos)
+{
+	unsigned long beat;
+	EOF_BEAT_MARKER *bp;
+	double measurepos;
+	double beatpos;
+
+	if(!eof_song)
+		return 0.0;	//Invalid parameters
+
+	if(!eof_beat_stats_cached)
+		eof_process_beat_statistics(eof_song, eof_selected_track);
+
+	beat = eof_get_beat(eof_song, pos);
+	if(beat >= eof_song->beats)
+		return 0.0;	//Error
+
+	bp = eof_song->beat[beat];
+	beatpos = ((double) pos - eof_song->beat[beat]->fpos) / eof_get_beat_length(eof_song, beat);	//This is the percentage into its beat the specified position is
+	measurepos = ((double) bp->beat_within_measure + beatpos) / bp->num_beats_in_measure;			//This is the percentage into its measure the specified position is
+	measurepos += bp->measurenum - 1;																//Add the number of complete measures that are before this position (measurenum is numbered beginning with 1)
+
+	return measurepos;
+}

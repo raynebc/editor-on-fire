@@ -485,7 +485,7 @@ double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos)
 	double porpos = 0.0, blength, rpos;
 	unsigned long beat;
 
-	eof_log("eof_get_porpos() entered", 2);
+	eof_log("eof_get_porpos() entered", 3);
 
 	if(!sp || (sp->beats < 2))
 		return 0.0;	//Invalid parameters
