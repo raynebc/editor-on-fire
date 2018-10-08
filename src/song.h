@@ -107,7 +107,10 @@
 #define EOF_NOTE_TFLAG_GHL_W3       32768	//This flag will indicate that the affected note is a "N 2 #" white 3 note being imported from a Feedback file instead of "N 5 #" toggle HOPO notation, since they are both stored as a lane 6 bitmask
 #define EOF_NOTE_TFLAG_RESNAP       65536	//This flag will indicate that a note was defined as grid snapped in the imported MIDI, and that it should be resnapped if rounding errors result in it not being grid snapped after import
 #define EOF_NOTE_TFLAG_SPLIT_CHORD 131072	//This flag will represent a note that was created during RS2 export due to a chord that was broken up into single notes by effect of the linknext or split statuses
-#define EOF_NOTE_TFLAG_GENERIC     262144	//This flag is used for generic purposes, such as marking which notes are in solo sections during star power pathing
+#define EOF_NOTE_TFLAG_GENERIC     262144	//This flag is reserved for generic purposes
+#define EOF_NOTE_TFLAG_SOLO_NOTE   262144	//	Such as marking which notes are in solo sections during star power pathing
+#define EOF_NOTE_TFLAG_GENERIC2    524288	//This flag is reserved for generic purposes
+#define EOF_NOTE_TFLAG_SP_END      524288	//	Such as marking which notes are the last in a star power phrase during star power pathing
 
 
 ///Extended note flags
@@ -1141,10 +1144,12 @@ int eof_get_drum_note_masks(EOF_SONG *sp, unsigned long track, unsigned long not
 	//If the note is not a drum note, *match_bitmask and *cymbal_match_bitmask are set to 0
 	//Returns 0 on error
 
-int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution);
+int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long solution_num, int logging);
 	//Determines the validity of the proposed star path solution for the specified track difficulty, setting the score and deployment_notes value in the passed structure
 	//The score is calculated with scoring rules for Clone Hero
 	//The solution's score and deployment_notes variables are modified to contain the values calculated for the solution
 	//Returns zero if the proposed solution is invalid (ie. calling for star power deployment while it is already deployed, or when there is insufficient star power)
+	//solution_num is the solution number being tested, to be logged and used for debugging
+	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
 
 #endif

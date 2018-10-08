@@ -838,7 +838,7 @@ double eof_get_measure_position(unsigned long pos)
 		return 0.0;	//Error
 
 	bp = eof_song->beat[beat];
-	beatpos = ((double) pos - eof_song->beat[beat]->fpos) / eof_get_beat_length(eof_song, beat);	//This is the percentage into its beat the specified position is
+	beatpos = ((double) pos - eof_song->beat[beat]->pos) / eof_get_beat_length(eof_song, beat);		//This is the percentage into its beat the specified position is (only compare the note against the beat's integer position, since the note position will have been rounded in either direction)
 	measurepos = ((double) bp->beat_within_measure + beatpos) / bp->num_beats_in_measure;			//This is the percentage into its measure the specified position is
 	measurepos += bp->measurenum - 1;																//Add the number of complete measures that are before this position (measurenum is numbered beginning with 1)
 

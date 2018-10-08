@@ -2761,3 +2761,26 @@ int eof_note_is_last_in_sp_phrase(EOF_SONG *sp, unsigned long track, unsigned lo
 
 	return 0;
 }
+
+unsigned long eof_translate_track_diff_note_index(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long index)
+{
+	unsigned long ctr, tracksize, match;
+
+	if(!sp || (track >= sp->tracks))
+		return ULONG_MAX;	//Invalid parameters
+
+	tracksize = eof_get_track_size(sp, track);
+	for(ctr = 0, match = 0; ctr < tracksize; ctr++)
+	{	//For each note in the specified track
+		if(eof_get_note_type(sp, track, ctr) == diff)
+		{	//If the note is in the target track difficulty
+			if(match == index)
+			{	//If this is the note being searched for
+				return ctr;
+			}
+			match++;	//Track how many notes in the target difficulty have been parsed
+		}
+	}
+
+	return ULONG_MAX;	//No such note was found
+}

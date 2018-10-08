@@ -150,4 +150,8 @@ int eof_note_is_last_in_sp_phrase(EOF_SONG *sp, unsigned long track, unsigned lo
 	// 1.  There is not another note that follows it
 	// 2.  There is another note that follows it, and it does not have star power
 
+unsigned long eof_translate_track_diff_note_index(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long index);
+	//Accepts an index specifying the note number within a track difficulty and returns the real index for that note in the track's note[] array
+	//Return ULONG_MAX if the index is invalid or upon error
+
 #endif
