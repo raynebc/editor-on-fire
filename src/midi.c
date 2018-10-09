@@ -64,6 +64,7 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 			eof_midi_event[eof_midi_events]->dp = NULL;
 			eof_midi_event[eof_midi_events]->on = note_on;
 			eof_midi_event[eof_midi_events]->off = note_off;
+			eof_midi_event[eof_midi_events]->length = 0;	//The calling function is required to set this for HOPO on/off marker's Note Off event
 			eof_midi_events++;
 
 			if((note >= 0) && (note <= 127))
@@ -1088,6 +1089,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
 						eof_add_midi_event(deltapos + markerlength, 0x80, midi_note_offset + 5, vel, 0);
+						eof_midi_event[eof_midi_events - 1]->length = markerlength;	//Have the event remember the marker's length to ensure eof_check_for_hopo_phrase_overlap() doesn't change the marker's length to zero
 					}
 				}
 
@@ -1125,6 +1127,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
 						eof_add_midi_event(deltapos + markerlength, 0x80, midi_note_offset + 6, vel, 0);
+						eof_midi_event[eof_midi_events - 1]->length = markerlength;	//Have the event remember the marker's length to ensure eof_check_for_hopo_phrase_overlap() doesn't change the marker's length to zero
 					}
 				}
 			}//For each note in the track
@@ -4195,8 +4198,14 @@ void eof_check_for_hopo_phrase_overlap(void)
 					if(eof_midi_event[ctr3]->note == HOPO_notes_off[ctr2])
 					{	//If this is a marker for the opposite HOPO phrase type
 						if(eof_midi_event[ctr]->pos > 0)	//Don't allow an underflow
-							eof_midi_event[ctr]->pos--;		//Decrement the HOPO marker's off event to be one delta earlier
-						phrasealtered = 1;
+						{	//Don't allow an underflow
+							if(eof_midi_event[ctr]->length > 1)
+							{	//If the HOPO on/off marker is more than one tick long
+								eof_midi_event[ctr]->pos--;		//Decrement the HOPO marker's off event to be one delta earlier
+								eof_midi_event[ctr]->length--;	//Track the new marker length for debugging purposes
+								phrasealtered = 1;
+							}
+						}
 						break;
 					}
 				}
@@ -4394,6 +4403,6 @@ void eof_log_midi_event_list(void)
 	{	//For each event in the list
 		ptr = &eof_midi_event[ctr];
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMIDI event:  Pos = %lu, type = 0x%X, note = %d, vel = %d, ch = %d", (*ptr)->pos, (*ptr)->type, (*ptr)->note, (*ptr)->velocity, (*ptr)->channel);
-		eof_log(eof_log_string, 3);
+		eof_log(eof_log_string, 3	);
 	}
 }

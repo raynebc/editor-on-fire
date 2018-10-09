@@ -795,6 +795,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					prev_note = tp->note[ctr];		//Track this note to compare it with the next one and set its HOPO status appropriately
 				}
 			}
+			eof_track_find_crazy_notes(sp, track, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status or merge into chords as appropriate)
 		}//If the track is valid
 		current_track = current_track->next;
 		lastchartpos = 0;	//Reset this value

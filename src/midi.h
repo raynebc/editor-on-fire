@@ -28,6 +28,7 @@ typedef struct
 	char off;				//Simplifies the use of running status by indicating if this is a note off event
 	unsigned long index;	//For text events, a tie in the sorting order will be broken by whichever has the lower index number
 	char sysexon;			//If this is a Sysex marker, tracks whether this is a start of Sysex marker, for quicksort purposes
+	unsigned long length;	//This field is only used to track forced HOPO on/off marker lengths to ensure a marker isn't decremented to 0 deltas by eof_check_for_hopo_phrase_overlap()
 } EOF_MIDI_EVENT;
 
 
@@ -187,6 +188,7 @@ void eof_check_for_hopo_phrase_overlap(void);
 	//Checks for any HOPO phrase that ends at the same delta position as a HOPO phrase of the opposite type (ie. a HOPO off phrase ending when a HOPO on phrase starts)
 	//Any such phrase is altered to end one delta tick earlier, so that the two phrases are one delta apart from each other
 	//This can happen in very special circumstances (ie. A hopo off note that overlaps a hopo on note and a hopo off note at the same time)
+	//The "length" value of the MIDI event is required to be > 0 in order for the end marker note from being made earlier, to guarantee the marker cannot be chagned to 0 deltas in length
 
 void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel);
 	//Creates a new structure to store the specified values and appends it to eof_midi_event[]

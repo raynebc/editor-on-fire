@@ -608,16 +608,6 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 	//Clear invalid gems, enforce status flag requirements, minimum note length, minimum note distance, merge notes that start at the same time if appropriate
 	for(i = tp->notes; i > 0; i--)
 	{	//For each note (in reverse order)
-		/* fix selections */
-		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.current_pos) && (tp->note[i-1]->note & eof_selection.notemask))
-		{	//If the note is in the active difficulty, at the last selection position and matches the bitmask of the last created/edited note
-			eof_selection.current = i-1;
-		}
-		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.last_pos))
-		{
-			eof_selection.last = i-1;
-		}
-
 		if(tp->note[i-1]->note > maxbitmask)
 		{	//If this note uses lanes that are higher than it can use
 			tp->note[i-1]->note &= maxbitmask;	//Clear the invalid lanes
@@ -745,6 +735,19 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}
 	}
 
+	//Update selection
+	for(i = 0; i < tp->notes; i++)
+	{	//For each note
+		/* fix selections */
+		if((tp->note[i]->type == eof_note_type) && (tp->note[i]->pos == eof_selection.current_pos) && (tp->note[i]->note & eof_selection.notemask))
+		{	//If the note is in the active difficulty, at the last selection position and matches the bitmask of the last created/edited note
+			eof_selection.current = i;
+		}
+		if((tp->note[i]->type == eof_note_type) && (tp->note[i]->pos == eof_selection.last_pos))
+		{
+			eof_selection.last = i;
+		}
+	}
 	if(!sel)
 	{
 		if(eof_selection.current < tp->notes)

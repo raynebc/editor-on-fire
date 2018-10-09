@@ -4563,7 +4563,7 @@ void eof_editor_logic(void)
 									}
 								}
 
-								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);	//Examine the hover note...
+								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);	//Examine the hover note
 								note ^= bitmask;	//as it would look by toggling the pen note's gem
 								if(note == 0)
 								{	//If the note just had all lanes cleared, delete the note
