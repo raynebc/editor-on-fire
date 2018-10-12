@@ -15,6 +15,7 @@
 #include "midi.h"
 #include "mix.h"
 #include "note.h"		//For EOF_LYRIC_PERCUSSION definition
+#include "pathing.h"
 #include "player.h"
 #include "rs.h"
 #include "song.h"

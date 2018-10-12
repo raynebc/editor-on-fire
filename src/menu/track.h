@@ -265,7 +265,4 @@ int eof_menu_track_rs_bonus_arrangement(void);			//Set the bonus RS arrangement 
 int eof_menu_track_rs_alternate_arrangement(void);		//Set the alternate RS arrangement flag and clear the bonus arrangement flag
 int eof_menu_track_rs_picked_bass_arrangement(void);	//Toggle the picked bass arrangement flag
 
-int eof_menu_track_find_ch_sp_path(void);
-	//Determines optimum star power deployment for the active track difficulty
-
 #endif

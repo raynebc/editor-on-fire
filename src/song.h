@@ -615,20 +615,6 @@ typedef struct
 
 } EOF_SONG;
 
-typedef struct
-{
-	//These arrays are sized to only store data about the target track difficulty's notes and not all of the track's notes
-	unsigned char *deploy;				//The star power deployment status at each note in the processed track difficulty (nonzero means star power is deployed at immediately at/before this note)
-	double *note_measure_positions;		//An array of double floats the defines the position (defined in measures) of each note in the specified track difficulty
-	double *note_beat_lengths;			//An array of double floats defining the length (defined in beats) of each note in the specified track difficulty
-	unsigned long note_count;			//The number of elements in the above arrays and the number of notes in the target track difficulty, used for bounds checking
-
-	unsigned long track;				//The track number being processed
-	unsigned char diff;					//The difficulty number being processed
-	unsigned long score;				//The estimated score if all notes in the processed track difficulty are hit, and all sustain star power notes are whammied for bonus star power
-	unsigned long deployment_notes;		//The number of notes played during star power deployment
-} EOF_SP_PATH_SOLUTION;
-
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure
 void eof_destroy_song(EOF_SONG * sp);	//De-allocates the memory used by the EOF_SONG structure.  If eof_undo_in_progress is nonzero, the spectrogram and waveform data are destroyed if applicable.
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specified PACKFILE pointer into the given EOF_SONG structure (called by eof_load_song()).  Returns 0 on error
@@ -678,7 +664,7 @@ unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned lon
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);
 	//Sets the note value of the specified track's note/lyric
 	//If the specified note is a pro guitar note, any unused strings have their corresponding fret values reset to 0
-unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note, or 0 on error
+unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note's accent bitflag of the specified track's note, or 0 on error
 void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified track's note
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error
 void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *name);	//Copies the string into the note's statically allocated name array, or a lyric's text array
@@ -1143,13 +1129,5 @@ int eof_get_drum_note_masks(EOF_SONG *sp, unsigned long track, unsigned long not
 	//For the specified drum note, updates the *match_bitmask to indicate the note's non-cymbals gems and *cymbal_match_bitmask to indicate the note's cymbal gems
 	//If the note is not a drum note, *match_bitmask and *cymbal_match_bitmask are set to 0
 	//Returns 0 on error
-
-int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long solution_num, int logging);
-	//Determines the validity of the proposed star path solution for the specified track difficulty, setting the score and deployment_notes value in the passed structure
-	//The score is calculated with scoring rules for Clone Hero
-	//The solution's score and deployment_notes variables are modified to contain the values calculated for the solution
-	//Returns zero if the proposed solution is invalid (ie. calling for star power deployment while it is already deployed, or when there is insufficient star power)
-	//solution_num is the solution number being tested, to be logged and used for debugging
-	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
 
 #endif
