@@ -20,6 +20,7 @@ typedef struct
 	unsigned long *deployments;					//An array defining the note index number of each deployment, ie deployments[0] being the first SP deployment, deployments[1] being the second, etc.
 	EOF_SP_PATH_SCORING_STATE *deploy_cache;	//An array of data about score and star power status at the first note after each end of star power deployments from the previous solution evaluation,
 												// allowing much/most of the score processing to be re-used between subsequent solutions where most of the deployments occur at the same indexes
+	unsigned long deploy_cache_count;			//The number of entries in deploy_cache, which eof_evaluate_ch_sp_path_solution() needs to properly remove invalid entries
 	unsigned long num_deployments;				//The number of star power deployments in this solution
 
 	//These arrays are sized to only store data about the target track difficulty's notes and not all of the track's notes
