@@ -283,6 +283,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		deployment_num = 0;
 	}
 
+	///Optionally log the solution's deployment details
 	tracksize = eof_get_track_size(eof_song, solution->track);
 	if(eof_log_level > 1)
 	{	//Skip logging overhead if the logging level is too low
@@ -326,6 +327,8 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			eof_log(eof_log_string, 2);
 		}
 	}
+
+	///Process the notes in the target track difficulty
 	for(; notectr < tracksize; notectr++)
 	{	//For each note in the track being evaluated
 		if(index >= solution->note_count)	//If all expected notes in the target track difficulty have been processed
@@ -895,7 +898,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	if(first_deploy < note_count)
 	{	//If the note was identified
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFirst possible star power deployment is at note index %lu in this track difficulty.", first_deploy);
-		eof_log(eof_log_string, 2);
+		eof_log(eof_log_string, 1);
 	}
 	else
 	{
@@ -904,7 +907,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	}
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEstimated maximum number of star power deployments is %lu", max_deployments);
-	eof_log(eof_log_string, 2);
+	eof_log(eof_log_string, 1);
 
 	///Test all possible solutions to find the highest scoring one
 	starttime = clock();	//Track the start time
@@ -947,15 +950,16 @@ int eof_menu_track_find_ch_sp_path(void)
 	{	//Continue testing until all solutions are tested, unless scoring the no deployment solution failed
 		unsigned long next_deploy;
 
-		if(key[KEY_ESC])
-		{	//Allow user to cancel
-			error = 2;
-			break;
-		}
-		if((validcount + invalidcount) % 1000 == 0)
-		{	//Update the title bar every 1000 solutions
+		if((validcount + invalidcount) % 2000 == 0)
+		{	//Update the title bar every 2000 solutions
 			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu - Press Esc to cancel", validcount + invalidcount);
 			set_window_title(windowtitle);
+
+			if(key[KEY_ESC])
+			{	//Allow user to cancel
+				error = 2;
+				break;
+			}
 		}
 
 		//Increment solution

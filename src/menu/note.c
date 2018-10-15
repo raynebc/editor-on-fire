@@ -4389,7 +4389,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		}
 
 		bitmask = 0;
-		retval = eof_popup_dialog(eof_pro_guitar_note_dialog, 0);	//Run the dialog
+		retval = eof_popup_dialog(eof_pro_guitar_note_dialog, 2);	//Run the dialog, set initial focus to the name field
 		if((retval == 55) || (retval == 56))
 		{	//If user clicked OK or Apply
 			//Validate and store the input
