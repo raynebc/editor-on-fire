@@ -319,12 +319,12 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		{	//If there were no star power deployments in this solution
 			strncat(eof_log_string, "(none)", sizeof(eof_log_string) - 1);
 		}
-		eof_log(eof_log_string, 2);
+		eof_log_casual(eof_log_string, 2);
 
 		if(cached)
 		{
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing cache for deployment at note index #%lu (Hitcount=%lu  Multiplier=x%lu  Total score=%lu  SP Meter=%lu%%  Uncapped SP Meter=%lu%%).  Resuming scoring from note index #%lu", solution->deploy_cache[cache_number].note_start, score.hitcounter, score.multiplier, score.score, (unsigned long)(score.sp_meter * 100.0 + 0.5), (unsigned long)(score.sp_meter_t * 100.0 + 0.5), index);
-			eof_log(eof_log_string, 2);
+			eof_log_casual(eof_log_string, 2);
 		}
 	}
 
@@ -366,7 +366,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				if(logging)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tStar power ended before note #%lu (index #%lu)", notectr, index);
-					eof_log(eof_log_string, 1);
+					eof_log_casual(eof_log_string, 1);
 				}
 				sp_deployed = 0;	//Star power is no longer in effect
 				score.note_end = index;		//This note is the first after the star power deployment that was in effect for the previous note
@@ -381,7 +381,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 					if(logging)
 					{
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAttempted to deploy star power while it is already deployed.  Solution invalid.");
-						eof_log(eof_log_string, 1);
+						eof_log_casual(eof_log_string, 1);
 					}
 					return 0;	//This solution is invalid
 				}
@@ -401,7 +401,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 					if(logging)
 					{
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeploying star power at note #%lu (index #%lu)", notectr, index);
-						eof_log(eof_log_string, 1);
+						eof_log_casual(eof_log_string, 1);
 					}
 				}
 				else
@@ -534,7 +534,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				if(logging)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tStar power ended during note #%lu (index #%lu)", notectr, index);
-					eof_log(eof_log_string, 1);
+					eof_log_casual(eof_log_string, 1);
 				}
 			}
 			notescore *= score.multiplier;	//Apply the current score multiplier in effect
@@ -622,7 +622,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			{	//Star power bonus
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%lu (index #%lu):  \tpos = %lums, \tbase = %lu, \tsustain = %lu, SP = %lu, SP sustain = %lu, mult = x%lu, solo bonus = %lu, \tscore = %lu.  \tTotal score:  %lu\tSP Meter at %lu%% (uncapped %lu%%)", notectr, index, notepos, base_score, sustain_score, sp_base_score, sp_sustain_score, score.multiplier, is_solo * 100, notescore, solution->score, (unsigned long)(score.sp_meter * 100.0 + 0.5), (unsigned long)(score.sp_meter_t * 100.0 + 0.5));
 			}
-			eof_log(eof_log_string, 1);
+			eof_log_casual(eof_log_string, 1);
 		}
 
 		///Update multiplier
@@ -631,7 +631,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		{
 			if(logging)
 			{
-				eof_log("\t\t\tMultiplier increased to x4", 1);
+				eof_log_casual("\t\t\tMultiplier increased to x4", 1);
 			}
 			score.multiplier = 4;
 		}
@@ -639,7 +639,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		{
 			if(logging)
 			{
-				eof_log("\t\t\tMultiplier increased to x3", 1);
+				eof_log_casual("\t\t\tMultiplier increased to x3", 1);
 			}
 			score.multiplier = 3;
 		}
@@ -647,7 +647,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		{
 			if(logging)
 			{
-				eof_log("\t\t\tMultiplier increased to x2", 1);
+				eof_log_casual("\t\t\tMultiplier increased to x2", 1);
 			}
 			score.multiplier = 2;
 		}
@@ -657,7 +657,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 
 	solution->score = score.score;	//Set the final score to the one from the scoring state structure
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSolution score:  %lu", solution->score);
-	eof_log(eof_log_string, 2);
+	eof_log_casual(eof_log_string, 2);
 
 	return 1;	//Return solution evaluated
 }
@@ -784,6 +784,7 @@ int eof_ch_pathing_worker(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *test
 		}
 	}//Continue testing until all solutions (or specified solutions) are tested
 
+	eof_log_casual(NULL, 2);	//Flush the buffered log writes to disk
 	return 0;	//Return success
 }
 
@@ -1034,10 +1035,13 @@ int eof_menu_track_find_ch_sp_path(void)
 	eof_log(eof_log_string, 1);
 
 	///Test all possible solutions to find the highest scoring one
-	starttime = clock();	//Track the start time
-	error = eof_ch_pathing_worker(best, testing, first_deploy, ULONG_MAX, &validcount, &invalidcount);	//Test all solutions
-	endtime = clock();	//Track the end time
-	elapsed_time = (double)(endtime - starttime) / (double)CLOCKS_PER_SEC;	//Convert to seconds
+	if(!error)
+	{	//If the no deployments score and first available star power deployment were successfully determined
+		starttime = clock();	//Track the start time
+		error = eof_ch_pathing_worker(best, testing, first_deploy, ULONG_MAX, &validcount, &invalidcount);	//Test all solutions
+		endtime = clock();	//Track the end time
+		elapsed_time = (double)(endtime - starttime) / (double)CLOCKS_PER_SEC;	//Convert to seconds
+	}
 
 	///Report best solution
 	if(error == 1)

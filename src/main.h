@@ -730,6 +730,10 @@ void eof_log(const char *text, int level);
 	//If the log is open, writes the string to the log file, followed by a newline character, and flushes the I/O stream
 	//Level indicates the minimum level of logging that must be in effect to log the message (ie. 1 = on, 2 = verbose)
 	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions
+void eof_log_casual(const char *text, int level);
+	//Similar to eof_log(), except that it has an internal memory buffer four times the size of EOF_LOG_STRING_SIZE
+	//only flushes to disk when the buffer has insufficient space for another EOF_LOG_STRING_SIZE number of bytes
+	//Calling with a NULL value for text siganls the function to flush to disk manually
 void eof_log_notes(EOF_SONG *sp, unsigned long track);
 	//Debug function that logs the position and length of each note in the specified track
 extern char eof_log_string[2048];	//A string reserved for use with eof_log()

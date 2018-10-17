@@ -598,7 +598,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			while(current_note)
 			{	//For each note in the track
 				notepos = chartpos_to_msec(chart, current_note->chartpos, &gridsnap) + 0.5;	//Round up
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Pos = %lums  Gem value = %d", notes_imported++, notepos, current_note->gemcolor);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Chartpos = %lu  Pos = %lums  Gem value = %d", current_note->chartpos, notes_imported++, notepos, current_note->gemcolor);
 				eof_log(eof_log_string, 1);
 				if(gridsnap && !eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
 				{	//If this chart position should be a grid snap, but the timing conversion did not result in this
@@ -790,10 +790,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 						}
 					}
 				}
-				if((tp->note[ctr]->note != 32) || (tp->note[ctr]->tflags & EOF_NOTE_TFLAG_GHL_W3))
-				{	//As long as this isn't a toggle HOPO marker (a lane 6 gem without the temporary flag indicating it is a W3 gem)
-					prev_note = tp->note[ctr];		//Track this note to compare it with the next one and set its HOPO status appropriately
-				}
+				prev_note = tp->note[ctr];		//Track this note to compare it with the next one and set its HOPO status appropriately
 			}
 			eof_track_find_crazy_notes(sp, track, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status or merge into chords as appropriate)
 		}//If the track is valid

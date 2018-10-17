@@ -5067,7 +5067,8 @@ void eof_stop_logging(void)
 	}
 }
 
-char eof_log_string[2048] = {0};
+#define EOF_LOG_STRING_SIZE 2048
+char eof_log_string[EOF_LOG_STRING_SIZE] = {0};
 void eof_log(const char *text, int level)
 {
 	if(text && eof_log_fp && (eof_log_level >= level))
@@ -5075,6 +5076,41 @@ void eof_log(const char *text, int level)
 		if(fprintf(eof_log_fp, "%03u: %s\n", eof_log_id, text) > 0)	//Prefix the log text with this EOF instance's logging ID
 		{	//If the log line was successfully written
 			(void) fflush(eof_log_fp);	//Explicitly commit the write to disk
+		}
+	}
+}
+
+void eof_log_casual(const char *text, int level)
+{
+	static char buffer[EOF_LOG_STRING_SIZE * 2] = {0};
+	static char buffer2[EOF_LOG_STRING_SIZE];
+	static unsigned long buffered_chars = 0;
+	size_t length;
+	int retval;
+
+	if(eof_log_fp)
+	{	//If the log file is open
+		if(!text)
+		{	//If the input string is NULL, flush buffer to disk
+			(void) fputs(buffer, eof_log_fp);	//Write the buffer to file
+			buffer[0] = '\0';	//Empty the buffer
+			buffered_chars = 0;
+		}
+		else if(text && eof_log_fp && (eof_log_level >= level))
+		{	//Otherwise if the logging level is high enough, log to buffer
+			retval = snprintf(buffer2, sizeof(buffer2) - 1, "%03u: %s\n", eof_log_id, text);
+			if(retval > 0)
+			{	//If the string was written to the temporary buffer
+				length = strlen(buffer2);
+				if(buffered_chars + length >= sizeof(buffer))
+				{	//If the buffer isn't large enough to hold this string
+					(void) fputs(buffer, eof_log_fp);	//Flush the buffer to file
+					buffer[0] = '\0';	//Empty the buffer
+					buffered_chars = 0;
+				}
+				strncat(buffer, buffer2, sizeof(buffer) - 1);
+				buffered_chars += length;	//Track the number of characters in the buffer
+			}
 		}
 	}
 }
