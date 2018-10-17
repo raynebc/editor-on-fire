@@ -239,7 +239,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	unsigned long cache_number = ULONG_MAX;	//The cached deploy scoring structure selected to resume from in evaluating this solution
 	unsigned long deployment_num;			//The instance number of the next star power deployment
 
-	if(!solution || !solution->deployments || !solution->note_measure_positions || !solution->note_beat_lengths || !eof_song || !solution->track || (solution->track >= eof_song->tracks) || (solution->num_deployments >= solution->deploy_cache_count))
+	if(!solution || !solution->deployments || !solution->note_measure_positions || !solution->note_beat_lengths || !eof_song || !solution->track || (solution->track >= eof_song->tracks) || (solution->num_deployments > solution->deploy_count))
 		return 0;	//Invalid parameters
 
 	///Look up cached scoring to skip as much calculation as possible
@@ -254,7 +254,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			break;	//This and all subsequent entries will be marked invalid in the for loop below
 		}
 	}
-	for(; ctr < solution->deploy_cache_count; ctr++)
+	for(; ctr < solution->deploy_count; ctr++)
 	{	//For each remaining cache entry that wasn't re-used
 		solution->deploy_cache[ctr].note_start = ULONG_MAX;	//Mark the entry as invalid
 	}
@@ -662,6 +662,131 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	return 1;	//Return solution evaluated
 }
 
+int eof_ch_pathing_worker(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount)
+{
+	char windowtitle[101] = {0};
+
+	if(!eof_song || !best || !testing || (first_deploy >= best->note_count) || !validcount || !invalidcount)
+		return 1;	//Invalid parameters
+
+	testing->num_deployments = 0;	//The first solution increment will test one deployment
+	while(1)
+	{	//Continue testing until all solutions (or specified solutions) are tested
+		unsigned long next_deploy;
+
+		if((*validcount + *invalidcount) % 2000 == 0)
+		{	//Update the title bar every 2000 solutions
+			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu - Press Esc to cancel", *validcount + *invalidcount);
+			set_window_title(windowtitle);
+
+			if(key[KEY_ESC])
+			{	//Allow user to cancel
+				return 2;	//User cancellation
+			}
+		}
+
+		//Increment solution
+		if(testing->num_deployments < testing->deploy_count)
+		{	//If the current solution array has fewer than the maximum number of usable star power deployments
+			if(!testing->num_deployments)
+			{	///Case 1:  This is the first solution
+				testing->deployments[0] = first_deploy;	//Initialize the first solution to test one deployment at the specified note index
+				testing->num_deployments++;	//One more deployment is in the solution
+			}
+			else
+			{	//Add another deployment to the solution
+				unsigned long previous_deploy = testing->deployments[testing->num_deployments - 1];	//This is the note at which the previous deployment occurs
+				next_deploy = eof_ch_path_find_next_deployable_sp(testing, previous_deploy);	//Detect the next note after which another 50% of star power meter has accumulated
+
+				if(next_deploy < testing->note_count)
+				{	//If a valid placement for the next deployment was found
+					///Case 2:  Add one deployment to the solution
+					testing->deployments[testing->num_deployments] = next_deploy;
+					testing->num_deployments++;	//One more deployment is in the solution
+				}
+				else
+				{	//If there are no further valid notes to test for this deployment
+					///Case 4:  The last deployment has exhausted all notes, remove and advance previous solution
+					testing->num_deployments--;	//Remove this deployment from the solution
+					if(!testing->num_deployments)
+					{	//If there are no more solutions to test
+						///Case 5:  All solutions exhausted
+						break;
+					}
+					if((testing->num_deployments == 1) && (testing->deployments[testing->num_deployments - 1] + 1 > last_deploy))
+					{	//If all solutions for the first deployment's specified range of notes have been tested
+						///Case 6:  All specified solutions exhausted
+						break;
+					}
+					next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the now-last deployment one note further
+					if(next_deploy >= testing->note_count)
+					{	//If the previous deployment cannot advance even though the deployment that was just removed had come after it
+						eof_log("\tLogic error:  Can't advance previous deployment after removing last deployment (1)", 1);
+						return 1;	//Return error
+					}
+					testing->deployments[testing->num_deployments - 1]= next_deploy;
+				}
+			}
+		}
+		else if(testing->num_deployments == testing->deploy_count)
+		{	//If the maximum number of deployments are in the solution, move the last deployment to create a new solution to test
+			next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the last deployment one note further
+			if(next_deploy >= testing->note_count)
+			{	//If the last deployment cannot advance
+				///Case 4:  The last deployment has exhausted all notes, remove and advance previous solution
+				testing->num_deployments--;	//Remove this deployment from the solution
+				if(!testing->num_deployments)
+				{	//If there are no more solutions to test
+					///Case 5:  All solutions exhausted
+					break;
+				}
+				if((testing->num_deployments == 1) && (testing->deployments[testing->num_deployments - 1] + 1 > last_deploy))
+				{	//If all solutions for the first deployment's specified range of notes have been tested
+					///Case 6:  All specified solutions exhausted
+					break;
+				}
+				next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the now-last deployment one note further
+				if(next_deploy >= testing->note_count)
+				{	//If the previous deployment cannot advance even though the deployment that was just removed had come after it
+					eof_log("\tLogic error:  Can't advance previous deployment after removing last deployment (2)", 1);
+					return 1;	//Return error
+				}
+				testing->deployments[testing->num_deployments - 1]= next_deploy;
+			}
+			else
+			{	///Case 3:  Advance last deployment by one note
+				testing->deployments[testing->num_deployments - 1] = next_deploy;
+			}
+		}
+		else
+		{	//If num_deployments > max_deployments
+			eof_log("\tLogic error:  More than the maximum number of deployments entered the testing solution", 1);
+			return 1;	//Return error
+		}
+
+		//Test and compare with the current best solution
+		if(eof_evaluate_ch_sp_path_solution(testing, *validcount + *invalidcount + 1, 0))
+		{	//If the solution was considered valid
+			if((testing->score > best->score) || ((testing->score == best->score) && (testing->deployment_notes < best->deployment_notes)))
+			{	//If this newly tested solution achieved a higher score than the current best, or if it matched the highest score but did so with fewer notes played during star power deployment
+				best->score = testing->score;	//It is the new best solution, copy its data into the best solution structure
+				best->deployment_notes = testing->deployment_notes;
+				best->num_deployments = testing->num_deployments;
+
+				memcpy(best->deployments, testing->deployments, sizeof(unsigned long) * testing->deploy_count);
+			}
+			(*validcount)++;	//Track the number of valid solutions tested
+		}
+		else
+		{
+			eof_log("\t\t*Solution invalid", 2);
+			(*invalidcount)++;	//Track the number of invalid solutions tested
+		}
+	}//Continue testing until all solutions (or specified solutions) are tested
+
+	return 0;	//Return success
+}
+
 int eof_menu_track_find_ch_sp_path(void)
 {
 	EOF_SP_PATH_SOLUTION *best, *testing;
@@ -685,7 +810,6 @@ int eof_menu_track_find_ch_sp_path(void)
 	double elapsed_time;
 	unsigned long sp_phrase_count;
 	double sp_sustain;				//The number of beats of star power sustain, used to count whammy bonus star power when estimating the maximum number of star power deployments
-	char windowtitle[101] = {0};
 
  	eof_log("eof_menu_track_find_ch_sp_path() entered", 1);
 
@@ -874,10 +998,10 @@ int eof_menu_track_find_ch_sp_path(void)
 	}
 	best->deployments = bdeployments;
 	best->deploy_cache = deploy_cache;
-	best->deploy_cache_count = max_deployments;
+	best->deploy_count = max_deployments;
 	testing->deployments = tdeployments;
 	testing->deploy_cache = deploy_cache;
-	testing->deploy_cache_count = max_deployments;
+	testing->deploy_count = max_deployments;
 
 	///Determine the maximum score when no star power is deployed
 	best->num_deployments = 0;
@@ -911,149 +1035,7 @@ int eof_menu_track_find_ch_sp_path(void)
 
 	///Test all possible solutions to find the highest scoring one
 	starttime = clock();	//Track the start time
-
-///Iterate and test solutions with a limit of that number of deployments, ie. for three deployments:
-///Solutions where the first deployment is at first note:
-/// 1 0 0 0 0	deployments={0,0,0}	*C1: num_deployments == 0, init first deployment at first_deploy
-/// 1 1 0 0 0	deployments={0,1,0}	*C2: num_deployments < max_deployments, init next deployment (!use function to determine suitable index)
-/// 1 1 1 0 0	deployments={0,1,2}	*C2: num_deployments < max_deployments, init next deployment (!use function to determine suitable index)
-/// 1 1 0 1 0	deployments={0,1,3}	*C3: num_deployments == max_deployments, increment last deployment
-/// 1 1 0 0 1	deployments={0,1,4}	*C3: num_deployments == max_deployments, increment last deployment
-/// 1 0 1 0 0	deployments={0,2,0} *C4: num_deployments == max_deployments, can't increment last deployment because it was already at last usable index, remove it and increment previous deployment
-/// 1 0 1 1 0	deployments={0,2,3}	*C2: num_deployments < max_deployments, init next deployment (!use function to determine suitable index)
-/// 1 0 1 0 1	deployments={0,2,4}	*C3: num_deployments == max_deployments, increment last deployment
-/// 1 0 0 1 0	deployments={0,3,0}	*C4: num_deployments == max_deployments, can't increment last deployment because it was already at last usable index, remove it and increment previous deployment
-/// 1 0 0 1 1	deployments={0,3,4}	*C2: num_deployments < max_deployments, init next deployment (!use function to determine suitable index)
-/// 1 0 0 0 1	deployments={0,4,0}	*C4: num_deployments == max_deployments, can't increment last deployment because it was already at last usable index, remove it and increment previous deployment
-///Solutions where the first deployment is at second note:
-/// 0 1 0 0 0	deployments={1,0,0}	*C4: num_deployments < max_deployments, can't init next deployment because the last usable index is in use, remove it and increment previous deployment
-/// 0 1 1 0 0	deployments={1,2,0}	*C2
-/// 0 1 1 1 0	deployments={1,2,3}	*C2
-/// 0 1 1 0 1	deployments={1,2,4}	*C3
-/// 0 1 0 1 0	deployments={1,3,0}	*C4
-/// 0 1 0 1 1	deployments={1,3,4}	*C2
-/// 0 1 0 0 1	deployments={1,4,0}	*C4
-///Solutions where the first deployment is at third note:
-/// 0 0 1 0 0	deployments={2,0,0}	*C4
-/// 0 0 1 1 0	deployments={2,3,0}	*C2
-/// 0 0 1 1 1	deployments={2,3,4}	*C2
-/// 0 0 1 0 1	deployments={2,4,0}	*C4
-///Solutions where the first deployment is at fourth note:
-/// 0 0 0 1 0	deployments={3,0,0}	*C4
-/// 0 0 0 1 1	deployments={3,4,0}	*C2
-///Solutions where the first deployment is at fifth note:
-/// 0 0 0 0 1	deployments={4,0,0}	*C4
-///	END								*C5: first deployment is at last usable index, all solutions have been tested
-	///Increment the solution array to create the next solution to test
-	testing->num_deployments = 0;	//The first solution increment will test one deployment
-	while(!error)
-	{	//Continue testing until all solutions are tested, unless scoring the no deployment solution failed
-		unsigned long next_deploy;
-
-		if((validcount + invalidcount) % 2000 == 0)
-		{	//Update the title bar every 2000 solutions
-			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu - Press Esc to cancel", validcount + invalidcount);
-			set_window_title(windowtitle);
-
-			if(key[KEY_ESC])
-			{	//Allow user to cancel
-				error = 2;
-				break;
-			}
-		}
-
-		//Increment solution
-		if(testing->num_deployments < max_deployments)
-		{	//If the current solution array has fewer than the maximum number of usable star power deployments
-			if(!testing->num_deployments)
-			{	///Case 1:  This is the first solution
-				testing->deployments[0] = first_deploy;	//Initialize the first solution to test one deployment at the first deployable point
-				testing->num_deployments++;	//One more deployment is in the solution
-			}
-			else
-			{	//Add another deployment to the solution
-				unsigned long previous_deploy = testing->deployments[testing->num_deployments - 1];	//This is the note at which the previous deployment occurs
-				next_deploy = eof_ch_path_find_next_deployable_sp(testing, previous_deploy);	//Detect the next note after which another 50% of star power meter has accumulated
-
-				if(next_deploy < note_count)
-				{	//If a valid placement for the next deployment was found
-					///Case 2:  Add one deployment to the solution
-					testing->deployments[testing->num_deployments] = next_deploy;
-					testing->num_deployments++;	//One more deployment is in the solution
-				}
-				else
-				{	//If there are no further valid notes to test for this deployment
-					///Case 4:  The last deployment has exhausted all notes, remove and advance previous solution
-					testing->num_deployments--;	//Remove this deployment from the solution
-					if(!testing->num_deployments)
-					{	//If there are no more solutions to test
-						///Case 5:  All solutions exhausted
-						break;
-					}
-					next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the now-last deployment one note further
-					if(next_deploy >= note_count)
-					{	//If the previous deployment cannot advance even though the deployment that was just removed had come after it
-						eof_log("\tLogic error:  Can't advance previous deployment after removing last deployment (1)", 1);
-						error = 1;
-						break;
-					}
-					testing->deployments[testing->num_deployments - 1]= next_deploy;
-				}
-			}
-		}
-		else if(testing->num_deployments == max_deployments)
-		{	//If the maximum number of deployments are in the solution, move the last deployment to create a new solution to test
-			next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the last deployment one note further
-			if(next_deploy >= note_count)
-			{	//If the last deployment cannot advance
-				///Case 4:  The last deployment has exhausted all notes, remove and advance previous solution
-				testing->num_deployments--;	//Remove this deployment from the solution
-				if(!testing->num_deployments)
-				{	//If there are no more solutions to test
-					///Case 5:  All solutions exhausted
-					break;
-				}
-				next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the now-last deployment one note further
-				if(next_deploy >= note_count)
-				{	//If the previous deployment cannot advance even though the deployment that was just removed had come after it
-					eof_log("\tLogic error:  Can't advance previous deployment after removing last deployment (2)", 1);
-					error = 1;
-					break;
-				}
-				testing->deployments[testing->num_deployments - 1]= next_deploy;
-			}
-			else
-			{	///Case 3:  Advance last deployment by one note
-				testing->deployments[testing->num_deployments - 1] = next_deploy;
-			}
-		}
-		else
-		{	//If num_deployments > max_deployments
-			eof_log("\tLogic error:  More than the maximum number of deployments entered the testing solution", 1);
-			error = 1;
-			break;
-		}
-
-		//Test and compare with the current best solution
-		if(eof_evaluate_ch_sp_path_solution(testing, validcount + invalidcount + 1, 0))
-		{	//If the solution was considered valid
-			if((testing->score > best->score) || ((testing->score == best->score) && (testing->deployment_notes < best->deployment_notes)))
-			{	//If this newly tested solution achieved a higher score than the current best, or if it matched the highest score but did so with fewer notes played during star power deployment
-				best->score = testing->score;	//It is the new best solution, copy its data into the best solution structure
-				best->deployment_notes = testing->deployment_notes;
-				best->num_deployments = testing->num_deployments;
-
-				memcpy(best->deployments, testing->deployments, sizeof(unsigned long) * max_deployments);
-			}
-			validcount++;	//Track the number of valid solutions tested
-		}
-		else
-		{
-			eof_log("\t\t*Solution invalid", 2);
-			invalidcount++;	//Track the number of invalid solutions tested
-		}
-	}//Continue testing until all solutions are tested, unless scoring the no deployment solution failed
-
+	error = eof_ch_pathing_worker(best, testing, first_deploy, ULONG_MAX, &validcount, &invalidcount);	//Test all solutions
 	endtime = clock();	//Track the end time
 	elapsed_time = (double)(endtime - starttime) / (double)CLOCKS_PER_SEC;	//Convert to seconds
 

@@ -20,7 +20,7 @@ typedef struct
 	unsigned long *deployments;					//An array defining the note index number of each deployment, ie deployments[0] being the first SP deployment, deployments[1] being the second, etc.
 	EOF_SP_PATH_SCORING_STATE *deploy_cache;	//An array of data about score and star power status at the first note after each end of star power deployments from the previous solution evaluation,
 												// allowing much/most of the score processing to be re-used between subsequent solutions where most of the deployments occur at the same indexes
-	unsigned long deploy_cache_count;			//The number of entries in deploy_cache, which eof_evaluate_ch_sp_path_solution() needs to properly remove invalid entries
+	unsigned long deploy_count;					//The number of entries in the above deployment arrays
 	unsigned long num_deployments;				//The number of star power deployments in this solution
 
 	//These arrays are sized to only store data about the target track difficulty's notes and not all of the track's notes
@@ -76,6 +76,14 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	//Returns zero if the proposed solution is invalid (ie. calling for star power deployment while it is already deployed, or when there is insufficient star power)
 	//solution_num is the solution number being tested, to be logged and used for debugging
 	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
+
+int eof_ch_pathing_worker(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount);
+	//Calculates all solutions where the first deployment starts at note index between first_deploy and last_deploy (inclusive),
+	// comparing their scores with the provided best solution and updating its content accordingly
+	//If all solutions are to be tested, ULONG_MAX should be specified for last_deploy
+	//validcount and invalidcount are passed so the calling function can know how many solutions were tested
+	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
+	//Returns 0 on success, 1 on error or 2 on user cancellation
 
 int eof_menu_track_find_ch_sp_path(void);
 	//Determines optimum star power deployment for the active track difficulty

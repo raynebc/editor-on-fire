@@ -5350,8 +5350,6 @@ int eof_menu_track_rs_alternate_arrangement(void)
 	}
 
 	return 1;
-
-	return 1;
 }
 
 int eof_menu_track_rs_normal_arrangement(void)
@@ -5367,8 +5365,6 @@ int eof_menu_track_rs_normal_arrangement(void)
 		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_ALT_ARR;	//Clear the alternate flag
 		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_BONUS_ARR;	//And clear the bonus flag
 	}
-
-	return 1;
 
 	return 1;
 }
