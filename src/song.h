@@ -647,6 +647,7 @@ void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);			
 unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
 void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char type);	//Sets the type (difficulty/lyric set) of the specified track's note/lyric
 unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the position of the specified track's note/lyric, or 0 on error
+unsigned long eof_get_note_midi_pos(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the defined midi position of the specified note (used during Feedback import), or 0 on error
 void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the position of the specified track's note/lyric
 void eof_move_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long amount, char dir);
 	//If dir > 0, increases the position of the specified note by the specified amount

@@ -4272,6 +4272,44 @@ unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long 
 	return 0;	//Return error
 }
 
+unsigned long eof_get_note_midi_pos(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->midi_pos;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				return sp->vocal_track[tracknum]->lyric[note]->midi_pos;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				return sp->pro_guitar_track[tracknum]->note[note]->midi_pos;
+			}
+		break;
+
+		default:
+		break;
+	}
+
+	return 0;	//Return error
+}
+
 long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
@@ -4549,7 +4587,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 	EOF_LYRIC *ptr2 = NULL;
 	EOF_PRO_GUITAR_NOTE *ptr3 = NULL;
 
- 	eof_log("eof_track_add_create_note() entered", 2);
+ 	eof_log("eof_track_add_create_note() entered", 3);
 
 	if(!sp || !track || (track >= sp->tracks))
 	{

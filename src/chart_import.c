@@ -61,6 +61,10 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	double beat_count;
 	double convert;
 	struct dBAnchor * current_anchor;
+
+	int debug = 0;	//Used to create debug logging about this timing conversion
+	unsigned long anchorctr = 0;
+
 	if(!chart)
 	{
 		return 0;
@@ -87,6 +91,11 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 				if(beat_chart_pos + (ctr * snaplength) == chartpos)
 				{	//If the target chart position matches this grid snap's chart position
 					*gridsnap = 1;	//Signal this to the calling function
+					if(debug)
+					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected grid snap of chartpos %lu is %lu / %lu", chartpos, ctr, interval);
+						eof_log(eof_log_string, 2);
+					}
 					break;			//Stop checking instances of this grid snap
 				}
 			}
@@ -127,10 +136,29 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		/* otherwise add the time from the current anchor to the specified chartpos */
 		else
 		{
-			curpos += (double)(chartpos - lastchartpos) * convert;
+			double partial_beat = (double)(chartpos - lastchartpos) * convert;	//Use the beat length estabalished at the previous anchor to determine how long this number of chart ticks is
+
+			if(debug)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTarget position is bewteen anchors, adding %fms", partial_beat);
+				eof_log(eof_log_string, 2);
+			}
+			curpos += partial_beat;
 			break;
 		}
+
+		if(debug)
+		{
+			anchorctr++;
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tdB Anchor #%lu: Chartpos = %lu  BPM = %lu  TS = %d  ms pos = %lu beat length = %f,  Detected pos = %fms", anchorctr, current_anchor->chartpos, current_anchor->BPM, current_anchor->TS, current_anchor->usec, beat_length, curpos);
+			eof_log(eof_log_string, 2);
+		}
 		current_anchor = current_anchor->next;
+	}
+	if(debug)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFinal converted realtime is %fms", curpos);
+		eof_log(eof_log_string, 2);
 	}
 	return curpos;
 }
@@ -146,6 +174,8 @@ void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track, un
 	{	//If this is the drum track
 		return;	//Skip it, lane 6 for the drum track indicates a sixth lane and not HOPO, and drum notes can't be slider notes
 	}
+
+	eof_log("\t\tProcessing toggle HOPO and slider markers", 2);
 
 	eof_track_sort_notes(sp, track);	//Sort the notes so the logic can assume they're in chronological order
 	for(ctr2 = eof_get_track_size(sp, track); ctr2 > 0; ctr2--)
@@ -176,7 +206,13 @@ void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track, un
 			}
 			if((pos2 >= pos) && (eof_get_note_type(sp, track, ctr3) == type))
 			{	//If this note is within the span of the HOPO notation and is in the same difficulty
-				eof_set_note_flags(sp, track, ctr3, (eof_get_note_flags(sp, track, ctr3) ^ EOF_NOTE_FLAG_F_HOPO));	//Toggle the forced HOPO flag for this note
+				unsigned long flags, mpos;
+
+				flags = eof_get_note_flags(sp, track, ctr3) ^ EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag for this note
+				eof_set_note_flags(sp, track, ctr3, flags);
+				mpos = eof_get_note_midi_pos(sp, track, ctr3);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Diff = %d  Chartpos = %lu  Pos = %lums:  Toggling HOPO status to %s", ctr3, type, mpos, pos2, ((flags & EOF_NOTE_FLAG_F_HOPO) ? "ON" : "OFF"));
+				eof_log(eof_log_string, 2);
 			}
 		}
 		eof_track_delete_note(sp, track, ctr2 - 1);	//Delete the gem
@@ -203,7 +239,10 @@ void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track, un
 			}
 			if((pos2 >= pos) && (eof_get_note_type(sp, track, ctr3) == type))
 			{	//If this note is within the span of the HOPO notation and is in the same difficulty
+				unsigned long mpos = eof_get_note_midi_pos(sp, track, ctr3);
 				eof_set_note_flags(sp, track, ctr3, (eof_get_note_flags(sp, track, ctr3) | EOF_GUITAR_NOTE_FLAG_IS_SLIDER));	//Set the slider flag for this note
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Diff = %d  Chartpos = %lu  Pos = %lums:  Enabling slider status", ctr3, type, mpos, pos2);
+				eof_log(eof_log_string, 2);
 			}
 		}
 	}
@@ -597,14 +636,17 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 			while(current_note)
 			{	//For each note in the track
+				unsigned long originalnotepos;	//In case a position is resnapped, this will store the original converted timing, for correctly retaining gem length
+
 				notepos = chartpos_to_msec(chart, current_note->chartpos, &gridsnap) + 0.5;	//Round up
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Chartpos = %lu  Pos = %lums  Gem value = %d", current_note->chartpos, notes_imported++, notepos, current_note->gemcolor);
+				originalnotepos = notepos;	//Keep a copy of this value
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Chartpos = %lu  Pos = %lums  Gem value = %d", notes_imported++, current_note->chartpos, notepos, current_note->gemcolor);
 				eof_log(eof_log_string, 1);
 				if(gridsnap && !eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
 				{	//If this chart position should be a grid snap, but the timing conversion did not result in this
 					if(closestpos != ULONG_MAX)
 					{	//If the nearest grid snap position was determined
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tCorrecting chart position from %lums to %lums", notepos, closestpos);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tCorrecting position from %lums to %lums", notepos, closestpos);
 						eof_log(eof_log_string, 1);
 						notepos = closestpos;	//Change it to be the closest grid snap position to the converted timestamp
 					}
@@ -708,8 +750,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 						if(new_note)
 						{
 							new_note->midi_pos = current_note->chartpos;	//Track the note's original chart position to more reliably apply HOPO status
-							new_note->pos = notepos;
-							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL) - (double)new_note->pos + 0.5;	//Round up
+							new_note->pos = notepos;	//Assign the position (which may have been resnapped)
+							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL) - (double)originalnotepos + 0.5;	//Determine the length (using the non resnapped position), round up
 							if((current_note->chartpos == lastpos) && (current_note->duration != lastduration))
 							{	//If this gem has and the previous one start at the same time but have different lengths
 								new_note->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to the new note

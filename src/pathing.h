@@ -62,7 +62,7 @@ double eof_get_measure_position(unsigned long pos);
 	//If beat statistics are not already cached, eof_process_beat_statistics() is called with focus on the active track
 	//Returns 0.0 on error
 
-unsigned long eof_ch_path_find_next_deployable_sp(EOF_SP_PATH_SOLUTION *solution, unsigned long start_index);
+unsigned long eof_ch_pathing_find_next_deployable_sp(EOF_SP_PATH_SOLUTION *solution, unsigned long start_index);
 	//Given the beat length information about solution's track difficulty, start parsing notes in the track difficulty
 	// starting at the specified note index and return the first note index at which 50% or more of the star power meter
 	// has been filled, allowing for star power to be deployed
@@ -77,13 +77,18 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	//solution_num is the solution number being tested, to be logged and used for debugging
 	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
 
-int eof_ch_pathing_worker(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount);
+int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount);
 	//Calculates all solutions where the first deployment starts at note index between first_deploy and last_deploy (inclusive),
 	// comparing their scores with the provided best solution and updating its content accordingly
 	//If all solutions are to be tested, ULONG_MAX should be specified for last_deploy
 	//validcount and invalidcount are passed so the calling function can know how many solutions were tested
 	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
 	//Returns 0 on success, 1 on error or 2 on user cancellation
+
+void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution);
+	//Parses the notes in the solution's target track difficulty, applying the EOF_NOTE_TFLAG_SOLO_NOTE tflag
+	// Applies the EOF_NOTE_TFLAG_SOLO_NOTE tflag to each note that is in a solo phrase
+	// Applies the EOF_NOTE_TFLAG_SP_END tflag to the last note of each star power phrase
 
 int eof_menu_track_find_ch_sp_path(void);
 	//Determines optimum star power deployment for the active track difficulty

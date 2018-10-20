@@ -173,7 +173,7 @@ double eof_get_measure_position(unsigned long pos)
 	return measurepos;
 }
 
-unsigned long eof_ch_path_find_next_deployable_sp(EOF_SP_PATH_SOLUTION *solution, unsigned long start_index)
+unsigned long eof_ch_pathing_find_next_deployable_sp(EOF_SP_PATH_SOLUTION *solution, unsigned long start_index)
 {
 	unsigned long ctr, index, sp_count, tracksize;
 	double sp_sustain = 0.0;	//The amount of star power sustain that has accumulated
@@ -473,7 +473,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 
 				//Score this sustain interval
 				///Double special case:  For disjointed chords, since the whammy bonus star power is only being evaluated for the longest gem, and
-				/// sustain points are being scored at the same time, such points have to be awareded for each of the applicable gems in the disjointed chord
+				/// sustain points are being scored at the same time, such points have to be awarded for each of the applicable gems in the disjointed chord
 				if(remaining_sustain < step)
 				{	//If there was less than a point's worth of sustain left, it will be scored and then rounded to nearest point
 					double floatscore;
@@ -522,10 +522,11 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			{	//If the star power meter still has star power, calculate the new end of deployment position
 				sp_deployment_start = eof_get_measure_position(notepos + notelength);	//The remainder of the deployment starts at this note's end position
 				sp_deployment_end = sp_deployment_start + (8.0 * score.sp_meter);	//Determine the end timing of the star power (one full meter is 8 measures)
+				score.sp_meter = score.sp_meter_t = 0.0;	//The entire star power meter will be used
 			}
 			else
 			{	//Otherwise the star power deployment has ended
-				score.sp_meter = score.sp_meter_t = 0.0;
+				score.sp_meter = score.sp_meter_t = 0.0;	//The star power meter was depleted
 				sp_deployed = 0;
 				score.note_end = index + 1;	//The next note will be the first after this ended star power deployment
 				score.note_end_native = notectr + 1;
@@ -662,7 +663,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	return 1;	//Return solution evaluated
 }
 
-int eof_ch_pathing_worker(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount)
+int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount)
 {
 	char windowtitle[101] = {0};
 
@@ -696,7 +697,7 @@ int eof_ch_pathing_worker(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *test
 			else
 			{	//Add another deployment to the solution
 				unsigned long previous_deploy = testing->deployments[testing->num_deployments - 1];	//This is the note at which the previous deployment occurs
-				next_deploy = eof_ch_path_find_next_deployable_sp(testing, previous_deploy);	//Detect the next note after which another 50% of star power meter has accumulated
+				next_deploy = eof_ch_pathing_find_next_deployable_sp(testing, previous_deploy);	//Detect the next note after which another 50% of star power meter has accumulated
 
 				if(next_deploy < testing->note_count)
 				{	//If a valid placement for the next deployment was found
@@ -788,13 +789,50 @@ int eof_ch_pathing_worker(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *test
 	return 0;	//Return success
 }
 
+void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution)
+{
+	unsigned long tracksize, numsolos, ctr, ctr2;
+	EOF_PHRASE_SECTION *sectionptr;
+
+	if(!solution || !eof_song || !solution->track || (solution->track >= eof_song->tracks))
+		return;	//Invalid parameters
+
+	tracksize = eof_get_track_size(eof_song, solution->track);
+	numsolos = eof_get_num_solos(eof_song, solution->track);
+	for(ctr = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		unsigned long tflags, notepos;
+
+		if(eof_get_note_type(eof_song, solution->track, ctr) != solution->diff)
+			continue;	//If it's not in the active track difficulty, skip it
+
+		notepos = eof_get_note_pos(eof_song, solution->track, ctr);
+		tflags = eof_get_note_tflags(eof_song, solution->track, ctr);
+		tflags &= ~(EOF_NOTE_TFLAG_SOLO_NOTE | EOF_NOTE_TFLAG_SP_END);	//Clear these temporary flags
+
+		if(eof_note_is_last_in_sp_phrase(eof_song, solution->track, ctr))
+		{	//If the note is the last note in a star power phrase
+			tflags |= EOF_NOTE_TFLAG_SP_END;	//Set the temporary flag that will track this condition to reduce repeatedly testing for this
+		}
+		for(ctr2 = 0; ctr2 < numsolos; ctr2++)
+		{	//For each solo phrase in the active track
+			sectionptr = eof_get_solo(eof_song, solution->track, ctr2);
+			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+			{	//If the note is in this solo phrase
+				tflags |= EOF_NOTE_TFLAG_SOLO_NOTE;	//Set the temporary flag that will track this note being in a solo
+				break;
+			}
+		}
+		eof_set_note_tflags(eof_song, solution->track, ctr, tflags);
+	}
+}
+
 int eof_menu_track_find_ch_sp_path(void)
 {
 	EOF_SP_PATH_SOLUTION *best, *testing;
 	unsigned long note_count = 0;				//The number of notes in the active track difficulty, which will be the size of the various note arrays
 	double *note_measure_positions;				//The position of each note in the active track difficulty defined in measures
 	double *note_beat_lengths;					//The length of each note in the active track difficulty defined in beats
-	unsigned char *sp_phrase_endings;			//The boolean status of whether each note in the active track difficulty is the last note in a star power phrase
 	unsigned long worst_score = 0;				//The estimated maximum score when no star power is deployed
 	unsigned long first_deploy = ULONG_MAX;		//The first note that occurs after the end of the second star power phrase, and is thus the first note at which star power can be deployed
 
@@ -802,9 +840,8 @@ int eof_menu_track_find_ch_sp_path(void)
 	unsigned long *tdeployments, *bdeployments;	//An array defining the note index number of each deployment, ie deployments[0] being the first SP deployment, deployments[1] being the second, etc.
 	EOF_SP_PATH_SCORING_STATE *deploy_cache;	//An array storing cached scoring data for star power deployments
 
-	unsigned long ctr, ctr2, index, tracksize, numsolos;
+	unsigned long ctr, index, tracksize;
 	unsigned long validcount = 0, invalidcount = 0;
-	EOF_PHRASE_SECTION *sectionptr;
 	int error = 0;
 	char undo_made = 0;
 	clock_t starttime = 0, endtime = 0;
@@ -838,18 +875,15 @@ int eof_menu_track_find_ch_sp_path(void)
 
 	note_measure_positions = malloc(sizeof(double) * note_count);
 	note_beat_lengths = malloc(sizeof(double) * note_count);
-	sp_phrase_endings = malloc(sizeof(unsigned char) * note_count);
 	best = malloc(sizeof(EOF_SP_PATH_SOLUTION));
 	testing = malloc(sizeof(EOF_SP_PATH_SOLUTION));
 
-	if(!note_measure_positions || !note_beat_lengths || !sp_phrase_endings || !best || !testing)
+	if(!note_measure_positions || !note_beat_lengths || !best || !testing)
 	{	//If any of those failed to allocate
 		if(note_measure_positions)
 			free(note_measure_positions);
 		if(note_beat_lengths)
 			free(note_beat_lengths);
-		if(sp_phrase_endings)
-			free(sp_phrase_endings);
 		if(best)
 			free(best);
 		if(testing)
@@ -871,42 +905,13 @@ int eof_menu_track_find_ch_sp_path(void)
 	testing->track = eof_selected_track;
 	testing->diff = eof_note_type;
 
-	memset(sp_phrase_endings, 0, sizeof(unsigned char) * note_count);
-
-	///Mark all notes that are in solo phrases with a temporary flag
-	///Mark all notes that are the last note in a star power phrase with a different temporary flag
-	tracksize = eof_get_track_size(eof_song, eof_selected_track);
-	numsolos = eof_get_num_solos(eof_song, eof_selected_track);
-	for(ctr = 0; ctr < tracksize; ctr++)
-	{	//For each note in the active track
-		unsigned long tflags, notepos;
-
-		if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)
-			continue;	//If it's not in the active track difficulty, skip it
-
-		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
-		tflags = eof_get_note_tflags(eof_song, eof_selected_track, ctr);
-		tflags &= ~(EOF_NOTE_TFLAG_SOLO_NOTE | EOF_NOTE_TFLAG_SP_END);	//Clear these temporary flags
-
-		if(eof_note_is_last_in_sp_phrase(eof_song, eof_selected_track, ctr))
-		{	//If the note is the last note in a star power phrase
-			tflags |= EOF_NOTE_TFLAG_SP_END;	//Set the temporary flag that will track this condition to reduce repeatedly testing for this
-		}
-		for(ctr2 = 0; ctr2 < numsolos; ctr2++)
-		{	//For each solo phrase in the active track
-			sectionptr = eof_get_solo(eof_song, eof_selected_track, ctr2);
-			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
-			{	//If the note is in this solo phrase
-				tflags |= EOF_NOTE_TFLAG_SOLO_NOTE;	//Set the temporary flag that will track this note being in a solo
-				break;
-			}
-		}
-		eof_set_note_tflags(eof_song, eof_selected_track, ctr, tflags);
-	}
+	///Apply EOF_NOTE_TFLAG_SOLO_NOTE and EOF_NOTE_TFLAG_SP_END tflags appropriately to notes in the target track difficulty
+	eof_ch_pathing_mark_tflags(best);
 
 	///Calculate the measure position and beat length of each note in the active track difficulty
 	///Find the first note at which star power can be deployed
 	///Record the end position of each star power phrase for faster detection of the last note in a star power phrase
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
 	for(ctr = 0, index = 0; ctr < tracksize; ctr++)
 	{	//For each note in the active track
 		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
@@ -918,7 +923,6 @@ int eof_menu_track_find_ch_sp_path(void)
 			{	//Bounds check
 				free(note_measure_positions);
 				free(note_beat_lengths);
-				free(sp_phrase_endings);
 				free(best);
 				free(testing);
 				eof_log("\tNotes miscounted", 1);
@@ -933,12 +937,6 @@ int eof_menu_track_find_ch_sp_path(void)
 			start = eof_get_beat(eof_song, notepos) + (eof_get_porpos(notepos) / 100.0);	//The floating point beat position of the start of the note
 			end = eof_get_beat(eof_song, notepos + notelength) + (eof_get_porpos(notepos + notelength) / 100.0);	//The floating point beat position of the end of the note
 			note_beat_lengths[index] = end - start;		//Store the floating point beat length of the note
-
-			//Populate the sp_phrase_endings[] array for faster future lookups
-			if(eof_get_note_tflags(eof_song, eof_selected_track, ctr) & EOF_NOTE_TFLAG_SP_END)
-			{	//If this is the last note in a star power phrase
-				sp_phrase_endings[index] = 1;
-			}
 
 			index++;
 		}//If the note is in the active difficulty
@@ -979,7 +977,6 @@ int eof_menu_track_find_ch_sp_path(void)
 	{
 		free(note_measure_positions);
 		free(note_beat_lengths);
-		free(sp_phrase_endings);
 		free(best);
 		free(testing);
 		if(tdeployments)
@@ -1019,7 +1016,7 @@ int eof_menu_track_find_ch_sp_path(void)
 		eof_log(eof_log_string, 1);
 	}
 
-	first_deploy = eof_ch_path_find_next_deployable_sp(testing, 0);	//Starting from the first note in the target track difficulty, find the first note at which star power can be deployed
+	first_deploy = eof_ch_pathing_find_next_deployable_sp(testing, 0);	//Starting from the first note in the target track difficulty, find the first note at which star power can be deployed
 	if(first_deploy < note_count)
 	{	//If the note was identified
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFirst possible star power deployment is at note index %lu in this track difficulty.", first_deploy);
@@ -1038,7 +1035,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	if(!error)
 	{	//If the no deployments score and first available star power deployment were successfully determined
 		starttime = clock();	//Track the start time
-		error = eof_ch_pathing_worker(best, testing, first_deploy, ULONG_MAX, &validcount, &invalidcount);	//Test all solutions
+		error = eof_ch_pathing_process_solutions(best, testing, first_deploy, ULONG_MAX, &validcount, &invalidcount);	//Test all solutions
 		endtime = clock();	//Track the end time
 		elapsed_time = (double)(endtime - starttime) / (double)CLOCKS_PER_SEC;	//Convert to seconds
 	}
@@ -1120,7 +1117,6 @@ int eof_menu_track_find_ch_sp_path(void)
 	///Cleanup
 	free(note_measure_positions);
 	free(note_beat_lengths);
-	free(sp_phrase_endings);
 	free(tdeployments);
 	free(bdeployments);
 	free(deploy_cache);
