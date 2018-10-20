@@ -93,4 +93,11 @@ void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution);
 int eof_menu_track_find_ch_sp_path(void);
 	//Determines optimum star power deployment for the active track difficulty
 
+void eof_worker_find_ch_sp_path(char *job_file);
+	//When EOF is launched with the ch_sp_path_worker parameter, this function is called after minimal program initialization to process the specified ####.job file
+	//If the job completes successfully, a ###.results file is created at the same path as the job file
+	//If the job fails due to error, a ###.fail file is created at the same path as the job file
+	//If the job is cancelled by the user (ie. Escape keypress), a ###.cancel file is created at the same path as the job file
+	//The specified job file is deleted after the above file is created
+
 #endif

@@ -5,6 +5,7 @@
 #include "pathing.h"
 #include "song.h"
 #include "undo.h"
+#include "utility.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -1135,4 +1136,197 @@ int eof_menu_track_find_ch_sp_path(void)
 	eof_fix_window_title();
 
 	return 1;
+}
+
+void eof_worker_find_ch_sp_path(char *job_file)
+{
+	PACKFILE *inf, *outf;
+	char output_path[1024] = {0};
+	char project_path[1024];
+	int error = 0, canceled = 0, retval;
+	EOF_SP_PATH_SOLUTION best, testing;
+	unsigned long ctr, first_deploy, last_deploy, validcount = 0, invalidcount = 0;
+
+	//Parse job file
+	if(!job_file)
+	{	//Invalid parameter
+		error = 1;
+	}
+	else
+	{	//A job file path was specified
+		inf = pack_fopen(job_file, "rb");
+		if(!inf)
+		{	//If the job file can't be loaded
+			error = 1;
+		}
+		else if(eof_load_song_string_pf(project_path, inf, sizeof(project_path)))
+		{	//If the project file path can't be read
+			error = 1;
+		}
+		else
+		{	//The project file path was read
+			eof_song = eof_load_song(project_path);
+			if(!eof_song)
+			{	//If the project file couldn't be loaded
+				error = 1;
+			}
+			else
+			{	//The project file was loaded
+				//Finish setup after loading project
+				eof_song_loaded = 1;
+				eof_init_after_load(0);
+				eof_fixup_notes(eof_song);
+
+				//Initialize solution array with job file contents
+				best.deploy_count = pack_igetl(inf);
+				testing.deploy_count = best.deploy_count;
+				best.deployments = malloc(sizeof(unsigned long) * best.deploy_count);
+				testing.deployments = malloc(sizeof(unsigned long) * best.deploy_count);
+				best.deploy_cache = malloc(sizeof(EOF_SP_PATH_SCORING_STATE) * best.deploy_count);
+				testing.deploy_cache = best.deploy_cache;
+				if(best.deploy_cache)
+				{	//If the deploy cache array was allocated
+					for(ctr = 0; ctr < best.deploy_count; ctr++)
+					{	//For every entry in the deploy cache
+						best.deploy_cache[ctr].note_start = ULONG_MAX;	//Mark it as invalid
+					}
+				}
+
+				best.note_count = pack_igetl(inf);
+				testing.note_count = best.note_count;
+				best.note_measure_positions = malloc(sizeof(double) * best.note_count);
+				testing.note_measure_positions = best.note_measure_positions;
+				if(best.note_measure_positions)
+				{	//If the measure positions array was allocated
+					for(ctr = 0; ctr < best.note_count; ctr++)
+					{	//For every entry in the measure position array
+						double temp = 0.0;
+
+						if(pack_fread(&temp, sizeof(double), inf) != sizeof(double))
+						{	//If the double floating point value was not read
+							error = 1;
+							break;
+						}
+						else
+						{
+							best.note_measure_positions[ctr] = temp;
+						}
+					}
+				}
+
+				best.note_beat_lengths = malloc(sizeof(double) * best.note_count);
+				testing.note_beat_lengths = best.note_beat_lengths;
+				if(best.note_beat_lengths)
+				{	//If the note lengths array was allocated
+					for(ctr = 0; ctr < best.note_count; ctr++)
+					{	//For every entry in the note lengths array
+						double temp = 0.0;
+
+						if(pack_fread(&temp, sizeof(double), inf) != sizeof(double))
+						{	//If the double floating point value was not read
+							error = 1;
+							break;
+						}
+						else
+						{
+							best.note_beat_lengths[ctr] = temp;
+						}
+					}
+				}
+
+				best.track = pack_igetl(inf);
+				testing.track = best.track;
+				best.diff = pack_igetw(inf);
+				testing.diff = best.diff;
+				first_deploy = pack_igetl(inf);
+				last_deploy = pack_igetl(inf);
+				best.num_deployments = testing.num_deployments = 0;
+				best.score = testing.score = 0;
+			}//The project file was loaded
+		}//The project file path was read
+		pack_fclose(inf);
+	}//A job file path was specified
+	if(!best.deployments || !testing.deployments || !best.deploy_cache || !best.note_measure_positions || !best.note_beat_lengths)
+	{	//If any of the arrays failed to allocate
+		error = 1;
+	}
+
+	//Test solutions
+	if(!error)
+	{	//If an error hasn't occurred yet
+		char buffer[300];
+
+		//Set the target track difficulty and apply temporary flags as appropriate
+		eof_selected_track = best.track;
+		eof_note_type = best.diff;
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);
+		eof_ch_pathing_mark_tflags(&testing);
+
+		clear_to_color(eof_window_info->screen, eof_color_gray);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "Testing solutions where first deployment is between note index %lu and %lu", first_deploy, last_deploy);
+		textout_ex(eof_window_info->screen, eof_font, buffer, 0, 0, eof_color_white, -1);	//Print the worker parameters to the program window
+
+		#ifdef EOF_DEBUG
+			(void) snprintf(buffer, sizeof(buffer) - 1, "Job file:  %s", get_filename(job_file));
+			textout_ex(eof_window_info->screen, eof_font, buffer, 0, 12, eof_color_white, -1);	//Print the worker parameters to the program window
+			(void) snprintf(buffer, sizeof(buffer) - 1, "deploy_count = %lu, note_count = %lu, track = %lu, diff = %d", testing.deploy_count, testing.note_count, testing.track, testing.diff);
+			textout_ex(eof_window_info->screen, eof_font, buffer, 0, 24, eof_color_white, -1);	//Print the worker parameters to the program window
+			(void) snprintf(buffer, sizeof(buffer) - 1, "measure positions : Note 0 = %f, Note %lu = %f", testing.note_measure_positions[0], testing.note_count - 1, testing.note_measure_positions[testing.note_count - 1]);
+			textout_ex(eof_window_info->screen, eof_font, buffer, 0, 36, eof_color_white, -1);	//Print the worker parameters to the program window
+			(void) snprintf(buffer, sizeof(buffer) - 1, "note beat lengths : Note 0 = %f, Note %lu = %f", testing.note_beat_lengths[0], testing.note_count - 1, testing.note_beat_lengths[testing.note_count - 1]);
+			textout_ex(eof_window_info->screen, eof_font, buffer, 0, 48, eof_color_white, -1);	//Print the worker parameters to the program window
+		#endif
+
+		//Test the specified range of solutions
+		retval = eof_ch_pathing_process_solutions(&best, &testing, first_deploy, last_deploy, &validcount, &invalidcount);
+		if(retval == 1)
+		{	//If the solution testing failed
+			error = 1;
+		}
+		else if(retval == 2)
+		{	//If the testing was canceled
+			canceled = 1;
+		}
+	}
+
+	if(error)
+	{	//If the job was not successfully processed
+		(void) replace_extension(output_path, job_file, "fail", 1024);		//Create a results file to specify failure
+		outf = pack_fopen(output_path, "w");
+
+	}
+	else if(canceled)
+	{	//If the user canceled the job
+		(void) replace_extension(output_path, job_file, "cancel", 1024);	//Create a results file to specify cancelation
+		outf = pack_fopen(output_path, "w");
+	}
+	else
+	{	//Normal completion, write best solution information to disk
+		(void) replace_extension(output_path, job_file, "success", 1024);	//Create a results file to contain the best solution
+		outf = pack_fopen(output_path, "w");
+		pack_iputl(best.score, outf);
+		pack_iputl(best.deployment_notes, outf);
+		pack_iputl(validcount, outf);
+		pack_iputl(invalidcount, outf);
+		pack_iputl(best.num_deployments, outf);
+		for(ctr = 0; ctr < best.num_deployments; ctr++)
+		{	//For each deployment in the solution
+			pack_iputl(best.deployments[ctr], outf);	//Write it to disk
+		}
+	}
+
+	//Cleanup
+	if(best.deployments)
+		free(best.deployments);
+	if(testing.deployments)
+		free(testing.deployments);
+	if(best.deploy_cache)
+		free(best.deploy_cache);
+	if(best.note_measure_positions)
+		free(best.note_measure_positions);
+	if(best.note_beat_lengths)
+		free(best.note_beat_lengths);
+
+	pack_fclose(outf);	//Close the results file
+	(void) delete_file(job_file);	//Then delete the job file to signal to the supervisor process that the results file is ready to access
 }

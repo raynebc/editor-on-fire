@@ -52,6 +52,7 @@
 #include "rs.h"	//for eof_pro_guitar_track_find_effective_fret_hand_position()
 #include "song.h"
 #include "utility.h"	//For eof_ucode_table[] declaration
+#include "pathing.h"	//For handling of ch_sp_path_worker command line parameter
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -4025,6 +4026,7 @@ int eof_initialize(int argc, char * argv[])
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 	char *logging_level[] = {"NULL", "normal", "verbose", "exhaustive"};
+	int ch_sp_path_worker = 0;	//Set to nonzero if the -ch_sp_path_worker command line parameter is specified, overriding normal EOF behavior
 
 	eof_log("eof_initialize() entered", 1);
 
@@ -4089,13 +4091,21 @@ int eof_initialize(int argc, char * argv[])
 	//Set the locale back to the default "C" locale because on Linux builds of Allegro, the locale is set to the local system locale when the keyboard system is initialized above
 	(void) setlocale(LC_ALL, "C");
 
+	if((argc == 3) && !ustricmp(argv[1], "-ch_sp_path_worker"))
+	{	//If this EOF instance was launched as a worker process to perform star power pathing
+		ch_sp_path_worker = 1;
+	}
+
 	//Start the logging system (unless the user disabled it via preferences)
-	eof_start_logging();
-	seconds = time(NULL);
-	caltime = localtime(&seconds);
-	(void) strftime(eof_log_string, sizeof(eof_log_string) - 1, "Logging started during program initialization at %c", caltime);
-	eof_log(eof_log_string, 0);
-	eof_log(EOF_VERSION_STRING, 0);
+	if(!ch_sp_path_worker)
+	{	//Don't start logging if this is a worker process
+		eof_start_logging();
+		seconds = time(NULL);
+		caltime = localtime(&seconds);
+		(void) strftime(eof_log_string, sizeof(eof_log_string) - 1, "Logging started during program initialization at %c", caltime);
+		eof_log(eof_log_string, 0);
+		eof_log(EOF_VERSION_STRING, 0);
+	}
 
 	InitIdleSystem();
 	show_mouse(NULL);
@@ -4392,6 +4402,14 @@ int eof_initialize(int argc, char * argv[])
 	MIDIqueue=MIDIqueuetail=NULL;	//Initialize the MIDI queue as empty
 	set_volume_per_voice(0);		//By default, Allegro halves the volume of each voice so that it won't clip if played fully panned to either the left or right channels.  EOF doesn't use panning, so force full volume.
 	set_volume(eof_global_volume, eof_global_volume);
+
+	/* divert to the Clone Hero SP pathing behavior if applicable */
+	if(ch_sp_path_worker)
+	{
+		eof_worker_find_ch_sp_path(argv[2]);
+		eof_quit = 1;	//Signal the main function to exit
+		return 1;
+	}
 
 	/* check for a previous crash condition of EOF */
 	eof_log("\tChecking for crash recovery files", 1);
