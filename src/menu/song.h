@@ -46,6 +46,7 @@ int eof_menu_song_seek_next_note(void);
 int eof_menu_song_seek_next_highlighted_note(void);
 int eof_menu_song_seek_previous_screen(void);
 int eof_menu_song_seek_next_screen(void);
+int eof_menu_song_seek_note_index(void);
 void eof_song_seek_partial_screen(int direction);
 	//Seeks a part of one screen forward (if direction is >= 0) or backward (if direction is < 0)
 int eof_menu_song_seek_bookmark_0(void);

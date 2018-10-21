@@ -11,6 +11,7 @@ typedef struct
 	unsigned long multiplier;		//The score multiplier in effect
 	unsigned long hitcounter;		//The note hit counter in effect
 	unsigned long score;			//The total score in effect
+	unsigned long deployment_notes;	//The number of notes played during star power deployment
 	double sp_meter;				//The star power meter level
 	double sp_meter_t;				//The uncapped star power meter level
 } EOF_SP_PATH_SCORING_STATE;
@@ -32,6 +33,7 @@ typedef struct
 	unsigned char diff;					//The difficulty number being processed
 	unsigned long score;				//The estimated score if all notes in the processed track difficulty are hit, and all sustain star power notes are whammied for bonus star power
 	unsigned long deployment_notes;		//The number of notes played during star power deployment
+	unsigned long solution_number;
 } EOF_SP_PATH_SOLUTION;
 
 int eof_note_is_last_longest_gem(EOF_SONG *sp, unsigned long track, unsigned long note);
@@ -65,17 +67,28 @@ double eof_get_measure_position(unsigned long pos);
 unsigned long eof_ch_pathing_find_next_deployable_sp(EOF_SP_PATH_SOLUTION *solution, unsigned long start_index);
 	//Given the beat length information about solution's track difficulty, start parsing notes in the track difficulty
 	// starting at the specified note index and return the first note index at which 50% or more of the star power meter
-	// has been filled, allowing for star power to be deployed
+	// has been added, allowing for star power to be deployed
 	//Expects that the EOF_NOTE_TFLAG_SP_END flag has been set appropriately by eof_menu_track_find_ch_sp_path()
 	//Returns ULONG_MAX on error
+
+unsigned long eof_ch_pathing_find_next_sp_note(EOF_SP_PATH_SOLUTION *solution, unsigned long start_index);
+	//Parses notes starting with the specified note index and returns the index of the first note having star power
+	//Returns ULONG_MAX if there is no such note or upon error
 
 int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long solution_num, int logging);
 	//Determines the validity of the proposed star path solution for the specified track difficulty, setting the score and deployment_notes value in the passed structure
 	//The score is calculated with scoring rules for Clone Hero
 	//The solution's score and deployment_notes variables are modified to contain the values calculated for the solution
+	//Returns 0 on success, or otherwise one of the following error codes:
+	// 1 for invalid parameters
+	// 2 for invalidated by cache (ie. cached deployment data shows that a deployment was already in progress during one of the other deployment indexes in the solution)
+	// 3 for attempting to deploy while star power is in effect
+	// 4 for attemptign to deploy without sufficient star power
+	// 5 5 for a general logic error
 	//Returns zero if the proposed solution is invalid (ie. calling for star power deployment while it is already deployed, or when there is insufficient star power)
 	//solution_num is the solution number being tested, to be logged and used for debugging
 	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
+	//If logging is greater than 1, verbose logging for each note's scoring, start and end of star power deployment, etc. is performed
 
 int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount);
 	//Calculates all solutions where the first deployment starts at note index between first_deploy and last_deploy (inclusive),

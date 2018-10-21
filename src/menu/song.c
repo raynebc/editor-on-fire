@@ -67,6 +67,7 @@ MENU eof_song_seek_note_menu[] =
 	{"&Next\tShift+PGDN", eof_menu_song_seek_next_note, NULL, 0, NULL},
 	{"Pr&Evious h.l.\t" CTRL_NAME "+Shift+Y", eof_menu_song_seek_previous_highlighted_note, NULL, 0, NULL},
 	{"Ne&Xt h.l.\tShift+Y", eof_menu_song_seek_next_highlighted_note, NULL, 0, NULL},
+	{"Note &Index", eof_menu_song_seek_note_index, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -910,6 +911,53 @@ int eof_menu_song_seek_next_screen(void)
 			eof_set_seek_position(eof_music_pos + SCREEN_W * eof_zoom);
 		}
 	}
+	return 1;
+}
+
+DIALOG eof_song_seek_note_index_dialog[] =
+{
+	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg)  (key)   (flags) (d1) (d2) (dp)       (dp2)             (dp3) */
+	{ d_agup_window_proc,     0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Seek to note index", NULL,             NULL },
+	{ eof_verified_edit_proc, 12,  80,  254, 20,  2,   23,   0,      0,      15,  0,   eof_etext, "0123456789", NULL },
+	{ d_agup_button_proc,     67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",      NULL,             NULL },
+	{ d_agup_button_proc,     163, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",  NULL,             NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_song_seek_note_index(void)
+{
+	unsigned long i, index;
+	long value;
+
+	eof_color_dialog(eof_song_seek_note_index_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_song_seek_note_index_dialog);
+	eof_etext[0] = '\0';	//Empty the input field
+
+	if(eof_popup_dialog(eof_song_seek_note_index_dialog, 1) == 2)
+	{	//User clicked OK
+		value = atol(eof_etext);
+		if(value <= 0)
+		{
+			allegro_message("Must be a number higher than 0");
+			return 1;
+		}
+	}
+
+
+	for(i = 0, index = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
+		{
+			if(index == value)
+			{	//If this is the target note
+				eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
+				return 1;
+			}
+
+			index++;	//Track how many notes in the active difficulty have been encountered
+		}
+	}
+
 	return 1;
 }
 

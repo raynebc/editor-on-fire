@@ -220,6 +220,32 @@ unsigned long eof_ch_pathing_find_next_deployable_sp(EOF_SP_PATH_SOLUTION *solut
 	return ULONG_MAX;	//An applicable note was not found
 }
 
+unsigned long eof_ch_pathing_find_next_sp_note(EOF_SP_PATH_SOLUTION *solution, unsigned long start_index)
+{
+	unsigned long ctr, index, tracksize;
+
+	if(!solution || (solution->track >= eof_song->tracks))
+		return ULONG_MAX;	//Invalid parameters
+
+	tracksize = eof_get_track_size(eof_song, solution->track);
+	for(ctr = 0, index = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active difficulty
+			if(index >= start_index)
+			{	//If the specified note index has been reached
+				if(eof_get_note_flags(eof_song, solution->track, ctr) & EOF_NOTE_FLAG_SP)
+				{	//If the note has star power
+					return index;
+				}
+			}
+			index++;	//Track the number of notes in the target difficulty that have been encountered
+		}
+	}
+
+	return ULONG_MAX;	//An applicable note was not found
+}
+
 int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long solution_num, int logging)
 {
 	int sp_deployed = 0;	//Set to nonzero if star power is currently in effect for the note being processed
@@ -241,7 +267,11 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	unsigned long deployment_num;			//The instance number of the next star power deployment
 
 	if(!solution || !solution->deployments || !solution->note_measure_positions || !solution->note_beat_lengths || !eof_song || !solution->track || (solution->track >= eof_song->tracks) || (solution->num_deployments > solution->deploy_count))
-		return 0;	//Invalid parameters
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t*Invalid parameters.  Solution invalid.");
+		eof_log_casual(eof_log_string, 1);
+		return 1;	//Invalid parameters
+	}
 
 	///Look up cached scoring to skip as much calculation as possible
 	for(ctr = 0; ctr < solution->num_deployments; ctr++)
@@ -274,6 +304,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		score.multiplier = 1;
 		score.hitcounter = 0;
 		score.score = 0;
+		score.deployment_notes = 0;
 		score.sp_meter = score.sp_meter_t = 0.0;
 
 		//Init solution structure
@@ -286,19 +317,21 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 
 	///Optionally log the solution's deployment details
 	tracksize = eof_get_track_size(eof_song, solution->track);
-	if(eof_log_level > 1)
-	{	//Skip logging overhead if the logging level is too low
-		unsigned long notenum, min, sec, ms;
+	if(logging)
+	{	//Skip logging overhead if logging isn't enabled
+///DEBUG LOGGING
+///		unsigned long notenum, min, sec, ms;
 		char tempstring[50];
 		int cached = 0;
 
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSP Solution #%lu:  Deploy at note indexes ", solution_num);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSolution #%lu:  Note indexes ", solution_num);
 
 		for(ctr = 0; ctr < solution->num_deployments; ctr++)
 		{	//For each deployment in the solution
 			int thiscached = 0;
 
-			notenum = eof_translate_track_diff_note_index(eof_song, solution->track, solution->diff, solution->deployments[ctr]);	//Find the real note number for this index
+///DEBUG LOGGING
+/*			notenum = eof_translate_track_diff_note_index(eof_song, solution->track, solution->diff, solution->deployments[ctr]);	//Find the real note number for this index
 			if(notenum < tracksize)
 			{	//If that number was found
 				ms = eof_get_note_pos(eof_song, solution->track, notenum);	//Determine mm:ss.ms formatting of timestamp
@@ -306,14 +339,17 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				ms -= 60000 * min;
 				sec = ms / 1000;
 				ms -= 1000 * sec;
-				if((cache_number < solution->num_deployments) && (cache_number >= ctr))
-				{	//If this deployment number is being looked up from cached scoring
-					cached = 1;
-					thiscached = 1;
-				}
 				snprintf(tempstring, sizeof(tempstring) - 1, "%s%s%lu (%lu:%lu.%lu)", (ctr ? ", " : ""), (thiscached ? "*" : ""), solution->deployments[ctr], min, sec, ms);
-				strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
 			}
+*/
+
+			if((cache_number < solution->num_deployments) && (cache_number >= ctr))
+			{	//If this deployment number is being looked up from cached scoring
+				cached = 1;
+				thiscached = 1;
+			}
+			snprintf(tempstring, sizeof(tempstring) - 1, "%s%s%lu", (ctr ? ", " : ""), (thiscached ? "*" : ""), solution->deployments[ctr]);
+			strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
 		}
 
 		if(!solution->num_deployments)
@@ -324,8 +360,17 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 
 		if(cached)
 		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing cache for deployment at note index #%lu (Hitcount=%lu  Multiplier=x%lu  Total score=%lu  SP Meter=%lu%%  Uncapped SP Meter=%lu%%).  Resuming scoring from note index #%lu", solution->deploy_cache[cache_number].note_start, score.hitcounter, score.multiplier, score.score, (unsigned long)(score.sp_meter * 100.0 + 0.5), (unsigned long)(score.sp_meter_t * 100.0 + 0.5), index);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing cache for deployment at note index #%lu (Hitcount=%lu  Mult.=x%lu  Score=%lu  D.Notes=%lu  SP Meter=%lu%%).  Resuming from note index #%lu", solution->deploy_cache[cache_number].note_start, score.hitcounter, score.multiplier, score.score, score.deployment_notes, (unsigned long)(score.sp_meter * 100.0 + 0.5), index);
 			eof_log_casual(eof_log_string, 2);
+			if(index > solution->deployments[deployment_num])
+			{	//If the solution indicated to deploy at a note that was already surpassed by the cache entry
+				if(logging)
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t*Cached scoring shows the attempted deployment is not possible.  Solution invalid.");
+					eof_log_casual(eof_log_string, 1);
+				}
+				return 2;	//Solution invalidated by cache
+			}
 		}
 	}
 
@@ -352,7 +397,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		score.hitcounter++;
 		if(score.hitcounter == 30)
 		{
-			if(logging)
+			if(logging > 1)
 			{
 				eof_log_casual("\t\t\tMultiplier increased to x4", 1);
 			}
@@ -360,7 +405,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		}
 		else if(score.hitcounter == 20)
 		{
-			if(logging)
+			if(logging > 1)
 			{
 				eof_log_casual("\t\t\tMultiplier increased to x3", 1);
 			}
@@ -368,7 +413,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		}
 		else if(score.hitcounter == 10)
 		{
-			if(logging)
+			if(logging > 1)
 			{
 				eof_log_casual("\t\t\tMultiplier increased to x2", 1);
 			}
@@ -391,7 +436,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		{	//If star power was in deployment during the previous note, determine if it should still be in effect
 			if(solution->note_measure_positions[index] >= sp_deployment_end + 0.0001)
 			{	//If this note is beyond the end of the deployment (allow variance for math error)
-				if(logging)
+				if(logging > 1)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tStar power ended before note #%lu (index #%lu)", notectr, index);
 					eof_log_casual(eof_log_string, 1);
@@ -408,10 +453,10 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				{	//If the solution specifies deploying star power while it's already in effect
 					if(logging)
 					{
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAttempted to deploy star power while it is already deployed.  Solution invalid.");
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t*Attempted to deploy star power while it is already deployed.  Solution invalid.");
 						eof_log_casual(eof_log_string, 1);
 					}
-					return 0;	//This solution is invalid
+					return 3;	//Solution attempting to deploy while star power is in effect
 				}
 			}
 		}
@@ -426,7 +471,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 					score.sp_meter = score.sp_meter_t = 0.0;	//The entire star power meter will be used
 					sp_deployed = 1;	//Star power is now in effect
 					score.note_start = index;	//Track the note index at which this star power deployment began, for caching purposes
-					if(logging)
+					if(logging > 1)
 					{
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeploying star power at note #%lu (index #%lu)", notectr, index);
 						eof_log_casual(eof_log_string, 1);
@@ -434,7 +479,12 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				}
 				else
 				{	//There is insufficient star power
-					return 0;	//This solution is invalid
+					if(logging)
+					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t*Attempted to deploy star power without sufficient star power.  Solution invalid.");
+						eof_log_casual(eof_log_string, 1);
+					}
+					return 4;	//Solution attempting to deploy without sufficient star power
 				}
 			}
 		}
@@ -467,7 +517,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			base_score = eof_note_count_colors(eof_song, solution->track, notectr) * 50;	//The base score for a note is 50 points per gem
 			sp_base_score = base_score;		//Star power adds the same number of bonus points
 			notescore = base_score + sp_base_score;
-			solution->deployment_notes++;	//Track how many notes are played during star power deployment
+			score.deployment_notes++;	//Track how many notes are played during star power deployment
 			score.sp_meter = (sp_deployment_end - sp_deployment_start) / 8.0;	//Convert remaining star power deployment duration back to star power
 			score.sp_meter_t = score.sp_meter;
 
@@ -491,7 +541,9 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				//Update the star power meter
 				if((beat >= eof_song->beats) || !eof_song->beat[beat]->has_ts)
 				{	//If the beat containing this 1/25 beat interval couldn't be identified, or if the beat has no time signature in effect
-					return 0;	//Invalidate the solution since it cannot be correctly scored
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t*Logic error.  Solution invalid.");
+					eof_log_casual(eof_log_string, 1);
+					return 5;	//General logic error
 				}
 				sp_drain = 1.0 / 8.0 / eof_song->beat[beat]->num_beats_in_measure / 25.0;	//Star power drains at a rate of 1/8 per measure of beats, and this is the amount of drain for a 1/25 beat interval
 				score.sp_meter = score.sp_meter + sp_whammy_gain - sp_drain;	//Update the star power meter to reflect the amount gained and the amount consumed during this 1/25 beat interval
@@ -560,7 +612,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				score.note_end_native = notectr + 1;
 
 				memcpy(&solution->deploy_cache[deployment_num++], &score, sizeof(EOF_SP_PATH_SCORING_STATE));	//Append this scoring data to the cache
-				if(logging)
+				if(logging > 1)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tStar power ended during note #%lu (index #%lu)", notectr, index);
 					eof_log_casual(eof_log_string, 1);
@@ -623,12 +675,11 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 					sustain *= 2.0;		//Apply star power bonus to the applicable portion of the sustain
 				}
 			}
-
 			if(sp_deployed)				//If star power is in effect
 			{
 				notescore *= 2;					//It doubles the note's score
 				sp_base_score = base_score;
-				solution->deployment_notes++;	//Track how many notes are played during star power deployment
+				score.deployment_notes++;	//Track how many notes are played during star power deployment
 			}
 			notescore += (sustain + sustain2 + 0.5);	//Round the sustain point total (including relevant star power bonus) to the nearest integer and add to the note's score
 			notescore *= score.multiplier;			//Apply the current score multiplier in effect
@@ -642,7 +693,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		}
 		score.score += notescore;
 
-		if(logging)
+		if(logging > 1)
 		{
 			if(!sp_base_score)
 			{	//No star power bonus
@@ -659,19 +710,21 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	}//For each note in the track being evaluated
 
 	solution->score = score.score;	//Set the final score to the one from the scoring state structure
-	if(eof_log_level > 1)
+	solution->deployment_notes = score.deployment_notes;
+	if(logging)
 	{	//Skip the overhead of building the logging string if it won't be logged
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSolution score:  %lu", solution->score);
 		eof_log_casual(eof_log_string, 2);
 	}
 
-	return 1;	//Return solution evaluated
+	return 0;	//Return solution evaluated
 }
 
 int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount)
 {
 	char windowtitle[101] = {0};
 	int invalid_increment = 0;	//Set to nonzero if the last iteration of the loop manually incremented the solution due to the solution being invalid
+	int retval;
 
 	if(!eof_song || !best || !testing || (first_deploy >= best->note_count) || !validcount || !invalidcount)
 		return 1;	//Invalid parameters
@@ -776,13 +829,15 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 		invalid_increment = 0;
 
 		//Test and compare with the current best solution
-		if(eof_evaluate_ch_sp_path_solution(testing, *validcount + *invalidcount + 1, 0))
+		retval = eof_evaluate_ch_sp_path_solution(testing, *validcount + *invalidcount + 1, (eof_log_level > 1 ? 1 : 0));	//Evaluate the solution (only perform light evaluation logging if verbose logging or higher is enabled)
+		if(!retval)
 		{	//If the solution was considered valid
 			if((testing->score > best->score) || ((testing->score == best->score) && (testing->deployment_notes < best->deployment_notes)))
 			{	//If this newly tested solution achieved a higher score than the current best, or if it matched the highest score but did so with fewer notes played during star power deployment
 				best->score = testing->score;	//It is the new best solution, copy its data into the best solution structure
 				best->deployment_notes = testing->deployment_notes;
 				best->num_deployments = testing->num_deployments;
+				best->solution_number = *validcount + *invalidcount + 1;	//Keep track of which solution number this is, for logging purposes
 
 				memcpy(best->deployments, testing->deployments, sizeof(unsigned long) * testing->deploy_count);
 			}
@@ -790,8 +845,6 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 		}
 		else
 		{	//If the solution was invalid
-			eof_log_casual("\t\t*Invalid", 2);
-
 			if(testing->num_deployments < testing->deploy_count)
 			{	//If fewer than the maximum number of deployments was just tested and found invalid, all solutions using this set of deployments will also fail
 				if(testing->num_deployments > 1)
@@ -804,6 +857,40 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Discarding solutions where deployment #%lu is at note index #%lu", testing->num_deployments, testing->deployments[testing->num_deployments - 1]);
 							eof_log_casual(eof_log_string, 2);
 						}
+
+						if(retval == 2)
+						{	//If the last tested solution was invalidated by the cache, use the cache to skip other invalid solutions up until that cache entry's end of deployment
+							if(testing->num_deployments > 1)
+							{	//If the deployment that was invalidated is after the first one
+								unsigned long note_end = testing->deploy_cache[testing->num_deployments - 2].note_end;	//Look up the first note occurring after the last successful star power deployment's end
+
+								if((note_end < testing->note_count) && (note_end > testing->deployments[testing->num_deployments - 1]))
+								{	//If the next deployment can be advanced to that note
+									next_deploy = note_end;	//Do so
+									if(eof_log_level > 1)
+									{	//Skip the overhead of building the logging string if it won't be logged
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Skipping deployment #%lu to note index #%lu", testing->num_deployments, next_deploy);
+										eof_log_casual(eof_log_string, 2);
+									}
+								}
+							}
+						}
+
+						if(retval == 4)
+						{	//If the last tested solution was invalidated due to there being insufficient star power to deploy, skip all other solutions up until the next star power note
+							unsigned long next_sp_note = eof_ch_pathing_find_next_sp_note(testing, next_deploy);	//Find the next note with star power (first opportunity to gain more star power)
+
+							if((next_sp_note < testing->note_count) && (next_sp_note > testing->deployments[testing->num_deployments - 1]))
+							{	//If such a note exists and the next deployment can be advanced to that note
+								next_deploy = next_sp_note;	//Do so
+								if(eof_log_level > 1)
+								{	//Skip the overhead of building the logging string if it won't be logged
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Skipping deployment #%lu to next SP note (index #%lu)", testing->num_deployments, next_deploy);
+									eof_log_casual(eof_log_string, 2);
+								}
+							}
+						}
+
 						testing->deployments[testing->num_deployments - 1] = next_deploy;
 						invalid_increment = 1;	//Prevent the solution from being incremented again at the beginning of the next loop
 					}
@@ -927,12 +1014,14 @@ int eof_menu_track_find_ch_sp_path(void)
 	best->note_count = note_count;
 	best->track = eof_selected_track;
 	best->diff = eof_note_type;
+	best->solution_number = 0;
 
 	testing->note_measure_positions = note_measure_positions;
 	testing->note_beat_lengths = note_beat_lengths;
 	testing->note_count = note_count;
 	testing->track = eof_selected_track;
 	testing->diff = eof_note_type;
+	testing->solution_number = 0;
 
 	///Apply EOF_NOTE_TFLAG_SOLO_NOTE and EOF_NOTE_TFLAG_SP_END tflags appropriately to notes in the target track difficulty
 	eof_ch_pathing_mark_tflags(best);
@@ -945,8 +1034,8 @@ int eof_menu_track_find_ch_sp_path(void)
 	{	//For each note in the active track
 		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
 		{	//If the note is in the active difficulty
-			unsigned long notepos, notelength;
-			double start, end;
+			unsigned long notepos, notelength, ctr2, endbeat;
+			double start, end, interval;
 
 			if(index >= note_count)
 			{	//Bounds check
@@ -964,7 +1053,28 @@ int eof_menu_track_find_ch_sp_path(void)
 			note_measure_positions[index] = eof_get_measure_position(notepos);	//Store the measure position of the note
 			notelength = eof_get_note_length(eof_song, eof_selected_track, ctr);
 			start = eof_get_beat(eof_song, notepos) + (eof_get_porpos(notepos) / 100.0);	//The floating point beat position of the start of the note
-			end = eof_get_beat(eof_song, notepos + notelength) + (eof_get_porpos(notepos + notelength) / 100.0);	//The floating point beat position of the end of the note
+			endbeat = eof_get_beat(eof_song, notepos + notelength);
+			end = (double) endbeat + (eof_get_porpos(notepos + notelength) / 100.0);	//The floating point beat position of the end of the note
+
+			//Allow for notes that end up to 2ms away from a 1/25 interval to have their beat length rounded to that interval
+			interval = eof_get_beat_length(eof_song, end) / 25.0;
+			for(ctr2 = 0; ctr2 < 26; ctr2++)
+			{	//For each 1/25 beat interval in the note's end beat up until the next beat's position
+				if(endbeat < eof_song->beats)
+				{	//Error check
+					double target = eof_song->beat[endbeat]->fpos + ((double) ctr2 * interval);
+
+					if((notepos + notelength + 2 == (unsigned long) (target + 0.5)) || (notepos + notelength + 1 == (unsigned long) (target + 0.5)))
+					{	//If the note ends 1 or 2 ms before this 1/25 beat interval
+						end = eof_get_beat(eof_song, notepos + notelength) + ((double) ctr2 / 25.0);	//Re-target the note's end position exactly to this interval
+					}
+					else if((notepos + notelength - 2 == (unsigned long) (target + 0.5)) || (notepos + notelength - 1 == (unsigned long) (target + 0.5)))
+					{	//If the note ends 1 or 2 ms after this 1/25 beat interval
+						end = eof_get_beat(eof_song, notepos + notelength) + ((double) ctr2 / 25.0);	//Re-target the note's end position exactly to this interval
+					}
+				}
+			}
+
 			note_beat_lengths[index] = end - start;		//Store the floating point beat length of the note
 
 			index++;
@@ -1032,8 +1142,9 @@ int eof_menu_track_find_ch_sp_path(void)
 
 	///Determine the maximum score when no star power is deployed
 	best->num_deployments = 0;
-	if(!eof_evaluate_ch_sp_path_solution(best, 0, (eof_log_level > 1 ? 1 : 0)))
-	{	//Populate the "best" solution with the worst scoring solution, so any better solution will replace it
+	eof_log_casual("CH Scoring without star power:", 1);
+	if(eof_evaluate_ch_sp_path_solution(best, 0, 2))
+	{	//Populate the "best" solution with the worst scoring solution, so any better solution will replace it, verbose log the evaluation
 		eof_log("\tError scoring no star power usage", 1);
 		allegro_message("Error scoring no star power usage");
 		error = 1;	//The testing of all other solutions will be skipped
@@ -1077,12 +1188,28 @@ int eof_menu_track_find_ch_sp_path(void)
 	}
 	else if(error == 2)
 	{
+		set_window_title("Release Escape key...");
+		while(key[KEY_ESC]);	//Wait for user to release Escape key
+		eof_fix_window_title();
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", validcount + invalidcount, validcount, invalidcount, elapsed_time, ((double)validcount + invalidcount)/elapsed_time);
 		eof_log(eof_log_string, 1);
 		allegro_message("User cancellation.%s", eof_log_string);
 	}
 	else
 	{
+		//If logging is enabled, verbose log the best solution
+		if(eof_log_level)
+		{
+			//Prep the testing array to hold the best solution for evaluation and logging
+			memcpy(testing->deployments, best->deployments, sizeof(unsigned long) * best->num_deployments);
+			testing->num_deployments = best->num_deployments;
+			for(ctr = 0; ctr < testing->deploy_count; ctr++)
+			{	//For each entry in the deploy cache
+				testing->deploy_cache[ctr].note_start = ULONG_MAX;	//Invalidate the entry
+			}
+			eof_log_casual("Best solution:", 1);
+			(void) eof_evaluate_ch_sp_path_solution(testing, best->solution_number, 2);
+		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", validcount + invalidcount, validcount, invalidcount, elapsed_time, ((double)validcount + invalidcount)/elapsed_time);
 		eof_log_casual(eof_log_string, 1);
 		if((best->deployment_notes == 0) && (best->score > worst_score))
