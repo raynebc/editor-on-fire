@@ -356,12 +356,12 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		{	//If there were no star power deployments in this solution
 			strncat(eof_log_string, "(none)", sizeof(eof_log_string) - 1);
 		}
-		eof_log_casual(eof_log_string, 2);
+		eof_log_casual(eof_log_string, 1);
 
 		if(cached)
 		{
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing cache for deployment at note index #%lu (Hitcount=%lu  Mult.=x%lu  Score=%lu  D.Notes=%lu  SP Meter=%lu%%).  Resuming from note index #%lu", solution->deploy_cache[cache_number].note_start, score.hitcounter, score.multiplier, score.score, score.deployment_notes, (unsigned long)(score.sp_meter * 100.0 + 0.5), index);
-			eof_log_casual(eof_log_string, 2);
+			eof_log_casual(eof_log_string, 1);
 			if(index > solution->deployments[deployment_num])
 			{	//If the solution indicated to deploy at a note that was already surpassed by the cache entry
 				if(logging)
@@ -434,8 +434,13 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		///Determine whether star power is in effect for this note
 		if(sp_deployed)
 		{	//If star power was in deployment during the previous note, determine if it should still be in effect
-			if(solution->note_measure_positions[index] >= sp_deployment_end + 0.0001)
-			{	//If this note is beyond the end of the deployment (allow variance for math error)
+			unsigned long truncated_note_position, truncated_sp_deployment_end_position;
+
+			//Truncate the note's position and end of deployment position at 3 decimal places for more reliable comparison
+			truncated_note_position = solution->note_measure_positions[index] * 1000;
+			truncated_sp_deployment_end_position = sp_deployment_end * 1000;
+			if(truncated_note_position >= truncated_sp_deployment_end_position)
+			{	//If this note is beyond the end of the deployment
 				if(logging > 1)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tStar power ended before note #%lu (index #%lu)", notectr, index);
@@ -473,7 +478,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 					score.note_start = index;	//Track the note index at which this star power deployment began, for caching purposes
 					if(logging > 1)
 					{
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeploying star power at note #%lu (index #%lu)", notectr, index);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeploying star power at note #%lu (index #%lu).  Projected deployment ending is measure %.2f", notectr, index, sp_deployment_end + 1);
 						eof_log_casual(eof_log_string, 1);
 					}
 				}
@@ -496,6 +501,11 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			if(sp_deployed)
 			{	//If star power is in effect
 				sp_deployment_end += 2.0;	//Extends the end of star power deployment by 2 measures (one fourth of the effect of a full star power meter)
+				if(logging > 1)
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tStar power deployment ending extended two measures (measure %.2f)", sp_deployment_end + 1);
+					eof_log_casual(eof_log_string, 1);
+				}
 			}
 			else
 			{	//Star power is not in effect
@@ -518,7 +528,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			sp_base_score = base_score;		//Star power adds the same number of bonus points
 			notescore = base_score + sp_base_score;
 			score.deployment_notes++;	//Track how many notes are played during star power deployment
-			score.sp_meter = (sp_deployment_end - sp_deployment_start) / 8.0;	//Convert remaining star power deployment duration back to star power
+			score.sp_meter = (sp_deployment_end - solution->note_measure_positions[index]) / 8.0;	//Convert remaining star power deployment duration back to star power
 			score.sp_meter_t = score.sp_meter;
 
 			while(remaining_sustain > 0)
@@ -701,7 +711,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			}
 			else
 			{	//Star power bonus
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%lu (index #%lu):  \tpos = %lums, \tm pos = %.2f, \tbase = %lu, \tsustain = %lu, SP = %lu, SP sustain = %lu, mult = x%lu, solo bonus = %lu, \tscore = %lu.  \tTotal score:  %lu\tSP Meter at %lu%% (uncapped %lu%%)", notectr, index, notepos, solution->note_measure_positions[index] + 1, base_score, sustain_score, sp_base_score, sp_sustain_score, score.multiplier, is_solo * 100, notescore, score.score, (unsigned long)(score.sp_meter * 100.0 + 0.5), (unsigned long)(score.sp_meter_t * 100.0 + 0.5));
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%lu (index #%lu):  \tpos = %lums, \tm pos = %.2f, \tbase = %lu, \tsustain = %lu, SP = %lu, SP sustain = %lu, mult = x%lu, solo bonus = %lu, \tscore = %lu.  \tTotal score:  %lu\tSP Meter at %lu%% (uncapped %lu%%), Deployment ends at measure %.2f", notectr, index, notepos, solution->note_measure_positions[index] + 1, base_score, sustain_score, sp_base_score, sp_sustain_score, score.multiplier, is_solo * 100, notescore, score.score, (unsigned long)(score.sp_meter * 100.0 + 0.5), (unsigned long)(score.sp_meter_t * 100.0 + 0.5), sp_deployment_end + 1);
 			}
 			eof_log_casual(eof_log_string, 1);
 		}
@@ -834,6 +844,8 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 		{	//If the solution was considered valid
 			if((testing->score > best->score) || ((testing->score == best->score) && (testing->deployment_notes < best->deployment_notes)))
 			{	//If this newly tested solution achieved a higher score than the current best, or if it matched the highest score but did so with fewer notes played during star power deployment
+				eof_log_casual("\t\t\t!New best solution", 2);
+
 				best->score = testing->score;	//It is the new best solution, copy its data into the best solution structure
 				best->deployment_notes = testing->deployment_notes;
 				best->num_deployments = testing->num_deployments;
@@ -845,10 +857,11 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 		}
 		else
 		{	//If the solution was invalid
+			next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Get the note index one after the last tested deployment
 			if(testing->num_deployments < testing->deploy_count)
 			{	//If fewer than the maximum number of deployments was just tested and found invalid, all solutions using this set of deployments will also fail
 				if(testing->num_deployments > 1)
-				{	//Bounds check
+				{	//If the next deployment can be advanced by one note
 					next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the last deployment one note further
 					if(next_deploy < testing->note_count)
 					{	//Bounds check
@@ -857,51 +870,57 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Discarding solutions where deployment #%lu is at note index #%lu", testing->num_deployments, testing->deployments[testing->num_deployments - 1]);
 							eof_log_casual(eof_log_string, 2);
 						}
-
-						if(retval == 2)
-						{	//If the last tested solution was invalidated by the cache, use the cache to skip other invalid solutions up until that cache entry's end of deployment
-							if(testing->num_deployments > 1)
-							{	//If the deployment that was invalidated is after the first one
-								unsigned long note_end = testing->deploy_cache[testing->num_deployments - 2].note_end;	//Look up the first note occurring after the last successful star power deployment's end
-
-								if((note_end < testing->note_count) && (note_end > testing->deployments[testing->num_deployments - 1]))
-								{	//If the next deployment can be advanced to that note
-									next_deploy = note_end;	//Do so
-									if(eof_log_level > 1)
-									{	//Skip the overhead of building the logging string if it won't be logged
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Skipping deployment #%lu to note index #%lu", testing->num_deployments, next_deploy);
-										eof_log_casual(eof_log_string, 2);
-									}
-								}
-							}
-						}
-
-						if(retval == 4)
-						{	//If the last tested solution was invalidated due to there being insufficient star power to deploy, skip all other solutions up until the next star power note
-							unsigned long next_sp_note = eof_ch_pathing_find_next_sp_note(testing, next_deploy);	//Find the next note with star power (first opportunity to gain more star power)
-
-							if((next_sp_note < testing->note_count) && (next_sp_note > testing->deployments[testing->num_deployments - 1]))
-							{	//If such a note exists and the next deployment can be advanced to that note
-								next_deploy = next_sp_note;	//Do so
-								if(eof_log_level > 1)
-								{	//Skip the overhead of building the logging string if it won't be logged
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Skipping deployment #%lu to next SP note (index #%lu)", testing->num_deployments, next_deploy);
-									eof_log_casual(eof_log_string, 2);
-								}
-							}
-						}
-
-						testing->deployments[testing->num_deployments - 1] = next_deploy;
-						invalid_increment = 1;	//Prevent the solution from being incremented again at the beginning of the next loop
 					}
 				}
 			}
 
+			if(retval == 2)
+			{	//If the last tested solution was invalidated by the cache, use the cache to skip other invalid solutions up until that cache entry's end of deployment
+				if(testing->num_deployments > 1)
+				{	//If the deployment that was invalidated is after the first one
+					unsigned long note_end = testing->deploy_cache[testing->num_deployments - 2].note_end;	//Look up the first note occurring after the last successful star power deployment's end
+
+					if((note_end < testing->note_count) && (note_end > testing->deployments[testing->num_deployments - 1]))
+					{	//If the next deployment can be advanced to that note
+						next_deploy = note_end;	//Do so
+						if(eof_log_level > 1)
+						{	//Skip the overhead of building the logging string if it won't be logged
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Skipping deployment #%lu to note index #%lu", testing->num_deployments, next_deploy);
+							eof_log_casual(eof_log_string, 2);
+						}
+					}
+				}
+			}
+
+			if(retval == 4)
+			{	//If the last tested solution was invalidated due to there being insufficient star power to deploy, skip all other solutions up until the next star power note
+				unsigned long next_sp_note = eof_ch_pathing_find_next_sp_note(testing, next_deploy);	//Find the next note with star power (first opportunity to gain more star power)
+
+				if((next_sp_note < testing->note_count) && (next_sp_note > testing->deployments[testing->num_deployments - 1]))
+				{	//If such a note exists and the next deployment can be advanced to that note
+					next_deploy = next_sp_note;	//Do so
+					if(eof_log_level > 1)
+					{	//Skip the overhead of building the logging string if it won't be logged
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Skipping deployment #%lu to next SP note (index #%lu)", testing->num_deployments, next_deploy);
+						eof_log_casual(eof_log_string, 2);
+					}
+				}
+
+				///If no such note exists, all remaining deployment solutions with this deployment will also fail for the same reason
+				///Remove the last deployment and increment the new-last deployment
+			}
+
+			if(next_deploy < testing->note_count)
+			{	//Bounds check
+				testing->deployments[testing->num_deployments - 1] = next_deploy;
+				invalid_increment = 1;	//Prevent the solution from being incremented again at the beginning of the next loop
+			}
+
 			(*invalidcount)++;	//Track the number of invalid solutions tested
-		}
+		}//If the solution was invalid
 	}//Continue testing until all solutions (or specified solutions) are tested
 
-	eof_log_casual(NULL, 2);	//Flush the buffered log writes to disk
+	eof_log_casual(NULL, 1);	//Flush the buffered log writes to disk
 	return 0;	//Return success
 }
 
@@ -1181,6 +1200,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	}
 
 	///Report best solution
+	eof_log_casual(NULL, 1);	//Flush the buffered log writes to disk
 	eof_fix_window_title();
 	if(error == 1)
 	{
@@ -1211,7 +1231,8 @@ int eof_menu_track_find_ch_sp_path(void)
 			(void) eof_evaluate_ch_sp_path_solution(testing, best->solution_number, 2);
 		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", validcount + invalidcount, validcount, invalidcount, elapsed_time, ((double)validcount + invalidcount)/elapsed_time);
-		eof_log_casual(eof_log_string, 1);
+		eof_log_casual(NULL, 1);	//Flush the buffered log writes to disk
+		eof_log(eof_log_string, 1);
 		if((best->deployment_notes == 0) && (best->score > worst_score))
 		{	//If the best score did not reflect notes being played in star power, but the score somehow was better than the score from when no star power deployment was tested
 			eof_log("\tLogic error calculating solution.", 1);
@@ -1225,12 +1246,13 @@ int eof_menu_track_find_ch_sp_path(void)
 		else
 		{	//There is at least one note played during star power deployment
 			unsigned long notenum, min, sec, ms, flags;
-			char timestamps[500], tempstring[20], scorestring[50];
+			char timestamps[500], indexes[500], tempstring[20], scorestring[50];
 			char *resultstring1 = "Optimum star power deployment in Clone Hero for this track difficulty is at these note timestamps (highlighted):";
 
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", resultstring1);
-			eof_log_casual(eof_log_string, 1);
+			eof_log(eof_log_string, 1);
 			timestamps[0] = '\0';	//Empty the timestamps string
+			indexes[0] = '\0';		//And the indexes string
 
 			for(ctr = 0; ctr < best->num_deployments; ctr++)
 			{	//For each deployment in the best solution
@@ -1259,12 +1281,18 @@ int eof_menu_track_find_ch_sp_path(void)
 				}
 				flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Enable highlighting for this note
 				eof_set_note_flags(eof_song, eof_selected_track, notenum, flags);
+
+				snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), best->deployments[ctr]);
+				strncat(indexes, tempstring, sizeof(indexes) - 1);	//Append to indexes string
 			}
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", timestamps);
-			eof_log_casual(eof_log_string, 1);
+			eof_log(eof_log_string, 1);
+			eof_log("\tAt these note indexes:", 1);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", indexes);
+			eof_log(eof_log_string, 1);
 			(void) snprintf(scorestring, sizeof(scorestring) - 1, "Estimated score:  %lu", best->score);
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", scorestring);
-			eof_log_casual(eof_log_string, 1);
+			eof_log(eof_log_string, 1);
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
 			eof_render();
 			allegro_message("%s\n%s\n%s", resultstring1, timestamps, scorestring);
@@ -1279,7 +1307,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	free(deploy_cache);
 	free(best);
 	free(testing);
-	eof_log_casual(NULL, 1);	//Flush any unwritten logging to disk
+	eof_log_casual(NULL, 1);	//Flush the buffered log writes to disk, if any are left
 
 	for(ctr = 0; ctr < tracksize; ctr++)
 	{	//For each note in the active track
@@ -1299,7 +1327,7 @@ void eof_worker_find_ch_sp_path(char *job_file)
 	char output_path[1024] = {0};
 	char project_path[1024];
 	int error = 0, canceled = 0, retval;
-	EOF_SP_PATH_SOLUTION best, testing;
+	EOF_SP_PATH_SOLUTION best = {0}, testing = {0};
 	unsigned long ctr, first_deploy, last_deploy, validcount = 0, invalidcount = 0;
 
 	//Parse job file

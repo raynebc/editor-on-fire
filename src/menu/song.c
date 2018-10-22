@@ -941,20 +941,19 @@ int eof_menu_song_seek_note_index(void)
 			allegro_message("Must be a number higher than 0");
 			return 1;
 		}
-	}
 
+		for(i = 0, index = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
+			{
+				if(index == value)
+				{	//If this is the target note
+					eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
+					return 1;
+				}
 
-	for(i = 0, index = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
-		{
-			if(index == value)
-			{	//If this is the target note
-				eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
-				return 1;
+				index++;	//Track how many notes in the active difficulty have been encountered
 			}
-
-			index++;	//Track how many notes in the active difficulty have been encountered
 		}
 	}
 

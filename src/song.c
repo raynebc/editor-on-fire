@@ -1944,165 +1944,170 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	{	//For each custom data block in the project
 		custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
 		data_block_type = pack_igetl(fp);	//Read the data block type
-		if(data_block_type == 1)
-		{	//If this is a linked list of raw MIDI track data
-			unsigned char mididataflags, deltatimings = 0;
-			unsigned long timedivision = 0;
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tData block type %lu, size %lu", data_block_type, custom_data_size);
+		eof_log(eof_log_string, 2);
+		if(custom_data_size)
+		{	//If this data block is nonzero in size
+			if(data_block_type == 1)
+			{	//If this is a linked list of raw MIDI track data
+				unsigned char mididataflags, deltatimings = 0;
+				unsigned long timedivision = 0;
 
-			num_midi_tracks = pack_igetw(fp);	//Read the number of tracks to read
-			mididataflags = pack_getc(fp);		//Read the raw MIDI data block flags
-			(void) pack_getc(fp);	//Read the reserved byte (not used)
-			for(ctr = 0; ctr < num_midi_tracks; ctr++)
-			{	//For each of the tracks to read
-				eventhead = eventtail = NULL;	//The event linked list begins empty
-				trackptr = malloc(sizeof(struct eof_MIDI_data_track));
-				if(!trackptr)
-				{
-					eof_log("Error:  Couldn't allocate memory for raw MIDI data", 1);
-					return 0;	//Memory allocation error
-				}
-				(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the MIDI track name
-				if(buffer[0] == '\0')
-				{	//If there is no track name
-					trackptr->trackname = NULL;
-				}
-				else
-				{	//If there is a track name
-					trackptr->trackname = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
-					if(!trackptr->trackname)
+				num_midi_tracks = pack_igetw(fp);	//Read the number of tracks to read
+				mididataflags = pack_getc(fp);		//Read the raw MIDI data block flags
+				(void) pack_getc(fp);	//Read the reserved byte (not used)
+				for(ctr = 0; ctr < num_midi_tracks; ctr++)
+				{	//For each of the tracks to read
+					eventhead = eventtail = NULL;	//The event linked list begins empty
+					trackptr = malloc(sizeof(struct eof_MIDI_data_track));
+					if(!trackptr)
 					{
-						eof_log("Error:  Couldn't allocate memory for raw MIDI track name", 1);
-						free(trackptr);
+						eof_log("Error:  Couldn't allocate memory for raw MIDI data", 1);
 						return 0;	//Memory allocation error
 					}
-					strcpy(trackptr->trackname, buffer);
-				}
-				(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the description string
-				if(buffer[0] == '\0')
-				{	//If there is no description
-					trackptr->description = NULL;
-				}
-				else
-				{	//If there is a description
-					trackptr->description = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
-					if(!trackptr->description)
-					{
-						free(trackptr->trackname);
-						free(trackptr);
-						eof_log("Error:  Couldn't allocate memory for raw MIDI track description", 1);
-						return 0;	//Memory allocation error
+					(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the MIDI track name
+					if(buffer[0] == '\0')
+					{	//If there is no track name
+						trackptr->trackname = NULL;
 					}
-					strcpy(trackptr->description, buffer);
-				}
-				numevents = pack_igetl(fp);	//Read the number of events for this track
-				timedivision = 0;	//This will be zero unless the stored track contains it
-				if(mididataflags & 1)
-				{	//If the MIDI data block's flags indicated that delta timings are allowed
-					deltatimings = pack_getc(fp);	//Read the byte indicating whether delta timings are present for this track
-					if(deltatimings)
-					{	//If this track is storing a delta time for each stored event
-						timedivision = pack_igetl(fp);	//Read the time division associated with the timings
-					}
-				}
-				trackptr->timedivision = timedivision;
-				for(ctr2 = 0; ctr2 < numevents; ctr2++)
-				{	//For each of the events to read
-					eventptr = malloc(sizeof(struct eof_MIDI_data_event));
-					if(!eventptr)
-					{
-						free(trackptr->trackname);
-						free(trackptr->description);
-						free(trackptr);
-						eof_log("Error:  Couldn't allocate memory for raw MIDI text event", 1);
-						while(eventhead)
-						{	//Release all raw MIDI events
-							eventtail = eventhead->next;	//Save the address of the next link
-							free(eventhead);				//Free the head link
-							eventhead = eventtail;			//Point to the next link
+					else
+					{	//If there is a track name
+						trackptr->trackname = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
+						if(!trackptr->trackname)
+						{
+							eof_log("Error:  Couldn't allocate memory for raw MIDI track name", 1);
+							free(trackptr);
+							return 0;	//Memory allocation error
 						}
-						return 0;	//Memory allocation error
+						strcpy(trackptr->trackname, buffer);
 					}
-					(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the timestamp string
-					(void) sscanf(buffer, "%99lf", &eventptr->realtime);		//Convert to double floating point (sscanf is width limited to prevent buffer overflow)
-					eventptr->stringtime = malloc(strlen(buffer) + 1);			//Allocate enough memory to store the timestamp string
-					if(!eventptr->stringtime)
-					{
-						free(trackptr->trackname);
-						free(trackptr->description);
-						free(trackptr);
-						free(eventptr);
-						eof_log("Error:  Couldn't allocate memory for raw MIDI timestamp", 1);
-						while(eventhead)
-						{	//Release all raw MIDI events
-							eventtail = eventhead->next;	//Save the address of the next link
-							free(eventhead);				//Free the head link
-							eventhead = eventtail;			//Point to the next link
+					(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the description string
+					if(buffer[0] == '\0')
+					{	//If there is no description
+						trackptr->description = NULL;
+					}
+					else
+					{	//If there is a description
+						trackptr->description = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
+						if(!trackptr->description)
+						{
+							free(trackptr->trackname);
+							free(trackptr);
+							eof_log("Error:  Couldn't allocate memory for raw MIDI track description", 1);
+							return 0;	//Memory allocation error
 						}
-						return 0;	//Memory allocation error
+						strcpy(trackptr->description, buffer);
 					}
-					strcpy(eventptr->stringtime, buffer);	//Store the timestamp string
-					eventptr->deltatime = 0;
-					if(deltatimings)
-					{	//If this track is storing a delta time for each stored event
-						eventptr->deltatime = pack_igetl(fp);	//Read the event's delta time
-					}
-					eventptr->size = pack_igetw(fp);	//Get the size of this event's data
-					eventptr->data = malloc((size_t)eventptr->size);	//Allocate enough memory to store the event data
-					if(!eventptr->data)
-					{
-						free(trackptr->trackname);
-						free(trackptr->description);
-						free(trackptr);
-						free(eventptr->stringtime);
-						free(eventptr);
-						eof_log("Error:  Couldn't allocate memory for raw MIDI event data", 1);
-						while(eventhead)
-						{	//Release all raw MIDI events
-							eventtail = eventhead->next;	//Save the address of the next link
-							free(eventhead);				//Free the head link
-							eventhead = eventtail;			//Point to the next link
+					numevents = pack_igetl(fp);	//Read the number of events for this track
+					timedivision = 0;	//This will be zero unless the stored track contains it
+					if(mididataflags & 1)
+					{	//If the MIDI data block's flags indicated that delta timings are allowed
+						deltatimings = pack_getc(fp);	//Read the byte indicating whether delta timings are present for this track
+						if(deltatimings)
+						{	//If this track is storing a delta time for each stored event
+							timedivision = pack_igetl(fp);	//Read the time division associated with the timings
 						}
-						return 0;	//Memory allocation error
 					}
-					(void) pack_fread(eventptr->data, (long)eventptr->size, fp);	//Read the event's data
-					eventptr->next = NULL;
-					if(eventhead == NULL)
-					{	//If the list is empty
-						eventhead = eventptr;	//The new link is now the first link in the list
+					trackptr->timedivision = timedivision;
+					for(ctr2 = 0; ctr2 < numevents; ctr2++)
+					{	//For each of the events to read
+						eventptr = malloc(sizeof(struct eof_MIDI_data_event));
+						if(!eventptr)
+						{
+							free(trackptr->trackname);
+							free(trackptr->description);
+							free(trackptr);
+							eof_log("Error:  Couldn't allocate memory for raw MIDI text event", 1);
+							while(eventhead)
+							{	//Release all raw MIDI events
+								eventtail = eventhead->next;	//Save the address of the next link
+								free(eventhead);				//Free the head link
+								eventhead = eventtail;			//Point to the next link
+							}
+							return 0;	//Memory allocation error
+						}
+						(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the timestamp string
+						(void) sscanf(buffer, "%99lf", &eventptr->realtime);		//Convert to double floating point (sscanf is width limited to prevent buffer overflow)
+						eventptr->stringtime = malloc(strlen(buffer) + 1);			//Allocate enough memory to store the timestamp string
+						if(!eventptr->stringtime)
+						{
+							free(trackptr->trackname);
+							free(trackptr->description);
+							free(trackptr);
+							free(eventptr);
+							eof_log("Error:  Couldn't allocate memory for raw MIDI timestamp", 1);
+							while(eventhead)
+							{	//Release all raw MIDI events
+								eventtail = eventhead->next;	//Save the address of the next link
+								free(eventhead);				//Free the head link
+								eventhead = eventtail;			//Point to the next link
+							}
+							return 0;	//Memory allocation error
+						}
+						strcpy(eventptr->stringtime, buffer);	//Store the timestamp string
+						eventptr->deltatime = 0;
+						if(deltatimings)
+						{	//If this track is storing a delta time for each stored event
+							eventptr->deltatime = pack_igetl(fp);	//Read the event's delta time
+						}
+						eventptr->size = pack_igetw(fp);	//Get the size of this event's data
+						eventptr->data = malloc((size_t)eventptr->size);	//Allocate enough memory to store the event data
+						if(!eventptr->data)
+						{
+							free(trackptr->trackname);
+							free(trackptr->description);
+							free(trackptr);
+							free(eventptr->stringtime);
+							free(eventptr);
+							eof_log("Error:  Couldn't allocate memory for raw MIDI event data", 1);
+							while(eventhead)
+							{	//Release all raw MIDI events
+								eventtail = eventhead->next;	//Save the address of the next link
+								free(eventhead);				//Free the head link
+								eventhead = eventtail;			//Point to the next link
+							}
+							return 0;	//Memory allocation error
+						}
+						(void) pack_fread(eventptr->data, (long)eventptr->size, fp);	//Read the event's data
+						eventptr->next = NULL;
+						if(eventhead == NULL)
+						{	//If the list is empty
+							eventhead = eventptr;	//The new link is now the first link in the list
+						}
+						else if(eventtail != NULL)
+						{	//If there is already a link at the end of the list
+							eventtail->next = eventptr;	//Point it forward to the new link
+						}
+						eventtail = eventptr;	//The new link is the new tail of the list
 					}
-					else if(eventtail != NULL)
-					{	//If there is already a link at the end of the list
-						eventtail->next = eventptr;	//Point it forward to the new link
-					}
-					eventtail = eventptr;	//The new link is the new tail of the list
+					trackptr->events = eventhead;	//Store the events linked list in the track link
+					trackptr->next = NULL;
+					eof_MIDI_add_track(sp, trackptr);	//Store the track link in the EOF_SONG structure
+				}//For each of the tracks to read
+			}//If this is a linked list of raw MIDI track data
+			else if(data_block_type == 2)
+			{	//If this is a set of floating point beat timings
+				for(ctr = 0; ctr < sp->beats; ctr++)
+				{	//For each beat in the project
+					(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));		//Read the timestamp string
+					(void) sscanf(buffer, "%99lf", &sp->beat[ctr]->fpos);			//Convert to double floating point (sscanf is width limited to prevent buffer overflow)
+					sp->beat[ctr]->pos = sp->beat[ctr]->fpos + 0.5;					//Round this up to the nearest millisecond to get the integer timestamp of the beat
 				}
-				trackptr->events = eventhead;	//Store the events linked list in the track link
-				trackptr->next = NULL;
-				eof_MIDI_add_track(sp, trackptr);	//Store the track link in the EOF_SONG structure
-			}//For each of the tracks to read
-		}//If this is a linked list of raw MIDI track data
-		else if(data_block_type == 2)
-		{	//If this is a set of floating point beat timings
-			for(ctr = 0; ctr < sp->beats; ctr++)
-			{	//For each beat in the project
-				(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));		//Read the timestamp string
-				(void) sscanf(buffer, "%99lf", &sp->beat[ctr]->fpos);			//Convert to double floating point (sscanf is width limited to prevent buffer overflow)
-				sp->beat[ctr]->pos = sp->beat[ctr]->fpos + 0.5;					//Round this up to the nearest millisecond to get the integer timestamp of the beat
+				sp->fpbeattimes = 1;	//Have eof_init_after_load() skip the recalculation of beat timings, since the original floating point timings were loaded
 			}
-			sp->fpbeattimes = 1;	//Have eof_init_after_load() skip the recalculation of beat timings, since the original floating point timings were loaded
-		}
-		else if(data_block_type == 3)
-		{	//This is start and end point pair of timestamps
-			sp->tags->start_point = pack_igetl(fp);	//Read the start point
-			sp->tags->end_point = pack_igetl(fp);	//Read the end point
-		}
-		else
-		{	//Otherwise, skip over the unknown data block
-			for(ctr=4; ctr<custom_data_size; ctr++)
-			{	//For each byte in the custom data block (accounting for the four byte data block type that was read)
-				(void) pack_getc(fp);	//Read the data (not supported yet)
+			else if(data_block_type == 3)
+			{	//This is start and end point pair of timestamps
+				sp->tags->start_point = pack_igetl(fp);	//Read the start point
+				sp->tags->end_point = pack_igetl(fp);	//Read the end point
 			}
-		}
+			else
+			{	//Otherwise, skip over the unknown data block
+				for(ctr=4; ctr<custom_data_size; ctr++)
+				{	//For each byte in the custom data block (accounting for the four byte data block type that was read)
+					(void) pack_getc(fp);	//Read the data (not supported yet)
+				}
+			}
+		}//If this data block is nonzero in size
 	}//For each custom data block in the project
 
 	/* read track data */
@@ -2290,157 +2295,160 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		{	//For each custom data block in the track
 			custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
 			custom_data_id = pack_igetl(fp);	//Read the ID of the custom data block
-			switch(custom_data_id)
-			{
-				case 2:		//Pro guitar finger array custom data block ID
-					if(custom_data_size < 4)
-					{	//This is invalid, the size needed to have included the 4 byte ID
-						allegro_message("Error:  Invalid custom data block size (finger definitions).  Aborting");
-						eof_log("Error:  Invalid custom data block size (finger definitions).  Aborting", 1);
-						return 0;
-					}
-					custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
-					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//Ensure this logic only runs for a pro guitar track
-						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
-						for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
-						{	//For each note in this track
-							for(ctr2 = 0, bitmask = 1; ctr2 < tp->numstrings; ctr2++, bitmask <<= 1)
-							{	//For each supported string in the track
-								if(tp->note[ctr]->note & bitmask)
-								{	//If this string is used
-									tp->note[ctr]->finger[ctr2] = pack_getc(fp);	//Read the finger value for this note
+			if(custom_data_size)
+			{	//If this data block is nonzero in size
+				switch(custom_data_id)
+				{
+					case 2:		//Pro guitar finger array custom data block ID
+						if(custom_data_size < 4)
+						{	//This is invalid, the size needed to have included the 4 byte ID
+							allegro_message("Error:  Invalid custom data block size (finger definitions).  Aborting");
+							eof_log("Error:  Invalid custom data block size (finger definitions).  Aborting", 1);
+							return 0;
+						}
+						custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
+						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a pro guitar track
+							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
+							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+							{	//For each note in this track
+								for(ctr2 = 0, bitmask = 1; ctr2 < tp->numstrings; ctr2++, bitmask <<= 1)
+								{	//For each supported string in the track
+									if(tp->note[ctr]->note & bitmask)
+									{	//If this string is used
+										tp->note[ctr]->finger[ctr2] = pack_getc(fp);	//Read the finger value for this note
+									}
 								}
 							}
 						}
-					}
-					else
-					{	//Corrupt file
-						allegro_message("Error: Invalid pro guitar finger array data block.  Aborting");
-						eof_log("Error: Invalid pro guitar finger array data block.  Aborting", 1);
-						return 0;
-					}
-				break;
+						else
+						{	//Corrupt file
+							allegro_message("Error: Invalid pro guitar finger array data block.  Aborting");
+							eof_log("Error: Invalid pro guitar finger array data block.  Aborting", 1);
+							return 0;
+						}
+					break;
 
-				case 3:		//Pro guitar track arrangement type
-					if(custom_data_size != 5)
-					{	//This data block is expected to be 5 bytes long
-						allegro_message("Error:  Invalid custom data block size (arrangement type).  Aborting");
-						eof_log("Error:  Invalid custom data block size (arrangement type).  Aborting", 1);
-						return 0;
-					}
-					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//Ensure this logic only runs for a pro guitar track
-						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
-						tp->arrangement = pack_getc(fp);	//Read the track arrangement type
-					}
-				break;
+					case 3:		//Pro guitar track arrangement type
+						if(custom_data_size != 5)
+						{	//This data block is expected to be 5 bytes long
+							allegro_message("Error:  Invalid custom data block size (arrangement type).  Aborting");
+							eof_log("Error:  Invalid custom data block size (arrangement type).  Aborting", 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a pro guitar track
+							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
+							tp->arrangement = pack_getc(fp);	//Read the track arrangement type
+						}
+					break;
 
-				case 4:		//Pro guitar track tuning not honored
-					if(custom_data_size != 5)
-					{	//This data block is expected to be 5 bytes long
-						allegro_message("Error:  Invalid custom data block size (track tuning not honored).  Aborting");
-						eof_log("Error:  Invalid custom data block size (track tuning not honored).  Aborting", 1);
-						return 0;
-					}
-					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//Ensure this logic only runs for a pro guitar track
-						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
-						tp->ignore_tuning = pack_getc(fp);	//Read the option of whether the chord detection does not honor the track's defined tuning
-					}
-				break;
+					case 4:		//Pro guitar track tuning not honored
+						if(custom_data_size != 5)
+						{	//This data block is expected to be 5 bytes long
+							allegro_message("Error:  Invalid custom data block size (track tuning not honored).  Aborting");
+							eof_log("Error:  Invalid custom data block size (track tuning not honored).  Aborting", 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a pro guitar track
+							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
+							tp->ignore_tuning = pack_getc(fp);	//Read the option of whether the chord detection does not honor the track's defined tuning
+						}
+					break;
 
-//				case 5:		//Pro guitar vibrato speeds (this data block is deprecated but is reserved for backwards compatibility with 1.8RC9 era release candidates)
-//				break;
+	//				case 5:		//Pro guitar vibrato speeds (this data block is deprecated but is reserved for backwards compatibility with 1.8RC9 era release candidates)
+	//				break;
 
-				case 6:		//Pro guitar capo position
-					if(custom_data_size != 5)
-					{	//This data block is expected to be 5 bytes long
-						allegro_message("Error:  Invalid custom data block size (capo position).  Aborting");
-						eof_log("Error:  Invalid custom data block size (capo position).  Aborting", 1);
-						return 0;
-					}
-					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//Ensure this logic only runs for a pro guitar track
-						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
-						tp->capo = pack_getc(fp);	//Read the capo position
-					}
-				break;
+					case 6:		//Pro guitar capo position
+						if(custom_data_size != 5)
+						{	//This data block is expected to be 5 bytes long
+							allegro_message("Error:  Invalid custom data block size (capo position).  Aborting");
+							eof_log("Error:  Invalid custom data block size (capo position).  Aborting", 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a pro guitar track
+							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
+							tp->capo = pack_getc(fp);	//Read the capo position
+						}
+					break;
 
-				case 7:		//Pro guitar tech notes
-					if(custom_data_size < 8)
-					{	//This data block is expected to be at least 8 bytes long
-						allegro_message("Error:  Invalid custom data block size (tech notes).  Aborting");
-						eof_log("Error:  Invalid custom data block size (tech notes).  Aborting", 1);
-						return 0;
-					}
-					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//Ensure this logic only runs for a pro guitar track
-						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
-						tp->technotes = pack_igetl(fp);	//Read the number of tech notes
-						for(ctr = 0; ctr < tp->technotes; ctr++)
-						{	//For each tech note in the custom data block
-							tp->technote[ctr] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));	//Allocate memory for the tech note
-							if(!tp->technote[ctr])
-							{
-								allegro_message("Error:  Unable to allocate memory for (tech notes).  Aborting");
-								eof_log("Error:  Unable to allocate memory for (tech notes).  Aborting", 1);
-								return 0;
-							}
-							memset(tp->technote[ctr], 0, sizeof(EOF_PRO_GUITAR_NOTE));
-							eof_read_pro_guitar_note(tp->technote[ctr], fp);	//Read the tech note
-							if(tp->technote[ctr]->type >= tp->parent->numdiffs)
-							{	//If this tech note's difficulty is the highest encountered in the track so far
-								tp->parent->numdiffs = tp->technote[ctr]->type + 1;	//Track it
+					case 7:		//Pro guitar tech notes
+						if(custom_data_size < 8)
+						{	//This data block is expected to be at least 8 bytes long
+							allegro_message("Error:  Invalid custom data block size (tech notes).  Aborting");
+							eof_log("Error:  Invalid custom data block size (tech notes).  Aborting", 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a pro guitar track
+							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
+							tp->technotes = pack_igetl(fp);	//Read the number of tech notes
+							for(ctr = 0; ctr < tp->technotes; ctr++)
+							{	//For each tech note in the custom data block
+								tp->technote[ctr] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));	//Allocate memory for the tech note
+								if(!tp->technote[ctr])
+								{
+									allegro_message("Error:  Unable to allocate memory for (tech notes).  Aborting");
+									eof_log("Error:  Unable to allocate memory for (tech notes).  Aborting", 1);
+									return 0;
+								}
+								memset(tp->technote[ctr], 0, sizeof(EOF_PRO_GUITAR_NOTE));
+								eof_read_pro_guitar_note(tp->technote[ctr], fp);	//Read the tech note
+								if(tp->technote[ctr]->type >= tp->parent->numdiffs)
+								{	//If this tech note's difficulty is the highest encountered in the track so far
+									tp->parent->numdiffs = tp->technote[ctr]->type + 1;	//Track it
+								}
 							}
 						}
-					}
-				break;
+					break;
 
-				case 8:		//Accent note bitmasks
-					if(custom_data_size < 5)
-					{	//This data block is expected to be at least 5 bytes long
-						allegro_message("Error:  Invalid custom data block size (accent note bitmasks).  Aborting");
-						eof_log("Error:  Invalid custom data block size (accent note bitmasks).  Aborting", 1);
-						return 0;
-					}
-					if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
-					{	//Ensure this logic only runs for a legacy track
-						for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
-						{	//For each note in this track
-							sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->accent = pack_getc(fp);		//Read note accent bitmask
+					case 8:		//Accent note bitmasks
+						if(custom_data_size < 5)
+						{	//This data block is expected to be at least 5 bytes long
+							allegro_message("Error:  Invalid custom data block size (accent note bitmasks).  Aborting");
+							eof_log("Error:  Invalid custom data block size (accent note bitmasks).  Aborting", 1);
+							return 0;
 						}
-					}
-				break;
+						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a legacy track
+							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+							{	//For each note in this track
+								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->accent = pack_getc(fp);		//Read note accent bitmask
+							}
+						}
+					break;
 
-				case 9:		//Track difficulty count
-					if(custom_data_size != 5)
-					{	//This data block is expected to be 5 bytes long
-						allegro_message("Error:  Invalid custom data block size (track difficulty count).  Aborting");
-						eof_log("Error:  Invalid custom data block size (track difficulty count).  Aborting", 1);
-						return 0;
-					}
-					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-					{	//Ensure this logic only runs for a pro guitar track
-						tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
-						tp->parent->numdiffs = pack_getc(fp);	//Read the difficulty count
-					}
-				break;
+					case 9:		//Track difficulty count
+						if(custom_data_size != 5)
+						{	//This data block is expected to be 5 bytes long
+							allegro_message("Error:  Invalid custom data block size (track difficulty count).  Aborting");
+							eof_log("Error:  Invalid custom data block size (track difficulty count).  Aborting", 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a pro guitar track
+							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
+							tp->parent->numdiffs = pack_getc(fp);	//Read the difficulty count
+						}
+					break;
 
-				default:	//Unknown custom data block ID
-					if(custom_data_size < 4)
-					{	//This is invalid, the size needed to have included the 4 byte ID
-						allegro_message("Error:  Invalid custom data block size (unknown custom data block).  Aborting");
-						eof_log("Error:  Invalid custom data block size (unknown custom data block).  Aborting", 1);
-						return 0;
-					}
-					custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
-					for(ctr=0; ctr<custom_data_size; ctr++)
-					{	//For each byte in the custom data block
-						(void) pack_getc(fp);	//Read the data (ignoring it)
-					}
-				break;
-			}
+					default:	//Unknown custom data block ID
+						if(custom_data_size < 4)
+						{	//This is invalid, the size needed to have included the 4 byte ID
+							allegro_message("Error:  Invalid custom data block size (unknown custom data block).  Aborting");
+							eof_log("Error:  Invalid custom data block size (unknown custom data block).  Aborting", 1);
+							return 0;
+						}
+						custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
+						for(ctr=0; ctr<custom_data_size; ctr++)
+						{	//For each byte in the custom data block
+							(void) pack_getc(fp);	//Read the data (ignoring it)
+						}
+					break;
+				}
+			}//If this data block is nonzero in size
 		}//For each custom data block in the track
 		(void) eof_track_convert_ghl_lane_ordering(sp, track_ctr);	//Convert the GHL lane ordering if applicable
 	}//For each track in the project
@@ -2945,6 +2953,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count;
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
+	int temp_file_error = 0;	//Set to nonzero if the temp files for any custom data blocks couldn't be written due to the temp files used to create the data being empty (ie. disk full)
 
 	#define EOFNUMINISTRINGTYPES 11
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -3143,7 +3152,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_iputw(ctr, tfp);		//Write the number of tracks that will be stored in this data block
 			(void) pack_putc(1, tfp);			//Write the raw MIDI data block flags (delta timings allowed)
 			(void) pack_putc(0, tfp);			//Write the reserved byte (not used)
-			trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
+			trackptr = sp->midi_data_head;		//Point to the beginning of the track linked list
 			while(trackptr != NULL)
 			{	//For each track of event data
 				(void) eof_save_song_string_pf(trackptr->trackname, tfp);		//Write the track name (this function allows for a NULL pointer)
@@ -3177,6 +3186,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 		//Write the custom data block
 			filesize = (unsigned long)file_size_ex(rawmididatafn);
+			if(!filesize)
+				temp_file_error = 1;
 			(void) pack_iputl(filesize, fp);	//Write the size of this data block
 			tfp = pack_fopen(rawmididatafn, "r");
 			if(!tfp)
@@ -3217,6 +3228,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 		//Write the custom data block
 			filesize = (unsigned long)file_size_ex(beattimesfn);
+			if(!filesize)
+				temp_file_error = 1;
 			(void) pack_iputl(filesize, fp);	//Write the size of this data block
 			(void) pack_iputl(2, fp);			//Write the data block ID (2 = Floating point beat timings)
 			tfp = pack_fopen(beattimesfn, "r");
@@ -3771,7 +3784,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				if(has_tech_notes)
 				{	//Write tech notes
 					PACKFILE *tempf;	//Since the size of the custom data block must be known in advance, write it to a temp file so its size can be read
-					unsigned long file_size;
+					unsigned long filesize;
 					char tempfilename[30];
 
 					(void) snprintf(tempfilename, sizeof(tempfilename) - 1, "%seof_tech_notes.tmp", eof_temp_path_s);
@@ -3791,8 +3804,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							eof_write_pro_guitar_note(tp->technote[ctr], tempf);	//Write the tech note to the temp file
 						}
 						(void) pack_fclose(tempf);	//Close temp file
-						file_size = (unsigned long)file_size_ex(tempfilename);
-						(void) pack_iputl(file_size + 4, fp);	//Write the number of bytes this block will contain (the temp file and a 4 byte block ID)
+						filesize = (unsigned long)file_size_ex(tempfilename);
+						if(!filesize)
+							temp_file_error = 1;
+						(void) pack_iputl(filesize + 4, fp);	//Write the number of bytes this block will contain (the temp file and a 4 byte block ID)
 						(void) pack_iputl(7, fp);				//Write the pro guitar tech note custom data block ID
 						tempf = pack_fopen(tempfilename, "r");	//Open temp file for reading
 						if(!tempf)
@@ -3801,7 +3816,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							(void) pack_fclose(fp);
 							return 0;
 						}
-						for(ctr = 0; ctr < file_size; ctr++)
+						for(ctr = 0; ctr < filesize; ctr++)
 						{	//For each byte in the temp file
 							(void) pack_putc(pack_getc(tempf), fp);	//Copy the byte to the project file
 						}
@@ -3843,6 +3858,13 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 	(void) pack_fclose(fp);
 	sp->tags->unshare_drum_phrasing = unshare_drum_phrasing;	//After all tracks have been formally written, store this value back into the project to optionally override drum phrase handling
+
+	if(temp_file_error)
+	{	//If any of the custom data blocks failed to be created
+		eof_log("\tOne or more data blocks failed to be written", 1);
+		allegro_message("Warning:  Some of the project failed to save due to inability to write to files in EOF's temp folder.  Possibly caused by running out of disk space or antivirus interference.");
+	}
+
 	eof_log("\tSave completed", 1);
 	return 1;	//Return success
 }
