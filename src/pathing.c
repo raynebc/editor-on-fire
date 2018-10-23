@@ -746,7 +746,14 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 
 		if((*validcount + *invalidcount) % 2000 == 0)
 		{	//Update the title bar every 2000 solutions
-			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu - Press Esc to cancel", *validcount + *invalidcount);
+			if(first_deploy == last_deploy)
+			{	//If only one solution set is being tested
+				(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu (set %lu)- Press Esc to cancel", *validcount + *invalidcount, testing->deployments[0]);
+			}
+			else
+			{
+				(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu (set %lu/%lu)- Press Esc to cancel", *validcount + *invalidcount, testing->deployments[0], testing->note_count);
+			}
 			set_window_title(windowtitle);
 
 			if(key[KEY_ESC])
@@ -857,14 +864,15 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 		}
 		else
 		{	//If the solution was invalid
-			next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Get the note index one after the last tested deployment
+			next_deploy = ULONG_MAX;
+
 			if(testing->num_deployments < testing->deploy_count)
 			{	//If fewer than the maximum number of deployments was just tested and found invalid, all solutions using this set of deployments will also fail
 				if(testing->num_deployments > 1)
 				{	//If the next deployment can be advanced by one note
-					next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the last deployment one note further
+					next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Get the note index one after the last tested deployment
 					if(next_deploy < testing->note_count)
-					{	//Bounds check
+					{	//If the next deployment can be advanced to that note
 						if(eof_log_level > 1)
 						{	//Skip the overhead of building the logging string if it won't be logged
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Discarding solutions where deployment #%lu is at note index #%lu", testing->num_deployments, testing->deployments[testing->num_deployments - 1]);
@@ -885,7 +893,7 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 						next_deploy = note_end;	//Do so
 						if(eof_log_level > 1)
 						{	//Skip the overhead of building the logging string if it won't be logged
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Skipping deployment #%lu to note index #%lu", testing->num_deployments, next_deploy);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*Skipping deployment #%lu to next note index #%lu", testing->num_deployments, next_deploy);
 							eof_log_casual(eof_log_string, 2);
 						}
 					}
@@ -894,10 +902,13 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 
 			if(retval == 4)
 			{	//If the last tested solution was invalidated due to there being insufficient star power to deploy, skip all other solutions up until the next star power note
-				unsigned long next_sp_note = eof_ch_pathing_find_next_sp_note(testing, next_deploy);	//Find the next note with star power (first opportunity to gain more star power)
+				unsigned long next_sp_note;
 
-				if((next_sp_note < testing->note_count) && (next_sp_note > testing->deployments[testing->num_deployments - 1]))
-				{	//If such a note exists and the next deployment can be advanced to that note
+				next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Get the note index one after the last tested deployment
+				next_sp_note = eof_ch_pathing_find_next_sp_note(testing, next_deploy);	//Find the next note with star power (first opportunity to gain more star power)
+
+				if(next_sp_note < testing->note_count)
+				{	//If such a note exists
 					next_deploy = next_sp_note;	//Do so
 					if(eof_log_level > 1)
 					{	//Skip the overhead of building the logging string if it won't be logged
@@ -905,13 +916,21 @@ int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOL
 						eof_log_casual(eof_log_string, 2);
 					}
 				}
-
-				///If no such note exists, all remaining deployment solutions with this deployment will also fail for the same reason
-				///Remove the last deployment and increment the new-last deployment
+				else
+				{	//No such star power note exists, all of the parent deployment's remaining solutions will also fail for the same reason
+					//Remove the last deployment and increment the new-last deployment
+					if(eof_log_level > 1)
+					{	//Skip the overhead of building the logging string if it won't be logged
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t*There are no more SP notes, the rest of the solutions for deployment #%lu are invalid.", testing->num_deployments);
+						eof_log_casual(eof_log_string, 2);
+					}
+					testing->deployments[testing->num_deployments - 1] = testing->note_count;	//Move the current deployment to the last usable index, the normal increment at the beginning of the loop will advance the parent solution to the next index
+					next_deploy = ULONG_MAX;	//Override any manual iteration from the above checks
+				}
 			}
 
 			if(next_deploy < testing->note_count)
-			{	//Bounds check
+			{	//If one of the above conditional tests defined the next solution
 				testing->deployments[testing->num_deployments - 1] = next_deploy;
 				invalid_increment = 1;	//Prevent the solution from being incremented again at the beginning of the next loop
 			}
@@ -1189,6 +1208,7 @@ int eof_menu_track_find_ch_sp_path(void)
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEstimated maximum number of star power deployments is %lu", max_deployments);
 	eof_log_casual(eof_log_string, 1);
+	eof_log_casual(NULL, 1);	//Flush the buffered log writes to disk
 
 	///Test all possible solutions to find the highest scoring one
 	if(!error)
@@ -1204,7 +1224,14 @@ int eof_menu_track_find_ch_sp_path(void)
 	eof_fix_window_title();
 	if(error == 1)
 	{
-		allegro_message("Failed to detect optimum star power path.");
+		if(!max_deployments)
+		{
+			allegro_message("There are not enough star power phrases/sustains to deploy even once.");
+		}
+		else
+		{
+			allegro_message("Failed to detect optimum star power path.");
+		}
 	}
 	else if(error == 2)
 	{

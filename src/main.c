@@ -5111,6 +5111,7 @@ void eof_log_casual(const char *text, int level)
 		if(!text)
 		{	//If the input string is NULL, flush buffer to disk
 			(void) fputs(buffer, eof_log_fp);	//Write the buffer to file
+			(void) fflush(eof_log_fp);			//Explicitly commit the write to disk
 			buffer[0] = '\0';	//Empty the buffer
 			buffered_chars = 0;
 		}
