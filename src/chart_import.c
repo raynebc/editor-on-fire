@@ -62,7 +62,6 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	double convert;
 	struct dBAnchor * current_anchor;
 
-	int debug = 0;	//Used to create debug logging about this timing conversion
 	unsigned long anchorctr = 0;
 
 	if(!chart)
@@ -91,7 +90,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 				if(beat_chart_pos + (ctr * snaplength) == chartpos)
 				{	//If the target chart position matches this grid snap's chart position
 					*gridsnap = 1;	//Signal this to the calling function
-					if(debug)
+					if(eof_log_level > 1)
 					{
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected grid snap of chartpos %lu is %lu / %lu", chartpos, ctr, interval);
 						eof_log(eof_log_string, 2);
@@ -138,7 +137,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		{
 			double partial_beat = (double)(chartpos - lastchartpos) * convert;	//Use the beat length estabalished at the previous anchor to determine how long this number of chart ticks is
 
-			if(debug)
+			if(eof_log_level > 1)
 			{
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTarget position is bewteen anchors, adding %fms", partial_beat);
 				eof_log(eof_log_string, 2);
@@ -147,7 +146,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 			break;
 		}
 
-		if(debug)
+		if(eof_log_level > 1)
 		{
 			anchorctr++;
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tdB Anchor #%lu: Chartpos = %lu  BPM = %lu  TS = %d  ms pos = %lu beat length = %f,  Detected pos = %fms", anchorctr, current_anchor->chartpos, current_anchor->BPM, current_anchor->TS, current_anchor->usec, beat_length, curpos);
@@ -155,7 +154,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		}
 		current_anchor = current_anchor->next;
 	}
-	if(debug)
+	if(eof_log_level > 1)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFinal converted realtime is %fms", curpos);
 		eof_log(eof_log_string, 2);

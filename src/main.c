@@ -4406,7 +4406,7 @@ int eof_initialize(int argc, char * argv[])
 	/* divert to the Clone Hero SP pathing behavior if applicable */
 	if(ch_sp_path_worker)
 	{
-		eof_worker_find_ch_sp_path(argv[2]);
+		eof_ch_sp_path_worker(argv[2]);
 		eof_quit = 1;	//Signal the main function to exit
 		return 1;
 	}

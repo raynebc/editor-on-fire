@@ -36,6 +36,18 @@ typedef struct
 	unsigned long solution_number;
 } EOF_SP_PATH_SOLUTION;
 
+#define EOF_SP_PATH_WORKER_IDLE 0
+#define EOF_SP_PATH_WORKER_RUNNING 1
+#define EOF_SP_PATH_WORKER_FAILED 2
+typedef struct
+{
+	int status;						//Tracks the process's status by way of one of the above EOF_SP_PATH_WORKER... macros
+	unsigned long first_deploy;		//The first solution set being tested by the worker process
+	unsigned long last_deploy;		//The last solution set being tested by the worker process
+	clock_t start_time;				//When the worker process was started
+	clock_t end_time;				//When the worker process was detected to have completed
+} EOF_SP_PATH_WORKER;
+
 int eof_note_is_last_longest_gem(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns nonzero if the note is the longest gem at its position (ie. for identifying the longest gem in a disjointed chord)
 	//Returns nonzero if the note does not have disjointed status, as it is the longest note at its position
@@ -90,11 +102,18 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
 	//If logging is greater than 1, verbose logging for each note's scoring, start and end of star power deployment, etc. is performed
 
-int eof_ch_pathing_process_solutions(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount);
+int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount);
 	//Calculates all solutions where the first deployment starts at note index between first_deploy and last_deploy (inclusive),
 	// comparing their scores with the provided best solution and updating its content accordingly
 	//If all solutions are to be tested, ULONG_MAX should be specified for last_deploy
 	//validcount and invalidcount are passed so the calling function can know how many solutions were tested
+	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
+	//Returns 0 on success, 1 on error or 2 on user cancellation
+
+int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount);
+	//Finds the best solution as eof_ch_sp_path_single_process_solve() does, but does so by running the specified number of worker EOF processes in parallel
+	// to test all solution sets from first_deploy to testing->note_count
+	//validcount and invalidcount are passed so the calling function can know how many solutions were tested among all worker processes
 	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
 	//Returns 0 on success, 1 on error or 2 on user cancellation
 
@@ -106,7 +125,7 @@ void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution);
 int eof_menu_track_find_ch_sp_path(void);
 	//Determines optimum star power deployment for the active track difficulty
 
-void eof_worker_find_ch_sp_path(char *job_file);
+void eof_ch_sp_path_worker(char *job_file);
 	//When EOF is launched with the ch_sp_path_worker parameter, this function is called after minimal program initialization to process the specified ####.job file
 	//If the job completes successfully, a ###.results file is created at the same path as the job file
 	//If the job fails due to error, a ###.fail file is created at the same path as the job file
