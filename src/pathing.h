@@ -37,13 +37,15 @@ typedef struct
 } EOF_SP_PATH_SOLUTION;
 
 #define EOF_SP_PATH_WORKER_IDLE 0
-#define EOF_SP_PATH_WORKER_RUNNING 1
-#define EOF_SP_PATH_WORKER_FAILED 2
+#define EOF_SP_PATH_WORKER_WAITING 1
+#define EOF_SP_PATH_WORKER_RUNNING 2
+#define EOF_SP_PATH_WORKER_FAILED 3
 typedef struct
 {
 	int status;						//Tracks the process's status by way of one of the above EOF_SP_PATH_WORKER... macros
 	unsigned long first_deploy;		//The first solution set being tested by the worker process
 	unsigned long last_deploy;		//The last solution set being tested by the worker process
+	unsigned long assignment_size;	//The last number of solution sets assigned to the worker process
 	clock_t start_time;				//When the worker process was started
 	clock_t end_time;				//When the worker process was detected to have completed
 } EOF_SP_PATH_WORKER;

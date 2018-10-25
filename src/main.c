@@ -4027,6 +4027,7 @@ int eof_initialize(int argc, char * argv[])
 	struct tm *caltime;	//Will store the current time in calendar format
 	char *logging_level[] = {"NULL", "normal", "verbose", "exhaustive"};
 	int ch_sp_path_worker = 0;	//Set to nonzero if the -ch_sp_path_worker command line parameter is specified, overriding normal EOF behavior
+	unsigned retry;
 
 	eof_log("eof_initialize() entered", 1);
 
@@ -4038,31 +4039,49 @@ int eof_initialize(int argc, char * argv[])
 	allegro_init();
 
 	set_window_title("EOF - No Song");
-	if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
-	{	//If Allegro failed to initialize the sound AND midi
-//		allegro_message("Can't set up MIDI!  Error: %s\nAttempting to init audio only",allegro_error);
-		if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
-		{
-			allegro_message("Can't set up sound!  Error: %s",allegro_error);
-			return 0;
+	if(!ch_sp_path_worker)
+	{	//Don't bother setting up the sound system if EOF is acting as a worker process
+		if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
+		{	//If Allegro failed to initialize the sound AND midi
+//			allegro_message("Can't set up MIDI!  Error: %s\nAttempting to init audio only",allegro_error);
+			if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
+			{
+				allegro_message("Can't set up sound!  Error: %s",allegro_error);
+				return 0;
+			}
+			eof_midi_initialized = 0;	//Couldn't set up MIDI
 		}
-		eof_midi_initialized = 0;	//Couldn't set up MIDI
-	}
-	else
-	{
-		install_timer();	//Needed to use midi_out()
-		eof_midi_initialized = 1;
+		else
+		{
+			install_timer();	//Needed to use midi_out()
+			eof_midi_initialized = 1;
+		}
 	}
 
-	if(install_keyboard())
-	{
-		allegro_message("Can't set up keyboard!  Error: %s",allegro_error);
-		return 0;
+	InitIdleSystem();
+
+	retry = 5;
+	while(install_keyboard())
+	{	//Try to install the keyboard up to 5 times
+		retry--;
+		if(!retry)
+		{
+			allegro_message("Can't set up keyboard!  Error: %s",allegro_error);
+			return 0;
+		}
+		Idle(1);	//Brief wait before retry
 	}
-	if(install_mouse() < 0)
-	{
-		allegro_message("Can't set up mouse!  Error: %s",allegro_error);
-		return 0;
+
+	retry = 5;
+	while(install_mouse() < 0)
+	{	//Try to install the mouse up to 5 times
+		retry--;
+		if(!retry)
+		{
+			allegro_message("Can't set up mouse!  Error: %s",allegro_error);
+			return 0;
+		}
+		Idle(1);	//Brief wait before retry
 	}
 	install_joystick(JOY_TYPE_AUTODETECT);
 	alogg_detect_endianess(); // make sure OGG player works for PPC
@@ -4107,8 +4126,8 @@ int eof_initialize(int argc, char * argv[])
 		eof_log(EOF_VERSION_STRING, 0);
 	}
 
-	InitIdleSystem();
-	show_mouse(NULL);
+	if(!ch_sp_path_worker)
+		show_mouse(NULL);
 	eof_load_config("eof.cfg");
 	if((eof_log_level >= 0) && (eof_log_level <= 3))
 	{	//If the logging level is valid
@@ -4168,12 +4187,21 @@ int eof_initialize(int argc, char * argv[])
 	{
 		return 0;
 	}
+
 	eof_init_colors();
 	gui_shadow_box_proc = d_agup_shadow_box_proc;
 	gui_button_proc = d_agup_button_proc;
 	gui_ctext_proc = d_agup_ctext_proc;
 	gui_text_list_proc = d_agup_text_list_proc;
 	gui_edit_proc = d_hackish_edit_proc;
+
+	/* divert to the Clone Hero SP pathing behavior if applicable */
+	if(ch_sp_path_worker)
+	{
+		eof_ch_sp_path_worker(argv[2]);
+		eof_quit = 1;	//Signal the main function to exit
+		return 1;
+	}
 
 	/* create file filters */
 	eof_filter_eof_files = ncdfs_filter_list_create();
@@ -4402,14 +4430,6 @@ int eof_initialize(int argc, char * argv[])
 	MIDIqueue=MIDIqueuetail=NULL;	//Initialize the MIDI queue as empty
 	set_volume_per_voice(0);		//By default, Allegro halves the volume of each voice so that it won't clip if played fully panned to either the left or right channels.  EOF doesn't use panning, so force full volume.
 	set_volume(eof_global_volume, eof_global_volume);
-
-	/* divert to the Clone Hero SP pathing behavior if applicable */
-	if(ch_sp_path_worker)
-	{
-		eof_ch_sp_path_worker(argv[2]);
-		eof_quit = 1;	//Signal the main function to exit
-		return 1;
-	}
 
 	/* check for a previous crash condition of EOF */
 	eof_log("\tChecking for crash recovery files", 1);

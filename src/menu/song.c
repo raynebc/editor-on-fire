@@ -4340,7 +4340,7 @@ int eof_run_time_range_dialog(unsigned long *start, unsigned long *end)
 	}
 
 	eof_render();
-	return 0;	//User cancelation
+	return 0;	//User cancellation
 }
 
 int eof_menu_song_export_song_preview(void)
