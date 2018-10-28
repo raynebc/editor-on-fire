@@ -101,6 +101,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	// 5 5 for a general logic error
 	//Returns zero if the proposed solution is invalid (ie. calling for star power deployment while it is already deployed, or when there is insufficient star power)
 	//solution_num is the solution number being tested, to be logged and used for debugging
+	// If this value is ULONG_MAX, the solution number is not logged
 	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
 	//If logging is greater than 1, verbose logging for each note's scoring, start and end of star power deployment, etc. is performed
 

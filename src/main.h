@@ -453,6 +453,8 @@ extern unsigned long eof_seek_selection_start, eof_seek_selection_end;
 extern int         eof_shift_released;
 extern int         eof_shift_used;
 extern int         eof_emergency_stop;
+extern int         ch_sp_path_worker;
+extern int         ch_sp_path_worker_logging;
 
 /* mouse control data */
 extern int         eof_selected_control;
@@ -730,10 +732,12 @@ void eof_log(const char *text, int level);
 	//If the log is open, writes the string to the log file, followed by a newline character, and flushes the I/O stream
 	//Level indicates the minimum level of logging that must be in effect to log the message (ie. 1 = on, 2 = verbose)
 	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions
-void eof_log_casual(const char *text, int level);
+void eof_log_casual(const char *text, int level, int prefix, int newline);
 	//Similar to eof_log(), except that it has an internal memory buffer four times the size of EOF_LOG_STRING_SIZE
 	//only flushes to disk when the buffer has insufficient space for another EOF_LOG_STRING_SIZE number of bytes
 	//Calling with a NULL value for text siganls the function to flush to disk manually
+	//If prefix is nonzero, the log ID number is not written in front of the provided text
+	//If newline is nonzero, a newline character is appended to the provided text
 void eof_log_notes(EOF_SONG *sp, unsigned long track);
 	//Debug function that logs the position and length of each note in the specified track
 extern char eof_log_string[2048];	//A string reserved for use with eof_log()

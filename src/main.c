@@ -288,6 +288,8 @@ unsigned long eof_seek_selection_start = 0, eof_seek_selection_end = 0;	//Used t
 int         eof_shift_released = 1;	//Tracks the press/release of the SHIFT keys for the Feedback input mode seek selection system
 int         eof_shift_used = 0;	//Tracks whether the SHIFT key was used for a keyboard shortcut while SHIFT was held
 int         eof_emergency_stop = 0;	//Set to nonzero by eof_switch_out_callback() so that playback can be stopped OUTSIDE of the callback, in EOF's main loop so that a crash with time stretched playback can be avoided
+int         ch_sp_path_worker = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker parameter to have it run as a worker process for star power pathing evaluation
+int         ch_sp_path_worker_logging = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker_logging parameter, which will allow logging to be performed during solving
 
 /* mouse control data */
 int         eof_selected_control = -1;
@@ -4026,7 +4028,6 @@ int eof_initialize(int argc, char * argv[])
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 	char *logging_level[] = {"NULL", "normal", "verbose", "exhaustive"};
-	int ch_sp_path_worker = 0;	//Set to nonzero if the -ch_sp_path_worker command line parameter is specified, overriding normal EOF behavior
 	unsigned retry;
 
 	eof_log("eof_initialize() entered", 1);
@@ -4037,6 +4038,15 @@ int eof_initialize(int argc, char * argv[])
 	}
 
 	allegro_init();
+
+	if((argc >= 3) && !ustricmp(argv[1], "-ch_sp_path_worker"))
+	{	//If this EOF instance was launched as a worker process to perform star power pathing (must be second parameter)
+		ch_sp_path_worker = 1;
+	}
+	if((argc >= 4) && !ustricmp(argv[3], "-ch_sp_path_worker_logging"))
+	{	//If this EOF instance was is being called with logging manually enabled (must be fourth parameter)
+		ch_sp_path_worker_logging = 1;
+	}
 
 	set_window_title("EOF - No Song");
 	if(!ch_sp_path_worker)
@@ -4110,14 +4120,9 @@ int eof_initialize(int argc, char * argv[])
 	//Set the locale back to the default "C" locale because on Linux builds of Allegro, the locale is set to the local system locale when the keyboard system is initialized above
 	(void) setlocale(LC_ALL, "C");
 
-	if((argc == 3) && !ustricmp(argv[1], "-ch_sp_path_worker"))
-	{	//If this EOF instance was launched as a worker process to perform star power pathing
-		ch_sp_path_worker = 1;
-	}
-
 	//Start the logging system (unless the user disabled it via preferences)
-	if(!ch_sp_path_worker)
-	{	//Don't start logging if this is a worker process
+	if(!ch_sp_path_worker || ch_sp_path_worker_logging)
+	{	//Don't start logging if this is a worker process (unless the separate parameter was provided to enable logging)
 		eof_start_logging();
 		seconds = time(NULL);
 		caltime = localtime(&seconds);
@@ -4198,6 +4203,7 @@ int eof_initialize(int argc, char * argv[])
 	/* divert to the Clone Hero SP pathing behavior if applicable */
 	if(ch_sp_path_worker)
 	{
+		eof_log("Changing to SP path worker mode", 1);
 		eof_ch_sp_path_worker(argv[2]);
 		eof_quit = 1;	//Signal the main function to exit
 		return 1;
@@ -4722,34 +4728,37 @@ void eof_exit(void)
 	eof_destroy_undo();
 
 	//Free the file filters
-	free(eof_filter_music_files);
-	eof_filter_music_files = NULL;
-	free(eof_filter_ogg_files);
-	eof_filter_ogg_files = NULL;
-	free(eof_filter_midi_files);
-	eof_filter_midi_files = NULL;
-	free(eof_filter_eof_files);
-	eof_filter_eof_files = NULL;
-	free(eof_filter_exe_files);
-	eof_filter_exe_files = NULL;
-	free(eof_filter_lyrics_files);
-	eof_filter_lyrics_files = NULL;
-	free(eof_filter_dB_files);
-	eof_filter_dB_files = NULL;
-	free(eof_filter_gh_files);
-	eof_filter_gh_files = NULL;
-	free(eof_filter_gp_files);
-	eof_filter_gp_files = NULL;
-	free(eof_filter_gp_lyric_text_files);
-	eof_filter_gp_lyric_text_files = NULL;
-	free(eof_filter_rs_files);
-	eof_filter_rs_files = NULL;
-	free(eof_filter_sonic_visualiser_files);
-	eof_filter_sonic_visualiser_files = NULL;
-	free(eof_filter_bf_files);
-	eof_filter_bf_files = NULL;
-	free(eof_filter_note_panel_files);
-	eof_filter_note_panel_files = NULL;
+	if(!ch_sp_path_worker)
+	{	//These filters weren't created if EOF ran as a worker process
+		free(eof_filter_music_files);
+		eof_filter_music_files = NULL;
+		free(eof_filter_ogg_files);
+		eof_filter_ogg_files = NULL;
+		free(eof_filter_midi_files);
+		eof_filter_midi_files = NULL;
+		free(eof_filter_eof_files);
+		eof_filter_eof_files = NULL;
+		free(eof_filter_exe_files);
+		eof_filter_exe_files = NULL;
+		free(eof_filter_lyrics_files);
+		eof_filter_lyrics_files = NULL;
+		free(eof_filter_dB_files);
+		eof_filter_dB_files = NULL;
+		free(eof_filter_gh_files);
+		eof_filter_gh_files = NULL;
+		free(eof_filter_gp_files);
+		eof_filter_gp_files = NULL;
+		free(eof_filter_gp_lyric_text_files);
+		eof_filter_gp_lyric_text_files = NULL;
+		free(eof_filter_rs_files);
+		eof_filter_rs_files = NULL;
+		free(eof_filter_sonic_visualiser_files);
+		eof_filter_sonic_visualiser_files = NULL;
+		free(eof_filter_bf_files);
+		eof_filter_bf_files = NULL;
+		free(eof_filter_note_panel_files);
+		eof_filter_note_panel_files = NULL;
+	}
 
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS
@@ -5118,7 +5127,7 @@ void eof_log(const char *text, int level)
 	}
 }
 
-void eof_log_casual(const char *text, int level)
+void eof_log_casual(const char *text, int level, int prefix, int newline)
 {
 	static char buffer[EOF_LOG_STRING_SIZE * 2] = {0};
 	static char buffer2[EOF_LOG_STRING_SIZE];
@@ -5132,12 +5141,35 @@ void eof_log_casual(const char *text, int level)
 		{	//If the input string is NULL, flush buffer to disk
 			(void) fputs(buffer, eof_log_fp);	//Write the buffer to file
 			(void) fflush(eof_log_fp);			//Explicitly commit the write to disk
-			buffer[0] = '\0';	//Empty the buffer
+			buffer[0] = '\0';	//Empty the buffers
+			buffer2[0] = '\0';
 			buffered_chars = 0;
 		}
 		else if(text && eof_log_fp && (eof_log_level >= level))
 		{	//Otherwise if the logging level is high enough, log to buffer
-			retval = snprintf(buffer2, sizeof(buffer2) - 1, "%03u: %s\n", eof_log_id, text);
+			buffer2[0] = '\0';
+			if(prefix)
+			{	//If the log ID is to be prefixed to the output string
+				if(newline)
+				{	//If a newline character is also to be appended
+					retval = snprintf(buffer2, sizeof(buffer2) - 1, "%03u: %s\n", eof_log_id, text);
+				}
+				else
+				{	//Just the log ID
+					retval = snprintf(buffer2, sizeof(buffer2) - 1, "%03u: %s", eof_log_id, text);
+				}
+			}
+			else
+			{	//No log ID
+				if(newline)
+				{	//Just the newline character suffix
+					retval = snprintf(buffer2, sizeof(buffer2) - 1, "%s\n", text);
+				}
+				else
+				{	//Just the provided text
+					retval = snprintf(buffer2, sizeof(buffer2) - 1, text);
+				}
+			}
 			if(retval > 0)
 			{	//If the string was written to the temporary buffer
 				length = strlen(buffer2);
