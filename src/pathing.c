@@ -755,10 +755,20 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 	int invalid_increment = 0;	//Set to nonzero if the last iteration of the loop manually incremented the solution due to the solution being invalid
 	int retval;
 
-	if(!eof_song || !best || !testing || (first_deploy > best->note_count) || !validcount || !invalidcount)
-		return 1;	//Invalid parameters
-
 	eof_log("eof_ch_sp_path_single_process_solve() entered", 1);
+
+	if(!eof_song || !best || !testing || !validcount || !invalidcount)
+	{
+		eof_log("\tInvalid pointer parameter", 1);
+		return 1;	//Invalid parameters
+	}
+	if(first_deploy > best->note_count)
+	{
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error:  First deployment (%lu) > the number of notes in the target track difficulty (%lu)", first_deploy, best->note_count);
+		eof_log(eof_log_string, 1);
+		return 1;	//Invalid parameters
+	}
+
 	testing->num_deployments = 0;	//The first solution increment will test one deployment
 	while(1)
 	{	//Continue testing until all solutions (or specified solutions) are tested
@@ -1013,12 +1023,12 @@ void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution)
 DIALOG eof_menu_track_find_ch_sp_path_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                         (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   350, 170, 0,   0,   0,    0,      0,   0,   "Find best star power path", NULL, NULL },
+	{ d_agup_window_proc,    0,   0,   360, 170, 0,   0,   0,    0,      0,   0,   "Find best star power path", NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Use this many worker processes:",NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
-	{ d_agup_text_proc,      12,  80,  60,  12,  0,   0,   0,    0,      0,   0,   "(More is faster but will slow your computer down)",NULL, NULL },
-	{ d_agup_text_proc,      12,  96,  60,  12,  0,   0,   0,    0,      0,   0,   "(Ideally don't use a number higher than the number",NULL, NULL },
-	{ d_agup_text_proc,      12,  112, 60,  12,  0,   0,   0,    0,      0,   0,   " of threads your CPU supports)",NULL, NULL },
+	{ d_agup_text_proc,      12,  80,  60,  12,  0,   0,   0,    0,      0,   0,   "More (up to the number of threads your CPU supports)",NULL, NULL },
+	{ d_agup_text_proc,      12,  96,  60,  12,  0,   0,   0,    0,      0,   0,   "is faster, but will slow your computer down more.",NULL, NULL },
+	{ d_agup_text_proc,      12,  112, 60,  12,  0,   0,   0,    0,      0,   0,   "",NULL, NULL },
 	{ d_agup_button_proc,    12,  130, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                        NULL, NULL },
 	{ d_agup_button_proc,    110, 130, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                    NULL, NULL },
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                        NULL, NULL }
@@ -1425,15 +1435,16 @@ int eof_menu_track_find_ch_sp_path(void)
 void eof_ch_sp_path_worker(char *job_file)
 {
 	PACKFILE *inf, *outf;
-	char output_path[1024] = {0};
+	char filename[1024];
+	char jobreadyfilename[1024];
 	char project_path[1024];
-	int error = 0, canceled = 0, retval;
+	int error = 0, canceled = 0, done = 0, idle = 0, retval, firstjob = 1;
 	EOF_SP_PATH_SOLUTION best = {0}, testing = {0};
-	unsigned long ctr, first_deploy, last_deploy, validcount = 0, invalidcount = 0;
+	unsigned long ctr, first_deploy = ULONG_MAX, last_deploy = ULONG_MAX, validcount = 0, invalidcount = 0;
 
-	//Parse job file
+	//Validate initial job file path
 	eof_log_cwd();
-	if(!job_file)
+	if(!job_file || !exists(job_file))
 	{	//Invalid parameter
 		error = 1;
 		if(ch_sp_path_worker_logging)
@@ -1442,61 +1453,87 @@ void eof_ch_sp_path_worker(char *job_file)
 		}
 		else
 		{
-			(void) snprintf(output_path, sizeof(output_path) - 1, "%scantfindjob", eof_temp_path_s);
-			outf = pack_fopen(output_path, "w");	//Create that file
+			(void) snprintf(filename, sizeof(filename) - 1, "%scantfindjob", eof_temp_path_s);
+			outf = pack_fopen(filename, "w");	//Create that file
 			(void) pack_fclose(outf);
 		}
+
+		return;
 	}
-	else
-	{	//A job file path was specified
-		inf = pack_fopen(job_file, "rb");
-		if(!inf)
-		{	//If the job file can't be loaded
-			error = 1;
+	(void) replace_extension(jobreadyfilename, job_file, "jobready", 1024);		//Create the path to the file indicating the job file is ready to read
+
+	//Worker main loop
+	while(EOF_PERSISTENT_WORKER && !done && !error && !canceled)
+	{	//If the worker process is to run until signaled to end by the supervisor, run until the worker's job is completed
+		if(exists(jobreadyfilename))
+		{	//If the supervisor indicated that a job file is ready to access
+			if(!firstjob)
+			{	//If this isn't the first job, re-initialize variables
+				validcount = invalidcount = 0;
+				for(ctr = 0; ctr < best.deploy_count; ctr++)
+				{	//For every entry in the deploy cache
+					best.deploy_cache[ctr].note_start = ULONG_MAX;	//Mark it as invalid
+				}
+			}
+
+			//Parse the job file
 			if(ch_sp_path_worker_logging)
 			{
-				eof_log("\tCan't load job", 1);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Loading job file \"%s\"", job_file);
+				eof_log(eof_log_string, 1);
 			}
-			else
-			{
-				(void) snprintf(output_path, sizeof(output_path) - 1, "%scantloadjob", eof_temp_path_s);
-				outf = pack_fopen(output_path, "w");	//Create that file
-				(void) pack_fclose(outf);
-			}
-		}
-		else if(eof_load_song_string_pf(project_path, inf, sizeof(project_path)))
-		{	//If the project file path can't be read
-			error = 1;
-			if(ch_sp_path_worker_logging)
-			{
-				eof_log("\tCant read project path", 1);
-			}
-			else
-			{
-				(void) snprintf(output_path, sizeof(output_path) - 1, "%scantreadprojectpath", eof_temp_path_s);
-				outf = pack_fopen(output_path, "w");	//Create that file
-				(void) pack_fclose(outf);
-			}
-		}
-		else
-		{	//The project file path was read
-			eof_song = eof_load_song(project_path);
-			if(!eof_song)
-			{	//If the project file couldn't be loaded
+			inf = pack_fopen(job_file, "rb");
+			if(!inf)
+			{	//If the job file can't be loaded
 				error = 1;
 				if(ch_sp_path_worker_logging)
 				{
-					eof_log("\tCan't load project", 1);
+					eof_log("\tCan't load job", 1);
 				}
 				else
 				{
-					(void) snprintf(output_path, sizeof(output_path) - 1, "%scantloadproject", eof_temp_path_s);
-					outf = pack_fopen(output_path, "w");	//Create that file
+					(void) snprintf(filename, sizeof(filename) - 1, "%scantloadjob", eof_temp_path_s);
+					outf = pack_fopen(filename, "w");	//Create that file
 					(void) pack_fclose(outf);
 				}
+				break;
 			}
-			else
-			{	//The project file was loaded
+
+			if(firstjob)
+			{	//If this is the worker's first job file, read common job data
+				if(eof_load_song_string_pf(project_path, inf, sizeof(project_path)))
+				{	//If the project file path can't be read
+					error = 1;
+					if(ch_sp_path_worker_logging)
+					{
+						eof_log("\tCant read project path", 1);
+					}
+					else
+					{
+						(void) snprintf(filename, sizeof(filename) - 1, "%scantreadprojectpath", eof_temp_path_s);
+						outf = pack_fopen(filename, "w");	//Create that file
+						(void) pack_fclose(outf);
+					}
+					break;
+				}
+
+				eof_song = eof_load_song(project_path);
+				if(!eof_song)
+				{	//If the project file couldn't be loaded
+					error = 1;
+					if(ch_sp_path_worker_logging)
+					{
+						eof_log("\tCan't load project", 1);
+					}
+					else
+					{
+						(void) snprintf(filename, sizeof(filename) - 1, "%scantloadproject", eof_temp_path_s);
+						outf = pack_fopen(filename, "w");	//Create that file
+						(void) pack_fclose(outf);
+					}
+					break;
+				}
+
 				//Finish setup after loading project
 				eof_song_loaded = 1;
 				eof_init_after_load(0);
@@ -1536,8 +1573,8 @@ void eof_ch_sp_path_worker(char *job_file)
 							}
 							else
 							{
-								(void) snprintf(output_path, sizeof(output_path) - 1, "%scantreadfppos", eof_temp_path_s);
-								outf = pack_fopen(output_path, "w");	//Create that file
+								(void) snprintf(filename, sizeof(filename) - 1, "%scantreadfppos", eof_temp_path_s);
+								outf = pack_fopen(filename, "w");	//Create that file
 								(void) pack_fclose(outf);
 							}
 							break;
@@ -1548,6 +1585,8 @@ void eof_ch_sp_path_worker(char *job_file)
 						}
 					}
 				}
+				if(error)	//If the floating point positions failed to be read
+					break;
 
 				best.note_beat_lengths = malloc(sizeof(double) * best.note_count);
 				testing.note_beat_lengths = best.note_beat_lengths;
@@ -1566,8 +1605,8 @@ void eof_ch_sp_path_worker(char *job_file)
 							}
 							else
 							{
-								(void) snprintf(output_path, sizeof(output_path) - 1, "%scantreadfplength", eof_temp_path_s);
-								outf = pack_fopen(output_path, "w");	//Create that file
+								(void) snprintf(filename, sizeof(filename) - 1, "%scantreadfplength", eof_temp_path_s);
+								outf = pack_fopen(filename, "w");	//Create that file
 								(void) pack_fclose(outf);
 							}
 							break;
@@ -1578,94 +1617,168 @@ void eof_ch_sp_path_worker(char *job_file)
 						}
 					}
 				}
+				if(error)	//If the floating point lengths failed to be read
+					break;
 
 				best.track = pack_igetl(inf);
 				testing.track = best.track;
 				best.diff = pack_igetw(inf);
 				testing.diff = best.diff;
-				first_deploy = pack_igetl(inf);
-				last_deploy = pack_igetl(inf);
-				best.num_deployments = testing.num_deployments = 0;
-				best.score = testing.score = 0;
-			}//The project file was loaded
-		}//The project file path was read
-		pack_fclose(inf);	//Close the job file
-	}//A job file path was specified
-	if(!best.deployments || !testing.deployments || !best.deploy_cache || !best.note_measure_positions || !best.note_beat_lengths)
-	{	//If any of the arrays failed to allocate
-		error = 1;
-		if(ch_sp_path_worker_logging)
-		{
-			eof_log("\tCan't allocate memory", 1);
-		}
-		else
-		{
-			(void) snprintf(output_path, sizeof(output_path) - 1, "%scantallocate", eof_temp_path_s);
-			outf = pack_fopen(output_path, "w");	//Create that file
+
+				if(!best.deployments || !testing.deployments || !best.deploy_cache || !best.note_measure_positions || !best.note_beat_lengths)
+				{	//If any of the arrays failed to allocate
+					error = 1;
+					if(ch_sp_path_worker_logging)
+					{
+						eof_log("\tCan't allocate memory", 1);
+					}
+					else
+					{
+						(void) snprintf(filename, sizeof(filename) - 1, "%scantallocate", eof_temp_path_s);
+						outf = pack_fopen(filename, "w");	//Create that file
+						(void) pack_fclose(outf);
+					}
+				}
+			}//If this is the worker's first job file, read common job data
+
+			//Read the unique job data (the first and last numbers of the range of solution sets to test)
+			first_deploy = pack_igetl(inf);
+			last_deploy = pack_igetl(inf);
+			pack_fclose(inf);	//Close the job file
+
+			//Initialize structures
+			best.num_deployments = testing.num_deployments = 0;
+			best.score = testing.score = 0;
+
+			//Signal to the supervisor that the worker process will begin testing solutions
+			(void) replace_extension(filename, job_file, "running", sizeof(filename));	//Build the path to this signal file
+			outf = pack_fopen(filename, "w");	//Create that file
 			(void) pack_fclose(outf);
+			idle = 0;
+		}//If a job file is present, parse it
+		else
+		{	//If no job is present, check for the kill signal from the supervisor
+			(void) replace_extension(filename, job_file, "kill", 1024);		//Create the path to the kill signal file
+			if(exists(filename))
+			{	//If this signal file is present
+				if(ch_sp_path_worker_logging)
+				{
+					eof_log("\tKill signal detected", 1);
+				}
+				done = 1;
+				delete_file(filename);
+			}
 		}
-	}
 
-	//Signal to the supervisor that the worker process is running
-	(void) replace_extension(output_path, job_file, "running", sizeof(output_path));	//Build the path to the file that will signal to the supervisor that the worker is beginning processing
-	outf = pack_fopen(output_path, "w");	//Create that file
-	(void) pack_fclose(outf);
+		//Test solutions
+		if(!error && !done && !idle)
+		{	//If an error or kill signal hasn't occurred yet, and the worker is not waiting for a job
+			if(firstjob)
+			{	//If this is the first job being processed, set the target track difficulty and apply temporary flags as appropriate
+				eof_selected_track = best.track;
+				eof_note_type = best.diff;
+				(void) eof_detect_difficulties(eof_song, eof_selected_track);
+				eof_ch_pathing_mark_tflags(&testing);
+			}
 
-	//Test solutions
-	if(!error)
-	{	//If an error hasn't occurred yet
-		//Set the target track difficulty and apply temporary flags as appropriate
-		eof_selected_track = best.track;
-		eof_note_type = best.diff;
-		(void) eof_detect_difficulties(eof_song, eof_selected_track);
-		eof_ch_pathing_mark_tflags(&testing);
-
-		//Test the specified range of solutions
-		retval = eof_ch_sp_path_single_process_solve(&best, &testing, first_deploy, last_deploy, &validcount, &invalidcount);
-		if(retval == 1)
-		{	//If the solution testing failed
-			error = 1;
+			//Test the specified range of solutions
 			if(ch_sp_path_worker_logging)
 			{
-				eof_log("\tSolving failed", 1);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tTesting solution sets #%lu through #%lu", first_deploy, last_deploy);
+				eof_log(eof_log_string, 1);
 			}
-			else
-			{
-				(void) snprintf(output_path, sizeof(output_path) - 1, "%ssolvefailed", eof_temp_path_s);
-				outf = pack_fopen(output_path, "w");	//Create that file
-				(void) pack_fclose(outf);
+			retval = eof_ch_sp_path_single_process_solve(&best, &testing, first_deploy, last_deploy, &validcount, &invalidcount);
+			if(retval == 1)
+			{	//If the solution testing failed
+				error = 1;
+				if(ch_sp_path_worker_logging)
+				{
+					eof_log("\tSolving failed", 1);
+				}
+				else
+				{
+					(void) snprintf(filename, sizeof(filename) - 1, "%ssolvefailed", eof_temp_path_s);
+					outf = pack_fopen(filename, "w");	//Create that file
+					(void) pack_fclose(outf);
+				}
 			}
+			else if(retval == 2)
+			{	//If the testing was canceled
+				canceled = 1;
+			}
+			firstjob = 0;	//All jobs after the first will re-use common data so subsequent job files can eliminate this redundant information
+		}//If an error or kill signal hasn't occurred yet, and the worker is not waiting for a job
+
+		if(error)
+		{	//If the job was not successfully processed
+			(void) replace_extension(filename, job_file, "fail", 1024);		//Create a results file to specify failure
+			outf = pack_fopen(filename, "w");
+			pack_fclose(outf);	//Close the results file
+			idle = 0;
 		}
-		else if(retval == 2)
-		{	//If the testing was canceled
+		else if(canceled)
+		{	//If the user canceled the job
+			(void) replace_extension(filename, job_file, "cancel", 1024);	//Create a results file to specify cancellation
+			outf = pack_fopen(filename, "w");
+			pack_fclose(outf);	//Close the results file
+			idle = 0;
+		}
+		else if(done)
+		{	//If the supervisor commanded the worker to stop
+			(void) replace_extension(filename, job_file, "dead", 1024);	//Create a results file to specify the worker will terminate
+			outf = pack_fopen(filename, "w");
+			pack_fclose(outf);	//Close the results file
+			idle = 0;
+		}
+		else if(!idle)
+		{	//Normal completion, write best solution information to disk
+			if(ch_sp_path_worker_logging)
+			{
+				char tempstring[30];
+
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tJob (solution sets #%lu-#%lu) completed.  Best solution:  Deploy at indexes ", first_deploy, last_deploy);
+				for(ctr = 0; ctr < testing.num_deployments; ctr++)
+				{	//For each deployment in the chosen solution
+					snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing.deployments[ctr]);
+					strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+				}
+				snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing.score);
+				strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+				eof_log(eof_log_string, 1);
+				eof_log("Waiting for next job", 1);
+			}
+			(void) replace_extension(filename, job_file, "success", 1024);	//Create a results file to contain the best solution
+			outf = pack_fopen(filename, "w");
+			pack_iputl(best.score, outf);
+			pack_iputl(best.deployment_notes, outf);
+			pack_iputl(validcount, outf);
+			pack_iputl(invalidcount, outf);
+			pack_iputl(best.num_deployments, outf);
+			for(ctr = 0; ctr < best.num_deployments; ctr++)
+			{	//For each deployment in the solution
+				pack_iputl(best.deployments[ctr], outf);	//Write it to disk
+			}
+			pack_fclose(outf);				//Close the results file
+			(void) delete_file(jobreadyfilename);	//Delete the job file readiness signal
+			(void) delete_file(job_file);			//Delete the job file to signal to the supervisor process that the results file is ready to access
+			set_window_title("Worker process idle.  Press Esc to cancel");
+			idle = 1;	//Until another job file or a kill signal is seen, this worker is in idle status
+		}
+
+		if(key[KEY_ESC])
+		{
 			canceled = 1;
 		}
-	}
-
-	if(error)
-	{	//If the job was not successfully processed
-		(void) replace_extension(output_path, job_file, "fail", 1024);		//Create a results file to specify failure
-		outf = pack_fopen(output_path, "w");
-	}
-	else if(canceled)
-	{	//If the user canceled the job
-		(void) replace_extension(output_path, job_file, "cancel", 1024);	//Create a results file to specify cancellation
-		outf = pack_fopen(output_path, "w");
-	}
-	else
-	{	//Normal completion, write best solution information to disk
-		(void) replace_extension(output_path, job_file, "success", 1024);	//Create a results file to contain the best solution
-		outf = pack_fopen(output_path, "w");
-		pack_iputl(best.score, outf);
-		pack_iputl(best.deployment_notes, outf);
-		pack_iputl(validcount, outf);
-		pack_iputl(invalidcount, outf);
-		pack_iputl(best.num_deployments, outf);
-		for(ctr = 0; ctr < best.num_deployments; ctr++)
-		{	//For each deployment in the solution
-			pack_iputl(best.deployments[ctr], outf);	//Write it to disk
+		if(eof_close_button_clicked)
+		{	//Consider clicking the close window control a cancellation
+			eof_close_button_clicked = 0;
+			canceled = 1;
 		}
-	}
+		if(idle)
+		{	//If this worker has nothing to do
+			Idle(10);	//Wait a bit before checking again
+		}
+	}//If the worker process is to run until signaled to end by the supervisor, run until the worker's job is completed
 
 	//Cleanup
 	if(best.deployments)
@@ -1679,29 +1792,32 @@ void eof_ch_sp_path_worker(char *job_file)
 	if(best.note_beat_lengths)
 		free(best.note_beat_lengths);
 
-	pack_fclose(outf);	//Close the results file
 	if(error)
-	{	//Create a copy of the job file to a new name
-		(void) replace_extension(output_path, job_file, "failedjob", sizeof(output_path));
-		(void) eof_copy_file(job_file, output_path);
+	{	//If the job failed, create a copy of the job file to a new name for troubleshooting
+		(void) replace_extension(filename, job_file, "failedjob", sizeof(filename));
+		(void) eof_copy_file(job_file, filename);
 	}
-	(void) delete_file(job_file);		//Delete the job file to signal to the supervisor process that the results file is ready to access
+
+	(void) delete_file(jobreadyfilename);	//Delete the job file readiness signal
+	(void) delete_file(job_file);	//Delete the job file to signal to the supervisor process that the worker is no longer running
 }
 
 int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount)
 {
 	EOF_SP_PATH_WORKER *workers;
 	PACKFILE *fp;
-	unsigned long ctr, workerctr, solutionctr, num_workers_running, num_workers_completed = 0;
+	unsigned long ctr, workerctr, solutionctr, num_workers_running, num_workers_launched = 0, num_jobs_completed = 0;
 	clock_t start_time, end_time;
 	clock_t waiting_overhead = 0;	//Track how many clocks are spent waiting for worker processes to go from waiting to running state
 	clock_t solutions_exhausted_time = 0;	//Track the time of the first instance where there is an idle worker process and no solutions let to assign
 	char filename[50];	//Stores the job filename for worker processes
+	char jobreadyfilename[50];	//Used to create the jobready file for a worker process
 	char commandline[1050];	//Stores the command line for launching a worker process
 	char exepath[1050];
 	char tempstr[100];
 	int done = 0, error = 0, canceled = 0, workerstatuschange;
 	double elapsed_time;
+	unsigned long trackdiffsize = 0;
 
 	if(!best || !testing || !validcount || !invalidcount || !worker_count)
 		return 1;	//Invalid parameters
@@ -1716,7 +1832,10 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 	for(ctr = 0; ctr < worker_count; ctr++)
 	{	//For each worker entry
 		workers[ctr].status = EOF_SP_PATH_WORKER_IDLE;
-		workers[ctr].assignment_size = ((double) testing->note_count - first_deploy) / 20.0 / worker_count;	//Assume that most of the processing will be in the first 5% of solution sets, split it up among the workers
+		workers[ctr].assignment_size = ((double) testing->note_count - first_deploy) * 0.005 / worker_count;	//Begin by dividing the first 0.5% of solution sets to all workers evenly
+		if(!workers[ctr].assignment_size)
+			workers[ctr].assignment_size = 1;	//Job size is a minimum of 1 solution set
+		workers[ctr].job_count = 1;
 	}
 
 	//Initialize temp folder and job file path array
@@ -1731,7 +1850,9 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 		//Delete any previously created status, job and results files for this worker process ID
 		(void) snprintf(filename, sizeof(filename) - 1, "%s%lu.job", eof_temp_path_s, workerctr);
 		(void) delete_file(filename);	//Delete #.job file
-		(void) replace_extension(filename, filename, "running", sizeof(filename));	//Build the path to this worker's running status file
+		(void) replace_extension(filename, filename, "jobready", sizeof(filename));
+		(void) delete_file(filename);	//Delete #.running file
+		(void) replace_extension(filename, filename, "running", sizeof(filename));
 		(void) delete_file(filename);	//Delete #.running file
 		(void) replace_extension(filename, filename, "fail", sizeof(filename));
 		(void) delete_file(filename);	//Delete #.fail file
@@ -1739,6 +1860,10 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 		(void) delete_file(filename);	//Delete #.cancel file
 		(void) replace_extension(filename, filename, "success", sizeof(filename));
 		(void) delete_file(filename);	//Delete #.success file
+		(void) replace_extension(filename, filename, "kill", sizeof(filename));
+		(void) delete_file(filename);	//Delete #.kill file
+		(void) replace_extension(filename, filename, "dead", sizeof(filename));
+		(void) delete_file(filename);	//Delete #.dead file
 	}
 
 	//Delete any existing files used to report worker failure reasons
@@ -1761,9 +1886,16 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 
 	//Evaluate solutions
 	solutionctr = first_deploy;	//The first worker process will be directed to calculate this solution set
+	(void) eof_count_selected_notes(&trackdiffsize);	//Count the number of notes in the active track difficulty
 	while(!done && !error && !canceled)
 	{	//Until the supervisor's job is completed
 		workerstatuschange = num_workers_running = 0;
+
+		if(testing->note_count > trackdiffsize)
+		{	//If the note count in the testing structure has become corrupted
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error:  Testing structure note count is corrupted (note_count = %lu, target difficulty note count = %lu)", testing->note_count, trackdiffsize);
+			eof_log_casual(eof_log_string, 1, 1, 1);
+		}
 
 		//Check worker process status
 		for(workerctr = 0; workerctr < worker_count; workerctr++)
@@ -1771,7 +1903,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 			(void) snprintf(filename, sizeof(filename) - 1, "%s%lu.job", eof_temp_path_s, workerctr);	//Build the file path for the process's job/results file
 
 			if(workers[workerctr].status == EOF_SP_PATH_WORKER_IDLE)
-			{	//If this process can be dispatched
+			{	//If this process is waiting for a job
 				if(!error && !canceled)
 				{	//If the supervisor hasn't detected a failed/canceled status
 					if(solutionctr <= testing->note_count)
@@ -1787,71 +1919,108 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 
 							//Build the job file
 							last_deploy = solutionctr + workers[workerctr].assignment_size;
-							workers[workerctr].assignment_size *= 1.25;		//Slowly ramp up the worker's assignment size for next time
 							if(last_deploy > testing->note_count)
 							{	//If this worker is processing the last of the solution sets
 								last_deploy = testing->note_count;	//Bounds check this variable so that the correct value is given to the worker
 							}
-							(void) eof_save_song_string_pf(eof_filename, fp);	//Write the path to the EOF project file
-							(void) pack_iputl(testing->deploy_count, fp);	//Write the detected maximum number of deployments so the worker can create an appropriately sized depoyment and cache arrays
-							(void) pack_iputl(testing->note_count, fp);		//Write the number of notes in the target track difficulty
-							for(ctr = 0; ctr < testing->note_count; ctr++)
-							{	//For every entry in the note measure position array
-								if(pack_fwrite(&testing->note_measure_positions[ctr], sizeof(double), fp) != sizeof(double))	//Write the note measure position
-								{	//If the double floating point value was not written
-									error = 1;
-									break;
+							if(workers[workerctr].job_count == 1)
+							{	//If this is the first job being sent to this worker, include extra data that will be re-used in subsequent jobs
+								(void) eof_save_song_string_pf(eof_filename, fp);	//Write the path to the EOF project file
+								(void) pack_iputl(testing->deploy_count, fp);	//Write the detected maximum number of deployments so the worker can create an appropriately sized depoyment and cache arrays
+								(void) pack_iputl(testing->note_count, fp);		//Write the number of notes in the target track difficulty
+								for(ctr = 0; ctr < testing->note_count; ctr++)
+								{	//For every entry in the note measure position array
+									if(pack_fwrite(&testing->note_measure_positions[ctr], sizeof(double), fp) != sizeof(double))	//Write the note measure position
+									{	//If the double floating point value was not written
+										error = 1;
+										break;
+									}
 								}
-							}
-							for(ctr = 0; ctr < testing->note_count; ctr++)
-							{	//For every entry in the note beat lengths array
-								if(pack_fwrite(&testing->note_beat_lengths[ctr], sizeof(double), fp) != sizeof(double))	//Write the note beat length
-								{	//If the double floating point value was not written
-									error = 1;
-									break;
+								for(ctr = 0; ctr < testing->note_count; ctr++)
+								{	//For every entry in the note beat lengths array
+									if(pack_fwrite(&testing->note_beat_lengths[ctr], sizeof(double), fp) != sizeof(double))	//Write the note beat length
+									{	//If the double floating point value was not written
+										error = 1;
+										break;
+									}
 								}
+								(void) pack_iputl(testing->track, fp);	//Write the target track
+								(void) pack_iputw(testing->diff, fp);	//Write the target difficulty
 							}
-							(void) pack_iputl(testing->track, fp);	//Write the target track
-							(void) pack_iputw(testing->diff, fp);	//Write the target difficulty
+
 							(void) pack_iputl(solutionctr, fp);		//Write the beginning of the solution set range the worker is to test
 							(void) pack_iputl(last_deploy, fp);		//Write the ending of the solution set range the worker is to test
 							(void) pack_fclose(fp);
 
-							//Launch the worker process
+							(void) replace_extension(jobreadyfilename, filename, "jobready", sizeof(filename));
+							fp = pack_fopen(jobreadyfilename, "w");	//Create a file to signal to the worker that the job file is ready to access
+							pack_fclose(fp);
+
+							if(EOF_PERSISTENT_WORKER && (workers[workerctr].job_count > 1))
+							{	//If the worker process for this job is already running
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDelivered job file \"%s\" (solution set #%lu to #%lu) to existing worker process", filename, solutionctr, last_deploy);
+								eof_log_casual(eof_log_string, 1, 1, 1);
+							}
+
+							//Launch the worker process if applicable
 							if(!error)
 							{	//If there hasn't been an I/O error
-								get_executable_name(exepath, sizeof(exepath) - 1);	//Get the full path to the running EOF executable
-								snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\"", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+								if(workers[workerctr].job_count == 1)
+								{	//If this job will initiate a worker process
+									get_executable_name(exepath, sizeof(exepath) - 1);	//Get the full path to the running EOF executable
+///Per worker logging
+//									snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+//Supervisor logging only
+									snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\"", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
 
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLaunching worker process #%lu to evaluate solution sets #%lu-#%lu with command line:  %s", workerctr, solutionctr, last_deploy, commandline);
-								eof_log_casual(eof_log_string, 1, 1, 1);
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLaunching worker process #%lu to evaluate solution sets #%lu-#%lu with command line:  %s", workerctr, solutionctr, last_deploy, commandline);
+									eof_log_casual(eof_log_string, 1, 1, 1);
 
-								if(eof_system(commandline))
-								{	//If the command failed to run
-									eof_log_casual("\t\tFailed to launch process", 1, 1, 1);
-									error = 1;
+									if(eof_system(commandline))
+									{	//If the command failed to run
+										eof_log_casual("\t\tFailed to launch process", 1, 1, 1);
+										error = 1;
+										break;
+									}
+									num_workers_launched++;
 								}
-								else
-								{
-									workers[workerctr].status = EOF_SP_PATH_WORKER_WAITING;
-									workers[workerctr].first_deploy = solutionctr;
-									workers[workerctr].last_deploy = last_deploy;
-									workers[workerctr].start_time = clock();	//Record the start time of the worker process
-									workerstatuschange = 1;
-									solutionctr = last_deploy + 1;	//Update the counter tracking which solution set to assign next
-								}
+
+								workers[workerctr].status = EOF_SP_PATH_WORKER_WAITING;
+								workers[workerctr].first_deploy = solutionctr;
+								workers[workerctr].last_deploy = last_deploy;
+								workers[workerctr].start_time = clock();	//Record the start time of the worker process
+								workerstatuschange = 1;
+								solutionctr = last_deploy + 1;	//Update the counter tracking which solution set to assign next
 							}
 						}//The job file was opened for writing
 					}//If there are solutions left to test
-					else if(!solutions_exhausted_time)
-					{	//If there are no solutions left to test, and this condition hasn't been logged yet
-						solutions_exhausted_time = clock();
-						elapsed_time = ((double)solutions_exhausted_time - start_time) / CLOCKS_PER_SEC;
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSolutions to test exhausted at %.2f seconds into supervisor process execution.", elapsed_time);
+					else
+					{	//There are no solutions left to test
+						if(!solutions_exhausted_time)
+						{	//If this condition hasn't been logged yet
+							solutions_exhausted_time = clock();
+							elapsed_time = ((double)solutions_exhausted_time - start_time) / CLOCKS_PER_SEC;
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSolutions to test exhausted at %.2f seconds into supervisor process execution.", elapsed_time);
+							eof_log_casual(eof_log_string, 1, 1, 1);
+						}
+						(void) replace_extension(filename, filename, "kill", sizeof(filename));	//Build the path to the file to command the worker process to end
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSignaling worker process #%lu to terminate", workerctr);
 						eof_log_casual(eof_log_string, 1, 1, 1);
+						fp = pack_fopen(filename, "w");	//Create that file
+						pack_fclose(fp);
+						workers[workerctr].status = EOF_SP_PATH_WORKER_STOPPING;
+						workerstatuschange = 1;
+					}//There are no solutions left to test
+
+					//Check if user canceled an idle worker process, don't consider this a cancellation of the supervisor, just the process
+					(void) replace_extension(filename, filename, "dead", sizeof(filename));	//Build the path to this worker's termination status file
+					if(exists(filename))
+					{
+						workers[workerctr].status = EOF_SP_PATH_WORKER_STOPPED;
+						workerstatuschange = 1;
 					}
-				}//If the supervisor hasn't detected a failed/canceled status, and if there are solutions left to test
-			}//If this process can be dispatched
+				}//If the supervisor hasn't detected a failed/canceled status
+			}//If this process is waiting for a job
 			else if(workers[workerctr].status == EOF_SP_PATH_WORKER_WAITING)
 			{	//If this process was previously dispatched, but hasn't been verified to be running yet
 				clock_t current_time = clock();
@@ -1942,6 +2111,10 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 									snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing->score);
 									strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
 									eof_log_casual(eof_log_string, 1, 1, 1);
+									if(elapsed_time < 5.0)
+									{	//If the worker completed in less than five seconds
+										workers[workerctr].assignment_size *= (5.0 / elapsed_time);	//Scale the job assignment size to take at least five seconds long
+									}
 
 									//Compare with current best solution
 									if((testing->score > best->score) || ((testing->score == best->score) && (testing->deployment_notes < best->deployment_notes)))
@@ -1958,7 +2131,11 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 									//Update the worker status
 									workers[workerctr].status = EOF_SP_PATH_WORKER_IDLE;
 									workerstatuschange = 1;
-									num_workers_completed++;	//Track the number of completed worker processes
+									num_jobs_completed++;	//Track the number of completed solution jobs
+									if(EOF_PERSISTENT_WORKER)
+									{	//If the worker will remain running after completing this job
+										workers[workerctr].job_count++;	//Track how many jobs the worker has been assigned, as all job files ffter the first will require less data to be written to file
+									}
 								}
 							}//If the worker succeeded
 							else
@@ -1980,6 +2157,15 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 					workerstatuschange = 1;
 				}
 			}//If this process was previously dispatched, check if it's done
+			else if(workers[workerctr].status == EOF_SP_PATH_WORKER_STOPPING)
+			{	//If this process was previously commanded to end, check if it has acknowledged
+				(void) replace_extension(filename, filename, "dead", sizeof(filename));	//Build the path to this worker's termination status file
+				if(exists(filename))
+				{
+					workers[workerctr].status = EOF_SP_PATH_WORKER_STOPPED;
+					workerstatuschange = 1;
+				}
+			}
 		}//For each worker process
 
 		//Check for user cancellation in the supervisor process
@@ -2014,6 +2200,8 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 				char *waiting_status = "WAITING";
 				char *running_status = "RUNNING";
 				char *error_status = "ERROR";
+				char *stopping_status = "STOPPING";
+				char *stopped_status = "STOPPED";
 				char *current_status;
 
 				if(workers[workerctr].status == EOF_SP_PATH_WORKER_IDLE)
@@ -2022,6 +2210,10 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 					current_status = waiting_status;
 				else if(workers[workerctr].status == EOF_SP_PATH_WORKER_RUNNING)
 					current_status = running_status;
+				else if(workers[workerctr].status == EOF_SP_PATH_WORKER_STOPPING)
+					current_status = stopping_status;
+				else if(workers[workerctr].status == EOF_SP_PATH_WORKER_STOPPED)
+					current_status = stopped_status;
 				else
 					current_status = error_status;
 
@@ -2029,11 +2221,11 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 				{	//If the worker process is running, display its assigned solution sets
 					if(workers[workerctr].first_deploy == workers[workerctr].last_deploy)
 					{	//Worker process is only evaluating one solution set
-						snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Evaluating solution #%lu", workerctr, current_status, workers[workerctr].first_deploy);
+						snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Processing job #%lu:  Evaluating solution set #%lu", workerctr, current_status, workers[workerctr].job_count, workers[workerctr].first_deploy);
 					}
 					else
 					{	//Worker process is evaluating multiple solution sets
-						snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Evaluating solutions #%lu through #%lu", workerctr, current_status, workers[workerctr].first_deploy, workers[workerctr].last_deploy);
+						snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Processing job #%lu:  Evaluating solution set #%lu through #%lu", workerctr, current_status, workers[workerctr].job_count, workers[workerctr].first_deploy, workers[workerctr].last_deploy);
 					}
 				}
 				else
@@ -2061,9 +2253,19 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 		}
 	}//Until the supervisor's job is completed
 
+	for(workerctr = 0; workerctr < worker_count; workerctr++)
+	{	//For each worker process
+		if((workers[workerctr].status != EOF_SP_PATH_WORKER_STOPPED) && (workers[workerctr].status != EOF_SP_PATH_WORKER_STOPPING))
+		{	//If the worker hasn't already been stopped or commanded to stop
+			(void) snprintf(filename, sizeof(filename) - 1, "%s%lu.kill", eof_temp_path_s, workerctr);	//Build the file path for the process's kill command
+			fp = pack_fopen(filename, "w");	//Create that file
+			pack_fclose(fp);
+		}
+	}
+
 	end_time = clock();
 	elapsed_time = ((double) end_time - start_time) / CLOCKS_PER_SEC;
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSupervisor finished at %.2f seconds into supervisor process execution.  A total of %lu worker instances were launched, with a combined waiting overhead of %.2f seconds.", elapsed_time, num_workers_completed, (double)waiting_overhead / CLOCKS_PER_SEC);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSupervisor finished at %.2f seconds into supervisor process execution.  A total of %lu worker instances were launched and %lu jobs completed, with a combined waiting overhead of %.2f seconds.", elapsed_time, num_workers_launched, num_jobs_completed, (double)waiting_overhead / CLOCKS_PER_SEC);
 	eof_log_casual(eof_log_string, 1, 1, 1);
 
 	//Clean up

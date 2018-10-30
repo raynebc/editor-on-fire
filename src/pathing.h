@@ -36,10 +36,18 @@ typedef struct
 	unsigned long solution_number;
 } EOF_SP_PATH_SOLUTION;
 
+#define EOF_PERSISTENT_WORKER 1
+	//Specifies that worker processes will remain running and able to receive additional #.job files from the supervisor process
+	//All jobs after the first will retain common information from the first job instead of requiring it to be defined again in the job
+	// removing the need to read and write kilobytes of floating point data per job file
+	//When the worker sees a #.kill file in the directory of its initial job, it will exit its main loop and end execution
+
 #define EOF_SP_PATH_WORKER_IDLE 0
 #define EOF_SP_PATH_WORKER_WAITING 1
 #define EOF_SP_PATH_WORKER_RUNNING 2
 #define EOF_SP_PATH_WORKER_FAILED 3
+#define EOF_SP_PATH_WORKER_STOPPING 4
+#define EOF_SP_PATH_WORKER_STOPPED 5
 typedef struct
 {
 	int status;						//Tracks the process's status by way of one of the above EOF_SP_PATH_WORKER... macros
@@ -48,6 +56,7 @@ typedef struct
 	unsigned long assignment_size;	//The last number of solution sets assigned to the worker process
 	clock_t start_time;				//When the worker process was started
 	clock_t end_time;				//When the worker process was detected to have completed
+	unsigned long job_count;		//After a persistent worker has received its first job, subsequent job files will omit redundant job data (everything except the start/end solution numbers to test)
 } EOF_SP_PATH_WORKER;
 
 int eof_note_is_last_longest_gem(EOF_SONG *sp, unsigned long track, unsigned long note);

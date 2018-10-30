@@ -290,6 +290,7 @@ int         eof_shift_used = 0;	//Tracks whether the SHIFT key was used for a ke
 int         eof_emergency_stop = 0;	//Set to nonzero by eof_switch_out_callback() so that playback can be stopped OUTSIDE of the callback, in EOF's main loop so that a crash with time stretched playback can be avoided
 int         ch_sp_path_worker = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker parameter to have it run as a worker process for star power pathing evaluation
 int         ch_sp_path_worker_logging = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker_logging parameter, which will allow logging to be performed during solving
+unsigned long ch_sp_path_worker_number = 0;	//Set to the number in the job filename, for creating worker-specific logging
 
 /* mouse control data */
 int         eof_selected_control = -1;
@@ -4045,6 +4046,9 @@ int eof_initialize(int argc, char * argv[])
 	}
 	if((argc >= 4) && !ustricmp(argv[3], "-ch_sp_path_worker_logging"))
 	{	//If this EOF instance was is being called with logging manually enabled (must be fourth parameter)
+		char * fnptr = get_filename(argv[2]);	//Get a pointer to the filename of the job file path
+		(void) replace_extension(temp_filename, fnptr, "", sizeof(temp_filename));	//Strip away the extension to get the worker number
+		ch_sp_path_worker_number = atol(temp_filename);	//Convert it to a number
 		ch_sp_path_worker_logging = 1;
 	}
 
@@ -4706,26 +4710,30 @@ void eof_exit(void)
 
 	//Delete the undo/redo related files
 	(void) eof_validate_temp_folder();	//Attempt to set the current working directory if it isn't EOF's program folder
-	eof_save_config("eof.cfg");
-	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
-	(void) delete_file(fn);	//And delete it if it exists
-	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo OGG
-	(void) delete_file(fn);	//And delete it if it exists
-	if(eof_undo_states_initialized > 0)
-	{
-		for(i = 0; i < EOF_MAX_UNDO; i++)
-		{	//For each undo slot
-			if(eof_undo_filename[i])
-			{
-				(void) delete_file(eof_undo_filename[i]);	//Delete the undo file
-				(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
-				(void) delete_file(fn);	//And delete it if it exists
+
+	if(!ch_sp_path_worker)
+	{	//None of these are applicable if this EOF isntance was a worker process
+		eof_save_config("eof.cfg");
+		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
+		(void) delete_file(fn);	//And delete it if it exists
+		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo OGG
+		(void) delete_file(fn);	//And delete it if it exists
+		if(eof_undo_states_initialized > 0)
+		{
+			for(i = 0; i < EOF_MAX_UNDO; i++)
+			{	//For each undo slot
+				if(eof_undo_filename[i])
+				{
+					(void) delete_file(eof_undo_filename[i]);	//Delete the undo file
+					(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
+					(void) delete_file(fn);	//And delete it if it exists
+				}
 			}
 		}
+		(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path_s);
+		(void) delete_file(eof_autoadjust_path);
+		eof_destroy_undo();
 	}
-	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path_s);
-	(void) delete_file(eof_autoadjust_path);
-	eof_destroy_undo();
 
 	//Free the file filters
 	if(!ch_sp_path_worker)
@@ -5075,7 +5083,17 @@ void eof_start_logging(void)
 		// coverity[dont_call]
 		eof_log_id = ((unsigned int) rand()) % 1000;	//Create a 3 digit random number to represent this EOF instance
 		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
-		(void) replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
+		if(ch_sp_path_worker_logging)
+		{	//If this is a worker process, use the process number in the log file name
+			char tempstr[10];
+
+			(void) snprintf(tempstr, sizeof(tempstr) - 1, "%lu.log", ch_sp_path_worker_number);
+			(void) replace_filename(log_filename, log_filename, tempstr, 1024);
+		}
+		else
+		{	//Normal EOF process
+			(void) replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
+		}
 		eof_log_fp = fopen(log_filename, "w");
 
 		if(eof_log_fp == NULL)

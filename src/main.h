@@ -455,6 +455,7 @@ extern int         eof_shift_used;
 extern int         eof_emergency_stop;
 extern int         ch_sp_path_worker;
 extern int         ch_sp_path_worker_logging;
+extern unsigned long ch_sp_path_worker_number;
 
 /* mouse control data */
 extern int         eof_selected_control;
