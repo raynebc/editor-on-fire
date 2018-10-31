@@ -104,7 +104,17 @@ sudo make install
 Some warnings during the make process are fine as long as the output indicates the final build target of afinfo completes.
 
 ## Build EOF ##
-Download the latest source code from https://github.com/raynebc/editor-on-fire .  You can use git tools if you like, or simply click the "Clone or download" button and pick the option to "Download ZIP" and then extract the source code.  You can then finally build EOF by opening a terminal to EOF's /src folder and running the makefile:
+Download the latest source code from https://github.com/raynebc/editor-on-fire .  You can use git tools if you like, or simply click the "Clone or download" button and pick the option to "Download ZIP" and then extract the source code.
+
+**If you want to use EOF on versions of OS X newer than Sierra, ie. on High Sierra or Mojave, a newer SDK version is needed and there is an edit you have to make to the makefile.macosx file.  I went with SDK 10.12, which I'd moved into the same parent folder as the 10.5 SDK (which I'm guessing is available with the 7.x series of Xcode downloads from the Apple website) I used when building Allegro previously:**
+
+In the CFLAGS line, add the following:
+```
+-isysroot /SDKs/MacOSX10.12.sdk
+```
+It doesn't seem like it's required to build EOF and Allegro with the same SDK version.
+
+You can then finally build EOF by opening a terminal to EOF's /src folder and running the makefile:
 ```
 make -f makefile.macosx
 ```
