@@ -671,11 +671,12 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		else if((eof_hover_note >= 0) && (p == 3))
 		{	//If this note is currently being moused over
 			rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, eof_color_gray);
-			if(!iscymbal)
-			{	//If this note is not a cymbal, draw a non filled circle over the note
-				circle(window->screen, x, y, radius, eof_color_gray);
-			}
-			else
+//currently, no condition exists where iscymbal is marked as nonzero in this if code block
+//			if(!iscymbal)
+//			{	//If this note is not a cymbal, draw a non filled circle over the note
+//				circle(window->screen, x, y, radius, eof_color_gray);
+//			}
+//			else
 			{	//Draw a non filled rectangle along the border of the filled triangle
 				line(window->screen, x, y-radius, x+radius, y+radius, eof_color_gray);
 				line(window->screen, x+radius, y+radius, x-radius, y+radius, eof_color_gray);

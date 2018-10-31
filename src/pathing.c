@@ -1090,6 +1090,21 @@ int eof_menu_track_find_ch_sp_path(void)
 	if(!note_count)
 		return 1;	//Don't both doing anything if there are no notes in the active track difficulty
 
+///Prompt user how many processes to use to evaluate solutions
+	eof_color_dialog(eof_menu_track_find_ch_sp_path_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_track_find_ch_sp_path_dialog);
+
+	if(eof_popup_dialog(eof_menu_track_find_ch_sp_path_dialog, 2) != 6)
+	{	//If the user did not click OK
+		return 1;
+	}
+	process_count = atol(eof_etext);
+	if(process_count < 1)
+	{
+		allegro_message("Must specify at number of processes that is 1 or higher.");
+		return 1;
+	}
+
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEvaluating CH path solution for \"%s\" difficulty %u", eof_song->track[eof_selected_track]->name, eof_note_type);
 	eof_log(eof_log_string, 2);
 
@@ -1289,21 +1304,6 @@ int eof_menu_track_find_ch_sp_path(void)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEstimated maximum number of star power deployments is %lu", max_deployments);
 	eof_log_casual(eof_log_string, 1, 1, 1);
 	eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk
-
-///Prompt user how many processes to use to evaluate solutions
-	eof_color_dialog(eof_menu_track_find_ch_sp_path_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_track_find_ch_sp_path_dialog);
-
-	if(eof_popup_dialog(eof_menu_track_find_ch_sp_path_dialog, 2) != 6)
-	{	//If the user did not click OK
-		return 1;
-	}
-	process_count = atol(eof_etext);
-	if(process_count < 1)
-	{
-		allegro_message("Must specify at number of processes that is 1 or higher.");
-		return 1;
-	}
 
 	///Test all possible solutions to find the highest scoring one
 	if(!error)
@@ -1885,6 +1885,13 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 	eof_log("eof_ch_sp_path_supervisor_process_solve() entered", 1);
 	start_time = clock();
 
+	//Initialize temp folder and job file path array
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 1;	//Return failure
+	}
+
 	//Initialize worker array
 	workers = malloc(sizeof(EOF_SP_PATH_WORKER) * worker_count);
 	if(!workers)
@@ -1896,13 +1903,6 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 		if(!workers[ctr].assignment_size)
 			workers[ctr].assignment_size = 1;	//Job size is a minimum of 1 solution set
 		workers[ctr].job_count = 1;
-	}
-
-	//Initialize temp folder and job file path array
-	if(eof_validate_temp_folder())
-	{	//Ensure the correct working directory and presence of the temporary folder
-		eof_log("\tCould not validate working directory and temp folder", 1);
-		return 1;	//Return failure
 	}
 
 	for(workerctr = 0; workerctr < worker_count; workerctr++)

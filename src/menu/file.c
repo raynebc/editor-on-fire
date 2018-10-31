@@ -51,6 +51,7 @@ MENU eof_file_notes_panel_menu[] =
 	{"N&Ote controls", eof_menu_file_notes_panel_note_controls, NULL, 0, NULL},
 	{"&Information panel", eof_menu_file_notes_panel_information, NULL, 0, NULL},
 	{"Note &Counts", eof_menu_file_notes_panel_note_counts, NULL, 0, NULL},
+	{"Clone &Hero", eof_menu_file_notes_panel_clone_hero, NULL, 0, NULL},
 	{eof_file_notes_panel_menu_string, eof_menu_file_notes_panel_user, NULL, 0, NULL},
 	{"&Browse", eof_menu_file_notes_panel_browse, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
@@ -6283,6 +6284,27 @@ int eof_menu_file_notes_panel_note_counts(void)
 	}
 	(void) ustrcpy(eof_current_notes_panel_path, "note_counts.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the note_counts.panel.txt, recover panel file from eof.dat if necessary
+}
+
+int eof_menu_file_notes_panel_clone_hero(void)
+{
+	eof_log("Switching Notes Panel to Clone Hero.", 1);
+
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		eof_enable_notes_panel = 0;
+
+		return 1;
+	}
+
+	if(eof_enable_notes_panel)
+	{	//If the notes window was already open
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+	}
+	(void) ustrcpy(eof_current_notes_panel_path, "clone_hero.panel.txt");
+	return eof_display_notes_panel_logic(1);	//Load the clone_hero.panel.txt, recover panel file from eof.dat if necessary
 }
 
 int eof_menu_file_notes_panel_user(void)
