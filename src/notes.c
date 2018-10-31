@@ -1066,7 +1066,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		char *count_string = strcasestr_spec(macro, "MOVE_UP_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
 
 		if(eof_read_macro_number(count_string, &pixelcount))
-		{	//If the gem count was successfully parsed
+		{	//If the pixel count was successfully parsed
 			dest_buffer[0] = '\0';
 			if(panel->ypos)
 				panel->ypos -= pixelcount;	//Update the y coordinate for Notes panel printing
@@ -1089,7 +1089,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		char *count_string = strcasestr_spec(macro, "MOVE_DOWN_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
 
 		if(eof_read_macro_number(count_string, &pixelcount))
-		{	//If the gem count was successfully parsed
+		{	//If the pixel count was successfully parsed
 			dest_buffer[0] = '\0';
 			panel->ypos += pixelcount;	//Update the y coordinate for Notes panel printing
 			return 1;
@@ -1111,7 +1111,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		char *count_string = strcasestr_spec(macro, "MOVE_LEFT_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
 
 		if(eof_read_macro_number(count_string, &pixelcount))
-		{	//If the gem count was successfully parsed
+		{	//If the pixel count was successfully parsed
 			dest_buffer[0] = '\0';
 			if(panel->xpos)
 				panel->xpos -= pixelcount;	//Update the x coordinate for Notes panel printing
@@ -1134,7 +1134,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		char *count_string = strcasestr_spec(macro, "MOVE_RIGHT_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
 
 		if(eof_read_macro_number(count_string, &pixelcount))
-		{	//If the gem count was successfully parsed
+		{	//If the pixel count was successfully parsed
 			dest_buffer[0] = '\0';
 			panel->xpos += pixelcount;	//Update the x coordinate for Notes panel printing
 			return 1;
@@ -2159,7 +2159,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long count;
 		unsigned char gems, toms, cymbals;
-		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_");	//Get a pointer to the text that is expected to be the gem count
+		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_");	//Get a pointer to the text that is expected to be the gem combination
 
 		if(eof_read_macro_gem_designations(gem_string, &gems, &toms, &cymbals))
 		{	//If the gem designations were successfully parsed
@@ -2175,7 +2175,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long count, totalnotecount = 0;
 		unsigned char gems, cymbals, toms;
-		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_");	//Get a pointer to the text that is expected to be the gem count
+		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_");	//Get a pointer to the text that is expected to be the gem combination
 
 		if(eof_read_macro_gem_designations(gem_string, &gems, &toms, &cymbals))
 		{	//If the gem designations were successfully parsed
@@ -2516,16 +2516,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
-	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific gem count
+	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific pitch
 	if(strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_"))
 	{
 		unsigned long ctr, count = 0, pitch;
-		char *count_string = strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_");	//Get a pointer to the text that is expected to be the gem count
+		char *count_string = strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_");	//Get a pointer to the text that is expected to be the pitch
 
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
 			if(eof_read_macro_number(count_string, &pitch))
-			{	//If the gem count was successfully parsed
+			{	//If the pitch number was successfully parsed
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each lyric
 					if(eof_get_note_note(eof_song, eof_selected_track, ctr) == pitch)

@@ -114,18 +114,20 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
 	//If logging is greater than 1, verbose logging for each note's scoring, start and end of star power deployment, etc. is performed
 
-int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount);
+int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes);
 	//Calculates all solutions where the first deployment starts at note index between first_deploy and last_deploy (inclusive),
 	// comparing their scores with the provided best solution and updating its content accordingly
 	//If all solutions are to be tested, ULONG_MAX should be specified for last_deploy
 	//validcount and invalidcount are passed so the calling function can know how many solutions were tested
+	//deployment_notes is used to track the highest count of notes that were found to be playable during all star power deployments of any solution
 	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
 	//Returns 0 on success, 1 on error or 2 on user cancellation
 
-int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount);
+int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes);
 	//Finds the best solution as eof_ch_sp_path_single_process_solve() does, but does so by running the specified number of worker EOF processes in parallel
 	// to test all solution sets from first_deploy to testing->note_count
 	//validcount and invalidcount are passed so the calling function can know how many solutions were tested among all worker processes
+	//deployment_notes is used to track the highest count of notes that were found to be playable during all star power deployments of any solution
 	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
 	//Returns 0 on success, 1 on error or 2 on user cancellation
 

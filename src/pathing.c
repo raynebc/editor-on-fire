@@ -749,7 +749,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	return 0;	//Return solution evaluated
 }
 
-int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount)
+int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes)
 {
 	char windowtitle[101] = {0};
 	int invalid_increment = 0;	//Set to nonzero if the last iteration of the loop manually incremented the solution due to the solution being invalid
@@ -757,9 +757,9 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 
 	eof_log("eof_ch_sp_path_single_process_solve() entered", 1);
 
-	if(!eof_song || !best || !testing || !validcount || !invalidcount)
+	if(!eof_song || !best || !testing || !validcount || !invalidcount || !deployment_notes)
 	{
-		eof_log("\tInvalid pointer parameter", 1);
+		eof_log("\tInvalid pointer parameters", 1);
 		return 1;	//Invalid parameters
 	}
 	if(first_deploy > best->note_count)
@@ -770,6 +770,7 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 	}
 
 	testing->num_deployments = 0;	//The first solution increment will test one deployment
+	*deployment_notes = 0;			//Reset this count so the first solution will be counted as the one with the most notes played during SP deployments
 	while(1)
 	{	//Continue testing until all solutions (or specified solutions) are tested
 		unsigned long next_deploy;
@@ -893,6 +894,10 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 				best->num_deployments = testing->num_deployments;
 				best->solution_number = *validcount + *invalidcount + 1;	//Keep track of which solution number this is, for logging purposes
 
+				if(testing->deployment_notes > *deployment_notes)
+				{	//If this solution played more notes during star power than any previous solution
+					*deployment_notes = testing->deployment_notes;	//Track this count
+				}
 				memcpy(best->deployments, testing->deployments, sizeof(unsigned long) * testing->deploy_count);
 			}
 			(*validcount)++;	//Track the number of valid solutions tested
@@ -1057,6 +1062,12 @@ int eof_menu_track_find_ch_sp_path(void)
 	double sp_sustain;				//The number of beats of star power sustain, used to count whammy bonus star power when estimating the maximum number of star power deployments
 
 	long process_count;
+	unsigned long deployment_notes = 0;	//Tracks the highest count of notes that were found to be playable during all star power deployments of any solution
+
+	//Variables for calculating the base score for the track difficulty (gem and sustain points, no bonuses, no multiplier) for calculating average multiplier (ie. awarded # of stars)
+	unsigned long base_score;
+	unsigned long note_score;
+	double sustain_score;
 
  	eof_log("eof_menu_track_find_ch_sp_path() entered", 1);
 
@@ -1174,6 +1185,20 @@ int eof_menu_track_find_ch_sp_path(void)
 		}//If the note is in the active difficulty
 	}//For each note in the active track
 
+	///Calculate the base score of the track difficulty
+	base_score = 0;
+	for(ctr = 0, index = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active difficulty
+			note_score = eof_note_count_colors(eof_song, eof_selected_track, ctr) * 50;	//The base score for a note is 50 points per gem
+			sustain_score = 25.0 * testing->note_beat_lengths[index];					//The sustain's base score is 25 points per beat
+			base_score += note_score + (sustain_score + 0.5);							//Add the rounded sum of those to the base score
+
+			index++;
+		}
+	}
+
 	///Estimate the maximum number of star power deployments, to limit the number of solutions tested
 	sp_phrase_count = 0;
 	sp_sustain = 0.0;
@@ -1286,11 +1311,11 @@ int eof_menu_track_find_ch_sp_path(void)
 		starttime = clock();	//Track the start time
 		if(process_count == 1)
 		{	//Perform a single process evaluation of all solutions
-			error = eof_ch_sp_path_single_process_solve(best, testing, first_deploy, ULONG_MAX, &validcount, &invalidcount);
+			error = eof_ch_sp_path_single_process_solve(best, testing, first_deploy, ULONG_MAX, &validcount, &invalidcount, &deployment_notes);
 		}
 		else
 		{	//Perform a multi process evaluation of all solutions
-			error = eof_ch_sp_path_supervisor_process_solve(best, testing, first_deploy, process_count, &validcount, &invalidcount);
+			error = eof_ch_sp_path_supervisor_process_solve(best, testing, first_deploy, process_count, &validcount, &invalidcount, &deployment_notes);
 		}
 		endtime = clock();	//Track the end time
 		elapsed_time = (double)(endtime - starttime) / (double)CLOCKS_PER_SEC;	//Convert to seconds
@@ -1341,8 +1366,10 @@ int eof_menu_track_find_ch_sp_path(void)
 			eof_log_casual("Best solution:", 1, 1, 1);
 			(void) eof_evaluate_ch_sp_path_solution(testing, best->solution_number, 2);
 		}
+		eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk, and use the normal logging function from here
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", validcount + invalidcount, validcount, invalidcount, elapsed_time, ((double)validcount + invalidcount)/elapsed_time);
-		eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk
+		eof_log(eof_log_string, 1);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tThe highest number of notes that could be played during star power deployment among all solutions was %lu (%.2f%%)", deployment_notes, (double)deployment_notes * 100.0 / note_count);
 		eof_log(eof_log_string, 1);
 		if((best->deployment_notes == 0) && (best->score > worst_score))
 		{	//If the best score did not reflect notes being played in star power, but the score somehow was better than the score from when no star power deployment was tested
@@ -1357,7 +1384,16 @@ int eof_menu_track_find_ch_sp_path(void)
 		else
 		{	//There is at least one note played during star power deployment
 			unsigned long notenum, min, sec, ms, flags;
-			char timestamps[500], indexes[500], tempstring[20], scorestring[50];
+			char timestamps[500], indexes[500], tempstring[20], scorestring[50], multiplierstring[50], base_score_string[25];
+			char *star_string;
+			char *str_0star = "(no stars)";
+			char *str_1star = "(1 star)";
+			char *str_2star = "(2 stars)";
+			char *str_3star = "(3 stars)";
+			char *str_4star = "(4 stars)";
+			char *str_5star = "(5 stars)";
+			char *str_6star = "(6 stars)";
+			char *str_7star = "(7 stars)";
 			char *resultstring1 = "Optimum star power deployment in Clone Hero for this track difficulty is at these note timestamps (highlighted):";
 
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", resultstring1);
@@ -1404,9 +1440,32 @@ int eof_menu_track_find_ch_sp_path(void)
 			(void) snprintf(scorestring, sizeof(scorestring) - 1, "Estimated score:  %lu", best->score);
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", scorestring);
 			eof_log(eof_log_string, 1);
+
+			star_string = str_0star;
+			if(best->score >= base_score * 0.1)
+				star_string = str_1star;
+			if(best->score >= base_score * 0.5)
+				star_string = str_2star;
+			if(best->score >= base_score)
+				star_string = str_3star;
+			if(best->score >= base_score * 2)
+				star_string = str_4star;
+			if(best->score >= base_score * 2.8)
+				star_string = str_5star;
+			if(best->score >= base_score * 3.6)
+				star_string = str_6star;
+			if(best->score >= base_score * 4.4)
+				star_string = str_7star;
+			(void) snprintf(base_score_string, sizeof(base_score_string) - 1, "Base score:  %lu", base_score);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", base_score_string);
+			eof_log(eof_log_string, 1);
+			(void) snprintf(multiplierstring, sizeof(multiplierstring) - 1, "Average multiplier:  %.2f %s", (double)best->score / base_score, star_string);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", multiplierstring);
+			eof_log(eof_log_string, 1);
+
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
 			eof_render();
-			allegro_message("%s\n%s\n%s", resultstring1, timestamps, scorestring);
+			allegro_message("%s\n%s\n\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, base_score_string, multiplierstring, deployment_notes, (double)deployment_notes * 100.0 / note_count);
 		}
 	}
 
@@ -1418,7 +1477,6 @@ int eof_menu_track_find_ch_sp_path(void)
 	free(deploy_cache);
 	free(best);
 	free(testing);
-	eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk, if any are left
 
 	for(ctr = 0; ctr < tracksize; ctr++)
 	{	//For each note in the active track
@@ -1440,7 +1498,7 @@ void eof_ch_sp_path_worker(char *job_file)
 	char project_path[1024];
 	int error = 0, canceled = 0, done = 0, idle = 0, retval, firstjob = 1;
 	EOF_SP_PATH_SOLUTION best = {0}, testing = {0};
-	unsigned long ctr, first_deploy = ULONG_MAX, last_deploy = ULONG_MAX, validcount = 0, invalidcount = 0;
+	unsigned long ctr, first_deploy = ULONG_MAX, last_deploy = ULONG_MAX, validcount = 0, invalidcount = 0, deployment_notes = 0;
 
 	//Validate initial job file path
 	eof_log_cwd();
@@ -1687,7 +1745,7 @@ void eof_ch_sp_path_worker(char *job_file)
 				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tTesting solution sets #%lu through #%lu", first_deploy, last_deploy);
 				eof_log(eof_log_string, 1);
 			}
-			retval = eof_ch_sp_path_single_process_solve(&best, &testing, first_deploy, last_deploy, &validcount, &invalidcount);
+			retval = eof_ch_sp_path_single_process_solve(&best, &testing, first_deploy, last_deploy, &validcount, &invalidcount, &deployment_notes);
 			if(retval == 1)
 			{	//If the solution testing failed
 				error = 1;
@@ -1750,7 +1808,8 @@ void eof_ch_sp_path_worker(char *job_file)
 			(void) replace_extension(filename, job_file, "success", 1024);	//Create a results file to contain the best solution
 			outf = pack_fopen(filename, "w");
 			pack_iputl(best.score, outf);
-			pack_iputl(best.deployment_notes, outf);
+			pack_iputl(best.deployment_notes, outf);	//Write the number of notes played during star power in the best solution
+			pack_iputl(deployment_notes, outf);			//Write the highest count of notes that were found to be playable during all of this job's tested solutions
 			pack_iputl(validcount, outf);
 			pack_iputl(invalidcount, outf);
 			pack_iputl(best.num_deployments, outf);
@@ -1802,7 +1861,7 @@ void eof_ch_sp_path_worker(char *job_file)
 	(void) delete_file(job_file);	//Delete the job file to signal to the supervisor process that the worker is no longer running
 }
 
-int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount)
+int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes)
 {
 	EOF_SP_PATH_WORKER *workers;
 	PACKFILE *fp;
@@ -1818,8 +1877,9 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 	int done = 0, error = 0, canceled = 0, workerstatuschange;
 	double elapsed_time;
 	unsigned long trackdiffsize = 0;
+	unsigned long job_deploy_notes;	//Used to store a job file's highest count of notes that were found to be playable during all star power deployments of any of the job's solutions
 
-	if(!best || !testing || !validcount || !invalidcount || !worker_count)
+	if(!best || !testing || !validcount || !invalidcount || !worker_count || !deployment_notes)
 		return 1;	//Invalid parameters
 
 	eof_log("eof_ch_sp_path_supervisor_process_solve() entered", 1);
@@ -1887,6 +1947,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 	//Evaluate solutions
 	solutionctr = first_deploy;	//The first worker process will be directed to calculate this solution set
 	(void) eof_count_selected_notes(&trackdiffsize);	//Count the number of notes in the active track difficulty
+	*deployment_notes = 0;			//Reset this count so the first solution will be counted as the one with the most notes played during SP deployments
 	while(!done && !error && !canceled)
 	{	//Until the supervisor's job is completed
 		workerstatuschange = num_workers_running = 0;
@@ -2051,111 +2112,142 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 				(void) replace_extension(filename, filename, "job", sizeof(filename));	//Build the path to this worker's job file
 				if(!exists(filename))
 				{	//If the job file no longer exists, the worker has completed, check the results
-					(void) replace_extension(filename, filename, "fail", sizeof(filename));	//Build the path to check whether this worker process failed
-					if(exists(filename))
-					{	//If the worker failed
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected failure by worker process #%lu", workerctr);
-						eof_log_casual(eof_log_string, 1, 1, 1);
-						error = 1;
-					}
-					else
-					{
-						(void) replace_extension(filename, filename, "cancel", sizeof(filename));	//Build the path to check whether this worker process was canceled
+					int retry;
+
+					for(retry = 5; retry > 0; retry--)
+					{	//Attempt to read the results file up to five times
+						(void) replace_extension(filename, filename, "fail", sizeof(filename));	//Build the path to check whether this worker process failed
 						if(exists(filename))
-						{	//If the user canceled the worker
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected cancellation by worker process #%lu", workerctr);
+						{	//If the worker failed
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected failure by worker process #%lu", workerctr);
 							eof_log_casual(eof_log_string, 1, 1, 1);
-							canceled = 1;
+							error = 1;
 						}
 						else
-						{
-							(void) replace_extension(filename, filename, "success", sizeof(filename));	//Build the path to check whether this worker process succeeded
+						{	//If the worker did not create a file indicating failure status
+							(void) replace_extension(filename, filename, "cancel", sizeof(filename));	//Build the path to check whether this worker process was canceled
 							if(exists(filename))
-							{	//If the worker succeeded
-								fp = pack_fopen(filename, "rb");
-								if(!fp)
-								{	//If the results couldn't be accessed
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFailed to open \"%s\" results file", filename);
-									eof_log_casual(eof_log_string, 1, 1, 1);
-									error = 1;
-								}
-								else
-								{
-									unsigned long vcount, icount;
-									char tempstring[30];
-
-									workers[workerctr].end_time = clock();	//Record the completion time of the worker
-
-									//Parse the results
-									testing->score = pack_igetl(fp);
-									testing->deployment_notes = pack_igetl(fp);
-									vcount = pack_igetl(fp);
-									*validcount += vcount;
-									icount = pack_igetl(fp);
-									*invalidcount += icount;
-									testing->num_deployments = pack_igetl(fp);	//The number of deployments in the solution
-									for(ctr = 0; ctr < testing->num_deployments; ctr++)
-									{	//For each deployment in the solution
-										testing->deployments[ctr] = pack_igetl(fp);	//Read the deployment's note index
-									}
-									(void) pack_fclose(fp);
-
-									//Log the results
-									elapsed_time = (double)(workers[workerctr].end_time - workers[workerctr].start_time) / (double)CLOCKS_PER_SEC;	//Convert to seconds
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (%lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, vcount + icount, elapsed_time);
-									for(ctr = 0; ctr < testing->num_deployments; ctr++)
-									{	//For each deployment in the chosen solution
-										snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing->deployments[ctr]);
-										strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
-									}
-									snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing->score);
-									strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
-									eof_log_casual(eof_log_string, 1, 1, 1);
-									if(elapsed_time < 5.0)
-									{	//If the worker completed in less than five seconds
-										workers[workerctr].assignment_size *= (5.0 / elapsed_time);	//Scale the job assignment size to take at least five seconds long
-									}
-
-									//Compare with current best solution
-									if((testing->score > best->score) || ((testing->score == best->score) && (testing->deployment_notes < best->deployment_notes)))
-									{	//If this worker's solution is the best solution
-										eof_log_casual("\t\t!New best solution", 1, 1, 1);
-
-										best->score = testing->score;	//It is the new best solution, copy its data into the best solution structure
-										best->deployment_notes = testing->deployment_notes;
-										best->num_deployments = testing->num_deployments;
-
-										memcpy(best->deployments, testing->deployments, sizeof(unsigned long) * testing->deploy_count);
-									}
-
-									//Update the worker status
-									workers[workerctr].status = EOF_SP_PATH_WORKER_IDLE;
-									workerstatuschange = 1;
-									num_jobs_completed++;	//Track the number of completed solution jobs
-									if(EOF_PERSISTENT_WORKER)
-									{	//If the worker will remain running after completing this job
-										workers[workerctr].job_count++;	//Track how many jobs the worker has been assigned, as all job files ffter the first will require less data to be written to file
-									}
-								}
-							}//If the worker succeeded
+							{	//If the user canceled the worker
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected cancellation by worker process #%lu", workerctr);
+								eof_log_casual(eof_log_string, 1, 1, 1);
+								canceled = 1;
+								break;	//Break from retry loop
+							}
 							else
-							{	//None of the expected results file names were found
-								eof_log_casual("\tWorker failed to report status.", 1, 1, 1);
-								error = 1;
-							}
-							if(!error)
-							{	//If the expected results file was found, delete it
-								(void) delete_file(filename);
-							}
-						}
+							{	//If the worker was not canceled
+								(void) replace_extension(filename, filename, "success", sizeof(filename));	//Build the path to check whether this worker process succeeded
+								if(exists(filename))
+								{	//If the worker succeeded
+									for(ctr = 0; ctr < 5; ctr++)
+									{	//Try to read the success file up to five times
+										fp = pack_fopen(filename, "rb");
+										if(fp)		//If the file was opened
+											break;	//exit this loop
+										Idle(2);	//Brief wait before retry
+									}
+									if(!fp)
+									{	//If the results couldn't be accessed
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFailed to open \"%s\" results file", filename);
+										eof_log_casual(eof_log_string, 1, 1, 1);
+										error = 1;
+										break;	//Break from retry loop
+									}
+									else
+									{	//The results file was opened
+										unsigned long vcount, icount;
+										char tempstring[30];
+
+										workers[workerctr].end_time = clock();	//Record the completion time of the worker
+
+										//Parse the results
+										testing->score = pack_igetl(fp);
+										testing->deployment_notes = pack_igetl(fp);
+										job_deploy_notes = pack_igetl(fp);
+										if(job_deploy_notes > *deployment_notes)
+										{	//If this job contained a solution that played more notes during combined star power deployments than any other tested solution
+											*deployment_notes = job_deploy_notes;	//Track this count
+										}
+										vcount = pack_igetl(fp);
+										*validcount += vcount;
+										icount = pack_igetl(fp);
+										*invalidcount += icount;
+										testing->num_deployments = pack_igetl(fp);	//The number of deployments in the solution
+										for(ctr = 0; ctr < testing->num_deployments; ctr++)
+										{	//For each deployment in the solution
+											testing->deployments[ctr] = pack_igetl(fp);	//Read the deployment's note index
+										}
+										(void) pack_fclose(fp);
+
+										//Log the results
+										elapsed_time = (double)(workers[workerctr].end_time - workers[workerctr].start_time) / (double)CLOCKS_PER_SEC;	//Convert to seconds
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (%lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, vcount + icount, elapsed_time);
+										for(ctr = 0; ctr < testing->num_deployments; ctr++)
+										{	//For each deployment in the chosen solution
+											snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing->deployments[ctr]);
+											strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+										}
+										snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing->score);
+										strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+										eof_log_casual(eof_log_string, 1, 1, 1);
+										if(elapsed_time < 5.0)
+										{	//If the worker completed in less than five seconds
+											workers[workerctr].assignment_size *= (5.0 / elapsed_time);	//Scale the job assignment size to take at least five seconds long
+										}
+
+										//Compare with current best solution
+										if((testing->score > best->score) || ((testing->score == best->score) && (testing->deployment_notes < best->deployment_notes)))
+										{	//If this worker's solution is the best solution
+											eof_log_casual("\t\t!New best solution", 1, 1, 1);
+
+											best->score = testing->score;	//It is the new best solution, copy its data into the best solution structure
+											best->deployment_notes = testing->deployment_notes;
+											best->num_deployments = testing->num_deployments;
+
+											if(testing->deployment_notes > *deployment_notes)
+											{	//If this solution played more notes during star power than any previous solution
+												*deployment_notes = testing->deployment_notes;	//Track this count
+											}
+											memcpy(best->deployments, testing->deployments, sizeof(unsigned long) * testing->deploy_count);
+										}
+
+										//Update the worker status
+										workers[workerctr].status = EOF_SP_PATH_WORKER_IDLE;
+										workerstatuschange = 1;
+										num_jobs_completed++;	//Track the number of completed solution jobs
+										if(EOF_PERSISTENT_WORKER)
+										{	//If the worker will remain running after completing this job
+											workers[workerctr].job_count++;	//Track how many jobs the worker has been assigned, as all job files ffter the first will require less data to be written to file
+										}
+										break;	//Break from retry loop
+									}//The results file was opened
+								}//If the worker succeeded
+								else
+								{	//None of the expected results file names were found
+									if(retry)
+									{	//If there are read attempts left before giving up
+										Idle(2);	//Brief wait before retry
+									}
+									else
+									{
+										eof_log_casual("\tWorker failed to report status.", 1, 1, 1);
+										error = 1;
+										break;	//Break from retry loop
+									}
+								}
+							}//If the worker was not canceled
+						}//If the worker did not create a file indicating failure status
+					}//Attempt to read the results file up to five times
+					if(error)
+					{
+						set_window_title("SP pathing failed.  Waiting for workers to finish/cancel.");
+						workers[workerctr].status = EOF_SP_PATH_WORKER_FAILED;
+						workerstatuschange = 1;
+					}
+					else
+					{	//If the expected results file was processed, delete it
+						(void) delete_file(filename);
 					}
 				}//If the job file no longer exists, the worker has completed, check the results
-				if(error)
-				{
-					set_window_title("SP pathing failed.  Waiting for workers to finish/cancel.");
-					workers[workerctr].status = EOF_SP_PATH_WORKER_FAILED;
-					workerstatuschange = 1;
-				}
 			}//If this process was previously dispatched, check if it's done
 			else if(workers[workerctr].status == EOF_SP_PATH_WORKER_STOPPING)
 			{	//If this process was previously commanded to end, check if it has acknowledged
