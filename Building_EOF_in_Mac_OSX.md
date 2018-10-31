@@ -106,7 +106,9 @@ Some warnings during the make process are fine as long as the output indicates t
 ## Build EOF ##
 Download the latest source code from https://github.com/raynebc/editor-on-fire .  You can use git tools if you like, or simply click the "Clone or download" button and pick the option to "Download ZIP" and then extract the source code.
 
-**If you want to use EOF on versions of OS X newer than Sierra, ie. on High Sierra or Mojave, a newer SDK version is needed and there is an edit you have to make to the makefile.macosx file.  I went with SDK 10.12, which I'd moved into the same parent folder as the 10.5 SDK (which I'm guessing is available with the 7.x series of Xcode downloads from the Apple website) I used when building Allegro previously:**
+**If you want to use EOF on versions of OS X newer than Sierra, ie. on High Sierra or Mojave, a newer SDK version is needed and there is an edit you have to make to the makefile.macosx file.  Otherwise skip this step and go to the part where you use the make command.**
+
+**I went with SDK 10.12 (which I'm guessing is available with the 7.x series of Xcode downloads from the Apple website).  For convenience, I copied this SDK folder into the same parent folder as the 10.5 SDK I used when building Allegro previously.  The corresponding change to make to the makefile is as follows:**
 
 In the CFLAGS line, add the following:
 ```
