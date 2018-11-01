@@ -5185,7 +5185,7 @@ void eof_log_casual(const char *text, int level, int prefix, int newline)
 				}
 				else
 				{	//Just the provided text
-					retval = snprintf(buffer2, sizeof(buffer2) - 1, text);
+					retval = snprintf(buffer2, sizeof(buffer2) - 1, "%s", text);
 				}
 			}
 			if(retval > 0)
