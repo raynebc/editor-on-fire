@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -O2 -fomit-frame-pointer -ffast-math -arch i386 -mmacosx-version-min=10.5 -isysroot /SDKs/MacOSX10.6.sdk -funroll-loops -flto -Ialogg/include -I/usr/local/include -DEOF_BUILD
+CFLAGS = -O2 -fomit-frame-pointer -ffast-math -arch i386 -mmacosx-version-min=10.6 -isysroot /SDKs/MacOSX10.6.sdk -funroll-loops -flto -Ialogg/include -I/usr/local/include -DEOF_BUILD
 CXXFLAGS = $(CFLAGS)
-LIBS = `pkg-config allegro --libs` -framework Cocoa -framework Carbon -framework IOKit -framework System -framework CoreAudio -framework AudioUnit -framework AudioToolBox -framework QuickTime -framework Accelerate -logg -lvorbis -lvorbisfile -lm -lfftw3 -lfftw3f -lrubberband -lstdc++ -lc++
+LIBS = `pkg-config allegro --libs` -framework Cocoa -framework Carbon -framework IOKit -framework System -framework CoreAudio -framework AudioUnit -framework AudioToolBox -framework QuickTime -framework Accelerate -logg -lvorbis -lvorbisfile -lm -lfftw3 -lfftw3f -lrubberband -lstdc++
 
 include makefile.common
 
@@ -26,13 +26,17 @@ $(BUNDLE).app : ../bin/$(EXENAME)
 	@mkdir $(BUNDLE).app/Contents/Resources/eof/vocaltutorial
 	@mkdir $(BUNDLE).app/Contents/Resources/eof/proguitartutorial
 	@cp ../bin/check.wav $(BUNDLE).app/Contents/Resources/eof
-	@cp ../bin/check.wav $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/chordshapes.xml $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/clone_hero.panel.txt $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/eof.dat $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/GPL_license.txt $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/history.txt $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/info.panel.txt $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/keys.txt $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/license.txt $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/note_controls.panel.txt $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/note_counts.panel.txt $(BUNDLE).app/Contents/Resources/eof
+	@cp ../bin/notes.panel.txt $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/percussion.dat $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/readme.txt $(BUNDLE).app/Contents/Resources/eof
 	@cp ../bin/second_of_silence.ogg $(BUNDLE).app/Contents/Resources/eof
