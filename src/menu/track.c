@@ -6,6 +6,7 @@
 #include "../main.h"
 #include "../midi.h"
 #include "../mix.h"
+#include "../pathing.h"
 #include "../player.h"
 #include "../rs.h"
 #include "../song.h"
@@ -103,6 +104,7 @@ MENU eof_track_menu[] =
 	{"Repair grid &Snap", eof_menu_track_repair_grid_snap, NULL, 0, NULL},
 	{"&Clone", NULL, eof_track_clone_menu, 0, NULL},
 	{"&Enable GHL mode", eof_track_menu_enable_ghl_mode, NULL, 0, NULL},
+	{"Find optimal CH star power path", eof_menu_track_find_ch_sp_path, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
