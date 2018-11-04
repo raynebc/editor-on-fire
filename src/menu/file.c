@@ -406,11 +406,11 @@ void eof_prepare_file_menu(void)
 	//Notes panel stuff
 	if(eof_enable_notes_panel)
 	{	//If the notes panel is enabled
-		eof_file_notes_panel_menu[7].flags = D_SELECTED;	//File>Display>Notes Panel>Enable
+		eof_file_notes_panel_menu[8].flags = D_SELECTED;	//File>Display>Notes Panel>Enable
 	}
 	else
 	{
-		eof_file_notes_panel_menu[7].flags = 0;
+		eof_file_notes_panel_menu[8].flags = 0;
 	}
 	if(exists(eof_last_browsed_notes_panel_path))
 	{	//If the last browsed Notes panel file path is valid, display the relative file name for the user's reference

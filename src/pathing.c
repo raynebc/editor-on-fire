@@ -368,7 +368,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		{	//If there were no star power deployments in this solution
 			strncat(eof_log_string, "(none)", sizeof(eof_log_string) - 1);
 		}
-		eof_log_casual(eof_log_string, 1, 1, 0);
+		eof_log_casual(eof_log_string, 1, 1, 1);
 
 		if(cached)
 		{
@@ -390,6 +390,8 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	///Process the notes in the target track difficulty
 	for(; notectr < tracksize; notectr++)
 	{	//For each note in the track being evaluated
+		unsigned long whammy_bonus_ctr = 0;	//Track how many 1/25 beat increments of whammy bonus star power were awarded, if any (each of which extend active SP deployment by .01 measures)
+
 		if(index >= solution->note_count)	//If all expected notes in the target track difficulty have been processed
 			break;	//Stop processing notes
 		if(eof_get_note_type(eof_song, solution->track, notectr) != solution->diff)
@@ -530,8 +532,8 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		}
 
 		///Special case:  Whammying a sustained star power note while star power is deployed (star power level has to be evaluated as each sustain point is awarded)
-		if((noteflags & EOF_NOTE_FLAG_SP) && (notelength > 1) && (sp_deployed))
-		{	//If this note has star power, it has sustain and star power is deployed
+		if((noteflags & EOF_NOTE_FLAG_SP) && (solution->note_beat_lengths[index] > 0.0) && (sp_deployed))
+		{	//If this note has star power, it has sustain that won't be dropped by Clone Hero (for being shorter than 1/12 measure long) and star power is deployed
 			double step = 1.0 / 25.0;	//Every 1/25 beat of sustain, a point is awarded.  Evaluate star power gain/loss at every such interval
 			double remaining_sustain = solution->note_beat_lengths[index];	//The amount of sustain remaining to be scored for this star power note
 			double sp_whammy_gain = 1.0 / 32.0 / 25.0;	//The amount of star power gained from whammying a star power sustain (1/32 meter per beat) during one scoring interval (1/25 beat)
@@ -570,6 +572,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				}
 				sp_drain = 1.0 / 8.0 / eof_song->beat[beat]->num_beats_in_measure / 25.0;	//Star power drains at a rate of 1/8 per measure of beats, and this is the amount of drain for a 1/25 beat interval
 				score.sp_meter = score.sp_meter + sp_whammy_gain - sp_drain;	//Update the star power meter to reflect the amount gained and the amount consumed during this 1/25 beat interval
+				whammy_bonus_ctr++;
 				if(score.sp_meter > 1.0)
 					score.sp_meter = 1.0;	//Cap the star power meter at 100%
 
@@ -641,7 +644,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				}
 			}
 			notescore *= score.multiplier;	//Apply the current score multiplier in effect
-		}//If this note has star power, it has sustain and star power is deployed
+		}//If this note has star power, it has sustain that won't be dropped by Clone Hero (for being shorter than 1/12 measure long) and star power is deployed
 		else
 		{	//Score the note and evaluate whammy star power gain separately
 			double sustain = 0.0;	//The score for the portion of the current note's sustain that is subject to star power bonus
@@ -650,8 +653,8 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			///Add any sustained star power note whammy bonus
 			if(noteflags & EOF_NOTE_FLAG_SP)
 			{	//If this note has star power
-				if(notelength > 1)
-				{	//If it has sustain
+				if(solution->note_beat_lengths[index] > 0.0)
+				{	//If it has sustain that won't be dropped by Clone Hero (for being shorter than 1/12 measure long)
 					///Double special case:  For disjointed chords, whammy bonus star power is only given for the longest gem
 					if(!disjointed || representative)
 					{	//If this is not a disjointed gem, or it is and this is the gem that is to be examined for the purpose of whammy star power bonus
@@ -668,8 +671,9 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 			///Calculate the note's score
 			base_score = eof_note_count_colors(eof_song, solution->track, notectr) * 50;	//The base score for a note is 50 points per gem
 			notescore = base_score;
-			if(notelength > 1)
-			{	//If this note has any sustain, determine its score and whether any of that sustain score is not subject to SP bonus due to SP deployment ending in the middle of the sustain (score2)
+			if(solution->note_beat_lengths[index] > 0.0)
+			{	//If this note has any sustain that won't be dropped by Clone Hero (for being shorter than 1/12 measure long),
+				//determine its score and whether any of that sustain score is not subject to SP bonus due to SP deployment ending in the middle of the sustain (score2)
 				sustain2 = 25.0 * solution->note_beat_lengths[index];	//The sustain's base score is 25 points per beat
 
 				if(solution->note_beat_lengths[index] >= 1.000 + 0.0001)
@@ -726,6 +730,11 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%lu (index #%lu):  \tpos = %lums, \tm pos = %.2f, \tbase = %lu, \tsustain = %lu, SP = %lu, SP sustain = %lu, mult = x%lu, solo bonus = %lu, \tscore = %lu.  \tTotal score:  %lu\tSP Meter at %lu%% (uncapped %lu%%), Deployment ends at measure %.2f", notectr, index, notepos, solution->note_measure_positions[index] + 1, base_score, sustain_score, sp_base_score, sp_sustain_score, score.multiplier, is_solo * 100, notescore, score.score, (unsigned long)(score.sp_meter * 100.0 + 0.5), (unsigned long)(score.sp_meter_t * 100.0 + 0.5), sp_deployment_end + 1);
 			}
 			eof_log_casual(eof_log_string, 1, 1, 1);
+			if(whammy_bonus_ctr)
+			{	//If the active star power deployment's ending was extended due to whammying a star power sustain
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tWhammying this note extended the deployment by %.2f measures.  Projected deployment ending is measure %.2f", .01 * (double)whammy_bonus_ctr, sp_deployment_end + 1);
+				eof_log_casual(eof_log_string, 1, 1, 1);
+			}
 		}
 
 		index++;	//Keep track of the number of notes in this track difficulty that were processed
@@ -1069,6 +1078,13 @@ int eof_menu_track_find_ch_sp_path(void)
 	unsigned long note_score;
 	double sustain_score;
 
+	//Variables for determining exact delta tick lengths that notes will have during MIDI export, since Clone Hero will discard the sutain of all notes shorter than 1/12 measure
+	//The logic for determining these delta values is re-used from the MIDI export code to ensure the best accuracy
+	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
+	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
+	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
+	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
+
  	eof_log("eof_menu_track_find_ch_sp_path() entered", 1);
 
  	///Ensure there's a time signature in effect
@@ -1090,18 +1106,35 @@ int eof_menu_track_find_ch_sp_path(void)
 	if(!note_count)
 		return 1;	//Don't both doing anything if there are no notes in the active track difficulty
 
+	///Initialize variables for calculating MIDI export timings
+	if(!eof_build_tempo_and_ts_lists(eof_song, &anchorlist, &tslist, &timedivision))
+	{
+		eof_log("\tError saving:  Cannot build tempo or TS list", 1);
+		return 1;	//Return if this failed
+	}
+	has_stored_tempo = eof_song_has_stored_tempo_track(eof_song) ? 1 : 0;	//Store this status
+	if(!eof_calculate_beat_delta_positions(eof_song))
+	{	//Calculate the delta position of each beat in the chart (required by eof_ConvertToDeltaTime() )
+		eof_log("\tCould not build beat delta positions", 1);
+		return 1;	//Return if this failed
+	}
+
 ///Prompt user how many processes to use to evaluate solutions
 	eof_color_dialog(eof_menu_track_find_ch_sp_path_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_menu_track_find_ch_sp_path_dialog);
 
 	if(eof_popup_dialog(eof_menu_track_find_ch_sp_path_dialog, 2) != 6)
 	{	//If the user did not click OK
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 		return 1;
 	}
 	process_count = atol(eof_etext);
 	if(process_count < 1)
 	{
 		allegro_message("Must specify at number of processes that is 1 or higher.");
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 		return 1;
 	}
 
@@ -1123,6 +1156,8 @@ int eof_menu_track_find_ch_sp_path(void)
 			free(best);
 		if(testing)
 			free(testing);
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 
 		eof_log("\tFailed to allocate memory", 1);
 		return 1;
@@ -1153,7 +1188,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	{	//For each note in the active track
 		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
 		{	//If the note is in the active difficulty
-			unsigned long notepos, notelength, ctr2, endbeat;
+			unsigned long notepos, notelength, ctr2, endbeat, deltapos, deltalength, startbeat;
 			double start, end, interval;
 
 			if(index >= note_count)
@@ -1163,6 +1198,8 @@ int eof_menu_track_find_ch_sp_path(void)
 				free(best);
 				free(testing);
 				eof_log("\tNotes miscounted", 1);
+				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 
 				return 1;	//Logic error
 			}
@@ -1175,30 +1212,46 @@ int eof_menu_track_find_ch_sp_path(void)
 			endbeat = eof_get_beat(eof_song, notepos + notelength);
 			end = (double) endbeat + (eof_get_porpos(notepos + notelength) / 100.0);	//The floating point beat position of the end of the note
 
-			//Allow for notes that end up to 2ms away from a 1/25 interval to have their beat length rounded to that interval
-			interval = eof_get_beat_length(eof_song, end) / 25.0;
-			for(ctr2 = 0; ctr2 < 26; ctr2++)
-			{	//For each 1/25 beat interval in the note's end beat up until the next beat's position
-				if(endbeat < eof_song->beats)
-				{	//Error check
-					double target = eof_song->beat[endbeat]->fpos + ((double) ctr2 * interval);
+			//Determine whether length of the note as it will be in the exported MIDI file is shorter than 1/12 measure, which will determien whether the sustain will be kept in Clone Hero
+			deltapos = eof_ConvertToDeltaTime(notepos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
+			deltalength = eof_ConvertToDeltaTime(notepos + notelength, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the note's length
+			startbeat = eof_get_beat(eof_song, notepos);	//Determine in which beat the note starts
 
-					if((notepos + notelength + 2 == (unsigned long) (target + 0.5)) || (notepos + notelength + 1 == (unsigned long) (target + 0.5)))
-					{	//If the note ends 1 or 2 ms before this 1/25 beat interval
-						end = eof_get_beat(eof_song, notepos + notelength) + ((double) ctr2 / 25.0);	//Re-target the note's end position exactly to this interval
-					}
-					else if((notepos + notelength - 2 == (unsigned long) (target + 0.5)) || (notepos + notelength - 1 == (unsigned long) (target + 0.5)))
-					{	//If the note ends 1 or 2 ms after this 1/25 beat interval
-						end = eof_get_beat(eof_song, notepos + notelength) + ((double) ctr2 / 25.0);	//Re-target the note's end position exactly to this interval
+			if((startbeat < eof_song->beats) && (deltalength < (double) EOF_DEFAULT_TIME_DIVISION * eof_song->beat[startbeat]->num_beats_in_measure / 12.0))
+			{	//If the length of 1/12 measure (as of this note's start position) could be determined and this note is shorter than that length
+				note_beat_lengths[index] = 0.0;	//This sustain will be discarded
+			}
+			else
+			{	//The sustain will be kept
+				//Allow for notes that end up to 2ms away from a 1/25 interval to have their beat length rounded to that interval
+				interval = eof_get_beat_length(eof_song, end) / 25.0;
+				for(ctr2 = 0; ctr2 < 26; ctr2++)
+				{	//For each 1/25 beat interval in the note's end beat up until the next beat's position
+					if(endbeat < eof_song->beats)
+					{	//Error check
+						double target = eof_song->beat[endbeat]->fpos + ((double) ctr2 * interval);
+
+						if((notepos + notelength + 2 == (unsigned long) (target + 0.5)) || (notepos + notelength + 1 == (unsigned long) (target + 0.5)))
+						{	//If the note ends 1 or 2 ms before this 1/25 beat interval
+							end = eof_get_beat(eof_song, notepos + notelength) + ((double) ctr2 / 25.0);	//Re-target the note's end position exactly to this interval
+						}
+						else if((notepos + notelength - 2 == (unsigned long) (target + 0.5)) || (notepos + notelength - 1 == (unsigned long) (target + 0.5)))
+						{	//If the note ends 1 or 2 ms after this 1/25 beat interval
+							end = eof_get_beat(eof_song, notepos + notelength) + ((double) ctr2 / 25.0);	//Re-target the note's end position exactly to this interval
+						}
 					}
 				}
+
+				note_beat_lengths[index] = end - start;		//Store the floating point beat length of the note
 			}
 
-			note_beat_lengths[index] = end - start;		//Store the floating point beat length of the note
 
 			index++;
 		}//If the note is in the active difficulty
 	}//For each note in the active track
+
+	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+	eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 
 	///Calculate the base score of the track difficulty
 	base_score = 0;
@@ -1395,6 +1448,7 @@ int eof_menu_track_find_ch_sp_path(void)
 			char *str_6star = "(6 stars)";
 			char *str_7star = "(7 stars)";
 			char *resultstring1 = "Optimum star power deployment in Clone Hero for this track difficulty is at these note timestamps (highlighted):";
+			char *score_disclaimer = "*Note:  This scoring is based on Clone Hero playing the chart as a MIDI, for which it will remove all sustains shorter than 1/12.";
 
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", resultstring1);
 			eof_log(eof_log_string, 1);
@@ -1465,7 +1519,7 @@ int eof_menu_track_find_ch_sp_path(void)
 
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
 			eof_render();
-			allegro_message("%s\n%s\n\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, base_score_string, multiplierstring, deployment_notes, (double)deployment_notes * 100.0 / note_count);
+			allegro_message("%s\n%s\n\n%s\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, base_score_string, multiplierstring, score_disclaimer, deployment_notes, (double)deployment_notes * 100.0 / note_count);
 		}
 	}
 
