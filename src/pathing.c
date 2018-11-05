@@ -747,7 +747,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSolution score:  %lu", solution->score);
 		if(logging > 1)
 		{	//If all of the per-note scoring was logged
-			eof_log_casual(eof_log_string, 2, 1, 0);	//This output will be on its own line and will need the log ID
+			eof_log_casual(eof_log_string, 2, 1, 1);	//This output will be on its own line and will need the log ID
 		}
 		else
 		{
@@ -829,29 +829,37 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 						testing->num_deployments++;	//One more deployment is in the solution
 					}
 					else
-					{	//If there are no further valid notes to test for this deployment
-						///Case 4:  The last deployment has exhausted all notes, remove and advance previous solution
-						testing->num_deployments--;	//Remove this deployment from the solution
-						if(!testing->num_deployments)
-						{	//If there are no more solutions to test
-							///Case 5:  All solutions exhausted
-							break;
-						}
-						if((testing->num_deployments == 1) && (testing->deployments[testing->num_deployments - 1] + 1 > last_deploy))
-						{	//If all solutions for the first deployment's specified range of notes have been tested
-							///Case 6:  All specified solutions exhausted
-							break;
-						}
-						next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the now-last deployment one note further
+					{	//If there are no further valid notes to test for the next deployment
+						next_deploy = previous_deploy + 1;	//Advance the last deployment one note further
 						if(next_deploy >= testing->note_count)
-						{	//If the previous deployment cannot advance even though the deployment that was just removed had come after it
-							eof_log("\tLogic error:  Can't advance previous deployment after removing last deployment (1)", 1);
-							return 1;	//Return error
+						{	//If the last deployment cannot advance
+							///Case 4:  The last deployment has exhausted all notes, remove and advance previous solution
+							testing->num_deployments--;	//Remove this deployment from the solution
+							if(!testing->num_deployments)
+							{	//If there are no more solutions to test
+								///Case 5:  All solutions exhausted
+								break;
+							}
+							if((testing->num_deployments == 1) && (testing->deployments[testing->num_deployments - 1] + 1 > last_deploy))
+							{	//If all solutions for the first deployment's specified range of notes have been tested
+								///Case 6:  All specified solutions exhausted
+								break;
+							}
+							next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the now-last deployment one note further
+							if(next_deploy >= testing->note_count)
+							{	//If the previous deployment cannot advance even though the deployment that was just removed had come after it
+								eof_log("\tLogic error:  Can't advance previous deployment after removing last deployment (1)", 1);
+								return 1;	//Return error
+							}
+							testing->deployments[testing->num_deployments - 1] = next_deploy;
 						}
-						testing->deployments[testing->num_deployments - 1] = next_deploy;
+						else
+						{	///Case 3:  Advance last deployment by one note
+							testing->deployments[testing->num_deployments - 1] = next_deploy;
+						}
 					}
-				}
-			}
+				}//Add another deployment to the solution
+			}//If the current solution array has fewer than the maximum number of usable star power deployments
 			else if(testing->num_deployments == testing->deploy_count)
 			{	//If the maximum number of deployments are in the solution, move the last deployment to create a new solution to test
 				next_deploy = testing->deployments[testing->num_deployments - 1] + 1;	//Advance the last deployment one note further
@@ -1073,9 +1081,10 @@ int eof_menu_track_find_ch_sp_path(void)
 	long process_count;
 	unsigned long deployment_notes = 0;	//Tracks the highest count of notes that were found to be playable during all star power deployments of any solution
 
-	//Variables for calculating the base score for the track difficulty (gem and sustain points, no bonuses, no multiplier) for calculating average multiplier (ie. awarded # of stars)
+	//Variables for calculating stars awarded, the base score for the track difficulty (gem and sustain points, no bonuses, no multiplier) for calculating average multiplier, etc.
 	unsigned long base_score;
 	unsigned long note_score;
+	unsigned long solo_note_count = 0;
 	double sustain_score;
 
 	//Variables for determining exact delta tick lengths that notes will have during MIDI export, since Clone Hero will discard the sutain of all notes shorter than 1/12 measure
@@ -1180,10 +1189,22 @@ int eof_menu_track_find_ch_sp_path(void)
 	///Apply EOF_NOTE_TFLAG_SOLO_NOTE and EOF_NOTE_TFLAG_SP_END tflags appropriately to notes in the target track difficulty
 	eof_ch_pathing_mark_tflags(best);
 
+	///Count the number of solo notes (the total score compared to the base score for awarded star count does not include solo bonuses)
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
+	for(ctr = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active difficulty
+			if(eof_get_note_tflags(eof_song, eof_selected_track, ctr) & EOF_NOTE_TFLAG_SOLO_NOTE)
+			{	//If the note was determined to be in a solo section
+				solo_note_count++;
+			}
+		}
+	}
+
 	///Calculate the measure position and beat length of each note in the active track difficulty
 	///Find the first note at which star power can be deployed
 	///Record the end position of each star power phrase for faster detection of the last note in a star power phrase
-	tracksize = eof_get_track_size(eof_song, eof_selected_track);
 	for(ctr = 0, index = 0; ctr < tracksize; ctr++)
 	{	//For each note in the active track
 		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
@@ -1437,7 +1458,8 @@ int eof_menu_track_find_ch_sp_path(void)
 		else
 		{	//There is at least one note played during star power deployment
 			unsigned long notenum, min, sec, ms, flags;
-			char timestamps[500], indexes[500], tempstring[20], scorestring[50], multiplierstring[50], base_score_string[25];
+			unsigned long effective_score;
+			char timestamps[500], indexes[500], tempstring[20], scorestring[50], sololess_scorestring[50], multiplierstring[50], base_score_string[50];
 			char *star_string;
 			char *str_0star = "(no stars)";
 			char *str_1star = "(1 star)";
@@ -1495,31 +1517,35 @@ int eof_menu_track_find_ch_sp_path(void)
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", scorestring);
 			eof_log(eof_log_string, 1);
 
+			effective_score = best->score - (100 * solo_note_count);	//The score compared against the base score does not include solo bonuses
 			star_string = str_0star;
-			if(best->score >= base_score * 0.1)
+			if(effective_score >= base_score * 0.1)
 				star_string = str_1star;
-			if(best->score >= base_score * 0.5)
+			if(effective_score >= base_score * 0.5)
 				star_string = str_2star;
-			if(best->score >= base_score)
+			if(effective_score >= base_score)
 				star_string = str_3star;
-			if(best->score >= base_score * 2)
+			if(effective_score >= base_score * 2)
 				star_string = str_4star;
-			if(best->score >= base_score * 2.8)
+			if(effective_score >= base_score * 2.8)
 				star_string = str_5star;
-			if(best->score >= base_score * 3.6)
+			if(effective_score >= base_score * 3.6)
 				star_string = str_6star;
-			if(best->score >= base_score * 4.4)
+			if(effective_score >= base_score * 4.4)
 				star_string = str_7star;
+			(void) snprintf(sololess_scorestring, sizeof(sololess_scorestring) - 1, "Without solo bonuses:  %lu", effective_score);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", sololess_scorestring);
+			eof_log(eof_log_string, 1);
 			(void) snprintf(base_score_string, sizeof(base_score_string) - 1, "Base score:  %lu", base_score);
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", base_score_string);
 			eof_log(eof_log_string, 1);
-			(void) snprintf(multiplierstring, sizeof(multiplierstring) - 1, "Average multiplier:  %.2f %s", (double)best->score / base_score, star_string);
+			(void) snprintf(multiplierstring, sizeof(multiplierstring) - 1, "Average multiplier:  %.2f %s", (double)effective_score / base_score, star_string);
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", multiplierstring);
 			eof_log(eof_log_string, 1);
 
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
 			eof_render();
-			allegro_message("%s\n%s\n\n%s\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, base_score_string, multiplierstring, score_disclaimer, deployment_notes, (double)deployment_notes * 100.0 / note_count);
+			allegro_message("%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, sololess_scorestring, base_score_string, multiplierstring, score_disclaimer, deployment_notes, (double)deployment_notes * 100.0 / note_count);
 		}
 	}
 
