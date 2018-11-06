@@ -1300,26 +1300,15 @@ DIALOG eof_menu_track_find_ch_sp_path_dialog[] =
 int eof_menu_track_find_ch_sp_path(void)
 {
 	EOF_SP_PATH_SOLUTION *best, *testing;
-	unsigned long note_count = 0;				//The number of notes in the active track difficulty, which will be the size of the various note arrays
-	double *note_measure_positions;				//The position of each note in the active track difficulty defined in measures
-	double *note_beat_lengths;					//The length of each note in the active track difficulty defined in beats
 	unsigned long worst_score = 0;				//The estimated maximum score when no star power is deployed
 	unsigned long first_deploy = ULONG_MAX;		//The first note that occurs after the end of the second star power phrase, and is thus the first note at which star power can be deployed
 	int worker_logging;
-
-	unsigned long max_deployments;				//The estimated maximum number of star power deployments, based on the amount of star power note sustain and the number of star power phrases
-	unsigned long *tdeployments, *bdeployments;	//An array defining the note index number of each deployment, ie deployments[0] being the first SP deployment, deployments[1] being the second, etc.
-	EOF_SP_PATH_SCORING_STATE *deploy_cache;	//An array storing cached scoring data for star power deployments
-
 	unsigned long ctr, index, tracksize;
 	unsigned long validcount = 0, invalidcount = 0;
 	int error = 0;
 	char undo_made = 0;
 	clock_t starttime = 0, endtime = 0;
 	double elapsed_time;
-	unsigned long sp_phrase_count;
-	double sp_sustain;				//The number of beats of star power sustain, used to count whammy bonus star power when estimating the maximum number of star power deployments
-
 	long process_count;
 	unsigned long deployment_notes = 0;	//Tracks the highest count of notes that were found to be playable during all star power deployments of any solution
 
@@ -1329,66 +1318,22 @@ int eof_menu_track_find_ch_sp_path(void)
 	unsigned long solo_note_count = 0;
 	double sustain_score;
 
-	//Variables for determining exact delta tick lengths that notes will have during MIDI export, since Clone Hero will discard the sutain of all notes shorter than 1/12 measure
-	//The logic for determining these delta values is re-used from the MIDI export code to ensure the best accuracy
-	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
-	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
-	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
-	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
-
  	eof_log("eof_menu_track_find_ch_sp_path() entered", 1);
 
  	if(!eof_song)
 		return 1;	//No project loaded
 
- 	///Ensure there's a time signature in effect
-	if(!eof_beat_stats_cached)
-		eof_process_beat_statistics(eof_song, eof_selected_track);
-	if(!eof_song->beat[0]->has_ts)
-	{
-		allegro_message("A time signature is required for the chart, but none in effect on the first beat.  4/4 will be applied.");
-
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		undo_made = 1;
-		eof_apply_ts(4, 4, 0, eof_song, 0);
-		eof_process_beat_statistics(eof_song, eof_selected_track);	//Recalculate beat statistics
-	}
-
-	///Initialize arrays and structures
-	(void) eof_count_selected_notes(&note_count);	//Count the number of notes in the active track difficulty
-
-	if(!note_count)
-		return 1;	//Don't both doing anything if there are no notes in the active track difficulty
-
-	///Initialize variables for calculating MIDI export timings
-	if(!eof_build_tempo_and_ts_lists(eof_song, &anchorlist, &tslist, &timedivision))
-	{
-		eof_log("\tError saving:  Cannot build tempo or TS list", 1);
-		return 1;	//Return if this failed
-	}
-	has_stored_tempo = eof_song_has_stored_tempo_track(eof_song) ? 1 : 0;	//Store this status
-	if(!eof_calculate_beat_delta_positions(eof_song))
-	{	//Calculate the delta position of each beat in the chart (required by eof_ConvertToDeltaTime() )
-		eof_log("\tCould not build beat delta positions", 1);
-		return 1;	//Return if this failed
-	}
-
 ///Prompt user how many processes to use to evaluate solutions
 	eof_color_dialog(eof_menu_track_find_ch_sp_path_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_menu_track_find_ch_sp_path_dialog);
-
 	if(eof_popup_dialog(eof_menu_track_find_ch_sp_path_dialog, 2) != 7)
 	{	//If the user did not click OK
-		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 		return 1;
 	}
 	process_count = atol(eof_etext);
 	if(process_count < 1)
 	{
 		allegro_message("Must specify at number of processes that is 1 or higher.");
-		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 		return 1;
 	}
 	worker_logging = (eof_menu_track_find_ch_sp_path_dialog[6].flags & D_SELECTED) ? 1 : 0;
@@ -1405,48 +1350,12 @@ int eof_menu_track_find_ch_sp_path(void)
 			return 1;
 		}
 	}
-
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEvaluating CH path solution for \"%s\" difficulty %u", eof_song->track[eof_selected_track]->name, eof_note_type);
 	eof_log(eof_log_string, 2);
-
-	note_measure_positions = malloc(sizeof(double) * note_count);
-	note_beat_lengths = malloc(sizeof(double) * note_count);
-	best = malloc(sizeof(EOF_SP_PATH_SOLUTION));
-	testing = malloc(sizeof(EOF_SP_PATH_SOLUTION));
-
-	if(!note_measure_positions || !note_beat_lengths || !best || !testing)
-	{	//If any of those failed to allocate
-		if(note_measure_positions)
-			free(note_measure_positions);
-		if(note_beat_lengths)
-			free(note_beat_lengths);
-		if(best)
-			free(best);
-		if(testing)
-			free(testing);
-		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-
-		eof_log("\tFailed to allocate memory", 1);
+	if(eof_ch_sp_path_setup(&best, &testing, &undo_made))
+	{	//If the function that performs setup for the pathing logic failed
 		return 1;
 	}
-
-	best->note_measure_positions = note_measure_positions;
-	best->note_beat_lengths = note_beat_lengths;
-	best->note_count = note_count;
-	best->track = eof_selected_track;
-	best->diff = eof_note_type;
-	best->solution_number = 0;
-
-	testing->note_measure_positions = note_measure_positions;
-	testing->note_beat_lengths = note_beat_lengths;
-	testing->note_count = note_count;
-	testing->track = eof_selected_track;
-	testing->diff = eof_note_type;
-	testing->solution_number = 0;
-
-	///Apply EOF_NOTE_TFLAG_SOLO_NOTE and EOF_NOTE_TFLAG_SP_END tflags appropriately to notes in the target track difficulty
-	eof_ch_pathing_mark_tflags(best);
 
 	///Count the number of solo notes (the total score compared to the base score for awarded star count does not include solo bonuses)
 	tracksize = eof_get_track_size(eof_song, eof_selected_track);
@@ -1461,78 +1370,6 @@ int eof_menu_track_find_ch_sp_path(void)
 		}
 	}
 
-	///Calculate the measure position and beat length of each note in the active track difficulty
-	///Find the first note at which star power can be deployed
-	///Record the end position of each star power phrase for faster detection of the last note in a star power phrase
-	for(ctr = 0, index = 0; ctr < tracksize; ctr++)
-	{	//For each note in the active track
-		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
-		{	//If the note is in the active difficulty
-			unsigned long notepos, notelength, ctr2, endbeat, deltapos, deltalength, startbeat;
-			double start, end, interval;
-
-			if(index >= note_count)
-			{	//Bounds check
-				free(note_measure_positions);
-				free(note_beat_lengths);
-				free(best);
-				free(testing);
-				eof_log("\tNotes miscounted", 1);
-				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-
-				return 1;	//Logic error
-			}
-
-			//Set position and length information
-			notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
-			note_measure_positions[index] = eof_get_measure_position(notepos);	//Store the measure position of the note
-			notelength = eof_get_note_length(eof_song, eof_selected_track, ctr);
-			start = eof_get_beat(eof_song, notepos) + (eof_get_porpos(notepos) / 100.0);	//The floating point beat position of the start of the note
-			endbeat = eof_get_beat(eof_song, notepos + notelength);
-			end = (double) endbeat + (eof_get_porpos(notepos + notelength) / 100.0);	//The floating point beat position of the end of the note
-
-			//Determine whether length of the note as it will be in the exported MIDI file is shorter than 1/12 measure, which will determien whether the sustain will be kept in Clone Hero
-			deltapos = eof_ConvertToDeltaTime(notepos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
-			deltalength = eof_ConvertToDeltaTime(notepos + notelength, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the note's length
-			startbeat = eof_get_beat(eof_song, notepos);	//Determine in which beat the note starts
-
-			if((startbeat < eof_song->beats) && (deltalength < (double) EOF_DEFAULT_TIME_DIVISION * eof_song->beat[startbeat]->num_beats_in_measure / 12.0))
-			{	//If the length of 1/12 measure (as of this note's start position) could be determined and this note is shorter than that length
-				note_beat_lengths[index] = 0.0;	//This sustain will be discarded
-			}
-			else
-			{	//The sustain will be kept
-				//Allow for notes that end up to 2ms away from a 1/25 interval to have their beat length rounded to that interval
-				interval = eof_get_beat_length(eof_song, end) / 25.0;
-				for(ctr2 = 0; ctr2 < 26; ctr2++)
-				{	//For each 1/25 beat interval in the note's end beat up until the next beat's position
-					if(endbeat < eof_song->beats)
-					{	//Error check
-						double target = eof_song->beat[endbeat]->fpos + ((double) ctr2 * interval);
-
-						if((notepos + notelength + 2 == (unsigned long) (target + 0.5)) || (notepos + notelength + 1 == (unsigned long) (target + 0.5)))
-						{	//If the note ends 1 or 2 ms before this 1/25 beat interval
-							end = eof_get_beat(eof_song, notepos + notelength) + ((double) ctr2 / 25.0);	//Re-target the note's end position exactly to this interval
-						}
-						else if((notepos + notelength - 2 == (unsigned long) (target + 0.5)) || (notepos + notelength - 1 == (unsigned long) (target + 0.5)))
-						{	//If the note ends 1 or 2 ms after this 1/25 beat interval
-							end = eof_get_beat(eof_song, notepos + notelength) + ((double) ctr2 / 25.0);	//Re-target the note's end position exactly to this interval
-						}
-					}
-				}
-
-				note_beat_lengths[index] = end - start;		//Store the floating point beat length of the note
-			}
-
-
-			index++;
-		}//If the note is in the active difficulty
-	}//For each note in the active track
-
-	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-	eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-
 	///Calculate the base score of the track difficulty
 	base_score = 0;
 	for(ctr = 0, index = 0; ctr < tracksize; ctr++)
@@ -1546,65 +1383,6 @@ int eof_menu_track_find_ch_sp_path(void)
 			index++;
 		}
 	}
-
-	///Estimate the maximum number of star power deployments, to limit the number of solutions tested
-	sp_phrase_count = 0;
-	sp_sustain = 0.0;
-	for(index = 0; index < note_count; index++)
-	{	//For each note in the active track difficulty
-		unsigned long note = eof_translate_track_diff_note_index(eof_song, eof_selected_track, eof_note_type, index);
-
-		if(note < tracksize)
-		{	//If the real note number was identified
-			unsigned long noteflags = eof_get_note_flags(eof_song, eof_selected_track, note);
-			if(noteflags & EOF_NOTE_FLAG_SP)
-			{	//If the note has star power
-				if(eof_get_note_length(eof_song, eof_selected_track, note) > 1)
-				{	//If the note has sustain
-					sp_sustain += note_beat_lengths[index];	//Count the number of beats of star power that will be whammied for bonus star power
-				}
-				if(eof_get_note_tflags(eof_song, eof_selected_track, note) & EOF_NOTE_TFLAG_SP_END)
-				{	//If this is the last note in a star power phrase
-					sp_phrase_count++;	//Keep count to determine how much star power is gained throughout the track difficulty
-				}
-			}
-		}
-	}
-	sp_phrase_count += (sp_sustain / 8.0) + 0.0001;	//Each beat of whammied star power sustain awards 1/32 meter of star power (1/8 as much star power as a completed star power phrase), (allow variance for math error)
-	max_deployments = sp_phrase_count / 2;			//Two star power phrases' worth of star power is enough to deploy star power once
-
-	///Initialize deployment arrays
-	tdeployments = malloc(sizeof(unsigned long) * max_deployments);
-	bdeployments = malloc(sizeof(unsigned long) * max_deployments);
-	deploy_cache = malloc(sizeof(EOF_SP_PATH_SCORING_STATE) * max_deployments);
-
-	if(!tdeployments || !bdeployments || !deploy_cache)
-	{
-		free(note_measure_positions);
-		free(note_beat_lengths);
-		free(best);
-		free(testing);
-		if(tdeployments)
-			free(tdeployments);
-		if(bdeployments)
-			free(bdeployments);
-		if(deploy_cache)
-			free(deploy_cache);
-
-		eof_log("\tFailed to allocate memory", 1);
-		return 1;
-	}
-
-	for(ctr = 0; ctr < max_deployments; ctr++)
-	{	//For every entry in the deploy cache
-		deploy_cache[ctr].note_start = ULONG_MAX;	//Mark it as invalid
-	}
-	best->deployments = bdeployments;
-	best->deploy_cache = deploy_cache;
-	best->deploy_count = max_deployments;
-	testing->deployments = tdeployments;
-	testing->deploy_cache = deploy_cache;
-	testing->deploy_count = max_deployments;
 
 	///Determine the maximum score when no star power is deployed
 	best->num_deployments = 0;
@@ -1623,7 +1401,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	}
 
 	first_deploy = eof_ch_pathing_find_next_deployable_sp(testing, 0);	//Starting from the first note in the target track difficulty, find the first note at which star power can be deployed
-	if(first_deploy < note_count)
+	if(first_deploy < testing->note_count)
 	{	//If the note was identified
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFirst possible star power deployment is at note index %lu in this track difficulty.", first_deploy);
 		eof_log_casual(eof_log_string, 1, 1, 1);
@@ -1634,7 +1412,7 @@ int eof_menu_track_find_ch_sp_path(void)
 		error = 1;
 	}
 
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEstimated maximum number of star power deployments is %lu", max_deployments);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEstimated maximum number of star power deployments is %lu", testing->deploy_count);
 	eof_log_casual(eof_log_string, 1, 1, 1);
 	eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk
 
@@ -1660,7 +1438,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	eof_render();
 	if(error == 1)
 	{
-		if(!max_deployments)
+		if(!testing->deploy_count)
 		{
 			eof_log("\tThere are not enough star power phrases/sustains to deploy even once.", 1);
 			allegro_message("There are not enough star power phrases/sustains to deploy even once.");
@@ -1702,7 +1480,7 @@ int eof_menu_track_find_ch_sp_path(void)
 		eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk, and use the normal logging function from here
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", validcount + invalidcount, validcount, invalidcount, elapsed_time, ((double)validcount + invalidcount)/elapsed_time);
 		eof_log(eof_log_string, 1);
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tThe highest number of notes that could be played during star power deployment among all solutions was %lu (%.2f%%)", deployment_notes, (double)deployment_notes * 100.0 / note_count);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tThe highest number of notes that could be played during star power deployment among all solutions was %lu (%.2f%%)", deployment_notes, (double)deployment_notes * 100.0 / testing->note_count);
 		eof_log(eof_log_string, 1);
 		if((best->deployment_notes == 0) && (best->score > worst_score))
 		{	//If the best score did not reflect notes being played in star power, but the score somehow was better than the score from when no star power deployment was tested
@@ -1804,16 +1582,16 @@ int eof_menu_track_find_ch_sp_path(void)
 
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
 			eof_render();
-			allegro_message("%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, sololess_scorestring, base_score_string, multiplierstring, score_disclaimer, deployment_notes, (double)deployment_notes * 100.0 / note_count);
+			allegro_message("%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, sololess_scorestring, base_score_string, multiplierstring, score_disclaimer, deployment_notes, (double)deployment_notes * 100.0 / testing->note_count);
 		}
 	}
 
 	///Cleanup
-	free(note_measure_positions);
-	free(note_beat_lengths);
-	free(tdeployments);
-	free(bdeployments);
-	free(deploy_cache);
+	free(testing->note_measure_positions);
+	free(testing->note_beat_lengths);
+	free(testing->deployments);
+	free(best->deployments);
+	free(testing->deploy_cache);
 	free(best);
 	free(testing);
 
