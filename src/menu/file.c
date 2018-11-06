@@ -3924,7 +3924,8 @@ int eof_save_helper(char *destfilename, char silent)
 		allegro_message("%s", eof_log_string);
 		return 9;	//Return failure:  Could not create project file
 	}
-	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
+	(void) ustrcpy(eof_filename, eof_temp_filename);	//Update the absolute project filename
+	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));	//Update the relative project filename
 
 	/* save the MIDI, INI and other files*/
 	if(!silent && (eof_write_fof_files || eof_write_rb_files))

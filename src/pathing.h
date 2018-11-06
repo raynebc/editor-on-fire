@@ -21,7 +21,7 @@ typedef struct
 	unsigned long *deployments;					//An array defining the note index number of each deployment, ie deployments[0] being the first SP deployment, deployments[1] being the second, etc.
 	EOF_SP_PATH_SCORING_STATE *deploy_cache;	//An array of data about score and star power status at the first note after each end of star power deployments from the previous solution evaluation,
 												// allowing much/most of the score processing to be re-used between subsequent solutions where most of the deployments occur at the same indexes
-	unsigned long deploy_count;					//The number of entries in the above deployment arrays
+	unsigned long deploy_count;					//The number of entries in the above deployment arrays (the detected maximum number star power deployments)
 	unsigned long num_deployments;				//The number of star power deployments in this solution
 
 	//These arrays are sized to only store data about the target track difficulty's notes and not all of the track's notes
@@ -123,18 +123,25 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
 	//Returns 0 on success, 1 on error or 2 on user cancellation
 
-int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes);
+int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes, int worker_logging);
 	//Finds the best solution as eof_ch_sp_path_single_process_solve() does, but does so by running the specified number of worker EOF processes in parallel
 	// to test all solution sets from first_deploy to testing->note_count
 	//validcount and invalidcount are passed so the calling function can know how many solutions were tested among all worker processes
 	//deployment_notes is used to track the highest count of notes that were found to be playable during all star power deployments of any solution
 	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
+	//If worker_logging is nonzero, the worker processes are launched with the -ch_sp_path_worker_logging parameter so they perform logging each in their own file
 	//Returns 0 on success, 1 on error or 2 on user cancellation
 
 void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution);
 	//Parses the notes in the solution's target track difficulty, applying the EOF_NOTE_TFLAG_SOLO_NOTE tflag
 	// Applies the EOF_NOTE_TFLAG_SOLO_NOTE tflag to each note that is in a solo phrase
 	// Applies the EOF_NOTE_TFLAG_SP_END tflag to the last note of each star power phrase
+
+int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **testingptr, char *undo_made);
+	//Performs all needed steps to prepare for the use of the pathing functions, such as creating the solution structures, preparing the active track difficulty, etc
+	//The addresses for the newly created structures are assigned to *bestptr and *testingptr for use by the calling function
+	//If a time signature is missing from the first beat, a 4/4 time signature is applied to it after creating an undo state, and *undo_made is set to 1 if the pointer is not NULL
+	//Returns 1 on error or 2 on cancellation (no notes in active track difficulty)
 
 int eof_menu_track_find_ch_sp_path(void);
 	//Determines optimum star power deployment for the active track difficulty
