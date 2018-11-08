@@ -56,6 +56,8 @@ int eof_note_is_last_longest_gem(EOF_SONG *sp, unsigned long track, unsigned lon
 			break;	//No later notes
 		if(eof_get_note_pos(sp, track, nextnote) != notepos)
 			break;	//No later notes at the same position
+
+		index = nextnote;	//Track the latest note at this position
 	}
 
 	if(longestnote == note)	//If no notes at this note's position were longer
@@ -1444,12 +1446,13 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lon
 	}
 }
 
+char eof_menu_track_find_ch_sp_path_dialog_string[4];
 DIALOG eof_menu_track_find_ch_sp_path_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                         (dp2) (dp3) */
 	{ d_agup_window_proc,    0,   0,   360, 186, 0,   0,   0,    0,      0,   0,   "Find optimal CH star power path", NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Use this many worker processes:",NULL, NULL },
-	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
+	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      2,   0,   eof_menu_track_find_ch_sp_path_dialog_string, "0123456789", NULL },
 	{ d_agup_text_proc,      12,  80,  60,  12,  0,   0,   0,    0,      0,   0,   "More (up to the number of threads your CPU supports)",NULL, NULL },
 	{ d_agup_text_proc,      12,  96,  60,  12,  0,   0,   0,    0,      0,   0,   "is faster, but will slow your computer down more.",NULL, NULL },
 	{ d_agup_text_proc,      12,  112, 60,  12,  0,   0,   0,    0,      0,   0,   "",NULL, NULL },
@@ -1486,7 +1489,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	{	//If the user did not click OK
 		return 1;
 	}
-	process_count = atol(eof_etext);
+	process_count = atol(eof_menu_track_find_ch_sp_path_dialog_string);
 	if(process_count < 1)
 	{
 		allegro_message("Must specify at number of processes that is 1 or higher.");
@@ -1528,6 +1531,7 @@ int eof_menu_track_find_ch_sp_path(void)
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEstimated maximum score without deploying star power is %lu.", worst_score);
 		eof_log_casual(eof_log_string, 1, 1, 1);
 	}
+	eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk
 
 	first_deploy = eof_ch_pathing_find_next_deployable_sp(testing, 0);	//Starting from the first note in the target track difficulty, find the first note at which star power can be deployed
 	if(first_deploy < testing->note_count)
