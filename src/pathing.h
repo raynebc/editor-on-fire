@@ -106,11 +106,10 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	// 1 for invalid parameters
 	// 2 for invalidated by cache (ie. cached deployment data shows that a deployment was already in progress during one of the other deployment indexes in the solution)
 	// 3 for attempting to deploy while star power is in effect
-	// 4 for attemptign to deploy without sufficient star power
+	// 4 for attempting to deploy without sufficient star power
 	// 5 5 for a general logic error
 	//Returns zero if the proposed solution is invalid (ie. calling for star power deployment while it is already deployed, or when there is insufficient star power)
-	//solution_num is the solution number being tested, to be logged and used for debugging
-	// If this value is ULONG_MAX, the solution number is not logged
+	//solution_num is the solution number being tested, to be logged and used for debugging.  If this value is ULONG_MAX, the solution number is not logged
 	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
 	//If logging is greater than 1, verbose logging for each note's scoring, start and end of star power deployment, etc. is performed
 
@@ -140,8 +139,15 @@ void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution);
 int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **testingptr, char *undo_made);
 	//Performs all needed steps to prepare for the use of the pathing functions, such as creating the solution structures, preparing the active track difficulty, etc
 	//The addresses for the newly created structures are assigned to *bestptr and *testingptr for use by the calling function
+	//bestptr is allowed to be NULL, in which case only one solution structure is allocated and initialized, such as for use in eof_menu_track_evaluate_user_ch_sp_path()
+	// where only one working solution is needed and no best solution needs to be separately kept
 	//If a time signature is missing from the first beat, a 4/4 time signature is applied to it after creating an undo state, and *undo_made is set to 1 if the pointer is not NULL
 	//Returns 1 on error or 2 on cancellation (no notes in active track difficulty)
+
+void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long validcount, unsigned long invalidcount, unsigned long deployment_notes, char *undo_made);
+	//Logs and reports details of the specified solution, including the base score and star count (which are calculated by this function)
+	//If validcount + invalidcount > 1, the function considers the specified solution to be the best solution out of several tested
+	// In this circumstance, if undo_made is not NULL, and *undo_made is zero, an undo state is made before highlighting the best solution's notes
 
 int eof_menu_track_find_ch_sp_path(void);
 	//Determines optimum star power deployment for the active track difficulty
@@ -152,5 +158,8 @@ void eof_ch_sp_path_worker(char *job_file);
 	//If the job fails due to error, a ###.fail file is created at the same path as the job file
 	//If the job is cancelled by the user (ie. Escape keypress), a ###.cancel file is created at the same path as the job file
 	//The specified job file is deleted after the above file is created
+
+int eof_menu_track_evaluate_user_ch_sp_path(void);
+	//For the active track difficulty, examines highlighted notes as a proposed star power path solution and reports the solution's validity/score to the user
 
 #endif

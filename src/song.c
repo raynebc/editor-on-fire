@@ -9393,7 +9393,7 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void)
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeleting anchor #%lu", ctr - 1 + delete_count);
 							eof_log(eof_log_string, 2);
 							eof_selected_beat = ctr - 1;	//Target the previous beat
-							eof_menu_beat_delete_anchor_logic(&undo_made);	//Use "Beat>Delete anchor" to effectively remove its tempo change so that the beat assumes the previous tempo
+							(void) eof_menu_beat_delete_anchor_logic(&undo_made);	//Use "Beat>Delete anchor" to effectively remove its tempo change so that the beat assumes the previous tempo
 							ongoing_beat_length = 0;	//Reset this sum
 						}
 						else

@@ -2306,7 +2306,7 @@ set_window_title(debugtext);
 								if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //										allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
-									unsigned long pos, length1, length2, diff, eflags;	//Variables used to compare the lengths between notes for application of disjointed status
+									unsigned long pos, length1, length2, lengthdiff, eflags;	//Variables used to compare the lengths between notes for application of disjointed status
 
 									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
 									eof_log(eof_log_string, 3);
@@ -2325,9 +2325,9 @@ set_window_title(debugtext);
 										if((eof_get_note_type(sp, picked_track, ctr) == eof_get_note_type(sp, picked_track, k - 1)) && (eof_get_note_pos(sp, picked_track, ctr) == pos))
 										{	//If the note is in the same difficulty and starts at the same time as the note that was just imported
 											length2 = eof_get_note_length(sp, picked_track, ctr);
-											diff = (length1 > length2) ? (length1 - length2) : (length2 - length1);	//Determine the difference between the note lengths
+											lengthdiff = (length1 > length2) ? (length1 - length2) : (length2 - length1);	//Determine the difference between the note lengths
 
-											if((length2 != 0) && (diff > 1))
+											if((length2 != 0) && (lengthdiff > 1))
 											{	//If the note has had its length determined and it's more than 1ms different from the note that was just imported
 												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tApplying disjointed status to note #%lu and #%lu at %lums in difficulty %d", ctr, k - 1, pos, eof_get_note_type(sp, picked_track, ctr));
 												eof_log(eof_log_string, 2);

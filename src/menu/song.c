@@ -936,9 +936,9 @@ int eof_menu_song_seek_note_index(void)
 	if(eof_popup_dialog(eof_song_seek_note_index_dialog, 1) == 2)
 	{	//User clicked OK
 		value = atol(eof_etext);
-		if(value <= 0)
+		if(value < 0)
 		{
-			allegro_message("Must be a number higher than 0");
+			allegro_message("Must be a number >= 0");
 			return 1;
 		}
 

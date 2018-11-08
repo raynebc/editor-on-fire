@@ -105,6 +105,7 @@ MENU eof_track_menu[] =
 	{"&Clone", NULL, eof_track_clone_menu, 0, NULL},
 	{"&Enable GHL mode", eof_track_menu_enable_ghl_mode, NULL, 0, NULL},
 	{"Find optimal CH star power path", eof_menu_track_find_ch_sp_path, NULL, 0, NULL},
+	{"Evaluate CH star power path", eof_menu_track_evaluate_user_ch_sp_path, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

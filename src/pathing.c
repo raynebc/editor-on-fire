@@ -360,7 +360,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 				cached = 1;
 				thiscached = 1;
 			}
-			snprintf(tempstring, sizeof(tempstring) - 1, "%s%s%lu", (ctr ? ", " : ""), (thiscached ? "*" : ""), solution->deployments[ctr]);
+			(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%s%lu", (ctr ? ", " : ""), (thiscached ? "*" : ""), solution->deployments[ctr]);
 			strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
 		}
 
@@ -372,7 +372,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 
 		if(cached)
 		{
-///DEBUG LOGGING
+///EXTRA DEBUG LOGGING
 ///			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing cache for deployment at note index #%lu (Hitcount=%lu  Mult.=x%lu  Score=%lu  D.Notes=%lu  SP Meter=%lu%%).  Resuming from note index #%lu", solution->deploy_cache[cache_number].note_start, score.hitcounter, score.multiplier, score.score, score.deployment_notes, (unsigned long)(score.sp_meter * 100.0 + 0.5), index);
 ///			eof_log_casual(eof_log_string, 1, 1, 1);
 			if(index > solution->deployments[deployment_num])
@@ -502,7 +502,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 					if(logging)
 					{
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t!Invalid:  Insufficient star power to deploy.");
-						eof_log_casual(eof_log_string, 1, 0, 0);
+						eof_log_casual(eof_log_string, 1, 1, 1);
 					}
 					return 4;	//Solution attempting to deploy without sufficient star power
 				}
@@ -773,7 +773,7 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 	}
 	if(first_deploy > best->note_count)
 	{
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error:  First deployment (%lu) > the number of notes in the target track difficulty (%lu)", first_deploy, best->note_count);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error:  First deployment (%lu) > the number of notes in the target track difficulty (%lu)", first_deploy, best->note_count);
 		eof_log(eof_log_string, 1);
 		return 1;	//Invalid parameters
 	}
@@ -1044,13 +1044,13 @@ void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution)
 
 int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **testingptr, char *undo_made)
 {
-	EOF_SP_PATH_SOLUTION *best, *testing;
+	EOF_SP_PATH_SOLUTION *best = NULL, *testing = NULL;
 	unsigned long note_count = 0;				//The number of notes in the active track difficulty, which will be the size of the various note arrays
-	double *note_measure_positions;				//The position of each note in the active track difficulty defined in measures
-	double *note_beat_lengths;					//The length of each note in the active track difficulty defined in beats
+	double *note_measure_positions = NULL;		//The position of each note in the active track difficulty defined in measures
+	double *note_beat_lengths = NULL;			//The length of each note in the active track difficulty defined in beats
 
 	unsigned long max_deployments;				//The estimated maximum number of star power deployments, based on the amount of star power note sustain and the number of star power phrases
-	unsigned long *tdeployments, *bdeployments;	//An array defining the note index number of each deployment, ie deployments[0] being the first SP deployment, deployments[1] being the second, etc.
+	unsigned long *tdeployments, *bdeployments = NULL;	//An array defining the note index number of each deployment, ie deployments[0] being the first SP deployment, deployments[1] being the second, etc.
 	EOF_SP_PATH_SCORING_STATE *deploy_cache;	//An array storing cached scoring data for star power deployments
 
 	unsigned long ctr, index, tracksize;
@@ -1066,7 +1066,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 
  	eof_log("eof_ch_sp_path_setup() entered", 1);
 
-	if(!bestptr || !testingptr || !eof_song)
+	if(!testingptr || !eof_song)
 	{
 		eof_log("\tInvalid parameters.", 1);
 		return 1;	//Return error
@@ -1082,7 +1082,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(undo_made)
 			*undo_made = 1;
-		eof_apply_ts(4, 4, 0, eof_song, 0);
+		(void) eof_apply_ts(4, 4, 0, eof_song, 0);
 		eof_process_beat_statistics(eof_song, eof_selected_track);	//Recalculate beat statistics
 	}
 
@@ -1106,10 +1106,13 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 
 	note_measure_positions = malloc(sizeof(double) * note_count);
 	note_beat_lengths = malloc(sizeof(double) * note_count);
-	best = malloc(sizeof(EOF_SP_PATH_SOLUTION));
+	if(bestptr)
+	{	//If the calling function wanted to initialize two solution structures
+		best = malloc(sizeof(EOF_SP_PATH_SOLUTION));
+	}
 	testing = malloc(sizeof(EOF_SP_PATH_SOLUTION));
 
-	if(!note_measure_positions || !note_beat_lengths || !best || !testing)
+	if(!note_measure_positions || !note_beat_lengths || (bestptr && !best) || !testing)
 	{	//If any of those failed to allocate
 		if(note_measure_positions)
 			free(note_measure_positions);
@@ -1126,12 +1129,15 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 		return 1;	//Return error
 	}
 
-	best->note_measure_positions = note_measure_positions;
-	best->note_beat_lengths = note_beat_lengths;
-	best->note_count = note_count;
-	best->track = eof_selected_track;
-	best->diff = eof_note_type;
-	best->solution_number = 0;
+	if(bestptr)
+	{	//If the calling function wanted to initialize two solution structures
+		best->note_measure_positions = note_measure_positions;
+		best->note_beat_lengths = note_beat_lengths;
+		best->note_count = note_count;
+		best->track = eof_selected_track;
+		best->diff = eof_note_type;
+		best->solution_number = 0;
+	}
 
 	testing->note_measure_positions = note_measure_positions;
 	testing->note_beat_lengths = note_beat_lengths;
@@ -1141,7 +1147,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	testing->solution_number = 0;
 
 	///Apply EOF_NOTE_TFLAG_SOLO_NOTE and EOF_NOTE_TFLAG_SP_END tflags appropriately to notes in the target track difficulty
-	eof_ch_pathing_mark_tflags(best);
+	eof_ch_pathing_mark_tflags(testing);
 
 	///Calculate the measure position and beat length of each note in the active track difficulty
 	///Find the first note at which star power can be deployed
@@ -1158,7 +1164,10 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 			{	//Bounds check
 				free(note_measure_positions);
 				free(note_beat_lengths);
-				free(best);
+				if(bestptr)
+				{	//If the calling function wanted to initialize two solution structures
+					free(best);
+				}
 				free(testing);
 				eof_log("\tNotes miscounted", 1);
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
@@ -1244,14 +1253,20 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 
 	///Initialize deployment arrays
 	tdeployments = malloc(sizeof(unsigned long) * max_deployments);
-	bdeployments = malloc(sizeof(unsigned long) * max_deployments);
+	if(bestptr)
+	{	//If the calling function wanted to initialize two solution structures
+		bdeployments = malloc(sizeof(unsigned long) * max_deployments);
+	}
 	deploy_cache = malloc(sizeof(EOF_SP_PATH_SCORING_STATE) * max_deployments);
 
-	if(!tdeployments || !bdeployments || !deploy_cache)
+	if(!tdeployments || (bestptr && !bdeployments) || !deploy_cache)
 	{
 		free(note_measure_positions);
 		free(note_beat_lengths);
-		free(best);
+		if(bestptr)
+		{	//If the calling function wanted to initialize two solution structures
+			free(best);
+		}
 		free(testing);
 		if(tdeployments)
 			free(tdeployments);
@@ -1268,18 +1283,165 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	{	//For every entry in the deploy cache
 		deploy_cache[ctr].note_start = ULONG_MAX;	//Mark it as invalid
 	}
-	best->deployments = bdeployments;
-	best->deploy_cache = deploy_cache;
-	best->deploy_count = max_deployments;
+	if(bestptr)
+	{	//If the calling function wanted to initialize two solution structures
+		best->deployments = bdeployments;
+		best->deploy_cache = deploy_cache;
+		best->deploy_count = max_deployments;
+	}
 	testing->deployments = tdeployments;
 	testing->deploy_cache = deploy_cache;
 	testing->deploy_count = max_deployments;
 
 	//Return prepared solution structures to calling function
-	*bestptr = best;
+	if(bestptr)
+	{	//If the calling function wanted to initialize two solution structures
+		*bestptr = best;
+	}
 	*testingptr = testing;
 
 	return 0;	//Return success
+}
+
+void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long validcount, unsigned long invalidcount, unsigned long deployment_notes, char *undo_made)
+{
+	unsigned long ctr, index, tracksize;
+	unsigned long base_score, note_score, solo_note_count = 0;
+	double sustain_score;
+
+	if(!eof_song || !solution || !solution->note_beat_lengths)
+		return;	//Invalid parameters
+
+	///Count the number of solo notes (the total score compared to the base score for awarded star count does not include solo bonuses)
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
+	for(ctr = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active difficulty
+			if(eof_get_note_tflags(eof_song, eof_selected_track, ctr) & EOF_NOTE_TFLAG_SOLO_NOTE)
+			{	//If the note was determined to be in a solo section
+				solo_note_count++;
+			}
+		}
+	}
+
+	///Calculate the base score of the track difficulty
+	base_score = 0;
+	for(ctr = 0, index = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active difficulty
+			note_score = eof_note_count_colors(eof_song, eof_selected_track, ctr) * 50;	//The base score for a note is 50 points per gem
+			sustain_score = 25.0 * solution->note_beat_lengths[index];					//The sustain's base score is 25 points per beat
+			base_score += note_score + (sustain_score + 0.5);							//Add the rounded sum of those to the base score
+
+			index++;
+		}
+	}
+
+	///Report the solution
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tThe highest number of notes that could be played during star power deployment among all solutions was %lu (%.2f%%)", deployment_notes, (double)deployment_notes * 100.0 / solution->note_count);
+	eof_log(eof_log_string, 1);
+	if(solution->deployment_notes == 0)
+	{	//If there was no best use of star power
+		eof_log("\tNo notes were playable during a star power deployment", 1);
+		allegro_message("No notes were playable during a star power deployment");
+	}
+	else
+	{	//There is at least one note played during star power deployment
+		unsigned long notenum, min, sec, ms, flags;
+		unsigned long effective_score;
+		char timestamps[500], indexes[500], tempstring[20], scorestring[50], sololess_scorestring[50], multiplierstring[50], base_score_string[50];
+		char *star_string;
+		char *str_0star = "(no stars)";
+		char *str_1star = "(1 star)";
+		char *str_2star = "(2 stars)";
+		char *str_3star = "(3 stars)";
+		char *str_4star = "(4 stars)";
+		char *str_5star = "(5 stars)";
+		char *str_6star = "(6 stars)";
+		char *str_7star = "(7 stars)";
+		char *resultstring1 = "Optimum star power deployment in Clone Hero for this track difficulty is at these note timestamps (highlighted):";
+		char *score_disclaimer = "*Note:  This scoring is based on Clone Hero playing the chart as a MIDI, for which it will remove all sustains shorter than 1/12.";
+
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", resultstring1);
+		eof_log(eof_log_string, 1);
+		timestamps[0] = '\0';	//Empty the timestamps string
+		indexes[0] = '\0';		//And the indexes string
+
+		for(ctr = 0; ctr < solution->num_deployments; ctr++)
+		{	//For each deployment in the best solution
+			notenum = eof_translate_track_diff_note_index(eof_song, solution->track, solution->diff, solution->deployments[ctr]);	//Find the real note number for this index
+			if(notenum >= tracksize)
+			{	//If the note was not identified
+				eof_log("\tLogic error displaying solution.", 1);
+				allegro_message("Logic error displaying solution.");
+				break;
+			}
+
+			//Build string of deployment timestamps
+			ms = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//Determine mm:ss.ms formatting of timestamp
+			min = ms / 60000;
+			ms -= 60000 * min;
+			sec = ms / 1000;
+			ms -= 1000 * sec;
+			(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu:%lu.%lu", (ctr ? ", " : ""), min, sec, ms);	//Generate timestamp, prefixing with a comma and spacing after the first
+			strncat(timestamps, tempstring, sizeof(timestamps) - 1);	//Append to timestamps string
+
+			if(validcount + invalidcount > 1)
+			{	//If this reporting is for the best detected solution instead of for a single solution, highlight the solution's deployments
+				flags = eof_get_note_flags(eof_song, eof_selected_track, notenum);
+				if(undo_made && (*undo_made == 0))
+				{	//If the calling function passed undo tracking to this function, and an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					*undo_made = 1;
+				}
+				flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Enable highlighting for this note
+				eof_set_note_flags(eof_song, eof_selected_track, notenum, flags);
+			}
+
+			(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), solution->deployments[ctr]);
+			strncat(indexes, tempstring, sizeof(indexes) - 1);	//Append to indexes string
+		}
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", timestamps);
+		eof_log(eof_log_string, 1);
+		eof_log("\tAt these note indexes:", 1);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", indexes);
+		eof_log(eof_log_string, 1);
+		(void) snprintf(scorestring, sizeof(scorestring) - 1, "Estimated score:  %lu", solution->score);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", scorestring);
+		eof_log(eof_log_string, 1);
+
+		effective_score = solution->score - (100 * solo_note_count);	//The score compared against the base score does not include solo bonuses
+		star_string = str_0star;
+		if(effective_score >= base_score * 0.1)
+			star_string = str_1star;
+		if(effective_score >= base_score * 0.5)
+			star_string = str_2star;
+		if(effective_score >= base_score)
+			star_string = str_3star;
+		if(effective_score >= base_score * 2)
+			star_string = str_4star;
+		if(effective_score >= base_score * 2.8)
+			star_string = str_5star;
+		if(effective_score >= base_score * 3.6)
+			star_string = str_6star;
+		if(effective_score >= base_score * 4.4)
+			star_string = str_7star;
+		(void) snprintf(sololess_scorestring, sizeof(sololess_scorestring) - 1, "Without solo bonuses:  %lu", effective_score);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", sololess_scorestring);
+		eof_log(eof_log_string, 1);
+		(void) snprintf(base_score_string, sizeof(base_score_string) - 1, "Base score:  %lu", base_score);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", base_score_string);
+		eof_log(eof_log_string, 1);
+		(void) snprintf(multiplierstring, sizeof(multiplierstring) - 1, "Average multiplier:  %.2f %s", (double)effective_score / base_score, star_string);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", multiplierstring);
+		eof_log(eof_log_string, 1);
+
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
+		eof_render();
+		allegro_message("%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, sololess_scorestring, base_score_string, multiplierstring, score_disclaimer, deployment_notes, (double)deployment_notes * 100.0 / solution->note_count);
+	}
 }
 
 DIALOG eof_menu_track_find_ch_sp_path_dialog[] =
@@ -1299,24 +1461,18 @@ DIALOG eof_menu_track_find_ch_sp_path_dialog[] =
 
 int eof_menu_track_find_ch_sp_path(void)
 {
-	EOF_SP_PATH_SOLUTION *best, *testing;
+	EOF_SP_PATH_SOLUTION *best = NULL, *testing = NULL;
 	unsigned long worst_score = 0;				//The estimated maximum score when no star power is deployed
 	unsigned long first_deploy = ULONG_MAX;		//The first note that occurs after the end of the second star power phrase, and is thus the first note at which star power can be deployed
 	int worker_logging;
-	unsigned long ctr, index, tracksize;
+	unsigned long ctr, tracksize;
 	unsigned long validcount = 0, invalidcount = 0;
 	int error = 0;
 	char undo_made = 0;
 	clock_t starttime = 0, endtime = 0;
-	double elapsed_time;
+	double elapsed_time = 1.0;			//Don't init to 0 to avoid a division by 0 if an error occurs during processing
 	long process_count;
 	unsigned long deployment_notes = 0;	//Tracks the highest count of notes that were found to be playable during all star power deployments of any solution
-
-	//Variables for calculating stars awarded, the base score for the track difficulty (gem and sustain points, no bonuses, no multiplier) for calculating average multiplier, etc.
-	unsigned long base_score;
-	unsigned long note_score;
-	unsigned long solo_note_count = 0;
-	double sustain_score;
 
  	eof_log("eof_menu_track_find_ch_sp_path() entered", 1);
 
@@ -1355,33 +1511,6 @@ int eof_menu_track_find_ch_sp_path(void)
 	if(eof_ch_sp_path_setup(&best, &testing, &undo_made))
 	{	//If the function that performs setup for the pathing logic failed
 		return 1;
-	}
-
-	///Count the number of solo notes (the total score compared to the base score for awarded star count does not include solo bonuses)
-	tracksize = eof_get_track_size(eof_song, eof_selected_track);
-	for(ctr = 0; ctr < tracksize; ctr++)
-	{	//For each note in the active track
-		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
-		{	//If the note is in the active difficulty
-			if(eof_get_note_tflags(eof_song, eof_selected_track, ctr) & EOF_NOTE_TFLAG_SOLO_NOTE)
-			{	//If the note was determined to be in a solo section
-				solo_note_count++;
-			}
-		}
-	}
-
-	///Calculate the base score of the track difficulty
-	base_score = 0;
-	for(ctr = 0, index = 0; ctr < tracksize; ctr++)
-	{	//For each note in the active track
-		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
-		{	//If the note is in the active difficulty
-			note_score = eof_note_count_colors(eof_song, eof_selected_track, ctr) * 50;	//The base score for a note is 50 points per gem
-			sustain_score = 25.0 * testing->note_beat_lengths[index];					//The sustain's base score is 25 points per beat
-			base_score += note_score + (sustain_score + 0.5);							//Add the rounded sum of those to the base score
-
-			index++;
-		}
 	}
 
 	///Determine the maximum score when no star power is deployed
@@ -1475,114 +1604,25 @@ int eof_menu_track_find_ch_sp_path(void)
 				testing->deploy_cache[ctr].note_start = ULONG_MAX;	//Invalidate the entry
 			}
 			eof_log_casual("Best solution:", 1, 1, 1);
+			if(process_count > 1)
+			{	//If multiple worker processes were used to find the best solution
+				best->solution_number = ULONG_MAX;	//Don't log a solution number since it has no meaning in this context
+			}
 			(void) eof_evaluate_ch_sp_path_solution(testing, best->solution_number, 2);
 		}
 		eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk, and use the normal logging function from here
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", validcount + invalidcount, validcount, invalidcount, elapsed_time, ((double)validcount + invalidcount)/elapsed_time);
-		eof_log(eof_log_string, 1);
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tThe highest number of notes that could be played during star power deployment among all solutions was %lu (%.2f%%)", deployment_notes, (double)deployment_notes * 100.0 / testing->note_count);
-		eof_log(eof_log_string, 1);
+
 		if((best->deployment_notes == 0) && (best->score > worst_score))
 		{	//If the best score did not reflect notes being played in star power, but the score somehow was better than the score from when no star power deployment was tested
 			eof_log("\tLogic error calculating solution.", 1);
 			allegro_message("Logic error calculating solution.");
 		}
-		else if(best->deployment_notes == 0)
-		{	//If there was no best use of star power
-			eof_log("\tNo notes were playable during a star power deployment", 1);
-			allegro_message("No notes were playable during a star power deployment");
-		}
 		else
-		{	//There is at least one note played during star power deployment
-			unsigned long notenum, min, sec, ms, flags;
-			unsigned long effective_score;
-			char timestamps[500], indexes[500], tempstring[20], scorestring[50], sololess_scorestring[50], multiplierstring[50], base_score_string[50];
-			char *star_string;
-			char *str_0star = "(no stars)";
-			char *str_1star = "(1 star)";
-			char *str_2star = "(2 stars)";
-			char *str_3star = "(3 stars)";
-			char *str_4star = "(4 stars)";
-			char *str_5star = "(5 stars)";
-			char *str_6star = "(6 stars)";
-			char *str_7star = "(7 stars)";
-			char *resultstring1 = "Optimum star power deployment in Clone Hero for this track difficulty is at these note timestamps (highlighted):";
-			char *score_disclaimer = "*Note:  This scoring is based on Clone Hero playing the chart as a MIDI, for which it will remove all sustains shorter than 1/12.";
-
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", resultstring1);
-			eof_log(eof_log_string, 1);
-			timestamps[0] = '\0';	//Empty the timestamps string
-			indexes[0] = '\0';		//And the indexes string
-
-			for(ctr = 0; ctr < best->num_deployments; ctr++)
-			{	//For each deployment in the best solution
-				notenum = eof_translate_track_diff_note_index(eof_song, best->track, best->diff, best->deployments[ctr]);	//Find the real note number for this index
-				if(notenum >= tracksize)
-				{	//If the note was not identified
-					eof_log("\tLogic error displaying solution.", 1);
-					allegro_message("Logic error displaying solution.");
-					break;
-				}
-
-				//Build string of deployment timestamps
-				ms = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//Determine mm:ss.ms formatting of timestamp
-				min = ms / 60000;
-				ms -= 60000 * min;
-				sec = ms / 1000;
-				ms -= 1000 * sec;
-				snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu:%lu.%lu", (ctr ? ", " : ""), min, sec, ms);	//Generate timestamp, prefixing with a comma and spacing after the first
-				strncat(timestamps, tempstring, sizeof(timestamps) - 1);	//Append to timestamps string
-
-				flags = eof_get_note_flags(eof_song, eof_selected_track, notenum);
-				if(!(flags & EOF_NOTE_FLAG_HIGHLIGHT) && !undo_made)
-				{	//If this is the first note being highlighted for the solution
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Enable highlighting for this note
-				eof_set_note_flags(eof_song, eof_selected_track, notenum, flags);
-
-				snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), best->deployments[ctr]);
-				strncat(indexes, tempstring, sizeof(indexes) - 1);	//Append to indexes string
-			}
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", timestamps);
-			eof_log(eof_log_string, 1);
-			eof_log("\tAt these note indexes:", 1);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", indexes);
-			eof_log(eof_log_string, 1);
-			(void) snprintf(scorestring, sizeof(scorestring) - 1, "Estimated score:  %lu", best->score);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", scorestring);
+		{	//The score was determined
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", validcount + invalidcount, validcount, invalidcount, elapsed_time, ((double)validcount + invalidcount)/elapsed_time);
 			eof_log(eof_log_string, 1);
 
-			effective_score = best->score - (100 * solo_note_count);	//The score compared against the base score does not include solo bonuses
-			star_string = str_0star;
-			if(effective_score >= base_score * 0.1)
-				star_string = str_1star;
-			if(effective_score >= base_score * 0.5)
-				star_string = str_2star;
-			if(effective_score >= base_score)
-				star_string = str_3star;
-			if(effective_score >= base_score * 2)
-				star_string = str_4star;
-			if(effective_score >= base_score * 2.8)
-				star_string = str_5star;
-			if(effective_score >= base_score * 3.6)
-				star_string = str_6star;
-			if(effective_score >= base_score * 4.4)
-				star_string = str_7star;
-			(void) snprintf(sololess_scorestring, sizeof(sololess_scorestring) - 1, "Without solo bonuses:  %lu", effective_score);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", sololess_scorestring);
-			eof_log(eof_log_string, 1);
-			(void) snprintf(base_score_string, sizeof(base_score_string) - 1, "Base score:  %lu", base_score);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", base_score_string);
-			eof_log(eof_log_string, 1);
-			(void) snprintf(multiplierstring, sizeof(multiplierstring) - 1, "Average multiplier:  %.2f %s", (double)effective_score / base_score, star_string);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", multiplierstring);
-			eof_log(eof_log_string, 1);
-
-			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
-			eof_render();
-			allegro_message("%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, sololess_scorestring, base_score_string, multiplierstring, score_disclaimer, deployment_notes, (double)deployment_notes * 100.0 / testing->note_count);
+			eof_ch_sp_path_report_solution(best, validcount, invalidcount, deployment_notes, &undo_made);
 		}
 	}
 
@@ -1595,6 +1635,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	free(best);
 	free(testing);
 
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
 	for(ctr = 0; ctr < tracksize; ctr++)
 	{	//For each note in the active track
 		unsigned long tflags = eof_get_note_tflags(eof_song, eof_selected_track, ctr);
@@ -1612,7 +1653,7 @@ void eof_ch_sp_path_worker(char *job_file)
 	PACKFILE *inf, *outf;
 	char filename[1024];
 	char jobreadyfilename[1024];
-	char project_path[1024];
+	char project_path[1024] = {0};
 	int error = 0, canceled = 0, done = 0, idle = 0, retval, firstjob = 1;
 	EOF_SP_PATH_SOLUTION best = {0}, testing = {0};
 	unsigned long ctr, first_deploy = ULONG_MAX, last_deploy = ULONG_MAX, validcount = 0, invalidcount = 0, deployment_notes = 0;
@@ -1654,7 +1695,7 @@ void eof_ch_sp_path_worker(char *job_file)
 			//Parse the job file
 			if(ch_sp_path_worker_logging)
 			{
-				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Loading job file \"%s\"", job_file);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Loading job file \"%s\"", job_file);
 				eof_log(eof_log_string, 1);
 			}
 			inf = pack_fopen(job_file, "rb");
@@ -1740,7 +1781,7 @@ void eof_ch_sp_path_worker(char *job_file)
 					{	//For every entry in the measure position array
 						double temp = 0.0;
 
-						if(pack_fread(&temp, sizeof(double), inf) != sizeof(double))
+						if(pack_fread(&temp, (long) sizeof(double), inf) != (long) sizeof(double))
 						{	//If the double floating point value was not read
 							error = 1;
 							if(ch_sp_path_worker_logging)
@@ -1772,7 +1813,7 @@ void eof_ch_sp_path_worker(char *job_file)
 					{	//For every entry in the note lengths array
 						double temp = 0.0;
 
-						if(pack_fread(&temp, sizeof(double), inf) != sizeof(double))
+						if(pack_fread(&temp, (long) sizeof(double), inf) != (long) sizeof(double))
 						{	//If the double floating point value was not read
 							error = 1;
 							if(ch_sp_path_worker_logging)
@@ -1820,14 +1861,14 @@ void eof_ch_sp_path_worker(char *job_file)
 			//Read the unique job data (the first and last numbers of the range of solution sets to test)
 			first_deploy = pack_igetl(inf);
 			last_deploy = pack_igetl(inf);
-			pack_fclose(inf);	//Close the job file
+			(void) pack_fclose(inf);	//Close the job file
 
 			//Initialize structures
 			best.num_deployments = testing.num_deployments = 0;
 			best.score = testing.score = 0;
 
 			//Signal to the supervisor that the worker process will begin testing solutions
-			(void) replace_extension(filename, job_file, "running", sizeof(filename));	//Build the path to this signal file
+			(void) replace_extension(filename, job_file, "running", (int) sizeof(filename));	//Build the path to this signal file
 			outf = pack_fopen(filename, "w");	//Create that file
 			(void) pack_fclose(outf);
 			idle = 0;
@@ -1842,7 +1883,7 @@ void eof_ch_sp_path_worker(char *job_file)
 					eof_log("\tKill signal detected", 1);
 				}
 				done = 1;
-				delete_file(filename);
+				(void) delete_file(filename);
 			}
 		}
 
@@ -1860,7 +1901,7 @@ void eof_ch_sp_path_worker(char *job_file)
 			//Test the specified range of solutions
 			if(ch_sp_path_worker_logging)
 			{
-				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tTesting solution sets #%lu through #%lu", first_deploy, last_deploy);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tTesting solution sets #%lu through #%lu", first_deploy, last_deploy);
 				eof_log(eof_log_string, 1);
 			}
 			retval = eof_ch_sp_path_single_process_solve(&best, &testing, first_deploy, last_deploy, &validcount, &invalidcount, &deployment_notes);
@@ -1890,21 +1931,21 @@ void eof_ch_sp_path_worker(char *job_file)
 		{	//If the job was not successfully processed
 			(void) replace_extension(filename, job_file, "fail", 1024);		//Create a results file to specify failure
 			outf = pack_fopen(filename, "w");
-			pack_fclose(outf);	//Close the results file
+			(void) pack_fclose(outf);	//Close the results file
 			idle = 0;
 		}
 		else if(canceled)
 		{	//If the user canceled the job
 			(void) replace_extension(filename, job_file, "cancel", 1024);	//Create a results file to specify cancellation
 			outf = pack_fopen(filename, "w");
-			pack_fclose(outf);	//Close the results file
+			(void) pack_fclose(outf);	//Close the results file
 			idle = 0;
 		}
 		else if(done)
 		{	//If the supervisor commanded the worker to stop
 			(void) replace_extension(filename, job_file, "dead", 1024);	//Create a results file to specify the worker will terminate
 			outf = pack_fopen(filename, "w");
-			pack_fclose(outf);	//Close the results file
+			(void) pack_fclose(outf);	//Close the results file
 			idle = 0;
 		}
 		else if(!idle)
@@ -1916,27 +1957,27 @@ void eof_ch_sp_path_worker(char *job_file)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tJob (solution sets #%lu-#%lu) completed.  Best solution:  Deploy at indexes ", first_deploy, last_deploy);
 				for(ctr = 0; ctr < testing.num_deployments; ctr++)
 				{	//For each deployment in the chosen solution
-					snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing.deployments[ctr]);
+					(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing.deployments[ctr]);
 					strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
 				}
-				snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing.score);
+				(void) snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing.score);
 				strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
 				eof_log(eof_log_string, 1);
 				eof_log("Waiting for next job", 1);
 			}
 			(void) replace_extension(filename, job_file, "success", 1024);	//Create a results file to contain the best solution
 			outf = pack_fopen(filename, "w");
-			pack_iputl(best.score, outf);
-			pack_iputl(best.deployment_notes, outf);	//Write the number of notes played during star power in the best solution
-			pack_iputl(deployment_notes, outf);			//Write the highest count of notes that were found to be playable during all of this job's tested solutions
-			pack_iputl(validcount, outf);
-			pack_iputl(invalidcount, outf);
-			pack_iputl(best.num_deployments, outf);
+			(void) pack_iputl(best.score, outf);
+			(void) pack_iputl(best.deployment_notes, outf);	//Write the number of notes played during star power in the best solution
+			(void) pack_iputl(deployment_notes, outf);			//Write the highest count of notes that were found to be playable during all of this job's tested solutions
+			(void) pack_iputl(validcount, outf);
+			(void) pack_iputl(invalidcount, outf);
+			(void) pack_iputl(best.num_deployments, outf);
 			for(ctr = 0; ctr < best.num_deployments; ctr++)
 			{	//For each deployment in the solution
-				pack_iputl(best.deployments[ctr], outf);	//Write it to disk
+				(void) pack_iputl(best.deployments[ctr], outf);	//Write it to disk
 			}
-			pack_fclose(outf);				//Close the results file
+			(void) pack_fclose(outf);				//Close the results file
 			(void) delete_file(jobreadyfilename);	//Delete the job file readiness signal
 			(void) delete_file(job_file);			//Delete the job file to signal to the supervisor process that the results file is ready to access
 			set_window_title("Worker process idle.  Press Esc to cancel");
@@ -1972,7 +2013,7 @@ void eof_ch_sp_path_worker(char *job_file)
 
 	if(error)
 	{	//If the job failed, create a copy of the job file to a new name for troubleshooting
-		(void) replace_extension(filename, job_file, "failedjob", sizeof(filename));
+		(void) replace_extension(filename, job_file, "failedjob", (int) sizeof(filename));
 		(void) eof_copy_file(job_file, filename);
 	}
 
@@ -1982,7 +2023,7 @@ void eof_ch_sp_path_worker(char *job_file)
 
 int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes, int worker_logging)
 {
-	EOF_SP_PATH_WORKER *workers;
+	EOF_SP_PATH_WORKER *workers = NULL;
 	PACKFILE *fp;
 	unsigned long ctr, workerctr, solutionctr, num_workers_running, num_workers_launched = 0, num_jobs_completed = 0;
 	clock_t start_time, end_time;
@@ -1991,7 +2032,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 	char filename[50];	//Stores the job filename for worker processes
 	char jobreadyfilename[50];	//Used to create the jobready file for a worker process
 	char commandline[1050];	//Stores the command line for launching a worker process
-	char exepath[1050];
+	char exepath[1050] = {0};
 	char tempstr[100];
 	int done = 0, error = 0, canceled = 0, workerstatuschange;
 	double elapsed_time;
@@ -2029,38 +2070,38 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 		//Delete any previously created status, job and results files for this worker process ID
 		(void) snprintf(filename, sizeof(filename) - 1, "%s%lu.job", eof_temp_path_s, workerctr);
 		(void) delete_file(filename);	//Delete #.job file
-		(void) replace_extension(filename, filename, "jobready", sizeof(filename));
+		(void) replace_extension(filename, filename, "jobready", (int) sizeof(filename));
 		(void) delete_file(filename);	//Delete #.running file
-		(void) replace_extension(filename, filename, "running", sizeof(filename));
+		(void) replace_extension(filename, filename, "running", (int) sizeof(filename));
 		(void) delete_file(filename);	//Delete #.running file
-		(void) replace_extension(filename, filename, "fail", sizeof(filename));
+		(void) replace_extension(filename, filename, "fail", (int) sizeof(filename));
 		(void) delete_file(filename);	//Delete #.fail file
-		(void) replace_extension(filename, filename, "cancel", sizeof(filename));
+		(void) replace_extension(filename, filename, "cancel", (int) sizeof(filename));
 		(void) delete_file(filename);	//Delete #.cancel file
-		(void) replace_extension(filename, filename, "success", sizeof(filename));
+		(void) replace_extension(filename, filename, "success", (int) sizeof(filename));
 		(void) delete_file(filename);	//Delete #.success file
-		(void) replace_extension(filename, filename, "kill", sizeof(filename));
+		(void) replace_extension(filename, filename, "kill", (int) sizeof(filename));
 		(void) delete_file(filename);	//Delete #.kill file
-		(void) replace_extension(filename, filename, "dead", sizeof(filename));
+		(void) replace_extension(filename, filename, "dead", (int) sizeof(filename));
 		(void) delete_file(filename);	//Delete #.dead file
 	}
 
 	//Delete any existing files used to report worker failure reasons
-	(void) replace_extension(filename, filename, "cantfindjob", sizeof(filename));
+	(void) replace_extension(filename, filename, "cantfindjob", (int) sizeof(filename));
 	(void) delete_file(filename);
-	(void) replace_extension(filename, filename, "cantloadjob", sizeof(filename));
+	(void) replace_extension(filename, filename, "cantloadjob", (int) sizeof(filename));
 	(void) delete_file(filename);
-	(void) replace_extension(filename, filename, "cantreadprojectpath", sizeof(filename));
+	(void) replace_extension(filename, filename, "cantreadprojectpath", (int) sizeof(filename));
 	(void) delete_file(filename);
-	(void) replace_extension(filename, filename, "cantloadproject", sizeof(filename));
+	(void) replace_extension(filename, filename, "cantloadproject", (int) sizeof(filename));
 	(void) delete_file(filename);
-	(void) replace_extension(filename, filename, "cantreadfppos", sizeof(filename));
+	(void) replace_extension(filename, filename, "cantreadfppos", (int) sizeof(filename));
 	(void) delete_file(filename);
-	(void) replace_extension(filename, filename, "cantreadfplength", sizeof(filename));
+	(void) replace_extension(filename, filename, "cantreadfplength", (int) sizeof(filename));
 	(void) delete_file(filename);
-	(void) replace_extension(filename, filename, "cantallocate", sizeof(filename));
+	(void) replace_extension(filename, filename, "cantallocate", (int) sizeof(filename));
 	(void) delete_file(filename);
-	(void) replace_extension(filename, filename, "solvefailed", sizeof(filename));
+	(void) replace_extension(filename, filename, "solvefailed", (int) sizeof(filename));
 	(void) delete_file(filename);
 
 	//Evaluate solutions
@@ -2110,7 +2151,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 								(void) pack_iputl(testing->note_count, fp);		//Write the number of notes in the target track difficulty
 								for(ctr = 0; ctr < testing->note_count; ctr++)
 								{	//For every entry in the note measure position array
-									if(pack_fwrite(&testing->note_measure_positions[ctr], sizeof(double), fp) != sizeof(double))	//Write the note measure position
+									if(pack_fwrite(&testing->note_measure_positions[ctr], (long) sizeof(double), fp) != (long) sizeof(double))	//Write the note measure position
 									{	//If the double floating point value was not written
 										error = 1;
 										break;
@@ -2118,7 +2159,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 								}
 								for(ctr = 0; ctr < testing->note_count; ctr++)
 								{	//For every entry in the note beat lengths array
-									if(pack_fwrite(&testing->note_beat_lengths[ctr], sizeof(double), fp) != sizeof(double))	//Write the note beat length
+									if(pack_fwrite(&testing->note_beat_lengths[ctr], (long) sizeof(double), fp) != (long) sizeof(double))	//Write the note beat length
 									{	//If the double floating point value was not written
 										error = 1;
 										break;
@@ -2132,9 +2173,9 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 							(void) pack_iputl(last_deploy, fp);		//Write the ending of the solution set range the worker is to test
 							(void) pack_fclose(fp);
 
-							(void) replace_extension(jobreadyfilename, filename, "jobready", sizeof(filename));
+							(void) replace_extension(jobreadyfilename, filename, "jobready", (int) sizeof(filename));
 							fp = pack_fopen(jobreadyfilename, "w");	//Create a file to signal to the worker that the job file is ready to access
-							pack_fclose(fp);
+							(void) pack_fclose(fp);
 
 							if(EOF_PERSISTENT_WORKER && (workers[workerctr].job_count > 1))
 							{	//If the worker process for this job is already running
@@ -2147,14 +2188,14 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 							{	//If there hasn't been an I/O error
 								if(workers[workerctr].job_count == 1)
 								{	//If this job will initiate a worker process
-									get_executable_name(exepath, sizeof(exepath) - 1);	//Get the full path to the running EOF executable
+									get_executable_name(exepath, (int) sizeof(exepath) - 1);	//Get the full path to the running EOF executable
 									if(worker_logging)
 									{	//If the user specified to perform per-worker logging
-										snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+										(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
 									}
 									else
 									{	//Supervisor logging only
-										snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\"", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+										(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\"", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
 									}
 
 									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLaunching worker process #%lu to evaluate solution sets #%lu-#%lu with command line:  %s", workerctr, solutionctr, last_deploy, commandline);
@@ -2187,17 +2228,17 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSolutions to test exhausted at %.2f seconds into supervisor process execution.", elapsed_time);
 							eof_log_casual(eof_log_string, 1, 1, 1);
 						}
-						(void) replace_extension(filename, filename, "kill", sizeof(filename));	//Build the path to the file to command the worker process to end
+						(void) replace_extension(filename, filename, "kill", (int) sizeof(filename));	//Build the path to the file to command the worker process to end
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSignaling worker process #%lu to terminate", workerctr);
 						eof_log_casual(eof_log_string, 1, 1, 1);
 						fp = pack_fopen(filename, "w");	//Create that file
-						pack_fclose(fp);
+						(void) pack_fclose(fp);
 						workers[workerctr].status = EOF_SP_PATH_WORKER_STOPPING;
 						workerstatuschange = 1;
 					}//There are no solutions left to test
 
 					//Check if user canceled an idle worker process, don't consider this a cancellation of the supervisor, just the process
-					(void) replace_extension(filename, filename, "dead", sizeof(filename));	//Build the path to this worker's termination status file
+					(void) replace_extension(filename, filename, "dead", (int) sizeof(filename));	//Build the path to this worker's termination status file
 					if(exists(filename))
 					{
 						workers[workerctr].status = EOF_SP_PATH_WORKER_STOPPED;
@@ -2210,7 +2251,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 				clock_t current_time = clock();
 
 				num_workers_running++;	//For the purposes of tracking how many workers are currently running, waiting status counts
-				(void) replace_extension(filename, filename, "running", sizeof(filename));	//Build the path to this worker's running status file
+				(void) replace_extension(filename, filename, "running", (int) sizeof(filename));	//Build the path to this worker's running status file
 				if(exists(filename))
 				{	//If the worker process created this file to signal that it is processing the job
 					(void) delete_file(filename);	//Delete the .running file to acknowledge that the worker is running
@@ -2232,14 +2273,14 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 			else if(workers[workerctr].status == EOF_SP_PATH_WORKER_RUNNING)
 			{	//If this process was previously running, check if it's done
 				num_workers_running++;	//Track the number of workers in running status
-				(void) replace_extension(filename, filename, "job", sizeof(filename));	//Build the path to this worker's job file
+				(void) replace_extension(filename, filename, "job", (int) sizeof(filename));	//Build the path to this worker's job file
 				if(!exists(filename))
 				{	//If the job file no longer exists, the worker has completed, check the results
 					int retry;
 
 					for(retry = 5; retry > 0; retry--)
 					{	//Attempt to read the results file up to five times
-						(void) replace_extension(filename, filename, "fail", sizeof(filename));	//Build the path to check whether this worker process failed
+						(void) replace_extension(filename, filename, "fail", (int) sizeof(filename));	//Build the path to check whether this worker process failed
 						if(exists(filename))
 						{	//If the worker failed
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected failure by worker process #%lu", workerctr);
@@ -2248,7 +2289,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 						}
 						else
 						{	//If the worker did not create a file indicating failure status
-							(void) replace_extension(filename, filename, "cancel", sizeof(filename));	//Build the path to check whether this worker process was canceled
+							(void) replace_extension(filename, filename, "cancel", (int) sizeof(filename));	//Build the path to check whether this worker process was canceled
 							if(exists(filename))
 							{	//If the user canceled the worker
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected cancellation by worker process #%lu", workerctr);
@@ -2258,7 +2299,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 							}
 							else
 							{	//If the worker was not canceled
-								(void) replace_extension(filename, filename, "success", sizeof(filename));	//Build the path to check whether this worker process succeeded
+								(void) replace_extension(filename, filename, "success", (int) sizeof(filename));	//Build the path to check whether this worker process succeeded
 								if(exists(filename))
 								{	//If the worker succeeded
 									for(ctr = 0; ctr < 5; ctr++)
@@ -2306,10 +2347,10 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (%lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, vcount + icount, elapsed_time);
 										for(ctr = 0; ctr < testing->num_deployments; ctr++)
 										{	//For each deployment in the chosen solution
-											snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing->deployments[ctr]);
+											(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing->deployments[ctr]);
 											strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
 										}
-										snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing->score);
+										(void) snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing->score);
 										strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
 										eof_log_casual(eof_log_string, 1, 1, 1);
 										if(elapsed_time < 5.0)
@@ -2374,7 +2415,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 			}//If this process was previously dispatched, check if it's done
 			else if(workers[workerctr].status == EOF_SP_PATH_WORKER_STOPPING)
 			{	//If this process was previously commanded to end, check if it has acknowledged
-				(void) replace_extension(filename, filename, "dead", sizeof(filename));	//Build the path to this worker's termination status file
+				(void) replace_extension(filename, filename, "dead", (int) sizeof(filename));	//Build the path to this worker's termination status file
 				if(exists(filename))
 				{
 					workers[workerctr].status = EOF_SP_PATH_WORKER_STOPPED;
@@ -2436,16 +2477,16 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 				{	//If the worker process is running, display its assigned solution sets
 					if(workers[workerctr].first_deploy == workers[workerctr].last_deploy)
 					{	//Worker process is only evaluating one solution set
-						snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Processing job #%lu:  Evaluating solution set #%lu", workerctr, current_status, workers[workerctr].job_count, workers[workerctr].first_deploy);
+						(void) snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Processing job #%lu:  Evaluating solution set #%lu", workerctr, current_status, workers[workerctr].job_count, workers[workerctr].first_deploy);
 					}
 					else
 					{	//Worker process is evaluating multiple solution sets
-						snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Processing job #%lu:  Evaluating solution set #%lu through #%lu", workerctr, current_status, workers[workerctr].job_count, workers[workerctr].first_deploy, workers[workerctr].last_deploy);
+						(void) snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Processing job #%lu:  Evaluating solution set #%lu through #%lu", workerctr, current_status, workers[workerctr].job_count, workers[workerctr].first_deploy, workers[workerctr].last_deploy);
 					}
 				}
 				else
 				{	//Otherwise just report the worker process's status
-					snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s", workerctr, current_status);
+					(void) snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s", workerctr, current_status);
 				}
 				textout_ex(eof_window_note_upper_left->screen, eof_font, tempstr, 2, ypos, eof_color_white, -1);
 				ypos += 12;
@@ -2462,7 +2503,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 			{
 				textout_ex(eof_window_note_upper_left->screen, eof_font, "Press Escape to cancel.", 2, ypos, eof_color_white, -1);
 			}
-			snprintf(tempstr, sizeof(tempstr) - 1, "%lu workers running.  Last assigned solution set is %lu/%lu.", num_workers_running, (solutionctr != first_deploy) ? (solutionctr - 1) : first_deploy, testing->note_count);
+			(void) snprintf(tempstr, sizeof(tempstr) - 1, "%lu workers running.  Last assigned solution set is %lu/%lu.", num_workers_running, (solutionctr != first_deploy) ? (solutionctr - 1) : first_deploy, testing->note_count);
 			set_window_title(tempstr);
 			blit(eof_window_note_upper_left->screen, screen, 0, 0, 0, 0, eof_window_note_upper_left->w, eof_window_note_upper_left->h);	//Render the screen normally
 		}
@@ -2474,7 +2515,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 		{	//If the worker hasn't already been stopped or commanded to stop
 			(void) snprintf(filename, sizeof(filename) - 1, "%s%lu.kill", eof_temp_path_s, workerctr);	//Build the file path for the process's kill command
 			fp = pack_fopen(filename, "w");	//Create that file
-			pack_fclose(fp);
+			(void) pack_fclose(fp);
 		}
 	}
 
@@ -2494,4 +2535,98 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 		return 2;	//Return cancellation
 
 	return 0;	//Return success
+}
+
+int eof_menu_track_evaluate_user_ch_sp_path(void)
+{
+	EOF_SP_PATH_SOLUTION *testing = NULL;
+	unsigned long ctr, index, tracksize, deploy_count;
+	char undo_made = 0;
+	int error = 0, retval;
+	char error_string[100];
+
+ 	eof_log("eof_menu_track_evaluate_user_ch_sp_path() entered", 1);
+
+ 	if(!eof_song)
+		return 1;	//No project loaded
+
+	///Initialize the solution structure to reflect the highlighted notes in the active track difficulty
+	if(eof_ch_sp_path_setup(NULL, &testing, &undo_made))
+	{	//If the function that performs setup for the pathing logic failed
+		return 1;
+	}
+
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
+	for(ctr = 0, index = 0, deploy_count = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		{	//If the note is in the active difficulty
+			if(eof_get_note_flags(eof_song, eof_selected_track, ctr) & EOF_NOTE_FLAG_HIGHLIGHT)
+			{	//If the note is highlighted
+				if(deploy_count >= testing->deploy_count)
+				{	//If the user specified more deployments than is possible
+					(void) snprintf(error_string, sizeof(error_string) - 1, "Solution invalid:  More than the possible number of %lu star power deployments are specified.", testing->deploy_count);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", error_string);
+					eof_log(eof_log_string, 1);
+					allegro_message("%s", error_string);
+					error = 1;
+					break;
+				}
+
+				testing->deployments[deploy_count] = index;	//Record a deployment for this note index
+				deploy_count++;
+			}
+			index++;	//Track the number of notes in the target difficulty that have been encountered
+		}
+	}
+	testing->num_deployments = deploy_count;	//Record the number of deployments for this solution
+
+	///Evaluate the solution
+	if(!error)
+	{	//If the user specified deployment count is valid
+		eof_log_casual("User specified solution:", 1, 1, 1);
+		retval = eof_evaluate_ch_sp_path_solution(testing, ULONG_MAX, 2);
+		eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk, and use the normal logging function from here
+
+		///Report the solution
+		if(retval)
+		{	//If the solution failed evaluation
+			if(retval == 1)
+				(void) snprintf(error_string, sizeof(error_string) - 1, "Testing failed:  Invalid parameters");
+			else if(retval == 2)
+				(void) snprintf(error_string, sizeof(error_string) - 1, "Testing failed:  Solution invalidated by cache");
+			else if(retval == 3)
+				(void) snprintf(error_string, sizeof(error_string) - 1, "Invalid solution:  Attempting to deploy while star power is in effect.");
+			else if(retval == 4)
+				(void) snprintf(error_string, sizeof(error_string) - 1, "Invalid solution:  Attempting to deploy without sufficient star power.");
+			else if(retval == 5)
+				(void) snprintf(error_string, sizeof(error_string) - 1, "Testing failed:  Logic error.");
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", error_string);
+			eof_log(eof_log_string, 1);
+			allegro_message("%s\nCheck EOF's log for more details.", error_string);
+		}
+		else
+		{	//The solution was found valid
+			eof_ch_sp_path_report_solution(testing, 1, 0, testing->deployment_notes, NULL);	//Report for one tested solution
+		}
+	}
+
+	///Cleanup
+	free(testing->note_measure_positions);
+	free(testing->note_beat_lengths);
+	free(testing->deployments);
+	free(testing->deploy_cache);
+	free(testing);
+
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
+	for(ctr = 0; ctr < tracksize; ctr++)
+	{	//For each note in the active track
+		unsigned long tflags = eof_get_note_tflags(eof_song, eof_selected_track, ctr);
+
+		tflags &= ~EOF_NOTE_TFLAG_SOLO_NOTE;	//Clear the temporary flags
+		tflags &= ~EOF_NOTE_TFLAG_SP_END;
+		eof_set_note_tflags(eof_song, eof_selected_track, ctr, tflags);
+	}
+
+	return 1;
 }
