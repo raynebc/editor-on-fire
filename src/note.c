@@ -543,7 +543,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					else
 						dcol2 = eof_color_blue;	//render it with a blue dot
 				}
-				else if(((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
+				else if(eof_note_is_cymbal_bitmask(mask, noteflags))
 				{	//If this drum note is marked as a yellow, blue or green cymbal
 					iscymbal = 1;
 				}
@@ -671,12 +671,14 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		else if((eof_hover_note >= 0) && (p == 3))
 		{	//If this note is currently being moused over
 			rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, eof_color_gray);
-//currently, no condition exists where iscymbal is marked as nonzero in this if code block
-//			if(!iscymbal)
-//			{	//If this note is not a cymbal, draw a non filled circle over the note
-//				circle(window->screen, x, y, radius, eof_color_gray);
-//			}
-//			else
+
+			//Determine if the hovered note is marked as a yellow, blue or green cymbal
+			iscymbal = eof_note_is_cymbal(eof_song, eof_selected_track, eof_hover_note);
+			if(!iscymbal)
+			{	//If this note is not a cymbal, draw a non filled circle over the note
+				circle(window->screen, x, y, radius, eof_color_gray);
+			}
+			else
 			{	//Draw a non filled rectangle along the border of the filled triangle
 				line(window->screen, x, y-radius, x+radius, y+radius, eof_color_gray);
 				line(window->screen, x+radius, y+radius, x-radius, y+radius, eof_color_gray);

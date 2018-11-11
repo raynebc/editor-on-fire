@@ -2348,7 +2348,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 
 										//Log the results
 										elapsed_time = (double)(workers[workerctr].end_time - workers[workerctr].start_time) / (double)CLOCKS_PER_SEC;	//Convert to seconds
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (%lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, vcount + icount, elapsed_time);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (job #%lu, %lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, workers[workerctr].job_count, vcount + icount, elapsed_time);
 										for(ctr = 0; ctr < testing->num_deployments; ctr++)
 										{	//For each deployment in the chosen solution
 											(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing->deployments[ctr]);
@@ -2507,7 +2507,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 			{
 				textout_ex(eof_window_note_upper_left->screen, eof_font, "Press Escape to cancel.", 2, ypos, eof_color_white, -1);
 			}
-			(void) snprintf(tempstr, sizeof(tempstr) - 1, "%lu workers running.  Last assigned solution set is %lu/%lu.", num_workers_running, (solutionctr != first_deploy) ? (solutionctr - 1) : first_deploy, testing->note_count);
+			(void) snprintf(tempstr, sizeof(tempstr) - 1, "%lu worker%s running.  Last assigned solution set is %lu/%lu.", num_workers_running, ((num_workers_running > 1) ? "s" : ""), (solutionctr != first_deploy) ? (solutionctr - 1) : first_deploy, testing->note_count);
 			set_window_title(tempstr);
 			blit(eof_window_note_upper_left->screen, screen, 0, 0, 0, 0, eof_window_note_upper_left->w, eof_window_note_upper_left->h);	//Render the screen normally
 		}

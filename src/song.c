@@ -9706,6 +9706,18 @@ int eof_note_is_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 	return 0;
 }
 
+int eof_note_is_cymbal_bitmask(unsigned long notemask, unsigned long flags)
+{
+	if( ((notemask & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)) ||
+		((notemask & 8) && (flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)) ||
+		((notemask & 16) && (flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)))
+	{	//If this note contains a cymbal on lane 3, 4 or 5
+		return 1;
+	}
+
+	return 0;
+}
+
 int eof_note_is_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {
 	return eof_is_grid_snap_position(eof_get_note_pos(sp, track, notenum));
