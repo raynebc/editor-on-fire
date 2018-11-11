@@ -98,7 +98,7 @@ unsigned long eof_ch_pathing_find_next_sp_note(EOF_SP_PATH_SOLUTION *solution, u
 	//Parses notes starting with the specified note index and returns the index of the first note having star power
 	//Returns ULONG_MAX if there is no such note or upon error
 
-int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long solution_num, int logging);
+int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long solution_num, int logging, int sequential);
 	//Determines the validity of the proposed star path solution for the specified track difficulty, setting the score and deployment_notes value in the passed structure
 	//The score is calculated with scoring rules for Clone Hero
 	//The solution's score and deployment_notes variables are modified to contain the values calculated for the solution
@@ -112,6 +112,9 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	//solution_num is the solution number being tested, to be logged and used for debugging.  If this value is ULONG_MAX, the solution number is not logged
 	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
 	//If logging is greater than 1, verbose logging for each note's scoring, start and end of star power deployment, etc. is performed
+	//If sequential is nonzero, the calling function indicates that the solution being tested is identical to the previously tested solution with the only exception
+	// being that the last deployment is one note later.  This allows more optimized score caching to be used, skipping all calculation earlier than 2 notes before the last
+	// deployment instead of requiring recalculation for all notes after the second to last deployment's scope.
 
 int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes);
 	//Calculates all solutions where the first deployment starts at note index between first_deploy and last_deploy (inclusive),
