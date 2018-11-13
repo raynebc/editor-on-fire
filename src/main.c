@@ -1865,6 +1865,9 @@ int eof_load_ogg(char * filename, char function)
 			load_silence = 1;
 			ptr = emptystring;
 			get_executable_name(output, 1024);	//Get EOF's executable path
+			#ifdef ALLEGRO_MACOSX
+				(void) strncat(output, "/Contents/Resources/eof/", sizeof(output) - strlen(output) - 1);
+			#endif
 			(void) replace_filename(output, output, "second_of_silence.ogg", 1024);
 			eof_music_data = (void *)eof_buffer_file(output, 0);
 			eof_music_data_size = file_size_ex(output);
@@ -4709,7 +4712,7 @@ void eof_exit(void)
 	StopIdleSystem();
 
 	//Delete the undo/redo related files
-	(void) eof_validate_temp_folder();	//Attempt to set the current working directory if it isn't EOF's program folder
+	(void) eof_validate_temp_folder();	//Attempt to set the current working directory if it isn't EOF's executable/resource folder
 
 	if(!ch_sp_path_worker)
 	{	//None of these are applicable if this EOF isntance was a worker process

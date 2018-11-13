@@ -252,7 +252,7 @@ unsigned long eof_ch_pathing_find_next_sp_note(EOF_SP_PATH_SOLUTION *solution, u
 	return ULONG_MAX;	//An applicable note was not found
 }
 
-int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long solution_num, int logging, int sequential)
+int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMBER *solution_num, int logging, int sequential)
 {
 	int sp_deployed = 0;	//Set to nonzero if star power is currently in effect for the note being processed
 	unsigned long tracksize, notectr, ctr;
@@ -277,7 +277,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	static unsigned long last_cache_deployment_num = 0;	//The next deployment number in effect as of when the last cache data was stored
 	int using_last_cache = 0;
 
-	if(!solution || !solution->deployments || !solution->note_measure_positions || !solution->note_beat_lengths || !eof_song || !solution->track || (solution->track >= eof_song->tracks) || (solution->num_deployments > solution->deploy_count))
+	if(!solution || !solution_num || !solution->deployments || !solution->note_measure_positions || !solution->note_beat_lengths || !eof_song || !solution->track || (solution->track >= eof_song->tracks) || (solution->num_deployments > solution->deploy_count))
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t*Invalid parameters.  Solution invalid.");
 		eof_log_casual(eof_log_string, 1, 1, 1);
@@ -285,7 +285,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	}
 
 	///Look up cached scoring to skip as much calculation as possible
-	if((solution_num > 1) && sequential && (last_cache.note_start < solution->note_count))
+	if((solution_num->value > 1) && sequential && (last_cache.note_start < solution->note_count))
 	{	//Use last cache if the calling function called for its use and the cache data is valid
 		using_last_cache = 1;
 		memcpy(&score, &last_cache, sizeof(EOF_SP_PATH_SCORING_STATE));	//Copy the last cache into the scoring state structure
@@ -347,13 +347,20 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 		char tempstring[100];
 		int cached = 0;
 
-		if(solution_num == ULONG_MAX)
+		if(solution_num->value == ULONG_MAX)
 		{	//If there is no tracked number for this solution (ie. multiple worker processes were used)
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNote indexes ");
 		}
 		else
 		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSolution #%lu:  Note indexes ", solution_num);
+			if(solution_num->overflow_count)
+			{	//If more than 4 billion solutions have been tested
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSolution #%lu billion + %lu:  Note indexes ", solution_num->overflow_count * 4, solution_num->value);
+			}
+			else
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSolution #%lu:  Note indexes ", solution_num->value);
+			}
 		}
 
 		for(ctr = 0; ctr < solution->num_deployments; ctr++)
@@ -819,12 +826,13 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	return 0;	//Return solution evaluated
 }
 
-int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes)
+int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes)
 {
 	char windowtitle[101] = {0};
 	int invalid_increment = 0;	//Set to nonzero if the last iteration of the loop manually incremented the solution due to the solution being invalid
 	int retval;
 	int sequential;	//Controls the use of the last cache mechanism in eof_evaluate_ch_sp_path_solution()
+	EOF_BIG_NUMBER solution_count = {0};
 
 	eof_log("eof_ch_sp_path_single_process_solve() entered", 1);
 
@@ -848,15 +856,30 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 		unsigned long next_deploy;
 
 		sequential = 0;	//Unless the solution being tested is identical to the previous solution except that the last deployment is one note later, this will be zero
-		if((*validcount + *invalidcount) % 2000 == 0)
+		eof_big_number_increment(&solution_count);	//Track number of tested solutions
+		if(solution_count.value % 2000 == 0)
 		{	//Update the title bar every 2000 solutions
-			if(first_deploy == last_deploy)
-			{	//If only one solution set is being tested
-				(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu (set %lu)- Press Esc to cancel", *validcount + *invalidcount, testing->deployments[0]);
+			if(solution_count.overflow_count)
+			{	//If more than 4 billion solutions have been tested
+				if(first_deploy == last_deploy)
+				{	//If only one solution set is being tested
+					(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu billion + %lu (set %lu)- Press Esc to cancel", solution_count.overflow_count * 4, solution_count.value, testing->deployments[0]);
+				}
+				else
+				{
+					(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu billion + %lu (set %lu/%lu)- Press Esc to cancel", solution_count.overflow_count * 4, solution_count.value, testing->deployments[0], testing->note_count);
+				}
 			}
 			else
 			{
-				(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu (set %lu/%lu)- Press Esc to cancel", *validcount + *invalidcount, testing->deployments[0], testing->note_count);
+				if(first_deploy == last_deploy)
+				{	//If only one solution set is being tested
+					(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu (set %lu)- Press Esc to cancel", solution_count.value, testing->deployments[0]);
+				}
+				else
+				{
+					(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu (set %lu/%lu)- Press Esc to cancel", solution_count.value, testing->deployments[0], testing->note_count);
+				}
 			}
 			set_window_title(windowtitle);
 
@@ -965,7 +988,7 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 		invalid_increment = 0;
 
 		//Test and compare with the current best solution
-		retval = eof_evaluate_ch_sp_path_solution(testing, *validcount + *invalidcount + 1, (eof_log_level > 1 ? 1 : 0), sequential);	//Evaluate the solution (only perform light evaluation logging if verbose logging or higher is enabled)
+		retval = eof_evaluate_ch_sp_path_solution(testing, &solution_count, (eof_log_level > 1 ? 1 : 0), sequential);	//Evaluate the solution (only perform light evaluation logging if verbose logging or higher is enabled)
 		if(!retval)
 		{	//If the solution was considered valid
 			if((testing->score > best->score) || ((testing->score == best->score) && (testing->deployment_notes < best->deployment_notes)))
@@ -975,7 +998,9 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 				best->score = testing->score;	//It is the new best solution, copy its data into the best solution structure
 				best->deployment_notes = testing->deployment_notes;
 				best->num_deployments = testing->num_deployments;
-				best->solution_number = *validcount + *invalidcount + 1;	//Keep track of which solution number this is, for logging purposes
+				best->solution_number.overflow_count = validcount->overflow_count;
+				best->solution_number.value = validcount->value;
+				eof_big_number_add_big_number(&best->solution_number, invalidcount);	//Keep track of which solution number this is, for logging purposes
 
 				if(testing->deployment_notes > *deployment_notes)
 				{	//If this solution played more notes during star power than any previous solution
@@ -983,7 +1008,8 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 				}
 				memcpy(best->deployments, testing->deployments, sizeof(unsigned long) * testing->deploy_count);
 			}
-			(*validcount)++;	//Track the number of valid solutions tested
+
+			eof_big_number_increment(validcount);	//Track the number of valid solutions tested
 		}
 		else
 		{	//If the solution was invalid
@@ -1058,7 +1084,7 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 				invalid_increment = 1;	//Prevent the solution from being incremented again at the beginning of the next loop
 			}
 
-			(*invalidcount)++;	//Track the number of invalid solutions tested
+			eof_big_number_increment(invalidcount);	//Track the number of invalid solutions tested
 		}//If the solution was invalid
 		if(eof_log_level > 1)
 		{	//If there was verbose logging made for this solution
@@ -1202,7 +1228,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 		best->note_count = note_count;
 		best->track = eof_selected_track;
 		best->diff = eof_note_type;
-		best->solution_number = 0;
+		best->solution_number.overflow_count = best->solution_number.value = 0;
 	}
 
 	testing->note_measure_positions = note_measure_positions;
@@ -1210,7 +1236,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	testing->note_count = note_count;
 	testing->track = eof_selected_track;
 	testing->diff = eof_note_type;
-	testing->solution_number = 0;
+	testing->solution_number.overflow_count = testing->solution_number.value = 0;
 
 	///Apply EOF_NOTE_TFLAG_SOLO_NOTE and EOF_NOTE_TFLAG_SP_END tflags appropriately to notes in the target track difficulty
 	eof_ch_pathing_mark_tflags(testing);
@@ -1369,13 +1395,14 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	return 0;	//Return success
 }
 
-void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long validcount, unsigned long invalidcount, unsigned long deployment_notes, char *undo_made)
+void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long deployment_notes, char *undo_made)
 {
 	unsigned long ctr, index, tracksize;
 	unsigned long base_score, note_score, solo_note_count = 0;
 	double sustain_score;
+	EOF_BIG_NUMBER solution_count = {0};
 
-	if(!eof_song || !solution || !solution->note_beat_lengths)
+	if(!eof_song || !validcount || !invalidcount || !solution || !solution->note_beat_lengths)
 		return;	//Invalid parameters
 
 	///Count the number of solo notes (the total score compared to the base score for awarded star count does not include solo bonuses)
@@ -1454,7 +1481,9 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lon
 			(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu:%lu.%lu", (ctr ? ", " : ""), min, sec, ms);	//Generate timestamp, prefixing with a comma and spacing after the first
 			strncat(timestamps, tempstring, sizeof(timestamps) - 1);	//Append to timestamps string
 
-			if(validcount + invalidcount > 1)
+			eof_big_number_add_big_number(&solution_count, validcount);		//Count the number of valid and invalid solutions tested
+			eof_big_number_add_big_number(&solution_count, invalidcount);
+			if(solution_count.overflow_count || solution_count.value)
 			{	//If this reporting is for the best detected solution instead of for a single solution, highlight the solution's deployments
 				flags = eof_get_note_flags(eof_song, eof_selected_track, notenum);
 				if(undo_made && (*undo_made == 0))
@@ -1533,7 +1562,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	unsigned long first_deploy = ULONG_MAX;		//The first note that occurs after the end of the second star power phrase, and is thus the first note at which star power can be deployed
 	int worker_logging;
 	unsigned long ctr, tracksize;
-	unsigned long validcount = 0, invalidcount = 0;
+	EOF_BIG_NUMBER validcount = {0}, invalidcount = {0}, solution_count = {0};
 	int error = 0;
 	char undo_made = 0;
 	clock_t starttime = 0, endtime = 0;
@@ -1583,7 +1612,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	///Determine the maximum score when no star power is deployed
 	best->num_deployments = 0;
 	eof_log_casual("CH Scoring without star power:", 1, 1, 1);
-	if(eof_evaluate_ch_sp_path_solution(best, 0, 2, 0))
+	if(eof_evaluate_ch_sp_path_solution(best, &solution_count, 2, 0))
 	{	//Populate the "best" solution with the worst scoring solution, so any better solution will replace it, verbose log the evaluation
 		eof_log("\tError scoring no star power usage", 1);
 		allegro_message("Error scoring no star power usage");
@@ -1630,6 +1659,8 @@ int eof_menu_track_find_ch_sp_path(void)
 	}
 
 	///Report best solution
+	eof_big_number_add_big_number(&solution_count, &validcount);	//Count the number of valid and invalid solutions tested
+	eof_big_number_add_big_number(&solution_count, &invalidcount);
 	eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk
 	eof_fix_window_title();
 	eof_render();
@@ -1654,7 +1685,15 @@ int eof_menu_track_find_ch_sp_path(void)
 			Idle(10);
 		}
 		eof_fix_window_title();
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", validcount + invalidcount, validcount, invalidcount, elapsed_time, ((double)validcount + invalidcount)/elapsed_time);
+		if(solution_count.overflow_count)
+		{	//If more than 4 billion solutions were tested
+			double billion_count = (double) solution_count.overflow_count + ((double) solution_count.value / EOF_BIG_NUMBER_OVERFLOW_VALUE_D);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%.f billion solutions per second)", solution_count.overflow_count * 4, solution_count.value, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, billion_count / elapsed_time);
+		}
+		else
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", solution_count.value, validcount.value, invalidcount.value, elapsed_time, ((double)solution_count.value)/elapsed_time);
+		}
 		eof_log("\tUser cancellation.", 1);
 		eof_log(eof_log_string, 1);
 		allegro_message("User cancellation.%s", eof_log_string);
@@ -1674,9 +1713,9 @@ int eof_menu_track_find_ch_sp_path(void)
 			eof_log_casual("Best solution:", 1, 1, 1);
 			if(process_count > 1)
 			{	//If multiple worker processes were used to find the best solution
-				best->solution_number = ULONG_MAX;	//Don't log a solution number since it has no meaning in this context
+				best->solution_number.value = ULONG_MAX;	//Don't log a solution number since it has no meaning in this context
 			}
-			(void) eof_evaluate_ch_sp_path_solution(testing, best->solution_number, 2, 0);
+			(void) eof_evaluate_ch_sp_path_solution(testing, &best->solution_number, 2, 0);
 		}
 		eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk, and use the normal logging function from here
 
@@ -1687,10 +1726,18 @@ int eof_menu_track_find_ch_sp_path(void)
 		}
 		else
 		{	//The score was determined
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", validcount + invalidcount, validcount, invalidcount, elapsed_time, ((double)validcount + invalidcount)/elapsed_time);
+			if(solution_count.overflow_count)
+			{	//If more than 4 billion solutions were tested
+				double billion_count = (double) solution_count.overflow_count + ((double) solution_count.value / EOF_BIG_NUMBER_OVERFLOW_VALUE_D);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%.f billion solutions per second)", solution_count.overflow_count * 4, solution_count.value, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, billion_count / elapsed_time);
+			}
+			else
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions tested (%lu valid, %lu invalid) in %.2f seconds (%.2f solutions per second)", solution_count.value, validcount.value, invalidcount.value, elapsed_time, ((double)solution_count.value)/elapsed_time);
+			}
 			eof_log(eof_log_string, 1);
 
-			eof_ch_sp_path_report_solution(best, validcount, invalidcount, deployment_notes, &undo_made);
+			eof_ch_sp_path_report_solution(best, &validcount, &invalidcount, deployment_notes, &undo_made);
 		}
 	}
 
@@ -1724,7 +1771,8 @@ void eof_ch_sp_path_worker(char *job_file)
 	char project_path[1024] = {0};
 	int error = 0, canceled = 0, done = 0, idle = 0, retval, firstjob = 1;
 	EOF_SP_PATH_SOLUTION best = {0}, testing = {0};
-	unsigned long ctr, first_deploy = ULONG_MAX, last_deploy = ULONG_MAX, validcount = 0, invalidcount = 0, deployment_notes = 0;
+	unsigned long ctr, first_deploy = ULONG_MAX, last_deploy = ULONG_MAX, deployment_notes = 0;
+	EOF_BIG_NUMBER validcount = {0}, invalidcount = {0};
 
 	//Validate initial job file path
 	eof_log_cwd();
@@ -1753,7 +1801,7 @@ void eof_ch_sp_path_worker(char *job_file)
 		{	//If the supervisor indicated that a job file is ready to access
 			if(!firstjob)
 			{	//If this isn't the first job, re-initialize variables
-				validcount = invalidcount = 0;
+				validcount.overflow_count = validcount.value = invalidcount.overflow_count = invalidcount.value = 0;
 				for(ctr = 0; ctr < best.deploy_count; ctr++)
 				{	//For every entry in the deploy cache
 					best.deploy_cache[ctr].note_start = ULONG_MAX;	//Mark it as invalid
@@ -2036,10 +2084,12 @@ void eof_ch_sp_path_worker(char *job_file)
 			(void) replace_extension(filename, job_file, "success", 1024);	//Create a results file to contain the best solution
 			outf = pack_fopen(filename, "w");
 			(void) pack_iputl(best.score, outf);
-			(void) pack_iputl(best.deployment_notes, outf);	//Write the number of notes played during star power in the best solution
+			(void) pack_iputl(best.deployment_notes, outf);		//Write the number of notes played during star power in the best solution
 			(void) pack_iputl(deployment_notes, outf);			//Write the highest count of notes that were found to be playable during all of this job's tested solutions
-			(void) pack_iputl(validcount, outf);
-			(void) pack_iputl(invalidcount, outf);
+			(void) pack_iputl(validcount.overflow_count, outf);
+			(void) pack_iputl(validcount.value, outf);
+			(void) pack_iputl(invalidcount.overflow_count, outf);
+			(void) pack_iputl(invalidcount.value, outf);
 			(void) pack_iputl(best.num_deployments, outf);
 			for(ctr = 0; ctr < best.num_deployments; ctr++)
 			{	//For each deployment in the solution
@@ -2089,7 +2139,7 @@ void eof_ch_sp_path_worker(char *job_file)
 	(void) delete_file(job_file);	//Delete the job file to signal to the supervisor process that the worker is no longer running
 }
 
-int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes, int worker_logging)
+int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes, int worker_logging)
 {
 	EOF_SP_PATH_WORKER *workers = NULL;
 	PACKFILE *fp;
@@ -2392,7 +2442,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 									}
 									else
 									{	//The results file was opened
-										unsigned long vcount, icount;
+										EOF_BIG_NUMBER vcount, icount, sum = {0};
 										char tempstring[30];
 
 										workers[workerctr].end_time = clock();	//Record the completion time of the worker
@@ -2405,10 +2455,13 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 										{	//If this job contained a solution that played more notes during combined star power deployments than any other tested solution
 											*deployment_notes = job_deploy_notes;	//Track this count
 										}
-										vcount = pack_igetl(fp);
-										*validcount += vcount;
-										icount = pack_igetl(fp);
-										*invalidcount += icount;
+										vcount.overflow_count = pack_igetl(fp);
+										vcount.value = pack_igetl(fp);
+										eof_big_number_add_big_number(validcount, &vcount);		//Keep a sum of the valid solutions, account for overflow
+										icount.overflow_count = pack_igetl(fp);
+										icount.value = pack_igetl(fp);
+										eof_big_number_add_big_number(invalidcount, &icount);	//Keep a sum of the invalid solutions, account for overflow
+
 										testing->num_deployments = pack_igetl(fp);	//The number of deployments in the solution
 										for(ctr = 0; ctr < testing->num_deployments; ctr++)
 										{	//For each deployment in the solution
@@ -2417,8 +2470,17 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 										(void) pack_fclose(fp);
 
 										//Log the results
+										eof_big_number_add_big_number(&sum, &vcount);	//Count the number of valid and invalid solutions tested
+										eof_big_number_add_big_number(&sum, &icount);
 										elapsed_time = (double)(workers[workerctr].end_time - workers[workerctr].start_time) / (double)CLOCKS_PER_SEC;	//Convert to seconds
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (job #%lu, %lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, workers[workerctr].job_count, vcount + icount, elapsed_time);
+										if(sum.overflow_count)
+										{	//If more than 4 billion solutions were tested
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (job #%lu, %lu billion + %lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, workers[workerctr].job_count, sum.overflow_count * 4, sum.value, elapsed_time);
+										}
+										else
+										{
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (job #%lu, %lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, workers[workerctr].job_count, sum.value, elapsed_time);
+										}
 										for(ctr = 0; ctr < testing->num_deployments; ctr++)
 										{	//For each deployment in the chosen solution
 											(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing->deployments[ctr]);
@@ -2575,7 +2637,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 					}
 					else
 					{	//Worker process is evaluating multiple solution sets
-						(void) snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Processing job #%lu:  Evaluating solution set #%lu through #%lu", workerctr, current_status, workers[workerctr].job_count, workers[workerctr].first_deploy, workers[workerctr].last_deploy);
+						(void) snprintf(tempstr, sizeof(tempstr) - 1, "Worker process #%lu status: %s.  Processing job #%lu:  Evaluating solution set #%lu -> #%lu", workerctr, current_status, workers[workerctr].job_count, workers[workerctr].first_deploy, workers[workerctr].last_deploy);
 					}
 				}
 				else
@@ -2676,10 +2738,16 @@ int eof_menu_track_evaluate_user_ch_sp_path(void)
 	testing->num_deployments = deploy_count;	//Record the number of deployments for this solution
 
 	///Evaluate the solution
-	if(!error)
+	if(!deploy_count)
+	{	//If the user did not specify deployment at any notes
+		allegro_message("No star power deployments were specified.  Highlight desired notes and try again.");
+	}
+	else if(!error)
 	{	//If the user specified deployment count is valid
+		EOF_BIG_NUMBER num = {0, ULONG_MAX};
+
 		eof_log_casual("User specified solution:", 1, 1, 1);
-		retval = eof_evaluate_ch_sp_path_solution(testing, ULONG_MAX, 2, 0);
+		retval = eof_evaluate_ch_sp_path_solution(testing, &num, 2, 0);
 		eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk, and use the normal logging function from here
 
 		///Report the solution
@@ -2701,7 +2769,10 @@ int eof_menu_track_evaluate_user_ch_sp_path(void)
 		}
 		else
 		{	//The solution was found valid
-			eof_ch_sp_path_report_solution(testing, 1, 0, testing->deployment_notes, NULL);	//Report for one tested solution
+			EOF_BIG_NUMBER num2 = {0, 0};
+
+			num.value = 0;
+			eof_ch_sp_path_report_solution(testing, &num, &num2, testing->deployment_notes, NULL);	//Report for one tested solution
 		}
 	}
 
@@ -2723,4 +2794,34 @@ int eof_menu_track_evaluate_user_ch_sp_path(void)
 	}
 
 	return 1;
+}
+
+inline void eof_big_number_add(EOF_BIG_NUMBER *bignum, unsigned long addend)
+{
+	unsigned long num_until_overflow = EOF_BIG_NUMBER_OVERFLOW_VALUE - bignum->value;	//The lowest addend that will trigger an overflow
+
+	if(num_until_overflow <= addend)
+	{	//If this addition will overflow
+		addend -= num_until_overflow;	//Add the portion of the addend that will overflow
+		bignum->overflow_count++;		//Track that another overflow occurred
+		bignum->value = 0;				//Reset the non overflowed value accordingly
+	}
+	bignum->value += addend;			//Add any remaining amount of the addend to the target big number
+}
+
+inline void eof_big_number_increment(EOF_BIG_NUMBER *bignum)
+{
+	if(bignum->value >= EOF_BIG_NUMBER_OVERFLOW_VALUE - 1)
+	{	//If this increment will overflow
+		bignum->overflow_count++;	//Track that another overflow occurred
+		bignum->value = 0;			//Reset the non overflowed value accordingly
+	}
+	else
+		bignum->value++;			//Otherwise the value of the big number increases by 1
+}
+
+inline void eof_big_number_add_big_number(EOF_BIG_NUMBER *bignum, EOF_BIG_NUMBER *addend)
+{
+	eof_big_number_add(bignum, addend->value);	//Add the addend's non overflowed value and update the target's overflow value if appropriate
+	bignum->overflow_count += addend->overflow_count;	//Add the addend's overflow count to the target
 }

@@ -3,6 +3,14 @@
 
 #include "song.h"
 
+#define EOF_BIG_NUMBER_OVERFLOW_VALUE 4000000000UL
+#define EOF_BIG_NUMBER_OVERFLOW_VALUE_D 4000000000.0
+typedef struct
+{
+	unsigned long overflow_count;	//The number of times the below value has surpassed 4 billion
+	unsigned long value;			//The current 32 bit sum, reset each time an addition reaches 4 billion, to avoid precision loss during overflow
+} EOF_BIG_NUMBER;					//This is a simple data type to keep track of large sums that are expected to overflow the 32 bit limit
+
 typedef struct
 {
 	unsigned long note_start;		//The note at which this deployment started the last time it was processed, or ULONG_MAX if this cache entry is undefined
@@ -33,7 +41,7 @@ typedef struct
 	unsigned char diff;					//The difficulty number being processed
 	unsigned long score;				//The estimated score if all notes in the processed track difficulty are hit, and all sustain star power notes are whammied for bonus star power
 	unsigned long deployment_notes;		//The number of notes played during star power deployment
-	unsigned long solution_number;
+	EOF_BIG_NUMBER solution_number;
 } EOF_SP_PATH_SOLUTION;
 
 #define EOF_PERSISTENT_WORKER 1
@@ -98,7 +106,7 @@ unsigned long eof_ch_pathing_find_next_sp_note(EOF_SP_PATH_SOLUTION *solution, u
 	//Parses notes starting with the specified note index and returns the index of the first note having star power
 	//Returns ULONG_MAX if there is no such note or upon error
 
-int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long solution_num, int logging, int sequential);
+int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMBER *solution_num, int logging, int sequential);
 	//Determines the validity of the proposed star path solution for the specified track difficulty, setting the score and deployment_notes value in the passed structure
 	//The score is calculated with scoring rules for Clone Hero
 	//The solution's score and deployment_notes variables are modified to contain the values calculated for the solution
@@ -109,14 +117,14 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, unsigned lo
 	// 4 for attempting to deploy without sufficient star power
 	// 5 5 for a general logic error
 	//Returns zero if the proposed solution is invalid (ie. calling for star power deployment while it is already deployed, or when there is insufficient star power)
-	//solution_num is the solution number being tested, to be logged and used for debugging.  If this value is ULONG_MAX, the solution number is not logged
+	//solution_num is the solution number being tested, to be logged and used for debugging and last caching.  If its non overflowed value is ULONG_MAX, the solution number is not logged
 	//If logging is nonzero, scoring details such as the number points awarded per note, when star power deploys and ends, etc. is logged
 	//If logging is greater than 1, verbose logging for each note's scoring, start and end of star power deployment, etc. is performed
 	//If sequential is nonzero, the calling function indicates that the solution being tested is identical to the previously tested solution with the only exception
 	// being that the last deployment is one note later.  This allows more optimized score caching to be used, skipping all calculation earlier than 2 notes before the last
 	// deployment instead of requiring recalculation for all notes after the second to last deployment's scope.
 
-int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes);
+int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes);
 	//Calculates all solutions where the first deployment starts at note index between first_deploy and last_deploy (inclusive),
 	// comparing their scores with the provided best solution and updating its content accordingly
 	//If all solutions are to be tested, ULONG_MAX should be specified for last_deploy
@@ -125,7 +133,7 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
 	//Returns 0 on success, 1 on error or 2 on user cancellation
 
-int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, unsigned long *validcount, unsigned long *invalidcount, unsigned long *deployment_notes, int worker_logging);
+int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes, int worker_logging);
 	//Finds the best solution as eof_ch_sp_path_single_process_solve() does, but does so by running the specified number of worker EOF processes in parallel
 	// to test all solution sets from first_deploy to testing->note_count
 	//validcount and invalidcount are passed so the calling function can know how many solutions were tested among all worker processes
@@ -147,7 +155,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	//If a time signature is missing from the first beat, a 4/4 time signature is applied to it after creating an undo state, and *undo_made is set to 1 if the pointer is not NULL
 	//Returns 1 on error or 2 on cancellation (no notes in active track difficulty)
 
-void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, unsigned long validcount, unsigned long invalidcount, unsigned long deployment_notes, char *undo_made);
+void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long deployment_notes, char *undo_made);
 	//Logs and reports details of the specified solution, including the base score and star count (which are calculated by this function)
 	//If validcount + invalidcount > 1, the function considers the specified solution to be the best solution out of several tested
 	// In this circumstance, if undo_made is not NULL, and *undo_made is zero, an undo state is made before highlighting the best solution's notes
@@ -164,5 +172,13 @@ void eof_ch_sp_path_worker(char *job_file);
 
 int eof_menu_track_evaluate_user_ch_sp_path(void);
 	//For the active track difficulty, examines highlighted notes as a proposed star power path solution and reports the solution's validity/score to the user
+
+inline void eof_big_number_add(EOF_BIG_NUMBER *bignum, unsigned long addend);
+	//Adds the addend value to bignum, incrementing bignum's overflow count as appropriate
+inline void eof_big_number_increment(EOF_BIG_NUMBER *bignum);
+	//Adds one to the value of bignum, incrementing bignum's overflow count as appropriate
+inline void eof_big_number_add_big_number(EOF_BIG_NUMBER *bignum, EOF_BIG_NUMBER *addend);
+	//Adds the addend's 32 bit value to that of bignum, incrementing bignum's overflow count as appropriate
+	//Also adds addend's overflow count to bignum's
 
 #endif
