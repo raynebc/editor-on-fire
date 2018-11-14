@@ -355,7 +355,11 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 		{
 			if(solution_num->overflow_count)
 			{	//If more than 4 billion solutions have been tested
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSolution #%lu billion + %lu:  Note indexes ", solution_num->overflow_count * 4, solution_num->value);
+				unsigned long billion_count, leftover;
+
+				billion_count = (solution_num->overflow_count * 4) + (solution_num->value / 1000000000);
+				leftover = solution_num->value % 1000000000;
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSolution #%lu billion + %lu:  Note indexes ", billion_count, leftover);
 			}
 			else
 			{
@@ -861,13 +865,17 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 		{	//Update the title bar every 2000 solutions
 			if(solution_count.overflow_count)
 			{	//If more than 4 billion solutions have been tested
+				unsigned long billion_count, leftover;
+
+				billion_count = (solution_count.overflow_count * 4) + (solution_count.value / 1000000000);
+				leftover = solution_count.value % 1000000000;
 				if(first_deploy == last_deploy)
 				{	//If only one solution set is being tested
-					(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu billion + %lu (set %lu)- Press Esc to cancel", solution_count.overflow_count * 4, solution_count.value, testing->deployments[0]);
+					(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu billion + %lu (set %lu)- Press Esc to cancel", billion_count, leftover, testing->deployments[0]);
 				}
 				else
 				{
-					(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu billion + %lu (set %lu/%lu)- Press Esc to cancel", solution_count.overflow_count * 4, solution_count.value, testing->deployments[0], testing->note_count);
+					(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu billion + %lu (set %lu/%lu)- Press Esc to cancel", billion_count, leftover, testing->deployments[0], testing->note_count);
 				}
 			}
 			else
@@ -1687,8 +1695,13 @@ int eof_menu_track_find_ch_sp_path(void)
 		eof_fix_window_title();
 		if(solution_count.overflow_count)
 		{	//If more than 4 billion solutions were tested
-			double billion_count = (double) solution_count.overflow_count + ((double) solution_count.value / EOF_BIG_NUMBER_OVERFLOW_VALUE_D);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%.f billion solutions per second)", solution_count.overflow_count * 4, solution_count.value, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, billion_count / elapsed_time);
+			unsigned long billion_count, leftover;
+			double million_count;
+
+			billion_count = (solution_count.overflow_count * 4) + (solution_count.value / 1000000000);
+			leftover = solution_count.value % 1000000000;
+			million_count = (double)billion_count * 1000.0 + ((double)leftover / 1000000.0);	//The number of millions of solutions tested
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%.f thousand solutions per second)", billion_count, leftover, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, million_count * 1000.0 / elapsed_time);
 		}
 		else
 		{
@@ -1728,8 +1741,13 @@ int eof_menu_track_find_ch_sp_path(void)
 		{	//The score was determined
 			if(solution_count.overflow_count)
 			{	//If more than 4 billion solutions were tested
-				double billion_count = (double) solution_count.overflow_count + ((double) solution_count.value / EOF_BIG_NUMBER_OVERFLOW_VALUE_D);
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%.f billion solutions per second)", solution_count.overflow_count * 4, solution_count.value, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, billion_count / elapsed_time);
+				unsigned long billion_count, leftover;
+				double million_count;
+
+				billion_count = (solution_count.overflow_count * 4) + (solution_count.value / 1000000000);
+				leftover = solution_count.value % 1000000000;
+				million_count = (double)billion_count * 1000.0 + ((double)leftover / 1000000.0);	//The number of millions of solutions tested
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%.f thousand solutions per second)", billion_count, leftover, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, million_count * 1000.0 / elapsed_time);
 			}
 			else
 			{
@@ -2313,14 +2331,31 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 								if(workers[workerctr].job_count == 1)
 								{	//If this job will initiate a worker process
 									get_executable_name(exepath, (int) sizeof(exepath) - 1);	//Get the full path to the running EOF executable
-									if(worker_logging)
-									{	//If the user specified to perform per-worker logging
-										(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
-									}
-									else
-									{	//Supervisor logging only
-										(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\"", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
-									}
+
+									#ifdef ALLEGRO_WINDOWS
+										if(worker_logging)
+										{	//If the user specified to perform per-worker logging
+											(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+										}
+										else
+										{	//Supervisor logging only
+											(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\"", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+										}
+									#else
+										///Mac and other *nix based platforms can use the ampersand at the end of a shell command to launch it as a background process and return execution to the caller
+										#ifdef ALLEGRO_MACOSX
+											///Additionally, EOF's executable file is inside of its application bundle
+											(void) strncat(exepath, "/Contents/MacOS/eof", sizeof(exepath) - strlen(exepath) - 1);
+										#endif
+										if(worker_logging)
+										{	//If the user specified to perform per-worker logging
+											(void) snprintf(commandline, sizeof(commandline) - 1, "\"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging &", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+										}
+										else
+										{	//Supervisor logging only
+											(void) snprintf(commandline, sizeof(commandline) - 1, "\"%s\" -ch_sp_path_worker \"%s\" &", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+										}
+									#endif
 
 									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLaunching worker process #%lu to evaluate solution sets #%lu-#%lu with command line:  %s", workerctr, solutionctr, last_deploy, commandline);
 									eof_log_casual(eof_log_string, 1, 1, 1);
@@ -2475,7 +2510,11 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 										elapsed_time = (double)(workers[workerctr].end_time - workers[workerctr].start_time) / (double)CLOCKS_PER_SEC;	//Convert to seconds
 										if(sum.overflow_count)
 										{	//If more than 4 billion solutions were tested
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (job #%lu, %lu billion + %lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, workers[workerctr].job_count, sum.overflow_count * 4, sum.value, elapsed_time);
+											unsigned long billion_count, leftover;
+
+											billion_count = (sum.overflow_count * 4) + (sum.value / 1000000000);
+											leftover = sum.value % 1000000000;
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWorker process %lu completed evaluation of solution sets #%lu-#%lu (job #%lu, %lu billion + %lu solutions) in %.2f seconds.  Its best solution:  Deploy at indexes ", workerctr, workers[workerctr].first_deploy, workers[workerctr].last_deploy, workers[workerctr].job_count, billion_count, leftover, elapsed_time);
 										}
 										else
 										{
@@ -2589,9 +2628,27 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 			}
 			if(key[KEY_PAUSE])
 			{
+				EOF_BIG_NUMBER sum = {0};
+
 				elapsed_time = (double)(clock() - start_time) / (double)CLOCKS_PER_SEC;	//Convert to seconds
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tElapsed time is %.2f seconds.", elapsed_time);
-				eof_log_casual(eof_log_string, 1, 1, 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tElapsed time is %.2f seconds.", elapsed_time);
+				eof_log_casual(eof_log_string, 1, 1, 0);
+
+				eof_big_number_add_big_number(&sum, validcount);	//Count the number of valid and invalid solutions tested
+				eof_big_number_add_big_number(&sum, invalidcount);
+				if(sum.overflow_count)
+				{	//If more than 4 billion solutions were tested
+					unsigned long billion_count, leftover;
+
+					billion_count = (sum.overflow_count * 4) + (sum.value / 1000000000);
+					leftover = sum.value % 1000000000;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions have been evaluated.", billion_count, leftover);
+				}
+				else
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu solutions have been evaluated.", sum.value);
+				}
+				eof_log_casual(eof_log_string, 1, 0, 1);
 				eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk
 				eof_log_cwd();
 				key[KEY_PAUSE] = 0;
