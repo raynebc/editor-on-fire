@@ -11,6 +11,11 @@
 #include "modules/g-idle.h"
 #include "dialog/proc.h"
 
+#ifndef ALLEGRO_WINDOWS
+//Mac/Linux builds will use fork()
+#include  <sys/types.h>
+#endif
+
 #ifdef USEMEMWATCH
 #include "memwatch.h"
 #endif
@@ -1701,7 +1706,7 @@ int eof_menu_track_find_ch_sp_path(void)
 			billion_count = (solution_count.overflow_count * 4) + (solution_count.value / 1000000000);
 			leftover = solution_count.value % 1000000000;
 			million_count = (double)billion_count * 1000.0 + ((double)leftover / 1000000.0);	//The number of millions of solutions tested
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%.f thousand solutions per second)", billion_count, leftover, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, million_count * 1000.0 / elapsed_time);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%f thousand solutions per second)", billion_count, leftover, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, million_count * 1000.0 / elapsed_time);
 		}
 		else
 		{
@@ -1747,7 +1752,7 @@ int eof_menu_track_find_ch_sp_path(void)
 				billion_count = (solution_count.overflow_count * 4) + (solution_count.value / 1000000000);
 				leftover = solution_count.value % 1000000000;
 				million_count = (double)billion_count * 1000.0 + ((double)leftover / 1000000.0);	//The number of millions of solutions tested
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%.f thousand solutions per second)", billion_count, leftover, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, million_count * 1000.0 / elapsed_time);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu billion + %lu solutions tested (%luB + %lu valid, %luB + %lu invalid) in %.2f seconds (%f thousand solutions per second)", billion_count, leftover, validcount.overflow_count * 4, validcount.value, invalidcount.overflow_count * 4, invalidcount.value, elapsed_time, million_count * 1000.0 / elapsed_time);
 			}
 			else
 			{
@@ -2333,6 +2338,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 									get_executable_name(exepath, (int) sizeof(exepath) - 1);	//Get the full path to the running EOF executable
 
 									#ifdef ALLEGRO_WINDOWS
+										///Windows can easily launch another EOF instance over the command line
 										if(worker_logging)
 										{	//If the user specified to perform per-worker logging
 											(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
@@ -2341,34 +2347,62 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 										{	//Supervisor logging only
 											(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\"", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
 										}
+
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLaunching worker process #%lu to evaluate solution sets #%lu-#%lu with command line:  %s", workerctr, solutionctr, last_deploy, commandline);
+										eof_log_casual(eof_log_string, 1, 1, 1);
+
+										if(eof_system(commandline))
+										{	//If the command failed to run
+											eof_log_casual("\t\tFailed to launch process", 1, 1, 1);
+											error = 1;
+											break;
+										}
 									#else
-										///Mac and other *nix based platforms can use the ampersand at the end of a shell command to launch it as a background process and return execution to the caller
-										#ifdef ALLEGRO_MACOSX
-											///Additionally, EOF's executable file is inside of its application bundle
-											(void) strncat(exepath, "/Contents/MacOS/eof", sizeof(exepath) - strlen(exepath) - 1);
-										#endif
-										if(worker_logging)
-										{	//If the user specified to perform per-worker logging
-											(void) snprintf(commandline, sizeof(commandline) - 1, "\"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging &", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+										///Mac and other *nix based platforms must use a more complicated means of forking the EOF process
+										eof_log_casual(NULL, 1, 1, 1);	//Flush the buffered log writes to disk
+										pid_t pid = fork();
+										if(pid < 0)
+										{	//fork() failed
+											eof_log_casual("\t\tFailed to fork process", 1, 1, 1);
+											error = 1;
+											break;
+										}
+										else if(pid == 0)
+										{	//If this is the worker process created by fork()
+											eof_stop_logging();	//Prevent the worker process from logging in the supervisor's log
+											if(worker_logging)
+											{	//If the user specified to perform per-worker logging
+												ch_sp_path_worker_logging = 1;			//Signal to eof_start_logging() that this worker process will log
+												ch_sp_path_worker_number = workerctr;	//Signal to eof_start_logging() this worker's process number
+												eof_start_logging();					//Restart logging to create this worker process's log file
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSuccessfully forked worker process number %lu", workerctr);
+												eof_log_casual(eof_log_string, 1, 1, 1);
+											}
+
+											//Perform cleanup for items allocated by the supervisor, which the worker won't use
+											free(workers);
+											free(testing->note_measure_positions);
+											free(testing->note_beat_lengths);
+											free(testing->deployments);
+											free(best->deployments);
+											free(testing->deploy_cache);
+											free(best);
+											free(testing);
+
+											eof_ch_sp_path_worker(filename);	//Divert the process to the worker pathing function
+											eof_quit = 1;	//Signal the main function to exit
+
+											return 1;
 										}
 										else
-										{	//Supervisor logging only
-											(void) snprintf(commandline, sizeof(commandline) - 1, "\"%s\" -ch_sp_path_worker \"%s\" &", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+										{	//This is the original supervisor process that called fork()
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSuccessfully forked EOF process, child PID is %d", pid);
+											eof_log_casual(eof_log_string, 1, 1, 1);
 										}
 									#endif
+								}//If this job will initiate a worker process
 
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLaunching worker process #%lu to evaluate solution sets #%lu-#%lu with command line:  %s", workerctr, solutionctr, last_deploy, commandline);
-									eof_log_casual(eof_log_string, 1, 1, 1);
-
-									if(eof_system(commandline))
-									{	//If the command failed to run
-										eof_log_casual("\t\tFailed to launch process", 1, 1, 1);
-										error = 1;
-										break;
-									}
-									num_workers_launched++;
-								}
-
+								num_workers_launched++;
 								workers[workerctr].status = EOF_SP_PATH_WORKER_WAITING;
 								workers[workerctr].first_deploy = solutionctr;
 								workers[workerctr].last_deploy = last_deploy;

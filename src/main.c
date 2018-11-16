@@ -4715,7 +4715,7 @@ void eof_exit(void)
 	(void) eof_validate_temp_folder();	//Attempt to set the current working directory if it isn't EOF's executable/resource folder
 
 	if(!ch_sp_path_worker)
-	{	//None of these are applicable if this EOF isntance was a worker process
+	{	//None of these are applicable if this EOF instance was a worker process
 		eof_save_config("eof.cfg");
 		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
 		(void) delete_file(fn);	//And delete it if it exists
@@ -4738,38 +4738,35 @@ void eof_exit(void)
 		eof_destroy_undo();
 	}
 
-	//Free the file filters
-	if(!ch_sp_path_worker)
-	{	//These filters weren't created if EOF ran as a worker process
+	//Free the file filters (they will not have been set to a non NULL value if EOF launched via command line as a worker process
+	if(eof_filter_music_files)
 		free(eof_filter_music_files);
-		eof_filter_music_files = NULL;
+	if(eof_filter_ogg_files)
 		free(eof_filter_ogg_files);
-		eof_filter_ogg_files = NULL;
+	if(eof_filter_midi_files)
 		free(eof_filter_midi_files);
-		eof_filter_midi_files = NULL;
+	if(eof_filter_eof_files)
 		free(eof_filter_eof_files);
-		eof_filter_eof_files = NULL;
+	if(eof_filter_exe_files)
 		free(eof_filter_exe_files);
-		eof_filter_exe_files = NULL;
+	if(eof_filter_lyrics_files)
 		free(eof_filter_lyrics_files);
-		eof_filter_lyrics_files = NULL;
+	if(eof_filter_dB_files)
 		free(eof_filter_dB_files);
-		eof_filter_dB_files = NULL;
+	if(eof_filter_gh_files)
 		free(eof_filter_gh_files);
-		eof_filter_gh_files = NULL;
+	if(eof_filter_gp_files)
 		free(eof_filter_gp_files);
-		eof_filter_gp_files = NULL;
+	if(eof_filter_gp_lyric_text_files)
 		free(eof_filter_gp_lyric_text_files);
-		eof_filter_gp_lyric_text_files = NULL;
+	if(eof_filter_rs_files)
 		free(eof_filter_rs_files);
-		eof_filter_rs_files = NULL;
+	if(eof_filter_sonic_visualiser_files)
 		free(eof_filter_sonic_visualiser_files);
-		eof_filter_sonic_visualiser_files = NULL;
+	if(eof_filter_bf_files)
 		free(eof_filter_bf_files);
-		eof_filter_bf_files = NULL;
+	if(eof_filter_note_panel_files)
 		free(eof_filter_note_panel_files);
-		eof_filter_note_panel_files = NULL;
-	}
 
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS
