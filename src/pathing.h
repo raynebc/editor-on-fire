@@ -124,13 +124,14 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 	// being that the last deployment is one note later.  This allows more optimized score caching to be used, skipping all calculation earlier than 2 notes before the last
 	// deployment instead of requiring recalculation for all notes after the second to last deployment's scope.
 
-int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes);
+int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes, char *kill_file);
 	//Calculates all solutions where the first deployment starts at note index between first_deploy and last_deploy (inclusive),
 	// comparing their scores with the provided best solution and updating its content accordingly
 	//If all solutions are to be tested, ULONG_MAX should be specified for last_deploy
 	//validcount and invalidcount are passed so the calling function can know how many solutions were tested
 	//deployment_notes is used to track the highest count of notes that were found to be playable during all star power deployments of any solution
 	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
+	//If kill_file is not NULL, this function will periodically check for the existence of this file and if it is found, the function will return the user cancellation code
 	//Returns 0 on success, 1 on error or 2 on user cancellation
 
 int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes, int worker_logging);

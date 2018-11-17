@@ -10,6 +10,7 @@
 #include "agup/agup.h"
 #include "modules/g-idle.h"
 #include "dialog/proc.h"
+#include <math.h>
 
 #ifndef ALLEGRO_WINDOWS
 //Mac/Linux builds will use fork()
@@ -416,7 +417,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 		{
 			if(logging > 1)
 			{	//Extra debug logging
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing cache for deployment at note index #%lu (Hitcount=%lu  Mult.=x%lu  Score=%lu  D.Notes=%lu  SP Meter=%lu%%).  Resuming from note index #%lu", solution->deploy_cache[cache_number].note_start, score.hitcounter, score.multiplier, score.score, score.deployment_notes, (unsigned long)(score.sp_meter * 100.0 + 0.5), index);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing cache for deployment at note index #%lu (Hitcount=%lu  Mult.=x%lu  Score=%lu  D.Notes=%lu  SP Meter=%.2f%%).  Resuming from note index #%lu", solution->deploy_cache[cache_number].note_start, score.hitcounter, score.multiplier, score.score, score.deployment_notes, (score.sp_meter * 100.0), index);
 				eof_log_casual(eof_log_string, 1, 1, 1);
 			}
 			if(index > solution->deployments[deployment_num])
@@ -520,7 +521,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 				solution->deploy_cache[deployment_num].hitcounter--;	//The hit counter reflects this note having already been hit.  Compensate so this counter isn't higher than it should be when loading from cache
 				if(logging > 1)
 				{
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tCaching deployment information for deployment ending before this note (Hitcount=%lu  Mult.=x%lu  Score=%lu  D.Notes=%lu  SP Meter=%lu%%).", solution->deploy_cache[deployment_num].hitcounter, score.multiplier, score.score, score.deployment_notes, (unsigned long)(score.sp_meter * 100.0 + 0.5));
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tCaching deployment information for deployment ending before this note (Hitcount=%lu  Mult.=x%lu  Score=%lu  D.Notes=%lu  SP Meter=%.2f%%).", solution->deploy_cache[deployment_num].hitcounter, score.multiplier, score.score, score.deployment_notes, (score.sp_meter * 100.0));
 					eof_log_casual(eof_log_string, 1, 1, 1);
 				}
 				deployment_num++;
@@ -640,6 +641,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 				if(remaining_sustain < step)
 				{	//If there was less than a point's worth of sustain left, it will be scored and then rounded to nearest point
 					double floatscore;
+					unsigned long ceiled_floatscore;
 
 					realpos = (double) notepos + notelength - 1.0;	//Set the realtime position to the last millisecond of the note
 					if(disjointed)
@@ -650,14 +652,16 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 					if(score.sp_meter > 0.0)
 					{	//If star power is still in effect
 						floatscore = (2 * disjointed_multiplier);	//This remainder of sustain score is doubled due to star power bonus
-						sp_sustain_score += floatscore + 0.5;		//For logging purposes, consider this a SP sustain point (since a partial sustain point and a partial SP sustain point won't be separately tracked)
+						ceiled_floatscore = ceil(floatscore);
+						sp_sustain_score += ceiled_floatscore;		//For logging purposes, consider this a SP sustain point (since a partial sustain point and a partial SP sustain point won't be separately tracked)
 					}
 					else
 					{
 						floatscore = disjointed_multiplier;			//This remainder of sustain score does not get a star power bonus
-						sustain_score += floatscore + 0.5;			//Track how many non star power sustain points were awarded
+						ceiled_floatscore = ceil(floatscore);
+						sustain_score += ceiled_floatscore;			//Track how many non star power sustain points were awarded
 					}
-					notescore += (unsigned long) (floatscore + 0.5);	//Round this remainder of sustain score to the nearest point
+					notescore += ceiled_floatscore;					//Ceiling the sustain score as per Clone Hero's sustain scoring rules
 				}
 				else
 				{	//Normal scoring
@@ -698,7 +702,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 				solution->deploy_cache[deployment_num].hitcounter--;	//The hit counter reflects this note having already been hit.  Compensate so this counter isn't higher than it should be when loading from cache
 				if(logging > 1)
 				{
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tCaching deployment information for deployment ending before this note (Hitcount=%lu  Mult.=x%lu  Score=%lu  D.Notes=%lu  SP Meter=%lu%%).", solution->deploy_cache[deployment_num].hitcounter, score.multiplier, score.score, score.deployment_notes, (unsigned long)(score.sp_meter * 100.0 + 0.5));
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tCaching deployment information for deployment ending before this note (Hitcount=%lu  Mult.=x%lu  Score=%lu  D.Notes=%lu  SP Meter=%.2f%%).", solution->deploy_cache[deployment_num].hitcounter, score.multiplier, score.score, score.deployment_notes, (score.sp_meter * 100.0));
 					eof_log_casual(eof_log_string, 1, 1, 1);
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tStar power ended during note #%lu (index #%lu)", notectr, index);
 					eof_log_casual(eof_log_string, 1, 1, 1);
@@ -756,10 +760,10 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 					sustain = sustain2;	//All of the sustain is awarded star power bonus
 					sustain2 = 0;		//None of it will receive regular scoring
 				}
-				sustain_score = sustain + sustain2 + 0.5;	//Track how many of the points are being awarded for the sustain (rounded to nearest whole number)
+				sustain_score = ceil(sustain + sustain2);	//Track (for logging purposes) how many of the points are being awarded for the sustain (ceilinged to int as per Clone Hero's sustain scoring rules)
 				if(sp_deployed)			//If star power is in effect
 				{
-					sp_sustain_score = sustain;	//Track how many star power bonus points are being awarded for the sustain
+					sp_sustain_score = ceil(sustain);	//Track (for logging purposes) how many star power bonus points are being awarded for the sustain
 					sustain *= 2.0;		//Apply star power bonus to the applicable portion of the sustain
 				}
 			}
@@ -769,7 +773,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 				sp_base_score = base_score;
 				score.deployment_notes++;	//Track how many notes are played during star power deployment
 			}
-			notescore += (sustain + sustain2 + 0.5);	//Round the sustain point total (including relevant star power bonus) to the nearest integer and add to the note's score
+			notescore += ceil(sustain + sustain2);	//Ceiling the sustain point total (including relevant star power bonus) and add to the note's score
 			notescore *= score.multiplier;			//Apply the current score multiplier in effect
 		}//Score the note and evaluate whammy star power gain separately
 
@@ -785,11 +789,11 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 		{
 			if(!sp_base_score)
 			{	//No star power bonus
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%lu (index #%lu): pos = %lums, m pos = %.2f, \tbase = %lu, sustain = %lu, \tmult = x%lu, solo bonus = %lu, hitctr = %lu,\tscore = %lu.  \tTotal score:  %lu\tSP Meter at %lu%% (uncapped %lu%%)", notectr, index, notepos, solution->note_measure_positions[index] + 1, base_score, sustain_score, score.multiplier, is_solo * 100, score.hitcounter, notescore, score.score, (unsigned long)(score.sp_meter * 100.0 + 0.5), (unsigned long)(score.sp_meter_t * 100.0 + 0.5));
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%lu (index #%lu): pos = %lums, m pos = %.2f, \tbase = %lu, sustain = %lu, \tmult = x%lu, solo bonus = %lu, hitctr = %lu,\tscore = %lu.  \tTotal score:  %lu\tSP Meter at %.2f%% (uncapped %.2f%%)", notectr, index, notepos, solution->note_measure_positions[index] + 1, base_score, sustain_score, score.multiplier, is_solo * 100, score.hitcounter, notescore, score.score, (score.sp_meter * 100.0), (score.sp_meter_t * 100.0));
 			}
 			else
 			{	//Star power bonus
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%lu (index #%lu): pos = %lums, m pos = %.2f, \tbase = %lu, sustain = %lu, SP = %lu, SP sustain = %lu, \tmult = x%lu, solo bonus = %lu, hitctr = %lu,\tscore = %lu.  \tTotal score:  %lu\tSP Meter at %lu%% (uncapped %lu%%), Deployment ends at measure %.2f", notectr, index, notepos, solution->note_measure_positions[index] + 1, base_score, sustain_score, sp_base_score, sp_sustain_score, score.multiplier, is_solo * 100, score.hitcounter, notescore, score.score, (unsigned long)(score.sp_meter * 100.0 + 0.5), (unsigned long)(score.sp_meter_t * 100.0 + 0.5), sp_deployment_end + 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%lu (index #%lu): pos = %lums, m pos = %.2f, \tbase = %lu, sustain = %lu, SP = %lu, SP sustain = %lu, \tmult = x%lu, solo bonus = %lu, hitctr = %lu,\tscore = %lu.  \tTotal score:  %lu\tSP Meter at %.2f%% (uncapped %.2f%%), Deployment ends at measure %.2f", notectr, index, notepos, solution->note_measure_positions[index] + 1, base_score, sustain_score, sp_base_score, sp_sustain_score, score.multiplier, is_solo * 100, score.hitcounter, notescore, score.score, (score.sp_meter * 100.0), (score.sp_meter_t * 100.0), sp_deployment_end + 1);
 			}
 			eof_log_casual(eof_log_string, 1, 1, 1);
 			if(whammy_bonus_ctr)
@@ -835,13 +839,14 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 	return 0;	//Return solution evaluated
 }
 
-int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes)
+int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long last_deploy, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes, char *kill_file)
 {
 	char windowtitle[101] = {0};
 	int invalid_increment = 0;	//Set to nonzero if the last iteration of the loop manually incremented the solution due to the solution being invalid
 	int retval;
 	int sequential;	//Controls the use of the last cache mechanism in eof_evaluate_ch_sp_path_solution()
 	EOF_BIG_NUMBER solution_count = {0};
+	clock_t time1, time2;
 
 	eof_log("eof_ch_sp_path_single_process_solve() entered", 1);
 
@@ -860,6 +865,7 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 	testing->num_deployments = 0;	//The first solution increment will test one deployment
 	testing->deployments[0] = first_deploy;	//Apply a correct value here for the sake of the title bar reflecting an accurate solution set number
 	*deployment_notes = 0;			//Reset this count so the first solution will be counted as the one with the most notes played during SP deployments
+	time1 = clock();				//Track the start time of this loop
 	while(1)
 	{	//Continue testing until all solutions (or specified solutions) are tested
 		unsigned long next_deploy;
@@ -867,7 +873,7 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 		sequential = 0;	//Unless the solution being tested is identical to the previous solution except that the last deployment is one note later, this will be zero
 		eof_big_number_increment(&solution_count);	//Track number of tested solutions
 		if(solution_count.value % 2000 == 0)
-		{	//Update the title bar every 2000 solutions
+		{	//Every 2000 solutions
 			if(solution_count.overflow_count)
 			{	//If more than 4 billion solutions have been tested
 				unsigned long billion_count, leftover;
@@ -894,7 +900,22 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 					(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "Testing SP path solution %lu (set %lu/%lu)- Press Esc to cancel", solution_count.value, testing->deployments[0], testing->note_count);
 				}
 			}
-			set_window_title(windowtitle);
+			set_window_title(windowtitle);	//Update the title bar
+
+			if(kill_file)
+			{	//If the calling function wanted this function to check for a kill signal file
+				time2 = clock();
+				if((time2 - time1) / CLOCKS_PER_SEC >= 5)
+				{	//If it's been about 10 or more seconds since the last time the file was checked for
+					if(exists(kill_file))
+					{	//If the file does exist
+						eof_log_casual("\tKill signal detected", 1, 1, 1);
+						eof_log_casual(NULL, 1, 1, 1);
+						return 2;	//User cancellation
+					}
+					time1 = time2;
+				}
+			}
 
 			if(key[KEY_ESC])
 			{	//Allow user to cancel
@@ -1439,7 +1460,7 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 		{	//If the note is in the active difficulty
 			note_score = eof_note_count_colors(eof_song, eof_selected_track, ctr) * 50;	//The base score for a note is 50 points per gem
 			sustain_score = 25.0 * solution->note_beat_lengths[index];					//The sustain's base score is 25 points per beat
-			base_score += note_score + (sustain_score + 0.5);							//Add the rounded sum of those to the base score
+			base_score += note_score + ceil(sustain_score);								//Add the ceilinged sum of those to the base score
 
 			index++;
 		}
@@ -1661,7 +1682,7 @@ int eof_menu_track_find_ch_sp_path(void)
 		starttime = clock();	//Track the start time
 		if(process_count == 1)
 		{	//Perform a single process evaluation of all solutions
-			error = eof_ch_sp_path_single_process_solve(best, testing, first_deploy, ULONG_MAX, &validcount, &invalidcount, &deployment_notes);
+			error = eof_ch_sp_path_single_process_solve(best, testing, first_deploy, ULONG_MAX, &validcount, &invalidcount, &deployment_notes, NULL);
 		}
 		else
 		{	//Perform a multi process evaluation of all solutions
@@ -1791,6 +1812,7 @@ void eof_ch_sp_path_worker(char *job_file)
 	PACKFILE *inf, *outf;
 	char filename[1024];
 	char jobreadyfilename[1024];
+	char jobkillfilename[1024];
 	char project_path[1024] = {0};
 	int error = 0, canceled = 0, done = 0, idle = 0, retval, firstjob = 1;
 	EOF_SP_PATH_SOLUTION best = {0}, testing = {0};
@@ -1816,6 +1838,7 @@ void eof_ch_sp_path_worker(char *job_file)
 		return;
 	}
 	(void) replace_extension(jobreadyfilename, job_file, "jobready", 1024);		//Create the path to the file indicating the job file is ready to read
+	(void) replace_extension(jobkillfilename, job_file, "kill", 1024);			//Create the path to the kill signal file
 
 	//Worker main loop
 	while(EOF_PERSISTENT_WORKER && !done && !error && !canceled)
@@ -2043,7 +2066,7 @@ void eof_ch_sp_path_worker(char *job_file)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tTesting solution sets #%lu through #%lu", first_deploy, last_deploy);
 				eof_log(eof_log_string, 1);
 			}
-			retval = eof_ch_sp_path_single_process_solve(&best, &testing, first_deploy, last_deploy, &validcount, &invalidcount, &deployment_notes);
+			retval = eof_ch_sp_path_single_process_solve(&best, &testing, first_deploy, last_deploy, &validcount, &invalidcount, &deployment_notes, jobkillfilename);
 			if(retval == 1)
 			{	//If the solution testing failed
 				error = 1;
