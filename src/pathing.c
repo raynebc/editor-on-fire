@@ -905,8 +905,8 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 			if(kill_file)
 			{	//If the calling function wanted this function to check for a kill signal file
 				time2 = clock();
-				if((time2 - time1) / CLOCKS_PER_SEC >= 5)
-				{	//If it's been about 10 or more seconds since the last time the file was checked for
+				if((time2 - time1) / CLOCKS_PER_SEC >= EOF_SP_PATH_KILL_FILE_CHECK_INTERVAL)
+				{	//If it's time to check for this signal
 					if(exists(kill_file))
 					{	//If the file does exist
 						eof_log_casual("\tKill signal detected", 1, 1, 1);
@@ -916,7 +916,6 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 					time1 = time2;
 				}
 			}
-
 			if(key[KEY_ESC])
 			{	//Allow user to cancel
 				return 2;	//User cancellation
@@ -2097,10 +2096,20 @@ void eof_ch_sp_path_worker(char *job_file)
 			idle = 0;
 		}
 		else if(canceled)
-		{	//If the user canceled the job
+		{	//If the user canceled the job during solution evaluation
 			(void) replace_extension(filename, job_file, "cancel", 1024);	//Create a results file to specify cancellation
 			outf = pack_fopen(filename, "w");
-			(void) pack_fclose(outf);	//Close the results file
+			if(outf)
+			{
+				(void) pack_iputl(validcount.overflow_count, outf);
+				(void) pack_iputl(validcount.value, outf);
+				(void) pack_iputl(invalidcount.overflow_count, outf);
+				(void) pack_iputl(invalidcount.value, outf);
+				(void) pack_fclose(outf);	//Close the results file
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCancel status file \"%s\" written", filename);
+				eof_log(eof_log_string, 1);
+				eof_validate_temp_folder();
+			}
 			idle = 0;
 		}
 		else if(done)
@@ -2129,19 +2138,22 @@ void eof_ch_sp_path_worker(char *job_file)
 			}
 			(void) replace_extension(filename, job_file, "success", 1024);	//Create a results file to contain the best solution
 			outf = pack_fopen(filename, "w");
-			(void) pack_iputl(best.score, outf);
-			(void) pack_iputl(best.deployment_notes, outf);		//Write the number of notes played during star power in the best solution
-			(void) pack_iputl(deployment_notes, outf);			//Write the highest count of notes that were found to be playable during all of this job's tested solutions
-			(void) pack_iputl(validcount.overflow_count, outf);
-			(void) pack_iputl(validcount.value, outf);
-			(void) pack_iputl(invalidcount.overflow_count, outf);
-			(void) pack_iputl(invalidcount.value, outf);
-			(void) pack_iputl(best.num_deployments, outf);
-			for(ctr = 0; ctr < best.num_deployments; ctr++)
-			{	//For each deployment in the solution
-				(void) pack_iputl(best.deployments[ctr], outf);	//Write it to disk
+			if(outf)
+			{
+				(void) pack_iputl(best.score, outf);
+				(void) pack_iputl(best.deployment_notes, outf);		//Write the number of notes played during star power in the best solution
+				(void) pack_iputl(deployment_notes, outf);			//Write the highest count of notes that were found to be playable during all of this job's tested solutions
+				(void) pack_iputl(validcount.overflow_count, outf);
+				(void) pack_iputl(validcount.value, outf);
+				(void) pack_iputl(invalidcount.overflow_count, outf);
+				(void) pack_iputl(invalidcount.value, outf);
+				(void) pack_iputl(best.num_deployments, outf);
+				for(ctr = 0; ctr < best.num_deployments; ctr++)
+				{	//For each deployment in the solution
+					(void) pack_iputl(best.deployments[ctr], outf);	//Write it to disk
+				}
+				(void) pack_fclose(outf);				//Close the results file
 			}
-			(void) pack_fclose(outf);				//Close the results file
 			(void) delete_file(jobreadyfilename);	//Delete the job file readiness signal
 			(void) delete_file(job_file);			//Delete the job file to signal to the supervisor process that the results file is ready to access
 			set_window_title("Worker process idle.  Press Esc to cancel");
@@ -2190,7 +2202,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 	EOF_SP_PATH_WORKER *workers = NULL;
 	PACKFILE *fp;
 	unsigned long ctr, workerctr, solutionctr, num_workers_running, num_workers_launched = 0, num_jobs_completed = 0, idle_ctr = 1500;
-	clock_t start_time, end_time;
+	clock_t start_time, end_time, time1, time2;
 	clock_t waiting_overhead = 0;	//Track how many clocks are spent waiting for worker processes to go from waiting to running state
 	clock_t solutions_exhausted_time = 0;	//Track the time of the first instance where there is an idle worker process and no solutions let to assign
 	char filename[50];	//Stores the job filename for worker processes
@@ -2511,6 +2523,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected cancellation by worker process #%lu", workerctr);
 								eof_log_casual(eof_log_string, 1, 1, 1);
 								canceled = 1;
+								workers[workerctr].status = EOF_SP_PATH_WORKER_STOPPED;
 								break;	//Break from retry loop
 							}
 							else
@@ -2641,7 +2654,10 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 					}
 					else
 					{	//If the expected results file was processed, delete it
-						(void) delete_file(filename);
+						if(!canceled)
+						{	//Except for cancel status files, whose tested solution counts will be read later
+							(void) delete_file(filename);
+						}
 					}
 				}//If the job file no longer exists, the worker has completed, check the results
 			}//If this process was previously dispatched, check if it's done
@@ -2665,6 +2681,10 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 		{	//Consider clicking the close window control a cancellation
 			eof_close_button_clicked = 0;
 			canceled = 1;
+		}
+		if(canceled)
+		{
+			workerstatuschange = 1;
 		}
 
 		if(!workerstatuschange && !num_workers_running && (solutionctr > testing->note_count))
@@ -2779,6 +2799,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 		}
 	}//Until the supervisor's job is completed
 
+	//Command all worker processes to end
 	for(workerctr = 0; workerctr < worker_count; workerctr++)
 	{	//For each worker process
 		if((workers[workerctr].status != EOF_SP_PATH_WORKER_STOPPED) && (workers[workerctr].status != EOF_SP_PATH_WORKER_STOPPING))
@@ -2786,6 +2807,58 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 			(void) snprintf(filename, sizeof(filename) - 1, "%s%lu.kill", eof_temp_path_s, workerctr);	//Build the file path for the process's kill command
 			fp = pack_fopen(filename, "w");	//Create that file
 			(void) pack_fclose(fp);
+		}
+	}
+
+	//If the processing was cancelled, wait for and read the tested solution counts for each worker
+	time1 = clock();
+	while(canceled)
+	{	//If the processing was cancelled
+		int all_stopped = 1;	//Set to nonzero if any workers are not already stopped
+
+		for(workerctr = 0; workerctr < worker_count; workerctr++)
+		{	//For each worker process
+			if(workers[workerctr].status != EOF_SP_PATH_WORKER_STOPPED)
+			{	//If the process hasn't been confirmed to have stopped yet
+				all_stopped = 0;
+				(void) snprintf(filename, sizeof(filename) - 1, "%s%lu.job", eof_temp_path_s, workerctr);	//Build the file path for the process's job file
+				if(!exists(filename))
+				{	//If the worker has deleted that file
+					(void) replace_extension(filename, filename, "cancel", (int) sizeof(filename));		//Build the path for the process's cancel status file
+					if(exists(filename))
+					{	//If it exists
+						fp = pack_fopen(filename, "rb");
+						if(fp)
+						{	//The results file was opened
+							EOF_BIG_NUMBER vcount, icount;
+
+							vcount.overflow_count = pack_igetl(fp);					//Read the number of valid solutions
+							vcount.value = pack_igetl(fp);
+							eof_big_number_add_big_number(validcount, &vcount);		//Add to the supervisor's ongoing sum of valid solutions, account for overflow
+							icount.overflow_count = pack_igetl(fp);					//Read the number of invalid solutions
+							icount.value = pack_igetl(fp);
+							eof_big_number_add_big_number(invalidcount, &icount);	//Add to the supervisor's ongonig sum of invalid solutions, account for overflow
+
+							workers[workerctr].status = EOF_SP_PATH_WORKER_STOPPED;	//This worker process is confirmed to have stopped
+							(void) pack_fclose(fp);
+						}
+					}
+				}
+			}
+		}
+
+		if(all_stopped)
+		{	//If there are no other cancel status files to wait for
+			break;	//Exit this while loop
+		}
+		else
+		{	//Otherwise if the threshold amount of time for the files to be recceived hasn't been reached, wait and check for more status files
+			time2 = clock();
+			if((time2 - time1) / CLOCKS_PER_SEC > EOF_SP_PATH_KILL_FILE_CHECK_INTERVAL + 1)
+			{	//If it's been more than a second longer than the interval the workers use to check for a kill command
+				break;	//Stop waiting for their status files and report the solution tested counts that are already known and exit this while loop
+			}
+			Idle(10);	//Wait a bit before checking worker process statuses files again
 		}
 	}
 

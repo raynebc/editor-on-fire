@@ -133,6 +133,8 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 	//The testing structure is used as the working structure to store each solution's score, provided for the calling function to reduce overhead
 	//If kill_file is not NULL, this function will periodically check for the existence of this file and if it is found, the function will return the user cancellation code
 	//Returns 0 on success, 1 on error or 2 on user cancellation
+#define EOF_SP_PATH_KILL_FILE_CHECK_INTERVAL 5
+	//How many seconds eof_ch_sp_path_single_process_solve() will wait before checking if the worker's kill file exists
 
 int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_SOLUTION *testing, unsigned long first_deploy, unsigned long worker_count, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long *deployment_notes, int worker_logging);
 	//Finds the best solution as eof_ch_sp_path_single_process_solve() does, but does so by running the specified number of worker EOF processes in parallel
