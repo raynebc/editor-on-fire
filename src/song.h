@@ -31,7 +31,7 @@
 #define EOF_NOTE_FLAG_F_HOPO     8	//Manually defines the note as being HOPO
 #define EOF_NOTE_FLAG_NO_HOPO    16	//Manually defines the note as being forced strum
 #define EOF_NOTE_FLAG_HIGHLIGHT  1073741824	//This flag will represent a note that is highlighted (in yellow, by default) in the editor window (permanently, until manually cleared)
-#define EOF_NOTE_FLAG_EXTENDED 2147483648UL	//The MSB will be set if an additional flag variable is present for the note in the project file
+#define EOF_NOTE_FLAG_EXTENDED 2147483648UL	//The MSB will be set if an additional extended flag variable is present for the note in the project file
 											//This flag will only be used during project save/load to determine whether another flags variable is written/read
 
 //The following flags pertain to pro guitar notes
@@ -129,6 +129,10 @@
 //The following extended flag pertains to legacy notes
 #define EOF_NOTE_EFLAG_DISJOINTED 128	//This flag specifies that affected notes will not be merged by fixup logic even when they are at the same timestamp, unless they have lanes in common
 
+//The following extended flags are not specific to a track format
+#define EOF_NOTE_EFLAG_SP_DEPLOY 1073741824		//This flag specifies that star power is to be deployed at the affected note, for predicting scoring in a particular game
+#define EOF_NOTE_EFLAG_EXTENDED 2147483648UL	//The MSB will be set if an additional extended flag variable is present for the note in the project file
+												//This flag will only be used during project save/load to determine whether another flags variable is written/read
 
 ///Beat flags
 #define EOF_BEAT_FLAG_ANCHOR       1
@@ -163,6 +167,7 @@ typedef struct
 	unsigned long flags;		//Stores various note statuses
 	unsigned long eflags;		//Stores extended note statuses
 	unsigned long tflags;		//Stores various temporary statuses
+	unsigned char sp_deploy;	//If the note's EOF_NOTE_EFLAG_SP_DEPLOY flag is set, used to track for which games the star power deployment is being predicted (ie. bit 1 for Clone Hero)
 
 } EOF_NOTE;
 
@@ -212,6 +217,7 @@ typedef struct
 	unsigned char slideend;
 	unsigned char unpitchend;
 	unsigned long phrasenum;	//The arpeggio/handshape/lyric phrase number this note is part of (or 0xFFFFFFFF if not applicable)
+	unsigned char sp_deploy;	//If the note's EOF_NOTE_EFLAG_SP_DEPLOY flag is set, used to track for which games the star power deployment is being predicted (ie. bit 1 for Clone Hero)
 
 } EOF_EXTENDED_NOTE;
 
@@ -658,15 +664,17 @@ unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned lon
 void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets the flags of the specified track's note/lyric
 unsigned long eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the temporary flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long tflags);	//Sets the temporary flags of the specified track's note/lyric
-unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the extended flags of the specified pro guitar note, or 0 on error
-void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char eflags);	//Sets the extended flags of the specified pro guitar or legacy note
+unsigned long eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the extended flags of the specified pro guitar note, or 0 on error
+void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long eflags);	//Sets the extended flags of the specified pro guitar or legacy note
 unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the ghost bitflag of the specified pro guitar track's note/lyric, or 0 on error or if the specified track isn't a pro guitar track
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);
 	//Sets the note value of the specified track's note/lyric
 	//If the specified note is a pro guitar note, any unused strings have their corresponding fret values reset to 0
-unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note's accent bitflag of the specified track's note, or 0 on error
-void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified track's note
+unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the accent bitmask of the specified note, or 0 on error
+void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified  note
+unsigned char eof_get_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the SP deploy bitmask of the specified note, or 0 on error
+void eof_set_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the SP deploy bitmask of the specified note
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error
 void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *name);	//Copies the string into the note's statically allocated name array, or a lyric's text array
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char note, unsigned long pos, long length, char type, char *text);

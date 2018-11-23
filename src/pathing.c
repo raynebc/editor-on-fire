@@ -1487,8 +1487,11 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 		char *str_5star = "(5 stars)";
 		char *str_6star = "(6 stars)";
 		char *str_7star = "(7 stars)";
-		char *resultstring1 = "Optimum star power deployment in Clone Hero for this track difficulty is at these note timestamps (highlighted):";
+		char *detected_solution_string = "Optimum star power deployment in Clone Hero for this track difficulty is at these note timestamps (highlighted):";
+		char *user_solution_string = "User defined star power deployment in Clone Hero for this track difficulty at these note timestamps:";
+		char *resultstring1 = detected_solution_string;	//Unless this function determines a user defined solution is being reported, the detected solution string is displayed
 		char *score_disclaimer = "*Note:  This scoring is based on Clone Hero playing the chart as a MIDI, for which it will remove all sustains shorter than 1/12.";
+		char deployment_notes_string[100] = {0};
 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", resultstring1);
 		eof_log(eof_log_string, 1);
@@ -1516,8 +1519,8 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 
 			eof_big_number_add_big_number(&solution_count, validcount);		//Count the number of valid and invalid solutions tested
 			eof_big_number_add_big_number(&solution_count, invalidcount);
-			if(solution_count.overflow_count || solution_count.value)
-			{	//If this reporting is for the best detected solution instead of for a single solution, highlight the solution's deployments
+			if(solution_count.overflow_count + solution_count.value > 1)
+			{	//If this reporting is for the best detected solution instead of for a single user defined solution, highlight the solution's deployments
 				flags = eof_get_note_flags(eof_song, eof_selected_track, notenum);
 				if(undo_made && (*undo_made == 0))
 				{	//If the calling function passed undo tracking to this function, and an undo state hasn't been made yet
@@ -1526,6 +1529,12 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 				}
 				flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Enable highlighting for this note
 				eof_set_note_flags(eof_song, eof_selected_track, notenum, flags);
+				(void) snprintf(deployment_notes_string, sizeof(deployment_notes_string) - 1, "A maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", deployment_notes, (double)deployment_notes * 100.0 / solution->note_count);
+			}
+			else
+			{	//Otherwise change the dialog's wording to reflect a user defined solution
+				resultstring1 = user_solution_string;
+				(void) snprintf(deployment_notes_string, sizeof(deployment_notes_string) - 1, "A maximum of %lu notes (%.2f%%) can be played during these SP deployments.", deployment_notes, (double)deployment_notes * 100.0 / solution->note_count);
 			}
 
 			(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), solution->deployments[ctr]);
@@ -1568,7 +1577,46 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
 		eof_render();
-		allegro_message("%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n\nA maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", resultstring1, timestamps, scorestring, sololess_scorestring, base_score_string, multiplierstring, score_disclaimer, deployment_notes, (double)deployment_notes * 100.0 / solution->note_count);
+		allegro_message("%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n\n%s", resultstring1, timestamps, scorestring, sololess_scorestring, base_score_string, multiplierstring, score_disclaimer, deployment_notes_string);
+
+		///Offer to apply SP deploy status to a detected best solution's notes, if no notes in the active track difficulty already have that status
+		if(solution_count.overflow_count + solution_count.value > 1)
+		{	//If this reporting is for the best detected solution instead of for a single user defined solution
+			int sp_deploy_notes_exist = 0;	//Set to nonzero if any notes are found to have EOF_NOTE_EFLAG_SP_DEPLOY status
+
+			for(ctr = 0, index = 0; ctr < tracksize; ctr++)
+			{	//For each note in the active track
+				if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+				{	//If the note is in the active difficulty
+					if(eof_get_note_eflags(eof_song, eof_selected_track, ctr) & EOF_NOTE_EFLAG_SP_DEPLOY)
+					{	//If the note has the SP deploy status
+						sp_deploy_notes_exist = 1;
+						break;
+					}
+				}
+			}
+
+			if(!sp_deploy_notes_exist)
+			{	//If no notes were found to have EOF_NOTE_EFLAG_SP_DEPLOY status already
+				if(alert(NULL, "Apply SP deploy status to the best solution's notes and remove their highlighting?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to replace the highlighting status with SP deploy status
+					for(ctr = 0; ctr < solution->num_deployments; ctr++)
+					{	//For each deployment in the best solution
+						notenum = eof_translate_track_diff_note_index(eof_song, solution->track, solution->diff, solution->deployments[ctr]);	//Find the real note number for this index
+						if(notenum < tracksize)
+						{	//If the note was identified
+							flags = eof_get_note_flags(eof_song, eof_selected_track, notenum);		//Remove the highlight flag
+							flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;
+							eof_set_note_flags(eof_song, eof_selected_track, notenum, flags);
+
+							eof_set_note_ch_sp_deploy_status(eof_song, eof_selected_track, notenum, 1, undo_made);	//Apply the Clone Hero SP deploy flag
+						}
+					}
+				}
+
+				(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
+			}
+		}
 	}
 }
 
@@ -2376,11 +2424,11 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 										///Windows can easily launch another EOF instance over the command line
 										if(worker_logging)
 										{	//If the user specified to perform per-worker logging
-											(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+											(void) snprintf(commandline, sizeof(commandline) - 1, "start /BELOWNORMAL \"\" \"%s\" -ch_sp_path_worker \"%s\" -ch_sp_path_worker_logging", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
 										}
 										else
 										{	//Supervisor logging only
-											(void) snprintf(commandline, sizeof(commandline) - 1, "start \"\" \"%s\" -ch_sp_path_worker \"%s\"", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
+											(void) snprintf(commandline, sizeof(commandline) - 1, "start /BELOWNORMAL \"\" \"%s\" -ch_sp_path_worker \"%s\"", exepath, filename);	//Build the parameters to invoke EOF as a worker process to handle this job file
 										}
 
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLaunching worker process #%lu to evaluate solution sets #%lu-#%lu with command line:  %s", workerctr, solutionctr, last_deploy, commandline);
@@ -2893,7 +2941,7 @@ int eof_menu_track_evaluate_user_ch_sp_path(void)
  	if(!eof_song)
 		return 1;	//No project loaded
 
-	///Initialize the solution structure to reflect the highlighted notes in the active track difficulty
+	///Initialize the solution structure to reflect the notes in the active track difficulty that have EOF_NOTE_EFLAG_SP_DEPLOY status
 	if(eof_ch_sp_path_setup(NULL, &testing, &undo_made))
 	{	//If the function that performs setup for the pathing logic failed
 		return 1;
@@ -2904,8 +2952,8 @@ int eof_menu_track_evaluate_user_ch_sp_path(void)
 	{	//For each note in the active track
 		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
 		{	//If the note is in the active difficulty
-			if(eof_get_note_flags(eof_song, eof_selected_track, ctr) & EOF_NOTE_FLAG_HIGHLIGHT)
-			{	//If the note is highlighted
+			if(eof_get_note_eflags(eof_song, eof_selected_track, ctr) & EOF_NOTE_EFLAG_SP_DEPLOY)
+			{	//If the note has the SP deploy status
 				if(deploy_count >= testing->deploy_count)
 				{	//If the user specified more deployments than is possible
 					(void) snprintf(error_string, sizeof(error_string) - 1, "Solution invalid:  More than the possible number of %lu star power deployments are specified.", testing->deploy_count);
@@ -2927,7 +2975,7 @@ int eof_menu_track_evaluate_user_ch_sp_path(void)
 	///Evaluate the solution
 	if(!deploy_count)
 	{	//If the user did not specify deployment at any notes
-		allegro_message("No star power deployments were specified.  Highlight desired notes and try again.");
+		allegro_message("No star power deployments were defined.  Use functions in the \"Note>Clone Hero>SP deploy>\" menu to specify deployment at desired notes and try again.");
 	}
 	else if(!error)
 	{	//If the user specified deployment count is valid
@@ -3011,4 +3059,57 @@ inline void eof_big_number_add_big_number(EOF_BIG_NUMBER *bignum, EOF_BIG_NUMBER
 {
 	eof_big_number_add(bignum, addend->value);	//Add the addend's non overflowed value and update the target's overflow value if appropriate
 	bignum->overflow_count += addend->overflow_count;	//Add the addend's overflow count to the target
+}
+
+void eof_set_note_ch_sp_deploy_status(EOF_SONG *sp, unsigned long track, unsigned long note, int function, char *undo_made)
+{
+	unsigned char sp_deploy;
+	unsigned long eflags, tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || !undo_made)
+		return;	//Invalid parameters
+	if(sp->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		return;	//For now, only legacy notes track SP deployment because it's the only track format Clone Hero supports
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	sp_deploy = eof_song->legacy_track[tracknum]->note[note]->sp_deploy;
+	if(function < 0)
+	{	//If Clone Hero SP deploy status is being toggled for the specified note
+		if(*undo_made == 0)
+		{	//If an undo state hasn't been made
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			*undo_made = 1;
+		}
+		sp_deploy ^= 1;		//Toggle the status
+	}
+	else if(function == 0)
+	{	//If Clone Hero SP deploy status is being removed from the specified note
+		if((sp_deploy & 1) && (*undo_made == 0))
+		{	//If the specified note has CH SP deploy status and an undo state hasn't been made
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			*undo_made = 1;
+		}
+		sp_deploy &= ~1;	//Clear the status
+	}
+	else
+	{	//Clone Hero SP deploy status is being added to the specified note
+		if(!(sp_deploy & 1) && (*undo_made == 0))
+		{	//If the specified note does not have CH SP deploy status and an undo state hasn't been made
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			*undo_made = 1;
+		}
+		sp_deploy |= 1;		//Add the status
+	}
+
+	eof_song->legacy_track[tracknum]->note[note]->sp_deploy = sp_deploy;	//Update the deploy status for the specified note
+	eflags = eof_get_note_eflags(eof_song, eof_selected_track, note);
+	if(sp_deploy)
+	{	//If the note has SP deploy status
+		eflags |= EOF_NOTE_EFLAG_SP_DEPLOY;	//Ensure the extended status flag for this is set
+	}
+	else
+	{	//The note has no SP deploy status
+		eflags &= ~EOF_NOTE_EFLAG_SP_DEPLOY;	//Ensure the extended status flag for this is cleared
+	}
+	eof_set_note_eflags(eof_song, eof_selected_track, note, eflags);
 }

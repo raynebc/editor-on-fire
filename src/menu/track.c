@@ -4937,7 +4937,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	char defaulttone[EOF_SECTION_NAME_LENGTH + 1] = {0};
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char s_track_format, d_track_format;
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
 	unsigned char notesetcount = 1, noteset;
 	EOF_PRO_GUITAR_NOTE *np;
 	unsigned long beats = 0, notes = 0, technotes = 0, sections = 0, events = 0;

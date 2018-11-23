@@ -2302,8 +2302,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					case 2:		//Pro guitar finger array custom data block ID
 						if(custom_data_size < 4)
 						{	//This is invalid, the size needed to have included the 4 byte ID
-							allegro_message("Error:  Invalid custom data block size (finger definitions).  Aborting");
-							eof_log("Error:  Invalid custom data block size (finger definitions).  Aborting", 1);
+							char *error = "Error:  Invalid custom data block size (finger definitions).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
 							return 0;
 						}
 						custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
@@ -2323,8 +2325,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						}
 						else
 						{	//Corrupt file
-							allegro_message("Error: Invalid pro guitar finger array data block.  Aborting");
-							eof_log("Error: Invalid pro guitar finger array data block.  Aborting", 1);
+							char *error = "Error: Invalid pro guitar finger array data block.  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
 							return 0;
 						}
 					break;
@@ -2332,8 +2336,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					case 3:		//Pro guitar track arrangement type
 						if(custom_data_size != 5)
 						{	//This data block is expected to be 5 bytes long
-							allegro_message("Error:  Invalid custom data block size (arrangement type).  Aborting");
-							eof_log("Error:  Invalid custom data block size (arrangement type).  Aborting", 1);
+							char *error = "Error:  Invalid custom data block size (arrangement type).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
 							return 0;
 						}
 						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2346,8 +2352,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					case 4:		//Pro guitar track tuning not honored
 						if(custom_data_size != 5)
 						{	//This data block is expected to be 5 bytes long
-							allegro_message("Error:  Invalid custom data block size (track tuning not honored).  Aborting");
-							eof_log("Error:  Invalid custom data block size (track tuning not honored).  Aborting", 1);
+							char *error = "Error:  Invalid custom data block size (track tuning not honored).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
 							return 0;
 						}
 						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2363,8 +2371,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					case 6:		//Pro guitar capo position
 						if(custom_data_size != 5)
 						{	//This data block is expected to be 5 bytes long
-							allegro_message("Error:  Invalid custom data block size (capo position).  Aborting");
-							eof_log("Error:  Invalid custom data block size (capo position).  Aborting", 1);
+							char *error = "Error:  Invalid custom data block size (capo position).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
 							return 0;
 						}
 						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2377,8 +2387,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					case 7:		//Pro guitar tech notes
 						if(custom_data_size < 8)
 						{	//This data block is expected to be at least 8 bytes long
-							allegro_message("Error:  Invalid custom data block size (tech notes).  Aborting");
-							eof_log("Error:  Invalid custom data block size (tech notes).  Aborting", 1);
+							char *error = "Error:  Invalid custom data block size (tech notes).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
 							return 0;
 						}
 						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2390,8 +2402,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 								tp->technote[ctr] = malloc(sizeof(EOF_PRO_GUITAR_NOTE));	//Allocate memory for the tech note
 								if(!tp->technote[ctr])
 								{
-									allegro_message("Error:  Unable to allocate memory for (tech notes).  Aborting");
-									eof_log("Error:  Unable to allocate memory for (tech notes).  Aborting", 1);
+									char *error = "Error:  Unable to allocate memory for (tech notes).  Aborting";
+
+									allegro_message("%s", error);
+									eof_log(error, 1);
 									return 0;
 								}
 								memset(tp->technote[ctr], 0, sizeof(EOF_PRO_GUITAR_NOTE));
@@ -2407,8 +2421,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					case 8:		//Accent note bitmasks
 						if(custom_data_size < 5)
 						{	//This data block is expected to be at least 5 bytes long
-							allegro_message("Error:  Invalid custom data block size (accent note bitmasks).  Aborting");
-							eof_log("Error:  Invalid custom data block size (accent note bitmasks).  Aborting", 1);
+							char *error = "Error:  Invalid custom data block size (accent note bitmasks).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
 							return 0;
 						}
 						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
@@ -2423,14 +2439,34 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					case 9:		//Track difficulty count
 						if(custom_data_size != 5)
 						{	//This data block is expected to be 5 bytes long
-							allegro_message("Error:  Invalid custom data block size (track difficulty count).  Aborting");
-							eof_log("Error:  Invalid custom data block size (track difficulty count).  Aborting", 1);
+							char *error = "Error:  Invalid custom data block size (track difficulty count).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
 							return 0;
 						}
 						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 						{	//Ensure this logic only runs for a pro guitar track
 							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 							tp->parent->numdiffs = pack_getc(fp);	//Read the difficulty count
+						}
+					break;
+
+					case 10:	//SP deploy bitmasks
+						if(custom_data_size < 5)
+						{	//This data block is expected to be at least 5 bytes long
+							char *error = "Error:  Invalid custom data block size (SP deploy bitmasks).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a legacy track
+							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+							{	//For each note in this track
+								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->sp_deploy = pack_getc(fp);		//Read SP deploy bitmask
+							}
 						}
 					break;
 
@@ -2950,7 +2986,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_fp_beat_timings = 1, has_start_end_points;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count,has_sp_deploy;
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
 	int temp_file_error = 0;	//Set to nonzero if the temp files for any custom data blocks couldn't be written due to the temp files used to create the data being empty (ie. disk full)
@@ -3697,7 +3733,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = has_sp_deploy = 0;
 		if(track_ctr && tp && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
@@ -3741,8 +3777,17 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					break;
 				}
 			}
+			//Check if any notes have SP deploy status
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				if(eof_get_note_eflags(sp, track_ctr, ctr) & EOF_NOTE_EFLAG_SP_DEPLOY)
+				{	//If at least one note has SP deploy status
+					has_sp_deploy = 1;
+					break;
+				}
+			}
 		}
-		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent + has_diff_count;
+		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent + has_diff_count + has_sp_deploy;
 		if(track_custom_block_count)
 		{	//If writing data in a custom data block
 			(void) pack_iputl(track_custom_block_count, fp);		//Write the number of custom data blocks
@@ -3840,6 +3885,15 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
 					{	//For each note in the track
 						(void) pack_putc(eof_get_note_accent(sp, track_ctr, ctr), fp);	//Write this note's accent bitmask
+					}
+				}
+				if(has_sp_deploy)
+				{	//Write SP deploy bitmasks
+					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (SP deploy bitmask data and a 4 byte block ID)
+					(void) pack_iputl(10, fp);		//Write the accent note bitmask custom data block ID
+					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+					{	//For each note in the track
+						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->sp_deploy, fp);	//Write this note's SP deploy bitmask
 					}
 				}
 			}
@@ -4484,7 +4538,7 @@ unsigned long eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned lo
 	return 0;	//Return error
 }
 
-unsigned char eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned long eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
@@ -4932,8 +4986,6 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 
 void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
 {
-// 	eof_log("eof_set_note_note() entered");
-
 	unsigned long tracknum;
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
@@ -4945,6 +4997,42 @@ void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		if(note < sp->legacy_track[tracknum]->notes)
 		{
 			sp->legacy_track[tracknum]->note[note]->accent = value;
+		}
+	}
+}
+
+unsigned char eof_get_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{
+		if(note < sp->legacy_track[tracknum]->notes)
+		{
+			return sp->legacy_track[tracknum]->note[note]->sp_deploy;
+		}
+	}
+
+	return 0;	//Return error
+}
+
+void eof_set_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{
+		if(note < sp->legacy_track[tracknum]->notes)
+		{
+			sp->legacy_track[tracknum]->note[note]->sp_deploy = value;
 		}
 	}
 }
@@ -6132,7 +6220,7 @@ void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	}
 }
 
-void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char eflags)
+void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long eflags)
 {
 	unsigned long tracknum;
 
@@ -7966,7 +8054,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	unsigned long sourcetrack = 0, copy_notes = 0;
 	unsigned long i, j, bitmask;
 	unsigned long highestfret = 0, currentfret;	//Used to find if any pasted notes would use a higher fret than the active track supports
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
 
 	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
 	int gridsnapbeat = 0;
@@ -8021,7 +8109,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	unsigned long copy_notes = 0;
 	unsigned long i, j, bitmask;
 	unsigned long highestlane = 0;	//Used to find if any pasted notes would use a higher lane than the active track supports
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
 
 	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
 	int gridsnapbeat = 0;

@@ -10,6 +10,7 @@
 #include "../main.h"
 #include "../mix.h"
 #include "../note.h"
+#include "../pathing.h"
 #include "../rs.h"	//For eof_is_string_muted()
 #include "edit.h"
 #include "note.h"
@@ -473,9 +474,17 @@ MENU eof_note_clone_hero_disjointed_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_clone_hero_sp_deploy_menu[] =
+{
+	{"&Toggle", eof_menu_note_toggle_ch_sp_deploy, NULL, 0, NULL},
+	{"&Remove", eof_menu_note_remove_ch_sp_deploy, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_clone_hero_menu[] =
 {
 	{"&Disjointed", NULL, eof_note_clone_hero_disjointed_menu, 0, NULL},
+	{"S&P deploy", NULL, eof_note_clone_hero_sp_deploy_menu, 0, NULL},
 	{"Convert GHL &Open\t" CTRL_NAME "+G", eof_menu_note_convert_to_ghl_open, NULL, 0, NULL},
 	{"&Swap GHL B/W gems", eof_menu_note_swap_ghl_black_white_gems, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -1217,13 +1226,13 @@ void eof_prepare_note_menu(void)
 
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 			{	//If GHL mode is enabled
-				eof_note_clone_hero_menu[1].flags = 0;	//Note>Clone Hero>Convert GHL Open
-				eof_note_clone_hero_menu[2].flags = 0;	//Note>Clone Hero>Swap GHL B/W gems
+				eof_note_clone_hero_menu[2].flags = 0;	//Note>Clone Hero>Convert GHL Open
+				eof_note_clone_hero_menu[3].flags = 0;	//Note>Clone Hero>Swap GHL B/W gems
 			}
 			else
 			{
-				eof_note_clone_hero_menu[1].flags = D_DISABLED;
 				eof_note_clone_hero_menu[2].flags = D_DISABLED;
+				eof_note_clone_hero_menu[3].flags = D_DISABLED;
 			}
 		}
 		else
@@ -8481,6 +8490,56 @@ int eof_menu_note_highlight_off(void)
 {
 	(void) eof_menu_note_clear_flag(0, EOF_ANY_TRACK_FORMAT, EOF_NOTE_FLAG_HIGHLIGHT);	//Clear the highlight flag
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update highlighting variables
+	return 1;
+}
+
+int eof_menu_note_remove_ch_sp_deploy(void)
+{
+	unsigned long i;
+	char undo_made = 0;
+	int note_selection_updated;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		return 1;	//Only allow this to run for legacy tracks
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If this note isn't selected, skip it
+
+		eof_set_note_ch_sp_deploy_status(eof_song, eof_selected_track, i, 0, &undo_made);	//Make an undo state if applicable and remove the status
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_ch_sp_deploy(void)
+{
+	unsigned long i;
+	char undo_made = 0;
+	int note_selection_updated;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		return 1;	//Only allow this to run for legacy tracks
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If this note isn't selected, skip it
+
+		eof_set_note_ch_sp_deploy_status(eof_song, eof_selected_track, i, -1, &undo_made);	//Make an undo state if applicable and toggle the status
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
 	return 1;
 }
 

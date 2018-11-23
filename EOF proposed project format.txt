@@ -202,6 +202,11 @@ Custom track data block definitions
 		}
 	Custom data block ID 9:  Track difficulty count (currently only written for pro guitar track with a difficulty count higher than 5)
 		1 byte:		Number of difficulties in the track (either with or without notes)
+	Custom data block ID 10:  SP deploy bitmask
+		SP DEPLOY CHUNK, for each note in the legacy track
+		{
+			1 byte: The SP deploy bitmask for the legacy note
+		}
 
 =========================================		
 }

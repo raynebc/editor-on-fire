@@ -161,7 +161,9 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long deployment_notes, char *undo_made);
 	//Logs and reports details of the specified solution, including the base score and star count (which are calculated by this function)
 	//If validcount + invalidcount > 1, the function considers the specified solution to be the best solution out of several tested
-	// In this circumstance, if undo_made is not NULL, and *undo_made is zero, an undo state is made before highlighting the best solution's notes
+	// In this circumstance, if undo_made is not NULL, and *undo_made is zero, an undo state is made, the solution's notes are highlighted
+	// and EOF offers to apply SP deploy status to the notes if no notes in the active track difficulty have the status
+	//If validcount + invalidcount == 1, the function considers the specified solution to be a user defined one
 
 int eof_menu_track_find_ch_sp_path(void);
 	//Determines optimum star power deployment for the active track difficulty
@@ -183,5 +185,12 @@ inline void eof_big_number_increment(EOF_BIG_NUMBER *bignum);
 inline void eof_big_number_add_big_number(EOF_BIG_NUMBER *bignum, EOF_BIG_NUMBER *addend);
 	//Adds the addend's 32 bit value to that of bignum, incrementing bignum's overflow count as appropriate
 	//Also adds addend's overflow count to bignum's
+
+void eof_set_note_ch_sp_deploy_status(EOF_SONG *sp, unsigned long track, unsigned long note, int function, char *undo_made);
+	//Alters the Clone Hero SP deployment status for the specified legacy track note, updating its EOF_NOTE_EFLAG_SP_DEPLOY flag accordingly
+	//If function is negative, CH deployment status is toggled for the note
+	//If function is zero, CH deployment status is removed for the note
+	//If function is positive, CH deployment status is enabled for the note
+	//If *undo_made is zero, an undo state is made before the function modifies the chart
 
 #endif

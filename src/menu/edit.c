@@ -777,7 +777,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	long new_pos = -1;
 	long new_end_pos = -1;
 	long last_pos = -1;
-	EOF_EXTENDED_NOTE temp_lyric = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_lyric = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
 	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste lyrics starting at the seek position instead of the original in-beat positions
@@ -1147,7 +1147,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	unsigned long last_anchor, next_anchor;
 	PACKFILE * fp;
 	unsigned long copy_notes[EOF_TRACKS_MAX];	//The number of notes to adjust for each track
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
 	EOF_NOTE * new_note = NULL;
 	double tfloat = 0.0;
 	unsigned long notepos = 0;
@@ -1499,7 +1499,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	unsigned long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned long copy_notes;
 	PACKFILE * fp;
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
 	EOF_EXTENDED_NOTE last_note;
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
@@ -4102,6 +4102,7 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	(void) pack_fread(&temp_note->porendpos, (long)sizeof(double), fp);	//Read the percent representing the note's end position within a beat
 	temp_note->flags = pack_igetl(fp);		//Read the note's flags
 	temp_note->eflags = pack_igetl(fp);		//Read the note's extended track flags
+	temp_note->sp_deploy = pack_getc(fp);		//Read the note's SP deploy bitmask
 	temp_note->legacymask = pack_getc(fp);		//Read the note's legacy bitmask
 	(void) pack_fread(temp_note->frets, (long)sizeof(temp_note->frets), fp);	//Read the note's fret array
 	(void) pack_fread(temp_note->finger, (long)sizeof(temp_note->finger), fp);	//Read the note's finger array
@@ -4151,6 +4152,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);	//Write the percent representing the note's end position within a beat
 	(void) pack_iputl(eof_get_note_flags(sp, track, note), fp);		//Write the note's flags
 	(void) pack_iputl(eof_get_note_eflags(sp, track, note), fp);	//Write the extended flags
+	(void) pack_putc(eof_get_note_sp_deploy(sp, track, note), fp);	//Write the SP deploy flags
 
 	/* Write pro guitar specific data to disk */
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)

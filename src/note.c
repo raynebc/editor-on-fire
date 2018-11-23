@@ -1811,6 +1811,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	flags = eof_get_note_flags(eof_song, track, note);
 	eflags = eof_get_note_eflags(eof_song, track, note);
 
+	if(eflags & EOF_NOTE_EFLAG_SP_DEPLOY)
+	{	//If the note has SP deploy status
+		buffer[index++] = 'm';	//In the symbols font, m is the star character
+	}
 	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//Check pro guitar statuses
 		unsigned long tracknum = eof_song->track[track]->tracknum, index2;
