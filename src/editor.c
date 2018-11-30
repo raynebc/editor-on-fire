@@ -5956,7 +5956,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 {
 //	eof_log("eof_render_editor_window_common() entered");
 
-	unsigned long i, j, ctr, notepos, markerlength;
+	unsigned long i, j, ctr, notepos, markerlength, tracksize;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beatmarker
 	int pmin = 0;
@@ -5982,6 +5982,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	if(!eof_song_loaded || !window)
 		return;
 
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) && !eof_open_strum_enabled(eof_selected_track))
 	{	//Special case:  Legacy guitar tracks can use a sixth lane but hide that lane if it is not enabled
@@ -6106,7 +6107,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			{	//If legacy view is in effect
 				int markerpos;
 				col = makecol(176, 48, 96);	//Store maroon color
-				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+				for(i = 0; i < tracksize; i++)
 				{	//For each note in this track
 					notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
 					notelength = eof_get_note_length(eof_song, eof_selected_track, i);
@@ -6167,7 +6168,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	}//If the vocal track is not active
 
 	/* draw highlight markers */
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < tracksize; i++)
 	{	//For each note in this track
 		int markerpos;
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
@@ -6279,6 +6280,30 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}//For each trill or tremolo section in the track
 		}//For each of the two phrase types (trills and tremolos)
 	}//If this track has any trill or tremolo sections
+
+	/* draw star power durations */
+	if(eof_show_ch_sp_durations && eof_ch_sp_solution)
+	{	//If the user selected to show star power durations and the solution structure was built
+		for(ctr = 0; ctr < eof_ch_sp_solution->num_deployments; ctr++)
+		{	//For each deployment in the solution
+			unsigned long notenum = eof_translate_track_diff_note_index(eof_song, eof_selected_track, eof_note_type, eof_ch_sp_solution->deployments[ctr]);	//Find the real note number for this index
+
+			if(notenum < tracksize)
+			{	//If the note was identified
+				int x1 = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//The start position of the deployment
+				int x2 = eof_get_realtime_position(eof_ch_sp_solution->deployment_endings[ctr]);	//The end position of the deployment
+				int col = makecol(0xC5, 0xD1, 0xF6);	//This is the color used to mark star power deployment on Slow Hero
+
+				if(!eof_ch_sp_solution->score)
+				{	//If the Clone Hero SP solution was evaluated as invalid
+					col = eof_color_yellow;	//Draw a short yellow marker instead
+					x2 = x1 + 100;
+				}
+
+				rectfill(window->screen, lpos + x1 / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, lpos + x2 / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 10, col);
+			}
+		}
+	}
 
 	if(window != eof_window_editor2)
 	{	//Only draw the graphs for the main piano roll

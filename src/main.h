@@ -9,6 +9,7 @@
 #include "notes.h"
 #include "control.h"
 #include "editor.h"
+#include "pathing.h"
 
 #define EOF_LOGGING_LEVEL 1
 	//Logging level 1 is normal logging, 2 is verbose logging, 3 is exhaustive logging
@@ -588,6 +589,7 @@ extern unsigned long eof_pro_guitar_fret_bitmask;
 extern char        eof_legacy_view;
 extern unsigned char eof_2d_render_top_option;
 extern char        eof_render_grid_lines;
+extern char        eof_show_ch_sp_durations;
 
 extern char eof_midi_initialized;			//Specifies whether Allegro was able to set up a MIDI device
 extern EOF_SELECTION_DATA eof_selection;

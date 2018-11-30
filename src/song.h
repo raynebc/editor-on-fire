@@ -472,7 +472,7 @@ typedef struct
 	//These variables, set with eof_process_beat_statistics(), track various properties of the beat to relieve various functions of related processing
 	//If has_ts is nonzero, num_beats_in_measure, beat_unit and beat_within_measure will be defined.  beat_within_measure is numbered starting with 0
 	//the contained...event variables are set to -1 if the beat does not contain a qualifying text event
-	unsigned long measurenum;
+	unsigned long measurenum;	//This counter is numbered starting with 1
 	unsigned num_beats_in_measure, beat_unit, beat_within_measure;
 	int contained_section_event, contained_rs_section_event, contained_rs_section_event_instance_number;
 	char contains_tempo_change, contains_ts_change, contains_end_event, has_ts;

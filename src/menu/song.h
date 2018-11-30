@@ -228,4 +228,7 @@ int eof_menu_song_doubly_compare_piano_rolls(void);
 	//Calls eof_menu_song_compare_piano_rolls() comparing the secondary piano roll against the primary piano roll
 	// and then vice-versa
 
+int eof_menu_song_toggle_ch_sp_durations(void);
+	//Toggles the display of durations for defined star power deployments will render in the editor window
+
 #endif

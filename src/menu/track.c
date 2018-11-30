@@ -240,7 +240,19 @@ void eof_prepare_track_menu(void)
 		}
 		else
 		{
-			eof_track_menu[13].flags = D_DISABLED;					//Track>Enable GHL mode
+			eof_track_menu[13].flags = D_DISABLED;			//Track>Enable GHL mode
+		}
+
+		/* (Clone Hero pathing functions) */
+		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS))
+		{	//If the active track is a legacy guitar/bass track or the keys track
+			eof_track_menu[14].flags = 0;					//Track>Find optimal CH star power path
+			eof_track_menu[15].flags = 0;					//Track>Evaluate CH star power path
+		}
+		else
+		{
+			eof_track_menu[14].flags = D_DISABLED;			//Track>Find optimal CH star power path
+			eof_track_menu[15].flags = D_DISABLED;			//Track>Evaluate CH star power path
 		}
 
 		/* enable five lane drums */

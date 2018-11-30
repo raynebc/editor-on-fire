@@ -176,6 +176,13 @@ MENU eof_song_piano_roll_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_song_test_menu[] =
+{
+	{"Test in &FOF", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
+	{"Test in &Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_song_menu[] =
 {
 	{"&Seek", NULL, eof_song_seek_menu, 0, NULL},
@@ -187,6 +194,7 @@ MENU eof_song_menu[] =
 	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
 	{"Spectrogra&m", NULL, eof_spectrogram_menu, 0, NULL},
 	{"Highlight non grid snapped notes", eof_menu_song_highlight_non_grid_snapped_notes, NULL, 0, NULL},
+	{"Show C&H SP durations", eof_menu_song_toggle_ch_sp_durations, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Catalog", NULL, eof_catalog_menu, 0, NULL},
 	{"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
@@ -200,8 +208,7 @@ MENU eof_song_menu[] =
 	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
 	{"Create pre&View audio", eof_menu_song_export_song_preview, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"T&est in FOF", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
-	{"Test i&N Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
+	{"T&Est song", NULL, eof_song_test_menu, EOF_LINUX_DISABLE, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -566,11 +573,11 @@ void eof_prepare_song_menu(void)
 		/* catalog */
 		if(!eof_song->catalog->entries && (eof_catalog_menu[5].flags == D_DISABLED))
 		{	//If there are no catalog entries and no notes selected (in which case Song>Catalog>Add would have been disabled earlier)
-			eof_song_menu[10].flags = D_DISABLED;	//Song>Catalog> submenu
+			eof_song_menu[11].flags = D_DISABLED;	//Song>Catalog> submenu
 		}
 		else
 		{
-			eof_song_menu[10].flags = 0;
+			eof_song_menu[11].flags = 0;
 		}
 
 		/* track */
@@ -596,41 +603,51 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[8].flags = 0;
 		}
 
-		/* leading silence */
-		if(eof_silence_loaded)
-		{	//If no chart audio is loaded
-			eof_song_menu[13].flags = D_DISABLED;	//Song>Leading silence
+		/* Show CH SP durations */
+		if(eof_show_ch_sp_durations)
+		{	//If the user has enabled the display the durations of defined Clone Hero star power deployments
+			eof_song_menu[9].flags = D_SELECTED;
 		}
 		else
 		{
-			eof_song_menu[13].flags = 0;
+			eof_song_menu[9].flags = 0;
 		}
 
-		/* lock tempo map */
-		if(eof_song->tags->tempo_map_locked)
-		{
-			eof_song_menu[14].flags = D_SELECTED;	//Song>Lock tempo map
+		/* leading silence */
+		if(eof_silence_loaded)
+		{	//If no chart audio is loaded
+			eof_song_menu[14].flags = D_DISABLED;	//Song>Leading silence
 		}
 		else
 		{
 			eof_song_menu[14].flags = 0;
 		}
 
-		/* disable click and drag */
-		if(eof_song->tags->click_drag_disabled)
+		/* lock tempo map */
+		if(eof_song->tags->tempo_map_locked)
 		{
-			eof_song_menu[15].flags = D_SELECTED;	//Song>Disable click and drag
+			eof_song_menu[15].flags = D_SELECTED;	//Song>Lock tempo map
 		}
 		else
 		{
 			eof_song_menu[15].flags = 0;
 		}
 
+		/* disable click and drag */
+		if(eof_song->tags->click_drag_disabled)
+		{
+			eof_song_menu[16].flags = D_SELECTED;	//Song>Disable click and drag
+		}
+		else
+		{
+			eof_song_menu[16].flags = 0;
+		}
+
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[16].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[17].flags = 0;			//Song>Rocksmith> submenu
+			eof_song_menu[17].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[18].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -654,8 +671,8 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable these menu items
-			eof_song_menu[16].flags = D_DISABLED;
 			eof_song_menu[17].flags = D_DISABLED;
+			eof_song_menu[18].flags = D_DISABLED;
 		}
 
 		/* Second piano roll>Sync with main piano roll */
@@ -4805,4 +4822,22 @@ int eof_menu_song_singly_compare_piano_rolls(void)
 int eof_menu_song_doubly_compare_piano_rolls(void)
 {
 	return eof_menu_song_compare_piano_rolls(1);
+}
+
+int eof_menu_song_toggle_ch_sp_durations(void)
+{
+	eof_show_ch_sp_durations ^= 1;	//Toggle this boolean variable
+
+	if(eof_show_ch_sp_durations)
+	{	//If it was toggled on
+		//Verify the first beat has a time signature
+		if(!eof_beat_stats_cached)
+			eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild beat statistics if necessary
+		if(!eof_song->beat[0]->has_ts)	//If the first beat marker has no time signature
+		{
+			allegro_message("The first beat marker must contain a time signature (select it and use Beat>Time Signature) before star power durations can be displayed");
+			eof_show_ch_sp_durations = 0;	//Disable this feature
+		}
+	}
+	return 1;
 }

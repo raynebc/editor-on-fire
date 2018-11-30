@@ -270,6 +270,8 @@ int eof_undo_apply(void)
 	eof_select_beat(eof_selected_beat);
 	eof_fix_catalog_selection();
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the cached Clone Hero SP solution structure as it will need to be rebuilt
+	eof_ch_sp_solution = NULL;
 
 	//Restore tech view for each pro guitar track that had it in use before the undo operation
 	for(ctr = 0; ctr < EOF_PRO_GUITAR_TRACKS_MAX; ctr++)

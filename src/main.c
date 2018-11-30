@@ -52,7 +52,7 @@
 #include "rs.h"	//for eof_pro_guitar_track_find_effective_fret_hand_position()
 #include "song.h"
 #include "utility.h"	//For eof_ucode_table[] declaration
-#include "pathing.h"	//For handling of ch_sp_path_worker command line parameter
+#include "pathing.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -216,8 +216,9 @@ char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whet
 unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes in the PS drum track will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by these shortcuts:  CTRL+# to set fret numbers, CTRL+(plus/minus) increment/decrement fret values, CTRL+G to toggle ghost status
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
-unsigned char eof_2d_render_top_option = 5;	//Specifies what item displays at the top of the 2D panel (defaults to note names)
-char        eof_render_grid_lines = 0;		//Specifies whether grid snap positions will render in the editor window
+unsigned char eof_2d_render_top_option = 5;		//Specifies what item displays at the top of the 2D panel (defaults to note names)
+char        eof_render_grid_lines = 0;			//Specifies whether grid snap positions will render in the editor window
+char        eof_show_ch_sp_durations = 0;		//Specifies whether durations for defined star power deployments will render in the editor window
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
@@ -1205,6 +1206,8 @@ void eof_prepare_undo(int type)
 	eof_undo_toggle = 1;
 	eof_fix_window_title();	//Redraw the window title to reflect the chart is modified
 	eof_window_title_dirty = 1;	//Indicate that the window title will need to be redrawn during the next normal render, to reflect whatever change is to follow this undo state
+	eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
+	eof_ch_sp_solution = NULL;
 	if(!eof_disable_backups && (eof_change_count % 10 == 0))
 	{	//If automatic backups are not disabled, backup the EOF project every 10 saves
 		(void) replace_extension(fn, eof_filename, "backup.eof.bak", 1024);
@@ -3642,6 +3645,7 @@ void eof_render(void)
 			eof_log("\tRebuilding beat stats.", 3);
 			eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild them (from the perspective of the specified track)
 		}
+		eof_ch_sp_solution_macros_wanted = 0;	//The rendering of the info and notes panels will change this to 1 any CH SP scoring information is needed for expansion macros
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render the info window yet, it will just be overwritten by the 3D window
 			eof_log("\tRendering Information panel.", 3);
@@ -3655,6 +3659,7 @@ void eof_render(void)
 			eof_render_editor_window_2();	//Render the secondary piano roll if applicable
 			eof_render_notes_window();		//Render the notes panel if applicable
 		}
+		eof_ch_sp_solution_rebuild();	//Build SP CH solution data if necessary
 	}
 	else
 	{	//If no project is loaded, just draw a blank screen and the menu
@@ -4809,6 +4814,8 @@ void eof_exit(void)
 	}
 
 	eof_destroy_shape_definitions();
+
+	eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the cached Clone Hero SP solution structure if applicable
 
 	//Stop the logging system
 	seconds = time(NULL);
