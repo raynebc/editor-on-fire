@@ -1513,6 +1513,22 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Track star power count
+	if(!ustricmp(macro, "TRACK_SLIDER_COUNT"))
+	{
+		unsigned long count = eof_get_num_sliders(eof_song, eof_selected_track);
+
+		if(count)
+		{	//If there are any star power sections in the active track
+			snprintf(dest_buffer, dest_buffer_size, "%lu", count);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
 	//Track slider note count
 	if(!ustricmp(macro, "TRACK_SLIDER_NOTE_COUNT"))
 	{

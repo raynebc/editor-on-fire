@@ -65,6 +65,7 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 			eof_midi_event[eof_midi_events]->on = note_on;
 			eof_midi_event[eof_midi_events]->off = note_off;
 			eof_midi_event[eof_midi_events]->length = 0;	//The calling function is required to set this for HOPO on/off marker's Note Off event
+			eof_midi_event[eof_midi_events]->needle = 0;	//Calling function must manually set this if wanted
 			eof_midi_events++;
 
 			if((note >= 0) && (note <= 127))
@@ -110,6 +111,7 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text, char allocation)
 				eof_midi_event[eof_midi_events]->filtered = 0;
 				eof_midi_event[eof_midi_events]->on = 0;
 				eof_midi_event[eof_midi_events]->off = 0;
+				eof_midi_event[eof_midi_events]->needle = 0;	//Calling function must manually set this if wanted
 				eof_midi_events++;
 			}
 			else
@@ -146,6 +148,7 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation, un
 				eof_midi_event[eof_midi_events]->on = 0;
 				eof_midi_event[eof_midi_events]->off = 0;
 				eof_midi_event[eof_midi_events]->index = index;
+				eof_midi_event[eof_midi_events]->needle = 0;	//Calling function must manually set this if wanted
 				eof_midi_events++;
 			}
 			else
@@ -186,6 +189,7 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon)
 					eof_midi_event[eof_midi_events]->on = 0;
 					eof_midi_event[eof_midi_events]->off = 0;
 					eof_midi_event[eof_midi_events]->sysexon = sysexon;
+					eof_midi_event[eof_midi_events]->needle = 0;	//Calling function must manually set this if wanted
 					eof_midi_events++;
 				}
 			}
@@ -199,6 +203,20 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon)
 			}
 		}
 	}
+}
+
+unsigned long eof_find_midi_event_needle(unsigned char num)
+{
+	unsigned long ctr;
+	for(ctr = 0; ctr < eof_midi_events; ctr++)
+	{	//For each MIDI event
+		if(eof_midi_event[ctr]->needle == num)
+		{	//If this event is the needle number being sought
+			return ctr;
+		}
+	}
+
+	return ULONG_MAX;	//Needle not found
 }
 
 void eof_clear_midi_events(void)
@@ -849,8 +867,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 								{	//Only write this notation if not writing a Rock Band compliant MIDI
 									phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
 									phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-									phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
 									phase_shift_sysex_phrase[5] = 7;	//Store the phrase ID (7 = Snare rim shot)
+									phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
 									eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom rim shot start marker
 									phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
 									eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom rim shot phrase stop marker
@@ -1206,6 +1224,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				for(i = 0; i < eof_get_num_sliders(sp, j); i++)
 				{	//For each slider in the track
 					sectionptr = eof_get_slider(sp, j, i);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAdding slider #%lu: Start = %lums, stop = %lums", i, sectionptr->start_pos, sectionptr->end_pos);
+					eof_log(eof_log_string, 2);
 					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
 					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the phrase's length
 					if(deltalength < 1)

@@ -29,6 +29,7 @@ typedef struct
 	unsigned long index;	//For text events, a tie in the sorting order will be broken by whichever has the lower index number
 	char sysexon;			//If this is a Sysex marker, tracks whether this is a start of Sysex marker, for quicksort purposes
 	unsigned long length;	//This field is only used to track forced HOPO on/off marker lengths to ensure a marker isn't decremented to 0 deltas by eof_check_for_hopo_phrase_overlap()
+	unsigned char needle;	//This is reset to 0 when the event is added to the list.  The calling function can manually set it to 1 and have eof_find_midi_event_needle() find it after a sort
 } EOF_MIDI_EVENT;
 
 
@@ -200,6 +201,10 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation, un
 	//Creates a new structure to store the specified text event and appends it to eof_midi_event[]
 	//The index parameter should be the event's index in the project, as it is used to resolve ties in MIDI event sorting
 	//The allocation boolean value specifies whether the string is using dynamically allocated memory and should be freed when the array is emptied
+unsigned long eof_find_midi_event_needle(unsigned char num);
+	//Parses through the events in eof_midi_event[] and returns the index of the first event with the specified needle number value
+	//Used to find the index of a specific event after the index changes after a sort operation
+	//Returns ULONG_MAX if no such event is found
 void eof_clear_midi_events(void);
 	//Frees the memory for all structures in eof_midi_event[], including any dynamically allocated strings
 	//Resets the eof_midi_event_full variable to zero

@@ -93,7 +93,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 					if(eof_log_level > 1)
 					{
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected grid snap of chartpos %lu is %lu / %lu", chartpos, ctr, interval);
-						eof_log(eof_log_string, 2);
+						eof_log(eof_log_string, 3);
 					}
 					break;			//Stop checking instances of this grid snap
 				}
@@ -140,7 +140,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 			if(eof_log_level > 1)
 			{
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTarget position is bewteen anchors, adding %fms", partial_beat);
-				eof_log(eof_log_string, 2);
+				eof_log(eof_log_string, 3);
 			}
 			curpos += partial_beat;
 			break;
@@ -150,14 +150,14 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		{
 			anchorctr++;
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tdB Anchor #%lu: Chartpos = %lu  BPM = %lu  TS = %d  ms pos = %lu beat length = %f,  Detected pos = %fms", anchorctr, current_anchor->chartpos, current_anchor->BPM, current_anchor->TS, current_anchor->usec, beat_length, curpos);
-			eof_log(eof_log_string, 2);
+			eof_log(eof_log_string, 3);
 		}
 		current_anchor = current_anchor->next;
 	}
 	if(eof_log_level > 1)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFinal converted realtime is %fms", curpos);
-		eof_log(eof_log_string, 2);
+		eof_log(eof_log_string, 3);
 	}
 	return curpos;
 }
@@ -203,8 +203,8 @@ void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track, un
 			{	//If this note occurs after the span of the HOPO notation
 				break;	//Break from inner loop
 			}
-			if((pos2 >= pos) && (eof_get_note_type(sp, track, ctr3) == type))
-			{	//If this note is within the span of the HOPO notation and is in the same difficulty
+			if((pos2 >= pos) && (eof_get_note_type(sp, track, ctr3) == type) && (ctr3 != ctr2 - 1))
+			{	//If this note is within the span of the HOPO notation, is in the same difficulty and isn't the toggle HOPO marker gem itself
 				unsigned long flags, mpos;
 
 				flags = eof_get_note_flags(sp, track, ctr3) ^ EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag for this note
@@ -214,7 +214,7 @@ void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track, un
 				eof_log(eof_log_string, 2);
 			}
 		}
-		eof_track_delete_note(sp, track, ctr2 - 1);	//Delete the gem
+		eof_track_delete_note(sp, track, ctr2 - 1);	//Delete the HOPO marker gem
 	}
 
 	/* check if unofficial "N 6 #" slider notation was found */
@@ -233,17 +233,18 @@ void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track, un
 			unsigned long pos2 = eof_get_note_pos(sp, track, ctr3);
 
 			if(pos2 > pos + len)
-			{	//If this note occurs after the span of the HOPO notation
+			{	//If this note occurs after the span of the slider notation
 				break;	//Break from inner loop
 			}
-			if((pos2 >= pos) && (eof_get_note_type(sp, track, ctr3) == type))
-			{	//If this note is within the span of the HOPO notation and is in the same difficulty
+			if((pos2 >= pos) && (eof_get_note_type(sp, track, ctr3) == type) && (ctr3 != ctr2 - 1))
+			{	//If this note is within the span of the slider notation, is in the same difficulty and isn't the slider marker gem itself
 				unsigned long mpos = eof_get_note_midi_pos(sp, track, ctr3);
 				eof_set_note_flags(sp, track, ctr3, (eof_get_note_flags(sp, track, ctr3) | EOF_GUITAR_NOTE_FLAG_IS_SLIDER));	//Set the slider flag for this note
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Diff = %d  Chartpos = %lu  Pos = %lums:  Enabling slider status", ctr3, type, mpos, pos2);
 				eof_log(eof_log_string, 2);
 			}
 		}
+		eof_track_delete_note(sp, track, ctr2 - 1);	//Delete the slider marker gem
 	}
 }
 
@@ -975,9 +976,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 				while(ctr2 + 1 < eof_get_track_size(sp, ctr))
 				{	//While there are additional notes to check
-					long next = eof_track_fixup_next_note(sp, ctr, ctr2);	//Determine if there's another note in this track difficulty
-					if(next <= 0)
-						break;	//If there are no other notes, exit inner loop
+					unsigned long next = ctr2 + 1;
+
 					if(!(eof_get_note_flags(sp, ctr, next) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
 						break;	//If the next note isn't a slider note, exit inner loop
 					if(eof_get_note_pos(sp, ctr, next) > eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2) + 1000)
@@ -985,6 +985,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 					ctr2++;		//Otherwise include this note in the slider note phrase
 				}
 				end = eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2);	//Track the end position of this run of slider notes
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tCreating slider section from %lums to %lums", start, end);
+				eof_log(eof_log_string, 2);
 				(void) eof_track_add_section(sp, ctr, EOF_SLIDER_SECTION, 0xFF, start, end, 0, NULL);	//Add the slider phrase
 			}
 		}
