@@ -711,6 +711,9 @@ void eof_mix_seek(unsigned long pos)
 	if(eof_disable_sound_processing)	//If sound cues are disabled
 		return;							//Don't do anything here
 
+	if(eof_silence_loaded)	//If no chart audio is actually loaded
+		return;				//Also do nothing because playback can't occur anyway
+
 	eof_mix_sample_count = eof_mix_msec_to_sample(pos, alogg_get_wave_freq_ogg(eof_music_track));
 	for(i = 0; i < eof_mix_claps; i++)
 	{

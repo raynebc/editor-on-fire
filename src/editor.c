@@ -6300,7 +6300,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					x2 = x1 + 100;
 				}
 
-				rectfill(window->screen, lpos + x1 / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, lpos + x2 / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 10, col);
+				rectfill(window->screen, lpos + x1 / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 9, lpos + x2 / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 9, col);
 			}
 		}
 	}

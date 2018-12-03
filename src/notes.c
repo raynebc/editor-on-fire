@@ -1449,7 +1449,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long count;
 
-		count = eof_notes_panel_count_section_stats(EOF_SP_SECTION, NULL, NULL);
+		count = eof_count_track_num_notes_with_flag(EOF_NOTE_FLAG_SP);
 
 		if(count)
 		{	//If there are any star power sections in the active track
@@ -1518,7 +1518,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long count;
 
-		count = eof_notes_panel_count_section_stats(EOF_SLIDER_SECTION, NULL, NULL);
+		count = eof_count_track_num_notes_with_flag(EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
 
 		if(count)
 		{	//If there are any slider sections in the active track
@@ -3082,6 +3082,24 @@ unsigned long eof_count_num_notes_with_gem_designation(unsigned char gems, unsig
 
 		if(eof_get_note_note(eof_song, eof_selected_track, ctr) == gems)
 		{	//If this note has the target bitmask
+			count++;
+		}
+	}
+
+	return count;
+}
+
+unsigned long eof_count_track_num_notes_with_flag(unsigned long flags)
+{
+	unsigned long ctr, count, tracksize;
+
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
+	for(ctr = 0, count = 0; ctr < tracksize; ctr++)
+	{	//For each note in the track
+		unsigned long noteflags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
+
+		if(noteflags & flags)
+		{	//If the note has the specified flag(s)
 			count++;
 		}
 	}
