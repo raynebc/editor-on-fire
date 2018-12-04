@@ -80,7 +80,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		beat_chart_pos = chartpos - (chartpos % beatlength_ticks);
 
 		for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
-		{	//Check all of the possible supported grid snap intervals
+		{	//Check all of the possible supported custom grid snap intervals
 			if(beatlength_ticks % interval != 0)
 				continue;	//If the beat's tick length isn't divisible by this interval, skip it
 

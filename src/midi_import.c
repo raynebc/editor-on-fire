@@ -296,7 +296,7 @@ double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *a
 		if(beat_delta_pos <= absolutedelta)
 		{	//As long as a valid delta time for that beat was determined
 			for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
-			{	//Check all of the possible supported grid snap intervals
+			{	//Check all of the possible supported custom grid snap intervals
 				if(beatlength_delta % interval != 0)
 					continue;	//If the beat's delta length isn't divisible by this interval, skip it
 
@@ -3649,10 +3649,10 @@ unsigned long eof_repair_midi_import_grid_snap(void)
 			unsigned long tflags = eof_get_note_tflags(eof_song, ctr, ctr2);
 			if(tflags & EOF_NOTE_TFLAG_RESNAP)
 			{	//If this note was flagged as being grid snapped during MIDI import
-				if(!eof_is_any_grid_snap_position(eof_get_note_pos(eof_song, ctr, ctr2), NULL, NULL, NULL, &closestpos))
-				{	//If the note is no longer grid snapped
+				if(!eof_is_any_beat_interval(eof_get_note_pos(eof_song, ctr, ctr2), &closestpos))
+				{	//If the note is no longer snapped to a beat interval position as it was originally deemed by eof_ConvertToRealTime()
 					if(closestpos != ULONG_MAX)
-					{	//If the nearest grid snap position was determined
+					{	//If the nearest beat interval position was determined
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCorrecting note position from %lums to %lums", eof_get_note_pos(eof_song, ctr, ctr2), closestpos);
 						eof_log(eof_log_string, 1);
 						eof_set_note_pos(eof_song, ctr, ctr2, closestpos);	//Set it to what was just determined the nearest grid snap for it

@@ -356,5 +356,10 @@ Miscellaneous Controls:
         to 1 in eof.cfg while EOF isn't running, the names and tones options are skipped by
         this shortcut.
 
+    ALT+Numpad minus / ALT+Numpad plus
+
+        Decreases or increases the depth of the 3D preview camera, to show less or more of
+        the track before the display cuts off.
+
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.

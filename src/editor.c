@@ -663,7 +663,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapv
 		return 0;
 
 	beatnum = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
-	if(!eof_beat_num_valid(eof_song, beatnum))	//If the seek position is outside the chart
+	if(!eof_beat_num_valid(eof_song, beatnum))	//If the beat's position is outside the chart
 		return 0;
 
 	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
@@ -772,6 +772,66 @@ unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int
 	}
 
 	return ((double)pos - eof_tail_snap.snap_length) + 0.5;	//Round to nearest ms
+}
+
+int eof_is_any_beat_interval(unsigned long pos, unsigned long *closestintervalpos)
+{
+	unsigned long ctr, interval, beatnum, interval_pos, closestpos = 0, closestdiff = 0, diff;
+	double beat_length, interval_length;
+	int first = 1;
+
+	if(closestintervalpos)
+		*closestintervalpos = ULONG_MAX;	//Unless this function returns successfully, this pointer will store an error value
+
+	if(!eof_song)
+		return 0;
+
+	beatnum = eof_get_beat(eof_song, pos);	//Find which beat the specified position is in
+	if(!eof_beat_num_valid(eof_song, beatnum))	//If the beat's position is outside the chart
+		return 0;
+
+	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
+		return 0;
+
+	beat_length = eof_get_beat_length(eof_song, beatnum);
+	for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
+	{	//Check all of the possible supported custom grid snap intervals
+		interval_length = beat_length / (double) interval;
+
+		for(ctr = 0; ctr < interval; ctr++)
+		{	//For each instance of that beat interval
+			interval_pos = eof_song->beat[beatnum]->fpos + (ctr * interval_length) + 0.5;
+			if(interval_pos == pos)
+			{	//If the interval positions rounds to the same integer millisecond position as the target
+				if(closestintervalpos)
+					*closestintervalpos = interval_pos;
+				return 1;	//Return true
+			}
+
+			if(first)
+			{	//If this is the first beat interval examined
+				closestpos = interval_pos;	//Track this as the beat interval position closest to the target position so far
+				closestdiff = (interval_pos > pos) ? (interval_pos - pos) : (pos - interval_pos);	//Track the distance between the target position and this grid snap
+			}
+			else
+			{
+				diff = (interval_pos > pos) ? (interval_pos - pos) : (pos - interval_pos);	//Get the distance between the target position and this grid snap
+				if(diff < closestdiff)
+				{	//If this beat interval position is closer to the target than any examined so far
+					closestpos = interval_pos;	//Track it as the closest
+					closestdiff = diff;
+				}
+			}
+
+			first = 0;
+		}
+	}
+
+	//The position was not found to be a beat interval position
+	if(closestintervalpos)
+		*closestintervalpos = closestpos;	//Return the closest interval position found if the calling function wanted it
+
+	return 0;
 }
 
 void eof_read_editor_keys(void)

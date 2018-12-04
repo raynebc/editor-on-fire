@@ -85,6 +85,11 @@ unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int
 	//Returns the position that is one full grid snap earlier than pos (not just the earliest grid snap occurrence), where the grid snap size is 1/# beat, or
 	// 1/# measure if per_measure is nonzero
 	//Returns ULONG_MAX if the position is not found
+int eof_is_any_beat_interval(unsigned long pos, unsigned long *closestintervalpos);
+	//Returns nonzero if the specified timestamp is any beat interval position, where the interval count is between 2 and EOF_MAX_GRID_SNAP_INTERVALS
+	// (This matches the logic in eof_ConvertToRealTime() that determines whether a tick position is a grid snap)
+	//If closestintervalpos is not NULL, it is set to the beat interval position that is closest to the specified timestamp
+	//Upon error, zero is returned and if closestintervalpos is not NULL, its referenced variable is set to ULONG_MAX
 
 void eof_read_editor_keys(void);
 void eof_editor_logic(void);

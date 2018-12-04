@@ -1399,6 +1399,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			if(eof_note_is_hopo(i))
 			{
 				flags |= EOF_NOTE_FLAG_HOPO;
+				flags &= ~EOF_NOTE_FLAG_NO_HOPO;	//Ensure that if a note has forced HOPO and forced non HOPO, forced HOPO takes precedence
 			}
 
 			/* mark and check star power notes */

@@ -3288,7 +3288,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 					if(beat_deltapos < ULONG_MAX)
 					{	//If the delta time of the target position's beat was found
 						for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
-						{	//Check all of the possible supported grid snap intervals
+						{	//Check all of the possible supported custom grid snap intervals
 							double snaplength;
 
 							if(beatlength_delta % interval != 0)
