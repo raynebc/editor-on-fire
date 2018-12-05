@@ -171,6 +171,12 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	//If a time signature is missing from the first beat, a 4/4 time signature is applied to it after creating an undo state, and *undo_made is set to 1 if the pointer is not NULL
 	//Returns 1 on error or 2 on cancellation (no notes in active track difficulty)
 
+unsigned long eof_ch_sp_path_calculate_stars(EOF_SP_PATH_SOLUTION *solution, unsigned long *base_score_ptr, unsigned long *effective_score_ptr);
+	//Calculates the base score, the effective score (the solution's score minus the solo bonuses) and returns the number of stars that would be awarded in Clone Hero
+	//If base_score_ptr is not NULL, the base score is returned through it
+	//If effective_score_ptr is not NULL, the effective score is returned through it
+	//Returns ULONG_MAX on error
+
 void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long deployment_notes, char *undo_made);
 	//Logs and reports details of the specified solution, including the base score and star count (which are calculated by this function)
 	//If validcount + invalidcount > 1, the function considers the specified solution to be the best solution out of several tested

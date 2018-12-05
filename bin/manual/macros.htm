@@ -343,6 +343,27 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>%IF_NOTE_GAP_IS_IN_MS%</td>
 <td>Evaluates as true if EOF's configured <a href="configure.htm#notegap">Min. note distance</a> setting (analogous to the note gap setting in Moonscraper) in File>Preferences>Preferences is set to # ms instead of a 1/# beat or measure interval as is typically recommended for Clone Hero authoring.</td>
 </tr>
+<tr>
+<td>%IF_CH_SP_TS_MISSING%</td>
+<td>Evaluates as true if star power scoring information can't be determined due to the first beat marker having no time signature.</td>
+</tr>
+<tr>
+<td>%IF_CH_SP_TS_DEFINED%</td>
+<td>Evaluates as true if the first beat marker has a defined time signature.</td>
+</tr>
+<tr>
+<tr>
+<td>%IF_CH_SP_PATH_VALID%</td>
+<td>Evaluates as true if a star power path is defined (either automatically with "Track>Find optimal CH star power path" or manually with "Note>Clone Hero>SP deploy") and it is valid.</td>
+</tr>
+<tr>
+<td>%IF_CH_SP_DEPLOYMENTS_MISSING%</td>
+<td>Evaluates as true if no star power deployments are defined.</td>
+</tr>
+<tr>
+<td>%IF_CH_SP_PATH_INVALID%</td>
+<td>Evaluates as true if one or more star power deployments are defined but it is considered an invalid star power path, such as if a deployment is designated without sufficient star power, deploying while star power is already deployed, etc.</td>
+</tr>
 </tbody>
 </table><br>
 
@@ -628,6 +649,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <td>Prints the internal note value of the selected note.  If the active track is the vocal track, this value is the pitch of the selected lyric.  If the active track is not a vocal track, this is a bitmask defining which lanes the note uses.  If no note is selected, "None" is printed.</td>
 </tr>
 <tr>
+<td>%SELECTED_NOTE_FLAGS%</td>
+<td>Prints the internal flags value of the selected note/lyric.  If no note/lyric is selected, "None" is printed.</td>
+</tr>
+<tr>
 <td>%SELECTED_LYRIC_TONE_NAME%</td>
 <td>Prints the proper note name for the pitch, ie. C# or Db (taking the <a href="functions.htm#semitones">Song>Display semitones as flat</a> setting into account).  If no lyric is selected, or the active track is not the vocal track, "None" is printed.</td>
 </tr>
@@ -737,6 +762,26 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 
 <tr>
+<td align="center"><b><u>Star power path information</u></b></td>
+</tr>
+<tr>
+<td>%CH_SP_PATH_SCORE%</td>
+<td>If a valid star power path is defined, prints the estimated score for the solution in Clone Hero.  If no star power path is defined, or the defined path is invalid, "None" is printed.</td>
+</tr>
+<tr>
+<td>%CH_SP_PATH_BASE_SCORE%</td>
+<td>If a valid star power path is defined, prints the base score (point values of gems and sustains without any bonuses, used to calculate the number of awarded stars) for the solution in Clone Hero.  If no star power path is defined, or the defined path is invalid, "None" is printed.</td>
+</tr>
+<tr>
+<td>%CH_SP_PATH_AVG_MULTIPLIER%</td>
+<td>If a valid star power path is defined, prints the average multiplier (the estimated in-game score (minus solo bonuses) divided by the base score) used to determine the number of awarded stars) for the solution in Clone Hero.  If no star power path is defined, or the defined path is invalid, "None" is printed.</td>
+</tr>
+<tr>
+<td>%CH_SP_PATH_STARS%</td>
+<td>If a valid star power path is defined, prints the number of stars (ie. as "1 star" or "7 stars") estimated for this star power path in Clone Hero.  If no star power path is defined, or the defined path is invalid, "None" is printed.</td>
+</tr>
+
+<tr>
 <td align="center"><b><u>Various information</u></b></td>
 </tr>
 <tr>
@@ -814,6 +859,22 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%ACTIVE_DIFFICULTY_NAME%</td>
 <td>Prints the name of the active difficulty, taking the "Use FoF difficulty naming" preference into account.</td>
+</tr>
+<tr>
+<td>%3D_MAX_DEPTH%</td>
+<td>Prints the current maximum depth of the 3D preview's camera (ie. how far back the displayed track goes), as controlled by ALT+numpad minus, ALT+numpad plus.</td>
+</tr>
+<tr>
+<td>%MOUSE_X%</td>
+<td>Prints the mouse X coordinate, as well as the relative X coordinate and name of whichever sub-window the mouse is in.</td>
+</tr>
+<tr>
+<td>%MOUSE_Y%</td>
+<td>Prints the mouse Y coordinate, as well as the relative Y coordinate and name of whichever sub-window the mouse is in.</td>
+</tr>
+<tr>
+<td>%EOF_HOVER_PIECE%</td>
+<td>Prints the lane number the mouse is currently hovered over, or -1 if the mouse isn't hovered directly over any lane.</td>
 </tr>
 </tbody>
 </table>

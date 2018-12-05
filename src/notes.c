@@ -1033,6 +1033,68 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_CH_SP_TS_MISSING"))
+	{
+		if(!eof_beat_stats_cached)
+			eof_process_beat_statistics(eof_song, eof_selected_track);
+		if(!eof_song->beat[0]->has_ts)
+		{	//If the first beat does not have a time signature
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_CH_SP_TS_DEFINED"))
+	{
+		if(!eof_beat_stats_cached)
+			eof_process_beat_statistics(eof_song, eof_selected_track);
+		if(eof_song->beat[0]->has_ts)
+		{	//If the first beat has a time signature
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_CH_SP_PATH_VALID"))
+	{
+		eof_ch_sp_solution_macros_wanted = 1;
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score && eof_ch_sp_solution->num_deployments)
+		{	//If the global star power solution structure is built, the score is nonzero and there is at least one defined SP deployment
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_CH_SP_DEPLOYMENTS_MISSING"))
+	{
+		eof_ch_sp_solution_macros_wanted = 1;
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score && !eof_ch_sp_solution->num_deployments)
+		{	//If the global star power solution structure is built, the score is nonzero but there are no defined SP deployments
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_CH_SP_PATH_INVALID"))
+	{
+		eof_ch_sp_solution_macros_wanted = 1;
+		if(!eof_ch_sp_solution || !eof_ch_sp_solution->score)
+		{	//If the global star power solution structure is not built or its score is zero
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -1687,6 +1749,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Selected note/lyric flags
+	if(!ustricmp(macro, "SELECTED_NOTE_FLAGS"))
+	{
+		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current));
+		else
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
 	//Selected note/lyric value/tone
 	if(!ustricmp(macro, "SELECTED_LYRIC_TONE_NAME"))
 	{
@@ -2061,6 +2133,103 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			snprintf(dest_buffer, dest_buffer_size, "(Error)");
 		}
 
+		return 1;
+	}
+
+	//The defined star power path's estimated score
+	if(!ustricmp(macro, "CH_SP_PATH_SCORE"))
+	{
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
+		{	//If the global star power solution structure is built and a score was determined
+			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_ch_sp_solution->score);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//The defined star power path's base score (used in star calculation)
+	if(!ustricmp(macro, "CH_SP_PATH_BASE_SCORE"))
+	{
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
+		{	//If the global star power solution structure is built and a score was determined
+			unsigned long base_score = 0;
+
+			if(eof_ch_sp_path_calculate_stars(eof_ch_sp_solution, &base_score, NULL) != ULONG_MAX)
+			{	//If the base score was calculated
+				snprintf(dest_buffer, dest_buffer_size, "%lu", base_score);
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "(Error)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//The defined star power path's estimated average multiplier
+	if(!ustricmp(macro, "CH_SP_PATH_AVG_MULTIPLIER"))
+	{
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
+		{	//If the global star power solution structure is built and a score was determined
+			unsigned long base_score = 0, effective_score = 0;
+
+			if(eof_ch_sp_path_calculate_stars(eof_ch_sp_solution, &base_score, &effective_score) != ULONG_MAX)
+			{	//If the base and effective scores were calculated
+				snprintf(dest_buffer, dest_buffer_size, "%.2f", (double)effective_score / base_score);
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "(Error)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//The defined star power path's estimated number of awarded stars
+	if(!ustricmp(macro, "CH_SP_PATH_STARS"))
+	{
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
+		{	//If the global star power solution structure is built and a score was determined
+			unsigned long stars = eof_ch_sp_path_calculate_stars(eof_ch_sp_solution, NULL, NULL);
+
+			if(stars != ULONG_MAX)
+			{	//If the number of stars was determined
+				snprintf(dest_buffer, dest_buffer_size, "%lu star%s", stars, (stars == 1) ? "" : "s");
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "(Error)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//The estimated number of notes that are played during the defined star power path's deployments
+	if(!ustricmp(macro, "CH_SP_PATH_DEPLOYMENT_NOTES"))
+	{
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
+		{	//If the global star power solution structure is built and a score was determined
+			snprintf(dest_buffer, dest_buffer_size, "%lu notes (%.2f%%)", eof_ch_sp_solution->deployment_notes, (double)eof_ch_sp_solution->deployment_notes * 100.0 / eof_ch_sp_solution->note_count);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
 		return 1;
 	}
 

@@ -14,9 +14,9 @@
 #define EOF_MAX_OGGS                 8
 #define EOF_OLD_MAX_NOTES        65536
 
-///#define EOF_MAX_NOTES            32768
+#define EOF_MAX_NOTES            32768
 ///Use this definition instead to quadruple the note limit
-#define EOF_MAX_NOTES            131072
+///#define EOF_MAX_NOTES            131072
 
 #define EOF_MAX_LYRICS   EOF_MAX_NOTES
 #define EOF_MAX_LYRIC_LINES       4096

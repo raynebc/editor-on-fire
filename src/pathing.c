@@ -1498,23 +1498,21 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	return 0;	//Return success
 }
 
-void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long deployment_notes, char *undo_made)
+unsigned long eof_ch_sp_path_calculate_stars(EOF_SP_PATH_SOLUTION *solution, unsigned long *base_score_ptr, unsigned long *effective_score_ptr)
 {
-	unsigned long ctr, index, tracksize;
-	unsigned long base_score, note_score, solo_note_count = 0;
+	unsigned long ctr, index, tracksize, base_score = 0, note_score, solo_note_count = 0, effective_score, star_count = 0;
 	double sustain_score;
-	EOF_BIG_NUMBER solution_count = {0};
 
-	if(!eof_song || !validcount || !invalidcount || !solution || !solution->note_beat_lengths)
-		return;	//Invalid parameters
+	if(!solution)
+		return ULONG_MAX;	//Invalid parameters
 
 	///Count the number of solo notes (the total score compared to the base score for awarded star count does not include solo bonuses)
-	tracksize = eof_get_track_size(eof_song, eof_selected_track);
+	tracksize = eof_get_track_size(eof_song, solution->track);
 	for(ctr = 0; ctr < tracksize; ctr++)
 	{	//For each note in the active track
-		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		if(eof_get_note_type(eof_song, solution->track, ctr) == eof_note_type)
 		{	//If the note is in the active difficulty
-			if(eof_get_note_tflags(eof_song, eof_selected_track, ctr) & EOF_NOTE_TFLAG_SOLO_NOTE)
+			if(eof_get_note_tflags(eof_song, solution->track, ctr) & EOF_NOTE_TFLAG_SOLO_NOTE)
 			{	//If the note was determined to be in a solo section
 				solo_note_count++;
 			}
@@ -1522,18 +1520,55 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 	}
 
 	///Calculate the base score of the track difficulty
-	base_score = 0;
 	for(ctr = 0, index = 0; ctr < tracksize; ctr++)
 	{	//For each note in the active track
-		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+		if(eof_get_note_type(eof_song, solution->track, ctr) == eof_note_type)
 		{	//If the note is in the active difficulty
-			note_score = eof_note_count_colors(eof_song, eof_selected_track, ctr) * 50;	//The base score for a note is 50 points per gem
+			note_score = eof_note_count_colors(eof_song, solution->track, ctr) * 50;	//The base score for a note is 50 points per gem
 			sustain_score = 25.0 * solution->note_beat_lengths[index];					//The sustain's base score is 25 points per beat
 			base_score += note_score + ceil(sustain_score);								//Add the ceilinged sum of those to the base score
 
 			index++;
 		}
 	}
+
+	effective_score = solution->score - (100 * solo_note_count);	//The score compared against the base score does not include solo bonuses
+
+	///Store values by reference if applicable
+	if(base_score_ptr)
+		*base_score_ptr = base_score;
+	if(effective_score_ptr)
+		*effective_score_ptr = effective_score;
+
+	///Return the awarded star count
+	if(effective_score >= base_score * 0.1)
+		star_count = 1;
+	if(effective_score >= base_score * 0.5)
+		star_count = 2;
+	if(effective_score >= base_score)
+		star_count = 3;
+	if(effective_score >= base_score * 2)
+		star_count = 4;
+	if(effective_score >= base_score * 2.8)
+		star_count = 5;
+	if(effective_score >= base_score * 3.6)
+		star_count = 6;
+	if(effective_score >= base_score * 4.4)
+		star_count = 7;
+
+	return star_count;
+}
+
+void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMBER *validcount, EOF_BIG_NUMBER *invalidcount, unsigned long deployment_notes, char *undo_made)
+{
+	unsigned long ctr, tracksize;
+	unsigned long base_score = 0;
+	EOF_BIG_NUMBER solution_count = {0};
+
+	if(!eof_song || !validcount || !invalidcount || !solution || !solution->note_beat_lengths)
+		return;	//Invalid parameters
+
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
 
 	///Report the solution
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tThe highest number of notes that could be played during star power deployment among all solutions was %lu (%.2f%%)", deployment_notes, (double)deployment_notes * 100.0 / solution->note_count);
@@ -1546,17 +1581,8 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 	else
 	{	//There is at least one note played during star power deployment
 		unsigned long notenum, min, sec, ms, flags;
-		unsigned long effective_score;
+		unsigned long effective_score = 0, star_count;
 		char timestamps[500], indexes[500], tempstring[20], scorestring[50], sololess_scorestring[50], multiplierstring[50], base_score_string[50];
-		char *star_string;
-		char *str_0star = "(no stars)";
-		char *str_1star = "(1 star)";
-		char *str_2star = "(2 stars)";
-		char *str_3star = "(3 stars)";
-		char *str_4star = "(4 stars)";
-		char *str_5star = "(5 stars)";
-		char *str_6star = "(6 stars)";
-		char *str_7star = "(7 stars)";
 		char *detected_solution_string = "Optimum star power deployment in Clone Hero for this track difficulty is at these note timestamps (highlighted):";
 		char *user_solution_string = "User defined star power deployment in Clone Hero for this track difficulty at these note timestamps:";
 		char *resultstring1 = detected_solution_string;	//Unless this function determines a user defined solution is being reported, the detected solution string is displayed
@@ -1619,29 +1645,15 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", scorestring);
 		eof_log(eof_log_string, 1);
 
-		effective_score = solution->score - (100 * solo_note_count);	//The score compared against the base score does not include solo bonuses
-		star_string = str_0star;
-		if(effective_score >= base_score * 0.1)
-			star_string = str_1star;
-		if(effective_score >= base_score * 0.5)
-			star_string = str_2star;
-		if(effective_score >= base_score)
-			star_string = str_3star;
-		if(effective_score >= base_score * 2)
-			star_string = str_4star;
-		if(effective_score >= base_score * 2.8)
-			star_string = str_5star;
-		if(effective_score >= base_score * 3.6)
-			star_string = str_6star;
-		if(effective_score >= base_score * 4.4)
-			star_string = str_7star;
+		star_count = eof_ch_sp_path_calculate_stars(solution, &base_score, &effective_score);	//Get the star count, base score and effective score (score minus solo bonuses)
+
 		(void) snprintf(sololess_scorestring, sizeof(sololess_scorestring) - 1, "Without solo bonuses:  %lu", effective_score);
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", sololess_scorestring);
 		eof_log(eof_log_string, 1);
 		(void) snprintf(base_score_string, sizeof(base_score_string) - 1, "Base score:  %lu", base_score);
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", base_score_string);
 		eof_log(eof_log_string, 1);
-		(void) snprintf(multiplierstring, sizeof(multiplierstring) - 1, "Average multiplier:  %.2f %s", (double)effective_score / base_score, star_string);
+		(void) snprintf(multiplierstring, sizeof(multiplierstring) - 1, "Average multiplier:  %.2f (%lu star%s)", (double)effective_score / base_score, star_count, (star_count == 1) ? "" : "s");
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", multiplierstring);
 		eof_log(eof_log_string, 1);
 
@@ -1654,7 +1666,7 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 		{	//If this reporting is for the best detected solution instead of for a single user defined solution
 			int sp_deploy_notes_exist = 0;	//Set to nonzero if any notes are found to have EOF_NOTE_EFLAG_SP_DEPLOY status
 
-			for(ctr = 0, index = 0; ctr < tracksize; ctr++)
+			for(ctr = 0; ctr < tracksize; ctr++)
 			{	//For each note in the active track
 				if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
 				{	//If the note is in the active difficulty
@@ -3009,6 +3021,15 @@ int eof_menu_track_evaluate_user_ch_sp_path(void)
 
  	if(!eof_song)
 		return 1;	//No project loaded
+
+ 	///Check whether there's a time signature in effect
+	if(!eof_beat_stats_cached)
+		eof_process_beat_statistics(eof_song, eof_selected_track);
+	if(!eof_song->beat[0]->has_ts)
+	{
+		allegro_message("A time signature must be in effect on the first beat.  Use \"Beat>Time Signature>\" to apply one.");
+		return 1;
+	}
 
 	///Initialize the solution structure to reflect the notes in the active track difficulty that have EOF_NOTE_EFLAG_SP_DEPLOY status
 	if(eof_ch_sp_path_setup(NULL, &testing, &undo_made))
