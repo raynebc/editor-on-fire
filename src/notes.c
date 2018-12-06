@@ -1086,8 +1086,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_CH_SP_PATH_INVALID"))
 	{
 		eof_ch_sp_solution_macros_wanted = 1;
-		if(!eof_ch_sp_solution || !eof_ch_sp_solution->score)
-		{	//If the global star power solution structure is not built or its score is zero
+		if(eof_ch_sp_solution && !eof_ch_sp_solution->score)
+		{	//If the global star power solution structure is built but its score is zero
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -2244,7 +2244,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_ch_sp_solution_macros_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score && eof_ch_sp_solution->num_deployments)
 		{	//If the global star power solution structure is built and a score was determined
-			unsigned long ctr, target = ULONG_MAX, notenum, sp_start, sp_end;
+			unsigned long ctr, target = ULONG_MAX, notenum, sp_start = ULONG_MAX, sp_end;
 			int status = 0;
 
 			for(ctr = 0; ctr < eof_ch_sp_solution->num_deployments; ctr++)
