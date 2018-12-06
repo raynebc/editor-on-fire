@@ -3023,6 +3023,7 @@ int eof_save_helper_checks(void)
 	char oggfn[1024] = {0};
 	char newfolderpath[1024] = {0};
 	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0, slide_error = 0, note_skew_warned = 0;
+	int pg_notes_present;
 
 	/* check if there are any notes beyond the chart audio */
 	notes_after_chart_audio = eof_check_if_notes_exist_beyond_audio_end(eof_song);
@@ -3190,9 +3191,12 @@ int eof_save_helper_checks(void)
 	}
 
 
+	pg_notes_present = eof_song_has_pro_guitar_content(eof_song);	//Determine whether there are no pro guitar/bass notes and therefore no need to provide certain RS/BF warnings
+
+
 	/* check if any Rocksmith sections don't have a Rocksmith phrase at the same position */
-	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
-	{	//If the user wants to save Rocksmith or Bandfuse capable files
+	if(pg_notes_present && (eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files))
+	{	//If there are any pro guitar/bass notes and the user wants to save Rocksmith or Bandfuse capable files
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
 			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -3643,8 +3647,8 @@ int eof_save_helper_checks(void)
 
 
 	/* check for RS phrases and RS sections that have non alphanumeric characters in their name */
-	if(eof_write_rs_files || eof_write_rs2_files)
-	{	//If the user wants to save Rocksmith capable files
+	if(pg_notes_present && (eof_write_rs_files || eof_write_rs2_files))
+	{	//If there are any pro guitar/bass notes and the user wants to save Rocksmith capable files
 		char warn = 0;
 		unsigned char original_eof_2d_render_top_option = eof_2d_render_top_option;	//Back up the user's preference
 

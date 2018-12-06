@@ -636,6 +636,7 @@ unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track);						//Retu
 unsigned long eof_get_track_size_all(EOF_SONG *sp, unsigned long track);					//For pro guitar tracks, returns the sum of the note count of both the active and tech note sets, otherwise returns the result of eof_get_track_size()
 unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track);					//For pro guitar tracks, returns the note count of the normal note set only, otherwise returns the result of eof_get_track_size()
 unsigned long eof_get_chart_size(EOF_SONG *sp);												//Returns the number of notes/lyrics in the chart, or 0 on error
+int eof_song_has_pro_guitar_content(EOF_SONG *sp);											//Returns nonzero if any of the pro guitar tracks in the specified chart have any normal or tech notes
 unsigned long eof_get_used_lanes(unsigned long track, unsigned long startpos, unsigned long endpos, char type);
 	//Returns a bitmask representing all lanes used within the specified track difficulty during the specified time span
 unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track);							//Returns the number of solos in the specified track, or 0 on error

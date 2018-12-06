@@ -4126,6 +4126,19 @@ unsigned long eof_get_chart_size(EOF_SONG *sp)
 	return notectr;
 }
 
+int eof_song_has_pro_guitar_content(EOF_SONG *sp)
+{
+	if(!sp)
+		return 0;	//Invalid parameter
+
+	if(eof_get_track_size_all(sp, EOF_TRACK_PRO_BASS) || eof_get_track_size_all(sp, EOF_TRACK_PRO_BASS_22) || eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR) || eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR_22) || eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR_B))
+	{	//If there are any notes or tech notes in any of the pro guitar tracks
+		return 1;
+	}
+
+	return 0;
+}
+
 void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;

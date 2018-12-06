@@ -7650,6 +7650,8 @@ unsigned char eof_set_active_difficulty(unsigned char diff)
 		eof_note_type = diff;	//Make it the active difficulty
 	}
 	eof_fix_window_title();
+	eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
+	eof_ch_sp_solution = NULL;
 	return eof_note_type_max;
 }
 

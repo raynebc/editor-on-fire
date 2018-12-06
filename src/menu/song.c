@@ -1572,6 +1572,8 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 		}
 		eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
 		eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
+		eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
+		eof_ch_sp_solution = NULL;
 	}
 	eof_set_color_set();
 	return 1;

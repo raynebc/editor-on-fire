@@ -2139,6 +2139,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The defined star power path's estimated score
 	if(!ustricmp(macro, "CH_SP_PATH_SCORE"))
 	{
+		eof_ch_sp_solution_macros_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_ch_sp_solution->score);
@@ -2153,6 +2154,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The defined star power path's base score (used in star calculation)
 	if(!ustricmp(macro, "CH_SP_PATH_BASE_SCORE"))
 	{
+		eof_ch_sp_solution_macros_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			unsigned long base_score = 0;
@@ -2176,6 +2178,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The defined star power path's estimated average multiplier
 	if(!ustricmp(macro, "CH_SP_PATH_AVG_MULTIPLIER"))
 	{
+		eof_ch_sp_solution_macros_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			unsigned long base_score = 0, effective_score = 0;
@@ -2199,6 +2202,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The defined star power path's estimated number of awarded stars
 	if(!ustricmp(macro, "CH_SP_PATH_STARS"))
 	{
+		eof_ch_sp_solution_macros_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			unsigned long stars = eof_ch_sp_path_calculate_stars(eof_ch_sp_solution, NULL, NULL);
@@ -2222,9 +2226,67 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The estimated number of notes that are played during the defined star power path's deployments
 	if(!ustricmp(macro, "CH_SP_PATH_DEPLOYMENT_NOTES"))
 	{
+		eof_ch_sp_solution_macros_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			snprintf(dest_buffer, dest_buffer_size, "%lu notes (%.2f%%)", eof_ch_sp_solution->deployment_notes, (double)eof_ch_sp_solution->deployment_notes * 100.0 / eof_ch_sp_solution->note_count);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//The status of whether the seek position is within a defined SP deployment
+	if(!ustricmp(macro, "CH_SP_SEEK_SP_PATH_STATUS"))
+	{
+		eof_ch_sp_solution_macros_wanted = 1;
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score && eof_ch_sp_solution->num_deployments)
+		{	//If the global star power solution structure is built and a score was determined
+			unsigned long ctr, target = ULONG_MAX, notenum, sp_start, sp_end;
+			int status = 0;
+
+			for(ctr = 0; ctr < eof_ch_sp_solution->num_deployments; ctr++)
+			{	//For each defined SP deployment
+				notenum = eof_translate_track_diff_note_index(eof_song, eof_ch_sp_solution->track, eof_ch_sp_solution->diff, eof_ch_sp_solution->deployments[ctr]);	//Find the real note number for this index
+				sp_start = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//Get the start position of this deployment
+				if(sp_start <= eof_music_pos - eof_av_delay)
+				{	//If this deployment begins at or before the seek position
+					target = ctr;	//Remember the last deployment that meets this criterion
+				}
+			}
+			if(target < eof_ch_sp_solution->num_deployments)
+			{	//If a star power deployment before the seek position was found
+				sp_end = eof_get_realtime_position(eof_ch_sp_solution->deployment_endings[target]);	//Get the end position of this deployment
+				if(sp_end >= eof_music_pos - eof_av_delay)
+				{	//If this deployment ends at or after the seek position
+					status = 1;	//Track that the seek position was found to be inside a defined SP deployment
+					snprintf(dest_buffer, dest_buffer_size, "Seek pos within %lums to %lums deployment", sp_start, sp_end);
+				}
+			}
+			if(!status)
+			{	//If the seek position was not within a defined SP deployment
+				snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a deployment");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "No valid SP path is defined");
+		}
+		return 1;
+	}
+
+	//The maximum number of SP deployments based on the currently defined star power notes
+	if(!ustricmp(macro, "CH_SP_MAX_DEPLOYMENT_COUNT_AND_RATIO"))
+	{
+		eof_ch_sp_solution_macros_wanted = 1;
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
+		{	//If the global star power solution structure is built and a score was determined
+			unsigned long count = 0;
+
+			(void) eof_count_selected_notes(&count);	//Count the number of notes in the active track difficulty
+			snprintf(dest_buffer, dest_buffer_size, "%lu (1 : %.2f notes)", eof_ch_sp_solution->deploy_count, (double)count / eof_ch_sp_solution->deploy_count);
 		}
 		else
 		{
