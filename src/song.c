@@ -831,6 +831,7 @@ int eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_p
 		tp->star_power_path[tp->star_power_paths].difficulty = 0xFF;
 		tp->star_power_path[tp->star_power_paths].name[0] = '\0';
 		tp->star_power_paths++;
+		eof_sort_and_merge_overlapping_sections(tp->star_power_path, &tp->star_power_paths);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -861,6 +862,7 @@ int eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, un
 		tp->solo[tp->solos].difficulty = 0xFF;
 		tp->solo[tp->solos].name[0] = '\0';
 		tp->solos++;
+		eof_sort_and_merge_overlapping_sections(tp->solo, &tp->solos);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -1098,6 +1100,7 @@ int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsi
 		tp->line[tp->lines].name[0] = '\0';
 		tp->line[tp->lines].difficulty = difficulty;
 		tp->lines++;
+		eof_sort_and_merge_overlapping_sections(tp->line, &tp->lines);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -2782,6 +2785,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				}
 				sp->pro_guitar_track[tracknum]->arpeggio[count].difficulty = difficulty;
 				sp->pro_guitar_track[tracknum]->arpeggios++;
+				eof_sort_and_merge_overlapping_sections(sp->pro_guitar_track[tracknum]->arpeggio, &sp->pro_guitar_track[tracknum]->arpeggios);	//Sort and remove overlapping instances
 				return 1;	//Return success
 			}
 		break;
@@ -2816,6 +2820,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					(void) ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
 				}
 				sp->legacy_track[tracknum]->sliders++;
+				eof_sort_and_merge_overlapping_sections(sp->legacy_track[tracknum]->slider, &sp->legacy_track[tracknum]->sliders);	//Sort and remove overlapping instances
 				return 1;	//Return success
 			}
 		break;
@@ -2865,6 +2870,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					(void) ustrcpy(sp->pro_guitar_track[tracknum]->popupmessage[count].name, name);
 				}
 				sp->pro_guitar_track[tracknum]->popupmessages++;
+				eof_sort_and_merge_overlapping_sections(sp->pro_guitar_track[tracknum]->popupmessage, &sp->pro_guitar_track[tracknum]->popupmessages);	//Sort and remove overlapping instances
 				return 1;	//Return success
 			}
 		break;
@@ -6385,6 +6391,7 @@ int eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 		tp->star_power_path[tp->star_power_paths].difficulty = 0xFF;
 		tp->star_power_path[tp->star_power_paths].name[0] = '\0';
 		tp->star_power_paths++;
+		eof_sort_and_merge_overlapping_sections(tp->star_power_path, &tp->star_power_paths);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -6472,6 +6479,7 @@ int eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start
 		tp->solo[tp->solos].difficulty = 0xFF;
 		tp->solo[tp->solos].name[0] = '\0';
 		tp->solos++;
+		eof_sort_and_merge_overlapping_sections(tp->solo, &tp->solos);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -6757,6 +6765,7 @@ int eof_legacy_track_add_trill(EOF_LEGACY_TRACK * tp, unsigned long start_pos, u
 		tp->trill[tp->trills].difficulty = 0xFF;
 		tp->trill[tp->trills].name[0] = '\0';
 		tp->trills++;
+		eof_sort_and_merge_overlapping_sections(tp->trill, &tp->trills);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -6772,6 +6781,7 @@ int eof_pro_guitar_track_add_trill(EOF_PRO_GUITAR_TRACK * tp, unsigned long star
 		tp->trill[tp->trills].difficulty = 0xFF;
 		tp->trill[tp->trills].name[0] = '\0';
 		tp->trills++;
+		eof_sort_and_merge_overlapping_sections(tp->trill, &tp->trills);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -6874,6 +6884,7 @@ int eof_legacy_track_add_tremolo(EOF_LEGACY_TRACK * tp, unsigned long start_pos,
 		tp->tremolo[tp->tremolos].name[0] = '\0';
 		tp->tremolo[tp->tremolos].difficulty = 0xFF;	//In legacy tracks, tremolo sections always apply to all difficulties
 		tp->tremolos++;
+		eof_sort_and_merge_overlapping_sections(tp->tremolo, &tp->tremolos);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -6889,6 +6900,7 @@ int eof_pro_guitar_track_add_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long st
 		tp->tremolo[tp->tremolos].name[0] = '\0';
 		tp->tremolo[tp->tremolos].difficulty = diff;
 		tp->tremolos++;
+		eof_sort_and_merge_overlapping_sections(tp->tremolo, &tp->tremolos);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -10270,4 +10282,54 @@ int eof_get_drum_note_masks(EOF_SONG *sp, unsigned long track, unsigned long not
 	*match_bitmask = tom;
 	*cymbal_match_bitmask = cymbal;
 	return 1;
+}
+
+void eof_sort_and_merge_overlapping_sections(EOF_PHRASE_SECTION *section_ptr, unsigned long *section_count)
+{
+	unsigned long ctr;
+	int overlap = 0;
+
+	if(!section_ptr || !section_count || (*section_count < 2))
+		return;	//Invalid parameters
+
+	qsort(section_ptr, (size_t)*section_count, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);	//Sort by chronological order
+
+	for(ctr = *section_count; ctr > 1; ctr--)
+	{	//For each instance of the section, in reverse order
+		EOF_PHRASE_SECTION *section1, *section2;
+		unsigned long start, end;
+
+		section1 = &section_ptr[ctr - 2];	//Simplify
+		section2 = &section_ptr[ctr - 1];
+
+		if((section1->start_pos <= section2->start_pos) && (section1->end_pos >= section2->end_pos))
+		{	//If this section and the previous one overlap
+			if(section1->difficulty == section2->difficulty)
+			{	//If they apply to the same difficulty (or both apply to all difficulties)
+				start = (section1->start_pos < section2->start_pos) ? section1->start_pos : section2->start_pos;	//Find the earlier of the two sections' start times
+				end = (section1->end_pos > section2->end_pos) ? section1->end_pos : section2->end_pos;				//Find the later of the two sections' end times
+				section2->start_pos = start;	//Update the timings on the previous section
+				section2->end_pos = end;
+				section1->start_pos = section1->end_pos = ULONG_MAX;	//Set the timings on this section so it will sort to the end for removal
+				overlap = 1;	//Track that a second call to qsort() and a parse for removal of applicable sections is to be performed
+			}
+		}
+	}
+
+	if(overlap)
+	{	//If at least one section instance was found to overlap and is to be removed
+		qsort(section_ptr, (size_t)*section_count, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);	//Sort by chronological order
+
+		for(ctr = *section_count; ctr > 1; ctr--)
+		{	//For each instance of the section, in reverse order
+			if((section_ptr[ctr - 1].start_pos == ULONG_MAX) && (section_ptr[ctr - 1].end_pos == ULONG_MAX))
+			{	//If this section instance is to be removed
+				*section_count = *section_count - 1;	//Decrement the section count passed by the calling function
+			}
+			else
+			{	//Otherwise this and all previous section instances are to be kept
+				return;
+			}
+		}
+	}
 }

@@ -91,6 +91,7 @@ unsigned long eof_count_track_num_notes_with_flag(unsigned long flags);
 
 unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, unsigned long *minptr, unsigned long *maxptr);
 	//Examines the number of notes in the active track's sections of the specified type (ie. EOF_SOLO_SECTION or EOF_SP_SECTION)
+	//For performance purposes, requires that the specified sections are sorted (ie. using qsort() with eof_song_qsort_phrase_sections() )
 	//The note count in the section with the fewest notes is returned via *min if minptr is not NULL
 	//The note count in the section with the most notes is returned via *max if maxptr is not NULL
 	//Returns the total number of section notes in the active track, or 0 on error

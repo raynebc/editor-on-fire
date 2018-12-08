@@ -271,6 +271,8 @@ char        eof_loaded_song_name[1024] = {0};			//The file name (minus the folde
 char        eof_loaded_ogg_name[1024] = {0};			//The full path of the loaded OGG file
 char        eof_window_title[4096] = {0};
 int         eof_quit = 0;
+unsigned long eof_main_loop_ctr = 0;
+double      eof_main_loop_fps = 0.0;
 unsigned    eof_note_type = EOF_NOTE_AMAZING;		//The active difficulty
 unsigned    eof_note_type_i = EOF_NOTE_AMAZING;		//The active difficulty for instrumental tracks
 unsigned    eof_note_type_v = EOF_NOTE_SUPAEASY;	//The active difficulty for the vocal track
@@ -5280,6 +5282,7 @@ void eof_log_cwd(void)
 int main(int argc, char * argv[])
 {
 	int updated = 0, init_failed = 0;
+	clock_t time1 = 0, time2 = 0;
 
 	#ifdef ALLEGRO_WINDOWS
 		if(!eof_initialize_windows())
@@ -5295,6 +5298,7 @@ int main(int argc, char * argv[])
 
 	eof_log("\tEntering main program loop", 1);
 
+	time1 = clock();
 	while(!eof_quit)
 	{	//While EOF isn't meant to quit
 		/* frame skip mode */
@@ -5310,6 +5314,16 @@ int main(int argc, char * argv[])
 		{
 			eof_render();
 			updated = 1;
+
+			#define EOF_FPS_SAMPLE_COUNT 10
+			eof_main_loop_ctr++;	//Count the number of calls to eof_render in this loop
+			if(eof_main_loop_ctr >= EOF_FPS_SAMPLE_COUNT)
+			{	//Every 5 renders, detect the number of rendered frames per second
+				time2 = clock();
+				eof_main_loop_fps = (double)CLOCKS_PER_SEC / ((double)time2 - time1) * EOF_FPS_SAMPLE_COUNT;
+				time1 = time2;
+				eof_main_loop_ctr = 0;
+			}
 		}
 
 		/* update the music */

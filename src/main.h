@@ -320,6 +320,8 @@ extern char        eof_current_notes_panel_path[1024];
 extern char        eof_loaded_song_name[1024];
 extern char        eof_loaded_ogg_name[1024];
 extern int         eof_quit;
+extern unsigned long eof_main_loop_ctr;
+extern double      eof_main_loop_fps;
 extern EOF_SCREEN_LAYOUT eof_screen_layout;
 extern BITMAP *    eof_screen;
 extern unsigned long eof_screen_width, eof_screen_height;

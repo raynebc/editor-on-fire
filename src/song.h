@@ -1145,4 +1145,10 @@ int eof_get_drum_note_masks(EOF_SONG *sp, unsigned long track, unsigned long not
 	//If the note is not a drum note, *match_bitmask and *cymbal_match_bitmask are set to 0
 	//Returns 0 on error
 
+void eof_sort_and_merge_overlapping_sections(EOF_PHRASE_SECTION *section_ptr, unsigned long *section_count);
+	//Sorts the specified sections array and checks for instances that overlap and apply to the same difficulty
+	//If any such overlapping sections are found, they are combined and the extraneous sections are deleted
+	//This deletion is carried out by sorting the extraneous sections to the end of the array and then decrementing the count referenced by section_count
+	//Only to be called on section types that define a start and end timestamp (ie. not for fret hand positions or tone changes)
+
 #endif

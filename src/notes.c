@@ -2244,15 +2244,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_ch_sp_solution_macros_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score && eof_ch_sp_solution->num_deployments)
 		{	//If the global star power solution structure is built and a score was determined
-			unsigned long ctr, target = ULONG_MAX, notenum, sp_start = ULONG_MAX, sp_end;
+			unsigned long ctr, target = ULONG_MAX, notenum, sp_start = ULONG_MAX, pos, sp_end;
 			int status = 0;
 
 			for(ctr = 0; ctr < eof_ch_sp_solution->num_deployments; ctr++)
 			{	//For each defined SP deployment
 				notenum = eof_translate_track_diff_note_index(eof_song, eof_ch_sp_solution->track, eof_ch_sp_solution->diff, eof_ch_sp_solution->deployments[ctr]);	//Find the real note number for this index
-				sp_start = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//Get the start position of this deployment
-				if(sp_start <= eof_music_pos - eof_av_delay)
+				pos = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//Get the start position of this deployment
+				if(pos <= eof_music_pos - eof_av_delay)
 				{	//If this deployment begins at or before the seek position
+					sp_start = pos;
 					target = ctr;	//Remember the last deployment that meets this criterion
 				}
 			}
@@ -2837,6 +2838,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The last calculated framerate
+	if(!ustricmp(macro, "EOF_FPS"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%.2f", eof_main_loop_fps);
+		return 1;
+	}
+
 	return 0;	//Macro not supported
 }
 
@@ -3356,7 +3364,7 @@ unsigned long eof_count_track_num_notes_with_flag(unsigned long flags)
 
 unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, unsigned long *minptr, unsigned long *maxptr)
 {
-	unsigned long ctr, ctr2, totalcount = 0, thiscount, tracknotecount, sectioncount, min = 0, max = 0;
+	unsigned long ctr, notectr, notepos, totalcount = 0, thiscount, tracknotecount, sectioncount, min = 0, max = 0;
 	EOF_PHRASE_SECTION *phrase = NULL;
 
 	if(!eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &sectioncount, &phrase) || !phrase)
@@ -3365,24 +3373,31 @@ unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, uns
 	}
 	tracknotecount = eof_get_track_size(eof_song, eof_selected_track);
 
+	notectr = 0;	//Start by examining the first note in the track
+	notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
+
 	for(ctr = 0; ctr < sectioncount; ctr++)
 	{	//For each section of this type in the track
 		EOF_PHRASE_SECTION *ptr = &phrase[ctr];	//Get a pointer to this section instance
 
 		thiscount = 0;	//Reset this counter
-		for(ctr2 = 0; ctr2 < tracknotecount; ctr2++)
-		{	//For each note in the track
-			unsigned long notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr2);
-
-			if(notepos > ptr->end_pos)	//If this note and all others are past the end of the section being examined
-				break;					//Stop looking for notes in this section
-
+		while(notepos <= ptr->end_pos)
+		{	//For all notes at/before the end of this section instance
 			if(notepos >= ptr->start_pos)
-			{	//If this note is not after the section, and starts at or after the section's beginning, it's in the section
-				thiscount++;	//Count the number of notes in this section
-				totalcount++;	//Count the number of notes in all solos
+			{	//If the note is within the scope of this section instance
+				thiscount++;	//Count the number of notes in this section instance
+				totalcount++;	//Count the number of notes in all instances of this section
 			}
+
+			//Iterate to next note
+			notectr++;
+			if(notectr >= tracknotecount)
+			{	//If all notes in the track have been examined
+				break;	//Exit while loop
+			}
+			notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
 		}
+
 		if(!min || (thiscount < min))
 		{	//If this section has the least number of notes among all examined so far
 			min = thiscount;
@@ -3391,6 +3406,14 @@ unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, uns
 		{	//If this section has the most notes among all examined so far
 			max = thiscount;
 		}
+
+		//Iterate to next note
+		notectr++;
+		if(notectr >= tracknotecount)
+		{	//If all notes in the track have been examined
+			break;	//Exit for loop
+		}
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
 	}
 
 	//Return min and max values by reference if applicable
