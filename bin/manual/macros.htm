@@ -364,6 +364,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>%IF_CH_SP_PATH_INVALID%</td>
 <td>Evaluates as true if one or more star power deployments are defined but it is considered an invalid star power path, such as if a deployment is designated without sufficient star power, deploying while star power is already deployed, etc.</td>
 </tr>
+<tr>
+<td>%IF_CH_SP_STATS_AVAILABLE%</td>
+<td>Evaluates as true if star power related information is available (the star power pathing logic calculated a score) to be displayed by applicable expansion macros.</td>
+</tr>
 </tbody>
 </table><br>
 
@@ -787,6 +791,14 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%CH_SP_SEEK_SP_PATH_STATUS%</td>
 <td>Prints whether or not the seek position is within the estimated scope of any defined star power deployment, and if so, that deployments start and stop timestamps.</td>
+</tr>
+<tr>
+<td>%CH_SP_MAX_DEPLOYMENT_COUNT_AND_RATIO%</td>
+<td>Prints the active track difficulty's maximum number of star power deployments and the ratio of deployments to notes, based on the currently defined star power phrases.</td>
+</tr>
+<tr>
+<td>%CH_SP_METER_AFTER_LAST_NOTE_HIT%</td>
+<td>Prints the star power meter level in effect after hitting the note immediately at/before the seek position.</td>
 </tr>
 
 <tr>

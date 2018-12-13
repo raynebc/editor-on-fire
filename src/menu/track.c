@@ -5276,7 +5276,8 @@ int eof_track_menu_enable_ghl_mode(void)
 {
 	EOF_TRACK_ENTRY *ep;
 	unsigned long ctr;
-	int warning = 0;
+	int warning = 0, lane_6_gem = 0;
+	char undo_made = 0;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
@@ -5290,14 +5291,35 @@ int eof_track_menu_enable_ghl_mode(void)
 		{	//For each note in the active track
 			unsigned long note = eof_get_note_note(eof_song, eof_selected_track, ctr);
 
-			if(!(eof_get_note_flags(eof_song, eof_selected_track, ctr) & EOF_GUITAR_NOTE_FLAG_GHL_OPEN) && (note & 32) && (note != 32))
-			{	//If this note contains a gem on lane 6 and isn't an open note (a lane 3 white gem) and contains a gem on another lane as well
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//The conversion of this note below will be lossy, make an undo state
-				break;
+			if((note != 32) || !(eof_get_note_flags(eof_song, eof_selected_track, ctr) & EOF_GUITAR_NOTE_FLAG_GHL_OPEN))
+			{	//If this note is not a GHL open note
+				if(note & 32)
+				{	//If this note contains a gem on lane 6
+					if(note != 32)
+					{	//If this contains a gem on another lane as well
+						if(!undo_made)
+						{	//If an undo state hasn't been made yet
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//The conversion of this note below will be lossy, make an undo state
+							undo_made = 1;
+						}
+					}
+					else
+					{	//This is a W3 single note
+						lane_6_gem = 1;
+					}
+					if(lane_6_gem && undo_made)
+					{	//If both conditions (W3 single note and chord with W3) were found
+						break;
+					}
+				}
 			}
 		}
 	}
 
+	if(lane_6_gem)
+	{
+		allegro_message("Warning:  Lane 3 white GHL gems will be converted to 5 note chords.");
+	}
 	ep = eof_song->track[eof_selected_track];		//Simplify
 	ep->flags ^= EOF_TRACK_FLAG_GHL_MODE;			//Toggle this flag
 	if(ep->flags & EOF_TRACK_FLAG_GHL_MODE)
@@ -5316,7 +5338,7 @@ int eof_track_menu_enable_ghl_mode(void)
 		{	//If the conversion of a chord containing a lane 3 white gem caused a loss of original authoring
 			if(!warning)
 			{	//If the user wasn't already warned about this
-				allegro_message("Warning:  Chords containing lane 3 white GHL gems can't be authored in a non GHL track");
+				allegro_message("Warning:  Chords containing lane 3 white GHL gems can't be authored in a non GHL track.  These were converted to 5 note chords and highlighted.");
 				warning = 1;
 			}
 		}

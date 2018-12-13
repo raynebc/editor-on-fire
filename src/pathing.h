@@ -37,6 +37,7 @@ typedef struct
 	//These arrays are sized to only store data about the target track difficulty's notes and not all of the track's notes
 	double *note_measure_positions;		//An array of double floats the defines the position (defined in measures) of each note in the specified track difficulty
 	double *note_beat_lengths;			//An array of double floats defining the length (defined in beats) of each note in the specified track difficulty
+	double *resulting_sp_meter;			//An array tracking the star power meter level after the note is hit/whammied
 	unsigned long note_count;			//The number of elements in the above arrays and the number of notes in the target track difficulty, used for bounds checking
 
 	unsigned long track;				//The track number being processed
@@ -218,5 +219,11 @@ void eof_destroy_sp_solution(EOF_SP_PATH_SOLUTION *ptr);
 void eof_ch_sp_solution_rebuild(void);
 	//Creates eof_ch_sp_solution (reflecting the active track difficulty) if either eof_ch_sp_solution_macros_wanted is nonzero or "Show CH SP durations" is enabled
 	//If the track or track difficulty has changed since eof_ch_sp_solution was created, it is recreated
+
+int eof_pos_is_within_sp_deployment(EOF_SP_PATH_SOLUTION *solution, unsigned long timestamp, unsigned long *start, unsigned long *end);
+	//Returns nonzero if the specified timestamp is within any defined deployment in the specified star power path
+	//If start is not NULL, the applicable deployment's start time is returned through it
+	//If end is not NULL, the applicable deployment's end time is returned through it
+	//Returns zero on error
 
 #endif

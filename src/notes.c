@@ -340,7 +340,7 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 
 int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel)
 {
-	unsigned long tracknum;
+	unsigned long tracknum, tracksize;
 
 	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
@@ -354,6 +354,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
 
 	///CONDITIONAL TEST MACROS
 	///The conditional macro handling requires that all conditional macros other than %ELSE% and %ENDIF% begin with %IF_
@@ -655,7 +656,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//A note/lyric is selected
 	if(!ustricmp(macro, "IF_NOTE_IS_SELECTED"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 		{
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -691,7 +692,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//A note/lyric is selected and was manually named
 	if(!ustricmp(macro, "IF_SELECTED_NOTE_IS_NAMED"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 		{	//If a note is selected
 			char *name = eof_get_note_name(eof_song, eof_selected_track, eof_selection.current);
 
@@ -708,7 +709,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//A pro guitar chord is selected and its has at least one chord name lookup match
 	if(!ustricmp(macro, "IF_CAN_LOOKUP_SELECTED_CHORD_NAME"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 		{	//If a note is selected
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a pro guitar track is active
@@ -914,7 +915,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If either drum track is active
 			unsigned long ctr;
 
-			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+			for(ctr = 0; ctr < tracksize; ctr++)
 			{	//For each note in the track
 				if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
 				{	//If the note is in the active difficulty
@@ -1088,6 +1089,20 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_ch_sp_solution_macros_wanted = 1;
 		if(eof_ch_sp_solution && !eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built but its score is zero
+			if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+			{	//If the active track's format is supported by the pathing logic
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_CH_SP_STATS_AVAILABLE"))
+	{
+		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
+		{	//If the global star power solution structure is built and the score is nonzero
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -1461,7 +1476,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If there are any solo notes in the active track
 			double percent;
 
-			percent = (double)count * 100.0 / eof_get_track_size(eof_song, eof_selected_track);
+			percent = (double)count * 100.0 / tracksize;
 			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
 		}
 		else
@@ -1517,7 +1532,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If there are any star power sections in the active track
 			double percent;
 
-			percent = (double)count * 100.0 / eof_get_track_size(eof_song, eof_selected_track);
+			percent = (double)count * 100.0 / tracksize;
 			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
 		}
 		else
@@ -1602,7 +1617,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If there are any slider sections in the active track
 			double percent;
 
-			percent = (double)count * 100.0 / eof_get_track_size(eof_song, eof_selected_track);
+			percent = (double)count * 100.0 / tracksize;
 			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
 		}
 		else
@@ -1702,7 +1717,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected note/lyric
 	if(!ustricmp(macro, "SELECTED_NOTE"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_selection.current);
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
@@ -1712,7 +1727,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected note/lyric position
 	if(!ustricmp(macro, "SELECTED_NOTE_POS"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
@@ -1722,7 +1737,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected note/lyric position
 	if(!ustricmp(macro, "SELECTED_NOTE_LENGTH"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 			snprintf(dest_buffer, dest_buffer_size, "%ld", eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
@@ -1732,7 +1747,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected note/lyric name/text
 	if(!ustricmp(macro, "SELECTED_NOTE_NAME"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 			snprintf(dest_buffer, dest_buffer_size, "%s", eof_get_note_name(eof_song, eof_selected_track, eof_selection.current));
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
@@ -1742,7 +1757,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected note/lyric value/tone
 	if(!ustricmp(macro, "SELECTED_NOTE_VALUE"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 			snprintf(dest_buffer, dest_buffer_size, "%d", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current));
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
@@ -1752,7 +1767,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected note/lyric flags
 	if(!ustricmp(macro, "SELECTED_NOTE_FLAGS"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current));
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
@@ -1762,7 +1777,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected note/lyric value/tone
 	if(!ustricmp(macro, "SELECTED_LYRIC_TONE_NAME"))
 	{
-		if(eof_vocals_selected && (eof_selection.current < eof_get_track_size(eof_song, eof_selected_track)))
+		if(eof_vocals_selected && (eof_selection.current < tracksize))
 		{
 			unsigned char tone = eof_get_note_note(eof_song, eof_selected_track, eof_selection.current);
 
@@ -1799,7 +1814,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected pro guitar note fretting
 	if(!ustricmp(macro, "PRO_GUITAR_NOTE_FRETTING"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 		{	//If a note is selected
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a pro guitar track is active
@@ -1825,7 +1840,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Pro guitar selected chord name lookup
 	if(!ustricmp(macro, "SELECTED_CHORD_NAME_LOOKUP"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 		{	//If a note is selected
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a pro guitar track is active
@@ -1864,7 +1879,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected pro guitar note fingering
 	if(!ustricmp(macro, "PRO_GUITAR_NOTE_FINGERING"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 		{	//If a note is selected
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a pro guitar track is active
@@ -1894,7 +1909,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected pro guitar note tones
 	if(!ustricmp(macro, "PRO_GUITAR_NOTE_TONES"))
 	{
-		if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+		if(eof_selection.current < tracksize)
 		{	//If a note is selected
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a pro guitar track is active
@@ -2244,30 +2259,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_ch_sp_solution_macros_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score && eof_ch_sp_solution->num_deployments)
 		{	//If the global star power solution structure is built and a score was determined
-			unsigned long ctr, target = ULONG_MAX, notenum, sp_start = ULONG_MAX, pos, sp_end;
-			int status = 0;
-
-			for(ctr = 0; ctr < eof_ch_sp_solution->num_deployments; ctr++)
-			{	//For each defined SP deployment
-				notenum = eof_translate_track_diff_note_index(eof_song, eof_ch_sp_solution->track, eof_ch_sp_solution->diff, eof_ch_sp_solution->deployments[ctr]);	//Find the real note number for this index
-				pos = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//Get the start position of this deployment
-				if(pos <= eof_music_pos - eof_av_delay)
-				{	//If this deployment begins at or before the seek position
-					sp_start = pos;
-					target = ctr;	//Remember the last deployment that meets this criterion
-				}
+			unsigned long sp_start = 0, sp_end = 0;
+			if(eof_pos_is_within_sp_deployment(eof_ch_sp_solution, eof_music_pos - eof_av_delay, &sp_start, &sp_end))
+			{	//If the seek position is within any defined star power deployment
+				snprintf(dest_buffer, dest_buffer_size, "Seek pos within %lums to %lums deployment", sp_start, sp_end);
 			}
-			if(target < eof_ch_sp_solution->num_deployments)
-			{	//If a star power deployment before the seek position was found
-				sp_end = eof_get_realtime_position(eof_ch_sp_solution->deployment_endings[target]);	//Get the end position of this deployment
-				if(sp_end >= eof_music_pos - eof_av_delay)
-				{	//If this deployment ends at or after the seek position
-					status = 1;	//Track that the seek position was found to be inside a defined SP deployment
-					snprintf(dest_buffer, dest_buffer_size, "Seek pos within %lums to %lums deployment", sp_start, sp_end);
-				}
-			}
-			if(!status)
-			{	//If the seek position was not within a defined SP deployment
+			else
+			{
 				snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a deployment");
 			}
 		}
@@ -2288,6 +2286,44 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 			(void) eof_count_selected_notes(&count);	//Count the number of notes in the active track difficulty
 			snprintf(dest_buffer, dest_buffer_size, "%lu (1 : %.2f notes)", eof_ch_sp_solution->deploy_count, (double)count / eof_ch_sp_solution->deploy_count);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//The star power meter level in effect after hitting the note at/before the seek position
+	if(!ustricmp(macro, "CH_SP_METER_AFTER_LAST_NOTE_HIT"))
+	{
+		eof_ch_sp_solution_macros_wanted = 1;
+		if(eof_ch_sp_solution && eof_ch_sp_solution->resulting_sp_meter)
+		{	//If the global star power solution structure is built and the star power meter array is allocated
+			unsigned long ctr, index, pos, target;
+
+			for(ctr = 0, index = 0, target = ULONG_MAX; ctr < tracksize; ctr++)
+			{	//For each note in the active track
+				pos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+
+				if(pos > eof_music_pos - eof_av_delay)
+				{	//If this note is after the seek position
+					break;	//All other notes are as well, stop parsing them
+				}
+				if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+				{	//If the note is in the active difficulty
+					target = index;	//Remember this as the last note at/before the seek position in the active difficulty
+					index++;		//Track the number of notes in the target difficulty that have been encountered
+				}
+			}
+			if(target < eof_ch_sp_solution->note_count)
+			{	//If the note's star power data was found successfully
+				snprintf(dest_buffer, dest_buffer_size, "%.2f%%", eof_ch_sp_solution->resulting_sp_meter[target] * 100.0);
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "(0%%)");
+			}
 		}
 		else
 		{
@@ -2525,7 +2561,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				double percent;
 
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each note in the track
 					if((eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && eof_is_string_muted(eof_song, eof_selected_track, ctr))
 						count++;	//Count the number of notes in the active difficulty that are fully string muted
@@ -2558,7 +2594,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				double percent;
 
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each note in the track
 					if((eof_get_note_type(eof_song, eof_selected_track, ctr) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, ctr) & 1))
 					{	//If the note is in the expert difficulty and has a gem on lane 1 (bass drum)
@@ -2597,7 +2633,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				double percent;
 
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each lyric in the track
 					if(eof_lyric_is_pitched(tp, ctr))
 					{	//If the lyric has a valid pitch and isn't freestyle
@@ -2705,7 +2741,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				double percent;
 
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each lyric in the track
 					if(eof_lyric_is_freestyle(tp, ctr) == 1)
 					{	//If the lyric has a freestyle marker (# or ^)
@@ -2774,7 +2810,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the vocal track is active
 			if(eof_read_macro_number(count_string, &pitch))
 			{	//If the pitch number was successfully parsed
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each lyric
 					if(eof_get_note_note(eof_song, eof_selected_track, ctr) == pitch)
 					{	//If the lyric has the target pitch

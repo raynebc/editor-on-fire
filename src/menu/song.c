@@ -93,6 +93,8 @@ MENU eof_song_seek_menu[] =
 	{eof_seek_menu_prev_anchor_text1, eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
 	{eof_seek_menu_next_anchor_text1, eof_menu_song_seek_next_anchor, NULL, 0, NULL},
 	{"Beat/&Measure\t" CTRL_NAME "+Shift+B", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
+	{"", NULL, NULL, 0, NULL},
+	{"Next CH &SP deployable note", eof_menu_song_seek_next_ch_sp_deployable_note, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -520,6 +522,16 @@ void eof_prepare_song_menu(void)
 		else
 		{
 			eof_song_seek_menu[0].flags = 0;
+		}
+
+		/* Seek to next CH SP deployable note */
+		if(eof_ch_sp_solution && eof_ch_sp_solution->resulting_sp_meter)
+		{	//If the global star power solution structure is built and the star power meter array is allocated
+			eof_song_seek_menu[21].flags = 0;
+		}
+		else
+		{
+			eof_song_seek_menu[21].flags = D_DISABLED;
 		}
 
 		/* display semitones as flat */
@@ -3415,6 +3427,7 @@ int eof_menu_song_seek_beat_measure(void)
 
 	if(!eof_song)
 		return 1;
+
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -3481,6 +3494,52 @@ int eof_menu_song_seek_beat_measure(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	return 1;
+}
+
+int eof_menu_song_seek_next_ch_sp_deployable_note(void)
+{
+	if(eof_ch_sp_solution && eof_ch_sp_solution->resulting_sp_meter)
+	{	//If the global star power solution structure is built and the star power meter array is allocated
+		unsigned long ctr, index, pos, target, tracksize;
+		double sp_meter = 0.0;
+
+		tracksize = eof_get_track_size(eof_song, eof_selected_track);
+		for(ctr = 0, index = 0, target = ULONG_MAX; ctr < tracksize; ctr++)
+		{	//For each note in the active track
+			pos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
+
+			if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+			{	//If the note is in the active difficulty
+				if(pos > eof_music_pos - eof_av_delay)
+				{	//If this note is after the seek position
+					if(sp_meter >= 0.50 - 0.0001)
+					{	//If the star power meter level in effect at the end of the previous note allows for star power deployment at this note
+						//Find out whether star power is already defined to be deployed by the time this note occurs (resulting_sp_meter[] tracks remaining star power level during deployment)
+						int retval;
+						unsigned long sp_start = 0;
+
+						retval = eof_pos_is_within_sp_deployment(eof_ch_sp_solution, pos, &sp_start, NULL);
+						if(!retval || (pos == sp_start))
+						{	//If star power isn't already deployed, or if it is defined to deploy at this note, it is a valid note at which to deploy
+							target = ctr;
+							break;
+						}
+					}
+				}
+				if(index < eof_ch_sp_solution->note_count)
+				{	//Bounds check
+					sp_meter = eof_ch_sp_solution->resulting_sp_meter[index];
+				}
+				index++;	//Track the number of notes in the target difficulty that have been encountered
+			}
+		}
+		if(target < tracksize)
+		{	//If a suitable note was found
+			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, target) + eof_av_delay);	//Seek to that note
+		}
+	}
+
 	return 1;
 }
 

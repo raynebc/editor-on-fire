@@ -333,6 +333,7 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 	static EOF_SP_PATH_SCORING_STATE last_cache ;	//Stores scoring data for the note prior to the deployment, to be able to skip the most calculations for sequential solutions being tested (ie. deploy at note 1 and 50, note 1 and 51, note 1 and 52, etc).
 	static unsigned long last_cache_deployment_num = 0;	//The next deployment number in effect as of when the last cache data was stored
 	int using_last_cache = 0;
+	int extra_stats = 0;	//Set to nonzero if the passed solution structure is the global solution structure, which will add storage of other stats like deployment end positions, star power meter level at each note
 
 	if(!solution || !solution_num || !solution->deployments || !solution->note_measure_positions || !solution->note_beat_lengths || !eof_song || !solution->track || (solution->track >= eof_song->tracks) || (solution->num_deployments > solution->deploy_count))
 	{
@@ -343,6 +344,9 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 
 	if(eof_song->track[solution->track]->track_format != EOF_LEGACY_TRACK_FORMAT)
 		return 6;	//Unsupported track format
+
+	if(solution == eof_ch_sp_solution)
+		extra_stats = 1;
 
 	///Look up cached scoring to skip as much calculation as possible
 	if((solution_num->value > 1) && sequential && (last_cache.note_start < solution->note_count))
@@ -601,7 +605,10 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 				{	//If the star power meter is at least half full (allow variance for math error)
 					sp_deployment_start = solution->note_measure_positions[index];
 					sp_deployment_end = sp_deployment_start + (8.0 * score.sp_meter);	//Determine the end timing of the star power (one full meter is 8 measures)
-					solution->deployment_endings[deployment_num] = sp_deployment_end;	//Store the deployment end position in the solution structure
+					if(extra_stats)
+					{	//If the solution being built is for global tracking of star power scoring/stats
+						solution->deployment_endings[deployment_num] = sp_deployment_end;	//Store the deployment end position in the solution structure
+					}
 					score.sp_meter = score.sp_meter_t = 0.0;	//The entire star power meter will be used
 					sp_deployed = 1;	//Star power is now in effect
 					score.note_start = index;	//Track the note index at which this star power deployment began, for caching purposes
@@ -630,7 +637,10 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 			if(sp_deployed)
 			{	//If star power is in effect
 				sp_deployment_end += 2.0;	//Extends the end of star power deployment by 2 measures (one fourth of the effect of a full star power meter)
-				solution->deployment_endings[deployment_num] += 2.0;	//Likewise, extend the deployment end position in the solution structure
+				if(extra_stats)
+				{	//If the solution being built is for global tracking of star power scoring/stats
+					solution->deployment_endings[deployment_num] += 2.0;	//Likewise, extend the deployment end position in the solution structure
+				}
 				if(logging > 1)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tStar power deployment ending extended two measures (measure %.2f)", sp_deployment_end + 1);
@@ -690,7 +700,10 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 				whammy_bonus_ctr++;
 				if(score.sp_meter > 1.0)
 					score.sp_meter = 1.0;	//Cap the star power meter at 100%
-				solution->deployment_endings[deployment_num] = sp_deployment_start + (8.0 * score.sp_meter);	//Convert sp_meter and store the current deployment end position in the solution structure
+				if(extra_stats)
+				{	//If the solution being built is for global tracking of star power scoring/stats
+					solution->deployment_endings[deployment_num] = sp_deployment_start + (8.0 * score.sp_meter);	//Convert sp_meter and store the current deployment end position in the solution structure
+				}
 
 				//Score this sustain interval
 				///Double special case:  For disjointed chords, since the whammy bonus star power is only being evaluated for the longest gem, and
@@ -746,7 +759,10 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 			{	//If the star power meter still has star power, calculate the new end of deployment position
 				sp_deployment_start = eof_get_measure_position(notepos + notelength);	//The remainder of the deployment starts at this note's end position
 				sp_deployment_end = sp_deployment_start + (8.0 * score.sp_meter);	//Determine the end timing of the star power (one full meter is 8 measures)
-				solution->deployment_endings[deployment_num] = sp_deployment_end;	//Store the deployment end position in the solution structure
+				if(extra_stats)
+				{	//If the solution being built is for global tracking of star power scoring/stats
+					solution->deployment_endings[deployment_num] = sp_deployment_end;	//Store the deployment end position in the solution structure
+				}
 				score.sp_meter = score.sp_meter_t = 0.0;	//The entire star power meter will be used
 			}
 			else
@@ -842,6 +858,17 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 			notescore += 100;	//It gets a bonus (not stackable with star power or multiplier) of 100 points if all notes in the solo are hit
 		}
 		score.score += notescore;
+		if(extra_stats)
+		{	//If the solution being built is for global tracking of star power scoring/stats
+			if(sp_deployed)
+			{	//If star power is in effect
+				solution->resulting_sp_meter[index] = (sp_deployment_end - solution->note_measure_positions[index]) / 8.0;	//Convert remaining star power deployment duration back to star power
+			}
+			else
+			{
+				solution->resulting_sp_meter[index] = score.sp_meter;	//Store the star power meter level that results from the note being hit
+			}
+		}
 
 		if(logging > 1)
 		{
@@ -1231,6 +1258,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	unsigned long note_count = 0;				//The number of notes in the active track difficulty, which will be the size of the various note arrays
 	double *note_measure_positions = NULL;		//The position of each note in the active track difficulty defined in measures
 	double *note_beat_lengths = NULL;			//The length of each note in the active track difficulty defined in beats
+	double *bresulting_sp_meter = NULL, *tresulting_sp_meter = NULL;
 
 	unsigned long max_deployments;				//The estimated maximum number of star power deployments, based on the amount of star power note sustain and the number of star power phrases
 	unsigned long *tdeployments, *bdeployments = NULL;	//An array defining the note index number of each deployment, ie deployments[0] being the first SP deployment, deployments[1] being the second, etc.
@@ -1296,13 +1324,15 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 
 	note_measure_positions = malloc(sizeof(double) * note_count);
 	note_beat_lengths = malloc(sizeof(double) * note_count);
+	tresulting_sp_meter = malloc(sizeof(double) * note_count);
 	if(bestptr)
 	{	//If the calling function wanted to initialize two solution structures
 		best = malloc(sizeof(EOF_SP_PATH_SOLUTION));
+		bresulting_sp_meter = malloc(sizeof(double) * note_count);
 	}
 	testing = malloc(sizeof(EOF_SP_PATH_SOLUTION));
 
-	if(!note_measure_positions || !note_beat_lengths || (bestptr && !best) || !testing)
+	if(!note_measure_positions || !note_beat_lengths || (bestptr && !best) || (bestptr && !bresulting_sp_meter) || !testing)
 	{	//If any of those failed to allocate
 		if(note_measure_positions)
 			free(note_measure_positions);
@@ -1312,6 +1342,10 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 			free(best);
 		if(testing)
 			free(testing);
+		if(tresulting_sp_meter)
+			free(tresulting_sp_meter);
+		if(bresulting_sp_meter)
+			free(bresulting_sp_meter);
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 
@@ -1327,6 +1361,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 		best->track = eof_selected_track;
 		best->diff = eof_note_type;
 		best->solution_number.overflow_count = best->solution_number.value = 0;
+		best->resulting_sp_meter = bresulting_sp_meter;
 	}
 
 	testing->note_measure_positions = note_measure_positions;
@@ -1335,6 +1370,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	testing->track = eof_selected_track;
 	testing->diff = eof_note_type;
 	testing->solution_number.overflow_count = testing->solution_number.value = 0;
+	testing->resulting_sp_meter = tresulting_sp_meter;
 
 	///Apply EOF_NOTE_TFLAG_SOLO_NOTE and EOF_NOTE_TFLAG_SP_END tflags appropriately to notes in the target track difficulty
 	eof_ch_pathing_mark_tflags(testing);
@@ -1356,6 +1392,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 				free(note_beat_lengths);
 				if(bestptr)
 				{	//If the calling function wanted to initialize two solution structures
+					free(bresulting_sp_meter);
 					free(best);
 				}
 				free(testing);
@@ -1456,6 +1493,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 		free(note_beat_lengths);
 		if(bestptr)
 		{	//If the calling function wanted to initialize two solution structures
+			free(bresulting_sp_meter);
 			free(best);
 		}
 		free(testing);
@@ -1917,6 +1955,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	///Cleanup
 	eof_destroy_sp_solution(testing);
 	free(best->deployments);
+	free(best->resulting_sp_meter);
 	free(best);
 
 	tracksize = eof_get_track_size(eof_song, eof_selected_track);
@@ -2067,7 +2106,14 @@ void eof_ch_sp_path_worker(char *job_file)
 				testing.note_count = best.note_count;
 				best.note_measure_positions = malloc(sizeof(double) * best.note_count);
 				testing.note_measure_positions = best.note_measure_positions;
-				if(best.note_measure_positions)
+				best.resulting_sp_meter = malloc(sizeof(double) * best.note_count);
+				testing.resulting_sp_meter = malloc(sizeof(double) * best.note_count);
+				if(!best.resulting_sp_meter || !testing.resulting_sp_meter)
+				{	//If either star power meter arrays failed to allocate
+					error = 1;
+					break;
+				}
+				else if(best.note_measure_positions)
 				{	//If the measure positions array was allocated
 					for(ctr = 0; ctr < best.note_count; ctr++)
 					{	//For every entry in the measure position array
@@ -2093,6 +2139,10 @@ void eof_ch_sp_path_worker(char *job_file)
 							best.note_measure_positions[ctr] = temp;
 						}
 					}
+				}
+				else
+				{
+					error = 1;
 				}
 				if(error)	//If the floating point positions failed to be read
 					break;
@@ -2319,6 +2369,10 @@ void eof_ch_sp_path_worker(char *job_file)
 		free(best.note_beat_lengths);
 	if(best.deployment_endings)
 		free(best.deployment_endings);
+	if(best.resulting_sp_meter)
+		free(best.resulting_sp_meter);
+	if(testing.resulting_sp_meter)
+		free(testing.resulting_sp_meter);
 
 	if(error)
 	{	//If the job failed, create a copy of the job file to a new name for troubleshooting
@@ -3211,6 +3265,7 @@ void eof_destroy_sp_solution(EOF_SP_PATH_SOLUTION *ptr)
 		free(ptr->deployments);
 		free(ptr->deploy_cache);
 		free(ptr->deployment_endings);
+		free(ptr->resulting_sp_meter);
 		free(ptr);
 	}
 }
@@ -3267,20 +3322,20 @@ void eof_ch_sp_solution_rebuild(void)
 				}
 			}
 			eof_ch_sp_solution->num_deployments = deploy_count;	//Record the number of deployments for this solution
-			if(error)	//If the soltuion strucutre couldn't be initialized (ie. had an invalid number of deployments)
-			{
-				eof_ch_sp_solution->score = 0;	//Ensure the score is reset to 0 to mark this as an invalid solution
-				return;	//Abort
-			}
-
-			//Evaluate the solution
-			retval = eof_evaluate_ch_sp_path_solution(eof_ch_sp_solution, &num, 0, 0);
-			if(retval)
-			{	//If the evaluation failed for any reason
+			if(error)
+			{	//If the solution structure couldn't be initialized (ie. had an invalid number of deployments)
 				eof_ch_sp_solution->score = 0;	//Ensure the score is reset to 0 to mark this as an invalid solution
 			}
-			solution_track = eof_selected_track;	//Remember which track difficulty the solution data pertains to
-			solution_diff = eof_note_type;
+			else
+			{	//Evaluate the solution
+				retval = eof_evaluate_ch_sp_path_solution(eof_ch_sp_solution, &num, 0, 0);
+				if(retval)
+				{	//If the evaluation failed for any reason
+					eof_ch_sp_solution->score = 0;	//Ensure the score is reset to 0 to mark this as an invalid solution
+				}
+				solution_track = eof_selected_track;	//Remember which track difficulty the solution data pertains to
+				solution_diff = eof_note_type;
+			}
 
 			//Cleanup
 			for(ctr = 0; ctr < tracksize; ctr++)
@@ -3293,4 +3348,42 @@ void eof_ch_sp_solution_rebuild(void)
 			}
 		}
 	}
+}
+
+int eof_pos_is_within_sp_deployment(EOF_SP_PATH_SOLUTION *solution, unsigned long timestamp, unsigned long *start, unsigned long *end)
+{
+	if(!eof_song || !solution)
+		return 0;	//Invalid parameters
+
+	if(solution && solution->score && solution->num_deployments)
+	{	//If the specified star power solution structure is built and a score was determined
+		unsigned long ctr, target = ULONG_MAX, notenum, sp_start = ULONG_MAX, pos, sp_end;
+
+		for(ctr = 0; ctr < solution->num_deployments; ctr++)
+		{	//For each defined SP deployment
+			notenum = eof_translate_track_diff_note_index(eof_song, solution->track, solution->diff, solution->deployments[ctr]);	//Find the real note number for this index
+			pos = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//Get the start position of this deployment
+			if(pos <= timestamp)
+			{	//If this deployment begins at or before the specified timestamp
+				sp_start = pos;
+				target = ctr;	//Remember the last deployment that meets this criterion
+			}
+		}
+		if(target < solution->num_deployments)
+		{	//If a star power deployment at/before the seek position was found
+			sp_end = eof_get_realtime_position(solution->deployment_endings[target]);	//Get the end position of this deployment
+
+			if(sp_end >= timestamp)
+			{	//If this deployment ends at or after the specified timestamp, this is a deployment that encompasses the specified timestamp
+				if(start)
+					*start = sp_start;	//Return the deployment's timings if applicable
+				if(end)
+					*end = sp_end;
+
+				return 1;	//Return true
+			}
+		}
+	}
+
+	return 0;	//Return false
 }
