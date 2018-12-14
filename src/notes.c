@@ -653,11 +653,23 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 3;	//True
 	}
 
-	//A note/lyric is selected
+	//A specific note/lyric is selected via mouse click
 	if(!ustricmp(macro, "IF_NOTE_IS_SELECTED"))
 	{
 		if(eof_selection.current < tracksize)
 		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//One or more notes are selected
+	if(!ustricmp(macro, "IF_SELECTED_NOTES"))
+	{
+		if(eof_count_selected_notes(NULL))
+		{	//If at least one note is selected
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -980,6 +992,17 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 3;	//True
 	}
 
+	if(!ustricmp(macro, "IF_TRACK_HAS_NO_SLIDERS"))
+	{
+		if(!eof_get_num_sliders(eof_song, eof_selected_track))
+		{	//If there are no sliders in the active track
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	if(!ustricmp(macro, "IF_NO_LOADING_TEXT"))
 	{
 		if(!eof_check_string(eof_song->tags->loading_text))
@@ -1062,7 +1085,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_CH_SP_PATH_VALID"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score && eof_ch_sp_solution->num_deployments)
 		{	//If the global star power solution structure is built, the score is nonzero and there is at least one defined SP deployment
 			dest_buffer[0] = '\0';
@@ -1074,7 +1097,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_CH_SP_DEPLOYMENTS_MISSING"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score && !eof_ch_sp_solution->num_deployments)
 		{	//If the global star power solution structure is built, the score is nonzero but there are no defined SP deployments
 			dest_buffer[0] = '\0';
@@ -1086,7 +1109,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_CH_SP_PATH_INVALID"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && !eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built but its score is zero
 			if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
@@ -1103,6 +1126,17 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and the score is nonzero
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_GRID_SNAP_ENABLED"))
+	{
+		if(eof_snap_mode != EOF_SNAP_OFF)
+		{	//If grid snap is enabled
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -1496,7 +1530,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		if(count && solocount)
 		{	//If there are any solo notes in the active track
-			snprintf(dest_buffer, dest_buffer_size, "%lu/%lu/%.2f (min/max/mean)", min, max, (double)count/solocount);
+			snprintf(dest_buffer, dest_buffer_size, "%lu/%lu/%.2f (min/max/mean)", min, max, (double)count / solocount);
 		}
 		else
 		{
@@ -1619,6 +1653,25 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 			percent = (double)count * 100.0 / tracksize;
 			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	//Track solo note stats
+	if(!ustricmp(macro, "TRACK_SLIDER_NOTE_STATS"))
+	{
+		unsigned long count, slidercount, min = 0, max = 0;
+
+		count = eof_notes_panel_count_section_stats(EOF_SLIDER_SECTION, &min, &max);
+		slidercount = eof_get_num_sliders(eof_song, eof_selected_track);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
+
+		if(count && slidercount)
+		{	//If there are any solo notes in the active track
+			snprintf(dest_buffer, dest_buffer_size, "%lu/%lu/%.2f (min/max/mean)", min, max, (double)count / slidercount);
 		}
 		else
 		{
@@ -1932,6 +1985,30 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Selected note NPS
+	if(!ustricmp(macro, "SELECTED_NOTE_NPS"))
+	{
+		unsigned long start = 0, end = 0, ctr, selected = 0;
+
+		if(eof_get_selected_note_range(&start, &end, 0))
+		{	//If at least one note is selected
+			for(ctr = start; ctr <= end; ctr++)
+			{	//For each note index between the first and last selected notes
+				if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+				{	//If the note is in the active difficulty
+					selected++;	//Count how many notes are actively selected or passively select (exist between first and last actively selected notes)
+				}
+			}
+			eof_get_selected_note_range(&start, &end, 1);	//Get the start and stop times of the note selection
+			snprintf(dest_buffer, dest_buffer_size, "%.2f", (double)selected * 1000.0 / ((double)end - (double)start));
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
 	//The fret hand position in effect at the pro guitar track's current seek position
 	if(!ustricmp(macro, "PRO_GUITAR_TRACK_EFFECTIVE_FHP"))
 	{
@@ -2154,7 +2231,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The defined star power path's estimated score
 	if(!ustricmp(macro, "CH_SP_PATH_SCORE"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_ch_sp_solution->score);
@@ -2169,7 +2246,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The defined star power path's base score (used in star calculation)
 	if(!ustricmp(macro, "CH_SP_PATH_BASE_SCORE"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			unsigned long base_score = 0;
@@ -2193,7 +2270,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The defined star power path's estimated average multiplier
 	if(!ustricmp(macro, "CH_SP_PATH_AVG_MULTIPLIER"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			unsigned long base_score = 0, effective_score = 0;
@@ -2217,7 +2294,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The defined star power path's estimated number of awarded stars
 	if(!ustricmp(macro, "CH_SP_PATH_STARS"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			unsigned long stars = eof_ch_sp_path_calculate_stars(eof_ch_sp_solution, NULL, NULL);
@@ -2241,7 +2318,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The estimated number of notes that are played during the defined star power path's deployments
 	if(!ustricmp(macro, "CH_SP_PATH_DEPLOYMENT_NOTES"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			snprintf(dest_buffer, dest_buffer_size, "%lu notes (%.2f%%)", eof_ch_sp_solution->deployment_notes, (double)eof_ch_sp_solution->deployment_notes * 100.0 / eof_ch_sp_solution->note_count);
@@ -2256,7 +2333,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined SP deployment
 	if(!ustricmp(macro, "CH_SP_SEEK_SP_PATH_STATUS"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score && eof_ch_sp_solution->num_deployments)
 		{	//If the global star power solution structure is built and a score was determined
 			unsigned long sp_start = 0, sp_end = 0;
@@ -2279,7 +2356,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The maximum number of SP deployments based on the currently defined star power notes
 	if(!ustricmp(macro, "CH_SP_MAX_DEPLOYMENT_COUNT_AND_RATIO"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
 			unsigned long count = 0;
@@ -2297,7 +2374,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The star power meter level in effect after hitting the note at/before the seek position
 	if(!ustricmp(macro, "CH_SP_METER_AFTER_LAST_NOTE_HIT"))
 	{
-		eof_ch_sp_solution_macros_wanted = 1;
+		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->resulting_sp_meter)
 		{	//If the global star power solution structure is built and the star power meter array is allocated
 			unsigned long ctr, index, pos, target;
@@ -2878,6 +2955,34 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "EOF_FPS"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%.2f", eof_main_loop_fps);
+		return 1;
+	}
+
+	//The effective note per second rate of the current grid snap at the current seek position
+	if(!ustricmp(macro, "GRID_SNAP_SEEK_POS_LENGTH_NPS"))
+	{
+		unsigned long pos = eof_music_pos - eof_av_delay;
+
+		if((eof_snap_mode != EOF_SNAP_OFF) && (pos < eof_song->beat[eof_song->beats - 1]->pos))
+		{	//If grid snap is enabled and the seek position is before the last beat marker
+			EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
+			unsigned long beat;
+
+			beat = eof_get_beat(eof_song, pos);		//Find which beat the seek position is in
+			if(eof_beat_num_valid(eof_song, beat))
+			{	//If the beat was found
+				eof_snap_logic(&temp, eof_song->beat[beat]->pos);	//Find grid snap length (in ms) starting at this beat
+				snprintf(dest_buffer, dest_buffer_size, "%.2fms (%.2f NPS)", temp.snap_length, 1000.0 / temp.snap_length);
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "(Error)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
 		return 1;
 	}
 

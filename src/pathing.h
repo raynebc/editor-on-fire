@@ -71,7 +71,7 @@ typedef struct
 } EOF_SP_PATH_WORKER;
 
 extern EOF_SP_PATH_SOLUTION *eof_ch_sp_solution;
-extern int eof_ch_sp_solution_macros_wanted;
+extern int eof_ch_sp_solution_wanted;
 
 int eof_note_is_last_longest_gem(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns nonzero if the note is the longest gem at its position (ie. for identifying the longest gem in a disjointed chord)
@@ -217,7 +217,7 @@ void eof_destroy_sp_solution(EOF_SP_PATH_SOLUTION *ptr);
 	//If ptr is not NULL, frees the allocated memory associated with the referenced structure
 
 void eof_ch_sp_solution_rebuild(void);
-	//Creates eof_ch_sp_solution (reflecting the active track difficulty) if either eof_ch_sp_solution_macros_wanted is nonzero or "Show CH SP durations" is enabled
+	//Creates eof_ch_sp_solution (reflecting the active track difficulty) if either eof_ch_sp_solution_wanted is nonzero or "Show CH SP durations" is enabled
 	//If the track or track difficulty has changed since eof_ch_sp_solution was created, it is recreated
 
 int eof_pos_is_within_sp_deployment(EOF_SP_PATH_SOLUTION *solution, unsigned long timestamp, unsigned long *start, unsigned long *end);

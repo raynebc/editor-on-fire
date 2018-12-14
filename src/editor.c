@@ -4850,6 +4850,8 @@ void eof_editor_logic(void)
 			eof_mix_start_helper();
 			eof_fix_window_title();
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);
+			eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
+			eof_ch_sp_solution = NULL;
 		}
 	}
 	else

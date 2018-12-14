@@ -525,8 +525,8 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* Seek to next CH SP deployable note */
-		if(eof_ch_sp_solution && eof_ch_sp_solution->resulting_sp_meter)
-		{	//If the global star power solution structure is built and the star power meter array is allocated
+		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		{	//If a compatible track format is active
 			eof_song_seek_menu[21].flags = 0;
 		}
 		else
@@ -685,6 +685,16 @@ void eof_prepare_song_menu(void)
 		{	//Otherwise disable these menu items
 			eof_song_menu[17].flags = D_DISABLED;
 			eof_song_menu[18].flags = D_DISABLED;
+		}
+
+		/* Second piano roll>Display */
+		if(eof_display_second_piano_roll)
+		{
+			eof_song_piano_roll_menu[0].flags = D_SELECTED;
+		}
+		else
+		{
+			eof_song_piano_roll_menu[0].flags = 0;
 		}
 
 		/* Second piano roll>Sync with main piano roll */
@@ -3499,6 +3509,9 @@ int eof_menu_song_seek_beat_measure(void)
 
 int eof_menu_song_seek_next_ch_sp_deployable_note(void)
 {
+	eof_ch_sp_solution_wanted = 1;	//Ensure the call to eof_ch_sp_solution_rebuild() below results in the SP solution structure being built
+	eof_ch_sp_solution_rebuild();	//Rebuild the global star power solution structure if necessary
+
 	if(eof_ch_sp_solution && eof_ch_sp_solution->resulting_sp_meter)
 	{	//If the global star power solution structure is built and the star power meter array is allocated
 		unsigned long ctr, index, pos, target, tracksize;

@@ -241,7 +241,11 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_NOTE_IS_SELECTED%</td>
-<td>Evaluates as true if a note is currently selected by mouse click.  Using select functions does not count towards this condition.</td>
+<td>Evaluates as true if a note is specifically selected by mouse click.  Using select functions does not count towards this condition.</td>
+</tr>
+<tr>
+<td>%IF_SELECTED_NOTES%</td>
+<td>Evaluates as true if at least one note is currently selected by any means (even without clicking on notes with the mouse).</td>
 </tr>
 <tr>
 <td>%IF_HOVER_NOTE%</td>
@@ -332,6 +336,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active track does not have any star power sections.</td>
 </tr>
 <tr>
+<td>%IF_TRACK_HAS_NO_SLIDERS%</td>
+<td>Evaluates as true if the active track does not have any slider sections.</td>
+</tr>
+<tr>
 <td>%IF_NO_LOADING_TEXT%</td>
 <td>Evaluates as true if the project has no loading text defined or the text that is defined is just whitespace.</td>
 </tr>
@@ -367,6 +375,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <tr>
 <td>%IF_CH_SP_STATS_AVAILABLE%</td>
 <td>Evaluates as true if star power related information is available (the star power pathing logic calculated a score) to be displayed by applicable expansion macros.</td>
+</tr>
+<tr>
+<td>%IF_GRID_SNAP_ENABLED%</td>
+<td>Evaluates as true as long as grid snap isn't set to off.</td>
 </tr>
 </tbody>
 </table><br>
@@ -567,6 +579,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%TRACK_SLIDER_NOTE_COUNT%</td>
 <td>Prints the number of slider notes in the active track, and the percentage of the track's total note count that represents.  If there aren't any, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_SLIDER_NOTE_STATS%</td>
+<td>Prints statistics about the number of notes in the active track's slider sections:  The minimum number among all slider sections, the maximum number among all slider sections and the mean number (the total number of slider notes divided by the number of slider sections).  If there aren't any, "None" is printed.</td>
 </tr>
 
 <tr>
@@ -899,6 +915,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%EOF_FPS%</td>
 <td>Prints the number of frames per second rendered in the main loop of EOF (ie. doesn't count benchmarking, while dialogs are open, etc).</td>
+</tr>
+<tr>
+<td>%GRID_SNAP_SEEK_POS_LENGTH_NPS%</td>
+<td>Prints the length and effective note per second rate of the current grid snap length at the current seek position.  If no grid snap is enabled, "None" is printed.</td>
 </tr>
 </tbody>
 </table>

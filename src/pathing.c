@@ -22,7 +22,7 @@
 #endif
 
 EOF_SP_PATH_SOLUTION *eof_ch_sp_solution = NULL;	//This is used to store SP pathing and scoring information pertaining to Clone Hero
-int eof_ch_sp_solution_macros_wanted = 0;			//This is used to track whether any expansion notes panel macros being displayed need scoring data from the SP pathing logic
+int eof_ch_sp_solution_wanted = 0;			//This is used to signal to eof_ch_sp_solution_rebuild() that the global solution structure should be built
 
 int eof_note_is_last_longest_gem(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
@@ -1543,6 +1543,8 @@ unsigned long eof_ch_sp_path_calculate_stars(EOF_SP_PATH_SOLUTION *solution, uns
 
 	if(!solution)
 		return ULONG_MAX;	//Invalid parameters
+
+	eof_ch_sp_solution_rebuild();	//Rebuild the global star power solution structure if necessary (if it doesn't reflect the currently active track difficulty)
 
 	///Count the number of solo notes (the total score compared to the base score for awarded star count does not include solo bonuses)
 	tracksize = eof_get_track_size(eof_song, solution->track);
@@ -3283,13 +3285,15 @@ void eof_ch_sp_solution_rebuild(void)
 	}
 
 	//Build the solution structure if necessary
-	if(eof_ch_sp_solution_macros_wanted || eof_show_ch_sp_durations)
+	if(eof_ch_sp_solution_wanted || eof_show_ch_sp_durations)
 	{	//If any notes panel macros to display star power scoring information are in use, or the user enabled "Show CH SP durations"
 		if(!eof_ch_sp_solution)
 		{	//If the global solution structure needs to be built
 			unsigned long tracksize, ctr, index, deploy_count;
 			int error = 0, retval;
 			EOF_BIG_NUMBER num = {0, ULONG_MAX};	//Initialize this with num.value set to ULONG_MAX to prevent eof_evaluate_ch_sp_path_solution() from logging a solution number
+
+			eof_log("Rebuilding CH SP solution structure", 1);
 
 			//Verify the first beat has a time signature
 			if(!eof_beat_stats_cached)

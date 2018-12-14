@@ -3648,7 +3648,7 @@ void eof_render(void)
 			eof_log("\tRebuilding beat stats.", 3);
 			eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild them (from the perspective of the specified track)
 		}
-		eof_ch_sp_solution_macros_wanted = 0;	//The rendering of the info and notes panels will change this to 1 any CH SP scoring information is needed for expansion macros
+		eof_ch_sp_solution_wanted = 0;	//The rendering of the info and notes panels will change this to 1 any CH SP scoring information is needed for expansion macros
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render the info window yet, it will just be overwritten by the 3D window
 			eof_log("\tRendering Information panel.", 3);
