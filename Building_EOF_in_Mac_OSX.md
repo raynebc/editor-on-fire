@@ -31,8 +31,8 @@ You can use Mercurial related tools to download through the repository, but it's
 
 Extract all source packages from their compressed formats.  The terminal commands may depend on the format, otherwise just double clicking on each in OS X's graphical interface should extract it to a subfolder.
 
-## Download Xcode 3.1 ##
-This involves browsing to https://developer.apple.com/download and creating a free Apple account.  After signing in, click "See more downloads" at the bottom of the page, enter **Xcode 3.1**, and download any of the 3.1 Developer Tools releases from 3.1 up to 3.1.4.  When the roughly 1GB download completes, double click on the downloaded DMG file to mount it in OS X.  An Xcode Tools window should appear.  In it, double click on the Packages folder, find the MacOSX10.5.pkg item and double click on it and install it.
+## Download Xcode 4.3 ##
+This involves browsing to https://developer.apple.com/download and creating a free Apple account.  After signing in, click "See more downloads" at the bottom of the page, enter **Xcode 4.3**, and download any of the 4.3 Developer Tools releases from 4.3 up to 4.3.3.  When the roughly 1.8GB download completes, double click on the downloaded DMG file to mount it in OS X.  An Xcode Tools window should appear.  In it, double click on the Packages folder, find the MacOSX10.6.pkg item and double click on it and install it.
 
 ## Install cmake ##
 Cmake can be manually built from source, but it's not necessary for EOF.  It's easier installed via DMG file or with Homebrew.  To download the DMG file, get it from their website:
@@ -74,7 +74,7 @@ In the CXX line, remove -stdlib=libc++
 
 In the CXXFLAGS line, change -DHAVE_VDSP to -DHAVE_FFTW3
 
-In the ARCHFLAGS line, change -mmacosx-version-min=10.7 to -mmacosx-version-min=10.5
+In the ARCHFLAGS line, change -mmacosx-version-min=10.7 to -mmacosx-version-min=10.6
 
 Save the changes and then go to the rubberband source file in a terminal.  Use the following commands to create a lib folder (to work around a bug in the makefile) and run the makefile with the target to specify just the static library:
 ```
@@ -92,12 +92,12 @@ Do note that Allegro 5 will not work, it has to be one of the 4.x releases.  Dow
 ```
 ls /SDKs/
 ```
-It should be something like MacOSX10.5.sdk, making the full path end up as /SDKs/MacOSX10.5.sdk (you will have to use this in a command below, you can type the first half of it and press tab and if it automatically completes the name it means the folder path is there.  It's fine to leave the trailing forward slash on the end of the export command).  Go to the Allegro source folder in a terminal and run the following commands:
+It should list something like MacOSX10.6.sdk, making the full path end up as /SDKs/MacOSX10.6.sdk (you will have to use this in a command below, you can type the first half of it and press tab and if it automatically completes the name it means the folder path is there.  It's fine to leave the trailing forward slash on the end of the export command).  Go to the Allegro source folder in a terminal and run the following commands:
 ```
 mkdir build
 cd build
-export SDK={path to your old SDK}
-cmake .. -DCMAKE_OSX_SYSROOT=$SDK -DCMAKE_OSX_ARCHITECTURES=i386 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.5 -DAUDIOTOOLBOX_LIBRARY=$SDK/System/Library/Frameworks/AudioToolbox.framework -DAUDIOUNIT_LIBRARY=$SDK/System/Library/Frameworks/AudioUnit.framework -DCARBON_LIBRARY=$SDK/System/Library/Frameworks/Carbon.framework -DCOCOA_LIBRARY=$SDK/System/Library/Frameworks/Cocoa.framework -DCOREAUDIO_LIBRARY=$SDK/System/Library/Frameworks/CoreAudio.framework -DIOKIT_LIBRARY=$SDK/System/Library/Frameworks/IOKit.framework -DWANT_ALLEGROGL=0 -DSHARED=0 -DWANT_EXAMPLES=0
+export SDK={path to your 10.6 SDK}
+cmake .. -DCMAKE_OSX_SYSROOT=$SDK -DCMAKE_OSX_ARCHITECTURES=i386 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.6 -DAUDIOTOOLBOX_LIBRARY=$SDK/System/Library/Frameworks/AudioToolbox.framework -DAUDIOUNIT_LIBRARY=$SDK/System/Library/Frameworks/AudioUnit.framework -DCARBON_LIBRARY=$SDK/System/Library/Frameworks/Carbon.framework -DCOCOA_LIBRARY=$SDK/System/Library/Frameworks/Cocoa.framework -DCOREAUDIO_LIBRARY=$SDK/System/Library/Frameworks/CoreAudio.framework -DIOKIT_LIBRARY=$SDK/System/Library/Frameworks/IOKit.framework -DWANT_ALLEGROGL=0 -DSHARED=0 -DWANT_EXAMPLES=0
 make
 sudo make install
 ```
@@ -106,15 +106,7 @@ Some warnings during the make process are fine as long as the output indicates t
 ## Build EOF ##
 Download the latest source code from https://github.com/raynebc/editor-on-fire .  You can use git tools if you like, or simply click the "Clone or download" button and pick the option to "Download ZIP" and then extract the source code.
 
-**If you want to use EOF on versions of OS X newer than Sierra, ie. on High Sierra or Mojave, a newer SDK version is needed and there is an edit you have to make to the makefile.macosx file.  Otherwise skip this step and go to the part where you use the make command.**
-
-**I went with SDK 10.12 (which I'm guessing is available with the 7.x series of Xcode downloads from the Apple website).  For convenience, I copied this SDK folder into the same parent folder as the 10.5 SDK I used when building Allegro previously.  The corresponding change to make to the makefile is as follows:**
-
-In the CFLAGS line, add the following:
-```
--isysroot /SDKs/MacOSX10.12.sdk
-```
-It doesn't seem like it's required to build EOF and Allegro with the same SDK version.
+The makefile.macosx file in the downloaded EOF source code may need to be edited.  In its CFLAGS line, edit the -isysroot parameter to have the path to your 10.6 SDK if it is different from /SDKs/MacOSX10.6.sdk 
 
 You can then finally build EOF by opening a terminal to EOF's /src folder and running the makefile:
 ```
