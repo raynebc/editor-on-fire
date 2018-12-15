@@ -56,13 +56,13 @@ brew install pkg-config
 ## Install the other dependencies ##
 For each of the libogg, libvorbis and fftw source packages you downloaded earlier, go to its source folder in a terminal and use the following commands:
 ```
-./configure --enable-shared=no --enable-static=yes CFLAGS="-arch i386 -arch x86_64 -mmacosx-version-min=10.5"
+./configure --enable-shared=no --enable-static=yes CFLAGS="-arch i386 -arch x86_64 -mmacosx-version-min=10.6"
 make
 sudo make install
 ```
 For fftw, you will also need to build the single precision floating point library (fftw3f).  Do this by still having the terminal at fftw's source folder and using the following commands:
 ```
-./configure --enable-float --enable-sse --enable-shared=no --enable-static=yes CFLAGS="-arch i386 -arch x86_64 -mmacosx-version-min=10.5"
+./configure --enable-float --enable-sse --enable-shared=no --enable-static=yes CFLAGS="-arch i386 -arch x86_64 -mmacosx-version-min=10.6"
 make
 sudo make install
 ```
