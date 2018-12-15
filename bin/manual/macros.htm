@@ -316,6 +316,14 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active difficulty is "Expert" by Rock Band standards ("Amazing" in Frets on Fire).</td>
 </tr>
 <tr>
+<td>%IF_ACTIVE_DIFFICULTY_HAS_EMPTY_SOLO%</td>
+<td>Evaluates as true if the active difficulty has any solo sections that don't have at least one note, even if the solos have notes in other difficulties.  This condition may prevent the chart from working in Clone Hero.</td>
+</tr>
+<tr>
+<td>%IF_ANY_SOLOS_CLOSER_THAN_1_SECOND%</td>
+<td>Evaluates as true if any solo sections begin less than one second after an earlier one.  This condition may prevent the solo bonus from displaying long enough to be visible in Clone Hero.</td>
+</tr>
+<tr>
 <td>%IF_TRACK_DIFF_HAS_NOTES_WITH_GEM_COUNT_[NUMBER]%</td>
 <td>Evaluates as true if the active track difficulty has at least one note with the specified [NUMBER] of gems.  Specify 0 to check for open strum notes.  This can be used to quality check a chart by looking for the presence of 4 or 5 lane chords.</td>
 </tr>

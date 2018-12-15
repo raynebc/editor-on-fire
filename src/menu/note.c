@@ -3097,6 +3097,7 @@ int eof_menu_solo_mark(void)
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	eof_determine_phrase_status(eof_song, eof_selected_track);
 	return 1;
 }
 
@@ -3127,6 +3128,7 @@ int eof_menu_solo_unmark(void)
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	eof_determine_phrase_status(eof_song, eof_selected_track);
 	return 1;
 }
 
@@ -3137,6 +3139,7 @@ int eof_menu_solo_erase_all(void)
 	{	//If the active track has solos and the user opts to delete them
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_set_num_solos(eof_song, eof_selected_track, 0);
+		eof_determine_phrase_status(eof_song, eof_selected_track);
 	}
 	return 1;
 }

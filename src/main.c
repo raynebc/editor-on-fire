@@ -1341,7 +1341,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 	char tremolos[EOF_MAX_PHRASES] = {0};
 	char arpeggios[EOF_MAX_PHRASES] = {0};
 	char sliders[EOF_MAX_PHRASES] = {0};
-	unsigned long notepos, flags, numphrases, numnotes;
+	unsigned long notepos, flags, tflags, numphrases, numnotes;
 	unsigned char notetype;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	char restore_tech_view = 0;
@@ -1388,10 +1388,12 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			notepos = eof_get_note_pos(sp, track, i);
 			notetype = eof_get_note_type(sp, track, i);
 			flags = eof_get_note_flags(sp, track, i);
+			tflags = eof_get_note_tflags(sp, track, i);
 			flags &= (~EOF_NOTE_FLAG_HOPO);
 			flags &= (~EOF_NOTE_FLAG_SP);
 			flags &= (~EOF_NOTE_FLAG_IS_TRILL);
 			flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
+			tflags &= (~EOF_NOTE_TFLAG_SOLO_NOTE);
 			if(((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (track == EOF_TRACK_KEYS))
 			{	//Only clear the is slider flag if this is a legacy guitar or keys track
 				flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
@@ -1423,6 +1425,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 				sectionptr = eof_get_solo(sp, track, j);
 				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 				{	//If the note is in this solo section
+					tflags |= EOF_NOTE_TFLAG_SOLO_NOTE;
 					so[j] = 1;
 				}
 			}
@@ -1495,6 +1498,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			if(!k)
 			{	//Only update note flags on the first pass
 				eof_set_note_flags(sp, track, i, flags);	//Update the note's flags variable
+				eof_set_note_tflags(sp, track, i, tflags);	//Update the note's temporary flags variable
 			}
 		}//For each note in the active track
 	}//Perform two passes, because the two drum tracks can share their phrasing

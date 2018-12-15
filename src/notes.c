@@ -903,6 +903,98 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//If the active difficulty has a solo section without any notes
+	if(!ustricmp(macro, "IF_ACTIVE_DIFFICULTY_HAS_EMPTY_SOLO"))
+	{
+		unsigned long numsolos, soloctr, notectr, notepos, solonotes;
+		long nextnote;
+		EOF_PHRASE_SECTION *soloptr;
+
+		//Start by examining the first note in the active track difficulty
+		for(notectr = 0; notectr < tracksize; notectr++)
+		{
+			if(eof_get_note_type(eof_song, eof_selected_track, notectr) == eof_note_type)
+				break;
+		}
+
+		numsolos = eof_get_num_solos(eof_song, eof_selected_track);
+		for(soloctr = 0; soloctr < numsolos; soloctr++)
+		{	//For each solo section in the active track
+			solonotes = 0;	//Reset this counter
+			soloptr = eof_get_solo(eof_song, eof_selected_track, soloctr);
+			if(soloptr)
+			{	//If the solo was properly found
+				if(notectr >= tracksize)
+				{	//If there are no more notes in the active track difficulty, this solo is empty
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+
+				notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
+				while(notepos <= soloptr->end_pos)
+				{	//For all notes at/before the end of this solo
+					if(notepos >= soloptr->start_pos)
+					{	//If the note is within the scope of this solo, this solo isn't empty
+						solonotes++;
+						break;	//Exit while loop to examine next solo
+					}
+					nextnote = eof_track_fixup_next_note(eof_song, eof_selected_track, notectr);
+					if(nextnote < 0)
+					{	//If there is no next note in the active difficulty
+						notectr = ULONG_MAX;	//Set a condition to indicate all notes were exhausted
+						break;
+					}
+					notectr = nextnote;
+					notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
+				}
+				if(!solonotes)
+				{	//If there were no notes in this solo
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+
+		//No solos were found to be empty
+		return 2;	//False
+	}
+
+	//If the active track has any solos with less than 1 second of space between them
+	if(!ustricmp(macro, "IF_ANY_SOLOS_CLOSER_THAN_1_SECOND"))
+	{
+		unsigned long numsolos, soloctr;
+		EOF_PHRASE_SECTION *solo1, *solo2;
+		int too_close = 0;
+
+		numsolos = eof_get_num_solos(eof_song, eof_selected_track);
+		if(numsolos < 2)
+			return 2;	//False
+
+		for(soloctr = 0; soloctr + 1 < numsolos; soloctr++)
+		{	//For each solo section in the active track, up until the penultimate one
+			solo1 = eof_get_solo(eof_song, eof_selected_track, soloctr);
+			solo2 = eof_get_solo(eof_song, eof_selected_track, soloctr + 1);
+			if(solo1 && solo2)
+			{	//If this solo and the next solo were identified
+				if((solo1->end_pos < solo2->start_pos) && (solo1->end_pos + 1000 > solo2->start_pos))
+				{	//If the first solo ends before the second, but less than one second away
+					too_close = 1;
+				}
+				else if((solo2->end_pos < solo1->start_pos) && (solo2->end_pos + 1000 > solo1->start_pos))
+				{	//If the second solo ends before the first, but less than one second away
+					too_close = 1;
+				}
+				if(too_close)
+				{
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
 	//If the active difficulty has notes with a specific gem count
 	if(strcasestr_spec(macro, "IF_TRACK_DIFF_HAS_NOTES_WITH_GEM_COUNT_"))
 	{
@@ -1504,7 +1596,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long count;
 
-		count = eof_notes_panel_count_section_stats(EOF_SOLO_SECTION, NULL, NULL);
+		count = eof_count_track_num_notes_with_tflag(EOF_NOTE_TFLAG_SOLO_NOTE);
 
 		if(count)
 		{	//If there are any solo notes in the active track
@@ -3492,10 +3584,24 @@ unsigned long eof_count_track_num_notes_with_flag(unsigned long flags)
 	tracksize = eof_get_track_size(eof_song, eof_selected_track);
 	for(ctr = 0, count = 0; ctr < tracksize; ctr++)
 	{	//For each note in the track
-		unsigned long noteflags = eof_get_note_flags(eof_song, eof_selected_track, ctr);
-
-		if(noteflags & flags)
+		if(eof_get_note_flags(eof_song, eof_selected_track, ctr) & flags)
 		{	//If the note has the specified flag(s)
+			count++;
+		}
+	}
+
+	return count;
+}
+
+unsigned long eof_count_track_num_notes_with_tflag(unsigned long tflags)
+{
+	unsigned long ctr, count, tracksize;
+
+	tracksize = eof_get_track_size(eof_song, eof_selected_track);
+	for(ctr = 0, count = 0; ctr < tracksize; ctr++)
+	{	//For each note in the track
+		if(eof_get_note_tflags(eof_song, eof_selected_track, ctr) & tflags)
+		{	//If the note has the specified temporary flag(s)
 			count++;
 		}
 	}

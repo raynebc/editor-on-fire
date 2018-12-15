@@ -111,8 +111,7 @@
 #define EOF_NOTE_TFLAG_GHL_W3       32768	//This flag will indicate that the affected note is a "N 2 #" white 3 note being imported from a Feedback file instead of "N 5 #" toggle HOPO notation, since they are both stored as a lane 6 bitmask
 #define EOF_NOTE_TFLAG_RESNAP       65536	//This flag will indicate that a note was defined as grid snapped in the imported MIDI, and that it should be resnapped if rounding errors result in it not being grid snapped after import
 #define EOF_NOTE_TFLAG_SPLIT_CHORD 131072	//This flag will represent a note that was created during RS2 export due to a chord that was broken up into single notes by effect of the linknext or split statuses
-#define EOF_NOTE_TFLAG_GENERIC     262144	//This flag is reserved for generic purposes
-#define EOF_NOTE_TFLAG_SOLO_NOTE   262144	//	Such as marking which notes are in solo sections during star power pathing
+#define EOF_NOTE_TFLAG_SOLO_NOTE   262144	//This flag will be set by eof_determine_phrase_status() if the note is in a solo section
 #define EOF_NOTE_TFLAG_GENERIC2    524288	//This flag is reserved for generic purposes
 #define EOF_NOTE_TFLAG_SP_END      524288	//	Such as marking which notes are the last in a star power phrase during star power pathing
 

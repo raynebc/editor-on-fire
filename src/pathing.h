@@ -160,9 +160,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 	//Returns 0 on success, 1 on error or 2 on user cancellation
 
 void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution);
-	//Parses the notes in the solution's target track difficulty, applying the EOF_NOTE_TFLAG_SOLO_NOTE tflag
-	// Applies the EOF_NOTE_TFLAG_SOLO_NOTE tflag to each note that is in a solo phrase
-	// Applies the EOF_NOTE_TFLAG_SP_END tflag to the last note of each star power phrase
+	//Parses the notes in the solution's target track difficulty, applying the EOF_NOTE_TFLAG_SP_END tflag to the last note of each star power phrase
 
 int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **testingptr, char *undo_made);
 	//Performs all needed steps to prepare for the use of the pathing functions, such as creating the solution structures, preparing the active track difficulty, etc

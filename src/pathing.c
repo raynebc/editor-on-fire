@@ -1216,37 +1216,25 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 
 void eof_ch_pathing_mark_tflags(EOF_SP_PATH_SOLUTION *solution)
 {
-	unsigned long tracksize, numsolos, ctr, ctr2;
-	EOF_PHRASE_SECTION *sectionptr;
+	unsigned long tracksize, ctr;
 
 	if(!solution || !eof_song || !solution->track || (solution->track >= eof_song->tracks))
 		return;	//Invalid parameters
 
 	tracksize = eof_get_track_size(eof_song, solution->track);
-	numsolos = eof_get_num_solos(eof_song, solution->track);
 	for(ctr = 0; ctr < tracksize; ctr++)
 	{	//For each note in the active track
-		unsigned long tflags, notepos;
+		unsigned long tflags;
 
 		if(eof_get_note_type(eof_song, solution->track, ctr) != solution->diff)
 			continue;	//If it's not in the active track difficulty, skip it
 
-		notepos = eof_get_note_pos(eof_song, solution->track, ctr);
 		tflags = eof_get_note_tflags(eof_song, solution->track, ctr);
-		tflags &= ~(EOF_NOTE_TFLAG_SOLO_NOTE | EOF_NOTE_TFLAG_SP_END);	//Clear these temporary flags
+		tflags &= ~EOF_NOTE_TFLAG_SP_END;	//Clear this temporary flag a recheck for this status
 
 		if(eof_note_is_last_in_sp_phrase(eof_song, solution->track, ctr))
 		{	//If the note is the last note in a star power phrase
 			tflags |= EOF_NOTE_TFLAG_SP_END;	//Set the temporary flag that will track this condition to reduce repeatedly testing for this
-		}
-		for(ctr2 = 0; ctr2 < numsolos; ctr2++)
-		{	//For each solo phrase in the active track
-			sectionptr = eof_get_solo(eof_song, solution->track, ctr2);
-			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
-			{	//If the note is in this solo phrase
-				tflags |= EOF_NOTE_TFLAG_SOLO_NOTE;	//Set the temporary flag that will track this note being in a solo
-				break;
-			}
 		}
 		eof_set_note_tflags(eof_song, solution->track, ctr, tflags);
 	}
@@ -1965,8 +1953,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	{	//For each note in the active track
 		unsigned long tflags = eof_get_note_tflags(eof_song, eof_selected_track, ctr);
 
-		tflags &= ~EOF_NOTE_TFLAG_SOLO_NOTE;	//Clear the temporary flags used by the pathing logic
-		tflags &= ~EOF_NOTE_TFLAG_SP_END;
+		tflags &= ~EOF_NOTE_TFLAG_SP_END;		//Clear this temporary flag used by the pathing logic
 		eof_set_note_tflags(eof_song, eof_selected_track, ctr, tflags);
 	}
 
@@ -3167,8 +3154,7 @@ int eof_menu_track_evaluate_user_ch_sp_path(void)
 	{	//For each note in the active track
 		unsigned long tflags = eof_get_note_tflags(eof_song, eof_selected_track, ctr);
 
-		tflags &= ~EOF_NOTE_TFLAG_SOLO_NOTE;	//Clear the temporary flags used by the pathing logic
-		tflags &= ~EOF_NOTE_TFLAG_SP_END;
+		tflags &= ~EOF_NOTE_TFLAG_SP_END;		//Clear this temporary flag used by the pathing logic
 		eof_set_note_tflags(eof_song, eof_selected_track, ctr, tflags);
 	}
 
@@ -3346,8 +3332,7 @@ void eof_ch_sp_solution_rebuild(void)
 			{	//For each note in the active track
 				unsigned long tflags = eof_get_note_tflags(eof_song, eof_selected_track, ctr);
 
-				tflags &= ~EOF_NOTE_TFLAG_SOLO_NOTE;	//Clear the temporary flags used by the pathing logic
-				tflags &= ~EOF_NOTE_TFLAG_SP_END;
+				tflags &= ~EOF_NOTE_TFLAG_SP_END;		//Clear this temporary flag used by the pathing logic
 				eof_set_note_tflags(eof_song, eof_selected_track, ctr, tflags);
 			}
 		}
