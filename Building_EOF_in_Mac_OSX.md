@@ -32,7 +32,7 @@ You can use Mercurial related tools to download through the repository, but it's
 Extract all source packages from their compressed formats.  The terminal commands may depend on the format, otherwise just double clicking on each in OS X's graphical interface should extract it to a subfolder.
 
 ## Download Xcode 4.3 ##
-This involves browsing to https://developer.apple.com/download and creating a free Apple account.  After signing in, click "See more downloads" at the bottom of the page, enter **Xcode 4.3**, and download any of the 4.3 Developer Tools releases from 4.3 up to 4.3.3.  When the roughly 1.8GB download completes, double click on the downloaded DMG file to mount it in OS X.  An Xcode Tools window should appear.  In it, double click on the Packages folder, find the MacOSX10.6.pkg item and double click on it and install it.
+This involves browsing to https://developer.apple.com/download and creating a free Apple account.  After signing in, click "See more downloads" at the bottom of the page, enter **Xcode 4.3**, and download any of the 4.3 Developer Tools releases from 4.3 up to 4.3.3.  When the roughly 1.8GB download completes, double click on the downloaded DMG file to mount it in OS X.  An Xcode window with an Xcode folder should appear.  Right click on the Xcode folder and select show package contents.  Then browse to /Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs, right click on the MacOSX10.6.sdk folder, copy it, then browse to /SDKs in your Mac computer's normal file system and paste the MacOSX10.6.sdk folder there.
 
 ## Install cmake ##
 Cmake can be manually built from source, but it's not necessary for EOF.  It's easier installed via DMG file or with Homebrew.  To download the DMG file, get it from their website:
