@@ -2997,6 +2997,21 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific pitch
+	if(strcasestr_spec(macro, "TRACK_COUNT_HIGHLIGHTED_NOTES"))
+	{
+		unsigned long ctr, count;
+
+		for(ctr = 0, count = 0; ctr < tracksize; ctr++)
+		{	//For each note in the active track
+			if(eof_note_is_highlighted(eof_song, eof_selected_track, ctr))
+				count++;	//Count the number of highlighted notes
+		}
+		snprintf(dest_buffer, dest_buffer_size, "%lu", count);
+
+		return 1;
+	}
+
 	//The current 3D maximum depth
 	if(!ustricmp(macro, "3D_MAX_DEPTH"))
 	{

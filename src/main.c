@@ -2201,6 +2201,8 @@ void eof_read_global_keys(void)
 		/* decrease tempo by .01BPM (SHIFT+CTRL+-) */
 		if(eof_key_code == KEY_MINUS)	//Use the scan code because CTRL+- cannot be reliably detected via ASCII value
 		{
+			unsigned long ctr;
+
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is held
 				eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -2221,8 +2223,14 @@ void eof_read_global_keys(void)
 				{	//If the CTRL key is not held (CTRL+- is reserved for decrement pro guitar fret value
 					tempochange = -1.0;
 					eof_menu_beat_adjust_bpm(tempochange);
+
 					eof_use_key();
 				}
+			}
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track
+				eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
+				eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
 			}
 		}
 
@@ -2231,6 +2239,8 @@ void eof_read_global_keys(void)
 		/* increase tempo by .01BPM (SHIFT+CTRL+(plus)) */
 		if(eof_key_code == KEY_EQUALS)	//Use the scan code because CTRL+= cannot be reliably detected via ASCII value
 		{
+			unsigned long ctr;
+
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is held
 				eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -2253,6 +2263,11 @@ void eof_read_global_keys(void)
 					eof_menu_beat_adjust_bpm(tempochange);
 					eof_use_key();
 				}
+			}
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track
+				eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
+				eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
 			}
 		}
 	}//If a song is loaded
