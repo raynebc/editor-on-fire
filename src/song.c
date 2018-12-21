@@ -9634,7 +9634,7 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 		{	//If the first exported beat does not have a time signature defined on it
 			unsigned num = 4, den = 4;
 
-			if(eof_get_effective_ts(sp, &num, &den, ctr))
+			if(eof_get_effective_ts(sp, &num, &den, ctr, 0))
 			{	//If the time signature on that beat was obtained
 				(void) eof_apply_ts(num, den, 0, csp, 0);	//Apply it to the first exported beat
 			}

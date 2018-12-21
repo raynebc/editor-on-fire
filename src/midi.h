@@ -138,9 +138,10 @@ int eof_get_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum
 	//Returns 0 if the specified beat was not a time signature
 	//Returns -1 on error
 	//If 1 is not returned, the values referenced by numerator and denominator are not altered
-int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum);
+int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum, int function);
 	//Get the time signature in effect at the specified beat, return the num and den through the passed pointers if they are not NULL
-	//If no time signature is found to be in effect, 4/4 is assumed
+	//If function is zero, a time signature of 4/4 is assumed if no time signature is explicitly defined
+	//If function is nonzero, and no time signature is explicitly defined at/before the specified beat, *num and *den are set to 0 if they are not NULL
 	//Returns 1 on success or 0 on error
 	//If 1 is not returned, the values referenced by numerator and denominator are not altered
 int eof_apply_ts(unsigned num, unsigned den, unsigned long beatnum, EOF_SONG *sp, char undo);

@@ -1741,10 +1741,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		if(count)
 		{	//If there are any slider sections in the active track
-			double percent;
+			if(tracksize)
+			{	//Redundant check to satisfy Coverity
+				double percent;
 
-			percent = (double)count * 100.0 / tracksize;
-			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+				percent = (double)count * 100.0 / tracksize;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+			}
 		}
 		else
 		{
@@ -2091,7 +2094,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					selected++;	//Count how many notes are actively selected or passively select (exist between first and last actively selected notes)
 				}
 			}
-			eof_get_selected_note_range(&start, &end, 1);	//Get the start and stop times of the note selection
+			(void) eof_get_selected_note_range(&start, &end, 1);	//Get the start and stop times of the note selection
 			snprintf(dest_buffer, dest_buffer_size, "%.2f", (double)selected * 1000.0 / ((double)end - (double)start));
 		}
 		else

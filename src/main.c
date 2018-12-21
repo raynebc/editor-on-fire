@@ -5339,9 +5339,12 @@ int main(int argc, char * argv[])
 			if(eof_main_loop_ctr >= EOF_FPS_SAMPLE_COUNT)
 			{	//Every 5 renders, detect the number of rendered frames per second
 				time2 = clock();
-				eof_main_loop_fps = (double)CLOCKS_PER_SEC / ((double)time2 - time1) * EOF_FPS_SAMPLE_COUNT;
-				time1 = time2;
-				eof_main_loop_ctr = 0;
+				if(time2 > time1)
+				{	//Verify these values are different in order to avoid a division by zero
+					eof_main_loop_fps = (double)CLOCKS_PER_SEC / ((double)time2 - time1) * EOF_FPS_SAMPLE_COUNT;
+					time1 = time2;
+					eof_main_loop_ctr = 0;
+				}
 			}
 		}
 

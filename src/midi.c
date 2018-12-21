@@ -3280,7 +3280,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 			{	//If a suitable beat length was obtained
 				unsigned num = 4, den = 4;
 
-				if(eof_get_effective_ts(eof_song, &num, &den, beatnum))
+				if(eof_get_effective_ts(eof_song, &num, &den, beatnum, 0))
 				{	//If the time signature of the target position's beat was obtained
 					unsigned long beatlength_delta = EOF_DEFAULT_TIME_DIVISION * 4 / den;	//One beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
 					unsigned long beat_deltapos = eof_song->beat[beatnum]->midi_pos;
@@ -3621,13 +3621,17 @@ int eof_get_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum
 	return 1;	//Return success
 }
 
-int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum)
+int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned long beatnum, int function)
 {
 	unsigned numerator = 4, denominator = 4;
 
 	if((sp == NULL) || (beatnum >= sp->beats) || (sp->beat[beatnum] == NULL))
 		return 0;	//Return error
 
+	if(function)
+	{	//If the calling function does not want to assume 4/4 in the absence of a defined time signature
+		numerator = denominator = 0;
+	}
 	while(eof_get_ts(sp, &numerator, &denominator, beatnum) != 1)
 	{	//Until a TS change is seen, check each beat in reverse, from the selected beat to the first one
 		if(beatnum == 0)

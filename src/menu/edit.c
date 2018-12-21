@@ -4577,7 +4577,6 @@ int eof_menu_edit_set_start_point(void)
 	if(!eof_song)
 		return 0;
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(eof_song->tags->start_point == eof_music_pos - eof_av_delay)
 	{	//If the start point is already set to the current seek position
 		eof_song->tags->start_point = ULONG_MAX;	//Clear the start point
@@ -4602,7 +4601,6 @@ int eof_menu_edit_set_end_point(void)
 	if(!eof_song)
 		return 0;
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(eof_song->tags->end_point == eof_music_pos - eof_av_delay)
 	{	//If the end point is already set to the current seek position
 		eof_song->tags->end_point = ULONG_MAX;	//Clear the start point

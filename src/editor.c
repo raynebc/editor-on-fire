@@ -7154,7 +7154,13 @@ void eof_editor_logic_common(void)
 					if(eof_blclick_released)
 					{
 						if(eof_beat_num_valid(eof_song, eof_hover_beat))
-						{
+						{	//If the hover beat is a valid beat
+							if(KEY_EITHER_SHIFT)
+							{	//If SHIFT was held, set the start and end points to reflect the range of beats between the currently selected beat and the beat that was just clicked
+								eof_song->tags->start_point = eof_song->beat[eof_selected_beat]->pos;
+								eof_song->tags->end_point = eof_song->beat[eof_hover_beat]->pos;
+								eof_shift_used = 1;	//Track that the SHIFT key was used
+							}
 							eof_select_beat(eof_hover_beat);
 						}
 						eof_blclick_released = 0;

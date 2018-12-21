@@ -94,9 +94,21 @@ MENU eof_beat_events_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_beat_menu[] =
+MENU eof_beat_bpm_menu[] =
 {
 	{"&BPM Change", eof_menu_beat_bpm_change, NULL, 0, NULL},
+	{"&Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
+	{"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
+	{"&Estimate BPM", eof_menu_beat_estimate_bpm, NULL, 0, NULL},
+	{"&Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
+	{"&Double BPM", NULL, eof_beat_double_bpm_menu, 0, NULL},
+	{"&Halve BPM", NULL, eof_beat_halve_bpm_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_beat_menu[] =
+{
+	{"&BPM", NULL, eof_beat_bpm_menu, 0, NULL},
 	{"Time &Signature", NULL, eof_beat_time_signature_menu, 0, NULL},
 	{"&Key Signature", NULL, eof_beat_key_signature_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
@@ -109,12 +121,8 @@ MENU eof_beat_menu[] =
 	{"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
 	{"De&Lete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
 	{"Anchor measures", eof_menu_beat_anchor_measures, NULL, 0, NULL},
-	{"Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
-	{"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
-	{"Estimate BPM", eof_menu_beat_estimate_bpm, NULL, 0, NULL},
-	{"&Double BPM", NULL, eof_beat_double_bpm_menu, 0, NULL},
-	{"&Halve BPM", NULL, eof_beat_halve_bpm_menu, 0, NULL},
-	{"Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
+	{"&Copy tempo map", eof_menu_beat_copy_tempo_map, NULL, 0, NULL},
+	{"&Paste tempo map", eof_menu_beat_paste_tempo_map, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
@@ -268,7 +276,6 @@ void eof_prepare_beat_menu(void)
 	if(eof_song && eof_song_loaded)
 	{	//If a song is loaded
 		//Several beat menu items are disabled below if the tempo map is locked.  Clear those items' flags in case the lock was removed
-		eof_beat_menu[0].flags = 0;		//BPM change
 		eof_beat_menu[4].flags = 0;		//Add
 		eof_beat_menu[5].flags = 0;		//Delete
 		eof_beat_menu[6].flags = 0;		//Push offset back
@@ -278,11 +285,14 @@ void eof_prepare_beat_menu(void)
 		eof_beat_menu[10].flags = 0;	//Toggle anchor
 		eof_beat_menu[11].flags = 0;	//Delete anchor
 		eof_beat_menu[12].flags = 0;	//Anchor measures
-		eof_beat_menu[13].flags = 0;	//Reset BPM
-		eof_beat_menu[14].flags = 0;	//Calculate BPM
-		eof_beat_menu[16].flags = 0;	//Double BPM
-		eof_beat_menu[17].flags = 0;	//Halve BPM
-		eof_beat_menu[18].flags = 0;	//Adjust tempo for RBN
+		eof_beat_menu[14].flags = 0;	//Paste tempo map
+
+		eof_beat_bpm_menu[0].flags = 0;	//BPM>BPM change
+		eof_beat_bpm_menu[1].flags = 0;	//BPM>Reset BPM
+		eof_beat_bpm_menu[2].flags = 0;	//BPM>Calculate BPM
+		eof_beat_bpm_menu[5].flags = 0;	//BPM>Double BPM
+		eof_beat_bpm_menu[6].flags = 0;	//BPM>Halve BPM
+		eof_beat_bpm_menu[4].flags = 0;	//BPM>Fix tempo for RBN
 
 		//Ditto for time signature sub menu items
 		eof_beat_time_signature_menu[0].flags = 0;	//4/4
@@ -364,21 +374,21 @@ void eof_prepare_beat_menu(void)
 			}
 		}
 		if(i == eof_song->beats)
-		{	//If there are no tempo changes throughout the entire chart, disable Beat>Reset BPM, as it would have no effect
-			eof_beat_menu[13].flags = D_DISABLED;
+		{	//If there are no tempo changes throughout the entire chart, disable Beat>BPM>Reset BPM, as it would have no effect
+			eof_beat_bpm_menu[1].flags = D_DISABLED;
 		}
 		else
 		{
-			eof_beat_menu[13].flags = 0;	//Reset BPM
+			eof_beat_bpm_menu[1].flags = 0;	//BPM>Reset BPM
 		}
 //Beat>Estimate validation
 		if(eof_silence_loaded || !eof_music_track)
 		{	//If no chart audio is loaded
-			eof_beat_menu[15].flags = D_DISABLED;
+			eof_beat_bpm_menu[3].flags = D_DISABLED;
 		}
 		else
 		{
-			eof_beat_menu[15].flags = 0;	//Estimate BPM
+			eof_beat_bpm_menu[3].flags = 0;	//BPM>Estimate BPM
 		}
 //Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
@@ -394,20 +404,20 @@ void eof_prepare_beat_menu(void)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
-			eof_beat_menu[21].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[17].flags = 0;	//Beat>Rocksmith>
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
-				eof_beat_menu[22].flags = D_DISABLED;
+				eof_beat_menu[18].flags = D_DISABLED;
 			}
 			else
 			{
-				eof_beat_menu[22].flags = 0;	//Place Trainer Event
+				eof_beat_menu[18].flags = 0;	//Place Trainer Event
 			}
 		}
 		else
 		{
-			eof_beat_menu[21].flags = D_DISABLED;
-			eof_beat_menu[22].flags = D_DISABLED;
+			eof_beat_menu[17].flags = D_DISABLED;
+			eof_beat_menu[18].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -496,7 +506,6 @@ void eof_prepare_beat_menu(void)
 
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the chart's tempo map is locked, disable various beat operations
-			eof_beat_menu[0].flags = D_DISABLED;	//BPM change
 			eof_beat_menu[4].flags = D_DISABLED;	//Add
 			eof_beat_menu[5].flags = D_DISABLED;	//Delete
 			eof_beat_menu[6].flags = D_DISABLED;	//Push offset back
@@ -506,11 +515,14 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[10].flags = D_DISABLED;	//Toggle anchor
 			eof_beat_menu[11].flags = D_DISABLED;	//Delete anchor
 			eof_beat_menu[12].flags = D_DISABLED;	//Anchor measures
-			eof_beat_menu[13].flags = D_DISABLED;	//Reset BPM
-			eof_beat_menu[14].flags = D_DISABLED;	//Calculate BPM
-			eof_beat_menu[16].flags = D_DISABLED;	//Double BPM
-			eof_beat_menu[17].flags = D_DISABLED;	//Halve BPM
-			eof_beat_menu[18].flags = D_DISABLED;	//Adjust tempo for RBN
+			eof_beat_menu[14].flags = D_DISABLED;	//Paste tempo map
+
+			eof_beat_bpm_menu[0].flags = D_DISABLED;	//BPM>BPM change
+			eof_beat_bpm_menu[1].flags = D_DISABLED;	//BPM>Reset BPM
+			eof_beat_bpm_menu[2].flags = D_DISABLED;	//BPM>Calculate BPM
+			eof_beat_bpm_menu[4].flags = D_DISABLED;	//BPM>Fix tempo for RBN
+			eof_beat_bpm_menu[5].flags = D_DISABLED;	//BPM>Double BPM
+			eof_beat_bpm_menu[6].flags = D_DISABLED;	//BPM>Halve BPM
 
 			//Also disable time signature functions that can change beat positions
 			eof_beat_time_signature_menu[0].flags = D_DISABLED;	//4/4
@@ -695,7 +707,7 @@ int eof_menu_beat_ts_custom_dialog(unsigned start)
 	eof_render();
 	eof_color_dialog(eof_custom_ts_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_ts_dialog);
-	(void) eof_get_effective_ts(eof_song, &num, &den, eof_selected_beat);
+	(void) eof_get_effective_ts(eof_song, &num, &den, eof_selected_beat, 0);
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%u", num);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%u", den);
 	if(start)
@@ -776,7 +788,7 @@ int eof_menu_beat_ts_convert(void)
 	}
 	if(eof_selected_beat > 0)
 	{	//If a beat other than the first one is selected, determine if it now needs to be anchored
-		(void) eof_get_effective_ts(eof_song, NULL, &prevden, eof_selected_beat - 1);	//Determine what TS is in effect at the previous beat
+		(void) eof_get_effective_ts(eof_song, NULL, &prevden, eof_selected_beat - 1, 0);	//Determine what TS is in effect at the previous beat
 		if((prevden != den) || (eof_song->beat[eof_selected_beat]->ppqn != eof_song->beat[eof_selected_beat - 1]->ppqn))
 		{	//If the time signature denominator or the tempo is different from the previous beat
 			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
@@ -3259,6 +3271,162 @@ int eof_menu_beat_estimate_bpm(void)
 	}
 	eof_calculate_beats(eof_song);
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+
+	return D_O_K;
+}
+
+int eof_menu_beat_copy_tempo_map(void)
+{
+	unsigned long ctr, start_beat, end_beat;
+	unsigned num = 0, den = 0;
+	char *instructions = "Use \"Set start point\" and \"Set end point\" from the Edit menu or click on a beat and then use SHIFT+click on another beat to select the range of beats for this copy operation.";
+	PACKFILE * fp;
+	char clipboard_path[50];
+
+	if(!eof_song)
+		return D_O_K;
+
+	eof_log("eof_menu_beat_copy_tempo_map() entered", 1);
+
+	//Validate start and end points
+	if((eof_song->tags->start_point == ULONG_MAX) || (eof_song->tags->end_point == ULONG_MAX))
+	{	//If either the start point or the end point aren't defined
+		allegro_message("No selection defined.\n%s", instructions);
+		return D_O_K;
+	}
+
+	start_beat = eof_get_beat(eof_song, eof_song->tags->start_point);
+	end_beat = eof_get_beat(eof_song, eof_song->tags->end_point);
+	if((start_beat >= eof_song->beats) || (end_beat >= eof_song->beats))
+	{
+		allegro_message("Invalid selection.\n%s", instructions);
+		return D_O_K;
+	}
+
+	if((start_beat == end_beat) && (eof_song->tags->start_point != eof_song->beat[start_beat]->pos))
+	{	//If there is a selection, but it doesn't overlap any beat markers
+		allegro_message("No beat markers are selected.\n%s", instructions);
+		return D_O_K;
+	}
+
+	//Open clipboard file for writing
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return D_O_K;
+	}
+
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.tempo.clipboard", eof_temp_path_s);
+	fp = pack_fopen(clipboard_path, "w");
+	if(!fp)
+	{
+		allegro_message("Clipboard error!");
+		return D_O_K;
+	}
+
+	//Write tempo data to clipboard file
+	(void) pack_iputl(end_beat - start_beat + 1, fp);	//Write the number of beats of data there will be
+	(void) eof_get_effective_ts(eof_song, &num, &den, start_beat, 1);	//The first beat's written data should include any explicit time signature in effect
+	for(ctr = start_beat; ctr <= end_beat; ctr++)
+	{	//For each beat in the selection
+		(void) eof_get_ts(eof_song, &num, &den, ctr);	//Update num and den to reflect any time signature change at this beat, if any
+		(void) pack_iputl(eof_song->beat[ctr]->ppqn, fp);	//Write the beat's native tempo value (PPQN)
+		(void) pack_iputl(num, fp);				//Write the time signature in effect
+		(void) pack_iputl(den, fp);
+	}
+	(void) pack_fclose(fp);
+
+	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+	return D_O_K;
+}
+
+int eof_menu_beat_paste_tempo_map(void)
+{
+	unsigned long ctr, numbeats, ppqn;
+	unsigned num = 0, den = 0;
+	PACKFILE * fp;
+	char clipboard_path[50];
+	unsigned long remove_flags = EOF_BEAT_FLAG_ANCHOR | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4 | EOF_BEAT_FLAG_CUSTOM_TS | EOF_BEAT_FLAG_MIDBEAT | EOF_BEAT_FLAG_START_2_4;
+
+	if(!eof_song || (eof_selected_beat >= eof_song->beats))
+		return D_O_K;	//Error
+
+	eof_log("eof_menu_beat_copy_tempo_map() entered", 1);
+
+	//Open clipboard file for reading
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return D_O_K;
+	}
+
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.tempo.clipboard", eof_temp_path_s);
+	fp = pack_fopen(clipboard_path, "r");
+	if(!fp)
+	{
+		allegro_message("Clipboard error!");
+		return D_O_K;
+	}
+
+	//Apply clipboard data to beats
+	numbeats = pack_igetl(fp);		//Read the number of beats' worth of tempo data this is in the clipboard file
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	for(ctr = 0; ctr < numbeats; ctr++)
+	{	//For each beat of data in the clipboard fle
+		//Read the data
+		ppqn = pack_igetl(fp);	//Read the beat's tempo (PPQN)
+		num = pack_igetl(fp);	//Read the beat's time signature change, if any
+		den = pack_igetl(fp);
+
+		//Update the selected beat
+		eof_song->beat[eof_selected_beat]->flags &= ~remove_flags;	//Clear these flags
+		eof_song->beat[eof_selected_beat]->ppqn = ppqn;	//Set the tempo
+		if(!eof_selected_beat || (eof_song->beat[eof_selected_beat - 1]->ppqn != ppqn))
+		{	//If the selected beat is the first beat, or if the previous beat has a different tempo
+			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Make it an anchor
+		}
+		if(num && den)
+		{	//If a time signature is to be set
+			if(eof_selected_beat > 0)
+			{	//If a beat after the first beat is selected
+				unsigned eff_num = 0, eff_den = 0;
+
+				(void) eof_get_effective_ts(eof_song, &eff_num, &eff_den, eof_selected_beat - 1, 1);	//Get any explicitly defined time signature in effect
+				if(!eff_num || !eff_den || (eff_num != num) || (eff_den != den))
+				{	//If there is no defined time signature in effect before the selected beat, or it is defined and is different from the signature from the clipboard
+					eof_apply_ts(num, den, eof_selected_beat, eof_song, 0);	//Set it
+				}
+			}
+			else
+			{	//The first beat will get any time signature change from the clipboard
+				eof_apply_ts(num, den, eof_selected_beat, eof_song, 0);
+			}
+		}
+
+		//Update the next beat's position
+		if(eof_selected_beat + 1 < eof_song->beats)
+		{	//If there is a next beat
+			eof_song->beat[eof_selected_beat + 1]->fpos = eof_song->beat[eof_selected_beat]->fpos + eof_calc_beat_length(eof_song, eof_selected_beat);	//Set its position
+			eof_song->beat[eof_selected_beat + 1]->pos = eof_song->beat[eof_selected_beat + 1]->fpos + 0.5;
+
+			eof_selected_beat++;	//Select the next beat
+		}
+		else
+			break;	//There are no more beats to have tempo/TS changes applied to
+	}
+	(void) pack_fclose(fp);
+
+	//Update the position of any remaining beats
+	for(ctr = eof_selected_beat; ctr + 1 < eof_song->beats; ctr++)
+	{	//For all beats from the now selected beat up until the penultimate one
+		eof_song->beat[ctr + 1]->fpos = eof_song->beat[ctr]->fpos + eof_calc_beat_length(eof_song, ctr);	//Set the next beat's position
+		eof_song->beat[ctr + 1]->pos = eof_song->beat[ctr + 1]->fpos + 0.5;
+	}
+
+	eof_set_seek_position(eof_song->beat[eof_selected_beat]->pos + eof_av_delay);	//Seek to the now selected beat
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+	eof_render();
 
 	return D_O_K;
 }
