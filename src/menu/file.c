@@ -4675,7 +4675,7 @@ int eof_gp_import_drum_track(int importvoice, int function)
 int eof_gp_import_guitar_track(int importvoice)
 {
 	unsigned long ctr, ctr2, selected;
-	char exists, tuning_prompted = 0, is_bass = 0;
+	char overlaps, tuning_prompted = 0, is_bass = 0;
 	char still_populated = 0;	//Will be set to nonzero if the track still contains notes after the track/difficulty is cleared before importing the GP track
 	EOF_PHRASE_SECTION *ptr, *ptr2;
 
@@ -4760,7 +4760,7 @@ int eof_gp_import_guitar_track(int importvoice)
 			}
 		}
 		//Copy trill phrases
-		for(ctr = 0, exists = 0; ctr < eof_parsed_gp_file->track[selected]->trills; ctr++)
+		for(ctr = 0, overlaps = 0; ctr < eof_parsed_gp_file->track[selected]->trills; ctr++)
 		{	//For each trill phrase in the GP track
 			ptr = &eof_parsed_gp_file->track[selected]->trill[ctr];
 			for(ctr2 = 0; ctr2 < eof_get_num_trills(eof_song, eof_selected_track); ctr2++)
@@ -4768,11 +4768,11 @@ int eof_gp_import_guitar_track(int importvoice)
 				ptr2 = eof_get_trill(eof_song, eof_selected_track, ctr2);
 				if((ptr->end_pos >= ptr2->start_pos) && (ptr->start_pos <= ptr2->end_pos))
 				{	//If the trill phrase in the GP track overlaps with any trill phrase already in the active track
-					exists = 1;	//Make a note
+					overlaps = 1;	//Make a note
 					break;
 				}
 			}
-			if(!exists)
+			if(!overlaps)
 			{	//If this trill phrase doesn't overlap with any existing trill phrases in the active track
 				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TRILL_SECTION, 0, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active track
 			}
@@ -4780,18 +4780,18 @@ int eof_gp_import_guitar_track(int importvoice)
 		//Copy tremolo phrases
 		for(ctr = 0; ctr < eof_parsed_gp_file->track[selected]->tremolos; ctr++)
 		{	//For each tremolo phrase in the GP track
-			exists = 0;	//Reset this status
+			overlaps = 0;	//Reset this status
 			ptr = &eof_parsed_gp_file->track[selected]->tremolo[ctr];
 			for(ctr2 = 0; ctr2 < eof_get_num_tremolos(eof_song, eof_selected_track); ctr2++)
 			{	//For each tremolo section already in the active track
 				ptr2 = eof_get_tremolo(eof_song, eof_selected_track, ctr2);
 				if((ptr->end_pos >= ptr2->start_pos) && (ptr->start_pos <= ptr2->end_pos) && (ptr->difficulty == eof_note_type))
 				{	//If the tremolo phrase in the GP track overlaps with any tremolo phrase already in the active track difficulty
-					exists = 1;	//Make a note
+					overlaps = 1;	//Make a note
 					break;
 				}
 			}
-			if(!exists)
+			if(!overlaps)
 			{	//If this tremolo phrase doesn't overlap with any existing tremolo phrases in the active track
 				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active track difficulty
 			}

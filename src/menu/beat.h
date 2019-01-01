@@ -79,6 +79,8 @@ int eof_menu_beat_copy_tempo_map(void);
 	//For all beat markers within the scope of the start and end points, copies the beats' tempos and time signatures to a clipboard file, to be applied later starting at a selected beat marker
 int eof_menu_beat_paste_tempo_map(void);
 	//Starting at the selected beat, applies the tempo and time signature changes stored by eof_menu_beat_copy_tempo_map()
+int eof_menu_beat_validate_tempo_map(void);
+	//Calls eof_detect_tempo_map_corruption() with the option to report a valid tempo map
 
 int eof_menu_beat_calculate_bpm(void);
 int eof_menu_beat_reset_bpm(void);		//Applies the first beat's tempo to all beats in the project

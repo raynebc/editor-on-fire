@@ -4929,6 +4929,7 @@ void eof_init_after_load(char initaftersavestate)
 		if(eof_song->beats > 0)
 			eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker
 		(void) eof_menu_edit_deselect_all();	//Deselect all notes
+		(void) eof_detect_tempo_map_corruption(eof_song, 0);
 	}
 	tracknum = eof_song->track[EOF_TRACK_DRUM]->tracknum;
 	if((eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_SIX_LANES) || (eof_song->legacy_track[tracknum]->numlanes == 6))

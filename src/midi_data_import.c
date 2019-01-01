@@ -14,7 +14,7 @@ double eof_MIDI_delta_to_realtime(struct eof_MIDI_tempo_change *tempolist, unsig
 	struct eof_MIDI_tempo_change *ptr = tempolist;
 	double BPM = 120.0;
 	unsigned long reldelta = absdelta;
-	double time = 0.0;	//Will store the time of the tempo change immediately prior to the specified absolute delta time
+	double realtime = 0.0;	//Will store the time of the tempo change immediately prior to the specified absolute delta time
 
 	if(tempolist)
 	{	//If there are tempo changes in the list
@@ -30,11 +30,11 @@ double eof_MIDI_delta_to_realtime(struct eof_MIDI_tempo_change *tempolist, unsig
 			}
 		}
 		BPM = ptr->BPM;
-		time = ptr->realtime;
+		realtime = ptr->realtime;
 		reldelta = absdelta - ptr->absdelta;
 	}
 
-	return time + (double)reldelta / timedivision * (60000.0 / BPM);	//Calculate the number of milliseconds between the specified delta time and the prior tempo change, and add it to the time of that tempo change (if it exists)
+	return realtime + (double)reldelta / timedivision * (60000.0 / BPM);	//Calculate the number of milliseconds between the specified delta time and the prior tempo change, and add it to the time of that tempo change (if it exists)
 }
 
 void eof_MIDI_empty_event_list(struct eof_MIDI_data_event *ptr)

@@ -20,7 +20,15 @@ void eof_calculate_beats(EOF_SONG * sp);
 	//Creates beats if there aren't enough to extend to one beat past the end of the chart as defined by eof_chart_length
 	//Updates eof_chart_length to reflect the last beat's timestamp if the latter is larger
 void eof_calculate_tempo_map(EOF_SONG * sp);
-	//Sets the tempo and anchor status of each beat in the EOF_SONG structure by using the configured time stamp of each beat
+	//Sets the tempo and anchor status of each beat in the EOF_SONG structure by using the configured FLOATING POINT time stamp of each beat
+double eof_calculate_beat_pos_by_prev_beat_tempo(EOF_SONG *sp, unsigned long beat);
+	//Determines the specified beat's expected position based on the previous beat's defined tempo
+	//If the specified beat number is 0, the position returned is the current OGG profile's MIDI delay
+int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report);
+	//Uses eof_calculate_beat_pos_by_prev_beat_tempo() on each beat to determine if any have an unexpected timestamp
+	//If any do, the user is prompted whether to recreeate the tempo changes to reflect the beat timings
+	//If the user opts to do so, eof_calculate_tempo_map() is used to carry this out
+	//If report is nonzero, and no tempo issues are found, a message is displayed to this effect
 void eof_change_accurate_ts(EOF_SONG * sp, char function);
 	//Recalculates the tempo on beats using a time signature with a denominator other than 4 depending on the value of function,
 	// allowing beats to retain the same real time length

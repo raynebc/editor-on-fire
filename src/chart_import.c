@@ -401,7 +401,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 	/* set up beat markers */
 	sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
-	current_event = chart->events;
 	chartpos = 0;
 
 	/* find the highest chartpos for beat markers */

@@ -873,6 +873,7 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
+
 }
 ///ALT handling testing
 /*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
@@ -6354,8 +6355,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			{	//If the note was identified
 				int x1 = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//The start position of the deployment
 				int x2 = eof_get_realtime_position(eof_ch_sp_solution->deployment_endings[ctr]);	//The end position of the deployment
-				int col = makecol(0xC5, 0xD1, 0xF6);	//This is the color used to mark star power deployment on Slow Hero
 
+				col = makecol(0xC5, 0xD1, 0xF6);	//This is the color used to mark star power deployment on Slow Hero
 				if(!eof_ch_sp_solution->score)
 				{	//If the Clone Hero SP solution was evaluated as invalid
 					col = eof_color_yellow;	//Draw a short yellow marker instead

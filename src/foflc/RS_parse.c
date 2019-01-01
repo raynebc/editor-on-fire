@@ -713,7 +713,7 @@ void RS_Load(FILE *inf)
 							//input file so I can create a buffer large enough to read any line into
 	char *buffer;			//Will be an array large enough to hold the largest line of text from input file
 	unsigned long processedctr=0;	//The current line number being processed in the text file
-	long time = 0, note = 0, length = 0;
+	long timevar = 0, note = 0, length = 0;
 	char lyric[256], lyric2[256];
 	char *index = NULL;
 	int readerrordetected = 0;
@@ -754,7 +754,7 @@ void RS_Load(FILE *inf)
 				if(strcasestr_spec(buffer, "</vocals>"))	//If the end of the vocals XML tag is reached
 					break;									//Stop processing lines
 
-				if(!parse_xml_rs_timestamp("time", buffer, &time))
+				if(!parse_xml_rs_timestamp("time", buffer, &timevar))
 				{	//If the timestamp was not readable
 					printf("Error reading timestamp on line #%lu.  Aborting", processedctr);
 					exit_wrapper(1);
@@ -789,7 +789,7 @@ void RS_Load(FILE *inf)
 						index++;
 					}
 				}
-				AddLyricPiece(lyric2, time, time + length, note, 0);	//Add lyric
+				AddLyricPiece(lyric2, timevar, timevar + length, note, 0);	//Add lyric
 				if(index)				//If a + character was filtered out of the lyric
 					EndLyricLine();		//End lyric line, as this is a line break mechanism in RS2014 formatted lyrics
 

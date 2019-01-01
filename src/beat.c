@@ -152,6 +152,7 @@ void eof_calculate_tempo_map(EOF_SONG * sp)
 	unsigned long ctr, lastppqn = 0;
 	unsigned num = 4, den = 4, lastden = 4;
 	int has_ts_change;
+	double ppqn;
 
 	if(!sp || (sp->beats < 3))
 		return;
@@ -159,11 +160,12 @@ void eof_calculate_tempo_map(EOF_SONG * sp)
 	for(ctr = 0; ctr < sp->beats - 1; ctr++)
 	{	//For each beat in the chart
 		has_ts_change = eof_get_ts(sp, &num, &den, ctr);	//Lookup any time signature defined at the beat
-		sp->beat[ctr]->ppqn = 1000 * (sp->beat[ctr + 1]->pos - sp->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
+		ppqn = 1000.0 * (sp->beat[ctr + 1]->fpos - sp->beat[ctr]->fpos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
 		if(sp->tags->accurate_ts)
 		{	//If the accurate time signatures song property is enabled
-			sp->beat[ctr]->ppqn *= (double)den / 4.0;	//Adjust for the time signature
+			ppqn *= (double)den / 4.0;	//Adjust for the time signature
 		}
+		sp->beat[ctr]->ppqn = ppqn + 0.5;	//Round to nearest integer
 		if(!lastppqn || (lastppqn != sp->beat[ctr]->ppqn))
 		{	//If the tempo is being changed at this beat, or this is the first beat
 			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
@@ -180,6 +182,74 @@ void eof_calculate_tempo_map(EOF_SONG * sp)
 		lastden = den;	//Track the TS denominator in use
 	}
 	sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;	//The last beat's tempo is the same as the previous beat's
+}
+
+double eof_calculate_beat_pos_by_prev_beat_tempo(EOF_SONG *sp, unsigned long beat)
+{
+	unsigned num = 4, den = 4;
+	double length;
+
+	if(!sp || (beat >= sp->beats))
+		return 0.0;	//Invalid parameters
+
+	if(!beat)
+	{	//If the first beat was specified
+		return sp->tags->ogg[eof_selected_ogg].midi_offset;	//Return the current OGG profile's MIDI delay (first beat position)
+	}
+
+	length = (double)eof_song->beat[beat - 1]->ppqn / 1000.0;	//Calculate the length of the previous beat from its tempo (this is the formula "beat_length = 60000 / BPM", where BPM = 60000000 / ppqn)
+	(void) eof_get_ts(sp, &num, &den, beat);	//Lookup any time signature defined at the beat
+	length *= (double)den / 4.0;	//Adjust for the time signature
+
+	return sp->beat[beat - 1]->fpos + length;
+}
+
+int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report)
+{
+	unsigned long ctr, expected_pos_int;
+	double expected_pos;
+	int corrupt = 0;
+
+	if(!sp)
+		return 1;	//Invalid parameters
+
+	for(ctr = 1; ctr < sp->beats; ctr++)
+	{	//For each beat after the first
+		expected_pos = eof_calculate_beat_pos_by_prev_beat_tempo(sp, ctr);
+		expected_pos_int = expected_pos + 0.5;	//Round to nearest ms
+
+		if(expected_pos_int != sp->beat[ctr]->pos)
+		{	//If this beat's timestamp doesn't accurately reflect the previous beat's tempo
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "The tempo map is corrupt beginning with beat #%lu (defined position is %fms, expected is %fms)", ctr, sp->beat[ctr]->fpos, expected_pos);
+			eof_log(eof_log_string, 1);
+			corrupt = 1;
+
+			if(sp->tags->tempo_map_locked)
+			{	//If the chart's tempo map is locked
+				allegro_message("%s\n\nHowever the tempo map is locked.  To correct this, disable the \"Song>Lock tempo map\" option and re-run this check with \"Beat>Validate tempo map\".", eof_log_string);
+				break;
+			}
+			else
+			{
+				if(alert(eof_log_string, NULL, "Recreate tempo changes based on beat positions?", "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to replace the highlighting status with SP deploy status
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					eof_calculate_tempo_map(sp);
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+	}
+
+	if(!corrupt && report)
+	{
+		allegro_message("Tempo map is valid");
+	}
+
+	return 1;
 }
 
 void eof_change_accurate_ts(EOF_SONG * sp, char function)
@@ -203,7 +273,6 @@ void eof_change_accurate_ts(EOF_SONG * sp, char function)
 			if(!lastppqn || (lastppqn != sp->beat[ctr]->ppqn))
 			{	//If the tempo is being changed at this beat, or this is the first beat
 				sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
-				lastppqn = sp->beat[ctr]->ppqn;
 			}
 		}
 		lastppqn = sp->beat[ctr]->ppqn;	//Track the tempo in effect

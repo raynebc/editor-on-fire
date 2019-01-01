@@ -6,6 +6,7 @@
 #include "beat.h"		//For eof_get_measure()
 #include "ini_import.h"
 #include "main.h"
+#include "midi.h"
 #include "mix.h"
 #include "notes.h"
 #include "rs.h"			//For eof_pro_guitar_track_find_effective_fret_hand_position()
@@ -3092,6 +3093,71 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		else
 		{
 			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+		return 1;
+	}
+
+	///DEBUGGING MACROS
+	//The selected beat's PPQN value (used to calculate its BPM)
+	if(!ustricmp(macro, "DEBUG_BEAT_PPQN"))
+	{
+		if(eof_selected_beat < eof_song->beats)
+		{
+			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_song->beat[eof_selected_beat]->ppqn);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "(Error)");
+		}
+		return 1;
+	}
+
+	//The selected beat's length based on its PPQN value and time signature
+	if(!ustricmp(macro, "DEBUG_BEAT_TEMPO_LENGTH"))
+	{
+		if(eof_selected_beat < eof_song->beats)
+		{
+			unsigned num = 4, den = 4;
+			double length = (double)eof_song->beat[eof_selected_beat]->ppqn / 1000.0;	//Calculate the length of the beat from its tempo (this is the formula "beat_length = 60000 / BPM", where BPM = 60000000 / ppqn)
+
+			(void) eof_get_ts(eof_song, &num, &den, eof_selected_beat);	//Lookup any time signature defined at the beat
+			length *= (double)den / 4.0;	//Adjust for the time signature
+			snprintf(dest_buffer, dest_buffer_size, "%f", length);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "(Error)");
+		}
+		return 1;
+	}
+
+	//The selected beat's length based on its relative position to the next beat
+	if(!ustricmp(macro, "DEBUG_BEAT_POS_LENGTH"))
+	{
+		if(eof_selected_beat + 1 < eof_song->beats)
+		{
+			double length = eof_song->beat[eof_selected_beat + 1]->fpos - eof_song->beat[eof_selected_beat]->fpos;
+			snprintf(dest_buffer, dest_buffer_size, "%f", length);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "(Error)");
+		}
+		return 1;
+	}
+
+	//The selected beat's expected position based on the previous beat's tempo
+	if(!ustricmp(macro, "DEBUG_BEAT_POS_FROM_PREV_BEAT_TEMPO"))
+	{
+		if(eof_selected_beat < eof_song->beats)
+		{
+			double length = eof_calculate_beat_pos_by_prev_beat_tempo(eof_song, eof_selected_beat);
+
+			snprintf(dest_buffer, dest_buffer_size, "%f", length);
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "(Error)");
 		}
 		return 1;
 	}

@@ -3214,7 +3214,13 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta, double realtime,
 	struct Tempo_change *temp;
 	struct Tempo_change *cond = NULL;	//A conductor for the linked list
 
-	eof_log("eof_add_to_tempo_list() entered", 3);
+	if(eof_log_level >= 3)
+	{
+		eof_log("eof_add_to_tempo_list() entered", 3);
+
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding tempo change:  Delta = %lu, pos = %f, BPM = %f", delta, realtime, BPM);
+		eof_log(eof_log_string, 3);
+	}
 
 //Allocate and initialize new link
 	temp = (struct Tempo_change *)malloc(sizeof(struct Tempo_change));

@@ -138,7 +138,7 @@ int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets,
 
 EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF_PRO_GUITAR_TRACK *tp, unsigned long linectr, unsigned char curdiff)
 {
-	long time = 0, step = 0;
+	long timevar = 0, step = 0;
 	long bend = 0, fret = 0, hammeron = 0, harmonic = 0, palmmute = 0, pulloff = 0, string = 0, sustain = 0, tremolo = 0, linknext = 0, accent = 0, ignore = 0, mute = 0, pinchharmonic = 0, tap = 0, vibrato = 0;
 	long pluck = -1, slap = -1, slideto = -1, slideunpitchto = -1;
 	unsigned long flags = 0;
@@ -159,7 +159,7 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 	if(ptr)
 	{	//If this is a note or chordnote tag
 		//Read note attributes
-		if(!parse_xml_rs_timestamp("time", buffer, &time))
+		if(!parse_xml_rs_timestamp("time", buffer, &timevar))
 		{	//If the timestamp was not readable
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
 			eof_log(eof_log_string, 1);
@@ -214,7 +214,7 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 			np->type = curdiff;
 			np->note = 1 << (unsigned long) string;
 			np->frets[(unsigned long) string] = fret;
-			np->pos = time;
+			np->pos = timevar;
 			np->length = sustain;
 			if(bend)
 			{
@@ -282,7 +282,7 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 	if(!ptr || !np)
 		return NULL;	//If this isn't a bendValue tag or a normal note tag wasn't previously read, the tag hasn't been recognized
 
-	if(!parse_xml_rs_timestamp("time", buffer, &time))
+	if(!parse_xml_rs_timestamp("time", buffer, &timevar))
 	{	//If the timestamp was not readable
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading start timestamp on line #%lu.  Aborting", linectr);
 		eof_log(eof_log_string, 1);
@@ -304,7 +304,7 @@ EOF_PRO_GUITAR_NOTE *eof_rs_import_note_tag_data(char *buffer, int function, EOF
 	}
 	tnp->type = np->type;	//This bend tech note will use the same difficulty and string as the note it is applied to
 	tnp->note = np->note;
-	tnp->pos = time;
+	tnp->pos = timevar;
 	tnp->length = 1;
 	tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 	tnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;
@@ -1541,7 +1541,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}//If this is the events tag and it isn't empty
 		else if(strcasestr_spec(buffer, "<levels") && !strstr(buffer, "/>"))
 		{	//If this is the levels tag and it isn't empty
-			long curdiff = 0, time = 0;
+			long curdiff = 0, timevar = 0;
 			long fret = 0, palmmute, mute;
 			unsigned long flags;
 			EOF_PRO_GUITAR_NOTE *np = NULL;
@@ -1704,7 +1704,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										flags = 0;
 
 										//Read chord attributes
-										if(!parse_xml_rs_timestamp("time", buffer, &time))
+										if(!parse_xml_rs_timestamp("time", buffer, &timevar))
 										{	//If the timestamp was not readable
 											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
 											eof_log(eof_log_string, 1);
@@ -1743,7 +1743,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											break;	//Break from inner loop
 										}
 										memcpy(np, chordlist[id], sizeof(EOF_PRO_GUITAR_NOTE));	//Copy the chord template into the new note
-										np->pos = time;
+										np->pos = timevar;
 										if(strcasestr_spec(tag, "up"))
 										{	//If the strum direction is marked as up
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
@@ -1848,7 +1848,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								{	//If this is an anchor tag
 									if(tp->handpositions < EOF_MAX_NOTES)
 									{	//If another fret hand position can be stored
-										if(!parse_xml_rs_timestamp("time", buffer, &time))
+										if(!parse_xml_rs_timestamp("time", buffer, &timevar))
 										{	//If the timestamp was not readable
 											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading timestamp on line #%lu.  Aborting", linectr);
 											eof_log(eof_log_string, 1);
@@ -1866,7 +1866,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										{	//If the anchor is higher than RS1 and RB3 support (taking the capo into account)
 											if(eof_write_rs_files || eof_write_rb_files)
 											{	//If either of those exports is enabled, log it and warn the user
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tHigh anchor (fret %ld) at position %ld on line #%lu", fret - tp->capo, time, linectr);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tHigh anchor (fret %ld) at position %ld on line #%lu", fret - tp->capo, timevar, linectr);
 												eof_log(eof_log_string, 1);
 												if(!(warning & 1))
 												{	//If the user wasn't warned about this error yet
@@ -1877,7 +1877,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										}
  										if(fret - tp->capo > 21)
 										{	//If the anchor is not valid (taking the capo into account), even for RS2, log it and warn the user
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIgnoring invalid anchor (fret %ld) at position %ld on line #%lu", fret - tp->capo, time, linectr);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIgnoring invalid anchor (fret %ld) at position %ld on line #%lu", fret - tp->capo, timevar, linectr);
  											eof_log(eof_log_string, 1);
  											if(!(warning & 2))
  											{	//If the user wasn't warned about this error yet
@@ -1887,7 +1887,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
  										}
  										else
 										{	//Otherwise add it to the track
-											tp->handposition[tp->handpositions].start_pos = time;
+											tp->handposition[tp->handpositions].start_pos = timevar;
 											tp->handposition[tp->handpositions].end_pos = fret - tp->capo;
 											tp->handposition[tp->handpositions].difficulty = curdiff;
 											tp->handpositions++;

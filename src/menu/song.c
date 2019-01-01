@@ -4220,7 +4220,6 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 									return 1;	//Return user cancellation
 								}
 								eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
-								problem_found = 1;
 							}
 							width_warning = 1;
 						}

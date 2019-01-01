@@ -2991,11 +2991,14 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
-	char has_raw_midi_data, has_fp_beat_timings = 1, has_start_end_points;
+	char has_raw_midi_data, has_start_end_points;
 	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count,has_sp_deploy;
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
 	int temp_file_error = 0;	//Set to nonzero if the temp files for any custom data blocks couldn't be written due to the temp files used to create the data being empty (ie. disk full)
+
+	#define EOF_USE_FP_BEAT_TIMINGS 1
+		//Set this to 0 to disable the saving of floating point beat positions
 
 	#define EOFNUMINISTRINGTYPES 11
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -3169,9 +3172,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	{	//If either the start or end points are defined
 		has_start_end_points = 1;
 	}
-	if(has_raw_midi_data || has_fp_beat_timings || has_start_end_points)
+	if(has_raw_midi_data || EOF_USE_FP_BEAT_TIMINGS || has_start_end_points)
 	{	//If writing data in a custom data block
-		(void) pack_iputl(has_raw_midi_data + has_fp_beat_timings + has_start_end_points, fp);	//Write the number of custom data blocks
+		(void) pack_iputl(has_raw_midi_data + EOF_USE_FP_BEAT_TIMINGS + has_start_end_points, fp);	//Write the number of custom data blocks
 		if(has_raw_midi_data)
 		{	//If there is raw MIDI data being stored, write it as a custom data block
 			PACKFILE *tfp;	//Used to create a temp file containing the MIDI data block, so its size can easily be determined before dumping into the output project file
@@ -3245,7 +3248,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_fclose(tfp);
 			(void) delete_file(rawmididatafn);	//Delete the temp file
 		}//If there is raw MIDI data being stored, write it as a custom data block
-		if(has_fp_beat_timings)
+		if(EOF_USE_FP_BEAT_TIMINGS)
 		{	//If floating point beat timings are to be written
 			char buffer[100] = {0};	//Will be used to store an ASCII representation of the beat timestamps
 			PACKFILE *tfp;	//Used to create a temp file containing the beat timings, so its size can easily be determined before dumping into the output project file

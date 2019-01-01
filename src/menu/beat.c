@@ -123,6 +123,7 @@ MENU eof_beat_menu[] =
 	{"Anchor measures", eof_menu_beat_anchor_measures, NULL, 0, NULL},
 	{"&Copy tempo map", eof_menu_beat_copy_tempo_map, NULL, 0, NULL},
 	{"&Paste tempo map", eof_menu_beat_paste_tempo_map, NULL, 0, NULL},
+	{"&Validate tempo map", eof_menu_beat_validate_tempo_map, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
@@ -404,20 +405,20 @@ void eof_prepare_beat_menu(void)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
-			eof_beat_menu[17].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[18].flags = 0;	//Beat>Rocksmith>
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
-				eof_beat_menu[18].flags = D_DISABLED;
+				eof_beat_menu[19].flags = D_DISABLED;
 			}
 			else
 			{
-				eof_beat_menu[18].flags = 0;	//Place Trainer Event
+				eof_beat_menu[19].flags = 0;	//Place Trainer Event
 			}
 		}
 		else
 		{
-			eof_beat_menu[17].flags = D_DISABLED;
 			eof_beat_menu[18].flags = D_DISABLED;
+			eof_beat_menu[19].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -1270,6 +1271,8 @@ int eof_menu_beat_anchor_measures(void)
 	{	//If the user has enabled the Note Auto-Adjust preference
 		(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
 	}
+
+	(void) eof_detect_tempo_map_corruption(eof_song, 0);
 
 	return 1;
 }
@@ -3427,6 +3430,13 @@ int eof_menu_beat_paste_tempo_map(void)
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 	eof_render();
+
+	return D_O_K;
+}
+
+int eof_menu_beat_validate_tempo_map(void)
+{
+	(void) eof_detect_tempo_map_corruption(eof_song, 1);
 
 	return D_O_K;
 }

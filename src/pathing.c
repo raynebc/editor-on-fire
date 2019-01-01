@@ -721,13 +721,13 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 					floatscore = remaining_sustain / step;	//This represents the fraction of one point this remaining sustain is worth
 					if(score.sp_meter > 0.0)
 					{	//If star power is still in effect
-						floatscore = (2 * disjointed_multiplier);	//This remainder of sustain score is doubled due to star power bonus
+						floatscore *= (2 * disjointed_multiplier);	//This remainder of sustain score is doubled due to star power bonus
 						ceiled_floatscore = ceil(floatscore);
 						sp_sustain_score += ceiled_floatscore;		//For logging purposes, consider this a SP sustain point (since a partial sustain point and a partial SP sustain point won't be separately tracked)
 					}
 					else
 					{
-						floatscore = disjointed_multiplier;			//This remainder of sustain score does not get a star power bonus
+						floatscore *= disjointed_multiplier;			//This remainder of sustain score does not get a star power bonus
 						ceiled_floatscore = ceil(floatscore);
 						sustain_score += ceiled_floatscore;			//Track how many non star power sustain points were awarded
 					}
