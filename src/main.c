@@ -5128,7 +5128,11 @@ void eof_start_logging(void)
 
 		if(eof_log_fp == NULL)
 		{
-			allegro_message("Error opening log file for writing.  Move EOF to a file path without any special (ie. accented) characters if applicable.");
+			#ifdef ALLEGRO_MACOSX
+				allegro_message("Error opening log file for writing.  Move EOF to a file path without any special (ie. accented) characters if applicable, and also move outside of the Downloads folder.");
+			#else
+				allegro_message("Error opening log file for writing.  Move EOF to a file path without any special (ie. accented) characters if applicable.");
+			#endif
 		}
 		#ifdef ALLEGRO_WINDOWS
 		{

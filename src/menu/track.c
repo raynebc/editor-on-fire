@@ -4635,16 +4635,16 @@ int eof_menu_track_repair_grid_snap(void)
 
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
 
-		if(!eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
-		{	//If this note is not grid snapped
+		if(!eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos))
+		{	//If this note is not beat interval snapped
 			if(closestpos != ULONG_MAX)
-			{	//If the nearest grid snap position was determined
+			{	//If the nearest beat interval position was determined
 				if(closestpos < notepos)
-				{	//If the closest grid snap is earlier than the note
+				{	//If the closest beat interval is earlier than the note
 					offset = notepos - closestpos;
 				}
 				else
-				{	//The closest grid snap is later than the note
+				{	//The closest beat interval is later than the note
 					offset = closestpos - notepos;
 				}
 
@@ -4678,8 +4678,8 @@ int eof_menu_track_repair_grid_snap(void)
 
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
 
-		if(!eof_is_any_grid_snap_position(notepos, NULL, NULL, NULL, &closestpos))
-		{	//If this note is not grid snapped
+		if(!eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos))
+		{	//If this note is not beat interval snapped
 			if(closestpos != ULONG_MAX)
 			{	//If the nearest grid snap position was determined
 				char direction;
@@ -4954,11 +4954,9 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	EOF_PRO_GUITAR_NOTE *np;
 	unsigned long beats = 0, notes = 0, technotes = 0, sections = 0, events = 0;
 
-	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
-	int gridsnapbeat = 0;
-	char gridsnapvalue = 0;
-	unsigned char gridsnapnum = 0;
-	unsigned long gridpos = 0;
+	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
+	unsigned long intervalbeat = 0, intervalpos = 0;
+	unsigned char intervalvalue = 0, intervalnum = 0;
 
 	eof_log("eof_menu_track_clone_track_from_clipboard() entered", 1);
 
@@ -5062,7 +5060,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 		for(ctr = 0; ctr < notecount; ctr++)
 		{	//For each note for this note set in the clipboard file
 			eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
-			eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
+			eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 
 			if((noteset > 0) && (d_track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 				continue;	//Don't add tech notes to a legacy track
@@ -5093,9 +5091,9 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			temp_note.length = eof_put_porpos(temp_note.endbeat, temp_note.porendpos, 0.0) - temp_note.pos;
 			if(temp_note.length <= 0)
 				temp_note.length = 1;
-			if(eof_find_grid_snap_position(gridsnapbeat, gridsnapvalue, gridsnapnum, &gridpos))
-			{	//If the destination grid snap position can be calculated
-				temp_note.pos = gridpos;	//Update the adjusted position for the note
+			if(eof_find_beat_interval_position(intervalbeat, intervalvalue, intervalnum, &intervalpos))
+			{	//If the destination beat interval position can be calculated
+				temp_note.pos = intervalpos;	//Update the adjusted position for the note
 			}
 
 			//Create the note

@@ -785,10 +785,9 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	unsigned long source_id = 0;
 	unsigned long lastlinenum = 0xFFFFFFFF, linestart = 0, lineend = 0;	//Used to create lyric lines
 
-	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
-	int gridsnapbeat = 0;
-	char gridsnapvalue = 0;
-	unsigned char gridsnapnum = 0;
+	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
+	unsigned long intervalbeat = 0;
+	unsigned char intervalvalue = 0, intervalnum = 0;
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
@@ -823,7 +822,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	{	//For each lyric in the clipboard file
 		/* read the note */
 		eof_read_clipboard_note(fp, &temp_lyric, EOF_MAX_LYRIC_LENGTH + 1);
-		eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
+		eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 
 		if(eof_music_pos + temp_lyric.pos - eof_av_delay >= eof_chart_length)
 			continue;	//If this lyric doesn't fit within the chart, skip it
@@ -839,15 +838,15 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 				newpasteoffset = newpasteoffset - temp_lyric.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
 			}
 			new_pos = eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, newpasteoffset);
-			if(gridsnapvalue)
-			{	//If the source lyric was grid snapped
+			if(intervalvalue)
+			{	//If the source lyric was beat interval snapped
 				unsigned long closestpos = new_pos;
 
-				(void) eof_is_any_grid_snap_position(new_pos, NULL, NULL, NULL, &closestpos);	//Get the grid snap position nearest the destination position
+				(void) eof_is_any_beat_interval_position(new_pos, NULL, NULL, NULL, &closestpos);	//Get the beat interval position nearest the destination position
 				if(closestpos != new_pos)
 				{	//If they aren't the same position
 					if(closestpos != ULONG_MAX)
-					{	//If the nearest grid snap position was determined
+					{	//If the nearest beat interval position was determined
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting lyric paste position from %ldms to %lums", new_pos, closestpos);
 						eof_log(eof_log_string, 1);
 						new_pos = closestpos;	//Update the destination timestamp for the note;
@@ -1155,11 +1154,9 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	char affect_until_end = 0;	//Is set to nonzero if all notes until the end of the project are affected by this operation
 	char eof_autoadjust_path[50];
 
-	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
-	int beat = 0;
-	char gridsnapvalue = 0;
-	unsigned char gridsnapnum = 0;
-	unsigned long gridpos = 0;
+	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
+	unsigned long intervalbeat = 0, intervalpos = 0;
+	unsigned char intervalvalue = 0, intervalnum = 0;
 
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
@@ -1228,15 +1225,15 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{
 		/* read the note */
 			eof_read_clipboard_note(fp, &temp_note, EOF_MAX_LYRIC_LENGTH + 1);
-			eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);
+			eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 
 			if(temp_note.pos + temp_note.length < eof_chart_length)
 			{
 				notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
 
-				if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
-				{	//If the adjusted grid snap position can be calculated
-					notepos = gridpos;	//Update the adjusted position for the note
+				if(eof_find_beat_interval_position(intervalbeat, intervalvalue, intervalnum, &intervalpos))
+				{	//If the adjusted beat interval position can be calculated
+					notepos = intervalpos;	//Update the adjusted position for the note
 				}
 				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - notepos;
 				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, temp_note.name);
@@ -1291,15 +1288,15 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			{
 				/* read the note */
 				eof_read_clipboard_note(fp, &temp_note, EOF_MAX_LYRIC_LENGTH + 1);
-				eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);
+				eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 
 				if(temp_note.pos + temp_note.length >= eof_chart_length)
 					continue;	//If this note doesn't fit within the chart, skip it
 
 				notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_tech_beat[j], temp_note.porpos, 0.0);
-				if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
-				{	//If the adjusted grid snap position can be calculated
-					notepos = gridpos;	//Update the adjusted position for the note
+				if(eof_find_beat_interval_position(intervalbeat, intervalvalue, intervalnum, &intervalpos))
+				{	//If the adjusted beat interval position can be calculated
+					notepos = intervalpos;	//Update the adjusted position for the note
 				}
 				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_tech_beat[j], temp_note.porendpos, 0.0) - notepos;
 				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, temp_note.name);
@@ -1356,24 +1353,24 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			{	//For each instance of this type of section in the track
 				/* which beat */
 				b = pack_igetl(fp);
-				(void) pack_fread(&tfloat, (long)sizeof(double), fp);								//Read the floating point position of the section's start position
-				eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);		//Read the grid snap position data for the section's start position
+				(void) pack_fread(&tfloat, (long)sizeof(double), fp);									//Read the floating point position of the section's start position
+				eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read the beat interval position data for the section's start position
 
 				phrase[sectionnum].start_pos = eof_put_porpos(b, tfloat, 0.0);
-				if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
-				{	//If the adjusted grid snap position can be calculated
-					phrase[sectionnum].start_pos = gridpos;	//Update the adjusted position for the section
+				if(eof_find_beat_interval_position(intervalbeat, intervalvalue, intervalnum, &intervalpos))
+				{	//If the adjusted beat interval position can be calculated
+					phrase[sectionnum].start_pos = intervalpos;	//Update the adjusted position for the section
 				}
 
 				if(sectiontype != EOF_FRET_HAND_POS_SECTION)
 				{	//Each of the auto adjusted phrase types have an end position variable to adjust, except for fret hand positions, which instead store the fret number with that value
 					b = pack_igetl(fp);
-					(void) pack_fread(&tfloat, (long)sizeof(double), fp);								//Read the floating point position of the section's end position
-					eof_read_clipboard_position_snap_data(fp, &beat, &gridsnapvalue, &gridsnapnum);		//Read the grid snap position data for the section's end position
+					(void) pack_fread(&tfloat, (long)sizeof(double), fp);									//Read the floating point position of the section's end position
+					eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read the beat interval position data for the section's end position
 					phrase[sectionnum].end_pos = eof_put_porpos(b, tfloat, 0.0);
-					if(eof_find_grid_snap_position(beat, gridsnapvalue, gridsnapnum, &gridpos))
-					{	//If the adjusted grid snap position can be calculated
-						phrase[sectionnum].end_pos = gridpos;	//Update the adjusted position for the section
+					if(eof_find_beat_interval_position(intervalbeat, intervalvalue, intervalnum, &intervalpos))
+					{	//If the adjusted beat interval position can be calculated
+						phrase[sectionnum].end_pos = intervalpos;	//Update the adjusted position for the section
 					}
 				}
 			}
@@ -1513,12 +1510,11 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	char clipboard_path[50];
 	int warning = 0;
 	char isghl;	//Set to nonzero if the clipboard's source track had GHL mode enabled, which changes the interpretation of lane 6 gems
-
-	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
-	int gridsnapbeat = 0;
-	char gridsnapvalue = 0;
-	unsigned char gridsnapnum = 0;
 	unsigned long source_id = 0;
+
+	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
+	unsigned long intervalbeat = 0;
+	unsigned char intervalvalue = 0, intervalnum = 0;
 
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
@@ -1590,12 +1586,12 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		unsigned long clear_start, clear_end;
 
 		eof_read_clipboard_note(fp, &first_note, EOF_NAME_LENGTH + 1);	//Read the first note on the clipboard
-		eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
+		eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 		memcpy(&last_note, &first_note, sizeof(first_note));	//Clone the first clipboard note into last_note in case there aren't any other notes on the clipboard
 		for(i = 1; i < copy_notes; i++)
 		{	//For each remaining note on the clipboard
 			eof_read_clipboard_note(fp, &last_note, EOF_NAME_LENGTH + 1);	//Read the note
-			eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
+			eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 		}
 		//At this point, last_note contains the data for the last note on the clipboard.  Determine the time span of notes that would need to be cleared
 		if(!oldpaste)
@@ -1636,7 +1632,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		EOF_PRO_GUITAR_NOTE *np;
 
 		eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
-		eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
+		eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 
 		//Add enough beats to encompass the pasted note if necessary
 		while(1)
@@ -1680,15 +1676,15 @@ int eof_menu_edit_paste_logic(int oldpaste)
 				newpasteoffset = newpasteoffset - temp_note.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
 			}
 			newnotepos = eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, newpasteoffset);
-			if(gridsnapvalue)
-			{	//If the source note was grid snapped
+			if(intervalvalue)
+			{	//If the source note was beat interval snapped
 				unsigned long closestpos = newnotepos;
 
-				(void) eof_is_any_grid_snap_position(newnotepos, NULL, NULL, NULL, &closestpos);	//Get the grid snap position nearest the destination position
+				(void) eof_is_any_beat_interval_position(newnotepos, NULL, NULL, NULL, &closestpos);	//Get the beat interval position nearest the destination position
 				if(closestpos != newnotepos)
 				{	//If they aren't the same position
 					if(closestpos != ULONG_MAX)
-					{	//If the nearest grid snap position was determined
+					{	//If the nearest beat interval position was determined
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting note paste position from %lums to %lums", newnotepos, closestpos);
 						eof_log(eof_log_string, 1);
 						newnotepos = closestpos;	//Update the destination timestamp for the note;
@@ -4113,14 +4109,14 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	temp_note->phrasenum = pack_igetl(fp);		//Read the arpeggio/handshape/lyric phrase number the note is in
 }
 
-void eof_read_clipboard_position_snap_data(PACKFILE *fp, int *beat, char *gridsnapvalue, unsigned char *gridsnapnum)
+void eof_read_clipboard_position_beat_interval_data(PACKFILE *fp, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum)
 {
-	if(!fp || !beat || !gridsnapvalue || !gridsnapnum)
+	if(!fp || !beat || !intervalvalue || !intervalnum)
 		return;	//Invalid parameters
 
 	*beat = pack_igetl(fp);				//Read the beat number
-	*gridsnapvalue = pack_getc(fp);		//Read the grid snap setting
-	*gridsnapnum = pack_getc(fp);		//Read the grid snap number
+	*intervalvalue = pack_getc(fp);		//Read the beat interval count
+	*intervalnum = pack_getc(fp);		//Read the beat interval number
 }
 
 void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long first_pos)
@@ -4210,17 +4206,16 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 
 void eof_write_clipboard_position_snap_data(PACKFILE *fp, unsigned long pos)
 {
-	char gridsnapvalue = 0;
-	unsigned char gridsnapnum = 0;
-	long beat = 0;
+	unsigned long intervalbeat = 0;
+	unsigned char intervalvalue = 0, intervalnum = 0;
 
 	if(!fp)
 		return;	//Invalid parameters
 
-	(void) eof_is_any_grid_snap_position(pos, &beat, &gridsnapvalue, &gridsnapnum, NULL);	//Determine grid snap position, if any, of the specified position
-	(void) pack_iputl(beat, fp);			//Write the beat number
-	(void) pack_putc(gridsnapvalue, fp);	//Write the grid snap setting
-	(void) pack_putc(gridsnapnum, fp);		//Write the grid snap number
+	(void) eof_is_any_beat_interval_position(pos, &intervalbeat, &intervalvalue, &intervalnum, NULL);	//Determine beat interval position, if any, of the specified position
+	(void) pack_iputl(intervalbeat, fp);	//Write the beat number
+	(void) pack_putc(intervalvalue, fp);	//Write the beat interval count
+	(void) pack_putc(intervalnum, fp);		//Write the beat interval number
 }
 
 unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long notemask)

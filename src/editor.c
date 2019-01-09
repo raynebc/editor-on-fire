@@ -646,6 +646,7 @@ int eof_is_grid_snap_position(unsigned long pos)
 	return (temp.pos == pos);
 }
 
+///This function is deprecated
 int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapvalue, unsigned char *gridsnapnum, unsigned long *closestgridpos)
 {
 	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
@@ -723,6 +724,7 @@ int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapv
 	return retval;
 }
 
+///This function is deprecated
 int eof_find_grid_snap_position(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
 {
 	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
@@ -774,10 +776,11 @@ unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int
 	return ((double)pos - eof_tail_snap.snap_length) + 0.5;	//Round to nearest ms
 }
 
-int eof_is_any_beat_interval(unsigned long pos, unsigned long *closestintervalpos)
+int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum, unsigned long *closestintervalpos)
 {
-	unsigned long ctr, interval, beatnum, interval_pos, closestpos = 0, closestdiff = 0, diff;
+	unsigned long ctr, beatnum, interval_pos, closestpos = 0, closestdiff = ULONG_MAX, diff;
 	double beat_length, interval_length;
+	unsigned char interval;
 	int first = 1;
 
 	if(closestintervalpos)
@@ -801,26 +804,26 @@ int eof_is_any_beat_interval(unsigned long pos, unsigned long *closestintervalpo
 		for(ctr = 0; ctr < interval; ctr++)
 		{	//For each instance of that beat interval
 			interval_pos = eof_song->beat[beatnum]->fpos + (ctr * interval_length) + 0.5;
+			diff = (interval_pos > pos) ? (interval_pos - pos) : (pos - interval_pos);	//Get the distance between the target position and this grid snap
+
 			if(interval_pos == pos)
-			{	//If the interval positions rounds to the same integer millisecond position as the target
+			{	//If this interval position rounds to the same integer millisecond position as the target
+				if(intervalnum)
+					*intervalnum = ctr;
+				if(intervalvalue)
+					*intervalvalue = interval;
+				if(beat)
+					*beat = beatnum;
 				if(closestintervalpos)
 					*closestintervalpos = interval_pos;
+
 				return 1;	//Return true
 			}
 
-			if(first)
-			{	//If this is the first beat interval examined
+			if(first || (diff < closestdiff))
+			{	//If this is the first beat interval examined, or if this interval position is closer to the target than any examined so far
 				closestpos = interval_pos;	//Track this as the beat interval position closest to the target position so far
-				closestdiff = (interval_pos > pos) ? (interval_pos - pos) : (pos - interval_pos);	//Track the distance between the target position and this grid snap
-			}
-			else
-			{
-				diff = (interval_pos > pos) ? (interval_pos - pos) : (pos - interval_pos);	//Get the distance between the target position and this grid snap
-				if(diff < closestdiff)
-				{	//If this beat interval position is closer to the target than any examined so far
-					closestpos = interval_pos;	//Track it as the closest
-					closestdiff = diff;
-				}
+				closestdiff = diff;	//Track the distance between the target position and this grid snap
 			}
 
 			first = 0;
@@ -828,10 +831,49 @@ int eof_is_any_beat_interval(unsigned long pos, unsigned long *closestintervalpo
 	}
 
 	//The position was not found to be a beat interval position
+	if(beatnum + 1 < eof_song->beats)
+	{	//If there is a beat after the specified position
+		unsigned long nextbeatpos = eof_song->beat[beatnum + 1]->pos;
+
+		if(nextbeatpos - pos < closestdiff)
+		{	//If that beat marker is closer than any grid snap interval found so far
+			closestpos = nextbeatpos;
+		}
+	}
+
+	//The specified position was not a beat interval position
+	if(intervalnum)
+		*intervalnum = 0;
+	if(intervalvalue)
+		*intervalvalue = 0;
+	if(beat)
+		*beat = beatnum;
 	if(closestintervalpos)
 		*closestintervalpos = closestpos;	//Return the closest interval position found if the calling function wanted it
 
-	return 0;
+	return 0;	//Return false
+}
+
+int eof_find_beat_interval_position(unsigned long beat, unsigned char intervalvalue, unsigned char intervalnum, unsigned long *intervalpos)
+{
+	double beat_length, interval_length;
+
+	if(!eof_song || !intervalpos || !intervalvalue)
+		return 0;	//Invalid parameters
+
+	while(intervalnum >= intervalvalue)
+	{	//If the calling function specified an interval number that is outside of the specified beat
+		intervalnum -= intervalvalue;	//Adjust the beat number
+		beat++;
+	}
+	if(beat >= eof_song->beats)	//If the beat number is invalid
+		return 0;				//Return error
+
+	beat_length = eof_get_beat_length(eof_song, beat);
+	interval_length = beat_length / (double)intervalvalue;
+	*intervalpos = eof_song->beat[beat]->fpos + ((double)intervalnum * interval_length) + 0.5;
+
+	return 1;	//Return success
 }
 
 void eof_read_editor_keys(void)
@@ -1902,6 +1944,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_snap_mode = EOF_SNAP_NINTY_SIXTH;
 		}
 		eof_fixup_notes(eof_song);	//Run the fixup logic for all tracks, so that if the "Highlight non grid snapped notes" feature is in use, the highlighting can discontinue taking the custom grid snap into account
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
 		eof_use_key();
 	}
 
@@ -1919,6 +1962,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_snap_mode = 0;
 		}
 		eof_fixup_notes(eof_song);	//Run the fixup logic for all tracks, so that if the "Highlight non grid snapped notes" feature is in use, the highlighting can discontinue taking the custom grid snap into account
+		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
 		eof_use_key();
 	}
 

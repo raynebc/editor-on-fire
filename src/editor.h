@@ -70,13 +70,15 @@ unsigned long eof_next_grid_snap(unsigned long pos);
 	//Returns the timestamp of the next grid snap position, or 0 on error
 int eof_is_grid_snap_position(unsigned long pos);
 	//Returns nonzero if the specified timestamp is a grid snap position based on the current grid snap setting
+///This function is deprecated
 int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapvalue, unsigned char *gridsnapnum, unsigned long *closestgridpos);
 	//Returns nonzero if the specified timestamp is a grid snap position for ANY built in grid snap setting for the currently loaded project
 	//If a custom grid snap setting is in effect, its position is also compared
-	//If beat is not NULL, the beat number the grid snap position is in is returned through it, or -1 if the specified position is invalid
+	//If beat is not NULL, the beat number the grid snap position is in is returned through it, or ULONG_MAX if the specified position is invalid
 	//If gridsnapvalue is not NULL, the grid snap setting of the matching position is returned through it, or 0 is if no match is found
 	//If gridsnapnum is not NULL, the grid snap position number of the matching position is returned through it
 	//If closestgridpos is not NULL, the timestamp of the grid snap position that is closest to the specified timestamp is returned through it, or ULONG_MAX is returned on error
+///This function is deprecated
 int eof_find_grid_snap_position(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos);
 	//Determines the real time position of the specified grid snap
 	//Depends on eof_chart_length being large enough to reflect the last beat time stamp
@@ -85,11 +87,17 @@ unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int
 	//Returns the position that is one full grid snap earlier than pos (not just the earliest grid snap occurrence), where the grid snap size is 1/# beat, or
 	// 1/# measure if per_measure is nonzero
 	//Returns ULONG_MAX if the position is not found
-int eof_is_any_beat_interval(unsigned long pos, unsigned long *closestintervalpos);
+int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum, unsigned long *closestintervalpos);
 	//Returns nonzero if the specified timestamp is any beat interval position, where the interval count is between 2 and EOF_MAX_GRID_SNAP_INTERVALS
 	// (This matches the logic in eof_ConvertToRealTime() that determines whether a tick position is a grid snap)
+	//If beat is not NULL, the beat number the grid snap position is in is returned through it, or ULONG_MAX if the specified position is invalid
+	//If intervalvalue is not NULL, the interval size of the matching position (ie. 1/10 beat) is returned through it, or 0 is if no match is found
+	//If intervalnum is not NULL, the interval number of the matching position is returned through it
 	//If closestintervalpos is not NULL, it is set to the beat interval position that is closest to the specified timestamp
 	//Upon error, zero is returned and if closestintervalpos is not NULL, its referenced variable is set to ULONG_MAX
+int eof_find_beat_interval_position(unsigned long beat, unsigned char intervalvalue, unsigned char intervalnum, unsigned long *intervalpos);
+	//Determines the real time position of the specified beat interval
+	//If it exists, it is returned through gridpos and nonzero is returned
 
 void eof_read_editor_keys(void);
 void eof_editor_logic(void);

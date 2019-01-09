@@ -8084,10 +8084,9 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	unsigned long highestfret = 0, currentfret;	//Used to find if any pasted notes would use a higher fret than the active track supports
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
 
-	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
-	int gridsnapbeat = 0;
-	char gridsnapvalue = 0;
-	unsigned char gridsnapnum = 0;
+	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
+	unsigned long intervalbeat = 0;
+	unsigned char intervalvalue = 0, intervalnum = 0;
 
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid
@@ -8112,7 +8111,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 		for(i = 0; i < copy_notes; i++)
 		{	//For each note in the clipboard file
 			eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
-			eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
+			eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 			for(j = 0, bitmask = 1; j < 6; j++, bitmask <<= 1)
 			{	//For each of the 6 usable strings
 				if(temp_note.note & bitmask)
@@ -8139,10 +8138,9 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	unsigned long highestlane = 0;	//Used to find if any pasted notes would use a higher lane than the active track supports
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
 
-	//Grid snap variables used to automatically re-snap auto-adjusted timestamps
-	int gridsnapbeat = 0;
-	char gridsnapvalue = 0;
-	unsigned char gridsnapnum = 0;
+	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
+	unsigned long intervalbeat = 0;
+	unsigned char intervalvalue = 0, intervalnum = 0;
 
 	if(!clipboardfile)
 	{	//If the passed clipboard filename is invalid
@@ -8165,7 +8163,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
 		eof_read_clipboard_note(fp, &temp_note, EOF_NAME_LENGTH + 1);	//Read the note
-		eof_read_clipboard_position_snap_data(fp, &gridsnapbeat, &gridsnapvalue, &gridsnapnum);	//Read its grid snap data
+		eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 		for(j = 1, bitmask = 1; j < 9; j++, bitmask<<=1)
 		{	//For each of the 8 bits in the bitmask
 			if(temp_note.note & bitmask)
@@ -10047,13 +10045,13 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 				}
 				else
 				{	//If using the closest grid snap setting of ANY grid size
-					(void) eof_is_any_grid_snap_position(sections[ctr].start_pos, NULL, NULL, NULL, &newstart);
-					if(newstart == ULONG_MAX)	//If the nearest grid snap position for the section beginning was not found
+					(void) eof_is_any_beat_interval_position(sections[ctr].start_pos, NULL, NULL, NULL, &newstart);
+					if(newstart == ULONG_MAX)	//If the nearest beat interval position for the section beginning was not found
 						continue;	//Skip it
 					if(sectiontype != EOF_FRET_HAND_POS_SECTION)
 					{	//Fret hand positions don't define an end position
-						(void) eof_is_any_grid_snap_position(sections[ctr].end_pos, NULL, NULL, NULL, &newend);
-						if(newend == ULONG_MAX)	//If the nearest grid snap position for the section ending was not found
+						(void) eof_is_any_beat_interval_position(sections[ctr].end_pos, NULL, NULL, NULL, &newend);
+						if(newend == ULONG_MAX)	//If the nearest beat interval position for the section ending was not found
 							continue;	//Skip it
 					}
 				}
@@ -10154,8 +10152,8 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 					continue;	//Skip it
 			}
 			else
-			{	//If using the closest grid snap setting of ANY grid size
-				(void) eof_is_any_grid_snap_position(tp->technote[ctr]->pos, NULL, NULL, NULL, &newstart);
+			{	//If using the closest beat interval of ANY grid size
+				(void) eof_is_any_beat_interval_position(tp->technote[ctr]->pos, NULL, NULL, NULL, &newstart);
 				if(newstart == ULONG_MAX)	//If the nearest grid snap position was not found
 					continue;	//Skip it
 			}
