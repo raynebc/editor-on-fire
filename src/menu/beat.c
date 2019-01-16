@@ -3014,7 +3014,7 @@ int eof_menu_beat_copy_events(void)
 			}
 			else
 			{	//On the second pass, write the events to the clipboard file
-				(void) eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write the event's name
+				(void) eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write the event's text
 				(void) pack_iputl(eof_song->text_event[ctr2]->track, fp);				//Write the event's track
 				(void) pack_iputl(eof_song->text_event[ctr2]->flags, fp);				//Write the event's flags
 			}

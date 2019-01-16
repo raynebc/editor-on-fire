@@ -295,7 +295,7 @@ Vocal Track Editing:
     
         Shift the piano roll directly to a specific octave.
 
-    Backspace:
+    0 (Not Number Pad):
 
         Add a percussion note.
 

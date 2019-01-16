@@ -183,8 +183,17 @@ void eof_mix_callback_stereo(void * buf, int length)
 	for(i = 0; i < bytes_left; i += 2)
 	{
 		/* store original sample values */
-		sum = buffer[i] - 32768;	//Convert to signed sample
+		sum = buffer[i] - 32768;		//Convert to signed sample
 		sum2 = buffer[i+1] - 32768;		//Repeat for the other channel of a stereo sample
+
+		/* perform phase cancellation if enabled */
+		if(eof_phase_cancellation)
+		{
+			long sum3 = (sum - sum2) / 2;		//Subtract one channel's amplitude from the other and divide by two
+
+			sum = sum3;		//And use that for each channel's amplitude
+			sum2 = sum3;
+		}
 
 		/* apply volume multiplier */
 		if(eof_chart_volume != 100)		//If the chart volume is to be less than 100%

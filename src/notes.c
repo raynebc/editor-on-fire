@@ -3097,6 +3097,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The status of the phase cancellation option
+	if(!ustricmp(macro, "PHASE_CANCELLATION"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", (eof_phase_cancellation ? "On" : "Off"));
+		return 1;
+	}
+
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
 	if(!ustricmp(macro, "DEBUG_BEAT_PPQN"))

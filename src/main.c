@@ -200,6 +200,7 @@ int         eof_windowed = 1;
 int         eof_anchor_all_beats = 1;
 int         eof_disable_windows = 0;
 int         eof_disable_vsync = 0;
+int         eof_phase_cancellation = 0;		//If nonzero, the stereo mixing callback function will subtract the right channel amplitude from the left (ie. to get the effect of reducing center-panned vocals)
 int         eof_playback_speed = 1000;
 char        eof_playback_time_stretch = 1;
 int         eof_ogg_setting = 1;
@@ -2089,6 +2090,12 @@ void eof_read_keyboard_input(char function)
 				}
 			}
 		}
+		#ifdef ALLEGRO_MACOSX
+			if(function && (eof_key_code == KEY_BACKSPACE))
+			{	//If the calling function was NOT a dialog function, and the keyboard input was backspace
+				eof_key_code = KEY_DEL;	//Remap it to delete (since Mac keyboards often combine backspace and delete) so it can be used for applicable delete key shortcuts
+			}
+		#endif
 		eof_last_key_char = eof_key_char;
 		eof_last_key_code = eof_key_code;
 	}

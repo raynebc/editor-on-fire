@@ -1676,6 +1676,8 @@ int eof_menu_edit_paste_logic(int oldpaste)
 				newpasteoffset = newpasteoffset - temp_note.porpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
 			}
 			newnotepos = eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, newpasteoffset);
+			if(newnotepos > eof_chart_length)
+				eof_chart_length = newnotepos;	//Update the end of chart content tracking variable accordingly, as eof_is_any_beat_interval_position() uses eof_get_beat() which validates it
 			if(intervalvalue)
 			{	//If the source note was beat interval snapped
 				unsigned long closestpos = newnotepos;

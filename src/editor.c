@@ -2330,6 +2330,16 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 	}
 
+	/* Toggle phase cancellation (ALT+P) */
+	if(eof_key_code == KEY_P)
+	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
+		if(KEY_EITHER_ALT)
+		{	//ALT is held
+			eof_phase_cancellation ^= 1;	//Toggle this setting on/off
+			eof_use_key();
+		}
+	}
+
 /* keyboard shortcuts that only apply when the chart is playing (non drum record type input methods) */
 
 	if(!eof_music_paused && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
@@ -5054,7 +5064,7 @@ void eof_vocal_editor_logic(void)
 			eof_pen_lyric.pos = eof_snap.pos;
 			rpos = eof_pen_lyric.pos;
 			eof_pen_lyric.length = eof_snap.length;
-			if(eof_key_code == KEY_BACKSPACE)
+			if(eof_key_char == '0')
 			{	//If entering a vocal percussion note
 				eof_pen_lyric.note = EOF_LYRIC_PERCUSSION;
 			}
@@ -5429,7 +5439,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}//If neither full screen 3D view is is use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
-			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || (eof_key_code == KEY_INSERT))) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && ((eof_key_char == '1') || (eof_key_char == '2') || (eof_key_char == '3') || (eof_key_char == '4') || (eof_key_char == '5') || (eof_key_char == '6'))) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || (eof_key_code == KEY_BACKSPACE)))
+			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || (eof_key_code == KEY_INSERT))) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && ((eof_key_char == '1') || (eof_key_char == '2') || (eof_key_char == '3') || (eof_key_char == '4') || (eof_key_char == '5') || (eof_key_char == '6'))) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || (eof_key_char == '0')))
 			{	//If full screen 3D view is not in effect and input to add a note is provided
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
@@ -5493,7 +5503,7 @@ void eof_vocal_editor_logic(void)
 				else
 				{
 					eof_rclick_released = 0;	//Track that the right mouse button is being held
-					if(eof_key_code == KEY_BACKSPACE)
+					if(eof_key_char == '0')
 					{	//Map the percussion note here
 						eof_pen_lyric.note = EOF_LYRIC_PERCUSSION;
 						eof_use_key();

@@ -128,7 +128,7 @@ MENU eof_file_menu[] =
 DIALOG eof_settings_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   48,  230, 244, 2,   23,  0,    0,      0,   0,   "Settings",       NULL, NULL },
+	{ d_agup_window_proc,    0,   48,  230, 264, 2,   23,  0,    0,      0,   0,   "Settings",       NULL, NULL },
 	{ d_agup_text_proc,      16,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "AV Delay (ms):", NULL, NULL },
 	{ eof_verified_edit_proc,158, 80,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,        "0123456789", NULL },
 	{ d_agup_text_proc,      16,  108, 64,  8,   2,   23,  0,    0,      0,   0,   "MIDI Tone Delay (ms):",NULL, NULL },
@@ -140,8 +140,9 @@ DIALOG eof_settings_dialog[] =
 	{ d_agup_check_proc,     16,  184, 160, 16,  2,   23,  0,    0,      1,   0,   "Smooth Playback",NULL, NULL },
 	{ d_agup_check_proc,     16,  204, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable Windows UI",NULL, NULL },
 	{ d_agup_check_proc,     16,  224, 160, 16,  2,   23,  0,    0,      1,   0,   "Disable VSync",  NULL, NULL },
-	{ d_agup_button_proc,    16,  252, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
-	{ d_agup_button_proc,    146, 252, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
+	{ d_agup_check_proc,     16,  244, 160, 16,  2,   23,  0,    0,      1,   0,   "Phase Cancellation",NULL, NULL },
+	{ d_agup_button_proc,    16,  272, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+	{ d_agup_button_proc,    146, 272, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1236,7 +1237,8 @@ int eof_menu_file_settings(void)
 	eof_settings_dialog[9].flags = eof_smooth_pos ? D_SELECTED : 0;
 	eof_settings_dialog[10].flags = eof_disable_windows ? D_SELECTED : 0;
 	eof_settings_dialog[11].flags = eof_disable_vsync ? D_SELECTED : 0;
-	if(eof_popup_dialog(eof_settings_dialog, 0) == 12)
+	eof_settings_dialog[12].flags = eof_phase_cancellation ? D_SELECTED : 0;
+	if(eof_popup_dialog(eof_settings_dialog, 0) == 13)
 	{	//User clicked OK
 		eof_av_delay = strtoul(eof_etext, NULL, 10);
 		eof_buffer_size = atol(eof_etext2);
@@ -1255,6 +1257,7 @@ int eof_menu_file_settings(void)
 		eof_smooth_pos = (eof_settings_dialog[9].flags == D_SELECTED ? 1 : 0);
 		eof_disable_windows = (eof_settings_dialog[10].flags == D_SELECTED ? 1 : 0);
 		eof_disable_vsync = (eof_settings_dialog[11].flags == D_SELECTED ? 1 : 0);
+		eof_phase_cancellation  = (eof_settings_dialog[12].flags == D_SELECTED ? 1 : 0);
 		ncdfs_use_allegro = eof_disable_windows;
 	}
 	eof_show_mouse(NULL);

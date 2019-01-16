@@ -413,6 +413,7 @@ extern int         eof_windowed;
 extern int         eof_anchor_all_beats;
 extern int         eof_disable_windows;
 extern int         eof_disable_vsync;
+extern int         eof_phase_cancellation;
 extern int         eof_playback_speed;
 extern char        eof_playback_time_stretch;
 extern int         eof_ogg_setting;
@@ -776,7 +777,9 @@ void eof_seek_and_render_position(unsigned long track, unsigned char diff, unsig
 void eof_read_keyboard_input(char function);
 	//Updates the keypress state variables
 	//If function is nonzero, the numberpad number key strokes have the ASCII value discarded so that the main editor logic can detect the keys without conflicting with the other number keys.
-	//  This functionality needs to be disabled in the dialogs or else the number pad keys cannot be used to type into input fields
+	//  And the backspace key is remapped to delete in OS X to suit Mac keyboards often not having a dedicated delete key
+	//Function needs to be zero when this function is used for dialog input or else the number pad keys cannot be used to type into input fields
+
 void eof_use_key(void);
 	//Erases the keypress state variables
 
