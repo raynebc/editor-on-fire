@@ -4586,7 +4586,7 @@ int eof_initialize(int argc, char * argv[])
 				eof_song = eof_import_midi(argv[i]);
 				if(!eof_song)
 				{
-					allegro_message("Could not import song!");
+					allegro_message("Could not import MIDI!");
 					return 0;
 				}
 				eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
@@ -4602,7 +4602,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				if(!eof_song)
 				{
-					allegro_message("Could not import song!");
+					allegro_message("Could not import RBA!");
 					return 0;
 				}
 
@@ -4613,7 +4613,7 @@ int eof_initialize(int argc, char * argv[])
 				eof_song = eof_import_chart(argv[i]);
 				if(!eof_song)
 				{
-					allegro_message("Could not import song!");
+					allegro_message("Could not import Feedback chart!");
 					return 0;
 				}
 				eof_song_loaded = 1;
@@ -4623,7 +4623,7 @@ int eof_initialize(int argc, char * argv[])
 				eof_song = eof_import_gh(argv[i]);
 				if(!eof_song)
 				{
-					allegro_message("Could not import song!");
+					allegro_message("Could not import Guitar Hero .pak!");
 					return 0;
 				}
 				eof_song_loaded = 1;
@@ -4634,7 +4634,7 @@ int eof_initialize(int argc, char * argv[])
 				eof_song = eof_load_bf(argv[i]);
 				if(!eof_song)
 				{
-					allegro_message("Could not import song!");
+					allegro_message("Could not import Bandfuse chart!");
 					return 0;
 				}
 				eof_song_loaded = 1;
@@ -4653,7 +4653,7 @@ int eof_initialize(int argc, char * argv[])
 					}
 					else
 					{
-						allegro_message("Could not import song!");
+						allegro_message("Could not import Rocksmith XML file!");
 						return 0;
 					}
 				}
@@ -4665,7 +4665,7 @@ int eof_initialize(int argc, char * argv[])
 					}
 					else
 					{
-						allegro_message("Could not import song!");
+						allegro_message("Could not import Go PlayAlong XML file!");
 						return 0;
 					}
 				}
@@ -4678,7 +4678,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				else
 				{
-					allegro_message("Could not import song!");
+					allegro_message("Could not import Guitar Pro file!");
 					return 0;
 				}
 			}

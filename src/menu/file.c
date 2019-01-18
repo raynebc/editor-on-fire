@@ -1199,7 +1199,7 @@ int eof_menu_file_midi_import(void)
 		else
 		{
 			eof_song_loaded = 0;
-			allegro_message("Could not import song!");
+			allegro_message("Could not import MIDI!");
 			eof_fix_window_title();
 			eof_changes = 0;
 			eof_undo_last_type = 0;
@@ -4390,7 +4390,7 @@ int eof_menu_file_gh_import(void)
 		}
 		else
 		{
-			allegro_message("Could not import file!");
+			allegro_message("Could not import GH file!");
 			eof_song_loaded = 0;
 			eof_changes = 0;
 			eof_fix_window_title();

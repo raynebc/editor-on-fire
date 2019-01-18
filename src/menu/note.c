@@ -493,8 +493,8 @@ MENU eof_note_clone_hero_menu[] =
 MENU eof_note_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
-	{"Clear", NULL, eof_note_clear_menu, 0, NULL},
-	{"Tr&Anspose", NULL, eof_note_transpose_menu, 0, NULL},
+	{"Cle&Ar", NULL, eof_note_clear_menu, 0, NULL},
+	{"Transpose", NULL, eof_note_transpose_menu, 0, NULL},
 	{"&Highlight", NULL, eof_note_highlight_menu, 0, NULL},
 	{"Gr&Id snap", NULL, eof_note_grid_snap_menu, 0, NULL},
 	{"&Solos", NULL, eof_solo_menu, 0, NULL},

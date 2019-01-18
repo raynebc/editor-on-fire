@@ -349,17 +349,23 @@ Miscellaneous Controls:
 
         Cycle to the next/previous track of the same type (ie. "pro guitar/bass").
 
-    SHIFT + F11
+    SHIFT + F11:
 
         Cycle through the "Names", "Hand pos", "RS sections + phrases" and "Tones" top of 2D
         pane shows preference.  If the eof_top_of_2d_pane_cycle_count_2 item is manually set
         to 1 in eof.cfg while EOF isn't running, the names and tones options are skipped by
         this shortcut.
 
-    ALT+Numpad minus / ALT+Numpad plus
+    ALT+Numpad minus / ALT+Numpad plus:
 
         Decreases or increases the depth of the 3D preview camera, to show less or more of
         the track before the display cuts off.
+
+    ALT+P:
+
+        Toggle the "Phase cancellation" playback option (also available in File>Settings).
+        This audio trick is typically used to reduce the vocals in the stereo audio, but it
+        can also reduce other instruments depending on how the recording was mixed.
 
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.

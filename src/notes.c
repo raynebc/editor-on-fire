@@ -3127,8 +3127,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			unsigned num = 4, den = 4;
 			double length = (double)eof_song->beat[eof_selected_beat]->ppqn / 1000.0;	//Calculate the length of the beat from its tempo (this is the formula "beat_length = 60000 / BPM", where BPM = 60000000 / ppqn)
 
-			(void) eof_get_ts(eof_song, &num, &den, eof_selected_beat);	//Lookup any time signature defined at the beat
-			length *= (double)den / 4.0;	//Adjust for the time signature
+			(void) eof_get_effective_ts(eof_song, &num, &den, eof_selected_beat, 0);	//Get the time signature in effect at the selected beat
+			length *= 4.0 / (double)den;	//Adjust for the time signature
 			snprintf(dest_buffer, dest_buffer_size, "%f", length);
 		}
 		else
