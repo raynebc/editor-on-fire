@@ -3,8 +3,9 @@ EOF is a song editor for Frets On Fire, Phase Shift, Rock Band, Rocksmith and Cl
 
 # Getting EOF #
 
-Binaries are provided for Windows and Mac OS on a somewhat regular basis and can be downloaded from here:
+Binaries are provided for Windows and Mac OS on a somewhat regular basis and can be downloaded from here:\
 http://ignition.customsforge.com/eof
+
 Just click the Apple or Windows logo for your OS and download the relevant files.
 
 The Windows version is distributed as an older release candidate (a full, standalone build) and a "hotfix" containing all files that have changed since that release candidate.  To install the latest release of EOF, extract the release candidate to a folder for which you have write permissions (ie. not within "Program Files" or "Program Files (x86)" ), then extract the hotfix into the release candidate folder (the one that contains eof.exe), allowing it to merge folders and replace existing files.  If you do this correctly, EOF should be able launch and you can verify the hotfix build date by opening its Help menu and selecting About.  For any subsequent hotfix, you can just extract over the previous EOF installation and it will include all updates since the previously installed hotfix.
@@ -14,7 +15,7 @@ The Mac version is distributed as just the current build.  Do make sure to downl
 
 # Building EOF #
 
-If you're using Linux or if you want to experiment with the source code yourself, there are platform specific build instructions for Windows, Mac OS and Linux available here:
+If you're using Linux or if you want to experiment with the source code yourself, there are platform specific build instructions for Windows, Mac OS and Linux available here:\
 https://github.com/raynebc/editor-on-fire/tree/wiki
 
 MP3 decoding and OGG encoding capabilities will require LAME and Vorbis Tools to be installed manually, otherwise EOF will warn that applicable features are disabled.
