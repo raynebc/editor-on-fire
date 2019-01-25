@@ -66,7 +66,7 @@
 #define EOF_COLORS_RS          3
 #define EOF_COLORS_BF          4
 
-#define EOF_MAX_IMAGES 100
+#define EOF_MAX_IMAGES 114
 
 #define EOF_IMAGE_WAVE                        0	//This macro is currently unused
 #define EOF_IMAGE_TAB0                        1
@@ -168,6 +168,20 @@
 #define EOF_IMAGE_NOTE_GHL_BARRE_SP_HIT      97
 #define EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO     98
 #define EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT 99
+#define EOF_IMAGE_NOTE_GREEN_SLIDER         100
+#define EOF_IMAGE_NOTE_RED_SLIDER           101
+#define EOF_IMAGE_NOTE_YELLOW_SLIDER        102
+#define EOF_IMAGE_NOTE_BLUE_SLIDER          103
+#define EOF_IMAGE_NOTE_PURPLE_SLIDER        104
+#define EOF_IMAGE_NOTE_ORANGE_SLIDER        105
+#define EOF_IMAGE_NOTE_WHITE_SLIDER         106
+#define EOF_IMAGE_NOTE_BLACK_SLIDER         107
+#define EOF_IMAGE_NOTE_GHL_WHITE_SLIDER     108
+#define EOF_IMAGE_NOTE_GHL_BLACK_SLIDER     109
+#define EOF_IMAGE_NOTE_GHL_BARRE_SLIDER     110
+#define EOF_IMAGE_NOTE_GHL_WHITE_SP_SLIDER  111
+#define EOF_IMAGE_NOTE_GHL_BLACK_SP_SLIDER  112
+#define EOF_IMAGE_NOTE_GHL_BARRE_SP_SLIDER  113
 
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1
@@ -228,6 +242,7 @@ typedef struct
 	unsigned int cymbalhit3d;	//The index into eof_image[] storing the hit 3D cymbal image for this color
 	unsigned int arrow3d;		//The index into eof_image[] storing the 3D arrow image for this color (dance track)
 	unsigned int arrowhit3d;	//The index into eof_image[] storing the hit 3D arrow image for this color (dance track)
+	unsigned int slider3d;		//The index into eof_image[] storing the 3D slider image for this color
 	char *colorname;			//The display name of this color, ie "red"
 }eof_color;
 

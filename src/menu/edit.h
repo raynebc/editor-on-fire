@@ -144,8 +144,18 @@ int eof_menu_edit_select_note_less_than_threshhold_of_next_note_logic(int functi
 	//Selects/deselects notes depending on whether they are less than the given threshold distance away of the note that immediately follows them
 	//If function is zero, matching notes are removed from the note selection, otherwise they are added to the note selection
 	//Returns 0 on error
-int eof_menu_edit_select_note_within_threshhold_of_next_note(void);	//Selects all notes in the active track difficulty that are within a threshold distance from the note they precede
-int eof_menu_edit_deselect_note_within_threshhold_of_next_note(void); //Deselects all notes in the active track difficulty that are within a threshold distance from the note they precede
+int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function, int function2);
+	//Selects/deselects notes based on their proximity to the following note
+	// If function is zero, deselection is performed, otherwise selection is performed
+	// If function2 is zero, the note's starting position compared to the next note's position, otherwise the former's end position is compared
+int eof_menu_edit_select_note_starting_within_threshhold_of_next_note(void);
+	//Uses eof_menu_edit_select_note_within_threshhold_of_next_note_logic() to select all notes in the active track difficulty beginning within a threshold distance from the note they precede
+int eof_menu_edit_deselect_note_starting_within_threshhold_of_next_note(void);
+	//Uses eof_menu_edit_select_note_within_threshhold_of_next_note_logic() to deselect all notes in the active track difficulty beginning within a threshold distance from the note they precede
+int eof_menu_edit_select_note_ending_within_threshhold_of_next_note(void);
+	//Uses eof_menu_edit_select_note_within_threshhold_of_next_note_logic() to select all notes in the active track difficulty ending within a threshold distance from the note they precede
+int eof_menu_edit_deselect_note_ending_within_threshhold_of_next_note(void);
+	//Uses eof_menu_edit_select_note_within_threshhold_of_next_note_logic() to deselect all notes in the active track difficulty ending within a threshold distance from the note they precede
 
 int eof_menu_edit_set_start_point(void);
 int eof_menu_edit_set_end_point(void);

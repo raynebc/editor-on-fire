@@ -1192,7 +1192,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 						if((notenote & barremask) == barremask)
 						{	//If this is to be rendered as a barre note
-							if(noteflags & EOF_NOTE_FLAG_HOPO)
+							if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+							{	//Barre SP GHL slider
+								imagenum = EOF_IMAGE_NOTE_GHL_BARRE_SP_SLIDER;
+							}
+							else if(noteflags & EOF_NOTE_FLAG_HOPO)
 							{	//If this is a HOPO note
 								imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO;
 							}
@@ -1201,6 +1205,10 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 								imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_SP_HIT : EOF_IMAGE_NOTE_GHL_BARRE_SP;
 							}
 							notenote &= ~barremask;		//Prevent drawing another gem for the other gem in the barre, since the barre note graphic already represents both
+						}
+						else if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+						{	//Black SP GHL slider
+							imagenum = EOF_IMAGE_NOTE_GHL_BLACK_SP_SLIDER;
 						}
 						else if(noteflags & EOF_NOTE_FLAG_HOPO)
 						{	//If this is a HOPO note
@@ -1213,7 +1221,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					}
 					else
 					{	//The next three lanes are white notes
-						if(noteflags & EOF_NOTE_FLAG_HOPO)
+						if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+						{	//White SP GHL slider
+							imagenum = EOF_IMAGE_NOTE_GHL_WHITE_SP_SLIDER;
+						}
+						else if(noteflags & EOF_NOTE_FLAG_HOPO)
 						{	//If this is a HOPO note
 							imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO;
 						}
@@ -1229,7 +1241,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 					if((ctr < 3) && ((notenote & barremask) == barremask))
 					{	//If this is to be rendered as a barre note
-						if(noteflags & EOF_NOTE_FLAG_HOPO)
+						if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+						{	//Barre GHL slider
+							imagenum = EOF_IMAGE_NOTE_GHL_BARRE_SLIDER;
+						}
+						else if(noteflags & EOF_NOTE_FLAG_HOPO)
 						{	//If this is a HOPO note
 							imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BARRE_HOPO;
 						}
@@ -1311,7 +1327,18 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 				if(!imagenum)
 				{	//If the appropriate 3D image wasn't determined yet
-					if(noteflags & EOF_NOTE_FLAG_HOPO)
+					if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+					{
+						if(noteflags & EOF_NOTE_FLAG_SP)
+						{	//If this is an SP note
+							imagenum = EOF_IMAGE_NOTE_WHITE_SLIDER;
+						}
+						else
+						{
+							imagenum = eof_colors[color].slider3d;
+						}
+					}
+					else if(noteflags & EOF_NOTE_FLAG_HOPO)
 					{	//If this is a HOPO note
 						if(noteflags & EOF_NOTE_FLAG_SP)
 						{	//If this is also a SP note

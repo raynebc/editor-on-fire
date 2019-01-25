@@ -164,7 +164,8 @@ MENU eof_edit_selection_select_menu[] =
 	{"Open notes", eof_menu_edit_select_open_notes, NULL, 0, NULL},
 	{"Non open notes", eof_menu_edit_select_non_open_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_select_note_number_in_sequence, NULL, 0, NULL},
-	{"Neighbor &Proximity", eof_menu_edit_select_note_within_threshhold_of_next_note, NULL, 0, NULL},
+	{"Start &Proximity", eof_menu_edit_select_note_starting_within_threshhold_of_next_note, NULL, 0, NULL},
+	{"End pro&Ximity", eof_menu_edit_select_note_ending_within_threshhold_of_next_note, NULL, 0, NULL},
 	{"Gem count", eof_menu_edit_select_gem_count, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -187,7 +188,8 @@ MENU eof_edit_selection_deselect_menu[] =
 	{"Open notes", eof_menu_edit_deselect_open_notes, NULL, 0, NULL},
 	{"Non open notes", eof_menu_edit_deselect_non_open_notes, NULL, 0, NULL},
 	{"One in &Every", eof_menu_edit_deselect_note_number_in_sequence, NULL, 0, NULL},
-	{"Neighbor &Proximity", eof_menu_edit_deselect_note_within_threshhold_of_next_note, NULL, 0, NULL},
+	{"Start &Proximity", eof_menu_edit_deselect_note_starting_within_threshhold_of_next_note, NULL, 0, NULL},
+	{"End pro&Ximity", eof_menu_edit_deselect_note_ending_within_threshhold_of_next_note, NULL, 0, NULL},
 	{"Gem count", eof_menu_edit_deselect_gem_count, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -2810,7 +2812,7 @@ DIALOG eof_menu_edit_select_less_than_threshold_dialog[] =
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
 };
 
-int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function)
+int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function, int function2)
 {
 	unsigned long i;
 	long threshold;
@@ -2855,7 +2857,11 @@ int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function)
 		if(nextnote < 0)
 			break;		//If there is no note that follows this one, stop checking notes for this track difficulty
 
-		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the note's start position so it can be compared to the next note's position
+		if(function2)
+		{	//If the note's end position is to be compared instead
+			notepos += eof_get_note_length(eof_song, eof_selected_track, i);
+		}
 		nextpos = eof_get_note_pos(eof_song, eof_selected_track, nextnote);
 		if(threshold)
 		{	//The threshold is a static number of milliseconds
@@ -2899,19 +2905,34 @@ int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function)
 	return 1;
 }
 
-int eof_menu_edit_select_note_within_threshhold_of_next_note(void)
+int eof_menu_edit_select_note_starting_within_threshhold_of_next_note(void)
 {
-	strncpy(eof_etext, "Select all notes preceding their neighbor by less than", sizeof(eof_etext) - 1);
+	strncpy(eof_etext, "Select all notes whose start positions precede their neighbor by less than", sizeof(eof_etext) - 1);
 	eof_etext2[0] = '\0';	//Empty the input field
-	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(1);
+	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(1, 0);
 }
 
-int eof_menu_edit_deselect_note_within_threshhold_of_next_note(void)
+int eof_menu_edit_deselect_note_starting_within_threshhold_of_next_note(void)
 {
 
-	strncpy(eof_etext, "Deselect all notes preceding their neighbor by less than", sizeof(eof_etext) - 1);
+	strncpy(eof_etext, "Deselect all notes whose start positions precede their neighbor by less than", sizeof(eof_etext) - 1);
 	eof_etext2[0] = '\0';	//Empty the input field
-	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(0);
+	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(0, 0);
+}
+
+int eof_menu_edit_select_note_ending_within_threshhold_of_next_note(void)
+{
+	strncpy(eof_etext, "Select all notes whose end positions precede their neighbor by less than", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(1, 1);
+}
+
+int eof_menu_edit_deselect_note_ending_within_threshhold_of_next_note(void)
+{
+
+	strncpy(eof_etext, "Deselect all notes whose end positions precede their neighbor by less than", sizeof(eof_etext) - 1);
+	eof_etext2[0] = '\0';	//Empty the input field
+	return eof_menu_edit_select_note_within_threshhold_of_next_note_logic(0, 1);
 }
 
 char eof_menu_edit_conditional_selection_dialog_string[25];

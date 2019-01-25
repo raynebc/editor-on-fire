@@ -3814,6 +3814,31 @@ int d_hackish_edit_proc (int msg, DIALOG *d, int c)
 	return d_agup_edit_proc (msg, d, c);
 }
 
+BITMAP *eof_load_pcx(char *filename)
+{
+	char path[1024];
+
+	if(!filename)
+		return NULL;	//Invalid parameter
+
+	//Check for the specified file in the resources folder
+	(void) snprintf(path, sizeof(path) - 1, "resources");
+	put_backslash(path);	//Append a file separator
+	(void) strncat(path, filename, sizeof(path) - 1);	//Append the file name
+
+	if(exists(path))
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Loading custom resource \"%s\"", path);
+		eof_log(eof_log_string, 1);
+	}
+	else
+	{	//If the file doesn't exist within /resources, change the path to within eof.dat
+		(void) snprintf(path, sizeof(path) - 1, "eof.dat#%s", filename);
+	}
+
+	return load_pcx(path, NULL);
+}
+
 int eof_load_data(void)
 {
 	int i;
@@ -3831,91 +3856,110 @@ int eof_load_data(void)
 		return 0;
 	}
 
+	//Load the palette
+	eof_image[EOF_IMAGE_TAB0] = load_pcx("eof.dat#tab0.pcx", eof_palette);	//Load an image from eof.dat and store the 256 color palette
+	if(eof_image[EOF_IMAGE_TAB0])
+		destroy_bitmap(eof_image[EOF_IMAGE_TAB0]);
+
 	//Load images
-	eof_image[EOF_IMAGE_TAB0] = load_pcx("eof.dat#tab0.pcx", eof_palette);
-	eof_image[EOF_IMAGE_TAB1] = load_pcx("eof.dat#tab1.pcx", NULL);
-	eof_image[EOF_IMAGE_TAB2] = load_pcx("eof.dat#tab2.pcx", NULL);
-	eof_image[EOF_IMAGE_TAB3] = load_pcx("eof.dat#tab3.pcx", NULL);
-	eof_image[EOF_IMAGE_TAB4] = load_pcx("eof.dat#tab4.pcx", NULL);
-	eof_image[EOF_IMAGE_TABE] = load_pcx("eof.dat#tabempty.pcx", NULL);
-	eof_image[EOF_IMAGE_VTAB0] = load_pcx("eof.dat#vtab0.pcx", NULL);
-	eof_image[EOF_IMAGE_SCROLL_BAR] = load_pcx("eof.dat#scrollbar.pcx", NULL);
-	eof_image[EOF_IMAGE_SCROLL_HANDLE] = load_pcx("eof.dat#scrollhandle.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GREEN] = load_pcx("eof.dat#note_green.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_RED] = load_pcx("eof.dat#note_red.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_YELLOW] = load_pcx("eof.dat#note_yellow.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_BLUE] = load_pcx("eof.dat#note_blue.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_PURPLE] = load_pcx("eof.dat#note_purple.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_WHITE] = load_pcx("eof.dat#note_white.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GREEN_HIT] = load_pcx("eof.dat#note_green_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_RED_HIT] = load_pcx("eof.dat#note_red_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_YELLOW_HIT] = load_pcx("eof.dat#note_yellow_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_BLUE_HIT] = load_pcx("eof.dat#note_blue_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_PURPLE_HIT] = load_pcx("eof.dat#note_purple_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_WHITE_HIT] = load_pcx("eof.dat#note_white_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_CONTROLS_BASE] = load_pcx("eof.dat#controls0.pcx", NULL);
-	eof_image[EOF_IMAGE_CONTROLS_0] = load_pcx("eof.dat#controls1.pcx", NULL);
-	eof_image[EOF_IMAGE_CONTROLS_1] = load_pcx("eof.dat#controls2.pcx", NULL);
-	eof_image[EOF_IMAGE_CONTROLS_2] = load_pcx("eof.dat#controls3.pcx", NULL);
-	eof_image[EOF_IMAGE_CONTROLS_3] = load_pcx("eof.dat#controls4.pcx", NULL);
-	eof_image[EOF_IMAGE_CONTROLS_4] = load_pcx("eof.dat#controls5.pcx", NULL);
-	eof_image[EOF_IMAGE_MENU] = load_pcx("eof.dat#menu.pcx", NULL);
-	eof_image[EOF_IMAGE_MENU_FULL] = load_pcx("eof.dat#menufull.pcx", NULL);
-	eof_image[EOF_IMAGE_CCONTROLS_BASE] = load_pcx("eof.dat#ccontrols0.pcx", NULL);
-	eof_image[EOF_IMAGE_CCONTROLS_0] = load_pcx("eof.dat#ccontrols1.pcx", NULL);
-	eof_image[EOF_IMAGE_CCONTROLS_1] = load_pcx("eof.dat#ccontrols2.pcx", NULL);
-	eof_image[EOF_IMAGE_CCONTROLS_2] = load_pcx("eof.dat#ccontrols3.pcx", NULL);
-	eof_image[EOF_IMAGE_MENU_NO_NOTE] = load_pcx("eof.dat#menunonote.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_YELLOW_CYMBAL] = load_pcx("eof.dat#note_yellow_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT] = load_pcx("eof.dat#note_yellow_hit_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_BLUE_CYMBAL] = load_pcx("eof.dat#note_blue_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT] = load_pcx("eof.dat#note_blue_hit_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_PURPLE_CYMBAL] = load_pcx("eof.dat#note_purple_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT] = load_pcx("eof.dat#note_purple_hit_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL] = load_pcx("eof.dat#note_white_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT] = load_pcx("eof.dat#note_white_hit_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_ORANGE] = load_pcx("eof.dat#note_orange.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_ORANGE_HIT] = load_pcx("eof.dat#note_orange_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GREEN_ARROW] = load_pcx("eof.dat#note_green_arrow.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_RED_ARROW] = load_pcx("eof.dat#note_red_arrow.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_YELLOW_ARROW] = load_pcx("eof.dat#note_yellow_arrow.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_BLUE_ARROW] = load_pcx("eof.dat#note_blue_arrow.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GREEN_ARROW_HIT] = load_pcx("eof.dat#note_green_hit_arrow.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_RED_ARROW_HIT] = load_pcx("eof.dat#note_red_hit_arrow.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_YELLOW_ARROW_HIT] = load_pcx("eof.dat#note_yellow_hit_arrow.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_BLUE_ARROW_HIT] = load_pcx("eof.dat#note_blue_hit_arrow.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GREEN_CYMBAL] = load_pcx("eof.dat#note_green_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GREEN_CYMBAL_HIT] = load_pcx("eof.dat#note_green_hit_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_ORANGE_CYMBAL] = load_pcx("eof.dat#note_orange_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT] = load_pcx("eof.dat#note_orange_hit_cymbal.pcx", NULL);
-	eof_image[EOF_IMAGE_TAB_FG] = load_pcx("eof.dat#tabfg.pcx", NULL);
-	eof_image[EOF_IMAGE_TAB_BG] = load_pcx("eof.dat#tabbg.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_BLACK] = load_pcx("eof.dat#note_black.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_BLACK_HIT] = load_pcx("eof.dat#note_black_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BLACK] = load_pcx("eof.dat#note_ghl_black.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_HIT] = load_pcx("eof.dat#note_ghl_black_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_HOPO] = load_pcx("eof.dat#note_ghl_black_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_HOPO_HIT] = load_pcx("eof.dat#note_ghl_black_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP] = load_pcx("eof.dat#note_ghl_black_sp.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_HIT] = load_pcx("eof.dat#note_ghl_black_sp_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO] = load_pcx("eof.dat#note_ghl_black_sp_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO_HIT] = load_pcx("eof.dat#note_ghl_black_sp_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_WHITE] = load_pcx("eof.dat#note_ghl_white.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_HIT] = load_pcx("eof.dat#note_ghl_white_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_HOPO] = load_pcx("eof.dat#note_ghl_white_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_HOPO_HIT] = load_pcx("eof.dat#note_ghl_white_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP] = load_pcx("eof.dat#note_ghl_white_sp.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT] = load_pcx("eof.dat#note_ghl_white_sp_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO] = load_pcx("eof.dat#note_ghl_white_sp_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT] = load_pcx("eof.dat#note_ghl_white_sp_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BARRE] = load_pcx("eof.dat#note_ghl_barre.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_HIT] = load_pcx("eof.dat#note_ghl_barre_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_HOPO] = load_pcx("eof.dat#note_ghl_barre_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_HOPO_HIT] = load_pcx("eof.dat#note_ghl_barre_hopo_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP] = load_pcx("eof.dat#note_ghl_barre_sp.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HIT] = load_pcx("eof.dat#note_ghl_barre_sp_hit.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO] = load_pcx("eof.dat#note_ghl_barre_sp_hopo.pcx", NULL);
-	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT] = load_pcx("eof.dat#note_ghl_barre_sp_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_TAB0] = eof_load_pcx("tab0.pcx");
+	eof_image[EOF_IMAGE_TAB1] = eof_load_pcx("tab1.pcx");
+	eof_image[EOF_IMAGE_TAB2] = eof_load_pcx("tab2.pcx");
+	eof_image[EOF_IMAGE_TAB3] = eof_load_pcx("tab3.pcx");
+	eof_image[EOF_IMAGE_TAB4] = eof_load_pcx("tab4.pcx");
+	eof_image[EOF_IMAGE_TABE] = eof_load_pcx("tabempty.pcx");
+	eof_image[EOF_IMAGE_VTAB0] = eof_load_pcx("vtab0.pcx");
+	eof_image[EOF_IMAGE_SCROLL_BAR] = eof_load_pcx("scrollbar.pcx");
+	eof_image[EOF_IMAGE_SCROLL_HANDLE] = eof_load_pcx("scrollhandle.pcx");
+	eof_image[EOF_IMAGE_NOTE_GREEN] = eof_load_pcx("note_green.pcx");
+	eof_image[EOF_IMAGE_NOTE_RED] = eof_load_pcx("note_red.pcx");
+	eof_image[EOF_IMAGE_NOTE_YELLOW] = eof_load_pcx("note_yellow.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLUE] = eof_load_pcx("note_blue.pcx");
+	eof_image[EOF_IMAGE_NOTE_PURPLE] = eof_load_pcx("note_purple.pcx");
+	eof_image[EOF_IMAGE_NOTE_WHITE] = eof_load_pcx("note_white.pcx");
+	eof_image[EOF_IMAGE_NOTE_GREEN_HIT] = eof_load_pcx("note_green_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_RED_HIT] = eof_load_pcx("note_red_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_YELLOW_HIT] = eof_load_pcx("note_yellow_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLUE_HIT] = eof_load_pcx("note_blue_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_PURPLE_HIT] = eof_load_pcx("note_purple_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_WHITE_HIT] = eof_load_pcx("note_white_hit.pcx");
+	eof_image[EOF_IMAGE_CONTROLS_BASE] = eof_load_pcx("controls0.pcx");
+	eof_image[EOF_IMAGE_CONTROLS_0] = eof_load_pcx("controls1.pcx");
+	eof_image[EOF_IMAGE_CONTROLS_1] = eof_load_pcx("controls2.pcx");
+	eof_image[EOF_IMAGE_CONTROLS_2] = eof_load_pcx("controls3.pcx");
+	eof_image[EOF_IMAGE_CONTROLS_3] = eof_load_pcx("controls4.pcx");
+	eof_image[EOF_IMAGE_CONTROLS_4] = eof_load_pcx("controls5.pcx");
+	eof_image[EOF_IMAGE_MENU] = eof_load_pcx("menu.pcx");
+	eof_image[EOF_IMAGE_MENU_FULL] = eof_load_pcx("menufull.pcx");
+	eof_image[EOF_IMAGE_CCONTROLS_BASE] = eof_load_pcx("ccontrols0.pcx");
+	eof_image[EOF_IMAGE_CCONTROLS_0] = eof_load_pcx("ccontrols1.pcx");
+	eof_image[EOF_IMAGE_CCONTROLS_1] = eof_load_pcx("ccontrols2.pcx");
+	eof_image[EOF_IMAGE_CCONTROLS_2] = eof_load_pcx("ccontrols3.pcx");
+	eof_image[EOF_IMAGE_MENU_NO_NOTE] = eof_load_pcx("menunonote.pcx");
+	eof_image[EOF_IMAGE_NOTE_YELLOW_CYMBAL] = eof_load_pcx("note_yellow_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT] = eof_load_pcx("note_yellow_hit_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLUE_CYMBAL] = eof_load_pcx("note_blue_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT] = eof_load_pcx("note_blue_hit_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_PURPLE_CYMBAL] = eof_load_pcx("note_purple_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT] = eof_load_pcx("note_purple_hit_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL] = eof_load_pcx("note_white_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT] = eof_load_pcx("note_white_hit_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_ORANGE] = eof_load_pcx("note_orange.pcx");
+	eof_image[EOF_IMAGE_NOTE_ORANGE_HIT] = eof_load_pcx("note_orange_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GREEN_ARROW] = eof_load_pcx("note_green_arrow.pcx");
+	eof_image[EOF_IMAGE_NOTE_RED_ARROW] = eof_load_pcx("note_red_arrow.pcx");
+	eof_image[EOF_IMAGE_NOTE_YELLOW_ARROW] = eof_load_pcx("note_yellow_arrow.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLUE_ARROW] = eof_load_pcx("note_blue_arrow.pcx");
+	eof_image[EOF_IMAGE_NOTE_GREEN_ARROW_HIT] = eof_load_pcx("note_green_hit_arrow.pcx");
+	eof_image[EOF_IMAGE_NOTE_RED_ARROW_HIT] = eof_load_pcx("note_red_hit_arrow.pcx");
+	eof_image[EOF_IMAGE_NOTE_YELLOW_ARROW_HIT] = eof_load_pcx("note_yellow_hit_arrow.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLUE_ARROW_HIT] = eof_load_pcx("note_blue_hit_arrow.pcx");
+	eof_image[EOF_IMAGE_NOTE_GREEN_CYMBAL] = eof_load_pcx("note_green_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_GREEN_CYMBAL_HIT] = eof_load_pcx("note_green_hit_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_ORANGE_CYMBAL] = eof_load_pcx("note_orange_cymbal.pcx");
+	eof_image[EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT] = eof_load_pcx("note_orange_hit_cymbal.pcx");
+	eof_image[EOF_IMAGE_TAB_FG] = eof_load_pcx("tabfg.pcx");
+	eof_image[EOF_IMAGE_TAB_BG] = eof_load_pcx("tabbg.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLACK] = eof_load_pcx("note_black.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLACK_HIT] = eof_load_pcx("note_black_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK] = eof_load_pcx("note_ghl_black.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_HIT] = eof_load_pcx("note_ghl_black_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_HOPO] = eof_load_pcx("note_ghl_black_hopo.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_HOPO_HIT] = eof_load_pcx("note_ghl_black_hopo_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP] = eof_load_pcx("note_ghl_black_sp.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_HIT] = eof_load_pcx("note_ghl_black_sp_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO] = eof_load_pcx("note_ghl_black_sp_hopo.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO_HIT] = eof_load_pcx("note_ghl_black_sp_hopo_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE] = eof_load_pcx("note_ghl_white.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_HIT] = eof_load_pcx("note_ghl_white_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_HOPO] = eof_load_pcx("note_ghl_white_hopo.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_HOPO_HIT] = eof_load_pcx("note_ghl_white_hopo_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP] = eof_load_pcx("note_ghl_white_sp.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT] = eof_load_pcx("note_ghl_white_sp_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO] = eof_load_pcx("note_ghl_white_sp_hopo.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT] = eof_load_pcx("note_ghl_white_sp_hopo_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE] = eof_load_pcx("note_ghl_barre.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_HIT] = eof_load_pcx("note_ghl_barre_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_HOPO] = eof_load_pcx("note_ghl_barre_hopo.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_HOPO_HIT] = eof_load_pcx("note_ghl_barre_hopo_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP] = eof_load_pcx("note_ghl_barre_sp.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HIT] = eof_load_pcx("note_ghl_barre_sp_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO] = eof_load_pcx("note_ghl_barre_sp_hopo.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT] = eof_load_pcx("note_ghl_barre_sp_hopo_hit.pcx");
+	eof_image[EOF_IMAGE_NOTE_GREEN_SLIDER] = eof_load_pcx("note_green_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_RED_SLIDER] = eof_load_pcx("note_red_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_YELLOW_SLIDER] = eof_load_pcx("note_yellow_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLUE_SLIDER] = eof_load_pcx("note_blue_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_PURPLE_SLIDER] = eof_load_pcx("note_purple_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_ORANGE_SLIDER] = eof_load_pcx("note_orange_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_WHITE_SLIDER] = eof_load_pcx("note_white_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_BLACK_SLIDER] = eof_load_pcx("note_black_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SLIDER] = eof_load_pcx("note_ghl_white_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SLIDER] = eof_load_pcx("note_ghl_black_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SLIDER] = eof_load_pcx("note_ghl_barre_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_SLIDER] = eof_load_pcx("note_ghl_white_sp_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_SLIDER] = eof_load_pcx("note_ghl_black_sp_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_SLIDER] = eof_load_pcx("note_ghl_barre_sp_slider.pcx");
 
 	//Load and scale the non-GHL HOPO images, using the scale size in user preferences
 	if(!eof_load_and_scale_hopo_images((double)eof_3d_hopo_scale_size / 100.0))
@@ -5554,6 +5598,7 @@ void eof_init_colors(void)
 	eof_color_green_struct.cymbalhit3d = EOF_IMAGE_NOTE_GREEN_CYMBAL_HIT;
 	eof_color_green_struct.arrow3d = EOF_IMAGE_NOTE_GREEN_ARROW;
 	eof_color_green_struct.arrowhit3d = EOF_IMAGE_NOTE_GREEN_ARROW_HIT;
+	eof_color_green_struct.slider3d = EOF_IMAGE_NOTE_GREEN_SLIDER;
 	eof_color_green_struct.colorname = eof_color_green_name;
 	//Init red
 	eof_color_red_struct.color = eof_color_red;
@@ -5568,6 +5613,7 @@ void eof_init_colors(void)
 	eof_color_red_struct.cymbalhit3d = EOF_IMAGE_NOTE_RED_HIT;
 	eof_color_red_struct.arrow3d = EOF_IMAGE_NOTE_RED_ARROW;
 	eof_color_red_struct.arrowhit3d = EOF_IMAGE_NOTE_RED_ARROW_HIT;
+	eof_color_red_struct.slider3d = EOF_IMAGE_NOTE_RED_SLIDER;
 	eof_color_red_struct.colorname = eof_color_red_name;
 	//Init yellow
 	eof_color_yellow_struct.color = eof_color_yellow;
@@ -5582,6 +5628,7 @@ void eof_init_colors(void)
 	eof_color_yellow_struct.cymbalhit3d = EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT;
 	eof_color_yellow_struct.arrow3d = EOF_IMAGE_NOTE_YELLOW_ARROW;
 	eof_color_yellow_struct.arrowhit3d = EOF_IMAGE_NOTE_YELLOW_ARROW_HIT;
+	eof_color_yellow_struct.slider3d = EOF_IMAGE_NOTE_YELLOW_SLIDER;
 	eof_color_yellow_struct.colorname = eof_color_yellow_name;
 	//Init blue
 	eof_color_blue_struct.color = eof_color_blue;
@@ -5596,6 +5643,7 @@ void eof_init_colors(void)
 	eof_color_blue_struct.cymbalhit3d = EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT;
 	eof_color_blue_struct.arrow3d = EOF_IMAGE_NOTE_BLUE_ARROW;
 	eof_color_blue_struct.arrowhit3d = EOF_IMAGE_NOTE_BLUE_ARROW_HIT;
+	eof_color_blue_struct.slider3d = EOF_IMAGE_NOTE_BLUE_SLIDER;
 	eof_color_blue_struct.colorname = eof_color_blue_name;
 	//Init orange
 	eof_color_orange_struct.color = eof_color_orange;
@@ -5610,6 +5658,7 @@ void eof_init_colors(void)
 	eof_color_orange_struct.cymbalhit3d = EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT;
 	eof_color_orange_struct.arrow3d = EOF_IMAGE_NOTE_ORANGE;
 	eof_color_orange_struct.arrowhit3d = EOF_IMAGE_NOTE_ORANGE_HIT;
+	eof_color_orange_struct.slider3d = EOF_IMAGE_NOTE_ORANGE_SLIDER;
 	eof_color_orange_struct.colorname = eof_color_orange_name;
 	//Init purple
 	eof_color_purple_struct.color = eof_color_purple;
@@ -5624,6 +5673,7 @@ void eof_init_colors(void)
 	eof_color_purple_struct.cymbalhit3d = EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT;
 	eof_color_purple_struct.arrow3d = EOF_IMAGE_NOTE_PURPLE;
 	eof_color_purple_struct.arrowhit3d = EOF_IMAGE_NOTE_PURPLE_HIT;
+	eof_color_purple_struct.slider3d = EOF_IMAGE_NOTE_PURPLE_SLIDER;
 	eof_color_purple_struct.colorname = eof_color_purple_name;
 	//Init black
 	eof_color_black_struct.color = makecol(51, 51, 51);
@@ -5638,6 +5688,7 @@ void eof_init_colors(void)
 	eof_color_black_struct.cymbalhit3d = EOF_IMAGE_NOTE_BLACK_HIT;
 	eof_color_black_struct.arrow3d = EOF_IMAGE_NOTE_BLACK;
 	eof_color_black_struct.arrowhit3d = EOF_IMAGE_NOTE_BLACK_HIT;
+	eof_color_black_struct.slider3d = EOF_IMAGE_NOTE_BLACK_SLIDER;
 	eof_color_black_struct.colorname = eof_color_black_name;
 	//Init ghl black
 	eof_color_ghl_black_struct.color = makecol(51, 51, 51);
@@ -5652,6 +5703,7 @@ void eof_init_colors(void)
 	eof_color_ghl_black_struct.cymbalhit3d = EOF_IMAGE_NOTE_GHL_BLACK_HIT;
 	eof_color_ghl_black_struct.arrow3d = EOF_IMAGE_NOTE_GHL_BLACK;
 	eof_color_ghl_black_struct.arrowhit3d = EOF_IMAGE_NOTE_GHL_BLACK_HIT;
+	eof_color_ghl_black_struct.slider3d = EOF_IMAGE_NOTE_GHL_BLACK_SLIDER;
 	eof_color_ghl_black_struct.colorname = eof_color_black_name;
 	//Init ghl white
 	eof_color_ghl_white_struct.color = eof_color_white;
@@ -5666,6 +5718,7 @@ void eof_init_colors(void)
 	eof_color_ghl_white_struct.cymbalhit3d = EOF_IMAGE_NOTE_GHL_WHITE_HIT;
 	eof_color_ghl_white_struct.arrow3d = EOF_IMAGE_NOTE_GHL_WHITE;
 	eof_color_ghl_white_struct.arrowhit3d = EOF_IMAGE_NOTE_GHL_WHITE_HIT;
+	eof_color_ghl_white_struct.slider3d = EOF_IMAGE_NOTE_GHL_WHITE_SLIDER;
 	eof_color_ghl_white_struct.colorname = eof_color_white_name;
 	//Init lane 1 (will be used to represent open fingering in Bandfuse color mode)
 	eof_lane_1_struct = eof_color_purple_struct;
@@ -6095,59 +6148,59 @@ int eof_load_and_scale_hopo_images(double value)
 	//Destroy and reload each relevant image
 	if(eof_image[EOF_IMAGE_NOTE_HGREEN])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HGREEN]);
-	eof_image[EOF_IMAGE_NOTE_HGREEN] = load_pcx("eof.dat#note_green_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HGREEN] = eof_load_pcx("note_green_hopo.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HRED])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HRED]);
-	eof_image[EOF_IMAGE_NOTE_HRED] = load_pcx("eof.dat#note_red_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HRED] = eof_load_pcx("note_red_hopo.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HYELLOW])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HYELLOW]);
-	eof_image[EOF_IMAGE_NOTE_HYELLOW] = load_pcx("eof.dat#note_yellow_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HYELLOW] = eof_load_pcx("note_yellow_hopo.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HBLUE])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HBLUE]);
-	eof_image[EOF_IMAGE_NOTE_HBLUE] = load_pcx("eof.dat#note_blue_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HBLUE] = eof_load_pcx("note_blue_hopo.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HPURPLE])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HPURPLE]);
-	eof_image[EOF_IMAGE_NOTE_HPURPLE] = load_pcx("eof.dat#note_purple_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HPURPLE] = eof_load_pcx("note_purple_hopo.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HWHITE])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HWHITE]);
-	eof_image[EOF_IMAGE_NOTE_HWHITE] = load_pcx("eof.dat#note_white_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HWHITE] = eof_load_pcx("note_white_hopo.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HGREEN_HIT])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HGREEN_HIT]);
-	eof_image[EOF_IMAGE_NOTE_HGREEN_HIT] = load_pcx("eof.dat#note_green_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HGREEN_HIT] = eof_load_pcx("note_green_hopo_hit.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HRED_HIT])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HRED_HIT]);
-	eof_image[EOF_IMAGE_NOTE_HRED_HIT] = load_pcx("eof.dat#note_red_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HRED_HIT] = eof_load_pcx("note_red_hopo_hit.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT]);
-	eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT] = load_pcx("eof.dat#note_yellow_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT] = eof_load_pcx("note_yellow_hopo_hit.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HBLUE_HIT])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HBLUE_HIT]);
-	eof_image[EOF_IMAGE_NOTE_HBLUE_HIT] = load_pcx("eof.dat#note_blue_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HBLUE_HIT] = eof_load_pcx("note_blue_hopo_hit.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT]);
-	eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT] = load_pcx("eof.dat#note_purple_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT] = eof_load_pcx("note_purple_hopo_hit.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HWHITE_HIT])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HWHITE_HIT]);
-	eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] = load_pcx("eof.dat#note_white_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] = eof_load_pcx("note_white_hopo_hit.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HORANGE])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HORANGE]);
-	eof_image[EOF_IMAGE_NOTE_HORANGE] = load_pcx("eof.dat#note_orange_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HORANGE] = eof_load_pcx("note_orange_hopo.pcx");
 
 	if(eof_image[EOF_IMAGE_NOTE_HORANGE_HIT])
 		destroy_bitmap(eof_image[EOF_IMAGE_NOTE_HORANGE_HIT]);
-	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = load_pcx("eof.dat#note_orange_hopo_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = eof_load_pcx("note_orange_hopo_hit.pcx");
 
 	//Scale each image
 	eof_image[EOF_IMAGE_NOTE_HGREEN] = eof_scale_image(eof_image[EOF_IMAGE_NOTE_HGREEN], value);
