@@ -11,7 +11,7 @@ Note:  Certain new Linux distributions use Pulse Audio, which messes up the abil
 First, you need to build Allegro itself, along with some other dependencies that EOF needs.  This procedure should work with version 4.4.1.1 and 4.4.2 of Allegro.  At this time EOF will NOT WORK with Allegro 5.  To build EOF from source, you will need:
   1. MinGW (http://sourceforge.net/projects/mingw/)
   1. Allegro source (download from http://liballeg.org/old.html)
-  1. DirectX SDK (download from http://liballeg.org/download.html)
+  1. DirectX SDK (download from https://liballeg.org/old.html)
   1. zlib and libpng (download from http://tjaden.strangesoft.net/loadpng/mingw.html)
   1. libogg and libvorbis Vorbis packages (download from http://xiph.org/downloads)
   1. MSYS (download from http://www.mingw.org/wiki/msys)
@@ -29,7 +29,7 @@ To get an appropriate MinGW compiler, you can go with the official release (http
 mingw-get.exe install gcc=4.8.*
 mingw-get.exe install g++=4.8.*
 ```
-After this, run the mingw-get utility again but with no command line so it displays the GUI.  Select the "mingw32-pthreads-w32" (from All Packages>MinGW>MinGW Base System>MinGW Standard Libraries), "mingw32-make" (from All Packages) and optionally the GDB debugger (from All Packages>MinGW>MinGW Base System>MinGW Source-Level Debugger) for installation.  These packages don't seem to require being an older version like GCC itself.  Ensure that MinGW's "bin" folder is in your PATH environment variable, so you can use gcc and mingw32-make from any current working directory.  Allegro in Windows requires a DirectX SDK.  Get one of them from http://liballeg.org/download.html.  Ie. download dx70\_mgw.zip and extract its contents to your MinGW install path (ie. c:\mingw), allowing files to be overwritten.  This must be done in order for Allegro to build later.
+After this, run the mingw-get utility again but with no command line so it displays the GUI.  Select the "mingw32-pthreads-w32" (from All Packages>MinGW>MinGW Base System>MinGW Standard Libraries), "mingw32-make" (from All Packages) and optionally the GDB debugger (from All Packages>MinGW>MinGW Base System>MinGW Source-Level Debugger) for installation.  These packages don't seem to require being an older version like GCC itself.  Ensure that MinGW's "bin" folder is in your PATH environment variable, so you can use gcc and mingw32-make from any current working directory.  Allegro in Windows requires a DirectX SDK.  Get one of them from https://liballeg.org/old.html.  Ie. download dx70_mgw.zip and extract its contents to your MinGW install path (ie. c:\mingw), allowing files to be overwritten.  This must be done in order for Allegro to build later.
 
 Get the zlib and libpng packages (http://tjaden.strangesoft.net/loadpng/mingw.html).  Make sure they install to your MinGW installation directory and NOT to a subfolder, otherwise the source files won't get stored in the right folders and Allegro's CMake will not find them.
 
