@@ -435,6 +435,31 @@ void eof_mix_find_claps(void)
 	}
 }
 
+SAMPLE *eof_load_wav(char *filename)
+{
+	char path[1024];
+
+	if(!filename)
+		return NULL;	//Invalid parameter
+
+	//Check for the specified file in the resources folder
+	(void) snprintf(path, sizeof(path) - 1, "resources");
+	put_backslash(path);	//Append a file separator
+	(void) strncat(path, filename, sizeof(path) - 1);	//Append the file name
+
+	if(exists(path))
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading custom WAV \"%s\"", path);
+		eof_log(eof_log_string, 1);
+	}
+	else
+	{	//If the file doesn't exist within /resources, change the path to within eof.dat
+		(void) snprintf(path, sizeof(path) - 1, "eof.dat#%s", filename);
+	}
+
+	return load_wav(path);
+}
+
 void eof_mix_init(void)
 {
 	int i;
@@ -442,22 +467,22 @@ void eof_mix_init(void)
 
 	eof_log("eof_mix_init() entered", 1);
 
-	eof_sound_clap = load_wav("eof.dat#clap.wav");
+	eof_sound_clap = eof_load_wav("clap.wav");
 	if(!eof_sound_clap)
 	{
 		allegro_message("Couldn't load clap sound!");
 	}
-	eof_sound_metronome = load_wav("eof.dat#metronome.wav");
+	eof_sound_metronome = eof_load_wav("metronome.wav");
 	if(!eof_sound_metronome)
 	{
 		allegro_message("Couldn't load metronome sound!");
 	}
-	eof_sound_metronome_low = load_wav("eof.dat#metronome_low.wav");
+	eof_sound_metronome_low = eof_load_wav("metronome_low.wav");
 	if(!eof_sound_metronome_low)
 	{
 		allegro_message("Couldn't load low pitched metronome sound!");
 	}
-	eof_sound_grid_snap = load_wav("eof.dat#gridsnap.wav");
+	eof_sound_grid_snap = eof_load_wav("gridsnap.wav");
 	if(!eof_sound_grid_snap)
 	{
 		allegro_message("Couldn't load seek sound!");

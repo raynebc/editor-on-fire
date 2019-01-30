@@ -128,3 +128,18 @@ Slider GHL notes that have star power:
 note_ghl_white_sp_slider.pcx
 note_ghl_black_sp_slider.pcx
 note_ghl_barre_sp_slider.pcx
+
+
+Fonts:  The fonts are defined as PCX image files where each glyph is white pixels with purple transparent background.  Glyphs are separated by the yellow background of the PCX file so that Allegro can distinguish them from each other.
+
+font_times_new_roman.pcx	The main font in EOF that is used in most situations.
+font_courier_new.pcx		A mono-space font used to print various text in the piano roll (timestamps, tempos, time signatures, key signatures measure numbers, beat marker arrows, capo position), the seek time next to the playback controls.
+font_symbols.pcx		A font used to draw fret numbers and any special symbols used for displaying a note's applied techniques and statuses below the piano roll.
+
+
+Sound effects:  The audio files are generally defined as 16 bit, mono, 44.1KHz sample rate PCM WAV.
+
+clap.wav		The clap sound cue.
+metronome.wav		The metronome sound cue.
+metronome_low.wav	The metronome sound cue used for beats that are not the first beat in a measure if the "Use multi-pitch metronome" option is enabled in "Sound>Audio cues".
+gridsnap.wav		The sound played when changing the grid snap or seeking by grid snap when Feedback input mode is in effect.

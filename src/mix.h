@@ -61,6 +61,8 @@ void eof_mix_callback_stereo(void * buf, int length);	//Buffer callback function
 void eof_mix_callback_mono(void * buf, int length);	//Buffer callback function for alogg, optimized for mono samples
 unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq);
 
+SAMPLE *eof_load_wav(char *filename);
+	//Loads the specified WAV file from /resources if it exists, otherwise loads it from eof.dat
 void eof_mix_init(void);	//Inits variables and loads cues (clap, metronome tick, vocal tones)
 void eof_mix_exit(void);	//Releases memory used by audio cues
 void eof_mix_start_helper(void);	//Finds the next clap, tick and vocal tone timestamps?

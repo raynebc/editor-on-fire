@@ -2157,6 +2157,8 @@ set_window_title(debugtext);
 				/* note off so get length of note */
 				else if(eof_import_events[i]->event[j]->type == 0x80)
 				{
+					char ghlopen = 0;
+
 #ifdef EOF_DEBUG
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
 					eof_log(eof_log_string, 2);
@@ -2299,14 +2301,22 @@ set_window_title(debugtext);
 
 					if((note_count[picked_track] > 0) && (diff != -1))
 					{	//If there's at least one note on found for this track, and this note off event has a defined difficulty
+						if(isghl && (lane == 10))
+						{	//If this was interpreted above as a GHL open note
+							lane = 5;		//Import as a lane 6 gem
+							ghlopen = 1;	//Track that a GHL open note needs to be found and have its end position adjusted
+						}
 						if(lane < EOF_MAX_FRETS)
-						{	//If the lane number for this gem is valid (ie. isn't the open note placeholder)
+						{	//If the lane number for this gem is valid
 							for(k = note_count[picked_track]; k > first_note; k--)
 							{	//Check for each note that has been imported, in reverse order
 								if((eof_get_note_type(sp, picked_track, k - 1) == diff) && (eof_get_note_note(sp, picked_track, k - 1) & lane_chart[lane]))
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //										allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 									unsigned long pos, length1, length2, lengthdiff, eflags;	//Variables used to compare the lengths between notes for application of disjointed status
+
+									if(ghlopen && !(eof_get_note_flags(sp, picked_track, k - 1) & EOF_GUITAR_NOTE_FLAG_GHL_OPEN))
+										continue;	//If this isn't the open note that needs to be altered, skip it
 
 									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from length %ld to %lu", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1), event_realtime - eof_get_note_pos(sp, picked_track, k - 1));
 									eof_log(eof_log_string, 3);

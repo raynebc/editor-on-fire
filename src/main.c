@@ -3828,7 +3828,7 @@ BITMAP *eof_load_pcx(char *filename)
 
 	if(exists(path))
 	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Loading custom resource \"%s\"", path);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading custom resource \"%s\"", path);
 		eof_log(eof_log_string, 1);
 	}
 	else
@@ -3837,6 +3837,31 @@ BITMAP *eof_load_pcx(char *filename)
 	}
 
 	return load_pcx(path, NULL);
+}
+
+FONT *eof_load_bitmap_font(char *filename)
+{
+	char path[1024];
+
+	if(!filename)
+		return NULL;	//Invalid parameter
+
+	//Check for the specified file in the resources folder
+	(void) snprintf(path, sizeof(path) - 1, "resources");
+	put_backslash(path);	//Append a file separator
+	(void) strncat(path, filename, sizeof(path) - 1);	//Append the file name
+
+	if(exists(path))
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading custom font \"%s\"", path);
+		eof_log(eof_log_string, 1);
+	}
+	else
+	{	//If the file doesn't exist within /resources, change the path to within eof.dat
+		(void) snprintf(path, sizeof(path) - 1, "eof.dat#%s", filename);
+	}
+
+	return load_bitmap_font(path, NULL, NULL);
 }
 
 int eof_load_data(void)
@@ -3969,19 +3994,19 @@ int eof_load_data(void)
 	}
 
 	//Load and process fonts
-	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
+	eof_font = eof_load_bitmap_font("font_times_new_roman.pcx");
 	if(!eof_font)
 	{
 		allegro_message("Could not load font!");
 		return 0;
 	}
-	eof_mono_font = load_bitmap_font("eof.dat#font_courier_new.pcx", NULL, NULL);
+	eof_mono_font = eof_load_bitmap_font("font_courier_new.pcx");
 	if(!eof_mono_font)
 	{
 		allegro_message("Could not load mono font!");
 		return 0;
 	}
-	eof_symbol_font = load_bitmap_font("eof.dat#font_symbols.pcx", NULL, NULL);
+	eof_symbol_font = eof_load_bitmap_font("font_symbols.pcx");
 	if(!eof_symbol_font)
 	{
 		allegro_message("Could not load symbol font!");

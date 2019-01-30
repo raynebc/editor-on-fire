@@ -719,6 +719,10 @@ void eof_display_info_panel(void);
 
 void eof_render_notes_window(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
+BITMAP *eof_load_pcx(char *filename);
+	//Loads the specified PCX file from /resources if it exists, otherwise loads it from eof.dat
+FONT *eof_load_bitmap_font(char *filename);
+	//Loads the specified PCX bitmap from /resources if it exists, otherwise loads it from eof.dat
 BITMAP *eof_scale_image(BITMAP *source, double value);
 	//Builds a new bitmap containing the input bitmap scaled by the specified value (ie. 0.5 to decrease to half size)
 	//Destroys the input bitmap and returns the new bitmap on success, or simply returns the input bitmap on error
