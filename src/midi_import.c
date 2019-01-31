@@ -989,10 +989,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								d3 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Metronome
 								d4 = (eof_work_midi->track[track[i]].data[track_pos++]);	//32nds
 
-								for(ctr=0,realden=1;ctr<d2;ctr++)
-								{	//Find 2^(d2)
-									realden = realden << 1;
-								}
+								realden = 1 << d2;
 
 								eof_midi_add_ts_deltas(eof_import_ts_changes[i],absolute_pos,d1,realden,i);
 								break;

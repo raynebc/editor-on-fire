@@ -9,7 +9,8 @@ struct dBAnchor
 {
 	unsigned long chartpos;	//The defined chart position of the anchor
 	unsigned long BPM;	//The tempo of this beat times 1000 (0 for no change from previous anchor)
-	unsigned char TS;	//The numerator of this beat's time signature (#/4) (0 for no change from previous anchor)
+	unsigned char TSN;	//The numerator of this beat's time signature (0 for no change from previous anchor)
+	unsigned char TSD;	//The denominator of this beat's time signature (4 is assumed if the .chart file is pre-Moonscraper and doesn't define this value, 0 for no change from previous anchor)
 	unsigned long usec;	//The real time position of this anchor in microseconds (millionths of a second) (0 if not an anchor)
 	struct dBAnchor *next;	//Pointer to the next anchor in the list
 };

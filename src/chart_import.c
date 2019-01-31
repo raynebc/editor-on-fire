@@ -149,7 +149,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		if(eof_log_level > 1)
 		{
 			anchorctr++;
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tdB Anchor #%lu: Chartpos = %lu  BPM = %lu  TS = %d  ms pos = %lu beat length = %f,  Detected pos = %fms", anchorctr, current_anchor->chartpos, current_anchor->BPM, current_anchor->TS, current_anchor->usec, beat_length, curpos);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tdB Anchor #%lu: Chartpos = %lu  BPM = %lu  TS = %d/%d  ms pos = %lu beat length = %f,  Detected pos = %fms", anchorctr, current_anchor->chartpos, current_anchor->BPM, current_anchor->TSN, current_anchor->TSD, current_anchor->usec, beat_length, curpos);
 			eof_log(eof_log_string, 3);
 		}
 		current_anchor = current_anchor->next;
@@ -261,13 +261,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 	int ret=0;
 	struct dbText * current_event;
 	unsigned long chartpos, max_chartpos;
-	EOF_BEAT_MARKER * new_beat = NULL;
+	EOF_BEAT_MARKER *new_beat = NULL;
 	struct dBAnchor *ptr, *ptr2;
 	unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
 	char midbeatchange = 0;
 	unsigned long nextbeat;
 	unsigned long curppqn = 500000;	//Stores the current tempo (default is 120BPM)
-	double beatlength, chartfpos = 0;
+	unsigned long beatlength;
 	char tschange;
 	struct dbTrack * current_track;
 	int track;
@@ -407,7 +407,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 	max_chartpos = chart->chart_length;	//ImportFeedback() tracked the highest used chart position
 
 	/* create beat markers */
-	beatlength = chart->resolution;
+	beatlength = chart->resolution;	//Until a time signature is defined, assume #/4 for the purpose of determining beat length
+	curden = 4;
 	while(chartpos <= max_chartpos)
 	{	//Add new beats until enough have been added to encompass the last item in the chart
 		new_beat = eof_song_add_beat(sp);
@@ -422,9 +423,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{	//If this anchor defines a tempo change (is nonzero)
 						curppqn = (60000000.0 / (ptr->BPM / 1000.0)) + 0.5;	//Convert tempo
 					}
-					if(ptr->TS)
-					{	//If this anchor defines a tempo change (is nonzero)
-						curnum = ptr->TS;	//Store this anchor's time signature (which Feedback stores as #/4)
+					if(ptr->TSN || ptr->TSD)
+					{	//If this anchor defines a tempo change (either the numerator or denominator is nonzero)
+						curnum = ptr->TSN;	//Store this anchor's time signature
+						curden = ptr->TSD;
 						if(ptr->chartpos == chartpos)
 						{	//If this change is at the current position
 							tschange = 1;	//Keep note
@@ -432,29 +434,32 @@ EOF_SONG * eof_import_chart(const char * fn)
 					}
 				}
 			}
+
+			//Determine if this beat represents a mid-beat tempo change
+			if(midbeatchange)
+			{	//If this anchor was determined in the previous loop iteration to occur off-beat
+				new_beat->flags |= EOF_BEAT_FLAG_MIDBEAT;	//Flag the beat as such so it can be removed after import if the user preference is to do so
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid beat tempo change at chart position %lu", chartpos);
+				eof_log(eof_log_string, 1);
+			}
+
 			if(eof_use_ts && (tschange || (sp->beats == 1)))
 			{	//If the user opted to import TS changes, and this anchor has a TS change (or this is the first beat)
 				(void) eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
 			}
 			new_beat->ppqn = curppqn;
 			new_beat->midi_pos = chartpos;
-			if(chartpos % chart->resolution != 0)
-			{	//If this beat's position is not a multiple of the chart resolution, it was created due to a mid-beat tempo change
-				new_beat->flags |= EOF_BEAT_FLAG_MIDBEAT;	//Flag the beat as such so it can be removed after import if the user preference is to do so
-			}
+			beatlength = (chart->resolution * 4) / curden;	//Get the expected length of one beat in the current time signature (ie. #/8 is half the length of the chart resolution)
 
 			//Scan ahead to look for mid beat tempo or TS changes
 			midbeatchange = 0;
-			beatlength = chart->resolution;		//Determine the length of one full beat in delta ticks
-			nextbeat = chartpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
+			nextbeat = chartpos + beatlength;	//By default, the delta position of the next beat will be the standard length of delta ticks
 			for(ptr2 = chart->anchors; ptr2 != NULL; ptr2 = ptr2->next)
 			{	//For each anchor in the chart
-				if(ptr2->chartpos  > chartpos)
+				if(ptr2->chartpos > chartpos)
 				{	//If this anchor is ahead of the current delta position
 					if(ptr2->chartpos < nextbeat)
 					{	//If this anchor occurs before the next beat marker
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid beat tempo change at chart position %lu", ptr2->chartpos);
-						eof_log(eof_log_string, 1);
 						nextbeat = ptr2->chartpos;	//Store its delta time
 						midbeatchange = 1;
 					}
@@ -462,16 +467,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 				}
 			}
 			if(midbeatchange)
-			{	//If there is a mid-beat tempo/TS change, this beat needs to be anchored and its tempo (and the current tempo) altered
+			{	//If there is a mid-beat tempo/TS change coming up, this beat needs to be anchored and its tempo (and the current effective tempo) altered
 				//Also update beatlength to reflect that less than a full beat's worth of deltas will be used to advance to the next beat marker
 				sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;
 				curppqn = (double)curppqn * (((double)nextbeat - chartpos) / beatlength) + 0.5;	//Scale the current beat's tempo based on the adjusted delta length (rounded to nearest whole number)
 				sp->beat[sp->beats - 1]->ppqn = curppqn;		//Update the beat's (now an anchor) tempo
-				beatlength = (double)nextbeat - chartpos;	//This is the distance between the current beat, and the upcoming mid-beat change
+				beatlength = nextbeat - chartpos;	//This is the distance between the current beat, and the upcoming mid-beat change
 			}
 		}//If the beat was created successfully
-		chartfpos += beatlength;	//Add the delta length of this beat to the delta counter
-		chartpos = chartfpos + 0.5;	//Get the current chart position, rounded up to an integer value
+		chartpos += beatlength;	//Add the delta length of this beat to the delta counter
 	}//Add new beats until enough have been added to encompass the last item in the chart
 
 	eof_calculate_beats(sp);		//Set the beats' timestamps based on their tempo changes
@@ -1482,6 +1486,18 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				return NULL;					//Invalid number, return error
 			}
 
+		//If this is a time signature change, check for a second parameter, which Moonscraper uses to define the denominator (the power to which 2 is raised)
+			if(anchortype == 'T')
+			{
+				C=(unsigned long)ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
+				if(errorstatus)
+				{	//If another number was not read on this line
+					C = 2;	//Assume 4 (2^2 == 4)
+					errorstatus = 0;
+				}
+				C = 1 << C;
+			}
+
 		//If this anchor event has the same chart time as the last, just write this event's information with the last's
 			if(curanchor && (curanchor->chartpos == A))
 			{
@@ -1490,7 +1506,10 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				else if(anchortype == 'B')	//If this is a Tempo event
 					curanchor->BPM=B;		//Store the tempo
 				else if(anchortype == 'T')	//If this is a Time Signature event
-					curanchor->TS=B;		//Store the Time Signature
+				{
+					curanchor->TSN = B;		//Store the Time Signature
+					curanchor->TSD = C;
+				}
 				else
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Invalid sync item type \"%c\"", chart->linesprocessed, anchortype);
@@ -1529,7 +1548,8 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					break;
 
 					case 'T':				//If this was a time signature event
-						curanchor->TS=B;	//Store the numerator of the time signature
+						curanchor->TSN=B;	//Store the numerator of the time signature
+						curanchor->TSD=C;	//Store the denominator of the time signature
 					break;
 
 					case 'A':				//If this was an anchor event
