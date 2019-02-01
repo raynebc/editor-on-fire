@@ -2635,21 +2635,50 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 	allegro_message("%s",chartinfo);
 }
 
-int eof_audio_to_ogg(char *file, char *directory)
+int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function)
 {
 	char syscommand[1024] = {0};
 	char cfn[1024] = {0};
+	char *src_name;
 
 	eof_log("eof_audio_to_ogg() entered", 1);
 
-	if((file == NULL) || (directory == NULL))
+	if((file == NULL) || (directory == NULL) || (dest_name == NULL))
 		return 3;	//Return invalid filename
 
-	if(!ustricmp(get_filename(file),"guitar.ogg"))
-	{	//If the input file's name is guitar.ogg
+	src_name = get_filename(file);
+
+	//Determine the name of the file to be created
+	if(!function)
+	{	//Name the file as guitar.ogg
+		snprintf(dest_name, 15, "guitar.ogg");
+	}
+	else
+	{	//Allow song.*, drums.*, rhythm.* and vocals.* to retain that part of their name
+		if(!ustricmp(src_name, "song.ogg") || !ustricmp(src_name, "song.mp3") || !ustricmp(src_name, "song.wav"))
+			snprintf(dest_name, 15, "song.ogg");
+		else if(!ustricmp(src_name, "drums.ogg") || !ustricmp(src_name, "drums.mp3") || !ustricmp(src_name, "drums.wav"))
+			snprintf(dest_name, 15, "drums.ogg");
+		else if(!ustricmp(src_name, "rhythm.ogg") || !ustricmp(src_name, "rhythm.mp3") || !ustricmp(src_name, "rhythm.wav"))
+			snprintf(dest_name, 15, "rhythm.ogg");
+		else if(!ustricmp(src_name, "vocals.ogg") || !ustricmp(src_name, "vocals.mp3") || !ustricmp(src_name, "vocals.wav"))
+			snprintf(dest_name, 15, "vocals.ogg");
+		else
+			snprintf(dest_name, 15, "guitar.ogg");	//If it doesn't match any of those names, it will be renamed as guitar.ogg
+	}
+
+	if(!ustricmp(src_name, dest_name))
+	{	//If the input file's name is the same as the OGG file that is to be created
 		(void) replace_filename(syscommand, file, "", 1024);	//Obtain the parent directory of the input file
 		if(!ustricmp(syscommand,directory))				//Special case:  The input and output file are the same
-			return 0;									//Return success without altering the existing guitar.ogg
+		{
+			eof_music_data = (void *)eof_buffer_file(file, 0);	//Buffer and load the audio
+			eof_music_data_size = file_size_ex(file);
+			eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
+			(void) strncpy(eof_loaded_ogg_name, file, sizeof(eof_loaded_ogg_name) - 1);	//Store the loaded OGG filename
+
+			return 0;									//Return success without altering the existing OGG file
+		}
 	}
 
 	if(!ustricmp(get_extension(file), "mp3"))
@@ -2682,9 +2711,9 @@ int eof_audio_to_ogg(char *file, char *directory)
 			(void) snprintf(cfn, sizeof(cfn) - 1, "%soriginal.mp3", directory);		//Get the destination path of the original.mp3 to be created
 			#ifdef ALLEGRO_WINDOWS
 				(void) eof_copy_file(file, "eoftemp.mp3");
-				(void) uszprintf(syscommand, (int) sizeof(syscommand), "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, file);
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "mp3toogg \"eoftemp.mp3\" %s \"%s%s\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, dest_name, file);
 			#else
-				(void) uszprintf(syscommand, (int) sizeof(syscommand), "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%s%s\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory, dest_name);
 			#endif
 			(void) eof_system(syscommand);
 			#ifdef ALLEGRO_WINDOWS
@@ -2705,9 +2734,9 @@ int eof_audio_to_ogg(char *file, char *directory)
 		{
 			put_backslash(directory);												//Ensure that the directory string ends in a folder separator
 			#ifdef ALLEGRO_WINDOWS
-				(void) uszprintf(syscommand, (int) sizeof(syscommand), "wavtoogg \"%s\" %s \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "wavtoogg \"%s\" %s \"%s%s\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory, dest_name);
 			#else
-				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%sguitar.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], file, directory);
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s%s\"", eof_ogg_quality[(int)eof_ogg_setting], file, directory, dest_name);
 			#endif
 			(void) eof_system(syscommand);
 		}
@@ -2730,11 +2759,17 @@ int eof_audio_to_ogg(char *file, char *directory)
 		}
 		(void) ustrcpy(syscommand, directory);
 		put_backslash(syscommand);
-		(void) ustrcat(syscommand, "guitar.ogg");
+		(void) ustrcat(syscommand, dest_name);
 		if(ustricmp(file, syscommand))
 		{	//If the source and destination file are not the same, copy the file
 			(void) eof_copy_file(file, syscommand);
 		}
+
+		(void) replace_filename(syscommand, file, dest_name, 1024);	//Build the path of the newly copied file
+		eof_music_data = (void *)eof_buffer_file(syscommand, 0);	//Buffer and load the audio
+		eof_music_data_size = file_size_ex(syscommand);
+		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
+		(void) strncpy(eof_loaded_ogg_name, syscommand, sizeof(eof_loaded_ogg_name) - 1);	//Store the loaded OGG filename
 	}
 
 	return 0;	//Return success
@@ -2747,6 +2782,7 @@ int eof_new_chart(char * filename)
 	char genre[256] = {0};
 	char tracknumber[32] = {0};
 	char oggfilename[1024] = {0};
+	char dest_name[15] = {0};
 	char * returnedfolder = NULL;
 	int ret = 0;
 	ALOGG_OGG * temp_ogg = NULL;
@@ -2932,8 +2968,8 @@ int eof_new_chart(char * filename)
 	}
 
 	/* if music file is MP3/WAV, convert it */
-	ret = eof_audio_to_ogg(oggfilename,eof_etext3);
-	if(ret != 0)	//If guitar.ogg was not created successfully
+	ret = eof_audio_to_ogg(oggfilename, eof_etext3, dest_name, 1);
+	if(ret != 0)	//If a suitably named OGG was not created successfully
 		return ret;	//Return failure
 
 	/* destroy old song */

@@ -1819,18 +1819,16 @@ int eof_load_ogg(char * filename, char function)
 	char * returnedfn = NULL;
 	char * ptr = filename;	//Used to refer to the OGG file that was processed from memory buffer
 	char output[1024] = {0};
+	char dest_name[15] = {0};
 	int loaded = 0;
 	char load_silence = 0;
 	char * emptystring = "";
-	char dest_filename[20] = {0};
 
 	eof_log("eof_load_ogg() entered", 1);
-	strncpy(dest_filename, "guitar.ogg", sizeof(dest_filename) - 1);	//This will be the default file name of the chart audio
 
 	if(!filename)
-	{
-		return 0;
-	}
+		return 0;	//Invalid parameters
+
 	eof_destroy_ogg();
 	eof_music_data = (void *)eof_buffer_file(filename, 0);
 	eof_music_data_size = file_size_ex(filename);
@@ -1840,35 +1838,15 @@ int eof_load_ogg(char * filename, char function)
 		returnedfn = ncd_file_select(0, output, "Select Music File", eof_filter_music_files);
 		eof_clear_input();
 		if(returnedfn)
-		{	//User selected an OGG, WAV or MP3 file, write guitar.ogg into the chart's destination folder accordingly
+		{	//User selected an OGG, WAV or MP3 file, write a suitably named OGG into the chart's destination folder
 			ptr = returnedfn;
 			(void) replace_filename(output, filename, "", 1024);	//Store the path of the file's parent folder
-			if(function == 2)
-			{	//If the calling function wants to retain the user selected OGG file's original name if it's suitable
-				char *src_filename = get_filename(returnedfn);
 
-				if(!ustricmp(src_filename, "guitar.ogg") || !ustricmp(src_filename, "song.ogg") || !ustricmp(src_filename, "drums.ogg") || !ustricmp(src_filename, "rhythm.ogg") || !ustricmp(src_filename, "vocals.ogg"))
-				{	//If the input file's name is suitable for use with rhythm games
-					(void) strncpy(dest_filename, src_filename, sizeof(dest_filename) - 1);	//Allow this file name to be kept for the chart audio
-				}
-
-				//Copy the OGG file to the appropriate folder
-				(void) replace_filename(output, filename, dest_filename, 1024);	//Store the path of the output file
-				(void) eof_copy_file(returnedfn, output);						//Copy the user selected file to that file name
-				(void) strncpy(filename, output, 1024);							//Update the target audio file path for use in the remainder of this function
-
-				//Buffer the copied file into memory
-				eof_music_data = (void *)eof_buffer_file(returnedfn, 0);
-				eof_music_data_size = file_size_ex(returnedfn);
-			}
-			else
-			{	//Attempt to create guitar.ogg in the specified file's parent folder
-				if(!eof_audio_to_ogg(returnedfn, output))
-				{	//If the file copy or conversion to create guitar.ogg succeeded
-					(void) replace_filename(returnedfn, filename, dest_filename, 1024);
-					eof_music_data = (void *)eof_buffer_file(returnedfn, 0);
-					eof_music_data_size = file_size_ex(returnedfn);
-				}
+			if(!eof_audio_to_ogg(returnedfn, output, dest_name, (function == 2 ? 1 : 0)))
+			{	//If the file copy or conversion to create guitar.ogg (or a suitably named OGG file if function == 2) succeeded
+				(void) replace_filename(output, filename, dest_name, 1024);
+				eof_music_data = (void *)eof_buffer_file(output, 0);
+				eof_music_data_size = file_size_ex(output);
 			}
 		}
 		else if(function)
@@ -1894,17 +1872,14 @@ int eof_load_ogg(char * filename, char function)
 		{
 			eof_silence_loaded = 0;
 
-			if(function == 2)
-			{	//If the calling function allowed to use an OGG named something other than guitar.ogg for the chart audio
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tApplying name \"%s\" to OGG profile", dest_filename);
-				eof_log(eof_log_string, 1);
-				if(ogg_profile_name)
-				{	//This pointer should refer to the file name string in the default OGG profile
-					(void) ustrcpy(ogg_profile_name, dest_filename);		//Update the OGG profile with the appropriate file name
-				}
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tApplying name \"%s\" to OGG profile", dest_name);
+			eof_log(eof_log_string, 1);
+			if(ogg_profile_name)
+			{	//This pointer should refer to the file name string in the default OGG profile
+				(void) ustrcpy(ogg_profile_name, dest_name);		//Update the OGG profile with the appropriate file name
 			}
 		}
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", filename);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", output);
 		eof_log(eof_log_string, 1);
 		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
 		if(eof_music_track)
@@ -1930,7 +1905,7 @@ int eof_load_ogg(char * filename, char function)
 			}
 			eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-			(void) ustrcpy(eof_loaded_ogg_name,filename);	//Store the loaded OGG filename
+			(void) ustrcpy(eof_loaded_ogg_name, output);	//Store the loaded OGG filename
 			eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
 		}
 	}
