@@ -1846,7 +1846,7 @@ int eof_ini_dialog_delete(DIALOG * d)
 
 int eof_menu_song_waveform(void)
 {
-	if(!eof_song_loaded)
+	if(!eof_song_loaded || eof_silence_loaded)
 		return 1;	//Return error
 
 	if(eof_display_waveform == 0)
@@ -1886,7 +1886,7 @@ int eof_menu_song_waveform(void)
 
 int eof_menu_song_spectrogram(void)
 {
-	if(!eof_song_loaded)
+	if(!eof_song_loaded || eof_silence_loaded)
 		return 1;	//Return error
 
 	if(eof_display_spectrogram == 0)

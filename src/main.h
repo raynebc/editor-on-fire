@@ -698,8 +698,9 @@ int eof_load_ogg(char * filename, char function);
 	//If function is 2, the browsed file name is allowed to keep its original filename (instead of being forcibly renamed to guitar.ogg) if it has one of the following names:
 	//  song.ogg, drums.ogg, rhythm.ogg, vocals.ogg
 	//  This would generally be used after a file import
-	//If function is 2 and ogg_profile_name is not NULL, the file name for the loaded OGG file is written to the pointer
+	//If function is 2 and ogg_profile_name is not NULL, the file name for the loaded OGG file is written to the pointer and ogg_profile_name is reset to NULL
 	//  This is to ensure that the OGG profile for the new project created from a file import has the user-selected OGG file name
+	//  Resetting it to NULL avoids writing to invalid memory after importing and undoing causes the function to reload the OGG file
 int eof_load_complete_song(char * filename);
 int eof_destroy_ogg(void);	//Frees chart audio
 int eof_save_ogg(char * fn);	//Writes the memory buffered chart audio OGG (eof_music_data) to the specified file

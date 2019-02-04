@@ -284,6 +284,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	double lyric_on = 0.0, lyric_off = 0.0;
 	unsigned long pos, closestpos = 0;
 	char limit_warned = 0;
+	char oldoggpath[1024] = {0};
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -320,7 +321,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	memcpy(backup_filename, fn, 1024);	//Back up the filename that is passed, if the calling function passed the file selection dialog's return path, that buffer will be clobbered if a file dialog to select the audio is launched
 										//This path will be used later to set the song and project paths at the end of the import
 
-	/* load audio */
+	/* identify/convert audio file to load */
 	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
 	(void) replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg by default
 	if((chart->audiofile != NULL) && !exists(oggfn))
@@ -333,6 +334,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		(void) replace_filename(searchpath, fn, "*.ogg", 1024);
 		if(al_findfirst(searchpath, &info, FA_ALL))
 		{
+			(void) ustrcpy(oldoggpath, eof_last_ogg_path);
 			(void) replace_filename(eof_last_ogg_path, fn, "", 1024);
 		}
 
@@ -347,23 +349,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 	if(exists(oggfn))
 	{	//If an existing audio file has been identified
 		(void) replace_filename(searchpath, oggfn, "", 1024);		//Store the path of the file's parent folder
-		ret = eof_audio_to_ogg(oggfn, searchpath, dest_name, 1);	//Create a suitably named OGG in the folder
+		ret = eof_audio_to_ogg(oggfn, searchpath, dest_name, 1);	//Create a suitably named OGG in the folder, converting to OGG if necessary
 		if(ret != 0)
 		{	//If guitar.ogg was not created successfully
 			DestroyFeedbackChart(chart, 1);
 			return NULL;
 		}
 	}
-	else
-	{	//Prompt the user to browse for an audio file
-		if(!eof_load_ogg(oggfn, 2))	//If user does not provide audio, fail over to using silent audio
-		{	//If that also fails
-			DestroyFeedbackChart(chart, 1);
-			return NULL;
-		}
-		strncpy(dest_name, get_filename(eof_loaded_ogg_name), sizeof(dest_name) - 1);	//Store the file name to use for the OGG profile
-	}
-	eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 
 	/* create empty song */
 	sp = eof_create_song_populated();
@@ -372,8 +364,16 @@ EOF_SONG * eof_import_chart(const char * fn)
 		DestroyFeedbackChart(chart, 1);
 		return NULL;
 	}
-	strncpy(sp->tags->ogg[0].filename, dest_name, sizeof(sp->tags->ogg[0].filename) - 1);	//Update the OGG profile to have the chosen OGG file name
+
+	/* load audio */
 	ogg_profile_name = sp->tags->ogg[0].filename;	//Store the pointer to the OGG profile filename to be updated by eof_load_ogg()
+	if(!eof_load_ogg(oggfn, 2))	//If user does not provide audio, fail over to using silent audio
+	{
+		DestroyFeedbackChart(chart, 1);
+		eof_destroy_song(sp);
+		(void) ustrcpy(eof_last_ogg_path, oldoggpath); // remember previous OGG directory if we fail
+		return NULL;
+	}
 
 	/* backup the current value of eof_song and assign sp to it so that grid snap logic can be performed during note creation */
 	eof_song_backup = eof_song;

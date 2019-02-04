@@ -242,6 +242,10 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	#else
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "\"%s\" \"%s\" \"silence.ogg\" \"%s\"", oggcfn, rel_oggfn, rel_backupfn);	//Use oggCat to overwrite the target OGG file with the silent audio concatenated with the backup of the target OGG file
 	#endif
+
+	eof_log_cwd();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling oggCat as follows:  %s", sys_command);
+	eof_log(eof_log_string, 1);
 	retval = eof_system(sys_command);
 
 	/* change back to the program folder */

@@ -108,7 +108,7 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart);
 	//Debug function to call an allegro_message with summary information about the passed chart
 
 int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function);
-	//Uses the specified file to create an OGG file with a suitable name guitar.ogg in the specified directory
+	//Uses the specified file to create an OGG file with a suitable name in the specified directory
 	//If the extension of the file is .mp3, it is converted to OGG format and a copy of the original mp3 file is stored at the specified directory,
 	// if the extension of the file is .wav, it is converted to OGG format,
 	// otherwise the specified file is simply copied to the specified directory
@@ -116,7 +116,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 	//If function is nonzero, the pre-extension part of the file name is allowed to be kept (instead of being forcibly renamed to guitar.ogg) if it has one of the following names:
 	// song.mp3, song.wav, drums.mp3, drums.wav, rhythm.mp3, rhythm.wav, vocals.mp3 or vocals.wav
 	// the selected destination OGG file name is written to *dest_name so the calling function is aware of the chosen file name
-	//dest_name is expected to be an array at least 15 bytes in size
+	//dest_name is expected to be an array at least 15 bytes in size (all of the supported OGG names are shorter than this)
 	//Returns zero on successful conversion or nonzero if conversion was canceled/unsuccessful
 
 void eof_restore_oggs_helper(void);

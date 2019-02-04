@@ -1819,7 +1819,7 @@ int eof_load_ogg(char * filename, char function)
 	char * returnedfn = NULL;
 	char * ptr = filename;	//Used to refer to the OGG file that was processed from memory buffer
 	char output[1024] = {0};
-	char dest_name[15] = {0};
+	char dest_name[256] = {0};
 	int loaded = 0;
 	char load_silence = 0;
 	char * emptystring = "";
@@ -1832,6 +1832,8 @@ int eof_load_ogg(char * filename, char function)
 	eof_destroy_ogg();
 	eof_music_data = (void *)eof_buffer_file(filename, 0);
 	eof_music_data_size = file_size_ex(filename);
+	strncpy(dest_name, get_filename(filename), sizeof(dest_name) - 1);	//By default, the specified file's name will be stored to the OGG profile
+	strncpy(output, filename, sizeof(output) - 1);	//By default, the specified file will be the one loaded
 	if(!eof_music_data)
 	{	//If the referenced file couldn't be buffered to memory, have the user browse for another file
 		(void) replace_filename(output, filename, "", 1024);	//Get the path of the target file's parent directory (the project folder)
@@ -1877,6 +1879,7 @@ int eof_load_ogg(char * filename, char function)
 			if(ogg_profile_name)
 			{	//This pointer should refer to the file name string in the default OGG profile
 				(void) ustrcpy(ogg_profile_name, dest_name);		//Update the OGG profile with the appropriate file name
+				ogg_profile_name = NULL;	//Reset this pointer
 			}
 		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", output);
@@ -1920,6 +1923,8 @@ int eof_load_ogg(char * filename, char function)
 	}
 
 	eof_fix_window_title();
+	eof_log("\teof_load_ogg() completed", 2);
+
 	return loaded;
 }
 

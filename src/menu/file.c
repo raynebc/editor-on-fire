@@ -701,6 +701,7 @@ int eof_menu_file_load(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+
 	return 1;
 }
 
@@ -2672,11 +2673,6 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		(void) replace_filename(syscommand, file, "", 1024);	//Obtain the parent directory of the input file
 		if(!ustricmp(syscommand,directory))				//Special case:  The input and output file are the same
 		{
-			eof_music_data = (void *)eof_buffer_file(file, 0);	//Buffer and load the audio
-			eof_music_data_size = file_size_ex(file);
-			eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
-			(void) strncpy(eof_loaded_ogg_name, file, sizeof(eof_loaded_ogg_name) - 1);	//Store the loaded OGG filename
-
 			return 0;									//Return success without altering the existing OGG file
 		}
 	}
@@ -2764,12 +2760,6 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		{	//If the source and destination file are not the same, copy the file
 			(void) eof_copy_file(file, syscommand);
 		}
-
-		(void) replace_filename(syscommand, file, dest_name, 1024);	//Build the path of the newly copied file
-		eof_music_data = (void *)eof_buffer_file(syscommand, 0);	//Buffer and load the audio
-		eof_music_data_size = file_size_ex(syscommand);
-		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
-		(void) strncpy(eof_loaded_ogg_name, syscommand, sizeof(eof_loaded_ogg_name) - 1);	//Store the loaded OGG filename
 	}
 
 	return 0;	//Return success
