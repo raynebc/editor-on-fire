@@ -423,6 +423,7 @@ extern int         eof_fingering_checks_include_mutes;
 extern int         eof_ghl_conversion_swaps_bw_gems;
 extern int         eof_3d_hopo_scale_size;
 extern int         eof_disable_backups;
+extern int         eof_enable_open_strums_by_default;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;
@@ -696,7 +697,7 @@ int eof_load_ogg(char * filename, char function);
 	//Loads the specified OGG file, or if it does not exist, have the user browse for an audio file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
 	//If function is 1, and the user cancels loading audio, "second_of_silence.ogg" is loaded instead, and nonzero is returned.
 	//If function is 2, the browsed file name is allowed to keep its original filename (instead of being forcibly renamed to guitar.ogg) if it has one of the following names:
-	//  song.ogg, drums.ogg, rhythm.ogg, vocals.ogg
+	//  song.ogg, drums.ogg, rhythm.ogg, vocals.ogg, bass.ogg, keys.ogg, crowd.ogg
 	//  This would generally be used after a file import
 	//If function is 2 and ogg_profile_name is not NULL, the file name for the loaded OGG file is written to the pointer and ogg_profile_name is reset to NULL
 	//  This is to ensure that the OGG profile for the new project created from a file import has the user-selected OGG file name

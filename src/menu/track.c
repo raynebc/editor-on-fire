@@ -3213,9 +3213,9 @@ int eof_menu_track_open_strum(void)
 		eof_pen_visible = 1;
 
 		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
-		{	//For each note in PART BASS
+		{	//For each note in the active track
 			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 32) && (eof_song->legacy_track[tracknum]->note[ctr]->note & ~32))
-			{	//If this note uses lane 6 (open bass) and at least one other lane
+			{	//If this note uses lane 6 (open note) and at least one other lane
 				if(!undo_made)
 				{
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Create an undo state before making the first change

@@ -205,6 +205,7 @@ void eof_load_config(char * fn)
 	eof_render_2d_rs_piano_roll = get_config_int("preferences", "eof_render_2d_rs_piano_roll", 0);
 	eof_disable_backups = get_config_int("preferences", "eof_disable_backups", 0);
 	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
+	eof_enable_open_strums_by_default = get_config_int("preferences", "eof_enable_open_strums_by_default", 0);
 	if(eof_min_note_distance > 999)
 	{	//If the minimum note distance is invalid (more than 3 digits)
 		eof_min_note_distance = 3;	//Reset it to default
@@ -554,6 +555,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_render_3d_rs_chords", eof_render_3d_rs_chords);
 	set_config_int("preferences", "eof_render_2d_rs_piano_roll", eof_render_2d_rs_piano_roll);
 	set_config_int("preferences", "eof_disable_backups", eof_disable_backups);
+	set_config_int("preferences", "eof_enable_open_strums_by_default", eof_enable_open_strums_by_default);
 	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
 	set_config_int("preferences", "eof_enforce_chord_density", eof_enforce_chord_density);
 	set_config_int("preferences", "eof_chord_density_threshold", eof_chord_density_threshold);

@@ -149,10 +149,10 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 444, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
-	{ d_agup_button_proc,12,  452, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  452, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 452, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_window_proc,0,   48,  482, 460, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_button_proc,12,  468, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  468, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 468, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_text_proc,  16,  207, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
 	{ d_agup_radio_proc, 161, 207, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
 	{ d_agup_radio_proc, 224, 207, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
@@ -207,6 +207,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 463, 230, 16,  2,   23,  0,    0,      1,   0,   "Disable automatic backups",NULL, NULL },
 	{ d_agup_check_proc, 248, 175, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
 	{ d_agup_check_proc, 248, 159, 206, 16,  2,   23,  0,    0,      1,   0,   "Use FoF difficulty naming",NULL, NULL },
+	{ d_agup_check_proc, 248, 479, 208, 16,  2,   23,  0,    0,      1,   0,   "Enable open strum by default",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1356,6 +1357,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[55].flags = eof_disable_backups ? D_SELECTED : 0;			//Disable automatic backups
 	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;		//New notes are force strum
 	eof_preferences_dialog[57].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;	//Use FoF difficulty naming
+	eof_preferences_dialog[58].flags = eof_enable_open_strums_by_default ? D_SELECTED : 0;	//Enable open strum by default
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1477,6 +1479,7 @@ int eof_menu_file_preferences(void)
 			eof_disable_backups = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
 			eof_new_note_forced_strum = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
 			eof_use_fof_difficulty_naming = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
+			eof_enable_open_strums_by_default = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1537,6 +1540,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[55].flags = 0;					//Disable automatic backups
 			eof_preferences_dialog[56].flags = 0;					//New notes are force strum
 			eof_preferences_dialog[57].flags = 0;					//Use FoF difficulty naming
+			eof_preferences_dialog[58].flags = 0;					//Enable open strum by default
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 
@@ -2664,6 +2668,12 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 			snprintf(dest_name, 15, "rhythm.ogg");
 		else if(!ustricmp(src_name, "vocals.ogg") || !ustricmp(src_name, "vocals.mp3") || !ustricmp(src_name, "vocals.wav"))
 			snprintf(dest_name, 15, "vocals.ogg");
+		else if(!ustricmp(src_name, "bass.ogg") || !ustricmp(src_name, "bass.mp3") || !ustricmp(src_name, "bass.wav"))
+			snprintf(dest_name, 15, "bass.ogg");
+		else if(!ustricmp(src_name, "keys.ogg") || !ustricmp(src_name, "keys.mp3") || !ustricmp(src_name, "keys.wav"))
+			snprintf(dest_name, 15, "keys.ogg");
+		else if(!ustricmp(src_name, "crowd.ogg") || !ustricmp(src_name, "crowd.mp3") || !ustricmp(src_name, "crowd.wav"))
+			snprintf(dest_name, 15, "crowd.ogg");
 		else
 			snprintf(dest_name, 15, "guitar.ogg");	//If it doesn't match any of those names, it will be renamed as guitar.ogg
 	}
@@ -2779,7 +2789,7 @@ int eof_new_chart(char * filename)
 	char * temp_buffer = NULL;
 	int temp_buffer_size = 0;
 	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};
-	int ctr=0;
+	unsigned long ctr = 0;
 
 	eof_log("eof_new_chart() entered", 1);
 
@@ -3038,6 +3048,25 @@ int eof_new_chart(char * filename)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+
+	/* enable open strum for legacy tracks if the relevant preference is enabled */
+	if(eof_enable_open_strums_by_default)
+	{	//If the user enabled this preference
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			if(eof_track_is_legacy_guitar(eof_song, ctr))
+			{	//If it is a legacy guitar track
+				if(!eof_open_strum_enabled(ctr))
+				{	//If open strum isn't already enabled for it (the expected case)
+					unsigned long tracknum = eof_song->track[ctr]->tracknum;
+
+					eof_song->track[ctr]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the 6 lane flag
+					eof_song->legacy_track[tracknum]->numlanes = 6;				//Set the lane count
+				}
+			}
+		}
+		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	}
 
 	(void) eof_menu_file_quick_save();
 

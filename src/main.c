@@ -194,6 +194,7 @@ int         eof_fingering_checks_include_mutes = 0;	//If nonzero, various functi
 int         eof_ghl_conversion_swaps_bw_gems = 0;	//If nonzero, toggling GHL mode on/off or copying between GHL and non GHL tracks will remap lanes 1-3 as the black GHL gems instead the white gems as per the default behavior
 int         eof_3d_hopo_scale_size = 75;		//The percentage of full size to which the 3D HOPO gem images are scaled
 int         eof_disable_backups = 0;			//If nonzero, .eof.bak files (created during undo and save operations) and .backup files (created during MIDI/GH/Feedback import) are not created
+int         eof_enable_open_strums_by_default = 0;	//If nonzero, legacy tracks in new projects will be initialized to have open strums enabled automatically
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
