@@ -176,8 +176,11 @@ void Export_UStar(FILE *outf)
 			if(Lyrics.verbose>=2)	printf("\tEstimated tempo's mean time skew is %fms\n",CalculateTimeDiff(tempo));
 			tempo=BruteForceTempo(200.0,400.0);
 			stepping=60000.0/(tempo*4);	//Recalculate stepping, since the tempo has changed
-			if(Lyrics.verbose>=2)	printf("Brute forced tempo= %fBPM, precision= %fms\n",tempo,stepping);
-			if(Lyrics.verbose>=2)	printf("\tBrute forced mean time skew= %fms\n",CalculateTimeDiff(tempo));
+			if(Lyrics.verbose>=2)
+			{
+				printf("Brute forced tempo= %fBPM, precision= %fms\n",tempo,stepping);
+				printf("\tBrute forced mean time skew= %fms\n",CalculateTimeDiff(tempo));
+			}
 		}
 	}
 

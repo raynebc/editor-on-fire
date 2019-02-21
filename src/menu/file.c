@@ -179,10 +179,10 @@ DIALOG eof_preferences_dialog[] =
 	{ eof_verified_edit_proc,160,165,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 335, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
 	{ d_agup_check_proc, 248, 255, 156, 16,  2,   23,  0,    0,      1,   0,   "dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  319, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-	{ d_agup_list_proc,  16,  336, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
-	{ d_agup_text_proc,  150, 336, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-	{ d_agup_list_proc,  129, 351, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
+	{ d_agup_text_proc,  24,  335, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_list_proc,  16,  352, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
+	{ d_agup_text_proc,  150, 352, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+	{ d_agup_list_proc,  129, 367, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
 	{ d_agup_check_proc, 248, 191, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
 	{ d_agup_check_proc, 248, 271, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
 	{ d_agup_check_proc, 248, 287, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
@@ -1524,13 +1524,13 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[38].flags = 0;					//Add new notes to selection
 			eof_preferences_dialog[39].flags = 0;					//Treat inverted chords as slash
 			eof_preferences_dialog[40].flags = D_SELECTED;			//Click to change dialog focus
-			eof_preferences_dialog[41].flags = 1;					//EOF leaving focus stops playback
+			eof_preferences_dialog[41].flags = D_SELECTED;			//EOF leaving focus stops playback
 			(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
 			eof_preferences_dialog[44].flags = 0;					//Apply crazy to repeated chords separated by a rest
 			eof_preferences_dialog[45].flags = D_SELECTED;			//Offer to auto complete fingering
 			eof_preferences_dialog[46].flags = 0;					//Don't auto-name double stops
-			eof_preferences_dialog[47].flags = 1;					//Auto-Adjust sections/FHPs
-			eof_preferences_dialog[48].flags = 1;					//Auto-Adjust tech notes
+			eof_preferences_dialog[47].flags = D_SELECTED;			//Auto-Adjust sections/FHPs
+			eof_preferences_dialog[48].flags = D_SELECTED;			//Auto-Adjust tech notes
 			eof_preferences_dialog[49].flags = 0;					//Fingering checks include mutes
 			eof_preferences_dialog[50].flags = 0;					//GHL conversion swaps B/W gems
 			eof_preferences_dialog[51].flags = 0;					//2D render RS piano roll
@@ -3066,6 +3066,17 @@ int eof_new_chart(char * filename)
 			}
 		}
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	}
+
+	/* selectively disable the difficulty limit for pro guitar tracks */
+	if(!eof_write_rb_files && !eof_write_fof_files && (eof_write_rs_files || eof_write_rs2_files))
+	{	//If neither Rock Band nor FoF export are enabled, but either RS1 or RS2 export is enabled
+		eof_song->track[EOF_TRACK_PRO_BASS]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Enable unlimited difficulties
+		eof_song->track[EOF_TRACK_PRO_GUITAR]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;
+		eof_song->track[EOF_TRACK_PRO_BASS_22]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;
+		eof_song->track[EOF_TRACK_PRO_GUITAR_22]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;
+		eof_song->track[EOF_TRACK_PRO_GUITAR_B]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;
+		eof_note_type = 0;	//And start in the first difficulty tab
 	}
 
 	(void) eof_menu_file_quick_save();

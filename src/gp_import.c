@@ -2152,9 +2152,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 1 header/footer string
 		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 2 header/footer string
 		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the page number header/footer string
-	}
-	if(fileversion >= 500)
-	{	//The tempo string only exists in version 5.x or newer of the format
+
+		//The tempo string only exists in version 5.x or newer of the format
 		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo string
 	}
 	pack_ReadDWORDLE(inf, &dword);	//Read the tempo

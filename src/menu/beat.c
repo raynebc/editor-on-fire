@@ -1273,6 +1273,7 @@ int eof_menu_beat_anchor_measures(void)
 	}
 
 	(void) eof_detect_tempo_map_corruption(eof_song, 0);
+	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 
 	return 1;
 }
@@ -3437,6 +3438,7 @@ int eof_menu_beat_paste_tempo_map(void)
 int eof_menu_beat_validate_tempo_map(void)
 {
 	(void) eof_detect_tempo_map_corruption(eof_song, 1);
+	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 
 	return D_O_K;
 }

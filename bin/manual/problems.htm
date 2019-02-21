@@ -19,11 +19,6 @@ EOF hangs intermittently.<br>
 Try disabling the "Use software cursor" option in File>Display>Display.<br><br>
 
 <b>Problem:</b><br>
-EOF doesn't work on Mac.  Opening EOF from the command line gives an error like "Warning once: This application, or a library it uses, is using NSQuickDrawView, which has been deprecated. Apps should cease use of QuickDraw and move to Quartz."<br>
-<b>Solution:</b><br>
-Around the release of Mac OS X High Sierra, the OS deprecated certain features that broke compatibility with Allegro 4 (the game library that EOF is built with).  There's no simple fix for this as EOF eventually has to be ported to Allegro 5, which is significantly different.  If you have the ability to keep a pre High Sierra version of Mac OS to use, that's the most reliable option.<br><br>
-
-<b>Problem:</b><br>
 The mouse doesn't appear very responsive, especially to small movements.  Changing the "Use Software Cursor" in File>Display doesn't lead to any improvement.<br>
 <b>Solution:</b></br>
 Some higher end mice (one example being the Logitech G500) may have problems working well with Allegro depending on their settings.  For example, it's been reported that with the Logitech G500, using the mouse's management utility to lower the polling rate helped.  If making setting changes to the mouse doesn't resolve the problem, it may ultimately be easiest to just try connecting and using an additional cheap mouse.<br><br>
@@ -89,6 +84,11 @@ Make sure EOF and your project files are on the Windows installation's file syst
 <b>Problem:</b><br>
 In Windows 8, EOF takes up the full screen and the mouse doesn't work.<br>
 <b>Solution:</b><br>
-Windows 8 may be allowing EOF to set a window size larger than the current screen resolution instead of refusing it.  Try setting EOF's screen resolution back to the default (640x480) by using the keyboard controls.  If that can't be done, you can edit the eof.cfg file in EOF's program folder and delete the lines beginning with "display_mode" and "eof_screen_width" under the "[display]" section or simply delete/rename the entire eof.cfg file and EOF will revert to all default settings.
+Windows 8 may be allowing EOF to set a window size larger than the current screen resolution instead of refusing it.  Try setting EOF's screen resolution back to the default (640x480) by using the keyboard controls.  If that can't be done, you can edit the eof.cfg file in EOF's program folder and delete the lines beginning with "display_mode" and "eof_screen_width" under the "[display]" section or simply delete/rename the entire eof.cfg file and EOF will revert to all default settings.<br><br>
+
+<b>Problem:</b><br>
+The program's response is extremely laggy and input is missed.<br>
+<b>Solution:</b><br>
+Some programs like nVidia's GSync feature manipulate the screen's refresh rate and can have odd side effects with non-games.  In the case of GSync, configuring it to only be used for programs that are running in full screen mode may help avoid it causing problems with EOF.
 </BODY>
 </HTML>

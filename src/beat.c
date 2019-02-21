@@ -213,8 +213,8 @@ int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report)
 	if(!sp)
 		return 1;	//Invalid parameters
 
-	for(ctr = 1; ctr < sp->beats; ctr++)
-	{	//For each beat after the first
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
 		expected_pos = eof_calculate_beat_pos_by_prev_beat_tempo(sp, ctr);
 		expected_pos_int = expected_pos + 0.5;	//Round to nearest ms
 
@@ -232,8 +232,12 @@ int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report)
 			else
 			{
 				if(alert(eof_log_string, NULL, "Recreate tempo changes based on beat positions?", "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to replace the highlighting status with SP deploy status
+				{	//If the user opts to correct the tempo map
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					if(sp->beat[0]->pos != sp->tags->ogg[eof_selected_ogg].midi_offset)
+					{	//If the first beat's position doesn't reflect the MIDI delay of the current OGG profile
+						sp->beat[0]->pos = sp->beat[0]->fpos = sp->tags->ogg[eof_selected_ogg].midi_offset;
+					}
 					eof_calculate_tempo_map(sp);
 					return 1;
 				}
