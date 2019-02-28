@@ -15,7 +15,7 @@
 	//Logging level 1 is normal logging, 2 is verbose logging, 3 is exhaustive logging
 	///This macro is deprecated as the logging level is now set in the config file
 #define EOF_VERSION_STRING "EOF v1.8RC12"
-#define EOF_COPYRIGHT_STRING "(c)2008-2018 T^3 Software."
+#define EOF_COPYRIGHT_STRING "(c)2008-2019 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #define KEY_EITHER_WIN (key[KEY_LWIN] || key[KEY_RWIN])
@@ -424,6 +424,8 @@ extern int         eof_ghl_conversion_swaps_bw_gems;
 extern int         eof_3d_hopo_scale_size;
 extern int         eof_disable_backups;
 extern int         eof_enable_open_strums_by_default;
+extern double      eof_lyric_gap_multiplier;
+extern char        eof_lyric_gap_multiplier_string[20];
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;

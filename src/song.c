@@ -1009,9 +1009,9 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 				}
 				else
 				{
-					unsigned effective_note_distance = eof_get_effective_minimum_note_distance(sp, track, i-1);
+					unsigned long effective_note_distance = eof_get_effective_minimum_note_distance(sp, track, i-1);
 
-					if(effective_note_distance == UINT_MAX)
+					if(effective_note_distance == ULONG_MAX)
 						continue;	//If the effective minimum note distance for this lyric couldn't be determined, skip it
 
 					if(tp->lyric[i-1]->pos + tp->lyric[i-1]->length > tp->lyric[next]->pos - effective_note_distance)
@@ -7472,8 +7472,8 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 			{	//If the note length is to be increased
 				if(next_note > 0)
 				{	//Check if the increase would be canceled due to being unable to overlap the next note
-					unsigned effective_note_distance = eof_get_effective_minimum_note_distance(sp, track, notepos);
-					if(effective_note_distance != UINT_MAX)
+					unsigned long effective_note_distance = eof_get_effective_minimum_note_distance(sp, track, notepos);
+					if(effective_note_distance == ULONG_MAX)
 						continue;	//If the effective minimum note distance for this note couldn't be determined, skip it
 					if((notepos + notelength + effective_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
 					{	//If this note cannot increase its length because it would overlap the next (taking the minimum note distance into account) and the note isn't "crazy"
@@ -8391,13 +8391,13 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 	long next = note;
 	unsigned long thisflags, thispos = 0, nextpos = 0;
 	unsigned char thisnote, nextnote;
-	unsigned effective_min_note_distance;
+	unsigned long effective_min_note_distance;
 
 	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Return error
 
 	effective_min_note_distance = eof_get_effective_minimum_note_distance(sp, track, note);	//By default, the user configured minimum note distance is used
-	if(effective_min_note_distance == UINT_MAX)
+	if(effective_min_note_distance == ULONG_MAX)
 		return 0;	//If the effective minimum note distance for this note couldn't be determined, return error
 
 	thisflags = eof_get_note_flags(sp, track, note);	//Get the note's flags so it can be checked for "crazy" status
@@ -8440,13 +8440,13 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 	return (nextpos - thispos);
 }
 
-unsigned eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+unsigned long eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {
 	long next;
 	unsigned long nextnotepos, cutoff;
 
 	if(!sp || !track || (track >= sp->tracks) || (notenum >= eof_get_track_size(sp, track)))
-		return UINT_MAX;	//Invalid parameters
+		return ULONG_MAX;	//Invalid parameters
 
 	next = eof_track_fixup_next_note(sp, track, notenum);	//Get the next note, if it exists
 	if(next < 0)
@@ -8459,9 +8459,102 @@ unsigned eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned long tra
 	cutoff = eof_get_position_minus_one_grid_snap_length(nextnotepos, eof_min_note_distance, (eof_min_note_distance_intervals == 1) ? 1 : 0);	//Determine where the note is required to end in order to meet the min. note distance setting requirement
 
 	if((cutoff == ULONG_MAX)  || (cutoff >= nextnotepos))
-		return UINT_MAX;	//Could not determine the appropriate cutoff position for the specified note
+		return ULONG_MAX;	//Could not determine the appropriate cutoff position for the specified note
 
 	return nextnotepos - cutoff;
+}
+
+void eof_enforce_lyric_gap_multiplier(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
+	unsigned long ctr, tracksize, notepos, targetnote, notelen, cutoff, targetlen, wallpos;
+	double gap;
+
+	if(!sp || !track || (track >= sp->tracks))
+		return;	//Invalid parameter
+	if(eof_snap_mode == EOF_SNAP_OFF)
+		return;	//Don't run if no grid snap is active
+	tracksize = eof_get_track_size(sp, track);
+	if((notenum != ULONG_MAX) && (notenum >= tracksize))
+		return;	//Invalid parameter
+	if(track != EOF_TRACK_VOCALS)
+		return;	//Only run on the vocal track
+
+	if(notenum == ULONG_MAX)
+	{	//If all selected notes are to be processed
+		if(eof_selection.track != eof_selected_track)	//If any note selection is outside of the active track
+			return;	//This function has nothing to manipulate
+
+		ctr = 0;	//Otherwise start with the first note
+	}
+	else
+	{
+		ctr = notenum;	//Otherwise process just the specified one
+	}
+
+	while(ctr < tracksize)
+	{	//For each note in the scope of this function
+		///Skip note if appropriate
+		if(notenum == ULONG_MAX)
+		{	//If all selected notes are to be processed
+			if((eof_get_note_type(sp, track, ctr) != eof_note_type) || !eof_selection.multi[ctr])
+			{	//If the note isn't in the active difficulty or isn't selected
+				ctr++;		//Skip it and advance to the next note
+				continue;
+			}
+		}
+
+		///Determine appropriate note gap for note being processed
+		if(notenum == ULONG_MAX)
+		{	//If all selected notes are to be processed
+			long nextnote = eof_track_fixup_next_note(sp, track, ctr);	//Find the next note
+
+			if(nextnote < 0)
+			{	//If there is no next note
+				break;	//There is no more processing to do
+			}
+			wallpos = eof_get_note_pos(sp, track, nextnote);	//This selected note is to be shortened pending its distance from this note
+			targetnote = ctr;	//The selected note is the one whose length may be altered
+		}
+		else
+		{	//If only a specific note is to be processed
+			long prevnote = eof_track_fixup_previous_note(sp, track, ctr);	//Find the previous note
+
+			if(prevnote < 0)
+			{	//If there is no note previous note
+				break;	//There is no processing to do
+			}
+			wallpos = eof_get_note_pos(sp, track, ctr);	//The previous note is to be shortened pending its distance from this note
+			targetnote = prevnote;	//The previous note is the one whose length may be altered
+		}
+		eof_snap_logic(&temp, wallpos);	//Calculate grid snap data about the target position
+		eof_snap_length_logic(&temp);
+		if(temp.length <= 0)
+			break;	//If the grid snap length could not be determined, return without making any changes
+		gap = temp.snap_length * eof_lyric_gap_multiplier;	//Multiply the grid snap size with the user defined value to get the gap to enforce
+
+		///Alter note length if appropriate
+		notepos = eof_get_note_pos(sp, track, targetnote);
+		targetlen = notelen = eof_get_note_length(sp, track, targetnote);
+		if(gap + 0.5 >= wallpos)
+			break;	//Logic error
+		cutoff = wallpos - gap + 0.5;		//One gap length before the next note, rounded up to the nearest millisecond
+		if(notepos >= cutoff)
+		{	//If the note being processed begins within the gap
+			targetlen = 1;	//The most that can be done is to minimize its length
+		}
+		else if(notepos + notelen >= cutoff)
+		{	//If the note being processed begins before the gap and ends within or after the gap
+			targetlen = cutoff - notepos;	//End it at the cutoff position
+		}
+		eof_set_note_length(sp, track, targetnote, targetlen);	//Update the note length
+
+		///Iterate or exit loop
+		if(notenum != ULONG_MAX)
+			break;	//If only one note was to be processed, exit loop
+
+		ctr++;	//Otherwise the next iteration will examine the next note
+	}//For each note in the scope of this function
 }
 
 int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp)
@@ -9385,7 +9478,7 @@ unsigned long eof_pro_guitar_lookup_combined_tech_flags(EOF_PRO_GUITAR_TRACK *tp
 void eof_pro_guitar_track_enforce_chord_density(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long ctr, threshold;
-	unsigned effective_note_distance;
+	unsigned long effective_note_distance;
 	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!sp || !track || (track >= sp->tracks))
@@ -9403,7 +9496,7 @@ void eof_pro_guitar_track_enforce_chord_density(EOF_SONG *sp, unsigned long trac
 			continue;	//Skip this note if it is selected, as the user may wish to edit it before this function alters the next note
 
 		effective_note_distance = eof_get_effective_minimum_note_distance(sp, track, ctr);
-		if(effective_note_distance == UINT_MAX)
+		if(effective_note_distance == ULONG_MAX)
 			continue;	//If the effective minimum note distance for this note couldn't be determined, skip it
 		if(eof_min_note_distance > 2)
 		{	//If the configured minimum note distance is larger than the default threshold of 2ms

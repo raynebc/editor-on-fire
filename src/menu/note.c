@@ -3784,6 +3784,8 @@ int eof_new_lyric_dialog(void)
 		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+		eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, eof_selection.current);		//Enforce the variable note gap on the lyric before the new lyric, if appropriate
+		eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, eof_selection.current + 1);	//Enforce the variable note gap on the new lyric (if placd too close before another lyric), if appropriate
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_reset_lyric_preview_lines();
 

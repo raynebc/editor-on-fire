@@ -2301,6 +2301,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
 						(void) eof_detect_difficulties(eof_song, eof_selected_track);
+						eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 					}
 				}
 				else
@@ -2659,7 +2660,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 							reductionvalue = 1;		//1 ms length change
 						}
 						else
-						{	//SHIFT+scroll wheel
+						{	//Only SHIFT is held
 							reductionvalue = 10;	//10ms length change
 						}
 					}
@@ -2669,6 +2670,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					reductionvalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
 				}
 				eof_adjust_note_length(eof_song, eof_selected_track, reductionvalue, -1);	//Decrease selected notes by the appropriate length
+				eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 			}
 			else
 			{	//If CTRL is held but SHIFT is not
@@ -2703,7 +2705,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 							increasevalue = 1;		//1 ms length change
 						}
 						else
-						{	//SHIFT+scroll wheel
+						{	//Only SHIFT is held
 							increasevalue = 10;	//10ms length change
 						}
 					}
@@ -2712,7 +2714,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{
 					increasevalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
 				}
-				eof_adjust_note_length(eof_song, eof_selected_track, increasevalue, 1);	//Increase selected notes by the appropriate length
+				eof_adjust_note_length(eof_song, eof_selected_track, increasevalue, 1);		//Increase selected notes by the appropriate length
+				eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 			}
 			else
 			{	//If CTRL is held but SHIFT is not
@@ -4271,8 +4274,8 @@ void eof_editor_logic(void)
 							{	//If the user opted to make all new notes forced strum notes
 								new_note->flags |= EOF_NOTE_FLAG_NO_HOPO;
 							}
+							eof_track_sort_notes(eof_song, eof_selected_track);
 						}
-						eof_track_sort_notes(eof_song, eof_selected_track);
 					}
 					else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, eof_hover_note))
 					{	//If the note is already an open note, delete it
@@ -4830,10 +4833,12 @@ void eof_editor_logic(void)
 					if(eof_mickey_z > 0)
 					{	//Decrease note length
 						eof_adjust_note_length(eof_song, eof_selected_track, adjust, -1);	//Decrease selected notes by the appropriate length
+						eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 					}
 					else if(eof_mickey_z < 0)
 					{	//Increase note length
 						eof_adjust_note_length(eof_song, eof_selected_track, adjust, 1);	//Increase selected notes by the appropriate length
+						eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 					}
 				}
 			}//If there was scroll wheel activity

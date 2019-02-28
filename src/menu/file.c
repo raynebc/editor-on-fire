@@ -3195,7 +3195,7 @@ int eof_save_helper_checks(void)
 			nextnotepos = eof_get_note_pos(eof_song, ctr, next);
 			effective_note_distance = eof_get_effective_minimum_note_distance(eof_song, ctr, ctr2);
 
-			if(effective_note_distance == UINT_MAX)
+			if(effective_note_distance == ULONG_MAX)
 				continue;	//If the effective minimum note distance for this note couldn't be determined, skip it
 			if(nextnotepos - thisnotepos >= effective_note_distance)
 				continue;	//If this note and the next are placed far away enough to allow enforcing the minimum note distance, skip it

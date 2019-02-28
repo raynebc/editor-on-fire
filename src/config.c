@@ -456,6 +456,14 @@ void eof_load_config(char * fn)
 		memcpy(gp_drum_import_lane_6, default_mapping, sizeof(default_mapping));
 	}
 
+	(void) strncpy(eof_lyric_gap_multiplier_string, get_config_string("other", "eof_lyric_gap_multiplier", "0.0"), sizeof(eof_lyric_gap_multiplier_string) - 1);
+	eof_lyric_gap_multiplier = atof(eof_lyric_gap_multiplier_string);	//Retain the original string in memory and use a double floating point conversion of it
+	if(eof_lyric_gap_multiplier < 0.0)
+	{
+		strncpy(eof_lyric_gap_multiplier_string, "0.0", sizeof(eof_lyric_gap_multiplier_string) - 1);
+		eof_lyric_gap_multiplier = 0.0;	//Bounds check
+	}
+
 	//Convert MIDI tones to zero numbering
 	if(eof_midi_synth_instrument_guitar > 0)
 		eof_midi_synth_instrument_guitar--;
@@ -667,6 +675,8 @@ void eof_save_config(char * fn)
 	set_config_string("other", "gp_drum_import_lane_5_cymbal", gp_drum_mappings);
 	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_6);
 	set_config_string("other", "gp_drum_import_lane_6", gp_drum_mappings);
+
+	set_config_string("other", "eof_lyric_gap_multiplier", eof_lyric_gap_multiplier_string);
 }
 
 void eof_build_gp_drum_mapping_string(char *destination, size_t size, unsigned char *mapping_list)

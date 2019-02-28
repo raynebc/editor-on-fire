@@ -762,11 +762,16 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 	//that of the next note in the track difficulty.
 	//enforcegap should be given as nonzero unless the note has linknext status, which forces a mandatory distance between notes to be ignored
 	//0 is returned on error, LONG_MAX is returned if there is no note that follows (indicating the note's length is only limited by its variable capacity)
-unsigned eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned long track, unsigned long notenum);
+unsigned long eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned long track, unsigned long notenum);
 	//Examines the specified note and determines the effective minimum note distance between this note and the next,
 	// based on the current settings of eof_min_note_distance and eof_min_note_distance_intervals
 	//Returns 0 if there is no applicable limit to the specified note's length
-	//Returns UINT_MAX on error
+	//Returns ULONG_MAX on error
+void eof_enforce_lyric_gap_multiplier(EOF_SONG *sp, unsigned long track, unsigned long notenum);
+	//Adjusts lyric lengths where appropriate to implement a variably-defined gap (the current grid snap multiplied by eof_lyric_gap_multiplier) before and after affected lyrics
+	//To be called when a lyric is created (notenum specifies the new lyric in question after sorting) or when selected lyric' lengths are altered (notenum will be ULONG_MAX)
+	//If notenum specifies a single lyric, and the lyric before the single specified lyric ends within the gap, the former is shortened if appropriate
+	//If notenum is ULONG_MAX, and a lyric starts less than one gap away from a selected lyric that begins within the gap, that selected lyric is shortened if appropriate
 
 void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char diff, char diffonly);
 	//If diffonly is zero, the entire specified track has its contents deleted
