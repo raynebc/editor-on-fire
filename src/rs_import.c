@@ -434,8 +434,8 @@ char eof_rs_import_process_chordnotes(EOF_PRO_GUITAR_TRACK *tp, EOF_PRO_GUITAR_N
 
 		//Examine pre-bend information
 		//Determine which pre-bend strength is the most used one on this chordnote
-		eof_pro_guitar_track_sort_notes(tp);		//Ensure both note sets are sorted
-		eof_pro_guitar_track_sort_tech_notes(tp);
+		eof_pro_guitar_track_sort_tech_notes(tp);	//The tech notes need to be sorted so eof_pro_guitar_note_bitmask_has_tech_note() can work, but the normal notes must remain
+													//unsorted because otherwise the chord being processed is not necessarily going to be the last note that was added to the notes array
 		for(ctr = 0; ctr < chordnotectr; ctr++)
 		{	//For each of the chordnotes
 			prebend_index = eof_pro_guitar_note_bitmask_has_pre_bend_tech_note_ptr(tp, chordnote[ctr], chordnote[ctr]->note);
@@ -1794,8 +1794,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 								}//If this is a chordnote tag
 
 								//Read bendValue tag
-								ptr = strcasestr_spec(buffer, "<bendValue ");
-								if(ptr)
+								if(strcasestr_spec(buffer, "<bendValue "))
 								{	//If this is a bendValue tag
 									if(!eof_rs_import_note_tag_data(buffer, 1, tp, linectr, curdiff))
 									{	//If there was an error parsing the bendvalue tag and adding a technote as appropriate
