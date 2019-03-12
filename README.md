@@ -1,4 +1,4 @@
-EOF is a song editor for Frets On Fire, Phase Shift, Rock Band, Rocksmith and Clone Hero. The aim of EOF is to provide a simple process with which to create songs. Just provide an OGG file and spend a little time designing note charts and EOF will save files in the appropriate format for immediate use with Frets on Fire, Phase Shift and Clone Hero. 
+EOF is a song editor for Frets On Fire, Phase Shift, Rock Band, Rocksmith and Clone Hero. The aim of EOF is to provide a simple process with which to create songs. Just provide an OGG file and spend a little time designing note charts and EOF will save files in the appropriate format for immediate use with Frets on Fire, Phase Shift, Clone Hero, Performous and similar games.  Combined with other game-specific tools, you can author charts for games such as Rock Band and Rocksmith.
 
 
 # Getting EOF #
@@ -8,7 +8,7 @@ http://ignition.customsforge.com/eof
 
 Just click the Apple or Windows logo for your OS and download the relevant files.
 
-The Windows version is distributed as an older release candidate (a full, standalone build) and a "hotfix" containing all files that have changed since that release candidate.  To install the latest release of EOF, extract the release candidate to a folder for which you have write permissions (ie. not within "Program Files" or "Program Files (x86)" ), then extract the hotfix into the release candidate folder (the one that contains eof.exe), allowing it to merge folders and replace existing files.  If you do this correctly, EOF should be able launch and you can verify the hotfix build date by opening its Help menu and selecting About.  For any subsequent hotfix, you can just extract over the previous EOF installation and it will include all updates since the previously installed hotfix.
+The Windows version is distributed as an older release candidate (a full, standalone build) and a "hotfix" containing all files that have changed since that release candidate.  To install the latest release of EOF, extract the release candidate to a folder for which you have write permissions (ie. not within "Program Files" or "Program Files (x86)" ), then extract the hotfix into the release candidate folder (the one that contains eof.exe), allowing it to merge folders and replace existing files.  If you do this correctly, EOF should be able launch and you can verify the hotfix build date by opening its Help menu and selecting About.  For any subsequent hotfix, you can just extract over the previous EOF installation and it will include all updates before and since the previously installed hotfix.
 
 The Mac version is distributed as just the current build.  Do make sure to download and install the Utilities offered on the download page, as this will install the capability to convert chart audio from MP3 and encode OGG audio in various scenarios (converting from MP3 or WAV when creating a new chart, re-encoding audio when adding leading silence, etc).
 
