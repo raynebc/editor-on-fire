@@ -83,7 +83,7 @@ MENU eof_file_import_menu[] =
 {
 	{"&Sonic visualiser", eof_menu_file_sonic_visualiser_import, NULL, 0, NULL},
 	{"&MIDI\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
-	{"&Feedback\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
+	{"&Feedback (.chart)\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
 	{"Guitar &Hero", eof_menu_file_gh_import, NULL, 0, NULL},
 	{"&Lyric\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
 	{"&Guitar Pro\tF12", eof_menu_file_gp_import, NULL, 0, NULL},
@@ -113,6 +113,7 @@ MENU eof_file_menu[] =
 	{"Export &Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
+	{"Default INI settings", eof_menu_file_default_ini_settings, NULL, 0, NULL},
 	{"&Preferences", NULL, eof_file_menu_preferences, 0, NULL},
 	{"&Display", NULL, eof_file_display_menu, 0, NULL},
 	{"&Controllers", eof_menu_file_controllers, NULL, 0, NULL},
@@ -1268,6 +1269,26 @@ int eof_menu_file_settings(void)
 	return 1;
 }
 
+int eof_menu_file_default_ini_settings(void)
+{
+	eof_cursor_visible = 0;
+	eof_render();
+
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "Default INI Settings");
+	eof_ini_dialog_array = eof_default_ini_setting;	//The dialog will alter the EOF instance's default INI settings list
+	eof_ini_dialog_count = &eof_default_ini_settings;
+
+	eof_color_dialog(eof_ini_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_ini_dialog);
+	if(eof_popup_dialog(eof_ini_dialog, 0) == 4)
+	{
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
+}
+
 int eof_menu_file_preferences(void)
 {
 	int retval, original_input_mode, original_eof_disable_info_panel = eof_disable_info_panel;
@@ -1299,7 +1320,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[17].flags = eof_disable_sound_processing ? D_SELECTED : 0;		//Disable sound effects
 	eof_preferences_dialog[18].flags = eof_disable_3d_rendering ? D_SELECTED : 0;			//Disable 3D rendering
 	eof_preferences_dialog[19].flags = eof_disable_2d_rendering ? D_SELECTED : 0;			//Disable 2D rendering
-	eof_preferences_dialog[20].flags = eof_disable_info_panel ? D_SELECTED : 0;				//Disable info panel
+	eof_preferences_dialog[20].flags = eof_disable_info_panel ? D_SELECTED : 0;				//Hide info panel
 	eof_preferences_dialog[21].flags = eof_paste_erase_overlap ? D_SELECTED : 0;			//Paste erases overlap
 	eof_preferences_dialog[22].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
 	eof_preferences_dialog[23].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
@@ -3077,6 +3098,16 @@ int eof_new_chart(char * filename)
 		eof_song->track[EOF_TRACK_PRO_GUITAR_22]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;
 		eof_song->track[EOF_TRACK_PRO_GUITAR_B]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;
 		eof_note_type = 0;	//And start in the first difficulty tab
+	}
+
+	/* add any default INI entries to the project's INI entries list */
+	for(ctr = 0; ctr < eof_default_ini_settings; ctr++)
+	{	//For each of the default INI settings
+		if(ctr < EOF_MAX_INI_SETTINGS)
+		{	//Bounds check
+			(void) ustrncpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], eof_default_ini_setting[ctr], EOF_INI_LENGTH - 1);
+			eof_song->tags->ini_settings++;
+		}
 	}
 
 	(void) eof_menu_file_quick_save();

@@ -441,7 +441,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
 	unsigned long note, noteflags, notepos, deltapos, nextdeltapos;
 	unsigned char type;
-	int channel = 0, velocity = 0, scale, chord = 0, isslash = 0, bassnote = 0;	//Used for pro guitar export
+	int channel = 0, velocity = 0, scale, last_scale, chord = 0, isslash = 0, bassnote = 0;	//Used for pro guitar export
 	unsigned long bitmask;
 	EOF_PHRASE_SECTION *sectionptr;
 	char *currentname = NULL, chordname[100]="";
@@ -582,6 +582,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		if(!featurerestriction && !format && eof_track_is_ghl_mode(sp, j))
 			isghl = 1;	//Note whether this track will export as a GHL track
 
+		last_scale = INT_MAX;	//Reset this every track
 		if(featurerestriction == 1)
 		{	//If writing a RBN2 or C3 compliant MIDI
 			if((j != EOF_TRACK_GUITAR) && (j != EOF_TRACK_BASS) && (j != EOF_TRACK_DRUM) && (j != EOF_TRACK_VOCALS) && (j != EOF_TRACK_KEYS) && (j != EOF_TRACK_PRO_KEYS))
@@ -2089,8 +2090,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						}
 						scale = (scale + 9) % 16 + (4 * ((scale + 9) / 16));	//Convert the scale to RB3's numbering system
 					}
-					eof_add_midi_event(deltapos, 0x90, scale, vel, 0);		//Write a root note reflecting the scale the chord is in
-					eof_add_midi_event(deltapos + deltalength, 0x80, scale, vel, 0);
+					if(scale != last_scale)
+					{	//It's not needed to write repeated root notes for consecutive matching notes
+						eof_add_midi_event(deltapos, 0x90, scale, vel, 0);		//Write a root note reflecting the scale the chord is in
+						eof_add_midi_event(deltapos + deltalength, 0x80, scale, vel, 0);
+						last_scale = scale;
+					}
 				}
 			}//For each note in the track
 

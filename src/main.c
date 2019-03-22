@@ -299,6 +299,9 @@ int         ch_sp_path_worker = 0;	//Set to nonzero if EOF is launched with the 
 int         ch_sp_path_worker_logging = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker_logging parameter, which will allow logging to be performed during solving
 unsigned long ch_sp_path_worker_number = 0;	//Set to the number in the job filename, for creating worker-specific logging
 
+char eof_default_ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH] = {{0}};	//Stores the entries of the [default_ini_settings] section in the config file
+unsigned short eof_default_ini_settings = 0;	//The number of such entries in memory
+
 /* mouse control data */
 int         eof_selected_control = -1;
 int         eof_cselected_control = -1;
@@ -4736,7 +4739,10 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(!ustricmp(get_extension(argv[i]), "ogg") || !ustricmp(get_extension(argv[i]), "mp3") || !ustricmp(get_extension(argv[i]), "wav"))
 			{	//Launch new chart wizard via command line
+				int old_eof_disable_info_panel = eof_disable_info_panel;	//Remember this because the call to eof_new_chart() before the info panel is formally loaded will ultimately cause the call to eof_render() to forcibly disable that panel
+
 				eof_new_chart(argv[i]);
+				eof_disable_info_panel = old_eof_disable_info_panel;	//Restore the info panel status that was defined in the configuration file
 			}
 		}//If the argument is not one of EOF's native command line parameters and no file is loaded yet
 	}//For each command line argument

@@ -4,6 +4,7 @@
 #include <string.h>	//For memcpy()
 #include "../agup/agup.h"
 #include "../main.h"
+#include "../config.h"
 #include "../dialog.h"
 #include "../mix.h"
 #include "../beat.h"
@@ -214,10 +215,12 @@ MENU eof_song_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+char (*eof_ini_dialog_array)[EOF_INI_LENGTH] = NULL;	//Used to point to whichever array of strings is to be edited by the INI dialog functions
+unsigned short *eof_ini_dialog_count = NULL;			//Used to point to the counter tracking the number of strings in the above array
 DIALOG eof_ini_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  346, 232, 2,   23,  0,    0,      0,   0,   "INI Settings",      NULL, NULL },
+	{ d_agup_window_proc, 0,   48,  346, 232, 2,   23,  0,    0,      0,   0,   eof_etext2,          NULL, NULL },
 	{ d_agup_list_proc,   12,  84,  240, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_ini_list,NULL, NULL },
 	{ d_agup_push_proc,   264, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",              NULL, (void *)eof_ini_dialog_add },
 	{ d_agup_push_proc,   264, 124, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",           NULL, (void *)eof_ini_dialog_delete },
@@ -1102,6 +1105,14 @@ int eof_menu_song_ini_settings(void)
 {
 	eof_cursor_visible = 0;
 	eof_render();
+
+	if(!eof_song || !eof_song->tags)
+		return 1;	//Error
+
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "INI Settings");
+	eof_ini_dialog_array = eof_song->tags->ini_setting;	//The dialog will alter the project's INI settings list
+	eof_ini_dialog_count = &eof_song->tags->ini_settings;
+
 	eof_color_dialog(eof_ini_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_ini_dialog);
 	if(eof_popup_dialog(eof_ini_dialog, 0) == 4)
@@ -1607,16 +1618,19 @@ char * eof_ini_list(int index, int * size)
 	int ecount = 0;
 	char * etextpointer[EOF_MAX_INI_SETTINGS] = {NULL};
 
-	if(eof_song->tags->ini_settings >= EOF_MAX_INI_SETTINGS)	//If the maximum number of settings has been met or exceeded
+	if(!eof_ini_dialog_count || !eof_ini_dialog_array)
+		return NULL;	//Target setting array not set
+
+	if(*eof_ini_dialog_count >= EOF_MAX_INI_SETTINGS)	//If the maximum number of settings has been met or exceeded
 		eof_ini_dialog[2].flags = D_DISABLED;	//Disable the "Add" Song INI dialog button
 	else
 		eof_ini_dialog[2].flags = 0;	//Enable the "Add" Song INI dialog button
 
-	for(i = 0; i < eof_song->tags->ini_settings; i++)
+	for(i = 0; i < *eof_ini_dialog_count; i++)
 	{
 		if(ecount < EOF_MAX_INI_SETTINGS)
 		{
-			etextpointer[ecount] = eof_song->tags->ini_setting[i];
+			etextpointer[ecount] = eof_ini_dialog_array[i];
 			ecount++;
 		}
 	}
@@ -1783,7 +1797,9 @@ int eof_ini_dialog_add(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->tags->ini_settings >= EOF_MAX_INI_SETTINGS)	//If the maximum number of INI settings is already defined
+	if(!eof_ini_dialog_array || !eof_ini_dialog_count)
+		return D_O_K;	//Target setting array not set
+	if(*eof_ini_dialog_count >= EOF_MAX_INI_SETTINGS)	//If the maximum number of INI settings is already defined
 		return D_O_K;	//Return without adding anything
 
 	eof_cursor_visible = 0;
@@ -1796,9 +1812,16 @@ int eof_ini_dialog_add(DIALOG * d)
 	{
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			(void) ustrncpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], eof_etext, EOF_INI_LENGTH - 1);
-			eof_song->tags->ini_settings++;
+			if(eof_song && (eof_ini_dialog_array == eof_song->tags->ini_setting))
+			{	//If it is the active project's INI settings that are being altered
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				(void) ustrncpy(eof_ini_dialog_array[*eof_ini_dialog_count], eof_etext, EOF_INI_LENGTH - 1);
+				(*eof_ini_dialog_count)++;
+			}
+			else
+			{
+				(void) eof_default_ini_add(eof_etext, 0);	//Use the validation logic to add a default INI setting
+			}
 		}
 	}
 
@@ -1813,14 +1836,16 @@ void eof_ini_delete(unsigned long index)
 {
 	unsigned short i;
 
-	if(!eof_song || (index >= eof_song->tags->ini_settings))
+	if(!eof_ini_dialog_array || !eof_ini_dialog_count)
+		return;	//Target setting array not set
+	if(index >= *eof_ini_dialog_count)
 		return;	//Invalid parameter
 
-	for(i = eof_ini_dialog[1].d1; i < eof_song->tags->ini_settings - 1; i++)
+	for(i = eof_ini_dialog[1].d1; i < *eof_ini_dialog_count - 1; i++)
 	{
-		memcpy(eof_song->tags->ini_setting[i], eof_song->tags->ini_setting[i + 1], EOF_INI_LENGTH);
+		memcpy(eof_ini_dialog_array[i], eof_ini_dialog_array[i + 1], EOF_INI_LENGTH);
 	}
-	eof_song->tags->ini_settings--;
+	(*eof_ini_dialog_count)--;
 }
 
 int eof_ini_dialog_delete(DIALOG * d)
@@ -1831,11 +1856,17 @@ int eof_ini_dialog_delete(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->tags->ini_settings > 0)
+	if(!eof_ini_dialog_count)
+		return D_O_K;	//Target setting array not set
+
+	if(*eof_ini_dialog_count > 0)
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(eof_song && (eof_ini_dialog_array == eof_song->tags->ini_setting))
+		{	//If it is the active project's INI settings that are being altered
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		}
 		eof_ini_delete(eof_ini_dialog[1].d1);
-		if(eof_ini_dialog[1].d1 >= eof_song->tags->ini_settings)
+		if(eof_ini_dialog[1].d1 >= *eof_ini_dialog_count)
 		{
 			eof_ini_dialog[1].d1--;
 		}

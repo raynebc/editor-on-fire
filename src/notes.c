@@ -2300,7 +2300,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "LOADED_OGG_NAME"))
 	{
 		if(!eof_silence_loaded)
-			snprintf(dest_buffer, dest_buffer_size, "%s", eof_song->tags->ogg[eof_selected_ogg].filename);
+			snprintf(dest_buffer, dest_buffer_size, "%s", get_filename(eof_loaded_ogg_name));
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
 

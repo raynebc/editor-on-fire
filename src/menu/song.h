@@ -16,6 +16,8 @@ extern MENU eof_spectrogram_menu[];
 extern MENU eof_song_proguitar_menu[];
 extern MENU eof_song_menu[];
 
+extern char (*eof_ini_dialog_array)[EOF_INI_LENGTH];
+extern unsigned short *eof_ini_dialog_count;
 extern DIALOG eof_ini_dialog[];
 extern DIALOG eof_ini_add_dialog[];
 extern DIALOG eof_song_properties_dialog[];

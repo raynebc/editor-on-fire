@@ -1,5 +1,5 @@
 #include <allegro.h>
-#include <ctype.h>	//For isdigit()
+#include <ctype.h>	//For isdigit(), isspace()
 #include <math.h>	//For sqrt()
 #include "config.h"
 #include "main.h"
@@ -53,6 +53,9 @@ void set_default_controller_config(void)
 void eof_load_config(char * fn)
 {
 	char gp_drum_mappings[1024] = {0};
+	int num_default_settings, ctr;
+	const char **default_settings = NULL;
+	char string[EOF_INI_LENGTH] = {0};
 
 	eof_log("eof_load_config() entered", 1);
 
@@ -473,11 +476,24 @@ void eof_load_config(char * fn)
 		eof_midi_synth_instrument_guitar_harm--;
 	if(eof_midi_synth_instrument_bass > 0)
 		eof_midi_synth_instrument_bass--;
+
+	//Read default INI settings
+	num_default_settings = list_config_entries("default_ini_settings", &default_settings);
+	for(ctr = 0; ctr < num_default_settings; ctr++)
+	{	//For each default INI setting found in the config file
+		snprintf(string, sizeof(string), "%s = %s", default_settings[ctr], get_config_string("default_ini_settings", default_settings[ctr], ""));	//Rebuild the config string since Allegro breaks it apart
+		(void) eof_default_ini_add(string, 0);	//Add the rebuilt string to the default INI entries
+	}
+	free_config_entries(&default_settings);
 }
 
 void eof_save_config(char * fn)
 {
 	char gp_drum_mappings[1024] = {0};
+	int num_default_settings, ctr;
+	unsigned long ctr2;
+	const char **default_settings = NULL;
+	char name[EOF_INI_LENGTH] = {0}, value[EOF_INI_LENGTH] = {0};
 
 	eof_log("eof_save_config() entered", 1);
 
@@ -677,6 +693,23 @@ void eof_save_config(char * fn)
 	set_config_string("other", "gp_drum_import_lane_6", gp_drum_mappings);
 
 	set_config_string("other", "eof_lyric_gap_multiplier", eof_lyric_gap_multiplier_string);
+
+	//Delete existing default INI settings from config file
+	num_default_settings = list_config_entries("default_ini_settings", &default_settings);
+	for(ctr = 0; ctr < num_default_settings; ctr++)
+	{	//For each default INI setting found in the config file
+		set_config_string("default_ini_settings", default_settings[ctr], NULL);
+	}
+	free_config_entries(&default_settings);
+
+	//Write default INI settings
+	for(ctr2 = 0; ctr2 < eof_default_ini_settings; ctr2++)
+	{	//For each default INI setting stored in memory
+		if(!eof_parse_config_entry_name(name, sizeof(name), value, sizeof(value),eof_default_ini_setting[ctr2]))
+		{	//If the setting was successfully parsed into a name and a value
+			set_config_string("default_ini_settings", name, value);	//Write them to the config file
+		}
+	}
 }
 
 void eof_build_gp_drum_mapping_string(char *destination, size_t size, unsigned char *mapping_list)
@@ -779,4 +812,163 @@ int eof_lookup_drum_mapping(unsigned char *mapping_list, unsigned char value)
 	}
 
 	return 0;	//No match was found
+}
+
+int eof_parse_config_entry_name(char *name, size_t name_size, char *value, size_t value_size, const char *string)
+{
+	size_t s_index = 0, n_index = 0, v_index = 0;
+	char name_started = 0, name_ended = 0;
+
+	if(!name || !value || !string || !name_size || !value_size)
+		return 1;	//Error:  Invalid parameters
+
+	while(string[s_index] != '\0')
+	{	//Until the end of the source string is reached
+		int this_char = string[s_index];
+
+		s_index++;
+		if(n_index + 1 >= name_size)
+		{	//If there is only one byte left in the name buffer
+			name[n_index] = '\0';	//Terminate it
+			value[0] = '\0';		//Empty the value buffer
+			return 2;	//Error:  Insufficient buffer size
+		}
+		if(isspace(this_char))
+		{	//If the next character in the source string is whitespace
+			if(!name_started)
+			{	//If there hasn't been any non-whitespace read yet
+				continue;	//This is leading whitespace, skip it
+			}
+
+			name_ended = 1;	//This marks the expected end of the entry name, and the next expected character is an equal sign
+		}
+		else if(this_char == '=')
+		{	//If the next character in the source string is an equal sign
+			if(!name_started)
+			{	//If the config entry name hasn't been read yet
+				name[0] = '\0';		//Empty the name buffer
+				value[0] = '\0';	//Empty the value buffer
+				return 3;	//Error:  Malformed entry
+			}
+
+			//If this point is reached, the config entry name was parsed, remove trailing whitespace
+			while(isspace(name[n_index]) && (n_index > 0))
+			{	//If the last character in the name buffer is a space and there's at least one character before it
+				n_index--;	//Truncate the space character from the buffer
+			}
+			name[n_index] = '\0';	//Terminate the name buffer
+
+			//Copy the remainder of the source string into the value buffer
+			for(;string[s_index] != '\0' && isspace(string[s_index]);s_index++);	//Skip any whitespace after the equal sign
+			while(string[s_index] != '\0')
+			{	//Until the end of the source string is reached
+				value[v_index] = string[s_index];	//Append the character to the value buffer
+				v_index++;
+				s_index++;
+			}
+			return 0;	//Return success
+		}
+		else
+		{	//The next character is non whitespace and isn't an equal sign
+			if(name_ended)
+			{	//If there was already text and a white space before the equal sign
+				name[0] = '\0';		//Empty the name buffer
+				value[0] = '\0';	//Empty the value buffer
+				return 3;	//Error:  Malformed entry
+			}
+
+			name_started = 1;	//Track that a non whitespace character was read
+			name[n_index] = this_char;	//Append the character to the name buffer
+			n_index++;
+		}
+	}
+
+	//If this point is reached, there was no equal sign in the source string
+	name[0] = '\0';		//Empty the name buffer
+	value[0] = '\0';	//Empty the value buffer
+	return 3;	//Error:  Malformed entry
+}
+
+int eof_validate_default_ini_entry(const char *entry, int silent)
+{
+	char name1[EOF_INI_LENGTH], name2[EOF_INI_LENGTH], value[EOF_INI_LENGTH];
+	unsigned long ctr;
+	int retval;
+
+	retval = eof_parse_config_entry_name(name1, sizeof(name1), value, sizeof(value), entry);
+	if(retval)
+	{	//If the provided string's variable name couldn't be parsed
+		if(retval == 3)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error adding default INI entry (malformed):  %s", entry);
+			eof_log(eof_log_string, 1);
+		}
+		else
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error code %d adding default INI entry:  %s", retval, entry);
+			eof_log(eof_log_string, 1);
+		}
+		if(!silent)
+		{	//If errors are to be displayed to the user
+			allegro_message("%s", eof_log_string);
+		}
+		return 1;	//Return input string error
+	}
+
+	//Compare with all existing default INI entries to ensure the variable isn't already defined
+	for(ctr = 0; ctr < eof_default_ini_settings; ctr++)
+	{	//For each already defined INI entry
+		if(eof_parse_config_entry_name(name2, sizeof(name2), value, sizeof(value), eof_default_ini_setting[ctr]))
+		{	//If the entry's variable name couldn't be parsed
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error parsing existing default INI entry:  %s", eof_default_ini_setting[ctr]);
+			eof_log(eof_log_string, 1);
+			if(!silent)
+			{	//If errors are to be displayed to the user
+				allegro_message("%s", eof_log_string);
+			}
+			return 2;	//Return logic error
+		}
+
+		if(!ustricmp(name1, name2))
+		{	//If the existing entry's variable name is the same as the provided string's variable name
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Skipped adding default INI entry because it is already defined:  %s", entry);
+			eof_log(eof_log_string, 1);
+			if(!silent)
+			{	//If errors are to be displayed to the user
+				allegro_message("%s", eof_log_string);
+			}
+			return 3;	//Return entry already defined
+		}
+	}
+
+	if(eof_default_ini_settings >= EOF_MAX_INI_SETTINGS)
+	{	//If the default INI settings array can't store another entry
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Skipped adding default INI entry because the maximum number of entries are already defined:  %s", entry);
+		eof_log(eof_log_string, 1);
+		if(!silent)
+		{	//If errors are to be displayed to the user
+			allegro_message("%s", eof_log_string);
+		}
+		return 4;
+	}
+
+	return 0;	//Valid
+}
+
+int eof_default_ini_add(const char *entry, int silent)
+{
+	int retval;
+
+	retval = eof_validate_default_ini_entry(entry, silent);
+	if(retval)
+	{	//If the text string failed validation
+		return retval;
+	}
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdded default INI entry:  %s", entry);
+	eof_log(eof_log_string, 1);
+	(void) ustrncpy(eof_default_ini_setting[eof_default_ini_settings], entry, EOF_INI_LENGTH - 1);
+	eof_default_ini_settings++;
+
+	return 0;	//Return success
 }

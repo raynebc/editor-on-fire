@@ -55,6 +55,7 @@ int eof_menu_file_export_audio_range(void);	//Similar to eof_menu_file_export_ch
 int eof_menu_file_export_guitar_pro(void);	//Calls the third party RocksmithToTab program to create a GP5 file of the project's guitar/bass arrangements
 int eof_menu_file_midi_import(void);
 int eof_menu_file_settings(void);
+int eof_menu_file_default_ini_settings(void);
 int eof_menu_file_preferences(void);
 int eof_menu_file_import_export_preferences(void);
 int eof_menu_file_display(void);
