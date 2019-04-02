@@ -49,7 +49,7 @@ OGG PROFILE CHUNK, for each OGG profile:
 *	2 bytes:	OGG profile description string length
 *	[varies:]	OGG profile description string
 	4 bytes:	MIDI delay for this profile (milliseconds)
-*	4 byte:		OGG profile flags (such as whether the file was originally provided as an OGG or if it was re-encoded, is being mixed with active OGG profile audio, etc)
+*	4 bytes:	OGG profile flags (such as whether the OGG is loaded as an additional stem, is muted, etc)
 }
 
 4 bytes:	Number of beats in the chart

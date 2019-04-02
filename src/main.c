@@ -250,7 +250,7 @@ unsigned long eof_music_end_pos;
 int         eof_music_paused = 1;
 char        eof_music_catalog_playback = 0;
 char        eof_play_selection = 0;
-int         eof_selected_ogg = 0;
+///int         eof_selected_ogg = 0;
 EOF_SONG    * eof_song = NULL;
 EOF_NOTE    eof_pen_note;
 EOF_LYRIC   eof_pen_lyric;
@@ -4574,7 +4574,7 @@ int eof_initialize(int argc, char * argv[])
 							(void) replace_filename(eof_song_path, eof_filename, "", 1024);		//Set the song folder path
 							(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);	//Set the last loaded song path
 							(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
-							(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);	//Construct the full OGG path
+							(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, 1024);	//Construct the full OGG path
 							if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 							{
 								allegro_message("Failed to load OGG!");
@@ -4627,7 +4627,7 @@ int eof_initialize(int argc, char * argv[])
 				(void) eof_import_ini(eof_song, temp_filename, warn);	//Read song.ini and prompt to replace values of existing settings in the project if they are different (unless user preference suppresses the prompts)
 
 				/* attempt to load the OGG profile OGG */
-				(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
+				(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, 1024);
 				if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 				{
 					allegro_message("Failed to load OGG!");

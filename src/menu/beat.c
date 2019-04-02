@@ -905,7 +905,7 @@ int eof_menu_beat_push_offset_back(char *undo_made)
 		eof_song->beat[0]->fpos = eof_song->beat[1]->fpos - backamount;
 		eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round to nearest ms
 		eof_song->beat[1]->flags = 0;
-		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+		eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
 		eof_move_text_events(eof_song, 0, 1, 1);
 		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	}
@@ -937,7 +937,7 @@ int eof_menu_beat_push_offset_up(void)
 		memcpy(eof_song->beat[i], eof_song->beat[i + 1], sizeof(EOF_BEAT_MARKER));
 	}
 	eof_song_delete_beat(eof_song, eof_song->beats - 1);
-	eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+	eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
 	eof_move_text_events(eof_song, 0, 1, -1);
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	eof_fixup_notes(eof_song);
@@ -1006,7 +1006,7 @@ int eof_menu_beat_reset_offset(void)
 		}
 		eof_song->beat[0]->pos = eof_song->beat[0]->fpos = 0;
 		eof_song->beat[0]->flags = eof_song->beat[1]->flags;	//Copy the flags (ie. Time Signature) of the original first beat marker
-		eof_song->tags->ogg[eof_selected_ogg].midi_offset = 0;
+		eof_song->tags->ogg[0].midi_offset = 0;
 		newbpm = 60000.0 / eof_song->beat[1]->fpos;	//60000ms / length of new beat (the MIDI delay) = Tempo
 		eof_song->beat[0]->ppqn = 60000000.0 / newbpm;	//60000000usec_per_minute / tempo = PPQN
 		eof_move_text_events(eof_song, 0, 1, 1);

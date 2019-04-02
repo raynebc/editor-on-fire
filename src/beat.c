@@ -98,7 +98,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 		return;
 	}
 
-	sp->beat[0]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset;
+	sp->beat[0]->fpos = (double)sp->tags->ogg[0].midi_offset;
 	sp->beat[0]->pos = sp->beat[0]->fpos + 0.5;	//Round up
 
 	/* calculate the beat length */
@@ -107,7 +107,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	for(i = 1; i < sp->beats; i++)
 	{	//For each beat
 		curpos += beat_length;
-		sp->beat[i]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
+		sp->beat[i]->fpos = (double)sp->tags->ogg[0].midi_offset + curpos;
 		sp->beat[i]->pos = sp->beat[i]->fpos + 0.5;	//Round up
 
 		/* bpm changed */
@@ -126,12 +126,12 @@ void eof_calculate_beats(EOF_SONG * sp)
 	}
 	cbeat = sp->beats - 1;	//The index of the last beat in the beat[] array
 	curpos += beat_length;
-	while(sp->tags->ogg[eof_selected_ogg].midi_offset + curpos < target_length + beat_length)
+	while(sp->tags->ogg[0].midi_offset + curpos < target_length + beat_length)
 	{	//While there aren't enough beats to cover the length of the chart, add beats
 		if(eof_song_add_beat(sp))
 		{	//If the beat was successfully added
 			sp->beat[sp->beats - 1]->ppqn = sp->beat[cbeat]->ppqn;
-			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
+			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[0].midi_offset + curpos;
 			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
 			curpos += beat_length;
 		}
@@ -194,7 +194,7 @@ double eof_calculate_beat_pos_by_prev_beat_tempo(EOF_SONG *sp, unsigned long bea
 
 	if(!beat)
 	{	//If the first beat was specified
-		return sp->tags->ogg[eof_selected_ogg].midi_offset;	//Return the current OGG profile's MIDI delay (first beat position)
+		return sp->tags->ogg[0].midi_offset;	//Return the current OGG profile's MIDI delay (first beat position)
 	}
 
 	length = (double)eof_song->beat[beat - 1]->ppqn / 1000.0;	//Calculate the length of the previous beat from its tempo (this is the formula "beat_length = 60000 / BPM", where BPM = 60000000 / ppqn)
@@ -234,9 +234,9 @@ int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report)
 				if(alert(eof_log_string, NULL, "Recreate tempo changes based on beat positions?", "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opts to correct the tempo map
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					if(sp->beat[0]->pos != sp->tags->ogg[eof_selected_ogg].midi_offset)
+					if(sp->beat[0]->pos != sp->tags->ogg[0].midi_offset)
 					{	//If the first beat's position doesn't reflect the MIDI delay of the current OGG profile
-						sp->beat[0]->pos = sp->beat[0]->fpos = sp->tags->ogg[eof_selected_ogg].midi_offset;
+						sp->beat[0]->pos = sp->beat[0]->fpos = sp->tags->ogg[0].midi_offset;
 					}
 					eof_calculate_tempo_map(sp);
 					return 1;

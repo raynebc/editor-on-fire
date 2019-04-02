@@ -3598,7 +3598,8 @@ eof_log("\tThird pass complete", 1);
 	destroy_midi(eof_work_midi);
 	eof_destroy_tempo_list(anchorlist);
 
-	eof_selected_ogg = 0;
+///DEPRECATED
+//	eof_selected_ogg = 0;
 
 	//Check for conflicts between the imported pro guitar/bass track (if any) and their tuning tags
 	tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;

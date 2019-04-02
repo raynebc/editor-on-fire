@@ -703,6 +703,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
+				sp->tags->ogg[i].flags = 0;
 			}
 
 			/* read file revision number */
@@ -823,6 +824,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
+				sp->tags->ogg[i].flags = 0;
 			}
 
 			/* read INI settings */
@@ -939,6 +941,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
+				sp->tags->ogg[i].flags = 0;
 			}
 
 			/* read INI settings */
@@ -1073,6 +1076,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
+				sp->tags->ogg[i].flags = 0;
 			}
 
 			/* read INI settings */
@@ -1209,6 +1213,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
+				sp->tags->ogg[i].flags = 0;
 			}
 
 			/* read INI settings */

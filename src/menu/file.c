@@ -637,7 +637,7 @@ int eof_menu_file_load(void)
 		(void) eof_import_ini(eof_song, temp_filename, warn);	//Read song.ini and prompt to replace values of existing settings in the project if they are different (unless user preference suppresses the prompts)
 
 		/* attempt to load the OGG profile OGG */
-		(void) replace_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
+		(void) replace_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, 1024);
 		if(!eof_load_ogg_quick(temp_filename))
 		{
 			/* upon fail, fall back to "guitar.ogg" */
@@ -655,20 +655,22 @@ int eof_menu_file_load(void)
 				eof_fix_window_title();
 				return 1;
 			}
-			/* adjust MIDI offset if it is different */
+///DEPRECATED
+/*			/ adjust MIDI offset if it is different /
 			if(eof_selected_ogg != 0)
 			{
 				unsigned long j;
-				if(eof_song->tags->ogg[0].midi_offset != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
+				if(eof_song->tags->ogg[0].midi_offset != eof_song->tags->ogg[0].midi_offset)
 				{
 					for(j = 0; j < eof_song->beats; j++)
 					{
-						eof_song->beat[j]->pos += eof_song->tags->ogg[0].midi_offset - eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+						eof_song->beat[j]->pos += eof_song->tags->ogg[0].midi_offset - eof_song->tags->ogg[0].midi_offset;
 					}
-					(void) eof_adjust_notes(eof_song->tags->ogg[0].midi_offset - eof_song->tags->ogg[eof_selected_ogg].midi_offset);
+					(void) eof_adjust_notes(eof_song->tags->ogg[0].midi_offset - eof_song->tags->ogg[0].midi_offset);
 				}
 			}
 			eof_selected_ogg = 0;
+*/
 		}
 
 		/* correct lyric line difficulties if necessary */
@@ -711,9 +713,10 @@ int eof_menu_file_save_as(void)
 {
 	char new_foldername[1024] = {0};
 	char * returnedfn = NULL;
-	EOF_OGG_INFO  temp_ogg[8];
-	int i, retval;
-	int swap = 0;
+///	EOF_OGG_INFO  temp_ogg[8];
+	int retval;
+///	int i;
+///	int swap = 0;
 
 	if(eof_song_loaded)
 	{
@@ -736,30 +739,31 @@ int eof_menu_file_save_as(void)
 		if(eof_menu_file_new_supplement(new_foldername, get_filename(returnedfn), 8) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
 			return 1;	//Return failure
 
-		if(!eof_silence_loaded)
+///DEPRECATED
+/*		if(!eof_silence_loaded)
 		{	//Only do audio checking if chart audio is loaded
 			(void) append_filename(eof_temp_filename, new_foldername, "guitar.ogg", 1024);
 			swap = ustricmp(new_foldername, eof_song_path);
 
 			if(!exists(eof_temp_filename) || swap)
 			{
-				/* if we are writing to a different folder and writing
+				/ if we are writing to a different folder and writing
 				   the currenty loaded OGG as "guitar.ogg," temporarily swap
-				   the OGG profiles to compensate */
+				   the OGG profiles to compensate /
 				if(eof_selected_ogg != 0)
 				{
 					for(i = 0; i < eof_song->tags->oggs; i++)
 					{
 						memcpy(&temp_ogg[i], &eof_song->tags->ogg[i], sizeof(EOF_OGG_INFO));
 					}
-					memcpy(&eof_song->tags->ogg[0], &eof_song->tags->ogg[eof_selected_ogg], sizeof(EOF_OGG_INFO));
+					memcpy(&eof_song->tags->ogg[0], &eof_song->tags->ogg[0], sizeof(EOF_OGG_INFO));
 					(void) ustrcpy(eof_song->tags->ogg[0].filename, "guitar.ogg");
 					eof_song->tags->oggs = 1;
 					eof_selected_ogg = 0;
 				}
 			}
 		}
-
+*/
 		retval = eof_save_helper(returnedfn, 0);	//Perform "Save As" operation to the selected path
 		if(retval == 0)
 		{	//If the "Save as" operation succeeded, update folder path strings
@@ -791,11 +795,11 @@ int eof_menu_file_load_ogg(void)
 	char checkfn[1024] = {0};
 	char checkfn2[1024] = {0};
 	unsigned long new_length;
-	char * fn = NULL;
-	int i;
-	unsigned long j;
+///	char * fn = NULL;
+///	int i;
+///	unsigned long j;
 
-	returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select OGG File", eof_filter_ogg_files);
+	returnedfn = ncd_file_select(0, eof_song_path, "Select OGG File", eof_filter_ogg_files);	//Init the dialog to the project path instead of eof_last_ogg_path since the current behavior is to only allow loading one from the active project's folder
 	eof_clear_input();
 	if(!returnedfn)
 		return 1;	//If the user did not select a file, return immediately
@@ -836,23 +840,24 @@ int eof_menu_file_load_ogg(void)
 		}
 	}
 
-	/* see if this OGG is already associated with the current project */
-	fn = get_filename(returnedfn);
+///DEPRECATED
+///	/* see if this OGG is already associated with the current project */
+/*	fn = get_filename(returnedfn);
 	for(i = 0; i < eof_song->tags->oggs; i++)
 	{
 		if(ustricmp(fn, eof_song->tags->ogg[i].filename))
 			continue;	//If this OGG profile doesn't involve the user selected filename, skip it
 
-		/* adjust MIDI offset if it is different */
+		/ adjust MIDI offset if it is different /
 		if(eof_selected_ogg != i)
 		{
-			if(eof_song->tags->ogg[i].midi_offset != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
+			if(eof_song->tags->ogg[i].midi_offset != eof_song->tags->ogg[0].midi_offset)
 			{
 				for(j = 0; j < eof_song->beats; j++)
 				{
-					eof_song->beat[j]->pos += eof_song->tags->ogg[i].midi_offset - eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+					eof_song->beat[j]->pos += eof_song->tags->ogg[i].midi_offset - eof_song->tags->ogg[0].midi_offset;
 				}
-				(void) eof_adjust_notes(eof_song->tags->ogg[i].midi_offset - eof_song->tags->ogg[eof_selected_ogg].midi_offset);
+				(void) eof_adjust_notes(eof_song->tags->ogg[i].midi_offset - eof_song->tags->ogg[0].midi_offset);
 			}
 		}
 		eof_selected_ogg = i;
@@ -865,7 +870,7 @@ int eof_menu_file_load_ogg(void)
 		{	//Create a new OGG profile
 			(void) ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs].filename, fn);
 			eof_song->tags->ogg[eof_song->tags->oggs].description[0] = '\0';
-			eof_song->tags->ogg[eof_song->tags->oggs].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+			eof_song->tags->ogg[eof_song->tags->oggs].midi_offset = eof_song->tags->ogg[0].midi_offset;
 			eof_song->tags->ogg[eof_song->tags->oggs].modified = 0;
 			eof_selected_ogg = eof_song->tags->oggs;
 			eof_song->tags->oggs++;
@@ -874,11 +879,12 @@ int eof_menu_file_load_ogg(void)
 		{	//Replace the last OGG profile
 			(void) ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs - 1].filename, fn);
 			eof_song->tags->ogg[eof_song->tags->oggs - 1].description[0] = '\0';
-			eof_song->tags->ogg[eof_song->tags->oggs - 1].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+			eof_song->tags->ogg[eof_song->tags->oggs - 1].midi_offset = eof_song->tags->ogg[0].midi_offset;
 			eof_song->tags->ogg[eof_song->tags->oggs - 1].modified = 0;
 			eof_selected_ogg = eof_song->tags->oggs - 1;
 		}
 	}
+*/
 
 	new_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 	if(new_length > eof_chart_length)
@@ -5825,7 +5831,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 				}
 				else
 				{	//This is the first point tag, update the chart's MIDI delay
-					eof_song->tags->ogg[eof_selected_ogg].midi_offset = frametime + 0.5;
+					eof_song->tags->ogg[0].midi_offset = frametime + 0.5;
 				}
 				if(beatctr >= eof_song->beats)
 				{	//If another beat needs to be added to the project

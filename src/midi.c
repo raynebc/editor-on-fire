@@ -526,7 +526,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	if(featurerestriction)
 	{	//If writing a Rock Band compliant MIDI
 		//Magma requires some default track events to be written
-		if(sp->tags->ogg[eof_selected_ogg].midi_offset != 0)
+		if(sp->tags->ogg[0].midi_offset != 0)
 		{	//Rock Band songs are have a MIDI offset of 0
 			eof_log("\t! Warning:  MIDI offset is not zero, this song may play out of sync in Rock Band", 1);
 		}

@@ -223,6 +223,8 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->ini_settings = 0;
 	sp->tags->ogg[0].midi_offset = 0;
 	sp->tags->ogg[0].modified = 0;
+	sp->tags->ogg[0].description[0] = '\0';
+	sp->tags->ogg[0].flags = 0;
 	(void) ustrcpy(sp->tags->ogg[0].filename, "guitar.ogg");
 	sp->tags->oggs = 1;
 	sp->tags->revision = 0;
@@ -317,7 +319,7 @@ EOF_SONG * eof_load_song(const char * fn)
 	EOF_SONG * sp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};	//This header represents the current project format
 	char rheader[16] = {0};
-	short i;
+///	short i;
 
  	eof_log("\tLoading project", 1);
  	eof_log("eof_load_song() entered", 1);
@@ -402,7 +404,9 @@ EOF_SONG * eof_load_song(const char * fn)
 	}
 	(void) pack_fclose(fp);
 
-	/* select correct OGG */
+///DEPRECATED
+/*
+	/ select correct OGG /
 	if(sp)
 	{
 		for(i = 0; i < sp->tags->oggs; i++)
@@ -414,6 +418,7 @@ EOF_SONG * eof_load_song(const char * fn)
 			}
 		}
 	}
+*/
 
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);
@@ -649,7 +654,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}
 
 		/* delete certain notes */
-		if((tp->note[i-1]->note == 0) || (tp->note[i-1]->type > 4) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
+		if((tp->note[i-1]->note == 0) || (tp->note[i-1]->type > 4) || (tp->note[i-1]->pos < sp->tags->ogg[0].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
 		{	//Delete the note if all lanes are clear, if it is an invalid type, if the position is before the first beat marker or if it is after the last beat marker
 			eof_legacy_track_delete_note(tp, i-1);
 		}
@@ -979,7 +984,7 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 		}
 
 		/* delete certain notes */
-		if((tp->lyric[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->lyric[i-1]->pos >= eof_chart_length))
+		if((tp->lyric[i-1]->pos < sp->tags->ogg[0].midi_offset) || (tp->lyric[i-1]->pos >= eof_chart_length))
 		{
 			eof_vocal_track_delete_lyric(tp, i-1);
 		}
@@ -1901,7 +1906,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			(void) eof_load_song_string_pf(NULL,fp,0);					//Parse past the original audio file name (not supported yet)
 			(void) eof_load_song_string_pf(sp->tags->ogg[sp->tags->oggs].description,fp,0);	//Read the OGG profile description string
 			sp->tags->ogg[sp->tags->oggs].midi_offset = pack_igetl(fp);	//Read the profile's MIDI delay
-			(void) pack_igetl(fp);										//Read the OGG profile flags (not supported yet)
+			sp->tags->ogg[sp->tags->oggs].flags = pack_igetl(fp);		//Read the OGG profile flags
 			sp->tags->oggs++;
 		}
 	}
@@ -3136,7 +3141,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		(void) eof_save_song_string_pf(NULL, fp);	//Write an empty original audio file name string (not supported yet)
 		(void) eof_save_song_string_pf(sp->tags->ogg[ctr].description, fp);	//Write an OGG profile description string
 		(void) pack_iputl(sp->tags->ogg[ctr].midi_offset, fp);	//Write the profile's MIDI delay
-		(void) pack_iputl(0, fp);	//Write the profile's flags (not supported yet)
+		(void) pack_iputl(sp->tags->ogg[ctr].flags, fp);		//Write the profile's flags
 	}
 	(void) pack_iputl(sp->beats, fp);	//Write the number of beats
 	for(ctr=0; ctr < sp->beats; ctr++)
@@ -5565,7 +5570,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}
 
 		/* delete invalid notes or force corrections on valid notes */
-		if((tp->note[i-1]->note == 0) || (tp->note[i-1]->type >= sp->track[track]->numdiffs) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
+		if((tp->note[i-1]->note == 0) || (tp->note[i-1]->type >= sp->track[track]->numdiffs) || (tp->note[i-1]->pos < sp->tags->ogg[0].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
 		{	//If the note is not valid
 			eof_pro_guitar_track_delete_note(tp, i-1);
 		}

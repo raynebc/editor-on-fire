@@ -1151,7 +1151,7 @@ int eof_menu_song_properties(void)
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 
-	old_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+	old_offset = eof_song->tags->ogg[0].midi_offset;
 	oldaccurate_ts = eof_song->tags->accurate_ts;
 	eof_cursor_visible = 0;
 	if(eof_song_loaded)
@@ -1166,7 +1166,7 @@ int eof_menu_song_properties(void)
 	(void) ustrcpy(eof_etext, eof_song->tags->title);
 	(void) ustrcpy(eof_etext2, eof_song->tags->artist);
 	(void) ustrcpy(eof_etext3, eof_song->tags->frettist);
-	(void) snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%ld", eof_song->tags->ogg[eof_selected_ogg].midi_offset);
+	(void) snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%ld", eof_song->tags->ogg[0].midi_offset);
 	(void) ustrcpy(eof_etext5, eof_song->tags->year);
 	(void) ustrcpy(eof_etext6, eof_song->tags->loading_text);
 	(void) ustrcpy(eof_etext8, eof_song->tags->album);
@@ -1201,7 +1201,7 @@ int eof_menu_song_properties(void)
 				eof_delete_rocksmith_wav();
 			}
 		}
-		else if(eof_is_number(eof_etext4) && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != atol(eof_etext4)))
+		else if(eof_is_number(eof_etext4) && (eof_song->tags->ogg[0].midi_offset != atol(eof_etext4)))
 		{	//If the delay was changed
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			undo_made = 1;
@@ -1236,8 +1236,8 @@ int eof_menu_song_properties(void)
 		}
 		if(!invalid)
 		{
-			eof_song->tags->ogg[eof_selected_ogg].midi_offset = atol(eof_etext4);
-			if(eof_song->tags->ogg[eof_selected_ogg].midi_offset < 0)
+			eof_song->tags->ogg[0].midi_offset = atol(eof_etext4);
+			if(eof_song->tags->ogg[0].midi_offset < 0)
 			{
 				invalid = 1;
 			}
@@ -1246,20 +1246,20 @@ int eof_menu_song_properties(void)
 		{
 			allegro_message("Invalid MIDI offset.");
 		}
-		if(eof_song->beat[0]->pos != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
+		if(eof_song->beat[0]->pos != eof_song->tags->ogg[0].midi_offset)
 		{	//If the first beat's position changed
 			for(i = 0; i < eof_song->beats; i++)
 			{
-				eof_song->beat[i]->fpos += (double)(eof_song->tags->ogg[eof_selected_ogg].midi_offset - old_offset);
+				eof_song->beat[i]->fpos += (double)(eof_song->tags->ogg[0].midi_offset - old_offset);
 				eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up
 			}
 		}
-		if((eof_song->tags->ogg[eof_selected_ogg].midi_offset != old_offset) && (eof_get_chart_size(eof_song) > 0))
+		if((eof_song->tags->ogg[0].midi_offset != old_offset) && (eof_get_chart_size(eof_song) > 0))
 		{	//If the MIDI offset was changed and there is at least one note/lyric in the chart, prompt to adjust the notes/lyrics
 			eof_clear_input();
 			if(alert(NULL, "Adjust notes to new offset?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{
-				(void) eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - old_offset);
+				(void) eof_adjust_notes(eof_song->tags->ogg[0].midi_offset - old_offset);
 			}
 			eof_clear_input();
 		}
@@ -2133,7 +2133,7 @@ int eof_menu_song_add_silence(void)
 				allegro_message("Could not add leading silence (error %d)", retval);
 			}
 			after_silence_length = get_ogg_length(eof_loaded_ogg_name);
-			eof_song->tags->ogg[eof_selected_ogg].modified = 1;
+			eof_song->tags->ogg[0].modified = 1;
 		}//Add silence
 
 		if(eof_music_length < old_eof_music_length)
@@ -2157,12 +2157,12 @@ int eof_menu_song_add_silence(void)
 				{
 					adjust = get_ogg_length(fn) - current_length;
 				}
-				if(eof_song->tags->ogg[eof_selected_ogg].midi_offset + adjust < 0)
+				if(eof_song->tags->ogg[0].midi_offset + adjust < 0)
 				{
 					adjust = 0;
 				}
-				eof_song->tags->ogg[eof_selected_ogg].midi_offset += adjust;
-				if(eof_song->beat[0]->pos != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
+				eof_song->tags->ogg[0].midi_offset += adjust;
+				if(eof_song->beat[0]->pos != eof_song->tags->ogg[0].midi_offset)
 				{
 					for(i = 0; i < eof_song->beats; i++)
 					{

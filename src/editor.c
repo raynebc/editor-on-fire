@@ -160,9 +160,9 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	sp->pos = sp->previous_snap = sp->next_snap = p;
 
 	/* ensure pen is within the song boundaries */
-	if(sp->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset)
+	if(sp->pos < eof_song->tags->ogg[0].midi_offset)
 	{
-		sp->pos = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+		sp->pos = eof_song->tags->ogg[0].midi_offset;
 	}
 	else if(sp->pos >= eof_chart_length)
 	{
@@ -6451,7 +6451,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 		if(eof_selected_track != EOF_TRACK_VOCALS)
 		{	//If not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-			hline(window->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, string_color);
+			hline(window->screen, lpos + eof_song->tags->ogg[0].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, string_color);
 		}
 	}
 	vline(window->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, bottomlane_y, eof_color_white);	//Render a line at the end of the chart
@@ -7238,7 +7238,7 @@ void eof_editor_logic_common(void)
 							{
 								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 								eof_moving_anchor = 1;
-								eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+								eof_last_midi_offset = eof_song->tags->ogg[0].midi_offset;
 							}
 							if((long)eof_song->beat[0]->pos + rdiff >= 0)
 							{
@@ -7256,7 +7256,7 @@ void eof_editor_logic_common(void)
 									eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round up to nearest ms
 								}
 							}
-							eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+							eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
 							eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 						}//If moving the first beat marker
 						else if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_beat_num_valid(eof_song, eof_selected_beat)) && (eof_mickeys_x != 0) && ((eof_beat_is_anchor(eof_song, eof_hover_beat) || eof_anchor_all_beats || (eof_moving_anchor && (eof_hover_beat == eof_selected_beat)))))
@@ -7270,7 +7270,7 @@ void eof_editor_logic_common(void)
 								{
 									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 									eof_moving_anchor = 1;
-									eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+									eof_last_midi_offset = eof_song->tags->ogg[0].midi_offset;
 									eof_adjusted_anchor = 1;	//Track that a beat is being moved
 									if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 									{
@@ -7317,7 +7317,7 @@ void eof_editor_logic_common(void)
 						eof_blclick_released = 1;
 						if(!eof_song->tags->click_drag_disabled && (!eof_song->tags->tempo_map_locked || (eof_selected_beat == 0)))
 						{	//If click and drag is not disabled and either the tempo map is not locked or the first beat marker was manipulated, allow the marker to be moved
-							if(eof_mouse_drug && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != eof_last_midi_offset))
+							if(eof_mouse_drug && (eof_song->tags->ogg[0].midi_offset != eof_last_midi_offset))
 							{	//If the first beat marker's position has changed
 								if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 								{	//Move all notes by the same amount that the first beat moved
@@ -7325,7 +7325,7 @@ void eof_editor_logic_common(void)
 									{
 										eof_shift_used = 1;	//Track that the SHIFT key was used
 									}
-									(void) eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - eof_last_midi_offset);
+									(void) eof_adjust_notes(eof_song->tags->ogg[0].midi_offset - eof_last_midi_offset);
 								}
 								eof_fixup_notes(eof_song);										//Update note highlighting
 								(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting

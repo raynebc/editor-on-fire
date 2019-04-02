@@ -94,7 +94,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 
 	/* write midi offset */
 	(void) ustrcat(ini_string, "\r\ndelay = ");
-	(void) snprintf(buffer, sizeof(buffer) - 1, "%ld", sp->tags->ogg[eof_selected_ogg].midi_offset);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "%ld", sp->tags->ogg[0].midi_offset);
 	(void) ustrcat(ini_string, buffer);
 
 	/* write year */

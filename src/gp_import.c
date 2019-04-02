@@ -2965,7 +2965,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 			}//If there are at least two beats positioned by the sync points
 		}//If the first sync point wasn't placed at the first beat
-		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+		eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
 		eof_song->tags->accurate_ts = 1;	//Enable the accurate TS option, since comparable logic was used to calculate sync point positions
 		eof_calculate_tempo_map(eof_song);	//Update the tempo and anchor status of all beats
 		free(sync_points);

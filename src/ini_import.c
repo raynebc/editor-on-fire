@@ -261,7 +261,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		}
 		else if(!ustricmp(eof_import_ini_setting[i].type, "delay"))
 		{
-			if(eof_compare_set_ini_integer(&value, sp->tags->ogg[eof_selected_ogg].midi_offset, value_index, &function, eof_import_ini_setting[i].type))
+			if(eof_compare_set_ini_integer(&value, sp->tags->ogg[0].midi_offset, value_index, &function, eof_import_ini_setting[i].type))
 			{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 				free(textbuffer);	//Free buffered INI file from memory
 				return 0;

@@ -482,12 +482,14 @@ typedef struct
 
 } EOF_BEAT_MARKER;
 
+#define EOF_OGG_FLAG_MULTI 1	//Distinguishes the OGG profile as having been added as an addition audio track to the chart's base audio file, as opposed to older profiles that were created with the "Load OGG" function
 typedef struct
 {
 	char filename[256];
 	long midi_offset;	//Leave signed just in case this is eventually used to allow for insertion of leading silence via specifying a negative midi offset
-	char modified;
+	char modified;		//Set to nonzero if the audio file was altered with the leading silence function and hasn't been saved, for tracking the need to change OGG files when performing undo/redo
 	char description[EOF_NAME_LENGTH + 1];
+	unsigned long flags;
 
 } EOF_OGG_INFO;
 

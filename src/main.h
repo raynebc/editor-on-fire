@@ -310,7 +310,7 @@ extern unsigned long eof_music_end_pos;
 extern int         eof_music_paused;
 extern char        eof_music_catalog_playback;
 extern char        eof_play_selection;
-extern int         eof_selected_ogg;
+///extern int         eof_selected_ogg;
 extern EOF_SONG    * eof_song;
 extern EOF_NOTE    eof_pen_note;
 extern EOF_LYRIC   eof_pen_lyric;
