@@ -946,7 +946,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}//For each event from the chart file
 
 	DestroyFeedbackChart(chart, 1);	//Free memory used by Feedback chart before exiting function
-///	eof_selected_ogg = 0;
 
 	/* check if there were lane 5 drums imported */
 	assert(sp != NULL);	//Unneeded assertion to resolve false positive in Splint

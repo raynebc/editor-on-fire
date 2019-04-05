@@ -319,7 +319,6 @@ EOF_SONG * eof_load_song(const char * fn)
 	EOF_SONG * sp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};	//This header represents the current project format
 	char rheader[16] = {0};
-///	short i;
 
  	eof_log("\tLoading project", 1);
  	eof_log("eof_load_song() entered", 1);
@@ -403,22 +402,6 @@ EOF_SONG * eof_load_song(const char * fn)
 		sp = eof_load_notes_legacy(fp, rheader[6]);
 	}
 	(void) pack_fclose(fp);
-
-///DEPRECATED
-/*
-	/ select correct OGG /
-	if(sp)
-	{
-		for(i = 0; i < sp->tags->oggs; i++)
-		{
-			if(sp->tags->ogg[i].midi_offset == sp->beat[0]->pos)
-			{
-				eof_selected_ogg = i;
-				break;
-			}
-		}
-	}
-*/
 
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);

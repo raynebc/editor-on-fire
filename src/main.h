@@ -11,9 +11,6 @@
 #include "editor.h"
 #include "pathing.h"
 
-#define EOF_LOGGING_LEVEL 1
-	//Logging level 1 is normal logging, 2 is verbose logging, 3 is exhaustive logging
-	///This macro is deprecated as the logging level is now set in the config file
 #define EOF_VERSION_STRING "EOF v1.8RC12"
 #define EOF_COPYRIGHT_STRING "(c)2008-2019 T^3 Software."
 
@@ -310,7 +307,6 @@ extern unsigned long eof_music_end_pos;
 extern int         eof_music_paused;
 extern char        eof_music_catalog_playback;
 extern char        eof_play_selection;
-///extern int         eof_selected_ogg;
 extern EOF_SONG    * eof_song;
 extern EOF_NOTE    eof_pen_note;
 extern EOF_LYRIC   eof_pen_lyric;

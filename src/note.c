@@ -2064,6 +2064,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'R';
 		}
+		if(eof_get_note_accent(eof_song, track, note))
+		{	//If any of the lanes on this note are accented
+			buffer[index++] = '>';
+		}
 	}
 	else if(eof_track_is_legacy_guitar(eof_song, track))
 	{	//Check legacy guitar statuses

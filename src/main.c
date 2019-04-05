@@ -250,7 +250,6 @@ unsigned long eof_music_end_pos;
 int         eof_music_paused = 1;
 char        eof_music_catalog_playback = 0;
 char        eof_play_selection = 0;
-///int         eof_selected_ogg = 0;
 EOF_SONG    * eof_song = NULL;
 EOF_NOTE    eof_pen_note;
 EOF_LYRIC   eof_pen_lyric;
