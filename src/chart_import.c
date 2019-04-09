@@ -754,7 +754,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 							new_note->pos = notepos;	//Assign the position (which may have been resnapped)
 							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL) - (double)originalnotepos + 0.5;	//Determine the length (using the non resnapped position), round up
 							if((current_note->chartpos == lastpos) && (current_note->duration != lastduration))
-							{	//If this gem has and the previous one start at the same time but have different lengths
+							{	//If this gem and the previous one start at the same time but have different lengths
 								new_note->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to the new note
 							}
 							if((sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE) && (current_note->gemcolor == 2))

@@ -801,10 +801,6 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
 				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
 			}
-			if(tp->note[i]->accent)
-			{	//If the note has any gems with accent status
-				eof_set_accent_at_legacy_note_pos(tp, tp->note[i]->pos, tp->note[i]->accent, 1);	//Apply accent status to such gems on any notes in other difficulties at that position
-			}
 		}//For each note in the drum track
 	}//If the track being cleaned is a drum track
 }

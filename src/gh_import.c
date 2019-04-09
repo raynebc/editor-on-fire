@@ -385,7 +385,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 	unsigned long numnotes = 0, dword = 0, ctr, notesize = 0;
 	unsigned int length = 0, isexpertplus;
 	unsigned char notemask = 0, accentmask = 0, fixednotemask;
-	EOF_NOTE *newnote = NULL;
+	EOF_NOTE *newnote = NULL, *lastnote = NULL;
 
 	if(!fb || !sp || !target)
 		return -1;
@@ -510,8 +510,8 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		}
 		else if(target->tracknum == EOF_TRACK_DRUM)
 		{	//If this is a drum track
-			if((newnote->type == EOF_NOTE_AMAZING) && (length >= 110))
-			{	//If this is an expert difficulty note that is at least 110ms long, it should be treated as a drum roll
+			if((newnote->type == EOF_NOTE_AMAZING) && (length >= 140))
+			{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
 				int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 				unsigned long lastnote = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
 
@@ -550,6 +550,15 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				return -1;
 			}
 		}
+
+		//Apply disjointed status if appropriate
+		if(lastnote && (lastnote->pos == newnote->pos) && (lastnote->length != newnote->length))
+		{	//If there was a previous note, it started at the same time as this note and has a different length
+			lastnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to both notes
+			newnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;
+		}
+
+		lastnote = newnote;
 	}//For each note in the section
 	return 1;
 }
@@ -1263,6 +1272,9 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	char forcestrum = 0;
 	char ts_warned = 0;
 
+	eof_log("eof_import_gh_note() entered", 1);
+	eof_log("Attempting to import NOTE format Guitar Hero chart", 1);
+
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
 	if(fb == NULL)
@@ -1670,7 +1682,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	unsigned long numnotes, dword = 0, ctr, ctr2, arraysize, *arrayptr = NULL;
 	unsigned int length = 0, isexpertplus;
 	unsigned char notemask = 0, accentmask = 0, fixednotemask;
-	EOF_NOTE *newnote = NULL;
+	EOF_NOTE *newnote = NULL, *lastnote = NULL;
 	char buffer[101] = {0};
 
 	if(!fb || !sp || !target || !songname)
@@ -1778,8 +1790,8 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 			else if(target->tracknum == EOF_TRACK_DRUM)
 			{	//If this is a drum track
-				if((newnote->type == EOF_NOTE_AMAZING) && (length >= 110))
-				{	//If this is an expert difficulty note that is at least 110ms long, it should be treated as a drum roll
+				if((newnote->type == EOF_NOTE_AMAZING) && (length >= 140))
+				{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
 					int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 					unsigned long lastnote = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
 
@@ -1805,6 +1817,15 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			{	//If this note was determined to be an expert+ drum note
 				newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
 			}
+
+			//Apply disjointed status if appropriate
+			if(lastnote && (lastnote->pos == newnote->pos) && (lastnote->length != newnote->length))
+			{	//If there was a previous note, it started at the same time as this note and has a different length
+				lastnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to both notes
+				newnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;
+			}
+
+			lastnote = newnote;
 		}//For each note in the section
 	}
 	if(arraysize)
@@ -2322,8 +2343,8 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	unsigned long qbindex;	//Will store the file index of the QB header
 	char ts_warned = 0;
 
-	eof_log("Attempting to import QB format Guitar Hero chart", 1);
 	eof_log("eof_import_gh_qb() entered", 1);
+	eof_log("Attempting to import QB format Guitar Hero chart", 1);
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);

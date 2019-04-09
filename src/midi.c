@@ -789,8 +789,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
 				}
-				if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (type != EOF_NOTE_SPECIAL))
-				{	//Ensure that drum notes are not written with sustain (Unless they are BRE notes)
+				if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (type != EOF_NOTE_SPECIAL) && !(noteflags & EOF_NOTE_FLAG_CRAZY))
+				{	//Ensure that drum notes are not written with sustain (Unless they are BRE notes or have crazy status)
 					deltalength = 1;
 				}
 

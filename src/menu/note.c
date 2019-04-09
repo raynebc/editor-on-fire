@@ -312,6 +312,13 @@ MENU eof_note_drum_accent_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_clone_hero_disjointed_menu[] =
+{
+	{"&Toggle", eof_menu_note_toggle_disjointed, NULL, 0, NULL},
+	{"&Remove", eof_menu_note_remove_disjointed, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_drum_menu[] =
 {
 	{"&Toggle cymbal\t" CTRL_NAME "+ALT+C", eof_menu_note_toggle_rb3_cymbal_all, NULL, 0, NULL},
@@ -334,6 +341,7 @@ MENU eof_note_drum_menu[] =
 	{"Toggle &B cymbal+tom\t" CTRL_NAME "+ALT+B", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
 	{"Toggle &G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
 	{"&Accent", NULL, eof_note_drum_accent_menu, 0, NULL},
+	{"&Disjointed", NULL, eof_note_clone_hero_disjointed_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -464,13 +472,6 @@ MENU eof_note_grid_snap_menu[] =
 	{"&Resnap to this grid\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
 	{"Resnap &Auto\tALT+R", eof_menu_note_resnap_auto, NULL, 0, NULL},
 	{"&Move grid snap", NULL, eof_note_move_grid_snap_menu, 0, NULL},
-	{NULL, NULL, NULL, 0, NULL}
-};
-
-MENU eof_note_clone_hero_disjointed_menu[] =
-{
-	{"&Toggle", eof_menu_note_toggle_disjointed, NULL, 0, NULL},
-	{"&Remove", eof_menu_note_remove_disjointed, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -972,8 +973,8 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[19].flags = D_DISABLED;	//Note>Lyrics> submenu
 
 			/* toggle crazy */
-			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-			{	//When a guitar track is active
+			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+			{	//When a guitar or drum track is active
 				eof_note_menu[10].flags = 0;				//Note>Toggle Crazy
 			}
 			else
@@ -2452,8 +2453,8 @@ int eof_menu_note_toggle_crazy(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if((track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_DANCE_TRACK_BEHAVIOR))
-		return 1;	//Do not allow this function to run unless a guitar or dance track is active
+	if((track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_DANCE_TRACK_BEHAVIOR) && (track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
+		return 1;	//Do not allow this function to run unless a guitar, dance or drum track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)

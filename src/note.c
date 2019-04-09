@@ -331,10 +331,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		tcol = eof_color_white;	//In which case, render the fret number (pro guitar) with the opposite color
 	}
 
-//Since Expert+ double bass notation uses the same flag as crazy status, override the dot color for PART DRUMS
-	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-		dcol = eof_color_white;
-
 	if(track != 0)
 	{	//If rendering an existing note
 		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
