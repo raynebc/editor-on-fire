@@ -579,6 +579,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 								tp->note[i-1]->note &= ~bitmask;		//Remove this gem from the original note
 								np->flags = tp->note[i-1]->flags;		//Clone the flags
 								np->eflags = tp->note[i-1]->eflags;		//Clone the extended flags (this will include the disjointed status flag)
+								np->accent = tp->note[i-1]->accent;		//Clone the accent bitmask
+								np->accent &= np->note;					//Clear any accent bits not for lanes not used by this note
 								notes_added = 1;						//Track that the notes will now need to be re-sorted
 							}
 						}
@@ -669,6 +671,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 						tp->note[i-1]->note |= tp->note[next]->note;			//Merge the note bitmasks
 						tp->note[i-1]->flags = flags | tp->note[next]->flags;	//Merge the flags
 						tp->note[i-1]->eflags |= tp->note[next]->eflags;		//Merge the extended flags
+						tp->note[i-1]->accent |= tp->note[next]->accent;		//Merge the accent bitmasks
 						eof_legacy_track_delete_note(tp, next);					//Delete the next note, as it has been merged with this note
 					}
 				}
@@ -744,7 +747,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}
 	}
 
-//Cleanup for pro drum and accent notations
+//Cleanup for pro drum notations
 	if(sp && (tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 	{	//If the track being cleaned is a drum track
 		unsigned lastcheckedgreenpos = 0;	//This will be used to prevent cymbal cleanup from operating on the same notes multiple times

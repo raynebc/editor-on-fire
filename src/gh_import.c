@@ -20,6 +20,9 @@ char eof_gh_skip_size_def = 0;	//Is set to nonzero if it's determined that the s
 char magicnumber[] = {0x1C,0x08,0x02,0x04,0x10,0x04,0x08,0x0C,0x0C,0x08,0x02,0x04,0x14,0x02,0x04,0x0C,0x10,0x10,0x0C,0x00};	//The magic number is expected 8 bytes into the QB header
 unsigned char eof_gh_unicode_encoding_detected;	//Is set to nonzero if determined that the lyric/section text is in Unicode format
 
+int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will prompt user whether the chart is from Warriors of Rock,
+								// which defines the bits in a different order than Smash Hits
+
 #define GH_IMPORT_DEBUG
 
 #define EOF_NUM_GH_INSTRUMENT_SECTIONS_NOTE 12
@@ -461,8 +464,8 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 			unsigned long tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 
 			fixednotemask = notemask;
-			fixednotemask &= ~1;	//Clear this gem
-			fixednotemask &= ~32;	//Clear this gem
+			fixednotemask &= ~1;	//Clear lane 1 gem
+			fixednotemask &= ~32;	//Clear lane 6 gem
 			if(notemask & 32)
 			{	//If lane 6 is populated, convert it to RB's bass drum gem
 				fixednotemask |= 1;		//Set the lane 1 (bass drum) gem
@@ -481,7 +484,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 			notemask = fixednotemask;
 
 			if(!fixednotemask)
-			{	//If the drum note has no gems, it is considered a ghost note and should import as a snare
+			{	//If the drum note has no gems, assume it is a snare note (other lanes are used in ghost notes, but their definition method is unknown)
 				notemask = 2;
 				ghost = 1;	//Track this so the note can be highlighted after it is created
 			}
@@ -520,17 +523,58 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 					phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
 				}
 				(void) eof_track_add_section(sp, EOF_TRACK_DRUM, phrasetype, 0xFF, dword, dword + length, 0, NULL);
+				newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Mark it as crazy, both so it can overlap other notes and so that it will export with sustain
 			}
-			if(accentmask & 15)
-			{	//Bits 0 through 3 of the accent mask are used to indicate accent status for drum gems (lanes other than bass drum) in Guitar Hero Smash Hits
-				newnote->accent = accentmask & 15;		//Store only the applicable bits (lane 2 through 6) into the note's accent mask
-				newnote->accent <<= 1;					//Shift left one bit to reflect that the first accent bit defines accent for snare, ie. lane 2 instead of bass, ie. lane 1
-				if(notemask & 32)
-				{	//If the accented note has any gems on lane 6, it's assumed that it inherits the accented status automatically since the game doesn't seem
-					// to use a bit to define accent status individually for this lane
-					newnote->accent |= 32;
+			if(accentmask)
+			{	//If there are any accent status bits
+				if(!eof_gh_accent_prompt)
+				{	//If the user wasn't prompted about which game this chart is from
+					if(alert("Is this chart from any of the following GH games?", "\"Warriors of Rock\", \"Band Hero\", \"Guitar Hero 5\"", "(These use a different accent notation than Smash Hits)", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user indicates the chart is fro mWarriors of Rock
+						eof_gh_accent_prompt = 1;
+					}
+					else
+					{
+						eof_gh_accent_prompt = 2;
+					}
 				}
-				newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
+				if(eof_gh_accent_prompt == 1)
+				{	//Warriors of Rock rules for interpreting the accent bitmask
+					if(accentmask & 31)
+					{	//Bits 0 through 4 of the accent mask are used to indicate accent status for drum gems
+						if(accentmask & 1)
+						{	//The least significant bit is assumed to be accent status for lane 6
+							accentmask &= ~1;	//Clear the bit for lane 1
+							accentmask |= 32;	//Set the bit for lane 6
+						}
+						accentmask &= newnote->note;	//Filter out any bits from the accent mask that don't have gems
+						newnote->accent = accentmask;
+						if(accentmask)
+						{	//If any used lanes are accented
+							newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
+						}
+					}
+				}
+				else
+				{	//Smash Hits rules for interpreting the accent bitmask
+					if(accentmask & 15)
+					{	//Bits 0 through 3 of the accent mask are used to indicate accent status for drum gems (lanes other than bass drum) in Guitar Hero Smash Hits
+						accentmask &= 15;						//Store only the applicable bits (lane 2 through 6) into the note's accent mask
+						accentmask <<= 1;						//Shift left one bit to reflect that the first accent bit defines accent for snare, ie. lane 2 instead of bass, ie. lane 1
+						if(notemask & 32)
+						{	//If the accented note has any gems on lane 6, it's assumed that it inherits the accented status automatically since the game doesn't seem
+							// to use a bit to define accent status individually for this lane
+							accentmask |= 32;
+						}
+
+						accentmask &= newnote->note;			//Filter out any bits from the accent mask that don't have gems
+						newnote->accent = accentmask;
+						if(accentmask)
+						{	//If any used lanes are accented
+							newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
+						}
+					}
+				}
 			}
 			if(ghost)
 			{	//If the ghost note was converted into a snare
@@ -1275,6 +1319,8 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	eof_log("eof_import_gh_note() entered", 1);
 	eof_log("Attempting to import NOTE format Guitar Hero chart", 1);
 
+	eof_gh_accent_prompt = 0;	//Reset this condition
+
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
 	if(fb == NULL)
@@ -1800,17 +1846,24 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 						phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
 					}
 					(void) eof_track_add_section(sp, EOF_TRACK_DRUM, phrasetype, 0xFF, dword, dword + length, 0, NULL);
+					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Mark it as crazy, both so it can overlap other notes and so that it will export with sustain
 				}
-				if(accentmask & 15)
-				{	//Bits 0 through 3 of the accent mask are used to indicate accent status for drum gems (lanes other than bass drum) in Guitar Hero Smash Hits
-					newnote->accent = accentmask & 15;		//Store only the applicable bits (lane 2 through 6) into the note's accent mask
-					newnote->accent <<= 1;					//Shift left one bit to reflect that the first accent bit defines accent for snare, ie. lane 2 instead of bass, ie. lane 1
+				if(accentmask & 31)
+				{	//Bits 0 through 4 of the accent mask are used to indicate accent status for drum gems (lanes other than bass drum) in Guitar Hero Smash Hits
+					accentmask &= 31;						//Store only the applicable bits (lane 2 through 6) into the note's accent mask
+					accentmask <<= 1;						//Shift left one bit to reflect that the first accent bit defines accent for snare, ie. lane 2 instead of bass, ie. lane 1
 					if(notemask & 32)
 					{	//If the accented note has any gems on lane 6, it's assumed that it inherits the accented status automatically since the game doesn't seem
 						// to use a bit to define accent status individually for this lane
-						newnote->accent |= 32;
+						accentmask |= 32;
 					}
-					newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
+
+					accentmask &= newnote->note;			//Filter out any bits from the accent mask that don't have gems
+					newnote->accent = accentmask;
+					if(accentmask)
+					{	//If any used lanes are accented
+						newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
+					}
 				}
 			}
 			if(isexpertplus)
