@@ -8,6 +8,9 @@
 #define EOF_MAX_IMPORT_MIDI_TRACKS 32
 #define EOF_MAX_MIDI_TEXT_SIZE 255
 #define EOF_IMPORT_MAX_EVENTS EOF_MAX_MIDI_EVENTS
+
+extern unsigned char eof_midi_import_drum_accent_velocity;
+
 EOF_SONG * eof_import_midi(const char * fn);
 double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset, unsigned int *gridsnap);
 	//Converts and returns the converted realtime of the specified delta time based on the anchors, time signatures and the MIDI's time division

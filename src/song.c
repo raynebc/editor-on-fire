@@ -7879,6 +7879,24 @@ char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track)
 	return 0;	//Track has no cymbals
 }
 
+char eof_track_has_accent(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long i;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the track
+		if(eof_get_note_accent(sp, track, i) & eof_get_note_note(sp, track, i))
+		{	//If any gems in the note have a set bit in the accent bitmask
+			return 1;	//Track has accent
+		}
+	}
+
+	return 0;	//Track has no cymbals
+}
+
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track)
 {
 	if((sp == NULL) || !track || (track >= sp->tracks))

@@ -440,7 +440,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
 	unsigned long note, noteflags, notepos, deltapos, nextdeltapos;
-	unsigned char type;
+	unsigned char type, accent;
 	int channel = 0, velocity = 0, scale, last_scale, chord = 0, isslash = 0, bassnote = 0;	//Used for pro guitar export
 	unsigned long bitmask;
 	EOF_PHRASE_SECTION *sectionptr;
@@ -654,8 +654,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			{	//If writing the GHWT variant MIDI
 				for(i = 0; i < eof_get_track_size(sp, j); i++)
 				{	//For each note in the track
-					unsigned char accent = eof_get_note_accent(sp, j, i);
 					unsigned char accentctr, accentmask;
+
+					accent = eof_get_note_accent(sp, j, i);
 					if(accent && (eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING))
 					{	//If this note has one or more accented gems and is in the expert difficulty
 						for(accentctr = 0, accentmask = 1; accentctr < 6; accentctr++, accentmask <<= 1)
@@ -679,6 +680,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				notepos = eof_get_note_pos(sp, j, i);		//Store the note position for easier use
 				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
 				type = eof_get_note_type(sp, j, i);			//Store the note type for easier use
+				accent = eof_get_note_accent(sp, j, i);				//Store the accent bitmask for easier use
 
 				if(isghl)
 				{	//This is a GHL track
@@ -831,6 +833,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0) && (accent & 1))
+						{	//If this is an accented drum note and a Rock Band compliant MIDI is not being written
+							vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+						}
+						else
+						{
+							vel = 100;	//Otherwise use the default velocity
+						}
 						if(!((noteflags & EOF_DRUM_NOTE_FLAG_DBASS) && sp->tags->double_bass_drum_disabled))
 						{	//If this is not an expert+ bass drum note that would be skipped due to such notes being disabled
 							if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (type == 3) && (noteflags & EOF_DRUM_NOTE_FLAG_DBASS) && !featurerestriction)
@@ -858,6 +868,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0) && (accent & 2))
+						{	//If this is an accented drum note and a Rock Band compliant MIDI is not being written
+							vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+						}
+						else
+						{
+							vel = 100;	//Otherwise use the default velocity
+						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 1, vel, 0);
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 1, vel, 0);
 						if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -889,6 +907,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0) && (accent & 4))
+						{	//If this is an accented drum note and a Rock Band compliant MIDI is not being written
+							vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+						}
+						else
+						{
+							vel = 100;	//Otherwise use the default velocity
+						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
@@ -955,6 +981,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0) && (accent & 8))
+						{	//If this is an accented drum note and a Rock Band compliant MIDI is not being written
+							vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+						}
+						else
+						{
+							vel = 100;	//Otherwise use the default velocity
+						}
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL))
 						{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
 							if(type == EOF_NOTE_AMAZING)
@@ -988,6 +1022,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0) && (accent & 16))
+						{	//If this is an accented drum note and a Rock Band compliant MIDI is not being written
+							vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+						}
+						else
+						{
+							vel = 100;	//Otherwise use the default velocity
+						}
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL))
 						{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
 							if(type == EOF_NOTE_AMAZING)
@@ -1060,6 +1102,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{
 						if(featurerestriction == 0)
 						{	//Only write this notation if not writing a Rock Band compliant MIDI
+							if(accent & 32)
+							{	//If this is an accented drum note
+								vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+							}
+							else
+							{
+								vel = 100;	//Otherwise use the default velocity
+							}
 							eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
 						}

@@ -2,9 +2,10 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "song.h"
-#include "utility.h"	//For eof_buffer_file()
-#include "ini.h"		//For eof_difficulty_ini_tags[]
-#include "main.h"		//For logging
+#include "utility.h"		//For eof_buffer_file()
+#include "ini.h"			//For eof_difficulty_ini_tags[]
+#include "main.h"			//For logging
+#include "midi_import.h"	//For declaration of eof_midi_import_drum_accent_velocity
 #include "ini_import.h"
 #include "undo.h"
 #include "foflc/Lyric_storage.h"	//For strcasestr_spec()
@@ -354,6 +355,15 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			if(status)
 			{
 				eof_ini_sysex_open_bass_present = 1;	//MIDI import will interpret forced HOPO lane 1 bass to be a HOPO bass gem and not an open strum
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "eof_midi_import_drum_accent_velocity"))
+		{
+			value = atoi(value_index);
+
+			if((value > 0) && (value < 128))
+			{	//If a valid accented drum note velocity is defined
+				eof_midi_import_drum_accent_velocity = value;	//Store it
 			}
 		}
 

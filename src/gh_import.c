@@ -22,6 +22,7 @@ unsigned char eof_gh_unicode_encoding_detected;	//Is set to nonzero if determine
 
 int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will prompt user whether the chart is from Warriors of Rock,
 								// which defines the bits in a different order than Smash Hits
+int eof_gh_import_ghost_drum_notice = 0;	//Will be set to nonzero if the user was notified that ghost notes were detected and highlighted during GH import
 
 #define GH_IMPORT_DEBUG
 
@@ -516,9 +517,9 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 			if((newnote->type == EOF_NOTE_AMAZING) && (length >= 140))
 			{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
 				int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
-				unsigned long lastnote = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
+				unsigned long lastnoteindex = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
 
-				if(eof_note_count_colors(sp, EOF_TRACK_DRUM, lastnote) > 1)
+				if(eof_note_count_colors(sp, EOF_TRACK_DRUM, lastnoteindex) > 1)
 				{	//If the new drum note contains gems on more than one lane
 					phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
 				}
@@ -549,10 +550,6 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 						}
 						accentmask &= newnote->note;	//Filter out any bits from the accent mask that don't have gems
 						newnote->accent = accentmask;
-						if(accentmask)
-						{	//If any used lanes are accented
-							newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
-						}
 					}
 				}
 				else
@@ -569,18 +566,20 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 
 						accentmask &= newnote->note;			//Filter out any bits from the accent mask that don't have gems
 						newnote->accent = accentmask;
-						if(accentmask)
-						{	//If any used lanes are accented
-							newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
-						}
 					}
 				}
 			}
 			if(ghost)
 			{	//If the ghost note was converted into a snare
 				newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
+
+				if(!eof_gh_import_ghost_drum_notice)
+				{
+					allegro_message("Detected ghost notes will be highlighted.");
+					eof_gh_import_ghost_drum_notice = 1;
+				}
 			}
-		}
+		}//If this is a drum track
 		if(isexpertplus)
 		{	//If this note was determined to be an expert+ drum note
 			newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
@@ -1235,7 +1234,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		{	//If there were any drum gems imported from this QB format GH file, add a "drum_fallback_blue = True" INI tag so Phase Shift knows how to downchart to 4 lanes
 			if(sp->tags->ini_settings < EOF_MAX_INI_SETTINGS)
 			{	//If this INI setting can be stored
-				(void) ustrncpy(sp->tags->ini_setting[sp->tags->ini_settings]," drum_fallback_blue = True", EOF_INI_LENGTH - 1);
+				(void) ustrncpy(sp->tags->ini_setting[sp->tags->ini_settings], "drum_fallback_blue = True", EOF_INI_LENGTH - 1);
 				sp->tags->ini_settings++;
 			}
 		}
@@ -1320,6 +1319,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	eof_log("Attempting to import NOTE format Guitar Hero chart", 1);
 
 	eof_gh_accent_prompt = 0;	//Reset this condition
+	eof_gh_import_ghost_drum_notice = 0;	//Reset this condition
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
@@ -1839,9 +1839,9 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				if((newnote->type == EOF_NOTE_AMAZING) && (length >= 140))
 				{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
 					int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
-					unsigned long lastnote = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
+					unsigned long lastnoteindex = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
 
-					if(eof_note_count_colors(sp, EOF_TRACK_DRUM, lastnote) > 1)
+					if(eof_note_count_colors(sp, EOF_TRACK_DRUM, lastnoteindex) > 1)
 					{	//If the new drum note contains gems on more than one lane
 						phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
 					}
@@ -1860,10 +1860,6 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 
 					accentmask &= newnote->note;			//Filter out any bits from the accent mask that don't have gems
 					newnote->accent = accentmask;
-					if(accentmask)
-					{	//If any used lanes are accented
-						newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
-					}
 				}
 			}
 			if(isexpertplus)

@@ -45,6 +45,8 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_ks_events;
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_text_events;
 int eof_import_bpm_count = 0;
 
+unsigned char eof_midi_import_drum_accent_velocity = 127;	//This will be parsed from an imported chart's INI file, otherwise 127 is assumed
+
 //Returns the value as if eof_ConvertToRealTime() was called, and the result was rounded up to the nearest unsigned long
 static inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset, unsigned int *gridsnap)
 {
@@ -475,6 +477,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 	/* read INI file */
 	(void) replace_filename(backup_filename, fn, "song.ini", 1024);
+	eof_midi_import_drum_accent_velocity = 127;		//By default, assume drum notes with a velocity of 127 are accent notes if the INI file doesn't define otherwise
 	(void) eof_import_ini(sp, backup_filename, 0);
 
 
@@ -1616,7 +1619,7 @@ set_window_title(debugtext);
 					}//Only import the lyric if it isn't a newline character, which some Power Gig MIDIs use in addition to carriage return
 				}//Lyric event
 
-				/* Control change event (Used in Power Gig to mark the equivalent of star power sections */
+				/* Control change event (Used in Power Gig to mark the equivalent of star power sections) */
 				else if(eof_import_events[i]->event[j]->type == 0xB0)
 				{	//Control change event
 					if(eof_import_events[i]->game == 1)
@@ -1962,6 +1965,7 @@ set_window_title(debugtext);
 				{
 					char doublebass = 0;
 					char ghlopen = 0;
+					unsigned char accent = 0;
 
 #ifdef EOF_DEBUG
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
@@ -1980,11 +1984,15 @@ set_window_title(debugtext);
 							doublebass = 1;	//Track that double bass was found for this note, and apply it after the note flag for a newly created note is initialized to zero
 						}
 						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
+						{	//If this is a drum track
 							if(lane == 5)
-							{	//A lane 6 gem encountered for a drum track will cause the track to be marked as being a "five lane" drum track
+							{	//A lane 6 gem is not considered a HOPO marker but instead is used as a fifth drum lane (not counting bass drum)
 								sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the six lane flag
 								sp->legacy_track[tracknum]->numlanes = 6;
+							}
+							if(eof_import_events[i]->event[j]->d2 == eof_midi_import_drum_accent_velocity)
+							{	//A drum note with the appropriate velocity (define-able in the chart's song.ini file) is considered an accent note
+								accent = lane_chart[lane];	//This gem's bit will be set in the note's accent bitmask
 							}
 						}
 						else
@@ -2097,6 +2105,7 @@ set_window_title(debugtext);
 						eof_set_note_length(sp, picked_track, notenum, 0);				//The length will be kept at 0 until the end of the note is found
 						eof_set_note_flags(sp, picked_track, notenum, 0);				//Clear the flag here so that the flag can be set later (ie. if it's an Expert+ double bass note)
 						eof_set_note_type(sp, picked_track, notenum, diff);				//Apply the determined difficulty
+						eof_set_note_accent(sp, picked_track, notenum, accent);			//Set the accent bitmask
 						if(gridsnap)
 							eof_set_note_tflags(sp, picked_track, notenum, EOF_NOTE_TFLAG_RESNAP);	//Track that the note is expected to be grid snapped after MIDI import completes
 						note_count[picked_track]++;

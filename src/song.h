@@ -963,6 +963,8 @@ int eof_five_lane_drums_enabled(void);
 
 char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a drum track that contains notes marked as cymbals
+char eof_track_has_accent(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified track has any gems that are accented
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a legacy guitar track
 int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track);
