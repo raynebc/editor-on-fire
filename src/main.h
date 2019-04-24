@@ -422,6 +422,7 @@ extern int         eof_disable_backups;
 extern int         eof_enable_open_strums_by_default;
 extern double      eof_lyric_gap_multiplier;
 extern char        eof_lyric_gap_multiplier_string[20];
+extern int         eof_song_folder_prompt;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;

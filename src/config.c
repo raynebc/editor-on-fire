@@ -467,6 +467,8 @@ void eof_load_config(char * fn)
 		eof_lyric_gap_multiplier = 0.0;	//Bounds check
 	}
 
+	eof_song_folder_prompt = get_config_int("other", "eof_song_folder_prompt", 0);
+
 	//Convert MIDI tones to zero numbering
 	if(eof_midi_synth_instrument_guitar > 0)
 		eof_midi_synth_instrument_guitar--;
@@ -693,6 +695,7 @@ void eof_save_config(char * fn)
 	set_config_string("other", "gp_drum_import_lane_6", gp_drum_mappings);
 
 	set_config_string("other", "eof_lyric_gap_multiplier", eof_lyric_gap_multiplier_string);
+	set_config_int("other", "eof_song_folder_prompt", eof_song_folder_prompt);
 
 	//Delete existing default INI settings from config file
 	num_default_settings = list_config_entries("default_ini_settings", &default_settings);

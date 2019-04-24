@@ -64,7 +64,7 @@ int eof_set_3d_hopo_scale_size(void);		//Sets the scale size for non-GHL 3D HOPO
 int eof_set_3d_camera_angle(void);			//Sets the 3D camera angle
 int eof_redraw_display(void);				//Rebuilds the program window with the current window size
 int eof_menu_file_controllers(void);
-int eof_menu_file_song_folder(void);
+int eof_menu_file_song_folder(void);		//Prompts the user to define a default path for new projects.  Returns 0 if user cancels the dialog
 int eof_menu_file_link(unsigned char application);
 	//Prompts the user for an executable and song path
 	//If application is 0, they are stored as a link to FoF

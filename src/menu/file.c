@@ -1791,6 +1791,7 @@ int eof_menu_file_controllers(void)
 int eof_menu_file_song_folder(void)
 {
 	char * returnfolder;
+	int retval = 0;
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -1799,11 +1800,13 @@ int eof_menu_file_song_folder(void)
 	if(returnfolder)
 	{
 		(void) ustrcpy(eof_songs_path, returnfolder);
+		retval = 1;
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-	return 1;
+
+	return retval;
 }
 
 int eof_menu_file_link(unsigned char application)

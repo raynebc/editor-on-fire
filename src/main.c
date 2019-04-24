@@ -197,6 +197,7 @@ int         eof_disable_backups = 0;			//If nonzero, .eof.bak files (created dur
 int         eof_enable_open_strums_by_default = 0;	//If nonzero, legacy tracks in new projects will be initialized to have open strums enabled automatically
 double      eof_lyric_gap_multiplier = 0.0;		//If greater than zero, edited lyrics will have a minimum distance applied to them that is equal to this variable multiplied by the current grid snap
 char        eof_lyric_gap_multiplier_string[20] = {0};	//The string representation of the above value, since it is to be stored in string format in the config file
+int         eof_song_folder_prompt = 0;			//In the Mac version, tracks whether the user opted to define the song folder or not
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -4766,10 +4767,43 @@ int eof_initialize(int argc, char * argv[])
 	if(eof_abridged_rs2_export && !eof_abridged_rs2_export_warning_suppressed)
 	{	//If abridged RS2 export is enabled and this warning hasn't been permanently dismissed
 		if(alert3("Warning:  The abridged RS2 file export preference is enabled.", "These XML files are only supported in Rocksmith Custom Song Toolkit 2.8.2.0 or newer.", "Ensure you have a new enough toolkit or disable this option in File>Preferences>Import/Export", "&OK", "Don't warn again", "&OK", 'O', 0, 'O') == 2)
-		{	//If the user opts to permanent suppress this warning
+		{	//If the user opts to permanently suppress this warning
 			eof_abridged_rs2_export_warning_suppressed = 1;
 		}
 	}
+
+	//Prompt user to define the song folder path if the Mac build is in use
+	#ifdef ALLEGRO_MACOSX
+		if(!eof_song_folder_prompt)
+		{	//If the user hasn't been prompted to set a song path yet
+			char exepath[1024] = {0};
+
+			get_executable_name(exepath, 1024);	//Set it to EOF's program file folder
+			(void) replace_filename(exepath, exepath, "", 1024);
+			put_backslash(exepath);	//Append a file separator if necessary
+
+			if(!ustrcmp(eof_songs_path, exepath))
+			{	//If the song path is currently set to the default of the executable file's parent folder
+				int retval = alert3("The default location for new projects is with EOF's executable and that can ultimately be within the application bundle.", "This can make it hard to find in OS X.", "Would you like to browse for a different song folder location now?", "Yes", "No", "Later", 0, 0, 0);
+
+				if(retval == 1)
+				{	//If the user opts to define the song folder
+					if(eof_menu_file_song_folder())
+					{	//If the user did not cancel the dialog and chose a folder
+						eof_song_folder_prompt = 1;
+					}
+				}
+				else if(retval == 2)
+				{	//If the user declined to define the song folder
+					eof_song_folder_prompt = 2;
+				}
+			}
+			else
+			{	//Track that a song path is already defined
+				eof_song_folder_prompt = 3;
+			}
+		}
+	#endif
 
 	//Load FFTW wisdom from disk
 	(void) fftw_import_wisdom_from_filename("FFTW.wisdom");
