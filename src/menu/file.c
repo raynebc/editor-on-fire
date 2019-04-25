@@ -242,6 +242,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 225, 220, 16,  2,   23,  0,    0,      1,   0,   "Allow RS2 extended ASCII lyrics",NULL, NULL },
 	{ d_agup_check_proc, 16,  240, 224, 16,  2,   23,  0,    0,      1,   0,   "Don't warn about INI differences",NULL, NULL },
 	{ d_agup_check_proc, 248, 240, 202, 16,  2,   23,  0,    0,      1,   0,   "Render mid beat tempos blue",NULL, NULL },
+	{ d_agup_check_proc, 248, 255, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1542,6 +1543,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[24].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;	//Allow RS2 extended ASCII lyrics
 	eof_import_export_preferences_dialog[25].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;	//Don't warn about INI differences
 	eof_import_export_preferences_dialog[26].flags = eof_render_mid_beat_tempos_blue ? D_SELECTED : 0;		//Render mid beat tempos blue
+	eof_import_export_preferences_dialog[27].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
 
 	do
 	{	//Run the dialog
@@ -1571,6 +1573,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_rs2_export_extended_ascii_lyrics = (eof_import_export_preferences_dialog[24].flags == D_SELECTED ? 1 : 0);
 			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[25].flags == D_SELECTED ? 1 : 0);
 			eof_render_mid_beat_tempos_blue = (eof_import_export_preferences_dialog[26].flags == D_SELECTED ? 1 : 0);
+			eof_disable_ini_export = (eof_import_export_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1597,6 +1600,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[24].flags = D_SELECTED;	//Allow RS2 extended ASCII lyrics
 			eof_import_export_preferences_dialog[25].flags = 0;				//Don't warn about INI differences
 			eof_import_export_preferences_dialog[26].flags = D_SELECTED;	//Render mid beat tempos blue
+			eof_import_export_preferences_dialog[27].flags = 0;				//Don't write INI file
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -3979,8 +3983,11 @@ int eof_save_helper(char *destfilename, char silent)
 		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 0);
 
 		/* Save INI file */
-		(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", (int) sizeof(eof_temp_filename));
-		(void) eof_save_ini(eof_song, eof_temp_filename);
+		if(!eof_disable_ini_export)
+		{	//But only if the user did not disable this
+			(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", (int) sizeof(eof_temp_filename));
+			(void) eof_save_ini(eof_song, eof_temp_filename);
+		}
 
 		/* save script lyrics if applicable) */
 		if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined

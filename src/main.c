@@ -185,6 +185,7 @@ int         eof_top_of_2d_pane_cycle_count_2 = 0;	//If nonzero, the SHIFT+F11 sh
 int         eof_rbn_export_slider_hopo = 0;		//If nonzero, notes in slider phrases will be exported to RBN MIDI as forced HOPO notes
 int         eof_imports_drop_mid_beat_tempos = 0;	//If nonzero, any beats inserted due to mid beat tempo changes during Feedback and MIDI import are deleted after the import
 int         eof_render_mid_beat_tempos_blue = 0;	//If nonzero, any beats that were inserted during Feedback/MIDI import due to mid beat tempo changes retain the EOF_BEAT_FLAG_MIDBEAT flag and have some special 2D rendering logic
+int         eof_disable_ini_export = 0;			//If nonzero, song.ini is not written during save even if a MIDI file is exported
 int         eof_db_import_suppress_5nc_conversion = 0;	//If nonzero, five note chords are not converted to open notes during Feedback import
 int         eof_warn_missing_bass_fhps = 1;		//If nonzero, the Rocksmith export checks will complain about FHPs not being defined for bass arrangements
 int         eof_4_fret_range = 1;				//Defines the lowest fret number at which the fret hand has a range of 4 frets, for fret hand position generation (the default value of 1 indicates this range for the entire fretboard)

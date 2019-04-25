@@ -19,6 +19,7 @@ char crc32_lookup_initialized = 0;	//Is set to nonzero when the lookup table is 
 char eof_gh_skip_size_def = 0;	//Is set to nonzero if it's determined that the size field in GH headers is omitted
 char magicnumber[] = {0x1C,0x08,0x02,0x04,0x10,0x04,0x08,0x0C,0x0C,0x08,0x02,0x04,0x14,0x02,0x04,0x0C,0x10,0x10,0x0C,0x00};	//The magic number is expected 8 bytes into the QB header
 unsigned char eof_gh_unicode_encoding_detected;	//Is set to nonzero if determined that the lyric/section text is in Unicode format
+char eof_rhythm_coop_aux_swap = 0;	//Set to nonzero if user opts to import the _song_aux_ sections into PART RHYTHM (ie. in QB format GH charts that have _song_aux_ notes but no _song_rhythmcoop_ notes)
 
 int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will prompt user whether the chart is from Warriors of Rock,
 								// which defines the bits in a different order than Smash Hits
@@ -1730,6 +1731,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	unsigned char notemask = 0, accentmask = 0, fixednotemask;
 	EOF_NOTE *newnote = NULL, *lastnote = NULL;
 	char buffer[101] = {0};
+	int destination_track;
 
 	if(!fb || !sp || !target || !songname)
 		return -1;
@@ -1755,6 +1757,28 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of notes = %lu", numnotes);
 		eof_log(eof_log_string, 1);
 #endif
+
+		//Offer to import the song_aux notes into the PART RHYTHM track if the latter is empty at this point
+		destination_track = target->tracknum;	//By default, use eof_gh_instrument_sections_qb[] to derive the track associated with the section name
+		if(strcasestr_spec(target->name, "_song_aux_"))
+		{	//If this is one of the auxiliary instrument sections
+			if(!eof_rhythm_coop_aux_swap && !eof_get_track_size(sp, EOF_TRACK_RHYTHM))
+			{	//If the user wasn't prompted yet, and the rhythm track is empty (nothing was imported from _song_rhythmcoop_ sections)
+				if(alert(NULL, "Import the auxiliary track into PART RHYTHM instead of PART KEYS?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to change the destination track for the auxiliary section
+					eof_rhythm_coop_aux_swap = 1;
+				}
+				else
+				{
+					eof_rhythm_coop_aux_swap = 2;
+				}
+			}
+
+			if(eof_rhythm_coop_aux_swap == 1)
+			{	//If the instrument section is to be imported into PART RHYTHM
+				destination_track = EOF_TRACK_RHYTHM;
+			}
+		}
 
 		for(ctr2 = 0; ctr2 < numnotes; ctr2++)
 		{	//For each note in the section
@@ -1787,7 +1811,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			eof_log(eof_log_string, 1);
 #endif
 			isexpertplus = 0;	//Reset this condition
-			if(target->tracknum == EOF_TRACK_DRUM)
+			if(destination_track == EOF_TRACK_DRUM)
 			{	//In Guitar Hero, lane 6 is bass drum, lane 1 is the right-most lane (ie. 6)
 				unsigned long tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 
@@ -1811,14 +1835,14 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				}
 				notemask = fixednotemask;
 			}
-			newnote = (EOF_NOTE *)eof_track_add_create_note(sp, target->tracknum, (notemask & 0x3F), dword, length, target->diffnum, NULL);
+			newnote = (EOF_NOTE *)eof_track_add_create_note(sp, destination_track, (notemask & 0x3F), dword, length, target->diffnum, NULL);
 			if(newnote == NULL)
 			{	//If there was an error adding a new note
 				eof_log("\t\tError:  Could not add note", 1);
 				free(arrayptr);
 				return -1;
 			}
-			if((target->tracknum == EOF_TRACK_GUITAR) || (target->tracknum == EOF_TRACK_BASS))
+			if(sp->track[destination_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR)
 			{	//If this is a guitar track, check the accent mask and HOPO status
 				if(notemask & 0x40)
 				{	//Bit 6 is the HOPO status
@@ -1834,7 +1858,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
 				}
 			}
-			else if(target->tracknum == EOF_TRACK_DRUM)
+			else if(destination_track == EOF_TRACK_DRUM)
 			{	//If this is a drum track
 				if((newnote->type == EOF_NOTE_AMAZING) && (length >= 140))
 				{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
@@ -2402,6 +2426,8 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		eof_log("Error:  Failed to buffer GH file", 1);
 		return NULL;
 	}
+
+	eof_rhythm_coop_aux_swap = 0;	//Reset this condition
 
 //Find the file name (stored within the PAK header)
 	while(1)
@@ -3186,18 +3212,21 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 				retval = 1;	//Return success
 				done = 1;	//Exit loop
 			}
-			for(ctr = sp->text_events; ctr > 0; ctr--)
-			{	//For each text event (in reverse order)
-				eof_song_delete_text_event(sp, ctr-1);	//Delete it
-			}
-			if(prompt == 4)
-			{	//User opted to skip the loading of practice sections
-				if(sections_file != fb)
-				{	//If an external section names file was buffered
-					eof_filebuffer_close(sections_file);	//Close that file buffer
+			else
+			{
+				for(ctr = sp->text_events; ctr > 0; ctr--)
+				{	//For each text event (in reverse order)
+					eof_song_delete_text_event(sp, ctr-1);	//Delete it
 				}
-				retval = -2;	//Return cancellation
-				done = 1;		//Exit loop
+				if(prompt == 4)
+				{	//User opted to skip the loading of practice sections
+					if(sections_file != fb)
+					{	//If an external section names file was buffered
+						eof_filebuffer_close(sections_file);	//Close that file buffer
+					}
+					retval = -2;	//Return cancellation
+					done = 1;		//Exit loop
+				}
 			}
 		}
 		else
