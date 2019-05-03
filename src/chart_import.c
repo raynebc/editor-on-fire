@@ -60,7 +60,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	double beat_length = 500.0;
 	double beat_count;
 	double convert;
-	struct dBAnchor * current_anchor;
+	struct dbAnchor * current_anchor;
 
 	unsigned long anchorctr = 0;
 
@@ -135,7 +135,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		/* otherwise add the time from the current anchor to the specified chartpos */
 		else
 		{
-			double partial_beat = (double)(chartpos - lastchartpos) * convert;	//Use the beat length estabalished at the previous anchor to determine how long this number of chart ticks is
+			double partial_beat = (double)(chartpos - lastchartpos) * convert;	//Use the beat length established at the previous anchor to determine how long this number of chart ticks is
 
 			if(eof_log_level > 1)
 			{
@@ -262,7 +262,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	struct dbText * current_event;
 	unsigned long chartpos, max_chartpos;
 	EOF_BEAT_MARKER *new_beat = NULL;
-	struct dBAnchor *ptr, *ptr2;
+	struct dbAnchor *ptr, *ptr2;
 	unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
 	char midbeatchange = 0;
 	unsigned long nextbeat;
@@ -1079,21 +1079,21 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	char *substring=NULL,*substring2=NULL;	//Used with strstr() to find tag strings in the input file
 	unsigned long A=0,B=0,C=0;				//The first, second and third integer values read from the current line of the file
 	int errorstatus=0;						//Passed to ParseLongInt()
-	char anchortype=0;						//The achor type being read in [SyncTrack]
+	char anchortype=0;						//The anchor type being read in [SyncTrack]
 	char notetype=0;						//The note type being read in the instrument track
-	char *string1=NULL,*string2=NULL;		//Used to hold strings parsed with Read_dB_string()
+	char *string1=NULL,*string2=NULL;		//Used to hold strings parsed with Read_db_string()
 	char *textbuffer;
 	char BOM[]={0xEF,0xBB,0xBF};
 
 //Feedback chart structure variables
 	struct FeedbackChart *chart=NULL;
-	struct dBAnchor *curanchor=NULL;		//Conductor for the anchor linked list
+	struct dbAnchor *curanchor=NULL;		//Conductor for the anchor linked list
 	struct dbText *curevent=NULL;			//Conductor for the text event linked list
 	struct dbNote *curnote=NULL;			//Conductor for the current instrument track's note linked list
 	struct dbTrack *curtrack=NULL;			//Conductor for the instrument track linked list, which contains a linked list of notes
 	void *temp=NULL;						//Temporary pointer used for storing newly-allocated memory
 	static struct FeedbackChart emptychart;	//A static struct has all members auto-initialized to 0/NULL
-	static struct dBAnchor emptyanchor;
+	static struct dbAnchor emptyanchor;
 	static struct dbText emptytext;
 	static struct dbNote emptynote;
 
@@ -1155,7 +1155,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 			buffer = ustrtok(NULL, "\r\n");	//Return the next tokenized line
 		}
 
-		if(!buffer)	//If a tokenized line of the file was obtained
+		if(!buffer)	//If a tokenized line of the file was not obtained
 			break;
 
 		chart->linesprocessed++;	//Track which line number is being parsed
@@ -1261,7 +1261,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					else
 					{	//This is an instrument section
 						gemcount = 0;	//Reset this counter
-						temp=(void *)Validate_dB_instrument(buffer);
+						temp=(void *)Validate_db_instrument(buffer);
 						if(temp == NULL)					//Not a valid Feedback instrument section name
 						{
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Invalid instrument section \"%s\" on line #%lu.  Ignoring.", buffer, chart->linesprocessed);
@@ -1324,7 +1324,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 
 //Process normal line input
 		if(currentsection != 0xFF)
-		{	//If this section isn't being processed
+		{	//If this section was identified and is to be processed
 			substring=strchr(buffer,'=');		//Any line within the section is expected to contain an equal sign
 			if(substring == NULL)
 			{
@@ -1342,7 +1342,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	//Process [Song]
 		if(currentsection == 1)
 		{
-			if(Read_dB_string(buffer,&string1,&string2))
+			if(Read_db_string(buffer,&string1,&string2))
 			{	//If a valid definition of (string) = (string) or (string) = "(string)" was found
 				if(strcasecmp(string1,"Name") == 0)
 					chart->name=string2;	//Save the song name tag
@@ -1522,17 +1522,17 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 			else
 			{
 		//Create and insert anchor link into the anchor list
-				temp=malloc_err(sizeof(struct dBAnchor));	//Allocate memory
-				*((struct dBAnchor *)temp)=emptyanchor;		//Reliably set all member variables to 0/NULL
+				temp=malloc_err(sizeof(struct dbAnchor));	//Allocate memory
+				*((struct dbAnchor *)temp)=emptyanchor;		//Reliably set all member variables to 0/NULL
 				if(chart->anchors == NULL)					//If the list is empty
 				{
-					chart->anchors=(struct dBAnchor *)temp;	//Point head of list to this link
+					chart->anchors=(struct dbAnchor *)temp;	//Point head of list to this link
 					curanchor=chart->anchors;				//Point conductor to this link
 				}
 				else
 				{
 					assert(curanchor != NULL);					//Put an assertion here to resolve a false positive with Coverity
-					curanchor->next=(struct dBAnchor *)temp;	//Conductor points forward to this link
+					curanchor->next=(struct dbAnchor *)temp;	//Conductor points forward to this link
 					curanchor=curanchor->next;					//Point conductor to this link
 				}
 
@@ -1913,7 +1913,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	return chart;
 }
 
-int Read_dB_string(char *source, char **str1, char **str2)
+int Read_db_string(char *source, char **str1, char **str2)
 {
 	//Scans the source string for a valid dB tag: text = text	or	text = "text"
 	//The text to the left of the equal sign is returned through str1 as a new string, with whitespace truncated
@@ -1923,7 +1923,7 @@ int Read_dB_string(char *source, char **str1, char **str2)
 	//Nonzero is returned upon success, or zero is returned if source did not contain two sets of non whitespace characters
 	//separated by an equal sign character, or if the closing quotation mark is missing.
 
-//	eof_log("Read_dB_string() entered");
+//	eof_log("Read_db_string() entered");
 
 	unsigned long srcindex;	//Index into source string
 	unsigned long index;	//Index into destination strings
@@ -1992,94 +1992,94 @@ int Read_dB_string(char *source, char **str1, char **str2)
 	return 1;		//Return success
 }
 
-int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *chart)
+int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *track)
 {
 	char *ptr;
 
-	if(!diffstring || !chart)
+	if(!diffstring || !track)
 		return 0;	//Invalid parameters
 
 	//Initialize chart variables
-	chart->tracktype = 0;	//Unless specified otherwise, this track will not import
-	chart->isguitar = chart->isdrums = chart->isbass = 0;
+	track->tracktype = 0;	//Unless specified otherwise, this track will not import
+	track->isguitar = track->isdrums = track->isbass = 0;
 
 	//Check for supported instrument difficulties
 	ptr = strcasestr_spec(diffstring,"Single]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "Single]"
-		chart->tracktype = 1;	//Track that this is a "Guitar" track
-		chart->isguitar = 1;
+		track->tracktype = 1;	//Track that this is a "Guitar" track
+		track->isguitar = 1;
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"SingleGuitar]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "SingleGuitar]"
-		chart->tracktype = 1;	//Track that this is a "Guitar" track
-		chart->isguitar = 1;
+		track->tracktype = 1;	//Track that this is a "Guitar" track
+		track->isguitar = 1;
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"DoubleGuitar]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "DoubleGuitar]"
-		chart->tracktype = 2;	//Track that this is a "Lead Guitar" track
-		chart->isguitar = 1;
+		track->tracktype = 2;	//Track that this is a "Lead Guitar" track
+		track->isguitar = 1;
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"DoubleBass]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "DoubleBass]"
-		chart->tracktype = 3;	//Track that this is a "Bass" track
-		chart->isbass = 1;
+		track->tracktype = 3;	//Track that this is a "Bass" track
+		track->isbass = 1;
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"SingleRhythm]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "SingleRhythm]"
-		chart->tracktype = 3;	//Track that this is a "Bass" track
-		chart->isbass = 1;
+		track->tracktype = 3;	//Track that this is a "Bass" track
+		track->isbass = 1;
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"Drums]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "Drums]"
-		chart->tracktype = 4;	//Track that this is a "Drums" track
-		chart->isdrums = 1;
+		track->tracktype = 4;	//Track that this is a "Drums" track
+		track->isdrums = 1;
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"DoubleDrums]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "DoubleDrums]"
-		chart->tracktype = 4;	//Doubledrums is an expert+ drum track
-		chart->isdrums = 2;	//This will be imported into the Phase Shift drum track instead of the normal drum track
+		track->tracktype = 4;	//Doubledrums is an expert+ drum track
+		track->isdrums = 2;	//This will be imported into the Phase Shift drum track instead of the normal drum track
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"Vocals]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "Vocals]"
-		chart->tracktype = 5;	//Track that this is a "Vocals" track
-		chart->isdrums = 0;
+		track->tracktype = 5;	//Track that this is a "Vocals" track
+		track->isdrums = 0;
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"DoubleRhythm]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "DoubleRhythm]"
-		chart->tracktype = 6;	//Track that this is a "Rhythm" track
-		chart->isguitar = 1;
+		track->tracktype = 6;	//Track that this is a "Rhythm" track
+		track->isguitar = 1;
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"Keyboard]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "Keyboard]"
-		chart->tracktype = 7;	//Track that this is a keyboard track
+		track->tracktype = 7;	//Track that this is a keyboard track
 		return 1;	//Return success
 	}
 
@@ -2087,16 +2087,16 @@ int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *chart)
 	ptr = strcasestr_spec(diffstring,"GHLGuitar]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "GHLGuitar]"
-		chart->tracktype = 1;	//Track that this is a "Guitar" track
-		chart->isguitar = 2;	//This signals that this is a 6 lane guitar track
+		track->tracktype = 1;	//Track that this is a "Guitar" track
+		track->isguitar = 2;	//This signals that this is a 6 lane guitar track
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"GHLBass]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "GHLBass]"
-		chart->tracktype = 3;	//Track that this is a "Bass" track
-		chart->isbass = 2;		//This signals that this is a 6 lane bass track
+		track->tracktype = 3;	//Track that this is a "Bass" track
+		track->isbass = 2;		//This signals that this is a 6 lane bass track
 		return 1;	//Return success
 	}
 
@@ -2104,35 +2104,35 @@ int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *chart)
 	ptr = strcasestr_spec(diffstring,"EnhancedGuitar]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "EnhancedGuitar]"
-		chart->isguitar = 1;	//EnhancedGuitar is a guitar track, but it won't be imported
+		track->isguitar = 1;	//EnhancedGuitar is a guitar track, but it won't be imported
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"CoopLead]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "CoopLead]"
-		chart->isguitar = 1;	//CoopLead is a guitar track, but it won't be imported
+		track->isguitar = 1;	//CoopLead is a guitar track, but it won't be imported
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"CoopBass]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "CoopBass]"
-		chart->isguitar = 1;	//CoopBass is a guitar track, but it won't be imported
+		track->isguitar = 1;	//CoopBass is a guitar track, but it won't be imported
 		return 1;	//Return success
 	}
 
 	ptr = strcasestr_spec(diffstring,"10KeyGuitar]");
 	if(ptr && (ptr[0] == '\0'))
 	{	//If the string ends in "10KeyGuitar]"
-		chart->isguitar = 1;	//10KeyGuitar is a guitar track, but it won't be imported
+		track->isguitar = 1;	//10KeyGuitar is a guitar track, but it won't be imported
 		return 1;	//Return success
 	}
 
 	return 0;	//Return failure
 }
 
-struct dbTrack *Validate_dB_instrument(char *buffer)
+struct dbTrack *Validate_db_instrument(char *buffer)
 {
 	//Validates that buffer contains a valid dB instrument track name enclosed in brackets []
 	//buffer is expected to point to the opening bracket
@@ -2145,11 +2145,11 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	char *endbracket=NULL;	//The pointer to the end bracket
 	char *diffstring=NULL;	//Used to find the difficulty substring
 	char *retstring=NULL;	//Used to create the instrument track string
-	struct dbTrack *chart=NULL;		//Used to create the structure that is returned
+	struct dbTrack *track=NULL;		//Used to create the structure that is returned
 	static struct dbTrack emptychart;	//Static structures have all members auto initialize to 0/NULL
 	char difftype=0;	//Used to track the difficulty of the track
 
-	eof_log("Validate_dB_instrument() entered", 1);
+	eof_log("Validate_db_instrument() entered", 1);
 
 	if(buffer == NULL)
 		return NULL;	//Return error
@@ -2202,13 +2202,13 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 		difftype=1;	//Track that this is is an Easy difficulty
 
 //Create and initialize the instrument structure
-	chart=malloc_err(sizeof(struct dbTrack));	//Allocate memory
-	*chart=emptychart;							//Reliably set all member variables to 0/NULL
+	track=malloc_err(sizeof(struct dbTrack));	//Allocate memory
+	*track=emptychart;							//Reliably set all member variables to 0/NULL
 
 //At this point, diffstring points to the character AFTER the matching difficulty string.  Verify that a valid instrument is specified
-	if(!eof_validate_db_track_diff_string(diffstring, chart))
+	if(!eof_validate_db_track_diff_string(diffstring, track))
 	{	//If the instrument difficulty is not recognized
-		free(chart);
+		free(track);
 		return NULL;	//Return error
 	}
 
@@ -2216,14 +2216,14 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	retstring=DuplicateString(&buffer[1]);
 	retstring[strlen(retstring)-1]='\0';	//Truncate the trailing bracket
 
-	chart->trackname=retstring;					//Store the instrument track name
-	chart->difftype=difftype;
-	return chart;
+	track->trackname=retstring;					//Store the instrument track name
+	track->difftype=difftype;
+	return track;
 }
 
 void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 {
-	struct dBAnchor *anchorptr;	//Conductor for the anchors linked list
+	struct dbAnchor *anchorptr;	//Conductor for the anchors linked list
 	struct dbText *eventptr;	//Conductor for the events linked list
 	struct dbTrack *trackptr;	//Conductor for the tracks linked list
 	struct dbNote *noteptr;	//Conductor for the notes linked lists

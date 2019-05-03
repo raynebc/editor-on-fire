@@ -3787,7 +3787,7 @@ int d_hackish_edit_proc (int msg, DIALOG *d, int c)
 		/* Adjust position/dimension so it is the same as AGUP's. */
 		d->y -= 3;
 		d->h += 6;
-		/* The Allegro GUI has a bug where it repeatedely sends MSG_START to a
+		/* The Allegro GUI has a bug where it repeatedly sends MSG_START to a
 		 * custom GUI procedure. We need to work around that.
 		 */
 		work_around_fsel_bug = 1;

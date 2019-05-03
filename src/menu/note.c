@@ -2461,8 +2461,6 @@ int eof_menu_note_toggle_crazy(void)
 	{	//For each note in the active track
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
 			continue;	//If the note isn't selected or in the active track difficulty, skip it
-		if((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32))
-			continue;	//If the note is an open bass strum note, skip it
 
 		if(!u)
 		{

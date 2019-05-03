@@ -5,14 +5,14 @@
 #include "song.h"
 
 //A linked list storing anchors, each of which is a Set Tempo, Anchor or Time Signature event
-struct dBAnchor
+struct dbAnchor
 {
 	unsigned long chartpos;	//The defined chart position of the anchor
 	unsigned long BPM;	//The tempo of this beat times 1000 (0 for no change from previous anchor)
 	unsigned char TSN;	//The numerator of this beat's time signature (0 for no change from previous anchor)
 	unsigned char TSD;	//The denominator of this beat's time signature (4 is assumed if the .chart file is pre-Moonscraper and doesn't define this value, 0 for no change from previous anchor)
 	unsigned long usec;	//The real time position of this anchor in microseconds (millionths of a second) (0 if not an anchor)
-	struct dBAnchor *next;	//Pointer to the next anchor in the list
+	struct dbAnchor *next;	//Pointer to the next anchor in the list
 };
 
 //A linked list strong text events
@@ -57,7 +57,7 @@ struct FeedbackChart
 	char *artist;
 	char *charter;
 	double offset;		//The chart's offset in SECONDS
-	unsigned long resolution;	//Is expected to be 192.  If it's missing in the .char file, 192 could probably be assumed
+	unsigned long resolution;	//Is expected to be 192.  If it's missing in the .chart file, 192 could probably be assumed
 	char *audiofile;			//The MP3/OGG file specified in the chart file as the audio track
 	unsigned long linesprocessed;	//The number of lines in the file that were processed
 	unsigned long tracksloaded;	//The number of instrument tracks that were loaded
@@ -65,14 +65,14 @@ struct FeedbackChart
 	char guitartypes;	//Tracks the presence of 6 lane guitar (0 = no guitar parts, 1 = 5 lane guitar parts only, 2 = 6 lane guitar parts only, 3 = 5 and 6 lane guitar parts)
 	char basstypes;		//Tracks the presence of 6 lane bass (0 = no bass parts, 1 = 5 lane bass parts only, 2 = 6 lane bass parts only, 3 = 5 and 6 lane bass parts)
 
-	struct dBAnchor *anchors;	//Linked list of anchors
+	struct dbAnchor *anchors;	//Linked list of anchors
 	struct dbText *events;		//Linked list of text events
 	struct dbTrack *tracks;		//Linked list of note tracks
 
 	unsigned long chart_length;	//The highest chart position used in the imported chart (including note lengths)
 };
 
-int Read_dB_string(char *source, char **str1, char **str2);
+int Read_db_string(char *source, char **str1, char **str2);
 	//Scans the source string for a valid dB tag: text = text	or	text = "text"
 	//The text to the left of the equal sign is returned through str1 as a new string, with whitespace truncated
 	//The text to the right of the equal sign is returned through str2 as a new string, with whitespace truncated
@@ -80,11 +80,11 @@ int Read_dB_string(char *source, char **str1, char **str2);
 	//that quotation mark up to the next are returned through str2
 	//Nonzero is returned upon success, or zero is returned if source did not contain two sets of non whitespace characters
 	//separated by an equal sign character, or if the closing quotation mark is missing.
-int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *chart);
-	//Compares the input string against all supported track difficulty names, setting values in *chart (ie. tracktype, isguitar, isdrums) accordingly
-	//chart->tracktype will be set to 0 if the string is a known instrument difficulty but isn't to be imported
+int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *track);
+	//Compares the input string against all supported track difficulty names, setting values in *track (ie. tracktype, isguitar, isdrums) accordingly
+	//track->tracktype will be set to 0 if the string is a known instrument difficulty but isn't to be imported
 	//Returns 0 on error or if the string doesn't reflect a supported name
-struct dbTrack *Validate_dB_instrument(char *buffer);
+struct dbTrack *Validate_db_instrument(char *buffer);
 	//Validates that buffer contains a valid dB instrument track name enclosed in brackets []
 	//buffer is expected to point to the opening bracket
 	//If it is valid, a dbTrack structure is allocated and initialized:

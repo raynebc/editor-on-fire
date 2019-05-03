@@ -59,7 +59,7 @@ int eof_system(const char * command)
 	#endif
 }
 
-void * eof_buffer_file(const char * fn, char appendnull)
+void *eof_buffer_file(const char * fn, char appendnull)
 {
 // 	eof_log("eof_buffer_file() entered");
 
@@ -88,6 +88,7 @@ void * eof_buffer_file(const char * fn, char appendnull)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCannot allocate %lu bytes of memory.", (unsigned long)buffersize);
 		eof_log(eof_log_string, 1);
+		(void) pack_fclose(fp);
 		return NULL;
 	}
 

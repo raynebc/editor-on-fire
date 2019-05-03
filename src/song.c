@@ -722,7 +722,6 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		if(eof_legacy_guitar_note_is_open(sp, track, i))
 		{	//If this is an open note
 			tp->note[i]->note = 32;							//Clear all lanes except lane 6
-			tp->note[i]->flags &= (~EOF_NOTE_FLAG_CRAZY);	//Clear the crazy status
 		}
 	}
 
@@ -7459,7 +7458,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 			{	//If the note length is to be increased
 				if(next_note > 0)
 				{	//Check if the increase would be canceled due to being unable to overlap the next note
-					unsigned long effective_note_distance = eof_get_effective_minimum_note_distance(sp, track, notepos);
+					unsigned long effective_note_distance = eof_get_effective_minimum_note_distance(sp, track, i);
 					if(effective_note_distance == ULONG_MAX)
 						continue;	//If the effective minimum note distance for this note couldn't be determined, skip it
 					if((notepos + notelength + effective_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))

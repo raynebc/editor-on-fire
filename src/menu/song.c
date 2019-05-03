@@ -734,18 +734,22 @@ void eof_prepare_song_menu(void)
 		if(!eof_display_second_piano_roll)
 		{	//If the secondary piano roll isn't displayed
 			eof_song_piano_roll_menu[3].flags = D_DISABLED;
+			eof_song_piano_roll_menu[4].flags = D_DISABLED;
 		}
 		else if((eof_selected_track == eof_selected_track2) && (eof_note_type == eof_note_type2))
 		{	//If both piano rolls are displaying the same track difficulty
 			eof_song_piano_roll_menu[3].flags = D_DISABLED;
+			eof_song_piano_roll_menu[4].flags = D_DISABLED;
 		}
 		else if(eof_song->track[eof_selected_track]->track_format != eof_song->track[eof_selected_track2]->track_format)
 		{	//If each piano roll is displaying a different format of track
 			eof_song_piano_roll_menu[3].flags = D_DISABLED;
+			eof_song_piano_roll_menu[4].flags = D_DISABLED;
 		}
 		else
 		{
 			eof_song_piano_roll_menu[3].flags = 0;
+			eof_song_piano_roll_menu[4].flags = 0;
 		}
 	}//If a chart is loaded
 }

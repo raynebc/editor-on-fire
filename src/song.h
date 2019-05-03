@@ -85,6 +85,7 @@
 //The following flags pertain to legacy guitar notes
 #define EOF_GUITAR_NOTE_FLAG_IS_SLIDER	512		//This flag will be set by eof_determine_phrase_status() if the note is in a slider section
 #define EOF_GUITAR_NOTE_FLAG_GHL_OPEN   1024	//This flag will represent an open note in a Guitar Hero Live style track
+//32, 64, 128, 256, 2048, 4096, 8192, 16384, 32768, 262144, etc. are currently unused for legacy guitar notes
 
 //The following flags pertain to legacy and pro guitar notes
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
