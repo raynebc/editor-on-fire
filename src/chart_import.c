@@ -139,7 +139,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 
 			if(eof_log_level > 1)
 			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTarget position is bewteen anchors, adding %fms", partial_beat);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTarget position is between anchors, adding %fms", partial_beat);
 				eof_log(eof_log_string, 3);
 			}
 			curpos += partial_beat;

@@ -4370,14 +4370,15 @@ void eof_destroy_ks_list(EOF_MIDI_KS_LIST *ptr)
 	}
 }
 
-void eof_write_ghwt_drum_animations(EOF_SONG *sp, char *fn)
+void eof_write_ghwt_drum_array_txt(EOF_SONG *sp, char *fn)
 {
 	PACKFILE * fp;
-	char buffer[10] = {0};
-	unsigned long ctr;
+	char buffer[20] = {0};
+	unsigned long ctr, code, length;
+	unsigned char note, accent;
 	EOF_LEGACY_TRACK *ptr;
 
-	eof_log("eof_write_ghwt_drum_animations() entered", 1);
+	eof_log("eof_write_ghwt_drum_array_txt() entered", 1);
 
 	if(!sp || !fn)
 	{
@@ -4393,7 +4394,7 @@ void eof_write_ghwt_drum_animations(EOF_SONG *sp, char *fn)
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output GHWT animation file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output GHWT array.txt file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return;	//Return failure
 	}
@@ -4404,76 +4405,54 @@ void eof_write_ghwt_drum_animations(EOF_SONG *sp, char *fn)
 			continue;	//If the note isn't in the expert difficulty, skip it
 
 		(void) snprintf(buffer, sizeof(buffer) - 1, "%lu\n", ptr->note[ctr]->pos);	//Build a string with the note's timestamp
+		(void) pack_fputs(buffer, fp);
 
-		if(ptr->note[ctr]->note & 1)
-		{	//Bass drum
-			(void) pack_fputs(buffer, fp);
-			(void) pack_fputs("2135490589\n", fp);
-			(void) pack_fputs(buffer, fp);
-			(void) pack_fputs("2134638621\n", fp);
-		}
+		//Build the code, the two most significant bytes being gems and status flags, the two less significant bytes being the length
+		code = 0;
+		note = ptr->note[ctr]->note;	//Simplify
+		accent = ptr->note[ctr]->accent;
 
-		if(ptr->note[ctr]->note & 2)
-		{	//Snare
-			(void) pack_fputs(buffer, fp);
-			(void) pack_fputs("1682767963\n", fp);
+		if(note & 1)	//Bass drum
+			code |= 32;
+		if(note & 2)
+		{	//Lane 2 (red)
+			code |= 2;
+			if(accent & 2)	//Accented lane 2
+				code |= 256;
 		}
+		if(note & 4)
+		{	//Lane 3 (yellow)
+			code |= 4;
+			if(accent & 4)	//Accented lane 3
+				code |= 512;
+		}
+		if(note & 8)
+		{	//Lane 4 (blue)
+			code |= 8;
+			if(accent & 8)	//Accented lane 4
+				code |= 1024;
+		}
+		if(note & 16)
+		{	//Lane 5 (orange)
+			code |= 16;
+			if(accent & 16)	//Accented lane 5
+				code |= 2048;
+		}
+		if(note & 32)
+		{	//Lane 6 (green)
+			code |= 1;
+			if(accent & 32)	//Accented lane 6
+				code |= 128;
+		}
+		code <<= 16;					//That note data belongs in the upper two bytes of the 4 byte code
 
-		if(ptr->note[ctr]->note & 4)
-		{
-			if(ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
-			{	//Yellow cymbal
-				if((ptr->note[ctr]->flags & EOF_NOTE_FLAG_IS_TRILL) || (ptr->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
-				{	//If the cymbal is in a drum roll or special drum roll phrase, export it as a "fast" hi hat
-					(void) pack_fputs(buffer, fp);
-					(void) pack_fputs("1682833461\n", fp);
-				}
-				else
-				{	//Otherwise export it as a normal hi hat
-					(void) pack_fputs(buffer, fp);
-					(void) pack_fputs("1682833500\n", fp);
-				}
-			}
-			else
-			{	//Yellow tom
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("1681850426\n", fp);
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("1682702394\n", fp);
-			}
-		}
+		length = ptr->note[ctr]->length;
+		if(length > 0xFFFF)
+			length = 0xFFFF;	//Ensure the length doesn't exceed what can be written in two bytes
+		code += length;			//Add the note length to put it in the lower two bytes of the code
 
-		if(ptr->note[ctr]->note & 8)
-		{
-			if(ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
-			{	//Blue cymbal
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("1682964573\n", fp);
-			}
-			else
-			{	//Blue tom
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("1682636859\n", fp);
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("1681784891\n", fp);
-			}
-		}
-
-		if(ptr->note[ctr]->note & 16)
-		{
-			if(ptr->note[ctr]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
-			{	//Green cymbal
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("1683030076\n", fp);
-			}
-			else
-			{	//Green tom
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("2135556125\n", fp);
-				(void) pack_fputs(buffer, fp);
-				(void) pack_fputs("2134704157\n", fp);
-			}
-		}
+		(void) snprintf(buffer, sizeof(buffer) - 1, "%lu\n", code);	//Write the code to the file
+		(void) pack_fputs(buffer, fp);
 	}
 
 	(void) pack_fclose(fp);
