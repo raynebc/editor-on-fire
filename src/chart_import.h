@@ -31,6 +31,7 @@ struct dbNote
 		//This is 0-4 for a note definition, 5 for inverted HOPO notation, 6 is for slider notation,
 		// 7 is for open strum, 'S' for a start of solo section, 'E' for an end of solo section
 		// '0' for a Player 1 section, '1' for a Player 2 section or '2' for a Star Power section
+	char is_gem;	//Set to nonzero if the note is a gem instead of a status marker (is valued from 0-4, 7 or 8)
 	unsigned long duration;
 	struct dbNote *next;
 };
@@ -109,5 +110,8 @@ void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track, un
 	//Processes and deletes toggle HOPO markers and slider markers from the specified track difficulty to remove them and help an imported track from avoid exceeding EOF_MAX_NOTES
 EOF_SONG * eof_import_chart(const char * fn);
 	//Invokes ImportFeedback() and transfers the chart data to EOF
+void sort_chart(struct FeedbackChart *chart);
+	//Performs a bubble sort of the specified chart's linked lists, to ensure markers are correctly processed
+	//Bubble sort isn't very efficient, but all notes are supposed to be defined in order anyway so it shouldn't matter for properly made charts
 
 #endif

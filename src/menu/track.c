@@ -4866,9 +4866,17 @@ int eof_menu_track_clone_track_to_clipboard(void)
 			}
 		}
 		(void) pack_iputl(sectioncount, fp);	//Write the number of instances of this section type
+		if(sectioncount)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing %lu instances of section type %lu", sectioncount, sectiontype);
+			eof_log(eof_log_string, 2);
+		}
 
 		for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
 		{	//For each instance of this type of section in the track
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCloning section instance %lu", sectionnum + 1);
+			eof_log(eof_log_string, 2);
+
 			content_found = 1;
 			(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].start_pos), fp);	//Write the beat number in which this section starts
 			tfloat = eof_get_porpos(phrase[sectionnum].start_pos);
@@ -4914,7 +4922,7 @@ int eof_menu_track_clone_track_to_clipboard(void)
 				}
 				else
 				{	//On second pass, write the events to the clipboard
-					(void)eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write event text
+					(void) eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write event text
 					(void) pack_iputl(eof_song->text_event[ctr2]->beat, fp);				//Write event's assigned beat number
 					(void) pack_putc(eof_song->text_event[ctr2]->flags, fp);				//Write event flags
 				}
@@ -4997,6 +5005,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	//Prompt user
 	if(eof_get_track_size_all(eof_song, eof_selected_track) && alert("This track already has notes", "Cloning from the clipboard will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 	{	//If the active track is already populated (with normal or tech notes) and the user doesn't opt to overwrite it
+		(void) pack_fclose(fp);
 		return 5;	//User cancellation
 	}
 
@@ -5073,6 +5082,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 					eof_log("\tError adding beat.  Aborting", 1);
 					allegro_message("Error adding beat.  Aborting");
 					eof_erase_track(eof_song, eof_selected_track);
+					(void) pack_fclose(fp);
 					return 6;
 				}
 				eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
@@ -5103,6 +5113,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 				eof_log("\tError adding note.  Aborting", 1);
 				allegro_message("Error adding note.  Aborting");
 				eof_erase_track(eof_song, eof_selected_track);
+				(void) pack_fclose(fp);
 				return 7;
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);

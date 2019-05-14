@@ -22,7 +22,7 @@ typedef struct
 	int velocity;
 	int channel;
 	char * dp;
-	char allocation;		//This tracks whether dp points to allocated that should be freed after it is written to file
+	char allocation;		//This tracks whether dp points to allocated memory that should be freed after it is written to file
 	char filtered;			//This is set to nonzero by eof_check_for_note_overlap() if the event should be dropped instead of being written to MIDI (ie. overlaps another of the same MIDI note)
 	char on;				//Simplifies the use of running status by indicating if this is a note on event
 	char off;				//Simplifies the use of running status by indicating if this is a note off event

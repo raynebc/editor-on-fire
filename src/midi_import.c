@@ -423,6 +423,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char powergig_hopo, powergig_sp;	//Track the HOPO and Star Power phrasing for Power Gig import
 	char guitar_present = 0, ghl_guitar_present = 0, bass_present = 0, ghl_bass_present = 0;	//Tracks whether each of these 4 tracks were imported
 	unsigned long guitar_track = 0, ghl_guitar_track = 0, bass_track = 0, ghl_bass_track = 0;	//Records the track index of each of those tracks
+	char sliders_exceeded_warning = 0;
 
 	eof_log("eof_import_midi() entered", 1);
 
@@ -2046,28 +2047,28 @@ set_window_title(debugtext);
 						if((midinote == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Legacy solos are marked with note 103
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
-							phraseptr->start_pos = event_realtime;
 						}
 						else if((midinote == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Star power is marked with note 116
 							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-							phraseptr->start_pos = event_realtime;
 						}
 						else if((midinote == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Tremolos are marked with note 126
 							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
-							phraseptr->start_pos = event_realtime;
-							phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
 						}
 						else if((midinote == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Trills are marked with note 127
 							phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
-							phraseptr->start_pos = event_realtime;
 						}
 						if(phraseptr)
-						{	//If a phrase was created, initialize some other values
+						{	//If the phrase can be added, define its parameters
+							phraseptr->start_pos = event_realtime;
 							phraseptr->flags = 0;
 							phraseptr->name[0] = '\0';
+							if(midinote == 126)
+							{	//If this was a tremolo
+								phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
+							}
 						}
 
 						/* rb3 pro drum markers */
@@ -2412,9 +2413,21 @@ set_window_title(debugtext);
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of phrase
 												phraseptr = eof_get_slider(sp, picked_track, eof_get_num_sliders(sp, picked_track));
-												phraseptr->start_pos = sliderpos[0];
-												phraseptr->end_pos = event_realtime;
-												eof_set_num_sliders(sp, picked_track, eof_get_num_sliders(sp, picked_track) + 1);
+												if(phraseptr)
+												{	//If another slider can be added
+													phraseptr->start_pos = sliderpos[0];
+													phraseptr->end_pos = event_realtime;
+													phraseptr->name[0] = '\0';	//Ensure the section name string is empty
+													eof_set_num_sliders(sp, picked_track, eof_get_num_sliders(sp, picked_track) + 1);
+												}
+												else
+												{
+													if(!sliders_exceeded_warning)
+													{
+														allegro_message("This MIDI contains too many sliders, only the first %d will be imported.", EOF_MAX_PHRASES);
+														sliders_exceeded_warning = 1;
+													}
+												}
 											}
 										}
 									break;
@@ -2610,8 +2623,12 @@ set_window_title(debugtext);
 								if(!powergig_sp && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 								{	//If a star power phrase had not been started, and another phrase can be stored
 									phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-									phraseptr->start_pos = event_realtime;
-									powergig_sp = 1;
+									if(phraseptr)
+									{	//If the phrase can be initialized
+										phraseptr->start_pos = event_realtime;
+										phraseptr->name[0] = '\0';	//Ensure the section name string is empty
+										powergig_sp = 1;
+									}
 								}
 							}
 							else
@@ -2619,8 +2636,11 @@ set_window_title(debugtext);
 								if(powergig_sp && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 								{	//If a star power phrase had been started, and another phrase can be stored
 									phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-									phraseptr->end_pos = event_realtime;
-									eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
+									if(phraseptr)
+									{	//If the phrase can be finalized
+										phraseptr->end_pos = event_realtime;
+										eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
+									}
 								}
 								powergig_sp = 0;
 							}
@@ -2787,28 +2807,28 @@ set_window_title(debugtext);
 					if((midinote == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 					{	//Pro guitar solos are marked with note 115
 						phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
-						phraseptr->start_pos = event_realtime;
 					}
 					else if((midinote == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 					{	//Star power is marked with note 116
 						phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-						phraseptr->start_pos = event_realtime;
 					}
 					else if((midinote == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
 					{	//Tremolos are marked with note 126
 						phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
-						phraseptr->start_pos = event_realtime;
-						phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
 					}
 					else if((midinote == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
 					{	//Trills are marked with note 127
 						phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
-						phraseptr->start_pos = event_realtime;
 					}
 					if(phraseptr)
-					{	//If a phrase was created, initialize some other values
+					{	//If a phrase can be added, define its parameters
+						phraseptr->start_pos = event_realtime;
 						phraseptr->flags = 0;
 						phraseptr->name[0] = '\0';
+						if(midinote == 126)
+						{	//If this was a tremolo
+							phraseptr->difficulty = 0xFF;	//Tremolo phrases imported from MIDI apply to all difficulties
+						}
 					}
 
 					/* fret hand positions */
@@ -3031,10 +3051,14 @@ set_window_title(debugtext);
 					if((arpegdiff >= 0) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
 					{	//If an arpeggio marker was found, and the max number of arpeggio phrases haven't already been added
 						phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
-						phraseptr->start_pos = arpegpos[arpegdiff];
-						phraseptr->end_pos = event_realtime;
-						phraseptr->difficulty = arpegdiff;	//Set the difficulty for this arpeggio
-						eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
+						if(phraseptr)
+						{	//If the arpeggio can be added, define its parameters
+							phraseptr->start_pos = arpegpos[arpegdiff];
+							phraseptr->name[0] = '\0';	//Ensure the section name string is empty
+							phraseptr->end_pos = event_realtime;
+							phraseptr->difficulty = arpegdiff;	//Set the difficulty for this arpeggio
+							eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
+						}
 					}
 
 					/* detect strum direction markers */

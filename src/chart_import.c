@@ -302,6 +302,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 	threshold = (chart->resolution * (66.0 / 192.0)) + 0.5;	//This is the tick distance at which notes become forced strums instead of HOPOs (66/192 beat or further)
 
+	sort_chart(chart);	//Sort markers before gems to ensure more reliable handling of markers and chords
+
 	if(!eof_disable_backups)
 	{	//If the user did not disable automatic backups
 		/* backup "song.ini" if it exists in the folder with the imported MIDI
@@ -611,6 +613,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			struct dbNote * current_note = current_track->notes;
 			unsigned long lastpos = -1;	//The position of the last imported note (not updated for sections that are parsed)
 			unsigned long lastduration = -1;
+			char lastnotewasgem = 0;
 			EOF_NOTE * new_note = NULL;
 			EOF_NOTE * prev_note = NULL;
 			char gemtype = 0, lastgemtype = 0;	//Tracks whether the current and previously added gems are normal notes or technique markers
@@ -656,14 +659,30 @@ EOF_SONG * eof_import_chart(const char * fn)
 				/* import star power */
 				if(current_note->gemcolor == '2')
 				{
-					if((current_note->duration > 2) && !((current_note->chartpos + current_note->duration) % chart->resolution))
-					{	//If this star power phrase is at least 3 ticks long and it ends on a beat marker, it's likely that the author of this .chart file improperly ended the phrase at another note's start position and didn't intend to mark that note
-						current_note->duration -= 2;	//Shorten the duration of the phrase
+					unsigned long endpos = current_note->chartpos + current_note->duration;	//Simplify
+
+					//Look ahead to see if the star power phrase ends at another note's start position.  If so, the marker needs to be shortened to NOT include that note
+					if(current_note->duration > 1)
+					{	//If the star power marker is at least 2 ticks long
+						struct dbNote *ptr;
+
+						for(ptr = current_note->next; ptr != NULL; ptr = ptr->next)
+						{	//For notes defined after the star power marker
+							if(ptr->chartpos > endpos)
+							{	//If this and all remaining notes are outside the scope of the star power marker
+								break;	//Stop processing the notes following the star power marker
+							}
+							if(ptr->chartpos == endpos)
+							{	//If this note starts at the star power marker's end position
+								endpos--;	//Shorten the marker by one delta tick to ensure the note is outside its scope when written to MIDI
+								break;	//Stop processing the notes following the star power marker
+							}
+						}
 					}
-					(void) eof_legacy_track_add_star_power(tp, notepos, chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL));
+					(void) eof_legacy_track_add_star_power(tp, notepos, chartpos_to_msec(chart, endpos, NULL));
 				}
 
-				/* import Clone Hero star power */
+				/* import Clone Hero solo */
 				else if(current_note->gemcolor == 'S')
 				{	//The start of a solo
 					if(difficulty == EOF_NOTE_AMAZING)
@@ -753,8 +772,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 							new_note->midi_pos = current_note->chartpos;	//Track the note's original chart position to more reliably apply HOPO status
 							new_note->pos = notepos;	//Assign the position (which may have been resnapped)
 							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL) - (double)originalnotepos + 0.5;	//Determine the length (using the non resnapped position), round up
-							if((current_note->chartpos == lastpos) && (current_note->duration != lastduration))
-							{	//If this gem and the previous one start at the same time but have different lengths
+							if((current_note->chartpos == lastpos) && (current_note->duration != lastduration) && lastnotewasgem)
+							{	//If the previous note was a gem (instead of a marker) and this gem and the previous one start at the same time but have different lengths
 								new_note->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to the new note
 							}
 							if((sp->track[track]->flags & EOF_TRACK_FLAG_GHL_MODE) && (current_note->gemcolor == 2))
@@ -798,6 +817,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					lastpos = current_note->chartpos;
 					lastgemtype = gemtype;
 					lastduration = current_note->duration;
+					lastnotewasgem = current_note->is_gem;
 				}
 				current_note = current_note->next;
 			}//For each note in the track
@@ -1747,7 +1767,13 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					}
 					else if(strstr(&substring[index + 1], "O"))
 					{	//If the E is followed by the letter O
-						notetype=3;	//This is an open strum marker
+						char *check = strcasestr_spec(substring, "= E O");	//Obtain the next character after this sequence of characters
+						if(check && (*check == '\0'))
+						{	//If that's the sequence this line ended in
+							notetype=3;	//This is an open strum marker
+						}
+						else
+							continue;	//Otherwise ignore this event
 					}
 					else if(strcasestr_spec(substring, "= E soloend"))
 					{
@@ -1879,6 +1905,10 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					return NULL;					//Invalid player section marker, return error
 				}
 				curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2', ...
+			}
+			if((curnote->gemcolor <= 8) && (curnote->gemcolor != 5) && (curnote->gemcolor != 6))
+			{	//If this gem is value 0-4, 7 or 8
+				curnote->is_gem = 1;
 			}
 			curnote->duration=C;			//The third number read is the note duration
 			if(A + C > chart->chart_length)
@@ -2342,4 +2372,122 @@ unsigned long FindLongestLineLength_ALLEGRO(const char *filename, char exit_on_e
 
 	(void) pack_fclose(inf);
 	return maxlinelength;
+}
+
+void sort_chart(struct FeedbackChart *chart)
+{
+	char sorted;
+	struct dbAnchor *anchor_ptr, *prev_anchor_ptr;
+	struct dbText *text_ptr, *prev_text_ptr;
+	struct dbTrack *track_ptr;
+	struct dbNote *note_ptr, *prev_note_ptr;
+
+	if(!chart)
+		return;	//Invalid parameter
+
+	//Sort anchors
+	do{
+		sorted = 1;
+		for(anchor_ptr = chart->anchors, prev_anchor_ptr = NULL; anchor_ptr != NULL; anchor_ptr = anchor_ptr->next)
+		{	//For each anchor in the linked list
+			if(anchor_ptr->next && (anchor_ptr->next->chartpos < anchor_ptr->chartpos))
+			{	//If there's another anchor and it should sort before this one
+				struct dbAnchor *this_ptr = anchor_ptr, *next_ptr = anchor_ptr->next;
+
+				#ifdef CCDEBUG
+					(void) printf("\tSorting anchor (Delta pos = %lu, tempo = %lu, TS = %u/%u, usec = %lu) before anchor (Delta pos = %lu, tempo = %lu, TS = %u/%u, usec = %lu).\n", anchor_ptr->chartpos, anchor_ptr->BPM, anchor_ptr->TSN, anchor_ptr->TSD, anchor_ptr->usec, anchor_ptr->next->chartpos, anchor_ptr->next->BPM, anchor_ptr->next->TSN, anchor_ptr->next->TSD, anchor_ptr->next->usec);
+				#endif
+
+				this_ptr->next = next_ptr->next;
+				next_ptr->next = this_ptr;
+				if(prev_anchor_ptr == NULL)
+				{	//If the head link of the list was swapped
+					chart->anchors = next_ptr;			//Update the linked list pointer in the chart structure
+				}
+				else
+				{
+					prev_anchor_ptr->next = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
+				}
+				sorted= 0;
+				break;	//Restart the for loop
+			}
+			prev_anchor_ptr = anchor_ptr;
+		}
+	}while(!sorted);
+
+	//Sort events
+	do{
+		sorted = 1;
+		for(text_ptr = chart->events, prev_text_ptr = NULL; text_ptr != NULL; text_ptr = text_ptr->next)
+		{	//For each text event in the linked list
+			if(text_ptr->next && (text_ptr->next->chartpos < text_ptr->chartpos))
+			{	//If there's another text event and it should sort before this one
+				struct dbText *this_ptr = text_ptr, *next_ptr = text_ptr->next;
+
+				#ifdef CCDEBUG
+					(void) printf("\tSorting text event (Delta pos = %lu, \"%s\") before text event (Delta pos = %lu, \"%s\".\n", text_ptr->chartpos, text_ptr->text, text_ptr->next->chartpos, text_ptr->next->text);
+				#endif
+
+				this_ptr->next = next_ptr->next;
+				next_ptr->next = this_ptr;
+				if(prev_text_ptr == NULL)
+				{	//If the head link of the list was swapped
+					chart->events = next_ptr;	//Update the linked list pointer in the chart structure
+				}
+				else
+				{
+					prev_text_ptr = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
+				}
+				sorted= 0;
+				break;	//Restart the for loop
+			}
+			prev_text_ptr = text_ptr;
+		}
+	}while(!sorted);
+
+	//Sort track content
+	for(track_ptr = chart->tracks; track_ptr != NULL; track_ptr = track_ptr->next)
+	{	//For each track
+		#ifdef CCDEBUG
+			(void) printf("\tSorting track %s.\n", track_ptr->trackname);
+		#endif
+		//Sort notes
+		do{
+			sorted = 1;
+			for(note_ptr = track_ptr->notes, prev_note_ptr = NULL; note_ptr != NULL; note_ptr = note_ptr->next)
+			{	//For each note in the linked list
+				if(note_ptr->next)
+				{	//If there's another note and it should sort before this one
+					int swap = 0;
+
+					if(note_ptr->next->chartpos < note_ptr->chartpos)
+					{	//If the next note occurs before this note
+						swap = 1;
+					}
+					if((note_ptr->next->chartpos == note_ptr->chartpos) && (note_ptr->next->gemcolor > note_ptr->gemcolor))
+					{	//If the two notes have the same position, but the next one has a higher lane (to help reliably sort toggle HOPO markers before the gems they affect, suiting a singly linked list)
+						swap = 1;
+					}
+					if(swap)
+					{
+						struct dbNote *this_ptr = note_ptr, *next_ptr = note_ptr->next;
+
+						this_ptr->next = next_ptr->next;
+						next_ptr->next = this_ptr;
+						if(prev_note_ptr == NULL)
+						{	//If the head link of the list was swapped
+							track_ptr->notes = next_ptr;	//Update the linked list pointer in the track structure
+						}
+						else
+						{
+							prev_note_ptr->next = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
+						}
+						sorted = 0;
+						break;	//Restart the for loop
+					}
+				}
+				prev_note_ptr = note_ptr;
+			}
+		}while(!sorted);
+	}
 }

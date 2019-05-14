@@ -1199,9 +1199,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_midi_event[eof_midi_events - 1]->length = markerlength;	//Have the event remember the marker's length to ensure eof_check_for_hopo_phrase_overlap() doesn't change the marker's length to zero
 					}
 				}
-
-				/* write accent */
-				///Determine how to encode this, since it's a per-lane mechanism instead of a marker
 			}//For each note in the track
 
 			/* fill in star power */
