@@ -90,8 +90,12 @@ extern char *midi_track_name[NUM_MIDI_TRACKS];	//The name of the MIDI track asso
 extern struct MIDIevent *midi_track_events[NUM_MIDI_TRACKS];	//Stores the linked list for each instrument, which is shared among the instrument's difficulties
 extern char events_reallocated[NUM_MIDI_TRACKS];	//Specifies whether each of the MIDI events tracks were reallocated and will only need a single call to free()
 extern clock_t start, end;	//Used to time how long the entire conversion takes on success
+extern char **utf_argv;	//Used to store a copy of main()'s argument list converted to UTF-8 encoding, so the user can pass Unicode file parameters
 
 ///Various utilities
+int build_utf8_argument_list(int argc, char **argv);
+	//Builds utf_argv[] to store UTF8 formatted copies of the program's command line arguments
+	//Returns nonzero on error
 void *buffer_file(const char * fn, char appendnull);
 	//Loads the specified file into a memory buffer and returns the buffer, or NULL upon error
 	//If appendnull is nonzero, an extra 0 byte is written at the end of the buffer, potentially necessary if buffering a file that will be read as text, ensuring the buffer is NULL terminated
@@ -109,15 +113,14 @@ void sort_chart(struct FeedbackChart *chart);
 	//Performs a bubble sort of the specified chart's linked lists, to ensure they will export to MIDI properly
 	//Bubble sort isn't very efficient, but all notes are expected to be defined in order anyway so it shouldn't matter for properly made charts
 int should_swap_events(struct MIDIevent *this_ptr, struct MIDIevent *next_ptr);
-	//Compares the two MIDI events and returns nonzero if next_ptr should sort before this_ptr, used by sort_midi_events()
+	//Compares the two MIDI events and returns nonzero if next_ptr should sort before this_ptr, used by insertion_sort_midi_events(()
 	//Returns zero on error
-void sort_midi_events(struct FeedbackChart *chart);
-	//Bubble sorts the linked lists referenced in midi_track_events[], to ensure proper ordering during MIDI export
-	//Resets the MIDI event linked list head pointers for each track in the chart,
-	// since these pointers will change if the first event in any list moves during the sort
-void sort_midi_events2(struct FeedbackChart *chart);	//Optimization implement a tail pointer to favor cases where the link appends to the sorted list
-void sort_midi_events3(struct FeedbackChart *chart);	//Optimization building a static array and quicksorting it
-int sort_midi_events3_qsort(const void * e1, const void * e2);	//A quicksort comparitor based on should_swap_events()
+void insertion_sort_midi_events(struct FeedbackChart *chart);
+	//Insertion sorts the linked lists referenced in midi_track_events[], to ensure proper ordering during MIDI export
+	//Resets the MIDI event linked list head pointers for each track in the chart, since new linked lists are created
+	//The sort algorithm is optimized for mostly-sorted data that can be appended to the end of the sorted list that is created
+void qsort_midi_events(struct FeedbackChart *chart);	//Optimization building a static array and quicksorting it
+int qsort_midi_events_comparitor(const void * e1, const void * e2);	//A quicksort comparitor based on insertion_sort_midi_events(()
 void set_hopo_status(struct FeedbackChart *chart);
 	//Examines all tracks in the specified chart and sets the is_hopo variable where applicable for each note
 	//First sets HOPO status based on note threshold, then inverts the HOPO status for all notes within toggle HOPO markers
@@ -178,7 +181,7 @@ int dump_midi_track(const char *inputfile, PACKFILE *outf);
 	//Writes a MIDI track header to the output file, followed by the size of the input file, followed by the contents of the input file
 	//Returns nonzero upon error
 int write_string_meta_event(unsigned char type, const char *str, PACKFILE *outf);
-	//Writes a meta MIDI event of the specified type (ie. 1 for text event, 3 for track name) to the given file stream
+	//Writes a meta MIDI event of the specified type (ie. 1 for text event, 3 for track name, 5 for lyric event) to the given file stream
 	//This involves writing the event, the string length and then the string
 	//Returns nonzero upon error
 struct MIDIevent *append_midi_event(struct dbTrack *track);

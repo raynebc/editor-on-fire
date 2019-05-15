@@ -6,13 +6,51 @@
 
 #define ALLEGRO_USE_CONSOLE
 #include <allegro.h>
+#ifdef ALLEGRO_WINDOWS
+	#include <winalleg.h>
+#endif
 
-#define CCDEBUG
+#ifdef CCDEBUG
+#include "..\memwatch.h"
+#endif
 
 char *midi_track_name[NUM_MIDI_TRACKS] = {"INVALID", "PART GUITAR", "PART GUITAR COOP", "PART BASS", "PART DRUMS", "PART RHYTHM", "PART KEYS", "PART GUITAR GHL", "PART BASS GHL"};
 struct MIDIevent *midi_track_events[NUM_MIDI_TRACKS] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 char events_reallocated[NUM_MIDI_TRACKS] = {0};
 clock_t start, end;
+
+#ifdef ALLEGRO_WINDOWS
+	char **utf_argv;
+	wchar_t **utf_internal_argv;
+	int utf_argc = 0;
+
+	int build_utf8_argument_list(int argc, char **argv)
+	{
+		int i;
+		wchar_t * cl = GetCommandLineW();
+		utf_internal_argv = CommandLineToArgvW(cl, &utf_argc);
+		utf_argv = malloc(utf_argc * sizeof(char *));
+
+		for(i = 0; i < utf_argc; i++)
+		{
+			utf_argv[i] = malloc(1024 * sizeof(char));
+			if(utf_argv[i] == NULL)
+			{	//If the allocation failed
+				while(i > 0)
+				{	//Free all the previously allocated argument strings
+					free(utf_argv[i - 1]);
+					i--;
+				}
+				free(utf_argv);
+				return 1;	//Return failure
+			}
+			memset(utf_argv[i], 0, 1024);
+			(void) uconvert((char *)utf_internal_argv[i], U_UNICODE, utf_argv[i], U_UTF8, 4096);
+		}
+
+		return 0;	//Success
+	}
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -20,7 +58,22 @@ int main(int argc, char *argv[])
 	char output_filename[PATH_WIDTH * 2] = {0};	//Allow for Unicode characters, which are two bytes each
 	int ctr;
 	char par_output_filename = 0, par_overwrite = 0, par_invalid = 0;
+	char **effective_argv;
 
+
+#ifdef ALLEGRO_WINDOWS
+	if(build_utf8_argument_list(argc, argv))
+	{	//If the argument list fails to be converted into Unicode
+		(void) puts("Failed to parse command line arguments");
+		par_invalid = 1;
+	}
+	else
+	{
+		effective_argv = utf_argv;
+	}
+#else
+	effective_argv = argv;
+#endif
 
 	///Process parameters
 	allegro_init();
@@ -28,25 +81,25 @@ int main(int argc, char *argv[])
 		par_invalid = 1;	//Insufficient parameter count
 	for(ctr = 2; (ctr < argc) && !par_invalid; ctr++)
 	{	//For each parameter after the first, unless a problem with the parameters has been found
-		if(argv[ctr][0] != '-')
+		if(effective_argv[ctr][0] != '-')
 		{	//If the parameter doesn't begin with a hyphen, this is expected to be the output filename
 			if(par_output_filename)
 			{
 				(void) puts("Cannot specify more than one output filename.");
 				par_invalid = 1;
 			}
-			ustrncpy(output_filename, argv[ctr], PATH_WIDTH);	//Use it verbatim
+			ustrncpy(output_filename, effective_argv[ctr], PATH_WIDTH);	//Use it verbatim
 			par_output_filename = 1;
 		}
 		else
 		{
-			if(!strcmpi(argv[ctr], "-o"))
+			if(!strcmpi(effective_argv[ctr], "-o"))
 			{	//If this is the overwrite switch
 				par_overwrite = 1;
 			}
 			else
 			{
-				(void) printf("Unknown parameter \"%s\".\n", argv[ctr]);
+				(void) printf("Unknown parameter \"%s\".\n", effective_argv[ctr]);
 				par_invalid = 1;
 			}
 		}
@@ -58,14 +111,14 @@ int main(int argc, char *argv[])
 		(void) puts("\tIf output filename exists, it isn't overwritten unless -o is specified.");
 		return 1;
 	}
-	if(!exists(argv[1]))
+	if(!exists(effective_argv[1]))
 	{
-		(void) printf("Input file \"%s\" does not exist.  Aborting.\n", argv[1]);
+		(void) printf("Input file \"%s\" does not exist.  Aborting.\n", effective_argv[1]);
 		return 2;
 	}
 	if(!par_output_filename)
 	{	//If a filename wasn't specified, input_filename.mid will be assumed
-		(void) replace_extension(output_filename,  argv[1], "mid", PATH_WIDTH);	//Use the input filename with a .mid extension
+		(void) replace_extension(output_filename,  effective_argv[1], "mid", PATH_WIDTH);	//Use the input filename with a .mid extension
 	}
 	if(exists(output_filename) && !par_overwrite)
 	{	//If the output file exists and the user didn't specify to overwrite it
@@ -75,9 +128,9 @@ int main(int argc, char *argv[])
 
 
 	///Import
-	(void) printf("Importing file \"%s\".\n", argv[1]);
+	(void) printf("Importing file \"%s\".\n", effective_argv[1]);
 	start = clock();
-	chart = import_feedback(argv[1]);
+	chart = import_feedback(effective_argv[1]);
 	if(!chart)
 	{
 		(void) puts("Import failed.  Aborting.");
@@ -116,6 +169,18 @@ int main(int argc, char *argv[])
 	///Clean up
 	(void) delete_file("temp");
 	destroy_feedback_chart(chart);
+
+#ifdef ALLEGRO_WINDOWS
+	if(utf_argv)
+	{
+		int ctr;
+		for(ctr = 0; ctr < utf_argc; ctr++)
+		{	//For each of the recreated command line argument strings
+			free(utf_argv[ctr]);
+		}
+		free(utf_argv);
+	}
+#endif
 
 	(void) printf("Converted in %f seconds.\n", ((double)end - start) / (double) CLOCKS_PER_SEC);
     return 0;
@@ -658,7 +723,7 @@ struct FeedbackChart *import_feedback(const char *filename)
 				curevent->text = duplicate_string(linebuffer2);	//Copy linebuffer2 to new string and store in list
 				eventcount++;
 				#ifdef CCDEBUG
-					(void) printf("\t\tEvent:  Delta pos:  %lu, \"%s\"\n", A, curevent->text);
+///					(void) printf("\t\tEvent:  Delta pos:  %lu, \"%s\"\n", A, curevent->text);
 				#endif
 			}
 			else
@@ -1544,6 +1609,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 	struct dbNote *note_ptr;
 	struct MIDIevent *mevent_ptr;
 	unsigned long track_ctr = 0, lastdelta;
+	unsigned long lyric_events = 0, non_lyric_events = 0;
 	int error = 0;
 	unsigned char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum)
 
@@ -1575,8 +1641,36 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 			track_ctr++;
 	}
 	track_ctr++;	//Add one for the mandatory tempo track
+
+	//Count the number of lyric events and non lyric events
 	if(chart->events)
 	{	//If there are events to write
+		for(event_ptr = chart->events; event_ptr != NULL; event_ptr = event_ptr->next)
+		{	//For each event in the linked list
+			if(!ustricmp(event_ptr->text, "phrase_start"))
+			{	//If this is a start of lyric phrase
+				lyric_events++;
+			}
+			else if(!ustricmp(event_ptr->text, "phrase_end"))
+			{	//If this is an end of lyric phrase
+				lyric_events++;
+			}
+			else if(ustrstr(event_ptr->text, "lyric "))
+			{	//If this is a lyric
+				lyric_events++;
+			}
+			else
+			{	//This is a non lyric event
+				non_lyric_events++;
+			}
+		}
+	}
+	if(lyric_events)
+	{	//If there are any lyric events to write
+		track_ctr++;	//Add one for the PART VOCALS track
+	}
+	if(non_lyric_events)
+	{	//If there are non lyric events to write
 		track_ctr++;	//Add one for the EVENTS track
 	}
 
@@ -1697,8 +1791,8 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 	}
 
 	///Create events track
-	if(chart->events)
-	{	//If there are events to write
+	if(non_lyric_events)
+	{	//If there is at least one non lyric event to write
 		tempf = pack_fopen(temp_filename, "wb");
 		if(!tempf)
 		{	//If the file failed to be opened
@@ -1714,6 +1808,19 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 		}
 		for(event_ptr = chart->events, lastdelta = 0; (event_ptr != NULL) && !error; event_ptr = event_ptr->next)
 		{	//For each event in the linked list, unless an error has occurred
+			if(!ustricmp(event_ptr->text, "phrase_start"))
+			{	//If this is a start of lyric phrase
+				continue;	//Skip it
+			}
+			else if(!ustricmp(event_ptr->text, "phrase_end"))
+			{	//If this is an end of lyric phrase
+				continue;	//Skip it
+			}
+			else if(ustrstr(event_ptr->text, "lyric "))
+			{	//If this is a lyric
+				continue;	//Skip it
+			}
+
 			error |= write_var_length(event_ptr->chartpos - lastdelta, tempf);	//Write this text event's relative delta time
 			error |= write_string_meta_event(1, event_ptr->text, tempf);
 
@@ -1738,7 +1845,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 			return error;
 		}
 
-		///Write events track
+	///Write events track
 		#ifdef CCDEBUG
 			(void) puts("\tWriting event track.");
 		#endif
@@ -1748,7 +1855,87 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 			(void) pack_fclose(outf);
 			return 10;
 		}
-	}
+	}//If there is at least one non lyric event to write
+
+	///Create vocal track
+	///Create events track
+	if(lyric_events)
+	{	//If there is at least one lyric event to write
+		tempf = pack_fopen(temp_filename, "wb");
+		if(!tempf)
+		{	//If the file failed to be opened
+			(void) printf("\tError opening temp file:  %s", strerror(errno));	//Get the Operating System's reason for the failure
+			error = 8;
+		}
+		error |= write_var_length(0, tempf);
+		error |= write_string_meta_event(3, "PART VOCALS", tempf);
+		if(error)
+		{	//If the name of the events track failed to be written
+			(void) puts("\tError writing vocal track name.");
+			error = 9;
+		}
+		for(event_ptr = chart->events, lastdelta = 0; (event_ptr != NULL) && !error; event_ptr = event_ptr->next)
+		{	//For each event in the linked list, unless an error has occurred
+			if(!ustricmp(event_ptr->text, "phrase_start"))
+			{	//If this is a start of lyric phrase, start a marker with note 105
+				error |= write_var_length(event_ptr->chartpos - lastdelta, tempf);	//Write this text event's relative delta time
+				error |= (pack_putc(0x90, tempf) == EOF);		//Write note on event, channel 0
+				error |= (pack_putc(105, tempf) == EOF);		//Write note 105
+				error |= (pack_putc(100, tempf) == EOF);		//Write note velocity
+			}
+			else if(!ustricmp(event_ptr->text, "phrase_end"))
+			{	//If this is an end of lyric phrase, end the marker
+				error |= write_var_length(event_ptr->chartpos - lastdelta, tempf);	//Write this text event's relative delta time
+				error |= (pack_putc(0x80, tempf) == EOF);		//Write note off event, channel 0
+				error |= (pack_putc(105, tempf) == EOF);		//Write note 105
+				error |= (pack_putc(100, tempf) == EOF);		//Write note velocity
+			}
+			else if(ustrstr(event_ptr->text, "lyric "))
+			{	//If this is a lyric
+				char *lyric = strcasestr_spec(event_ptr->text, "lyric ");	//Find the beginning of the lyric text (the first character after "lyric ")
+				if(lyric)
+				{	//As long as it was found
+					error |= write_var_length(event_ptr->chartpos - lastdelta, tempf);	//Write this text event's relative delta time
+					error |= write_string_meta_event(5, lyric, tempf);
+				}
+			}
+			else
+			{	//This is a non lyric event
+				continue;	//Skip it
+			}
+
+			if(error)
+			{
+				(void) puts("\t\tI/O error writing vocal track.");
+			}
+			lastdelta = event_ptr->chartpos;	//Track the last delta time written because MIDI defines event timings as relative
+		}//For each event in the linked list, unless an error has occurred
+		error |= (write_var_length(0, tempf) == EOF);	//Write delta time
+		error |= (pack_putc(0xFF, tempf) == EOF);		//Write Meta Event 0x2F (End Track)
+		error |= (pack_putc(0x2F, tempf) == EOF);
+		error |= (pack_putc(0x00, tempf) == EOF);		//Write padding
+
+		if(tempf)
+			(void) pack_fclose(tempf);	//Close the temporary file
+		tempf = NULL;
+
+		if(error)
+		{	//If the events track failed to be created
+			(void) pack_fclose(outf);
+			return error;
+		}
+
+	///Write vocal track
+		#ifdef CCDEBUG
+			(void) puts("\tWriting vocal track.");
+		#endif
+		if(dump_midi_track("temp", outf))
+		{	//If the file failed to be written
+			(void) puts("\t\tError writing vocal track.");
+			(void) pack_fclose(outf);
+			return 11;
+		}
+	}//If there is at least one lyric event to write
 
 	///Generate instrument track events
 	for(track_ctr = 1, track_ptr = chart->tracks; (track_ptr != NULL) && !error; track_ctr++, track_ptr = track_ptr->next)
@@ -1763,7 +1950,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 		if(track_ptr->tracktype >= NUM_MIDI_TRACKS)
 		{
 			(void) puts("\tLogic error:  Invalid instrument track type.");
-			error = 11;
+			error = 12;
 			break;
 		}
 
@@ -1981,7 +2168,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 	#ifdef CCDEBUG
 		(void) puts("\tSorting MIDI events");
 	#endif
-	sort_midi_events3(chart);	//Sort all of the events that were added to the lists in midi_track_events[]
+	qsort_midi_events(chart);	//Sort all of the events that were added to the lists in midi_track_events[]
 
 	///Create and write instrument tracks
 	for(track_ctr = 1; track_ctr < NUM_MIDI_TRACKS; track_ctr++)
@@ -1998,7 +2185,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 		if(!tempf)
 		{	//If the file failed to be opened
 			(void) printf("\tError opening temp file:  %s", strerror(errno));	//Get the Operating System's reason for the failure
-			error = 12;
+			error = 13;
 			break;
 		}
 		error |= write_var_length(0, tempf);
@@ -2006,7 +2193,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 		if(error)
 		{	//If the name of the instrument track failed to be written
 			(void) puts("\tError writing instrument track name.");
-			error = 13;
+			error = 14;
 			break;
 		}
 
@@ -2030,7 +2217,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 			}
 			else
 			{	//Note on/off
-				error |= (pack_putc(mevent_ptr->type, tempf) == EOF);	//Write event type
+				error |= (pack_putc(mevent_ptr->type + mevent_ptr->channel, tempf) == EOF);	//Write event type (upper nibble) and channel number (lower nibble)
 				error |= (pack_putc(mevent_ptr->note, tempf) == EOF);	//Write note number
 				error |= (pack_putc(mevent_ptr->velocity, tempf) == EOF);	//Write note velocity
 			}
@@ -2056,7 +2243,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 		{	//If the file failed to be written
 			(void) puts("\t\tError writing track.");
 			(void) pack_fclose(outf);
-			return 14;
+			return 15;
 		}
 	}
 
@@ -2565,118 +2752,24 @@ int should_swap_events(struct MIDIevent *this_ptr, struct MIDIevent *next_ptr)
 	return 0;	//Do not swap, the two events are in the correct order
 }
 
-void sort_midi_events(struct FeedbackChart *chart)
-{
-	unsigned long track_ctr;
-	struct MIDIevent *sorted_list, *conductor, *event_ptr, *prev_event_ptr;
-	int inserted;
-	struct dbTrack *track_ptr;
-	unsigned long pre_count, post_count;
-	clock_t start, end;
-
-	if(!chart)
-		return;	//Invalid parameter
-
-	start = clock();
-
-	//Sort the events
-	for(track_ctr = 1; track_ctr < NUM_MIDI_TRACKS; track_ctr++)
-	{	//For each of the instrument tracks that may have been built
-		if(midi_track_events[track_ctr] == NULL)	//If there is no MIDI data for this track
-			continue;	//Skip it
-
-		#ifdef CCDEBUG	///DEBUG
-			(void) printf("\t\tSorting midi track \"%s\".\n", midi_track_name[track_ctr]);
-		#endif
-
-		for(event_ptr = midi_track_events[track_ctr], pre_count = 0; event_ptr != NULL; event_ptr = event_ptr->next, pre_count++);	//Count the number of events before sort
-
-		sorted_list = NULL;
-		while(midi_track_events[track_ctr])
-		{	//While there are unsorted events
-			//Extract the head link from the unsorted list
-			event_ptr = midi_track_events[track_ctr];		//Remove the first event from the list
-			midi_track_events[track_ctr] = event_ptr->next;
-			inserted = 0;
-
-			//Sort it into the sorted list
-			if(!sorted_list)
-			{	//If the sorted listed is empty
-				sorted_list = event_ptr;	//The extracted link is its head link
-				event_ptr->next = NULL;		//And there are no links after it yet
-			}
-			else
-			{	//The link will be added to a list with one or more items
-				for(conductor = sorted_list, prev_event_ptr = NULL; conductor != NULL; conductor = conductor->next)
-				{	//For each event in the sorted list
-					if(should_swap_events(conductor, event_ptr))
-					{	//If the extracted link should insert in front of the conductor
-						if(!prev_event_ptr)
-						{	//If the extracted link is to be inserted in front of all links in the sorted list
-							event_ptr->next = sorted_list;	//It is the new head link
-							sorted_list = event_ptr;
-						}
-						else
-						{	//The extracted link is to be inserted in the middle of the sorted list
-							event_ptr->next = prev_event_ptr->next;
-							prev_event_ptr->next = event_ptr;
-						}
-						inserted = 1;
-						break;
-					}
-					prev_event_ptr = conductor;
-				}//For each event in the sorted list
-				if(!inserted)
-				{	//If the extracted link did not insert in front of any of the already sorted links
-					if((conductor == NULL) && prev_event_ptr)
-					{	//If the end of the sorted list is known as expected
-						prev_event_ptr->next = event_ptr;	//It is the new tail link
-						event_ptr->next = NULL;				//And there are no links after it
-					}
-					else
-					{
-						(void) puts("\t\tLogic error:  Lost end of sorted list.");
-					}
-				}
-			}
-		}
-
-		midi_track_events[track_ctr] = sorted_list;	//Replace the now empty global list with the sorted list
-		for(event_ptr = midi_track_events[track_ctr], post_count = 0; event_ptr != NULL; event_ptr = event_ptr->next, post_count++);	//Count the number of events after sort
-		if(pre_count != post_count)
-		{	//If the number of events changed during sort
-			(void) printf("\t\tLogic error:  MIDI event list corrupted during sort (event count before:  %lu, after:  %lu).\n", pre_count, post_count);
-		}
-	}//For each of the instrument tracks that may have been built
-
-	//Update the linked list pointers in the chart's track difficulties
-	for(track_ptr = chart->tracks; track_ptr != NULL; track_ptr = track_ptr->next)
-	{	//For each track in the chart
-		if(track_ptr->tracktype < NUM_MIDI_TRACKS)
-		{	//Bounds check
-			track_ptr->events = midi_track_events[track_ptr->tracktype];	//Point the track to the current head of the associated instrument's event linked list
-		}
-	}
-
-	end = clock();
-	#ifdef CCDEBUG	///DEBUG
-	(void) printf("\t\tSort completed in %f seconds.\n", ((double)end - start) / (double)CLOCKS_PER_SEC);
-	#endif
-}
-
-void sort_midi_events2(struct FeedbackChart *chart)
+void insertion_sort_midi_events(struct FeedbackChart *chart)
 {
 	unsigned long track_ctr;
 	struct MIDIevent *sorted_list, *conductor, *event_ptr, *prev_event_ptr, *event_tail = NULL;
 	int inserted;
 	struct dbTrack *track_ptr;
 	unsigned long pre_count, post_count;
-	clock_t start, end;
+
+	#ifdef CCDEBUG
+		clock_t start, end;
+	#endif
 
 	if(!chart)
 		return;	//Invalid parameter
 
-	start = clock();
+	#ifdef CCDEBUG
+		start = clock();
+	#endif
 
 	//Sort the events
 	for(track_ctr = 1; track_ctr < NUM_MIDI_TRACKS; track_ctr++)
@@ -2684,7 +2777,7 @@ void sort_midi_events2(struct FeedbackChart *chart)
 		if(midi_track_events[track_ctr] == NULL)	//If there is no MIDI data for this track
 			continue;	//Skip it
 
-		#ifdef CCDEBUG	///DEBUG
+		#ifdef CCDEBUG
 			(void) printf("\t\tSorting midi track \"%s\".\n", midi_track_name[track_ctr]);
 		#endif
 
@@ -2767,24 +2860,29 @@ void sort_midi_events2(struct FeedbackChart *chart)
 		}
 	}
 
-	end = clock();
-	#ifdef CCDEBUG	///DEBUG
-	(void) printf("\t\tSort completed in %f seconds.\n", ((double)end - start) / (double)CLOCKS_PER_SEC);
+	#ifdef CCDEBUG
+		end = clock();
+		(void) printf("\t\tSort completed in %f seconds.\n", ((double)end - start) / (double)CLOCKS_PER_SEC);
 	#endif
 }
 
-void sort_midi_events3(struct FeedbackChart *chart)
+void qsort_midi_events(struct FeedbackChart *chart)
 {
 	unsigned long track_ctr;
 	struct MIDIevent *sorted_list, *event_ptr, *next_ptr;
 	struct dbTrack *track_ptr;
 	unsigned long pre_count, index;
-	clock_t start, end;
+
+	#ifdef CCDEBUG
+		clock_t start, end;
+	#endif
 
 	if(!chart)
 		return;	//Invalid parameter
 
-	start = clock();
+	#ifdef CCDEBUG
+		start = clock();
+	#endif
 
 	//Sort the events
 	for(track_ctr = 1; track_ctr < NUM_MIDI_TRACKS; track_ctr++)
@@ -2808,7 +2906,7 @@ void sort_midi_events3(struct FeedbackChart *chart)
 			{	//For each event in the list
 				memcpy(&sorted_list[index], event_ptr, sizeof(struct MIDIevent));	//Copy it to the static array, the allocated dp arrays will be kept as-is
 			}
-			qsort(sorted_list, (size_t)pre_count, sizeof(struct MIDIevent), sort_midi_events3_qsort);	//Quicksort the static array
+			qsort(sorted_list, (size_t)pre_count, sizeof(struct MIDIevent), qsort_midi_events_comparitor);	//Quicksort the static array
 
 			//Destroy the old linked list
 			event_ptr = midi_track_events[track_ctr];
@@ -2832,7 +2930,7 @@ void sort_midi_events3(struct FeedbackChart *chart)
 		else
 		{
 			(void) puts("\t\t\tMemory allocation failed, falling back to slower sort (deal with it).");
-			sort_midi_events2(chart);
+			insertion_sort_midi_events(chart);
 			return;
 		}
 	}//For each of the instrument tracks that may have been built
@@ -2846,13 +2944,13 @@ void sort_midi_events3(struct FeedbackChart *chart)
 		}
 	}
 
-	end = clock();
 	#ifdef CCDEBUG	///DEBUG
-	(void) printf("\t\tSort completed in %f seconds.\n", ((double)end - start) / (double)CLOCKS_PER_SEC);
+		end = clock();
+		(void) printf("\t\tSort completed in %f seconds.\n", ((double)end - start) / (double)CLOCKS_PER_SEC);
 	#endif
 }
 
-int sort_midi_events3_qsort(const void * e1, const void * e2)
+int qsort_midi_events_comparitor(const void * e1, const void * e2)
 {
 	const struct MIDIevent *this_ptr = e1;
 	const struct MIDIevent *next_ptr = e2;
