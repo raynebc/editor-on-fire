@@ -96,6 +96,8 @@ extern char **utf_argv;	//Used to store a copy of main()'s argument list convert
 int build_utf8_argument_list(int argc, char **argv);
 	//Builds utf_argv[] to store UTF8 formatted copies of the program's command line arguments
 	//Returns nonzero on error
+void destroy_utf8_argument_list(void);
+	//De-allocates the strings in utf_argv[]
 void *buffer_file(const char * fn, char appendnull);
 	//Loads the specified file into a memory buffer and returns the buffer, or NULL upon error
 	//If appendnull is nonzero, an extra 0 byte is written at the end of the buffer, potentially necessary if buffering a file that will be read as text, ensuring the buffer is NULL terminated

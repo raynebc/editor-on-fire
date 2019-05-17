@@ -50,6 +50,21 @@ clock_t start, end;
 
 		return 0;	//Success
 	}
+
+	void destroy_utf8_argument_list(void)
+	{
+		if(utf_argv)
+		{
+			int ctr;
+			for(ctr = 0; ctr < utf_argc; ctr++)
+			{	//For each of the recreated command line argument strings
+				free(utf_argv[ctr]);
+			}
+			free(utf_argv);
+			utf_argv = NULL;
+			utf_argc = 0;
+		}
+	}
 #endif
 
 int main(int argc, char *argv[])
@@ -58,7 +73,7 @@ int main(int argc, char *argv[])
 	char output_filename[PATH_WIDTH * 2] = {0};	//Allow for Unicode characters, which are two bytes each
 	int ctr;
 	char par_output_filename = 0, par_overwrite = 0, par_invalid = 0;
-	char **effective_argv;
+	char **effective_argv = NULL;
 
 
 #ifdef ALLEGRO_WINDOWS
@@ -109,11 +124,17 @@ int main(int argc, char *argv[])
 		(void) puts("Usage:  chartconvert {input_filename.chart} [output_filename.mid] [-o]");
 		(void) puts("\tIf no output filename, [input_filename].mid is assumed.");
 		(void) puts("\tIf output filename exists, it isn't overwritten unless -o is specified.");
+		#ifdef ALLEGRO_WINDOWS
+			destroy_utf8_argument_list();
+		#endif
 		return 1;
 	}
 	if(!exists(effective_argv[1]))
 	{
 		(void) printf("Input file \"%s\" does not exist.  Aborting.\n", effective_argv[1]);
+		#ifdef ALLEGRO_WINDOWS
+			destroy_utf8_argument_list();
+		#endif
 		return 2;
 	}
 	if(!par_output_filename)
@@ -123,6 +144,9 @@ int main(int argc, char *argv[])
 	if(exists(output_filename) && !par_overwrite)
 	{	//If the output file exists and the user didn't specify to overwrite it
 		(void) printf("Output file \"%s\" already exists.  Aborting.\n", output_filename);
+		#ifdef ALLEGRO_WINDOWS
+			destroy_utf8_argument_list();
+		#endif
 		return 3;
 	}
 
@@ -134,6 +158,10 @@ int main(int argc, char *argv[])
 	if(!chart)
 	{
 		(void) puts("Import failed.  Aborting.");
+		destroy_utf8_argument_list();
+		#ifdef ALLEGRO_WINDOWS
+			destroy_utf8_argument_list();
+		#endif
 		return 4;
 	}
 	#ifdef CCDEBUG
@@ -158,6 +186,9 @@ int main(int argc, char *argv[])
 		destroy_feedback_chart(chart);
 		(void) delete_file(output_filename);
 		(void) delete_file("temp");
+		#ifdef ALLEGRO_WINDOWS
+			destroy_utf8_argument_list();
+		#endif
 		return 5;
 	}
 	end = clock();
@@ -171,15 +202,7 @@ int main(int argc, char *argv[])
 	destroy_feedback_chart(chart);
 
 #ifdef ALLEGRO_WINDOWS
-	if(utf_argv)
-	{
-		int ctr;
-		for(ctr = 0; ctr < utf_argc; ctr++)
-		{	//For each of the recreated command line argument strings
-			free(utf_argv[ctr]);
-		}
-		free(utf_argv);
-	}
+	destroy_utf8_argument_list();
 #endif
 
 	(void) printf("Converted in %f seconds.\n", ((double)end - start) / (double) CLOCKS_PER_SEC);
@@ -1719,6 +1742,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 			error |= (pack_putc((ppqn & 0xFF0000) >> 16, tempf) == EOF);	//Write high order byte of ppqn
 			error |= (pack_putc((ppqn & 0xFF00) >> 8, tempf) == EOF);		//Write middle byte of ppqn
 			error |= (pack_putc((ppqn & 0xFF), tempf) == EOF);				//Write low order byte of ppqn
+			lastdelta = anchor_ptr->chartpos;	//Track the last delta time written because MIDI defines event timings as relative
 			identified = 1;
 		}
 		if((anchor_ptr->TSN) || (anchor_ptr->TSD))
@@ -1744,6 +1768,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 			error |= (pack_putc(den, tempf) == EOF);				//Write the denominator
 			error |= (pack_putc(24, tempf) == EOF);					//Write the metronome interval (not used by EOF)
 			error |= (pack_putc(8, tempf) == EOF);					//Write the number of 32nd notes per 24 ticks (not used by EOF)
+			lastdelta = anchor_ptr->chartpos;	//Track the last delta time written because MIDI defines event timings as relative
 			identified = 1;
 		}
 		if(anchor_ptr->usec)
@@ -1762,7 +1787,6 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 		{
 			(void) puts("\t\tI/O error writing tempo track.");
 		}
-		lastdelta = anchor_ptr->chartpos;	//Track the last delta time written because MIDI defines event timings as relative
 	}//For each anchor in the linked list, unless an error has occurred
 	error |= (write_var_length(0, tempf) == EOF);	//Write delta time
 	error |= (pack_putc(0xFF, tempf) == EOF);		//Write Meta Event 0x2F (End Track)
@@ -2890,7 +2914,7 @@ void qsort_midi_events(struct FeedbackChart *chart)
 		if(midi_track_events[track_ctr] == NULL)	//If there is no MIDI data for this track
 			continue;	//Skip it
 
-		#ifdef CCDEBUG	///DEBUG
+		#ifdef CCDEBUG
 			(void) printf("\t\tSorting midi track \"%s\".\n", midi_track_name[track_ctr]);
 		#endif
 
@@ -2944,7 +2968,7 @@ void qsort_midi_events(struct FeedbackChart *chart)
 		}
 	}
 
-	#ifdef CCDEBUG	///DEBUG
+	#ifdef CCDEBUG
 		end = clock();
 		(void) printf("\t\tSort completed in %f seconds.\n", ((double)end - start) / (double)CLOCKS_PER_SEC);
 	#endif
