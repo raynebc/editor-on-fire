@@ -84,6 +84,7 @@ NCDFS_FILTER_LIST * eof_filter_rs_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_bf_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_note_panel_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_array_txt_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -4387,6 +4388,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_note_panel_files, "panel.txt", "Notes panel text (*.panel.txt)", 1);
 
+	eof_filter_array_txt_files = ncdfs_filter_list_create();
+	if(!eof_filter_array_txt_files)
+	{
+		allegro_message("Could not create file list filter (*.txt)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_array_txt_files, "txt", "Queen Bee array text (*.txt)", 1);
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -4893,6 +4902,8 @@ void eof_exit(void)
 		free(eof_filter_bf_files);
 	if(eof_filter_note_panel_files)
 		free(eof_filter_note_panel_files);
+	if(eof_filter_array_txt_files)
+		free(eof_filter_array_txt_files);
 
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS

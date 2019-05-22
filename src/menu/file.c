@@ -89,6 +89,7 @@ MENU eof_file_import_menu[] =
 	{"&Guitar Pro\tF12", eof_menu_file_gp_import, NULL, 0, NULL},
 	{"&Rocksmith", eof_menu_file_rs_import, NULL, 0, NULL},
 	{"&Bandfuse", eof_menu_file_bf_import, NULL, 0, NULL},
+	{"&Queen Bee", eof_menu_file_array_txt_import, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -372,6 +373,7 @@ void eof_prepare_file_menu(void)
 		#endif
 		eof_file_import_menu[0].flags = 0; // Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = 0; // Import>Lyric
+		eof_file_import_menu[8].flags = 0; // Import>Queen Bee
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
@@ -395,6 +397,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[9].flags = D_DISABLED;	// Export guitar pro
 		eof_file_import_menu[0].flags = D_DISABLED; // Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = D_DISABLED; // Import>Lyric
+		eof_file_import_menu[8].flags = D_DISABLED; // Import>Queen Bee
 		eof_file_display_menu[6].flags = D_DISABLED;	//Benchmark image sequence
 	}
 
@@ -6389,4 +6392,34 @@ int eof_menu_file_notes_panel_browse(void)
 	eof_render();
 
 	return D_O_K;
+}
+
+int eof_menu_file_array_txt_import(void)
+{
+	char *returnedfn = NULL;
+
+	if(!eof_song)
+		return 0;
+
+	eof_log("eof_menu_file_array_txt_import() entered", 1);
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	returnedfn = ncd_file_select(0, eof_song_path, "Import Queen Bee array.txt", eof_filter_array_txt_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		eof_log("\tImporting array.txt data", 1);
+
+		(void) eof_import_array_txt(returnedfn);
+	}
+	eof_reset_lyric_preview_lines();
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+
+	eof_log("\tData loaded", 1);
+
+	return 1;
 }

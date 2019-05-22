@@ -1126,7 +1126,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	{
 		return NULL;
 	}
-	inf=pack_fopen(filename,"rt");
+	inf=pack_fopen(filename,"rt");	//Open the file to ensure it is readable
 	if(inf == NULL)
 	{
 		if(error)
@@ -1135,6 +1135,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 		eof_log(eof_log_string, 1);
 		return NULL;
 	}
+	pack_fclose(inf);
 
 //Initialize chart structure
 	chart=(struct FeedbackChart *)malloc_err(sizeof(struct FeedbackChart));	//Allocate memory
@@ -1935,7 +1936,6 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 
 	free(textbuffer);
 	free(buffer2);
-	(void) pack_fclose(inf);
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEnd of import.  Highest used chart position detected as %lu", chart->chart_length);
 	eof_log(eof_log_string, 2);

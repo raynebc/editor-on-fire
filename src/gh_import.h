@@ -154,4 +154,7 @@ unsigned long eof_char_to_binary(unsigned char input);
 char *eof_sections_list_all(int index, int * size);
 	//A list box function to display the text events in the EOF_SONG structure pointed at by eof_sections_list_all_ptr
 
+int eof_import_array_txt(const char *filename);
+	//Imports beat or note data in the format exported by Queen Bee
+
 #endif

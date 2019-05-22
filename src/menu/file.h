@@ -201,4 +201,7 @@ int eof_menu_file_notes_panel_browse(void);
 int eof_3d_preview_toggle_full_height(void);
 	//Changes whether the 3D preview will take one panel's or two panels' worth of height
 
+int eof_menu_file_array_txt_import(void);
+	//Prompts the user to browse for an array.txt file exported by Queen Bee, to import Guitar Hero chart data
+
 #endif

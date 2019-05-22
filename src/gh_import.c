@@ -8,6 +8,7 @@
 #include "ini_import.h"	//For eof_import_ini()
 #include "main.h"
 #include "midi.h"	//For eof_apply_ts()
+#include "undo.h"
 #include "utility.h"
 
 #ifdef USEMEMWATCH
@@ -532,7 +533,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				if(!eof_gh_accent_prompt)
 				{	//If the user wasn't prompted about which game this chart is from
 					if(alert("Is this chart from any of the following GH games?", "\"Warriors of Rock\", \"Band Hero\", \"Guitar Hero 5\"", "(These use a different accent notation than Smash Hits)", "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user indicates the chart is fro mWarriors of Rock
+					{	//If user indicates the chart is from Warriors of Rock
 						eof_gh_accent_prompt = 1;
 					}
 					else
@@ -3288,4 +3289,310 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 	}//Until the user accepts a language of section names
 
 	return retval;
+}
+
+int eof_import_array_txt(const char *filename)
+{
+	char *buffer, *buffer2, *line;
+	int failed = 0, format = 0;
+	unsigned long ctr = 0, linesread = 0, tracknum;
+	long position, lastposition = 0, note, fixednote, data, length, accent;
+	EOF_NOTE *newnote, *lastnote = NULL;
+
+	if(!filename || !eof_song)
+		return 1;	//No project or invalid parameter
+
+	eof_gh_accent_prompt = 0;	//Reset this condition
+
+	///Load file into memory buffer
+	buffer = (char *)eof_buffer_file(filename, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
+	if(!buffer)
+		return 2;	//Failed to buffer file into memory
+
+	///Create an extra copy of the buffer, so the input file can be parsed twice
+	buffer2 = DuplicateString(buffer);
+	if(!buffer2)
+	{
+		free(buffer);
+		return 3;	//Failed to allocate memory
+	}
+
+	///Parse file contents to determine whether all lines have a valid number and what data is being represented
+	for(ctr = 0; !failed; ctr++)
+	{	//Until an error has occurred
+		if(!ctr)
+		{	//If this is the first line being parsed
+			line = ustrtok(buffer2, "\r\n");	//Initialize the tokenization and get first tokenized line
+		}
+		else
+		{
+			line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+		}
+
+		if(!line)	//If a tokenized line of the file was not obtained
+			break;
+		if(line[0] == '\0')	//If this line is empty
+			continue;	//Skip it
+
+		if(line[0] == '0')
+		{	//If this number is a zero
+			position = 0;
+		}
+		else
+		{
+			position = atol(line);	//Convert the string into a number
+			if(position < 0)
+			{	//If the number is an invalid position
+				failed = 4;	//Invalid data
+				break;
+			}
+			if(position == 0)
+			{	//If atol() couldn't convert the number
+				failed = 5;	//Invalid data
+				break;
+			}
+		}
+
+		if((ctr > 0) && (position <= lastposition))
+		{	//If a number is not larger than the previous line's number
+			format = 1;	//This is note data and not beat position data
+		}
+		linesread++;	//Count how many numbers were read
+		lastposition = position;
+	}//Until an error has occurred
+	if(format && ((linesread % 2) != 0))
+	{	//If this was determined to be  note data, but there was an odd number of lines with content
+		failed = 6;	//Invalid data, each note is defined in two lines (one with a position, the other with its composition)
+	}
+
+	if(failed)
+	{	//If any numbers failed to be parsed or the data is invalid
+		free(buffer);
+		free(buffer2);
+
+		return failed;
+	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+
+	if(!format)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting %lu beat times.", linesread);
+		eof_log(eof_log_string, 1);
+	}
+	else
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting %lu note definitions.", linesread / 2);
+		eof_log(eof_log_string, 1);
+	}
+
+	///Parse file contents as either beat positions or note data
+	for(ctr = 0; !failed; ctr++)
+	{	//Until an error has occurred
+		if(!ctr)
+		{	//If this is the first line being parsed
+			line = ustrtok(buffer, "\r\n");	//Initialize the tokenization and get first tokenized line
+		}
+		else
+		{
+			line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+		}
+
+		if(!line)	//If a tokenized line of the file was not obtained
+			break;
+		if(line[0] == '\0')	//If this line is empty
+			continue;	//Skip it
+
+		//Read the position
+		if(line[0] == '0')
+		{	//If this number is a zero
+			position = 0;
+		}
+		else
+		{
+			position = atol(line);	//Convert the string into a number
+		}
+
+		if(!format)
+		{	//If this is a beat position, update the project's beat map
+			if(ctr >= eof_song->beats)
+			{	//If there aren't enough beats in the project to store this beat position
+				EOF_BEAT_MARKER *new_beat = eof_song_add_beat(eof_song);	//Add a beat
+
+				if(!new_beat)
+				{	//If a new beat couldn't be added
+					failed = 7;
+					break;
+				}
+			}
+			eof_song->beat[ctr]->pos = eof_song->beat[ctr]->fpos = position;
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tBeat %lu:  %lums.", ctr, position);
+			eof_log(eof_log_string, 1);
+		}
+		else
+		{	//This is note data, read the next line to get the note's composition
+			line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+			if(!line || (line[0] == '\0') || (line[0] == '0'))
+			{	//If the line couldn't be read, is empty or is a zero
+				failed = 8;	//Invalid data
+				break;
+			}
+			data = atol(line);
+			if(data == 0)
+			{	//If atol() couldn't convert the number
+				failed = 9;	//Invalid data
+				break;
+			}
+
+			length = data & 0xFFFF;	//The two least significant bytes are the length of the note
+			data >>= 16;		//Shift the data right two bytes, discarding the length
+			note = data & 63;	//The next byte defines the gems used, although only the first 6 bits pertain to gems
+			fixednote = note;
+			accent = data >> 8;	//The most significant byte defines the accent bitmask
+
+			newnote = eof_track_add_create_note(eof_song, eof_selected_track, 0, position, length, eof_note_type, NULL);	//Add the note to the active track difficulty
+			if(!newnote)
+			{	//If the note couldn't be added
+				failed = 10;
+				break;
+			}
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If a drum track is active, interpret as drum note data
+				fixednote &= ~1;	//Clear lane 1 gem
+				fixednote &= ~32;	//Clear lane 6 gem
+				if(data & 32)
+				{	//If lane 6 is populated, convert it to RB's bass drum gem
+					fixednote |= 1;		//Set the lane 1 (bass drum) gem
+				}
+				if(data & 1)
+				{	//If lane 1 is populated, convert it to lane 6
+					fixednote |= 32;
+					eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Ensure "five lane" drums is enabled for the track
+					tracknum = eof_song->track[eof_selected_track]->tracknum;	//Simplify
+					eof_song->legacy_track[tracknum]->numlanes = 6;
+				}
+				if((data & 64) && !(data & 32))
+				{	//If bit 6 is set, but bit 5 is not
+					fixednote |= 1;	//Consider it a double bass drum note
+					newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
+				}
+				else if((accent & 32) && !(note & 32))
+				{	//If bit 5 of the accent mask is set, but bit 5 of the note mask is not
+					fixednote |= 1;	//Consider it a double bass drum note
+					newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
+				}
+
+				if((newnote->type == EOF_NOTE_AMAZING) && (length >= 140))
+				{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
+					int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
+					unsigned long lastnoteindex = eof_get_track_size(eof_song, EOF_TRACK_DRUM) - 1;
+
+					if(eof_note_count_colors(eof_song, EOF_TRACK_DRUM, lastnoteindex) > 1)
+					{	//If the new drum note contains gems on more than one lane
+						phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
+					}
+					(void) eof_track_add_section(eof_song, EOF_TRACK_DRUM, phrasetype, 0xFF, position, position + length, 0, NULL);
+					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Mark it as crazy, both so it can overlap other notes and so that it will export with sustain
+				}
+
+				//If there is accent data, prompt user about which game it's from to account for different accent definition behavior as with GH import
+				if(accent)
+				{
+					if(!eof_gh_accent_prompt)
+					{	//If the user wasn't prompted about which game this chart is from
+						if(alert("Is this chart from any of the following GH games?", "\"Warriors of Rock\", \"Band Hero\", \"Guitar Hero 5\"", "(These use a different accent notation than Smash Hits)", "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user indicates the chart is from Warriors of Rock
+							eof_gh_accent_prompt = 1;
+						}
+						else
+						{
+							eof_gh_accent_prompt = 2;
+						}
+					}
+					if(eof_gh_accent_prompt == 1)
+					{	//Warriors of Rock rules for interpreting the accent bitmask
+						if(accent & 31)
+						{	//Bits 0 through 4 of the accent mask are used to indicate accent status for drum gems
+							if(accent & 1)
+							{	//The least significant bit is assumed to be accent status for lane 6
+								accent &= ~1;	//Clear the bit for lane 1
+								accent |= 32;	//Set the bit for lane 6
+							}
+							accent &= fixednote;			//Filter out any bits from the accent mask that don't have gems
+							newnote->accent = accent;
+						}
+					}
+					else
+					{	//Smash Hits rules for interpreting the accent bitmask
+						if(accent & 15)
+						{	//Bits 0 through 3 of the accent mask are used to indicate accent status for drum gems (lanes other than bass drum) in Guitar Hero Smash Hits
+							accent &= 15;						//Store only the applicable bits (lane 2 through 6) into the note's accent mask
+							accent <<= 1;						//Shift left one bit to reflect that the first accent bit defines accent for snare, ie. lane 2 instead of bass, ie. lane 1
+							if(fixednote & 32)
+							{	//If the accented note has any gems on lane 6, it's assumed that it inherits the accented status automatically since the game doesn't seem
+								// to use a bit to define accent status individually for this lane
+								accent |= 32;
+							}
+
+							accent &= fixednote;			//Filter out any bits from the accent mask that don't have gems
+							newnote->accent = accent;
+						}
+					}
+				}
+			}//If a drum track is active, interpret as drum note data
+			else
+			{	//Interpret as guitar/bass note data
+				if(data & 64)
+				{	//Bit 6 is the HOPO bit
+					newnote->flags |= (EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_HOPO);
+				}
+				else
+				{
+					newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
+				}
+			}
+			newnote->note = fixednote;	//Update the new note's bitmask
+
+			//Apply disjointed status if appropriate
+			if(lastnote && (lastnote->pos == newnote->pos) && (lastnote->length != newnote->length))
+			{	//If there was a previous note, it started at the same time as this note and has a different length
+				lastnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to both notes
+				newnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;
+			}
+
+			lastnote = newnote;
+		}//This is note data, read the next line to get the note's composition
+	}//Until an error has occurred
+
+	if(!failed)
+	{	//If the import succeeded
+		if(!format)
+		{	//If beat timings were imported
+			eof_calculate_tempo_map(eof_song);	//Update the tempos of the project based on the imported timestamps
+			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//The position of the last beat is the new chart length
+		}
+		else
+		{	//If notes were imported
+			unsigned long lastpos;
+
+			eof_track_sort_notes(eof_song, eof_selected_track);
+			lastpos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
+			if(eof_chart_length < lastpos)
+			{	//If the length of the project is to be extended due to new notes
+				eof_chart_length = lastpos;
+				eof_truncate_chart(eof_song);	//Add enough beats to encompass the notes
+			}
+			eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status or merge into chords as appropriate)
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting
+
+			//Update piano roll and 3D preview lane coordinates in case the lane count changed
+			eof_set_3D_lane_positions(0);	//Update xchart[] by force
+			eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+		}
+	}
+
+	///Free memory
+	free(buffer);
+	free(buffer2);
+
+	return failed;	//Return whatever success/failure status has accumulated
 }

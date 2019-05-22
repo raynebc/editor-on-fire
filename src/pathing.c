@@ -3279,13 +3279,13 @@ void eof_ch_sp_solution_rebuild(void)
 			int error = 0, retval;
 			EOF_BIG_NUMBER num = {0, ULONG_MAX};	//Initialize this with num.value set to ULONG_MAX to prevent eof_evaluate_ch_sp_path_solution() from logging a solution number
 
-			eof_log("Rebuilding CH SP solution structure", 1);
-
 			//Verify the first beat has a time signature
 			if(!eof_beat_stats_cached)
 				eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild beat statistics if necessary
 			if(!eof_song->beat[0]->has_ts)	//If the first beat marker has no time signature
 				return;						//Abort
+
+			eof_log("Rebuilding CH SP solution structure", 1);
 
 			//Create and initialize the solution structure to reflect the marked SP deployments in the active track difficulty
 			if(eof_ch_sp_path_setup(NULL, &eof_ch_sp_solution, NULL))

@@ -2128,6 +2128,7 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 	unsigned long tracknum, tracknum2;
 	unsigned long note1note, note2note;
 	unsigned long flags, flags2, eflags, eflags2;
+	unsigned char accent1, accent2;
 	long length, length2;
 
 	//Validate parameters
@@ -2150,12 +2151,18 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		flags2 &= ~EOF_NOTE_FLAG_HIGHLIGHT;
 		eflags = eof_get_note_eflags(sp, track1, note1);
 		eflags2 = eof_get_note_eflags(sp, track2, note2);
+		accent1 = eof_get_note_accent(sp, track1, note1);
+		accent2 = eof_get_note_accent(sp, track2, note2);
 		if(flags != flags2)
 		{	//If the flags don't match
 			return 1;	//Return not equal
 		}
 		if(eflags != eflags2)
 		{	//If the extended flags don't match
+			return 1;	//Return not equal
+		}
+		if(accent1 != accent2)
+		{	//If the accent bitmasks don't match
 			return 1;	//Return not equal
 		}
 		length = eof_get_note_length(sp, track1, note1);
