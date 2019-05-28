@@ -156,5 +156,6 @@ char *eof_sections_list_all(int index, int * size);
 
 int eof_import_array_txt(const char *filename);
 	//Imports beat or note data in the format exported by Queen Bee
+	//Returns nonzero on error
 
 #endif

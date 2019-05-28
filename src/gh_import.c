@@ -1733,6 +1733,8 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	EOF_NOTE *newnote = NULL, *lastnote = NULL;
 	char buffer[101] = {0};
 	int destination_track;
+	int gh3_format;		//Specifies whether the notes are determined to be defined as 3 dwords each instead of 2
+	unsigned long fbindex, lastpos = 0, headersize;
 
 	if(!fb || !sp || !target || !songname)
 		return -1;
@@ -1746,18 +1748,16 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of note data
 		assert(arrayptr != NULL);	//Unneeded assertion to resolve a false positive in Splint
-		numnotes = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
-		if(numnotes % 2)
+		headersize = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
+		if(headersize % 2)
 		{	//The value in numnotes is the number of dwords used to define this note array (each note should be 2 dwords in size)
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Invalid note array size (%lu)", numnotes);
-			eof_log(eof_log_string, 1);
-			return -1;
+			if(headersize % 3)
+			{	//However in GH3/GHA format, each note is defined with 3 dwords instead
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Invalid note array size (%lu)", headersize);
+				eof_log(eof_log_string, 1);
+				return -1;
+			}
 		}
-		numnotes /= 2;	//Determine the number of notes that are defined
-#ifdef GH_IMPORT_DEBUG
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of notes = %lu", numnotes);
-		eof_log(eof_log_string, 1);
-#endif
 
 		//Offer to import the song_aux notes into the PART RHYTHM track if the latter is empty at this point
 		destination_track = target->tracknum;	//By default, use eof_gh_instrument_sections_qb[] to derive the track associated with the section name
@@ -1781,31 +1781,112 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 		}
 
-		for(ctr2 = 0; ctr2 < numnotes; ctr2++)
-		{	//For each note in the section
+		///Pre-parse the content to detect whether it's GH3/GHA format, where each note is defined as 3 dwords:  timestamp, duration, bitmask
+		fbindex = fb->index;	//Record this to rewind after the check
+		gh3_format = 1;			//Unless the notes don't follow the expected scheme, assume GH3/GHA format
+		for(ctr2 = 0; ctr2 < headersize / 3; ctr2++)
+		{	//For each note in the section (in this format, each note is defined with 3 qwords instead of 2)
 			if(eof_filebuffer_get_dword(fb, &dword))	//Read the note position
 			{	//If there was an error reading the next 4 byte value
-				eof_log("\t\tError:  Could not read note position", 1);
-				free(arrayptr);
-				return -1;
+				gh3_format = 0;
+				break;
 			}
-			if(eof_filebuffer_get_byte(fb, &accentmask))	//Read the note accent bitmask
-			{	//If there was an error reading the next 1 byte value
-				eof_log("\t\tError:  Could not read note accent bitmask", 1);
-				free(arrayptr);
-				return -1;
+			if(ctr2 && (dword < lastpos))
+			{	//If this isn't the first note parsed, and the timestamp is smaller then the previous timestamp
+				gh3_format = 0;
+				break;
 			}
-			if(eof_filebuffer_get_byte(fb, &notemask))	//Read the note bitmask
-			{	//If there was an error reading the next 1 byte value
-				eof_log("\t\tError:  Could not read note bitmask", 1);
-				free(arrayptr);
-				return -1;
+			lastpos = dword;	//Remember this timestamp for comparison with the next timestamp
+			if(eof_filebuffer_get_dword(fb, &dword))	//Read the note duration
+			{	//If there was an error reading the next 4 byte value
+				gh3_format = 0;
+				break;
 			}
-			if(eof_filebuffer_get_word(fb, &length))	//Read the note length
-			{	//If there was an error reading the next 2 byte value
-				eof_log("\t\tError:  Could not read note length", 1);
-				free(arrayptr);
-				return -1;
+			if(eof_filebuffer_get_dword(fb, &dword))	//Read the note bitmask
+			{	//If there was an error reading the next 4 byte value
+				gh3_format = 0;
+				break;
+			}
+			if(dword > 63)
+			{	//If the note bitmask is larger than expected (higher than 6 set bits, the most significant of which's purpose is unknown)
+				gh3_format = 0;
+				break;
+			}
+		}
+		fb->index = fbindex;	//Restore the file buffer index to parse beginning from the first note
+		if(gh3_format)
+		{	//This format uses 3 dwords to define each note
+			numnotes = headersize / 3;
+#ifdef GH_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH3/GHA note format detected.\tNumber of notes = %lu", numnotes);
+			eof_log(eof_log_string, 1);
+#endif
+		}
+		else
+		{	//This format uses 2 dwords to define each note
+			numnotes = headersize/ 2;	//Determine the number of notes that are defined, assuming it's not GH3/GHA format
+#ifdef GH_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of notes = %lu", numnotes);
+			eof_log(eof_log_string, 1);
+#endif
+		}
+
+		///Parse the note content in the detected format
+		for(ctr2 = 0; ctr2 < numnotes; ctr2++)
+		{	//For each note in the section
+			if(gh3_format)
+			{
+				unsigned long pos = 0;
+
+				if(eof_filebuffer_get_dword(fb, &pos))	//Read the note position
+				{	//If there was an error reading the next 4 byte value
+					eof_log("\t\tError:  Could not read note position", 1);
+					free(arrayptr);
+					return -1;
+				}
+				if(eof_filebuffer_get_dword(fb, &dword))	//Read the note length
+				{	//If there was an error reading the next 4 byte value
+					eof_log("\t\tError:  Could not read note length", 1);
+					free(arrayptr);
+					return -1;
+				}
+				length = dword;	//The logic below expects this variable to hold the length
+				if(eof_filebuffer_get_dword(fb, &dword))	//Read the note bitmask
+				{	//If there was an error reading the next 4 byte value
+					eof_log("\t\tError:  Could not read note bitmask", 1);
+					free(arrayptr);
+					return -1;
+				}
+				notemask = dword;	//The logic below expects this variable to hold the note bitmask
+				dword = pos;	//The logic below expects this variable to hold the note position
+				accentmask = 0;	//Unused
+			}
+			else
+			{
+				if(eof_filebuffer_get_dword(fb, &dword))	//Read the note position
+				{	//If there was an error reading the next 4 byte value
+					eof_log("\t\tError:  Could not read note position", 1);
+					free(arrayptr);
+					return -1;
+				}
+				if(eof_filebuffer_get_byte(fb, &accentmask))	//Read the note accent bitmask
+				{	//If there was an error reading the next 1 byte value
+					eof_log("\t\tError:  Could not read note accent bitmask", 1);
+					free(arrayptr);
+					return -1;
+				}
+				if(eof_filebuffer_get_byte(fb, &notemask))	//Read the note bitmask
+				{	//If there was an error reading the next 1 byte value
+					eof_log("\t\tError:  Could not read note bitmask", 1);
+					free(arrayptr);
+					return -1;
+				}
+				if(eof_filebuffer_get_word(fb, &length))	//Read the note length
+				{	//If there was an error reading the next 2 byte value
+					eof_log("\t\tError:  Could not read note length", 1);
+					free(arrayptr);
+					return -1;
+				}
 			}
 #ifdef GH_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu) accent = %08lu", ctr2+1, dword, length, notemask, eof_char_to_binary(notemask), eof_char_to_binary(accentmask));
@@ -1854,8 +1935,8 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required), but only if the user opted to do so
 					newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
 				}
-				if(accentmask != 0xF)
-				{	//"Crazy" guitar/bass notes have an accent mask that isn't 0xF
+				if((accentmask != 0xF) && !gh3_format)
+				{	//"Crazy" guitar/bass notes have an accent mask that isn't 0xF, and the chart wasn't determined to be in GH3/GHA format
 					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
 				}
 			}
@@ -3294,7 +3375,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 int eof_import_array_txt(const char *filename)
 {
 	char *buffer, *buffer2, *line;
-	int failed = 0, format = 0;
+	int failed = 0, format = 0, gh3_format;
 	unsigned long ctr = 0, linesread = 0, tracknum;
 	long position, lastposition = 0, note, fixednote, data, length, accent;
 	EOF_NOTE *newnote, *lastnote = NULL;
@@ -3317,7 +3398,7 @@ int eof_import_array_txt(const char *filename)
 		return 3;	//Failed to allocate memory
 	}
 
-	///Parse file contents to determine whether all lines have a valid number and what data is being represented
+	///Pre-parse file contents to determine whether all lines have a valid number and what data is being represented
 	for(ctr = 0; !failed; ctr++)
 	{	//Until an error has occurred
 		if(!ctr)
@@ -3360,9 +3441,62 @@ int eof_import_array_txt(const char *filename)
 		linesread++;	//Count how many numbers were read
 		lastposition = position;
 	}//Until an error has occurred
-	if(format && ((linesread % 2) != 0))
-	{	//If this was determined to be  note data, but there was an odd number of lines with content
+	if(format && ((linesread % 2) && (linesread % 3)))
+	{	//If this was determined to be note data, but the number of lines isn't divisible by two (post GH3/GHA format) or three (GH3/GHA format)
 		failed = 6;	//Invalid data, each note is defined in two lines (one with a position, the other with its composition)
+	}
+
+	///If it is determined to be note data, pre-parse to determine whether it's GH3/GHA format (3 numbers define each note) or newer format (2 numbers define each note)
+	strcpy(buffer2, buffer);	//Replace buffer2 with a clean copy of buffer to re-tokenize it
+	gh3_format = 1;	//Unless the notes don't follow the expected scheme, assume GH3/GHA format
+	for(ctr = 0; !failed; ctr++)
+	{	//Until an error has occurred
+		if(!ctr)
+		{	//If this is the first line being parsed
+			line = ustrtok(buffer2, "\r\n");	//Initialize the tokenization and get first tokenized line
+		}
+		else
+		{
+			line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+		}
+
+		if(!line)	//If a tokenized line of the file was not obtained
+			break;
+		if(line[0] == '\0')	//If this line is empty
+			continue;	//Skip it
+
+		if(line[0] == '0')
+		{	//If this number is a zero
+			position = 0;
+		}
+		else
+		{
+			position = atol(line);	//Convert the string into a number
+		}
+		if(ctr && (position < lastposition))
+		{	//If this isn't the first note parsed, and the timestamp is smaller then the previous timestamp
+			gh3_format = 0;
+			break;
+		}
+		lastposition = position;	//Remember this timestamp for comparison with the next timestamp
+		line = ustrtok(NULL, "\r\n");	//Read the note duration
+		if(!line || (line[0] == '\0'))
+		{	//If the line couldn't be read of the line is empty
+			gh3_format = 0;
+			break;
+		}
+		line = ustrtok(NULL, "\r\n");	//Read the note bitmask
+		if(!line || (line[0] == '\0'))
+		{	//If the line couldn't be read of the line is empty
+			gh3_format = 0;
+			break;
+		}
+		note = atol(line);	//Convert the bitmask to integer format
+		if(note > 63)
+		{	//If the note bitmask is larger than expected (higher than 6 set bits, the most significant of which's purpose is unknown)
+			gh3_format = 0;
+			break;
+		}
 	}
 
 	if(failed)
@@ -3442,12 +3576,35 @@ int eof_import_array_txt(const char *filename)
 				failed = 9;	//Invalid data
 				break;
 			}
+			if(gh3_format)
+			{	//The line that was just read and one more are expected to define the note
+				length = data;	//That line was the duration
 
-			length = data & 0xFFFF;	//The two least significant bytes are the length of the note
-			data >>= 16;		//Shift the data right two bytes, discarding the length
-			note = data & 63;	//The next byte defines the gems used, although only the first 6 bits pertain to gems
-			fixednote = note;
-			accent = data >> 8;	//The most significant byte defines the accent bitmask
+				line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+				if(!line || (line[0] == '\0') || (line[0] == '0'))
+				{	//If the line couldn't be read, is empty or is a zero
+					failed = 8;	//Invalid data
+					break;
+				}
+				data = atol(line);
+				if(data == 0)
+				{	//If atol() couldn't convert the number
+					failed = 9;	//Invalid data
+					break;
+				}
+
+				note = data & 63;	//The third line is the note bitmask
+				fixednote = note;
+				accent = 0;			//Unused
+			}
+			else
+			{	//The line that was just read completes the note's definition
+				length = data & 0xFFFF;	//The two least significant bytes are the length of the note
+				data >>= 16;		//Shift the data right two bytes, discarding the length
+				note = data & 63;	//The next byte defines the gems used, although only the first 6 bits pertain to gems
+				fixednote = note;
+				accent = data >> 8;	//The most significant byte defines the accent bitmask
+			}
 
 			newnote = eof_track_add_create_note(eof_song, eof_selected_track, 0, position, length, eof_note_type, NULL);	//Add the note to the active track difficulty
 			if(!newnote)

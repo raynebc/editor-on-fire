@@ -4177,8 +4177,8 @@ int eof_save_helper(char *destfilename, char silent)
 		eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 
 		//Determine if the Rocksmith WAV file exists, if not, export the chart audio in WAV format
-		if(!eof_silence_loaded)
-		{	//If chart audio is loaded
+		if(!eof_silence_loaded && eof_song_has_pro_guitar_content(eof_song))
+		{	//If chart audio is loaded and there is at least one normal or tech note in any pro guitar track
 			eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
 			if(!exists(eof_temp_filename))
 			{	//If the WAV file does not exist
@@ -6397,6 +6397,7 @@ int eof_menu_file_notes_panel_browse(void)
 int eof_menu_file_array_txt_import(void)
 {
 	char *returnedfn = NULL;
+	int retval;
 
 	if(!eof_song)
 		return 0;
@@ -6412,14 +6413,22 @@ int eof_menu_file_array_txt_import(void)
 	{
 		eof_log("\tImporting array.txt data", 1);
 
-		(void) eof_import_array_txt(returnedfn);
+		retval = eof_import_array_txt(returnedfn);
+		if(retval)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError %u", retval);
+			eof_log(eof_log_string, 1);
+			allegro_message("Import failed (error %u).", retval);
+		}
+		else
+		{
+			eof_log("\tData loaded", 1);
+		}
 	}
 	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-
-	eof_log("\tData loaded", 1);
 
 	return 1;
 }

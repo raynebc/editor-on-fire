@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include "beat.h"
 #include "main.h"
 #include "midi.h"
@@ -199,7 +200,10 @@ double eof_calculate_beat_pos_by_prev_beat_tempo(EOF_SONG *sp, unsigned long bea
 
 	length = (double)eof_song->beat[beat - 1]->ppqn / 1000.0;	//Calculate the length of the previous beat from its tempo (this is the formula "beat_length = 60000 / BPM", where BPM = 60000000 / ppqn)
 	(void) eof_get_effective_ts(eof_song, &num, &den, beat - 1, 0);	//Get the time signature in effect at the previous beat
-	length *= 4.0 / (double)den;	//Adjust for the time signature
+	if(den != 4)
+	{	//If the TS isn't #/4
+		length *= 4.0 / (double)den;	//Adjust for the time signature
+	}
 
 	return sp->beat[beat - 1]->fpos + length;
 }
@@ -218,9 +222,9 @@ int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report)
 		expected_pos = eof_calculate_beat_pos_by_prev_beat_tempo(sp, ctr);
 		expected_pos_int = expected_pos + 0.5;	//Round to nearest ms
 
-		if(expected_pos_int != sp->beat[ctr]->pos)
+		if((expected_pos_int != sp->beat[ctr]->pos) && (fabs(expected_pos - sp->beat[ctr]->fpos) > 0.5))
 		{	//If this beat's timestamp doesn't accurately reflect the previous beat's tempo
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "The tempo map is corrupt beginning with beat #%lu (defined position is %fms, expected is %fms)", ctr, sp->beat[ctr]->fpos, expected_pos);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "The tempo map is corrupt beginning with beat #%lu (defined position is %fms, %lums, expected is %fms, %lums)", ctr, sp->beat[ctr]->fpos, sp->beat[ctr]->pos, expected_pos, expected_pos_int);
 			eof_log(eof_log_string, 1);
 			corrupt = 1;
 
