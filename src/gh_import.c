@@ -1926,18 +1926,29 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 			if(sp->track[destination_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR)
 			{	//If this is a guitar track, check the accent mask and HOPO status
-				if(notemask & 0x40)
-				{	//Bit 6 is the HOPO status
-					newnote->flags |= EOF_NOTE_FLAG_F_HOPO;
-					newnote->flags |= EOF_NOTE_FLAG_HOPO;
+				if(gh3_format)
+				{	//GH3/GHA charts used note proximity and a toggle HOPO marker
+					if(notemask & 32)
+					{	//Bit 5 is a toggle HOPO status
+						newnote->flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
+						newnote->flags ^= EOF_NOTE_FLAG_HOPO;
+					}
 				}
-				else if(forcestrum)
-				{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required), but only if the user opted to do so
-					newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
-				}
-				if((accentmask != 0xF) && !gh3_format)
-				{	//"Crazy" guitar/bass notes have an accent mask that isn't 0xF, and the chart wasn't determined to be in GH3/GHA format
-					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
+				else
+				{	//Other charts explicitly define HOPO on/off
+					if(notemask & 0x40)
+					{	//Bit 6 is the HOPO status
+						newnote->flags |= EOF_NOTE_FLAG_F_HOPO;
+						newnote->flags |= EOF_NOTE_FLAG_HOPO;
+					}
+					else if(forcestrum)
+					{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required), but only if the user opted to do so
+						newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
+					}
+					if((accentmask != 0xF) && !gh3_format)
+					{	//"Crazy" guitar/bass notes have an accent mask that isn't 0xF, and the chart wasn't determined to be in GH3/GHA format
+						newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
+					}
 				}
 			}
 			else if(destination_track == EOF_TRACK_DRUM)
@@ -1981,8 +1992,33 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 
 			lastnote = newnote;
+			if(newnote->pos > eof_chart_length)
+				eof_chart_length = newnote->pos;	//Keep this variable up to date so the HOPO logic below can work (eof_get_beat() requires eof_chart_length to be correct)
 		}//For each note in the section
-	}
+
+		//Apply auto HOPO statuses if necessary
+		if(gh3_format)
+		{	//If the notes were in GH3/GHA format, HOPO status is based on proximity to the previous note
+			unsigned long tracksize = eof_get_track_size(sp, destination_track);
+			eof_track_sort_notes(sp, destination_track);
+			for(ctr2 = 1; ctr2 < tracksize; ctr2++)
+			{	//For each of the imported notes, after the first
+				unsigned long flags = eof_get_note_flags(sp, destination_track, ctr2);
+
+				if(eof_note_is_gh3_hopo(sp, destination_track, ctr2))
+				{	//If this note meets the criteria for an auto HOPO (is a single gem not matching the previous note and is within the threshold distance)
+					flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
+					flags ^= EOF_NOTE_FLAG_HOPO;
+				}
+				if(forcestrum && !(flags & EOF_NOTE_FLAG_F_HOPO))
+				{	//If the note was not ultimately a HOPO, and the user opted to import forced strum status
+					flags |= EOF_NOTE_FLAG_NO_HOPO;
+				}
+				eof_set_note_flags(sp, destination_track, ctr2, flags);	//Update the note's flags
+			}
+		}
+	}//For each 1D array of note data
+
 	if(arraysize)
 	{	//If memory was allocated by eof_gh_process_section_header()
 		free(arrayptr);
@@ -3376,7 +3412,7 @@ int eof_import_array_txt(const char *filename)
 {
 	char *buffer, *buffer2, *line;
 	int failed = 0, format = 0, gh3_format;
-	unsigned long ctr = 0, linesread = 0, tracknum;
+	unsigned long ctr = 0, ctr2, linesread = 0, tracknum;
 	long position, lastposition = 0, note, fixednote, data, length, accent;
 	EOF_NOTE *newnote, *lastnote = NULL;
 
@@ -3594,7 +3630,7 @@ int eof_import_array_txt(const char *filename)
 				}
 
 				note = data & 63;	//The third line is the note bitmask
-				fixednote = note;
+				fixednote = note & 31;	//Only the lower 5 bits define gems, bit 6 defines the toggle HOPO marker
 				accent = 0;			//Unused
 			}
 			else
@@ -3698,13 +3734,24 @@ int eof_import_array_txt(const char *filename)
 			}//If a drum track is active, interpret as drum note data
 			else
 			{	//Interpret as guitar/bass note data
-				if(data & 64)
-				{	//Bit 6 is the HOPO bit
-					newnote->flags |= (EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_HOPO);
+				if(gh3_format)
+				{	//GH3/GHA charts used note proximity and a toggle HOPO marker
+					if(note & 32)
+					{	//Bit 5 of the note bitmask is a toggle HOPO status
+						newnote->flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
+						newnote->flags ^= EOF_NOTE_FLAG_HOPO;
+					}
 				}
 				else
-				{
-					newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
+				{	//Other charts explicitly define HOPO on/off
+					if(data & 64)
+					{	//Bit 6 is the HOPO bit
+						newnote->flags |= (EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_HOPO);
+					}
+					else
+					{
+						newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
+					}
 				}
 			}
 			newnote->note = fixednote;	//Update the new note's bitmask
@@ -3732,6 +3779,30 @@ int eof_import_array_txt(const char *filename)
 			unsigned long lastpos;
 
 			eof_track_sort_notes(eof_song, eof_selected_track);
+
+			//Apply auto HOPO statuses if necessary
+			if(gh3_format)
+			{	//If the notes were in GH3/GHA format, HOPO status is based on proximity to the previous note
+				unsigned long tracksize = eof_get_track_size(eof_song, eof_selected_track);
+
+				eof_track_sort_notes(eof_song, eof_selected_track);
+				for(ctr2 = 0; ctr2 < tracksize; ctr2++)
+				{	//For each of the imported notes
+					unsigned long flags = eof_get_note_flags(eof_song, eof_selected_track, ctr2);
+
+					if(eof_note_is_gh3_hopo(eof_song, eof_selected_track, ctr2))
+					{	//If this note meets the criteria for an auto HOPO (is a single gem not matching the previous note and is within the threshold distance)
+						flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
+						flags ^= EOF_NOTE_FLAG_HOPO;
+					}
+					if(!(flags & EOF_NOTE_FLAG_F_HOPO))
+					{	//If the note was not ultimately a HOPO, and the user opted to import forced strum status
+						flags |= EOF_NOTE_FLAG_NO_HOPO;
+					}
+					eof_set_note_flags(eof_song, eof_selected_track, ctr2, flags);	//Update the note's flags
+				}
+			}
+
 			lastpos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
 			if(eof_chart_length < lastpos)
 			{	//If the length of the project is to be extended due to new notes

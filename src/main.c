@@ -1251,6 +1251,48 @@ long eof_get_previous_note(long cnote, int function)
 	return -1;
 }
 
+int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	long pnote;
+	unsigned long delta, beat, thispos, prevpos;
+
+	if(!sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
+		return 0;	//Invalid parameters
+
+	if(eof_get_note_flags(sp, track, note) & EOF_NOTE_FLAG_F_HOPO)
+		return 1;	//Forced HOPO
+
+	if(eof_get_note_flags(sp, track, note) & EOF_NOTE_FLAG_NO_HOPO)
+		return 0;	//Forced non HOPO
+
+	if(eof_note_count_colors(sp, track, note) > 1)
+		return 0;	//Chords are non HOPO by default
+
+	pnote = eof_track_fixup_previous_note(sp, track, note);
+	if(pnote < 0)
+		return 0;	//A note can't be an auto HOPO if there is no previous note
+
+	if(eof_get_note_note(sp, track, note) == eof_get_note_note(sp, track, pnote))
+		return 0;	//Identical notes are non HOPO by default
+
+	prevpos = eof_get_note_pos(sp, track, pnote);
+	thispos = eof_get_note_pos(sp, track, note);
+	if(thispos < prevpos)
+		return 0;	//Notes out of order
+
+	beat = eof_get_beat(sp, thispos);
+	if(beat >= sp->beats)
+		return 0;	//The beat containing the specified note can't be identified
+
+	delta = thispos - prevpos;
+	if(delta < (unsigned long) (eof_get_beat_length(sp, beat) * (66.0 / 192.0) + 0.5))
+	{	//If this note is close enough to the previous note (shorter than 66/192 beats away)
+		return 1;	//Auto HOPO
+	}
+
+	return 0;	//Not a HOPO
+}
+
 int eof_note_is_hopo(unsigned long cnote)
 {
 	double delta;
@@ -1266,6 +1308,9 @@ int eof_note_is_hopo(unsigned long cnote)
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		return 0;	//Only guitar/bass tracks can have HOPO notes
 
+	if(eof_hopo_view == EOF_HOPO_GH3)
+		return eof_note_is_gh3_hopo(eof_song, eof_selected_track, cnote);
+
 	forcedhopo = (eof_get_note_flags(eof_song, eof_selected_track, cnote) & EOF_NOTE_FLAG_F_HOPO);
 	if(eof_hopo_view == EOF_HOPO_MANUAL)
 	{
@@ -1274,13 +1319,6 @@ int eof_note_is_hopo(unsigned long cnote)
 			return 1;
 		}
 		return 0;
-	}
-	if(eof_hopo_view == EOF_HOPO_GH3)
-	{	//If GH3 HOPO preview is in effect, forced HOPO on/off is observed
-		if(forcedhopo)
-			return 1;
-		if(eof_get_note_flags(eof_song, eof_selected_track, cnote) & EOF_NOTE_FLAG_NO_HOPO)
-			return 0;
 	}
 	if(cnote == 0)
 		return 0;	//Otherwise if the specified note isn't at least the second note in the track, it can't be a HOPO
@@ -1320,20 +1358,6 @@ int eof_note_is_hopo(unsigned long cnote)
 		if((delta <= hopo_delta * scale) && !(eof_get_note_note(eof_song, eof_selected_track, pnote) & eof_get_note_note(eof_song, eof_selected_track, cnote)))
 		{	//If this note is close enough to the previous note and both notes have no gems in common
 			return 1;
-		}
-	}
-	else if(eof_hopo_view == EOF_HOPO_GH3)
-	{
-		delta = cnotepos - eof_get_note_pos(eof_song, eof_selected_track, pnote);
-		if(delta < (unsigned long) (eof_get_beat_length(eof_song, beat) * (66.0/192.0) + 0.5))
-		{	//If this note is close enough to the previous note (shorter than 66/192 beats away)
-			if(eof_note_count_colors_bitmask(eof_get_note_note(eof_song, eof_selected_track, cnote)) == 1)
-			{	//If this note is not a chord
-				if(eof_get_note_note(eof_song, eof_selected_track, cnote) != eof_get_note_note(eof_song, eof_selected_track, pnote))
-				{	//If this note and the previous one are not identical (they are allowed to have some of the same lanes but not use the same lanes exactly)
-					return 1;
-				}
-			}
 		}
 	}
 //	allegro_message("bpm = %f\nscale = %f\ndelta = %f\npnote = %d(%d), cnote = %d(%d)", bpm, scale, delta, pnote, eof_song->legacy_track[tracknum]->note[pnote].pos, cnote, eof_song->legacy_track[tracknum]->note[cnote].pos);	//Debug

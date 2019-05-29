@@ -784,6 +784,11 @@ void eof_close_button_callback(void);	//Sets eof_close_button_clicked to track t
 long eof_get_previous_note(long cnote, int function);
 	//Returns the note that exists immediately before the specified note in the active track difficulty, or -1 if no such note exists
 	//If function is nonzero, the added criterion of being at a different timestamp is also required, to allow for the existence of disjointed chords
+int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns nonzero if the specified note is a HOPO by GH3 rules:
+	//	Is explicitly marked as a HOPO, OR:
+	//	Is not explicitly marked as a non HOPO, and isn't a chord, and isn't the same as the previous note, and is less than 66/192 beats from a previous note
+	//The specified track's format is not taken into account, the calling function must use that criterion if needed
 int eof_note_is_hopo(unsigned long cnote);	//Returns nonzero if the specified note in the active track should be rendered as a HOPO, based on the current HOPO preview setting
 void eof_read_global_keys(void);	//Reads and acts on various keyboard combinations, only if the chart is paused
 void eof_lyric_logic(void);	//Performs various vocal editor logic
