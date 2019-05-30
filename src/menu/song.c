@@ -2142,9 +2142,11 @@ int eof_menu_song_add_silence(void)
 
 		if(eof_music_length < old_eof_music_length)
 		{	//If the operation malfunctioned (usually due to an incompatibility between OggCat and the chart audio)
+			char *stream_copy_message = "Try re-doing this with the re-encode option.";
+
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLeading silence failure detected.  Chart audio went from %lums to %lums in length", old_eof_music_length, eof_music_length);
 			eof_log(eof_log_string, 1);
-			if(alert("Warning:  The leading silence operation seemed to have failed.", NULL, "Undo?", "&Yes", "&No", 'y', 'n') == 1)
+			if(alert("Warning:  The leading silence operation seemed to have failed.", ((creationmethod == 9) ? stream_copy_message : ""), "Undo?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to undo the operation
 				(void) eof_undo_apply();
 			}

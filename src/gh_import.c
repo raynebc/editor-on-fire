@@ -25,6 +25,7 @@ char eof_rhythm_coop_aux_swap = 0;	//Set to nonzero if user opts to import the _
 int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will prompt user whether the chart is from Warriors of Rock,
 								// which defines the bits in a different order than Smash Hits
 int eof_gh_import_ghost_drum_notice = 0;	//Will be set to nonzero if the user was notified that ghost notes were detected and highlighted during GH import
+int eof_gh_import_threshold_prompt = 0;	//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 as the HOPO threshold
 
 #define GH_IMPORT_DEBUG
 
@@ -1735,6 +1736,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	int destination_track;
 	int gh3_format;		//Specifies whether the notes are determined to be defined as 3 dwords each instead of 2
 	unsigned long fbindex, lastpos = 0, headersize;
+	double threshold = 66.0 / 192.0;
 
 	if(!fb || !sp || !target || !songname)
 		return -1;
@@ -1808,7 +1810,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				break;
 			}
 			if(dword > 63)
-			{	//If the note bitmask is larger than expected (higher than 6 set bits, the most significant of which's purpose is unknown)
+			{	//If the note bitmask is larger than expected (higher than 6 set bits)
 				gh3_format = 0;
 				break;
 			}
@@ -1817,14 +1819,26 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 		if(gh3_format)
 		{	//This format uses 3 dwords to define each note
 			numnotes = headersize / 3;
+			if(!eof_gh_import_threshold_prompt)
+			{	//If the user wasn't prompted to select a HOPO threshold yet during this import
+				eof_gh_import_threshold_prompt = alert("GH3/GHA charts can have one of two HOPO thresholds.", "Which should EOF use?", NULL, "66/192 beat", "100/192 beat", 0, 0);
+			}
+			if(eof_gh_import_threshold_prompt == 2)
+			{	//If the user selected the 100/192 threshold now or earlier in the import
+				threshold = 100.0 / 192.0;
+			}
+
 #ifdef GH_IMPORT_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH3/GHA note format detected.\tNumber of notes = %lu", numnotes);
+			eof_log("\tGH3/GHA note format detected.", 1);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tUser selected %s HOPO threshold.", ((eof_gh_import_threshold_prompt == 1) ? "66/192" : "100/192"));
+			eof_log(eof_log_string, 1);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of notes = %lu", numnotes);
 			eof_log(eof_log_string, 1);
 #endif
 		}
 		else
 		{	//This format uses 2 dwords to define each note
-			numnotes = headersize/ 2;	//Determine the number of notes that are defined, assuming it's not GH3/GHA format
+			numnotes = headersize / 2;	//Determine the number of notes that are defined, assuming it's not GH3/GHA format
 #ifdef GH_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of notes = %lu", numnotes);
 			eof_log(eof_log_string, 1);
@@ -1996,19 +2010,30 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				eof_chart_length = newnote->pos;	//Keep this variable up to date so the HOPO logic below can work (eof_get_beat() requires eof_chart_length to be correct)
 		}//For each note in the section
 
+		eof_track_sort_notes(sp, destination_track);
+
 		//Apply auto HOPO statuses if necessary
 		if(gh3_format)
 		{	//If the notes were in GH3/GHA format, HOPO status is based on proximity to the previous note
 			unsigned long tracksize = eof_get_track_size(sp, destination_track);
 			eof_track_sort_notes(sp, destination_track);
-			for(ctr2 = 1; ctr2 < tracksize; ctr2++)
-			{	//For each of the imported notes, after the first
-				unsigned long flags = eof_get_note_flags(sp, destination_track, ctr2);
+			for(ctr2 = 0; ctr2 < tracksize; ctr2++)
+			{	//For each of the imported notes
+				unsigned long flags = eof_get_note_flags(sp, destination_track, ctr2), flags2;
 
-				if(eof_note_is_gh3_hopo(sp, destination_track, ctr2))
-				{	//If this note meets the criteria for an auto HOPO (is a single gem not matching the previous note and is within the threshold distance)
+				if(eof_get_note_type(sp, destination_track, ctr2) != target->diffnum)	//If this isn't one of the notes that was imported for this section's track difficulty
+					continue;	//Skip it
+
+				flags2 = flags & ~(EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_NO_HOPO);	//Clear these flags so eof_note_is_gh3_hopo() won't use them as the deciding factor
+				eof_set_note_flags(sp, destination_track, ctr2, flags2);
+				if(eof_note_is_gh3_hopo(sp, destination_track, ctr2, threshold))
+				{	//If this note meets the criteria for an auto HOPO (is a single gem not matching the previous note and is within the user specified threshold distance)
 					flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
 					flags ^= EOF_NOTE_FLAG_HOPO;
+				}
+				else
+				{
+					flags &= ~EOF_NOTE_FLAG_HOPO;	//Clear HOPO flag
 				}
 				if(forcestrum && !(flags & EOF_NOTE_FLAG_F_HOPO))
 				{	//If the note was not ultimately a HOPO, and the user opted to import forced strum status
@@ -2545,7 +2570,8 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		return NULL;
 	}
 
-	eof_rhythm_coop_aux_swap = 0;	//Reset this condition
+	eof_rhythm_coop_aux_swap = 0;	//Reset these conditions
+	eof_gh_import_threshold_prompt = 0;
 
 //Find the file name (stored within the PAK header)
 	while(1)
@@ -3415,6 +3441,8 @@ int eof_import_array_txt(const char *filename)
 	unsigned long ctr = 0, ctr2, linesread = 0, tracknum;
 	long position, lastposition = 0, note, fixednote, data, length, accent;
 	EOF_NOTE *newnote, *lastnote = NULL;
+	double threshold = 66.0 / 192.0;
+	unsigned long toggle_hopo_count = 0;
 
 	if(!filename || !eof_song)
 		return 1;	//No project or invalid parameter
@@ -3529,7 +3557,7 @@ int eof_import_array_txt(const char *filename)
 		}
 		note = atol(line);	//Convert the bitmask to integer format
 		if(note > 63)
-		{	//If the note bitmask is larger than expected (higher than 6 set bits, the most significant of which's purpose is unknown)
+		{	//If the note bitmask is larger than expected (higher than 6 set bits)
 			gh3_format = 0;
 			break;
 		}
@@ -3551,6 +3579,21 @@ int eof_import_array_txt(const char *filename)
 	}
 	else
 	{
+		if(gh3_format)
+		{
+			int selection;
+
+			selection = alert("GH3/GHA charts can have one of two HOPO thresholds.", "Which should EOF use?", NULL, "66/192 beat", "100/192 beat", 0, 0);
+			if(selection == 2)
+			{	//If the user selected the 100/192 threshold
+				threshold = 100.0 / 192.0;
+			}
+#ifdef GH_IMPORT_DEBUG
+			eof_log("\tGH3/GHA note format detected.", 1);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tUser selected %s HOPO threshold.", ((selection == 1) ? "66/192" : "100/192"));
+			eof_log(eof_log_string, 1);
+#endif
+		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting %lu note definitions.", linesread / 2);
 		eof_log(eof_log_string, 1);
 	}
@@ -3740,6 +3783,7 @@ int eof_import_array_txt(const char *filename)
 					{	//Bit 5 of the note bitmask is a toggle HOPO status
 						newnote->flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
 						newnote->flags ^= EOF_NOTE_FLAG_HOPO;
+						toggle_hopo_count++;	//Keep track of how many of these there are
 					}
 				}
 				else
@@ -3788,19 +3832,32 @@ int eof_import_array_txt(const char *filename)
 				eof_track_sort_notes(eof_song, eof_selected_track);
 				for(ctr2 = 0; ctr2 < tracksize; ctr2++)
 				{	//For each of the imported notes
-					unsigned long flags = eof_get_note_flags(eof_song, eof_selected_track, ctr2);
+					unsigned long flags = eof_get_note_flags(eof_song, eof_selected_track, ctr2), flags2;
 
-					if(eof_note_is_gh3_hopo(eof_song, eof_selected_track, ctr2))
-					{	//If this note meets the criteria for an auto HOPO (is a single gem not matching the previous note and is within the threshold distance)
+					if(eof_get_note_type(eof_song, eof_selected_track, ctr2) != eof_note_type)	//If this isn't one of the notes that was imported into the active difficulty
+						continue;	//Skip it
+					flags2 = flags & ~(EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_NO_HOPO);	//Clear these flags so eof_note_is_gh3_hopo() won't use them as the deciding factor
+					eof_set_note_flags(eof_song, eof_selected_track, ctr2, flags2);
+					if(eof_note_is_gh3_hopo(eof_song, eof_selected_track, ctr2, threshold))
+					{	//If this note meets the criteria for an auto HOPO (is a single gem not matching the previous note and is within the user specified threshold distance)
 						flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
 						flags ^= EOF_NOTE_FLAG_HOPO;
 					}
+					else
+					{
+						flags &= ~EOF_NOTE_FLAG_HOPO;	//Clear HOPO flag
+					}
 					if(!(flags & EOF_NOTE_FLAG_F_HOPO))
 					{	//If the note was not ultimately a HOPO, and the user opted to import forced strum status
-						flags |= EOF_NOTE_FLAG_NO_HOPO;
+						flags |= EOF_NOTE_FLAG_NO_HOPO;	//Set forced non HOPO
 					}
 					eof_set_note_flags(eof_song, eof_selected_track, ctr2, flags);	//Update the note's flags
 				}
+
+#ifdef GH_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu toggle HOPO statuses encountered.", toggle_hopo_count);
+				eof_log(eof_log_string, 1);
+#endif
 			}
 
 			lastpos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
@@ -3815,8 +3872,10 @@ int eof_import_array_txt(const char *filename)
 			//Update piano roll and 3D preview lane coordinates in case the lane count changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force
 			eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
-		}
-	}
+
+			eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+		}//If notes were imported
+	}//If the import succeeded
 
 	///Free memory
 	free(buffer);

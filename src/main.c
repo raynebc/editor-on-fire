@@ -1251,7 +1251,7 @@ long eof_get_previous_note(long cnote, int function)
 	return -1;
 }
 
-int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note)
+int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note, double threshold)
 {
 	long pnote;
 	unsigned long delta, beat, thispos, prevpos;
@@ -1285,8 +1285,8 @@ int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note)
 		return 0;	//The beat containing the specified note can't be identified
 
 	delta = thispos - prevpos;
-	if(delta < (unsigned long) (eof_get_beat_length(sp, beat) * (66.0 / 192.0) + 0.5))
-	{	//If this note is close enough to the previous note (shorter than 66/192 beats away)
+	if(delta < (unsigned long) (eof_get_beat_length(sp, beat) * threshold + 0.5))
+	{	//If this note is close enough to the previous note (based on the specified threshold)
 		return 1;	//Auto HOPO
 	}
 
@@ -1309,7 +1309,7 @@ int eof_note_is_hopo(unsigned long cnote)
 		return 0;	//Only guitar/bass tracks can have HOPO notes
 
 	if(eof_hopo_view == EOF_HOPO_GH3)
-		return eof_note_is_gh3_hopo(eof_song, eof_selected_track, cnote);
+		return eof_note_is_gh3_hopo(eof_song, eof_selected_track, cnote, (66.0 / 192.0));	//Use the typical GH3 threshold
 
 	forcedhopo = (eof_get_note_flags(eof_song, eof_selected_track, cnote) & EOF_NOTE_FLAG_F_HOPO);
 	if(eof_hopo_view == EOF_HOPO_MANUAL)
