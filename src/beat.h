@@ -66,5 +66,8 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track);
 	//The beat's measure number (or 0 if no TS is in effect), beat within measure, total number of beats in current measure are stored,
 	//The section text event assigned to the beat is stored (from the perspective of the specified track, or -1 if no section event),
 	//a boolean status for whether the beat contains an "[end]" event and boolean statuses for whether the beat contains tempo or TS changes
+double eof_get_distance_in_beats(EOF_SONG *sp, unsigned long pos1, unsigned long pos2);
+	//Uses eof_get_beat() and eof_get_porpos_sp() to calculate the number of beats between the two specified positions, which could be in either order
+	//Returns 0.0 on error
 
 #endif

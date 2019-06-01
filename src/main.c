@@ -1254,7 +1254,8 @@ long eof_get_previous_note(long cnote, int function)
 int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note, double threshold)
 {
 	long pnote;
-	unsigned long delta, beat, thispos, prevpos;
+	unsigned long thispos, prevpos;
+	double distance;
 
 	if(!sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
 		return 0;	//Invalid parameters
@@ -1280,13 +1281,13 @@ int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	if(thispos < prevpos)
 		return 0;	//Notes out of order
 
-	beat = eof_get_beat(sp, thispos);
-	if(beat >= sp->beats)
-		return 0;	//The beat containing the specified note can't be identified
-
-	delta = thispos - prevpos;
-	if(delta < (unsigned long) (eof_get_beat_length(sp, beat) * threshold + 0.5))
-	{	//If this note is close enough to the previous note (based on the specified threshold)
+	distance = eof_get_distance_in_beats(sp, prevpos, thispos);
+	if(distance == 0.0)
+	{	//If the distance between the two couldn't be determined
+		return 0;
+	}
+	if(distance  < threshold)
+	{	//If the distance between the the two notes is below the threshold
 		return 1;	//Auto HOPO
 	}
 

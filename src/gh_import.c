@@ -20,7 +20,9 @@ char crc32_lookup_initialized = 0;	//Is set to nonzero when the lookup table is 
 char eof_gh_skip_size_def = 0;	//Is set to nonzero if it's determined that the size field in GH headers is omitted
 char magicnumber[] = {0x1C,0x08,0x02,0x04,0x10,0x04,0x08,0x0C,0x0C,0x08,0x02,0x04,0x14,0x02,0x04,0x0C,0x10,0x10,0x0C,0x00};	//The magic number is expected 8 bytes into the QB header
 unsigned char eof_gh_unicode_encoding_detected;	//Is set to nonzero if determined that the lyric/section text is in Unicode format
-char eof_rhythm_coop_aux_swap = 0;	//Set to nonzero if user opts to import the _song_aux_ sections into PART RHYTHM (ie. in QB format GH charts that have _song_aux_ notes but no _song_rhythmcoop_ notes)
+char eof_song_aux_swap = 0;	//Set to nonzero if user opts to import the _song_aux_ sections into PART RHYTHM (ie. in QB format GH charts that have _song_aux_ notes but no _song_rhythmcoop_ notes)
+							//or if PART RHYTHM is populated but PART BASS is empty, the user is prompted to import aux to bass instead
+unsigned long eof_song_aux_track = EOF_TRACK_KEYS;	//The effective track to which the aux guitar track's notes and star power paths are to be imported
 
 int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will prompt user whether the chart is from Warriors of Rock,
 								// which defines the bits in a different order than Smash Hits
@@ -93,6 +95,16 @@ gh_section eof_gh_sp_sections_qb[EOF_NUM_GH_SP_SECTIONS_QB] =
 	{"_rhythmcoop_expert_star", EOF_TRACK_RHYTHM, 0},
 	{"_drum_expert_star", EOF_TRACK_DRUM, 0},
 	{"_aux_expert_star", EOF_TRACK_KEYS, 0}
+};
+
+gh_section eof_gh_sp_battle_sections_qb[EOF_NUM_GH_SP_SECTIONS_QB] =
+{
+	{"_expert_starbattlemode", EOF_TRACK_GUITAR, 0},
+	{"_rhythm_expert_starbattlemode", EOF_TRACK_BASS, 0},
+	{"_guitarcoop_expert_starbattlemode", EOF_TRACK_GUITAR_COOP, 0},
+	{"_rhythmcoop_expert_starbattlemode", EOF_TRACK_RHYTHM, 0},
+	{"_drum_expert_starbattlemode", EOF_TRACK_DRUM, 0},
+	{"_aux_expert_starbattlemode", EOF_TRACK_KEYS, 0}
 };
 
 #define EOF_NUM_GH_TAP_SECTIONS_NOTE 2
@@ -1248,6 +1260,8 @@ EOF_SONG * eof_import_gh(const char * fn)
 		unsigned long tracknum;
 		unsigned long ctr;
 
+		eof_gh_import_sp_cleanup(sp);	//Shorten any star power phrases that end on a note's start position, so the latter isn't included in the phrase (GH uses this logic)
+
 		if(!eof_disable_backups)
 		{	//If the user did not disable automatic backups
 			/* backup "song.ini" if it exists in the folder with the imported file
@@ -1761,29 +1775,46 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 		}
 
-		//Offer to import the song_aux notes into the PART RHYTHM track if the latter is empty at this point
+		//Offer to import the song_aux notes into the rhythm or bass tracks if thy are empty (they are all imported before the aux track)
 		destination_track = target->tracknum;	//By default, use eof_gh_instrument_sections_qb[] to derive the track associated with the section name
 		if(strcasestr_spec(target->name, "_song_aux_"))
 		{	//If this is one of the auxiliary instrument sections
-			if(!eof_rhythm_coop_aux_swap && !eof_get_track_size(sp, EOF_TRACK_RHYTHM))
-			{	//If the user wasn't prompted yet, and the rhythm track is empty (nothing was imported from _song_rhythmcoop_ sections)
-				if(alert(NULL, "Import the auxiliary track into PART RHYTHM instead of PART KEYS?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-				{	//If user opts to change the destination track for the auxiliary section
-					eof_rhythm_coop_aux_swap = 1;
+			if(!eof_song_aux_swap)
+			{	//If the user hasn't been prompted to re-target this track
+				if(!eof_get_track_size(sp, EOF_TRACK_RHYTHM))
+				{	//If the rhythm track is empty
+					if(alert(NULL, "Import the auxiliary track into PART RHYTHM instead of PART KEYS?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to change the destination track for the auxiliary section
+						eof_song_aux_swap = 1;
+						eof_song_aux_track = EOF_TRACK_RHYTHM;
+						eof_log("\tImporting aux guitar track to rhythm.", 1);
+					}
+					else
+					{
+						eof_song_aux_swap = 2;
+					}
 				}
-				else
-				{
-					eof_rhythm_coop_aux_swap = 2;
+				else if(!eof_get_track_size(sp, EOF_TRACK_BASS))
+				{	//If the rhythm track is populated but the bass track is empty
+					if(alert(NULL, "Import the auxiliary track into PART BASS instead of PART KEYS?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to change the destination track for the auxiliary section
+						eof_song_aux_swap = 1;
+						eof_song_aux_track = EOF_TRACK_BASS;
+						eof_log("\tImporting aux guitar track to bass.", 1);
+					}
+					else
+					{
+						eof_song_aux_swap = 2;
+					}
 				}
 			}
-
-			if(eof_rhythm_coop_aux_swap == 1)
-			{	//If the instrument section is to be imported into PART RHYTHM
-				destination_track = EOF_TRACK_RHYTHM;
+			if(eof_song_aux_swap)
+			{	//If the user opted to redirect the aux notes
+				destination_track = eof_song_aux_track;
 			}
 		}
 
-		///Pre-parse the content to detect whether it's GH3/GHA format, where each note is defined as 3 dwords:  timestamp, duration, bitmask
+		//Pre-parse the content to detect whether it's GH3/GHA format, where each note is defined as 3 dwords:  timestamp, duration, bitmask
 		fbindex = fb->index;	//Record this to rewind after the check
 		gh3_format = 1;			//Unless the notes don't follow the expected scheme, assume GH3/GHA format
 		for(ctr2 = 0; ctr2 < headersize / 3; ctr2++)
@@ -1946,6 +1977,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 					{	//Bit 5 is a toggle HOPO status
 						newnote->flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
 						newnote->flags ^= EOF_NOTE_FLAG_HOPO;
+						newnote->note &= 31;	//Clear all bits above 5, as they aren't used in this game
 					}
 				}
 				else
@@ -2051,13 +2083,20 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	return 1;
 }
 
-int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex)
+unsigned long eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex, int count_only)
 {
-	unsigned long numphrases, dword = 0, length = 0, ctr, ctr2, arraysize, *arrayptr = NULL;
+	unsigned long numphrases, dword = 0, length = 0, ctr, ctr2, arraysize, *arrayptr = NULL, destination_track;
 	char buffer[101] = {0};
 
 	if(!fb || !sp || !target || !songname)
-		return -1;
+		return ULONG_MAX;
+
+	destination_track = target->tracknum;	//By default, the star power phrases will import to their default tracks
+	if(strcasestr_spec(target->name, "_aux_expert_star") && eof_song_aux_swap)
+	{	//However if an aux guitar star power section is being imported, and the user redirected the aux guitar track to another track
+		destination_track = eof_song_aux_track;	//Redirect the star power sections to match
+		eof_log("\tRedirecting aux star power sections to match redirected notes.", 1);
+	}
 
 	(void) snprintf(buffer, sizeof(buffer) - 1, "%s%s", songname, target->name);
 #ifdef GH_IMPORT_DEBUG
@@ -2065,6 +2104,10 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 	eof_log(eof_log_string, 1);
 #endif
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
+
+	if(count_only)
+		return arraysize;	//If the calling function only wanted to count the number of SP phrases in the specified section name
+
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of star power data
 		assert(arrayptr != NULL);	//Unneeded check to resolve false positive in Splint
@@ -2074,7 +2117,7 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Invalid star power array size (%lu)", numphrases);
 			eof_log(eof_log_string, 1);
 			free(arrayptr);
-			return -1;
+			return ULONG_MAX;
 		}
 		numphrases /= 3;	//Determine the number of phrases that are defined
 #ifdef GH_IMPORT_DEBUG
@@ -2087,24 +2130,24 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 			{	//If there was an error reading the next 4 byte value
 				eof_log("\t\tError:  Could not read phrase position", 1);
 				free(arrayptr);
-				return -1;
+				return ULONG_MAX;
 			}
 			if(eof_filebuffer_get_dword(fb, &length))	//Read the phrase length
 			{	//If there was an error reading the next 4 byte value
 				eof_log("\t\tError:  Could not read phrase length", 1);
 				free(arrayptr);
-				return -1;
+				return ULONG_MAX;
 			}
 			fb->index += 4;	//Skip the field indicating the number of notes contained within the star power section
 #ifdef GH_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tPhrase %lu position = %lu  length = %lu", ctr2+1, dword, length);
 			eof_log(eof_log_string, 1);
 #endif
-			if(!eof_track_add_section(sp, target->tracknum, EOF_SP_SECTION, 0, dword, dword + length, 0, NULL))
+			if(!eof_track_add_section(sp, destination_track, EOF_SP_SECTION, 0, dword, dword + length, 0, NULL))
 			{	//If there was an error adding the section
 				eof_log("\t\tError:  Could not add sp section", 1);
 				free(arrayptr);
-				return -1;
+				return ULONG_MAX;
 			}
 
 #ifdef GH_IMPORT_DEBUG
@@ -2113,12 +2156,12 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 			eof_log(eof_log_string, 1);
 #endif
 		}
-	}
+	}//For each 1D array of star power data
 	if(arraysize)
 	{	//If memory was allocated by eof_gh_process_section_header()
 		free(arrayptr);
 	}
-	return 1;
+	return arraysize;
 }
 
 int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex)
@@ -2287,7 +2330,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 				}
 			}
 		}//For each vox note in the section
-	}//For each 1D array of star power data
+	}//For each 1D array of voxnote data
 	if(arraysize)
 	{	//If memory was allocated by eof_gh_process_section_header()
 		free(arrayptr);
@@ -2558,6 +2601,8 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr = NULL, numbeats, numsigs, tsnum = 0, tsden = 0, dword = 0, lastfretbar = 0, lastsig = 0;
 	unsigned long qbindex;	//Will store the file index of the QB header
 	char ts_warned = 0;
+	unsigned long sp_count, sp_battle_count;
+	int import_sp = 1, import_battle_sp = 1, sp_has_conflict = 0, sp_conflicts[EOF_NUM_GH_SP_SECTIONS_QB];
 
 	eof_log("eof_import_gh_qb() entered", 1);
 	eof_log("Attempting to import QB format Guitar Hero chart", 1);
@@ -2570,8 +2615,9 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		return NULL;
 	}
 
-	eof_rhythm_coop_aux_swap = 0;	//Reset these conditions
+	eof_song_aux_swap = 0;	//Reset these conditions
 	eof_gh_import_threshold_prompt = 0;
+	eof_song_aux_track = EOF_TRACK_KEYS;
 
 //Find the file name (stored within the PAK header)
 	while(1)
@@ -2826,11 +2872,85 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		(void) eof_gh_read_instrument_section_qb(fb, sp, songname, &eof_gh_instrument_sections_qb[ctr], qbindex, forcestrum);	//Import notes from the section
 	}
 
+//Check whether the chart has both normal star power AND star power battle sections
+#ifdef GH_IMPORT_DEBUG
+		eof_log("\tGH:  Counting star power phrases.", 1);
+#endif
+	for(ctr = 0; ctr < EOF_NUM_GH_SP_SECTIONS_QB; ctr++)
+	{	//For each of the known SP and SP battle section names
+		unsigned long retval;
+
+		sp_count = sp_battle_count = 0;	//Reset these
+		retval = eof_gh_read_sp_section_qb(fb, sp, songname, &eof_gh_sp_sections_qb[ctr], qbindex, 1);	//Count star power phrases
+		if(retval != ULONG_MAX)
+		{	//If the count was successful
+#ifdef GH_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t%s%s:  %lu Star power phrases", songname, eof_gh_sp_sections_qb[ctr].name, retval);
+			eof_log(eof_log_string, 1);
+#endif
+			sp_count += retval;	//Add to the star power phrase counter
+		}
+
+		retval = eof_gh_read_sp_section_qb(fb, sp, songname, &eof_gh_sp_battle_sections_qb[ctr], qbindex, 1);	//Count star power battle phrases
+		if(retval != ULONG_MAX)
+		{	//If the count was successful
+#ifdef GH_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t%s%s:  %lu Star power battle phrases", songname, eof_gh_sp_sections_qb[ctr].name, retval);
+			eof_log(eof_log_string, 1);
+#endif
+			sp_battle_count += retval;	//Add to the star power battle phrase counter
+		}
+		if(sp_count && sp_battle_count)
+		{	//If this track has both types of SP phrases
+			sp_conflicts[ctr] = 1;	//Track this
+			sp_has_conflict = 1;
+		}
+		else
+		{	//This track had only one SP phrase type or none at all
+			sp_conflicts[ctr] = 0;
+		}
+	}
+	if(sp_has_conflict)
+	{
+		int ret = alert3("At least one track has both normal AND battle SP phrases.", "Import which type when both are present?", NULL, "Normal", "Battle", "Both", 0, 0, 0);
+		if(ret == 1)
+		{
+			import_battle_sp = 0;	//Don't import battle SP phrases when both SP types are present
+		}
+		else if(ret == 2)
+		{
+			import_sp = 0;	//Don't import normal SP phrases when both SP types are present
+		}
+	}
+
 //Read star power sections
 	for(ctr = 0; ctr < EOF_NUM_GH_SP_SECTIONS_QB; ctr++)
 	{	//For each known guitar hero star power section
+		if(sp_conflicts[ctr] && !import_sp)
+		{	//If this track has SP AND battle SP phrases, and the user opted to import only battle phrases in this scenario
+#ifdef GH_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  User opted to skip %s%s phrase", songname, eof_gh_sp_sections_qb[ctr].name);
+			eof_log(eof_log_string, 1);
+#endif
+			continue;	//Skip this section
+		}
 		fb->index = 0;	//Rewind to beginning of file buffer
-		(void) eof_gh_read_sp_section_qb(fb, sp, songname, &eof_gh_sp_sections_qb[ctr], qbindex);	//Import star power section
+		(void) eof_gh_read_sp_section_qb(fb, sp, songname, &eof_gh_sp_sections_qb[ctr], qbindex, 0);	//Import star power section
+	}
+
+//Read star power battle sections
+	for(ctr = 0; ctr < EOF_NUM_GH_SP_SECTIONS_QB; ctr++)
+	{	//For each known guitar hero star power battle section
+		if(sp_conflicts[ctr] && !import_battle_sp)
+		{	//If this track has SP AND battle SP phrases, and the user opted to import only normal SP phrases in this scenario
+#ifdef GH_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  User opted to skip %s%s phrase", songname, eof_gh_sp_sections_qb[ctr].name);
+			eof_log(eof_log_string, 1);
+#endif
+			continue;	//Skip this section
+		}
+		fb->index = 0;	//Rewind to beginning of file buffer
+		(void) eof_gh_read_sp_section_qb(fb, sp, songname, &eof_gh_sp_battle_sections_qb[ctr], qbindex, 0);	//Import star power battle section
 	}
 
 //Read tap (slider) sections
@@ -3836,6 +3956,7 @@ int eof_import_array_txt(const char *filename)
 
 					if(eof_get_note_type(eof_song, eof_selected_track, ctr2) != eof_note_type)	//If this isn't one of the notes that was imported into the active difficulty
 						continue;	//Skip it
+
 					flags2 = flags & ~(EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_NO_HOPO);	//Clear these flags so eof_note_is_gh3_hopo() won't use them as the deciding factor
 					eof_set_note_flags(eof_song, eof_selected_track, ctr2, flags2);
 					if(eof_note_is_gh3_hopo(eof_song, eof_selected_track, ctr2, threshold))
@@ -3882,4 +4003,35 @@ int eof_import_array_txt(const char *filename)
 	free(buffer2);
 
 	return failed;	//Return whatever success/failure status has accumulated
+}
+
+void eof_gh_import_sp_cleanup(EOF_SONG *sp)
+{
+	unsigned long track, path, numpaths, note, numnotes;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp)
+		return;	//Invalid parameter
+
+	for(track = 1; track < sp->tracks; track++)
+	{	//For each track in the project
+		numpaths = eof_get_num_star_power_paths(sp, track);
+
+		for(path = 0; path < numpaths; path++)
+		{	//For each star power path in the track
+			ptr = eof_get_star_power_path(sp, track, path);
+			if(ptr && (ptr->end_pos - ptr->start_pos > 1))
+			{	//If the phrase was found, and its length is at least 2ms
+				numnotes = eof_get_track_size(sp, track);
+				for(note = 0; note < numnotes; note++)
+				{	//For each note in the track
+					if(eof_get_note_pos(sp, track, note) == ptr->end_pos)
+					{	//If the note begins at the end position of the star power path
+						ptr->end_pos--;	//Truncate the path by 1ms
+						break;	//Stop checking notes for this star power path
+					}
+				}
+			}
+		}
+	}
 }

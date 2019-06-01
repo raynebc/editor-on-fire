@@ -897,3 +897,34 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 
 	eof_beat_stats_cached = 1;
 }
+
+double eof_get_distance_in_beats(EOF_SONG *sp, unsigned long pos1, unsigned long pos2)
+{
+	unsigned long temppos;
+	unsigned long beat1, beat2;
+	double bpos1, bpos2;
+
+	if(!sp)
+		return 0.0;	//Invalid parameters
+
+	//Ensure pos1 and pos2 are in ascending order
+	if(pos1 > pos2)
+	{	//If the positions aren't in order
+		temppos = pos1;	//Swap them
+		pos1 = pos2;
+		pos2 = temppos;
+	}
+
+	//Get the beat positions
+	beat1 = eof_get_beat(sp, pos1);
+	beat2 = eof_get_beat(sp, pos2);
+	if((beat1 >= sp->beats) || (beat2 >= sp->beats))
+	{	//If the beat containing either position can't be found
+		return 0.0;	//Error
+	}
+
+	bpos1 = beat1 + (eof_get_porpos_sp(sp, pos1) / 100.0);
+	bpos2 = beat2 + (eof_get_porpos_sp(sp, pos2) / 100.0);
+
+	return bpos2 - bpos1;
+}

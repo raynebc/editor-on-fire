@@ -119,12 +119,13 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	//If an error is detected, -1 is returned
 	//If it is found, it is parsed and notes are added accordingly to the passed EOF_SONG structure
 	//If forcestrum is nonzero, all non HOPO gems for guitar tracks are marked as explicit HOPO OFF notes (as they are played in GH)
-int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex);
+unsigned long eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex, int count_only);
 	//Searches for the target section in the buffered file (QB format GH file)
 	//songname is a string representing the song's name, which is a prefix for each section name
+	//If it is found, and count_only is zero, it is parsed and the star power sections are added accordingly to the passed EOF_SONG structure
 	//If the section is not found, 0 is returned
-	//If an error is detected, -1 is returned
-	//If it is found, it is parsed and the star power sections are added accordingly to the passed EOF_SONG structure
+	//If an error is detected, ULONG_MAX is returned
+	//Otherwise the number of applicable star power phrases is returned
 int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex);
 	//Searches for the target section in the buffered file (QB format GH file)
 	//songname is a string representing the song's name, which is a prefix for each section name
@@ -157,5 +158,10 @@ char *eof_sections_list_all(int index, int * size);
 int eof_import_array_txt(const char *filename);
 	//Imports beat or note data in the format exported by Queen Bee
 	//Returns nonzero on error
+
+void eof_gh_import_sp_cleanup(EOF_SONG *sp);
+	//Examines the star power phrases in each of the specified chart's tracks
+	//For any that are at least 2 ms long AND end at the start timestamp of a note in that track, the phrase is shortened by 1ms
+	//This reflects how star power phrases are handled in Guitar Hero and Feedback
 
 #endif
