@@ -72,7 +72,7 @@ int eof_read_macro_gem_designations(char *string, unsigned char *bitmask, unsign
 	//If the string contains an open strum designation in addition to other gems, open strum takes precedence and 255 is returned through *bitmask
 void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque);
 	//Processes the specified panel's text file and renders it to the panel's configured EOF_WINDOW instance
-	//If opaque is nonzero, the specified panel's window is cleared to dark gray and a window border is drawn
+	//If opaque is nonzero, and eof_background is NULL, the specified panel's window is cleared to dark gray and a window border is drawn
 	//Set opaque to zero in the event that full screen 3D preview is in use, so that it doesn't obscure the 3D preview
 
 unsigned long eof_count_num_notes_with_gem_count(unsigned long gemcount);

@@ -3465,8 +3465,10 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	}
 
 	eof_log("\t\tClearing window to gray", 3);
-	if(opaque)
+	if(opaque && !eof_background)
+	{	//If the calling function specified opacity for the info panel and a background image is NOT loaded
 		clear_to_color(panel->window->screen, eof_color_gray);
+	}
 
 	//Initialize the panel array
 	eof_log("\t\tInitializing panel variables", 3);

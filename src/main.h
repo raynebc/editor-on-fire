@@ -585,6 +585,7 @@ extern PALETTE     eof_palette;
 extern BITMAP *    eof_image[EOF_MAX_IMAGES];
 extern BITMAP *    eof_stretch_bitmap;			//Used to cache and reuse the bitmap created to render a double-tall 3D gem when full height 3D preview is in effect
 extern BITMAP *    eof_hopo_stretch_bitmap;		//Used to cache and reuse the bitmap created to render a double-tall 3D HOPO gem when full height 3D preview is in effect
+extern BITMAP *    eof_background;
 extern FONT *      eof_allegro_font;
 extern FONT *      eof_font;
 extern FONT *      eof_mono_font;

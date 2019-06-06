@@ -143,3 +143,7 @@ clap.wav		The clap sound cue.
 metronome.wav		The metronome sound cue.
 metronome_low.wav	The metronome sound cue used for beats that are not the first beat in a measure if the "Use multi-pitch metronome" option is enabled in "Sound>Audio cues".
 gridsnap.wav		The sound played when changing the grid snap or seeking by grid snap when Feedback input mode is in effect.
+
+
+A background image displayed in place of the gray background behind the piano roll, 3D preview, info panel, etc:
+background.pcx

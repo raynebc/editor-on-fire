@@ -90,6 +90,7 @@ PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
 BITMAP *    eof_stretch_bitmap = NULL;
 BITMAP *    eof_hopo_stretch_bitmap = NULL;
+BITMAP *    eof_background = NULL;
 FONT *      eof_allegro_font = NULL;
 FONT *      eof_font = NULL;
 FONT *      eof_mono_font = NULL;
@@ -2823,7 +2824,10 @@ void eof_render_info_window(void)
 	else
 	{
 		eof_window_info = eof_window_note_lower_left;	//Render info panel at the lower left of EOF's program window
-		clear_to_color(eof_window_info->screen, eof_color_gray);
+		if(!eof_background)
+		{	//If a background image was NOT loaded
+			clear_to_color(eof_window_info->screen, eof_color_gray);	//Clear the info panel portion of the screen
+		}
 	}
 
 	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
@@ -3327,7 +3331,10 @@ void eof_render_3d_window(void)
 		}
 	}
 
-	clear_to_color(eof_window_3d->screen, eof_color_gray);
+	if(!eof_background)
+	{	//If a background image was NOT loaded
+		clear_to_color(eof_window_3d->screen, eof_color_gray);	//Clear the 3D preview portion of the screen
+	}
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	lastlane = numlanes - 1;	//This variable begins lane numbering at 0 instead of 1
 	eof_set_3D_lane_positions(eof_selected_track);	//Update the xchart[] array
@@ -3670,7 +3677,14 @@ void eof_render(void)
 		{	//If the window title needs to be redrawn
 			eof_fix_window_title();
 		}
-		clear_to_color(eof_screen, eof_color_light_gray);
+		if(eof_background)
+		{	//If a background image was loaded
+			blit(eof_background, eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);	//Display it
+		}
+		else
+		{	//Otherwise just draw a blank screen
+			clear_to_color(eof_screen, eof_color_light_gray);
+		}
 		if(!eof_full_screen_3d && !eof_screen_zoom)
 		{	//Only blit the menu bar now if neither full screen 3D view nor x2 zoom is in effect, otherwise it will be blitted later
 			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
@@ -3704,9 +3718,16 @@ void eof_render(void)
 		eof_ch_sp_solution_rebuild();	//Build SP CH solution data if necessary
 	}
 	else
-	{	//If no project is loaded, just draw a blank screen and the menu
+	{	//If no project is loaded
 		eof_log("\tProject is not loaded.", 3);
-		clear_to_color(eof_screen, eof_color_gray);
+		if(eof_background)
+		{	//If a background image was loaded
+			blit(eof_background, eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);	//Display it
+		}
+		else
+		{	//Otherwise just draw a blank screen
+			clear_to_color(eof_screen, eof_color_gray);
+		}
 		if(eof_screen_zoom)
 		{	//If x2 zoom is enabled, stretch blit the menu
 			stretch_blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU]->w, eof_image[EOF_IMAGE_MENU]->h, 0, 0, eof_image[EOF_IMAGE_MENU]->w / 2, eof_image[EOF_IMAGE_MENU]->h / 2);
@@ -3745,7 +3766,14 @@ void eof_render(void)
 		{	//If the 3D preview is already the full height of the program window, draw it along the right edge of the screen to allow space for the info panel
 			int xpos = EOF_SCREEN_PANEL_WIDTH / 6;
 
-			clear_to_color(eof_screen, eof_color_gray);
+			if(eof_background)
+			{	//If a background image was loaded
+				blit(eof_background, eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);	//Display it
+			}
+			else
+			{	//Otherwise just draw a blank screen
+				clear_to_color(eof_screen, eof_color_gray);
+			}
 			stretch_blit(temp_3d, eof_screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_screen_height, xpos, 20, EOF_SCREEN_PANEL_WIDTH * 2, eof_screen_height);
 		}
 		destroy_bitmap(temp_3d);	//Destroy the copy of the 3D preview
@@ -4138,6 +4166,11 @@ void eof_destroy_data(void)
 	{	//If the symbol font was loaded
 		destroy_font(eof_symbol_font);
 		eof_symbol_font = NULL;
+	}
+	if(eof_background)
+	{
+		destroy_bitmap(eof_background);
+		eof_background = NULL;
 	}
 }
 
@@ -4855,6 +4888,11 @@ int eof_initialize(int argc, char * argv[])
 	{
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 		(void) eof_display_notes_panel();
+	}
+
+	if(!eof_song_loaded)
+	{	//If no file was loaded over the command line, display any user-defined background image
+		eof_background = eof_load_pcx("background.pcx");
 	}
 
 	return 1;

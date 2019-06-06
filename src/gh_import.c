@@ -2106,7 +2106,13 @@ unsigned long eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 
 	if(count_only)
+	{
+		if(arraysize)
+		{	//If memory was allocated by eof_gh_process_section_header()
+			free(arrayptr);
+		}
 		return arraysize;	//If the calling function only wanted to count the number of SP phrases in the specified section name
+	}
 
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of star power data

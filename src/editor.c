@@ -6132,7 +6132,10 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	stop = eof_determine_piano_roll_right_edge();	//Find the timestamp of the right visible edge of the piano roll
 
 	/* fill in window background color */
-	rectfill(window->screen, 0, 25 + 8, window->w - 1, window->h - 1, eof_color_gray);
+	if(!eof_background)
+	{	//If a background image was NOT loaded
+		rectfill(window->screen, 0, 25 + 8, window->w - 1, window->h - 1, eof_color_gray);	//Draw over the piano roll portion of the screen
+	}
 
 	/* draw the playback controls */
 	if(!eof_full_height_3d_preview)
