@@ -225,7 +225,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
 	{ d_agup_check_proc, 248, 90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
 	{ d_agup_check_proc, 16,  105, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
-	{ d_agup_check_proc, 248, 105, 184, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/Phase Shift files",NULL, NULL },
+	{ d_agup_check_proc, 248, 105, 184, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/CH/Phase Shift files",NULL, NULL },
 	{ d_agup_check_proc, 16,  120, 212, 16,  2,   23,  0,    0,      1,   0,   "Save separate Guitar Hero files",NULL, NULL },
 	{ d_agup_check_proc, 248, 120, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
 	{ d_agup_check_proc, 16,  135, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
@@ -1528,7 +1528,7 @@ int eof_menu_file_import_export_preferences(void)
 	original_rs1_export_setting = eof_write_rs_files;	//Back up this setting to track whether it is changed in the dialog
 	eof_import_export_preferences_dialog[7].flags = eof_write_rs2_files ? D_SELECTED : 0;					//Save separate Rocksmith 2 files
 	eof_import_export_preferences_dialog[8].flags = eof_write_bf_files ? D_SELECTED : 0;					//Save separate Bandfuse files
-	eof_import_export_preferences_dialog[9].flags = eof_write_fof_files ? D_SELECTED : 0;					//Save FoF/Phase Shift files
+	eof_import_export_preferences_dialog[9].flags = eof_write_fof_files ? D_SELECTED : 0;					//Save FoF/CH/Phase Shift files
 	eof_import_export_preferences_dialog[10].flags = eof_write_gh_files ? D_SELECTED : 0;					//Save Guitar Hero files
 	eof_import_export_preferences_dialog[11].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 	eof_import_export_preferences_dialog[12].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
@@ -1585,7 +1585,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[6].flags = 0;				//Save separate Rocksmith 1 files
 			eof_import_export_preferences_dialog[7].flags = D_SELECTED;		//Save separate Rocksmith 2 files
 			eof_import_export_preferences_dialog[8].flags = 0;				//Save separate Bandfuse files
-			eof_import_export_preferences_dialog[9].flags = D_SELECTED;		//Save FoF/Phase Shift files
+			eof_import_export_preferences_dialog[9].flags = D_SELECTED;		//Save FoF/CH/Phase Shift files
 			eof_import_export_preferences_dialog[10].flags = 0;				//Save Guitar Hero files
 			eof_import_export_preferences_dialog[11].flags = 0;				//Don't write Rocksmith WAV file
 			eof_import_export_preferences_dialog[12].flags = 0;				//GP import beat text as sections, markers as phrases

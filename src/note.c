@@ -1002,7 +1002,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned long notenote = 0;
 	unsigned imagenum = 0;	//Used to store the appropriate image index to use for rendering the specified note
 
-//Validate parameters
+	//Validate parameters
 	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_get_track_size(eof_song, track)))
 	{	//If an invalid track or note number was passed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)

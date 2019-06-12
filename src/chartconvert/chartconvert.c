@@ -15,7 +15,7 @@
 #endif
 
 char *midi_track_name[NUM_MIDI_TRACKS] = {"INVALID", "PART GUITAR", "PART GUITAR COOP", "PART BASS", "PART DRUMS", "PART RHYTHM", "PART KEYS", "PART GUITAR GHL", "PART BASS GHL"};
-struct MIDIevent *midi_track_events[NUM_MIDI_TRACKS] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+struct MIDIevent *midi_track_events[NUM_MIDI_TRACKS] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};	//The first element of this array is unused
 char events_reallocated[NUM_MIDI_TRACKS] = {0};
 clock_t start, end;
 
@@ -1631,7 +1631,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 	struct dbText *event_ptr;
 	struct dbNote *note_ptr;
 	struct MIDIevent *mevent_ptr;
-	unsigned long track_ctr = 0, lastdelta;
+	unsigned long track_ctr = 0, lastdelta, track_export_count;
 	unsigned long lyric_events = 0, non_lyric_events = 0;
 	int error = 0;
 	unsigned char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum)
@@ -1657,13 +1657,248 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 		return 3;
 	}
 
+	///Generate instrument track events
+	for(track_ctr = 1, track_ptr = chart->tracks; (track_ptr != NULL) && !error; track_ctr++, track_ptr = track_ptr->next)
+	{	//For each track in the linked list, unless an error has occurred
+		int midi_note_offset = 60, is_ghl = 0;
+		unsigned long ch_solo_pos = 0;	//Tracks the start position of the last Clone Hero solo event
+		char ch_solo_on = 0;			//Tracks whether a Clone Hero solo event is in progress
+		unsigned long slider_count = 0, open_strum_count = 0;	//Debugging
+
+		if(!track_ptr->tracktype)	//If this was not a track that was identified as one to import
+			continue;				//Skip it
+		if(track_ptr->tracktype >= NUM_MIDI_TRACKS)
+		{
+			(void) puts("\tLogic error:  Invalid instrument track type.");
+			error = 12;
+			break;
+		}
+
+		#ifdef CCDEBUG
+			(void) printf("\tBuilding events for track \"%s\".\n", track_ptr->trackname);
+		#endif
+
+		switch(track_ptr->difftype)
+		{
+			case 1:	//Easy difficulty
+				midi_note_offset = 60;	//Lane 1 is note 60
+				break;
+			case 2:	//Medium difficulty
+				midi_note_offset = 72;	//Lane 1 is note 72
+				break;
+			case 3:	//Hard difficulty
+				midi_note_offset = 84;	//Lane 1 is note 84
+				break;
+			case 4:	//Expert difficulty
+				midi_note_offset = 96;	//Lane 1 is note 96
+				break;
+		}
+		if((track_ctr == 7) || (track_ctr == 8))
+		{	//If the track being exported is a GHL track
+			is_ghl = 1;	//Note this
+			midi_note_offset--;	//And reflect that the first lane in this track format is one MIDI note lower, and open notes are one note lower still
+		}
+
+		///Write MIDI events to the track's linked list
+		for(note_ptr = track_ptr->notes; note_ptr != NULL && !error; note_ptr = note_ptr->next)
+		{	//For each note in the linked list, unless an error has occurred
+			unsigned char gemcolor = note_ptr->gemcolor;	//Simplify
+			unsigned long startpos, endpos;
+			int vel = 100;	//Use a velocity of 100 for notes
+
+			startpos = note_ptr->chartpos;	//Simplify
+			endpos = startpos + note_ptr->duration;
+
+			if(gemcolor == '2')
+			{	//Star power notation
+				struct dbNote *ptr;
+
+				///Look ahead to see if the star power phrase ends at another note's start position.  If so, the marker needs to be shortened to NOT include that note
+				if(note_ptr->duration > 1)
+				{	//If the star power marker is at least 2 ticks long
+					for(ptr = note_ptr->next; ptr != NULL; ptr = ptr->next)
+					{	//For notes defined after the star power marker
+						if(ptr->chartpos > endpos)
+						{	//If this and all remaining notes are outside the scope of the star power marker
+							break;	//Stop processing the notes following the star power marker
+						}
+						if(ptr->chartpos == endpos)
+						{	//If this note starts at the star power marker's end position
+							endpos--;	//Shorten the marker by one delta tick to ensure the note is outside its scope when written to MIDI
+							break;	//Stop processing the notes following the star power marker
+						}
+					}
+				}
+				error |= add_midi_event(track_ptr, startpos, 0x90, 116, vel, 0);	//Write a marker with note 116
+				error |= add_midi_event(track_ptr, endpos, 0x80, 116, vel, 0);
+			}
+			else if(gemcolor == 'S')
+			{	//Clone Hero solo start notation
+				ch_solo_pos = startpos;	//Store this until the solo end notation is parsed
+				ch_solo_on = 1;
+			}
+			else if(gemcolor == 'E')
+			{	//Clone Hero solo end notation
+				if(ch_solo_on)
+				{	//If the start of the solo was defined
+					///Write midi events for solo marker
+					error |= add_midi_event(track_ptr, ch_solo_pos, 0x90, 103, vel, 0);	//Write a marker with note 103, ranging from the 'S' start marker to this 'E' end marker
+					error |= add_midi_event(track_ptr, startpos, 0x80, 103, vel, 0);
+					ch_solo_on = 0;
+				}
+			}
+			else if(gemcolor == 5)
+			{	//Toggle HOPO marker (this was already processed by set_hopo_status() )
+			}
+			else if(gemcolor == 6)
+			{	//Slider marker (this was already processed by set_slider_status(), the sliders will be written later on)
+			}
+			else if(gemcolor == 7)
+			{	//Open strum
+				if(!track_ptr->isdrums)
+				{	//If this isn't a drum track
+					if(is_ghl)
+					{	//GHL tracks define open notes as one note below lane 1
+						error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset - 1, vel, 0);	//Write as 1 note below lane 1
+						error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset - 1, vel, 0);
+					}
+					else
+					{	//Other tracks use a lane 1 gem and a Sysex marker
+						error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
+						error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 0, vel, 0);
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = track_ptr->difftype - 1;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 1;	//Store the phrase ID (1 = Open Strum Bass)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						error |= add_midi_sysex_event(track_ptr, startpos, 8, phase_shift_sysex_phrase, 1);	//Write the custom open bass phrase start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						error |= add_midi_sysex_event(track_ptr, endpos, 8, phase_shift_sysex_phrase, 0);	//Write the custom open bass phrase stop marker
+						open_strum_count++;
+					}
+				}
+			}
+			else
+			{	//A note instead of a marker
+				int note = 0;
+
+				if(is_ghl)
+				{	//If this is a GHL track, there are special mappings
+					if(gemcolor == 0)
+						note = 3;		//W1 is written as lane 4
+					else if(gemcolor == 1)
+						note = 4;		//W2 is written as lane 5
+					else if(gemcolor == 2)
+						note = 5;		//W3 is written as lane 6
+					else if(gemcolor == 3)
+						note = 0;		//B1 is written as lane 1
+					else if(gemcolor == 4)
+						note = 1;		//B2 is written as lane 2
+					else if(gemcolor == 8)
+						note = 2;		//B3 is written as lane 3
+				}
+				else
+				{	//Normal lane numbering
+					note = gemcolor;
+				}
+
+				error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + note, vel, 0);	//Write a gem for the associated lane
+				error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + note, vel, 0);
+			}
+
+			//Write forced HOPO marker if applicable
+			if(note_ptr->is_hopo)
+			{	//Write a forced HOPO marker
+				if(is_ghl)
+				{	//If this is a GHL track, forced HOPO is written one note above lane 6
+					error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 6, vel, 0);
+					error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 6, vel, 0);
+				}
+				else
+				{	//Otherwise it is written one note above lane 5
+					error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 5, vel, 0);
+					error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 5, vel, 0);
+				}
+			}
+			else
+			{	//Write a forced strum marker
+				if(is_ghl)
+				{	//If this is a GHL track, forced strum is written two notes above lane 6
+					error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 7, vel, 0);
+					error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 7, vel, 0);
+				}
+				else
+				{	//Otherwise it is written two notes above lane 5
+					error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 6, vel, 0);
+					error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 6, vel, 0);
+				}
+			}
+		}//For each note in the linked list, unless an error has occurred
+
+		//Write slider phrases
+		if(!track_ptr->isdrums)
+		{	//If this isn't a drum track
+			unsigned long start, end;
+			char slider_on = 0;
+
+			for(note_ptr = track_ptr->notes; note_ptr != NULL && !error; note_ptr = note_ptr->next)
+			{	//For each note in the linked list, unless an error has occurred
+				if(!note_ptr->is_gem)
+				{	//If this is a status marker instead of a note
+					continue;	//Skip it
+				}
+				if(note_ptr->is_slider)
+				{	//If this note is a slider note
+					if(!slider_on)
+					{	//If a set of contiguous slider notes is not already being tracked
+						slider_on = 1;
+						start = note_ptr->chartpos;			//Track the position of the first of potential contiguous slider notes
+						end = start + note_ptr->duration;	//And the end position
+					}
+					else
+					{	//There are other slider notes in this contiguous set
+						end = note_ptr->chartpos + note_ptr->duration;	//Update the end position
+					}
+				}
+				else
+				{	//This is not a slider note
+					if(slider_on)
+					{	//But one or more slider notes were just parsed
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = 0xFF;	//Store the difficulty ID (0xFF = all difficulties)
+						phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						error |= add_midi_sysex_event(track_ptr, start, 8, phase_shift_sysex_phrase, 1);	//Write the custom slider start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						error |= add_midi_sysex_event(track_ptr, end, 8, phase_shift_sysex_phrase, 0);	//Write the custom slider stop marker
+						slider_count++;
+						slider_on = 0;	//Track that a run of slider notes is not in progress
+					}
+				}
+			}
+		}
+
+		#ifdef CCDEBUG
+			if(slider_count)
+				(void) printf("\t\t%lu slider Sysex phrases written.\n", slider_count);
+			if(open_strum_count)
+				(void) printf("\t\t%lu open strum Sysex phrases written.\n", open_strum_count);
+		#endif
+	}//For each track in the linked list, unless an error has occurred
+
+	#ifdef CCDEBUG
+		(void) puts("\tSorting MIDI events");
+	#endif
+	qsort_midi_events(chart);	//Sort all of the events that were added to the lists in midi_track_events[]
+
 	///Count the number of tracks to write
-	for(track_ctr = 0, track_ptr = chart->tracks; track_ptr != NULL; track_ptr = track_ptr->next)
-	{	//For each track in the linked list
-		if(track_ptr->tracktype)	//If this was a track that was identified as one to import
-			track_ctr++;
+	//Count the number of populated instrument tracks
+	track_export_count = 0;
+	for(track_ctr = 1; track_ctr < NUM_MIDI_TRACKS; track_ctr++)
+	{	//For each of the instrument tracks that may have been built
+		if(midi_track_events[track_ctr])	//If there was content imported for this instrument track
+			track_export_count++;
 	}
-	track_ctr++;	//Add one for the mandatory tempo track
+	track_export_count++;	//Add one for the mandatory tempo track
 
 	//Count the number of lyric events and non lyric events
 	if(chart->events)
@@ -1690,11 +1925,11 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 	}
 	if(lyric_events)
 	{	//If there are any lyric events to write
-		track_ctr++;	//Add one for the PART VOCALS track
+		track_export_count++;	//Add one for the PART VOCALS track
 	}
 	if(non_lyric_events)
 	{	//If there are non lyric events to write
-		track_ctr++;	//Add one for the EVENTS track
+		track_export_count++;	//Add one for the EVENTS track
 	}
 
 	///Write MIDI header
@@ -1702,7 +1937,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 		error = 4;
 	error |= write_dword_be(6, outf);					//Write the MIDI header chunk size
 	error |= write_word_be(1, outf);					//Write a MIDI format of 1
-	error |= write_word_be(track_ctr, outf);			//Write the number of tracks
+	error |= write_word_be(track_export_count, outf);	//Write the number of tracks
 	error |= write_word_be(chart->resolution, outf);	//Write the time division (number of ticks per quarter note)
 	if(error)
 	{	//If any of that failed to be written
@@ -1960,239 +2195,6 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 			return 11;
 		}
 	}//If there is at least one lyric event to write
-
-	///Generate instrument track events
-	for(track_ctr = 1, track_ptr = chart->tracks; (track_ptr != NULL) && !error; track_ctr++, track_ptr = track_ptr->next)
-	{	//For each track in the linked list, unless an error has occurred
-		int midi_note_offset = 60, is_ghl = 0;
-		unsigned long ch_solo_pos = 0;	//Tracks the start position of the last Clone Hero solo event
-		char ch_solo_on = 0;			//Tracks whether a Clone Hero solo event is in progress
-		unsigned long slider_count = 0, open_strum_count = 0;	//Debugging
-
-		if(!track_ptr->tracktype)	//If this was not a track that was identified as one to import
-			continue;				//Skip it
-		if(track_ptr->tracktype >= NUM_MIDI_TRACKS)
-		{
-			(void) puts("\tLogic error:  Invalid instrument track type.");
-			error = 12;
-			break;
-		}
-
-		#ifdef CCDEBUG
-			(void) printf("\tBuilding events for track \"%s\".\n", track_ptr->trackname);
-		#endif
-
-		switch(track_ptr->difftype)
-		{
-			case 1:	//Easy difficulty
-				midi_note_offset = 60;	//Lane 1 is note 60
-				break;
-			case 2:	//Medium difficulty
-				midi_note_offset = 72;	//Lane 1 is note 72
-				break;
-			case 3:	//Hard difficulty
-				midi_note_offset = 84;	//Lane 1 is note 84
-				break;
-			case 4:	//Expert difficulty
-				midi_note_offset = 96;	//Lane 1 is note 96
-				break;
-		}
-		if((track_ctr == 7) || (track_ctr == 8))
-		{	//If the track being exported is a GHL track
-			is_ghl = 1;	//Note this
-			midi_note_offset--;	//And reflect that the first lane in this track format is one MIDI note lower, and open notes are one note lower still
-		}
-
-		///Write MIDI events to the track's linked list
-		for(note_ptr = track_ptr->notes; note_ptr != NULL && !error; note_ptr = note_ptr->next)
-		{	//For each note in the linked list, unless an error has occurred
-			unsigned char gemcolor = note_ptr->gemcolor;	//Simplify
-			unsigned long startpos, endpos;
-			int vel = 100;	//Use a velocity of 100 for notes
-
-			startpos = note_ptr->chartpos;	//Simplify
-			endpos = startpos + note_ptr->duration;
-
-			if(gemcolor == '2')
-			{	//Star power notation
-				struct dbNote *ptr;
-
-				///Look ahead to see if the star power phrase ends at another note's start position.  If so, the marker needs to be shortened to NOT include that note
-				if(note_ptr->duration > 1)
-				{	//If the star power marker is at least 2 ticks long
-					for(ptr = note_ptr->next; ptr != NULL; ptr = ptr->next)
-					{	//For notes defined after the star power marker
-						if(ptr->chartpos > endpos)
-						{	//If this and all remaining notes are outside the scope of the star power marker
-							break;	//Stop processing the notes following the star power marker
-						}
-						if(ptr->chartpos == endpos)
-						{	//If this note starts at the star power marker's end position
-							endpos--;	//Shorten the marker by one delta tick to ensure the note is outside its scope when written to MIDI
-							break;	//Stop processing the notes following the star power marker
-						}
-					}
-				}
-				error |= add_midi_event(track_ptr, startpos, 0x90, 116, vel, 0);	//Write a marker with note 116
-				error |= add_midi_event(track_ptr, endpos, 0x80, 116, vel, 0);
-			}
-			else if(gemcolor == 'S')
-			{	//Clone Hero solo start notation
-				ch_solo_pos = startpos;	//Store this until the solo end notation is parsed
-				ch_solo_on = 1;
-			}
-			else if(gemcolor == 'E')
-			{	//Clone Hero solo end notation
-				if(ch_solo_on)
-				{	//If the start of the solo was defined
-					///Write midi events for solo marker
-					error |= add_midi_event(track_ptr, ch_solo_pos, 0x90, 103, vel, 0);	//Write a marker with note 103, ranging from the 'S' start marker to this 'E' end marker
-					error |= add_midi_event(track_ptr, startpos, 0x80, 103, vel, 0);
-					ch_solo_on = 0;
-				}
-			}
-			else if(gemcolor == 5)
-			{	//Toggle HOPO marker (this was already processed by set_hopo_status() )
-			}
-			else if(gemcolor == 6)
-			{	//Slider marker (this was already processed by set_slider_status(), the sliders will be written later on)
-			}
-			else if(gemcolor == 7)
-			{	//Open strum
-				if(!track_ptr->isdrums)
-				{	//If this isn't a drum track
-					if(is_ghl)
-					{	//GHL tracks define open notes as one note below lane 1
-						error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset - 1, vel, 0);	//Write as 1 note below lane 1
-						error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset - 1, vel, 0);
-					}
-					else
-					{	//Other tracks use a lane 1 gem and a Sysex marker
-						error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
-						error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 0, vel, 0);
-						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-						phase_shift_sysex_phrase[4] = track_ptr->difftype - 1;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-						phase_shift_sysex_phrase[5] = 1;	//Store the phrase ID (1 = Open Strum Bass)
-						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						error |= add_midi_sysex_event(track_ptr, startpos, 8, phase_shift_sysex_phrase, 1);	//Write the custom open bass phrase start marker
-						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						error |= add_midi_sysex_event(track_ptr, endpos, 8, phase_shift_sysex_phrase, 0);	//Write the custom open bass phrase stop marker
-						open_strum_count++;
-					}
-				}
-			}
-			else
-			{	//A note instead of a marker
-				int note = 0;
-
-				if(is_ghl)
-				{	//If this is a GHL track, there are special mappings
-					if(gemcolor == 0)
-						note = 3;		//W1 is written as lane 4
-					else if(gemcolor == 1)
-						note = 4;		//W2 is written as lane 5
-					else if(gemcolor == 2)
-						note = 5;		//W3 is written as lane 6
-					else if(gemcolor == 3)
-						note = 0;		//B1 is written as lane 1
-					else if(gemcolor == 4)
-						note = 1;		//B2 is written as lane 2
-					else if(gemcolor == 8)
-						note = 2;		//B3 is written as lane 3
-				}
-				else
-				{	//Normal lane numbering
-					note = gemcolor;
-				}
-
-				error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + note, vel, 0);	//Write a gem for the associated lane
-				error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + note, vel, 0);
-			}
-
-			//Write forced HOPO marker if applicable
-			if(note_ptr->is_hopo)
-			{	//Write a forced HOPO marker
-				if(is_ghl)
-				{	//If this is a GHL track, forced HOPO is written one note above lane 6
-					error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 6, vel, 0);
-					error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 6, vel, 0);
-				}
-				else
-				{	//Otherwise it is written one note above lane 5
-					error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 5, vel, 0);
-					error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 5, vel, 0);
-				}
-			}
-			else
-			{	//Write a forced strum marker
-				if(is_ghl)
-				{	//If this is a GHL track, forced strum is written two notes above lane 6
-					error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 7, vel, 0);
-					error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 7, vel, 0);
-				}
-				else
-				{	//Otherwise it is written two notes above lane 5
-					error |= add_midi_event(track_ptr, startpos, 0x90, midi_note_offset + 6, vel, 0);
-					error |= add_midi_event(track_ptr, endpos, 0x80, midi_note_offset + 6, vel, 0);
-				}
-			}
-		}//For each note in the linked list, unless an error has occurred
-
-		//Write slider phrases
-		if(!track_ptr->isdrums)
-		{	//If this isn't a drum track
-			unsigned long start, end;
-			char slider_on = 0;
-
-			for(note_ptr = track_ptr->notes; note_ptr != NULL && !error; note_ptr = note_ptr->next)
-			{	//For each note in the linked list, unless an error has occurred
-				if(!note_ptr->is_gem)
-				{	//If this is a status marker instead of a note
-					continue;	//Skip it
-				}
-				if(note_ptr->is_slider)
-				{	//If this note is a slider note
-					if(!slider_on)
-					{	//If a set of contiguous slider notes is not already being tracked
-						slider_on = 1;
-						start = note_ptr->chartpos;			//Track the position of the first of potential contiguous slider notes
-						end = start + note_ptr->duration;	//And the end position
-					}
-					else
-					{	//There are other slider notes in this contiguous set
-						end = note_ptr->chartpos + note_ptr->duration;	//Update the end position
-					}
-				}
-				else
-				{	//This is not a slider note
-					if(slider_on)
-					{	//But one or more slider notes were just parsed
-						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-						phase_shift_sysex_phrase[4] = 0xFF;	//Store the difficulty ID (0xFF = all difficulties)
-						phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
-						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						error |= add_midi_sysex_event(track_ptr, start, 8, phase_shift_sysex_phrase, 1);	//Write the custom slider start marker
-						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						error |= add_midi_sysex_event(track_ptr, end, 8, phase_shift_sysex_phrase, 0);	//Write the custom slider stop marker
-						slider_count++;
-						slider_on = 0;	//Track that a run of slider notes is not in progress
-					}
-				}
-			}
-		}
-
-		#ifdef CCDEBUG
-			if(slider_count)
-				(void) printf("\t\t%lu slider Sysex phrases written.\n", slider_count);
-			if(open_strum_count)
-				(void) printf("\t\t%lu open strum Sysex phrases written.\n", open_strum_count);
-		#endif
-	}//For each track in the linked list, unless an error has occurred
-
-	#ifdef CCDEBUG
-		(void) puts("\tSorting MIDI events");
-	#endif
-	qsort_midi_events(chart);	//Sort all of the events that were added to the lists in midi_track_events[]
 
 	///Create and write instrument tracks
 	for(track_ctr = 1; track_ctr < NUM_MIDI_TRACKS; track_ctr++)
