@@ -63,6 +63,7 @@ struct dbTrack
 	struct MIDIevent *events;	//The linked list of MIDI events created during MIDI export
 	char isdrums;				//Nonzero if it is a drums track, 1 reflects the normal drum track and 2 reflects the double drums track
 	struct dbTrack *next;
+	char notes_reallocated;		//Set to nonzero if the notes linked list was rebuilt into a single allocated chunk of memory for quicksorting, and will only need one call to free()
 
 	///Remove these if found to be unused
 	char isguitar;				//Nonzero if it is a guitar track, set to 2 if it is a GHL guitar track
@@ -112,8 +113,9 @@ char *truncate_string(char *str, char dealloc);
 	//if dealloc is nonzero, str is de-allocated, so the calling function can overwrite the str pointer with the return value
 	//Returns NULL on error
 void sort_chart(struct FeedbackChart *chart);
-	//Performs a bubble sort of the specified chart's linked lists, to ensure they will export to MIDI properly
-	//Bubble sort isn't very efficient, but all notes are expected to be defined in order anyway so it shouldn't matter for properly made charts
+	//Performs a bubble sort of the specified chart's anchor and event linked lists, to ensure they will export to MIDI properly
+	//As long as the memory for it can be allocated, each track's notes linked list is reallocated into a static array and is quicksorted
+	// If that memory can't be allocated, the extremely slower bubble sort is used to sort the notes
 int should_swap_events(struct MIDIevent *this_ptr, struct MIDIevent *next_ptr);
 	//Compares the two MIDI events and returns nonzero if next_ptr should sort before this_ptr, used by insertion_sort_midi_events(()
 	//Returns zero on error
@@ -123,6 +125,7 @@ void insertion_sort_midi_events(struct FeedbackChart *chart);
 	//The sort algorithm is optimized for mostly-sorted data that can be appended to the end of the sorted list that is created
 void qsort_midi_events(struct FeedbackChart *chart);	//Optimization building a static array and quicksorting it
 int qsort_midi_events_comparitor(const void * e1, const void * e2);	//A quicksort comparitor based on insertion_sort_midi_events(()
+int qsort_notes_comparitor(const void * e1, const void * e2);	//A quicksort comparitor to sort dbNote structures
 void set_hopo_status(struct FeedbackChart *chart);
 	//Examines all tracks in the specified chart and sets the is_hopo variable where applicable for each note
 	//First sets HOPO status based on note threshold, then inverts the HOPO status for all notes within toggle HOPO markers

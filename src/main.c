@@ -3592,7 +3592,7 @@ void eof_render_3d_window(void)
 
 		if(tr < 0)
 		{	//If eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
-			unsigned long i2, lastpos = 0, thisend;
+			unsigned long i2, lastpos = 0, thisend = 0;
 
 			//Find the latest end position of all prior notes
 			for(i2 = 0; i2 < i; i2++)

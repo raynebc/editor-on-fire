@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -O2 -funroll-loops -mwindows -static-libgcc -static-libstdc++ -flto -Ialogg/include -DEOF_BUILD
+CFLAGS = -Wall -O2 -funroll-loops -mwindows -static-libgcc -static-libstdc++ -flto -Ialogg/include -static
 CXXFLAGS = $(CFLAGS)
 LIBS = -lalleg44.dll
 OFILES = chartconvert.o

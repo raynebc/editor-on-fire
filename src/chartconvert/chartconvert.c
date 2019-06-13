@@ -177,7 +177,6 @@ int main(int argc, char *argv[])
 	(void) puts("Condensing slider phrases.");
 	set_slider_status(chart);
 
-
 	///Export
 	(void) printf("Exporting file \"%s\".\n", output_filename);
 	if(export_midi(output_filename, chart))
@@ -1060,11 +1059,18 @@ void destroy_feedback_chart(struct FeedbackChart *ptr)
 	{
 		trackptr = ptr->tracks->next;	//Store link to next instrument track
 
-		while(ptr->tracks->notes != NULL)
-		{
-			noteptr = ptr->tracks->notes->next;	//Store link to next note
-			free(ptr->tracks->notes);			//Free current note
-			ptr->tracks->notes = noteptr;		//Point to next note
+		if(ptr->tracks->notes_reallocated)
+		{	//If the entire linked list was rebuilt into a single allocated chunk of memory
+			free(ptr->tracks->notes);	//Only one call to free() is needed for the links
+		}
+		else
+		{	//Otherwise each link needs to be freed individually
+			while(ptr->tracks->notes != NULL)
+			{
+				noteptr = ptr->tracks->notes->next;	//Store link to next note
+				free(ptr->tracks->notes);			//Free current note
+				ptr->tracks->notes = noteptr;		//Point to next note
+			}
 		}
 
 		free(ptr->tracks->trackname);	//Free track name
@@ -2345,7 +2351,8 @@ void sort_chart(struct FeedbackChart *chart)
 	struct dbAnchor *anchor_ptr, *prev_anchor_ptr;
 	struct dbText *text_ptr, *prev_text_ptr;
 	struct dbTrack *track_ptr;
-	struct dbNote *note_ptr, *prev_note_ptr;
+	struct dbNote *note_ptr, *prev_note_ptr, *next_note_ptr, *sorted_list;
+	unsigned long pre_count, index;
 
 	if(!chart)
 		return;	//Invalid parameter
@@ -2362,7 +2369,6 @@ void sort_chart(struct FeedbackChart *chart)
 				#ifdef CCDEBUG
 					(void) printf("\tSorting anchor (Delta pos = %lu, tempo = %lu, TS = %u/%u, usec = %lu) before anchor (Delta pos = %lu, tempo = %lu, TS = %u/%u, usec = %lu).\n", anchor_ptr->chartpos, anchor_ptr->BPM, anchor_ptr->TSN, anchor_ptr->TSD, anchor_ptr->usec, anchor_ptr->next->chartpos, anchor_ptr->next->BPM, anchor_ptr->next->TSN, anchor_ptr->next->TSD, anchor_ptr->next->usec);
 				#endif
-
 				this_ptr->next = next_ptr->next;
 				next_ptr->next = this_ptr;
 				if(prev_anchor_ptr == NULL)
@@ -2373,7 +2379,7 @@ void sort_chart(struct FeedbackChart *chart)
 				{
 					prev_anchor_ptr->next = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
 				}
-				sorted= 0;
+				sorted = 0;
 				break;	//Restart the for loop
 			}
 			prev_anchor_ptr = anchor_ptr;
@@ -2416,45 +2422,85 @@ void sort_chart(struct FeedbackChart *chart)
 		#ifdef CCDEBUG
 			(void) printf("\tSorting track %s.\n", track_ptr->trackname);
 		#endif
-		//Sort notes
-		do{
-			sorted = 1;
-			for(note_ptr = track_ptr->notes, prev_note_ptr = NULL; note_ptr != NULL; note_ptr = note_ptr->next)
+
+		//Rebuild the track's notes linked list into a static array so it can be quicksorted
+		for(note_ptr = track_ptr->notes, pre_count = 0; note_ptr != NULL; note_ptr = note_ptr->next, pre_count++);	//Count the number of notes in the linked list
+		if(pre_count < 2)	//If there aren't at least two links in the list
+			continue;		//There's no need to sort it
+
+		sorted_list = malloc(sizeof(struct dbNote) * pre_count);	//Allocate enough memory to build a static array of note structures for this track
+		if(sorted_list)
+		{	//If it was allocated
+			track_ptr->notes_reallocated = 1;	//Track that this linked list will require only a single call to free()
+
+			//Build the event array and quicksort it
+			for(note_ptr = track_ptr->notes, index = 0; note_ptr != NULL; note_ptr = note_ptr->next, index++)
 			{	//For each note in the linked list
-				if(note_ptr->next)
-				{	//If there's another note and it should sort before this one
-					int swap = 0;
-
-					if(note_ptr->next->chartpos < note_ptr->chartpos)
-					{	//If the next note occurs before this note
-						swap = 1;
-					}
-					if((note_ptr->next->chartpos == note_ptr->chartpos) && (note_ptr->next->gemcolor > note_ptr->gemcolor))
-					{	//If the two notes have the same position, but the next one has a higher lane (to help reliably sort toggle HOPO markers before the gems they affect, suiting a singly linked list)
-						swap = 1;
-					}
-					if(swap)
-					{
-						struct dbNote *this_ptr = note_ptr, *next_ptr = note_ptr->next;
-
-						this_ptr->next = next_ptr->next;
-						next_ptr->next = this_ptr;
-						if(prev_note_ptr == NULL)
-						{	//If the head link of the list was swapped
-							track_ptr->notes = next_ptr;	//Update the linked list pointer in the track structure
-						}
-						else
-						{
-							prev_note_ptr->next = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
-						}
-						sorted = 0;
-						break;	//Restart the for loop
-					}
-				}
-				prev_note_ptr = note_ptr;
+				memcpy(&sorted_list[index], note_ptr, sizeof(struct dbNote));	//Copy it to the static array
 			}
-		}while(!sorted);
-	}
+			qsort(sorted_list, (size_t)pre_count, sizeof(struct dbNote), qsort_notes_comparitor);	//Quicksort the static array
+
+			//Destroy the old linked list
+			note_ptr = track_ptr->notes;
+			while(note_ptr != NULL)
+			{
+				next_note_ptr = note_ptr->next;	//Store the address of the next link
+				free(note_ptr);					//Free this link
+				note_ptr = next_note_ptr;		//Point to next link
+			}
+
+			//Updated the sorted array's pointers to make it a proper linked list
+			for(index = 0; index + 1 < pre_count; index++)
+			{	//For each element in the event array before the last one
+				sorted_list[index].next = &sorted_list[index + 1];
+			}
+			sorted_list[pre_count - 1].next = NULL;	//The final link in the list always points forward to NULL
+			track_ptr->notes = sorted_list;
+		}
+		else
+		{	//Perform the much slower bubblesort
+			(void) puts("\t\t\tMemory allocation failed, falling back to slower note sort (deal with it).");
+
+			//Bubble sort notes
+			do{
+				sorted = 1;
+				for(note_ptr = track_ptr->notes, prev_note_ptr = NULL; note_ptr != NULL; note_ptr = note_ptr->next)
+				{	//For each note in the linked list
+					if(note_ptr->next)
+					{	//If there's another note and it should sort before this one
+						int swap = 0;
+
+						if(note_ptr->next->chartpos < note_ptr->chartpos)
+						{	//If the next note occurs before this note
+							swap = 1;
+						}
+						if((note_ptr->next->chartpos == note_ptr->chartpos) && (note_ptr->next->gemcolor > note_ptr->gemcolor))
+						{	//If the two notes have the same position, but the next one has a higher lane (to help reliably sort toggle HOPO markers before the gems they affect, suiting a singly linked list)
+							swap = 1;
+						}
+						if(swap)
+						{
+							struct dbNote *this_ptr = note_ptr, *next_ptr = note_ptr->next;
+
+							this_ptr->next = next_ptr->next;
+							next_ptr->next = this_ptr;
+							if(prev_note_ptr == NULL)
+							{	//If the head link of the list was swapped
+								track_ptr->notes = next_ptr;	//Update the linked list pointer in the track structure
+							}
+							else
+							{
+								prev_note_ptr->next = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
+							}
+							sorted = 0;
+							break;	//Restart the for loop
+						}
+					}
+					prev_note_ptr = note_ptr;
+				}
+			}while(!sorted);
+		}//Perform the much slower bubblesort
+	}//For each track
 }
 
 int write_string_meta_event(unsigned char type, const char *str, PACKFILE *outf)
@@ -3123,6 +3169,39 @@ int qsort_midi_events_comparitor(const void * e1, const void * e2)
 		{	//If this event is a note off and the next event is a note on
 			return -1;	//This is the correct order
 		}
+	}
+
+	return 0;	//If no sort order has been determined by now, the sorting priority for these events is considered equal
+}
+
+int qsort_notes_comparitor(const void * e1, const void * e2)
+{
+	const struct dbNote *this_ptr = e1;
+	const struct dbNote *next_ptr = e2;
+
+	if(!this_ptr || !next_ptr)
+	{
+		return 0;	//Invalid parameters
+	}
+
+	//Chronological order takes precedence in sorting
+	if(next_ptr->chartpos < this_ptr->chartpos)
+	{	//If the next note occurs before this note
+		return 1;
+	}
+	if(this_ptr->chartpos < next_ptr->chartpos)
+	{	//This note occurs before the next note
+		return -1;	//This is the correct order
+	}
+
+	//Lane number (sort higher before lower, to help reliably sort toggle HOPO markers before the gems they affect)
+	if(next_ptr->gemcolor > this_ptr->gemcolor)
+	{	//If the next note has a higher lane than this note
+		return 1;
+	}
+	if(this_ptr->gemcolor > next_ptr->gemcolor)
+	{	//If this note has a higher lane than the next note
+		return -1;
 	}
 
 	return 0;	//If no sort order has been determined by now, the sorting priority for these events is considered equal
