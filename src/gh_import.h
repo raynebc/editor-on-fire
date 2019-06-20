@@ -163,5 +163,7 @@ void eof_gh_import_sp_cleanup(EOF_SONG *sp);
 	//Examines the star power phrases in each of the specified chart's tracks
 	//For any that are at least 2 ms long AND end at the start timestamp of a note in that track, the phrase is shortened by 1ms
 	//This reflects how star power phrases are handled in Guitar Hero and Feedback
+void eof_gh_import_slider_cleanup(EOF_SONG *sp);
+	//Similar to eof_gh_import_sp_cleanup(), but operates on the chart's slider phrases
 
 #endif

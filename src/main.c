@@ -389,6 +389,7 @@ eof_color eof_lane_1_struct, eof_lane_2_struct, eof_lane_3_struct, eof_lane_4_st
 
 EOF_SCREEN_LAYOUT eof_screen_layout;
 BITMAP * eof_screen = NULL;
+BITMAP * eof_screen2 = NULL;						//Used to render the screen when x2 zoom is used, so the menu can render on top of it at normal scaling
 unsigned long eof_screen_width, eof_screen_height;	//Used to track the EOF window size, for when the 3D projection is altered
 unsigned long eof_screen_width_default;				//Stores the default width based on the current window height
 int eof_vanish_x = 0, eof_vanish_y = 0;				//Used to allow the user to control the vanishing point for the 3D preview
@@ -858,6 +859,11 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		destroy_bitmap(eof_screen);
 		eof_screen = NULL;
 	}
+	if(eof_screen2)
+	{
+		destroy_bitmap(eof_screen2);
+		eof_screen2 = NULL;
+	}
 
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect
@@ -1003,6 +1009,12 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	eof_screen = create_bitmap(eof_screen_width, eof_screen_height);
 	if(!eof_screen)
 	{
+		return 0;
+	}
+	eof_screen2 = create_bitmap(eof_screen_width * 2, eof_screen_height * 2);
+	if(!eof_screen2)
+	{
+		destroy_bitmap(eof_screen);
 		return 0;
 	}
 	if(eof_full_height_3d_preview)
@@ -1255,8 +1267,9 @@ long eof_get_previous_note(long cnote, int function)
 int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note, double threshold)
 {
 	long pnote;
-	unsigned long thispos, prevpos;
+	unsigned long thispos, prevpos, pbeat;
 	double distance;
+	unsigned den = 4;
 
 	if(!sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
 		return 0;	//Invalid parameters
@@ -1282,11 +1295,26 @@ int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	if(thispos < prevpos)
 		return 0;	//Notes out of order
 
-	distance = eof_get_distance_in_beats(sp, prevpos, thispos);
+	//Get the distance between the two notes, measured in quarter notes
+	distance = eof_get_distance_in_beats(sp, prevpos, thispos);	//Get the distance measured in beats
 	if(distance == 0.0)
 	{	//If the distance between the two couldn't be determined
 		return 0;
 	}
+	pbeat = eof_get_beat(sp, prevpos);
+	if(pbeat >= sp->beats)
+	{	//If the beat the previous note is in couldn't be identified
+		return 0;
+	}
+	if(!eof_get_effective_ts(sp, NULL, &den, pbeat, 0))
+	{	//If the time signature's beat unit in effect on the previous note's beat couldn't be determined
+		return 0;
+	}
+	if(den != 4)
+	{	//If the previous note isn't in #/4 meter
+		distance = (distance * 4) / den;	//Scale the threshold to account for time signature so that it reflects quarter note length instead of beat length
+	}
+
 	if(distance  < threshold)
 	{	//If the distance between the the two notes is below the threshold
 		return 1;	//Auto HOPO
@@ -3820,20 +3848,21 @@ void eof_render(void)
 		DoneVSync();
 	}
 	if(eof_screen_zoom)
-	{	//If x2 zoom is enabled, stretch blit the menu to eof_screen, and then stretch blit that to screen
+	{	//If x2 zoom is enabled, stretch blit the menu to eof_screen, blit that to eof_screen2, blit the menu to eof_screen2 and then stretch blit that to screen
 		//Blitting straight to screen causes flickery menus
 		//Drawing the menu half size and then stretching it to full size makes it unreadable, but that may be better than not rendering them at all
 		//The highest quality (and most memory wasteful) solution would require another large bitmap to render the x2 program window and then the x1 menus on top, which would then be blit to screen
 		eof_log("\tPerforming x2 blit.", 3);
+		stretch_blit(eof_screen, eof_screen2, 0, 0, eof_screen_width, eof_screen_height, 0, 0, SCREEN_W, SCREEN_H);	//Stretch blit the screen to another bitmap
 		if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
 		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
-			stretch_blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU_FULL]->w, eof_image[EOF_IMAGE_MENU_FULL]->h, 0, 0, eof_image[EOF_IMAGE_MENU_FULL]->w / 2, eof_image[EOF_IMAGE_MENU_FULL]->h / 2);
+			blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);			//Normal blit the menu to that latter bitmap
 		}
 		else
 		{
-			stretch_blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU_NO_NOTE]->w, eof_image[EOF_IMAGE_MENU_NO_NOTE]->h, 0, 0, eof_image[EOF_IMAGE_MENU_NO_NOTE]->w / 2, eof_image[EOF_IMAGE_MENU_NO_NOTE]->h / 2);
+			blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 		}
-		stretch_blit(eof_screen, screen, 0, 0, eof_screen_width, eof_screen_height, 0, 0, SCREEN_W, SCREEN_H);
+		blit(eof_screen2, screen, 0, 0, 0, 0, eof_screen2->w, eof_screen2->h);	//Blit that latter bitmap to screen
 	}
 	else
 	{

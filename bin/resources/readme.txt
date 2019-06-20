@@ -1,4 +1,4 @@
-You can save files in here to be used instead of default graphics that EOF keeps in eof.dat.
+You can save files in here to be used instead of default files that EOF keeps in eof.dat.
 
 
 Graphics:  EOF was designed with the gem graphics being 48x48, but other sizes may be suitable as long as you save the images in PCX format.  "Selected" means that the note is selected, is being moused over or is the note underneath the seek line during chart playback.  File names are not case-sensitive in Windows, but they are in Linux and probably also in Mac OS:

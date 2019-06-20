@@ -27,7 +27,7 @@ unsigned long eof_song_aux_track = EOF_TRACK_KEYS;	//The effective track to whic
 int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will prompt user whether the chart is from Warriors of Rock,
 								// which defines the bits in a different order than Smash Hits
 int eof_gh_import_ghost_drum_notice = 0;	//Will be set to nonzero if the user was notified that ghost notes were detected and highlighted during GH import
-int eof_gh_import_threshold_prompt = 0;	//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 as the HOPO threshold
+int eof_gh_import_threshold_prompt = 0;	//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 quarter notes as the HOPO threshold
 
 #define GH_IMPORT_DEBUG
 
@@ -1260,7 +1260,8 @@ EOF_SONG * eof_import_gh(const char * fn)
 		unsigned long tracknum;
 		unsigned long ctr;
 
-		eof_gh_import_sp_cleanup(sp);	//Shorten any star power phrases that end on a note's start position, so the latter isn't included in the phrase (GH uses this logic)
+		eof_gh_import_sp_cleanup(sp);		//Shorten any star power phrases that end on a note's start position, so the latter isn't included in the phrase (GH uses this logic)
+		eof_gh_import_slider_cleanup(sp);	//Likewise, shorten slider (tap) phrases
 
 		if(!eof_disable_backups)
 		{	//If the user did not disable automatic backups
@@ -1852,7 +1853,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			numnotes = headersize / 3;
 			if(!eof_gh_import_threshold_prompt)
 			{	//If the user wasn't prompted to select a HOPO threshold yet during this import
-				eof_gh_import_threshold_prompt = alert("GH3/GHA charts can have one of two HOPO thresholds.", "Which should EOF use?", NULL, "66/192 beat", "100/192 beat", 0, 0);
+				eof_gh_import_threshold_prompt = alert("GH3/GHA charts can have one of two HOPO thresholds.", "Which should EOF use?", NULL, "66/192 qnote", "100/192 qnote", 0, 0);
 			}
 			if(eof_gh_import_threshold_prompt == 2)
 			{	//If the user selected the 100/192 threshold now or earlier in the import
@@ -3709,7 +3710,7 @@ int eof_import_array_txt(const char *filename)
 		{
 			int selection;
 
-			selection = alert("GH3/GHA charts can have one of two HOPO thresholds.", "Which should EOF use?", NULL, "66/192 beat", "100/192 beat", 0, 0);
+			selection = alert("GH3/GHA charts can have one of two HOPO thresholds.", "Which should EOF use?", NULL, "66/192 qnote", "100/192 qnote", 0, 0);
 			if(selection == 2)
 			{	//If the user selected the 100/192 threshold
 				threshold = 100.0 / 192.0;
@@ -4035,6 +4036,37 @@ void eof_gh_import_sp_cleanup(EOF_SONG *sp)
 					{	//If the note begins at the end position of the star power path
 						ptr->end_pos--;	//Truncate the path by 1ms
 						break;	//Stop checking notes for this star power path
+					}
+				}
+			}
+		}
+	}
+}
+
+void eof_gh_import_slider_cleanup(EOF_SONG *sp)
+{
+	unsigned long track, path, numpaths, note, numnotes;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp)
+		return;	//Invalid parameter
+
+	for(track = 1; track < sp->tracks; track++)
+	{	//For each track in the project
+		numpaths = eof_get_num_sliders(sp, track);
+
+		for(path = 0; path < numpaths; path++)
+		{	//For each slider path in the track
+			ptr = eof_get_slider(sp, track, path);
+			if(ptr && (ptr->end_pos - ptr->start_pos > 1))
+			{	//If the phrase was found, and its length is at least 2ms
+				numnotes = eof_get_track_size(sp, track);
+				for(note = 0; note < numnotes; note++)
+				{	//For each note in the track
+					if(eof_get_note_pos(sp, track, note) == ptr->end_pos)
+					{	//If the note begins at the end position of the slider
+						ptr->end_pos--;	//Truncate the path by 1ms
+						break;	//Stop checking notes for this slider
 					}
 				}
 			}

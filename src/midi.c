@@ -1399,8 +1399,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				WriteVarLen(0, fp);
 				(void) pack_putc(0xFF, fp);
 				(void) pack_putc(0x03, fp);
-				WriteVarLen(ustrlen(exportname), fp);
-				(void) pack_fwrite(exportname, ustrlen(exportname), fp);
+				WriteVarLen(ustrsize(exportname), fp);
+				(void) pack_fwrite(exportname, ustrsize(exportname), fp);
 
 				/* add MIDI events */
 				lastdelta = 0;
@@ -1649,8 +1649,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			WriteVarLen(0, fp);
 			(void) pack_putc(0xFF, fp);
 			(void) pack_putc(0x03, fp);
-			WriteVarLen(ustrlen(sp->track[j]->name), fp);
-			(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
+			WriteVarLen(ustrsize(sp->track[j]->name), fp);
+			(void) pack_fwrite(sp->track[j]->name, ustrsize(sp->track[j]->name), fp);
 
 			/* add MIDI events */
 			lastdelta = 0;
@@ -2304,8 +2304,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			WriteVarLen(0, fp);
 			(void) pack_putc(0xFF, fp);
 			(void) pack_putc(0x03, fp);
-			WriteVarLen(ustrlen(sp->track[j]->name), fp);
-			(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
+			WriteVarLen(ustrsize(sp->track[j]->name), fp);
+			(void) pack_fwrite(sp->track[j]->name, ustrsize(sp->track[j]->name), fp);
 
 			/* add MIDI events */
 			lastdelta = 0;
@@ -2424,8 +2424,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			WriteVarLen(0, fp);
 			(void) pack_putc(0xFF, fp);
 			(void) pack_putc(0x03, fp);
-			WriteVarLen(ustrlen("EVENTS"), fp);
-			(void) pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
+			WriteVarLen(ustrsize("EVENTS"), fp);
+			(void) pack_fwrite("EVENTS", ustrsize("EVENTS"), fp);
 
 			/* add MIDI events */
 			lastdelta = 0;
@@ -2514,8 +2514,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		WriteVarLen(0, fp);
 		(void) pack_putc(0xFF, fp);
 		(void) pack_putc(0x03, fp);
-		WriteVarLen(ustrlen("BEAT"), fp);
-		(void) pack_fwrite("BEAT", ustrlen("BEAT"), fp);
+		WriteVarLen(ustrsize("BEAT"), fp);
+		(void) pack_fwrite("BEAT", ustrsize("BEAT"), fp);
 
 		/* parse the beat array, writing a note #12 at the first beat of every measure, and a note #13 at every other beat */
 		lastdelta = 0;
@@ -3026,8 +3026,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 			(void) pack_putc(0x03, fp);
 			if(!passnum)
 			{	//If writing a Synthesia style MIDI
-				WriteVarLen(ustrlen(arrangement_name), fp);
-				(void) pack_fwrite(arrangement_name, ustrlen(arrangement_name), fp);
+				WriteVarLen(ustrsize(arrangement_name), fp);
+				(void) pack_fwrite(arrangement_name, ustrsize(arrangement_name), fp);
 
 				/* set the guitar/bass MIDI instrument as appropriate */
 				if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -3047,9 +3047,9 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 			{	//If writing a Fretlight style MIDI
 				char prefix[] = "FMP - ";	//The required track name prefix
 
-				WriteVarLen(ustrlen(arrangement_name) + ustrlen(prefix), fp);	//Include the extra number of characters needed for the prefix
-				(void) pack_fwrite(prefix, ustrlen(prefix), fp);
-				(void) pack_fwrite(arrangement_name, ustrlen(arrangement_name), fp);
+				WriteVarLen(ustrsize(arrangement_name) + ustrsize(prefix), fp);	//Include the extra number of characters needed for the prefix
+				(void) pack_fwrite(prefix, ustrsize(prefix), fp);
+				(void) pack_fwrite(arrangement_name, ustrsize(arrangement_name), fp);
 			}
 
 			/* add MIDI events */
@@ -3137,8 +3137,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 		WriteVarLen(0, fp);
 		(void) pack_putc(0xFF, fp);
 		(void) pack_putc(0x03, fp);
-		WriteVarLen(ustrlen("EVENTS"), fp);
-		(void) pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
+		WriteVarLen(ustrsize("EVENTS"), fp);
+		(void) pack_fwrite("EVENTS", ustrsize("EVENTS"), fp);
 
 		/* add MIDI events */
 		lastdelta = 0;
@@ -3803,7 +3803,7 @@ void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp)
 	unsigned long length;
 	if(str && fp)
 	{
-		length = ustrlen(str);
+		length = ustrsize(str);
 		if(length < 128)
 		{	//EOF's implementation is a bit lax and only accounts for 1 byte variable length values (7 bits)
 			WriteVarLen(deltas, fp);
@@ -3820,7 +3820,7 @@ void eof_write_lyric_event(unsigned long deltas, const char *str, PACKFILE *fp)
 	unsigned long length;
 	if(str && fp)
 	{
-		length = ustrlen(str);
+		length = ustrsize(str);
 		if(length < 128)
 		{	//EOF's implementation is a bit lax and only accounts for 1 byte variable length values (7 bits)
 			WriteVarLen(deltas, fp);
@@ -3847,8 +3847,8 @@ void eof_write_tempo_track(char *trackname, struct Tempo_change *anchorlist, EOF
 		WriteVarLen(0, outf);
 		(void) pack_putc(0xFF, outf);
 		(void) pack_putc(0x03, outf);
-		WriteVarLen(ustrlen(trackname), outf);
-		(void) pack_fwrite(trackname, ustrlen(trackname), outf);
+		WriteVarLen(ustrsize(trackname), outf);
+		(void) pack_fwrite(trackname, ustrsize(trackname), outf);
 	}
 
 	ptr = anchorlist;
