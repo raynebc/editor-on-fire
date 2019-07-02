@@ -3398,12 +3398,12 @@ int eof_menu_beat_paste_tempo_map(void)
 				(void) eof_get_effective_ts(eof_song, &eff_num, &eff_den, eof_selected_beat - 1, 1);	//Get any explicitly defined time signature in effect
 				if(!eff_num || !eff_den || (eff_num != num) || (eff_den != den))
 				{	//If there is no defined time signature in effect before the selected beat, or it is defined and is different from the signature from the clipboard
-					eof_apply_ts(num, den, eof_selected_beat, eof_song, 0);	//Set it
+					(void) eof_apply_ts(num, den, eof_selected_beat, eof_song, 0);	//Set it
 				}
 			}
 			else
 			{	//The first beat will get any time signature change from the clipboard
-				eof_apply_ts(num, den, eof_selected_beat, eof_song, 0);
+				(void) eof_apply_ts(num, den, eof_selected_beat, eof_song, 0);
 			}
 		}
 

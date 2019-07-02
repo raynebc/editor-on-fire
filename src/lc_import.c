@@ -295,7 +295,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 
 int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, int format)
 {
-	unsigned long linectr = 0, lyrctr = 0, lastlyrtime = 0, linestart = 0, lineend = 0;
+	unsigned long linectr = 0, lyrctr = 0, thislyrtime, lastlyrtime = 0, linestart = 0, lineend = 0;
 	unsigned char pitch = 0;
 	FILE *outf = NULL;			//Used to open output file
 	FILE *pitchedlyrics = NULL;	//Used to open output pitched lyric fle
@@ -376,22 +376,23 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 
 		while(lyrctr < tp->lyrics)
 		{	//For each lyric
+			thislyrtime = tp->lyric[lyrctr]->pos;
 			if((tp->lyric[lyrctr])->text[0] != '\0')
 			{	//If this lyric's text isn't an empty string
-				if((tp->lyric[lyrctr])->pos < lastlyrtime)	//If this lyric precedes the previous lyric
+				if(thislyrtime < lastlyrtime)	//If this lyric precedes the previous lyric
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error while preparing lyrics for export to file \"%s\"", tempoutputfilename);
 					eof_log(eof_log_string, 1);
 					ReleaseMemory(1);
 					return -1;				//Return failure
 				}
-				if((tp->lyric[lyrctr])->pos < linestart)		//If this lyric precedes the beginning of the line
+				if(thislyrtime < linestart)		//If this lyric precedes the beginning of the line
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Lyric \"%s\" at %lums is outside of defined lyric lines", tp->lyric[lyrctr]->text, tp->lyric[lyrctr]->pos);
 					eof_log(eof_log_string, 1);
 					CreateLyricLine();	//Initialize new line of lyrics
 				}
-				if((tp->lyric[lyrctr])->pos > lineend)		//If this lyric is placed beyond the end of this line
+				if(thislyrtime > lineend)		//If this lyric is placed beyond the end of this line
 				{
 					break;					//Break from this while loop to have another line created
 				}
@@ -415,6 +416,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 					Lyrics.lastpiece->groupswithnext = 1;	//Set its grouping status
 			}//If this lyric's text isn't an empty string
 
+			lastlyrtime = thislyrtime;
 			lyrctr++;	//Advance to next lyric
 		}//For each lyric
 

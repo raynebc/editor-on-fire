@@ -494,9 +494,9 @@ EOF_SONG *eof_load_bf(char * fn)
 			sectiondata[ctr].objkey = qword2;	//Store the object key in the array so it's associated with this ZOBJ section
 			string = eof_lookup_bf_string_key(stringdata, numstrings, qword);	//Identify the string name of this ZOBJ section
 			#ifdef ALLEGRO_WINDOWS
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (ZOBJ) chunk size = %lu, index key = 0x%016I64x (\"%s\", %s), object key = 0x%016I64x, type string key = 0x%016I64x", sectionctr, zobjsize, qword, string ? string : "[UNKNOWN KEY]", parent ? "Parent" : "Child", qword2, qword3);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (ZOBJ) chunk size = %lu, index key = 0x%016I64x (\"%s\", %s), object key = 0x%016I64x, type string key = 0x%016I64x", sectionctr, zobjsize, qword, string ? string : "[UNKNOWN KEY]", (parent ? "Parent" : "Child"), qword2, qword3);
 			#else
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (ZOBJ) chunk size = %lu, index key = 0x%016llux (\"%s\", %s), object key = 0x%016llux, type string key = 0x%016llux", sectionctr, zobjsize, qword, string ? string : "[UNKNOWN KEY]", parent ? "Parent" : "Child", qword2, qword3);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection #%lu (ZOBJ) chunk size = %lu, index key = 0x%016llux (\"%s\", %s), object key = 0x%016llux, type string key = 0x%016llux", sectionctr, zobjsize, qword, string ? string : "[UNKNOWN KEY]", (parent ? "Parent" : "Child"), qword2, qword3);
 			#endif
 			eof_log(eof_log_string, 1);
 

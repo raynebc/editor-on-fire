@@ -449,6 +449,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 	for(ctr = 0; ctr < numnotes; ctr++)
 	{	//For each note in the section
 		int ghost = 0;
+		unsigned char ghostmask;
 
 		if(eof_filebuffer_get_dword(fb, &dword))	//Read the note position
 		{	//If there was an error reading the next 4 byte value
@@ -470,14 +471,38 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 			eof_log("\t\tError:  Could not read note accent bitmask", 1);
 			return -1;
 		}
+///If the size field is omitted, it's not yet known whether the expected size is 8 or 9 bytes
+		ghostmask = 0;
+		if(notesize == 9)
+		{	//A variation of the note section is one that contains an extra byte of data (for drum notes it appears to define ghost status)
+			if(eof_filebuffer_get_byte(fb, &ghostmask))	//Read the extra data byte
+			{	//If there was an error reading the next 1 byte value
+				eof_log("\t\tError:  Could not read ghost status byte", 1);
+				return -1;
+			}
+		}
+
 #ifdef GH_IMPORT_DEBUG
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu) accent = %08lu", ctr, dword, length, notemask, eof_char_to_binary(notemask), eof_char_to_binary(accentmask));
+		if(ghostmask)
+		{	//If this note has any ghost gems
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu) accent = %08lu ghost = %08lu", ctr, dword, length, notemask, eof_char_to_binary(notemask), eof_char_to_binary(accentmask), eof_char_to_binary(ghostmask));
+		}
+		else
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu) accent = %08lu", ctr, dword, length, notemask, eof_char_to_binary(notemask), eof_char_to_binary(accentmask));
+		}
 		eof_log(eof_log_string, 1);
 #endif
 		isexpertplus = 0;	//Reset this condition
 		if(target->tracknum == EOF_TRACK_DRUM)
 		{	//In Guitar Hero, lane 6 is bass drum, lane 1 is the right-most lane (ie. 6)
 			unsigned long tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+
+			notemask |= ghostmask;	//Add any defined ghost gems to the note
+			if(ghostmask)
+			{	//If this note has any ghost gems
+				ghost = 1;
+			}
 
 			fixednotemask = notemask;
 			fixednotemask &= ~1;	//Clear lane 1 gem
@@ -498,12 +523,6 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				fixednotemask |= 1;		//Set the lane 1 (bass drum gem)
 			}
 			notemask = fixednotemask;
-
-			if(!fixednotemask)
-			{	//If the drum note has no gems, assume it is a snare note (other lanes are used in ghost notes, but their definition method is unknown)
-				notemask = 2;
-				ghost = 1;	//Track this so the note can be highlighted after it is created
-			}
 		}
 		newnote = (EOF_NOTE *)eof_track_add_create_note(sp, target->tracknum, (notemask & 0x3F), dword, length, target->diffnum, NULL);
 		if(newnote == NULL)
@@ -598,15 +617,6 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		if(isexpertplus)
 		{	//If this note was determined to be an expert+ drum note
 			newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
-		}
-///If the size field is omitted, it's not yet known whether the expected size is 8 or 9 bytes
-		if(notesize == 9)
-		{	//A variation of the note section is one that contains an extra byte of unknown data
-			if(eof_filebuffer_get_byte(fb, &notemask))	//Read the extra data byte
-			{	//If there was an error reading the next 1 byte value
-				eof_log("\t\tError:  Could not read unknown data byte", 1);
-				return -1;
-			}
 		}
 
 		//Apply disjointed status if appropriate
@@ -3765,7 +3775,7 @@ int eof_import_array_txt(const char *filename)
 				}
 			}
 			eof_song->beat[ctr]->pos = eof_song->beat[ctr]->fpos = position;
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tBeat %lu:  %lums.", ctr, position);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tBeat %lu:  %ldms.", ctr, position);
 			eof_log(eof_log_string, 1);
 		}
 		else

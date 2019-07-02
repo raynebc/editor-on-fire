@@ -192,7 +192,7 @@ double eof_get_measure_position(unsigned long pos)
 unsigned long eof_get_realtime_position(double pos)
 {
 	unsigned long ctr, prior_beat_num = ULONG_MAX;
-	double prior_beat_pos = 0.0, m_beat_length, m_difference, b_difference, real_pos;
+	double prior_beat_pos = 0.0, meas_beat_length, meas_difference, b_difference, real_pos;
 
 	if(!eof_song)
 		return ULONG_MAX;	//Invalid parameters
@@ -229,9 +229,9 @@ unsigned long eof_get_realtime_position(double pos)
 	if(eof_song->beat[prior_beat_num]->num_beats_in_measure == 0)
 		return ULONG_MAX;	//Logic error, avoid division by zero
 
-	m_beat_length = 1.0 / eof_song->beat[prior_beat_num]->num_beats_in_measure;	//The length of that beat in terms of measures
-	m_difference = pos - prior_beat_pos;	//The amount of measures between that beat and the target position
-	b_difference = m_difference / m_beat_length;	//Scale that by the beat's length in measures to determine how far into the beat the target position is
+	meas_beat_length = 1.0 / eof_song->beat[prior_beat_num]->num_beats_in_measure;	//The length of that beat in terms of measures
+	meas_difference = pos - prior_beat_pos;	//The amount of measures between that beat and the target position
+	b_difference = meas_difference / meas_beat_length;	//Scale that by the beat's length in measures to determine how far into the beat the target position is
 	real_pos = eof_song->beat[prior_beat_num]->fpos + (eof_get_beat_length(eof_song, prior_beat_num) * b_difference);	//Translate that position into milliseconds
 
 	return real_pos + 0.5;	//Round to nearest whole millisecond
@@ -930,7 +930,7 @@ int eof_ch_sp_path_single_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_PATH_
 	int invalid_increment = 0;	//Set to nonzero if the last iteration of the loop manually incremented the solution due to the solution being invalid
 	int retval;
 	int sequential;	//Controls the use of the last cache mechanism in eof_evaluate_ch_sp_path_solution()
-	EOF_BIG_NUMBER solution_count = {0};
+	EOF_BIG_NUMBER solution_count = {0, 0};
 	clock_t time1, time2;
 
 	eof_log("eof_ch_sp_path_single_process_solve() entered", 1);
@@ -1591,7 +1591,7 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 {
 	unsigned long ctr, tracksize;
 	unsigned long base_score = 0;
-	EOF_BIG_NUMBER solution_count = {0};
+	EOF_BIG_NUMBER solution_count = {0, 0};
 
 	if(!eof_song || !validcount || !invalidcount || !solution || !solution->note_beat_lengths)
 		return;	//Invalid parameters
@@ -1753,7 +1753,7 @@ int eof_menu_track_find_ch_sp_path(void)
 	unsigned long first_deploy = ULONG_MAX;		//The first note that occurs after the end of the second star power phrase, and is thus the first note at which star power can be deployed
 	int worker_logging;
 	unsigned long ctr, tracksize;
-	EOF_BIG_NUMBER validcount = {0}, invalidcount = {0}, solution_count = {0};
+	EOF_BIG_NUMBER validcount = {0, 0}, invalidcount = {0, 0}, solution_count = {0, 0};
 	int error = 0;
 	char undo_made = 0;
 	clock_t starttime = 0, endtime = 0;
@@ -1973,7 +1973,7 @@ void eof_ch_sp_path_worker(char *job_file)
 	int error = 0, canceled = 0, done = 0, idle = 0, retval, firstjob = 1;
 	EOF_SP_PATH_SOLUTION best = {0}, testing = {0};
 	unsigned long ctr, first_deploy = ULONG_MAX, last_deploy = ULONG_MAX, deployment_notes = 0;
-	EOF_BIG_NUMBER validcount = {0}, invalidcount = {0};
+	EOF_BIG_NUMBER validcount = {0, 0}, invalidcount = {0, 0};
 
 	//Validate initial job file path
 	eof_log_cwd();
@@ -2383,7 +2383,9 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 	clock_t solutions_exhausted_time = 0;	//Track the time of the first instance where there is an idle worker process and no solutions let to assign
 	char filename[50];	//Stores the job filename for worker processes
 	char jobreadyfilename[50];	//Used to create the jobready file for a worker process
+#ifdef ALLEGRO_WINDOWS
 	char commandline[1050];	//Stores the command line for launching a worker process
+#endif
 	char exepath[1050] = {0};
 	char tempstr[100];
 	int done = 0, error = 0, canceled = 0, workerstatuschange;
@@ -2719,7 +2721,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 									}
 									else
 									{	//The results file was opened
-										EOF_BIG_NUMBER vcount, icount, sum = {0};
+										EOF_BIG_NUMBER vcount, icount, sum = {0, 0};
 										char tempstring[30];
 
 										workers[workerctr].end_time = clock();	//Record the completion time of the worker
@@ -2877,7 +2879,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 			}
 			if(key[KEY_PAUSE])
 			{
-				EOF_BIG_NUMBER sum = {0};
+				EOF_BIG_NUMBER sum = {0, 0};
 
 				elapsed_time = (double)(clock() - start_time) / (double)CLOCKS_PER_SEC;	//Convert to seconds
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tElapsed time is %.2f seconds.", elapsed_time);

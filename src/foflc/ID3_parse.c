@@ -39,6 +39,7 @@ char *ReadTextInfoFrame(FILE *inf)
 
 	if(fread(buffer,4,1,inf) != 1)	//Read the frame ID
 		return NULL;				//If there was an I/O error, return error
+	buffer[4] = '\0';				//Guarantee this string is terminated to resolve a false positive in Coverity
 	if(fread(buffer2,7,1,inf) != 1)	//Read the rest of the frame header and the following byte (string encoding)
 		return NULL;				//If there was an I/O error, return error
 

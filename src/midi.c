@@ -203,6 +203,7 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon)
 			}
 		}
 	}
+	// cppcheck-suppress memleak symbolName=datacopy	//Cppcheck generates a false positive when the allocted memory's pointer is stored into a global array
 }
 
 unsigned long eof_find_midi_event_needle(unsigned char num)

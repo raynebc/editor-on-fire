@@ -664,15 +664,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 					//Look ahead to see if the star power phrase ends at another note's start position.  If so, the marker needs to be shortened to NOT include that note
 					if(current_note->duration > 1)
 					{	//If the star power marker is at least 2 ticks long
-						struct dbNote *ptr;
+						struct dbNote *noteptr;
 
-						for(ptr = current_note->next; ptr != NULL; ptr = ptr->next)
+						for(noteptr = current_note->next; noteptr != NULL; noteptr = noteptr->next)
 						{	//For notes defined after the star power marker
-							if(ptr->chartpos > endpos)
+							if(noteptr->chartpos > endpos)
 							{	//If this and all remaining notes are outside the scope of the star power marker
 								break;	//Stop processing the notes following the star power marker
 							}
-							if(ptr->chartpos == endpos)
+							if(noteptr->chartpos == endpos)
 							{	//If this note starts at the star power marker's end position
 								endpos--;	//Shorten the marker by one delta tick to ensure the note is outside its scope when written to MIDI
 								break;	//Stop processing the notes following the star power marker
@@ -1135,7 +1135,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 		eof_log(eof_log_string, 1);
 		return NULL;
 	}
-	pack_fclose(inf);
+	(void) pack_fclose(inf);
 
 //Initialize chart structure
 	chart=(struct FeedbackChart *)malloc_err(sizeof(struct FeedbackChart));	//Allocate memory
@@ -2408,7 +2408,7 @@ void sort_chart(struct FeedbackChart *chart)
 				{
 					prev_anchor_ptr->next = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
 				}
-				sorted= 0;
+				sorted = 0;
 				break;	//Restart the for loop
 			}
 			prev_anchor_ptr = anchor_ptr;
@@ -2436,9 +2436,9 @@ void sort_chart(struct FeedbackChart *chart)
 				}
 				else
 				{
-					prev_text_ptr = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
+					prev_text_ptr->next = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
 				}
-				sorted= 0;
+				sorted = 0;
 				break;	//Restart the for loop
 			}
 			prev_text_ptr = text_ptr;

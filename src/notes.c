@@ -1601,10 +1601,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		if(count)
 		{	//If there are any solo notes in the active track
-			double percent;
+			if(tracksize)
+			{	//Redundant check to satisfy Coverity
+				double percent;
 
-			percent = (double)count * 100.0 / tracksize;
-			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+				percent = (double)count * 100.0 / tracksize;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+			}
 		}
 		else
 		{
@@ -1657,10 +1660,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		if(count)
 		{	//If there are any star power sections in the active track
-			double percent;
+			if(tracksize)
+			{	//Redundant check to satisfy Coverity
+				double percent;
 
-			percent = (double)count * 100.0 / tracksize;
-			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+				percent = (double)count * 100.0 / tracksize;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
+			}
 		}
 		else
 		{

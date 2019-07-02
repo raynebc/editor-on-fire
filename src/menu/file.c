@@ -364,7 +364,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[3].flags = 0; // Save As
 		eof_file_menu[4].flags = 0; // Quick save
 		eof_file_menu[5].flags = 0; // Load OGG
-		eof_file_menu[7].flags = 0;	// Export time range
+		eof_file_menu[7].flags = 0;	// Export chart range
 		eof_file_menu[8].flags = 0;	// Export audio range
 		#ifdef ALLEGRO_WINDOWS
 			eof_file_menu[9].flags = 0;	// Export guitar pro
@@ -392,7 +392,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[3].flags = D_DISABLED; // Save As
 		eof_file_menu[4].flags = D_DISABLED; // Quick save
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
-		eof_file_menu[7].flags = D_DISABLED; // Export time range
+		eof_file_menu[7].flags = D_DISABLED; // Export chart range
 		eof_file_menu[8].flags = D_DISABLED; // Export audio range
 		eof_file_menu[9].flags = D_DISABLED;	// Export guitar pro
 		eof_file_import_menu[0].flags = D_DISABLED; // Import>Sonic Visualiser
@@ -2600,26 +2600,26 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 	//Determine the name of the file to be created
 	if(!function)
 	{	//Name the file as guitar.ogg
-		snprintf(dest_name, 15, "guitar.ogg");
+		(void) snprintf(dest_name, 15, "guitar.ogg");
 	}
 	else
 	{	//Allow song.*, drums.*, rhythm.* and vocals.* to retain that part of their name
 		if(!ustricmp(src_name, "song.ogg") || !ustricmp(src_name, "song.mp3") || !ustricmp(src_name, "song.wav"))
-			snprintf(dest_name, 15, "song.ogg");
+			(void) snprintf(dest_name, 15, "song.ogg");
 		else if(!ustricmp(src_name, "drums.ogg") || !ustricmp(src_name, "drums.mp3") || !ustricmp(src_name, "drums.wav"))
-			snprintf(dest_name, 15, "drums.ogg");
+			(void) snprintf(dest_name, 15, "drums.ogg");
 		else if(!ustricmp(src_name, "rhythm.ogg") || !ustricmp(src_name, "rhythm.mp3") || !ustricmp(src_name, "rhythm.wav"))
-			snprintf(dest_name, 15, "rhythm.ogg");
+			(void) snprintf(dest_name, 15, "rhythm.ogg");
 		else if(!ustricmp(src_name, "vocals.ogg") || !ustricmp(src_name, "vocals.mp3") || !ustricmp(src_name, "vocals.wav"))
-			snprintf(dest_name, 15, "vocals.ogg");
+			(void) snprintf(dest_name, 15, "vocals.ogg");
 		else if(!ustricmp(src_name, "bass.ogg") || !ustricmp(src_name, "bass.mp3") || !ustricmp(src_name, "bass.wav"))
-			snprintf(dest_name, 15, "bass.ogg");
+			(void) snprintf(dest_name, 15, "bass.ogg");
 		else if(!ustricmp(src_name, "keys.ogg") || !ustricmp(src_name, "keys.mp3") || !ustricmp(src_name, "keys.wav"))
-			snprintf(dest_name, 15, "keys.ogg");
+			(void) snprintf(dest_name, 15, "keys.ogg");
 		else if(!ustricmp(src_name, "crowd.ogg") || !ustricmp(src_name, "crowd.mp3") || !ustricmp(src_name, "crowd.wav"))
-			snprintf(dest_name, 15, "crowd.ogg");
+			(void) snprintf(dest_name, 15, "crowd.ogg");
 		else
-			snprintf(dest_name, 15, "guitar.ogg");	//If it doesn't match any of those names, it will be renamed as guitar.ogg
+			(void) snprintf(dest_name, 15, "guitar.ogg");	//If it doesn't match any of those names, it will be renamed as guitar.ogg
 	}
 
 	if(!ustricmp(src_name, dest_name))
@@ -5913,7 +5913,7 @@ int eof_menu_file_export_chart_range(void)
 		end = eof_song->tags->end_point;
 	}
 
-	strncpy(eof_etext, "Export time range", sizeof(eof_etext) - 1);	//Set the title of the eof_menu_song_time_range_dialog dialog
+	strncpy(eof_etext, "Export chart range", sizeof(eof_etext) - 1);	//Set the title of the eof_menu_song_time_range_dialog dialog
 	if(!eof_run_time_range_dialog(&start, &end))	//If a valid time range isn't provided by the user
 		return 0;									//Cancel
 
@@ -6416,7 +6416,7 @@ int eof_menu_file_array_txt_import(void)
 		retval = eof_import_array_txt(returnedfn);
 		if(retval)
 		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError %u", retval);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError %d", retval);
 			eof_log(eof_log_string, 1);
 			allegro_message("Import failed (error %u).", retval);
 		}

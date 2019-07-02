@@ -17,7 +17,6 @@
 char *midi_track_name[NUM_MIDI_TRACKS] = {"INVALID", "PART GUITAR", "PART GUITAR COOP", "PART BASS", "PART DRUMS", "PART RHYTHM", "PART KEYS", "PART GUITAR GHL", "PART BASS GHL"};
 struct MIDIevent *midi_track_events[NUM_MIDI_TRACKS] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};	//The first element of this array is unused
 char events_reallocated[NUM_MIDI_TRACKS] = {0};
-clock_t start, end;
 
 #ifdef ALLEGRO_WINDOWS
 	char **utf_argv;
@@ -74,7 +73,7 @@ int main(int argc, char *argv[])
 	int ctr;
 	char par_output_filename = 0, par_overwrite = 0, par_invalid = 0;
 	char **effective_argv = NULL;
-
+	clock_t runtime_start, runtime_end;
 
 #ifdef ALLEGRO_WINDOWS
 	if(build_utf8_argument_list(argc, argv))
@@ -153,7 +152,7 @@ int main(int argc, char *argv[])
 
 	///Import
 	(void) printf("Importing file \"%s\".\n", effective_argv[1]);
-	start = clock();
+	runtime_start = clock();
 	chart = import_feedback(effective_argv[1]);
 	if(!chart)
 	{
@@ -190,7 +189,7 @@ int main(int argc, char *argv[])
 		#endif
 		return 5;
 	}
-	end = clock();
+	runtime_end = clock();
 	#ifdef CCDEBUG
 		(void) puts("\tFile exported.");
 	#endif
@@ -204,7 +203,7 @@ int main(int argc, char *argv[])
 	destroy_utf8_argument_list();
 #endif
 
-	(void) printf("Converted in %f seconds.\n", ((double)end - start) / (double) CLOCKS_PER_SEC);
+	(void) printf("Converted in %f seconds.\n", ((double)runtime_end - runtime_start) / (double) CLOCKS_PER_SEC);
     return 0;
 }
 
@@ -2551,12 +2550,12 @@ struct MIDIevent *append_midi_event(struct dbTrack *track)
 
 	//Create a new MIDI event link and append it to the track's MIDI event linked list
 	event = malloc(sizeof(struct MIDIevent));
-	memset(event, 0, sizeof(struct MIDIevent));
 	if(!event)
 	{
 		(void) puts("Failed to allocate memory.");
 		return NULL;
 	}
+	memset(event, 0, sizeof(struct MIDIevent));
 	if(!conductor)
 	{	//If the linked list is empty
 		track->events = event;	//This is the head of the list

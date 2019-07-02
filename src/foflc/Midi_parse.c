@@ -67,6 +67,7 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 			MIDIstruct.miditype=1;		//Track that this MIDI file is within a RIFF header
 			fseek_err(inf,20,SEEK_SET);	//Seek to byte 20, which is the beginning of the MIDI header in an RMIDI file
 			fread_err(header,4,1,inf);	//Read 4 bytes, which are expected to be the MIDI header
+			header[4]='\0';				//Guarantee this string is terminated to resolve a false positive in Coverity
 			if(strcmp(header,"MThd") != 0)
 				failure=1;
 		}
@@ -322,8 +323,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 				if(strcasecmp(tchunk->trackname,Lyrics.inputtrack) == 0)
 					MIDIstruct.endtime=MIDIstruct.realtime+((double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * (60000.0 / MIDIstruct.BPM));
 
-			if(vars.trackname != NULL)	//If there's a track name being remembered
-				vars.trackname=NULL;	//forget it now that the end of the track has been reached
+			vars.trackname=NULL;		//If there's a track name being remembered, forget it now that the end of the track has been reached
 
 			if(Lyrics.verbose)
 				(void) printf("Seeking to next track chunk (file position 0x%lX)\n", tchunk->fileposition+tchunk->chunksize+8);
@@ -611,8 +611,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 								if(strcasecmp(tchunk->trackname,Lyrics.inputtrack) == 0)
 									MIDIstruct.endtime=MIDIstruct.realtime+((double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * (60000.0 / MIDIstruct.BPM));
 
-							if(vars.trackname != NULL)	//If there's a track name being remembered
-								vars.trackname=NULL;	//forget it now that the end of the track has been reached
+							vars.trackname=NULL;		//If there's a track name being remembered, forget it now that the end of the track has been reached
 
 							if(Lyrics.verbose)
 								(void) printf("Seeking to next track chunk (file position 0x%lX)\n", tchunk->fileposition+tchunk->chunksize+8);

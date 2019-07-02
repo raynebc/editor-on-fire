@@ -2192,14 +2192,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			if(word != 0xFFFF)
 			{	//If the symbol's use is defined
 				gp->symbols[ctr]--;			//Change the numbering to reflect the first measure being #0
-			}
+
 #ifdef GP_IMPORT_DEBUG
-			if(word != 0xFFFF)
-			{
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"%s\" symbol is at measure #%u", musical_symbols[ctr], word);
 				eof_log(eof_log_string, 1);
-			}
 #endif
+			}
 		}
 
 		pack_ReadDWORDLE(inf, &dword);	//Read the master reverb value

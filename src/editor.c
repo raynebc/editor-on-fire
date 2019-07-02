@@ -4854,10 +4854,7 @@ void eof_editor_logic(void)
 		{
 			if((eof_music_pos >= eof_song->beat[i]->pos) && (eof_music_pos < eof_song->beat[i + 1]->pos))
 			{
-				if(eof_hover_beat_2 != i)
-				{
-					eof_hover_beat_2 = i;
-				}
+				eof_hover_beat_2 = i;
 				break;
 			}
 		}
@@ -5647,10 +5644,7 @@ void eof_vocal_editor_logic(void)
 		{
 			if((eof_music_pos >= eof_song->beat[i]->pos) && (eof_music_pos < eof_song->beat[i + 1]->pos))
 			{
-				if(eof_hover_beat_2 != i)
-				{
-					eof_hover_beat_2 = i;
-				}
+				eof_hover_beat_2 = i;
 				break;
 			}
 		}

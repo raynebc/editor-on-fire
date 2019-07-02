@@ -484,7 +484,7 @@ void eof_load_config(char * fn)
 	num_default_settings = list_config_entries("default_ini_settings", &default_settings);
 	for(ctr = 0; ctr < num_default_settings; ctr++)
 	{	//For each default INI setting found in the config file
-		snprintf(string, sizeof(string), "%s = %s", default_settings[ctr], get_config_string("default_ini_settings", default_settings[ctr], ""));	//Rebuild the config string since Allegro breaks it apart
+		(void) snprintf(string, sizeof(string), "%s = %s", default_settings[ctr], get_config_string("default_ini_settings", default_settings[ctr], ""));	//Rebuild the config string since Allegro breaks it apart
 		(void) eof_default_ini_add(string, 0);	//Add the rebuilt string to the default INI entries
 	}
 	free_config_entries(&default_settings);

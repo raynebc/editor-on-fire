@@ -260,10 +260,12 @@ int VL_PreLoad(FILE *inf,char validate)
 		VL.numlines++;	//one more lyric string has been parsed
 	}//end while(1)
 
-	if(Lyrics.verbose)	printf("%lu text chunk entries loaded\n",VL.numlines);
-
 //Load the Sync points
-	if(Lyrics.verbose)	(void) puts("Loading sync chunk entries");
+	if(Lyrics.verbose)
+	{
+		printf("%lu text chunk entries loaded\n",VL.numlines);
+		(void) puts("Loading sync chunk entries");
+	}
 
 	fseek_err(inf,VL.textsize+16+8,SEEK_SET);	//Seek to first sync entry (8 bytes past start of sync header)
 

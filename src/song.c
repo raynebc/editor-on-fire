@@ -9750,7 +9750,7 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 					eof_destroy_song(csp);
 					return NULL;
 				}
-				csp->beat[0]->pos = start;	//Initialize the first beat to match the start of the export time range
+				csp->beat[0]->pos = start;	//Initialize the first beat to match the start of the export chart range
 				csp->beat[0]->fpos = start;
 				beatoffset--;			//Update the offset to reflect that the offset for text events is one beat further into the project
 			}

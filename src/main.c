@@ -1667,7 +1667,11 @@ int eof_figure_difficulty(void)
 	/* see which difficulties are populated with notes */
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		nt[(int)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;
+		unsigned type = eof_get_note_type(eof_song, eof_selected_track, i);
+		if(type != 0xFF)
+		{	//If the note's difficulty level was identified
+			nt[type] = 1;
+		}
 	}
 
 	/* no notes in this difficulty so don't allow test */
