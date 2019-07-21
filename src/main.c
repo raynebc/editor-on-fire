@@ -3622,25 +3622,8 @@ void eof_render_3d_window(void)
 		tr = eof_note_tail_draw_3d(eof_selected_track, i-1, p);
 		(void) eof_note_draw_3d(eof_selected_track, i-1, p);
 
-		if(tr < 0)
-		{	//If eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
-			unsigned long i2, lastpos = 0, thisend = 0;
-
-			//Find the latest end position of all prior notes
-			for(i2 = 0; i2 < i; i2++)
-			{	//For all notes earlier than the one whose tail was just rendered
-				if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i2))
-					continue;	//If this note isn't in the active difficulty, skip it
-
-				thisend = eof_get_note_endpos(eof_song, eof_selected_track, i2);	//Find the end position of this note
-				if(thisend > lastpos)
-					lastpos = thisend;	//Track the latest of the note end positions
-			}
-			if(thisend < eof_get_note_pos(eof_song, eof_selected_track, i-1))
-			{	//If all prior notes end before this note begins
-				break;	//Stop rendering 3d notes
-			}
-		}
+		if(tr < 0)	//if eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
+			break;	//Stop rendering 3d notes
 
 /*	Used for debugging
 		if(tr == 0)

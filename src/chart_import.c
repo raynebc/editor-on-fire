@@ -285,9 +285,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 	unsigned long pos, closestpos = 0;
 	char limit_warned = 0;
 	char oldoggpath[1024] = {0};
+	clock_t start_time, cur_time;
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
+	start_time = clock();
 
 	if(!fn)
 	{
@@ -409,6 +411,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 	/* create beat markers */
 	beatlength = chart->resolution;	//Until a time signature is defined, assume #/4 for the purpose of determining beat length
 	curden = 4;
+
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding beats (import currently at %.2f seconds)", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 1);
+
 	while(chartpos <= max_chartpos)
 	{	//Add new beats until enough have been added to encompass the last item in the chart
 		new_beat = eof_song_add_beat(sp);
@@ -511,7 +518,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 
 	/* fill in notes */
-	eof_log("\tImporting notes", 1);
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tImporting notes (import currently at %.2f seconds)", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 1);
+
 	current_track = chart->tracks;
 	while(current_track)
 	{	//For each track
@@ -822,6 +832,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 				current_note = current_note->next;
 			}//For each note in the track
 
+			cur_time = clock();
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTrack notes imported (import currently at %.2f seconds)", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+			eof_log(eof_log_string, 1);
+
 			eof_chart_import_process_note_markers(sp, track, difficulty);	//Process and remove toggle HOPO and slider marker gems where applicable so they no longer count against the track's note limit
 
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImported track difficulty:  %lu notes created, %lu gems combined to form chords", notes_created, notes_combined);
@@ -984,6 +998,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 	eof_sort_notes(sp);	//Ensure the notes are sorted as the slider phrase creation logic will expect
 
 	//Create slider phrases
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCreating slider phrases (import currently at %.2f seconds)", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 1);
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
 		//Add slider phrases to encompass marked notes
@@ -1079,7 +1096,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
-	eof_log("\tFeedback import completed", 1);
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFeedback import completed in %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 1);
 
 	/* restore the original value of eof_song in case the calling function needed it */
 	eof_song = eof_song_backup;

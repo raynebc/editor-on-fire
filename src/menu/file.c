@@ -365,7 +365,14 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[4].flags = 0; // Quick save
 		eof_file_menu[5].flags = 0; // Load OGG
 		eof_file_menu[7].flags = 0;	// Export chart range
-		eof_file_menu[8].flags = 0;	// Export audio range
+		if(eof_silence_loaded)
+		{	//If no chart audio is loaded
+			eof_file_menu[8].flags = D_DISABLED;	// Export audio range
+		}
+		else
+		{
+			eof_file_menu[8].flags = 0;	// Export audio range
+		}
 		#ifdef ALLEGRO_WINDOWS
 			eof_file_menu[9].flags = 0;	// Export guitar pro
 		#else

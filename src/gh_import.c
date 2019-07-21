@@ -2891,13 +2891,14 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 
 //Check whether the chart has both normal star power AND star power battle sections
 #ifdef GH_IMPORT_DEBUG
-		eof_log("\tGH:  Counting star power phrases.", 1);
+		eof_log("\tGH:  *Counting star power phrases.", 1);
 #endif
 	for(ctr = 0; ctr < EOF_NUM_GH_SP_SECTIONS_QB; ctr++)
 	{	//For each of the known SP and SP battle section names
 		unsigned long retval;
 
 		sp_count = sp_battle_count = 0;	//Reset these
+		fb->index = 0;	//Rewind to beginning of file buffer so the search checks the entire buffered file
 		retval = eof_gh_read_sp_section_qb(fb, sp, songname, &eof_gh_sp_sections_qb[ctr], qbindex, 1);	//Count star power phrases
 		if(retval != ULONG_MAX)
 		{	//If the count was successful
@@ -2908,6 +2909,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 			sp_count += retval;	//Add to the star power phrase counter
 		}
 
+		fb->index = 0;	//Rewind to beginning of file buffer so the search checks the entire buffered file
 		retval = eof_gh_read_sp_section_qb(fb, sp, songname, &eof_gh_sp_battle_sections_qb[ctr], qbindex, 1);	//Count star power battle phrases
 		if(retval != ULONG_MAX)
 		{	//If the count was successful
@@ -2941,6 +2943,9 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	}
 
 //Read star power sections
+#ifdef GH_IMPORT_DEBUG
+		eof_log("\tGH:  *Importing star power phrases.", 1);
+#endif
 	for(ctr = 0; ctr < EOF_NUM_GH_SP_SECTIONS_QB; ctr++)
 	{	//For each known guitar hero star power section
 		if(sp_conflicts[ctr] && !import_sp)
@@ -2951,7 +2956,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 #endif
 			continue;	//Skip this section
 		}
-		fb->index = 0;	//Rewind to beginning of file buffer
+		fb->index = 0;	//Rewind to beginning of file buffer so the search checks the entire buffered file
 		(void) eof_gh_read_sp_section_qb(fb, sp, songname, &eof_gh_sp_sections_qb[ctr], qbindex, 0);	//Import star power section
 	}
 
@@ -2966,7 +2971,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 #endif
 			continue;	//Skip this section
 		}
-		fb->index = 0;	//Rewind to beginning of file buffer
+		fb->index = 0;	//Rewind to beginning of file buffer so the search checks the entire buffered file
 		(void) eof_gh_read_sp_section_qb(fb, sp, songname, &eof_gh_sp_battle_sections_qb[ctr], qbindex, 0);	//Import star power battle section
 	}
 

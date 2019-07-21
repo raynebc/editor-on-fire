@@ -6607,6 +6607,7 @@ int eof_menu_trill_unmark(void)
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *sectionptr;
 	int note_selection_updated;
+	char undo_made = 0;
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
@@ -6621,7 +6622,11 @@ int eof_menu_trill_unmark(void)
 				sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
 				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
 				{	//If the note is encompassed within this trill section
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					if(!undo_made)
+					{
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
 					eof_track_delete_trill(eof_song, eof_selected_track, j);	//Delete the trill section
 					break;
 				}
@@ -6642,6 +6647,7 @@ int eof_menu_tremolo_unmark(void)
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *sectionptr;
 	int note_selection_updated;
+	char undo_made = 0;
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
@@ -6667,7 +6673,11 @@ int eof_menu_tremolo_unmark(void)
 			}
 			if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
 			{	//If the note is encompassed within this tremolo section
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				if(!undo_made)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
 				eof_track_delete_tremolo(eof_song, eof_selected_track, j);	//Delete the tremolo section
 				break;
 			}
@@ -6687,6 +6697,7 @@ int eof_menu_slider_unmark(void)
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *sectionptr;
 	int note_selection_updated;
+	char undo_made = 0;
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
 		return 1;	//Do not allow this function to run unless a legacy guitar track is active
@@ -6701,7 +6712,11 @@ int eof_menu_slider_unmark(void)
 				sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
 				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
 				{	//If the note is encompassed within this slider section
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					if(!undo_made)
+					{
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
 					eof_track_delete_slider(eof_song, eof_selected_track, j);	//Delete the slider section
 					break;
 				}
