@@ -3451,7 +3451,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 		return -1;
 
 	eof_log("eof_gh_read_sections_qb() entered", 1);
-	sections_file = fb;	//By default, check for sections in the main chart file
+	sections_file = fb;	//By default, check for section names in the same file as the section timestamps
 	sections_file->index = 0;	//Rewind to beginning of file buffer
 
 	while(!done)
@@ -3467,24 +3467,24 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 			{	//For each link in the sections checksum list
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH: \tSearching for position of section \"%s\" (checksum 0x%08lX)", linkptr->text, linkptr->checksum);
 				eof_log(eof_log_string, 1);
-				sections_file->index = 0;	//Rewind to beginning of chart file buffer
+				fb->index = 0;	//Rewind to beginning of chart file buffer
 				found = 0;	//Reset this boolean condition
 				while(1)
 				{	//Search for each instance of the section string checksum
-					if(eof_filebuffer_find_checksum(sections_file, linkptr->checksum))	//Find the section string checksum in the buffer
+					if(eof_filebuffer_find_checksum(fb, linkptr->checksum))	//Find the section string checksum in the buffer
 					{	//If the checksum wasn't found
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCouldn't find position data for section \"%s\", it is probably a lyric", linkptr->text);
 						eof_log(eof_log_string, 1);
 						break;	//Skip looking for this section's timestamp
 					}
-					findpos = sections_file->index;	//Store the section string checksum match position
+					findpos = fb->index;	//Store the section string checksum match position
 					validated = 0;		//Reset this boolean condition
 					if(eof_gh_import_gh3_style_sections)
 					{	//GH3 format section names
-						if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0) && (sections_file->index >= 24))
+						if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0) && (fb->index >= 24))
 						{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 24 bytes
-							sections_file->index -= 24;	//Rewind 6 dwords, where the timestamp is expected to be
-							if(!eof_filebuffer_get_dword(sections_file, &dword))	//Read the timestamp
+							fb->index -= 24;	//Rewind 6 dwords, where the timestamp is expected to be
+							if(!eof_filebuffer_get_dword(fb, &dword))	//Read the timestamp
 							{	//If the timestamp was successfully read
 								unsigned long beatnum;
 
@@ -3511,10 +3511,10 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 					}
 					else
 					{	//Other GH games' section name format
-						if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0) && (sections_file->index >= 20))
+						if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0) && (fb->index >= 20))
 						{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 20 bytes
-							sections_file->index -= 20;	//Rewind 5 dwords
-							if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0x00201C00))
+							fb->index -= 20;	//Rewind 5 dwords
+							if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0x00201C00))
 							{	//If the 3rd dword before the string checksum was succesfully read and the value was 0x00201C00 (new section header)
 								validated = 1;	//Consider this to be the appropriate entry matching the section string checksum with its section checksum
 							}
@@ -3522,29 +3522,29 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 
 						if(validated)
 						{
-							if(!eof_filebuffer_get_dword(sections_file, &checksum))
+							if(!eof_filebuffer_get_dword(fb, &checksum))
 							{	//If the checksum for the practice section could be read
-								sections_file->index = 0;	//Rewind to beginning of chart file buffer (the external file, if used, contains its own section name and checksum, and a referring checksum used in the main chart file)
+								fb->index = 0;	//Rewind to beginning of chart file buffer (the external file, if used, contains its own section name and checksum, and a referring checksum used in the main chart file)
 								while(1)
 								{	//Search for each instance of the practice section checksum
-									if(eof_filebuffer_find_checksum(sections_file, checksum))	//Find the practice section checksum in the buffer
+									if(eof_filebuffer_find_checksum(fb, checksum))	//Find the practice section checksum in the buffer
 									{	//If the practice section checksum was not found
 										break;	//Exit to next outer loop to continue looking for other instances of the section string checksum
 									}
-									findpos2 = sections_file->index;	//Store the practice section checksum match position
+									findpos2 = fb->index;	//Store the practice section checksum match position
 									validated = 0;	//Reset this boolean condition
-									if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0) && (sections_file->index >= 16))
+									if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0) && (fb->index >= 16))
 									{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 16 bytes
-										sections_file->index -= 16;	//Rewind 4 dwords
-										if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0x00011A00) && (sections_file->index >= 12))
+										fb->index -= 16;	//Rewind 4 dwords
+										if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0x00011A00) && (fb->index >= 12))
 										{	//If the 3rd dword before the string checksum was succesfully read, the value was 0x00011A00 (alternate 2D array section header) and the buffer can be rewound at least 24 bytes
-											sections_file->index -= 12;	//Rewind 3 dwords
+											fb->index -= 12;	//Rewind 3 dwords
 											validated = 1;
 										}
 									}
 									if(validated)
 									{
-										if(!eof_filebuffer_get_dword(sections_file, &dword))	//Read the timestamp
+										if(!eof_filebuffer_get_dword(fb, &dword))	//Read the timestamp
 										{	//If the timestamp was successfully read
 											unsigned long beatnum;
 
@@ -3565,7 +3565,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 											break;	//Break from practice section search loop
 										}
 									}
-									sections_file->index = findpos2;	//Restore the buffer position for the next iteration of this loop
+									fb->index = findpos2;	//Restore the buffer position for the next iteration of this loop
 								}
 							}//If the checksum for the practice section could be read
 						}
@@ -3574,7 +3574,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 					{	//If the practice section's timestamp was imported
 						break;	//Break from section string search loop
 					}
-					sections_file->index = findpos;	//Restore the buffer position for the next iteration of this loop
+					fb->index = findpos;	//Restore the buffer position for the next iteration of this loop
 				}//Search for each instance of the section string checksum
 			}//For each link in the sections checksum list
 

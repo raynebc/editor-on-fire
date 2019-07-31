@@ -4886,7 +4886,7 @@ int eof_initialize(int argc, char * argv[])
 
 			if(!ustrcmp(eof_songs_path, exepath))
 			{	//If the song path is currently set to the default of the executable file's parent folder
-				int retval = alert3("The default location for new projects is with EOF's executable and that can ultimately be within the application bundle.", "This can make it hard to find in OS X.", "Would you like to browse for a different song folder location now?", "Yes", "No", "Later", 0, 0, 0);
+				int retval = alert3("The default location for new projects is with EOF's executable and that can ultimately", "be within the application bundle.  This can make it hard to find in OS X.", "Would you like to browse for a different song folder location now?", "Yes", "No", "Later", 0, 0, 0);
 
 				if(retval == 1)
 				{	//If the user opts to define the song folder
