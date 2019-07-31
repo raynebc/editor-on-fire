@@ -27,6 +27,10 @@ unsigned long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	{
 		return ULONG_MAX;
 	}
+	if(!sp->beats)
+	{
+		return ULONG_MAX;
+	}
 	if(pos < sp->beat[0]->pos)
 	{
 		return ULONG_MAX;

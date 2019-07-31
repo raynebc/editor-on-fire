@@ -19,7 +19,7 @@ unsigned long crc32_lookup[256] = {0};	//A lookup table to improve checksum calc
 char crc32_lookup_initialized = 0;	//Is set to nonzero when the lookup table is created
 char eof_gh_skip_size_def = 0;	//Is set to nonzero if it's determined that the size field in GH headers is omitted
 char magicnumber[] = {0x1C,0x08,0x02,0x04,0x10,0x04,0x08,0x0C,0x0C,0x08,0x02,0x04,0x14,0x02,0x04,0x0C,0x10,0x10,0x0C,0x00};	//The magic number is expected 8 bytes into the QB header
-unsigned char eof_gh_unicode_encoding_detected;	//Is set to nonzero if determined that the lyric/section text is in Unicode format
+unsigned char eof_gh_unicode_encoding_detected;	//Is set to nonzero if determined that the lyric/section text is in Unicode (UTF-16) format
 char eof_song_aux_swap = 0;	//Set to nonzero if user opts to import the _song_aux_ sections into PART RHYTHM (ie. in QB format GH charts that have _song_aux_ notes but no _song_rhythmcoop_ notes)
 							//or if PART RHYTHM is populated but PART BASS is empty, the user is prompted to import aux to bass instead
 unsigned long eof_song_aux_track = EOF_TRACK_KEYS;	//The effective track to which the aux guitar track's notes and star power paths are to be imported
@@ -27,7 +27,8 @@ unsigned long eof_song_aux_track = EOF_TRACK_KEYS;	//The effective track to whic
 int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will prompt user whether the chart is from Warriors of Rock,
 								// which defines the bits in a different order than Smash Hits
 int eof_gh_import_ghost_drum_notice = 0;	//Will be set to nonzero if the user was notified that ghost notes were detected and highlighted during GH import
-int eof_gh_import_threshold_prompt = 0;	//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 quarter notes as the HOPO threshold
+int eof_gh_import_threshold_prompt = 0;		//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 quarter notes as the HOPO threshold
+int eof_gh_import_gh3_style_sections = 0;	//Will be set to nonzero if GH3 format sections are detected from whichever file is used to import section names, since they are defined differently than in newer games
 
 #define GH_IMPORT_DEBUG
 
@@ -388,9 +389,13 @@ int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, size_t searchle
 		{	//Seek to beginning of match
 			fb->index = matchpos;
 		}
-		else
-		{	//Otherwise seek past the last byte of the match
+		else if(seektype == 2)
+		{	//Seek past the last byte of the match
 			fb->index++;
+		}
+		else if(seektype == 0)
+		{	//Restore original buffer position
+			fb->index = originalpos;
 		}
 		return 1;	//Return match (if seektype was not 1, the buffer position is left at the byte following the match
 	}
@@ -2634,6 +2639,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 
 	eof_song_aux_swap = 0;	//Reset these conditions
 	eof_gh_import_threshold_prompt = 0;
+	eof_gh_import_gh3_style_sections = 0;
 	eof_song_aux_track = EOF_TRACK_KEYS;
 
 //Find the file name (stored within the PAK header)
@@ -2994,10 +3000,13 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 
 struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 {
-	unsigned long checksum, index2, nameindex, ctr;
+	unsigned long checksum, index2, nameindex, ctr, dword;
 	unsigned char sectionid_ASCII[] = {0x22, 0x0D, 0x0A};		//This hex sequence is between each section name entry for ASCII text encoded GH files
 	unsigned char sectionid_UNI[] = {0x00, 0x22, 0x00, 0x0A};	//This hex sequence is between each section name entry for ASCII text encoded GH files
+	unsigned char sectionid_GH3[] = {0x00, 0x20, 0x03, 0x00};	//This hex sequence precedes each section name entry in GH3 format chart files
+	unsigned char sectionid_GH3_2[] = {0x13, 0xE8, 0x9E, 0x88};	//This hex sequence follows each string ID in GH3 format chart files
 	unsigned char *sectionid, char_size;
+	char addsection;
 	size_t section_id_size;
 	unsigned char quote_rewind;	//The number of bytes before a section name's opening quote mark its checknum exists
 	char *buffer = NULL, checksumbuff[9] = {0}, checksumbuffuni[18] = {0}, *name;
@@ -3013,12 +3022,20 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	if(!fb)
 		return NULL;
 
-	if(eof_gh_unicode_encoding_detected)
+	if(eof_filebuffer_find_bytes(fb, sectionid_GH3, 4, 0) && eof_filebuffer_find_bytes(fb, sectionid_GH3_2, 4, 0))
+	{	//If hex strings associated with GH3 charts are found
+		section_id_size = sizeof(sectionid_GH3);
+		sectionid = sectionid_GH3;
+		eof_gh_import_gh3_style_sections = 1;		//Different logic will be used to parse the section names
+		eof_log("\tDetected GH3 format sections", 1);
+	}
+	else if(eof_gh_unicode_encoding_detected)
 	{	//If Unicode encoding was found when importing lyrics, the section names will also be in Unicode
 		section_id_size = sizeof(sectionid_UNI);
 		sectionid = sectionid_UNI;
 		quote_rewind = 18;
 		char_size = 2;	//A Unicode character is two bytes
+		eof_log("\tDetected UTF-16 sections", 1);
 	}
 	else
 	{	//ASCII encoding is assumed
@@ -3026,6 +3043,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 		sectionid = sectionid_ASCII;
 		quote_rewind = 9;
 		char_size = 1;
+		eof_log("\tDetected ASCII sections", 1);
 	}
 
 //Find the section names and checksums
@@ -3033,47 +3051,17 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	while(eof_filebuffer_find_bytes(fb, sectionid, section_id_size, 1) > 0)
 	{	//While there are section name entries
 		lastfoundpos = fb->index;
-		for(index2 = char_size; (index2 <= fb->index) && (fb->buffer[fb->index - index2 + char_size - 1] != '\"'); index2 += char_size);	//Find the opening quotation mark for this string
-		if((index2 > fb->index) || (index2 < 1))
-		{	//If the opening quotation mark wasn't found or if there was some kind of logic error (ie. overflow)
-			eof_destroy_qblyric_list(head);
-			return NULL;
-		}
-		if(fb->index - index2 >= quote_rewind)
-		{	//If there is enough buffered data before this position to allow for an 8 character checksum and a space character
-			//Find and parse the checksum for this section name
-			fb->index = fb->index - index2 - quote_rewind;	//Seek to the position of the section name checksum
-			if(eof_gh_unicode_encoding_detected)
-			{	//If this GH file is in Unicode, convert the letters to ASCII by skipping the leading 0 byte of each
-				if(eof_filebuffer_memcpy(fb, checksumbuffuni, 16) == EOF)	//Read the Unicode checksum into a buffer
-				{
-					eof_log("\t\tError:  Could not read Unicode section name checksum", 1);
-					eof_destroy_qblyric_list(head);
-					return NULL;
-				}
-				for(ctr = 0; ctr < 8; ctr++)
-				{	//For each of the 8 Unicode characters
-					checksumbuff[ctr] = checksumbuffuni[(2 * ctr) + 1];	//Keep the second byte of each Unicode character
-				}
-			}
-			else
+		addsection = 0;	//Reset this status
+		if(eof_gh_import_gh3_style_sections)
+		{	//GH3 section parsing logic
+			nameindex = 0;	//This is the index into the buffer that will point ahead of any leading gibberish the section name string may contain
+			fb->index += 4;	//Seek past the section header
+			if(eof_filebuffer_get_dword(fb, &checksum) == EOF)	//Read the checksum into a buffer
 			{
-				if(eof_filebuffer_memcpy(fb, checksumbuff, 8) == EOF)	//Read the checksum into a buffer
-				{
-					eof_log("\t\tError:  Could not read section name checksum", 1);
-					eof_destroy_qblyric_list(head);
-					return NULL;
-				}
+				eof_log("\t\tError:  Could not read section name checksum", 1);
+				eof_destroy_qblyric_list(head);
+				return NULL;
 			}
-			checksumbuff[8] = '\0';	//Null terminate the buffer
-			(void) sscanf(checksumbuff, "%8lX", &checksum);	//Convert the hex string to unsigned decimal format (sscanf is width limited to prevent buffer overflow)
-			if(fb->buffer[fb->index + eof_gh_unicode_encoding_detected] != ' ')
-			{	//If the expected space character is not found at this position
-				eof_log("\t\tError:  Malformed section name checksum, skipping.", 1);
-				fb->index = lastfoundpos + 1;	//Seek just beyond the last search hit so the next one can be found
-				continue;	//Look for next section
-			}
-			fb->index += (2 * char_size);	//Seek past the space character and opening quotation mark
 
 			//Check if this checksum was already read (one language of sections has been parsed), and if so, revert the buffer position to before the last seek operation, return section list
 			for(temp = head; temp != NULL; temp = temp->next)
@@ -3085,8 +3073,17 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				}
 			}
 
+			if(eof_filebuffer_get_dword(fb, &dword) || (dword != 0x13E89E88))
+			{	//If the number that follows the string ID wasn't readable or validated to be the expected value
+				eof_log("\t\tError:  Malformed section", 1);
+				eof_destroy_qblyric_list(head);
+				return NULL;
+			}
+
 			//Parse the section name string
-			buffer = malloc((size_t)index2);		//This buffer will be large enough to contain the string
+			fb->index += 8;	//Seek past 8 bytes of unknown data
+			for(index2 = 0; fb->buffer[fb->index + index2] != '\0'; index2++);	//Count the number of characters in this string
+			buffer = malloc((size_t)index2 + 1);		//This buffer will be large enough to contain the string and a NULL terminator
 			if(buffer == NULL)
 			{	//If the memory couldn't be allocated
 				eof_log("\t\tError:  Cannot allocate memory", 1);
@@ -3094,103 +3091,187 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				return NULL;
 			}
 			memset(buffer, 0, (size_t)index2);		//Fill with 0s to satisfy Splint
-			if(eof_filebuffer_memcpy(fb, buffer, (size_t)index2 - 1) == EOF)	//Read the section name string into a buffer
+			if(eof_filebuffer_memcpy(fb, buffer, (size_t)index2) == EOF)	//Read the section name string into a buffer
 			{
 				eof_log("\t\tError:  Could not read section name text", 1);
 				free(buffer);
 				eof_destroy_qblyric_list(head);
 				return NULL;
 			}
-			if(eof_gh_unicode_encoding_detected)
-			{	//If this GH file is in Unicode, convert the letters to ASCII by skipping the leading 0 byte of each
-				for(ctr = 0; ctr < index2 / char_size; ctr++)
-				{	//For each of the Unicode characters
-					buffer[ctr] = buffer[(ctr * char_size) + 1];	//Keep the second byte of each Unicode character
-				}
-				buffer[ctr - 1] = '\0';	//Terminate the string
+			buffer[index2] = '\0';	//Terminate the string
+			addsection = 1;	//Criteria have been met to add this section
+		}
+		else
+		{	//Non GH3 section parsing logic
+			for(index2 = char_size; (index2 <= fb->index) && (fb->buffer[fb->index - index2 + char_size - 1] != '\"'); index2 += char_size);	//Find the opening quotation mark for this string
+			if((index2 > fb->index) || (index2 < 1))
+			{	//If the opening quotation mark wasn't found or if there was some kind of logic error (ie. overflow)
+				eof_destroy_qblyric_list(head);
+				return NULL;
 			}
-			else
-			{
-				buffer[index2 - 1] = '\0';	//Terminate the string
-			}
-			nameindex = 0;	//This is the index into the buffer that will point ahead of any leading gibberish the section name string may contain
-			if(strlen(buffer) >= 2)
-			{	//If this string is at least two characters long
-				if(buffer[nameindex] == '\\')
-				{	//If this string begins with a backslash
-					nameindex++;
-					if(buffer[nameindex] == 'L')
-					{	//If it follows with an 'L' character, this is probably a lyric entry string
-						abnormal_markers = 1;	//A few QB files prefix section names with "\L", requiring all such strings to be parsed in case they are sections
-						nameindex++;
-						if(buffer[nameindex] == '=')
-						{	//If it follows with a '=' character, this is definitely a lyric entry string
-							free(buffer);
-							fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
-							continue;		//Skip it
-						}
-						nameindex--;	//Rewind one character
+			if(fb->index - index2 >= quote_rewind)
+			{	//If there is enough buffered data before this position to allow for an 8 character checksum and a space character
+				//Find and parse the checksum for this section name
+				fb->index = fb->index - index2 - quote_rewind;	//Seek to the position of the section name checksum
+				if(eof_gh_unicode_encoding_detected)
+				{	//If this GH file is in Unicode, convert the letters to ASCII by skipping the leading 0 byte of each
+					if(eof_filebuffer_memcpy(fb, checksumbuffuni, 16) == EOF)	//Read the Unicode checksum into a buffer
+					{
+						eof_log("\t\tError:  Could not read Unicode section name checksum", 1);
+						eof_destroy_qblyric_list(head);
+						return NULL;
 					}
-					nameindex++;	//Otherwise skip the character that follows the backslash (expected to be the 'u' character)
-				}
-				if(buffer[nameindex] == '[')
-				{	//If there is an open bracket
-					nameindex++;	//Skip past it
-					while(buffer[nameindex] != ']')
-					{	//Until the closing bracket is found
-						if(buffer[nameindex] == '\0')
-						{	//If the end of the string is reached unexpectedly
-							eof_log("\t\tError:  Malformed section name string", 1);
-							free(buffer);
-							eof_destroy_qblyric_list(head);
-							return NULL;
-						}
-						nameindex++;
+					for(ctr = 0; ctr < 8; ctr++)
+					{	//For each of the 8 Unicode characters
+						checksumbuff[ctr] = checksumbuffuni[(2 * ctr) + 1];	//Keep the second byte (non-zero byte) of each UTF-16 Unicode character, converting to ASCII format
 					}
-					nameindex++;	//Skip past the closing bracket
 				}
-				name = malloc(strlen(&buffer[nameindex]) + 1);	//Allocate a new buffer large enough to store the important part of the section name string
-				if(!name)
+				else
+				{
+					if(eof_filebuffer_memcpy(fb, checksumbuff, 8) == EOF)	//Read the checksum into a buffer
+					{
+						eof_log("\t\tError:  Could not read section name checksum", 1);
+						eof_destroy_qblyric_list(head);
+						return NULL;
+					}
+				}
+				checksumbuff[8] = '\0';	//Null terminate the buffer
+				(void) sscanf(checksumbuff, "%8lX", &checksum);	//Convert the hex string to unsigned decimal format (sscanf is width limited to prevent buffer overflow)
+				if(fb->buffer[fb->index + eof_gh_unicode_encoding_detected] != ' ')
+				{	//If the expected space character is not found at this position
+					eof_log("\t\tError:  Malformed section name checksum, skipping.", 1);
+					fb->index = lastfoundpos + 1;	//Seek just beyond the last search hit so the next one can be found
+					continue;	//Look for next section
+				}
+				fb->index += (2 * char_size);	//Seek past the space character and opening quotation mark
+
+				//Check if this checksum was already read (one language of sections has been parsed), and if so, revert the buffer position to before the last seek operation, return section list
+				for(temp = head; temp != NULL; temp = temp->next)
+				{	//For each section name parsed in this function call
+					if(temp->checksum == checksum)
+					{	//If the checksum just read already exists in the linked list
+						fb->index = lastseekstartpos;	//Revert to position before the most recent seek
+						return head;	//Stop reading sections
+					}
+				}
+
+				//Parse the section name string
+				buffer = malloc((size_t)index2);		//This buffer will be large enough to contain the string
+				if(buffer == NULL)
 				{	//If the memory couldn't be allocated
 					eof_log("\t\tError:  Cannot allocate memory", 1);
+					eof_destroy_qblyric_list(head);
+					return NULL;
+				}
+				memset(buffer, 0, (size_t)index2);		//Fill with 0s to satisfy Splint
+				if(eof_filebuffer_memcpy(fb, buffer, (size_t)index2 - 1) == EOF)	//Read the section name string into a buffer
+				{
+					eof_log("\t\tError:  Could not read section name text", 1);
 					free(buffer);
 					eof_destroy_qblyric_list(head);
 					return NULL;
 				}
-				strcpy(name, &buffer[nameindex]);	//Copy the clean section name into the new buffer
+				if(eof_gh_unicode_encoding_detected)
+				{	//If this GH file is in Unicode, convert the letters to ASCII by skipping the leading 0 byte of each
+					for(ctr = 0; ctr < index2 / char_size; ctr++)
+					{	//For each of the Unicode characters
+						buffer[ctr] = buffer[(ctr * char_size) + 1];	//Keep the second byte of each Unicode character
+					}
+					buffer[ctr - 1] = '\0';	//Terminate the string
+				}
+				else
+				{
+					buffer[index2 - 1] = '\0';	//Terminate the string
+				}
+				nameindex = 0;	//This is the index into the buffer that will point ahead of any leading gibberish the section name string may contain
+				if(strlen(buffer) >= 2)
+				{	//If this string is at least two characters long
+					if(buffer[nameindex] == '\\')
+					{	//If this string begins with a backslash
+						nameindex++;
+						if(buffer[nameindex] == 'L')
+						{	//If it follows with an 'L' character, this is probably a lyric entry string
+							abnormal_markers = 1;	//A few QB files prefix section names with "\L", requiring all such strings to be parsed in case they are sections
+							nameindex++;
+							if(buffer[nameindex] == '=')
+							{	//If it follows with a '=' character, this is definitely a lyric entry string
+								free(buffer);
+								fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
+								continue;		//Skip it
+							}
+							nameindex--;	//Rewind one character
+						}
+						nameindex++;	//Otherwise skip the character that follows the backslash (expected to be the 'u' character)
+					}
+					if(buffer[nameindex] == '[')
+					{	//If there is an open bracket
+						nameindex++;	//Skip past it
+						while(buffer[nameindex] != ']')
+						{	//Until the closing bracket is found
+							if(buffer[nameindex] == '\0')
+							{	//If the end of the string is reached unexpectedly
+								eof_log("\t\tError:  Malformed section name string", 1);
+								free(buffer);
+								eof_destroy_qblyric_list(head);
+								return NULL;
+							}
+							nameindex++;
+						}
+						nameindex++;	//Skip past the closing bracket
+					}
+					addsection = 1;	//Criteria have been met to add this section
+				}//If this string is at least two characters long
+			}//If there is enough buffered data before this position to allow for an 8 character checksum and a space character
+		}//Non GH3 section parsing logic
+		lastseekstartpos = fb->index;	//Back up the buffer position before each seek
+
+		if(addsection)
+		{	//If the information for a section was parsed
+			name = malloc(strlen(&buffer[nameindex]) + 1);	//Allocate a new buffer large enough to store the important part of the section name string
+			if(!name)
+			{	//If the memory couldn't be allocated
+				eof_log("\t\tError:  Cannot allocate memory", 1);
+				free(buffer);
+				eof_destroy_qblyric_list(head);
+				return NULL;
+			}
+			strcpy(name, &buffer[nameindex]);	//Copy the clean section name into the new buffer
 
 #ifdef GH_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPotential section name = \"%s\"\tchecksum = 0x%08lX", name, checksum);
-				eof_log(eof_log_string, 1);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPotential section name = \"%s\"\tchecksum = 0x%08lX", name, checksum);
+			eof_log(eof_log_string, 1);
 #endif
 
-				//Store the section name and checksum pair in the linked list
-				linkptr = malloc(sizeof(struct QBlyric));	//Allocate a new link, initialize it and insert it into the linked list
-				if(!linkptr)
-				{
-					eof_log("\t\tError:  Cannot allocate memory", 1);
-					free(buffer);
-					free(name);
-					eof_destroy_qblyric_list(head);
-					return NULL;
-				}
-				linkptr->checksum = checksum;
-				linkptr->text = name;
-				linkptr->next = NULL;
-				if(head == NULL)
-				{	//If the list is empty
-					head = linkptr;	//The new link is now the first link in the list
-				}
-				else if(tail != NULL)
-				{	//If there is already a link at the end of the list
-					tail->next = linkptr;	//Point it forward to the new link
-				}
-				tail = linkptr;	//The new link is the new tail of the list
-			}//If this string is at least two characters long
+			//Store the section name and checksum pair in the linked list
+			linkptr = malloc(sizeof(struct QBlyric));	//Allocate a new link, initialize it and insert it into the linked list
+			if(!linkptr)
+			{
+				eof_log("\t\tError:  Cannot allocate memory", 1);
+				free(buffer);
+				free(name);
+				eof_destroy_qblyric_list(head);
+				return NULL;
+			}
+			linkptr->checksum = checksum;
+			linkptr->text = name;
+			linkptr->next = NULL;
+			if(head == NULL)
+			{	//If the list is empty
+				head = linkptr;	//The new link is now the first link in the list
+			}
+			else if(tail != NULL)
+			{	//If there is already a link at the end of the list
+				tail->next = linkptr;	//Point it forward to the new link
+			}
+			tail = linkptr;	//The new link is the new tail of the list
 
-			fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
 			free(buffer);	//Free the temporary buffer that stored the raw section name string
 			buffer = NULL;
+		}//If this string is at least two characters long
+
+		if(!eof_gh_import_gh3_style_sections)
+		{	//Non GH3 section parsing logic
+			fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
 			if(!abnormal_markers && ((size_t)fb->index + 4 < fb->size))
 			{	//If there are at least four more bytes in the buffer (and no strings beginning with "\L" were parsed)
 				if((fb->buffer[fb->index] == 0x0D) && (fb->buffer[fb->index + 1] == 0x0A) && (fb->buffer[fb->index + 2] == 0x0D) && (fb->buffer[fb->index + 3] == 0x0A))
@@ -3198,8 +3279,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 					break;	//This marks the formal end of the section names
 				}
 			}
-		}//If there is enough buffered data before this position to allow for an 8 character checksum and a space character
-		lastseekstartpos = fb->index;	//Back up the buffer position before each seek
+			}
 	}//While there are section name entries
 
 	return head;
@@ -3405,68 +3485,99 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 					}
 					findpos = sections_file->index;	//Store the section string checksum match position
 					validated = 0;		//Reset this boolean condition
-					if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0) && (sections_file->index >= 20))
-					{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 20 bytes
-						sections_file->index -= 20;	//Rewind 5 dwords
-						if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0x00201C00))
-						{	//If the 3rd dword before the string checksum was succesfully read and the value was 0x00201C00 (new section header)
-							validated = 1;	//Consider this to be the appropriate entry matching the section string checksum with its section checksum
-						}
-					}
-					if(validated)
-					{
-						if(!eof_filebuffer_get_dword(sections_file, &checksum))
-						{	//If the checksum for the practice section could be read
-							fb->index = 0;	//Rewind to beginning of chart file buffer (the external file, if used, contains its own section name and checksum, and a referring checksum used in the main chart file)
-							while(1)
-							{	//Search for each instance of the practice section checksum
-								if(eof_filebuffer_find_checksum(fb, checksum))	//Find the practice section checksum in the buffer
-								{	//If the practice section checksum was not found
-									break;	//Exit to next outer loop to continue looking for other instances of the section string checksum
-								}
-								findpos2 = fb->index;	//Store the practice section checksum match position
-								validated = 0;	//Reset this boolean condition
-								if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0) && (fb->index >= 16))
-								{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 16 bytes
-									fb->index -= 16;	//Rewind 4 dwords
-									if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0x00011A00) && (fb->index >= 12))
-									{	//If the 3rd dword before the string checksum was succesfully read, the value was 0x00011A00 (alternate 2D array section header) and the buffer can be rewound at least 24 bytes
-										fb->index -= 12;	//Rewind 3 dwords
-										validated = 1;
-									}
-								}
-								if(validated)
-								{
-									if(!eof_filebuffer_get_dword(fb, &dword))	//Read the timestamp
-									{	//If the timestamp was successfully read
-										unsigned long beatnum;
+					if(eof_gh_import_gh3_style_sections)
+					{	//GH3 format section names
+						if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0) && (sections_file->index >= 24))
+						{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 24 bytes
+							sections_file->index -= 24;	//Rewind 6 dwords, where the timestamp is expected to be
+							if(!eof_filebuffer_get_dword(sections_file, &dword))	//Read the timestamp
+							{	//If the timestamp was successfully read
+								unsigned long beatnum;
 
-										eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
-										beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
-										if(eof_beat_num_valid(sp, beatnum))
-										{	//If there is such a beat
-											char buffer2[256] = {0};
+								eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+								beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
+								if(eof_beat_num_valid(sp, beatnum))
+								{	//If there is such a beat
+									char buffer2[256] = {0};
 
 #ifdef GH_IMPORT_DEBUG
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
-											eof_log(eof_log_string, 1);
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+									eof_log(eof_log_string, 1);
 #endif
-											(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
-											(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
-										}
-										found = 1;
-										break;	//Break from practice section search loop
-									}
+									(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
+									(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 								}
-								fb->index = findpos2;	//Restore the buffer position for the next iteration of this loop
+								found = 1;
+								break;	//Break from practice section search loop
 							}
-						}//If the checksum for the practice section could be read
+						}
 					}
+					else
+					{	//Other GH games' section name format
+						if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0) && (sections_file->index >= 20))
+						{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 20 bytes
+							sections_file->index -= 20;	//Rewind 5 dwords
+							if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0x00201C00))
+							{	//If the 3rd dword before the string checksum was succesfully read and the value was 0x00201C00 (new section header)
+								validated = 1;	//Consider this to be the appropriate entry matching the section string checksum with its section checksum
+							}
+						}
+
+						if(validated)
+						{
+							if(!eof_filebuffer_get_dword(sections_file, &checksum))
+							{	//If the checksum for the practice section could be read
+								sections_file->index = 0;	//Rewind to beginning of chart file buffer (the external file, if used, contains its own section name and checksum, and a referring checksum used in the main chart file)
+								while(1)
+								{	//Search for each instance of the practice section checksum
+									if(eof_filebuffer_find_checksum(sections_file, checksum))	//Find the practice section checksum in the buffer
+									{	//If the practice section checksum was not found
+										break;	//Exit to next outer loop to continue looking for other instances of the section string checksum
+									}
+									findpos2 = sections_file->index;	//Store the practice section checksum match position
+									validated = 0;	//Reset this boolean condition
+									if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0) && (sections_file->index >= 16))
+									{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 16 bytes
+										sections_file->index -= 16;	//Rewind 4 dwords
+										if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0x00011A00) && (sections_file->index >= 12))
+										{	//If the 3rd dword before the string checksum was succesfully read, the value was 0x00011A00 (alternate 2D array section header) and the buffer can be rewound at least 24 bytes
+											sections_file->index -= 12;	//Rewind 3 dwords
+											validated = 1;
+										}
+									}
+									if(validated)
+									{
+										if(!eof_filebuffer_get_dword(sections_file, &dword))	//Read the timestamp
+										{	//If the timestamp was successfully read
+											unsigned long beatnum;
+
+											eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+											beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
+											if(eof_beat_num_valid(sp, beatnum))
+											{	//If there is such a beat
+												char buffer2[256] = {0};
+
+#ifdef GH_IMPORT_DEBUG
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+												eof_log(eof_log_string, 1);
+#endif
+												(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
+												(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
+											}
+											found = 1;
+											break;	//Break from practice section search loop
+										}
+									}
+									sections_file->index = findpos2;	//Restore the buffer position for the next iteration of this loop
+								}
+							}//If the checksum for the practice section could be read
+						}
+					}//Other GH games' section name format
 					if(found)
 					{	//If the practice section's timestamp was imported
 						break;	//Break from section string search loop
 					}
-					fb->index = findpos;	//Restore the buffer position for the next iteration of this loop
+					sections_file->index = findpos;	//Restore the buffer position for the next iteration of this loop
 				}//Search for each instance of the section string checksum
 			}//For each link in the sections checksum list
 

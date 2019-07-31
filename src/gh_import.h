@@ -64,7 +64,8 @@ int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, size_t searchle
 	//Searches from the current buffer position for the first match of the sequence of byte values
 	//bytes is an array of byte values to find, and searchlen is the number of bytes defined in the array
 	//If no match is found, the buffer position is returned to what it was when the function was called
-	//If a match is found, the buffer position is set based on the value of seektype and 1 is returned
+	//If a match is found, the buffer position is optionally set based on the value of seektype and 1 is returned
+	//If seektype is 0, the buffer position is restored to its original value
 	//If seektype is 1, the buffer position is set to the first byte of the match
 	//If seektype is 2, the buffer position is set to the first byte that follows the match
 	//If an error occurs, -1 is returned

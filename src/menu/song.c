@@ -787,6 +787,10 @@ int eof_menu_song_seek_end(void)
 	if(!eof_music_catalog_playback)
 	{
 		eof_set_seek_position(eof_music_length + eof_av_delay);
+		if(!eof_music_paused)
+		{	//If the chart was playing
+			eof_music_play(0);	//Stop it here because ALOGG may not correctly detect the seek reached the end of the audio
+		}
 	}
 	return 1;
 }
@@ -796,6 +800,10 @@ int eof_menu_song_seek_chart_end(void)
 	if(!eof_music_catalog_playback)
 	{
 		eof_set_seek_position(eof_chart_length + eof_av_delay);
+		if(!eof_music_paused)
+		{	//If the chart was playing
+			eof_music_play(0);	//Stop it here because ALOGG may not correctly detect the seek reached the end of the audio
+		}
 	}
 	return 1;
 }
