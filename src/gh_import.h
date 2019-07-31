@@ -25,6 +25,7 @@ extern unsigned long crc32_lookup[256];
 extern char crc32_lookup_initialized;
 extern EOF_SONG *eof_sections_list_all_ptr;	//eof_sections_list_all() lists the text events in this chart
 extern char eof_rhythm_coop_aux_swap;
+extern int eof_gh_import_gh3_style_sections;
 
 EOF_SONG * eof_import_gh(const char * fn);
 	//Imports the specified Guitar Hero file

@@ -3000,11 +3000,10 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 
 struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 {
-	unsigned long checksum, index2, nameindex, ctr, dword;
+	unsigned long checksum, index2, nameindex, ctr;
 	unsigned char sectionid_ASCII[] = {0x22, 0x0D, 0x0A};		//This hex sequence is between each section name entry for ASCII text encoded GH files
 	unsigned char sectionid_UNI[] = {0x00, 0x22, 0x00, 0x0A};	//This hex sequence is between each section name entry for ASCII text encoded GH files
 	unsigned char sectionid_GH3[] = {0x00, 0x20, 0x03, 0x00};	//This hex sequence precedes each section name entry in GH3 format chart files
-	unsigned char sectionid_GH3_2[] = {0x13, 0xE8, 0x9E, 0x88};	//This hex sequence follows each string ID in GH3 format chart files
 	unsigned char *sectionid, char_size;
 	char addsection;
 	size_t section_id_size;
@@ -3022,8 +3021,8 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	if(!fb)
 		return NULL;
 
-	if(eof_filebuffer_find_bytes(fb, sectionid_GH3, 4, 0) && eof_filebuffer_find_bytes(fb, sectionid_GH3_2, 4, 0))
-	{	//If hex strings associated with GH3 charts are found
+	if(eof_filebuffer_find_bytes(fb, sectionid_GH3, 4, 0))
+	{	//If the hex string associated with GH3 charts is found
 		section_id_size = sizeof(sectionid_GH3);
 		sectionid = sectionid_GH3;
 		eof_gh_import_gh3_style_sections = 1;		//Different logic will be used to parse the section names
@@ -3073,12 +3072,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				}
 			}
 
-			if(eof_filebuffer_get_dword(fb, &dword) || (dword != 0x13E89E88))
-			{	//If the number that follows the string ID wasn't readable or validated to be the expected value
-				eof_log("\t\tError:  Malformed section", 1);
-				eof_destroy_qblyric_list(head);
-				return NULL;
-			}
+			fb->index += 4;	//Seek past 4 bytes of unknown data
 
 			//Parse the section name string
 			fb->index += 8;	//Seek past 8 bytes of unknown data
@@ -3494,7 +3488,10 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 							{	//If the timestamp was successfully read
 								unsigned long beatnum;
 
-								eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+								if(eof_chart_length < dword)
+								{	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+									eof_chart_length = dword;
+								}
 								beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 								if(eof_beat_num_valid(sp, beatnum))
 								{	//If there is such a beat

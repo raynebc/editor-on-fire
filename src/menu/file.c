@@ -90,6 +90,7 @@ MENU eof_file_import_menu[] =
 	{"&Rocksmith", eof_menu_file_rs_import, NULL, 0, NULL},
 	{"&Bandfuse", eof_menu_file_bf_import, NULL, 0, NULL},
 	{"&Queen Bee", eof_menu_file_array_txt_import, NULL, 0, NULL},
+	{"Guitar Hero sections", eof_menu_file_gh3_section_import, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -6437,5 +6438,34 @@ int eof_menu_file_array_txt_import(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 
+	return 1;
+}
+
+int eof_menu_file_gh3_section_import(void)
+{
+	filebuffer *fb;
+	char * sectionfn;
+
+	eof_log("eof_menu_file_gh3_section_import() entered", 1);
+
+	if(!eof_song)
+		return 1;
+
+	//Prompt user to browse for file, and buffer it to memory
+	sectionfn = ncd_file_select(0, eof_last_eof_path, "Import GH3 section name file", eof_filter_gh_files);
+	if(!sectionfn)
+		return 1;
+	fb = eof_filebuffer_load(sectionfn);
+	if(fb == NULL)
+	{	//Section names file failed to buffer
+		allegro_message("Error:  Failed to buffer section name file");
+	}
+
+	//Import sections
+	eof_gh_import_gh3_style_sections = 0;	//Reset this status
+	(void) eof_gh_read_sections_qb(fb, eof_song);
+
+	//Cleanup
+	eof_filebuffer_close(fb);	//Close that file buffer
 	return 1;
 }

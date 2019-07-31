@@ -915,7 +915,7 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
-
+	(void) eof_menu_file_gh3_section_import();
 }
 ///ALT handling testing
 /*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
