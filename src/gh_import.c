@@ -2989,7 +2989,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	}
 
 //Read sections
-	(void) eof_gh_read_sections_qb(fb, sp);
+	(void) eof_gh_read_sections_qb(fb, sp, 0);
 
 //Read vocal track
 	(void) eof_gh_read_vocals_qb(fb, sp, songname, qbindex);
@@ -3077,23 +3077,26 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 			//Parse the section name string
 			fb->index += 8;	//Seek past 8 bytes of unknown data
 			for(index2 = 0; fb->buffer[fb->index + index2] != '\0'; index2++);	//Count the number of characters in this string
-			buffer = malloc((size_t)index2 + 1);		//This buffer will be large enough to contain the string and a NULL terminator
-			if(buffer == NULL)
-			{	//If the memory couldn't be allocated
-				eof_log("\t\tError:  Cannot allocate memory", 1);
-				eof_destroy_qblyric_list(head);
-				return NULL;
+			if(index2)
+			{	//If there is at least one character (if there aren't any, it probably isn't a practice section)
+				buffer = malloc((size_t)index2 + 1);		//This buffer will be large enough to contain the string and a NULL terminator
+				if(buffer == NULL)
+				{	//If the memory couldn't be allocated
+					eof_log("\t\tError:  Cannot allocate memory", 1);
+					eof_destroy_qblyric_list(head);
+					return NULL;
+				}
+				memset(buffer, 0, (size_t)index2);		//Fill with 0s to satisfy Splint
+				if(eof_filebuffer_memcpy(fb, buffer, (size_t)index2) == EOF)	//Read the section name string into a buffer
+				{
+					eof_log("\t\tError:  Could not read section name text", 1);
+					free(buffer);
+					eof_destroy_qblyric_list(head);
+					return NULL;
+				}
+				buffer[index2] = '\0';	//Terminate the string
+				addsection = 1;	//Criteria have been met to add this section
 			}
-			memset(buffer, 0, (size_t)index2);		//Fill with 0s to satisfy Splint
-			if(eof_filebuffer_memcpy(fb, buffer, (size_t)index2) == EOF)	//Read the section name string into a buffer
-			{
-				eof_log("\t\tError:  Could not read section name text", 1);
-				free(buffer);
-				eof_destroy_qblyric_list(head);
-				return NULL;
-			}
-			buffer[index2] = '\0';	//Terminate the string
-			addsection = 1;	//Criteria have been met to add this section
 		}
 		else
 		{	//Non GH3 section parsing logic
@@ -3438,7 +3441,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 	return 0;	//Return cancellation/no sections
 }
 
-int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
+int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 {
 	unsigned long checksum = 0, dword = 0, ctr, findpos, findpos2, lastsectionpos = 0;
 	char sectionsfound = 0, validated, found;
@@ -3446,6 +3449,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
 	filebuffer *sections_file;
 	int done = 0, retval = 0;
+	char undo_made = 0;
 
 	if(!fb || !sp)
 		return -1;
@@ -3502,6 +3506,11 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 									eof_log(eof_log_string, 1);
 #endif
 									(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
+									if(undo && !undo_made)
+									{	//Make a back up before adding the first section (but only if the calling function specified to create an undo state)
+										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+										undo_made = 1;
+									}
 									(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 								}
 								found = 1;
@@ -3559,6 +3568,11 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 												eof_log(eof_log_string, 1);
 #endif
 												(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
+												if(undo && !undo_made)
+												{	//Make a back up before adding the first section (but only if the calling function specified to create an undo state)
+													eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+													undo_made = 1;
+												}
 												(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 											}
 											found = 1;

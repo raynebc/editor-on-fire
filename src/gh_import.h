@@ -108,11 +108,12 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp);
 	//Each language of sections are loaded individually and presented to the user so that the user can select which language to import
 	//If sections are not found, or the user cancels loading sections, 0 is returned
 	//If an error is detected, -1 is returned
-int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp);
+int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo);
 	//Searches the buffered file for section markers and loads them into the specified EOF_SONG structure (QB format GH file)
 	//If sections are not found, 0 is returned
 	//If an error is detected, -1 is returned
 	//If the user cancels the loading of sections, -2 is returned
+	//If undo is nonzero, an undo state is created before any sections are imported
 
 int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex, char forcestrum);
 	//Searches for the target instrument section in the buffered file (QB format GH file)

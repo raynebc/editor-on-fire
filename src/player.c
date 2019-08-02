@@ -14,6 +14,7 @@ void eof_music_play(char resumelastspeed)
 	static int speed = 1000;
 	unsigned long i;
 	int ret, newspeed = 1000;
+	int ctrl_held = 0;
 
 	eof_log("eof_music_play() entered", 1);
 
@@ -25,7 +26,17 @@ void eof_music_play(char resumelastspeed)
 	if(!resumelastspeed)
 	{	//If the previous playback speed isn't being re-used, determine what speed to play at
 		newspeed = eof_playback_speed;	//By default, use the currently configured playback rate
+		#ifdef ALLEGRO_MACOSX
+			//In OS X, CMD+Space brings up the OS search instead, so allow the use the real CTRL keys for slow playback shortcuts
+			if(key[KEY_LCONTROL] || key[KEY_RCONTROL])
+			{	//If CTRL is being held
+				ctrl_held = 1;
+			}
+		#endif
 		if(KEY_EITHER_CTRL)
+			ctrl_held = 1;
+
+		if(ctrl_held)
 		{	//If CTRL is being held
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is also being held

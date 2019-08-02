@@ -6463,7 +6463,7 @@ int eof_menu_file_gh3_section_import(void)
 
 	//Import sections
 	eof_gh_import_gh3_style_sections = 0;	//Reset this status
-	(void) eof_gh_read_sections_qb(fb, eof_song);
+	(void) eof_gh_read_sections_qb(fb, eof_song, 1);
 
 	//Cleanup
 	eof_filebuffer_close(fb);	//Close that file buffer

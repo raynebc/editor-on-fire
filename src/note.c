@@ -646,7 +646,21 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			}
 			else
 			{	//Otherwise render it as a triangle
-				triangle(window->screen, x, y-radius, x+radius, y+radius, x-radius, y+radius, ncol);
+				#ifdef ALLEGRO_MACOSX
+				{	//The triangle() function is broken in at least OS X High Sierra, call polygon() instead
+					int points[6];
+
+					points[0] = x;
+					points[1] = y-radius;
+					points[2] = x+radius;
+					points[3] = y+radius;
+					points[4] = x-radius;
+					points[5] = y+radius;
+					polygon(window->screen, 3, points, ncol);
+				}
+				#else
+					triangle(window->screen, x, y-radius, x+radius, y+radius, x-radius, y+radius, ncol);
+				#endif
 				if(p)
 				{	//Draw a non filled rectangle along the border of the filled triangle
 					line(window->screen, x, y-radius, x+radius, y+radius, pcol);
