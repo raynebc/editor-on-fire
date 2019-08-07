@@ -144,7 +144,7 @@ int         eof_paste_erase_overlap = 0;
 int         eof_write_fof_files = 1;			//If nonzero, files are written during save that are used for Frets on Fire, Guitar Hero and Phase Shift authoring
 int         eof_write_gh_files = 0;				//If nonzero, extra GH3 and GHWT MIDIs are written, as well as the GHWT drum animations file
 int         eof_write_rb_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rock Band customs
-int         eof_write_music_midi = 0;			//If nonzero, an extra MIDI file is written during save that contains normal MIDI pitches and can be used for other MIDI based games like Songs2See and Synthesia
+int         eof_write_music_midi = 0;			//If nonzero, extra MIDI files are written during save that contains normal MIDI pitches and can be used for other MIDI based games like Songs2See and Synthesia and also for Fretlight
 int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
 int         eof_write_rs2_files = 0;			//If nonzero, extra files are written during save that are used for authoring Rocksmith 2014 customs
 int         eof_abridged_rs2_export = 1;		//If nonzero, default XML attributes are omitted from RS2 export
@@ -4060,6 +4060,7 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_SLIDER] = eof_load_pcx("note_ghl_white_sp_slider.pcx");
 	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_SLIDER] = eof_load_pcx("note_ghl_black_sp_slider.pcx");
 	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_SLIDER] = eof_load_pcx("note_ghl_barre_sp_slider.pcx");
+	eof_background = eof_load_pcx("background.pcx");
 
 	//Load and scale the non-GHL HOPO images, using the scale size in user preferences
 	if(!eof_load_and_scale_hopo_images((double)eof_3d_hopo_scale_size / 100.0))
@@ -4922,11 +4923,6 @@ int eof_initialize(int argc, char * argv[])
 	{
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 		(void) eof_display_notes_panel();
-	}
-
-	if(!eof_song_loaded)
-	{	//If no file was loaded over the command line, display any user-defined background image
-		eof_background = eof_load_pcx("background.pcx");
 	}
 
 	return 1;

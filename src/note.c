@@ -102,17 +102,28 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 	return count;
 }
 
-int eof_adjust_notes(int offset)
+int eof_adjust_notes(unsigned long track, int offset)
 {
 	unsigned long i, j, tracknum;
 	EOF_PHRASE_SECTION *phraseptr = NULL;
 	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long neg_offset = 0;
 
 	eof_log("eof_adjust_notes() entered", 1);
 
+	if(!eof_song || (track < 1) || ((track != ULONG_MAX) && (track >= eof_song->tracks)))
+		return 0;	//Invalid parameters
+
+	if(offset < 0)
+	{	//If content is being made earlier
+		neg_offset = -offset;	//Store the absolute value to use as a check that nothing is to be made a negative timestamp
+	}
 	for(i = 1; i < eof_song->tracks; i++)
 	{	//For each track
 		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the notes have been stored
+
+		if((track != ULONG_MAX) && (track != i))	//If this track isn't in the scope of the operation
+			continue;								//Skip it
 
 		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, i);
 		eof_menu_track_set_tech_view_state(eof_song, i, 0);	//Disable tech view if applicable
@@ -120,6 +131,9 @@ int eof_adjust_notes(int offset)
 		//Offset the regular notes
 		for(j = 0; j < eof_get_track_size(eof_song, i); j++)
 		{	//For each note in the track
+			if(eof_get_note_pos(eof_song, i, j) < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
 		}
 		//Offset the tech notes
@@ -128,6 +142,9 @@ int eof_adjust_notes(int offset)
 			eof_menu_track_set_tech_view_state(eof_song, i, 1);	//Enable tech view if applicable
 			for(j = 0; j < eof_get_track_size(eof_song, i); j++)
 			{	//For each note in the track
+				if(eof_get_note_pos(eof_song, i, j) < neg_offset)
+					return 0;	//Negative timestamps not allowed
+
 				eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
 			}
 			eof_menu_track_set_tech_view_state(eof_song, i, restore_tech_view);	//Restore the track's original tech view state
@@ -136,42 +153,70 @@ int eof_adjust_notes(int offset)
 		for(j = 0; j < eof_get_num_solos(eof_song, i); j++)
 		{	//For each solo section in the track
 			phraseptr = eof_get_solo(eof_song, i, j);
+
+			if(phraseptr->start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
 		for(j = 0; j < eof_get_num_star_power_paths(eof_song, i); j++)
 		{	//For each star power path in the track
 			phraseptr = eof_get_star_power_path(eof_song, i, j);
+
+			if(phraseptr->start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
 		for(j = 0; j < eof_get_num_trills(eof_song, i); j++)
 		{	//For each trill phrase in the track
 			phraseptr = eof_get_trill(eof_song, i, j);
+
+			if(phraseptr->start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
 		for(j = 0; j < eof_get_num_tremolos(eof_song, i); j++)
 		{	//For each tremolo phrase in the track
 			phraseptr = eof_get_tremolo(eof_song, i, j);
+
+			if(phraseptr->start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
 		for(j = 0; j < eof_get_num_arpeggios(eof_song, i); j++)
 		{	//For each arpeggio phrase in the track
 			phraseptr = eof_get_arpeggio(eof_song, i, j);
+
+			if(phraseptr->start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
 		for(j = 0; j < eof_get_num_sliders(eof_song, i); j++)
 		{	//For each slider phrase in the track
 			phraseptr = eof_get_slider(eof_song, i, j);
+
+			if(phraseptr->start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
 		for(j = 0; j < eof_get_num_lyric_sections(eof_song, i); j++)
 		{	//For each lyric phrase in the track
 			phraseptr = eof_get_lyric_section(eof_song, i, j);
+
+			if(phraseptr->start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
@@ -184,28 +229,49 @@ int eof_adjust_notes(int offset)
 
 		for(j = 0; j < tp->handpositions; j++)
 		{	//For each fret hand position in the track (only change the start_pos variable, end_pos stores the fret position and not a timestamp)
+			if(tp->handposition[j].start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			tp->handposition[j].start_pos += offset;
 		}
 		for(j = 0; j < tp->popupmessages; j++)
 		{	//For each popup message in the track
+			if(tp->popupmessage[j].start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			tp->popupmessage[j].start_pos += offset;
 			tp->popupmessage[j].end_pos += offset;
 		}
 		for(j = 0; j < tp->tonechanges; j++)
 		{	//For each tone change in the track (only change the start_pos variable, end_pos is unused)
+			if(tp->tonechange[j].start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
 			tp->tonechange[j].start_pos += offset;
 		}
 	}
-	for(i = 0; i < eof_song->catalog->entries; i++)
-	{
-		eof_song->catalog->entry[i].start_pos += offset;
-		eof_song->catalog->entry[i].end_pos += offset;
-	}
-	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
-	{
-		if(eof_song->bookmark_pos[i] != 0)
+
+	if(track == ULONG_MAX)
+	{	//If the entire chart is being altered
+		//Update fret catalog entries
+		for(i = 0; i < eof_song->catalog->entries; i++)
 		{
-			eof_song->bookmark_pos[i] += offset;
+			if(eof_song->catalog->entry[i].start_pos < neg_offset)
+				return 0;	//Negative timestamps not allowed
+
+			eof_song->catalog->entry[i].start_pos += offset;
+			eof_song->catalog->entry[i].end_pos += offset;
+		}
+		//Update bookmarks
+		for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
+		{
+			if(eof_song->bookmark_pos[i] != 0)
+			{
+				if(eof_song->bookmark_pos[i] < neg_offset)
+					return 0;	//Negative timestamps not allowed
+
+				eof_song->bookmark_pos[i] += offset;
+			}
 		}
 	}
 	return 1;
@@ -1337,10 +1403,10 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 				if(!imagenum)
 				{	//If the appropriate 3D image wasn't determined yet
-					if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-					{
+					if(eof_track_is_legacy_guitar(eof_song, track) && (noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+					{	//If the specified note is a slider note
 						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this is an SP note
+						{	//If it is also an SP note
 							imagenum = EOF_IMAGE_NOTE_WHITE_SLIDER;
 						}
 						else

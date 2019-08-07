@@ -1271,7 +1271,7 @@ int eof_menu_song_properties(void)
 			eof_clear_input();
 			if(alert(NULL, "Adjust notes to new offset?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{
-				(void) eof_adjust_notes(eof_song->tags->ogg[0].midi_offset - old_offset);
+				(void) eof_adjust_notes(ULONG_MAX, eof_song->tags->ogg[0].midi_offset - old_offset);
 			}
 			eof_clear_input();
 		}
@@ -2184,7 +2184,7 @@ int eof_menu_song_add_silence(void)
 						eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up
 					}
 				}
-				(void) eof_adjust_notes(adjust);
+				(void) eof_adjust_notes(ULONG_MAX, adjust);
 			}
 			eof_fixup_notes(eof_song);
 			eof_calculate_beats(eof_song);

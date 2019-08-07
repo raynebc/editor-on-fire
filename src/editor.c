@@ -7322,7 +7322,7 @@ void eof_editor_logic_common(void)
 									{
 										eof_shift_used = 1;	//Track that the SHIFT key was used
 									}
-									(void) eof_adjust_notes(eof_song->tags->ogg[0].midi_offset - eof_last_midi_offset);
+									(void) eof_adjust_notes(ULONG_MAX, eof_song->tags->ogg[0].midi_offset - eof_last_midi_offset);
 								}
 								eof_fixup_notes(eof_song);										//Update note highlighting
 								(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting

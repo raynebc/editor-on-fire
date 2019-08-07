@@ -3004,10 +3004,10 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	unsigned char sectionid_ASCII[] = {0x22, 0x0D, 0x0A};		//This hex sequence is between each section name entry for ASCII text encoded GH files
 	unsigned char sectionid_UNI[] = {0x00, 0x22, 0x00, 0x0A};	//This hex sequence is between each section name entry for ASCII text encoded GH files
 	unsigned char sectionid_GH3[] = {0x00, 0x20, 0x03, 0x00};	//This hex sequence precedes each section name entry in GH3 format chart files
-	unsigned char *sectionid, char_size;
+	unsigned char *sectionid, char_size = 1;
 	char addsection;
 	size_t section_id_size;
-	unsigned char quote_rewind;	//The number of bytes before a section name's opening quote mark its checknum exists
+	unsigned char quote_rewind = 0;	//The number of bytes before a section name's opening quote mark its checknum exists
 	char *buffer = NULL, checksumbuff[9] = {0}, checksumbuffuni[18] = {0}, *name;
 	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL, *temp;	//Used to maintain the linked list matching section names with checksums
 	char abnormal_markers = 0;	//Normally, section names don't begin with "\L", but some files have them with this prefix

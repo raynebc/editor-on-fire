@@ -22,8 +22,10 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 	//If target is 2, then Rocksmith 2 authoring rules are followed and string muted gems are counted, but ghosted gems still are not
 	//If (target & 4) is nonzero, then ghosted gems are also counted
 	//Returns 0 on error
-int eof_adjust_notes(int offset);
+int eof_adjust_notes(unsigned long track, int offset);
+	//Alters the positions of a specified track's contents, or if track is ULONG_MAX, all track contents in addition to some global content (fret catalog entries, bookmarks)
 	//Applies the given additive offset to all notes, lyrics, bookmarks, catalog entries, phrases, etc.
+	//Returns zero on error, such as invalid parameters or a negative offset that would have made some piece of content move to a negative position (which is not carried out)
 int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW *window);
 	//Renders the note to the specified window, unless it would be outside the viewable area
 	//If p is nonzero, the note is rendered as highlighted (selected/hovered)

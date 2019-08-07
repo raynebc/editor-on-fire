@@ -106,6 +106,7 @@ MENU eof_track_menu[] =
 	{"&Enable GHL mode", eof_track_menu_enable_ghl_mode, NULL, 0, NULL},
 	{"Find optimal CH star power path", eof_menu_track_find_ch_sp_path, NULL, 0, NULL},
 	{"Evaluate CH star power path", eof_menu_track_evaluate_user_ch_sp_path, NULL, 0, NULL},
+	{"&Offset", eof_menu_track_offset, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -5432,5 +5433,45 @@ int eof_menu_track_rs_picked_bass_arrangement(void)
 		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_RS_PICKED_BASS;	//Otherwise set the flag
 	}
 
+	return 1;
+}
+
+DIALOG eof_menu_track_offset_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                      (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   300, 148, 0,   0,   0,    0,      0,   0,   "Move all track content", NULL, NULL },
+	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",          NULL, NULL },
+	{ eof_verified_edit_proc,12,  74,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,                "-0123456789",  NULL },
+	{ d_agup_button_proc,    12,  108, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                     NULL, NULL },
+	{ d_agup_button_proc,    110, 108, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                 NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                     NULL, NULL }
+};
+
+int eof_menu_track_offset(void)
+{
+	long offset;
+
+	eof_etext[0] = '\0';	//Empty the dialog's input string
+	eof_color_dialog(eof_menu_track_offset_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_track_offset_dialog);
+
+	if(eof_popup_dialog(eof_menu_track_offset_dialog, 2) != 3)
+		return 1;	//If the user did not click OK, return immediately
+	if(eof_etext[0] == '\0')
+		return 1;	//If the user did not enter an offset, return immediately
+
+	offset = atol(eof_etext);
+	if(!offset)
+		return 1;	//If there was an error converting the number of the user entered an offset of 0, don't do anything
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	if(eof_adjust_notes(eof_selected_track, offset) == 0)
+	{	//The operation failed
+		allegro_message("Cannot offset content to a position earlier than 0ms.  The operation will be canceled.");
+		(void) eof_undo_apply();	//Undo this failed operation
+	}
+
+	eof_reset_lyric_preview_lines();
+	eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
 	return 1;
 }

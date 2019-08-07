@@ -222,7 +222,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_button_proc,86,  260, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
 	{ d_agup_button_proc,160, 260, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
-	{ d_agup_check_proc, 248, 75,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI file",NULL, NULL },
+	{ d_agup_check_proc, 248, 75,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI files",NULL, NULL },
 	{ d_agup_check_proc, 16,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
 	{ d_agup_check_proc, 248, 90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
 	{ d_agup_check_proc, 16,  105, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
@@ -764,10 +764,15 @@ int eof_menu_file_load_ogg(void)
 	char checkfn2[1024] = {0};
 	unsigned long new_length;
 
+	eof_log("eof_menu_file_load_ogg() entered", 1);
+
 	returnedfn = ncd_file_select(0, eof_song_path, "Select OGG File", eof_filter_ogg_files);	//Init the dialog to the project path instead of eof_last_ogg_path since the current behavior is to only allow loading one from the active project's folder
 	eof_clear_input();
 	if(!returnedfn)
+	{
+		eof_log("\tFile browse canceled.", 1);
 		return 1;	//If the user did not select a file, return immediately
+	}
 
 	eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since loading different audio will require a new WAV file to be written
 
@@ -783,9 +788,11 @@ int eof_menu_file_load_ogg(void)
 	/* failed to load new OGG so reload old one */
 	if(!eof_load_ogg(returnedfn, 0))
 	{	//If eof_load_ogg() failed, eof_loaded_ogg_name contains the name of the file that was loaded before
+		eof_log("\tFailed to load specified OGG.", 1);
 		returnedfn = eof_loaded_ogg_name;
 		if(!eof_load_ogg(eof_loaded_ogg_name, 0))
 		{
+			eof_log("\tFailed to re-load the OGG that was in use when this function was invoked.", 1);
 			eof_show_mouse(NULL);
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
@@ -1531,7 +1538,7 @@ int eof_menu_file_import_export_preferences(void)
 	centre_dialog(eof_import_export_preferences_dialog);
 	//Use the currently configured settings to populate the dialog selections
 	eof_import_export_preferences_dialog[4].flags = eof_write_rb_files ? D_SELECTED : 0;					//Save separate Rock Band files
-	eof_import_export_preferences_dialog[5].flags = eof_write_music_midi ? D_SELECTED : 0;					//Save separate musical MIDI file
+	eof_import_export_preferences_dialog[5].flags = eof_write_music_midi ? D_SELECTED : 0;					//Save separate musical MIDI files
 	eof_import_export_preferences_dialog[6].flags = eof_write_rs_files ? D_SELECTED : 0;					//Save separate Rocksmith 1 files
 	original_rs1_export_setting = eof_write_rs_files;	//Back up this setting to track whether it is changed in the dialog
 	eof_import_export_preferences_dialog[7].flags = eof_write_rs2_files ? D_SELECTED : 0;					//Save separate Rocksmith 2 files
@@ -1589,7 +1596,7 @@ int eof_menu_file_import_export_preferences(void)
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
 			eof_import_export_preferences_dialog[4].flags = 0;				//Save separate Rock Band files
-			eof_import_export_preferences_dialog[5].flags = 0;				//Save separate musical MIDI file
+			eof_import_export_preferences_dialog[5].flags = 0;				//Save separate musical MIDI files
 			eof_import_export_preferences_dialog[6].flags = 0;				//Save separate Rocksmith 1 files
 			eof_import_export_preferences_dialog[7].flags = D_SELECTED;		//Save separate Rocksmith 2 files
 			eof_import_export_preferences_dialog[8].flags = 0;				//Save separate Bandfuse files
@@ -4065,7 +4072,7 @@ int eof_save_helper(char *destfilename, char silent)
 	}
 
 	if(eof_write_music_midi)
-	{	//If the user opted to also save a normal musical MIDI
+	{	//If the user opted to also save musical MIDIs
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_music.mid", (int) sizeof(eof_temp_filename));
 		(void) eof_export_music_midi(eof_song, eof_temp_filename, 0);	//Write a Synthesia formatted MIDI
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_fretlight.mid", (int) sizeof(eof_temp_filename));
