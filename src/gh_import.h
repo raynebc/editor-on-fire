@@ -71,6 +71,10 @@ int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, size_t searchle
 	//If seektype is 2, the buffer position is set to the first byte that follows the match
 	//If an error occurs, -1 is returned
 	//If the buffer is parsed but no match is found, 0 is returned
+unsigned long eof_filebuffer_count_instances(filebuffer *fb, const void *bytes, size_t searchlen);
+	//Counts the number of instances of the specified sequence of byte values in the specified buffer (searching from the beginning)
+	//The buffer's position is restored to its original position
+	//Returns 0 on error or if there are no matches
 int eof_filebuffer_find_checksum(filebuffer *fb, unsigned long checksum);
 	//Looks for the 4 byte checksum in the buffered file starting at the current position
 	//If the checksum is found, the position is set to the byte that follows it and zero is returned

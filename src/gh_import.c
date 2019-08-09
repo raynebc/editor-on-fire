@@ -404,6 +404,24 @@ int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, size_t searchle
 	return 0;	//Return no match
 }
 
+unsigned long eof_filebuffer_count_instances(filebuffer *fb, const void *bytes, size_t searchlen)
+{
+	unsigned long originalpos, count = 0;
+
+	if(!fb || !bytes || !searchlen)
+		return 0;	//Invalid parameters
+
+	originalpos = fb->index;
+	fb->index = 0;
+	while(eof_filebuffer_find_bytes(fb, bytes, searchlen, 2) == 1)
+	{	//For each match that is found
+		count++;
+	}
+	fb->index = originalpos;	//Restore the buffer position to what it was before the searching
+
+	return count;
+}
+
 int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target, char forcestrum)
 {
 	unsigned long numnotes = 0, dword = 0, ctr, notesize = 0;
@@ -3000,7 +3018,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 
 struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 {
-	unsigned long checksum, index2, nameindex, ctr;
+	unsigned long checksum = 0, index2, nameindex = 0, ctr;
 	unsigned char sectionid_ASCII[] = {0x22, 0x0D, 0x0A};		//This hex sequence is between each section name entry for ASCII text encoded GH files
 	unsigned char sectionid_UNI[] = {0x00, 0x22, 0x00, 0x0A};	//This hex sequence is between each section name entry for ASCII text encoded GH files
 	unsigned char sectionid_GH3[] = {0x00, 0x20, 0x03, 0x00};	//This hex sequence precedes each section name entry in GH3 format chart files
@@ -3015,14 +3033,19 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 		//Some GH files put all languages together instead of in separate parts, this is used to store the position before a seek so if a duplicate checksum (same
 		//section as a previous one in another language) is found, the seek position is restored and function returns, so next call can parse the next language
 	unsigned long lastfoundpos;	//Stores the last found instance of the section ID, in case it turns out not to be a section and should be skipped
+	unsigned long gh3_count = 0, ascii_count = 0, uni_count = 0;
 
 	eof_log("eof_gh_read_section_names() entered", 1);
 
 	if(!fb)
 		return NULL;
 
-	if(eof_filebuffer_find_bytes(fb, sectionid_GH3, 4, 0))
-	{	//If the hex string associated with GH3 charts is found
+	gh3_count = eof_filebuffer_count_instances(fb, sectionid_GH3, 4);		//Count how many times the GH3 section associated byte sequence is found
+	ascii_count = eof_filebuffer_count_instances(fb, sectionid_ASCII, 3);	//Count how many times the ASCII section associated byte sequence is found
+	uni_count = eof_filebuffer_count_instances(fb, sectionid_UNI, 4);		//Count how many times the Unicode section associated byte sequence is found
+
+	if((gh3_count > ascii_count) && (gh3_count > uni_count))
+	{	//If the hex string associated with GH3 charts is most prevalent
 		section_id_size = sizeof(sectionid_GH3);
 		sectionid = sectionid_GH3;
 		eof_gh_import_gh3_style_sections = 1;		//Different logic will be used to parse the section names

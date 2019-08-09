@@ -2948,13 +2948,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 					for(ctr = 0; ctr < skipbeatsourcectr; ctr++)
 					{	//For each of the beats that need to be omitted during import since they are before 0ms
-						unsigned num = 0, den = 0;
+						unsigned tsnum = 0, tsden = 0;
 
-						eof_get_ts(eof_song, &num, &den, 1);					//Store the time signature change at this beat, if there is one
+						eof_get_ts(eof_song, &tsnum, &tsden, 1);				//Store the time signature change at this beat, if there is one
 						eof_song->beat[1]->flags = eof_song->beat[0]->flags;	//Retain the deleted beat's flags (ie. time signatures)
-						if(num)
+						if(tsnum)
 						{	//If the now-first beat had a time signature change
-							eof_apply_ts(num, den, 1, eof_song, 0);				//Re-apply it now so it isn't lost
+							eof_apply_ts(tsnum, tsden, 1, eof_song, 0);				//Re-apply it now so it isn't lost
 						}
 						eof_song_delete_beat(eof_song, 0);						//Delete the first beat in the project
 					}

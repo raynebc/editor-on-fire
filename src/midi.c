@@ -1071,6 +1071,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else if(featurerestriction == 0)
 					{	//Otherwise only write this notation if not writing a Rock Band compliant MIDI
+						unsigned long marker_length = deltalength;	//By default, write the marker to be the full length of the note
+
+						if(noteflags & EOF_NOTE_FLAG_CRAZY)
+						{	//If the open note has crazy status though
+							marker_length = 1;	//End the marker immediately to better suit Clone Hero's MIDI logic to ensure overlapped notes aren't converted to open strums
+						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
 						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
@@ -1079,7 +1085,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
 						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom open bass phrase start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase, 0);	//Write the custom open bass phrase stop marker
+						eof_add_sysex_event(deltapos + marker_length, 8, phase_shift_sysex_phrase, 0);	//Write the custom open bass phrase stop marker
 					}
 				}
 

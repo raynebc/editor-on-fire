@@ -2376,7 +2376,7 @@ set_window_title(debugtext);
 								switch(eof_import_events[i]->event[j]->dp[5])
 								{	//Check the value of the phrase ID
 									case 1:	//Open strum
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Open strum (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Open strum (deltapos=%lu, pos=%lu, diff=%d, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, phrasediff, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2387,9 +2387,10 @@ set_window_title(debugtext);
 										{	//End of open strum phrase
 											for(k = note_count[picked_track]; k > first_note; k--)
 											{	//Check for each note that has been imported
-												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (eof_get_note_pos(sp, picked_track, k - 1) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
-												{	//If the note is in the same difficulty as the open strum phrase, and its timestamp falls between the phrase on and phrase off marker
-													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to have a note mask of 33", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1));
+												unsigned long notepos = eof_get_note_pos(sp, picked_track, k - 1);
+												if((eof_get_note_type(sp, picked_track, k - 1) == phrasediff) && (notepos == openstrumpos[phrasediff]) && (eof_get_note_note(sp, picked_track, k - 1) == 1))
+												{	//If the note is in the same difficulty as the open strum phrase, and its timestamp is the start time of the phrase on marker, and it is a lane 1 gem
+													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to have a note mask of 33", k - 1, eof_get_note_type(sp, picked_track, k - 1), notepos, eof_get_note_note(sp, picked_track, k - 1), eof_get_note_length(sp, picked_track, k - 1));
 													eof_log(eof_log_string, 3);
 
 													eof_set_note_note(sp, picked_track, k - 1, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
