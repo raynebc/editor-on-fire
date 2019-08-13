@@ -580,7 +580,9 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 								np->flags = tp->note[i-1]->flags;		//Clone the flags
 								np->eflags = tp->note[i-1]->eflags;		//Clone the extended flags (this will include the disjointed status flag)
 								np->accent = tp->note[i-1]->accent;		//Clone the accent bitmask
-								np->accent &= np->note;					//Clear any accent bits not for lanes not used by this note
+								np->accent &= np->note;					//Clear any accent bits for lanes not used by this note
+								np->ghost = tp->note[i-1]->ghost;		//Clone the ghost bitmask
+								np->ghost &= np->note;					//Clear any ghost bits for lanes not used by this note
 								notes_added = 1;						//Track that the notes will now need to be re-sorted
 							}
 						}
@@ -672,6 +674,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 						tp->note[i-1]->flags = flags | tp->note[next]->flags;	//Merge the flags
 						tp->note[i-1]->eflags |= tp->note[next]->eflags;		//Merge the extended flags
 						tp->note[i-1]->accent |= tp->note[next]->accent;		//Merge the accent bitmasks
+						tp->note[i-1]->ghost |= tp->note[next]->ghost;			//Merge the ghost bitmasks
 						eof_legacy_track_delete_note(tp, next);					//Delete the next note, as it has been merged with this note
 					}
 				}
@@ -687,6 +690,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}//The note has valid gems, type and position
 
 		tp->note[i-1]->accent &= tp->note[i-1]->note;	//Clear all accent bits that don't have a corresponding gem that exists
+		tp->note[i-1]->ghost &= tp->note[i-1]->note;	//Clear all ghost bits that don't have a corresponding gem that exists
 	}//For each note (in reverse order)
 
 	//Run another pass to check crazy notes overlapping with gems on their same lanes more than 1 note ahead
@@ -1425,38 +1429,6 @@ void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned notenum, un
 		else if(operation == 2)
 		{	//If the calling function indicated to toggle the flag
 			tp->note[ctr]->flags ^= flag;
-		}
-	}
-}
-
-void eof_set_accent_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned long pos, unsigned long mask, char operation)
-{
-// 	eof_log("eof_set_accent_at_legacy_note_pos() entered");
-
-	unsigned long ctr;
-
-	if(tp == NULL)
-		return;
-
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note starting with the one specified
-		if(tp->note[ctr]->pos > pos)
-			break;	//If there are no more notes at the specified note's position, stop looking
-
-		if(tp->note[ctr]->pos == pos)
-		{	//If this note is at the target position
-			if(operation == 0)
-			{	//If the calling function indicated to clear the specified accent bits
-				tp->note[ctr]->accent &= (~mask);
-			}
-			else if(operation == 1)
-			{	//If the calling function indicated to set the specified accent bits
-				tp->note[ctr]->accent |= mask;
-			}
-			else if(operation == 2)
-			{	//If the calling function indicated to toggle the specified accent bits
-				tp->note[ctr]->accent ^= mask;
-			}
 		}
 	}
 }
@@ -2459,6 +2431,24 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						}
 					break;
 
+					case 11:	//Ghost note bitmasks
+						if(custom_data_size < 5)
+						{	//This data block is expected to be at least 5 bytes long
+							char *error = "Error:  Invalid custom data block size (ghost note bitmasks).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a legacy track
+							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+							{	//For each note in this track
+								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->ghost = pack_getc(fp);		//Read ghost accent bitmask
+							}
+						}
+					break;
+
 					default:	//Unknown custom data block ID
 						if(custom_data_size < 4)
 						{	//This is invalid, the size needed to have included the 4 byte ID
@@ -2978,7 +2968,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_start_end_points;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count,has_sp_deploy;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count,has_sp_deploy,has_ghost;
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
 	int temp_file_error = 0;	//Set to nonzero if the temp files for any custom data blocks couldn't be written due to the temp files used to create the data being empty (ie. disk full)
@@ -3728,7 +3718,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = has_sp_deploy = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = has_sp_deploy = has_ghost = 0;
 		if(track_ctr && tp && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
@@ -3781,8 +3771,17 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					break;
 				}
 			}
+			//Check if any notes have ghost status
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				if(eof_get_note_ghost(sp, track_ctr, ctr))
+				{	//If at least one gem has ghost status
+					has_ghost = 1;
+					break;
+				}
+			}
 		}
-		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent + has_diff_count + has_sp_deploy;
+		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent + has_diff_count + has_sp_deploy + has_ghost;
 		if(track_custom_block_count)
 		{	//If writing data in a custom data block
 			(void) pack_iputl(track_custom_block_count, fp);		//Write the number of custom data blocks
@@ -3885,10 +3884,19 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				if(has_sp_deploy)
 				{	//Write SP deploy bitmasks
 					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (SP deploy bitmask data and a 4 byte block ID)
-					(void) pack_iputl(10, fp);		//Write the accent note bitmask custom data block ID
+					(void) pack_iputl(10, fp);		//Write the sP deploy bitmask custom data block ID
 					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
 					{	//For each note in the track
 						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->sp_deploy, fp);	//Write this note's SP deploy bitmask
+					}
+				}
+				if(has_ghost)
+				{	//Write ghost note bitmasks
+					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (ghost bitmask data and a 4 byte block ID)
+					(void) pack_iputl(11, fp);		//Write the ghost note bitmask custom data block ID
+					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+					{	//For each note in the track
+						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->ghost, fp);	//Write this note's ghost note bitmask
 					}
 				}
 			}
@@ -4664,12 +4672,24 @@ unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned lon
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	switch(sp->track[track]->track_format)
 	{
-		if(note < sp->pro_guitar_track[tracknum]->notes)
-		{
-			return sp->pro_guitar_track[tracknum]->note[note]->ghost;
-		}
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->ghost;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				return sp->pro_guitar_track[tracknum]->note[note]->ghost;
+			}
+		break;
+
+		default:
+		break;
 	}
 
 	return 0;	//Return error or not applicable
@@ -4737,6 +4757,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 			ptr = (EOF_NOTE *)new_note;
 			ptr->type = type;
 			ptr->note = note;
+			ptr->ghost = 0;
 			ptr->midi_pos = 0;	//Not implemented yet
 			ptr->midi_length = 0;	//Not implemented yet
 			ptr->pos = pos;
@@ -5000,6 +5021,7 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 			{
 				sp->legacy_track[tracknum]->note[note]->note = value;
 				sp->legacy_track[tracknum]->note[note]->accent &= value;	//Clear all accent bits that don't have a corresponding gem that exists
+				sp->legacy_track[tracknum]->note[note]->ghost &= value;		//Ditto for ghost bits
 			}
 		break;
 
@@ -5044,6 +5066,35 @@ void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		{
 			sp->legacy_track[tracknum]->note[note]->accent = value;
 		}
+	}
+}
+
+void eof_set_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->ghost = value;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				sp->pro_guitar_track[tracknum]->note[note]->ghost = value;
+			}
+		break;
+
+		default:
+		break;
 	}
 }
 
@@ -7144,7 +7195,8 @@ char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note)
 void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sourcenote, EOF_SONG *dsp, unsigned long desttrack, unsigned long pos, long length, char type)
 {
 	unsigned long sourcetracknum, desttracknum, newnotenum;
-	unsigned long note, flags, eflags;
+	unsigned long flags, eflags;
+	unsigned char note, accent, ghost;
 	char *text;
 	void *result = NULL;
 
@@ -7165,6 +7217,8 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	text = eof_get_note_name(ssp, sourcetrack, sourcenote);
 	flags = eof_get_note_flags(ssp, sourcetrack, sourcenote);
 	eflags = eof_get_note_eflags(ssp, sourcetrack, sourcenote);
+	accent = eof_get_note_accent(ssp, sourcetrack, sourcenote);
+	ghost = eof_get_note_ghost(ssp, sourcetrack, sourcenote);
 
 	if(desttrack == EOF_TRACK_VOCALS)
 	{	//If copying from PART VOCALS
@@ -7187,11 +7241,12 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	newnotenum = eof_get_track_size(dsp, desttrack) - 1;		//The index of the new note
 	eof_set_note_flags(dsp, desttrack, newnotenum, flags);		//Copy the source note's flags to the newly created note
 	eof_set_note_eflags(dsp, desttrack, newnotenum, eflags);	//Copy the source note's extended flags to the newly created note
+	eof_set_note_accent(dsp, desttrack, newnotenum, accent);	//Copy the source note's accent bitmask to the newly created note
+	eof_set_note_ghost(dsp, desttrack, newnotenum, ghost);		//Copy the source note's ghost bitmask to the newly created note
 	if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
 		memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
 		memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);		//Copy the six usable finger values from the source note to the newly created note
-		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;					//Copy the ghost bitmask
 		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
 		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
 		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
@@ -7931,7 +7986,25 @@ char eof_track_has_accent(EOF_SONG *sp, unsigned long track)
 		}
 	}
 
-	return 0;	//Track has no cymbals
+	return 0;	//Track has no accented gems
+}
+
+char eof_track_has_ghost(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long i;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the track
+		if(eof_get_note_ghost(sp, track, i) & eof_get_note_note(sp, track, i))
+		{	//If any gems in the note have a set bit in the ghost bitmask
+			return 1;	//Track has accent
+		}
+	}
+
+	return 0;	//Track has no ghosted gems
 }
 
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track)

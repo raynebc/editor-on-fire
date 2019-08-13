@@ -10,6 +10,7 @@
 #define EOF_IMPORT_MAX_EVENTS EOF_MAX_MIDI_EVENTS
 
 extern unsigned char eof_midi_import_drum_accent_velocity;
+extern unsigned char eof_midi_import_drum_ghost_velocity;
 
 EOF_SONG * eof_import_midi(const char * fn);
 double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset, unsigned int *gridsnap);

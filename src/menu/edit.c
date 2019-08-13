@@ -1246,6 +1246,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 					eof_set_note_flags(eof_song, j, notenum, temp_note.flags);		//Set the last created note's flags
 					eof_set_note_eflags(eof_song, j, notenum, temp_note.eflags);	//Set the last created note's extended flags
 					eof_set_note_accent(eof_song, j, notenum, temp_note.accent);	//Set the last created note's accent bitmask
+					eof_set_note_ghost(eof_song, j, notenum, temp_note.ghost);		//Set the last created note's ghost bitmask
 
 					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//If this is a pro guitar track
@@ -1254,7 +1255,6 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 						np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
 						memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
 						memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
-						np->ghost = temp_note.ghost;									//Copy the ghost bitmask to the last created pro guitar note
 						np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 						np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 						np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
@@ -1714,8 +1714,9 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			eflags |= temp_note.eflags;
 			eof_set_note_eflags(eof_song, eof_selected_track, match, eflags);	//Marge the extended flags
 
-			eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);	//Merge the note bitmask
+			eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);		//Merge the note bitmask
 			eof_set_note_accent(eof_song, eof_selected_track, match, eof_get_note_accent(eof_song, eof_selected_track, match) | temp_note.accent);	//Merge the accent bitmask
+			eof_set_note_ghost(eof_song, eof_selected_track, match, eof_get_note_ghost(eof_song, eof_selected_track, match) | temp_note.ghost);		//Merge the ghost bitmask
 			//Erase ghost and legacy flags
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
@@ -1731,6 +1732,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 				eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
 				eof_set_note_eflags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.eflags);
 				eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
+				eof_set_note_ghost(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.ghost);
 				if(isghl != eof_track_is_ghl_mode(eof_song, eof_selected_track))
 				{	//If the source and destination tracks for this paste didn't have matching GHL mode status, convert the note
 					if(eof_note_convert_ghl_authoring(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1))
@@ -1755,7 +1757,6 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
 		memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
 		memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
-		np->ghost = temp_note.ghost;									//Copy the ghost bitmask to the last created pro guitar note
 		np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 		np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 		np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
@@ -3017,8 +3018,8 @@ int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsi
 			{	//If this gem did not meet any of those 3 criteria
 				note &= ~bitmask;	//Clear it from the effective note bitmask to indicate this gem isn't a match
 			}
-		}
-	}
+		}//For each of the 6 usable strings
+	}//If the specified track is a pro guitar track
 
 	if(eof_menu_edit_conditional_selection_dialog[3].flags == D_SELECTED)
 	{	//Contain any of
@@ -4219,7 +4220,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 		(void) pack_putc(0, fp);			//Write a legacy bitmask indicating that the original note bitmask is to be used
 		(void) pack_fwrite(frets, (long)sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
 		(void) pack_fwrite(finger, (long)sizeof(finger), fp);	//Write 0 data for the note's finger array (legacy notes pasted into a pro guitar track will have no fingering by default)
-		(void) pack_putc(0, fp);			//Write a blank ghost bitmask (no strings are ghosted by default)
+		(void) pack_putc(eof_get_note_ghost(sp, track, note), fp);	//Write the note's ghost bitmask
 		(void) pack_putc(0, fp);			//Write a blank bend strength
 		(void) pack_putc(0, fp);			//Write a blank slide end position
 		(void) pack_putc(0, fp);			//Write a blank unpitched slide end position

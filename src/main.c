@@ -1315,7 +1315,7 @@ int eof_note_is_gh3_hopo(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		distance = (distance * 4) / den;	//Scale the threshold to account for time signature so that it reflects quarter note length instead of beat length
 	}
 
-	if(distance  < threshold)
+	if(distance < threshold)
 	{	//If the distance between the the two notes is below the threshold
 		return 1;	//Auto HOPO
 	}

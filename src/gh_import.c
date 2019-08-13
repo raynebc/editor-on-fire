@@ -26,7 +26,6 @@ unsigned long eof_song_aux_track = EOF_TRACK_KEYS;	//The effective track to whic
 
 int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will prompt user whether the chart is from Warriors of Rock,
 								// which defines the bits in a different order than Smash Hits
-int eof_gh_import_ghost_drum_notice = 0;	//Will be set to nonzero if the user was notified that ghost notes were detected and highlighted during GH import
 int eof_gh_import_threshold_prompt = 0;		//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 quarter notes as the HOPO threshold
 int eof_gh_import_gh3_style_sections = 0;	//Will be set to nonzero if GH3 format sections are detected from whichever file is used to import section names, since they are defined differently than in newer games
 
@@ -527,6 +526,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				ghost = 1;
 			}
 
+			//Translate the note bitmask to EOF's lane ordering
 			fixednotemask = notemask;
 			fixednotemask &= ~1;	//Clear lane 1 gem
 			fixednotemask &= ~32;	//Clear lane 6 gem
@@ -546,6 +546,30 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				fixednotemask |= 1;		//Set the lane 1 (bass drum gem)
 			}
 			notemask = fixednotemask;
+
+			//Translate the ghost bitmask to EOF's lane ordering
+			if(ghostmask)
+			{
+				fixednotemask = ghostmask;
+				fixednotemask &= ~1;	//Clear lane 1 gem
+				fixednotemask &= ~32;	//Clear lane 6 gem
+				if(ghostmask & 32)
+				{	//If lane 6 is populated, convert it to RB's bass drum gem
+					fixednotemask |= 1;		//Set the lane 1 (bass drum) gem
+				}
+				if(ghostmask & 1)
+				{	//If lane 1 is populated, convert it to lane 6
+					fixednotemask |= 32;	//Set the lane 6 gem
+					sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Ensure "five lane" drums is enabled for the track
+					sp->legacy_track[tracknum]->numlanes = 6;
+				}
+				if((ghostmask & 64) && !(ghostmask & 32))
+				{	//If bit 6 is set, but bit 5 is not
+					isexpertplus = 1;		//Consider this to be double bass
+					fixednotemask |= 1;		//Set the lane 1 (bass drum gem)
+				}
+				ghostmask = fixednotemask;
+			}
 		}
 		newnote = (EOF_NOTE *)eof_track_add_create_note(sp, target->tracknum, (notemask & 0x3F), dword, length, target->diffnum, NULL);
 		if(newnote == NULL)
@@ -627,14 +651,8 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				}
 			}
 			if(ghost)
-			{	//If the ghost note was converted into a snare
-				newnote->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Highlight the note
-
-				if(!eof_gh_import_ghost_drum_notice)
-				{
-					allegro_message("Detected ghost notes will be highlighted.");
-					eof_gh_import_ghost_drum_notice = 1;
-				}
+			{	//If a ghost gem was detected
+				newnote->ghost = ghostmask;
 			}
 		}//If this is a drum track
 		if(isexpertplus)
@@ -1370,7 +1388,6 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	eof_log("Attempting to import NOTE format Guitar Hero chart", 1);
 
 	eof_gh_accent_prompt = 0;	//Reset this condition
-	eof_gh_import_ghost_drum_notice = 0;	//Reset this condition
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);

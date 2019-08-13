@@ -308,7 +308,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	unsigned long noteflags = 0;
 	unsigned long notenote = 0;
 	unsigned char notetype = 0;
+	unsigned char ghost = 0;
 	long length;
+	int half_string_space = eof_screen_layout.string_space / 2;
 
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 
@@ -332,6 +334,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		noteflags = eof_get_note_flags(eof_song, track, notenum);
 		notenote = eof_get_note_note(eof_song, track, notenum);
 		notetype = eof_get_note_type(eof_song, track, notenum);
+		ghost = eof_get_note_ghost(eof_song, track, notenum);
 
 		if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
 		{	//If the catalog entry is a pro guitar note and the active track is not, or the user specified to display pro guitar notes as legacy notes
@@ -615,8 +618,20 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			else
 				dcol2 = dcol;			//Otherwise render with the expected dot color
 
+			//Render ghost note status background
+			if(ghost & mask)
+			{	//If this lane is ghosted
+				long ghostlength = length;	//By default, draw this to match the length of the note
+				if(ghostlength < 5)
+				{	//But if the note is shorter than this
+					ghostlength = 5;	//Pad it to this minimum so it's more visible
+				}
+				rectfill(window->screen, x, y - half_string_space, x + ghostlength, y + half_string_space, eof_color_white);	//Fill the background for this lane in white for the duration of the gem
+			}
+
+			//Render note tail
 			if((notetype == EOF_NOTE_SPECIAL) || !((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && eof_hide_drum_tails))
-			{	//If this is a BRE note or it is otherwise not drum note that will have tails hidden due to the "Hide drum note tails" user option,
+			{	//If this is a BRE note or it is otherwise not a drum note that will have its tail hidden due to the "Hide drum note tails" user option,
 				rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, ncol);	//Draw the note tail
 				if(p)
 				{	//If this note is moused over
@@ -690,6 +705,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				}
 			}//If rendering an existing pro guitar note that slides up or down or is an unpitched slide
 
+			//Render note head
 			if(!iscymbal)
 			{	//If this note is not a cymbal, render note as a circle
 				circlefill(window->screen, x, y, radius, ncol);
@@ -2047,7 +2063,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)
 		{
-			buffer[index++] = 'g';	//In the symbols font, f is the linknext indicator
+			buffer[index++] = 'g';	//In the symbols font, g is the linknext indicator
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 		{
@@ -2144,6 +2160,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{	//If any of the lanes on this note are accented
 			buffer[index++] = '>';
 		}
+		if(eof_get_note_ghost(eof_song, track, note))
+		{	//If any of the lanes on this note are ghosted
+			buffer[index++] = 'G';
+		}
 	}
 	else if(eof_track_is_legacy_guitar(eof_song, track))
 	{	//Check legacy guitar statuses
@@ -2208,7 +2228,7 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 	unsigned long tracknum, tracknum2;
 	unsigned long note1note, note2note;
 	unsigned long flags, flags2, eflags, eflags2;
-	unsigned char accent1, accent2;
+	unsigned char accent1, accent2, ghost1, ghost2;
 	long length, length2;
 
 	//Validate parameters
@@ -2233,6 +2253,8 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		eflags2 = eof_get_note_eflags(sp, track2, note2);
 		accent1 = eof_get_note_accent(sp, track1, note1);
 		accent2 = eof_get_note_accent(sp, track2, note2);
+		ghost1 = eof_get_note_ghost(sp, track1, note1);
+		ghost2 = eof_get_note_ghost(sp, track2, note2);
 		if(flags != flags2)
 		{	//If the flags don't match
 			return 1;	//Return not equal
@@ -2243,6 +2265,10 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		}
 		if(accent1 != accent2)
 		{	//If the accent bitmasks don't match
+			return 1;	//Return not equal
+		}
+		if(ghost1 != ghost2)
+		{	//If the ghost bitmasks don't match
 			return 1;	//Return not equal
 		}
 		length = eof_get_note_length(sp, track1, note1);

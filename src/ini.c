@@ -311,6 +311,12 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		(void) ustrcat(ini_string, "\r\neof_midi_import_drum_accent_velocity = 127");	//Write this tag to indicate to Phase Shift that EOF is using velocity 127 to define accented drum notes
 	}
 
+	/* check for ghosted drums */
+	if(eof_track_has_ghost(sp, EOF_TRACK_DRUM) || eof_track_has_ghost(sp, EOF_TRACK_DRUM_PS))
+	{
+		(void) ustrcat(ini_string, "\r\neof_midi_import_drum_ghost_velocity = 1");		//Write this tag to indicate that EOF is using velocity 1 to define ghosted drum notes
+	}
+
 	/* write tuning tags */
 	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_GUITAR))
 	{	//If the 17 fret pro guitar track is populated

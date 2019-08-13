@@ -288,6 +288,28 @@ MENU eof_note_clear_accent_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_toggle_ghost_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_ghost_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_ghost_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_ghost_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_ghost_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_toggle_ghost_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_toggle_ghost_orange, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_ghost_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_ghost_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_ghost_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_ghost_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_ghost_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_clear_ghost_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_clear_ghost_orange, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_freestyle_menu[] =
 {
 	{"&On", eof_menu_set_freestyle_on, NULL, 0, NULL},
@@ -309,6 +331,13 @@ MENU eof_note_drum_accent_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_accent_menu, 0, NULL},
 	{"&Clear", NULL, eof_note_clear_accent_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_drum_ghost_menu[] =
+{
+	{"&Toggle", NULL, eof_note_toggle_ghost_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_ghost_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -339,9 +368,10 @@ MENU eof_note_drum_menu[] =
 	{"Remove &Rim shot status", eof_menu_note_remove_rimshot, NULL, 0, NULL},
 	{"Toggle &Y cymbal+tom\t" CTRL_NAME "+ALT+Y", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
 	{"Toggle &B cymbal+tom\t" CTRL_NAME "+ALT+B", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
-	{"Toggle &G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
+	{"Toggle G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
 	{"&Accent", NULL, eof_note_drum_accent_menu, 0, NULL},
 	{"&Disjointed", NULL, eof_note_clone_hero_disjointed_menu, 0, NULL},
+	{"&Ghost", NULL, eof_note_drum_ghost_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2307,7 +2337,7 @@ int eof_menu_note_clear_orange(void)
 int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 {
 	unsigned long i;
-	unsigned char mask, undo_made = 0;
+	unsigned char mask, undo_made = 0, accent;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
@@ -2331,7 +2361,9 @@ int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
-				eof_set_accent_at_legacy_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], eof_get_note_pos(eof_song, eof_selected_track, i), mask, 2);	//Toggle accent status from this lane for all notes at this position
+				accent = eof_get_note_accent(eof_song, eof_selected_track, i);
+				accent ^= mask;
+				eof_set_note_accent(eof_song, eof_selected_track, i, accent);
 			}
 		}
 	}
@@ -2402,7 +2434,8 @@ int eof_menu_note_clear_accent_lane(unsigned int lanenum)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
-				eof_set_accent_at_legacy_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], eof_get_note_pos(eof_song, eof_selected_track, i), mask, 0);	//Clear accent status from this lane for all notes at this position
+				accent &= ~mask;
+				eof_set_note_accent(eof_song, eof_selected_track, i, accent);
 			}
 		}
 	}
@@ -2443,6 +2476,150 @@ int eof_menu_note_clear_accent_purple(void)
 int eof_menu_note_clear_accent_orange(void)
 {
 	return eof_menu_note_clear_accent_lane(6);
+}
+
+int eof_menu_note_toggle_ghost_lane(unsigned int lanenum)
+{
+	unsigned long i;
+	unsigned char mask, undo_made = 0, ghost;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
+	{
+		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
+	}
+	if(eof_count_selected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			mask = 1 << (lanenum - 1);
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & mask)
+			{	//If the note has a gem on the specified lane
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				ghost = eof_get_note_ghost(eof_song, eof_selected_track, i);
+				ghost ^= mask;
+				eof_set_note_ghost(eof_song, eof_selected_track, i, ghost);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_ghost_green(void)
+{
+	return eof_menu_note_toggle_ghost_lane(1);
+}
+
+int eof_menu_note_toggle_ghost_red(void)
+{
+	return eof_menu_note_toggle_ghost_lane(2);
+}
+
+int eof_menu_note_toggle_ghost_yellow(void)
+{
+	return eof_menu_note_toggle_ghost_lane(3);
+}
+
+int eof_menu_note_toggle_ghost_blue(void)
+{
+	return eof_menu_note_toggle_ghost_lane(4);
+}
+
+int eof_menu_note_toggle_ghost_purple(void)
+{
+	return eof_menu_note_toggle_ghost_lane(5);
+}
+
+int eof_menu_note_toggle_ghost_orange(void)
+{
+	return eof_menu_note_toggle_ghost_lane(6);
+}
+
+int eof_menu_note_clear_ghost_lane(unsigned int lanenum)
+{
+	unsigned long i;
+	unsigned char ghost, mask, undo_made = 0;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
+	{
+		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
+	}
+	if(eof_count_selected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			ghost = eof_get_note_ghost(eof_song, eof_selected_track, i);
+			mask = 1 << (lanenum - 1);
+			if((eof_get_note_note(eof_song, eof_selected_track, i) & mask) && (ghost & mask))
+			{	//If the note has a gem on the specified lane and it is ghosted
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				ghost &= ~mask;
+				eof_set_note_ghost(eof_song, eof_selected_track, i, ghost);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_clear_ghost_green(void)
+{
+	return eof_menu_note_clear_ghost_lane(1);
+}
+
+int eof_menu_note_clear_ghost_red(void)
+{
+	return eof_menu_note_clear_ghost_lane(2);
+}
+
+int eof_menu_note_clear_ghost_yellow(void)
+{
+	return eof_menu_note_clear_ghost_lane(3);
+}
+
+int eof_menu_note_clear_ghost_blue(void)
+{
+	return eof_menu_note_clear_ghost_lane(4);
+}
+
+int eof_menu_note_clear_ghost_purple(void)
+{
+	return eof_menu_note_clear_ghost_lane(5);
+}
+
+int eof_menu_note_clear_ghost_orange(void)
+{
+	return eof_menu_note_clear_ghost_lane(6);
 }
 
 int eof_menu_note_toggle_crazy(void)
@@ -9435,7 +9612,7 @@ int eof_menu_note_reflect(char function)
 {
 	int note_selection_updated;
 	unsigned long i, ctr, bitmask1, bitmask2, index1 = 0, index2 = 0, numlanes, tracknum, pos1, pos2, next, previous;
-	unsigned char note, newnote, newlegacy, newghost, newfrets[6], newfinger[6], first_found = 0;
+	unsigned char note, newnote, newlegacy, ghost, newghost, accent, newaccent, newfrets[6], newfinger[6], first_found = 0;
 	char undo_made = 0;
 	EOF_PRO_GUITAR_NOTE *np = NULL;
 
@@ -9450,17 +9627,21 @@ int eof_menu_note_reflect(char function)
 			if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
 				continue;	//If the note is not selected, skip it
 
-			newnote = newlegacy = newghost = 0;	//Reset these
+			newnote = newlegacy = newghost = newaccent = 0;	//Reset these
 			(void) memset(newfrets, 0, sizeof(newfrets));	//Clear these arrays
 			(void) memset(newfinger, 0, sizeof(newfinger));
 			index2 = numlanes - 1;	//This is the highest lane's array index (for pro guitar note fret and finger arrays)
 			bitmask2 = 1 << (numlanes - 1);	//This is the bit corresponding to the note mask's highest lane
 			note = eof_get_note_note(eof_song, eof_selected_track, i);
+			ghost = eof_get_note_ghost(eof_song, eof_selected_track, i);
+			accent = eof_get_note_accent(eof_song, eof_selected_track, i);
 			for(ctr = 0, bitmask1 = 1; ctr <= numlanes / 2; ctr++, bitmask1 <<= 1, bitmask2 >>= 1, index2--)
 			{	//For the lower half of the lanes in this track and the center lane
 				if((numlanes % 2) && (ctr == (numlanes / 2)))
 				{	//If this is the center lane, leave it as-is
 					newnote |= (note & bitmask1);
+					newghost |= (ghost & bitmask1);
+					newaccent |= (accent & bitmask1);
 				}
 				else
 				{	//Otherwise reflect it
@@ -9472,6 +9653,14 @@ int eof_menu_note_reflect(char function)
 							undo_made = 1;
 						}
 						newnote |= bitmask2;	//The bit on the other side of the reflection is set
+						if(ghost & bitmask1)
+						{	//If this lane is ghosted
+							newghost |= bitmask2;	//The bit on the other side of the reflection is set for the ghost bitmask
+						}
+						if(accent & bitmask1)
+						{	//If this lane has accent status
+							newaccent |= bitmask2;	//The bit on the other side of the reflection is set for the accent bitmask
+						}
 					}
 					if(note & bitmask2)
 					{	//If the lane opposite the reflection is set
@@ -9481,6 +9670,14 @@ int eof_menu_note_reflect(char function)
 							undo_made = 1;
 						}
 						newnote |= bitmask1;	//The bit on this side of the reflection is set
+						if(ghost & bitmask2)
+						{	//If this lane opposite the reflection is set in the ghost bitmask
+							newghost |= bitmask1;	//The bit on the other side of the reflection is set for the ghost bitmask
+						}
+						if(accent & bitmask2)
+						{	//If this lane opposite the reflection is set in the accent bitmask
+							newaccent |= bitmask1;	//The bit on the other side of the reflection is set for the accent bitmask
+						}
 					}
 				}
 
@@ -9503,10 +9700,6 @@ int eof_menu_note_reflect(char function)
 						{	//If this lane is set in the legacy bitmask
 							newlegacy |= bitmask2;	//The bit on the other side of the reflection is set for the legacy bitmask
 						}
-						if(np->ghost & bitmask1)
-						{	//If this lane is set in the ghost bitmask
-							newghost |= bitmask2;	//The bit on the other side of the reflection is set for the ghost bitmask
-						}
 						newfrets[index2] = np->frets[ctr];			//The fret value on the other side of the reflection is updated
 						newfinger[index2] = np->finger[ctr];		//The finger value on the other side of the reflection is updated
 					}
@@ -9516,21 +9709,18 @@ int eof_menu_note_reflect(char function)
 						{	//If the lane opposite the reflection is set in the legacy bitmask
 							newlegacy |= bitmask1;	//The bit on the other side of the reflection is set for the legacy bitmask
 						}
-						if(np->ghost & bitmask2)
-						{	//If this lane opposite the reflection is set in the ghost bitmask
-							newghost |= bitmask1;	//The bit on the other side of the reflection is set for the ghost bitmask
-						}
 						newfrets[ctr] = np->frets[index2];			//The fret value on this side of the reflection is updated
 						newfinger[ctr] = np->finger[index2];		//The finger value on this side of the reflection is updated
 					}
 				}//Otherwise reflect it
 			}//For the lower half of the lanes in this track and the center lane
 
-			eof_set_note_note(eof_song, eof_selected_track, i, newnote);	//Update the note bitmask
+			eof_set_note_note(eof_song, eof_selected_track, i, newnote);		//Update the note bitmask
+			eof_set_note_ghost(eof_song, eof_selected_track, i, newghost);		//Update the ghost bitmask
+			eof_set_note_accent(eof_song, eof_selected_track, i, newaccent);	//Update the accent bitmask
 			if(np && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the track is a pro guitar track
 				np->legacymask = newlegacy;	//Update the legacy bitmask
-				np->ghost = newghost;		//Update the ghost bitmask
 				(void) memcpy(np->frets, newfrets, sizeof(newfrets));		//Update the fret array
 				(void) memcpy(np->finger, newfinger, sizeof(newfinger));	//Update the finger array
 			}

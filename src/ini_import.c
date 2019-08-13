@@ -5,7 +5,7 @@
 #include "utility.h"		//For eof_buffer_file()
 #include "ini.h"			//For eof_difficulty_ini_tags[]
 #include "main.h"			//For logging
-#include "midi_import.h"	//For declaration of eof_midi_import_drum_accent_velocity
+#include "midi_import.h"	//For declaration of eof_midi_import_drum_accent_velocity and eof_midi_import_drum_ghost_velocity
 #include "ini_import.h"
 #include "undo.h"
 #include "foflc/Lyric_storage.h"	//For strcasestr_spec()
@@ -364,6 +364,15 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			if((value > 0) && (value < 128))
 			{	//If a valid accented drum note velocity is defined
 				eof_midi_import_drum_accent_velocity = value;	//Store it
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "eof_midi_import_drum_ghost_velocity"))
+		{
+			value = atoi(value_index);
+
+			if((value > 0) && (value < 128))
+			{	//If a valid ghosted drum note velocity is defined
+				eof_midi_import_drum_ghost_velocity = value;	//Store it
 			}
 		}
 

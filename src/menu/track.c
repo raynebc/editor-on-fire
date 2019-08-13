@@ -5120,6 +5120,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
 			eof_set_note_eflags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.eflags);
 			eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
+			eof_set_note_ghost(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.ghost);
 
 			if(noteset == 0)
 				notes++;		//Track how many normal notes are cloned from the clipboard
@@ -5132,7 +5133,6 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
 			memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
 			memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
-			np->ghost = temp_note.ghost;									//Copy the ghost bitmask to the last created pro guitar note
 			np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 			np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 			np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note

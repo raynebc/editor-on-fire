@@ -207,6 +207,11 @@ Custom track data block definitions
 		{
 			1 byte: The SP deploy bitmask for the legacy note
 		}
+	Custom data block ID 11:  Ghost note bitmask
+		GHOST CHUNK, for each note in the legacy track
+		{
+			1 byte:  The ghost note bitmask for the legacy note
+		}
 
 =========================================		
 }

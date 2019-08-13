@@ -55,7 +55,7 @@ int eof_tick_volume = 100;	//Stores the volume level for the tick cue, specified
 int eof_tone_volume = 100;	//Stores the volume level for the tone cue, specified as a percentage
 int eof_percussion_volume = 100;	//Stores the volume level for the vocal percussion cue, specified as a percentage
 int eof_clap_for_mutes = 1;			//Specifies whether fully string muted notes trigger the clap sound cue
-int eof_clap_for_ghosts = 1;		//Specifies whether ghosted pro guitar notes trigger the clap sound cue
+int eof_clap_for_ghosts = 1;		//Specifies whether ghosted pro guitar or drum notes trigger the clap sound cue
 int eof_multi_pitch_metronome = 1;	//Specifies whether the metronome will use a lower tick for beats that aren't the first in a measure
 
 int           eof_mix_speed = 1000;
@@ -343,17 +343,22 @@ void eof_mix_find_claps(void)
 	{	//If a vocal track is not selected
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the track
-			if((eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type) || !(eof_get_note_note(eof_song, eof_selected_track, i) & eof_mix_claps_note))
-				continue;	//If the note is not in the active track difficulty or the clap sound cue doesn't apply to at least one gem used in the note, skip it
+			unsigned char note, ghost;
 
+			note = eof_get_note_note(eof_song, eof_selected_track, i);
+			if((eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type) || !(note & eof_mix_claps_note))
+			{	//If the note is not in the active track difficulty or the clap sound cue doesn't apply to at least one gem used in the note
+				continue;	//Skip it
+			}
+			ghost = eof_get_note_ghost(eof_song, eof_selected_track, i);
+			if(!eof_clap_for_ghosts && !(note & ~ghost))
+			{	//If clap cues should not trigger for ghosted gems, or if this gem doesn't have any non-ghosted gems
+				continue;	//Skip this note
+			}
 			if(tp)
-			{	//If a pro guitar track is active, perform other checks
+			{	//If a pro guitar track is active
 				if(!eof_clap_for_mutes && (eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE))
 				{	//If clap cues should not trigger for fully string muted notes, and this note is
-					continue;	//Skip this note
-				}
-				if(!eof_clap_for_ghosts && !(tp->note[i]->note & ~tp->note[i]->ghost))
-				{	//If clap cues should not trigger for ghosted gems, or if this gem doesn't have any non-ghosted gems
 					continue;	//Skip this note
 				}
 			}

@@ -46,6 +46,7 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_text_events;
 int eof_import_bpm_count = 0;
 
 unsigned char eof_midi_import_drum_accent_velocity = 127;	//This will be parsed from an imported chart's INI file, otherwise 127 is assumed
+unsigned char eof_midi_import_drum_ghost_velocity = 1;		//This will be parsed from an imported chart's INI file, otherwise 1 is assumed
 
 //Returns the value as if eof_ConvertToRealTime() was called, and the result was rounded up to the nearest unsigned long
 static inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision, unsigned long offset, unsigned int *gridsnap)
@@ -479,6 +480,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	/* read INI file */
 	(void) replace_filename(backup_filename, fn, "song.ini", 1024);
 	eof_midi_import_drum_accent_velocity = 127;		//By default, assume drum notes with a velocity of 127 are accent notes if the INI file doesn't define otherwise
+	eof_midi_import_drum_ghost_velocity = 1;		//By default, assume drum notes with a velocity of 1 are ghost notes if the INI file doesn't define otherwise
 	(void) eof_import_ini(sp, backup_filename, 0);
 
 
@@ -1966,7 +1968,7 @@ set_window_title(debugtext);
 				{
 					char doublebass = 0;
 					char ghlopen = 0;
-					unsigned char accent = 0;
+					unsigned char accent = 0, ghost = 0;
 
 #ifdef EOF_DEBUG
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
@@ -1994,6 +1996,10 @@ set_window_title(debugtext);
 							if(eof_import_events[i]->event[j]->d2 == eof_midi_import_drum_accent_velocity)
 							{	//A drum note with the appropriate velocity (define-able in the chart's song.ini file) is considered an accent note
 								accent = lane_chart[lane];	//This gem's bit will be set in the note's accent bitmask
+							}
+							if(eof_import_events[i]->event[j]->d2 == eof_midi_import_drum_ghost_velocity)
+							{	//A drum note with the appropriate velocity (define-able in the chart's song.ini file) is considered a ghost note
+								ghost = lane_chart[lane];	//This gem's bit will be set in the note's ghost bitmask
 							}
 						}
 						else
@@ -2107,6 +2113,7 @@ set_window_title(debugtext);
 						eof_set_note_flags(sp, picked_track, notenum, 0);				//Clear the flag here so that the flag can be set later (ie. if it's an Expert+ double bass note)
 						eof_set_note_type(sp, picked_track, notenum, diff);				//Apply the determined difficulty
 						eof_set_note_accent(sp, picked_track, notenum, accent);			//Set the accent bitmask
+						eof_set_note_ghost(sp, picked_track, notenum, ghost);			//Set the ghost bitmask
 						if(gridsnap)
 							eof_set_note_tflags(sp, picked_track, notenum, EOF_NOTE_TFLAG_RESNAP);	//Track that the note is expected to be grid snapped after MIDI import completes
 						note_count[picked_track]++;

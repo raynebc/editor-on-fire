@@ -163,7 +163,8 @@ typedef struct
 	char name[EOF_NAME_LENGTH + 1];
 	unsigned char type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's fret values
-	unsigned char accent;		//Stores the note's accent bitmask
+	unsigned char accent;		//Stores the note's accent bitmask (for drums)
+	unsigned char ghost;		//Stores the note's ghost bitmask (for drums)
 	unsigned long midi_pos;
 	unsigned long midi_length;
 	unsigned long pos;
@@ -216,7 +217,7 @@ typedef struct
 	unsigned char legacymask;
 	unsigned char frets[8];
 	unsigned char finger[8];
-	unsigned char ghost;
+	unsigned char ghost;		//Stores the legacy or pro guitar note's ghost bitmask
 	unsigned char bendstrength;
 	unsigned char slideend;
 	unsigned char unpitchend;
@@ -675,12 +676,13 @@ void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, 
 unsigned long eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the extended flags of the specified pro guitar note, or 0 on error
 void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long eflags);	//Sets the extended flags of the specified pro guitar or legacy note
 unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
-unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the ghost bitflag of the specified pro guitar track's note/lyric, or 0 on error or if the specified track isn't a pro guitar track
+unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the ghost bitmask of the specified legacy or pro guitar note, or 0 on error
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);
 	//Sets the note value of the specified track's note/lyric
 	//If the specified note is a pro guitar note, any unused strings have their corresponding fret values reset to 0
 unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the accent bitmask of the specified note, or 0 on error
-void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified  note
+void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified note
+void eof_set_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified legacy or pro guitar note
 unsigned char eof_get_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the SP deploy bitmask of the specified note, or 0 on error
 void eof_set_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the SP deploy bitmask of the specified note
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error
@@ -904,13 +906,6 @@ void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned notenum, un
 	//If operation is 2, the specified flag is toggled on applicable notes
 	//The track's notes array is expected to be sorted
 
-void eof_set_accent_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned long pos, unsigned long mask, char operation);
-	//Alters the specified accent bits on all notes at the specified note's timestamp
-	//If operation is 0, the specified flag is cleared on applicable notes
-	//If operation is 1, the specified flag is set on applicable notes
-	//If operation is 2, the specified flag is toggled on applicable notes
-	//The track's notes array is expected to be sorted
-
 int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const size_t buffersize);
 	//Reads the next two bytes of the PACKFILE to determine how many characters long the string is
 	//That number of bytes is read, the first (buffersize-1) of which are copied to the buffer
@@ -967,6 +962,8 @@ char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a drum track that contains notes marked as cymbals
 char eof_track_has_accent(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track has any gems that are accented
+char eof_track_has_ghost(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified legacy track has any gems that are ghosted
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a legacy guitar track
 int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track);
