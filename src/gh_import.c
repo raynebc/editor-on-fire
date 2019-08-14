@@ -15,6 +15,9 @@
 #include "memwatch.h"
 #endif
 
+//Any drum note at least this long will be considered a drum roll
+#define EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD 160
+
 unsigned long crc32_lookup[256] = {0};	//A lookup table to improve checksum calculation performance
 char crc32_lookup_initialized = 0;	//Is set to nonzero when the lookup table is created
 char eof_gh_skip_size_def = 0;	//Is set to nonzero if it's determined that the size field in GH headers is omitted
@@ -595,7 +598,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		}
 		else if(target->tracknum == EOF_TRACK_DRUM)
 		{	//If this is a drum track
-			if((newnote->type == EOF_NOTE_AMAZING) && (length >= 140))
+			if((newnote->type == EOF_NOTE_AMAZING) && (length >= EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD))
 			{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
 				int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 				unsigned long lastnoteindex = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
@@ -2050,7 +2053,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 			else if(destination_track == EOF_TRACK_DRUM)
 			{	//If this is a drum track
-				if((newnote->type == EOF_NOTE_AMAZING) && (length >= 140))
+				if((newnote->type == EOF_NOTE_AMAZING) && (length >= EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD))
 				{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
 					int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 					unsigned long lastnoteindex = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
@@ -4021,7 +4024,7 @@ int eof_import_array_txt(const char *filename)
 					newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
 				}
 
-				if((newnote->type == EOF_NOTE_AMAZING) && (length >= 140))
+				if((newnote->type == EOF_NOTE_AMAZING) && (length >= EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD))
 				{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
 					int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 					unsigned long lastnoteindex = eof_get_track_size(eof_song, EOF_TRACK_DRUM) - 1;

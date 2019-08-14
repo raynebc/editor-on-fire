@@ -656,7 +656,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				originalnotepos = notepos;	//Keep a copy of this value
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Chartpos = %lu  Pos = %lums  Gem value = %d", notes_imported++, current_note->chartpos, notepos, current_note->gemcolor);
 				eof_log(eof_log_string, 1);
-				if(gridsnap && !eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos))
+				if(gridsnap && !eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos, 0))
 				{	//If this chart position should be a beat interval, but the timing conversion did not result in this
 					if(closestpos != ULONG_MAX)
 					{	//If the nearest beat interval position was determined
@@ -897,7 +897,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		//Determine the realtime position associated with the event, for solos, lyric lines and lyrics
 		pos = chartpos_to_msec(chart, current_event->chartpos, &gridsnap) + 0.5;	//Store the real timestamp associated with the event, rounded up to nearest millisecond
-		if(gridsnap && !eof_is_any_beat_interval_position(pos, NULL, NULL, NULL, &closestpos))
+		if(gridsnap && !eof_is_any_beat_interval_position(pos, NULL, NULL, NULL, &closestpos, 0))
 		{	//If this chart position should be a beat interval, but the timing conversion did not result in this
 			if(closestpos != ULONG_MAX)
 			{	//If the nearest beat interval position was determined

@@ -211,6 +211,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 175, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
 	{ d_agup_check_proc, 248, 159, 206, 16,  2,   23,  0,    0,      1,   0,   "Use FoF difficulty naming",NULL, NULL },
 	{ d_agup_check_proc, 248, 479, 208, 16,  2,   23,  0,    0,      1,   0,   "Enable open strum by default",NULL, NULL },
+	{ d_agup_check_proc, 16,  319, 216, 16,  2,   23,  0,    0,      1,   0,   "Prefer MIDI friendly grid snaps",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1223,8 +1224,9 @@ int eof_menu_file_default_ini_settings(void)
 
 int eof_menu_file_preferences(void)
 {
-	int retval, original_input_mode, original_eof_disable_info_panel = eof_disable_info_panel;
+	int retval, original_input_mode, original_eof_disable_info_panel = eof_disable_info_panel, original_eof_prefer_midi_friendly_grid_snapping = eof_prefer_midi_friendly_grid_snapping;
 	unsigned original_eof_min_note_distance = eof_min_note_distance, original_eof_chord_density_threshold = eof_chord_density_threshold;
+	unsigned long ctr;
 
 	eof_log("Preferences logic starting", 2);
 
@@ -1307,10 +1309,11 @@ int eof_menu_file_preferences(void)
 	{
 		eof_etext3[0] = '\0';	//Otherwise empty the string
 	}
-	eof_preferences_dialog[55].flags = eof_disable_backups ? D_SELECTED : 0;			//Disable automatic backups
-	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;		//New notes are force strum
-	eof_preferences_dialog[57].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;	//Use FoF difficulty naming
-	eof_preferences_dialog[58].flags = eof_enable_open_strums_by_default ? D_SELECTED : 0;	//Enable open strum by default
+	eof_preferences_dialog[55].flags = eof_disable_backups ? D_SELECTED : 0;					//Disable automatic backups
+	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;				//New notes are force strum
+	eof_preferences_dialog[57].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;			//Use FoF difficulty naming
+	eof_preferences_dialog[58].flags = eof_enable_open_strums_by_default ? D_SELECTED : 0;		//Enable open strum by default
+	eof_preferences_dialog[59].flags = eof_prefer_midi_friendly_grid_snapping ? D_SELECTED : 0;	//Prefer MIDI friendly grid snaps
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1433,6 +1436,7 @@ int eof_menu_file_preferences(void)
 			eof_new_note_forced_strum = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
 			eof_use_fof_difficulty_naming = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
 			eof_enable_open_strums_by_default = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
+			eof_prefer_midi_friendly_grid_snapping = (eof_preferences_dialog[59].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1494,6 +1498,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[56].flags = 0;					//New notes are force strum
 			eof_preferences_dialog[57].flags = 0;					//Use FoF difficulty naming
 			eof_preferences_dialog[58].flags = 0;					//Enable open strum by default
+			eof_preferences_dialog[59].flags = D_SELECTED;			//Prefer MIDI friendly grid snaps
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 
@@ -1512,6 +1517,14 @@ int eof_menu_file_preferences(void)
 		eof_log("\tToggling info panel", 2);
 		eof_disable_info_panel = 1 - eof_disable_info_panel;	//Toggle this because the function call below will toggle it again
 		eof_display_info_panel();	//Create/destroy the information panel instance accordingly
+	}
+	if(original_eof_prefer_midi_friendly_grid_snapping != eof_prefer_midi_friendly_grid_snapping)
+	{	//If the "Prefer MIDI friendly grid snaps" preference changed
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track
+			eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
+			eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
+		}
 	}
 	(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient
 	eof_rebuild_notes_window();					//Recreate the notes panel window to fill all available space in the bottom half of the program window
@@ -3611,7 +3624,7 @@ int eof_save_helper_checks(void)
 			char *warning2 = "Warning: At least one note is out of sync with a grid snapped note.";
 			char *warning = warning1;
 
-			note1snapped = eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, NULL);	//Check if the outer loop's note is beat interval snapped
+			note1snapped = eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, NULL, 0);	//Check if the outer loop's note is beat interval snapped
 			note2snapped = note1snapped;
 			for(ctr3 = 0; ctr3 < eof_get_track_size(eof_song, ctr); ctr3++)
 			{	//For each note in the track
@@ -3631,7 +3644,7 @@ int eof_save_helper_checks(void)
 				else
 					unmatch = 1;	//Otherwise it was a note within 3ms, track this
 
-				note2snapped = eof_is_any_beat_interval_position(notepos2, NULL, NULL, NULL, NULL);	//Check if the inner loop's note is beat interval snapped
+				note2snapped = eof_is_any_beat_interval_position(notepos2, NULL, NULL, NULL, NULL, 0);	//Check if the inner loop's note is beat interval snapped
 				if(note1snapped != note2snapped)
 					break;	//If one note is snapped and the other isn't, the snapped note is considered correct
 			}

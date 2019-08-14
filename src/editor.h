@@ -87,7 +87,7 @@ unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int
 	//Returns the position that is one full grid snap earlier than pos (not just the earliest grid snap occurrence), where the grid snap size is 1/# beat, or
 	// 1/# measure if per_measure is nonzero
 	//Returns ULONG_MAX if the position is not found
-int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum, unsigned long *closestintervalpos);
+int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum, unsigned long *closestintervalpos, int midi_friendly);
 	//Returns nonzero if the specified timestamp is any beat interval position, where the interval count is between 2 and EOF_MAX_GRID_SNAP_INTERVALS
 	// (This matches the logic in eof_ConvertToRealTime() that determines whether a tick position is a grid snap)
 	//If beat is not NULL, the beat number the grid snap position is in is returned through it, or ULONG_MAX if the specified position is invalid
@@ -95,9 +95,11 @@ int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, un
 	//If intervalnum is not NULL, the interval number of the matching position is returned through it
 	//If closestintervalpos is not NULL, it is set to the beat interval position that is closest to the specified timestamp
 	//Upon error, zero is returned and if closestintervalpos is not NULL, its referenced variable is set to ULONG_MAX
+	//If midi_friendly is nonzero, grid positions that the time division isn't divisible by are ignored, to be used by the "Highlight non grid snapped notes" and "Repair grid snap"
+	// to resolve scenarios where otherwise grid-snapped notes are using a grid snap that will not quantize properly to MIDI
 int eof_find_beat_interval_position(unsigned long beat, unsigned char intervalvalue, unsigned char intervalnum, unsigned long *intervalpos);
 	//Determines the real time position of the specified beat interval
-	//If it exists, it is returned through gridpos and nonzero is returned
+	//If it exists, it is returned through intervalpos and nonzero is returned
 
 void eof_read_editor_keys(void);
 void eof_editor_logic(void);

@@ -4636,7 +4636,7 @@ int eof_menu_track_repair_grid_snap(void)
 
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
 
-		if(!eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos))
+		if(!eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping))
 		{	//If this note is not beat interval snapped
 			if(closestpos != ULONG_MAX)
 			{	//If the nearest beat interval position was determined
@@ -4679,7 +4679,7 @@ int eof_menu_track_repair_grid_snap(void)
 
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
 
-		if(!eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos))
+		if(!eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping))
 		{	//If this note is not beat interval snapped
 			if(closestpos != ULONG_MAX)
 			{	//If the nearest grid snap position was determined

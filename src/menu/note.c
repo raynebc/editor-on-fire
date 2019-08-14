@@ -1520,7 +1520,7 @@ int eof_menu_note_resnap_logic(int any)
 		}
 		else
 		{
-			(void) eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &newnotepos);	//Store the closest beat interval position of any size into newnotepos
+			(void) eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &newnotepos, 0);	//Store the closest beat interval position of any size into newnotepos
 			if(newnotepos == ULONG_MAX)
 			{	//If the nearest beat interval position was NOT determined
 				newnotepos = notepos;	//Have the note retain its current timestamp
@@ -1571,7 +1571,7 @@ int eof_menu_note_resnap_logic(int any)
 		}
 		else
 		{
-			(void) eof_is_any_beat_interval_position(tailpos, NULL, NULL, NULL, &newnotepos);	//Store the closest beat interval position of any size into newnotepos
+			(void) eof_is_any_beat_interval_position(tailpos, NULL, NULL, NULL, &newnotepos, 0);	//Store the closest beat interval position of any size into newnotepos
 			if(newnotepos == ULONG_MAX)
 			{	//If the nearest beat interval position was NOT determined
 				newnotepos = tailpos;	//Have the tail retain its current ending timestamp

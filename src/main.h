@@ -422,6 +422,7 @@ extern int         eof_ghl_conversion_swaps_bw_gems;
 extern int         eof_3d_hopo_scale_size;
 extern int         eof_disable_backups;
 extern int         eof_enable_open_strums_by_default;
+extern int         eof_prefer_midi_friendly_grid_snapping;
 extern double      eof_lyric_gap_multiplier;
 extern char        eof_lyric_gap_multiplier_string[20];
 extern int         eof_song_folder_prompt;

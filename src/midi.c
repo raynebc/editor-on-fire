@@ -3387,8 +3387,9 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 							snaplength = beatlength / (double) interval;	//Determine the real time length of one such grid snap interval
 							for(gridsnapnum = 0; gridsnapnum < interval; gridsnapnum++)
 							{	//For each instance of that grid snap
-								if(realtimeint == (unsigned long)((eof_song->beat[beatnum]->fpos + (double)gridsnapnum * snaplength) + 0.5))
-								{	//If the target timestamp matches this grid snap position
+								unsigned long gridsnappos = (eof_song->beat[beatnum]->fpos + (double)gridsnapnum * snaplength) + 0.5;
+								if((realtimeint == gridsnappos) || (realtimeint + 1 == gridsnappos) || (realtimeint == gridsnappos + 1))
+								{	//If the target timestamp matches this grid snap position, or is within 1ms to account for rounding error
 									return beat_deltapos + (gridsnapnum * beatlength_delta / interval);
 								}
 							}

@@ -10253,12 +10253,12 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 				}
 				else
 				{	//If using the closest grid snap setting of ANY grid size
-					(void) eof_is_any_beat_interval_position(sections[ctr].start_pos, NULL, NULL, NULL, &newstart);
+					(void) eof_is_any_beat_interval_position(sections[ctr].start_pos, NULL, NULL, NULL, &newstart, 0);
 					if(newstart == ULONG_MAX)	//If the nearest beat interval position for the section beginning was not found
 						continue;	//Skip it
 					if(sectiontype != EOF_FRET_HAND_POS_SECTION)
 					{	//Fret hand positions don't define an end position
-						(void) eof_is_any_beat_interval_position(sections[ctr].end_pos, NULL, NULL, NULL, &newend);
+						(void) eof_is_any_beat_interval_position(sections[ctr].end_pos, NULL, NULL, NULL, &newend, 0);
 						if(newend == ULONG_MAX)	//If the nearest beat interval position for the section ending was not found
 							continue;	//Skip it
 					}
@@ -10361,7 +10361,7 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 			}
 			else
 			{	//If using the closest beat interval of ANY grid size
-				(void) eof_is_any_beat_interval_position(tp->technote[ctr]->pos, NULL, NULL, NULL, &newstart);
+				(void) eof_is_any_beat_interval_position(tp->technote[ctr]->pos, NULL, NULL, NULL, &newstart, 0);
 				if(newstart == ULONG_MAX)	//If the nearest grid snap position was not found
 					continue;	//Skip it
 			}

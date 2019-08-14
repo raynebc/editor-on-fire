@@ -3695,7 +3695,7 @@ unsigned long eof_repair_midi_import_grid_snap(void)
 			unsigned long tflags = eof_get_note_tflags(eof_song, ctr, ctr2);
 			if(tflags & EOF_NOTE_TFLAG_RESNAP)
 			{	//If this note was flagged as being grid snapped during MIDI import
-				if(!eof_is_any_beat_interval_position(eof_get_note_pos(eof_song, ctr, ctr2), NULL, NULL, NULL, &closestpos))
+				if(!eof_is_any_beat_interval_position(eof_get_note_pos(eof_song, ctr, ctr2), NULL, NULL, NULL, &closestpos, 0))
 				{	//If the note is no longer snapped to a beat interval position as it was originally deemed by eof_ConvertToRealTime()
 					if(closestpos != ULONG_MAX)
 					{	//If the nearest beat interval position was determined

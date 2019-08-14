@@ -1402,6 +1402,10 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 			//Determine whether length of the note as it will be in the exported MIDI file is shorter than 1/12 measure, which will determien whether the sustain will be kept in Clone Hero
 			deltapos = eof_ConvertToDeltaTime(notepos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
 			deltalength = eof_ConvertToDeltaTime(notepos + notelength, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the note's length
+			if(deltalength < 1)
+			{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+				deltalength = 1;
+			}
 			startbeat = eof_get_beat(eof_song, notepos);	//Determine in which beat the note starts
 
 			if((startbeat < eof_song->beats) && (deltalength < (double) EOF_DEFAULT_TIME_DIVISION * eof_song->beat[startbeat]->num_beats_in_measure / 12.0))

@@ -4651,7 +4651,7 @@ void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track
 			}
 			else
 			{	//Otherwise do it the hard way
-				thisisgridsnapped = eof_is_any_beat_interval_position(thispos, NULL, NULL, NULL, NULL);
+				thisisgridsnapped = eof_is_any_beat_interval_position(thispos, NULL, NULL, NULL, NULL, eof_prefer_midi_friendly_grid_snapping);
 			}
 			if(!thisisgridsnapped)
 			{	//If this note position does not match that of any grid snap

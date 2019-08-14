@@ -776,7 +776,7 @@ unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int
 	return ((double)pos - eof_tail_snap.snap_length) + 0.5;	//Round to nearest ms
 }
 
-int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum, unsigned long *closestintervalpos)
+int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum, unsigned long *closestintervalpos, int midi_friendly)
 {
 	unsigned long ctr, beatnum, interval_pos, closestpos = 0, closestdiff = ULONG_MAX, diff;
 	double beat_length, interval_length;
@@ -799,6 +799,19 @@ int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, un
 	beat_length = eof_get_beat_length(eof_song, beatnum);
 	for(interval = 2; interval < EOF_MAX_GRID_SNAP_INTERVALS; interval++)
 	{	//Check all of the possible supported custom grid snap intervals
+		if(midi_friendly)
+		{	//If the calling function wanted to discard any interval that the MIDI time division isn't divisible by, to improve MIDI export
+			unsigned num = 4, den = 4;
+			if(eof_get_effective_ts(eof_song, &num, &den, beatnum, 0))
+			{	//If the time signature of the target position's beat was obtained
+				unsigned long beatlength_delta = EOF_DEFAULT_TIME_DIVISION * 4 / den;	//One beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
+				if(beatlength_delta % interval != 0)
+				{	//if the beat's number of delta ticks isn't divisible by this number of interval
+					continue;	//Skip this interval count
+				}
+			}
+		}
+
 		interval_length = beat_length / (double) interval;
 
 		for(ctr = 0; ctr < interval; ctr++)

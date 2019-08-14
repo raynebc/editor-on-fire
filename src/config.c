@@ -254,6 +254,7 @@ void eof_load_config(char * fn)
 	{
 		eof_3d_hopo_scale_size = 75;
 	}
+	eof_prefer_midi_friendly_grid_snapping = get_config_int("preferences", "eof_prefer_midi_friendly_grid_snapping", 1);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -611,6 +612,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_fingering_checks_include_mutes", eof_fingering_checks_include_mutes);
 	set_config_int("preferences", "eof_ghl_conversion_swaps_bw_gems", eof_ghl_conversion_swaps_bw_gems);
 	set_config_int("preferences", "eof_3d_hopo_scale_size", eof_3d_hopo_scale_size);
+	set_config_int("preferences", "eof_prefer_midi_friendly_grid_snapping", eof_prefer_midi_friendly_grid_snapping);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);
