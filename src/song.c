@@ -2480,10 +2480,14 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 
 	*count = 0;	//These will be the default values unless applicable information is found for the specified track
 	*ptr = NULL;
+	if((track == EOF_TRACK_DRUM_PS) && (!sp->tags->unshare_drum_phrasing))
+	{	//If drum phasing is being shared, any query of the phase shift drum track's phrasing is to reflect the normal drum track instead
+		track = EOF_TRACK_DRUM;
+	}
 	tracknum = sp->track[track]->tracknum;
 	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{	//Legacy track format
-		EOF_LEGACY_TRACK *tp = sp->legacy_track[tracknum];
+		EOF_LEGACY_TRACK *tp = sp->legacy_track[tracknum];;
 
 		switch(sectiontype)
 		{
@@ -3030,7 +3034,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* write file header */
-	fp = pack_fopen(fn, "w");
+	fp = eof_pack_fopen_retry(fn, "w", 5);
 	if(!fp)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
@@ -3161,7 +3165,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 		//Parse the linked list to write the MIDI data to a temp file
 			(void) snprintf(rawmididatafn, sizeof(rawmididatafn) - 1, "%srawmididata.tmp", eof_temp_path_s);
-			tfp = pack_fopen(rawmididatafn, "w");
+			tfp = eof_pack_fopen_retry(rawmididatafn, "w", 5);
 			if(!tfp)
 			{	//If the temp file couldn't be opened for writing
 				eof_log("\tError creating temp file for raw MIDI data block", 1);
@@ -3212,7 +3216,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_iputl(filesize, fp);	//Write the size of this data block
 			tfp = pack_fopen(rawmididatafn, "r");
 			if(!tfp)
-			{	//If the temp file couldn't be opened for writing
+			{	//If the temp file couldn't be opened for reading
 				eof_log("\tError reading temp file for raw MIDI data block", 1);
 				(void) pack_fclose(fp);
 				return 0;	//return error
@@ -3233,7 +3237,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 		//Write the beat timings to a temp file
 			(void) snprintf(beattimesfn, sizeof(beattimesfn) - 1, "%sbeattimes.tmp", eof_temp_path_s);
-			tfp = pack_fopen(beattimesfn, "w");
+			tfp = eof_pack_fopen_retry(beattimesfn, "w", 5);
 			if(!tfp)
 			{	//If the temp file couldn't be opened for writing
 				eof_log("\tError creating temp file for floating point beat timings data block", 1);
@@ -3255,7 +3259,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_iputl(2, fp);			//Write the data block ID (2 = Floating point beat timings)
 			tfp = pack_fopen(beattimesfn, "r");
 			if(!tfp)
-			{	//If the temp file couldn't be opened for writing
+			{	//If the temp file couldn't be opened for reading
 				eof_log("\tError reading temp file for floating point beat timings data block", 1);
 				(void) pack_fclose(fp);
 				return 0;	//return error
@@ -3827,7 +3831,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					char tempfilename[30];
 
 					(void) snprintf(tempfilename, sizeof(tempfilename) - 1, "%seof_tech_notes.tmp", eof_temp_path_s);
-					tempf = pack_fopen(tempfilename, "w");
+					tempf = eof_pack_fopen_retry(tempfilename, "w", 1);
 					if(!tempf)
 					{	//If there was an error opening the temp file for writing
 						eof_log("Error writing tech notes to temp file, skipping export of the track's tech notes", 1);
@@ -7369,8 +7373,8 @@ int eof_create_image_sequence(char benchmark_only)
 		if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
 		{	//If this folder doesn't already exist
 			err = eof_mkdir(eof_temp_filename);
-			if(err)
-			{	//If the folder could not be created
+			if(err && !file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+			{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
 				allegro_message("Could not create folder!\n%s", eof_temp_filename);
 				return 1;
 			}
@@ -10134,6 +10138,7 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 	unsigned long sectiontype, sectioncount = 0, ctr, ctr2, notepos;
 	EOF_PHRASE_SECTION *sections = NULL;
 	int applicable, missing;
+	char unshare_drum_phrasing;
 
 	if(!eof_section_auto_adjust)
 		return;	//User has not enabled this feature
@@ -10143,6 +10148,9 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 		return;	//No notes in the specified track are selected
 	if(eof_menu_track_get_tech_view_state(sp, track))
 		return;	//This logic should not run in tech view
+
+	unshare_drum_phrasing = sp->tags->unshare_drum_phrasing;	//Store this value and temporarily force unsharing so any existing PS drum track phrases can be adjusted appropriately
+	sp->tags->unshare_drum_phrasing = 1;
 
 	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 	{	//For each type of section that exists
@@ -10276,6 +10284,8 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 			}//If moving by grid snap
 		}//For each instance of this section type in the track
 	}//For each type of section that exists
+
+	sp->tags->unshare_drum_phrasing = unshare_drum_phrasing;	//Restore the drum phrase sharing status that was in effect
 }
 
 unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char any, char *undo_made)

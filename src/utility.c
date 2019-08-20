@@ -4,6 +4,7 @@
 #include "utility.h"
 #include "main.h"	//For logging
 #include "foflc/RS_parse.h"	//For rs_lyric_substitute_char_extended()
+#include "modules/g-idle.h"	//For Idle()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -490,4 +491,26 @@ int eof_string_is_hexadecimal(char *string)
 	}
 
 	return 1;	//No non-hexadecimal characters were encountered
+}
+
+PACKFILE *eof_pack_fopen_retry(const char *filename, const char *mode, unsigned count)
+{
+	PACKFILE *fp;
+
+	if(!filename || !mode)
+		return NULL;	//Invalid parameters
+
+	fp = pack_fopen(filename, mode);
+	while(fp == NULL)
+	{
+		count--;
+		if(!count)
+		{	//If the number of retries have been exhausted
+			return NULL;
+		}
+		Idle(1);	//Brief wait before retry
+		fp = pack_fopen(filename, mode);
+	}
+
+	return fp;
 }

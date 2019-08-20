@@ -456,8 +456,8 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	if(!file_exists(syscommand, FA_DIREC | FA_HIDDEN, NULL))
 	{	//If the folder doesn't exist,
 		err = eof_mkdir(syscommand);	//Try to create it
-		if(err)
-		{	//If it couldn't be created
+		if(err && !file_exists(syscommand, FA_DIREC | FA_HIDDEN, NULL))
+		{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
 			eof_render();
 			allegro_message("Could not create folder!\n%s\nEnsure that the specified folder name is valid and\nthe Song Folder is configured to a non write-restricted area.\n(File->Song Folder)", syscommand);
 			return 0;
@@ -825,6 +825,7 @@ int eof_menu_file_load_ogg(void)
 	}
 	eof_music_seek(eof_music_pos - eof_av_delay);
 	(void) replace_filename(eof_last_ogg_path, returnedfn, "", 1024);
+	eof_log("\t\t\tOGG loaded", 1);
 
 	return 1;
 }
@@ -898,8 +899,8 @@ int eof_menu_file_save_logic(char silent)
 				return 2;
 			}
 			err = eof_mkdir(eof_temp_filename);
-			if(err)
-			{
+			if(err && !file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+			{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
 				eof_render();
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError creating project folder:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 				eof_log(eof_log_string, 1);
@@ -1955,6 +1956,7 @@ int eof_menu_file_exit(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_clear_input();
+	(void) eof_redraw_display();
 	if(alert(NULL, "Want to Quit?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		if(eof_changes)
@@ -3873,6 +3875,7 @@ int eof_save_helper(char *destfilename, char silent)
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 	unsigned short user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during Rocksmith and Bandfuse exports
+	int err;
 
 	eof_log("eof_save_helper() entered", 1);
 
@@ -4072,8 +4075,9 @@ int eof_save_helper(char *destfilename, char silent)
 			(void) ustrcat(eof_temp_filename, "songs_upgrades");
 			if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
 			{	//If the songs_upgrades folder doesn't already exist
-				if(eof_mkdir(eof_temp_filename))
-				{	//And it couldn't be created
+				err = eof_mkdir(eof_temp_filename);
+				if(err && !file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+				{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
 					allegro_message("Could not create folder!\n%s", eof_temp_filename);
 					return 10;	//Return failure:  Could not recreate project folder
 				}

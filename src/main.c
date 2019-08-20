@@ -2175,6 +2175,7 @@ void eof_read_global_keys(void)
 	/* exit program (Esc or close button) */
 	if((eof_key_code == KEY_ESC) || eof_close_button_clicked)
 	{	//Use the key code for Escape instead of the ASCII char, since CTLR+[ triggers the same ASCII character value of 27
+		(void) eof_redraw_display();
 		eof_menu_file_exit();
 		eof_use_key(); //If user cancelled quitting, make sure these keys are cleared
 	}
@@ -5157,7 +5158,8 @@ void eof_init_after_load(char initaftersavestate)
 	eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
 	eof_sort_events(eof_song);
 	eof_delete_blank_events(eof_song);
-	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 
 	eof_log("\tInitialization after load complete", 1);
 }
