@@ -3741,12 +3741,12 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 	return retval;
 }
 
-int eof_import_array_txt(const char *filename)
+int eof_import_array_txt(const char *filename, char *undo_made)
 {
 	char *buffer, *buffer2, *line;
 	int failed = 0, format = 0, gh3_format;
 	unsigned long ctr = 0, ctr2, linesread = 0, tracknum;
-	long position, lastposition = 0, note, fixednote, data, length, accent;
+	long position, lastposition = 0, note, fixednote, data, length, accent, item1 = 0, item2 = 0, item3 = 0;
 	EOF_NOTE *newnote, *lastnote = NULL;
 	double threshold = 66.0 / 192.0;
 	unsigned long toggle_hopo_count = 0;
@@ -3811,10 +3811,29 @@ int eof_import_array_txt(const char *filename)
 		}
 		linesread++;	//Count how many numbers were read
 		lastposition = position;
+
+		//Store the first, second and third items, to avoid having to re-read them in the event of an array.txt file with only 3 values
+		if(linesread == 1)
+			item1 = position;
+		else if(linesread == 2)
+			item2 = position;
+		else if(linesread == 3)
+			item3 = position;
 	}//Until an error has occurred
 	if(format && ((linesread % 2) && (linesread % 3)))
 	{	//If this was determined to be note data, but the number of lines isn't divisible by two (post GH3/GHA format) or three (GH3/GHA format)
 		failed = 6;	//Invalid data, each note is defined in two lines (one with a position, the other with its composition)
+	}
+	if(linesread == 3)
+	{	//An array.txt with only 3 numbers is expected to be a definition for either a time signature or a star power phrase
+		if((item2 <= 50) && eof_number_is_power_of_two(item3))
+		{	//If the second value is no more than 50 and the third value is a power of two
+			format = 2;	//Consider this a time signature definition
+		}
+		else
+		{
+			format = 3;	//Consider this a star power phrase definition
+		}
 	}
 
 	///If it is determined to be note data, pre-parse to determine whether it's GH3/GHA format (3 numbers define each note) or newer format (2 numbers define each note)
@@ -3877,15 +3896,20 @@ int eof_import_array_txt(const char *filename)
 
 		return failed;
 	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	if(!undo_made || (*undo_made == 0))
+	{	//If an undo state is to be made
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(undo_made)
+			*undo_made = 1;
+	}
 
 	if(!format)
-	{
+	{	//Import beat timings
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting %lu beat times.", linesread);
 		eof_log(eof_log_string, 1);
 	}
-	else
-	{
+	else if(format == 1)
+	{	//Import notes
 		if(gh3_format)
 		{
 			int selection;
@@ -3904,68 +3928,99 @@ int eof_import_array_txt(const char *filename)
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting %lu note definitions.", linesread / 2);
 		eof_log(eof_log_string, 1);
 	}
-
-	///Parse file contents as either beat positions or note data
-	for(ctr = 0; !failed; ctr++)
-	{	//Until an error has occurred
-		if(!ctr)
-		{	//If this is the first line being parsed
-			line = ustrtok(buffer, "\r\n");	//Initialize the tokenization and get first tokenized line
+	else if(format == 2)
+	{	//Import time signature definition
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting time signature definition:  %ldms:  %ld/%ld.", item1, item2, item3);
+		eof_log(eof_log_string, 1);
+		for(ctr = 0; ctr < eof_song->beats; ctr++)
+		{	//For each beat in the song
+			if(item1 == eof_song->beat[ctr]->pos)
+			{	//If the time signature read is positioned at this beat marker
+				(void) eof_apply_ts(item2, item3, ctr, eof_song, 0);	//Apply the signature
+				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+				break;
+			}
+			else if(item1 < eof_song->beat[ctr]->pos)
+			{	//Otherwise if this time signature's position has been surpassed by a beat
+				eof_log("\t\t\tWarning:  Mid beat time signature detected.  Skipping", 1);
+				break;
+			}
 		}
-		else
-		{
-			line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
-		}
+	}
+	else
+	{	//Import SP definition
+		unsigned long numnotes;
 
-		if(!line)	//If a tokenized line of the file was not obtained
-			break;
-		if(line[0] == '\0')	//If this line is empty
-			continue;	//Skip it
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting star power phrase definition:  %ldms - %ldms.", item1, item1 + item2);
+		eof_log(eof_log_string, 1);
 
-		//Read the position
-		if(line[0] == '0')
-		{	//If this number is a zero
-			position = 0;
-		}
-		else
-		{
-			position = atol(line);	//Convert the string into a number
-		}
-
-		if(!format)
-		{	//If this is a beat position, update the project's beat map
-			if(ctr >= eof_song->beats)
-			{	//If there aren't enough beats in the project to store this beat position
-				EOF_BEAT_MARKER *new_beat = eof_song_add_beat(eof_song);	//Add a beat
-
-				if(!new_beat)
-				{	//If a new beat couldn't be added
-					failed = 7;
+		//Clean up the star power phrase to ensure that it doesn't apply to a note positioned at the end of the phrase
+		numnotes = eof_get_track_size(eof_song, eof_selected_track);
+		if(item2 > 1)
+		{	//If the star power phrase is at least 2ms long
+			for(ctr = 0; ctr < numnotes; ctr++)
+			{	//For each note in the track
+				if(eof_get_note_pos(eof_song, eof_selected_track, ctr) == item1 + item2)
+				{	//If the note begins at the end position of the star power phrase
+					item2--;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdjusting star power phrase to end at %ldms to not overlap a note at the end position.", item1 + item2);
+					eof_log(eof_log_string, 1);
 					break;
 				}
 			}
-			eof_song->beat[ctr]->pos = eof_song->beat[ctr]->fpos = position;
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tBeat %lu:  %ldms.", ctr, position);
-			eof_log(eof_log_string, 1);
 		}
-		else
-		{	//This is note data, read the next line to get the note's composition
-			line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
-			if(!line || (line[0] == '\0') || (line[0] == '0'))
-			{	//If the line couldn't be read, is empty or is a zero
-				failed = 8;	//Invalid data
-				break;
-			}
-			data = atol(line);
-			if(data == 0)
-			{	//If atol() couldn't convert the number
-				failed = 9;	//Invalid data
-				break;
-			}
-			if(gh3_format)
-			{	//The line that was just read and one more are expected to define the note
-				length = data;	//That line was the duration
 
+		(void) eof_track_add_star_power_path(eof_song, eof_selected_track, item1, item1 + item2);
+		eof_determine_phrase_status(eof_song, eof_selected_track);
+	}
+
+	///Parse file contents as either beat positions or note data
+	if(format < 2)
+	{	//If the content was determined to be beat or note data
+		for(ctr = 0; !failed; ctr++)
+		{	//Until an error has occurred
+			if(!ctr)
+			{	//If this is the first line being parsed
+				line = ustrtok(buffer, "\r\n");	//Initialize the tokenization and get first tokenized line
+			}
+			else
+			{
+				line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+			}
+
+			if(!line)	//If a tokenized line of the file was not obtained
+				break;
+			if(line[0] == '\0')	//If this line is empty
+				continue;	//Skip it
+
+			//Read the position
+			if(line[0] == '0')
+			{	//If this number is a zero
+				position = 0;
+			}
+			else
+			{
+				position = atol(line);	//Convert the string into a number
+			}
+
+			if(!format)
+			{	//If this is a beat position, update the project's beat map
+				if(ctr >= eof_song->beats)
+				{	//If there aren't enough beats in the project to store this beat position
+					EOF_BEAT_MARKER *new_beat = eof_song_add_beat(eof_song);	//Add a beat
+
+					if(!new_beat)
+					{	//If a new beat couldn't be added
+						failed = 7;
+						break;
+					}
+				}
+				eof_song->beat[ctr]->pos = eof_song->beat[ctr]->fpos = position;
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tBeat %lu:  %ldms.", ctr, position);
+				eof_log(eof_log_string, 1);
+			}
+			else
+			{	//This is note data, read the next line to get the note's composition
 				line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
 				if(!line || (line[0] == '\0') || (line[0] == '0'))
 				{	//If the line couldn't be read, is empty or is a zero
@@ -3978,145 +4033,162 @@ int eof_import_array_txt(const char *filename)
 					failed = 9;	//Invalid data
 					break;
 				}
+				if(gh3_format)
+				{	//The line that was just read and one more are expected to define the note
+					length = data;	//That line was the duration
 
-				note = data & 63;	//The third line is the note bitmask
-				fixednote = note & 31;	//Only the lower 5 bits define gems, bit 6 defines the toggle HOPO marker
-				accent = 0;			//Unused
-			}
-			else
-			{	//The line that was just read completes the note's definition
-				length = data & 0xFFFF;	//The two least significant bytes are the length of the note
-				data >>= 16;		//Shift the data right two bytes, discarding the length
-				note = data & 63;	//The next byte defines the gems used, although only the first 6 bits pertain to gems
-				fixednote = note;
-				accent = data >> 8;	//The most significant byte defines the accent bitmask
-			}
-
-			newnote = eof_track_add_create_note(eof_song, eof_selected_track, 0, position, length, eof_note_type, NULL);	//Add the note to the active track difficulty
-			if(!newnote)
-			{	//If the note couldn't be added
-				failed = 10;
-				break;
-			}
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If a drum track is active, interpret as drum note data
-				fixednote &= ~1;	//Clear lane 1 gem
-				fixednote &= ~32;	//Clear lane 6 gem
-				if(data & 32)
-				{	//If lane 6 is populated, convert it to RB's bass drum gem
-					fixednote |= 1;		//Set the lane 1 (bass drum) gem
-				}
-				if(data & 1)
-				{	//If lane 1 is populated, convert it to lane 6
-					fixednote |= 32;
-					eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Ensure "five lane" drums is enabled for the track
-					tracknum = eof_song->track[eof_selected_track]->tracknum;	//Simplify
-					eof_song->legacy_track[tracknum]->numlanes = 6;
-				}
-				if((data & 64) && !(data & 32))
-				{	//If bit 6 is set, but bit 5 is not
-					fixednote |= 1;	//Consider it a double bass drum note
-					newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
-				}
-				else if((accent & 32) && !(note & 32))
-				{	//If bit 5 of the accent mask is set, but bit 5 of the note mask is not
-					fixednote |= 1;	//Consider it a double bass drum note
-					newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
-				}
-
-				if((newnote->type == EOF_NOTE_AMAZING) && (length >= EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD))
-				{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
-					int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
-					unsigned long lastnoteindex = eof_get_track_size(eof_song, EOF_TRACK_DRUM) - 1;
-
-					if(eof_note_count_colors(eof_song, EOF_TRACK_DRUM, lastnoteindex) > 1)
-					{	//If the new drum note contains gems on more than one lane
-						phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
+					line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+					if(!line || (line[0] == '\0') || (line[0] == '0'))
+					{	//If the line couldn't be read, is empty or is a zero
+						failed = 8;	//Invalid data
+						break;
 					}
-					(void) eof_track_add_section(eof_song, EOF_TRACK_DRUM, phrasetype, 0xFF, position, position + length, 0, NULL);
-					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Mark it as crazy, both so it can overlap other notes and so that it will export with sustain
+					data = atol(line);
+					if(data == 0)
+					{	//If atol() couldn't convert the number
+						failed = 9;	//Invalid data
+						break;
+					}
+
+					note = data & 63;	//The third line is the note bitmask
+					fixednote = note & 31;	//Only the lower 5 bits define gems, bit 6 defines the toggle HOPO marker
+					accent = 0;			//Unused
+				}
+				else
+				{	//The line that was just read completes the note's definition
+					length = data & 0xFFFF;	//The two least significant bytes are the length of the note
+					data >>= 16;		//Shift the data right two bytes, discarding the length
+					note = data & 63;	//The next byte defines the gems used, although only the first 6 bits pertain to gems
+					fixednote = note;
+					accent = data >> 8;	//The most significant byte defines the accent bitmask
 				}
 
-				//If there is accent data, prompt user about which game it's from to account for different accent definition behavior as with GH import
-				if(accent)
-				{
-					if(!eof_gh_accent_prompt)
-					{	//If the user wasn't prompted about which game this chart is from
-						if(alert("Is this chart from any of the following GH games?", "\"Warriors of Rock\", \"Band Hero\", \"Guitar Hero 5\"", "(These use a different accent notation than Smash Hits)", "&Yes", "&No", 'y', 'n') == 1)
-						{	//If user indicates the chart is from Warriors of Rock
-							eof_gh_accent_prompt = 1;
+				newnote = eof_track_add_create_note(eof_song, eof_selected_track, 0, position, length, eof_note_type, NULL);	//Add the note to the active track difficulty
+				if(!newnote)
+				{	//If the note couldn't be added
+					failed = 10;
+					break;
+				}
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If a drum track is active, interpret as drum note data
+					fixednote &= ~1;	//Clear lane 1 gem
+					fixednote &= ~32;	//Clear lane 6 gem
+					if(data & 32)
+					{	//If lane 6 is populated, convert it to RB's bass drum gem
+						fixednote |= 1;		//Set the lane 1 (bass drum) gem
+					}
+					if(data & 1)
+					{	//If lane 1 is populated, convert it to lane 6
+						fixednote |= 32;
+						eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Ensure "five lane" drums is enabled for the track
+						tracknum = eof_song->track[eof_selected_track]->tracknum;	//Simplify
+						eof_song->legacy_track[tracknum]->numlanes = 6;
+					}
+					if((data & 64) && !(data & 32))
+					{	//If bit 6 is set, but bit 5 is not
+						fixednote |= 1;	//Consider it a double bass drum note
+						newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
+					}
+					else if((accent & 32) && !(note & 32))
+					{	//If bit 5 of the accent mask is set, but bit 5 of the note mask is not
+						fixednote |= 1;	//Consider it a double bass drum note
+						newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
+					}
+
+					if((newnote->type == EOF_NOTE_AMAZING) && (length >= EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD))
+					{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
+						int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
+						unsigned long lastnoteindex = eof_get_track_size(eof_song, EOF_TRACK_DRUM) - 1;
+
+						if(eof_note_count_colors(eof_song, EOF_TRACK_DRUM, lastnoteindex) > 1)
+						{	//If the new drum note contains gems on more than one lane
+							phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
+						}
+						(void) eof_track_add_section(eof_song, EOF_TRACK_DRUM, phrasetype, 0xFF, position, position + length, 0, NULL);
+						newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Mark it as crazy, both so it can overlap other notes and so that it will export with sustain
+					}
+
+					//If there is accent data, prompt user about which game it's from to account for different accent definition behavior as with GH import
+					if(accent)
+					{
+						if(!eof_gh_accent_prompt)
+						{	//If the user wasn't prompted about which game this chart is from
+							if(alert("Is this chart from any of the following GH games?", "\"Warriors of Rock\", \"Band Hero\", \"Guitar Hero 5\"", "(These use a different accent notation than Smash Hits)", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If user indicates the chart is from Warriors of Rock
+								eof_gh_accent_prompt = 1;
+							}
+							else
+							{
+								eof_gh_accent_prompt = 2;
+							}
+						}
+						if(eof_gh_accent_prompt == 1)
+						{	//Warriors of Rock rules for interpreting the accent bitmask
+							if(accent & 31)
+							{	//Bits 0 through 4 of the accent mask are used to indicate accent status for drum gems
+								if(accent & 1)
+								{	//The least significant bit is assumed to be accent status for lane 6
+									accent &= ~1;	//Clear the bit for lane 1
+									accent |= 32;	//Set the bit for lane 6
+								}
+								accent &= fixednote;			//Filter out any bits from the accent mask that don't have gems
+								newnote->accent = accent;
+							}
+						}
+						else
+						{	//Smash Hits rules for interpreting the accent bitmask
+							if(accent & 15)
+							{	//Bits 0 through 3 of the accent mask are used to indicate accent status for drum gems (lanes other than bass drum) in Guitar Hero Smash Hits
+								accent &= 15;						//Store only the applicable bits (lane 2 through 6) into the note's accent mask
+								accent <<= 1;						//Shift left one bit to reflect that the first accent bit defines accent for snare, ie. lane 2 instead of bass, ie. lane 1
+								if(fixednote & 32)
+								{	//If the accented note has any gems on lane 6, it's assumed that it inherits the accented status automatically since the game doesn't seem
+									// to use a bit to define accent status individually for this lane
+									accent |= 32;
+								}
+
+								accent &= fixednote;			//Filter out any bits from the accent mask that don't have gems
+								newnote->accent = accent;
+							}
+						}
+					}
+				}//If a drum track is active, interpret as drum note data
+				else
+				{	//Interpret as guitar/bass note data
+					if(gh3_format)
+					{	//GH3/GHA charts used note proximity and a toggle HOPO marker
+						if(note & 32)
+						{	//Bit 5 of the note bitmask is a toggle HOPO status
+							newnote->flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
+							newnote->flags ^= EOF_NOTE_FLAG_HOPO;
+							toggle_hopo_count++;	//Keep track of how many of these there are
+						}
+					}
+					else
+					{	//Other charts explicitly define HOPO on/off
+						if(data & 64)
+						{	//Bit 6 is the HOPO bit
+							newnote->flags |= (EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_HOPO);
 						}
 						else
 						{
-							eof_gh_accent_prompt = 2;
-						}
-					}
-					if(eof_gh_accent_prompt == 1)
-					{	//Warriors of Rock rules for interpreting the accent bitmask
-						if(accent & 31)
-						{	//Bits 0 through 4 of the accent mask are used to indicate accent status for drum gems
-							if(accent & 1)
-							{	//The least significant bit is assumed to be accent status for lane 6
-								accent &= ~1;	//Clear the bit for lane 1
-								accent |= 32;	//Set the bit for lane 6
-							}
-							accent &= fixednote;			//Filter out any bits from the accent mask that don't have gems
-							newnote->accent = accent;
-						}
-					}
-					else
-					{	//Smash Hits rules for interpreting the accent bitmask
-						if(accent & 15)
-						{	//Bits 0 through 3 of the accent mask are used to indicate accent status for drum gems (lanes other than bass drum) in Guitar Hero Smash Hits
-							accent &= 15;						//Store only the applicable bits (lane 2 through 6) into the note's accent mask
-							accent <<= 1;						//Shift left one bit to reflect that the first accent bit defines accent for snare, ie. lane 2 instead of bass, ie. lane 1
-							if(fixednote & 32)
-							{	//If the accented note has any gems on lane 6, it's assumed that it inherits the accented status automatically since the game doesn't seem
-								// to use a bit to define accent status individually for this lane
-								accent |= 32;
-							}
-
-							accent &= fixednote;			//Filter out any bits from the accent mask that don't have gems
-							newnote->accent = accent;
+							newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
 						}
 					}
 				}
-			}//If a drum track is active, interpret as drum note data
-			else
-			{	//Interpret as guitar/bass note data
-				if(gh3_format)
-				{	//GH3/GHA charts used note proximity and a toggle HOPO marker
-					if(note & 32)
-					{	//Bit 5 of the note bitmask is a toggle HOPO status
-						newnote->flags ^= EOF_NOTE_FLAG_F_HOPO;	//Toggle the forced HOPO flag
-						newnote->flags ^= EOF_NOTE_FLAG_HOPO;
-						toggle_hopo_count++;	//Keep track of how many of these there are
-					}
-				}
-				else
-				{	//Other charts explicitly define HOPO on/off
-					if(data & 64)
-					{	//Bit 6 is the HOPO bit
-						newnote->flags |= (EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_HOPO);
-					}
-					else
-					{
-						newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
-					}
-				}
-			}
-			newnote->note = fixednote;	//Update the new note's bitmask
+				newnote->note = fixednote;	//Update the new note's bitmask
 
-			//Apply disjointed status if appropriate
-			if(lastnote && (lastnote->pos == newnote->pos) && (lastnote->length != newnote->length))
-			{	//If there was a previous note, it started at the same time as this note and has a different length
-				lastnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to both notes
-				newnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;
-			}
+				//Apply disjointed status if appropriate
+				if(lastnote && (lastnote->pos == newnote->pos) && (lastnote->length != newnote->length))
+				{	//If there was a previous note, it started at the same time as this note and has a different length
+					lastnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to both notes
+					newnote->eflags |= EOF_NOTE_EFLAG_DISJOINTED;
+				}
 
-			lastnote = newnote;
-		}//This is note data, read the next line to get the note's composition
-	}//Until an error has occurred
+				lastnote = newnote;
+			}//This is note data, read the next line to get the note's composition
+		}//Until an error has occurred
+	}//If the content was determined to be beat or note data
 
 	if(!failed)
 	{	//If the import succeeded
@@ -4163,8 +4235,11 @@ int eof_import_array_txt(const char *filename)
 				}
 
 #ifdef GH_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu toggle HOPO statuses encountered.", toggle_hopo_count);
-				eof_log(eof_log_string, 1);
+				if(format == 1)
+				{	//If note data was imported
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu toggle HOPO statuses encountered.", toggle_hopo_count);
+					eof_log(eof_log_string, 1);
+				}
 #endif
 			}
 

@@ -162,8 +162,10 @@ unsigned long eof_char_to_binary(unsigned char input);
 char *eof_sections_list_all(int index, int * size);
 	//A list box function to display the text events in the EOF_SONG structure pointed at by eof_sections_list_all_ptr
 
-int eof_import_array_txt(const char *filename);
+int eof_import_array_txt(const char *filename, char *undo_made);
 	//Imports beat or note data in the format exported by Queen Bee
+	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
+	//If undo_made is NULL, the undo state will be made
 	//Returns nonzero on error
 
 void eof_gh_import_sp_cleanup(EOF_SONG *sp);

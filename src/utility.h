@@ -46,4 +46,7 @@ PACKFILE *eof_pack_fopen_retry(const char *filename, const char *mode, unsigned 
 	//Attempts to open the specified file in the specified mode up to [count] number of times, with a 1ms delay between each attempt
 	//If any attempts succeed, the PACKFILE handle is returned, otherwise if all attempts fail, NULL is returned
 
+int eof_number_is_power_of_two(unsigned long value);
+	//Returns nonzero if the specified value is any power of two from 2^0 through 2^31
+
 #endif

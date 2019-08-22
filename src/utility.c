@@ -514,3 +514,16 @@ PACKFILE *eof_pack_fopen_retry(const char *filename, const char *mode, unsigned 
 
 	return fp;
 }
+
+int eof_number_is_power_of_two(unsigned long value)
+{
+	unsigned long mask, count;
+
+	for(count = 0, mask = 1; count < 32; count++, mask <<= 1)
+	{
+		if(value == mask)
+			return 1;
+	}
+
+	return 0;
+}

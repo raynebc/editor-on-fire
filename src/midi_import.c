@@ -2138,7 +2138,7 @@ set_window_title(debugtext);
 									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Ensure the cymbal flag is set
 								}
 								if(eof_get_note_note(sp, picked_track, notenum) & 16)
-								{	//This is a purle drum note (green in Rock Band), assume it is a cymbal unless a pro drum phrase indicates otherwise
+								{	//This is a purple drum note (green in Rock Band), assume it is a cymbal unless a pro drum phrase indicates otherwise
 									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Ensure the cymbal flag is set
 								}
 							}
@@ -2365,10 +2365,10 @@ set_window_title(debugtext);
 										}
 									}
 									break;
-								}
-							}
-						}
-					}
+								}//If the note is in the same difficulty as this note off event and it contains one of the same gems
+							}//Check for each note that has been imported, in reverse order
+						}//If the lane number for this gem is valid
+					}//If there's at least one note on found for this track, and this note off event has a defined difficulty
 				}//Note off event
 
 				/* Sysex event (custom phrase markers for Phase Shift) */
@@ -2599,8 +2599,8 @@ set_window_title(debugtext);
 							break;
 							default:
 							break;
-						}
-					}
+						}//Check the value of the message ID
+					}//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
 					free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
 					eof_import_events[i]->event[j]->dp = NULL;
 				}//Sysex event

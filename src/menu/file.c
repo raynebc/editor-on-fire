@@ -90,6 +90,7 @@ MENU eof_file_import_menu[] =
 	{"&Rocksmith", eof_menu_file_rs_import, NULL, 0, NULL},
 	{"&Bandfuse", eof_menu_file_bf_import, NULL, 0, NULL},
 	{"&Queen Bee", eof_menu_file_array_txt_import, NULL, 0, NULL},
+	{"Queen Bee (multi)", eof_menu_file_multiple_array_txt_import, NULL, 0, NULL},
 	{"Guitar Hero sections", eof_menu_file_gh3_section_import, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -152,10 +153,10 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 460, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
-	{ d_agup_button_proc,12,  468, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  468, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 468, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_window_proc,0,   48,  482, 476, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ d_agup_button_proc,12,  484, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  484, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 484, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_text_proc,  16,  207, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
 	{ d_agup_radio_proc, 161, 207, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
 	{ d_agup_radio_proc, 224, 207, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
@@ -182,10 +183,10 @@ DIALOG eof_preferences_dialog[] =
 	{ eof_verified_edit_proc,160,165,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_check_proc, 248, 335, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
 	{ d_agup_check_proc, 248, 255, 156, 16,  2,   23,  0,    0,      1,   0,   "dB style seek controls",NULL, NULL },
-	{ d_agup_text_proc,  24,  335, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-	{ d_agup_list_proc,  16,  352, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
-	{ d_agup_text_proc,  150, 352, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-	{ d_agup_list_proc,  129, 367, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
+	{ d_agup_text_proc,  24,  351, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+	{ d_agup_list_proc,  16,  368, 100, 110, 2,   23,  0,    0,      0,   0,   (void *)eof_input_list,        NULL, NULL },
+	{ d_agup_text_proc,  150, 368, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+	{ d_agup_list_proc,  129, 383, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
 	{ d_agup_check_proc, 248, 191, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
 	{ d_agup_check_proc, 248, 271, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
 	{ d_agup_check_proc, 248, 287, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
@@ -203,15 +204,16 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 399, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
 	{ d_agup_check_proc, 248, 415, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
 	{ d_agup_check_proc, 248, 431, 230, 16,  2,   23,  0,    0,      1,   0,   "GHL conversion swaps B/W gems",NULL, NULL },
-	{ d_agup_check_proc, 248, 447, 230, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
+	{ d_agup_check_proc, 248, 447, 168, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
 	{ d_agup_radio_proc, 190, 144, 40,  16,  2,   23,  0,    0,      2,   0,   "ms",          NULL, NULL },
 	{ d_agup_radio_proc, 230, 144, 92,  16,  2,   23,  0,    0,      2,   0,   "1/# measure", NULL, NULL },
 	{ d_agup_radio_proc, 322, 144, 68,  16,  2,   23,  0,    0,      2,   0,   "1/# beat",    NULL, NULL },
-	{ d_agup_check_proc, 248, 463, 230, 16,  2,   23,  0,    0,      1,   0,   "Disable automatic backups",NULL, NULL },
+	{ d_agup_check_proc, 248, 463, 186, 16,  2,   23,  0,    0,      1,   0,   "Disable automatic backups",NULL, NULL },
 	{ d_agup_check_proc, 248, 175, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
 	{ d_agup_check_proc, 248, 159, 206, 16,  2,   23,  0,    0,      1,   0,   "Use FoF difficulty naming",NULL, NULL },
 	{ d_agup_check_proc, 248, 479, 208, 16,  2,   23,  0,    0,      1,   0,   "Enable open strum by default",NULL, NULL },
 	{ d_agup_check_proc, 16,  319, 216, 16,  2,   23,  0,    0,      1,   0,   "Prefer MIDI friendly grid snaps",NULL, NULL },
+	{ d_agup_check_proc, 248, 495, 184, 16,  2,   23,  0,    0,      1,   0,   "Don't auto edit new lyrics",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1196,6 +1198,7 @@ int eof_menu_file_settings(void)
 		eof_disable_vsync = (eof_settings_dialog[11].flags == D_SELECTED ? 1 : 0);
 		eof_phase_cancellation  = (eof_settings_dialog[12].flags == D_SELECTED ? 1 : 0);
 		ncdfs_use_allegro = eof_disable_windows;
+		eof_fix_window_title();
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -1315,6 +1318,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[57].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;			//Use FoF difficulty naming
 	eof_preferences_dialog[58].flags = eof_enable_open_strums_by_default ? D_SELECTED : 0;		//Enable open strum by default
 	eof_preferences_dialog[59].flags = eof_prefer_midi_friendly_grid_snapping ? D_SELECTED : 0;	//Prefer MIDI friendly grid snaps
+	eof_preferences_dialog[60].flags = eof_dont_auto_edit_new_lyrics ? D_SELECTED : 0;			//Don't auto edit new lyrics
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1438,6 +1442,7 @@ int eof_menu_file_preferences(void)
 			eof_use_fof_difficulty_naming = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
 			eof_enable_open_strums_by_default = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
 			eof_prefer_midi_friendly_grid_snapping = (eof_preferences_dialog[59].flags == D_SELECTED ? 1 : 0);
+			eof_dont_auto_edit_new_lyrics = (eof_preferences_dialog[60].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1500,6 +1505,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[57].flags = 0;					//Use FoF difficulty naming
 			eof_preferences_dialog[58].flags = 0;					//Enable open strum by default
 			eof_preferences_dialog[59].flags = D_SELECTED;			//Prefer MIDI friendly grid snaps
+			eof_preferences_dialog[60].flags = 0;					//Don't auto edit new lyrics
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 
@@ -6445,7 +6451,7 @@ int eof_menu_file_array_txt_import(void)
 	{
 		eof_log("\tImporting array.txt data", 1);
 
-		retval = eof_import_array_txt(returnedfn);
+		retval = eof_import_array_txt(returnedfn, NULL);
 		if(retval)
 		{
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError %d", retval);
@@ -6455,6 +6461,76 @@ int eof_menu_file_array_txt_import(void)
 		else
 		{
 			eof_log("\tData loaded", 1);
+		}
+	}
+	eof_reset_lyric_preview_lines();
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+
+	return 1;
+}
+
+int eof_menu_file_multiple_array_txt_import(void)
+{
+	char *returnedfn = NULL;
+	unsigned long count = 0;
+	int retval, done;
+	struct al_ffblk info = {0, 0, 0, {0}, NULL}; // for file search
+	char searchpath[1024] = {0};
+	char undo_made = 0, empty_set = 0;
+
+	if(!eof_song)
+		return 0;
+
+	eof_log("eof_menu_file_multiple_array_txt_import() entered", 1);
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	returnedfn = ncd_file_select(0, eof_song_path, "Import all Queen Bee array.txt files in the same folder as", eof_filter_array_txt_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		(void) replace_filename(searchpath, returnedfn, "*.txt", 1024);	//Build the search string to find all text files in the specified file's folder path
+		done = al_findfirst(searchpath, &info, FA_ALL);
+		if(done)
+		{	//If no file matches are found
+			allegro_message("\tNo .txt files were found at this path.");
+			empty_set = 1;
+		}
+
+		while(!done)
+		{
+			(void) replace_filename(searchpath, searchpath, info.name, 1024);	//Build the path to this search result
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting \"%s\"", searchpath);
+			eof_log(eof_log_string, 1);
+			retval = eof_import_array_txt(searchpath, &undo_made);	//Attempt to import this search result
+
+			if(retval)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tError %d", retval);
+				eof_log(eof_log_string, 1);
+				allegro_message("Import failed (error %u).", retval);
+			}
+			else
+			{
+				eof_log("\t\t\tData loaded", 1);
+				count++;
+			}
+
+			done = al_findnext(&info);	//Find the next .txt file in the folder path
+		}
+
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImported %lu files", count);
+		eof_log(eof_log_string, 1);
+
+		if(!count)
+			allegro_message("No files were imported.");
+
+		if(!empty_set)
+		{	//If there were any file search results
+			al_findclose(&info);	//Free the memory that was allocated by Allegro to enumerate them
 		}
 	}
 	eof_reset_lyric_preview_lines();

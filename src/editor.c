@@ -928,7 +928,7 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
-	(void) eof_menu_file_gh3_section_import();
+
 }
 ///ALT handling testing
 /*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
@@ -2351,6 +2351,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		{	//ALT is held
 			eof_phase_cancellation ^= 1;	//Toggle this setting on/off
 			eof_use_key();
+			eof_fix_window_title();
 		}
 	}
 

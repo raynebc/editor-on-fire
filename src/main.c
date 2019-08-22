@@ -199,6 +199,7 @@ int         eof_3d_hopo_scale_size = 75;		//The percentage of full size to which
 int         eof_disable_backups = 0;			//If nonzero, .eof.bak files (created during undo and save operations) and .backup files (created during MIDI/GH/Feedback import) are not created
 int         eof_enable_open_strums_by_default = 0;	//If nonzero, legacy tracks in new projects will be initialized to have open strums enabled automatically
 int         eof_prefer_midi_friendly_grid_snapping = 1;	//If nonzero, the "Highlight non grid snapped notes" and "Repair grid snap" functions will only recognize grid snaps that quantize well to MIDI using the defined time division
+int         eof_dont_auto_edit_new_lyrics = 0;	//If nonzero, the edit lyric dialog is not automatically launched when a new lyric is placed
 double      eof_lyric_gap_multiplier = 0.0;		//If greater than zero, edited lyrics will have a minimum distance applied to them that is equal to this variable multiplied by the current grid snap
 char        eof_lyric_gap_multiplier_string[20] = {0};	//The string representation of the above value, since it is to be stored in string format in the config file
 int         eof_song_folder_prompt = 0;			//In the Mac version, tracks whether the user opted to define the song folder or not
@@ -1188,6 +1189,10 @@ void eof_fix_window_title(void)
 		if(eof_song_has_stored_tempo_track(eof_song))
 		{	//If the project has a stored tempo track
 			(void) ustrcat(eof_window_title, "(Stored tempo map)");
+		}
+		if(eof_phase_cancellation)
+		{	//If center panned vocals are being removed
+			(void) ustrcat(eof_window_title, "(Phase cancellation)");
 		}
 	}
 	else

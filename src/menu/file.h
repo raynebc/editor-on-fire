@@ -203,6 +203,8 @@ int eof_3d_preview_toggle_full_height(void);
 
 int eof_menu_file_array_txt_import(void);
 	//Prompts the user to browse for an array.txt file exported by Queen Bee, to import Guitar Hero chart data
+int eof_menu_file_multiple_array_txt_import(void);
+	//Prompts the user to browse to an array.txt file exported by Queen Bee, then imports each .txt file in that file's folder with eof_import_array_txt()
 
 int eof_menu_file_gh3_section_import(void);
 	//Prompts the user to browser for a Guitar Hero chart file, to import its section events into the active project

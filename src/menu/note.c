@@ -3943,13 +3943,16 @@ int eof_new_lyric_dialog(void)
 
 	if(eof_pen_lyric.note != EOF_LYRIC_PERCUSSION)		//If not entering a percussion note
 	{
-		ret = eof_popup_dialog(eof_lyric_dialog, 2);	//prompt for lyric text
-		if(!eof_check_string(eof_etext) && !eof_pen_lyric.note)	//If the placed lyric is both pitchless AND textless
-			return D_O_K;	//Return without adding
+		if(!eof_dont_auto_edit_new_lyrics)
+		{	//Unless the user has opted to not have this dialog launch automatically when a lyric is placed
+			ret = eof_popup_dialog(eof_lyric_dialog, 2);	//prompt for lyric text
+			if(!eof_check_string(eof_etext) && !eof_pen_lyric.note)	//If the placed lyric is both pitchless AND textless
+				return D_O_K;	//Return without adding
+		}
 	}
 
-	if((ret == 3) || (eof_pen_lyric.note == EOF_LYRIC_PERCUSSION))
-	{
+	if((ret == 3) || (eof_pen_lyric.note == EOF_LYRIC_PERCUSSION) || eof_dont_auto_edit_new_lyrics)
+	{	//If the user clicked OK on the edit lyric prompt, a vocal percussion note is being added or the user suppressed the prompt to add lyric text
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_lyric.note, eof_pen_lyric.pos, eof_pen_lyric.length, 0, NULL);
 		(void) ustrcpy(new_lyric->text, eof_etext);

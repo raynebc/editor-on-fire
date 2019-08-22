@@ -6215,7 +6215,7 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option)
 	unsigned long i, pos1, pos2;
 	long next;
 
- 	eof_log("eof_track_find_crazy_notes() entered", 1);
+ 	eof_log("eof_track_find_crazy_notes() entered", 2);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
