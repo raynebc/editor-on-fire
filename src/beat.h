@@ -69,5 +69,7 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track);
 double eof_get_distance_in_beats(EOF_SONG *sp, unsigned long pos1, unsigned long pos2);
 	//Uses eof_get_beat() and eof_get_porpos_sp() to calculate the number of beats between the two specified positions, which could be in either order
 	//Returns 0.0 on error
+void eof_detect_mid_measure_ts_changes(void);
+	//Checks for time signature changes that occur part-way into a measure and warns the user
 
 #endif

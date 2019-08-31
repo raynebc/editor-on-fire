@@ -932,3 +932,45 @@ double eof_get_distance_in_beats(EOF_SONG *sp, unsigned long pos1, unsigned long
 
 	return bpos2 - bpos1;
 }
+
+void eof_detect_mid_measure_ts_changes(void)
+{
+	unsigned long ctr, mid_change_count = 0;
+	unsigned suggested_num = 4, suggested_den = 4;
+
+	if(!eof_song || (eof_song->beats < 2))
+		return;
+
+	eof_process_beat_statistics(eof_song, eof_selected_track);
+	for(ctr = 1; ctr < eof_song->beats; ctr++)
+	{	//For each beat after the first
+		if(!eof_song->beat[ctr]->contains_ts_change)
+			continue;	//If this beat does not have a time signature change, skip it
+
+		if(!eof_song->beat[ctr - 1]->has_ts || (eof_song->beat[ctr - 1]->beat_within_measure == eof_song->beat[ctr - 1]->num_beats_in_measure - 1))
+			continue;	//If the previous beat does not have a time signature, or if it was the last beat in its measure (the beat_within_measure stat is numbered starting with 0), skip it
+
+		if(!mid_change_count)
+		{	//If this is the first offending time signature change
+			suggested_num = eof_song->beat[ctr - 1]->beat_within_measure + 1;	//Track the last beat number in the measure and account for the zero numbering
+			for(ctr = ctr - 1; ctr > 0; ctr--)
+			{	//For each of the previous beats
+				if(eof_song->beat[ctr]->beat_within_measure == 0)
+				{	//If this is the first beat in the affected measure
+					break;
+				}
+			}
+			suggested_den = eof_song->beat[ctr]->beat_unit;
+			eof_selected_beat = ctr;	//Select the affected beat marker
+		}
+		mid_change_count++;
+	}
+
+	if(mid_change_count)
+	{	//If there were any offending time signature changes
+		eof_beat_stats_cached = 0;
+		eof_seek_and_render_position(eof_selected_track, eof_note_type, eof_song->beat[eof_selected_beat]->pos);	//seek to the beat in question and render
+
+		allegro_message("%lu measures are interrupted by a time signature change.\nThis can cause problems in some rhythm games.\nSuggested T/S for this one is %d/%u.", mid_change_count, suggested_num, suggested_den);
+	}
+}

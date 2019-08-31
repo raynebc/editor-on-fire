@@ -1385,7 +1385,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	unsigned long dword = 0, ctr, ctr2, numbeats = 0, numsigs = 0, lastfretbar = 0, lastsig = 0;
 	unsigned char tsnum = 0, tsden = 0;
 	char forcestrum = 0;
-	char ts_warned = 0;
+	char ts_warned = 0, ts_move_notified = 0;
 
 	eof_log("eof_import_gh_note() entered", 1);
 	eof_log("Attempting to import NOTE format Guitar Hero chart", 1);
@@ -1488,7 +1488,6 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 		}
 	}
 
-	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
 	if(eof_use_ts)
 	{	//If the user opted to import TS changes
 //Process the timesig section to load time signatures
@@ -1568,26 +1567,61 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 #endif
 			for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
 			{	//For each beat in the song
-				if(dword == sp->beat[ctr2]->pos)
+				unsigned long beatpos = sp->beat[ctr2]->pos;	//Simplify
+				if(dword == beatpos)
 				{	//If this time signature is positioned at this beat marker
-					(void) eof_apply_ts(tsnum,tsden,ctr2,sp,0);	//Apply the signature
+					(void) eof_apply_ts(tsnum, tsden, ctr2, sp, 0);	//Apply the signature
 					break;
 				}
-				else if(dword < sp->beat[ctr2]->pos)
-				{	//Otherwise if this time signature's position has been surpassed by a beat
-					if(!ts_warned)
-					{	//If the user hasn't been warned about this yet
-						allegro_message("Warning:  Mid beat time signature detected.  Skipping");
-						ts_warned = 1;
+				else
+				{
+					int reassign = 0;
+
+					if(dword >= beatpos)
+					{	//If the time signature is defined AFTER this beat
+						if(dword - beatpos <= 3)
+						{	//But it is within 3ms of the beat position
+							dword = beatpos;	//Assume this is an authoring error and move the time signature to this beat
+							reassign = 1;
+						}
 					}
-					eof_log("\t\tWarning:  Mid beat time signature detected.  Skipping", 1);
-					break;
+					else if(beatpos - dword <= 3)
+					{	//If the time signature is defined before this beat, but within 3 ms of its position
+						dword = beatpos;	//Assume this is an authoring error and move the time signature to this beat
+						reassign = 1;
+					}
+					if(reassign)
+					{	//If the time signature is being moved to align with this beat marker
+#ifdef GH_IMPORT_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTime signature is being moved to align with the beat at %lums", beatpos);
+						eof_log(eof_log_string, 1);
+#endif
+						(void) eof_apply_ts(tsnum, tsden, ctr2, sp, 0);	//Apply the signature
+						if(!ts_move_notified)
+						{	//If the user hasn't been warned about this yet
+							allegro_message("At least one time signature is 1-3ms out of sync with its target beat marker, it will be corrected.");
+							ts_move_notified = 1;
+						}
+						break;
+					}
+
+					if(dword < beatpos)
+					{	//Otherwise if this time signature's position has been surpassed by a beat
+						if(!ts_warned)
+						{	//If the user hasn't been warned about this yet
+							allegro_message("Warning:  Mid beat time signature detected.  Skipping");
+							ts_warned = 1;
+						}
+						eof_log("\t\tWarning:  Mid beat time signature detected.  Skipping", 1);
+						break;
+					}
 				}
 			}
 
 			lastsig = dword;
-		}
+		}//For each time signature in the chart file
 	}//If the user opted to import TS changes
+	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps, but only after the time signatures were optionally applied
 
 	eof_clear_input();
 	if(alert(NULL, "Import the chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)
@@ -2660,7 +2694,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	unsigned char byte = 0;
 	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr = NULL, numbeats, numsigs, tsnum = 0, tsden = 0, dword = 0, lastfretbar = 0, lastsig = 0;
 	unsigned long qbindex;	//Will store the file index of the QB header
-	char ts_warned = 0;
+	char ts_warned = 0, ts_move_notified = 0;
 	unsigned long sp_count, sp_battle_count;
 	int import_sp = 1, import_battle_sp = 1, sp_has_conflict = 0, sp_conflicts[EOF_NUM_GH_SP_SECTIONS_QB];
 
@@ -2894,19 +2928,55 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 #endif
 				for(ctr3 = 0; ctr3 < sp->beats; ctr3++)
 				{	//For each beat in the song
-					if(dword == sp->beat[ctr3]->pos)
+					unsigned long beatpos = sp->beat[ctr3]->pos;	//Simplify
+
+					if(dword == beatpos)
 					{	//If this time signature is positioned at this beat marker
-						(void) eof_apply_ts(tsnum,tsden,ctr3,sp,0);	//Apply the signature
+						(void) eof_apply_ts(tsnum, tsden, ctr3, sp, 0);	//Apply the signature
 						break;
 					}
-					else if(dword < sp->beat[ctr3]->pos)
-					{	//Otherwise if this time signature's position has been surpassed by a beat
-						if(!ts_warned)
-						{	//If the user hasn't been warned about this yet
-							allegro_message("Warning:  Mid beat time signature detected.  Skipping");
-							ts_warned = 1;
+					else
+					{
+						int reassign = 0;
+
+						if(dword >= beatpos)
+						{	//If the time signature is defined AFTER this beat
+							if(dword - beatpos <= 3)
+							{	//But it is within 3ms of the beat position
+								dword = beatpos;	//Assume this is an authoring error and move the time signature to this beat
+								reassign = 1;
+							}
 						}
-						eof_log("\t\tWarning:  Mid beat time signature detected.  Skipping", 1);
+						else if(beatpos - dword <= 3)
+						{	//If the time signature is defined before this beat, but within 3 ms of its position
+							dword = beatpos;	//Assume this is an authoring error and move the time signature to this beat
+							reassign = 1;
+						}
+						if(reassign)
+						{	//If the time signature is being moved to align with this beat marker
+#ifdef GH_IMPORT_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTime signature is being moved to align with the beat at %lums", beatpos);
+							eof_log(eof_log_string, 1);
+#endif
+							(void) eof_apply_ts(tsnum, tsden, ctr3, sp, 0);	//Apply the signature
+							if(!ts_move_notified)
+							{	//If the user hasn't been warned about this yet
+								allegro_message("At least one time signature is 1-3ms out of sync with its target beat marker, it will be corrected.");
+								ts_move_notified = 1;
+							}
+							break;
+						}
+
+						if(dword < beatpos)
+						{	//Otherwise if this time signature's position has been surpassed by a beat
+							if(!ts_warned)
+							{	//If the user hasn't been warned about this yet
+								allegro_message("Warning:  Mid beat time signature detected.  Skipping");
+								ts_warned = 1;
+							}
+							eof_log("\t\t\t\tWarning:  Mid beat time signature detected.  Skipping", 1);
+							break;
+						}
 					}
 				}
 
@@ -2918,7 +2988,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 			free(arrayptr);	//Free the memory used to store the 1D arrays of section data
 		}
 	}//If the user opted to import TS changes
-	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
+	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps, but only after the time signatures were optionally applied
 
 	eof_clear_input();
 	if(alert(NULL, "Import the chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)
@@ -3319,8 +3389,11 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 					break;	//This marks the formal end of the section names
 				}
 			}
-			}
+		}
 	}//While there are section name entries
+
+	if(buffer)
+		free(buffer);	//If buffer still holds allocated memory, free it
 
 	return head;
 }

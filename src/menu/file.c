@@ -1134,6 +1134,7 @@ int eof_menu_file_midi_import(void)
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);
 			(void) replace_filename(eof_last_midi_path, returnedfn_path, "", 1024);	//Set the last loaded MIDI file path
 			eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
+			eof_detect_mid_measure_ts_changes();
 		}
 		else
 		{
@@ -1963,6 +1964,14 @@ int eof_menu_file_exit(void)
 	eof_render();
 	eof_clear_input();
 	(void) eof_redraw_display();
+
+	//Re-initialize the notes panel if it was destroyed when the program window was redrawn
+	if(eof_enable_notes_panel)
+	{
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+		(void) eof_display_notes_panel();
+		eof_render();
+	}
 	if(alert(NULL, "Want to Quit?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		if(eof_changes)
@@ -1988,6 +1997,7 @@ int eof_menu_file_exit(void)
 		}
 		eof_clear_input();
 	}
+
 	eof_close_button_clicked = 0;	//User either canceled the close or eof_quit has been set
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -4448,6 +4458,7 @@ int eof_menu_file_gh_import(void)
 			eof_init_after_load(0);
 			(void) replace_filename(eof_last_gh_path, returnedfn_path, "", 1024);	//Set the last loaded GH file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
+			eof_detect_mid_measure_ts_changes();
 		}
 		else
 		{
