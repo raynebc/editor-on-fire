@@ -7116,6 +7116,10 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 
 			oldfretvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
 			newfretvalue = oldfretvalue;
+
+			if(function && (oldfretvalue == 0xFF))	//Don't allow a muted gem with no defined fret value to be incremented/decremented
+				continue;
+
 			switch(function)
 			{
 				case 0:	//Set fret value
@@ -7135,8 +7139,8 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 				default:
 				break;
 			}
-			if((newfretvalue <= eof_song->pro_guitar_track[tracknum]->numfrets) || (newfretvalue == 0xFF))
-			{	//Only set the fret value if it is valid
+			if(((newfretvalue & 0x7F) <= eof_song->pro_guitar_track[tracknum]->numfrets) || (newfretvalue == 0xFF))
+			{	//Only set the fret value (when masking out the mute bit) if it is valid
 				if(!undo_made && (newfretvalue != oldfretvalue))
 				{	//Make an undo state before making the first change
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -7370,10 +7374,10 @@ int eof_create_image_sequence(char benchmark_only)
 		put_backslash(eof_temp_filename);
 		(void) ustrcat(eof_temp_filename, "sequence");
 		eof_clear_input();
-		if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+		if(!eof_folder_exists(eof_temp_filename))
 		{	//If this folder doesn't already exist
 			err = eof_mkdir(eof_temp_filename);
-			if(err && !file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+			if(err && !eof_folder_exists(eof_temp_filename))
 			{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
 				allegro_message("Could not create folder!\n%s", eof_temp_filename);
 				return 1;

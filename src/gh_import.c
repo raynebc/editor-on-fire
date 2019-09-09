@@ -31,6 +31,7 @@ int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will
 								// which defines the bits in a different order than Smash Hits
 int eof_gh_import_threshold_prompt = 0;		//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 quarter notes as the HOPO threshold
 int eof_gh_import_gh3_style_sections = 0;	//Will be set to nonzero if GH3 format sections are detected from whichever file is used to import section names, since they are defined differently than in newer games
+unsigned long sustain_threshold = 0;		//Set to nonzero to reflect any sustain threshold being enforced
 
 #define GH_IMPORT_DEBUG
 
@@ -518,6 +519,15 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		}
 		eof_log(eof_log_string, 1);
 #endif
+
+		if(length <= sustain_threshold)
+		{	//If the sustain threshold is being applied and will truncate this note
+			length = 1;
+#ifdef GH_IMPORT_DEBUG
+			eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
+#endif
+		}
+
 		isexpertplus = 0;	//Reset this condition
 		if(target->tracknum == EOF_TRACK_DRUM)
 		{	//In Guitar Hero, lane 6 is bass drum, lane 1 is the right-most lane (ie. 6)
@@ -1390,7 +1400,8 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	eof_log("eof_import_gh_note() entered", 1);
 	eof_log("Attempting to import NOTE format Guitar Hero chart", 1);
 
-	eof_gh_accent_prompt = 0;	//Reset this condition
+	eof_gh_accent_prompt = 0;	//Reset these
+	sustain_threshold = 0;
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
@@ -1485,6 +1496,20 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 		{
 			sp->beat[ctr]->pos = sp->beat[ctr]->fpos = dword;	//Set the timestamp position of this beat
 			lastfretbar = dword;
+		}
+	}
+
+//Determine the effective sustain threshold (used in GH3 and possibly some other GH games) and optionally offer to apply it to imported notes
+	if(numbeats > 1)
+	{	//If at least two beat timings were defined
+		if(eof_gh_import_sustain_threshold_prompt)
+		{	//If the user enabled the import preference to ask to apply this threshold
+			if(alert(NULL, "Apply the sustain threshold (half of the first beat's length) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If user opts to enforce the threshold
+				sustain_threshold = (sp->beat[1]->pos - sp->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", sustain_threshold);
+				eof_log(eof_log_string, 1);
+			}
 		}
 	}
 
@@ -2025,6 +2050,14 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu) accent = %08lu", ctr2+1, dword, length, notemask, eof_char_to_binary(notemask), eof_char_to_binary(accentmask));
 			eof_log(eof_log_string, 1);
 #endif
+
+			if(length <= sustain_threshold)
+			{	//If the sustain threshold is being applied and will truncate this note
+				length = 1;
+#ifdef GH_IMPORT_DEBUG
+				eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
+#endif
+			}
 			isexpertplus = 0;	//Reset this condition
 			if(destination_track == EOF_TRACK_DRUM)
 			{	//In Guitar Hero, lane 6 is bass drum, lane 1 is the right-most lane (ie. 6)
@@ -2692,7 +2725,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	filebuffer *fb;
 	char filename[101] = {0}, songname[101] = {0}, buffer[101], forcestrum = 0;
 	unsigned char byte = 0;
-	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr = NULL, numbeats, numsigs, tsnum = 0, tsden = 0, dword = 0, lastfretbar = 0, lastsig = 0;
+	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr = NULL, numbeats = 0, numsigs, tsnum = 0, tsden = 0, dword = 0, lastfretbar = 0, lastsig = 0;
 	unsigned long qbindex;	//Will store the file index of the QB header
 	char ts_warned = 0, ts_move_notified = 0;
 	unsigned long sp_count, sp_battle_count;
@@ -2700,6 +2733,8 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 
 	eof_log("eof_import_gh_qb() entered", 1);
 	eof_log("Attempting to import QB format Guitar Hero chart", 1);
+
+	sustain_threshold = 0;	//Reset this
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
@@ -2871,6 +2906,20 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	{	//If memory was allocated by eof_gh_process_section_header()
 		free(arrayptr);	//Free the memory used to store the 1D arrays of section data
 		arrayptr = NULL;
+	}
+
+//Determine the effective sustain threshold (used in GH3 and possibly some other GH games) and optionally offer to apply it to imported notes
+	if(numbeats > 1)
+	{	//If at least two beat timings were defined
+		if(eof_gh_import_sustain_threshold_prompt)
+		{	//If the user enabled the import preference to ask to apply this threshold
+			if(alert(NULL, "Apply the sustain threshold (half of the first beat's length) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If user opts to enforce the threshold
+				sustain_threshold = (sp->beat[1]->pos - sp->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tThe sustain threshold of %lums is being enforced.", sustain_threshold);
+				eof_log(eof_log_string, 1);
+			}
+		}
 	}
 
 	if(eof_use_ts)
@@ -3827,7 +3876,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 	if(!filename || !eof_song)
 		return 1;	//No project or invalid parameter
 
-	eof_gh_accent_prompt = 0;	//Reset this condition
+	eof_gh_accent_prompt = 0;	//Reset these
+	sustain_threshold = 0;
 
 	///Load file into memory buffer
 	buffer = (char *)eof_buffer_file(filename, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
@@ -4000,6 +4050,20 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting %lu note definitions.", linesread / 2);
 		eof_log(eof_log_string, 1);
+
+//Determine the effective sustain threshold (used in GH3 and possibly some other GH games) and optionally offer to apply it to imported notes
+		if(eof_song->beats > 1)
+		{	//If at least two beat timings are in the active project
+			if(eof_gh_import_sustain_threshold_prompt)
+			{	//If the user enabled the import preference to ask to apply this threshold
+				if(alert(NULL, "Apply the sustain threshold (half of the first beat's length) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to enforce the threshold
+					sustain_threshold = (eof_song->beat[1]->pos - eof_song->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tThe sustain threshold of %lums is being enforced.", sustain_threshold);
+					eof_log(eof_log_string, 1);
+				}
+			}
+		}
 	}
 	else if(format == 2)
 	{	//Import time signature definition
@@ -4136,6 +4200,10 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 					accent = data >> 8;	//The most significant byte defines the accent bitmask
 				}
 
+				if(length <= sustain_threshold)
+				{	//If the sustain threshold is being applied and will truncate this note
+					length = 1;
+				}
 				newnote = eof_track_add_create_note(eof_song, eof_selected_track, 0, position, length, eof_note_type, NULL);	//Add the note to the active track difficulty
 				if(!newnote)
 				{	//If the note couldn't be added

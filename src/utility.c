@@ -28,6 +28,46 @@ int eof_chdir(const char * dir)
 	#endif
 }
 
+int eof_folder_exists(const char * dir)
+{
+	char *rebuilt_path = NULL;
+	const char *path;
+	int aret = 0, length, endchar;
+	int match = 1;
+
+	if(!dir)
+		return 0;	//Invalid parameter
+
+	//Rebuild the string if necessary, to ensure it does not end in a file separator
+	path = dir;		//By default, use the specified string as-is
+	length = ustrlen(dir);	//Read the number of characters (Unicode aware) in the input string
+	if(length == 0)
+		return 0;	//Invalid parameter (empty string)
+	endchar = ugetat(dir, length - 1);	//Find the character at the end of the input string
+
+	if((endchar == '\\') || (endchar == '/'))
+	{	//If the input string ends in a file separator
+		rebuilt_path = malloc(length + 2);	//Allocate enough space to copy the input string, plus a two byte NULL terminator (instead of one byte, in case UTF-16 is in effect for some reason)
+		if(!rebuilt_path)
+			return 0;	//Couldn't allocate memory
+
+		(void) ustrncpy(rebuilt_path, dir, length);		//Copy the string, including the file separator at the end, so its truncation can be verified while debugging
+		(void) usetat(rebuilt_path, length - 1, '\0');	//Terminate the string, removing the trailing file separator
+		path = rebuilt_path;	//Use this new string as the path to verify
+	}
+
+	if(!file_exists(path, FA_ALL, &aret))
+		match = 0;	//File path does not exist
+
+	if(!(aret & FA_DIREC))
+		match = 0;	//The matching file path is not a directory
+
+	if(rebuilt_path)			//If a string was allocated to rebuild the input path
+		free(rebuilt_path);		//Free it now
+
+	return match;
+}
+
 int eof_mkdir(const char * dir)
 {
 	#ifdef ALLEGRO_WINDOWS

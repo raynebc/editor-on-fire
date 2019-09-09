@@ -313,6 +313,10 @@ Miscellaneous Controls:
 
         Zoom in/out.
 
+    CTRL + +/-:
+
+        Increments/decrements the fret value for selected notes (pro guitar/bass tracks only).
+
     Shift + +/- (Numpad):
 
         Lower/raise the 3D preview's camera angle.

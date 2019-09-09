@@ -664,8 +664,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	}
 
 //Cleanup
-	if(oggstruct != NULL)
-		alogg_destroy_ogg(oggstruct);
+	alogg_destroy_ogg(oggstruct);
 	if(audio != NULL)
 	if(oggbuffer)
 		free(oggbuffer);

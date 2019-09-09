@@ -3503,8 +3503,6 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		(void) fclose(fp);
-		if(tempfile)
-			(void) fclose(tempfile);
 		ReleaseMIDI();
 		ReleaseMemory(1);
 		return 1;	//Return failure

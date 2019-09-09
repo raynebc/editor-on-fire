@@ -1,7 +1,8 @@
 #ifndef EOF_UTILITY_H
 #define EOF_UTILITY_H
 
-int eof_chdir(const char * dir);
+int eof_folder_exists(const char * dir);	//Returns nonzero if the specified file path exists and is a directory
+int eof_chdir(const char * dir);		//Changes the current working directory of the program.  Returns nonzero on error
 int eof_mkdir(const char * dir);
 int eof_system(const char * command);	//Runs the specified system command, after reformatting the command string accordingly
 

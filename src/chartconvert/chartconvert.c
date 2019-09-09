@@ -1080,33 +1080,33 @@ void destroy_feedback_chart(struct FeedbackChart *ptr)
 //Empty MIDI event linked lists
 	for(track_ctr = 1; track_ctr < NUM_MIDI_TRACKS; track_ctr++)
 	{	//For each of the instrument tracks that may have been built
-		struct MIDIevent *ptr, *nextptr;
+		struct MIDIevent *eptr, *nextptr;
 
 		if(events_reallocated[track_ctr])
 		{	//If the entire linked list was rebuilt into a single allocated chunk of memory
-			ptr = midi_track_events[track_ctr];
-			while(ptr != NULL)
+			eptr = midi_track_events[track_ctr];
+			while(eptr != NULL)
 			{	//While there are events imported for this instrument track
-				if(ptr->dp)
+				if(eptr->dp)
 				{	//If there was memory allocated for this event
-					free(ptr->dp);		//Free it
+					free(eptr->dp);		//Free it
 				}
-				ptr = ptr->next;
+				eptr = eptr->next;
 			}
 			free(midi_track_events[track_ctr]);	//Only one call to free() is needed for the links
 		}
 		else
 		{	//Otherwise each link needs to be freed individually
-			ptr = midi_track_events[track_ctr];
-			while(ptr != NULL)
+			eptr = midi_track_events[track_ctr];
+			while(eptr != NULL)
 			{	//While there are events imported for this instrument track
-				nextptr = ptr->next;	//Store link to next event
-				if(ptr->dp)
+				nextptr = eptr->next;	//Store link to next event
+				if(eptr->dp)
 				{	//If there was memory allocated for this event
-					free(ptr->dp);		//Free it
+					free(eptr->dp);		//Free it
 				}
-				free(ptr);				//Free current event
-				ptr = nextptr;			//Point to next event
+				free(eptr);				//Free current event
+				eptr = nextptr;			//Point to next event
 			}
 		}
 	}

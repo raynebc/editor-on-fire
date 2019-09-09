@@ -220,7 +220,7 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 255, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_window_proc,0,   48,  500, 255, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
 	{ d_agup_button_proc,12,  260, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
 	{ d_agup_button_proc,86,  260, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
 	{ d_agup_button_proc,160, 260, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
@@ -248,6 +248,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  240, 224, 16,  2,   23,  0,    0,      1,   0,   "Don't warn about INI differences",NULL, NULL },
 	{ d_agup_check_proc, 248, 240, 202, 16,  2,   23,  0,    0,      1,   0,   "Render mid beat tempos blue",NULL, NULL },
 	{ d_agup_check_proc, 248, 255, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
+	{ d_agup_check_proc, 248, 270, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -455,10 +456,10 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	{	//If the path ends in a separator
 		syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] = '\0';	//Remove it
 	}
-	if(!file_exists(syscommand, FA_DIREC | FA_HIDDEN, NULL))
+	if(!eof_folder_exists(syscommand))
 	{	//If the folder doesn't exist,
 		err = eof_mkdir(syscommand);	//Try to create it
-		if(err && !file_exists(syscommand, FA_DIREC | FA_HIDDEN, NULL))
+		if(err && !eof_folder_exists(syscommand))
 		{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
 			eof_render();
 			allegro_message("Could not create folder!\n%s\nEnsure that the specified folder name is valid and\nthe Song Folder is configured to a non write-restricted area.\n(File->Song Folder)", syscommand);
@@ -890,7 +891,7 @@ int eof_menu_file_save_logic(char silent)
 		{	//If the path ends in a separator
 			eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] = '\0';	//Remove it
 		}
-		if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+		if(!eof_folder_exists(eof_temp_filename))
 		{
 			eof_clear_input();
 			if(alert("Song folder no longer exists.", "Recreate folder?", NULL, "&Yes", "&No", 'y', 'n') == 2)
@@ -901,7 +902,7 @@ int eof_menu_file_save_logic(char silent)
 				return 2;
 			}
 			err = eof_mkdir(eof_temp_filename);
-			if(err && !file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+			if(err && !eof_folder_exists(eof_temp_filename))
 			{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
 				eof_render();
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError creating project folder:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
@@ -1583,6 +1584,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[25].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;	//Don't warn about INI differences
 	eof_import_export_preferences_dialog[26].flags = eof_render_mid_beat_tempos_blue ? D_SELECTED : 0;		//Render mid beat tempos blue
 	eof_import_export_preferences_dialog[27].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
+	eof_import_export_preferences_dialog[28].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;	//GH import sustain threshold prompt
 
 	do
 	{	//Run the dialog
@@ -1613,6 +1615,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[25].flags == D_SELECTED ? 1 : 0);
 			eof_render_mid_beat_tempos_blue = (eof_import_export_preferences_dialog[26].flags == D_SELECTED ? 1 : 0);
 			eof_disable_ini_export = (eof_import_export_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
+			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1640,6 +1643,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[25].flags = 0;				//Don't warn about INI differences
 			eof_import_export_preferences_dialog[26].flags = D_SELECTED;	//Render mid beat tempos blue
 			eof_import_export_preferences_dialog[27].flags = 0;				//Don't write INI file
+			eof_import_export_preferences_dialog[28].flags = 0;				//GH import sustain threshold prompt
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -4089,10 +4093,10 @@ int eof_save_helper(char *destfilename, char silent)
 			(void) ustrcpy(eof_temp_filename, newfolderpath);
 			put_backslash(eof_temp_filename);
 			(void) ustrcat(eof_temp_filename, "songs_upgrades");
-			if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+			if(!eof_folder_exists(eof_temp_filename))
 			{	//If the songs_upgrades folder doesn't already exist
 				err = eof_mkdir(eof_temp_filename);
-				if(err && !file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+				if(err && !eof_folder_exists(eof_temp_filename))
 				{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
 					allegro_message("Could not create folder!\n%s", eof_temp_filename);
 					return 10;	//Return failure:  Could not recreate project folder

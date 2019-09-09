@@ -6436,7 +6436,7 @@ int eof_menu_arpeggio_mark_logic(int handshape)
 	unsigned long flags;
 	int note_selection_updated;
 	EOF_PRO_GUITAR_TRACK *tp;
-	EOF_PHRASE_SECTION *pp;	//A pointer to the modified or newly-created arpeggio phrase
+	EOF_PHRASE_SECTION *pp = NULL;	//A pointer to the modified or newly-created arpeggio phrase
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
@@ -6461,7 +6461,16 @@ int eof_menu_arpeggio_mark_logic(int handshape)
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing arpeggio phrase, create one applying to the active difficulty
 		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, sel_start, sel_end, 0, NULL);
-		pp = &tp->arpeggio[tp->arpeggios - 1];
+
+		//The new arpeggio will have been sorted so it has to be properly found
+		for(j = 0; j < tp->arpeggios; j++)
+		{	//For each arpeggio section in the track
+			if((sel_end >= tp->arpeggio[j].start_pos) && (sel_start <= tp->arpeggio[j].end_pos) && (tp->arpeggio[j].difficulty == eof_note_type))
+			{	//If the selection of notes is within this arpeggio's start and end position, and the arpeggio is also in the active difficulty
+				pp = &tp->arpeggio[j];
+				break;
+			}
+		}
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -6469,14 +6478,19 @@ int eof_menu_arpeggio_mark_logic(int handshape)
 		tp->arpeggio[existingphrasenum].end_pos = sel_end;
 		pp = &tp->arpeggio[existingphrasenum];
 	}
-	if(handshape)
-	{	//If the phrase added/edited is intended to be a handshape
-		pp->flags |= EOF_RS_ARP_HANDSHAPE;	//Set this flag
+
+	if(pp)
+	{	//Unless an error occurred
+		if(handshape)
+		{	//If the phrase added/edited is intended to be a handshape
+			pp->flags |= EOF_RS_ARP_HANDSHAPE;	//Set this flag
+		}
+		else
+		{
+			pp->flags &= ~EOF_RS_ARP_HANDSHAPE;	//Otherwise clear the flag
+		}
 	}
-	else
-	{
-		pp->flags &= ~EOF_RS_ARP_HANDSHAPE;	//Otherwise clear the flag
-	}
+
 	//Mark notes inside of arpeggio phrases with crazy status
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
