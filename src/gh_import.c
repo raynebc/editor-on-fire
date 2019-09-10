@@ -31,7 +31,8 @@ int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will
 								// which defines the bits in a different order than Smash Hits
 int eof_gh_import_threshold_prompt = 0;		//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 quarter notes as the HOPO threshold
 int eof_gh_import_gh3_style_sections = 0;	//Will be set to nonzero if GH3 format sections are detected from whichever file is used to import section names, since they are defined differently than in newer games
-unsigned long sustain_threshold = 0;		//Set to nonzero to reflect any sustain threshold being enforced
+unsigned long eof_gh_import_sustain_threshold = 0;		//Set to nonzero to reflect any sustain threshold being enforced
+unsigned long eof_gh_import_gap_threshold = 0;			//Set to nonzero to reflect any sustain threshold based note gap being enforced
 
 #define GH_IMPORT_DEBUG
 
@@ -520,12 +521,31 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		eof_log(eof_log_string, 1);
 #endif
 
-		if(length <= sustain_threshold)
+		//Apply sustain threshold and note gap threshold if appropriate
+		if(length <= eof_gh_import_sustain_threshold)
 		{	//If the sustain threshold is being applied and will truncate this note
 			length = 1;
 #ifdef GH_IMPORT_DEBUG
 			eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
 #endif
+		}
+		if(eof_gh_import_gap_threshold && lastnote && (lastnote->length > 1))
+		{	//If the note gap is being enforced, and there was a previous imported note that can be shortened
+			if(lastnote->pos + lastnote->length + eof_gh_import_gap_threshold > dword)
+			{	//If the previous note must be shortened to accommodate the note gap
+				if(dword <= lastnote->pos + eof_gh_import_gap_threshold)
+				{	//If the previous note doesn't begin more than one note gap away from this note
+					lastnote->length = 1;	//This is as much as it can be shortened
+				}
+				else
+				{	//Otherwise shorten it the appropriate amount
+					lastnote->length = dword - eof_gh_import_gap_threshold - lastnote->pos;
+				}
+#ifdef GH_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\t\tPrevious note truncated to %lums by note gap threshold.", lastnote->length);
+				eof_log(eof_log_string, 1);
+#endif
+			}
 		}
 
 		isexpertplus = 0;	//Reset this condition
@@ -1401,7 +1421,8 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	eof_log("Attempting to import NOTE format Guitar Hero chart", 1);
 
 	eof_gh_accent_prompt = 0;	//Reset these
-	sustain_threshold = 0;
+	eof_gh_import_sustain_threshold = 0;
+	eof_gh_import_gap_threshold = 0;
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
@@ -1506,9 +1527,16 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 		{	//If the user enabled the import preference to ask to apply this threshold
 			if(alert(NULL, "Apply the sustain threshold (half of the first beat's length) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{	//If user opts to enforce the threshold
-				sustain_threshold = (sp->beat[1]->pos - sp->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", sustain_threshold);
+				eof_gh_import_sustain_threshold = (sp->beat[1]->pos - sp->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 				eof_log(eof_log_string, 1);
+
+				if(alert(NULL, "Also apply the note gap (half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to enforce the note gap
+					eof_gh_import_gap_threshold = eof_gh_import_sustain_threshold / 2;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The note gap of %lums is being enforced.", eof_gh_import_gap_threshold);
+					eof_log(eof_log_string, 1);
+				}
 			}
 		}
 	}
@@ -2051,13 +2079,33 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			eof_log(eof_log_string, 1);
 #endif
 
-			if(length <= sustain_threshold)
+			//Apply sustain threshold and note gap threshold if appropriate
+			if(length <= eof_gh_import_sustain_threshold)
 			{	//If the sustain threshold is being applied and will truncate this note
 				length = 1;
 #ifdef GH_IMPORT_DEBUG
 				eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
 #endif
 			}
+			if(eof_gh_import_gap_threshold && lastnote && (lastnote->length > 1))
+			{	//If the note gap is being enforced, and there was a previous imported note that can be shortened
+				if(lastnote->pos + lastnote->length + eof_gh_import_gap_threshold > dword)
+				{	//If the previous note must be shortened to accommodate the note gap
+					if(dword <= lastnote->pos + eof_gh_import_gap_threshold)
+					{	//If the previous note doesn't begin more than one note gap away from this note
+						lastnote->length = 1;	//This is as much as it can be shortened
+					}
+					else
+					{	//Otherwise shorten it the appropriate amount
+						lastnote->length = dword - eof_gh_import_gap_threshold - lastnote->pos;
+					}
+#ifdef GH_IMPORT_DEBUG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\t\tPrevious note truncated to %lums by note gap threshold.", lastnote->length);
+					eof_log(eof_log_string, 1);
+#endif
+				}
+			}
+
 			isexpertplus = 0;	//Reset this condition
 			if(destination_track == EOF_TRACK_DRUM)
 			{	//In Guitar Hero, lane 6 is bass drum, lane 1 is the right-most lane (ie. 6)
@@ -2734,7 +2782,8 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	eof_log("eof_import_gh_qb() entered", 1);
 	eof_log("Attempting to import QB format Guitar Hero chart", 1);
 
-	sustain_threshold = 0;	//Reset this
+	eof_gh_import_sustain_threshold = 0;	//Reset these
+	eof_gh_import_gap_threshold = 0;
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
@@ -2915,9 +2964,16 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		{	//If the user enabled the import preference to ask to apply this threshold
 			if(alert(NULL, "Apply the sustain threshold (half of the first beat's length) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{	//If user opts to enforce the threshold
-				sustain_threshold = (sp->beat[1]->pos - sp->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tThe sustain threshold of %lums is being enforced.", sustain_threshold);
+				eof_gh_import_sustain_threshold = (sp->beat[1]->pos - sp->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 				eof_log(eof_log_string, 1);
+
+				if(alert(NULL, "Also apply the note gap (half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to enforce the note gap
+					eof_gh_import_gap_threshold = eof_gh_import_sustain_threshold / 2;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The note gap of %lums is being enforced.", eof_gh_import_gap_threshold);
+					eof_log(eof_log_string, 1);
+				}
 			}
 		}
 	}
@@ -3877,7 +3933,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 		return 1;	//No project or invalid parameter
 
 	eof_gh_accent_prompt = 0;	//Reset these
-	sustain_threshold = 0;
+	eof_gh_import_sustain_threshold = 0;
+	eof_gh_import_gap_threshold = 0;
 
 	///Load file into memory buffer
 	buffer = (char *)eof_buffer_file(filename, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
@@ -4058,9 +4115,16 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			{	//If the user enabled the import preference to ask to apply this threshold
 				if(alert(NULL, "Apply the sustain threshold (half of the first beat's length) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 				{	//If user opts to enforce the threshold
-					sustain_threshold = (eof_song->beat[1]->pos - eof_song->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tThe sustain threshold of %lums is being enforced.", sustain_threshold);
+					eof_gh_import_sustain_threshold = (eof_song->beat[1]->pos - eof_song->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 					eof_log(eof_log_string, 1);
+
+					if(alert(NULL, "Also apply the note gap (half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to enforce the note gap
+						eof_gh_import_gap_threshold = eof_gh_import_sustain_threshold / 2;
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The note gap of %lums is being enforced.", eof_gh_import_gap_threshold);
+						eof_log(eof_log_string, 1);
+					}
 				}
 			}
 		}
@@ -4200,10 +4264,26 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 					accent = data >> 8;	//The most significant byte defines the accent bitmask
 				}
 
-				if(length <= sustain_threshold)
+				//Apply sustain threshold and note gap threshold if appropriate
+				if(length <= eof_gh_import_sustain_threshold)
 				{	//If the sustain threshold is being applied and will truncate this note
 					length = 1;
 				}
+				if(eof_gh_import_gap_threshold && lastnote && (lastnote->length > 1))
+				{	//If the note gap is being enforced, and there was a previous imported note that can be shortened
+					if(lastnote->pos + lastnote->length + eof_gh_import_gap_threshold > position)
+					{	//If the previous note must be shortened to accommodate the note gap
+						if(position <= lastnote->pos + eof_gh_import_gap_threshold)
+						{	//If the previous note doesn't begin more than one note gap away from this note
+							lastnote->length = 1;	//This is as much as it can be shortened
+						}
+						else
+						{	//Otherwise shorten it the appropriate amount
+							lastnote->length = position - eof_gh_import_gap_threshold - lastnote->pos;
+						}
+					}
+				}
+
 				newnote = eof_track_add_create_note(eof_song, eof_selected_track, 0, position, length, eof_note_type, NULL);	//Add the note to the active track difficulty
 				if(!newnote)
 				{	//If the note couldn't be added
