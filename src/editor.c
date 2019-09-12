@@ -3964,6 +3964,13 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
+	/* paste at mouse (SHIFT+Insert) */
+		if(eof_paste_at_mouse)
+		{	//If eof_editor_logic_common() detected SHIFT+Insert
+			(void) eof_menu_edit_paste_at_mouse();
+			eof_paste_at_mouse = 0;
+		}
+
 	/* toggle Notes panel (CTRL+P) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'p'))
 		{	//If CTRL is held and SHIFT is not
@@ -7380,6 +7387,13 @@ void eof_editor_logic_common(void)
 		{
 			eof_hover_beat = ULONG_MAX;
 			eof_adjusted_anchor = 0;
+
+			if(KEY_EITHER_SHIFT && (eof_key_code == KEY_INSERT))
+			{	//If SHIFT+Insert was pressed
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				eof_use_key();		//Clear the keyboard input variables so the same Insert key press doesn't get re-used later
+				eof_paste_at_mouse = 1;	//Track that a paste at mouse operation should be performed
+			}
 		}
 
 		/* handle scroll bar click */
@@ -7477,7 +7491,7 @@ void eof_editor_logic_common(void)
 				break;
 			}
 		}
-	}
+	}//If the chart or fret catalog is playing
 
 	/* handle playback controls */
 	if(!eof_full_height_3d_preview)

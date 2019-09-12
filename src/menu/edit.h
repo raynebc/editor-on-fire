@@ -30,9 +30,13 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option);
 	//Performs "Auto adjust" logic (ie. when anchors are manipulated) to write the notes that were stored in "eof.autoadjust"
 	//option should be the same value as when the eof.autoadjust data was created
 	//The affected notes are deleted and then recreated with those in the autoadjust file
-int eof_menu_edit_paste_logic(int oldpaste);	//If oldpaste is nonzero, uses old paste logic (notes paste to positions relative to each other), otherwise uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
+int eof_menu_edit_paste_logic(int function);
+	//If function is 0, uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
+	//If function is 1, uses old paste logic (notes paste to positions relative to each other)
+	//If function is 2, uses new paste logic at the pen note position
 int eof_menu_edit_paste(void);					//Calls eof_menu_edit_paste_logic() to use new paste logic
 int eof_menu_edit_old_paste(void);				//Calls eof_menu_edit_paste_logic() to use old paste logic
+int eof_menu_edit_paste_at_mouse(void);			//Calls eof_menu_edit_paste_logic() to use paste at pen note position logic
 int eof_menu_edit_metronome(void);
 int eof_menu_edit_claps_all(void);
 int eof_menu_edit_claps_green(void);
@@ -254,8 +258,11 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 	//the existing note to inherit the flags of the merging note.
 int eof_menu_edit_copy_vocal(void);
 	//Copies selected lyrics to the vocal clipboard file
-int eof_menu_edit_paste_vocal_logic(int oldpaste);
-	//Using the vocal clipboard file as the source, if oldpaste is nonzero, uses old paste logic (notes paste to positions relative to each other), otherwise uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
+int eof_menu_edit_paste_vocal_logic(int function);
+///	//Using the vocal clipboard file as the source, if oldpaste is nonzero, uses old paste logic (notes paste to positions relative to each other), otherwise uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
+	//If function is 0, uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
+	//If function is 1, uses old paste logic (notes paste to positions relative to each other)
+	//If function is 2, uses new paste logic at the pen note position
 int eof_menu_edit_bookmark_helper(int b);	//Sets the specified bookmark number to the current seek position
 char * eof_menu_song_paste_from_difficulty_list(int index, int * size);
 	//The list dialog function for eof_menu_song_paste_from_difficulty();

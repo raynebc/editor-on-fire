@@ -519,6 +519,7 @@ extern int         eof_cursor_visible;
 extern int         eof_pen_visible;
 extern int         eof_hover_type;
 extern int         eof_mouse_drug;
+extern int         eof_paste_at_mouse;
 
 extern char          eof_snap_mode;
 extern char          eof_last_snap_mode;

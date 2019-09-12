@@ -211,6 +211,13 @@ MENU eof_edit_selection_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_edit_tones_menu[] =
+{
+	{"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, 0, NULL},
+	{"&MIDI Tones\tShift+T", eof_menu_edit_midi_tones, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_edit_menu[] =
 {
 	{"&Undo\t" CTRL_NAME "+Z", eof_menu_edit_undo, NULL, D_DISABLED, NULL},
@@ -220,6 +227,7 @@ MENU eof_edit_menu[] =
 	{"Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
 	{"Old &Paste", eof_menu_edit_old_paste, NULL, 0, NULL},
 	{"Paste &From", NULL, eof_edit_paste_from_menu, 0, NULL},
+	{"Paste at mouse\tShift+Ins", eof_menu_edit_paste_at_mouse, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
 	{"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
@@ -230,8 +238,7 @@ MENU eof_edit_menu[] =
 	{"&Metronome\tM", eof_menu_edit_metronome, NULL, 0, NULL},
 	{"Claps\tC", eof_menu_edit_claps, NULL, 0, NULL},
 	{"Clap &Notes", NULL, eof_edit_claps_menu, 0, NULL},
-	{"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, 0, NULL},
-	{"MIDI Tones\tShift+T", eof_menu_edit_midi_tones, NULL, 0, NULL},
+	{"&Tones", NULL, eof_edit_tones_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Bookmark", NULL, eof_edit_bookmark_menu, 0, NULL},
 	{"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
@@ -628,9 +635,50 @@ void eof_prepare_edit_menu(void)
 			eof_edit_snap_menu[15].flags = D_SELECTED;
 		}
 
+		/* Metronome */
+		if(!eof_mix_metronome_enabled)
+		{
+			eof_edit_menu[15].flags = 0;
+		}
+		else
+		{
+			eof_edit_menu[15].flags = D_SELECTED;
+		}
+
+		/* Claps */
+		if(!eof_mix_claps_enabled)
+		{
+			eof_edit_menu[16].flags = 0;
+		}
+		else
+		{
+			eof_edit_menu[16].flags = D_SELECTED;
+		}
+
 		/* MIDI tones */
 		if(!eof_midi_initialized)
-			eof_edit_menu[18].flags = D_DISABLED;
+			eof_edit_tones_menu[1].flags = D_DISABLED;
+		else
+		{
+			if(!eof_mix_midi_tones_enabled)
+			{
+				eof_edit_tones_menu[1].flags = 0;
+			}
+			else
+			{
+				eof_edit_tones_menu[1].flags = D_SELECTED;
+			}
+		}
+
+		/* Vocal tones */
+		if(!eof_mix_vocal_tones_enabled)
+		{
+			eof_edit_tones_menu[0].flags = 0;
+		}
+		else
+		{
+			eof_edit_tones_menu[0].flags = D_SELECTED;
+		}
 
 		/* Update "Paste From" difficulty labeling */
 		if(eof_use_fof_difficulty_naming)
@@ -767,14 +815,14 @@ int eof_menu_edit_copy_vocal(void)
 	return 1;
 }
 
-int eof_menu_edit_paste_vocal_logic(int oldpaste)
+int eof_menu_edit_paste_vocal_logic(int function)
 {
 	unsigned long i, j;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	unsigned long paste_count = 0;
 	unsigned long first_beat = 0;
-	unsigned long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long this_beat;
 	unsigned long copy_notes;
 	long new_pos = -1;
 	long new_end_pos = -1;
@@ -786,6 +834,8 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	char clipboard_path[50];
 	unsigned long source_id = 0;
 	unsigned long lastlinenum = 0xFFFFFFFF, linestart = 0, lineend = 0;	//Used to create lyric lines
+	int oldpaste = 0;	//By default, assume the new paste logic is being used
+	unsigned long targetpos = eof_music_pos - eof_av_delay;	//By default, assume the paste will occur at the seek position
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
@@ -793,8 +843,19 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
+
+	if(function == 1)
+	{	//Calling function specified to use old paste logic
+		oldpaste = 1;
+	}
+	else if((function == 2) && (eof_pen_note.pos < eof_chart_length))
+	{	//Calling function specified to use new paste at the mouse cursor, and that position is deemed valid
+		targetpos = eof_pen_note.pos;
+	}
+	this_beat = eof_get_beat(eof_song, targetpos);
+
 	if(!eof_beat_num_valid(eof_song, this_beat))
-		return 1;	//Return error if the seek position isn't within the chart
+		return 1;	//Return error if the target position isn't within the chart
 	if(!oldpaste && (first_beat + this_beat >= eof_song->beats - 1))
 	{	//If new paste logic is being used, return from function if the first lyric would paste after the last beat
 		return 1;
@@ -818,7 +879,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 
 	if(!oldpaste)
 	{	//If using new paste, find the seek position's percentage within the current beat
-		newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);
+		newpasteoffset = eof_get_porpos(targetpos);
 	}
 	for(i = 0; i < copy_notes; i++)
 	{	//For each lyric in the clipboard file
@@ -826,7 +887,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 		eof_read_clipboard_note(fp, &temp_lyric, EOF_MAX_LYRIC_LENGTH + 1);
 		eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
 
-		if(eof_music_pos + temp_lyric.pos - eof_av_delay >= eof_chart_length)
+		if(targetpos + temp_lyric.pos >= eof_chart_length)
 			continue;	//If this lyric doesn't fit within the chart, skip it
 
 		if(last_pos >= 0)
@@ -859,7 +920,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 		}
 		else
 		{	//If old paste logic is being used, this lyric pastes into a position relative to the previous pasted note
-			new_pos = eof_music_pos + temp_lyric.pos - eof_av_delay;
+			new_pos = targetpos + temp_lyric.pos;
 			new_end_pos = new_pos + temp_lyric.length;
 		}
 		if(last_pos < 0)
@@ -1502,13 +1563,13 @@ int eof_menu_edit_copy(void)
 	return 1;
 }
 
-int eof_menu_edit_paste_logic(int oldpaste)
+int eof_menu_edit_paste_logic(int function)
 {
 	unsigned long i, j;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	unsigned long paste_count = 0;
 	unsigned long first_beat = 0;
-	unsigned long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long this_beat;
 	unsigned long copy_notes;
 	PACKFILE * fp;
 	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
@@ -1526,6 +1587,8 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	int warning = 0;
 	char isghl;	//Set to nonzero if the clipboard's source track had GHL mode enabled, which changes the interpretation of lane 6 gems
 	unsigned long source_id = 0;
+	int oldpaste = 0;	//By default, assume the new paste logic is being used
+	unsigned long targetpos = eof_music_pos - eof_av_delay;	//By default, assume the paste will occur at the seek position
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
@@ -1533,8 +1596,18 @@ int eof_menu_edit_paste_logic(int oldpaste)
 
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
-		return eof_menu_edit_paste_vocal_logic(oldpaste);	//Call the old or new vocal paste logic accordingly
+		return eof_menu_edit_paste_vocal_logic(function);	//Call the old or new vocal paste logic accordingly
 	}
+
+	if(function == 1)
+	{	//Calling function specified to use old paste logic
+		oldpaste = 1;
+	}
+	else if((function == 2) && (eof_pen_note.pos < eof_chart_length))
+	{	//Calling function specified to use new paste at the mouse cursor, and that position is deemed valid
+		targetpos = eof_pen_note.pos;
+	}
+	this_beat = eof_get_beat(eof_song, targetpos);
 
 	/* open the file */
 	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path_s);
@@ -1589,7 +1662,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 
 	if(!oldpaste)
 	{	//If using new paste, find the seek position's percentage within the current beat
-		newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);
+		newpasteoffset = eof_get_porpos(targetpos);
 	}
 
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
@@ -1617,8 +1690,8 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		}
 		else
 		{	//If old paste logic is being used, this note pastes into a position relative to the previous pasted note
-			clear_start = eof_music_pos + first_note.pos - eof_av_delay;	//The position that "old paste" would paste the first note at
-			clear_end = eof_music_pos + last_note.pos - eof_av_delay;	//The position where "old paste" would paste the last note at
+			clear_start = targetpos + first_note.pos;	//The position that "old paste" would paste the first note at
+			clear_end = targetpos + last_note.pos;	//The position where "old paste" would paste the last note at
 		}
 		eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, clear_start, clear_end);
 		//The packfile functions have no seek routine, so the file has to be closed, re-opened and repositioned to the first clipboard note for the actual paste logic
@@ -1638,7 +1711,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 
 	if(!oldpaste)
 	{	//If using new paste, find the seek position's percentage within the current beat
-		newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);
+		newpasteoffset = eof_get_porpos(targetpos);
 	}
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
@@ -1654,7 +1727,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		{
 			if(oldpaste)
 			{	//If old paste is being performed, the chart simply has to be long enough to accommodate the pasted note's original length
-				if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_song->beat[eof_song->beats - 1]->pos)
+				if(targetpos + temp_note.pos + temp_note.length < eof_song->beat[eof_song->beats - 1]->pos)
 				{	//If there are enough beats already
 					break;
 				}
@@ -1712,7 +1785,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		}
 		else
 		{	//If old paste logic is being used, this note pastes into a position relative to the previous pasted note
-			newnotepos = eof_music_pos + temp_note.pos - eof_av_delay;
+			newnotepos = targetpos + temp_note.pos;
 			newnotelength = temp_note.length;
 		}
 		if(!eof_paste_erase_overlap && eof_search_for_note_near(eof_song, eof_selected_track, newnotepos, 2, eof_note_type, &match))
@@ -1858,6 +1931,11 @@ int eof_menu_edit_paste(void)
 int eof_menu_edit_old_paste(void)
 {
 	return eof_menu_edit_paste_logic(1);	//Use old paste logic
+}
+
+int eof_menu_edit_paste_at_mouse(void)
+{
+	return eof_menu_edit_paste_logic(2);	//Use paste at mouse logic
 }
 
 int eof_menu_edit_snap_quarter(void)
@@ -2387,12 +2465,10 @@ int eof_menu_edit_metronome(void)
 	if(eof_mix_metronome_enabled)
 	{
 		eof_mix_metronome_enabled = 0;
-		eof_edit_menu[14].flags = 0;
 	}
 	else
 	{
 		eof_mix_metronome_enabled = 1;
-		eof_edit_menu[14].flags = D_SELECTED;
 	}
 	return 1;
 }
@@ -2449,12 +2525,10 @@ int eof_menu_edit_claps(void)
 	if(eof_mix_claps_enabled)
 	{
 		eof_mix_claps_enabled = 0;
-		eof_edit_menu[15].flags = 0;
 	}
 	else
 	{
 		eof_mix_claps_enabled = 1;
-		eof_edit_menu[15].flags = D_SELECTED;
 	}
 	return 1;
 }
@@ -2465,13 +2539,11 @@ int eof_menu_edit_vocal_tones(void)
 	{
 		eof_mix_vocal_tones_enabled = 0;
 		eof_mix_percussion_enabled = 0;
-		eof_edit_menu[17].flags = 0;
 	}
 	else
 	{
 		eof_mix_vocal_tones_enabled = 1;
 		eof_mix_percussion_enabled = 1;
-		eof_edit_menu[17].flags = D_SELECTED;
 	}
 	return 1;
 }
@@ -2481,12 +2553,10 @@ int eof_menu_edit_midi_tones(void)
 	if(eof_mix_midi_tones_enabled)
 	{
 		eof_mix_midi_tones_enabled = 0;
-		eof_edit_menu[18].flags = 0;
 	}
 	else
 	{
 		eof_mix_midi_tones_enabled = 1;
-		eof_edit_menu[18].flags = D_SELECTED;
 	}
 	return 1;
 }

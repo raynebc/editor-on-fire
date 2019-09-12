@@ -344,6 +344,7 @@ int         eof_cursor_visible = 1;
 int         eof_pen_visible = 1;
 int         eof_hover_type = -1;
 int         eof_mouse_drug = 0;
+int         eof_paste_at_mouse = 0;
 int         eof_notes_moved = 0;
 
 /* grid snap data */
