@@ -32,7 +32,7 @@ int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will
 int eof_gh_import_threshold_prompt = 0;		//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 quarter notes as the HOPO threshold
 int eof_gh_import_gh3_style_sections = 0;	//Will be set to nonzero if GH3 format sections are detected from whichever file is used to import section names, since they are defined differently than in newer games
 unsigned long eof_gh_import_sustain_threshold = 0;		//Set to nonzero to reflect any sustain threshold being enforced
-unsigned long eof_gh_import_gap_threshold = 0;			//Set to nonzero to reflect any sustain threshold based note gap being enforced
+unsigned long eof_gh_import_sustain_trim = 0;			//Set to nonzero to reflect any sustain threshold based sustain trimming being applied
 
 #define GH_IMPORT_DEBUG
 
@@ -521,29 +521,32 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		eof_log(eof_log_string, 1);
 #endif
 
-		//Apply sustain threshold and note gap threshold if appropriate
-		if(length <= eof_gh_import_sustain_threshold)
-		{	//If the sustain threshold is being applied and will truncate this note
-			length = 1;
-#ifdef GH_IMPORT_DEBUG
-			eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
-#endif
-		}
-		if(eof_gh_import_gap_threshold && lastnote && (lastnote->length > 1))
-		{	//If the note gap is being enforced, and there was a previous imported note that can be shortened
-			if(lastnote->pos + lastnote->length + eof_gh_import_gap_threshold > dword)
-			{	//If the previous note must be shortened to accommodate the note gap
-				if(dword <= lastnote->pos + eof_gh_import_gap_threshold)
-				{	//If the previous note doesn't begin more than one note gap away from this note
-					lastnote->length = 1;	//This is as much as it can be shortened
+		//Apply sustain trim and sustain threshold if appropriate
+		if(length > 1)
+		{	//If the note can be shortened
+			if(eof_gh_import_sustain_trim)
+			{	//If note trimming is being performed
+				if(length <= eof_gh_import_sustain_trim)
+				{	//If the note isn't long enough to be shortened by the full trim amount
+					length = 1;	//This is as much as it can be shortened
 				}
 				else
 				{	//Otherwise shorten it the appropriate amount
-					lastnote->length = dword - eof_gh_import_gap_threshold - lastnote->pos;
+					length -= eof_gh_import_sustain_trim;\
 				}
 #ifdef GH_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\t\tPrevious note truncated to %lums by note gap threshold.", lastnote->length);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\t\tNote trimmed to %ums", length);
 				eof_log(eof_log_string, 1);
+#endif
+			}
+		}
+		if(length > 1)
+		{	//If the note can still be shortened
+			if(length <= eof_gh_import_sustain_threshold)
+			{	//If the sustain threshold is being applied and will truncate this note
+				length = 1;
+#ifdef GH_IMPORT_DEBUG
+				eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
 #endif
 			}
 		}
@@ -1422,7 +1425,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 
 	eof_gh_accent_prompt = 0;	//Reset these
 	eof_gh_import_sustain_threshold = 0;
-	eof_gh_import_gap_threshold = 0;
+	eof_gh_import_sustain_trim = 0;
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
@@ -1531,10 +1534,10 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 				eof_log(eof_log_string, 1);
 
-				if(alert(NULL, "Also apply the note gap (half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-				{	//If user opts to enforce the note gap
-					eof_gh_import_gap_threshold = eof_gh_import_sustain_threshold / 2;
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The note gap of %lums is being enforced.", eof_gh_import_gap_threshold);
+				if(alert(NULL, "Also apply sustain trimming (by half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to apply sustain trimming
+					eof_gh_import_sustain_trim = eof_gh_import_sustain_threshold / 2;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain trim of %lums is being enforced.", eof_gh_import_sustain_trim);
 					eof_log(eof_log_string, 1);
 				}
 			}
@@ -2079,29 +2082,32 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			eof_log(eof_log_string, 1);
 #endif
 
-			//Apply sustain threshold and note gap threshold if appropriate
-			if(length <= eof_gh_import_sustain_threshold)
-			{	//If the sustain threshold is being applied and will truncate this note
-				length = 1;
-#ifdef GH_IMPORT_DEBUG
-				eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
-#endif
-			}
-			if(eof_gh_import_gap_threshold && lastnote && (lastnote->length > 1))
-			{	//If the note gap is being enforced, and there was a previous imported note that can be shortened
-				if(lastnote->pos + lastnote->length + eof_gh_import_gap_threshold > dword)
-				{	//If the previous note must be shortened to accommodate the note gap
-					if(dword <= lastnote->pos + eof_gh_import_gap_threshold)
-					{	//If the previous note doesn't begin more than one note gap away from this note
-						lastnote->length = 1;	//This is as much as it can be shortened
+			//Apply sustain trim and sustain threshold if appropriate
+			if(length > 1)
+			{	//If the note can be shortened
+				if(eof_gh_import_sustain_trim)
+				{	//If note trimming is being performed
+					if(length <= eof_gh_import_sustain_trim)
+					{	//If the note isn't long enough to be shortened by the full trim amount
+						length = 1;	//This is as much as it can be shortened
 					}
 					else
 					{	//Otherwise shorten it the appropriate amount
-						lastnote->length = dword - eof_gh_import_gap_threshold - lastnote->pos;
+						length -= eof_gh_import_sustain_trim;\
 					}
 #ifdef GH_IMPORT_DEBUG
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\t\tPrevious note truncated to %lums by note gap threshold.", lastnote->length);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\t\tNote trimmed to %ums", length);
 					eof_log(eof_log_string, 1);
+#endif
+				}
+			}
+			if(length > 1)
+			{	//If the note can still be shortened
+				if(length <= eof_gh_import_sustain_threshold)
+				{	//If the sustain threshold is being applied and will truncate this note
+					length = 1;
+#ifdef GH_IMPORT_DEBUG
+					eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
 #endif
 				}
 			}
@@ -2783,7 +2789,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	eof_log("Attempting to import QB format Guitar Hero chart", 1);
 
 	eof_gh_import_sustain_threshold = 0;	//Reset these
-	eof_gh_import_gap_threshold = 0;
+	eof_gh_import_sustain_trim = 0;
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
@@ -2968,10 +2974,10 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 				eof_log(eof_log_string, 1);
 
-				if(alert(NULL, "Also apply the note gap (half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-				{	//If user opts to enforce the note gap
-					eof_gh_import_gap_threshold = eof_gh_import_sustain_threshold / 2;
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The note gap of %lums is being enforced.", eof_gh_import_gap_threshold);
+				if(alert(NULL, "Also apply sustain trimming (by half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to apply sustain trimming
+					eof_gh_import_sustain_trim = eof_gh_import_sustain_threshold / 2;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain trim of %lums is being enforced.", eof_gh_import_sustain_trim);
 					eof_log(eof_log_string, 1);
 				}
 			}
@@ -3934,7 +3940,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 
 	eof_gh_accent_prompt = 0;	//Reset these
 	eof_gh_import_sustain_threshold = 0;
-	eof_gh_import_gap_threshold = 0;
+	eof_gh_import_sustain_trim = 0;
 
 	///Load file into memory buffer
 	buffer = (char *)eof_buffer_file(filename, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
@@ -4119,10 +4125,10 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 					eof_log(eof_log_string, 1);
 
-					if(alert(NULL, "Also apply the note gap (half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user opts to enforce the note gap
-						eof_gh_import_gap_threshold = eof_gh_import_sustain_threshold / 2;
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The note gap of %lums is being enforced.", eof_gh_import_gap_threshold);
+					if(alert(NULL, "Also apply sustain trimming (by half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to apply sustain trimming
+						eof_gh_import_sustain_trim = eof_gh_import_sustain_threshold / 2;
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain trim of %lums is being enforced.", eof_gh_import_sustain_trim);
 						eof_log(eof_log_string, 1);
 					}
 				}
@@ -4264,23 +4270,26 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 					accent = data >> 8;	//The most significant byte defines the accent bitmask
 				}
 
-				//Apply sustain threshold and note gap threshold if appropriate
-				if(length <= eof_gh_import_sustain_threshold)
-				{	//If the sustain threshold is being applied and will truncate this note
-					length = 1;
-				}
-				if(eof_gh_import_gap_threshold && lastnote && (lastnote->length > 1))
-				{	//If the note gap is being enforced, and there was a previous imported note that can be shortened
-					if(lastnote->pos + lastnote->length + eof_gh_import_gap_threshold > position)
-					{	//If the previous note must be shortened to accommodate the note gap
-						if(position <= lastnote->pos + eof_gh_import_gap_threshold)
-						{	//If the previous note doesn't begin more than one note gap away from this note
-							lastnote->length = 1;	//This is as much as it can be shortened
+				//Apply sustain trim and sustain threshold if appropriate
+				if(length > 1)
+				{	//If the note can be shortened
+					if(eof_gh_import_sustain_trim)
+					{	//If note trimming is being performed
+						if(length <= eof_gh_import_sustain_trim)
+						{	//If the note isn't long enough to be shortened by the full trim amount
+							length = 1;	//This is as much as it can be shortened
 						}
 						else
 						{	//Otherwise shorten it the appropriate amount
-							lastnote->length = position - eof_gh_import_gap_threshold - lastnote->pos;
+							length -= eof_gh_import_sustain_trim;\
 						}
+					}
+				}
+				if(length > 1)
+				{	//If the note can still be shortened
+					if(length <= eof_gh_import_sustain_threshold)
+					{	//If the sustain threshold is being applied and will truncate this note
+						length = 1;
 					}
 				}
 
