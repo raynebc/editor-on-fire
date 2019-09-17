@@ -4756,7 +4756,16 @@ int eof_initialize(int argc, char * argv[])
 					allegro_message("Could not import MIDI!");
 					return 0;
 				}
+				eof_init_after_load(0);
+				if(!eof_repair_midi_import_grid_snap())
+				{
+					eof_log("\tGrid snap correction failed.", 1);
+				}
 				eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+				eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
+				(void) eof_detect_difficulties(eof_song, eof_selected_track);
+				eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
+				eof_detect_mid_measure_ts_changes();
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rba"))
 			{
@@ -4773,7 +4782,16 @@ int eof_initialize(int argc, char * argv[])
 					return 0;
 				}
 
+				eof_init_after_load(0);
+				if(!eof_repair_midi_import_grid_snap())
+				{
+					eof_log("\tGrid snap correction failed.", 1);
+				}
 				eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
+				eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
+				(void) eof_detect_difficulties(eof_song, eof_selected_track);
+				eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
+				eof_detect_mid_measure_ts_changes();
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))
 			{	//Import a Feedback chart via command line

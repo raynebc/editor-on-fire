@@ -176,5 +176,6 @@ void eof_gh_import_sp_cleanup(EOF_SONG *sp);
 	//This reflects how star power phrases are handled in Guitar Hero and Feedback
 void eof_gh_import_slider_cleanup(EOF_SONG *sp);
 	//Similar to eof_gh_import_sp_cleanup(), but operates on the chart's slider phrases
+	//If the slider encompasses multiple notes, instead of just being shortened by 1ms, it is shortened to end at the end position of the last note ending within the phrase
 
 #endif

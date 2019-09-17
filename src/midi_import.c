@@ -16,6 +16,8 @@
 #include "memwatch.h"
 #endif
 
+#define EOF_DEBUG_MIDI_IMPORT
+
 typedef struct
 {
 	unsigned long pos;
@@ -350,8 +352,6 @@ double eof_ConvertToRealTime(unsigned long absolutedelta, struct Tempo_change *a
 	return realtime + offset;
 }
 
-//#define EOF_DEBUG_MIDI_IMPORT
-
 EOF_SONG * eof_import_midi(const char * fn)
 {
 	EOF_SONG * sp = NULL;
@@ -379,7 +379,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	EOF_PHRASE_SECTION *phraseptr = NULL, *phraseptr2 = NULL;
 	unsigned long bitmask;
 	char chord0name[100] = "", chord1name[100] = "", chord2name[100] = "", chord3name[100] = "", *chordname = NULL;	//Used for chord name import
-	char debugstring[100] = {0};
+	char debugstring[400] = {0};
 	char is_event_track;	//This will be set to nonzero if the current track's name is EVENTS (for sorting text events into global event list instead of track specific list)
 	char isghl;				//Set to nonzero if the current track's name indicates it is a GHL format track (includes " GHL" in the name)
 	unsigned long beat_track = 0;	//Will identify the "BEAT" track if it is found during import
@@ -1042,18 +1042,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 
 	/* second pass, create tempo map */
-//#ifdef EOF_DEBUG_MIDI_IMPORT
-//char debugtext[400];
-//allegro_message("Pass two, adding beats.  last_delta_time = %lu",last_delta_time);
 	eof_log("\tPass two, adding beats", 1);
-//#endif
 
 	while(deltapos <= last_delta_time)
 	{	//Add new beats until enough have been added to encompass the last MIDI event
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
-snprintf(debugtext, sizeof(debugtext) - 1,"Start delta %lu / %lu: Adding beat",deltapos,last_delta_time);
-set_window_title(debugtext);
+		snprintf(debugstring, sizeof(debugstring) - 1,"Start delta %lu / %lu: Adding beat", deltapos, last_delta_time);
+		set_window_title(debugstring);
 #endif
 
 		if(eof_song_add_beat(sp) == NULL)	//Add a new beat
@@ -1073,8 +1069,8 @@ allegro_message("Fail point 1");
 	//Find the relevant tempo and time signature for the beat
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
-snprintf(debugtext, sizeof(debugtext) - 1,"Start delta %lu / %lu: Finding tempo and TS",deltapos,last_delta_time);
-set_window_title(debugtext);
+		snprintf(debugstring, sizeof(debugstring) - 1,"Start delta %lu / %lu: Finding tempo and TS",deltapos,last_delta_time);
+		set_window_title(debugstring);
 #endif
 
 		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)
@@ -1105,8 +1101,8 @@ assert(sp->beat[sp->beats - 1] != NULL);	//Prevent NULL dereference below
 	//Store timing information in the beat structure
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
-snprintf(debugtext, sizeof(debugtext) - 1,"Start delta %lu / %lu: Storing timing info",deltapos,last_delta_time);
-set_window_title(debugtext);
+		snprintf(debugstring, sizeof(debugstring) - 1,"Start delta %lu / %lu: Storing timing info",deltapos,last_delta_time);
+		set_window_title(debugstring);
 #endif
 
 assert(sp->tags != NULL);	//Prevent a NULL dereference below
@@ -1132,8 +1128,8 @@ assert(curppqn != 0);	//Avoid a division by 0 below
 	//Update anchor linked list
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
-snprintf(debugtext, sizeof(debugtext) - 1,"Start delta %lu / %lu: Updating anchor list",deltapos,last_delta_time);
-set_window_title(debugtext);
+		snprintf(debugstring, sizeof(debugstring) - 1,"Start delta %lu / %lu: Updating anchor list",deltapos,last_delta_time);
+		set_window_title(debugstring);
 #endif
 
 		if(lastppqn != curppqn)
@@ -1149,8 +1145,8 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 	//Find the number of deltas to the next tempo or time signature change, in order to handle mid beat changes
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
-snprintf(debugtext, sizeof(debugtext) - 1,"Start delta %lu / %lu: Calculate mid best tempo/TS change",deltapos,last_delta_time);
-set_window_title(debugtext);
+		snprintf(debugstring, sizeof(debugstring) - 1,"Start delta %lu / %lu: Calculate mid best tempo/TS change",deltapos,last_delta_time);
+		set_window_title(debugstring);
 #endif
 
 		if(midbeatchange)
@@ -1202,8 +1198,8 @@ set_window_title(debugtext);
 	//Update delta and realtime counters (the TS affects a beat's length in deltas, the tempo affects a beat's length in milliseconds)
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
-snprintf(debugtext, sizeof(debugtext) - 1,"Start delta %lu / %lu: Updating counters",deltapos,last_delta_time);
-set_window_title(debugtext);
+		snprintf(debugstring, sizeof(debugstring) - 1,"Start delta %lu / %lu: Updating counters",deltapos,last_delta_time);
+		set_window_title(debugstring);
 #endif
 
 		beatreallength = (60000.0 / (60000000.0 / (double)curppqn));	//Determine the current length (based on the tempo) of a quarter note in milliseconds
@@ -1505,6 +1501,10 @@ set_window_title(debugtext);
 					if(midinote == 105)
 					{
 						sp->vocal_track[0]->line[last_105].end_pos = event_realtime;
+#ifdef EOF_DEBUG_MIDI_IMPORT
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[last_105].start_pos, sp->vocal_track[0]->line[last_105].end_pos);
+						eof_log(eof_log_string, 1);
+#endif
 						sp->vocal_track[0]->lines++;
 						if(overdrive_pos == sp->vocal_track[0]->line[last_105].start_pos)
 						{
@@ -1514,6 +1514,10 @@ set_window_title(debugtext);
 					else if(midinote == 106)
 					{
 						sp->vocal_track[0]->line[last_106].end_pos = event_realtime;
+#ifdef EOF_DEBUG_MIDI_IMPORT
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[last_106].start_pos, sp->vocal_track[0]->line[last_106].end_pos);
+						eof_log(eof_log_string, 1);
+#endif
 						sp->vocal_track[0]->lines++;
 						if(overdrive_pos == sp->vocal_track[0]->line[last_106].start_pos)
 						{
@@ -1585,6 +1589,10 @@ set_window_title(debugtext);
 								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart;
 								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
 								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
+#ifdef EOF_DEBUG_MIDI_IMPORT
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos, sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos);
+								eof_log(eof_log_string, 1);
+#endif
 								sp->vocal_track[0]->lines++;
 								linetrack = 0;
 							}
@@ -1606,6 +1614,10 @@ set_window_title(debugtext);
 										sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//The line this lyric is in gets marked with star power status
 									}
 								}
+#ifdef EOF_DEBUG_MIDI_IMPORT
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric:  %lums \"%s\"", sp->vocal_track[0]->lyric[note_count[picked_track]]->pos, sp->vocal_track[0]->lyric[note_count[picked_track]]->text);
+								eof_log(eof_log_string, 1);
+#endif
 								note_count[picked_track]++;
 							}
 						}
@@ -1627,7 +1639,7 @@ set_window_title(debugtext);
 				{	//Control change event
 					if(eof_import_events[i]->game == 1)
 					{	//If the MIDI is in Power Gig notation
-#ifdef EOF_DEBUG
+#ifdef EOF_DEBUG_MIDI_IMPORT
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, eof_import_events[i]->event[j]->pos, event_realtime);
 						eof_log(eof_log_string, 1);
 #endif

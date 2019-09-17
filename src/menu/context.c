@@ -19,6 +19,7 @@ MENU eof_right_click_menu_normal[] =
 	{"Second piano &Roll", NULL, eof_song_piano_roll_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
+	{"Paste at mouse\tShift+Ins", eof_menu_edit_paste_at_mouse, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -92,12 +93,12 @@ void eof_prepare_context_menu(void)
 		}
 		if(eof_track_diff_populated_status[eof_note_type])
 		{	//If the active instrument difficulty is populated, enable the Selection submenu
-			eof_right_click_menu_normal[6].flags = 0;
+			eof_right_click_menu_normal[7].flags = 0;
 			eof_right_click_menu_note[8].flags = 0;
 		}
 		else
 		{
-			eof_right_click_menu_normal[6].flags = D_DISABLED;
+			eof_right_click_menu_normal[7].flags = D_DISABLED;
 			eof_right_click_menu_note[7].flags = D_DISABLED;
 		}
 	}
