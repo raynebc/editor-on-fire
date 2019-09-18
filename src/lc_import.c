@@ -412,6 +412,9 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 				AddLyricPiece(buffer, tp->lyric[lyrctr]->pos, tp->lyric[lyrctr]->pos + tp->lyric[lyrctr]->length, pitch, 0);
 					//Add the lyric to the Lyrics structure
 
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding lyric:  %lums:  \"%s\"", thislyrtime, buffer);
+				eof_log(eof_log_string, 2);
+
 				if((Lyrics.lastpiece != NULL) && (Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-'))	//If the piece that was just added ended in a hyphen
 					Lyrics.lastpiece->groupswithnext = 1;	//Set its grouping status
 			}//If this lyric's text isn't an empty string

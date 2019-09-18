@@ -407,6 +407,7 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 	{
 		Lyrics.lyric_defined=0;					//Expecting a new lyric event
 		Lyrics.lyric_on=0;						//Expecting a new Note On event as well
+		Lyrics.lastpiece=NULL;					//Signal to the calling function that the lyric addition failed
 		free(str);								//de-allocate newly-created string
 		if(Lyrics.verbose>=2)
 			(void) puts("(empty lyric dropped)");

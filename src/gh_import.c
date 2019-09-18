@@ -32,7 +32,7 @@ int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will
 int eof_gh_import_threshold_prompt = 0;		//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 quarter notes as the HOPO threshold
 int eof_gh_import_gh3_style_sections = 0;	//Will be set to nonzero if GH3 format sections are detected from whichever file is used to import section names, since they are defined differently than in newer games
 unsigned long eof_gh_import_sustain_threshold = 0;		//Set to nonzero to reflect any sustain threshold being enforced
-unsigned long eof_gh_import_sustain_trim = 0;			//Set to nonzero to reflect any sustain threshold based sustain trimming being applied
+unsigned long eof_gh_import_sustain_trim = 0;			//Set to nonzero to reflect any sustain threshold based sustain trimming being applied IF the sustain threshold didn't remove the note's sustain
 
 #define GH_IMPORT_DEBUG
 
@@ -524,7 +524,14 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		//Apply sustain trim and sustain threshold if appropriate
 		if(length > 1)
 		{	//If the note can be shortened
-			if(eof_gh_import_sustain_trim)
+			if(length <= eof_gh_import_sustain_threshold)
+			{	//If the sustain threshold is being applied and will truncate this note
+				length = 1;
+#ifdef GH_IMPORT_DEBUG
+				eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
+#endif
+			}
+			else if(eof_gh_import_sustain_trim)
 			{	//If note trimming is being performed
 				if(length <= eof_gh_import_sustain_trim)
 				{	//If the note isn't long enough to be shortened by the full trim amount
@@ -532,21 +539,11 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				}
 				else
 				{	//Otherwise shorten it the appropriate amount
-					length -= eof_gh_import_sustain_trim;\
+					length -= eof_gh_import_sustain_trim;
 				}
 #ifdef GH_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\t\tNote trimmed to %ums", length);
 				eof_log(eof_log_string, 1);
-#endif
-			}
-		}
-		if(length > 1)
-		{	//If the note can still be shortened
-			if(length <= eof_gh_import_sustain_threshold)
-			{	//If the sustain threshold is being applied and will truncate this note
-				length = 1;
-#ifdef GH_IMPORT_DEBUG
-				eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
 #endif
 			}
 		}
@@ -1534,7 +1531,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 				eof_log(eof_log_string, 1);
 
-				if(alert(NULL, "Also apply sustain trimming (by half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				if(alert("Also apply sustain trimming (half the sustain threshold)", NULL, "to imported notes that pass the sustain threshold?", "&Yes", "&No", 'y', 'n') == 1)
 				{	//If user opts to apply sustain trimming
 					eof_gh_import_sustain_trim = eof_gh_import_sustain_threshold / 2;
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain trim of %lums is being enforced.", eof_gh_import_sustain_trim);
@@ -2085,7 +2082,14 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			//Apply sustain trim and sustain threshold if appropriate
 			if(length > 1)
 			{	//If the note can be shortened
-				if(eof_gh_import_sustain_trim)
+				if(length <= eof_gh_import_sustain_threshold)
+				{	//If the sustain threshold is being applied and will truncate this note
+					length = 1;
+#ifdef GH_IMPORT_DEBUG
+					eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
+#endif
+				}
+				else if(eof_gh_import_sustain_trim)
 				{	//If note trimming is being performed
 					if(length <= eof_gh_import_sustain_trim)
 					{	//If the note isn't long enough to be shortened by the full trim amount
@@ -2093,21 +2097,11 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 					}
 					else
 					{	//Otherwise shorten it the appropriate amount
-						length -= eof_gh_import_sustain_trim;\
+						length -= eof_gh_import_sustain_trim;
 					}
 #ifdef GH_IMPORT_DEBUG
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\t\tNote trimmed to %ums", length);
 					eof_log(eof_log_string, 1);
-#endif
-				}
-			}
-			if(length > 1)
-			{	//If the note can still be shortened
-				if(length <= eof_gh_import_sustain_threshold)
-				{	//If the sustain threshold is being applied and will truncate this note
-					length = 1;
-#ifdef GH_IMPORT_DEBUG
-					eof_log("\tGH:  \t\t\tNote truncated by sustain threshold", 1);
 #endif
 				}
 			}
@@ -2974,7 +2968,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 				eof_log(eof_log_string, 1);
 
-				if(alert(NULL, "Also apply sustain trimming (by half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				if(alert("Also apply sustain trimming (half the sustain threshold)", NULL, "to imported notes that pass the sustain threshold?", "&Yes", "&No", 'y', 'n') == 1)
 				{	//If user opts to apply sustain trimming
 					eof_gh_import_sustain_trim = eof_gh_import_sustain_threshold / 2;
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain trim of %lums is being enforced.", eof_gh_import_sustain_trim);
@@ -4125,7 +4119,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 					eof_log(eof_log_string, 1);
 
-					if(alert(NULL, "Also apply sustain trimming (by half the sustain threshold) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					if(alert("Also apply sustain trimming (half the sustain threshold)", NULL, "to imported notes that pass the sustain threshold?", "&Yes", "&No", 'y', 'n') == 1)
 					{	//If user opts to apply sustain trimming
 						eof_gh_import_sustain_trim = eof_gh_import_sustain_threshold / 2;
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain trim of %lums is being enforced.", eof_gh_import_sustain_trim);
@@ -4273,7 +4267,11 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 				//Apply sustain trim and sustain threshold if appropriate
 				if(length > 1)
 				{	//If the note can be shortened
-					if(eof_gh_import_sustain_trim)
+					if(length <= eof_gh_import_sustain_threshold)
+					{	//If the sustain threshold is being applied and will truncate this note
+						length = 1;
+					}
+					else if(eof_gh_import_sustain_trim)
 					{	//If note trimming is being performed
 						if(length <= eof_gh_import_sustain_trim)
 						{	//If the note isn't long enough to be shortened by the full trim amount
@@ -4281,15 +4279,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 						}
 						else
 						{	//Otherwise shorten it the appropriate amount
-							length -= eof_gh_import_sustain_trim;\
+							length -= eof_gh_import_sustain_trim;
 						}
-					}
-				}
-				if(length > 1)
-				{	//If the note can still be shortened
-					if(length <= eof_gh_import_sustain_threshold)
-					{	//If the sustain threshold is being applied and will truncate this note
-						length = 1;
 					}
 				}
 
