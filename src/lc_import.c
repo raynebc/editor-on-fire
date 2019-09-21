@@ -89,7 +89,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 	{
-		(void) puts("Assert() handled sucessfully!");
+		(void) puts("Assert() handled successfully!");
 		free(Lyrics.infilename);
 		Lyrics.infilename = NULL;
 		ReleaseMemory(1);	//Release memory allocated during lyric import
@@ -349,6 +349,17 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 		Lyrics.plain = 1;
 		Lyrics.grouping = 2;	//Enable line grouping for script.txt export
 	}
+	else if((format == LRC_FORMAT) || (format == ELRC_FORMAT) || (format == QRC_FORMAT))
+	{
+		if(format == LRC_FORMAT)
+		{	//Normal LRC format is line synced
+			Lyrics.noplus = 1;		//Disable plus output
+			Lyrics.grouping = 2;	//Enable line grouping
+		}
+		Lyrics.nohyphens = 3;		//Disable hyphen output
+		Lyrics.filter = DuplicateString("^=%#/");	//Use default filter list
+		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
+	}
 
 	eof_allocate_ucode_table();
 
@@ -536,6 +547,11 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 				Lyrics.rocksmithver = 2;
 			}
 			Export_RS(outf);
+		break;
+
+		case QRC_FORMAT:	//Export as QRC
+			outf = fopen_err(Lyrics.outfilename,"wt");	//QRC is a text format
+			Export_QRC(outf);
 		break;
 
 		default:

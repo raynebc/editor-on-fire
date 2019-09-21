@@ -19,5 +19,7 @@ void WriteLRCTimestamp(FILE *outf,char openchar,char closechar,unsigned long tim
 	//the beginning and end of the timestamp: ie. <##:##.##> or [##:##.##]
 void Export_LRC(FILE *outf);
 	//Exports the Lyric structure to specified file in simple or extended LRC format (based on the value of Lyrics.out_format)
+void Export_QRC(FILE *outf);
+	//Exports the Lyric structure to the specified file in QRC format (an ELRC variant popular in China)
 
 #endif //#ifndef _lrc_parse_h_

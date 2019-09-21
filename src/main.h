@@ -376,6 +376,7 @@ extern int         eof_abridged_rs2_export_warning_suppressed;
 extern int         eof_rs2_export_extended_ascii_lyrics;
 extern int         eof_disable_ini_difference_warnings;
 extern int         eof_write_bf_files;
+extern int         eof_write_lrc_files;
 extern int         eof_add_new_notes_to_selection;
 extern int         eof_drum_modifiers_affect_all_difficulties;
 extern int         eof_fb_seek_controls;

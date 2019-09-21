@@ -3498,7 +3498,7 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 	jumpcode = setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 	if(jumpcode != 0) //if program control returned to the setjmp() call above returning any nonzero value
 	{
-		(void) puts("Assert() handled sucessfully!");
+		(void) puts("Assert() handled successfully!");
 		eof_show_mouse(NULL);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;

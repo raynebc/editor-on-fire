@@ -361,6 +361,12 @@ int main(int argc, char *argv[])
 				Lyrics.noplus=1;	//Disable plus output, which is used for line breaks in RS2014
 				correct_extension=DuplicateString(".xml");	//.xml is the correct extension for this file format
 			}
+			else if(strcasecmp(argv[ctr+1],"qrc") == 0)
+			{	//QRC format
+				Lyrics.out_format=QRC_FORMAT;
+				Lyrics.outfilename=argv[ctr+2];
+				correct_extension=DuplicateString(".qrc");	//.qrc is the correct extension for this file format
+			}
 			else	//Any other specified output format is invalid
 				Input_failed(ctr+1,NULL);
 
@@ -1144,6 +1150,11 @@ int main(int argc, char *argv[])
 			Lyrics.rocksmithver=2;
 			outf=fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
 			Export_RS(outf);
+		break;
+
+		case QRC_FORMAT:	//Export as QRC
+			outf=fopen_err(Lyrics.outfilename,"wt");	//QRC is a text format
+			Export_QRC(outf);
 		break;
 
 		default:

@@ -78,8 +78,9 @@ Export functions are expected to:
 #define RS_FORMAT 15
 #define RS2_FORMAT 16
 #define PLAIN_FORMAT 17
+#define QRC_FORMAT 18
 
-#define NUMBEROFLYRICFORMATS 17
+#define NUMBEROFLYRICFORMATS 18
 	//This defined number should be equal to the number of defined lyric macros above, for use with the LYRICFORMATNAMES[] array
 
 //#define NDEBUG		//This will disable the assert macros in the source file if defined

@@ -220,10 +220,10 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  500, 255, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  260, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  260, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 260, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_window_proc,0,   48,  500, 270, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  275, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  275, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 275, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248, 75,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI files",NULL, NULL },
 	{ d_agup_check_proc, 16,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -232,7 +232,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 105, 184, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/CH/Phase Shift files",NULL, NULL },
 	{ d_agup_check_proc, 16,  120, 212, 16,  2,   23,  0,    0,      1,   0,   "Save separate Guitar Hero files",NULL, NULL },
 	{ d_agup_check_proc, 248, 120, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
-	{ d_agup_check_proc, 16,  135, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
+	{ d_agup_check_proc, 16,  135, 222, 16,  2,   23,  0,    0,      1,   0,   "Save LRC, ELRC, QRC lyric files",NULL, NULL },
 	{ d_agup_check_proc, 16,  150, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
 	{ d_agup_check_proc, 248, 150, 186, 16,  2,   23,  0,    0,      1,   0,   "RBN export slider as HOPO",NULL, NULL },
 	{ d_agup_check_proc, 16,  165, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
@@ -247,8 +247,9 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 225, 220, 16,  2,   23,  0,    0,      1,   0,   "Allow RS2 extended ASCII lyrics",NULL, NULL },
 	{ d_agup_check_proc, 16,  240, 224, 16,  2,   23,  0,    0,      1,   0,   "Don't warn about INI differences",NULL, NULL },
 	{ d_agup_check_proc, 248, 240, 202, 16,  2,   23,  0,    0,      1,   0,   "Render mid beat tempos blue",NULL, NULL },
-	{ d_agup_check_proc, 248, 255, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
-	{ d_agup_check_proc, 248, 270, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
+	{ d_agup_check_proc, 16,  255, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
+	{ d_agup_check_proc, 248, 270, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
+	{ d_agup_check_proc, 248, 285, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -996,7 +997,7 @@ int eof_menu_file_lyrics_import(void)
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 		{	//If the import failed
-			(void) puts("Assert() handled sucessfully!");
+			(void) puts("Assert() handled successfully!");
 			eof_show_mouse(NULL);
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
@@ -1568,7 +1569,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[9].flags = eof_write_fof_files ? D_SELECTED : 0;					//Save FoF/CH/Phase Shift files
 	eof_import_export_preferences_dialog[10].flags = eof_write_gh_files ? D_SELECTED : 0;					//Save Guitar Hero files
 	eof_import_export_preferences_dialog[11].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
-	eof_import_export_preferences_dialog[12].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
+	eof_import_export_preferences_dialog[12].flags = eof_write_lrc_files ? D_SELECTED : 0;					//Save LRC, ELRC, QRC lyric files
 	eof_import_export_preferences_dialog[13].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;	//GP import truncates short notes
 	eof_import_export_preferences_dialog[14].flags = eof_rbn_export_slider_hopo ? D_SELECTED : 0;			//RBN export slider as HOPO
 	eof_import_export_preferences_dialog[15].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;	//GP import truncates short chords
@@ -1583,8 +1584,9 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[24].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;	//Allow RS2 extended ASCII lyrics
 	eof_import_export_preferences_dialog[25].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;	//Don't warn about INI differences
 	eof_import_export_preferences_dialog[26].flags = eof_render_mid_beat_tempos_blue ? D_SELECTED : 0;		//Render mid beat tempos blue
-	eof_import_export_preferences_dialog[27].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
-	eof_import_export_preferences_dialog[28].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;	//GH import sustain threshold prompt
+	eof_import_export_preferences_dialog[27].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
+	eof_import_export_preferences_dialog[28].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
+	eof_import_export_preferences_dialog[29].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;	//GH import sustain threshold prompt
 
 	do
 	{	//Run the dialog
@@ -1599,7 +1601,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_write_fof_files = (eof_import_export_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
 			eof_write_gh_files = (eof_import_export_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
 			eof_disable_rs_wav = (eof_import_export_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
+			eof_write_lrc_files = (eof_import_export_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_truncate_short_notes = (eof_import_export_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			eof_rbn_export_slider_hopo = (eof_import_export_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_truncate_short_chords = (eof_import_export_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
@@ -1614,8 +1616,9 @@ int eof_menu_file_import_export_preferences(void)
 			eof_rs2_export_extended_ascii_lyrics = (eof_import_export_preferences_dialog[24].flags == D_SELECTED ? 1 : 0);
 			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[25].flags == D_SELECTED ? 1 : 0);
 			eof_render_mid_beat_tempos_blue = (eof_import_export_preferences_dialog[26].flags == D_SELECTED ? 1 : 0);
-			eof_disable_ini_export = (eof_import_export_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
-			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
+			eof_disable_ini_export = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
+			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1627,7 +1630,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[9].flags = D_SELECTED;		//Save FoF/CH/Phase Shift files
 			eof_import_export_preferences_dialog[10].flags = 0;				//Save Guitar Hero files
 			eof_import_export_preferences_dialog[11].flags = 0;				//Don't write Rocksmith WAV file
-			eof_import_export_preferences_dialog[12].flags = 0;				//GP import beat text as sections, markers as phrases
+			eof_import_export_preferences_dialog[12].flags = 0;				//Save LRC, ELRC, QRC lyric files
 			eof_import_export_preferences_dialog[13].flags = D_SELECTED;	//GP import truncates short notes
 			eof_import_export_preferences_dialog[14].flags = 0;				//RBN export slider as HOPO
 			eof_import_export_preferences_dialog[15].flags = D_SELECTED;	//GP import truncates short chords
@@ -1642,8 +1645,9 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[24].flags = D_SELECTED;	//Allow RS2 extended ASCII lyrics
 			eof_import_export_preferences_dialog[25].flags = 0;				//Don't warn about INI differences
 			eof_import_export_preferences_dialog[26].flags = D_SELECTED;	//Render mid beat tempos blue
-			eof_import_export_preferences_dialog[27].flags = 0;				//Don't write INI file
-			eof_import_export_preferences_dialog[28].flags = 0;				//GH import sustain threshold prompt
+			eof_import_export_preferences_dialog[27].flags = 0;				//GP import beat text as sections, markers as phrases
+			eof_import_export_preferences_dialog[28].flags = 0;				//Don't write INI file
+			eof_import_export_preferences_dialog[29].flags = 0;				//GH import sustain threshold prompt
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2536,7 +2540,7 @@ int eof_menu_file_feedback_import(void)
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 		{	//Import failed
-			(void) puts("Assert() handled sucessfully!");
+			(void) puts("Assert() handled successfully!");
 			allegro_message("dB Chart import failed");
 			eof_show_mouse(NULL);
 			eof_cursor_visible = 1;
@@ -4021,7 +4025,7 @@ int eof_save_helper(char *destfilename, char silent)
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 		{	//Lyric export failed
-			(void) puts("Assert() handled sucessfully!");
+			(void) puts("Assert() handled successfully!");
 			allegro_message("Plain script lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 		}
 		else
@@ -4050,13 +4054,55 @@ int eof_save_helper(char *destfilename, char silent)
 			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 			{	//Lyric export failed
-				(void) puts("Assert() handled sucessfully!");
+				(void) puts("Assert() handled successfully!");
 				allegro_message("Script lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 			}
 			else
 			{
 				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 			}
+		}
+	}
+
+	if(eof_write_lrc_files && eof_song->vocal_track[0]->lyrics && eof_song->vocal_track[0]->lines)
+	{	//If the user opted to save LRC lyric files and there are lyrics and lyric lines defined
+		//Export normal LRC
+		(void) append_filename(eof_temp_filename, newfolderpath, "lyrics.lrc", (int) sizeof(eof_temp_filename));
+		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+		{	//Lyric export failed
+			(void) puts("Assert() handled successfully!");
+			allegro_message("LRC lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
+		}
+		else
+		{
+			(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,LRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to LRC format
+		}
+
+		//Export extended LRC
+		(void) append_filename(eof_temp_filename, newfolderpath, "lyrics.elrc", (int) sizeof(eof_temp_filename));
+		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+		{	//Lyric export failed
+			(void) puts("Assert() handled successfully!");
+			allegro_message("ELRC lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
+		}
+		else
+		{
+			(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,ELRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to ELRC format
+		}
+
+		//Export QRC
+		(void) append_filename(eof_temp_filename, newfolderpath, "lyrics.qrc", (int) sizeof(eof_temp_filename));
+		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+		{	//Lyric export failed
+			(void) puts("Assert() handled successfully!");
+			allegro_message("QRC lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
+		}
+		else
+		{
+			(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,QRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to QRC format
 		}
 	}
 
@@ -4170,7 +4216,7 @@ int eof_save_helper(char *destfilename, char silent)
 				jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 				if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 				{	//Lyric export failed
-					(void) puts("Assert() handled sucessfully!");
+					(void) puts("Assert() handled successfully!");
 					allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 				}
 				else
@@ -4206,7 +4252,7 @@ int eof_save_helper(char *destfilename, char silent)
 				jumpcode = setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 				if(jumpcode != 0) //if program control returned to the setjmp() call above returning any nonzero value
 				{	//Lyric export failed
-					(void) puts("Assert() handled sucessfully!");
+					(void) puts("Assert() handled successfully!");
 					allegro_message("Rocksmith lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 				}
 				else

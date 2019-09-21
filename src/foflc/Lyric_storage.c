@@ -33,7 +33,7 @@ jmp_buf jumpbuffer;			//Used in the conditional compiling code to allow this pro
 							//in the event of an exception that would normally terminate the program
 jmp_buf FLjumpbuffer;		//This is used by FLC's internal logic to provide for exception handling (ie. in validating MIDI files with DetectLyricFormat())
 char useFLjumpbuffer=0;		//Boolean:  If nonzero, FLC's logic intercepts in exit_wrapper() regardless of whether EOF_BUILD is defined
-const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle","XML","JamBand","Rocksmith XML","Rocksmith 2 XML","Plain script"};
+const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle","XML","JamBand","Rocksmith XML","Rocksmith 2 XML","Plain script","QRC"};
 
 
 
@@ -1962,6 +1962,15 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 			return detectionlist;
 		}
 
+		temp=strstr(buffer,"<QrcInfos>");	//Search for XML tag used in QRC lyrics
+		if(temp && isxml)
+		{	//If this tag AND the XML header tag were read
+			free(buffer);
+			fclose_err(inf);
+			detectionlist->format=QRC_FORMAT;
+			return detectionlist;
+		}
+
 		for(index=0;buffer[index]!='\0';index++)	//Skip leading whitespace
 			if(!isspace(buffer[index]))				//If this character is the first non whitespace character in the line
 				break;								//Break from this loop
@@ -2362,6 +2371,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 			case C9C_FORMAT:
 			case RS_FORMAT:
 			case RS2_FORMAT:
+			case QRC_FORMAT:
 				if(lasttype == 1)
 				{
 					(void) puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");

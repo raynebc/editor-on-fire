@@ -6,6 +6,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <time.h>
 #include "LRC_parse.h"
 #include "Lyric_storage.h"
 
@@ -15,8 +16,9 @@
 #endif
 
 #ifdef USEMEMWATCH
-#ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
-#include "../memwatch.h"
+#ifdef EOF_BUILD			//In the EOF code base,
+#include "../main.h"		//The EOF version string is defined here
+#include "../memwatch.h"	//memwatch.h is at the root
 #else
 #include "memwatch.h"
 #endif
@@ -607,7 +609,7 @@ void Export_LRC(FILE *outf)
 			}
 			else if(Lyrics.out_format == ELRC_FORMAT)
 				//There is another lyric in this line and outputting in extended LRC format, write its timestamp
-					WriteLRCTimestamp(outf,'<','>',temp->next->start);
+				WriteLRCTimestamp(outf,'<','>',temp->next->start);
 
 			temp=temp->next;	//Advance to next lyric piece as normal
 		}//while(temp != NULL)
@@ -618,4 +620,114 @@ void Export_LRC(FILE *outf)
 	}//end while(curline != NULL)
 
 	if(Lyrics.verbose)	printf("\nLRC export complete.  %lu lyrics written\n",Lyrics.piececount);
+}
+
+void Export_QRC(FILE *outf)
+{
+	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
+	struct Lyric_Piece *temp=NULL;		//A conductor for the lyric pieces list
+	int errornumber=0;
+	time_t current_time;
+
+	assert_wrapper(outf != NULL);			//This must not be NULL
+	assert_wrapper(Lyrics.piececount != 0);	//This function is not to be called with an empty Lyrics structure
+
+	if(Lyrics.verbose)	printf("\nExporting QRC lyrics to file \"%s\"\n\nWriting tags\n",Lyrics.outfilename);
+
+//Write XML tags
+	fputs_err("<?xml version=\"1.0\" encoding=\"windows-1252\"?>\n",outf);
+	fputs_err("<QrcInfos>\n",outf);
+	current_time = time(NULL);
+	if(fprintf(outf,"<QrcHeadInfo SaveTime=\"%lu\" Version=\"100\"/>\n", (unsigned long)current_time) < 0)
+		errornumber=errno;
+	fputs_err("<LyricInfo LyricCount=\"1\">\n",outf);
+	fputs_err("<Lyric_1 LyricType=\"1\" LyricContent=\"",outf);
+
+//Write metadata tags
+	if(Lyrics.Title != NULL)
+		if(fprintf(outf,"[ti:%s]\n",Lyrics.Title) < 0)
+			errornumber=errno;
+
+	if(Lyrics.Artist != NULL)
+		if(fprintf(outf,"[ar:%s]\n",Lyrics.Artist) < 0)
+			errornumber=errno;
+
+	if(Lyrics.Album != NULL)
+		if(fprintf(outf,"[al:%s]\n",Lyrics.Album) < 0)
+			errornumber=errno;
+
+	if(Lyrics.Editor != NULL)
+		if(fprintf(outf,"[by:%s]\n",Lyrics.Editor) < 0)
+			errornumber=errno;
+
+	if(Lyrics.Offset != NULL)
+		if(fprintf(outf,"[offset:%s]\n",Lyrics.Offset) < 0)
+			errornumber=errno;
+
+	#ifdef EOF_BUILD
+		if(fprintf(outf,"[re:%s]\n",EOF_VERSION_STRING) < 0)
+			errornumber=errno;
+	#else
+		if(fprintf(outf,"[re:%s]\n",PROGVERSION) < 0)
+			errornumber=errno;
+	#endif
+
+	if(errornumber != 0)
+	{
+		printf("Error exporting tags: %s\nAborting\n",strerror(errornumber));
+		exit_wrapper(1);
+	}
+
+//Write lyrics
+	if(Lyrics.verbose)	(void) puts("Writing lyrics");
+
+	curline=Lyrics.lines;	//Point lyric line conductor to first line of lyrics
+
+	while(curline != NULL)	//For each line of lyrics
+	{
+	//Write line timings
+		if(fprintf(outf,"[%lu,%lu]",curline->start,curline->duration) < 0)
+			errornumber=errno;
+
+		if(Lyrics.verbose)	printf("\tLyric line: ");
+
+		temp=curline->pieces;	//Starting with the first piece of lyric in this line
+
+		while(temp != NULL)	//For each piece of lyric in this line
+		{
+			assert_wrapper(temp->lyric != NULL);
+
+		//Write lyric
+			fputs_err(temp->lyric,outf);
+
+			if(Lyrics.verbose)	printf("'%s'",temp->lyric);
+
+		//Insert a space for non-grouped lyrics
+			if((temp->next != NULL) && (!temp->groupswithnext))	//If there is another lyric in this line and it does not group with this one
+				fputc_err(' ',outf);	//Append a space before the timestamp is written
+
+		//Write lyric timings
+			if(fprintf(outf,"(%lu,%lu)",temp->start,temp->duration) < 0)
+				errornumber=errno;
+
+			temp=temp->next;	//Advance to next lyric piece as normal
+
+			if(errornumber != 0)
+			{
+				printf("Error exporting lyrics: %s\nAborting\n",strerror(errornumber));
+				exit_wrapper(1);
+			}
+		}//while(temp != NULL)
+
+		fputc_err('\n',outf);	//This was the last lyric in the line, write a newline char
+		curline=curline->next;	//Advance to next line of lyrics
+
+		if(Lyrics.verbose)	(void) putchar('\n');
+	}//end while(curline != NULL)
+
+//Write XML tag endings
+	fputs_err("\"/>\n",outf);
+	fputs_err("</LyricInfo>\n",outf);
+	fputs_err("</QrcInfos>\n",outf);
+	if(Lyrics.verbose)	printf("\nQRC export complete.  %lu lyrics written\n",Lyrics.piececount);
 }

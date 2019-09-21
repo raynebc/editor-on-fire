@@ -152,6 +152,7 @@ int         eof_abridged_rs2_export_warning_suppressed = 0;	//Set to nonzero if 
 int         eof_rs2_export_extended_ascii_lyrics = 0;	//If nonzero, a larger set of text characters are allowed to export to RS2 lyrics
 int         eof_disable_ini_difference_warnings = 0;	//If nonzero, warnings will be given during project load if there are tags in song.ini that don't match the contents of the EOF project
 int         eof_write_bf_files = 0;				//If nonzero, an extra XML file is written during save that is used for authoring Bandfuse customs
+int         eof_write_lrc_files = 0;			//If nonzero, lyrics in LRC, ELRC and QRC formats are each written during save
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
