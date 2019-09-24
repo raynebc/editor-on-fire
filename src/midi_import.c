@@ -396,6 +396,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	double beatlength, beatreallength;	//The delta and realtime lengths, respectively, of the beat being processed
 	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
+	unsigned long event_miditime;
 	unsigned long beat;
 	long picked_track;
 	char used_track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};	//for Rock Band songs, we need to ignore certain tracks
@@ -1441,7 +1442,8 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 				set_window_title(ttit);
 			}
 
-			event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset, &gridsnap);
+			event_miditime = eof_import_events[i]->event[j]->pos;	//Simplify
+			event_realtime = eof_ConvertToRealTimeInt(event_miditime,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset, &gridsnap);
 			eof_track_resize(sp, picked_track, note_count[picked_track] + 1);	//Ensure the track can accommodate another note
 
 			midinote = eof_import_events[i]->event[j]->d1;	//Simplify
@@ -1482,6 +1484,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						{
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->note = midinote;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
+							sp->vocal_track[0]->lyric[note_count[picked_track]]->midi_pos = event_miditime;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
 							if(gridsnap)
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->tflags |= EOF_NOTE_TFLAG_RESNAP;	//Track that the lyric is expected to be grid snapped after MIDI import completes
@@ -1600,6 +1603,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							{	//Otherwise add the lyric
 								strcpy(sp->vocal_track[0]->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->note = 0;
+								sp->vocal_track[0]->lyric[note_count[picked_track]]->midi_pos = event_miditime;
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
 								if(!linetrack)
@@ -1640,7 +1644,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					if(eof_import_events[i]->game == 1)
 					{	//If the MIDI is in Power Gig notation
 #ifdef EOF_DEBUG_MIDI_IMPORT
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, eof_import_events[i]->event[j]->pos, event_realtime);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, event_miditime, event_realtime);
 						eof_log(eof_log_string, 1);
 #endif
 						if((midinote >= 80) && (midinote <= 82))
@@ -1983,7 +1987,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					unsigned char accent = 0, ghost = 0;
 
 #ifdef EOF_DEBUG
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, event_miditime, event_realtime);
 					eof_log(eof_log_string, 2);
 #endif
 
@@ -2121,6 +2125,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						}
 						eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
 						eof_set_note_pos(sp, picked_track, notenum, event_realtime);
+						eof_set_note_midi_pos(sp, picked_track, notenum, event_miditime);
 						eof_set_note_length(sp, picked_track, notenum, 0);				//The length will be kept at 0 until the end of the note is found
 						eof_set_note_flags(sp, picked_track, notenum, 0);				//Clear the flag here so that the flag can be set later (ie. if it's an Expert+ double bass note)
 						eof_set_note_type(sp, picked_track, notenum, diff);				//Apply the determined difficulty
@@ -2186,7 +2191,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					char ghlopen = 0;
 
 #ifdef EOF_DEBUG
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, event_miditime, event_realtime);
 					eof_log(eof_log_string, 2);
 #endif
 
@@ -2395,7 +2400,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								switch(eof_import_events[i]->event[j]->dp[5])
 								{	//Check the value of the phrase ID
 									case 1:	//Open strum
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Open strum (deltapos=%lu, pos=%lu, diff=%d, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, phrasediff, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Open strum (deltapos=%lu, pos=%lu, diff=%d, status=%d)", event_miditime, event_realtime, phrasediff, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2423,7 +2428,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 									case 4:	//Slider
 										if((sp->track[picked_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[picked_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 										{	//Only parse slider phrases for legacy guitar tracks
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Slider (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Slider (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 											eof_log(eof_log_string, 2);
 
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2454,7 +2459,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 									case 5:	//Open hi hat
 										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
 										{	//Only parse hi hat phrases for the drum tracks
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Open hi hat (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Open hi hat (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 											eof_log(eof_log_string, 2);
 
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2476,7 +2481,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 									case 6:	//Pedal controlled hi hat
 										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
 										{	//Only parse hi hat phrases for the drum tracks
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pedal hi hat (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pedal hi hat (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 											eof_log(eof_log_string, 2);
 
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2498,7 +2503,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 									case 7:	//Snare rim shot
 										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
 										{	//Only parse rim shot phrases for the drum tracks
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Rim shot (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Rim shot (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 											eof_log(eof_log_string, 2);
 
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2520,7 +2525,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 									case 8:	//Sizzle hi hat
 										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
 										{	//Only parse hi hat phrases for the drum tracks
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Sizzle hi hat (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Sizzle hi hat (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 											eof_log(eof_log_string, 2);
 
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2542,7 +2547,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 									case 17:	//Yellow Tom + Cymbal
 										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
 										{	//Only parse hi hat phrases for the drum tracks
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Yellow tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Yellow tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 											eof_log(eof_log_string, 2);
 
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2564,7 +2569,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 									case 18:	//Blue Tom + Cymbal
 										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
 										{	//Only parse hi hat phrases for the drum tracks
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Blue tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Blue tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 											eof_log(eof_log_string, 2);
 
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2586,7 +2591,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 									case 19:	//Green Tom + Cymbal
 										if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
 										{	//Only parse hi hat phrases for the drum tracks
-											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Green tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Green tom/cymbal combo (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 											eof_log(eof_log_string, 2);
 
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2622,7 +2627,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 				{	//Control change event
 					if(eof_import_events[i]->game == 1)
 					{	//If the MIDI is in Power Gig notation
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, eof_import_events[i]->event[j]->pos, event_realtime);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, event_miditime, event_realtime);
 						eof_log(eof_log_string, 2);
 
 						if(eof_import_events[i]->event[j]->d1 == 68)
@@ -2715,7 +2720,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
 					char strum = 0;	//Will store the strum type, to reduce duplicated logic below
 
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", midinote, eof_import_events[i]->event[j]->pos, event_realtime);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", midinote, event_miditime, event_realtime);
 					eof_log(eof_log_string, 2);
 
 					/* store forced Ho/Po markers, when the note off for this marker occurs, search for note with same position and apply it to that note */
@@ -2885,6 +2890,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							notenum = note_count[picked_track];
 							eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
 							eof_set_note_pos(sp, picked_track, notenum, event_realtime);
+							eof_set_note_midi_pos(sp, picked_track, notenum, event_miditime);
 							eof_set_note_length(sp, picked_track, notenum, 0);	//The length will be kept at 0 until the end of the note is found
 							eof_set_note_flags(sp, picked_track, notenum, 0);	//Clear the flag here so that the flag can be set if it has a special status
 							eof_set_note_type(sp, picked_track, notenum, diff);	//Apply the determined difficulty
@@ -2968,7 +2974,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 				/* note off so get length of note */
 				else if(eof_import_events[i]->event[j]->type == 0x80)
 				{	//Note off event
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, event_miditime, event_realtime);
 					eof_log(eof_log_string, 2);
 
 					/* detect forced HOPO */
@@ -3229,7 +3235,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								switch(eof_import_events[i]->event[j]->dp[5])
 								{	//Check the value of the phrase ID
 									case 2:	//Pro guitar slide up
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar slide up (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar slide up (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3248,7 +3254,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 3:	//Pro guitar slide down
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar slide down (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar slide down (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3267,7 +3273,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 9:	//Pro guitar palm mute
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar palm mute (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar palm mute (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3286,7 +3292,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 10:	//Pro guitar vibrato
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar vibrato (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar vibrato (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3305,7 +3311,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 11:	//Pro guitar harmonic
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar harmonic (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar harmonic (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3324,7 +3330,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 12:	//Pro guitar pinch harmonic
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar pinch harmonic (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar pinch harmonic (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3343,7 +3349,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 13:	//Pro guitar bend
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar bend (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar bend (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3362,7 +3368,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 14:	//Pro guitar accent
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar accent (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar accent (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3381,7 +3387,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 15:	//Pro guitar pop
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar pop (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar pop (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3400,7 +3406,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 16:	//Pro guitar slap
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar slap (deltapos=%lu, pos=%lu, status=%d)", eof_import_events[i]->event[j]->pos, event_realtime, eof_import_events[i]->event[j]->dp[6]);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Pro guitar slap (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 										eof_log(eof_log_string, 2);
 
 										if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -3681,6 +3687,12 @@ eof_log("\tThird pass complete", 1);
 		memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
 	}
 
+	//Check for chord snap authoring errors
+	if(eof_midi_import_check_unsnapped_chords(sp))
+	{
+		allegro_message("Warning:  At least one note has a chord snap error (gems defined 1-10 delta ticks apart).  These gems have been highlighted.");
+	}
+
 //#ifdef EOF_DEBUG_MIDI_IMPORT
 eof_log("\tMIDI import complete", 1);
 //#endif
@@ -3723,4 +3735,47 @@ unsigned long eof_repair_midi_import_grid_snap(void)
 	}
 
 	return 1;
+}
+
+int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp)
+{
+	int marked = 0;
+	unsigned long ctr, ctr2, this_midi_pos, next_midi_pos, flags;
+	long next;
+
+	if(!sp)
+		return 0;	//Invalid parameter
+
+	eof_log("eof_midi_import_check_unsnapped_chords() entered", 1);
+
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track in the project
+		if(ctr == EOF_TRACK_VOCALS)
+			continue;	//Skip the vocal track
+
+		eof_track_sort_notes(sp, ctr);	//Ensure the track is sorted
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tChecking %s", sp->track[ctr]->name);
+		eof_log(eof_log_string, 1);
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note in the track
+			this_midi_pos = eof_get_note_midi_pos(sp, ctr, ctr2);
+			next = eof_track_fixup_next_note(sp, ctr, ctr2);	//Look for another note in this track difficulty
+			if(next > 0)
+			{	//If there is a next note
+				next_midi_pos = eof_get_note_midi_pos(sp, ctr, next);
+				if((next_midi_pos > this_midi_pos) && (next_midi_pos < this_midi_pos + 11))
+				{	//If the next note was at a different delta position, but less than 11 ticks away
+					flags = eof_get_note_flags(sp, ctr, ctr2);
+					eof_set_note_flags(sp, ctr, ctr2, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the first note
+
+					flags = eof_get_note_flags(sp, ctr, next);
+					eof_set_note_flags(sp, ctr, next, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the second note
+
+					marked = 1;	//Track that this note and the next were highlighted
+				}
+			}
+		}
+	}
+
+	return marked;
 }

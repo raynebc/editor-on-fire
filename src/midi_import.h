@@ -22,8 +22,14 @@ unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, unsigne
 	//Parses a variable length value from data[pos], returning it and adding the size (in bytes) of the variable length value to bytes_used
 	//bytes_used is NOT initialized to zero within this function, the calling function must set it appropriately
 unsigned long eof_repair_midi_import_grid_snap(void);
-	//Parses all notes/lyrics in the active project and processes those that has the EOF_NOTE_TFLAG_RESNAP temporary flag set during MIDI import
+	//Parses all notes/lyrics in the active project and processes those that have the EOF_NOTE_TFLAG_RESNAP temporary flag set during MIDI import
 	//For such notes that are not currently grid snapped, they are each moved to the nearest grid snap of any size and the temporary flag is cleared
+	//Currently, this is called after eof_import_midi() and eof_init_after_load() have completed
 	//Returns zero on error
+int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp);
+	//Checks the midi_pos variable (set during MIDI import) for the notes in each instrument track in the specified chart
+	//If any two notes in a track difficulty are within 10ms of each other but not at the same position, they are highlighted as possible "chord snapping" authoring error
+	//If any notes were highlighted in this way, nonzero is returned
+	//This is to be called at the end of eof_import_midi() before any timing changes such as those made by eof_repair_midi_import_grid_snap() occur
 
 #endif

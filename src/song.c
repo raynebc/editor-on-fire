@@ -4949,6 +4949,43 @@ void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, uns
 	}
 }
 
+void eof_set_note_midi_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos)
+{
+// 	eof_log("eof_set_note_pos() entered");
+
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->midi_pos = pos;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				sp->vocal_track[tracknum]->lyric[note]->midi_pos = pos;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				sp->pro_guitar_track[tracknum]->note[note]->midi_pos = pos;
+			}
+		break;
+
+		default:
+		break;
+	}
+}
 void eof_move_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long amount, char dir)
 {
 // 	eof_log("eof_move_note_pos() entered");
@@ -8013,6 +8050,24 @@ char eof_track_has_ghost(EOF_SONG *sp, unsigned long track)
 	}
 
 	return 0;	//Track has no ghosted gems
+}
+
+char eof_track_has_highlighting(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long i;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the track
+		if(eof_note_is_highlighted(sp, track, i))
+		{	//If the note is highlighted
+			return 1;
+		}
+	}
+
+	return 0;	//Track has no highlighted notes
 }
 
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track)

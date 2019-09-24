@@ -600,7 +600,14 @@ void eof_prepare_song_menu(void)
 		{	//Access this array reflecting track numbering starting from 0 instead of 1
 			if(eof_get_track_size_all(eof_song, i + 1))
 			{	//If the track exists and is populated with normal notes or tech notes, draw the track populated indicator
-				eof_track_selected_menu[i].text[0] = '*';
+				if(eof_track_has_highlighting(eof_song, i + 1))
+				{	//If any of the track's notes are highlighted
+					eof_track_selected_menu[i].text[0] = '!';
+				}
+				else
+				{
+					eof_track_selected_menu[i].text[0] = '*';
+				}
 			}
 			else
 			{	//Otherwise clear the indicator from the menu

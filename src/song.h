@@ -664,6 +664,7 @@ unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long 
 unsigned long eof_get_note_endpos(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the end position of the specified track's note/lyric, or 0 on error
 unsigned long eof_get_note_midi_pos(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the defined midi position of the specified note (used during Feedback import), or 0 on error
 void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the position of the specified track's note/lyric
+void eof_set_note_midi_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the midi position of the specified track's note/lyric
 void eof_move_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long amount, char dir);
 	//If dir > 0, increases the position of the specified note by the specified amount
 	//If dir < 0, decreases the position of the specified note by the specified amount ONLY if it won't make the position negative
@@ -964,6 +965,8 @@ char eof_track_has_accent(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track has any gems that are accented
 char eof_track_has_ghost(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified legacy track has any gems that are ghosted
+char eof_track_has_highlighting(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if any of the specified track's notes are highlighted
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a legacy guitar track
 int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track);
