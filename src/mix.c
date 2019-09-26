@@ -195,6 +195,15 @@ void eof_mix_callback_stereo(void * buf, int length)
 			sum2 = sum3;
 		}
 
+		/* perform center isolation if enabled */
+		else if(eof_center_isolation)
+		{
+			long sum3 = (sum + sum2) / 2;		//Add the two channels' amplitudes and divide by two
+
+			sum = sum3;		//And use that for each channel's amplitude
+			sum2 = sum3;
+		}
+
 		/* apply volume multiplier */
 		if(eof_chart_volume != 100)		//If the chart volume is to be less than 100%
 		{

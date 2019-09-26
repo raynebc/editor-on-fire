@@ -212,6 +212,7 @@ int         eof_anchor_all_beats = 1;
 int         eof_disable_windows = 0;
 int         eof_disable_vsync = 0;
 int         eof_phase_cancellation = 0;		//If nonzero, the stereo mixing callback function will subtract the right channel amplitude from the left (ie. to get the effect of reducing center-panned vocals)
+int         eof_center_isolation = 0;		//If nonzero, the stereo mixing callback function will add the right channel amplitude to the left (ie. to get the effect of reducing non center-panned vocals)
 int         eof_playback_speed = 1000;
 char        eof_playback_time_stretch = 1;
 int         eof_ogg_setting = 1;
@@ -1196,6 +1197,10 @@ void eof_fix_window_title(void)
 		if(eof_phase_cancellation)
 		{	//If center panned vocals are being removed
 			(void) ustrcat(eof_window_title, "(Phase cancellation)");
+		}
+		if(eof_center_isolation)
+		{	//If center panned vocals are being removed
+			(void) ustrcat(eof_window_title, "(Center isolation)");
 		}
 	}
 	else
@@ -4767,6 +4772,8 @@ int eof_initialize(int argc, char * argv[])
 				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 				eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 				eof_detect_mid_measure_ts_changes();
+				eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+				eof_beat_stats_cached = 0;
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rba"))
 			{
@@ -4793,6 +4800,8 @@ int eof_initialize(int argc, char * argv[])
 				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 				eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 				eof_detect_mid_measure_ts_changes();
+				eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+				eof_beat_stats_cached = 0;
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))
 			{	//Import a Feedback chart via command line

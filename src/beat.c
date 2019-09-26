@@ -12,6 +12,9 @@
 #endif
 
 int eof_beat_stats_cached = 0;	//Tracks whether the cached statistics for the projects beats is current (should be reset after each load, import, undo, redo or beat operation)
+int eof_skip_mid_beats_in_measure_numbering = 0;	//Tracks whether beats inserted for mid beat tempo or TS changes should be ignored when counting beats and measures
+													//This should remain 0 until after any warnings related to mid beat changes are displayed at the end of file imports
+													//This should also be set to 0 during the time eof_save_helper_checks() is running so that it can warn about interrupted measures, etc.
 
 unsigned long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
@@ -834,10 +837,20 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 		{
 			sp->beat[i]->contains_ts_change = 0;
 
-			if(beat_counter >= beats_per_measure)
-			{	//if the beat count has incremented enough to reach the next measure
-				beat_counter = 0;
-				measure_counter++;
+			if((sp->beat[i]->flags & EOF_BEAT_FLAG_MIDBEAT) && eof_skip_mid_beats_in_measure_numbering)
+			{	//If this is a mid beat tempo change and such beats are to be skipped during measure numbering
+				if(beat_counter)
+				{	//Logic check
+					beat_counter--;	//Undo the previous beat's decrement of the beat counter so this mid-beat doesn't count
+				}
+			}
+			else
+			{	//Normal beat counting
+				if(beat_counter >= beats_per_measure)
+				{	//if the beat count has incremented enough to reach the next measure
+					beat_counter = 0;
+					measure_counter++;
+				}
 			}
 		}
 

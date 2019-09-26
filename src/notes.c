@@ -3110,6 +3110,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The status of the center isolation option
+	if(!ustricmp(macro, "CENTER_ISOLATION"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", (eof_center_isolation ? "On" : "Off"));
+		return 1;
+	}
+
+
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
 	if(!ustricmp(macro, "DEBUG_BEAT_PPQN"))

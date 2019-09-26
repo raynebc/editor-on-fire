@@ -2349,7 +2349,34 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
 		if(KEY_EITHER_ALT)
 		{	//ALT is held
-			eof_phase_cancellation ^= 1;	//Toggle this setting on/off
+			if(eof_center_isolation)
+			{	//If center isolation is in effect
+				eof_center_isolation = 0;	//Disable it
+				eof_phase_cancellation = 1;	//Enable phase cancellation
+			}
+			else
+			{	//Otherwise simply toggle this setting on/off
+				eof_phase_cancellation ^= 1;
+			}
+			eof_use_key();
+			eof_fix_window_title();
+		}
+	}
+
+	/* Toggle center isolation (ALT+I) */
+	if(eof_key_code == KEY_I)
+	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
+		if(KEY_EITHER_ALT)
+		{	//ALT is held
+			if(eof_phase_cancellation)
+			{	//If phase cancellation is in effect
+				eof_phase_cancellation = 0;	//Disable it
+				eof_center_isolation = 1;	//Enable center isolation
+			}
+			else
+			{	//Otherwise simply toggle this setting on/off
+				eof_center_isolation ^= 1;
+			}
 			eof_use_key();
 			eof_fix_window_title();
 		}

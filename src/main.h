@@ -435,6 +435,7 @@ extern int         eof_anchor_all_beats;
 extern int         eof_disable_windows;
 extern int         eof_disable_vsync;
 extern int         eof_phase_cancellation;
+extern int         eof_center_isolation;
 extern int         eof_playback_speed;
 extern char        eof_playback_time_stretch;
 extern int         eof_ogg_setting;

@@ -4,6 +4,7 @@
 #include "song.h"
 
 extern int eof_beat_stats_cached;
+extern int eof_skip_mid_beats_in_measure_numbering;
 
 unsigned long eof_get_beat(EOF_SONG * sp, unsigned long pos);
 	//Returns the beat number at or immediately before the specified position, or ULONG_MAX if the timestamp does not occur within the chart (before the first beat or after the last beat)
