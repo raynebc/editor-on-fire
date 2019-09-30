@@ -153,6 +153,7 @@ int         eof_rs2_export_extended_ascii_lyrics = 0;	//If nonzero, a larger set
 int         eof_disable_ini_difference_warnings = 0;	//If nonzero, warnings will be given during project load if there are tags in song.ini that don't match the contents of the EOF project
 int         eof_write_bf_files = 0;				//If nonzero, an extra XML file is written during save that is used for authoring Bandfuse customs
 int         eof_write_lrc_files = 0;			//If nonzero, lyrics in LRC, ELRC and QRC formats are each written during save
+int         eof_force_pro_drum_midi_notation = 1;	//If nonzero, even drum tracks without cymbals will write with RB3 style tom markers for all yellow, blue and green drum notes (instead of no tom markers as would otherwise be done), and "pro_drums = true" is written to song.ini
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
@@ -4772,7 +4773,7 @@ int eof_initialize(int argc, char * argv[])
 				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 				eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 				eof_detect_mid_measure_ts_changes();
-				eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+///				eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
 				eof_beat_stats_cached = 0;
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rba"))
@@ -4800,7 +4801,7 @@ int eof_initialize(int argc, char * argv[])
 				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 				eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 				eof_detect_mid_measure_ts_changes();
-				eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+///				eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
 				eof_beat_stats_cached = 0;
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))

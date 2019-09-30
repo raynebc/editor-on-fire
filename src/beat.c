@@ -12,6 +12,8 @@
 #endif
 
 int eof_beat_stats_cached = 0;	//Tracks whether the cached statistics for the projects beats is current (should be reset after each load, import, undo, redo or beat operation)
+
+///Disabled for now until a more useful purpose for this feature is developed
 int eof_skip_mid_beats_in_measure_numbering = 0;	//Tracks whether beats inserted for mid beat tempo or TS changes should be ignored when counting beats and measures
 													//This should remain 0 until after any warnings related to mid beat changes are displayed at the end of file imports
 													//This should also be set to 0 during the time eof_save_helper_checks() is running so that it can warn about interrupted measures, etc.

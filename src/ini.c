@@ -294,8 +294,8 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	(void) ustrcat(ini_string, "\r\nmultiplier_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power
 
 	/* check for use of cymbal notation */
-	if(eof_track_has_cymbals(sp, EOF_TRACK_DRUM) || eof_track_has_cymbals(sp, EOF_TRACK_DRUM_PS))
-	{	//If either drum track has any notes marked as cymbals
+	if(eof_force_pro_drum_midi_notation || (eof_track_has_cymbals(sp, EOF_TRACK_DRUM) || eof_track_has_cymbals(sp, EOF_TRACK_DRUM_PS)))
+	{	//If the use of pro drum notation is being forced by user preference or either drum track has any notes marked as cymbals
 		(void) ustrcat(ini_string, "\r\npro_drums = True");	//Write the pro drum tag, which indicates notes default as cymbals unless marked as toms (used in Phase Shift)
 	}
 

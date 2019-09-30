@@ -234,6 +234,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  120, 212, 16,  2,   23,  0,    0,      1,   0,   "Save separate Guitar Hero files",NULL, NULL },
 	{ d_agup_check_proc, 248, 120, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
 	{ d_agup_check_proc, 16,  135, 222, 16,  2,   23,  0,    0,      1,   0,   "Save LRC, ELRC, QRC lyric files",NULL, NULL },
+	{ d_agup_check_proc, 248, 135, 222, 16,  2,   23,  0,    0,      1,   0,   "Force pro drum MIDI notation",NULL, NULL },
 	{ d_agup_check_proc, 16,  150, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
 	{ d_agup_check_proc, 248, 150, 186, 16,  2,   23,  0,    0,      1,   0,   "RBN export slider as HOPO",NULL, NULL },
 	{ d_agup_check_proc, 16,  165, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
@@ -1140,7 +1141,7 @@ int eof_menu_file_midi_import(void)
 			eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
 			eof_beat_stats_cached = 0;
 			eof_detect_mid_measure_ts_changes();
-			eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+///			eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
 			eof_beat_stats_cached = 0;
 		}
 		else
@@ -1581,23 +1582,24 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[10].flags = eof_write_gh_files ? D_SELECTED : 0;					//Save Guitar Hero files
 	eof_import_export_preferences_dialog[11].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 	eof_import_export_preferences_dialog[12].flags = eof_write_lrc_files ? D_SELECTED : 0;					//Save LRC, ELRC, QRC lyric files
-	eof_import_export_preferences_dialog[13].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;	//GP import truncates short notes
-	eof_import_export_preferences_dialog[14].flags = eof_rbn_export_slider_hopo ? D_SELECTED : 0;			//RBN export slider as HOPO
-	eof_import_export_preferences_dialog[15].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;	//GP import truncates short chords
-	eof_import_export_preferences_dialog[16].flags = eof_gp_import_replaces_track ? D_SELECTED : 0;			//GP import replaces active track
-	eof_import_export_preferences_dialog[17].flags = eof_imports_drop_mid_beat_tempos ? D_SELECTED : 0;		//Imports drop mid beat tempos
-	eof_import_export_preferences_dialog[18].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;		//GP import nat. harmonics only
-	eof_import_export_preferences_dialog[19].flags = eof_imports_recall_last_path ? D_SELECTED : 0;			//Import dialogs recall last path
-	eof_import_export_preferences_dialog[20].flags = eof_use_ts ? D_SELECTED : 0;							//Import/Export TS
-	eof_import_export_preferences_dialog[21].flags = eof_db_import_suppress_5nc_conversion ? D_SELECTED : 0;//dB import skips 5nc conversion
-	eof_import_export_preferences_dialog[22].flags = eof_warn_missing_bass_fhps ? D_SELECTED : 0;			//Warn about missing bass FHPs
-	eof_import_export_preferences_dialog[23].flags = eof_abridged_rs2_export ? D_SELECTED : 0;				//Abridged Rocksmith 2 export
-	eof_import_export_preferences_dialog[24].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;	//Allow RS2 extended ASCII lyrics
-	eof_import_export_preferences_dialog[25].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;	//Don't warn about INI differences
-	eof_import_export_preferences_dialog[26].flags = eof_render_mid_beat_tempos_blue ? D_SELECTED : 0;		//Render mid beat tempos blue
-	eof_import_export_preferences_dialog[27].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
-	eof_import_export_preferences_dialog[28].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
-	eof_import_export_preferences_dialog[29].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;	//GH import sustain threshold prompt
+	eof_import_export_preferences_dialog[13].flags = eof_force_pro_drum_midi_notation ? D_SELECTED : 0;		//Force pro drum MIDI notation
+	eof_import_export_preferences_dialog[14].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;	//GP import truncates short notes
+	eof_import_export_preferences_dialog[15].flags = eof_rbn_export_slider_hopo ? D_SELECTED : 0;			//RBN export slider as HOPO
+	eof_import_export_preferences_dialog[16].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;	//GP import truncates short chords
+	eof_import_export_preferences_dialog[17].flags = eof_gp_import_replaces_track ? D_SELECTED : 0;			//GP import replaces active track
+	eof_import_export_preferences_dialog[18].flags = eof_imports_drop_mid_beat_tempos ? D_SELECTED : 0;		//Imports drop mid beat tempos
+	eof_import_export_preferences_dialog[19].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;		//GP import nat. harmonics only
+	eof_import_export_preferences_dialog[20].flags = eof_imports_recall_last_path ? D_SELECTED : 0;			//Import dialogs recall last path
+	eof_import_export_preferences_dialog[21].flags = eof_use_ts ? D_SELECTED : 0;							//Import/Export TS
+	eof_import_export_preferences_dialog[22].flags = eof_db_import_suppress_5nc_conversion ? D_SELECTED : 0;//dB import skips 5nc conversion
+	eof_import_export_preferences_dialog[23].flags = eof_warn_missing_bass_fhps ? D_SELECTED : 0;			//Warn about missing bass FHPs
+	eof_import_export_preferences_dialog[24].flags = eof_abridged_rs2_export ? D_SELECTED : 0;				//Abridged Rocksmith 2 export
+	eof_import_export_preferences_dialog[25].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;	//Allow RS2 extended ASCII lyrics
+	eof_import_export_preferences_dialog[26].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;	//Don't warn about INI differences
+	eof_import_export_preferences_dialog[27].flags = eof_render_mid_beat_tempos_blue ? D_SELECTED : 0;		//Render mid beat tempos blue
+	eof_import_export_preferences_dialog[28].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
+	eof_import_export_preferences_dialog[29].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
+	eof_import_export_preferences_dialog[30].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;	//GH import sustain threshold prompt
 
 	do
 	{	//Run the dialog
@@ -1613,23 +1615,24 @@ int eof_menu_file_import_export_preferences(void)
 			eof_write_gh_files = (eof_import_export_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
 			eof_disable_rs_wav = (eof_import_export_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
 			eof_write_lrc_files = (eof_import_export_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_truncate_short_notes = (eof_import_export_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
-			eof_rbn_export_slider_hopo = (eof_import_export_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_truncate_short_chords = (eof_import_export_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_replaces_track = (eof_import_export_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
-			eof_imports_drop_mid_beat_tempos = (eof_import_export_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_nat_harmonics_only = (eof_import_export_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
-			eof_imports_recall_last_path = (eof_import_export_preferences_dialog[19].flags == D_SELECTED ? 1 : 0);
-			eof_use_ts = (eof_import_export_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
-			eof_db_import_suppress_5nc_conversion = (eof_import_export_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
-			eof_warn_missing_bass_fhps = (eof_import_export_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
-			eof_abridged_rs2_export = (eof_import_export_preferences_dialog[23].flags == D_SELECTED ? 1 : 0);
-			eof_rs2_export_extended_ascii_lyrics = (eof_import_export_preferences_dialog[24].flags == D_SELECTED ? 1 : 0);
-			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[25].flags == D_SELECTED ? 1 : 0);
-			eof_render_mid_beat_tempos_blue = (eof_import_export_preferences_dialog[26].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
-			eof_disable_ini_export = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
-			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
+			eof_force_pro_drum_midi_notation = (eof_import_export_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_truncate_short_notes = (eof_import_export_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
+			eof_rbn_export_slider_hopo = (eof_import_export_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_truncate_short_chords = (eof_import_export_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_replaces_track = (eof_import_export_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
+			eof_imports_drop_mid_beat_tempos = (eof_import_export_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_nat_harmonics_only = (eof_import_export_preferences_dialog[19].flags == D_SELECTED ? 1 : 0);
+			eof_imports_recall_last_path = (eof_import_export_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
+			eof_use_ts = (eof_import_export_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
+			eof_db_import_suppress_5nc_conversion = (eof_import_export_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
+			eof_warn_missing_bass_fhps = (eof_import_export_preferences_dialog[23].flags == D_SELECTED ? 1 : 0);
+			eof_abridged_rs2_export = (eof_import_export_preferences_dialog[24].flags == D_SELECTED ? 1 : 0);
+			eof_rs2_export_extended_ascii_lyrics = (eof_import_export_preferences_dialog[25].flags == D_SELECTED ? 1 : 0);
+			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[26].flags == D_SELECTED ? 1 : 0);
+			eof_render_mid_beat_tempos_blue = (eof_import_export_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
+			eof_disable_ini_export = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
+			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[30].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1642,23 +1645,24 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[10].flags = 0;				//Save Guitar Hero files
 			eof_import_export_preferences_dialog[11].flags = 0;				//Don't write Rocksmith WAV file
 			eof_import_export_preferences_dialog[12].flags = 0;				//Save LRC, ELRC, QRC lyric files
-			eof_import_export_preferences_dialog[13].flags = D_SELECTED;	//GP import truncates short notes
-			eof_import_export_preferences_dialog[14].flags = 0;				//RBN export slider as HOPO
-			eof_import_export_preferences_dialog[15].flags = D_SELECTED;	//GP import truncates short chords
-			eof_import_export_preferences_dialog[16].flags = D_SELECTED;	//GP import replaces active track
-			eof_import_export_preferences_dialog[17].flags = 0;				//Imports drop mid beat tempos
-			eof_import_export_preferences_dialog[18].flags = 0;				//GP import nat. harmonics only
-			eof_import_export_preferences_dialog[19].flags = 0;				//Import dialogs recall last path
-			eof_import_export_preferences_dialog[20].flags = D_SELECTED;	//Import/Export TS
-			eof_import_export_preferences_dialog[21].flags = 0;				//dB import skips 5nc conversion
-			eof_import_export_preferences_dialog[22].flags = D_SELECTED;	//Warn about missing bass FHPs
-			eof_import_export_preferences_dialog[23].flags = D_SELECTED;	//Abridged Rocksmith 2 export
-			eof_import_export_preferences_dialog[24].flags = D_SELECTED;	//Allow RS2 extended ASCII lyrics
-			eof_import_export_preferences_dialog[25].flags = 0;				//Don't warn about INI differences
-			eof_import_export_preferences_dialog[26].flags = D_SELECTED;	//Render mid beat tempos blue
-			eof_import_export_preferences_dialog[27].flags = 0;				//GP import beat text as sections, markers as phrases
-			eof_import_export_preferences_dialog[28].flags = 0;				//Don't write INI file
-			eof_import_export_preferences_dialog[29].flags = 0;				//GH import sustain threshold prompt
+			eof_import_export_preferences_dialog[13].flags = D_SELECTED;	//Force pro drum MIDI notation
+			eof_import_export_preferences_dialog[14].flags = D_SELECTED;	//GP import truncates short notes
+			eof_import_export_preferences_dialog[15].flags = 0;				//RBN export slider as HOPO
+			eof_import_export_preferences_dialog[16].flags = D_SELECTED;	//GP import truncates short chords
+			eof_import_export_preferences_dialog[17].flags = D_SELECTED;	//GP import replaces active track
+			eof_import_export_preferences_dialog[18].flags = 0;				//Imports drop mid beat tempos
+			eof_import_export_preferences_dialog[19].flags = 0;				//GP import nat. harmonics only
+			eof_import_export_preferences_dialog[20].flags = 0;				//Import dialogs recall last path
+			eof_import_export_preferences_dialog[21].flags = D_SELECTED;	//Import/Export TS
+			eof_import_export_preferences_dialog[22].flags = 0;				//dB import skips 5nc conversion
+			eof_import_export_preferences_dialog[23].flags = D_SELECTED;	//Warn about missing bass FHPs
+			eof_import_export_preferences_dialog[24].flags = D_SELECTED;	//Abridged Rocksmith 2 export
+			eof_import_export_preferences_dialog[25].flags = D_SELECTED;	//Allow RS2 extended ASCII lyrics
+			eof_import_export_preferences_dialog[26].flags = 0;				//Don't warn about INI differences
+			eof_import_export_preferences_dialog[27].flags = D_SELECTED;	//Render mid beat tempos blue
+			eof_import_export_preferences_dialog[28].flags = 0;				//GP import beat text as sections, markers as phrases
+			eof_import_export_preferences_dialog[29].flags = 0;				//Don't write INI file
+			eof_import_export_preferences_dialog[30].flags = 0;				//GH import sustain threshold prompt
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -3933,7 +3937,7 @@ int eof_save_helper(char *destfilename, char silent)
 		if(eof_save_helper_checks())	//If the user cancels the save via one of the prompts
 			return 1;	//Return cancellation
 
-		eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+///		eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
 		eof_beat_stats_cached = 0;
 
 		eof_seek_and_render_position(seektrack, seekdiff, seekpos);	//Restore the active track and seek position from before the checks
@@ -4528,7 +4532,7 @@ int eof_menu_file_gh_import(void)
 			eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
 			eof_beat_stats_cached = 0;
 			eof_detect_mid_measure_ts_changes();
-			eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+///			eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
 			eof_beat_stats_cached = 0;
 		}
 		else

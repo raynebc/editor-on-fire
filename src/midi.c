@@ -650,6 +650,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
 			prodrums = eof_track_has_cymbals(sp, j);
 
+			if(eof_force_pro_drum_midi_notation)
+				prodrums = 1;	//If the preference to force the use of pro drum notation is enabled, ensure it will export that way
+
 			//Create accent note text events as needed for the GHWT MIDI variant
 			if(format == 1)
 			{	//If writing the GHWT variant MIDI
