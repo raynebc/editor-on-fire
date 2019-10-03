@@ -4103,8 +4103,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 		}//If it is pasting into a pro guitar track
 	}//If the note is copying from a pro guitar track
 
-	if(	((eof_song->track[sourcetrack]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[sourcetrack]->track_format == EOF_LEGACY_TRACK_FORMAT)) &&
-		((eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[desttrack]->track_format != EOF_LEGACY_TRACK_FORMAT)))
+	if(eof_track_is_legacy_guitar(eof_song, sourcetrack) && !eof_track_is_legacy_guitar(eof_song, desttrack))
 	{	//If copying from a legacy guitar track to a non legacy guitar track, erase conflicting flags
 		*flags &= ~EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
 		*flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;

@@ -3182,8 +3182,8 @@ int eof_save_helper_checks(void)
 	/* check 5 lane guitar note lengths */
 	for(ctr = 1; !note_length_warned && eof_min_note_length && (ctr < eof_song->tracks); ctr++)
 	{	//For each track (only check if the user defined a minimum length, and only if the user didn't already decline to cancel when an offending note was found)
-		if((eof_song->track[ctr]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[ctr]->track_format != EOF_LEGACY_TRACK_FORMAT))
-			continue;	//If this isn't a 5 lane guitar track, skip it
+		if(!eof_track_is_legacy_guitar(eof_song, ctr))
+			continue;	//If this isn't a legacy guitar track, skip it
 
 		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
 		{	//For each note in the track

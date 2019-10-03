@@ -223,7 +223,14 @@ void eof_prepare_track_menu(void)
 		}
 		else
 		{
-			eof_track_phaseshift_menu[0].flags = 0;
+			if(!eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+			{	//If a legacy guitar track isn't active
+				eof_track_phaseshift_menu[0].flags = D_DISABLED;
+			}
+			else
+			{
+				eof_track_phaseshift_menu[0].flags = 0;
+			}
 		}
 
 		/* enable GHL mode */
@@ -3180,7 +3187,7 @@ int eof_menu_track_open_strum(void)
 	unsigned long ctr;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 
-	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT) || (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR))
+	if(!eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 		return 1;	//Don't allow this function to run unless a legacy guitar/bass track is active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;

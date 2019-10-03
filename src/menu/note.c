@@ -6758,7 +6758,7 @@ int eof_menu_slider_mark(void)
 	EOF_PHRASE_SECTION *sectionptr;
 	int note_selection_updated;
 
-	if(((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_selected_track != EOF_TRACK_KEYS)) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
+	if(!eof_track_is_legacy_guitar(eof_song, eof_selected_track) && (eof_selected_track != EOF_TRACK_KEYS))
 		return 1;	//Do not allow this function to run unless a legacy guitar track or the keys track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
@@ -6893,7 +6893,7 @@ int eof_menu_slider_unmark(void)
 	int note_selection_updated;
 	char undo_made = 0;
 
-	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
+	if(!eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a legacy guitar track is active
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
@@ -6972,7 +6972,7 @@ int eof_menu_tremolo_erase_all(void)
 
 int eof_menu_slider_erase_all(void)
 {
-	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
+	if(!eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a legacy guitar track is active
 
 	eof_clear_input();

@@ -26,10 +26,12 @@ unsigned long eof_repair_midi_import_grid_snap(void);
 	//For such notes that are not currently grid snapped, they are each moved to the nearest grid snap of any size and the temporary flag is cleared
 	//Currently, this is called after eof_import_midi() and eof_init_after_load() have completed
 	//Returns zero on error
-int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp);
+int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp, int function);
 	//Checks the midi_pos variable (set during MIDI import) for the notes in each instrument track in the specified chart
-	//If any two notes in a track difficulty are within 10ms of each other but not at the same position, they are highlighted as possible "chord snapping" authoring error
-	//If any notes were highlighted in this way, nonzero is returned
+	//If any two notes in a track difficulty are within 10ms of each other but not at the same position, they are regarded as authoring errors where they were probably meant to be a chord
+	//If function is zero, if there are such notes they are highlighted
+	//If function is nononzero, if there are any such notes, the user is prompted about whether the later gems in the unsnapped chord should be re-aligned with the earlier gem
+	//If any notes were deemed to be unsnapped chords, nonzero is returned
 	//This is to be called at the end of eof_import_midi() before any timing changes such as those made by eof_repair_midi_import_grid_snap() occur
 
 #endif

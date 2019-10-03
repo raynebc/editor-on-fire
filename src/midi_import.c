@@ -1321,6 +1321,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		}
 	}
 
+
 	/* third pass, create EOF notes */
 	eof_log("\tPass three, creating notes", 1);
 
@@ -3460,7 +3461,6 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		{	//If this is not a Power Gig formatted MIDI, only allow one MIDI track to import into each track in the project
 			if(eof_get_track_size(sp, picked_track) > 0)
 			{	//If at least one note was imported
-				eof_track_find_crazy_notes(sp, picked_track, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status or merge into chords as appropriate)
 				used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
 			}
 		}
@@ -3688,9 +3688,20 @@ eof_log("\tThird pass complete", 1);
 	}
 
 	//Check for chord snap authoring errors
-	if(eof_midi_import_check_unsnapped_chords(sp))
+	if(eof_midi_import_check_unsnapped_chords(sp, 0))
 	{
 		allegro_message("Warning:  At least one note has a chord snap error (gems defined 1-10 delta ticks apart).  These gems have been highlighted.");
+
+		if(alert(NULL, "Re-align the gems to make them proper chords?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to automatically fix the unsnapped chords
+			eof_midi_import_check_unsnapped_chords(sp, 1);
+		}
+	}
+
+	//Mark any remaining overlapping notes as crazy
+	for(i = 1; i < sp->tracks; i++)
+	{	//For each track
+		eof_track_find_crazy_notes(sp, i, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status or merge into chords as appropriate)
 	}
 
 //#ifdef EOF_DEBUG_MIDI_IMPORT
@@ -3737,9 +3748,9 @@ unsigned long eof_repair_midi_import_grid_snap(void)
 	return 1;
 }
 
-int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp)
+int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp, int function)
 {
-	int marked = 0;
+	int unsnapped = 0;
 	unsigned long ctr, ctr2, this_midi_pos, next_midi_pos, flags;
 	long next;
 
@@ -3765,17 +3776,26 @@ int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp)
 				next_midi_pos = eof_get_note_midi_pos(sp, ctr, next);
 				if((next_midi_pos > this_midi_pos) && (next_midi_pos < this_midi_pos + 11))
 				{	//If the next note was at a different delta position, but less than 11 ticks away
-					flags = eof_get_note_flags(sp, ctr, ctr2);
-					eof_set_note_flags(sp, ctr, ctr2, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the first note
+					if(!function)
+					{	//If the calling function wanted to have the notes highlighted
+						flags = eof_get_note_flags(sp, ctr, ctr2);
+						eof_set_note_flags(sp, ctr, ctr2, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the first note
 
-					flags = eof_get_note_flags(sp, ctr, next);
-					eof_set_note_flags(sp, ctr, next, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the second note
+						flags = eof_get_note_flags(sp, ctr, next);
+						eof_set_note_flags(sp, ctr, next, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the second note
+					}
+					else
+					{	//If the calling function wanted to re-align the notes
+						unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);	//Take this note position
 
-					marked = 1;	//Track that this note and the next were highlighted
+						eof_set_note_pos(sp, ctr, next, pos);	//And assign it to the next note
+					}
+
+					unsnapped = 1;	//Track that an unsnapped chord was found
 				}
 			}
 		}
 	}
 
-	return marked;
+	return unsnapped;
 }
