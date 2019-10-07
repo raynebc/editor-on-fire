@@ -303,6 +303,7 @@ PACKFILE *  eof_recovery = NULL;
 unsigned long eof_seek_selection_start = 0, eof_seek_selection_end = 0;	//Used to track the keyboard driven note selection system in Feedback input mode.  If both variables are of equal value, no seek selection is in effect
 int         eof_shift_released = 1;	//Tracks the press/release of the SHIFT keys for the Feedback input mode seek selection system
 int         eof_shift_used = 0;	//Tracks whether the SHIFT key was used for a keyboard shortcut while SHIFT was held
+int         eof_tab_released = 1;	//Tracks the press/release of the tab key to prevent the Allegro bug of its status getting stuck from repeatedly triggering keyboard functions
 int         eof_emergency_stop = 0;	//Set to nonzero by eof_switch_out_callback() so that playback can be stopped OUTSIDE of the callback, in EOF's main loop so that a crash with time stretched playback can be avoided
 int         ch_sp_path_worker = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker parameter to have it run as a worker process for star power pathing evaluation
 int         ch_sp_path_worker_logging = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker_logging parameter, which will allow logging to be performed during solving

@@ -1444,57 +1444,65 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* cycle difficulty forward (Tab) */
 	if(eof_key_code == KEY_TAB)
 	{	//Read the scan code because the ASCII code cannot represent CTRL or SHIFT with the tab key
-		if(KEY_EITHER_CTRL)
-		{	//Track numbering begins at 1 instead of 0
-			if(KEY_EITHER_SHIFT)	//Shift instrument back 1 number
-			{
-				eof_shift_used = 1;	//Track that the SHIFT key was used
-				if(eof_selected_track > EOF_TRACKS_MIN)
-					(void) eof_menu_track_selected_track_number(eof_selected_track - 1, 1);
-				else
-					(void) eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1, 1);	//Wrap around
-			}
-			else					//Shift instrument forward 1 number
-			{
-				if(eof_selected_track < EOF_TRACKS_MAX - 1)
-					(void) eof_menu_track_selected_track_number(eof_selected_track + 1, 1);
-				else
-					(void) eof_menu_track_selected_track_number(EOF_TRACKS_MIN, 1);	//Wrap around
-			}
-		}
-		else
-		{
-			unsigned char eof_note_type_max = eof_set_active_difficulty(eof_note_type);	//Determine the number of usable difficulties in the active track
-
-			if(KEY_EITHER_SHIFT)
-			{
-				eof_shift_used = 1;	//Track that the SHIFT key was used
-				if(eof_note_type == 0)
-				{	//Wrap around
-					eof_note_type = eof_note_type_max;
-				}
-				else
+		if(eof_tab_released)
+		{	//Only process one Tab shortcut per press and release of the Tab key
+			if(KEY_EITHER_CTRL)
+			{	//Track numbering begins at 1 instead of 0
+				if(KEY_EITHER_SHIFT)	//Shift instrument back 1 number
 				{
-					eof_note_type--;
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					if(eof_selected_track > EOF_TRACKS_MIN)
+						(void) eof_menu_track_selected_track_number(eof_selected_track - 1, 1);
+					else
+						(void) eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1, 1);	//Wrap around
+				}
+				else					//Shift instrument forward 1 number
+				{
+					if(eof_selected_track < EOF_TRACKS_MAX - 1)
+						(void) eof_menu_track_selected_track_number(eof_selected_track + 1, 1);
+					else
+						(void) eof_menu_track_selected_track_number(EOF_TRACKS_MIN, 1);	//Wrap around
 				}
 			}
 			else
 			{
-				if(eof_note_type >= eof_note_type_max)
-				{	//Wrap around
-					eof_note_type = 0;
+				unsigned char eof_note_type_max = eof_set_active_difficulty(eof_note_type);	//Determine the number of usable difficulties in the active track
+
+				if(KEY_EITHER_SHIFT)
+				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					if(eof_note_type == 0)
+					{	//Wrap around
+						eof_note_type = eof_note_type_max;
+					}
+					else
+					{
+						eof_note_type--;
+					}
 				}
 				else
 				{
-					eof_note_type++;
+					if(eof_note_type >= eof_note_type_max)
+					{	//Wrap around
+						eof_note_type = 0;
+					}
+					else
+					{
+						eof_note_type++;
+					}
 				}
+				eof_fix_window_title();
+				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 			}
-			eof_fix_window_title();
-			(void) eof_detect_difficulties(eof_song, eof_selected_track);
-		}
-		eof_mix_find_claps();
-		eof_mix_start_helper();
-		eof_use_key();
+			eof_mix_find_claps();
+			eof_mix_start_helper();
+			eof_use_key();
+			eof_tab_released = 0;	//Track that Tab is now held down
+		}//Only process one Tab shortcut per press and release of the Tab key
+	}
+	else
+	{	//The tab key is not held
+		eof_tab_released = 1;
 	}
 
 	/* play/pause music (Space) */

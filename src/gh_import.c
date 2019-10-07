@@ -4490,7 +4490,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 
 void eof_gh_import_sp_cleanup(EOF_SONG *sp)
 {
-	unsigned long track, path, numpaths, note, numnotes;
+	unsigned long track, path, numpaths, note, numnotes, notepos, notelen, newphraseend;
 	EOF_PHRASE_SECTION *ptr;
 
 	if(!sp)
@@ -4503,15 +4503,29 @@ void eof_gh_import_sp_cleanup(EOF_SONG *sp)
 		for(path = 0; path < numpaths; path++)
 		{	//For each star power path in the track
 			ptr = eof_get_star_power_path(sp, track, path);
+			newphraseend = ptr->start_pos;	//Initialize this so we can track whether a better SP end position is found
 			if(ptr && (ptr->end_pos - ptr->start_pos > 1))
 			{	//If the phrase was found, and its length is at least 2ms
 				numnotes = eof_get_track_size(sp, track);
 				for(note = 0; note < numnotes; note++)
 				{	//For each note in the track
-					if(eof_get_note_pos(sp, track, note) == ptr->end_pos)
-					{	//If the note begins at the end position of the star power path
-						ptr->end_pos--;	//Truncate the path by 1ms
-						break;	//Stop checking notes for this star power path
+					notepos = eof_get_note_pos(sp, track, note);	//Simplify
+					notelen = eof_get_note_length(sp, track, note);
+					if((notepos >= ptr->start_pos) && (notepos + notelen) < ptr->end_pos)
+					{	//If the note begins and ends within this SP phrase
+						newphraseend = notepos + notelen;	//Track the end position of the last note beginning and ending within the phrase as a possible end position for the SP phrase
+					}
+					else if(notepos >= ptr->end_pos)
+					{	//If the note begins at or after the end position of the SP phrase
+						if(newphraseend != ptr->start_pos)
+						{	//If the SP phrase can be resized to end with the previous note in the phrase
+							ptr->end_pos = newphraseend;	//Do that
+						}
+						else
+						{
+							ptr->end_pos--;	//Otherwise truncate the path by 1ms
+						}
+						break;	//Stop checking notes for this SP phrase
 					}
 				}
 			}
@@ -4546,8 +4560,8 @@ void eof_gh_import_slider_cleanup(EOF_SONG *sp)
 					{	//If the note begins and ends within this slider phrase
 						newphraseend = notepos + notelen;	//Track the end position of the last note beginning and ending within the phrase as a possible end position for the slider
 					}
-					else if(notepos == ptr->end_pos)
-					{	//If the note begins at the end position of the slider
+					else if(notepos >= ptr->end_pos)
+					{	//If the note begins at or after the end position of the slider
 						if(newphraseend != ptr->start_pos)
 						{	//If the slider can be resized to end with the previous note in the phrase
 							ptr->end_pos = newphraseend;	//Do that

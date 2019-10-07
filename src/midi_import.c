@@ -551,10 +551,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 		while(track_pos < eof_work_midi->track[track[i]].len)
 		{	//While the byte index of this MIDI track hasn't reached the end of the track data
 			/* read delta */
-#ifdef EOF_DEBUG_MIDI_IMPORT
-			(void) snprintf(debugstring, sizeof(debugstring) - 1, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
-			eof_log(debugstring, 1);
-#endif
+///#ifdef EOF_DEBUG_MIDI_IMPORT
+///			(void) snprintf(debugstring, sizeof(debugstring) - 1, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
+///			eof_log(debugstring, 1);
+///#endif
 
 			bytes_used = 0;
 			delta = eof_parse_var_len(eof_work_midi->track[track[i]].data, track_pos, &bytes_used);
