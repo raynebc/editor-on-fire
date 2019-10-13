@@ -1368,8 +1368,8 @@ double eof_calc_beat_length(EOF_SONG *sp, unsigned long beat)
 	}
 
 	ms = (60000.0 / (60000000.0 / (double)sp->beat[beat]->ppqn));	//Get the length of a quarter note based on the tempo in effect
-	if(sp->tags->accurate_ts)
-	{	//If the user enabled the accurate time signatures song property
+	if(sp->tags->accurate_ts && (den != 4))
+	{	//If the user enabled the accurate time signatures song property, and the time signature necessitates adjustment (isn't #/4)
 		ms /= (double)den / 4.0;	//Translate this into the length of a beat based on the time signature in effect
 	}
 	return ms;
@@ -6141,7 +6141,7 @@ void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_set_num_solos() entered", 1);
+ 	eof_log("eof_set_num_solos() entered", 2);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
@@ -7054,7 +7054,7 @@ void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_set_num_trills() entered", 1);
+ 	eof_log("eof_set_num_trills() entered", 2);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
@@ -7083,7 +7083,7 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_set_num_tremolos() entered", 1);
+ 	eof_log("eof_set_num_tremolos() entered", 2);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;

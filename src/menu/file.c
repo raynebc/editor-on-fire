@@ -425,6 +425,15 @@ void eof_prepare_file_menu(void)
 		eof_file_display_menu[4].flags = 0;
 	}
 
+	if(eof_full_height_3d_preview)
+	{
+		eof_file_3d_preview_menu[2].flags = D_SELECTED;	//Display>3D Preview>Full height
+	}
+	else
+	{
+		eof_file_3d_preview_menu[2].flags = 0;
+	}
+
 	//Notes panel stuff
 	if(eof_enable_notes_panel)
 	{	//If the notes panel is enabled

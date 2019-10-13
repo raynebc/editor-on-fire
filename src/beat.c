@@ -171,8 +171,8 @@ void eof_calculate_tempo_map(EOF_SONG * sp)
 	{	//For each beat in the chart
 		has_ts_change = eof_get_ts(sp, &num, &den, ctr);	//Lookup any time signature defined at the beat
 		ppqn = 1000.0 * (sp->beat[ctr + 1]->fpos - sp->beat[ctr]->fpos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
-		if(sp->tags->accurate_ts)
-		{	//If the accurate time signatures song property is enabled
+		if(sp->tags->accurate_ts && (den != 4))
+		{	//If the accurate time signatures song property is enabled, and the time signature necessitates adjustment (isn't #/4)
 			ppqn *= (double)den / 4.0;	//Adjust for the time signature
 		}
 		sp->beat[ctr]->ppqn = ppqn + 0.5;	//Round to nearest integer
@@ -209,8 +209,8 @@ double eof_calculate_beat_pos_by_prev_beat_tempo(EOF_SONG *sp, unsigned long bea
 
 	length = (double)eof_song->beat[beat - 1]->ppqn / 1000.0;	//Calculate the length of the previous beat from its tempo (this is the formula "beat_length = 60000 / BPM", where BPM = 60000000 / ppqn)
 	(void) eof_get_effective_ts(eof_song, &num, &den, beat - 1, 0);	//Get the time signature in effect at the previous beat
-	if(den != 4)
-	{	//If the TS isn't #/4
+	if(sp->tags->accurate_ts && (den != 4))
+	{	//If the user enabled the accurate time signatures song property, and the time signature necessitates adjustment (isn't #/4)
 		length *= 4.0 / (double)den;	//Adjust for the time signature
 	}
 
@@ -410,7 +410,10 @@ void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat)
 		{	//For each beat BEFORE the target
 			(void) eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
 		}
-		multiplier = (double)den / 4.0;	//Get the beat length that is in effect when the target beat is reached
+		if(den != 4)
+		{	//If the time signature necessitates adjustment (isn't #/4)
+			multiplier = (double)den / 4.0;	//Get the beat length that is in effect when the target beat is reached
+		}
 	}
 	newbpm = 60000.0 / (beats_length * multiplier / (double)beats);
 	newppqn = 60000000.0 / newbpm;
@@ -465,7 +468,10 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 		{	//For each beat BEFORE the target
 			(void) eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
 		}
-		multiplier = (double)den / 4.0;	//Get the beat length that is in effect when the target beat is reached
+		if(den != 4)
+		{	//If the time signature necessitates adjustment (isn't #/4)
+			multiplier = (double)den / 4.0;	//Get the beat length that is in effect when the target beat is reached
+		}
 	}
 	newbpm = 60000.0 / (beats_length * multiplier / (double)beats);
 	newppqn = 60000000.0 / newbpm;
@@ -485,6 +491,7 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 	if(eof_beat_num_valid(sp, next_anchor))
 	{	//If there is another anchor, adjust all beat timings up until that anchor
 		beats = 0;
+		multiplier = 1.0;
 		if(cbeat < next_anchor)
 			beats = next_anchor - cbeat;	//The number of beats between the specified beat and the next anchor
 
@@ -499,7 +506,10 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 				(void) eof_get_ts(sp, &num, &den, i);	//Lookup any time signature defined at the beat
 			}
 			(void) eof_get_ts(sp, &num, &den, cbeat);	//Lookup any time signature change defined at the beat
-			multiplier = (double)den / 4.0;	//Get the beat length that is in effect when the target beat is reached
+			if(den != 4)
+			{	//If the time signature necessitates adjustment (isn't #/4)
+				multiplier = (double)den / 4.0;	//Get the beat length that is in effect when the target beat is reached
+			}
 		}
 		newbpm = 60000.0 / (beats_length * multiplier / (double)beats);	//Re-apply the accurate TS multiplier here if applicable
 		newppqn = 60000000.0 / newbpm;

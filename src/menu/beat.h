@@ -82,6 +82,7 @@ int eof_menu_beat_paste_tempo_map(void);
 int eof_menu_beat_validate_tempo_map(void);
 	//Calls eof_detect_tempo_map_corruption() with the option to report a valid tempo map
 
+int eof_menu_beat_remove_mid_beat_status(void);	//If the selected beat has the EOF_BEAT_FLAG_MIDBEAT flag set, creates an undo state and clears that flag
 int eof_menu_beat_calculate_bpm(void);
 int eof_menu_beat_reset_bpm(void);		//Applies the first beat's tempo to all beats in the project
 int eof_menu_beat_remove_ts(void);		//Removes all time signature changes from the project

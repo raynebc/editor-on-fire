@@ -124,6 +124,7 @@ MENU eof_beat_menu[] =
 	{"&Copy tempo map", eof_menu_beat_copy_tempo_map, NULL, 0, NULL},
 	{"&Paste tempo map", eof_menu_beat_paste_tempo_map, NULL, 0, NULL},
 	{"&Validate tempo map", eof_menu_beat_validate_tempo_map, NULL, 0, NULL},
+	{"Remove mid-beat status", eof_menu_beat_remove_mid_beat_status, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
@@ -403,22 +404,31 @@ void eof_prepare_beat_menu(void)
 			eof_beat_events_menu[2].flags = D_DISABLED;
 		}
 
+		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_MIDBEAT)
+		{	//If the selected beat has the mid beat flag set
+			eof_beat_menu[16].flags = 0;	//Remove mid-beat status
+		}
+		else
+		{
+			eof_beat_menu[16].flags = D_DISABLED;
+		}
+
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
-			eof_beat_menu[18].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[19].flags = 0;	//Beat>Rocksmith>
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
-				eof_beat_menu[19].flags = D_DISABLED;
+				eof_beat_menu[20].flags = D_DISABLED;
 			}
 			else
 			{
-				eof_beat_menu[19].flags = 0;	//Place Trainer Event
+				eof_beat_menu[20].flags = 0;	//Place Trainer Event
 			}
 		}
 		else
 		{
-			eof_beat_menu[18].flags = D_DISABLED;
 			eof_beat_menu[19].flags = D_DISABLED;
+			eof_beat_menu[20].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -853,6 +863,7 @@ void eof_menu_beat_delete_logic(unsigned long beat)
 	}
 	eof_move_text_events(eof_song, beat, 1, -1);
 	flags &= (~EOF_BEAT_FLAG_ANCHOR);	//Clear the anchor flag
+	flags &= (~EOF_BEAT_FLAG_MIDBEAT);	//Clear the mid-beat flag
 	eof_song->beat[beat - 1]->flags |= flags;
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 }
@@ -3439,6 +3450,20 @@ int eof_menu_beat_validate_tempo_map(void)
 {
 	(void) eof_detect_tempo_map_corruption(eof_song, 1);
 	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+
+	return D_O_K;
+}
+
+int eof_menu_beat_remove_mid_beat_status(void)
+{
+	if(!eof_song || (eof_selected_beat >= eof_song->beats))
+		return D_O_K;	//Error
+
+	if(!(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_MIDBEAT))
+		return D_O_K;	//Selected beat does not have this status
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	eof_song->beat[eof_selected_beat]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear this status
 
 	return D_O_K;
 }

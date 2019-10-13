@@ -16,7 +16,7 @@
 #include "memwatch.h"
 #endif
 
-#define EOF_DEBUG_MIDI_IMPORT
+//#define EOF_DEBUG_MIDI_IMPORT
 
 typedef struct
 {
@@ -552,8 +552,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 		{	//While the byte index of this MIDI track hasn't reached the end of the track data
 			/* read delta */
 ///#ifdef EOF_DEBUG_MIDI_IMPORT
-///			(void) snprintf(debugstring, sizeof(debugstring) - 1, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
-///			eof_log(debugstring, 1);
+///			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
+///			eof_log(eof_log_string, 1);
 ///#endif
 
 			bytes_used = 0;
@@ -1346,6 +1346,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		char fretwarning = 0;					//Tracks whether the user was warned about the track violating its standard fret limit, if applicable
 		unsigned long linestart = 0;			//Tracks the start of a line of lyrics for Power Gig MIDIs, which don't formally mark line placements with a note
 		char linetrack = 0;						//Is set to nonzero when linestart is tracking the position of the current line of lyrics
+		char filter = 0;						//Is set to nonzero if the track's note limit is reached and upon prompting, the user opts to import only the expert difficulty
 
 		if(eof_import_events[i]->type < 0)
 		{	//If this track is to be skipped (ie. unidentified track)
@@ -1980,6 +1981,11 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					}
 				}//Note on or note off
 
+				if(filter && (diff >= 0) && (diff != EOF_NOTE_AMAZING))
+				{	//If this event pertains to a note/marker that is being filtered from the import
+					continue;	//Skip it
+				}
+
 				/* note on */
 				if(eof_import_events[i]->event[j]->type == 0x90)
 				{
@@ -2120,9 +2126,41 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						//The note off handling will apply disjointed status where appropriate and the fixup logic will combine notes without disjointed status where appropriate
 						notenum = note_count[picked_track];
 						if(notenum >= EOF_MAX_NOTES)
-						{
-							allegro_message("Error:  The maximum number of notes is exceeded by track \"%s\".  Truncating track.", eof_midi_tracks[picked_track].name);
-							break;	//Exit outer for loop
+						{	//If the track's capacity is exceeded
+							if(!filter)
+							{	//If the user wasn't prompted about how to handle this yet
+								eof_clear_input();
+								if(alert("Error:  The maximum number of notes is exceeded by track:", eof_midi_tracks[picked_track].name, "Import expert notes only instead of truncating import?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user opts to drop notes that aren't expert difficulty
+									unsigned long filterctr, deletectr;
+
+									eof_log("\t\t\tNote limit reached.  User opted to filter out non expert notes for the track.", 1);
+									filter = 1;
+
+									for(filterctr = eof_get_track_size(sp, picked_track), deletectr = 0; filterctr > 0; filterctr--)
+									{	//For each note in the track, in reverse order
+										if(eof_get_note_type(sp, picked_track, filterctr - 1) != EOF_NOTE_AMAZING)
+										{	//If the note isn't in the expert difficulty
+											eof_track_delete_note(sp, picked_track, filterctr - 1);	//Delete the note
+											note_count[picked_track]--;	//Decrement the track's note counter
+											deletectr++;	//Count how many already-imported notes are being removed
+										}
+									}
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tRemoved %lu filtered notes.", deletectr);
+									eof_log(eof_log_string, 1);
+								}
+								else
+								{	//User opted to truncating the import of this track
+									eof_log("\t\t\tNote limit reached.  User opted to truncate the track's import.", 1);
+									break;	//Exit outer for loop
+								}
+							}
+							else
+							{	//If the user already opted to drop non expert notes but the note limit was still reached
+								eof_log("\t\t\t\tNote limit still reached.  Track import truncated.", 1);
+								allegro_message("Error:  The maximum number of expert notes is exceeded by track \"%s\".  Truncating track.", eof_midi_tracks[picked_track].name);
+								break;	//Exit outer for loop
+							}
 						}
 						eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
 						eof_set_note_pos(sp, picked_track, notenum, event_realtime);
@@ -3692,6 +3730,7 @@ eof_log("\tThird pass complete", 1);
 	{
 		allegro_message("Warning:  At least one note has a chord snap error (gems defined 1-10 delta ticks apart).  These gems have been highlighted.");
 
+		eof_clear_input();
 		if(alert(NULL, "Re-align the gems to make them proper chords?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If the user opts to automatically fix the unsnapped chords
 			eof_midi_import_check_unsnapped_chords(sp, 1);

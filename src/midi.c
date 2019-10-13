@@ -3285,8 +3285,8 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 			list=temp;	//Update list pointer
 		}
 
-		if(sp->tags->accurate_ts)
-		{	//If accurate time signatures are to be observed for export
+		if(sp->tags->accurate_ts && (den != 4))
+		{	//If accurate time signatures are to be observed for export, and the time signature necessitates adjustment (isn't #/4)
 			beatlength = (double)EOF_DEFAULT_TIME_DIVISION / ((double)den / 4.0);		//Determine the length of this beat in deltas (taking the time signature into consideration)
 		}
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
