@@ -487,10 +487,13 @@ extern unsigned long ch_sp_path_worker_number;
 extern char        eof_default_ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH];
 extern unsigned short eof_default_ini_settings;
 
+extern int         eof_display_catalog;
+extern int         eof_catalog_full_width;
+extern unsigned long eof_selected_catalog_entry;
+
 /* mouse control data */
 extern int         eof_selected_control;
 extern int         eof_cselected_control;
-extern unsigned long eof_selected_catalog_entry;
 extern unsigned long eof_selected_beat;
 extern long        eof_selected_measure;
 extern int         eof_beat_in_measure;

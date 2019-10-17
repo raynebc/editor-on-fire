@@ -1344,6 +1344,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		unsigned long tracknum;
 		unsigned long ctr;
 
+		eof_sort_notes(sp);					//Ensure the notes are sorted so the cleanup functions below will work as expected
 		eof_gh_import_sp_cleanup(sp);		//Shorten any star power phrases that end on a note's start position, so the latter isn't included in the phrase (GH uses this logic)
 		eof_gh_import_slider_cleanup(sp);	//Likewise, shorten slider (tap) phrases
 
@@ -4496,41 +4497,49 @@ void eof_gh_import_sp_cleanup(EOF_SONG *sp)
 	if(!sp)
 		return;	//Invalid parameter
 
+	eof_log("eof_gh_import_sp_cleanup() entered", 1);
+
 	for(track = 1; track < sp->tracks; track++)
 	{	//For each track in the project
 		numpaths = eof_get_num_star_power_paths(sp, track);
+		numnotes = eof_get_track_size(sp, track);
 
 		for(path = 0; path < numpaths; path++)
 		{	//For each star power path in the track
 			ptr = eof_get_star_power_path(sp, track, path);
-			newphraseend = ptr->start_pos;	//Initialize this so we can track whether a better SP end position is found
 			if(ptr && (ptr->end_pos - ptr->start_pos > 1))
 			{	//If the phrase was found, and its length is at least 2ms
-				numnotes = eof_get_track_size(sp, track);
+				newphraseend = ptr->start_pos;	//Initialize this so we can track whether a better SP end position is found
 				for(note = 0; note < numnotes; note++)
 				{	//For each note in the track
 					notepos = eof_get_note_pos(sp, track, note);	//Simplify
 					notelen = eof_get_note_length(sp, track, note);
-					if((notepos >= ptr->start_pos) && (notepos + notelen) < ptr->end_pos)
+					if((notepos >= ptr->start_pos) && (notepos + notelen <= ptr->end_pos))
 					{	//If the note begins and ends within this SP phrase
 						newphraseend = notepos + notelen;	//Track the end position of the last note beginning and ending within the phrase as a possible end position for the SP phrase
 					}
 					else if(notepos >= ptr->end_pos)
 					{	//If the note begins at or after the end position of the SP phrase
-						if(newphraseend != ptr->start_pos)
-						{	//If the SP phrase can be resized to end with the previous note in the phrase
-							ptr->end_pos = newphraseend;	//Do that
+						if(newphraseend == notepos)
+						{	//Special case:  The last note in the phrase ends on the same timestamp at which a note begins
+							newphraseend = ptr->end_pos - 2;	//Truncate the path by 2ms
 						}
-						else
-						{
-							ptr->end_pos--;	//Otherwise truncate the path by 1ms
+						else if(newphraseend == ptr->start_pos)
+						{	//If the SP phrase can't be resized to end with the previous note in the phrase
+							newphraseend = ptr->end_pos - 2;	//Truncate the path by 2ms
 						}
+
+#ifdef GH_IMPORT_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tResizing SP phrase from %lums to %lums to end at %lums", ptr->start_pos, ptr->end_pos, newphraseend);
+						eof_log(eof_log_string, 1);
+#endif
+						ptr->end_pos = newphraseend;
 						break;	//Stop checking notes for this SP phrase
-					}
-				}
-			}
-		}
-	}
+					}//If the note begins at or after the end position of the SP phrase
+				}//For each note in the track
+			}//If the phrase was found, and its length is at least 2ms
+		}//For each star power path in the track
+	}//For each track in the project
 }
 
 void eof_gh_import_slider_cleanup(EOF_SONG *sp)
@@ -4541,39 +4550,47 @@ void eof_gh_import_slider_cleanup(EOF_SONG *sp)
 	if(!sp)
 		return;	//Invalid parameter
 
+	eof_log("eof_gh_import_slider_cleanup() entered", 1);
+
 	for(track = 1; track < sp->tracks; track++)
 	{	//For each track in the project
 		numpaths = eof_get_num_sliders(sp, track);
+		numnotes = eof_get_track_size(sp, track);
 
 		for(path = 0; path < numpaths; path++)
 		{	//For each slider path in the track
 			ptr = eof_get_slider(sp, track, path);
-			newphraseend = ptr->start_pos;	//Initialize this so we can track whether a better slider end position is found
 			if(ptr && (ptr->end_pos - ptr->start_pos > 1))
 			{	//If the phrase was found, and its length is at least 2ms
-				numnotes = eof_get_track_size(sp, track);
+				newphraseend = ptr->start_pos;	//Initialize this so we can track whether a better slider end position is found
 				for(note = 0; note < numnotes; note++)
 				{	//For each note in the track
 					notepos = eof_get_note_pos(sp, track, note);	//Simplify
 					notelen = eof_get_note_length(sp, track, note);
-					if((notepos >= ptr->start_pos) && (notepos + notelen) < ptr->end_pos)
+					if((notepos >= ptr->start_pos) && (notepos + notelen <= ptr->end_pos))
 					{	//If the note begins and ends within this slider phrase
 						newphraseend = notepos + notelen;	//Track the end position of the last note beginning and ending within the phrase as a possible end position for the slider
 					}
 					else if(notepos >= ptr->end_pos)
 					{	//If the note begins at or after the end position of the slider
-						if(newphraseend != ptr->start_pos)
-						{	//If the slider can be resized to end with the previous note in the phrase
-							ptr->end_pos = newphraseend;	//Do that
+						if(newphraseend == notepos)
+						{	//Special case:  The last note in the phrase ends on the same timestamp at which a note begins
+							newphraseend = ptr->end_pos - 2;	//Truncate the path by 2ms
 						}
-						else
-						{
-							ptr->end_pos--;	//Otherwise truncate the path by 1ms
+						else if(newphraseend == ptr->start_pos)
+						{	//If the SP phrase can't be resized to end with the previous note in the phrase
+							newphraseend = ptr->end_pos - 2;	//Truncate the path by 2ms
 						}
-						break;	//Stop checking notes for this slider
-					}
-				}
-			}
-		}
-	}
+
+#ifdef GH_IMPORT_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tResizing slider phrase from %lums to %lums to end at %lums", ptr->start_pos, ptr->end_pos, newphraseend);
+						eof_log(eof_log_string, 1);
+#endif
+						ptr->end_pos = newphraseend;
+						break;	//Stop checking notes for this SP phrase
+					}//If the note begins at or after the end position of the slider
+				}//For each note in the track
+			}//If the phrase was found, and its length is at least 2ms
+		}//For each slider path in the track
+	}//For each track in the project
 }

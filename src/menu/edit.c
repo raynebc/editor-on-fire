@@ -702,7 +702,7 @@ int eof_menu_edit_undo(void)
 {
 	(void) eof_undo_apply();
 	eof_redo_toggle = 1;
-	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_song->catalog->entries > 0))
+	if(eof_display_catalog && (eof_song->catalog->entries > 0))
 	{
 		eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 	}
@@ -713,7 +713,7 @@ int eof_menu_edit_redo(void)
 {
 	eof_redo_apply();
 	eof_redo_toggle = 0;
-	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_song->catalog->entries > 0))
+	if(eof_display_catalog && (eof_song->catalog->entries > 0))
 	{
 		eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 	}

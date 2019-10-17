@@ -312,10 +312,13 @@ unsigned long ch_sp_path_worker_number = 0;	//Set to the number in the job filen
 char eof_default_ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH] = {{0}};	//Stores the entries of the [default_ini_settings] section in the config file
 unsigned short eof_default_ini_settings = 0;	//The number of such entries in memory
 
+int         eof_display_catalog = 0;
+int         eof_catalog_full_width = 0;
+unsigned long eof_selected_catalog_entry = 0;
+
 /* mouse control data */
 int         eof_selected_control = -1;
 int         eof_cselected_control = -1;
-unsigned long eof_selected_catalog_entry = 0;
 unsigned long eof_selected_beat = 0;
 long        eof_selected_measure = 0;
 int         eof_beat_in_measure = 0;
@@ -2596,7 +2599,7 @@ void eof_note_logic(void)
 		eof_scaled_mouse_y = mouse_y / 2;
 	}
 
-	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < 90) && (eof_scaled_mouse_y > 40 + eof_window_info->y) && (eof_scaled_mouse_y < 40 + 18 + eof_window_info->y))
+	if(eof_display_catalog && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < 90) && (eof_scaled_mouse_y > 40 + eof_window_info->y) && (eof_scaled_mouse_y < 40 + 18 + eof_window_info->y))
 	{
 		eof_cselected_control = eof_scaled_mouse_x / 30;
 		if(!eof_full_screen_3d && (mouse_b & 1))
@@ -2627,7 +2630,7 @@ void eof_note_logic(void)
 	{
 		eof_cselected_control = -1;
 	}
-	if((eof_scaled_mouse_y >= eof_window_info->y) && (eof_scaled_mouse_y < eof_window_info->y + 12) && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
+	if((eof_scaled_mouse_y >= eof_window_info->y) && (eof_scaled_mouse_y < eof_window_info->y + 12) && (eof_scaled_mouse_x >= 0) && (eof_scaled_mouse_x < (eof_display_catalog ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
 	{
 		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
@@ -2879,7 +2882,7 @@ void eof_render_info_window(void)
 		}
 	}
 
-	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
+	if(eof_display_catalog && eof_song->catalog->entries)
 	{	//If show catalog is selected and there's at least one entry
 		eof_render_fret_catalog_window();	//Render the fret catalog
 		return;
@@ -2912,8 +2915,17 @@ void eof_render_fret_catalog_window(void)
 	if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the info panel
 		return;							//Return immediately
 
+	if(eof_catalog_full_width)
+	{	//If the fret catalog is allowed to render the full width of the program window
+		set_clip_rect(eof_window_info->screen, 0, 0, eof_window_info->screen->w, eof_window_info->screen->h);
+	}
+	else
+	{	//Otherwise enforce clipping around the fret catalog if it isn't meant to render into other panels' space
+		set_clip_rect(eof_window_info->screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_window_info->screen->h);
+	}
+
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
-	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
+	if(eof_display_catalog && eof_song->catalog->entries)
 	{//If show catalog is selected and there's at least one entry
 		eof_set_2D_lane_positions(eof_selected_track);	//Update the ychart[] array
 		if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track] == NULL)
@@ -3224,7 +3236,7 @@ void eof_render_lyric_window(void)
 	int note[7] = {0, 2, 4, 5, 7, 9, 11};
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 
-	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_catalog_menu[1].flags == D_SELECTED))
+	if(eof_display_catalog && eof_catalog_full_width)
 	{	//If the fret catalog is visible and it's configured to display at full width
 		return;	//Don't draw the lyric window
 	}
@@ -3356,7 +3368,7 @@ void eof_render_3d_window(void)
 			return;															//Return immediately
 	}
 
-	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_catalog_menu[1].flags == D_SELECTED))
+	if(eof_display_catalog && eof_catalog_full_width)
 	{	//If the fret catalog is visible and it's configured to display at full width
 		return;	//Don't draw the 3D window
 	}
@@ -3693,9 +3705,11 @@ void eof_render_3d_window(void)
 void eof_render_notes_window(void)
 {
 	if(!eof_enable_notes_panel || !eof_window_notes)	//If the notes panel isn't enabled, the note window isn't created or the notes panel text file isn't loaded
-		return;			//Return immediately
+		return;		//Return immediately
 	if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the panels that display on the bottom half of the program window
 		return;							//Return immediately
+	if(eof_display_catalog && eof_catalog_full_width)	//If the fret catalog is visible and it's configured to display at full width
+		return;		//Return immediately
 	if(!eof_notes_panel)
 	{	//If the notes panel isn't properly loaded
 		eof_enable_notes_panel = 0;		//Properly disable the panel's display option
@@ -5165,7 +5179,7 @@ void eof_init_after_load(char initaftersavestate)
 		eof_selected_catalog_entry = 0;
 		eof_display_waveform = 0;
 		eof_display_spectrogram = 0;
-		eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
+		eof_display_catalog = 0;		//Hide the fret catalog by default
 		eof_select_beat(0);
 		eof_undo_reset();
 		if(eof_song->beats > 0)

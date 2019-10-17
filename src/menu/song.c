@@ -369,22 +369,41 @@ void eof_prepare_song_menu(void)
 			eof_song_seek_menu[16].flags = D_DISABLED;	//Next beat
 		}
 
-		/* show catalog */
-		/* edit name */
+		/* Song>Catalog>Show */
+		/* Song>Catalog>Edit name */
+		/* Song>Catalog>Edit timing */
 		/* seek catalog entry */
 		if(eof_song->catalog->entries > 0)
 		{	//If there are any fret catalog entries
-			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
+			if(eof_display_catalog)
+			{
+				eof_catalog_menu[0].flags = D_SELECTED;	//Show catalog
+			}
+			else
+			{
+				eof_catalog_menu[0].flags = 0;
+			}
 			eof_catalog_menu[2].flags = 0;		//Enable "Edit name"
 			eof_catalog_menu[3].flags = 0;		//Enable "Edit timing"
 			eof_song_seek_menu[5].flags = 0;	//Enable Seek>Catalog entry
 		}
 		else
 		{
-			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
-			eof_catalog_menu[2].flags = D_DISABLED;	//Disable "Edit name"
-			eof_catalog_menu[3].flags = D_DISABLED;	//Disable "Edit timing"
+			eof_display_catalog = 0;
+			eof_catalog_menu[0].flags = D_DISABLED;		//Disable "Show catalog"
+			eof_catalog_menu[2].flags = D_DISABLED;		//Disable "Edit name"
+			eof_catalog_menu[3].flags = D_DISABLED;		//Disable "Edit timing"
 			eof_song_seek_menu[5].flags = D_DISABLED;	//Disable Seek>Catalog entry
+		}
+
+		/* Song>Catalog>Full width */
+		if(eof_catalog_full_width)
+		{
+			eof_catalog_menu[1].flags = D_SELECTED;	//Full width
+		}
+		else
+		{
+			eof_catalog_menu[1].flags = 0;
 		}
 
 		/* rewind */
@@ -1681,13 +1700,13 @@ int eof_menu_catalog_show(void)
 {
 	if(eof_song->catalog->entries > 0)
 	{
-		if(eof_catalog_menu[0].flags & D_SELECTED)
+		if(eof_display_catalog)
 		{
-			eof_catalog_menu[0].flags = 0;
+			eof_display_catalog = 0;
 		}
 		else
 		{
-			eof_catalog_menu[0].flags = D_SELECTED;
+			eof_display_catalog = 1;
 			if((eof_song->catalog->entries > 0) && !eof_music_catalog_playback)
 			{
 				eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
@@ -1696,7 +1715,7 @@ int eof_menu_catalog_show(void)
 	}
 	else
 	{
-		eof_catalog_menu[0].flags = 0;
+		eof_display_catalog = 0;
 	}
 	return 1;
 }
@@ -1771,7 +1790,7 @@ int eof_menu_catalog_delete(void)
 	eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 	if(eof_song->catalog->entries == 0)
 	{
-		eof_catalog_menu[0].flags = 0;
+		eof_display_catalog = 0;
 	}
 
 	return 1;
@@ -3996,14 +4015,8 @@ int eof_menu_catalog_find_next(void)
 
 int eof_menu_catalog_toggle_full_width(void)
 {
-	if(eof_catalog_menu[1].flags == D_SELECTED)
-	{	//If it was already enabled
-		eof_catalog_menu[1].flags = 0;
-	}
-	else
-	{
-		eof_catalog_menu[1].flags = D_SELECTED;
-	}
+	eof_catalog_full_width ^= 1;	//Toggle this boolean variable
+
 	return 1;
 }
 

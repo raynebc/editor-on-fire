@@ -3833,6 +3833,15 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}//If the mouse is in the fretboard area
 		}//If CTRL is not held down and the input method is rex mundi or Feedback
 
+	/* add beat (CTRL+Ins) */
+		if(eof_key_code == KEY_INSERT)
+		{
+			if(KEY_EITHER_CTRL)
+			{	//If CTRL is held
+				(void) eof_menu_beat_add();
+			}
+		}
+
 	/* delete note (Del) */
 	/* delete beat (CTRL+Del) */
 	/* delete effective fret hand position (SHIFT+Del in a pro guitar track) */

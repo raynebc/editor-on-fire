@@ -15,9 +15,12 @@
 #define EOF_BUILD
 #endif
 
-#ifdef USEMEMWATCH
 #ifdef EOF_BUILD			//In the EOF code base,
 #include "../main.h"		//The EOF version string is defined here
+#endif
+
+#ifdef USEMEMWATCH
+#ifdef EOF_BUILD			//In the EOF code base,
 #include "../memwatch.h"	//memwatch.h is at the root
 #else
 #include "memwatch.h"

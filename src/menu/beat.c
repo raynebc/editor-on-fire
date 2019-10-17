@@ -112,7 +112,7 @@ MENU eof_beat_menu[] =
 	{"Time &Signature", NULL, eof_beat_time_signature_menu, 0, NULL},
 	{"&Key Signature", NULL, eof_beat_key_signature_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Add", eof_menu_beat_add, NULL, 0, NULL},
+	{"&Add\t" CTRL_NAME "+Ins", eof_menu_beat_add, NULL, 0, NULL},
 	{"Delete\t" CTRL_NAME "+Del", eof_menu_beat_delete, NULL, 0, NULL},
 	{"Push Offset Back", eof_menu_beat_push_offset_back_menu, NULL, 0, NULL},
 	{"Push Offset Up", eof_menu_beat_push_offset_up, NULL, 0, NULL},
