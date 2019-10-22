@@ -85,7 +85,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 	//chord is set to the index into eof_chord_names[] that names the matching chord
 	//isslash is set to nonzero if the chord is detected as a slash chord, in which case the bass note is returned through bassnote
 	//If isslash is zero, combining the index into the eof_note_names[] and eof_chord_names[] arrays will provide a full chord name, such as "Amin6"
-	//If isslash is nonzero, combining the index into the eof_note_names[], eof_chord_names[] and eof_slash_note_names[] arrays will provide a full chord name, such as "Dmaj/F#"
+	//If isslash is nonzero, combining the index into the eof_note_names[], eof_chord_names[] and eof_slash_note_names[] arrays will provide a full chord name, such as "DMaj/F#"
 	//For manually-named notes, 2 is returned (and isslash is set to nonzero) if the scale is identified and the name contains a forward or backward slash but the bass note cannot be identified
 	//3 is returned (and isslash is set to nonzero) if both the scale and bass note are identified, in which case bassnote will have the appropriate note
 	//Zero is returned on error or if no match is found
@@ -109,5 +109,15 @@ int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track)
 
 int eof_track_is_drop_tuned(EOF_PRO_GUITAR_TRACK *tp);
 	//Returns nonzero if the specified track's lowest string is tuned below standard more half steps than all other strings
+
+int eof_rs_check_chord_name(EOF_SONG *sp, unsigned long track, unsigned long note, int function);
+	//Warns if the specified chord is manually named and that name includes "maj" (in lowercase), which Rocksmith will re-name to reflect a minor chord
+	//Returns 0 if the note does not have this naming flaw
+	//Returns 1 if the note has this naming flaw and the user was told about it
+	//If function is nonzero, if the note has the naming flaw the seek position is changed to the note position and the window is re-rendered
+	//  also, the user is prompted to cancel the save operation, in which case the return values are:
+	//  0 the note doesn't have this naming flaw
+	//	1 if the user declines to cancel save
+	//  2 if the user opts to cancel save
 
 #endif

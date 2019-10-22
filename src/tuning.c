@@ -113,7 +113,7 @@ EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =
 	{"Majb5", "1,3,b5"},
 	{"7b5", "1,3,b5,b7"},
 	{"Maj7b5", "1,3,b5,7"},
-	{"", "1,3,5"},		//For Rocksmith compatibility reasons, the "maj" notation will be left off of major chords, which is common enough anyway
+	{"", "1,3,5"},		//For Rocksmith compatibility reasons, the "Maj" notation will be left off of major chords, which is common enough anyway
 	{"6", "1,3,6"},
 	{"6", "1,3,5,6"},
 	{"7", "1,3,b7"},
@@ -697,4 +697,38 @@ int eof_track_is_drop_tuned(EOF_PRO_GUITAR_TRACK *tp)
 	}
 
 	return 0;	//not a drop tuning
+}
+
+int eof_rs_check_chord_name(EOF_SONG *sp, unsigned long track, unsigned long note, int function)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!sp || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+	if(!eof_write_rs_files && !eof_write_rs2_files)
+		return 0;	//Rocksmith export is not enabled
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//Only run for pro guitar tracks
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(note >= tp->notes)
+		return 0;	//Invalid parameter
+
+	if(strstr(tp->note[note]->name, "maj"))
+	{	//If the note is manually named to contain "maj" in lowercase
+		if(function)
+		{
+			eof_seek_and_render_position(track, tp->note[note]->type, tp->note[note]->pos);
+			if(alert("Warning (Rocksmith):  A chord name including \"maj\"", "(with a lowercase m) may appear in-game named as a minor chord.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opted to cancel the save
+				return 2;	//Return cancellation
+			}
+		}
+		else
+		{
+			allegro_message("Warning (Rocksmith):  A chord name including \"maj\" (with a lowercase m) may appear in-game named as a minor chord.");
+		}
+		return 1;	//Return user acknowledgment
+	}
+
+	return 0;
 }

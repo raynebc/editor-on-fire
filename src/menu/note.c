@@ -12,6 +12,7 @@
 #include "../note.h"
 #include "../pathing.h"
 #include "../rs.h"	//For eof_is_string_muted()
+#include "../tuning.h"	//For eof_rs_check_chord_name()
 #include "edit.h"
 #include "note.h"
 #include "song.h"	//For eof_menu_track_selected_track_number()
@@ -4587,7 +4588,8 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		{	//If user clicked OK or Apply
 			//Validate and store the input
 			if(eof_note_edit_name[0] != '\0')
-			{	//If the user specified a name, ensure it does not include brackets
+			{	//If the user specified a name
+				//Ensure it does not include brackets
 				for(i = 0; i < (unsigned long)ustrlen(eof_note_edit_name); i++)
 				{	//For each character in the name field
 					if((eof_note_edit_name[i] == '[') || (eof_note_edit_name[i] == ']'))
@@ -4633,7 +4635,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
 					continue;	//If the note isn't selected or in the active track difficulty, skip it
 
-				//Save the updated note name  (listed from top to bottom as string 1 through string 6)
+				//Save the updated note name
 				if(ustrcmp(eof_note_edit_name, tp->note[i]->name))
 				{	//If the name was changed
 					if(!undo_made)
@@ -4642,6 +4644,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						undo_made = 1;
 					}
 					memcpy(tp->note[i]->name, eof_note_edit_name, sizeof(eof_note_edit_name));
+					(void) eof_rs_check_chord_name(eof_song, eof_selected_track, eof_selection.current, 0);	//Check if the user included lowercase "maj" in the name
 				}
 
 				for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
@@ -7079,7 +7082,7 @@ int eof_menu_note_edit_name(void)
 					eof_etext[0] = '\0';	//Empty the string, so that it won't assign a name unless it is detected
 					(void) eof_build_note_name(eof_song, eof_selected_track, i, eof_etext);	//Detect the name of this chord
 				}
-				if(ustricmp(notename, eof_etext))
+				if(ustrcmp(notename, eof_etext))
 				{	//If the updated string (eof_etext) is different from the note's existing name
 					if(!undo_made)
 					{
@@ -7087,6 +7090,7 @@ int eof_menu_note_edit_name(void)
 						undo_made = 1;
 					}
 					eof_set_note_name(eof_song, eof_selected_track, i, eof_etext);	//Update the note's name
+					(void) eof_rs_check_chord_name(eof_song, eof_selected_track, eof_selection.current, 0);	//Check if the user included lowercase "maj" in the name
 				}
 			}
 		}

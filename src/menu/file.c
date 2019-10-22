@@ -3555,6 +3555,40 @@ int eof_save_helper_checks(void)
 	}//If the user wants to save Rocksmith capable files
 
 
+	/* check for the use of "maj" in chord names, which will be overridden by Rocksmith to reflect that it is a minor chord instead of a major chord */
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		char restore_tech_view = 0;
+		int user_prompted = 0;
+
+		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
+		{	//For each track (until the user is warned about any offending handshape phrases)
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//If this is not a pro guitar/bass track, skip it
+
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Disable tech view
+
+			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track
+				user_prompted = eof_rs_check_chord_name(eof_song, eof_selected_track, eof_selection.current, 1);
+				if(user_prompted)
+				{	//If there is lowercase "maj" in the note's name
+					if(user_prompted == 2)
+					{	//If the user opted to cancel the save
+						return 1;	//Return cancellation
+					}
+					break;	//Otherwise just stop checking notes in this track
+				}
+			}
+
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Re-enable tech view if it was in effect before save
+		}
+	}
+
+
 	/* check for arpeggio/handshape phrases that cross from one RS phrase into another, which may malfunction on charts with dynamic difficulty */
 	if(!eof_song->tags->rs_export_suppress_dd_warnings)
 	{	//If dynamic difficulty warnings haven't been suppressed for this chart
