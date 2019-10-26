@@ -1162,4 +1162,10 @@ void eof_sort_and_merge_overlapping_sections(EOF_PHRASE_SECTION *section_ptr, un
 	//This deletion is carried out by sorting the extraneous sections to the end of the array and then decrementing the count referenced by section_count
 	//Only to be called on section types that define a start and end timestamp (ie. not for fret hand positions or tone changes)
 
+int eof_check_for_notes_preceding_sections(int function);
+	//If FoF/RB export is enabled, checks the active project to see if there are any section events, and if so, if there are any notes that occur before the first section
+	//If function is zero, the user is alerted to this and zero is returned
+	//If function is nonzero, the user gets alerted and is prompted whether to cancel save
+	// If the user opts to cancel, nonzero is returned, otherwise zero is returned
+
 #endif

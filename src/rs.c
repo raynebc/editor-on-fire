@@ -1370,7 +1370,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//Don't warn about missing FHPs in bass arrangements if user disabled that preference
 				if((*user_warned & 1) == 0)
 				{	//If the user wasn't alerted that one or more track difficulties have no fret hand positions defined
-					allegro_message("Warning:  At least one track difficulty has no fret hand positions defined.  They will be created automatically.");
+					allegro_message("Warning (RS):  At least one track difficulty has no fret hand positions defined.  They will be created automatically.");
 					*user_warned |= 1;
 				}
 			}
@@ -2960,7 +2960,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			{	//Don't warn about missing FHPs in bass arrangements if user disabled that preference
 				if((*user_warned & 1) == 0)
 				{	//If the user wasn't alerted that one or more track difficulties have no fret hand positions defined
-					allegro_message("Warning:  At least one track difficulty has no fret hand positions defined.  They will be created automatically.");
+					allegro_message("Warning (RS):  At least one track difficulty has no fret hand positions defined.  They will be created automatically.");
 					*user_warned |= 1;
 				}
 			}

@@ -1452,8 +1452,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else if(eof_midi_event[i]->type == 0xF0)
 					{	//Sysex message
-						WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
-						(void) pack_putc(0xF0, fp);						//Sysex event
+						WriteVarLen(delta - lastdelta, fp);			//Write this event's relative delta time
+						(void) pack_putc(0xF0, fp);					//Sysex event
 						WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
 						(void) pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
 						lastevent = 0;	//Reset running status after a meta/sysex event
@@ -3285,9 +3285,16 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 			list=temp;	//Update list pointer
 		}
 
-		if(sp->tags->accurate_ts && (den != 4))
-		{	//If accurate time signatures are to be observed for export, and the time signature necessitates adjustment (isn't #/4)
-			beatlength = (double)EOF_DEFAULT_TIME_DIVISION / ((double)den / 4.0);		//Determine the length of this beat in deltas (taking the time signature into consideration)
+		if(sp->tags->accurate_ts)
+		{	//If accurate time signatures are to be observed for export
+			if(den != 4)
+			{	//If the time signature necessitates adjustment (isn't #/4)
+				beatlength = (double)EOF_DEFAULT_TIME_DIVISION / ((double)den / 4.0);		//Determine the length of this beat in deltas (taking the time signature into consideration)
+			}
+			else
+			{
+				beatlength = EOF_DEFAULT_TIME_DIVISION;
+			}
 		}
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta
@@ -3365,7 +3372,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 	//a 1/# beat interval where the beat's delta length is divisible by #
 	if(!disablequantize)
 	{	//Only do this if the calling function didn't prevent it
-		beatnum = eof_get_beat(eof_song, realtime);
+		beatnum = eof_get_beat(eof_song, realtime + 0.5);	//Round to nearest ms to compare against integer beat timings
 		if(beatnum < eof_song->beats)
 		{	//If the beat containing this timestamp was identified
 			double beatlength = eof_calc_beat_length(eof_song, beatnum);
@@ -3892,7 +3899,7 @@ void eof_write_tempo_track(char *trackname, struct Tempo_change *anchorlist, EOF
 			whattowrite = 1;
 		}
 		if(eof_use_ts && (current_ts < tslist->changes))
-		{	//If there are any Ts changes left (only if the user opted to do export TS changes)
+		{	//If there are any TS changes left (only if the user opted to do export TS changes)
 			if(!whattowrite || (nexteventpos > tslist->change[current_ts]->pos))
 			{	//If no tempo changes were left, or this TS change is earlier than any such changes
 				nexteventpos = tslist->change[current_ts]->pos;

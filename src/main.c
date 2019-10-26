@@ -1252,7 +1252,7 @@ void eof_prepare_undo(int type)
 	eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
 	eof_ch_sp_solution = NULL;
 	if(!eof_disable_backups && (eof_change_count % 10 == 0))
-	{	//If automatic backups are not disabled, backup the EOF project every 10 saves
+	{	//If automatic backups are not disabled, backup the EOF project every 10 undo states
 		(void) replace_extension(fn, eof_filename, "backup.eof.bak", 1024);
 		eof_log("\tSaving periodic backup", 1);
 		if(!eof_save_song(eof_song, fn))
@@ -2921,7 +2921,20 @@ void eof_render_fret_catalog_window(void)
 	}
 	else
 	{	//Otherwise enforce clipping around the fret catalog if it isn't meant to render into other panels' space
-		set_clip_rect(eof_window_info->screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_window_info->screen->h);
+		unsigned long width = EOF_SCREEN_PANEL_WIDTH;	//By default, give it one panel width
+
+		if(!eof_enable_notes_panel)
+		{	//If the notes panel is not being displayed
+			if(eof_disable_3d_rendering)
+			{	//If the 3D preview is also disabled
+				width = eof_window_info->screen->w;	//Give the fret catalog the entire program window width
+			}
+			else
+			{
+				width = eof_screen->w - EOF_SCREEN_PANEL_WIDTH;	//Give it the entire program window width, minus one panel for the 3D preview
+			}
+		}
+		set_clip_rect(eof_window_info->screen, 0, 0, width, eof_window_info->screen->h);
 	}
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);

@@ -10611,3 +10611,62 @@ void eof_sort_and_merge_overlapping_sections(EOF_PHRASE_SECTION *section_ptr, un
 		}
 	}
 }
+
+int eof_check_for_notes_preceding_sections(int function)
+{
+	if(!eof_song)
+		return 0;
+
+	/* check for notes occurring before the first defined section, if there are any sections */
+	if(eof_write_fof_files || eof_write_rb_files)
+	{	//This should only be a concern for the GH/RB style MIDI charts
+		unsigned long ctr, first_section_beat = ULONG_MAX;
+
+		//Find the first section event in the project
+		for(ctr = 0; ctr< eof_song->text_events; ctr++)
+		{	//For each text event in the project
+			if(eof_is_section_marker(eof_song->text_event[ctr], 0))
+			{	//If this text event is a section event
+				first_section_beat = eof_song->text_event[ctr]->beat;	//Record the event's assigned beat number
+				break;
+			}
+		}
+
+		//Compare the first section's timestamp against the first note in each track
+		if(first_section_beat < eof_song->text_events)
+		{	//If a section event was found
+			unsigned long first_section_pos, first_note_pos;
+
+			if(first_section_beat < eof_song->beats)
+			{	//Bounds check
+				first_section_pos = eof_song->beat[first_section_beat]->pos;
+				for(ctr = 1; ctr < eof_song->tracks; ctr++)
+				{	//For each track
+					if(eof_get_track_size(eof_song, ctr))
+					{	//If the track has any notes
+						first_note_pos = eof_get_note_pos(eof_song, ctr, 0);	//Obtain the first note's position
+						if(first_note_pos < first_section_pos)
+						{	//If the first note occurs before the first section
+							eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, 0), eof_get_note_pos(eof_song, ctr, 0));
+							eof_clear_input();
+							if(function)
+							{	//If the calling function wanted to alert and prompt to cancel save
+								if(alert("At least one note occurs before the first section marker.", "Such notes won't show up when practicing sections in-game.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user opts to cancel the save
+									return 1;	//Return cancellation
+								}
+							}
+							else
+							{	//The calling function only wanted to alert
+								allegro_message("At least one note occurs before the first section marker.\nSuch notes won't show up when practicing sections in-game.");
+							}
+							break;	//Stop checking the first note in each track
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return 0;
+}

@@ -12,7 +12,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function);
 	//returns without processing the remainder of the file.
 	//At this time, only file imports call this with a function value of 0
 
-int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char *tag);
+int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char *tag, size_t buffersize);
 	//If *function is nonzero, the destination string is compared against the source string (case insensitive)
 	//	and if not identical, prompts the user whether or not to replace the existing setting.  If user
 	//	allows, the source string is copied to the destination and zero is returned.
@@ -21,6 +21,7 @@ int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char 
 	//If *function is zero, the source string is copied to the destination without prompting and zero is returned
 	//If the strings are identical, zero is returned regardless of the value of function
 	//tag is the display name of the tag being checked, used for logging
+	//buffersize is the size of the destination buffer, to prevent buffer overflows
 
 int eof_compare_set_ini_boolean(char *status, char original, char *string, int *function, char *tag);
 	//The string is compared against "True" or "1" to determine a boolean status which is returned

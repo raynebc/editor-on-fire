@@ -15,11 +15,13 @@
 #include "memwatch.h"
 #endif
 
+#define EOF_INI_SETTING_TYPE_LENGTH 256
+#define EOF_INI_SETTING_VALUE_LENGTH 1024
 typedef struct
 {
 
-	char type[256];
-	char value[1024];
+	char type[EOF_INI_SETTING_TYPE_LENGTH];
+	char value[EOF_INI_SETTING_VALUE_LENGTH];
 
 } EOF_IMPORT_INI_SETTING;
 
@@ -98,8 +100,8 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 
 					equals[0] = '\0';
 					token = equals + 1;
-					(void) ustrcpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token);
-					(void) ustrcpy(eof_import_ini_setting[eof_import_ini_settings].value, token);
+					(void) ustrncpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token, EOF_INI_SETTING_TYPE_LENGTH - 1);	//Copy the strings, preventing buffer overflow
+					(void) ustrncpy(eof_import_ini_setting[eof_import_ini_settings].value, token, EOF_INI_SETTING_VALUE_LENGTH - 1);
 					while(1)
 					{	//Drop all trailing space characters from the tag type string
 						stringlen = ustrlen(eof_import_ini_setting[eof_import_ini_settings].type);
@@ -144,7 +146,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
 				}
 			}
-			if(eof_compare_set_ini_string_field(sp->tags->artist, value_index, &function, eof_import_ini_setting[i].type))
+			if(eof_compare_set_ini_string_field(sp->tags->artist, value_index, &function, eof_import_ini_setting[i].type, sizeof(sp->tags->artist)))
 			{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 				free(textbuffer);	//Free buffered INI file from memory
 				return 0;
@@ -159,7 +161,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
 				}
 			}
-			if(eof_compare_set_ini_string_field(sp->tags->title, value_index, &function, eof_import_ini_setting[i].type))
+			if(eof_compare_set_ini_string_field(sp->tags->title, value_index, &function, eof_import_ini_setting[i].type, sizeof(sp->tags->title)))
 			{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 				free(textbuffer);	//Free buffered INI file from memory
 				return 0;
@@ -167,7 +169,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		}
 		else if(!ustricmp(eof_import_ini_setting[i].type, "charter"))
 		{
-			if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, &function, eof_import_ini_setting[i].type))
+			if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, &function, eof_import_ini_setting[i].type, sizeof(sp->tags->frettist)))
 			{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 				free(textbuffer);	//Free buffered INI file from memory
 				return 0;
@@ -178,7 +180,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		{
 			if(!charterparsed)
 			{	//If this information wasn't already parsed from the charter INI tag
-				if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, &function, eof_import_ini_setting[i].type))
+				if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, &function, eof_import_ini_setting[i].type, sizeof(sp->tags->frettist)))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					free(textbuffer);	//Free buffered INI file from memory
 					return 0;
@@ -187,7 +189,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		}
 		else if(!ustricmp(eof_import_ini_setting[i].type, "album"))
 		{
-			if(eof_compare_set_ini_string_field(sp->tags->album, value_index, &function, eof_import_ini_setting[i].type))
+			if(eof_compare_set_ini_string_field(sp->tags->album, value_index, &function, eof_import_ini_setting[i].type, sizeof(sp->tags->album)))
 			{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 				free(textbuffer);	//Free buffered INI file from memory
 				return 0;
@@ -195,7 +197,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		}
 		else if(!ustricmp(eof_import_ini_setting[i].type, "genre"))
 		{
-			if(eof_compare_set_ini_string_field(sp->tags->genre, value_index, &function, eof_import_ini_setting[i].type))
+			if(eof_compare_set_ini_string_field(sp->tags->genre, value_index, &function, eof_import_ini_setting[i].type, sizeof(sp->tags->genre)))
 			{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 				free(textbuffer);	//Free buffered INI file from memory
 				return 0;
@@ -203,7 +205,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		}
 		else if(!ustricmp(eof_import_ini_setting[i].type, "track"))
 		{
-			if(eof_compare_set_ini_string_field(sp->tags->tracknumber, value_index, &function, eof_import_ini_setting[i].type))
+			if(eof_compare_set_ini_string_field(sp->tags->tracknumber, value_index, &function, eof_import_ini_setting[i].type, sizeof(sp->tags->tracknumber)))
 			{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 				free(textbuffer);	//Free buffered INI file from memory
 				return 0;
@@ -215,7 +217,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			if(eof_is_number(value_index))
 			{	//If the number is a valid year (all numerical characters)
 				value_index[4] = '\0';	//Ensure the number is truncated to 4 characters
-				if(eof_compare_set_ini_string_field(sp->tags->year, value_index, &function, eof_import_ini_setting[i].type))
+				if(eof_compare_set_ini_string_field(sp->tags->year, value_index, &function, eof_import_ini_setting[i].type, sizeof(sp->tags->year)))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					free(textbuffer);	//Free buffered INI file from memory
 					return 0;
@@ -236,7 +238,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		}
 		else if(!ustricmp(eof_import_ini_setting[i].type, "loading_phrase"))
 		{
-			if(eof_compare_set_ini_string_field(sp->tags->loading_text, value_index, &function, eof_import_ini_setting[i].type))
+			if(eof_compare_set_ini_string_field(sp->tags->loading_text, value_index, &function, eof_import_ini_setting[i].type, sizeof(sp->tags->loading_text)))
 			{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 				free(textbuffer);	//Free buffered INI file from memory
 				return 0;
@@ -530,11 +532,13 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 	return 1;
 }
 
-int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char *tag)
+int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char *tag, size_t buffersize)
 {
 	if(!dest || !src || !function || !tag)
 		return 1;	//Return error
 
+	if(buffersize < 1)
+		return 0;	//Invalid buffer size
 	if(!ustricmp(dest, src))
 		return 0;	//If the strings match
 
@@ -551,7 +555,11 @@ int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char 
 		*function = 0;	//Disable any further user prompting regarding this INI file
 	}
 
-	(void) ustrcpy(dest, src);	//Copy the string
+	if(ustrsize(src) >= buffersize)
+	{
+		allegro_message("Warning:  The INI value for tag \"%s\" is longer than allowed and will be truncated.", tag);
+	}
+	(void) ustrncpy(dest, src, buffersize - 1);	//Copy the string, preventing buffer overflow
 	return 0;
 }
 

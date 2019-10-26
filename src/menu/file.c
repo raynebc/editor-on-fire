@@ -1151,6 +1151,7 @@ int eof_menu_file_midi_import(void)
 			eof_beat_stats_cached = 0;
 			eof_detect_mid_measure_ts_changes();
 ///			eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+			(void) eof_check_for_notes_preceding_sections(0);	//Warn if there are notes that precede the first section event, if there are any sections
 			eof_beat_stats_cached = 0;
 		}
 		else
@@ -2590,6 +2591,7 @@ int eof_menu_file_feedback_import(void)
 			(void) replace_filename(eof_last_db_path, returnedfn_path, "", 1024);	//Set the last loaded Feedback file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
+			(void) eof_check_for_notes_preceding_sections(0);	//Warn if there are notes that precede the first section event, if there are any sections
 		}
 		else
 		{
@@ -3810,7 +3812,7 @@ int eof_save_helper_checks(void)
 				eof_seek_and_render_position(ctr, eof_note_type, eof_song->beat[ctr]->pos);	//Render the track so the user can see where the correction needs to be made
 				eof_clear_input();
 
-				if(alert("At least one RS section/phrase has a non alphanumeric character in its name.", "Some characters may cause the game to malfunction.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+				if(alert("Warning (RS):  At least one RS section/phrase has a non alphanumeric character in its name.", "Some characters may cause the game to malfunction.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opted to cancel the save
 					return 1;	//Return cancellation
 				}
@@ -3854,6 +3856,12 @@ int eof_save_helper_checks(void)
 			}//For each note in the track
 			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Restore the note set that was in use for the track
 		}//For each track (until the user is warned about any offending bend notes)
+	}
+
+	/* check for notes occurring before the first defined section, if there are any sections */
+	if(eof_check_for_notes_preceding_sections(1))
+	{	//If there are notes before the first section and the user opts to cancel save
+		return 1;	//Return cancellation
 	}
 
 
@@ -3929,7 +3937,7 @@ int eof_save_helper_checks(void)
 					eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll
 					eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);	//Render the track so the user can see where the correction needs to be made
 					eof_clear_input();
-					if(!user_prompted && alert("At least one note crosses an RS phrase or section boundary.", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+					if(!user_prompted && alert("Warning (RS):  At least one note crosses an RS phrase or section boundary.", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 					{	//If the user hasn't already answered this prompt, and opts to correct the issue
 						return 1;	//Return cancellation
 					}
@@ -4576,6 +4584,7 @@ int eof_menu_file_gh_import(void)
 			eof_beat_stats_cached = 0;
 			eof_detect_mid_measure_ts_changes();
 ///			eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+			(void) eof_check_for_notes_preceding_sections(0);	//Warn if there are notes that precede the first section event, if there are any sections
 			eof_beat_stats_cached = 0;
 		}
 		else
