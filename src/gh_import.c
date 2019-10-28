@@ -3534,6 +3534,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 	char matched, sectionsfound = 0;
 	int prompt;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
+	int event_realignment_warning = 0;
 
 	if(!fb || !sp)
 		return -1;
@@ -3604,17 +3605,30 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 					if(linkptr->checksum != checksum)
 						continue;	//If this checksum does not match the one in the list, skip it
 
-					eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+					if(eof_chart_length < dword)
+					{	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+						eof_chart_length = dword;
+					}
 					beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 					if(eof_beat_num_valid(sp, beatnum))
 					{	//If there is such a beat
 						char buffer2[256] = {0};
 
 #ifdef GH_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Original position = %lums.  Assigned position = %lums, checksum = 0x%08lX: %s", dword, sp->beat[beatnum]->pos, checksum, linkptr->text);
 						eof_log(eof_log_string, 1);
 #endif
 						(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
+
+						if(dword != sp->beat[beatnum]->pos)
+						{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
+							eof_log("\t\t\t\t!This section was moved to a beat position", 1);
+							if(!event_realignment_warning)
+							{	//If the user wasn't warned about this yet
+								allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+								event_realignment_warning = 1;
+							}
+						}
 						(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 					}
 					break;
@@ -3672,6 +3686,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 	filebuffer *sections_file;
 	int done = 0, retval = 0;
 	char undo_made = 0;
+	int event_realignment_warning = 0;
 
 	if(!fb || !sp)
 		return -1;
@@ -3724,7 +3739,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 									char buffer2[256] = {0};
 
 #ifdef GH_IMPORT_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Original position = %lums.  Assigned position = %lums, checksum = 0x%08lX: %s", dword, sp->beat[beatnum]->pos, checksum, linkptr->text);
 									eof_log(eof_log_string, 1);
 #endif
 									(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
@@ -3732,6 +3747,16 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 									{	//Make a back up before adding the first section (but only if the calling function specified to create an undo state)
 										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 										undo_made = 1;
+									}
+
+									if(dword != sp->beat[beatnum]->pos)
+									{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
+										eof_log("\t\t\t\t!This section was moved to a beat position", 1);
+										if(!event_realignment_warning)
+										{	//If the user wasn't warned about this yet
+											allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+											event_realignment_warning = 1;
+										}
 									}
 									(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 								}
@@ -3779,14 +3804,17 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 										{	//If the timestamp was successfully read
 											unsigned long beatnum;
 
-											eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+											if(eof_chart_length < dword)
+											{	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+												eof_chart_length = dword;
+											}
 											beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 											if(eof_beat_num_valid(sp, beatnum))
 											{	//If there is such a beat
 												char buffer2[256] = {0};
 
 #ifdef GH_IMPORT_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Original position = %lums.  Assigned position = %lums, checksum = 0x%08lX: %s", dword, sp->beat[beatnum]->pos, checksum, linkptr->text);
 												eof_log(eof_log_string, 1);
 #endif
 												(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
@@ -3794,6 +3822,16 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 												{	//Make a back up before adding the first section (but only if the calling function specified to create an undo state)
 													eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 													undo_made = 1;
+												}
+
+												if(dword != sp->beat[beatnum]->pos)
+												{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
+													eof_log("\t\t\t\t!This section was moved to a beat position", 1);
+													if(!event_realignment_warning)
+													{	//If the user wasn't warned about this yet
+														allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+														event_realignment_warning = 1;
+													}
 												}
 												(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 											}

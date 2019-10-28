@@ -368,27 +368,29 @@ void eof_prepare_file_menu(void)
 {
 	if(eof_song && eof_song_loaded)
 	{	//If a chart is loaded
-		eof_file_menu[2].flags = 0; // Save
-		eof_file_menu[3].flags = 0; // Save As
-		eof_file_menu[4].flags = 0; // Quick save
-		eof_file_menu[5].flags = 0; // Load OGG
-		eof_file_menu[7].flags = 0;	// Export chart range
+		eof_file_menu[2].flags = 0;	//Save
+		eof_file_menu[3].flags = 0;	//Save As
+		eof_file_menu[4].flags = 0;	//Quick save
+		eof_file_menu[5].flags = 0;	//Load OGG
+		eof_file_menu[7].flags = 0;	//Export chart range
 		if(eof_silence_loaded)
 		{	//If no chart audio is loaded
-			eof_file_menu[8].flags = D_DISABLED;	// Export audio range
+			eof_file_menu[8].flags = D_DISABLED;	//Export audio range
 		}
 		else
 		{
-			eof_file_menu[8].flags = 0;	// Export audio range
+			eof_file_menu[8].flags = 0;	//Export audio range
 		}
 		#ifdef ALLEGRO_WINDOWS
-			eof_file_menu[9].flags = 0;	// Export guitar pro
+			eof_file_menu[9].flags = 0;	//Export guitar pro
 		#else
-			eof_file_menu[9].flags = D_DISABLED;	// Export guitar pro
+			eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
 		#endif
-		eof_file_import_menu[0].flags = 0; // Import>Sonic Visualiser
-		eof_file_import_menu[4].flags = 0; // Import>Lyric
-		eof_file_import_menu[8].flags = 0; // Import>Queen Bee
+		eof_file_import_menu[0].flags = 0;	//Import>Sonic Visualiser
+		eof_file_import_menu[4].flags = 0;	//Import>Lyric
+		eof_file_import_menu[8].flags = 0;	//Import>Queen Bee
+		eof_file_import_menu[9].flags = 0;	//Import>Queen Bee (multi)
+		eof_file_import_menu[10].flags = 0;	//Import>Guitar Hero sections
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
@@ -403,16 +405,18 @@ void eof_prepare_file_menu(void)
 	}
 	else
 	{
-		eof_file_menu[2].flags = D_DISABLED; // Save
-		eof_file_menu[3].flags = D_DISABLED; // Save As
-		eof_file_menu[4].flags = D_DISABLED; // Quick save
-		eof_file_menu[5].flags = D_DISABLED; // Load OGG
-		eof_file_menu[7].flags = D_DISABLED; // Export chart range
-		eof_file_menu[8].flags = D_DISABLED; // Export audio range
-		eof_file_menu[9].flags = D_DISABLED;	// Export guitar pro
-		eof_file_import_menu[0].flags = D_DISABLED; // Import>Sonic Visualiser
-		eof_file_import_menu[4].flags = D_DISABLED; // Import>Lyric
-		eof_file_import_menu[8].flags = D_DISABLED; // Import>Queen Bee
+		eof_file_menu[2].flags = D_DISABLED;	//Save
+		eof_file_menu[3].flags = D_DISABLED;	//Save As
+		eof_file_menu[4].flags = D_DISABLED;	//Quick save
+		eof_file_menu[5].flags = D_DISABLED;	//Load OGG
+		eof_file_menu[7].flags = D_DISABLED;	//Export chart range
+		eof_file_menu[8].flags = D_DISABLED;	//Export audio range
+		eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
+		eof_file_import_menu[0].flags = D_DISABLED;		//Import>Sonic Visualiser
+		eof_file_import_menu[4].flags = D_DISABLED;		//Import>Lyric
+		eof_file_import_menu[8].flags = D_DISABLED;		//Import>Queen Bee
+		eof_file_import_menu[9].flags = D_DISABLED;		//Import>Queen Bee (multi)
+		eof_file_import_menu[10].flags = D_DISABLED;	//Import>Guitar Hero sections
 		eof_file_display_menu[6].flags = D_DISABLED;	//Benchmark image sequence
 	}
 

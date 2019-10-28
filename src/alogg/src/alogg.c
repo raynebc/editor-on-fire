@@ -13,6 +13,8 @@
 #include "vorbis/vorbisfile.h"
 #include "vorbis/codec.h"
 
+#include "../../main.h"	//For eof_log()
+
 #ifdef USEMEMWATCH
 #include "../../memwatch.h"
 #endif
@@ -893,7 +895,12 @@ SAMPLE *alogg_create_sample_from_ogg(ALOGG_OGG *ogg) {
 
   /* return NULL if we were not able to allocate the memory for it */
   if (sample == NULL)
+  {
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\talogg_create_sample_from_ogg() failed to allocate a sample structure for %d bytes of audio data.", sample_len_bytes);
+	eof_log(eof_log_string, 1);
+
     return NULL;
+  }
 
   /* we need to stop and rewind the ogg */
   alogg_stop_ogg(ogg);
@@ -922,6 +929,7 @@ SAMPLE *alogg_create_sample_from_ogg(ALOGG_OGG *ogg) {
       if (size_done == OV_HOLE)
         size_done = 0;
       else {
+		eof_log("\talogg_create_sample_from_ogg() failed to decode the OGG.", 1);
         alogg_rewind_ogg(ogg);
         destroy_sample(sample);
         return NULL;

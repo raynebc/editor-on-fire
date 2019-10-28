@@ -426,6 +426,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char guitar_present = 0, ghl_guitar_present = 0, bass_present = 0, ghl_bass_present = 0;	//Tracks whether each of these 4 tracks were imported
 	unsigned long guitar_track = 0, ghl_guitar_track = 0, bass_track = 0, ghl_bass_track = 0;	//Records the track index of each of those tracks
 	char sliders_exceeded_warning = 0;
+	int event_realignment_warning = 0;
 
 	eof_log("eof_import_midi() entered", 1);
 
@@ -3654,6 +3655,18 @@ eof_log("\tThird pass complete", 1);
 			if(b >= 0)
 			{
 //				allegro_message("%s", eof_import_text_events->event[i]->text);	//Debug
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection:  Original MIDI position = %lu ticks.  Assigned position = %lums: %s", eof_import_text_events->event[i]->pos, tp, eof_import_text_events->event[i]->text);
+				eof_log(eof_log_string, 1);
+
+				if(tp != sp->beat[b]->pos)
+				{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
+					eof_log("\t\t\t!This section was moved to a beat position", 1);
+					if(!event_realignment_warning)
+					{	//If the user wasn't warned about this yet
+						allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+						event_realignment_warning = 1;
+					}
+				}
 				(void) eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text, 0, 0, 0);
 			}
 		}
@@ -3789,7 +3802,7 @@ unsigned long eof_repair_midi_import_grid_snap(void)
 
 int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp, int function)
 {
-	int unsnapped = 0;
+	int unsnapped = 0, altered = 1;
 	unsigned long ctr, ctr2, this_midi_pos, next_midi_pos, flags;
 	long next;
 
@@ -3806,31 +3819,39 @@ int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp, int function)
 		eof_track_sort_notes(sp, ctr);	//Ensure the track is sorted
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tChecking %s", sp->track[ctr]->name);
 		eof_log(eof_log_string, 1);
-		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
-		{	//For each note in the track
-			this_midi_pos = eof_get_note_midi_pos(sp, ctr, ctr2);
-			next = eof_track_fixup_next_note(sp, ctr, ctr2);	//Look for another note in this track difficulty
-			if(next > 0)
-			{	//If there is a next note
-				next_midi_pos = eof_get_note_midi_pos(sp, ctr, next);
-				if((next_midi_pos > this_midi_pos) && (next_midi_pos < this_midi_pos + 11))
-				{	//If the next note was at a different delta position, but less than 11 ticks away
-					if(!function)
-					{	//If the calling function wanted to have the notes highlighted
-						flags = eof_get_note_flags(sp, ctr, ctr2);
-						eof_set_note_flags(sp, ctr, ctr2, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the first note
+		while(altered)
+		{	//Until the notes in this track have been parsed and none needed to be moved
+			altered = 0;
+			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+			{	//For each note in the track
+				this_midi_pos = eof_get_note_midi_pos(sp, ctr, ctr2);
+				next = eof_track_fixup_next_note(sp, ctr, ctr2);	//Look for another note in this track difficulty
+				if(next > 0)
+				{	//If there is a next note
+					next_midi_pos = eof_get_note_midi_pos(sp, ctr, next);
+					if((next_midi_pos > this_midi_pos) && (next_midi_pos < this_midi_pos + 11))
+					{	//If the next note was at a different delta position, but less than 11 ticks away
+						if(!function)
+						{	//If the calling function wanted to have the notes highlighted
+							flags = eof_get_note_flags(sp, ctr, ctr2);
+							eof_set_note_flags(sp, ctr, ctr2, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the first note
 
-						flags = eof_get_note_flags(sp, ctr, next);
-						eof_set_note_flags(sp, ctr, next, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the second note
+							flags = eof_get_note_flags(sp, ctr, next);
+							eof_set_note_flags(sp, ctr, next, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the second note
+						}
+						else
+						{	//If the calling function wanted to re-align the notes
+							unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);	//Take this note position
+
+							eof_set_note_pos(sp, ctr, next, pos);	//And assign it to the next note
+
+							pos = eof_get_note_midi_pos(sp, ctr, ctr2);	//Also update the MIDI note position
+							eof_set_note_midi_pos(sp, ctr, next, pos);
+							altered = 1;	//Force another pass of the for loop over this track's notes
+						}
+
+						unsnapped = 1;	//Track that an unsnapped chord was found
 					}
-					else
-					{	//If the calling function wanted to re-align the notes
-						unsigned long pos = eof_get_note_pos(sp, ctr, ctr2);	//Take this note position
-
-						eof_set_note_pos(sp, ctr, next, pos);	//And assign it to the next note
-					}
-
-					unsnapped = 1;	//Track that an unsnapped chord was found
 				}
 			}
 		}

@@ -337,6 +337,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	decoded=alogg_create_sample_from_ogg(oggfile);
 	if(decoded == NULL)
 	{
+		eof_log("Leading silence re-encode: ALOGG failed to decode input audio file", 1);
 		alogg_destroy_ogg(oggfile);
 		free(oggbuffer);
 		return 44;	//Return failure:  Could not decode chart audio to memory

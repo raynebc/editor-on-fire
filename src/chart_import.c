@@ -286,6 +286,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char limit_warned = 0;
 	char oldoggpath[1024] = {0};
 	clock_t start_time, cur_time;
+	int event_realignment_warning = 0;
 
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
@@ -933,6 +934,19 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 			buffer[index++] = ']';	//End with a closing bracket
 			buffer[index++] = '\0';	//Terminate the string
+
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection:  Original chart position = %lu ticks (%f beats).  Assigned position = %lums: %s", current_event->chartpos, (double)current_event->chartpos / chart->resolution, pos, buffer);
+			eof_log(eof_log_string, 1);
+
+			if(pos != sp->beat[b]->pos)
+			{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
+				eof_log("\t\t\t!This section was moved to a beat position", 1);
+				if(!event_realignment_warning)
+				{	//If the user wasn't warned about this yet
+					allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+					event_realignment_warning = 1;
+				}
+			}
 			(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 		}
 		else if(!ustricmp(current_event->text, "phrase_start"))
