@@ -631,6 +631,7 @@ extern EOF_SELECTION_DATA eof_selection;
 extern FILE *eof_log_fp;
 extern char eof_log_level;
 extern char eof_enable_logging;
+extern char eof_notes_panel_logged;
 
 extern int eof_custom_zoom_level;
 extern int eof_display_flats;

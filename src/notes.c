@@ -62,6 +62,7 @@ EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 		return NULL;
 	}
 
+	eof_notes_panel_logged = 0;	//Enable exhaustive logging of this panel's processing for the next frame
 	return panel;
 }
 
@@ -348,8 +349,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!eof_song)
 		return 0;	//No chart loaded
 
-	if(eof_log_level > 2)
-	{	//If exhaustive logging is in effect
+	if((eof_log_level > 2) && !eof_notes_panel_logged)
+	{	//If exhaustive logging is enabled and this panel hasn't been logged since it was loaded
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tProcessing Notes macro \"%s\"", macro);
 		eof_log(eof_log_string, 3);
 	}
@@ -3117,6 +3118,26 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The status of whether the seek position is within a defined star power phrase
+	if(!ustricmp(macro, "SEEK_SP_STATUS"))
+	{
+		EOF_PHRASE_SECTION *ptr = NULL;
+		unsigned long ctr, seekpos = eof_music_pos - eof_av_delay;
+
+		for(ctr = 0; ctr < eof_get_num_star_power_paths(eof_song, eof_selected_track); ctr++)
+		{	//For each star power path in the active track
+			ptr = eof_get_star_power_path(eof_song, eof_selected_track, ctr);
+			if((seekpos >= ptr->start_pos) && (seekpos <= ptr->end_pos))
+			{	//If the seek position is within this star power phrase
+				snprintf(dest_buffer, dest_buffer_size, "Seek pos within SP phrase (%lums - %lums)", ptr->start_pos, ptr->end_pos);
+				return 1;
+			}
+		}
+
+		snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within an SP phrase");
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
@@ -3475,20 +3496,22 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	if(!panel || !panel->window || !panel->text)	//If the provided panel isn't valid
 		return;			//Invalid parameter
 
-	if(eof_log_level > 2)
-	{	//If exhaustive logging is enabled
+	if((eof_log_level > 2) && !eof_notes_panel_logged)
+	{	//If exhaustive logging is enabled and this panel hasn't been logged since it was loaded
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRendering text panel for file \"%s\"", panel->filename);
 		eof_log(eof_log_string, 3);
 	}
 
-	eof_log("\t\tClearing window to gray", 3);
+	if(!eof_notes_panel_logged)
+		eof_log("\t\tClearing window to gray", 3);
 	if(opaque && !eof_background)
 	{	//If the calling function specified opacity for the info panel and a background image is NOT loaded
 		clear_to_color(panel->window->screen, eof_color_gray);
 	}
 
 	//Initialize the panel array
-	eof_log("\t\tInitializing panel variables", 3);
+	if(!eof_notes_panel_logged)
+		eof_log("\t\tInitializing panel variables", 3);
 	panel->ypos = 0;
 	panel->xpos = 2;
 	panel->color = eof_color_white;
@@ -3500,8 +3523,8 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	panel->endline = 0;
 	panel->endpanel = 0;
 
-	if(eof_log_level > 2)
-	{	//If exhaustive logging is enabled
+	if((eof_log_level > 2) && !eof_notes_panel_logged)
+	{	//If exhaustive logging is enabled and this panel hasn't been logged since it was loaded
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text beginning with line:  %.20s", panel->text);
 		eof_log(eof_log_string, 3);
 	}
@@ -3531,13 +3554,15 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 			if(panel->allowempty || panel->contentprinted || (buffer2[0] != '\0'))
 			{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
 				//If content was printed earlier in the line and flushed to the Notes panel, allow the coordinates to reset to the next line
-				eof_log("\t\t\tPrinting line", 3);
+				if(!eof_notes_panel_logged)
+					eof_log("\t\t\tPrinting line", 3);
 				textout_ex(panel->window->screen, font, buffer2, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
 				panel->allowempty = 0;	//Reset this condition, it has to be enabled per-line
 				panel->xpos = 2;			//Reset the x coordinate to the beginning of the line
 				panel->ypos +=12;
 				panel->contentprinted = 0;
-				eof_log("\t\t\tLine printed", 3);
+				if(!eof_notes_panel_logged)
+					eof_log("\t\t\tLine printed", 3);
 			}
 
 			dst_index = 0;	//Reset the destination buffer index
@@ -3547,8 +3572,11 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 				break;	//Break from while loop
 			}
 			linectr++;		//Track the line number being processed for debugging purposes
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text line #%lu", linectr);
-			eof_log(eof_log_string, 3);
+			if(!eof_notes_panel_logged)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text line #%lu", linectr);
+				eof_log(eof_log_string, 3);
+			}
 		}
 		else
 		{
@@ -3559,7 +3587,8 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	//Print any remaining content in the output buffer
 	if(dst_index && (dst_index < TEXT_PANEL_BUFFER_SIZE))
 	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
-		eof_log("\t\tProcessing remainder of buffer", 3);
+		if(!eof_notes_panel_logged)
+			eof_log("\t\tProcessing remainder of buffer", 3);
 		buffer[dst_index] = '\0';	//NULL terminate the buffer
 		retval = eof_expand_notes_window_text(buffer, buffer2, TEXT_PANEL_BUFFER_SIZE, panel);
 		if(!retval)
@@ -3570,15 +3599,18 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		}
 		if((retval == 2) || (buffer2[0] != '\0'))
 		{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
-			eof_log("\t\t\tPrinting line", 3);
+			if(!eof_notes_panel_logged)
+				eof_log("\t\t\tPrinting line", 3);
 			textout_ex(panel->window->screen, font, buffer2, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
 			panel->ypos +=12;
-			eof_log("\t\t\tLine printed", 3);
+			if(!eof_notes_panel_logged)
+				eof_log("\t\t\tLine printed", 3);
 		}
 	}
 
 	//Draw a border around the edge of the notes panel
-	eof_log("\t\tPrinting completed.  Rendering panel border", 3);
+	if(!eof_notes_panel_logged)
+		eof_log("\t\tPrinting completed.  Rendering panel border", 3);
 	if(opaque)
 	{	//But only if this panel wasn't meant to obscure whatever it's drawn on top of
 		rect(panel->window->screen, 0, 0, panel->window->w - 1, panel->window->h - 1, eof_color_dark_silver);
@@ -3587,7 +3619,9 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		vline(panel->window->screen, panel->window->w - 2, 1, panel->window->h - 2, eof_color_white);
 	}
 
-	eof_log("\t\tText panel render complete.", 3);
+	if(!eof_notes_panel_logged)
+		eof_log("\t\tText panel render complete.", 3);
+	eof_notes_panel_logged = 1;	//Prevent repeated logging of this panel file
 }
 
 unsigned long eof_count_num_notes_with_gem_count(unsigned long gemcount)

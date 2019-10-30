@@ -214,6 +214,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->tempo_map_locked = 0;
 	sp->tags->highlight_unsnapped_notes = 0;
 	sp->tags->accurate_ts = 1;
+	sp->tags->foflc_export_without_pitch_shifts = 0;
 	sp->tags->highlight_arpeggios = 0;
 	sp->tags->click_drag_disabled = 0;
 	sp->tags->rs_chord_technique_export = 0;
@@ -1743,7 +1744,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long const inistringbuffersize[EOFNUMINISTRINGTYPES]={0,0,256,256,256,0,32,512,256,256,32};
 		//Store the buffer information of each of the INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 14
+	#define EOFNUMINIBOOLEANTYPES 15
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -1788,6 +1789,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	inibooleanbuffer[11] = &sp->tags->accurate_ts;
 	inibooleanbuffer[12] = &sp->tags->highlight_arpeggios;
 	inibooleanbuffer[13] = &sp->tags->rs_export_suppress_dd_warnings;
+	inibooleanbuffer[14] = &sp->tags->foflc_export_without_pitch_shifts;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* read chart properties */
@@ -2984,7 +2986,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-	#define EOFNUMINIBOOLEANTYPES 14
+	#define EOFNUMINIBOOLEANTYPES 15
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the boolean type INI settings (number 0 is reserved) to simplify the loading code
 	#define EOFNUMININUMBERTYPES 5
@@ -3031,6 +3033,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	inibooleanbuffer[11] = &sp->tags->accurate_ts;
 	inibooleanbuffer[12] = &sp->tags->highlight_arpeggios;
 	inibooleanbuffer[13] = &sp->tags->rs_export_suppress_dd_warnings;
+	inibooleanbuffer[14] = &sp->tags->foflc_export_without_pitch_shifts;
 	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* write file header */
@@ -4150,7 +4153,7 @@ void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_track_add_note() entered", 3);
+// 	eof_log("eof_track_add_note() entered", 3);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return NULL;
@@ -4178,7 +4181,7 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_track_delete_note() entered", 3);
+// 	eof_log("eof_track_delete_note() entered", 3);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;

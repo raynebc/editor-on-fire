@@ -24,8 +24,8 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	//  string2 is required for KAR import, used if supplied for SKAR/MIDI import as mentioned above, otherwise it is ignored
 	//If the format is not zero (no auto detection), lp is not used and may be NULL
 
-int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, int format);
-	//Accept the EOF lyric structure (tp) by reference, populate the Lyrics structure with it and perform
+int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int format);
+	//Accept the EOF song structure by reference, populate the Lyrics structure with its vocal track and perform
 	//the specified export.  string2 will be required to be either the pitched lyric filename to create
 	//during Vrhythm export, or the name to call the exported track (for MIDI based lyric exports)
 	//	string2 may be NULL for SKAR export, as the track to import is pre-determined

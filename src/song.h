@@ -518,6 +518,7 @@ typedef struct
 	char highlight_unsnapped_notes;
 	char accurate_ts;
 	char highlight_arpeggios;
+	char foflc_export_without_pitch_shifts;
 
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
 	unsigned short oggs;

@@ -293,7 +293,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 	return 0;	//Return success
 }
 
-int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, int format)
+int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int format)
 {
 	unsigned long linectr = 0, lyrctr = 0, thislyrtime, lastlyrtime = 0, linestart = 0, lineend = 0;
 	unsigned char pitch = 0;
@@ -305,15 +305,20 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 	char *tempoutputfilename = "lyrics.temp";
 	char buffer[EOF_MAX_LYRIC_LENGTH + 1] = {0};
 	int exascii = 0;			//Set to nonzero if any extended ASCII characters are detected
+	EOF_VOCAL_TRACK * tp;
 
 	eof_log("EOF_EXPORT_TO_LC() entered", 1);
 
-	if((tp == NULL) || (outputfilename == NULL) || (tp->lyrics == 0))
+	if((sp == NULL) || (outputfilename == NULL))
 		return -1;	//Return failure
 
 //Initialize variables
 	InitLyrics();	//Initialize all variables in the Lyrics structure
 	InitMIDI();		//Initialize all variables in the MIDI structure
+
+	tp = eof_song->vocal_track[0];
+	if(tp->lyrics == 0)
+		return -1;	//Return failure
 
 	qsort(tp->line, (size_t)tp->lines, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);	//Sort the lyric lines
 	temp = tp->line[0];			//Preserve the original lyric line information
@@ -361,6 +366,10 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp, char *outputfilename, char *string2, 
 		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
 	}
 
+	if(sp->tags->foflc_export_without_pitch_shifts)
+	{
+		Lyrics.noplus = 1;	//Disable plus output
+	}
 	eof_allocate_ucode_table();
 
 //Import lyrics from EOF structure

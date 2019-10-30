@@ -4673,8 +4673,8 @@ int eof_menu_note_edit_pro_guitar_note(void)
 								highfretvalue = fretvalue;	//Track the highest user-defined fret value
 							}
 						}
-						if((eof_pro_guitar_note_dialog[35 - ctr].flags == D_SELECTED) || (eof_pro_guitar_note_dialog[47].flags == D_SELECTED))
-						{	//If this string's muted checkbox is checked, or the string mute radio button is selected
+						if(eof_pro_guitar_note_dialog[35 - ctr].flags == D_SELECTED)
+						{	//If this string's muted checkbox is checked
 							if(eof_fret_strings[ctr][0] == '\0')
 							{	//If the fret string is empty
 								fretvalue = 0xFF;	//Mark it as muted with no fret specified
@@ -4911,11 +4911,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					flags |= (tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION);
 				}
 
-				if(!allmuted)
-				{	//If any used strings in this note/chord weren't string muted
-					flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
-				}
-				else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+				if(allmuted && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 				{	//If all strings are muted and the user didn't specify a palm mute
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
 				}

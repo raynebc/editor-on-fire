@@ -5916,7 +5916,7 @@ void eof_render_editor_window(EOF_WINDOW *window)
 	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the user disabled the 2D window's rendering (or enabled full screen 3D view)
 		return;											//Return immediately
 
-	eof_log("\tRendering piano roll.", 3);
+//	eof_log("\tRendering piano roll.", 3);
 	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 	{	//If this is a vocal track
 		eof_render_vocal_editor_window(window);

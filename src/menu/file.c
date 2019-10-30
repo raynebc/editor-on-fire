@@ -4106,7 +4106,7 @@ int eof_save_helper(char *destfilename, char silent)
 		}
 		else
 		{
-			(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,PLAIN_FORMAT);	//Import lyrics into FLC lyrics structure and export to plain script format
+			(void) EOF_EXPORT_TO_LC(eof_song,eof_temp_filename,NULL,PLAIN_FORMAT);	//Import lyrics into FLC lyrics structure and export to plain script format
 		}
 	}
 
@@ -4135,7 +4135,7 @@ int eof_save_helper(char *destfilename, char silent)
 			}
 			else
 			{
-				(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+				(void) EOF_EXPORT_TO_LC(eof_song,eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 			}
 		}
 	}
@@ -4152,7 +4152,7 @@ int eof_save_helper(char *destfilename, char silent)
 		}
 		else
 		{
-			(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,LRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to LRC format
+			(void) EOF_EXPORT_TO_LC(eof_song,eof_temp_filename,NULL,LRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to LRC format
 		}
 
 		//Export extended LRC
@@ -4165,7 +4165,7 @@ int eof_save_helper(char *destfilename, char silent)
 		}
 		else
 		{
-			(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,ELRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to ELRC format
+			(void) EOF_EXPORT_TO_LC(eof_song,eof_temp_filename,NULL,ELRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to ELRC format
 		}
 
 		//Export QRC
@@ -4178,7 +4178,7 @@ int eof_save_helper(char *destfilename, char silent)
 		}
 		else
 		{
-			(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,QRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to QRC format
+			(void) EOF_EXPORT_TO_LC(eof_song,eof_temp_filename,NULL,QRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to QRC format
 		}
 	}
 
@@ -4297,7 +4297,7 @@ int eof_save_helper(char *destfilename, char silent)
 				}
 				else
 				{
-					(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith format
+					(void) EOF_EXPORT_TO_LC(eof_song,eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith format
 				}
 			}
 			//Export in RS2 format
@@ -4333,7 +4333,7 @@ int eof_save_helper(char *destfilename, char silent)
 				}
 				else
 				{
-					(void) EOF_EXPORT_TO_LC(eof_song->vocal_track[0], eof_temp_filename, NULL, RS2_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith 2014 format
+					(void) EOF_EXPORT_TO_LC(eof_song, eof_temp_filename, NULL, RS2_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith 2014 format
 				}
 
 				//Export a UTF-8 version of the lyrics if applicable

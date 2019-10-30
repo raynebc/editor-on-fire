@@ -445,6 +445,7 @@ char eof_midi_initialized = 0;			//Specifies whether Allegro was able to set up 
 FILE *eof_log_fp = NULL;	//Is set to NULL if logging is disabled
 char eof_log_level = 0;		//The logging level is set in the config file (1 = normal, 2 = verbose, 3 = exhaustive)
 char eof_enable_logging = 1;	//Is set to 0 if logging is disabled
+char eof_notes_panel_logged = 0;	//Is set to 1 after the notes panel processing was logged for one frame, if exhaustive logging is enabled, to reduce the repeated duplicate logging
 
 int eof_custom_zoom_level = 0;	//Tracks any user-defined custom zoom level
 int eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note names containing flats.  By default, display as sharps instead
@@ -1352,7 +1353,7 @@ int eof_note_is_hopo(unsigned long cnote)
 	double bpm;
 	double scale;	//Scales the proximity threshold for the given beat's tempo
 
-	eof_log("eof_note_is_hopo() entered", 3);
+//	eof_log("eof_note_is_hopo() entered", 3);
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		return 0;	//Only guitar/bass tracks can have HOPO notes
@@ -3736,7 +3737,7 @@ void eof_render(void)
 {
 //	eof_log("eof_render() entered");
 
-	eof_log("eof_render() entered.", 3);
+//	eof_log("eof_render() entered.", 3);
 
 	/* don't draw if window is out of focus */
 	if(!eof_has_focus)
@@ -3749,13 +3750,17 @@ void eof_render(void)
 	}
 	if(eof_song_loaded)
 	{	//If a project is loaded
-		eof_log("\tProject is loaded.", 3);
+//		eof_log("\tProject is loaded.", 3);
 		if(eof_window_title_dirty)
 		{	//If the window title needs to be redrawn
 			eof_fix_window_title();
 		}
 		if(eof_background)
 		{	//If a background image was loaded
+			if((eof_screen->h > eof_background->h + 5) || (eof_screen->w > eof_background->w + 5))
+			{	//If the program window is more than 5 pixels taller/wider than the background image
+				clear_to_color(eof_screen, eof_color_gray);	//Clear the screen to ensure that remnants of the previous frame don't get left
+			}
 			blit(eof_background, eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);	//Display it
 		}
 		else
@@ -3781,10 +3786,10 @@ void eof_render(void)
 		eof_ch_sp_solution_wanted = 0;	//The rendering of the info and notes panels will change this to 1 any CH SP scoring information is needed for expansion macros
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render the info window yet, it will just be overwritten by the 3D window
-			eof_log("\tRendering Information panel.", 3);
+//			eof_log("\tRendering Information panel.", 3);
 			eof_render_info_window();	//Otherwise render the info window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
 		}
-		eof_log("\tRendering 3D preview.", 3);
+//		eof_log("\tRendering 3D preview.", 3);
 		eof_render_3d_window();
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render these windows
@@ -3815,7 +3820,7 @@ void eof_render(void)
 		}
 	}
 
-	eof_log("\tSub-windows rendered", 3);
+//	eof_log("\tSub-windows rendered", 3);
 
 	if(eof_cursor_visible && eof_soft_cursor)
 	{	//If rendering the software mouse cursor, do so at the actual screen coordinates
@@ -3897,11 +3902,11 @@ void eof_render(void)
 	}
 	else
 	{
-		eof_log("\tPerforming normal blit.", 3);
+//		eof_log("\tPerforming normal blit.", 3);
 		blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);	//Render the screen normally
 	}
 
-	eof_log("eof_render() completed.", 3);
+//	eof_log("eof_render() completed.", 3);
 }
 
 static int work_around_fsel_bug = 0;

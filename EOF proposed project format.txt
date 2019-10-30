@@ -23,7 +23,7 @@ INI STRING CHUNK, for each INI string:
 2 bytes:	Number of INI booleans
 INI BOOLEAN CHUNK, for each INI boolean:
 {
-*	1 byte:		INI boolean type (0=Reserved,128-255=DISALLOWED,1=Lyrics present,2=Eighth note HOPO,3=Guitar fret hand pos of 0,4=Bass fret hand pos of 0,5=Tempo map locked,6=Expert+ drums disabled,7=Click/drag disabled,8=Export RS chord techniques,9=Unshare drum phrasing,10=Highlight non grid snapped notes,11=Accurate T/S,12=Highlight notes in arpeggios,13=Suppress DD warnings)
+*	1 byte:		INI boolean type (0=Reserved,128-255=DISALLOWED,1=Lyrics present,2=Eighth note HOPO,3=Guitar fret hand pos of 0,4=Bass fret hand pos of 0,5=Tempo map locked,6=Expert+ drums disabled,7=Click/drag disabled,8=Export RS chord techniques,9=Unshare drum phrasing,10=Highlight non grid snapped notes,11=Accurate T/S,12=Highlight notes in arpeggios,13=Suppress DD warnings,14=FoFLC export w/o pitch shifts)
 !	The MSB is the boolean status of the INI setting (1 is True), allowing for an explicit "value = False" setting to be stored if necessary
 !	The low 7 bits represents the boolean INI setting in question, numbered from 0 to 127 (number 0 reserved for future use)
 !	Tutorial songs are hidden during quickplay in FoFiX
