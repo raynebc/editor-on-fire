@@ -8502,7 +8502,7 @@ unsigned long eof_determine_chart_length(EOF_SONG *sp)
 
 void eof_truncate_chart(EOF_SONG *sp)
 {
-	unsigned long ctr, targetpos, targetbeat;
+	unsigned long ctr, targetpos, targetbeat, count;
 
 	if(!sp || !sp->beats)
 		return;
@@ -8524,6 +8524,7 @@ void eof_truncate_chart(EOF_SONG *sp)
 	if(sp->beat[sp->beats - 1]->pos <= targetpos)
 	{	//If there aren't enough beats so that at least one starts after the target position
 		eof_log("\tAdding beats", 1);
+		count = 0;
 		while(sp->beat[sp->beats - 1]->pos <= targetpos)
 		{	//While there aren't enough beats so that at least one starts after the target position
 			if(!eof_song_append_beats(sp, 1))
@@ -8531,6 +8532,12 @@ void eof_truncate_chart(EOF_SONG *sp)
 				eof_log("\tError adding beat.  Aborting", 1);
 				return;
 			}
+			count++;
+		}
+		if(eof_log_level > 2)
+		{	//If exhaustive logging is enabled
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAdded %lu beats", count);
+			eof_log(eof_log_string, 1);
 		}
 		eof_chart_length = sp->beat[sp->beats - 1]->pos;	//The position of the last beat is the new chart length
 	}
@@ -8551,12 +8558,18 @@ void eof_truncate_chart(EOF_SONG *sp)
 		eof_chart_length = targetpos;	//Resize the chart length accordingly
 
 		//Truncate empty beats
-		for(ctr = sp->beats; ctr > 0; ctr--)
+		for(ctr = sp->beats, count = 0; ctr > 0; ctr--)
 		{	//For each beat (in reverse order)
 			if(sp->beat[ctr - 1]->pos > eof_chart_length)
 			{	//If this beat is beyond the end of the populated chart and the audio
 				eof_song_delete_beat(sp, ctr - 1);	//Remove it from the end of the chart
+				count++;
 			}
+		}
+		if(eof_log_level > 2)
+		{	//If exhaustive logging is enabled
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeleted %lu beats", count);
+			eof_log(eof_log_string, 1);
 		}
 		if((sp == eof_song) && (eof_selected_beat >= sp->beats))
 		{	//If the selected beat in the active project is no longer valid

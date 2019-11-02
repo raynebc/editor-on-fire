@@ -1642,6 +1642,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* seek back one note (SHIFT+Pg Up, non Feedback input modes) */
 	/* seek back one measure (Pg Up, Feedback input mode) */
 	/* seek back one beat (Pg Up, non Feedback input modes) */
+	/* seek to previous time signature change (ALT+Pg Up) */
 	if(do_pg_up)
 	{
 		if(!eof_music_catalog_playback)
@@ -1677,8 +1678,12 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					(void) eof_menu_song_seek_previous_note();
 				}
 			}
+			else if(KEY_EITHER_ALT)
+			{	//If ALT is being held
+				(void) eof_menu_song_seek_previous_ts_change();
+			}
 			else
-			{	//If neither SHIFT nor CTRL are being held
+			{	//If no modifier keys are being held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
 					(void) eof_menu_song_seek_previous_measure();
@@ -1697,6 +1702,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* seek forward one note (SHIFT+Pg Dn, non Feedback input modes) */
 	/* seek forward one measure (Pg Up, Feedback input mode) */
 	/* seek forward one beat (Pg Dn, non Feedback input modes) */
+	/* seek to next time signature change (ALT+Pg Dn) */
 	if(do_pg_dn)
 	{
 		if(!eof_music_catalog_playback)
@@ -1732,8 +1738,12 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					(void) eof_menu_song_seek_next_note();
 				}
 			}
+			else if(KEY_EITHER_ALT)
+			{	//If ALT is being held
+				(void) eof_menu_song_seek_next_ts_change();
+			}
 			else
-			{	//If neither SHIFT nor CTRL are being held
+			{	//If no modifier keys are being held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
 					(void) eof_menu_song_seek_next_measure();

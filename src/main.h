@@ -778,7 +778,7 @@ void eof_log(const char *text, int level);
 void eof_log_casual(const char *text, int level, int prefix, int newline);
 	//Similar to eof_log(), except that it has an internal memory buffer four times the size of EOF_LOG_STRING_SIZE
 	//only flushes to disk when the buffer has insufficient space for another EOF_LOG_STRING_SIZE number of bytes
-	//Calling with a NULL value for text siganls the function to flush to disk manually
+	//Calling with a NULL value for text signals the function to flush to disk manually
 	//If prefix is nonzero, the log ID number is not written in front of the provided text
 	//If newline is nonzero, a newline character is appended to the provided text
 void eof_log_notes(EOF_SONG *sp, unsigned long track);

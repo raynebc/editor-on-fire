@@ -5185,7 +5185,7 @@ void eof_load_chord_shape_definitions(char *fn)
 							memcpy(eof_chord_shape[num_eof_chord_shapes].frets, frets, 8);		//Store the fret array
 							eof_chord_shape[num_eof_chord_shapes].note = note;			//Store the note mask
 							num_eof_chord_shapes++;
-							eof_log("\t\tChord shape definition loaded", 2);
+							eof_log("\t\tChord shape definition loaded", 3);
 						}
 					}//The chord shape is valid
 				}//The chord template was read

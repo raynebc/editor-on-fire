@@ -72,8 +72,10 @@ int eof_menu_song_seek_next_anchor(void);			//Seeks to the next anchor
 int eof_menu_song_seek_first_beat(void);			//Seeks to the first beat
 int eof_menu_song_seek_previous_beat(void);			//Seeks to the previous beat
 int eof_menu_song_seek_next_beat(void);				//Seeks to the next beat
-int eof_menu_song_seek_previous_measure(void);		//Seeks to the previous measure
-int eof_menu_song_seek_next_measure(void);			//Seeks to the next measure
+int eof_menu_song_seek_previous_measure(void);		//Seeks backward one measure's worth of beats
+int eof_menu_song_seek_next_measure(void);			//Seeks forward one measure's worth of beats
+int eof_menu_song_seek_previous_ts_change(void);	//Seeks to the previous time signature change
+int eof_menu_song_seek_next_ts_change(void);		//Seeks to the next time signature change
 int eof_custom_seek_beat_measure_edit_proc(int msg, DIALOG *d, int c);
 	//If the user types the letter b, sets the "beat" radio button in eof_seek_beat_measure_dialog[]
 	//If the user types the letter m, sets the "measure" radio button in eof_seek_beat_measure_dialog[]

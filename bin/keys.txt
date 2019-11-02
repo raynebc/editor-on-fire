@@ -50,6 +50,8 @@ Playback and Seek controls:
         Hold both Ctrl and Shift while pressing to seek to the previous/next anchor
         position (when grid snap is disabled).
         
+        Hold ALT while pressing to seek to the previous/next time signature change.
+
         (If Feedback input method is active, Pg Up/Dn seeks one measure back/forward
          if there is a time signature in effect.)
 
@@ -370,6 +372,12 @@ Miscellaneous Controls:
         Toggle the "Phase cancellation" playback option (also available in File>Settings).
         This audio trick is typically used to reduce the vocals in the stereo audio, but it
         can also reduce other instruments depending on how the recording was mixed.
+
+    ALT+I:
+
+        Toggle the "Center isolation" playback option (also available in File>Settings).
+        This audio trick is typically used to emphasize the vocals in the stereo audio, but
+        it can also include other sounds depending on how the recording was mixed.
 
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.

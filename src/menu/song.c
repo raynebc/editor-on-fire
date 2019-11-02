@@ -93,6 +93,8 @@ MENU eof_song_seek_menu[] =
 	{"Next Beat\tPGDN", eof_menu_song_seek_next_beat, NULL, 0, NULL},
 	{eof_seek_menu_prev_anchor_text1, eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
 	{eof_seek_menu_next_anchor_text1, eof_menu_song_seek_next_anchor, NULL, 0, NULL},
+	{"Previous TS change\tALT+PGUP", eof_menu_song_seek_previous_ts_change, NULL, 0, NULL},
+	{"Next TS change\tALT+PGDN", eof_menu_song_seek_next_ts_change, NULL, 0, NULL},
 	{"Beat/&Measure\t" CTRL_NAME "+Shift+B", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Next CH &SP deployable note", eof_menu_song_seek_next_ch_sp_deployable_note, NULL, 0, NULL},
@@ -547,14 +549,45 @@ void eof_prepare_song_menu(void)
 			eof_song_seek_menu[0].flags = 0;
 		}
 
+		/* Previous TS change */
+		eof_song_seek_menu[19].flags = D_DISABLED;	//Previous TS change
+		i = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+		while(eof_beat_num_valid(eof_song, i))
+		{	//For each beat at or before the current seek position
+			if(eof_get_ts(eof_song, NULL, NULL, i) == 1)
+			{	//If this beat has a time signature change
+				if(eof_song->beat[i]->pos < eof_music_pos - eof_av_delay)
+				{	//If this beat is before the existing seek position
+					eof_song_seek_menu[19].flags = 0;
+					break;	//Break from the loop
+				}
+			}
+			i--;	//Check previous beat
+		}
+
+		eof_song_seek_menu[20].flags = D_DISABLED;	//Next TS change
+		i = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+		while(eof_beat_num_valid(eof_song, i))
+		{	//For each beat at or before the current seek position
+			if(eof_get_ts(eof_song, NULL, NULL, i) == 1)
+			{	//If this beat has a time signature change
+				if(eof_song->beat[i]->pos > eof_music_pos - eof_av_delay)
+				{	//If this beat is after the existing seek position
+					eof_song_seek_menu[20].flags = 0;
+					break;	//Break from the loop
+				}
+			}
+			i++;	//Check next beat
+		}
+
 		/* Seek to next CH SP deployable note */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 		{	//If a compatible track format is active
-			eof_song_seek_menu[21].flags = 0;
+			eof_song_seek_menu[23].flags = 0;
 		}
 		else
 		{
-			eof_song_seek_menu[21].flags = D_DISABLED;
+			eof_song_seek_menu[23].flags = D_DISABLED;
 		}
 
 		/* display semitones as flat */
@@ -2966,7 +2999,7 @@ int eof_menu_song_seek_previous_measure(void)
 	while(eof_beat_num_valid(eof_song, b))
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
-		{	//If this beat is a time signature
+		{	//If this beat has a time signature change
 			break;	//Break from the loop
 		}
 		b--;	//Check previous beat on next loop
@@ -3010,7 +3043,7 @@ int eof_menu_song_seek_next_measure(void)
 	while(eof_beat_num_valid(eof_song, b))
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
-		{	//If this beat is a time signature
+		{	//If this beat has a time signature change
 			break;	//Break from the loop
 		}
 		b--;	//Check previous beat on next loop
@@ -3039,6 +3072,62 @@ int eof_menu_song_seek_next_measure(void)
 		}
 	}
 	eof_feedback_input_mode_update_selected_beat();	//Update the selected beat and measure if Feedback input mode is in use
+	return 1;
+}
+
+int eof_menu_song_seek_previous_ts_change(void)
+{
+	unsigned long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+
+	if(!eof_song)
+		return 1;
+
+	while(eof_beat_num_valid(eof_song, b))
+	{	//For each beat at or before the current seek position
+		if(eof_get_ts(eof_song, NULL, NULL, b) == 1)
+		{	//If this beat has a time signature change
+			if(eof_song->beat[b]->pos < eof_music_pos - eof_av_delay)
+			{	//If this beat is before the existing seek position
+				break;	//Break from the loop
+			}
+		}
+		b--;	//Check previous beat
+	}
+
+	if(eof_beat_num_valid(eof_song, b))
+	{	//If a time signature change was found
+		eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);
+		eof_feedback_input_mode_update_selected_beat();	//Update the selected beat and measure if Feedback input mode is in use
+	}
+
+	return 1;
+}
+
+int eof_menu_song_seek_next_ts_change(void)
+{
+	unsigned long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+
+	if(!eof_song)
+		return 1;
+
+	while(eof_beat_num_valid(eof_song, b))
+	{	//For each beat at or before the current seek position
+		if(eof_get_ts(eof_song, NULL, NULL, b) == 1)
+		{	//If this beat has a time signature change
+			if(eof_song->beat[b]->pos > eof_music_pos - eof_av_delay)
+			{	//If this beat is after the existing seek position
+				break;	//Break from the loop
+			}
+		}
+		b++;	//Check next beat
+	}
+
+	if(eof_beat_num_valid(eof_song, b))
+	{	//If a time signature change was found
+		eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);
+		eof_feedback_input_mode_update_selected_beat();	//Update the selected beat and measure if Feedback input mode is in use
+	}
+
 	return 1;
 }
 
