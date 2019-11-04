@@ -547,10 +547,10 @@ typedef struct
 typedef struct
 {
 	char text[EOF_TEXT_EVENT_LENGTH + 1];
-	unsigned long beat;
+	unsigned long pos;
 	unsigned long track;	//The track this event is tied to, or 0 if it goes into the EVENTS track (such as a generic section marker)
 	char is_temporary;		//This is nonzero if the event is considered temporary (doesn't trigger undo/redo when added/deleted), required RBN events are added this way during save
-	unsigned char flags;
+	unsigned flags;
 	unsigned long index;	//Populated with the event's index in eof_sort_events(), since the quicksort algorithm can and will re-order list items that have equivalent sorting order
 
 } EOF_TEXT_EVENT;
@@ -559,6 +559,7 @@ typedef struct
 #define EOF_EVENT_FLAG_RS_SECTION     2
 #define EOF_EVENT_FLAG_RS_EVENT       4
 #define EOF_EVENT_FLAG_RS_SOLO_PHRASE 8
+#define EOF_EVENT_FLAG_FLOATING_POS   16
 
 typedef struct
 {

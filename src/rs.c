@@ -1189,7 +1189,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track  == track))
 				{	//If the event applies to the specified track
 					expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256, 0, 0, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-					(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, buffer2);
+					(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", eof_get_text_event_fpos(sp, ctr) / 1000.0, buffer2);
 					(void) pack_fputs(buffer, fp);
 				}
 			}
@@ -2687,7 +2687,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track  == track))
 				{	//If the event applies to the specified track
 					expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256, 0, 0, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-					(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, buffer2);
+					(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", eof_get_text_event_fpos(sp, ctr) / 1000.0, buffer2);
 					(void) pack_fputs(buffer, fp);
 				}
 			}

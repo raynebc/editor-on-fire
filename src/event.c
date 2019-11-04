@@ -9,13 +9,18 @@
 #endif
 
 char eof_event_list_text[EOF_MAX_TEXT_EVENTS][256] = {{0}};
+EOF_SONG *eof_song_qsort_events_ptr;	//A pointer to the relevant song structure for the sort, since beat positions need to be able to be referenced
 
-EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text, unsigned long track, unsigned long flags, char is_temporary)
+EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long pos, char * text, unsigned long track, unsigned long flags, char is_temporary)
 {
 // 	eof_log("eof_song_add_text_event() entered");
 
-	if(!sp || !text || (sp->text_events >= EOF_MAX_TEXT_EVENTS) || (beat >= sp->beats))
+	if(!sp || !text || (sp->text_events >= EOF_MAX_TEXT_EVENTS))
 		return NULL;	//Invalid parameters
+	if(!(flags & EOF_EVENT_FLAG_FLOATING_POS) && (pos >= sp->beats))
+	{	//If this text event is assigned to a beat marker, but the specified beat is invalid
+		return NULL;	//Invalid parameters
+	}
 
 	sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
 	if(!sp->text_event[sp->text_events])
@@ -23,7 +28,7 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char
 
 	sp->text_event[sp->text_events]->text[0] = '\0';	//Eliminate false positive in Splint
 	(void) ustrcpy(sp->text_event[sp->text_events]->text, text);
-	sp->text_event[sp->text_events]->beat = beat;
+	sp->text_event[sp->text_events]->pos = pos;
 	if(track >= sp->tracks)
 	{	//If this is an invalid track
 		track = 0;	//Make this a global text event
@@ -31,7 +36,10 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char
 	sp->text_event[sp->text_events]->track = track;
 	sp->text_event[sp->text_events]->flags = flags;
 	sp->text_event[sp->text_events]->is_temporary = is_temporary;
-	sp->beat[beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the events flag for the beat
+	if(!(flags & EOF_EVENT_FLAG_FLOATING_POS))
+	{	//If this text event is assigned to a beat marker
+		sp->beat[pos]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the events flag for the beat
+	}
 	sp->text_event[sp->text_events]->index = 0;
 	sp->text_events++;
 
@@ -49,26 +57,29 @@ void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offse
 		return;
 	}
 	for(i = 0; i < sp->text_events; i++)
-	{
-		if(sp->text_event[i]->beat < beat)
-			continue;	//If this event's beat is before the move takes effect, skip it
+	{	//For each text event
+		if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(sp->text_event[i]->pos < beat)
+				continue;	//If this event's beat is before the move takes effect, skip it
 
-		if(sp->text_event[i]->beat >= sp->beats)
-			continue;	//Do not allow an out of bound access
-		sp->beat[sp->text_event[i]->beat]->flags &= ~(EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
-		if(dir < 0)
-		{
-			if(offset > sp->text_event[i]->beat)
-				continue;	//Do not allow an underflow
-			sp->text_event[i]->beat -= offset;
+			if(sp->text_event[i]->pos >= sp->beats)
+				continue;	//Do not allow an out of bound access
+			sp->beat[sp->text_event[i]->pos]->flags &= ~(EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
+			if(dir < 0)
+			{
+				if(offset > sp->text_event[i]->pos)
+					continue;	//Do not allow an underflow
+				sp->text_event[i]->pos -= offset;
+			}
+			else
+			{
+				if(sp->text_event[i]->pos + offset >= sp->beats)
+					continue;	//Do not allow an overflow
+				sp->text_event[i]->pos += offset;
+			}
+			sp->beat[sp->text_event[i]->pos]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the event flag
 		}
-		else
-		{
-			if(sp->text_event[i]->beat + offset >= sp->beats)
-				continue;	//Do not allow an overflow
-			sp->text_event[i]->beat += offset;
-		}
-		sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the event flag
 	}
 }
 
@@ -133,6 +144,7 @@ void eof_sort_events(EOF_SONG * sp)
 		{	//For each text event in the project
 			sp->text_event[ctr]->index = ctr;	//Store the native index into the event to prevent qsort() from corrupting the order of events that otherwise have matching sort criteria
 		}
+		eof_song_qsort_events_ptr = sp;	//Set the song structure that will be referenced by the comparitor function
 		qsort(sp->text_event, (size_t)sp->text_events, sizeof(EOF_TEXT_EVENT *), eof_song_qsort_events);
 	}
 }
@@ -162,12 +174,15 @@ int eof_song_qsort_events(const void * e1, const void * e2)
 {
 	EOF_TEXT_EVENT ** thing1 = (EOF_TEXT_EVENT **)e1;
 	EOF_TEXT_EVENT ** thing2 = (EOF_TEXT_EVENT **)e2;
+	unsigned long pos1, pos2;
 
-	if((*thing1)->beat < (*thing2)->beat)
+	pos1 = eof_get_text_event_pos_ptr(eof_song_qsort_events_ptr, *thing1);
+	pos2 = eof_get_text_event_pos_ptr(eof_song_qsort_events_ptr, *thing2);
+	if(pos1 < pos2)
 	{
 		return -1;
 	}
-	else if((*thing1)->beat == (*thing2)->beat)
+	else if(pos1 == pos2)
 	{
 		if((*thing1)->index < ((*thing2)->index))
 			return -1;	//If the first event's index is lower, it will sort earlier

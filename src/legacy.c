@@ -580,7 +580,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < b; i++)
 			{
 				(void) pack_fread(sp->text_event[i]->text, 256, fp);
-				sp->text_event[i]->beat = pack_igetl(fp);
+				sp->text_event[i]->pos = pack_igetl(fp);
 			}
 
 			/* read tracks */
@@ -651,7 +651,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < b; i++)
 			{
 				(void) pack_fread(sp->text_event[i]->text, 256, fp);
-				sp->text_event[i]->beat = pack_igetl(fp);
+				sp->text_event[i]->pos = pack_igetl(fp);
 			}
 
 			/* read tracks */
@@ -737,7 +737,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < b; i++)
 			{
 				(void) pack_fread(sp->text_event[i]->text, 256, fp);
-				sp->text_event[i]->beat = pack_igetl(fp);
+				sp->text_event[i]->pos = pack_igetl(fp);
 			}
 
 			/* read tracks */
@@ -855,7 +855,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < b; i++)
 			{
 				(void) pack_fread(sp->text_event[i]->text, 256, fp);
-				sp->text_event[i]->beat = pack_igetl(fp);
+				sp->text_event[i]->pos = pack_igetl(fp);
 			}
 
 			/* read tracks */
@@ -972,7 +972,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < b; i++)
 			{
 				(void) pack_fread(sp->text_event[i]->text, 256, fp);
-				sp->text_event[i]->beat = pack_igetl(fp);
+				sp->text_event[i]->pos = pack_igetl(fp);
 			}
 
 			/* read tracks */
@@ -1107,7 +1107,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < b; i++)
 			{
 				(void) pack_fread(sp->text_event[i]->text, 256, fp);
-				sp->text_event[i]->beat = pack_igetl(fp);
+				sp->text_event[i]->pos = pack_igetl(fp);
 			}
 
 			/* read tracks */
@@ -1244,7 +1244,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < b; i++)
 			{
 				(void) pack_fread(sp->text_event[i]->text, 256, fp);
-				sp->text_event[i]->beat = pack_igetl(fp);
+				sp->text_event[i]->pos = pack_igetl(fp);
 			}
 
 			/* read tracks */

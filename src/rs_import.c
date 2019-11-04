@@ -1095,7 +1095,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						strncpy(eventlist[eventlist_count]->text, phraselist[id], sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the phrase name
 						eventlist[eventlist_count]->track = eof_selected_track;
 						eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_PHRASE;
-						eventlist[eventlist_count]->beat = timestamp;	//Store the real timestamp, it will need to be converted to the beat number later
+						eventlist[eventlist_count]->pos = timestamp;	//Store the real timestamp, it will need to be converted to the beat number later
 						phraseitctr++;
 						eventlist_count++;
 					}
@@ -1460,7 +1460,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					strncpy(eventlist[eventlist_count]->text, tag, sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the section name
 					eventlist[eventlist_count]->track = eof_selected_track;
 					eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_SECTION;
-					eventlist[eventlist_count]->beat = output;	//Store the real timestamp, it will need to be converted to the beat number later
+					eventlist[eventlist_count]->pos = output;	//Store the real timestamp, it will need to be converted to the beat number later
 					sectionctr++;
 					eventlist_count++;
 				}
@@ -1522,7 +1522,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					strncpy(eventlist[eventlist_count]->text, tag, sizeof(eventlist[eventlist_count]->text) - 1);	//Copy the event code
 					eventlist[eventlist_count]->track = eof_selected_track;
 					eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_EVENT;
-					eventlist[eventlist_count]->beat = output;	//Store the real timestamp, it will need to be converted to the beat number later
+					eventlist[eventlist_count]->pos = output;	//Store the real timestamp, it will need to be converted to the beat number later
 					eventctr++;
 					eventlist_count++;
 				}
@@ -2197,7 +2197,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		{	//If import succeeded
 			for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
 			{	//For each beat in the project
-				if((ctr2 + 1 >= eof_song->beats) || (eventlist[ctr]->beat < eof_song->beat[ctr2 + 1]->pos))
+				if((ctr2 + 1 >= eof_song->beats) || (eventlist[ctr]->pos < eof_song->beat[ctr2 + 1]->pos))
 				{	//If this text event falls before the next beat, or if there isn't another beat
 					(void) eof_song_add_text_event(eof_song, ctr2, eventlist[ctr]->text, eof_selected_track, eventlist[ctr]->flags, 0);	//Add the event to this beat
 					break;
@@ -2212,40 +2212,43 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	{	//If the user opted to import TS changes
 		for(ctr = eof_song->text_events; ctr > 0; ctr--)
 		{	//For each text event (in reverse order)
-			char buffer3[5] = {0};
-			char *ptr3 = strcasestr_spec(eof_song->text_event[ctr - 1]->text, "TS:");
-			unsigned index = 0;
-			long num, den;
+			if(!(eof_song->text_event[ctr - 1]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+			{	//If this text event is assigned to a beat marker
+				char buffer3[5] = {0};
+				char *ptr3 = strcasestr_spec(eof_song->text_event[ctr - 1]->text, "TS:");
+				unsigned index = 0;
+				long num, den;
 
-			if(!ptr3)
-				continue;	//If this text event is not formatted like a time signature change, skip it
+				if(!ptr3)
+					continue;	//If this text event is not formatted like a time signature change, skip it
 
-			while((index < 5) && (*ptr3 != '/'))
-			{	//Copy the numerator into the buffer
-				buffer3[index++] = *ptr3;
-				ptr3++;
+				while((index < 5) && (*ptr3 != '/'))
+				{	//Copy the numerator into the buffer
+					buffer3[index++] = *ptr3;
+					ptr3++;
+				}
+				if(!index || (index >= 5))
+					continue;	//Skip converting this text event if an error was encountered
+				buffer3[index] = '\0';		//Terminate the buffer
+				num = atol(buffer3);		//Convert the string to a number
+				if(!num || (num > 999) || (*ptr3 != '/'))
+					continue;	//Skip converting this text event if an error was encountered
+				ptr3++;	//Advance past the forward slash
+				index = 0;
+				while((index < 5) && (*ptr3 != '\0'))
+				{	//Copy the denominator into the buffer
+					buffer3[index++] = *ptr3;
+					ptr3++;
+				}
+				if(!index || (index >= 5))
+					continue;	//Skip converting this text event if an error was encountered
+				buffer3[index] = '\0';		//Terminate the buffer
+				den = atol(buffer3);		//Convert the string to a number
+				if(!den || (den > 999))
+					continue;	//Skip converting this text event if an error was encountered
+				(void) eof_apply_ts(num, den, eof_song->text_event[ctr - 1]->pos, eof_song, 0);	//Add the time signature to the active project
+				eof_song_delete_text_event(eof_song, ctr - 1);	//Delete the converted text event
 			}
-			if(!index || (index >= 5))
-				continue;	//Skip converting this text event if an error was encountered
-			buffer3[index] = '\0';		//Terminate the buffer
-			num = atol(buffer3);		//Convert the string to a number
-			if(!num || (num > 999) || (*ptr3 != '/'))
-				continue;	//Skip converting this text event if an error was encountered
-			ptr3++;	//Advance past the forward slash
-			index = 0;
-			while((index < 5) && (*ptr3 != '\0'))
-			{	//Copy the denominator into the buffer
-				buffer3[index++] = *ptr3;
-				ptr3++;
-			}
-			if(!index || (index >= 5))
-				continue;	//Skip converting this text event if an error was encountered
-			buffer3[index] = '\0';		//Terminate the buffer
-			den = atol(buffer3);		//Convert the string to a number
-			if(!den || (den > 999))
-				continue;	//Skip converting this text event if an error was encountered
-			(void) eof_apply_ts(num, den, eof_song->text_event[ctr - 1]->beat, eof_song, 0);	//Add the time signature to the active project
-			eof_song_delete_text_event(eof_song, ctr - 1);	//Delete the converted text event
 		}
 		eof_calculate_tempo_map(eof_song);	//Rebuild tempo map to account for any time signature changes
 	}

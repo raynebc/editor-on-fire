@@ -4328,7 +4328,7 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 	{	//For each event in the project
 		if(sp->text_event[ctr]->track == sourcetrack)
 		{	//If the event is specific to the source track, copy it to the destination track
-			(void) eof_song_add_text_event(sp, sp->text_event[ctr]->beat, sp->text_event[ctr]->text, desttrack, sp->text_event[ctr]->flags, 0);
+			(void) eof_song_add_text_event(sp, sp->text_event[ctr]->pos, sp->text_event[ctr]->text, desttrack, sp->text_event[ctr]->flags, 0);
 		}
 	}
 
@@ -4931,7 +4931,7 @@ int eof_menu_track_clone_track_to_clipboard(void)
 				else
 				{	//On second pass, write the events to the clipboard
 					(void) eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write event text
-					(void) pack_iputl(eof_song->text_event[ctr2]->beat, fp);				//Write event's assigned beat number
+					(void) pack_iputl(eof_song->text_event[ctr2]->pos, fp);				//Write event's assigned beat number
 					(void) pack_putc(eof_song->text_event[ctr2]->flags, fp);				//Write event flags
 				}
 			}

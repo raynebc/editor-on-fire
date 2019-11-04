@@ -1894,7 +1894,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	for(ctr=0; ctr<count; ctr++)
 	{	//For each text event in the project
 		(void) eof_load_song_string_pf(sp->text_event[ctr]->text,fp,256);	//Read the text event string
-		sp->text_event[ctr]->beat = pack_igetl(fp);		//Read the text event's beat number
+		sp->text_event[ctr]->pos = pack_igetl(fp);		//Read the text event's beat number
 		sp->text_event[ctr]->track = pack_igetw(fp);	//Read the text event's associated track number
 		sp->text_event[ctr]->flags = pack_igetw(fp);	//Read the text event's flags
 	}
@@ -3133,7 +3133,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	for(ctr=0; ctr < sp->text_events; ctr++)
 	{	//For each text event in the project
 		(void) eof_save_song_string_pf(sp->text_event[ctr]->text, fp);	//Write the text event string
-		(void) pack_iputl(sp->text_event[ctr]->beat, fp);	//Write the text event's associated beat number
+		(void) pack_iputl(sp->text_event[ctr]->pos, fp);	//Write the text event's associated position
 		(void) pack_iputw(sp->text_event[ctr]->track, fp);	//Write the text event's associated track number
 		(void) pack_iputw(sp->text_event[ctr]->flags, fp);	//Write the text event's flags
 	}
@@ -8424,7 +8424,7 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 unsigned long eof_determine_chart_length(EOF_SONG *sp)
 {
 	unsigned long lastitempos = 0;	//This will track the position of the last text event, or the end of the last note/lyric, whichever is later
-	unsigned long ctr, ctr2, thisendpos, thiseventbeat;
+	unsigned long ctr, ctr2, thisendpos;
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 
 	if(!sp)
@@ -8477,10 +8477,9 @@ unsigned long eof_determine_chart_length(EOF_SONG *sp)
 	//Check text events
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event in the project
-		thiseventbeat = sp->text_event[ctr]->beat;
-		if(thiseventbeat < sp->beats)
-		{	//If this text event is on a valid beat marker
-			thisendpos = sp->beat[thiseventbeat]->pos;
+		thisendpos = eof_get_text_event_pos(sp, ctr);
+		if(thisendpos < ULONG_MAX)
+		{	//If this text event's position was found
 			if(thisendpos > lastitempos)
 			{	//If this text event is later than all of the notes/lyrics in the project
 				lastitempos = thisendpos;	//Track its position
@@ -9934,10 +9933,25 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 	//Clone text events
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event in the source project
-		unsigned long beat = sp->text_event[ctr]->beat;
-		if((beat < sp->beats) && (beat >= beatoffset) && (sp->beat[beat]->pos >= start) && (sp->beat[beat]->pos <= end))
+		unsigned long offsetpos, eventpos = eof_get_text_event_pos(sp, ctr);
+		unsigned long beat = sp->text_event[ctr]->pos;
+
+		if((beat < sp->beats) && (beat >= beatoffset) && (eventpos >= start) && (eventpos <= end))
 		{	//If this text event is in the time range being cloned, clone it
-			if(!eof_song_add_text_event(csp, beat - beatoffset, sp->text_event[ctr]->text, sp->text_event[ctr]->track, sp->text_event[ctr]->flags, 0))
+			if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+			{	//If this text event is assigned to a beat marker
+				if((sp->text_event[ctr]->pos >= sp->beats) || (sp->text_event[ctr]->pos < beatoffset))
+				{	//If the assigned beat number is invalid or there was a logic error
+					continue;	//Skip this text event
+				}
+				offsetpos = beat - beatoffset;
+			}
+			else
+			{	//This text event has a floating position
+				offsetpos = eventpos - start;
+			}
+
+			if(!eof_song_add_text_event(csp, offsetpos, sp->text_event[ctr]->text, sp->text_event[ctr]->track, sp->text_event[ctr]->flags, 0))
 			{	//If the text event couldn't be added to the destination project
 				eof_destroy_song(csp);
 				return NULL;
@@ -10636,48 +10650,46 @@ int eof_check_for_notes_preceding_sections(int function)
 	/* check for notes occurring before the first defined section, if there are any sections */
 	if(eof_write_fof_files || eof_write_rb_files)
 	{	//This should only be a concern for the GH/RB style MIDI charts
-		unsigned long ctr, first_section_beat = ULONG_MAX;
+		unsigned long ctr, first_section_pos;
+		int section_found = 0;
 
 		//Find the first section event in the project
 		for(ctr = 0; ctr< eof_song->text_events; ctr++)
 		{	//For each text event in the project
 			if(eof_is_section_marker(eof_song->text_event[ctr], 0))
 			{	//If this text event is a section event
-				first_section_beat = eof_song->text_event[ctr]->beat;	//Record the event's assigned beat number
+				first_section_pos = eof_get_text_event_pos(eof_song, ctr);	//Record the event's position
+				section_found = 1;
 				break;
 			}
 		}
 
 		//Compare the first section's timestamp against the first note in each track
-		if(first_section_beat < eof_song->text_events)
+		if(section_found)
 		{	//If a section event was found
-			unsigned long first_section_pos, first_note_pos;
+			unsigned long first_note_pos;
 
-			if(first_section_beat < eof_song->beats)
-			{	//Bounds check
-				first_section_pos = eof_song->beat[first_section_beat]->pos;
-				for(ctr = 1; ctr < eof_song->tracks; ctr++)
-				{	//For each track
-					if(eof_get_track_size(eof_song, ctr))
-					{	//If the track has any notes
-						first_note_pos = eof_get_note_pos(eof_song, ctr, 0);	//Obtain the first note's position
-						if(first_note_pos < first_section_pos)
-						{	//If the first note occurs before the first section
-							eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, 0), eof_get_note_pos(eof_song, ctr, 0));
-							eof_clear_input();
-							if(function)
-							{	//If the calling function wanted to alert and prompt to cancel save
-								if(alert("At least one note occurs before the first section marker.", "Such notes won't show up when practicing sections in-game.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to cancel the save
-									return 1;	//Return cancellation
-								}
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track
+				if(eof_get_track_size(eof_song, ctr))
+				{	//If the track has any notes
+					first_note_pos = eof_get_note_pos(eof_song, ctr, 0);	//Obtain the first note's position
+					if(first_note_pos < first_section_pos)
+					{	//If the first note occurs before the first section
+						eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, 0), eof_get_note_pos(eof_song, ctr, 0));
+						eof_clear_input();
+						if(function)
+						{	//If the calling function wanted to alert and prompt to cancel save
+							if(alert("At least one note occurs before the first section marker.", "Such notes won't show up when practicing sections in-game.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to cancel the save
+								return 1;	//Return cancellation
 							}
-							else
-							{	//The calling function only wanted to alert
-								allegro_message("At least one note occurs before the first section marker.\nSuch notes won't show up when practicing sections in-game.");
-							}
-							break;	//Stop checking the first note in each track
 						}
+						else
+						{	//The calling function only wanted to alert
+							allegro_message("At least one note occurs before the first section marker.\nSuch notes won't show up when practicing sections in-game.");
+						}
+						break;	//Stop checking the first note in each track
 					}
 				}
 			}

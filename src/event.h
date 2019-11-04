@@ -6,11 +6,12 @@
 extern EOF_TEXT_EVENT eof_text_event[EOF_MAX_TEXT_EVENTS];
 extern char eof_event_list_text[EOF_MAX_TEXT_EVENTS][256];
 extern int eof_text_events;
+extern EOF_SONG *eof_song_qsort_events_ptr;
 
-EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text, unsigned long track, unsigned long flags, char is_temporary);
+EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long pos, char * text, unsigned long track, unsigned long flags, char is_temporary);
 	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.
 	//Track specifies which track this event will be associated with, or 0 or if it's not track specific.
-	//A boolen status is tracked to regard whether the event is considered temporary.
+	//A boolean status is tracked to regard whether the event is considered temporary.
 	//Returns the newly allocated structure or NULL upon error
 void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offset, int dir);
 	//Moves all text events defined at or after the specified beat the specified number of beats in either direction
@@ -24,6 +25,7 @@ void eof_delete_blank_events(EOF_SONG *sp);
 	//Deletes any text events in the specified chart that have no text
 int eof_song_qsort_events(const void * e1, const void * e2);
 	//The comparitor function used to quicksort the events array
+	//Requires that eof_song_qsort_events_ptr has been set to the song structure whose events are being sorted
 char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific);
 	//Returns nonzero if there is one or more text events that matches the specified string exactly (case sensitive)
 	// and whose flags ANDED with the specified flags is nonzero (ie. for checking for existing of a RS phrase, use a flags value of all bits set to search for any event type)

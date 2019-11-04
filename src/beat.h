@@ -72,5 +72,14 @@ double eof_get_distance_in_beats(EOF_SONG *sp, unsigned long pos1, unsigned long
 	//Returns 0.0 on error
 void eof_detect_mid_measure_ts_changes(void);
 	//Checks for time signature changes that occur part-way into a measure and warns the user
+unsigned long eof_get_text_event_pos_ptr(EOF_SONG *sp, EOF_TEXT_EVENT *ptr);
+	//Returns the realtime position of the specified text event, taking into account whether it has a floating position instead of being assigned to a beat marker
+	//Returns ULONG_MAX on error
+unsigned long eof_get_text_event_pos(EOF_SONG *sp, unsigned long event);
+	//Accepts a song structure and event index, returning the position determined by eof_get_text_event_pos_ptr()
+double eof_get_text_event_fpos_ptr(EOF_SONG *sp, EOF_TEXT_EVENT *ptr);
+double eof_get_text_event_fpos(EOF_SONG *sp, unsigned long event);
+	//Floating point versions of eof_get_text_event_pos() and eof_get_text_event_fpos()
+	//Return 0.0 on error, since DBL_MAX doesn't seem standardized in MinGW
 
 #endif

@@ -699,10 +699,13 @@ void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 		sp->beat[beat + 1]->ppqn = sp->beat[beat]->ppqn;	//Copy the current beat's tempo to the new beat
 		for(i = 0; i < sp->text_events; i++)
 		{	//For each text event
-			if(sp->text_event[i]->beat >= beat + 1)	//If the event is at the added beat or after
-			{
-				sp->text_event[i]->beat++;			//Move it forward one beat
-				sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Ensure that beat is marked as having a text event
+			if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+			{	//If this text event is assigned to a beat marker
+				if(sp->text_event[i]->pos >= beat + 1)	//If the event is at the added beat or after
+				{
+					sp->text_event[i]->pos++;			//Move it forward one beat
+					sp->beat[sp->text_event[i]->pos]->flags |= EOF_BEAT_FLAG_EVENTS;	//Ensure that beat is marked as having a text event
+				}
 			}
 		}
 
@@ -756,10 +759,13 @@ int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 		eof_song_delete_beat(sp, beat + 1);	//Delete the next beat
 		for(i = 0; i < sp->text_events; i++)
 		{	//For each text event
-			if(sp->text_event[i]->beat >= beat + 1)	//If the event is at the deleted beat or after
-			{
-				sp->text_event[i]->beat--;			//Move it back one beat
-				sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Ensure that beat is marked as having a text event
+			if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+			{	//If this text event is assigned to a beat marker
+				if(sp->text_event[i]->pos >= beat + 1)	//If the event is at the deleted beat or after
+				{
+					sp->text_event[i]->pos--;			//Move it back one beat
+					sp->beat[sp->text_event[i]->pos]->flags |= EOF_BEAT_FLAG_EVENTS;	//Ensure that beat is marked as having a text event
+				}
 			}
 		}
 
@@ -891,31 +897,37 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 
 			for(ctr = 0; ctr < sp->text_events; ctr++)
 			{	//For each text event
-				if(sp->text_event[ctr]->beat == i)
-				{	//If the event is assigned to this beat
-					if(eof_is_section_marker(sp->text_event[ctr], track))
-					{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
-						sp->beat[i]->contained_section_event = ctr;
-						break;	//And break from the loop
-					}
-					else if(!ustrcmp(sp->text_event[ctr]->text, "[end]"))
-					{	//If this is the [end] event
-						sp->beat[i]->contains_end_event = 1;
-						break;
+				if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+				{	//If this text event is assigned to a beat marker
+					if(sp->text_event[ctr]->pos == i)
+					{	//If the event is assigned to this beat
+						if(eof_is_section_marker(sp->text_event[ctr], track))
+						{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
+							sp->beat[i]->contained_section_event = ctr;
+							break;	//And break from the loop
+						}
+						else if(!ustrcmp(sp->text_event[ctr]->text, "[end]"))
+						{	//If this is the [end] event
+							sp->beat[i]->contains_end_event = 1;
+							break;
+						}
 					}
 				}
 			}
 
 			for(ctr = 0; ctr < sp->text_events; ctr++)
 			{	//For each text event
-				if(sp->text_event[ctr]->beat == i)
-				{	//If the event is assigned to this beat
-					count = eof_get_rs_section_instance_number(sp, track, ctr);	//Determine if this event is a Rocksmith section, and if so, which instance number it is
-					if(count)
+				if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+				{	//If this text event is assigned to a beat marker
+					if(sp->text_event[ctr]->pos == i)
 					{	//If the event is assigned to this beat
-						sp->beat[i]->contained_rs_section_event = ctr;
-						sp->beat[i]->contained_rs_section_event_instance_number = count;
-						break;
+						count = eof_get_rs_section_instance_number(sp, track, ctr);	//Determine if this event is a Rocksmith section, and if so, which instance number it is
+						if(count)
+						{	//If the event is assigned to this beat
+							sp->beat[i]->contained_rs_section_event = ctr;
+							sp->beat[i]->contained_rs_section_event_instance_number = count;
+							break;
+						}
 					}
 				}
 			}
@@ -998,4 +1010,56 @@ void eof_detect_mid_measure_ts_changes(void)
 
 		allegro_message("%lu measures are interrupted by a time signature change.\nThis can cause problems in some rhythm games.\nSuggested T/S for this one is %d/%u.", mid_change_count, suggested_num, suggested_den);
 	}
+}
+
+unsigned long eof_get_text_event_pos_ptr(EOF_SONG *sp, EOF_TEXT_EVENT *ptr)
+{
+	if(!ptr)
+		return ULONG_MAX;	//Invalid parameter
+
+	if(ptr->flags & EOF_EVENT_FLAG_FLOATING_POS)
+	{	//The event's position is in milliseconds
+		return ptr->pos;
+	}
+	else
+	{	//The event's position refers to its assigned beat number
+		if(!eof_beat_num_valid(sp, ptr->pos))
+			return ULONG_MAX;	//Invalid beat number
+
+		return sp->beat[ptr->pos]->pos;
+	}
+}
+
+unsigned long eof_get_text_event_pos(EOF_SONG *sp, unsigned long event)
+{
+	if(!sp || (event >= sp->text_events))
+		return ULONG_MAX;	//Invalid parameters
+
+	return eof_get_text_event_pos_ptr(sp, sp->text_event[event]);
+}
+
+double eof_get_text_event_fpos_ptr(EOF_SONG *sp, EOF_TEXT_EVENT *ptr)
+{
+	if(!ptr)
+		return 0.0;	//Invalid parameter
+
+	if(ptr->flags & EOF_EVENT_FLAG_FLOATING_POS)
+	{	//The event's position is in milliseconds
+		return ptr->pos;
+	}
+	else
+	{	//The event's position refers to its assigned beat number
+		if(!eof_beat_num_valid(sp, ptr->pos))
+			return 0.0;	//Invalid beat number
+
+		return sp->beat[ptr->pos]->fpos;
+	}
+}
+
+double eof_get_text_event_fpos(EOF_SONG *sp, unsigned long event)
+{
+	if(!sp || (event >= sp->text_events))
+		return 0.0;	//Invalid parameters
+
+	return eof_get_text_event_fpos_ptr(sp, sp->text_event[event]);
 }

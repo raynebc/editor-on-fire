@@ -5744,11 +5744,14 @@ void eof_cleanup_beat_flags(EOF_SONG *sp)
 
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event
-		if(sp->text_event[ctr]->beat >= sp->beats)
-		{	//If the text event is assigned to an invalid beat number
-			sp->text_event[ctr]->beat = sp->beats - 1;	//Re-assign to the last beat marker
+		if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(sp->text_event[ctr]->pos >= sp->beats)
+			{	//If the text event is assigned to an invalid beat number
+				sp->text_event[ctr]->pos = sp->beats - 1;	//Re-assign to the last beat marker
+			}
+			sp->beat[sp->text_event[ctr]->pos]->flags |= EOF_BEAT_FLAG_EVENTS;	//Ensure the text event status flag is set
 		}
-		sp->beat[sp->text_event[ctr]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Ensure the text event status flag is set
 	}
 
 	if(sp->beats < 1)

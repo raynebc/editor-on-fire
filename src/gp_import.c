@@ -2500,7 +2500,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(sync_points);
 							return NULL;
 						}
-						gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
+						gp->text_event[gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
 						gp->text_event[gp->text_events]->track = 0;
 						rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
 						if(eof_gp_import_preference_1 || !rssectionname)
@@ -2567,7 +2567,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							return NULL;
 						}
 						memset(gp->text_event[gp->text_events], 0, sizeof(EOF_TEXT_EVENT));	//Fill with 0s to satisfy Splint
-						gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
+						gp->text_event[gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
 						gp->text_event[gp->text_events]->track = 0;
 						rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
 						if(eof_gp_import_preference_1 || !rssectionname)
@@ -2704,9 +2704,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//For each measure in the GP file
 		for(ctr2 = 0; ctr2 < gp->text_events; ctr2++)
 		{	//For each section marker that was imported
-			if((gp->text_event[ctr2]->beat == ctr) && (!gp->text_event[ctr2]->is_temporary))
+			if((gp->text_event[ctr2]->pos == ctr) && (!gp->text_event[ctr2]->is_temporary))
 			{	//If the section marker was defined on this measure (and it hasn't been converted to use beat numbering yet
-				gp->text_event[ctr2]->beat = beatctr;
+				gp->text_event[ctr2]->pos = beatctr;
 				gp->text_event[ctr2]->is_temporary = 1;	//Track that this event has been converted to beat numbering
 			}
 		}
@@ -2961,9 +2961,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					//Re-correct the placement of any section markers that were previously imported
 					for(ctr2 = 0; ctr2 < gp->text_events; ctr2++)
 					{	//For each section marker that was imported
-						if(gp->text_event[ctr2]->beat >= skipbeatsourcectr)
+						if(gp->text_event[ctr2]->pos >= skipbeatsourcectr)
 						{	//If the event can be moved back the appropriate number of beats
-							gp->text_event[ctr2]->beat -= skipbeatsourcectr;	//Do so
+							gp->text_event[ctr2]->pos -= skipbeatsourcectr;	//Do so
 						}
 					}
 					eof_cleanup_beat_flags(eof_song);	//Rebuild the beat flags so the correct beats are marked as having text events
@@ -3578,7 +3578,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(strings);
 									return NULL;
 								}
-								gp->text_event[gp->text_events]->beat = curbeat - skipbeatsourcectr;
+								gp->text_event[gp->text_events]->pos = curbeat - skipbeatsourcectr;
 								gp->text_event[gp->text_events]->track = 0;
 								gp->text_event[gp->text_events]->is_temporary = 1;	//Track that the event's beat number has already been determined
 								if(rssectionname)
@@ -5272,7 +5272,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 			{	//If text events are being unwrapped
 				for(ctr = 0; ctr < gp->text_events; ctr++)
 				{	//For each text event that was imported from the gp file
-					if(gp->text_event[ctr]->beat != measuremap[currentmeasure])
+					if(gp->text_event[ctr]->pos != measuremap[currentmeasure])
 						continue;	//If the text event is not positioned at this measure, skip it
 
 					if(newevents >= EOF_MAX_TEXT_EVENTS)
@@ -5297,7 +5297,7 @@ int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, c
 						return 8;
 					}
 					memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
-					newevent[newevents]->beat = beatctr;	//Correct the beat number
+					newevent[newevents]->pos = beatctr;	//Correct the beat number
 					newevents++;
 				}
 			}

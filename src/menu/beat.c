@@ -1474,7 +1474,7 @@ int eof_menu_beat_all_events(void)
 	eof_all_events_dialog[1].d1 = 0;
 	for(ctr = 0, count = 0; ctr < eof_song->text_events; ctr++)
 	{	//For each text event in the project
-		if(eof_song->beat[eof_song->text_event[ctr]->beat]->pos > eof_music_pos - eof_av_delay)
+		if(eof_get_text_event_pos(eof_song, ctr) > eof_music_pos - eof_av_delay)
 			break;	//If this text event and all subsequent ones occur after the seek position, stop processing text events
 
 		if(eof_event_is_not_filtered_from_listing(ctr))
@@ -1500,8 +1500,13 @@ int eof_menu_beat_all_events(void)
 		{	//User clicked Find
 			if(realindex < eof_song->text_events)
 			{	//If a valid text event is selected
-				eof_set_seek_position(eof_song->beat[eof_song->text_event[realindex]->beat]->pos + eof_av_delay);
-				eof_selected_beat = eof_song->text_event[realindex]->beat;
+				unsigned long eventpos = eof_get_text_event_pos(eof_song, realindex);
+
+				eof_set_seek_position(eventpos + eof_av_delay);
+				if(!(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+				{	//If this text event is assigned to a beat marker
+					eof_selected_beat = eof_song->text_event[realindex]->pos;
+				}
 				track = eof_song->text_event[realindex]->track;
 				if((track != 0) && (track < eof_song->tracks))
 				{	//If this is a track-specific event
@@ -1657,8 +1662,8 @@ char * eof_events_list(int index, int * size)
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
-		if(eof_song->text_event[i]->beat != eof_selected_beat)
-			continue;	//If this text event isn't on the selected beat, skip it
+		if((eof_song->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS) || (eof_song->text_event[i]->pos != eof_selected_beat))
+			continue;	//If this text event has a floating position or isn't on the selected beat, skip it
 		if(ecount >= EOF_MAX_TEXT_EVENTS)
 			continue;	//If an invalid number of events have been counted, skip counting any more
 
@@ -1798,10 +1803,15 @@ char * eof_events_list_all(int index, int * size)
 	}
 	else
 	{	//Return the specified list item
+		unsigned long eventpos;
+
 		realindex = eof_retrieve_text_event(index);	//Get the actual event based on the current filter
-		if(eof_song->text_event[realindex]->beat >= eof_song->beats)
-		{	//Something bad happened, repair the event
-			eof_song->text_event[realindex]->beat = eof_song->beats - 1;	//Reset the text event to be at the last beat marker
+		if(!(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(eof_song->text_event[realindex]->pos >= eof_song->beats)
+			{	//Something bad happened, repair the event
+				eof_song->text_event[realindex]->pos = eof_song->beats - 1;	//Reset the text event to be at the last beat marker
+			}
 		}
 		if((eof_song->text_event[realindex]->track != 0) || (eof_song->text_event[realindex]->flags != 0))
 		{	//If this event is track specific or has any flags set
@@ -1840,7 +1850,8 @@ char * eof_events_list_all(int index, int * size)
 			eventflags[0] = '\0';	//Empty the string
 		}
 
-		(void) snprintf(eof_event_list_text[index], sizeof(eof_event_list_text[index]) - 1, "(%02lu:%02lu.%03lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, eof_song->beat[eof_song->text_event[realindex]->beat]->pos % 1000, eventflags, eof_song->text_event[realindex]->text);
+		eventpos = eof_get_text_event_pos(eof_song, realindex);
+		(void) snprintf(eof_event_list_text[index], sizeof(eof_event_list_text[index]) - 1, "(%02lu:%02lu.%03lu%s) %s", eventpos / 60000, (eventpos / 1000) % 60, eventpos % 1000, eventflags, eof_song->text_event[realindex]->text);
 		return eof_event_list_text[index];
 	}
 	return NULL;
@@ -1883,15 +1894,18 @@ int eof_menu_beat_add_section(void)
 	//Determine if the selected beat already has an existing section marker
 	for(ctr = 0; ctr < eof_song->text_events; ctr++)
 	{	//For each text event in the project
-		if(eof_song->text_event[ctr]->beat == eof_selected_beat)
-		{	//If the text event is assigned to the selected beat
-			if(!eof_song->text_event[ctr]->track || (eof_song->text_event[ctr]->track == eof_selected_track))
-			{	//If the text event has no associated track or is specific to the active track
-				ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event
-				if(ptr)
-				{	//If it exists
-					ep = eof_song->text_event[ctr];	//Store this event's pointer
-					break;
+		if(!(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(eof_song->text_event[ctr]->pos == eof_selected_beat)
+			{	//If the text event is assigned to the selected beat
+				if(!eof_song->text_event[ctr]->track || (eof_song->text_event[ctr]->track == eof_selected_track))
+				{	//If the text event has no associated track or is specific to the active track
+					ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event
+					if(ptr)
+					{	//If it exists
+						ep = eof_song->text_event[ctr];	//Store this event's pointer
+						break;
+					}
 				}
 			}
 		}
@@ -1973,21 +1987,24 @@ int eof_events_dialog_edit(DIALOG * d)
 	/* find the event */
 	for(i = 0; i < eof_song->text_events; i++)
 	{
-		if(eof_song->text_event[i]->beat != eof_selected_beat)
-			continue;	//If this beat isn't the selected beat, skip it
+		if(!(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(eof_song->text_event[i]->pos != eof_selected_beat)
+				continue;	//If this beat isn't the selected beat, skip it
 
-		/* if we've reached the item that is selected, edit it */
-		if(eof_events_dialog[1].d1 == ecount)
-		{
-			event = i;
-			found = 1;
-			break;
-		}
+			/* if we've reached the item that is selected, edit it */
+			if(eof_events_dialog[1].d1 == ecount)
+			{
+				event = i;
+				found = 1;
+				break;
+			}
 
-		/* go to next event */
-		else
-		{
-			ecount++;
+			/* go to next event */
+			else
+			{
+				ecount++;
+			}
 		}
 	}
 	if(found && (event < eof_song->text_events))
@@ -2184,9 +2201,12 @@ unsigned long eof_events_dialog_delete_events_count(void)
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
-		if(eof_song->text_event[i]->beat == eof_selected_beat)
-		{
-			count++;
+		if(!(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(eof_song->text_event[i]->pos == eof_selected_beat)
+			{
+				count++;
+			}
 		}
 	}
 	return count;
@@ -2208,29 +2228,32 @@ int eof_events_dialog_delete(DIALOG * d)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->text_events; i++)
 	{
-		if(eof_song->text_event[i]->beat != eof_selected_beat)
-			continue;	//If this beat isn't the selected beat, skip it
+		if(!(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(eof_song->text_event[i]->pos != eof_selected_beat)
+				continue;	//If this beat isn't the selected beat, skip it
 
-		/* if we've reached the item that is selected, delete it */
-		if(eof_events_dialog[1].d1 == ecount)
-		{
-			/* remove the text event and exit */
-			eof_song_delete_text_event(eof_song, i);
-			eof_sort_events(eof_song);
-
-			/* remove flag if no more events tied to this beat */
-			c = eof_events_dialog_delete_events_count();
-			if(((unsigned long)eof_events_dialog[1].d1 >= c) && (c > 0))
+			/* if we've reached the item that is selected, delete it */
+			if(eof_events_dialog[1].d1 == ecount)
 			{
-				eof_events_dialog[1].d1--;
-			}
-			(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
-			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-			return D_REDRAW;
-		}
+				/* remove the text event and exit */
+				eof_song_delete_text_event(eof_song, i);
+				eof_sort_events(eof_song);
 
-		/* go to next event */
-		ecount++;
+				/* remove flag if no more events tied to this beat */
+				c = eof_events_dialog_delete_events_count();
+				if(((unsigned long)eof_events_dialog[1].d1 >= c) && (c > 0))
+				{
+					eof_events_dialog[1].d1--;
+				}
+				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &junk);
+				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+				return D_REDRAW;
+			}
+
+			/* go to next event */
+			ecount++;
+		}
 	}
 	return D_O_K;
 }
@@ -3015,20 +3038,23 @@ int eof_menu_beat_copy_events(void)
 	{
 		for(ctr2 = 0; ctr2 < eof_song->text_events; ctr2++)
 		{	//For each text event in the project
-			if(eof_song->text_event[ctr2]->beat != eof_selected_beat)
-				continue;	//If the text event is not assigned to this beat, skip it
-			if(eof_song->text_event[ctr2]->track && (eof_song->text_event[ctr2]->track != eof_selected_track))
-				continue;	//If the text event is assigned to a specific track but it is not the active track, skip it
+			if(!(eof_song->text_event[ctr2]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+			{	//If this text event is assigned to a beat marker
+				if(eof_song->text_event[ctr2]->pos != eof_selected_beat)
+					continue;	//If the text event is not assigned to this beat, skip it
+				if(eof_song->text_event[ctr2]->track && (eof_song->text_event[ctr2]->track != eof_selected_track))
+					continue;	//If the text event is assigned to a specific track but it is not the active track, skip it
 
-			if(!ctr)
-			{	//On the first pass, count the events that will be copied
-				count++;
-			}
-			else
-			{	//On the second pass, write the events to the clipboard file
-				(void) eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write the event's text
-				(void) pack_iputl(eof_song->text_event[ctr2]->track, fp);				//Write the event's track
-				(void) pack_iputl(eof_song->text_event[ctr2]->flags, fp);				//Write the event's flags
+				if(!ctr)
+				{	//On the first pass, count the events that will be copied
+					count++;
+				}
+				else
+				{	//On the second pass, write the events to the clipboard file
+					(void) eof_save_song_string_pf(eof_song->text_event[ctr2]->text, fp);	//Write the event's text
+					(void) pack_iputl(eof_song->text_event[ctr2]->track, fp);				//Write the event's track
+					(void) pack_iputl(eof_song->text_event[ctr2]->flags, fp);				//Write the event's flags
+				}
 			}
 		}
 		if(ctr)
@@ -3120,26 +3146,29 @@ int eof_events_dialog_move(char direction)
 	/* find the relevant event indexes */
 	for(i = 0; i < eof_song->text_events; i++)
 	{	//For each text event
-		if(eof_song->text_event[i]->beat != eof_selected_beat)
-			continue;	//If the text event is not applied to the selected beat, skip it
+		if(!(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(eof_song->text_event[i]->pos != eof_selected_beat)
+				continue;	//If the text event is not applied to the selected beat, skip it
 
-		if((unsigned long)eof_events_dialog[1].d1 == ecount)
-		{	//If the text event is the one selected in the Events dialog
-			selected = i;
-		}
-		else
-		{	//The text event is one of the non selected events in the dialog
-			if(selected == -1)
-			{	//If the selected one hasn't been reached yet
-				previous = i;	//It's one of the previous entries
+			if((unsigned long)eof_events_dialog[1].d1 == ecount)
+			{	//If the text event is the one selected in the Events dialog
+				selected = i;
 			}
 			else
-			{	//Otherwise it's the one immediately after it
-				next = i;
-				break;	//Stop parsing, since the selected entry has been found, and any previous and next event has been identified
+			{	//The text event is one of the non selected events in the dialog
+				if(selected == -1)
+				{	//If the selected one hasn't been reached yet
+					previous = i;	//It's one of the previous entries
+				}
+				else
+				{	//Otherwise it's the one immediately after it
+					next = i;
+					break;	//Stop parsing, since the selected entry has been found, and any previous and next event has been identified
+				}
 			}
+			ecount++;	//Count the number of events at the selected beat that have been reached
 		}
-		ecount++;	//Count the number of events at the selected beat that have been reached
 	}
 
 	if(selected < 0)

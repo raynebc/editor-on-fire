@@ -516,9 +516,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	{
 		if(!ustrcmp(sp->text_event[i]->text, "[end]"))
 		{	//If there is an end event defined here
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEnd position located at %lums", sp->beat[sp->text_event[i]->beat]->pos);
+			unsigned long eventpos = eof_get_text_event_pos(sp, i);
+
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEnd position located at %lums", eventpos);
 			eof_log(eof_log_string, 1);
-			endbeatnum = sp->text_event[i]->beat;
+			endbeatnum = eof_get_beat(sp, eventpos);
 			enddelta = eof_ConvertToDeltaTime(sp->beat[endbeatnum]->pos, anchorlist, tslist, timedivision, 0, has_stored_tempo);	//Get the delta time of this event
 			break;
 		}
@@ -629,11 +631,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		{	//For each event in the song
 			if(sp->text_event[i]->track == j)
 			{	//If this event is specific to this track
-				if(sp->text_event[i]->beat >= sp->beats)
-				{	//If the text event's beat number is invalid
-					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+				double eventpos;
+
+				if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+				{	//If this text event is assigned to a beat marker
+					if(sp->text_event[i]->pos >= sp->beats)
+					{	//If the text event's beat number is invalid
+						sp->text_event[i]->pos = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+					}
 				}
-				deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the beat
+				eventpos = eof_get_text_event_fpos(sp, i);
+				deltapos = eof_ConvertToDeltaTime(eventpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the beat
 				eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 			}
 		}
@@ -2465,11 +2473,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			{
 				if(sp->text_event[i]->track == 0)
 				{	//If the text event is global (not specific to any single track)
-					if(sp->text_event[i]->beat >= sp->beats)
-					{	//If the text event is corrupted
-						sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+					double eventpos;
+
+					if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+					{	//If this text event is assigned to a beat marker
+						if(sp->text_event[i]->pos >= sp->beats)
+						{	//If the text event is corrupted
+							sp->text_event[i]->pos = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+						}
 					}
-					delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+					eventpos = eof_get_text_event_fpos(sp, i);
+					delta = eof_ConvertToDeltaTime(eventpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
 					eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
 					lastdelta = delta;					//Store this event's absolute delta time
 				}
@@ -2871,11 +2885,17 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 			{	//For each event in the song
 				if(sp->text_event[i]->track == j)
 				{	//If this event is specific to this track
-					if(sp->text_event[i]->beat >= sp->beats)
-					{	//If the text event's beat number is invalid
-						sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+					double eventpos;
+
+					if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+					{	//If this text event is assigned to a beat marker
+						if(sp->text_event[i]->pos >= sp->beats)
+						{	//If the text event's beat number is invalid
+							sp->text_event[i]->pos = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+						}
 					}
-					deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
+					eventpos = eof_get_text_event_fpos(sp, i);
+					deltapos = eof_ConvertToDeltaTime(eventpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
 					eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 				}
 			}
@@ -3178,15 +3198,22 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 		{
 			if(sp->text_event[i]->track == 0)
 			{	//If the text event is global (not specific to any single track)
-				if(sp->text_event[i]->beat >= sp->beats)
-				{	//If the text event is corrupted
-					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+				double eventpos;
+
+				if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+				{	//If this text event is assigned to a beat marker
+					if(sp->text_event[i]->pos >= sp->beats)
+					{	//If the text event is corrupted
+						sp->text_event[i]->pos = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+					}
 				}
-				delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+				eventpos = eof_get_text_event_fpos(sp, i);
+				delta = eof_ConvertToDeltaTime(eventpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
 				eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
 				lastdelta = delta;					//Store this event's absolute delta time
 			}
 		}
+
 		/* end of track */
 		WriteVarLen(0, fp);
 		(void) pack_putc(0xFF, fp);

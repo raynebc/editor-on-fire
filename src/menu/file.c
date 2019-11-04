@@ -5185,7 +5185,7 @@ int eof_gp_import_common(const char *fn)
 				}
 				for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
 				{	//For each of the text events
-					(void) eof_song_add_text_event(eof_song, eof_parsed_gp_file->text_event[ctr]->beat, eof_parsed_gp_file->text_event[ctr]->text, 0, eof_parsed_gp_file->text_event[ctr]->flags, 0);	//Add the event to the active project
+					(void) eof_song_add_text_event(eof_song, eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text, 0, eof_parsed_gp_file->text_event[ctr]->flags, 0);	//Add the event to the active project
 				}
 			}
 			for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
