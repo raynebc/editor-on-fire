@@ -4132,7 +4132,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 	if(eof_song->track[desttrack]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 	{	//If the note is pasting into a non drum track, erase drum flags
 		if(eof_song->track[sourcetrack]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-		{	//If the note is copying from a drum track, erase all drum flags as they are invalid
+		{	//If the note is copying from a drum track, erase all drum flags as they are invalid for the destination track
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Erase the open hi hat flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Erase the pedal controlled hi hat flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;		//Erase the rim shot flag
@@ -4144,6 +4144,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;			//Erase the yellow tom/cymbal combo flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;			//Erase the blue tom/cymbal combo flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;			//Erase the green tom/cymbal combo flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_FLAM;				//Erase the flam flag
 		}
 	}
 	else

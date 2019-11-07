@@ -808,6 +808,10 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
 				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
 			}
+			if(tp->note[i]->type != EOF_NOTE_AMAZING)
+			{	//If this note isn't in the expert difficulty
+				tp->note[i]->flags &= ~EOF_DRUM_NOTE_FLAG_FLAM;	//Clear the flam status if it is set
+			}
 		}//For each note in the drum track
 	}//If the track being cleaned is a drum track
 }
@@ -854,6 +858,46 @@ int eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, un
 		tp->solo[tp->solos].name[0] = '\0';
 		tp->solos++;
 		eof_sort_and_merge_overlapping_sections(tp->solo, &tp->solos);	//Sort and remove overlapping instances
+		return 1;	//Return success
+	}
+	return 0;	//Return error
+}
+
+int eof_track_add_slider(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos)
+{
+	unsigned long tracknum;
+
+ 	eof_log("eof_track_add_slider() entered", 1);
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return eof_legacy_track_add_slider(sp->legacy_track[tracknum], start_pos, end_pos);
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		break;
+
+		default:
+		break;
+	}
+	return 0;	//Return error
+}
+
+int eof_legacy_track_add_slider(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+{
+	if(tp && (tp->sliders < EOF_MAX_PHRASES))
+	{	//If the maximum number of solo phrases for this track hasn't already been defined
+		tp->slider[tp->sliders].start_pos = start_pos;
+		tp->slider[tp->sliders].end_pos = end_pos;
+		tp->slider[tp->sliders].flags = 0;
+		tp->slider[tp->sliders].name[0] = '\0';
+		tp->slider[tp->sliders].difficulty = 0xFF;	//In legacy tracks, slider sections always apply to all difficulties
+		tp->sliders++;
+		eof_sort_and_merge_overlapping_sections(tp->slider, &tp->sliders);	//Sort and remove overlapping instances
 		return 1;	//Return success
 	}
 	return 0;	//Return error
@@ -6880,7 +6924,7 @@ int eof_track_add_trill(EOF_SONG *sp, unsigned long track, unsigned long start_p
 int eof_legacy_track_add_trill(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
 	if(tp && (tp->trills < EOF_MAX_PHRASES))
-	{	//If the maximum number of solo phrases for this track hasn't already been defined
+	{	//If the maximum number of trill phrases for this track hasn't already been defined
 		tp->trill[tp->trills].start_pos = start_pos;
 		tp->trill[tp->trills].end_pos = end_pos;
 		tp->trill[tp->trills].flags = 0;
@@ -6896,7 +6940,7 @@ int eof_legacy_track_add_trill(EOF_LEGACY_TRACK * tp, unsigned long start_pos, u
 int eof_pro_guitar_track_add_trill(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
 	if(tp && (tp->trills < EOF_MAX_PHRASES))
-	{	//If the maximum number of solo phrases for this track hasn't already been defined
+	{	//If the maximum number of trill phrases for this track hasn't already been defined
 		tp->trill[tp->trills].start_pos = start_pos;
 		tp->trill[tp->trills].end_pos = end_pos;
 		tp->trill[tp->trills].flags = 0;
@@ -6999,7 +7043,7 @@ int eof_track_add_tremolo(EOF_SONG *sp, unsigned long track, unsigned long start
 int eof_legacy_track_add_tremolo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
 	if(tp && (tp->tremolos < EOF_MAX_PHRASES))
-	{	//If the maximum number of solo phrases for this track hasn't already been defined
+	{	//If the maximum number of tremolo phrases for this track hasn't already been defined
 		tp->tremolo[tp->tremolos].start_pos = start_pos;
 		tp->tremolo[tp->tremolos].end_pos = end_pos;
 		tp->tremolo[tp->tremolos].flags = 0;
@@ -7015,7 +7059,7 @@ int eof_legacy_track_add_tremolo(EOF_LEGACY_TRACK * tp, unsigned long start_pos,
 int eof_pro_guitar_track_add_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned char diff)
 {
 	if(tp && (tp->tremolos < EOF_MAX_PHRASES))
-	{	//If the maximum number of solo phrases for this track hasn't already been defined
+	{	//If the maximum number of tremolo phrases for this track hasn't already been defined
 		tp->tremolo[tp->tremolos].start_pos = start_pos;
 		tp->tremolo[tp->tremolos].end_pos = end_pos;
 		tp->tremolo[tp->tremolos].flags = 0;

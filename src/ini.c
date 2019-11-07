@@ -400,10 +400,10 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 
 	/* write song length */
 	(void) snprintf(buffer, sizeof(buffer) - 1, "song_length = %lu", eof_music_length);
-	(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
+	(void) ustrcat(ini_string, buffer);	//Append the song length tag to the ongoing INI string
 	(void) ustrcat(ini_string, "\r\n");
 
-	(void) pack_fwrite(ini_string, ustrlen(ini_string), fp);
+	(void) pack_fwrite(ini_string, ustrsize(ini_string), fp);
 	(void) pack_fclose(fp);
 	return 1;
 }

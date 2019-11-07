@@ -418,6 +418,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int phrasediff;						//Used for parsing Sysex phrase markers
 	int slidediff;						//Used for parsing slide markers
 	unsigned char slidevelocity[4] = {0};	//Used for parsing slide markers
+	unsigned long flampos = 0;			//Used for parsing flam markers
 	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0}, vibratopos[4] = {0}, harmpos[4] = {0}, pharmpos[4] = {0}, bendpos[4] = {0}, accentpos[4] = {0}, poppos[4] = {0}, slappos[4] = {0}, ycombopos[4] = {0}, bcombopos[4] = {0}, gcombopos[4] = {0};	//Used for parsing Sysex phrase markers
 	int lc;
 	long b = -1;
@@ -2026,6 +2027,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							{	//A drum note with the appropriate velocity (define-able in the chart's song.ini file) is considered a ghost note
 								ghost = lane_chart[lane];	//This gem's bit will be set in the note's ghost bitmask
 							}
+							if(midinote == 109)
+							{	//Note 109 is used as a flam marker
+								flampos = event_realtime;
+							}
 						}
 						else
 						{	/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
@@ -2345,6 +2350,17 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							}
 						}
 
+						if((eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (midinote == 109))
+						{	//If this is a drum track and this event ends a flam marker
+								for(k = note_count[picked_track]; k > first_note; k--)
+								{	//Check for each note that has been imported for this track, in reverse order
+									if((sp->legacy_track[tracknum]->note[k - 1]->pos >= flampos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
+									{	//If the note is positioned within this flam marker
+										sp->legacy_track[tracknum]->note[k - 1]->flags |= EOF_DRUM_NOTE_FLAG_FLAM;	//Set the flam flag for the note
+									}
+								}
+						}
+
 						if((midinote == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a solo phrase
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
@@ -2452,52 +2468,59 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										{	//End of open strum phrase
 											unsigned long first = 0, firstpos = 0;
 
-											for(k = first_note; k < note_count[picked_track]; k++)
-											{	//Check for each note that has been imported
-												unsigned long notepos = eof_get_note_pos(sp, picked_track, k);
-												if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_note(sp, picked_track, k) == 1))
-												{	//If the note is in the same difficulty as the open strum phrase and it is a lane 1 gem
-													if((notepos >= openstrumpos[phrasediff]) && (notepos <= event_realtime))
-													{	//If the note is within the phrase on and off marker
-														if(!first)
-														{	//Track the position of the first note affected by this marker
-															first = 1;
-															firstpos = notepos;
-														}
-														else
-														{
-															if(notepos != firstpos)
-															{	//If this marker spans across multiple notes (manually authored outside of EOF, as EOF defines this marker per-note)
-																if(!nonstandard_open_strum_marker_prompt)
-																{	//If the user hasn't been prompted how to treat such markers during this import
-																	eof_clear_input();
-																	if(alert("Warning:  This MIDI has nonstandard use of open strum markers marking multiple notes.", "This makes open notes extending over other notes impossible.", "Import all notes in the markers as open notes?", "&Yes", "&No", 'y', 'n') == 1)
-																	{	//If the user opts to import all notes within the marker as open notes
-																		nonstandard_open_strum_marker_prompt = 1;	//All notes within the marker will be converted to open notes
-																		eof_log("\tUser opted to convert all notes in nonstandard open strum markers into strum notes.", 1);
-																	}
-																	else
-																	{
-																		nonstandard_open_strum_marker_prompt = 2;	//Only the first note in the marker will be converted to an open note
-																		eof_log("\tUser opted to convert only the first note in nonstandard open strum markers into strum notes.", 1);
+											if(picked_track == EOF_TRACK_DANCE)
+											{
+												eof_log("\t\t\t!Open strums are not valid in the dance track.  Ignoring", 2);
+											}
+											else
+											{	//If not importing into a dance track
+												for(k = first_note; k < note_count[picked_track]; k++)
+												{	//Check for each note that has been imported
+													unsigned long notepos = eof_get_note_pos(sp, picked_track, k);
+													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_note(sp, picked_track, k) == 1))
+													{	//If the note is in the same difficulty as the open strum phrase and it is a lane 1 gem
+														if((notepos >= openstrumpos[phrasediff]) && (notepos <= event_realtime))
+														{	//If the note is within the phrase on and off marker
+															if(!first)
+															{	//Track the position of the first note affected by this marker
+																first = 1;
+																firstpos = notepos;
+															}
+															else
+															{
+																if(notepos != firstpos)
+																{	//If this marker spans across multiple notes (manually authored outside of EOF, as EOF defines this marker per-note)
+																	if(!nonstandard_open_strum_marker_prompt)
+																	{	//If the user hasn't been prompted how to treat such markers during this import
+																		eof_clear_input();
+																		if(alert("Warning:  This MIDI has nonstandard use of open strum markers marking multiple notes.", "This makes open notes extending over other notes impossible.", "Import all notes in the markers as open notes?", "&Yes", "&No", 'y', 'n') == 1)
+																		{	//If the user opts to import all notes within the marker as open notes
+																			nonstandard_open_strum_marker_prompt = 1;	//All notes within the marker will be converted to open notes
+																			eof_log("\tUser opted to convert all notes in nonstandard open strum markers into strum notes.", 1);
+																		}
+																		else
+																		{
+																			nonstandard_open_strum_marker_prompt = 2;	//Only the first note in the marker will be converted to an open note
+																			eof_log("\tUser opted to convert only the first note in nonstandard open strum markers into strum notes.", 1);
+																		}
 																	}
 																}
 															}
-														}
 
-														if((nonstandard_open_strum_marker_prompt != 2) || (notepos == firstpos))
-														{	//If this note isn't being excluded from being marked as an open note as per the above prompt
-															(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to have a note mask of 33", k, eof_get_note_type(sp, picked_track, k), notepos, eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
-															eof_log(eof_log_string, 3);
+															if((nonstandard_open_strum_marker_prompt != 2) || (notepos == firstpos))
+															{	//If this note isn't being excluded from being marked as an open note as per the above prompt
+																(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to have a note mask of 33", k, eof_get_note_type(sp, picked_track, k), notepos, eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
+																eof_log(eof_log_string, 3);
 
-															eof_set_note_note(sp, picked_track, k, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
-															sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
-															tracknum = sp->track[picked_track]->tracknum;
-															sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
-														}
-													}//If the note is within the phrase on and off marker
-												}//If the note is in the same difficulty as the open strum phrase and it is a lane 1 gem
-											}//Check for each note that has been imported
+																eof_set_note_note(sp, picked_track, k, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
+																sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+																tracknum = sp->track[picked_track]->tracknum;
+																sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+															}
+														}//If the note is within the phrase on and off marker
+													}//If the note is in the same difficulty as the open strum phrase and it is a lane 1 gem
+												}//Check for each note that has been imported
+											}//If not importing into a dance track
 										}
 									break;
 									case 4:	//Slider

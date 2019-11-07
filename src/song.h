@@ -75,6 +75,7 @@
 #define EOF_DRUM_NOTE_FLAG_Y_COMBO          8192	//This flag means the yellow drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
 #define EOF_DRUM_NOTE_FLAG_B_COMBO         16384	//This flag means the blue drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
 #define EOF_DRUM_NOTE_FLAG_G_COMBO         32768	//This flag means the green drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
+#define EOF_DRUM_NOTE_FLAG_FLAM           262144	//This flag means the drum note is a flam
 
 //The following flags pertain to dance notes
 #define EOF_DANCE_FLAG_LANE_1_MINE		512		//This flag will represent a mine note for lane 1
@@ -738,6 +739,7 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 unsigned long eof_get_num_sliders(EOF_SONG *sp, unsigned long track);		//Returns the number of slider phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified slider phrase, or NULL on error
 void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of slider phrases in the specified track
+int eof_track_add_slider(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a slider phrase at the specified start and stop timestamp
 unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Returns the number of arpeggio phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio phrase, or NULL on error
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of arpeggio phrases in the specified track
@@ -805,6 +807,7 @@ int eof_legacy_track_add_trill(EOF_LEGACY_TRACK * tp, unsigned long start_pos, u
 void eof_legacy_track_delete_trill(EOF_LEGACY_TRACK * tp, unsigned long index);		//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
 int eof_legacy_track_add_tremolo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a tremolo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_legacy_track_delete_tremolo(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
+int eof_legacy_track_add_slider(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a slider phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 
 EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp);	//Allocates, initializes and stores a new EOF_LYRIC structure into the lyrics array.  Returns the newly allocated structure or NULL upon error
 void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Removes and frees the specified lyric from the lyrics array.  All lyrics after the deleted lyric are moved back in the array one position

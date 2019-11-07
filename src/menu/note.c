@@ -219,11 +219,31 @@ MENU eof_tremolo_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_menu_slider_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[0], eof_menu_copy_sliders_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_copy_sliders_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_copy_sliders_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_copy_sliders_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_copy_sliders_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_copy_sliders_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_copy_sliders_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_copy_sliders_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_sliders_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_copy_sliders_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_sliders_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_sliders_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_copy_sliders_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_sliders_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_slider_menu[] =
 {
 	{eof_slider_menu_mark_text, eof_menu_slider_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_slider_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_slider_erase_all, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_slider_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -342,10 +362,17 @@ MENU eof_note_drum_ghost_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_note_clone_hero_disjointed_menu[] =
+MENU eof_note_drum_disjointed_menu[] =
 {
 	{"&Toggle", eof_menu_note_toggle_disjointed, NULL, 0, NULL},
 	{"&Remove", eof_menu_note_remove_disjointed, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_drum_flam_menu[] =
+{
+	{"&Toggle\tSHIFT+F", eof_menu_note_toggle_flam, NULL, 0, NULL},
+	{"&Remove", eof_menu_note_remove_flam, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -371,8 +398,9 @@ MENU eof_note_drum_menu[] =
 	{"Toggle &B cymbal+tom\t" CTRL_NAME "+ALT+B", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
 	{"Toggle G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
 	{"&Accent", NULL, eof_note_drum_accent_menu, 0, NULL},
-	{"&Disjointed", NULL, eof_note_clone_hero_disjointed_menu, 0, NULL},
+	{"&Disjointed", NULL, eof_note_drum_disjointed_menu, 0, NULL},
 	{"&Ghost", NULL, eof_note_drum_ghost_menu, 0, NULL},
+	{"&Flam", NULL, eof_note_drum_flam_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -515,7 +543,7 @@ MENU eof_note_clone_hero_sp_deploy_menu[] =
 
 MENU eof_note_clone_hero_menu[] =
 {
-	{"&Disjointed", NULL, eof_note_clone_hero_disjointed_menu, 0, NULL},
+	{"&Disjointed", NULL, eof_note_drum_disjointed_menu, 0, NULL},
 	{"S&P deploy", NULL, eof_note_clone_hero_sp_deploy_menu, 0, NULL},
 	{"Convert GHL &Open\t" CTRL_NAME "+G", eof_menu_note_convert_to_ghl_open, NULL, 0, NULL},
 	{"&Swap GHL B/W gems", eof_menu_note_swap_ghl_black_white_gems, NULL, 0, NULL},
@@ -924,6 +952,17 @@ void eof_prepare_note_menu(void)
 		else
 		{
 			eof_slider_menu[2].flags = D_DISABLED;
+		}
+
+		/* slider copy from */
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
+		{	//For each track supported by EOF
+			eof_menu_slider_copy_menu[i].flags = 0;
+
+			if(!eof_get_num_sliders(eof_song, i + 1) || (i + 1 == eof_selected_track))
+			{	//If the track has no star power phrases or is the active track
+				eof_menu_slider_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+			}
 		}
 
 		/* resnap */
@@ -7874,6 +7913,112 @@ int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, unsigned long sourcetrack, 
 	return 1;	//Return completion
 }
 
+int eof_menu_copy_sliders_track_1(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 1, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_2(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 2, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_3(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 3, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_4(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 4, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_5(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 5, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_6(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 6, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_7(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 7, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_8(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 8, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_9(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 9, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_10(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 10, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_11(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 11, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_12(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_13(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 13, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_14(void)
+{
+	return eof_menu_copy_sliders_track_number(eof_song, 14, eof_selected_track);
+}
+
+int eof_menu_copy_sliders_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
+{
+	unsigned long ctr;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
+		return 0;	//Invalid parameters
+	if(!eof_get_num_sliders(sp, sourcetrack))
+		return 0;	//Source track has no slider phrases
+	if(eof_get_num_sliders(sp, desttrack))
+	{	//If there are already sliders in the destination track
+		eof_clear_input();
+		if(alert(NULL, "Warning:  Existing slider phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to continue
+			return 0;
+		}
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	while(eof_get_num_sliders(sp, desttrack))
+	{	//While there are sliders in the destination track
+		eof_track_delete_slider(sp, desttrack, 0);	//Delete the first one
+	}
+
+	for(ctr = 0; ctr < eof_get_num_sliders(sp, sourcetrack); ctr++)
+	{	//For each slider phrase in the source track
+		ptr = eof_get_slider(sp, sourcetrack, ctr);
+		if(ptr)
+		{	//If this phrase could be found
+			(void) eof_track_add_slider(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
+		}
+	}
+	eof_determine_phrase_status(eof_song, eof_selected_track);
+	return 1;	//Return completion
+}
+
 int eof_menu_note_toggle_hi_hat_open(void)
 {
 	unsigned long i, flags, tracknum;
@@ -8145,6 +8290,74 @@ int eof_menu_note_remove_rimshot(void)
 			flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;			//Clear the rimshot status
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
 		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_flam(void)
+{
+	unsigned long i, flags;
+	long u = 0;
+	int note_selection_updated;
+
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run if a drum track is not active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If the note isn't selected, skip it
+		if(eof_get_note_type(eof_song, eof_selected_track, i) != EOF_NOTE_AMAZING)
+			continue;	//If this drum note isn't in the expert difficulty, skip it
+
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		flags ^= EOF_DRUM_NOTE_FLAG_FLAM;	//Toggle the flam status
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_flam(void)
+{
+	unsigned long i, flags;
+	long u = 0;
+	int note_selection_updated;
+
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If the note isn't selected, skip it
+		if(!(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_DRUM_NOTE_FLAG_FLAM))
+			continue;	//If the drum note doesn't contain a note with flam status, skip it
+
+		if(!u)
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		flags &= ~EOF_DRUM_NOTE_FLAG_FLAM;			//Clear the flam status
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note

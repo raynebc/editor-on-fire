@@ -2156,6 +2156,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'R';
 		}
+		if(flags & EOF_DRUM_NOTE_FLAG_FLAM)
+		{
+			buffer[index++] = 'F';
+		}
 		if(eof_get_note_accent(eof_song, track, note))
 		{	//If any of the lanes on this note are accented
 			buffer[index++] = '>';

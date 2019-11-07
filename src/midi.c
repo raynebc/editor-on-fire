@@ -1239,6 +1239,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_midi_event[eof_midi_events - 1]->length = markerlength;	//Have the event remember the marker's length to ensure eof_check_for_hopo_phrase_overlap() doesn't change the marker's length to zero
 					}
 				}
+
+				/* write flams */
+				if(noteflags & EOF_DRUM_NOTE_FLAG_FLAM)
+				{
+					if(featurerestriction == 0)
+					{	//Only write flam notation if not writing a Rock Band compliant MIDI
+						eof_add_midi_event(deltapos, 0x90, 109, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, 109, vel, 0);
+					}
+				}
 			}//For each note in the track
 
 			/* fill in star power */
@@ -1399,17 +1409,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				char *exportname = sp->track[j]->name;	//By default, the track's regular name is used for export
 
 				if(isghl)
-				{
+				{	//GHL tracks export with a " GHL" suffix by default
 					(void) snprintf(ghlname, sizeof(ghlname) - 1, "%s GHL", exportname);
+					exportname = ghlname;
+				}
 
-					if((sp->track[j]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[j]->altname[0] != '\0'))
-					{	//If the track has been renamed
-						exportname = sp->track[j]->altname;	//Allow that name to export for GHL format MIDI tracks
-					}
-					else
-					{	//Otherwise GHL tracks export with a " GHL" suffix by default
-						exportname = ghlname;
-					}
+				if((sp->track[j]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[j]->altname[0] != '\0'))
+				{	//If the track has been renamed
+					exportname = sp->track[j]->altname;	//Allow that name to export to the MIDI track
 				}
 
 				/* open the file */

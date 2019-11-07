@@ -2822,12 +2822,12 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 
 	/* Mark tremolo (CTRL+SHIFT+O) */
-	if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_key_char == 'o'))
-	{
-		(void) eof_menu_tremolo_mark();
-		eof_shift_used = 1;	//Track that the SHIFT key was used
-		eof_use_key();
-	}
+		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_key_char == 'o'))
+		{
+			(void) eof_menu_tremolo_mark();
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			eof_use_key();
+		}
 
 	/* select like (CTRL+L) */
 	/* precise select like (SHIFT+L) */
@@ -2866,10 +2866,26 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 
 	/* toggle freestyle (F in a vocal track) */
-		if((eof_key_char == 'f') && !KEY_EITHER_CTRL && !KEY_EITHER_WIN && eof_vocals_selected)
-		{
-			(void) eof_menu_toggle_freestyle();
-			eof_use_key();
+	/* toggle flam (SHIFT+F in a drum track */
+		if((eof_key_char == 'f') && !KEY_EITHER_CTRL && !KEY_EITHER_WIN)
+		{	//If neither CTRL nor the Windows key are held
+			if(KEY_EITHER_SHIFT)
+			{	//If SHIFT is held
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If a drum track is active
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_menu_note_toggle_flam();
+					eof_use_key();
+				}
+			}
+			else
+			{	//SHIFT is not held
+				if(eof_vocals_selected)
+				{
+					(void) eof_menu_toggle_freestyle();
+					eof_use_key();
+				}
+			}
 		}
 
 	/* deselect all (CTRL+D) */

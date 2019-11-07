@@ -147,8 +147,10 @@ int eof_menu_note_toggle_hi_hat_open(void);		//Toggles the open hi hat status fo
 int eof_menu_note_toggle_hi_hat_pedal(void);	//Toggles the pedal controlled hi hat status for selected yellow (or red during a disco flip) drum notes
 int eof_menu_note_toggle_hi_hat_sizzle(void);	//Toggles the sizzle hi hat status for selected yellow (or red during a disco flip) drum notes
 int eof_menu_note_remove_hi_hat_status(void);	//Removes the open, pedal controlled and sizzle hi hat statuses for selected yellow (or red during a disco flip) drum notes
-int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selected red notes
-int eof_menu_note_remove_rimshot(void);			//Removes the rimshot status for selected red notes
+int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selected red drum notes
+int eof_menu_note_remove_rimshot(void);			//Removes the rimshot status for selected red drum notes
+int eof_menu_note_toggle_flam(void);			//Toggles the flam status for selected drum notes
+int eof_menu_note_remove_flam(void);			//Toggles the flam status for selected drum notes
 int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected pro guitar notes
 int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected pro guitar notes
 int eof_menu_note_toggle_bend_logic(int function);	//Shared logic for toggling bend and pre-bend statuses, a function value of 0 toggles bend, otherwise the function toggles pre-bend
@@ -345,6 +347,23 @@ int eof_menu_copy_tremolo_track_13(void);
 int eof_menu_copy_tremolo_track_14(void);
 int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the tremolo phrases from the specified source track to the destination track
+
+int eof_menu_copy_sliders_track_1(void);
+int eof_menu_copy_sliders_track_2(void);
+int eof_menu_copy_sliders_track_3(void);
+int eof_menu_copy_sliders_track_4(void);
+int eof_menu_copy_sliders_track_5(void);
+int eof_menu_copy_sliders_track_6(void);
+int eof_menu_copy_sliders_track_7(void);
+int eof_menu_copy_sliders_track_8(void);
+int eof_menu_copy_sliders_track_9(void);
+int eof_menu_copy_sliders_track_10(void);
+int eof_menu_copy_sliders_track_11(void);
+int eof_menu_copy_sliders_track_12(void);
+int eof_menu_copy_sliders_track_13(void);
+int eof_menu_copy_sliders_track_14(void);
+int eof_menu_copy_sliders_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
+	//Copies the slider phrases from the specified source track to the destination track
 
 int eof_feedback_mode_update_note_selection(void);
 	//If Feedback input mode is in use, eof_selection.multi[] indicates no notes are selected and there is a seek hover note, note #eof_seek_hover_note is marked as selected in the array and nonzero is returned

@@ -340,6 +340,8 @@ void eof_prepare_track_menu(void)
 
 			if(i + 1 == EOF_TRACK_VOCALS)
 				continue;	//This function cannot be used with the vocal track since there isn't a second such track
+			if(i + 1 == EOF_TRACK_DANCE)
+				continue;	//This function cannot be used with the dance track since there isn't a second such track
 			if(i + 1 == eof_selected_track)
 				continue;	//This function cannot clone the active track from itself
 			if(eof_song->track[eof_selected_track]->track_format != eof_song->track[i + 1]->track_format)
@@ -4252,6 +4254,12 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 	if(sp->track[sourcetrack]->track_format != sp->track[desttrack]->track_format)
 		return 0;	//Invalid parameters
 
+	if((sourcetrack == EOF_TRACK_DANCE) || (desttrack == EOF_TRACK_DANCE))
+	{
+		allegro_message("Cannot clone between dance and non dance tracks");
+		return 0;	//Invalid parameters
+	}
+
 	//Warn if the destination track is populated
 	eof_clear_input();
 	if(!eof_get_track_size_all(sp, desttrack))
@@ -4959,6 +4967,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	PACKFILE *fp;
 	char clipboard_path[50];
 	char source_vocal = 0, dest_vocal = 0;
+	char source_dance = 0, dest_dance = 0;
 	unsigned char sourcetrack, difficulty = 0xFF, numdiffs = 5, lanecount = 0, numfrets = 17, arrangement = 0, ignore_tuning = 0, capo = 0;
 	unsigned long ctr, flags, notecount, sectiontype, eventcount;
 	char tuning[EOF_TUNING_LENGTH] = {0};
@@ -5004,6 +5013,17 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	if(source_vocal != dest_vocal)
 	{
 		allegro_message("Cannot clone between vocal and non vocal tracks");
+		(void) pack_fclose(fp);
+		return 4;	//Invalid clone operation
+	}
+
+	if(sourcetrack == EOF_TRACK_DANCE)
+		source_dance = 1;
+	if(eof_selected_track == EOF_TRACK_DANCE)
+		dest_dance = 1;
+	if(source_dance != dest_dance)
+	{
+		allegro_message("Cannot clone between dance and non dance tracks");
 		(void) pack_fclose(fp);
 		return 4;	//Invalid clone operation
 	}
