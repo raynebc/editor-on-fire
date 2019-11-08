@@ -224,7 +224,7 @@ int eof_gp_parse_bend(PACKFILE *inf, struct guitar_pro_bend *bp)
 }
 
 #ifndef EOF_BUILD
-	//Standalone parse utility
+{	//Standalone parse utility
 
 EOF_SONG *parse_gp(const char * fn)
 {
@@ -1649,6 +1649,7 @@ int main(int argc, char *argv[])
 	return 0;	//Return success
 }
 
+}
 #else
 
 #define GP_IMPORT_DEBUG
@@ -1681,6 +1682,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	double measure_position;		//Tracks the current position as an amount within the current measure
 	unsigned long allflags;			//Tracks the flags for the current note
 	unsigned long flags;			//Tracks the flags for the current string while individual strings are being parsed, after which this variable stores the combined flags of all gems in the note
+	unsigned long tflags;			//Tracks any temporary flags marked for a note
 	unsigned long tieflags;			//Tracks the flags for the tie gems only in the current note (so that tie chords containing a different string than the connecting note won't apply linknext status if it's not appropriate)
 	unsigned char bendstrength;		//Tracks the note's bend strength if applicable
 	struct guitar_pro_bend bendstruct = {0, 0, {0}, {0}};	//Stores data about the bend being parsed
@@ -3292,7 +3294,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
 					rest_note = 0;	//Assume a note isn't a rest note unless found otherwise
 					bendstruct.bendpoints = 0;	//Assume the note has no bend points unless any are parsed
-					tieflags = allflags = 0;
+					tieflags = allflags = tflags = 0;
 					bendstrength = 0;
 					note_is_short = 0;
 					memset(finger, 0, sizeof(finger));	//Clear the finger array
@@ -4225,6 +4227,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										if(!graceonbeat)
 										{	//if the grace note is before the beat
 											grace_position = measure_position - grace_duration;	//Reposition it accordingly
+											tflags = EOF_NOTE_TFLAG_GRACE;	//Recognized this as a flam note if it is imported as a percussion track
 										}
 										beat_position = grace_position * curnum;								//How many whole beats into the current measure the position is
 										partial_beat_position = (grace_position * curnum) - beat_position;	//How far into this beat the grace note begins
@@ -4719,6 +4722,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(strings);
 								return NULL;
 							}
+							gnp->tflags = tflags;	//Track the grace note status for the sake of being able to treat as flam notation for percussion tracks
 							if(strings[ctr2] > 6)
 							{	//If this is a 7 string track
 								if(effective_drop_7)

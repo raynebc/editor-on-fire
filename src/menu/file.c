@@ -4660,22 +4660,27 @@ int eof_gp_import_drum_track(int importvoice, int function)
 	unsigned long populated = 0, populated2 = 0, bitmask, ctr, ctr2, selected;
 	char fivelane = 0;		//Set to nonzero if a lane 6 drum note (based on mappings in gp_drum_import_lane_6[] ) causes the destination drum track(s) to be converted to 5 lane
 	int combo = 0;			//Track whether any cymbal+tom notes were imported
+	int gracenote_prompt = 0;
+	int this_is_gracenote = 0, previous_was_gracenote = 0;	//Tracks whether the current and previous notes were before the beat grace notes, optionally used to signal flam drum notation
 
 	eof_log("\tImporting as a drum track", 1);
 	selected = eof_gp_import_dialog[1].d1;
 	if(function & 1)
 	{	//Import into normal drum track
 		populated = eof_get_track_size(eof_song, EOF_TRACK_DRUM);
+		eof_selected_track = EOF_TRACK_DRUM;
 	}
 	if(function & 2)
 	{	//Import into Phase Shift drum track
 		populated2 = eof_get_track_size(eof_song, EOF_TRACK_DRUM_PS);
+		eof_selected_track = EOF_TRACK_DRUM_PS;
 	}
 
 	//Prompt about overwriting the active track or track difficulty as appropriate
 	eof_clear_input();
 	if(populated || populated2)
 	{	//If the destination track(s) have notes in them
+		eof_clear_input();
 		if(alert("The destination drum track(s) have notes", "Importing this GP track will overwrite their contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the drum track(s) are already populated and the user doesn't opt to overwrite them
 			eof_log("\t\tImport canceled", 1);
@@ -4707,6 +4712,7 @@ int eof_gp_import_drum_track(int importvoice, int function)
 		if(!(importvoice & (eof_parsed_gp_file->track[selected]->note[ctr]->type + 1)))
 			continue;	//If this voice was not chosen for import, skip it
 
+		this_is_gracenote = 0;	//Reset this status
 		gnp = eof_parsed_gp_file->track[selected]->note[ctr];
 		for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 		{	//For each of the 6 usable strings
@@ -4718,6 +4724,10 @@ int eof_gp_import_drum_track(int importvoice, int function)
 			if(!(gnp->note & bitmask))
 				continue;	//If this string does not have a gem, skip it
 
+			if(gnp->tflags & EOF_NOTE_TFLAG_GRACE)
+			{	//If this note is a before the beat grace note
+				this_is_gracenote = 1;	//Track this
+			}
 			fret = gnp->frets[ctr2] & 0x7F;
 			if(eof_lookup_drum_mapping(gp_drum_import_lane_1, fret))
 			{	//Maps to the bass drum
@@ -4835,6 +4845,26 @@ int eof_gp_import_drum_track(int importvoice, int function)
 				fivelane = 2;
 			}
 
+			if(previous_was_gracenote && !this_is_gracenote)
+			{	//If a previously parsed note was a grace note, and this one isn't
+				if(!gracenote_prompt)
+				{	//If the user wasn't prompted yet
+					eof_clear_input();
+					if(alert("There is at least one before-the-beat grace note", NULL, "Import the notes that follow these as flams?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to treat this as flam drum notation
+						gracenote_prompt = 1;
+					}
+					else
+					{
+						gracenote_prompt = 2;
+					}
+				}
+				if(gracenote_prompt == 1)
+				{	//If the user opted to treat this as a flam note
+					flags |= EOF_DRUM_NOTE_FLAG_FLAM;
+				}
+			}
+
 			if(function & 1)
 			{	//Import into normal drum track
 				np = eof_track_add_create_note(eof_song, EOF_TRACK_DRUM, note, gnp->pos, 1, EOF_NOTE_AMAZING, NULL);
@@ -4859,8 +4889,9 @@ int eof_gp_import_drum_track(int importvoice, int function)
 			}
 			lastflags = flags | psflags;
 			lastnote = note;
-		}
-	}
+		}//For each of the 6 usable strings
+		previous_was_gracenote = this_is_gracenote;	//The next iteration will remember if this note was a grace note
+	}//For each note in the GP track
 
 	if(combo)
 	{	//If one or more cymbal+tom notes were imported

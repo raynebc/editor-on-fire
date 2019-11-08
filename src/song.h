@@ -116,6 +116,7 @@
 #define EOF_NOTE_TFLAG_SOLO_NOTE   262144	//This flag will be set by eof_determine_phrase_status() if the note is in a solo section
 #define EOF_NOTE_TFLAG_GENERIC2    524288	//This flag is reserved for generic purposes
 #define EOF_NOTE_TFLAG_SP_END      524288	//	Such as marking which notes are the last in a star power phrase during star power pathing
+#define EOF_NOTE_TFLAG_GRACE      1048576	//This flag will indicate that the note was defined in an imported guitar pro file as a before the beat grace note, which can be converted to flam notes in the case of a percussion track
 
 
 ///Extended note flags
@@ -290,7 +291,9 @@ typedef struct
 #define EOF_TRACK_PRO_GUITAR_22	12
 #define EOF_TRACK_DRUM_PS		13
 #define EOF_TRACK_PRO_GUITAR_B	14
-#define EOF_TRACK_PRO_KEYS		15
+#define EOF_TRACK_PRO_KEYS		0
+#define EOF_TRACK_HARM          0
+	//Leave the harmonics and pro keys macro defined to 0 to ensure MIDI import knows they're not supported tracks
 
 
 ///Phrase numbers
@@ -576,7 +579,8 @@ typedef struct
 
 extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1];
 	//The list of default tracks that should be presented in EOF
-extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 16];
+#define EOF_MIDI_TRACK_DEFINITIONS EOF_TRACKS_MAX + 16
+extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_MIDI_TRACK_DEFINITIONS];
 	//The list of MIDI track names pertaining to each instrument and harmony track
 extern EOF_TRACK_ENTRY eof_power_gig_tracks[EOF_POWER_GIG_TRACKS_MAX];
 extern EOF_TRACK_ENTRY eof_guitar_hero_animation_tracks[EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX];

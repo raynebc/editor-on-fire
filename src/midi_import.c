@@ -365,7 +365,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int track_pos;
 	unsigned long delta;
 	unsigned long absolute_pos;
-	unsigned long last_delta_time=0;	//Will store the absolute delta time of the last parsed MIDI event
+	unsigned long last_delta_time = 0;	//Will store the absolute delta time of the last parsed MIDI event
 	unsigned long bytes_used;
 	unsigned char current_event;
 	unsigned char current_event_hi = 0;
@@ -748,7 +748,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 								/* detect what kind of track this is */
 								eof_import_events[i]->type = 0;
-								for(j = 1; j < EOF_TRACKS_MAX + 4; j++)
+								for(j = 1; j < EOF_MIDI_TRACK_DEFINITIONS; j++)
 								{	//Compare the track name against the tracks in eof_midi_tracks[], including the GHL variants
 									if(ustricmp(text, eof_midi_tracks[j].name))
 										continue;	//If this name doesn't match that of the track, skip it
@@ -985,6 +985,13 @@ EOF_SONG * eof_import_midi(const char * fn)
 									eof_midi_import_add_event(eof_import_bpm_events, 0, 0x51, 500000, 0, i);	//Insert the default tempo of 120BPM at the beginning of the tempo list
 								}
 								eof_midi_import_add_event(eof_import_bpm_events, absolute_pos, 0x51, d4, 0, i);
+								break;
+							}
+
+							/* SMPTE offset */
+							case 0x54:
+							{
+								track_pos += 6;
 								break;
 							}
 
