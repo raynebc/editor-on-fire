@@ -10324,8 +10324,13 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 				}
 				else
 				{
-					if(notepos > sections[ctr].start_pos)
-						break;	//If this note and all subsequent notes occur after the fret hand position, stop looking for notes in this section
+					if(eof_get_note_type(sp, track, ctr2) == sections[ctr].difficulty)
+					{	//If this note is in the same difficulty as the fret hand position
+						if(notepos > sections[ctr].start_pos)
+						{	//If this note and all subsequent notes occur after the fret hand position
+							break;	//Stop looking for notes in this section
+						}
+					}
 				}
 				if(notepos < sections[ctr].start_pos)
 					continue;	//If this note occurs before the section begins, skip it

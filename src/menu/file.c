@@ -3970,6 +3970,7 @@ int eof_save_helper(char *destfilename, char silent)
 	struct tm *caltime;	//Will store the current time in calendar format
 	unsigned short user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during Rocksmith and Bandfuse exports
 	int err;
+	int midi_export_success = 1;
 
 	eof_log("eof_save_helper() entered", 1);
 
@@ -4114,7 +4115,7 @@ int eof_save_helper(char *destfilename, char silent)
 	{	//If the user opted to save FoF related files
 		/* Save MIDI file */
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes.mid", (int) sizeof(eof_temp_filename));
-		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 0);
+		midi_export_success &= eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 0);
 
 		/* Save INI file */
 		if(!eof_disable_ini_export)
@@ -4190,26 +4191,26 @@ int eof_save_helper(char *destfilename, char silent)
 
 		/* Save GHWT MIDI variant */
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_ghwt.mid", (int) sizeof(eof_temp_filename));
-		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 1);
+		midi_export_success &= eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 1);
 
 		/* Save GH3 MIDI variant */
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_gh3.mid", (int) sizeof(eof_temp_filename));
-		(void) eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 2);
+		midi_export_success &= eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 2);
 	}
 
 	if(eof_write_rb_files)
 	{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", (int) sizeof(eof_temp_filename));
-		(void) eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases, 0);	//Write a RBN2 compliant MIDI
+		midi_export_success &= eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases, 0);	//Write a RBN2 compliant MIDI
 		if(eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size_normal(eof_song, EOF_TRACK_PRO_GUITAR_22))
 		{	//If any of the pro guitar tracks' normal note sets are populated
 			//Write the pro guitar upgrade MIDI
 			(void) append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", (int) sizeof(eof_temp_filename));
-			(void) eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases, 0);	//Write a RB3 pro guitar upgrade compliant MIDI
+			midi_export_success &= eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases, 0);	//Write a RB3 pro guitar upgrade compliant MIDI
 
 			//Write the Rock Band MIDI that can be built by the C3 release of Magma
 			(void) append_filename(eof_temp_filename, newfolderpath, "notes_c3.mid", (int) sizeof(eof_temp_filename));
-			(void) eof_export_midi(eof_song, eof_temp_filename, 3, fixvoxpitches, fixvoxphrases, 0);	//Write a MIDI containing the RBN and pro guitar content
+			midi_export_success &= eof_export_midi(eof_song, eof_temp_filename, 3, fixvoxpitches, fixvoxphrases, 0);	//Write a MIDI containing the RBN and pro guitar content
 
 			//Write a DTA file for the pro guitar upgrade
 			(void) ustrcpy(eof_temp_filename, newfolderpath);
@@ -4228,6 +4229,11 @@ int eof_save_helper(char *destfilename, char silent)
 			(void) replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", (int) sizeof(eof_temp_filename));
 			(void) eof_save_upgrades_dta(eof_song, eof_temp_filename);		//Create the upgrades.dta file in the songs_upgrades folder if it does not already exist
 		}
+	}
+
+	if(!midi_export_success)
+	{	//If any of the calls to eof_export_midi() returned 0 (failed)
+		allegro_message("Error:  At least one MIDI file failed to export.  Check the logging for details.");
 	}
 
 	if(eof_write_music_midi)

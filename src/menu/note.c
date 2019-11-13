@@ -491,13 +491,6 @@ MENU eof_note_reflect_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_note_move_grid_snap_menu[] =
-{
-	{"&Backward\t" CTRL_NAME "+[", eof_menu_note_move_back_grid_snap, NULL, 0, NULL},
-	{"&Forward\t" CTRL_NAME "+]", eof_menu_note_move_forward_grid_snap, NULL, 0, NULL},
-	{NULL, NULL, NULL, 0, NULL}
-};
-
 MENU eof_note_name_menu[] =
 {
 	{"&Edit", eof_menu_note_edit_name, NULL, 0, NULL},
@@ -526,11 +519,25 @@ MENU eof_note_highlight_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_move_grid_snap_menu[] =
+{
+	{"&Backward\t" CTRL_NAME "+[", eof_menu_note_move_back_grid_snap, NULL, 0, NULL},
+	{"&Forward\t" CTRL_NAME "+]", eof_menu_note_move_forward_grid_snap, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_grid_snap_menu[] =
 {
 	{"&Resnap to this grid\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
 	{"Resnap &Auto\tALT+R", eof_menu_note_resnap_auto, NULL, 0, NULL},
 	{"&Move grid snap", NULL, eof_note_move_grid_snap_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_move_by_millisecond_menu[] =
+{
+	{"&Backward\t" CTRL_NAME "+[", eof_menu_note_move_back_millisecond, NULL, 0, NULL},
+	{"&Forward\t" CTRL_NAME "+]", eof_menu_note_move_forward_millisecond, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -968,11 +975,13 @@ void eof_prepare_note_menu(void)
 		/* resnap */
 		if(eof_snap_mode == EOF_SNAP_OFF)
 		{
-			eof_note_menu[4].flags = D_DISABLED;	//Note>Resnap
+			eof_note_menu[4].text = "&Move by millisecond";
+			eof_note_menu[4].child = eof_note_move_by_millisecond_menu;
 		}
 		else
 		{
-			eof_note_menu[4].flags = 0;
+			eof_note_menu[4].text = "Gr&Id snap";
+			eof_note_menu[4].child = eof_note_grid_snap_menu;
 		}
 
 		if(eof_vocals_selected)
@@ -10123,6 +10132,73 @@ int eof_menu_note_move_forward_grid_snap(void)
 	char undo_made = 0;
 
 	return eof_menu_note_move_by_grid_snap(1, &undo_made);
+}
+
+int eof_menu_note_move_by_millisecond(int dir, char *undo_made)
+{
+	unsigned long pos, i;
+
+	if(eof_count_selected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	//First pass:  If moving backward, ensure that each selected note can be moved backward
+	if(dir < 0)
+	{
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+			{	//If the note is selected
+				if(eof_get_note_pos(eof_song, eof_selected_track, i) == 0)
+				{	//If this note is at 0ms and cannot move backward
+					return 0;	//Return failure
+				}
+
+				break;	//Otherwise this and all remaining notes are after 0ms
+			}
+		}
+	}
+
+	//Second pass:  Move the notes
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If the note is selected
+			pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+
+			if(dir < 0)
+			{	//Move note backward
+				pos--;
+			}
+			else
+			{	//Move note forward
+				pos++;
+			}
+			if(undo_made && (*undo_made == 0))
+			{	//If an undo state needs to be made
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
+			}
+			eof_set_note_pos(eof_song, eof_selected_track, i, pos);
+		}
+	}
+
+	return 1;
+}
+
+int eof_menu_note_move_back_millisecond(void)
+{
+	char undo_made = 0;
+
+	return eof_menu_note_move_by_millisecond(-1, &undo_made);
+}
+
+int eof_menu_note_move_forward_millisecond(void)
+{
+	char undo_made = 0;
+
+	return eof_menu_note_move_by_millisecond(1, &undo_made);
 }
 
 int eof_menu_note_convert_to_ghl_open(void)

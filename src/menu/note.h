@@ -403,6 +403,14 @@ int eof_menu_note_move_back_grid_snap(void);
 int eof_menu_note_move_forward_grid_snap(void);
 	//Calls eof_menu_note_move_by_grid_snap() with the option to move notes forward one grid snap
 
+int eof_menu_note_move_by_millisecond(int dir, char *undo_made);
+	//Moves each selected note forward (if dir is >= 0) or backward (if dir < 0) by one millisecond if possible
+	//If undo_made is not NULL and references a value of 0, an undo state is made prior to the first note being moved, and *undo_made is set to nonzero
+int eof_menu_note_move_back_millisecond(void);
+	//Calls eof_menu_note_move_by_millisecond() with the option to move notes backward one millisecond
+int eof_menu_note_move_forward_millisecond(void);
+	//Calls eof_menu_note_move_by_millisecond() with the option to move notes forward one millisecond
+
 int eof_menu_note_convert_to_ghl_open(void);
 	//If a legacy guitar track is active and GHL mode is enabled, changes all selected notes to GHL open notes
 int eof_menu_note_swap_ghl_black_white_gems(void);

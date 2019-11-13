@@ -1438,7 +1438,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 					eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 					eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
-					eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open temporary MIDI track:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+					eof_log(eof_log_string, 1);
 					return 0;	//Return failure
 				}
 
@@ -1688,7 +1689,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 				eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
-				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open temporary MIDI track:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+				eof_log(eof_log_string, 1);
 				return 0;	//Return failure
 			}
 
@@ -2343,7 +2345,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 				eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
-				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open temporary MIDI track:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+				eof_log(eof_log_string, 1);
 				return 0;	//Return failure
 			}
 
@@ -2426,7 +2429,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-		eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open temporary MIDI track:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
 		return 0;	//Return failure
 	}
 	if(featurerestriction != 0)
@@ -2463,7 +2467,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open temporary MIDI track:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+				eof_log(eof_log_string, 1);
 				return 0;	//Return failure
 			}
 
@@ -2559,7 +2564,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 			eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 			eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-			eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open temporary MIDI track:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+			eof_log(eof_log_string, 1);
 			return 0;	//Return failure
 		}
 
@@ -2740,6 +2746,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 	eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 
+	eof_log("\tMIDI export completed", 1);
 	return 1;	//Return success
 }
 

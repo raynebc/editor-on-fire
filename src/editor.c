@@ -2734,10 +2734,22 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			else
 			{	//If CTRL is held but SHIFT is not
 				char undo_made = 0;
+				unsigned long offset = 0;	//By default, the offset will reflect one grid snap
 
-				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, -1, 0, &undo_made);		//Move sections accordingly by one grid snap
-				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, -1, 0, &undo_made);	//Move tech notes accordingly by one grid snap
-				(void) eof_menu_note_move_by_grid_snap(-1, &undo_made);
+				if(eof_snap_mode == EOF_SNAP_OFF)
+				{	//If grid snap is disabled, move notes by one millisecond
+					offset = 1;
+				}
+				eof_auto_adjust_sections(eof_song, eof_selected_track, offset, -1, 0, &undo_made);		//Move sections accordingly by one grid snap
+				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, -1, 0, &undo_made);	//Move tech notes accordingly by one grid snap
+				if(eof_snap_mode == EOF_SNAP_OFF)
+				{	//If grid snap is disabled, move notes by one millisecond
+					(void) eof_menu_note_move_by_millisecond(-1, &undo_made);
+				}
+				else
+				{	//Otherwise move by one grid snap
+					(void) eof_menu_note_move_by_grid_snap(-1, &undo_made);
+				}
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
@@ -2779,10 +2791,22 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			else
 			{	//If CTRL is held but SHIFT is not
 				char undo_made = 0;
+				unsigned long offset = 0;	//By default, the offset will reflect one grid snap
 
-				eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 1, 0, &undo_made);	//Move sections accordingly by one grid snap
-				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 1, 0, &undo_made);	//Move tech notes accordingly by one grid snap
-				(void) eof_menu_note_move_by_grid_snap(1, &undo_made);
+				if(eof_snap_mode == EOF_SNAP_OFF)
+				{	//If grid snap is disabled, move notes by one millisecond
+					offset = 1;
+				}
+				eof_auto_adjust_sections(eof_song, eof_selected_track, offset, 1, 0, &undo_made);	//Move sections accordingly by one grid snap
+				(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, offset, 1, 0, &undo_made);	//Move tech notes accordingly by one grid snap
+				if(eof_snap_mode == EOF_SNAP_OFF)
+				{	//If grid snap is disabled, move notes by one millisecond
+					(void) eof_menu_note_move_by_millisecond(1, &undo_made);
+				}
+				else
+				{	//Otherwise move by one grid snap
+					(void) eof_menu_note_move_by_grid_snap(1, &undo_made);
+				}
 				if(eof_song->tags->highlight_unsnapped_notes)
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
