@@ -3546,6 +3546,9 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 			{	//If this is a track specific text event (chord names excluded, that will be handled by track specific logic)
 				if(!text_event_imported)
 				{	//If this text event wasn't already imported as a lyric
+					unsigned long pos;
+					unsigned long flags = 0;	//By default, the section is to be treated as an on-beat section
+
 					for(k = 0; k + 1 < sp->beats; k++)
 					{	//For each beat
 						if(event_realtime < sp->beat[k + 1]->pos)
@@ -3553,7 +3556,16 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							break;	//Stop parsing beats
 						}
 					}	//k now refers to the appropriate beat this event is assigned to
-					(void) eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0, 0);	//Store this as a text event specific to the track being parsed
+					pos = k;
+
+					if(event_realtime != sp->beat[k]->pos)
+					{	//If the event is not on a beat position, it will be added as a floating text event
+						eof_log("\t\t\t\t!This text event is being added as a floating (off-beat) text event", 1);
+						flags = EOF_EVENT_FLAG_FLOATING_POS;	//The call to eof_song_add_text_event() will receive this as a floating text event
+						pos = event_realtime;					//with a millisecond timestamp instead of an assigned beat index
+					}
+
+					(void) eof_song_add_text_event(sp, pos, eof_import_events[i]->event[j]->text, picked_track, flags, 0);	//Store this as a text event specific to the track being parsed
 				}
 			}
 
@@ -3719,20 +3731,25 @@ eof_log("\tThird pass complete", 1);
 			b = eof_import_closest_beat(sp, tp);
 			if(b >= 0)
 			{
+				unsigned long pos = b;
+				unsigned long flags = 0;	//By default, the section is to be treated as an on-beat section
+
 //				allegro_message("%s", eof_import_text_events->event[i]->text);	//Debug
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection:  Original MIDI position = %lu ticks.  Assigned position = %lums: %s", eof_import_text_events->event[i]->pos, tp, eof_import_text_events->event[i]->text);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tText event:  Original MIDI position = %lu ticks.  Assigned position = %lums: %s", eof_import_text_events->event[i]->pos, tp, eof_import_text_events->event[i]->text);
 				eof_log(eof_log_string, 1);
 
 				if(tp != sp->beat[b]->pos)
-				{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
-					eof_log("\t\t\t!This section was moved to a beat position", 1);
+				{	//If the event is not on a beat position, it will be added as a floating text event
+					eof_log("\t\t\t\t!This section is being added as a floating (off-beat) text event", 1);
 					if(!event_realignment_warning)
 					{	//If the user wasn't warned about this yet
-						allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+						allegro_message("Note:  At least one text event was defined mid-beat and is being stored as a \"floating\" text event.  Check logging for details.");
 						event_realignment_warning = 1;
 					}
+					flags = EOF_EVENT_FLAG_FLOATING_POS;	//The call to eof_song_add_text_event() will receive this as a floating text event
+					pos = tp;								//with a millisecond timestamp instead of an assigned beat index
 				}
-				(void) eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text, 0, 0, 0);
+				(void) eof_song_add_text_event(sp, pos, eof_import_text_events->event[i]->text, 0, flags, 0);
 			}
 		}
 	}

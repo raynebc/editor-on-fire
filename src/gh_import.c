@@ -3412,6 +3412,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 							if(buffer[nameindex] == '=')
 							{	//If it follows with a '=' character, this is definitely a lyric entry string
 								free(buffer);
+								buffer = NULL;
 								fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
 								continue;		//Skip it
 							}
@@ -3613,23 +3614,26 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 					if(eof_beat_num_valid(sp, beatnum))
 					{	//If there is such a beat
 						char buffer2[256] = {0};
+						unsigned long flags = 0;	//By default, the section is to be treated as an on-beat section
 
 #ifdef GH_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Original position = %lums.  Assigned position = %lums, checksum = 0x%08lX: %s", dword, sp->beat[beatnum]->pos, checksum, linkptr->text);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Original position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
 						eof_log(eof_log_string, 1);
 #endif
 						(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
 
 						if(dword != sp->beat[beatnum]->pos)
-						{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
-							eof_log("\t\t\t\t!This section was moved to a beat position", 1);
+						{	//If the event is not on a beat position, it will be added as a floating text event
+							eof_log("\t\t\t\t!This section is being added as a floating (off-beat) text event", 1);
 							if(!event_realignment_warning)
 							{	//If the user wasn't warned about this yet
-								allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+								allegro_message("Note:  At least one section was defined mid-beat and is being stored as a \"floating\" text event.  Check logging for details.");
 								event_realignment_warning = 1;
 							}
+							flags = EOF_EVENT_FLAG_FLOATING_POS;	//The call to eof_song_add_text_event() will receive this as a floating text event
+							beatnum = dword;						//with a millisecond timestamp instead of an assigned beat index
 						}
-						(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
+						(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, flags, 0);	//Add the text event
 					}
 					break;
 				}
@@ -3737,9 +3741,10 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 								if(eof_beat_num_valid(sp, beatnum))
 								{	//If there is such a beat
 									char buffer2[256] = {0};
+									unsigned long flags = 0;	//By default, the section is to be treated as an on-beat section
 
 #ifdef GH_IMPORT_DEBUG
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Original position = %lums.  Assigned position = %lums, checksum = 0x%08lX: %s", dword, sp->beat[beatnum]->pos, checksum, linkptr->text);
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Original position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
 									eof_log(eof_log_string, 1);
 #endif
 									(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
@@ -3750,15 +3755,17 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 									}
 
 									if(dword != sp->beat[beatnum]->pos)
-									{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
-										eof_log("\t\t\t\t!This section was moved to a beat position", 1);
+									{	//If the event is not on a beat position, it will be added as a floating text event
+										eof_log("\t\t\t\t!This section is being added as a floating (off-beat) text event", 1);
 										if(!event_realignment_warning)
 										{	//If the user wasn't warned about this yet
-											allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+											allegro_message("Note:  At least one section was defined mid-beat and is being stored as a \"floating\" text event.  Check logging for details.");
 											event_realignment_warning = 1;
 										}
+										flags = EOF_EVENT_FLAG_FLOATING_POS;	//The call to eof_song_add_text_event() will receive this as a floating text event
+										beatnum = dword;						//with a millisecond timestamp instead of an assigned beat index
 									}
-									(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
+									(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, flags, 0);	//Add the text event
 								}
 								found = 1;
 								break;	//Break from practice section search loop
@@ -3812,9 +3819,10 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 											if(eof_beat_num_valid(sp, beatnum))
 											{	//If there is such a beat
 												char buffer2[256] = {0};
+												unsigned long flags = 0;	//By default, the section is to be treated as an on-beat section
 
 #ifdef GH_IMPORT_DEBUG
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Original position = %lums.  Assigned position = %lums, checksum = 0x%08lX: %s", dword, sp->beat[beatnum]->pos, checksum, linkptr->text);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
 												eof_log(eof_log_string, 1);
 #endif
 												(void) snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
@@ -3825,15 +3833,17 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 												}
 
 												if(dword != sp->beat[beatnum]->pos)
-												{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
-													eof_log("\t\t\t\t!This section was moved to a beat position", 1);
+												{	//If the event is not on a beat position, it will be added as a floating text event
+													eof_log("\t\t\t\t!This section is being added as a floating (off-beat) text event", 1);
 													if(!event_realignment_warning)
 													{	//If the user wasn't warned about this yet
-														allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+														allegro_message("Note:  At least one section was defined mid-beat and is being stored as a \"floating\" text event.  Check logging for details.");
 														event_realignment_warning = 1;
 													}
+													flags = EOF_EVENT_FLAG_FLOATING_POS;	//The call to eof_song_add_text_event() will receive this as a floating text event
+													beatnum = dword;						//with a millisecond timestamp instead of an assigned beat index
 												}
-												(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
+												(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, flags, 0);	//Add the text event
 											}
 											found = 1;
 											break;	//Break from practice section search loop

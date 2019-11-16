@@ -2887,7 +2887,7 @@ int eof_menu_edit_deselect_all_of_length(void)
 DIALOG eof_menu_edit_select_less_than_threshold_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   350, 148, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
+	{ d_agup_window_proc,    0,   0,   480, 148, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
 	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "(specify 0 for one grid snap length)",NULL, NULL },
 	{ eof_verified_edit_proc,12,  76,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789",  NULL },

@@ -5016,6 +5016,22 @@ void eof_exit(void)
 	if(!ch_sp_path_worker)
 	{	//None of these are applicable if this EOF instance was a worker process
 		eof_save_config("eof.cfg");
+		if(!exists("eof.cfg"))
+		{
+			FILE *fp;
+			fp = fopen("eof.cfg", "wt");	//Attempt to manually create the file
+			if(!fp)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output config file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+				eof_log(eof_log_string, 1);
+			}
+			else
+			{
+				eof_log("Allegro's config routines could not create eof.cfg, but the standard fopen() function was able to.  Please report whether subsequent EOF sessions also fail to save the configuration.", 1);
+				fclose(fp);
+			}
+			allegro_message("Error:  Could not write config file eof.cfg.  Check logging for details.");
+		}
 		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
 		(void) delete_file(fn);	//And delete it if it exists
 		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo OGG

@@ -1814,7 +1814,7 @@ char * eof_events_list_all(int index, int * size)
 			}
 		}
 		if((eof_song->text_event[realindex]->track != 0) || (eof_song->text_event[realindex]->flags != 0))
-		{	//If this event is track specific or has any flags set
+		{	//If this event is track specific or has any flags (other than just the floating position flag) set
 			if((eof_song->text_event[realindex]->track != 0) && (eof_song->text_event[realindex]->track < eof_song->tracks))
 			{	//If this is a track specific event
 				(void) snprintf(trackname, sizeof(trackname) - 1, "%s", eof_song->track[eof_song->text_event[realindex]->track]->name);
@@ -1843,6 +1843,10 @@ char * eof_events_list_all(int index, int * size)
 			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_RS_EVENT)
 			{
 				(void) strncat(eventflags, "E", sizeof(trackname) - strlen(trackname) - 1);	//Append an E
+			}
+			if(eof_song->text_event[realindex]->flags & EOF_EVENT_FLAG_FLOATING_POS)
+			{
+				(void) strncat(eventflags, "f", sizeof(trackname) - strlen(trackname) - 1);	//Append an f
 			}
 		}
 		else

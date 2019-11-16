@@ -725,6 +725,8 @@ void eof_save_config(char * fn)
 			set_config_string("default_ini_settings", name, value);	//Write them to the config file
 		}
 	}
+
+	flush_config_file();
 }
 
 void eof_build_gp_drum_mapping_string(char *destination, size_t size, unsigned char *mapping_list)

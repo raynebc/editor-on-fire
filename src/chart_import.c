@@ -922,6 +922,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		{	//If this is a section event, rebuild the string to ensure it's in the proper format
 			char buffer[256] = {0};
 			int index = 0, index2 = 0;	//index1 will index into the rebuilt buffer[] string, index2 will index into the original current_event->text[] string
+			unsigned long flags = 0;	//By default, the section is to be treated as an on-beat section
 
 			buffer[index++] = '[';	//Begin with an open bracket
 			while(current_event->text[index2] != '\0' && (index < 254))
@@ -939,15 +940,17 @@ EOF_SONG * eof_import_chart(const char * fn)
 			eof_log(eof_log_string, 1);
 
 			if(pos != sp->beat[b]->pos)
-			{	//If the event is being moved to a beat position, and the user wasn't warned about this yet
-				eof_log("\t\t\t!This section was moved to a beat position", 1);
+			{	//If the event is not on a beat position, it will be added as a floating text event
+				eof_log("\t\t\t\t!This section is being added as a floating (off-beat) text event", 1);
 				if(!event_realignment_warning)
 				{	//If the user wasn't warned about this yet
-					allegro_message("Warning:  At least one section was defined mid-beat and was relocated to the nearest beat to be stored as a text event.  Check logging for original section timestamps.");
+					allegro_message("Note:  At least one section was defined mid-beat and is being stored as a \"floating\" text event.  Check logging for details.");
 					event_realignment_warning = 1;
 				}
+				flags = EOF_EVENT_FLAG_FLOATING_POS;	//The call to eof_song_add_text_event() will receive this as a floating text event
+				b = pos;								//with a millisecond timestamp instead of an assigned beat index
 			}
-			(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
+			(void) eof_song_add_text_event(sp, b, buffer, 0, flags, 0);
 		}
 		else if(!ustricmp(current_event->text, "phrase_start"))
 		{	//If this is a Clone Hero start of lyric line marker (and a lyric line definition isn't already in progress)
@@ -987,7 +990,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 			else
 			{	//This is a normal text event, copy the string as-is
-				(void) eof_song_add_text_event(sp, b, current_event->text, 0, 0, 0);
+				unsigned long flags = 0;	//By default, the section is to be treated as an on-beat text event
+
+				if(pos != sp->beat[b]->pos)
+				{	//If the event is not on a beat position, it will be added as a floating text event
+					eof_log("\t\t\t\t!This text event is being added as a floating (off-beat) text event", 1);
+					flags = EOF_EVENT_FLAG_FLOATING_POS;	//The call to eof_song_add_text_event() will receive this as a floating text event
+					b = pos;								//with a millisecond timestamp instead of an assigned beat index
+				}
+				(void) eof_song_add_text_event(sp, b, current_event->text, 0, flags, 0);
 			}
 		}
 		current_event = current_event->next;	//Iterate to the next text event
