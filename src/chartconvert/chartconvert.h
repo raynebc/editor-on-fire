@@ -90,7 +90,6 @@ struct FeedbackChart
 extern char *midi_track_name[NUM_MIDI_TRACKS];	//The name of the MIDI track associated with each value of the dbTrack structure's tracktype variable
 extern struct MIDIevent *midi_track_events[NUM_MIDI_TRACKS];	//Stores the linked list for each instrument, which is shared among the instrument's difficulties
 extern char events_reallocated[NUM_MIDI_TRACKS];	//Specifies whether each of the MIDI events tracks were reallocated and will only need a single call to free()
-extern clock_t runtime_start, runtime_end;	//Used to time how long the entire conversion takes on success
 extern char **utf_argv;	//Used to store a copy of main()'s argument list converted to UTF-8 encoding, so the user can pass Unicode file parameters
 
 ///Various utilities

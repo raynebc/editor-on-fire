@@ -4845,6 +4845,7 @@ int eof_initialize(int argc, char * argv[])
 					allegro_message("Could not import Feedback chart!");
 					return 0;
 				}
+				eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 				eof_song_loaded = 1;
 			}
 			else if(strcasestr_spec(argv[i], ".pak."))

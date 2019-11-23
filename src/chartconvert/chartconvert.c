@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 	int ctr;
 	char par_output_filename = 0, par_overwrite = 0, par_invalid = 0;
 	char **effective_argv = NULL;
-	clock_t runtime_start, runtime_end;
+	clock_t runtime_start, runtime_end;	//Used to time how long the entire conversion takes on success
 
 #ifdef ALLEGRO_WINDOWS
 	if(build_utf8_argument_list(argc, argv))

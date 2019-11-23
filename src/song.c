@@ -9772,6 +9772,7 @@ int eof_length_within_target_range(unsigned long target, unsigned long length, d
 void eof_song_enforce_mid_beat_tempo_change_removal(void)
 {
 	unsigned long ctr, last_normal_beat_length = 0, ongoing_beat_length = 0, this_beat_length, consecutive_count = 0, delete_count = 0;
+	int warned = 0;
 
 	if(!eof_song || (eof_song->beats < 2))
 		return;
@@ -9885,15 +9886,24 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void)
 		if(delete_count)
 		{	//If any beats were deleted
 			allegro_message("One or more mid-beat tempo changes were altered during import due to the \"Import drops mid beat tempos\" preference being enabled.  Make sure to review the tempo map and note sync and re-import after disabling that preference if you are unsatisfied with the results.");
+			warned = 1;
 		}
 	}//If the user set the preference to delete mid beat tempo changes
 
-	//Pass 2:  Remove mid beat flags if the "Render mid beat tempos blue" import preference is not enabled
-	if(!eof_render_mid_beat_tempos_blue)
-	{	//If that preference is not enabled
-		for(ctr = 0; ctr < eof_song->beats; ctr++)
-		{	//For each beat
-			eof_song->beat[ctr]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear the mid beat tempo flag
+	//Pass 2:  Remove mid beat flags if the "Render mid beat tempos blue" import preference is not enabled, warn user if there are mid beats that were not removed
+	for(ctr = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat
+		if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_MIDBEAT)
+		{	//If the beat was inserted during import due to a mid beat tempo/TS change
+			if(!eof_render_mid_beat_tempos_blue)
+			{	//If the preference to retain that status is not enabled
+				eof_song->beat[ctr]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear the mid beat tempo flag
+			}
+			if(!warned)
+			{
+				allegro_message("At least one beat marker was inserted due to mid-beat tempo or time signatures changes in the imported file.  Make sure to clean up the beat map or update time signatures accordingly.");
+				warned = 1;
+			}
 		}
 	}
 }

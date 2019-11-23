@@ -1106,7 +1106,8 @@ int eof_length_within_target_range(unsigned long target, unsigned long length, d
 	//Returns nonzero if the specified length is within (target * ratio) of the given target length
 void eof_song_enforce_mid_beat_tempo_change_removal(void);
 	//If the "Imports drop mid beat tempos" preference is enabled, this function deletes beats that have the EOF_BEAT_FLAG_MIDBEAT flag
-	//Regardless of that preference's setting, the flag is removed from all beats in the project
+	//If that preference is not enabled, but there are beats with the EOF_BEAT_FLAG_MIDBEAT flag, the user is warned about the presence of the inserted beats
+	//Regardless of that preference's setting, the flag is removed from all beats in the project if the "Render mid beat tempos blue" preference is not enabled
 
 //Criterion checks for selection functions
 int eof_note_is_chord(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note contains more than one gem

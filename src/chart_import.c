@@ -881,19 +881,12 @@ EOF_SONG * eof_import_chart(const char * fn)
 	while(current_event)
 	{	//For each text event from the chart file
 		//Determine the beat marker associated with the event, for text events
-		unsigned long target = current_event->chartpos / chart->resolution;	//This is the beat number at which the event is in the source file
-
-		for(b = 0, ctr = 0; b < sp->beats; b++)
+		for(ctr = 0, b = 0; ctr < sp->beats; ctr++)
 		{	//For each beat in the project
-			if(ctr == target)
+			if(current_event->chartpos == sp->beat[ctr]->midi_pos)
 			{	//If this is the beat that should contain the event
-				break;
+				b = ctr;	//Store this beat number.  Any off-beat text event will be stored as a floating text event
 			}
-			if(sp->beat[b]->flags & EOF_BEAT_FLAG_MIDBEAT)
-			{	//If this is a beat that was inserted to store a mid beat tempo change
-				continue;	//Skip it, it doesn't reflect a beat in the original chart
-			}
-			ctr++;	//Keep track of how many non-inserted beats were parsed
 		}
 
 		//Determine the realtime position associated with the event, for solos, lyric lines and lyrics
