@@ -880,12 +880,27 @@ EOF_SONG * eof_import_chart(const char * fn)
 	current_event = chart->events;
 	while(current_event)
 	{	//For each text event from the chart file
+		double beatpos = 0.0;
+
 		//Determine the beat marker associated with the event, for text events
 		for(ctr = 0, b = 0; ctr < sp->beats; ctr++)
 		{	//For each beat in the project
+			if(current_event->chartpos < sp->beat[ctr]->midi_pos)	//If the text event occurs before this beat
+				continue;	//Skip it
+
 			if(current_event->chartpos == sp->beat[ctr]->midi_pos)
 			{	//If this is the beat that should contain the event
 				b = ctr;	//Store this beat number.  Any off-beat text event will be stored as a floating text event
+				beatpos = ctr;
+				break;
+			}
+			else if((ctr + 1 < sp->beats) && (current_event->chartpos < sp->beat[ctr + 1]->midi_pos))
+			{	//If the text event occurs in between this beat and the next
+				unsigned long delta = current_event->chartpos - sp->beat[ctr]->midi_pos;		//The number of ticks into this beat the text event is
+				unsigned long beatlen = sp->beat[ctr + 1]->midi_pos - sp->beat[ctr]->midi_pos;	//The number of delta ticks between the two beats
+
+				beatpos = ctr + ((double)delta / (double)beatlen);
+				break;
 			}
 		}
 
@@ -929,7 +944,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			buffer[index++] = ']';	//End with a closing bracket
 			buffer[index++] = '\0';	//Terminate the string
 
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection:  Original chart position = %lu ticks (%f beats).  Assigned position = %lums: %s", current_event->chartpos, (double)current_event->chartpos / chart->resolution, pos, buffer);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection:  Original chart position = %lu ticks (%f beats).  Assigned position = %lums: %s", current_event->chartpos, beatpos, pos, buffer);
 			eof_log(eof_log_string, 1);
 
 			if(pos != sp->beat[b]->pos)

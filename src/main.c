@@ -1861,24 +1861,6 @@ int eof_load_ogg_quick(char * filename)
 		if(eof_music_track)
 		{
 			loaded = 1;
-			if(!eof_silence_loaded)
-			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(eof_write_fof_files)
-				{	//If authoring for Frets on Fire style games
-					int rate = alogg_get_wave_freq_ogg(eof_music_track);
-					if(rate != 44100)
-					{
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnsupported sample rate detected:  %d", rate);
-						eof_log(eof_log_string, 1);
-						allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
-					}
-					if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
-					{
-						eof_log("\t\tUnsupported mono channel audio detected", 1);
-						allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
-					}
-				}
-			}
 		}
 	}
 	if(loaded)
@@ -1974,24 +1956,6 @@ int eof_load_ogg(char * filename, char function)
 		if(eof_music_track)
 		{
 			loaded = 1;
-			if(!eof_silence_loaded)
-			{	//Only display song channel and sample rate warnings if chart audio is loaded
-				if(eof_write_fof_files)
-				{	//If authoring for Frets on Fire style games
-					int rate = alogg_get_wave_freq_ogg(eof_music_track);
-					if(rate != 44100)
-					{
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnsupported sample rate detected:  %d", rate);
-						eof_log(eof_log_string, 1);
-						allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
-					}
-					if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
-					{
-						eof_log("\t\tUnsupported mono channel audio detected", 1);
-						allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
-					}
-				}
-			}
 			eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 			(void) ustrcpy(eof_loaded_ogg_name, output);	//Store the loaded OGG filename

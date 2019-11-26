@@ -5107,8 +5107,8 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			{	//Until there are enough beats to accommodate the end position of this note
 				if(!eof_song_append_beats(eof_song, 1))
 				{	//If there was an error adding a beat
-					eof_log("\tError adding beat.  Aborting", 1);
-					allegro_message("Error adding beat.  Aborting");
+					eof_log("\tError adding beat (notes).  Aborting", 1);
+					allegro_message("Error adding beat (notes).  Aborting");
 					eof_erase_track(eof_song, eof_selected_track);
 					(void) pack_fclose(fp);
 					return 6;
@@ -5232,8 +5232,8 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			{	//Until there are enough beats to accommodate the end position of this section
 				if(!eof_song_append_beats(eof_song, 1))
 				{	//If there was an error adding a beat
-					eof_log("\tError adding beat.  Aborting", 1);
-					allegro_message("Error adding beat.  Aborting");
+					eof_log("\tError adding beat (phrase).  Aborting", 1);
+					allegro_message("Error adding beat (phrase).  Aborting");
 					eof_erase_track(eof_song, eof_selected_track);
 					(void) pack_fclose(fp);
 					return 9;
@@ -5261,18 +5261,37 @@ int eof_menu_track_clone_track_from_clipboard(void)
 		char text[EOF_TEXT_EVENT_LENGTH + 1];
 		unsigned long beatnum;
 		unsigned char eventflags;
+		int needbeat = 0;
 
 		(void) eof_load_song_string_pf(text, fp, sizeof(text));	//Read event text
 		beatnum = pack_igetl(fp);								//Read event's assigned beat number
 		eventflags = pack_getc(fp);								//Read event flags
 
 		//Add enough beats to encompass the event if necessary
-		while(eof_song->beats <= beatnum + 1)
+		while(1)
 		{	//Until there are enough beats to accommodate the beat number this event is assigned to
+			needbeat = 0;
+			if(eventflags & EOF_EVENT_FLAG_FLOATING_POS)
+			{	//If this is a floating text event
+				if((eof_song->beats < 2) || (eof_song->beat[eof_song->beats - 1]->pos <= beatnum))
+				{	//If the last beat doesn't exceed the millisecond position needed for the event
+					needbeat = 1;
+				}
+			}
+			else
+			{	//This text event is assigned to a beat marker
+				if(eof_song->beats <= beatnum + 1)
+				{	//If the number of beats in the project doesn't exceed the beat number needed for the event
+					needbeat = 1;	//Add another
+				}
+			}
+			if(!needbeat)	//If the current number of beats is sufficient
+				break;		//Exit loop
+
 			if(!eof_song_append_beats(eof_song, 1))
 			{	//If there was an error adding a beat
-				eof_log("\tError adding beat.  Aborting", 1);
-				allegro_message("Error adding beat.  Aborting");
+				eof_log("\tError adding beat (event).  Aborting", 1);
+				allegro_message("Error adding beat (event).  Aborting");
 				eof_erase_track(eof_song, eof_selected_track);
 				(void) pack_fclose(fp);
 				return 11;
