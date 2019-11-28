@@ -348,15 +348,21 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[8].flags = D_DISABLED;
 		}
 //Beat>Anchor Beat and Toggle Anchor validation
+		if(eof_beat_is_mandatory_anchor(eof_song, eof_selected_beat))
+		{	//If the selected beat is required to be an anchor
+			eof_beat_menu[10].flags = D_DISABLED;	//Toggle anchor
+		}
+		else
+		{
+			eof_beat_menu[10].flags = 0;
+		}
 		if(eof_selected_beat != 0)
 		{	//If the first beat marker is not selected, enable Beat>Anchor Beat and Toggle Anchor
 			eof_beat_menu[9].flags = 0;		//Anchor beat
-			eof_beat_menu[10].flags = 0;	//Toggle anchor
 		}
 		else
 		{
 			eof_beat_menu[9].flags = D_DISABLED;
-			eof_beat_menu[10].flags = D_DISABLED;
 		}
 //Beat>Delete Anchor validation
 		if((eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_selected_beat != 0))
@@ -1139,28 +1145,14 @@ int eof_menu_beat_anchor(void)
 
 int eof_menu_beat_toggle_anchor(void)
 {
-	unsigned long ctr;
-	unsigned num = 4, den = 4, lastden = 4;
-
 	if(!eof_song)
 		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 	if(eof_selected_beat == 0)
 		return 1;	//Don't attempt to remove the anchor from the first beat
-
-	//Determine the time signature in effect immediately before the selected beat
-	for(ctr = 0; ctr < eof_selected_beat; ctr++)
-	{	//For each beat up to the selected one
-		(void) eof_get_ts(eof_song, &num, &den, ctr);	//Lookup any time signature defined at the beat
-	}
-	lastden = den;	//Track the TS denominator in use
-	(void) eof_get_ts(eof_song, &num, &den, ctr);	//Lookup any time signature defined at the beat
-	if(den != lastden)
-	{	//If the time signature denominator changes at the selected beat
-		eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag by force
-		return 1;	//Don't allow the anchor to be removed
-	}
+	if(eof_beat_is_mandatory_anchor(eof_song, eof_selected_beat))
+		return 1;	//Don't attempt to remove the anchor if the selected beat has a TS or tempo change that forces it to be an anchor
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->flags ^= EOF_BEAT_FLAG_ANCHOR;

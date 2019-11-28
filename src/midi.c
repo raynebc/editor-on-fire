@@ -1514,6 +1514,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			#define EOF_LYRIC_PHRASE_PADDING 5
 			unsigned long last_phrase = 0;	//Stores the absolute delta time of the last Note 105 On
 			int lastevent = 0;	//Track the last event written so running status can be utilized
+			char *exportname = sp->track[j]->name;	//By default, the track's regular name is used for export
+
+			if((sp->track[j]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[j]->altname[0] != '\0'))
+			{	//If the track has been renamed
+				exportname = sp->track[j]->altname;	//Allow that name to export to the MIDI track
+			}
 
 			/* make vocals track */
 			/* insert the missing lyric phrases if the user opted to do so */
@@ -1698,8 +1704,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			WriteVarLen(0, fp);
 			(void) pack_putc(0xFF, fp);
 			(void) pack_putc(0x03, fp);
-			WriteVarLen(ustrsize(sp->track[j]->name), fp);
-			(void) pack_fwrite(sp->track[j]->name, ustrsize(sp->track[j]->name), fp);
+			WriteVarLen(ustrsize(exportname), fp);
+			(void) pack_fwrite(exportname, ustrsize(exportname), fp);
 
 			/* add MIDI events */
 			lastdelta = 0;

@@ -754,6 +754,7 @@ void eof_init_after_load(char initaftersavestate);
 	//Initializes variables and cleans up notes, should be used after loading or creating a chart
 	//Functions that import into a track (lyrics, GP, etc) should not use this function as it will do things like erase all undo information
 	//If initaftersavestate is zero (as should be used when loading/importing a chart/MIDI/etc), more variables are forcibly initialized
+int eof_beat_is_mandatory_anchor(EOF_SONG *sp, unsigned long beat);	//Returns nonzero if the specified beat is valid and represents a TS or tempo change that requires the beat to be an anchor by eof_cleanup_beat_flags()
 void eof_cleanup_beat_flags(EOF_SONG *sp);	//Repairs the text event and anchor statuses for beats in the specified chart
 
 void eof_scale_fretboard(unsigned long numlanes);

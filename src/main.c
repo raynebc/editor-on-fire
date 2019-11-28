@@ -5708,10 +5708,36 @@ int main(int argc, char * argv[])
 	return 0;
 }
 
+int eof_beat_is_mandatory_anchor(EOF_SONG *sp, unsigned long beat)
+{
+	unsigned den = 0, den2 = 0;
+
+	if(!sp || (beat >= sp->beats) || (sp->beats < 2))
+		return 0;
+
+	if(beat < 1)
+		return 1;	//The first beat is always an anchor
+
+	if(sp->beat[beat - 1]->ppqn != sp->beat[beat]->ppqn)
+		return 1;	//This beat has a different tempo than the previous one
+
+	if(eof_get_effective_ts(sp, NULL, &den, beat - 1, 0))
+	{	//If the time signature in effect at the previous beat was able to be found
+		if(eof_get_ts(sp, NULL, &den2, beat) == 1)
+		{	//If there is a time signature change at this beat
+			if(den != den2)
+			{	//If the denominator changed
+				return 1;	//This beat has a different beat unit than the previous one
+			}
+		}
+	}
+
+	return 0;	//This beat isn't required to be an anchor
+}
+
 void eof_cleanup_beat_flags(EOF_SONG *sp)
 {
 	unsigned long ctr;
-	unsigned num = 4, den = 4, lastden = 4;
 
 	eof_log("eof_cleanup_beat_flags() entered", 1);
 
@@ -5741,19 +5767,10 @@ void eof_cleanup_beat_flags(EOF_SONG *sp)
 	sp->beat[0]->flags |= EOF_BEAT_FLAG_ANCHOR;	//The first beat marker is required to be an anchor
 	for(ctr = 1; ctr < sp->beats; ctr++)
 	{	//For each beat after the first
-		if(sp->beat[ctr]->ppqn != sp->beat[ctr - 1]->ppqn)
-		{	//If the beat has a different tempo than the previous beat
+		if(eof_beat_is_mandatory_anchor(sp, ctr))
+		{	//If this beat must be an anchor due to a tempo or TS change
 			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure the anchor status flag is set
 		}
-	}
-	for(ctr = 0; ctr < sp->beats; ctr++)
-	{	//For each beat
-		(void) eof_get_ts(sp, &num, &den, ctr);	//Lookup any time signature defined at the beat
-		if(den != lastden)
-		{	//If the time signature denominator changes
-			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
-		}
-		lastden = den;	//Track the TS denominator in use
 	}
 }
 
