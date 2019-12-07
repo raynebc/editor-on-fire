@@ -6142,6 +6142,7 @@ void eof_render_editor_window_2(void)
 			eof_music_pos = eof_music_pos2;	//Change to that position
 		}
 		(void) eof_menu_track_selected_track_number(eof_selected_track2, 0);	//Change to the track of the secondary piano roll, update coordinates, color set, etc.
+		eof_process_beat_statistics(eof_song, eof_selected_track);		//Rebuild the beat stats so that the secondary piano roll can display the correct RS phrases and sections
 		eof_note_type = eof_note_type2;									//Set the secondary piano roll's difficulty
 		eof_render_editor_window(eof_window_editor2);					//Render this track difficulty to the secondary piano roll screen
 
@@ -6222,11 +6223,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	eof_set_2D_lane_positions(eof_selected_track);	//Update the ychart[] array
 	bottomlane_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1];	//Store this for multiple uses
 
-	if(eof_display_second_piano_roll)
-	{	//If the secondary piano roll is being displayed
-		eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild the beat stats so that the primary and secondary piano rolls can each display the correct RS phrases and sections
-	}
-
 	/* draw the starting position */
 	if(pos < 300)
 	{
@@ -6259,6 +6255,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			{
 				draw_sprite(eof_screen, eof_image[EOF_IMAGE_CONTROLS_0 + eof_selected_control], eof_screen_layout.controls_x, 22 + 8);
 			}
+///DEBUG (print FPS instead of seek position)
+///textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%.2f", eof_main_loop_fps);
 			textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02lu:%02lu", ((eof_music_pos - eof_av_delay) / 1000) / 60, ((eof_music_pos - eof_av_delay) / 1000) % 60);
 		}
 	}

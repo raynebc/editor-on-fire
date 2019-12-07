@@ -2240,6 +2240,7 @@ void eof_read_global_keys(void)
 		if(eof_key_code == KEY_MINUS)	//Use the scan code because CTRL+- cannot be reliably detected via ASCII value
 		{
 			unsigned long ctr;
+			int updated = 0;
 
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is held
@@ -2254,6 +2255,7 @@ void eof_read_global_keys(void)
 				}
 				eof_menu_beat_adjust_bpm(tempochange);
 				eof_use_key();
+				updated = 1;
 			}
 			else
 			{	//If SHIFT is not held
@@ -2263,12 +2265,16 @@ void eof_read_global_keys(void)
 					eof_menu_beat_adjust_bpm(tempochange);
 
 					eof_use_key();
+					updated = 1;
 				}
 			}
-			for(ctr = 1; ctr < eof_song->tracks; ctr++)
-			{	//For each track
-				eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
-				eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
+			if(updated && eof_song->tags->highlight_unsnapped_notes)
+			{	//If one of the valid shortcuts for this command (ie. not CTRL+-) was intercepted, and unsnapped notes are to be highlighted
+				for(ctr = 1; ctr < eof_song->tracks; ctr++)
+				{	//For each track
+					eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
+					eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
+				}
 			}
 		}
 
@@ -2278,6 +2284,7 @@ void eof_read_global_keys(void)
 		if(eof_key_code == KEY_EQUALS)	//Use the scan code because CTRL+= cannot be reliably detected via ASCII value
 		{
 			unsigned long ctr;
+			int updated = 0;
 
 			if(KEY_EITHER_SHIFT)
 			{	//If SHIFT is held
@@ -2292,6 +2299,7 @@ void eof_read_global_keys(void)
 				}
 				eof_menu_beat_adjust_bpm(tempochange);
 				eof_use_key();
+				updated = 1;
 			}
 			else
 			{	//The SHIFT key is not held
@@ -2300,12 +2308,16 @@ void eof_read_global_keys(void)
 					tempochange = 1.0;
 					eof_menu_beat_adjust_bpm(tempochange);
 					eof_use_key();
+					updated = 1;
 				}
 			}
-			for(ctr = 1; ctr < eof_song->tracks; ctr++)
-			{	//For each track
-				eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
-				eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
+			if(updated && eof_song->tags->highlight_unsnapped_notes)
+			{	//If one of the valid shortcuts for this command (ie. not CTRL++) was intercepted, and unsnapped notes are to be highlighted
+				for(ctr = 1; ctr < eof_song->tracks; ctr++)
+				{	//For each track
+					eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
+					eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
+				}
 			}
 		}
 	}//If a song is loaded
@@ -3699,8 +3711,6 @@ void eof_render_notes_window(void)
 
 void eof_render(void)
 {
-//	eof_log("eof_render() entered");
-
 //	eof_log("eof_render() entered.", 3);
 
 	/* don't draw if window is out of focus */

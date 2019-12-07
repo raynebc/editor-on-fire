@@ -237,4 +237,7 @@ int eof_menu_song_doubly_compare_piano_rolls(void);
 int eof_menu_song_toggle_ch_sp_durations(void);
 	//Toggles the display of durations for defined star power deployments will render in the editor window
 
+int eof_menu_song_add_floating_text_event(void);
+	//Adds a floating text event to the project
+
 #endif

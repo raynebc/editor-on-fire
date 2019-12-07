@@ -824,7 +824,7 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 	unsigned beat_unit = 0;
 	unsigned long measure_counter = 0;
 	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
-	unsigned long i;
+	unsigned long i, ctr, count;
 	unsigned curnum = 0, curden = 0;
 
 	eof_log("eof_process_beat_statistics() entered", 2);
@@ -891,50 +891,33 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 		sp->beat[i]->contains_end_event = 0;			//Reset this boolean status
 		sp->beat[i]->contained_rs_section_event = sp->beat[i]->contained_rs_section_event_instance_number = -1;	//Reset these until the beat is found to contain a Rocksmith section
 
-		if(sp->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
-		{	//If this beat has one or more text events
-			unsigned long ctr, count;
+		beat_counter++;	//Update beat counter
+	}//For each beat
 
-			for(ctr = 0; ctr < sp->text_events; ctr++)
-			{	//For each text event
-				if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
-				{	//If this text event is assigned to a beat marker
-					if(sp->text_event[ctr]->pos == i)
-					{	//If the event is assigned to this beat
-						if(eof_is_section_marker(sp->text_event[ctr], track))
-						{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
-							sp->beat[i]->contained_section_event = ctr;
-							break;	//And break from the loop
-						}
-						else if(!ustrcmp(sp->text_event[ctr]->text, "[end]"))
-						{	//If this is the [end] event
-							sp->beat[i]->contains_end_event = 1;
-							break;
-						}
-					}
-				}
+	//Process text events to update the variables tracking the contained section, RS section and end events
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event
+		if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(eof_is_section_marker(sp->text_event[ctr], track))
+			{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
+				sp->beat[sp->text_event[ctr]->pos]->contained_section_event = ctr;
 			}
-
-			for(ctr = 0; ctr < sp->text_events; ctr++)
-			{	//For each text event
-				if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
-				{	//If this text event is assigned to a beat marker
-					if(sp->text_event[ctr]->pos == i)
-					{	//If the event is assigned to this beat
-						count = eof_get_rs_section_instance_number(sp, track, ctr);	//Determine if this event is a Rocksmith section, and if so, which instance number it is
-						if(count)
-						{	//If the event is assigned to this beat
-							sp->beat[i]->contained_rs_section_event = ctr;
-							sp->beat[i]->contained_rs_section_event_instance_number = count;
-							break;
-						}
-					}
+			else if(!ustrcmp(sp->text_event[ctr]->text, "[end]"))
+			{	//If this is the [end] event
+				sp->beat[sp->text_event[ctr]->pos]->contains_end_event = 1;
+			}
+			else
+			{
+				count = eof_get_rs_section_instance_number(sp, track, ctr);	//Determine if this event is a Rocksmith section, and if so, which instance number it is
+				if(count)
+				{	//If the event is a Rocksmith section
+					sp->beat[sp->text_event[ctr]->pos]->contained_rs_section_event = ctr;
+					sp->beat[sp->text_event[ctr]->pos]->contained_rs_section_event_instance_number = count;
 				}
 			}
 		}
-
-		beat_counter++;	//Update beat counter
-	}//For each beat
+	}
 
 	eof_beat_stats_cached = 1;
 }

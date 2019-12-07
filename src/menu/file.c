@@ -114,6 +114,7 @@ MENU eof_file_menu[] =
 	{"&Export chart range", eof_menu_file_export_chart_range, NULL, D_DISABLED, NULL},
 	{"Export audio range", eof_menu_file_export_audio_range, NULL, D_DISABLED, NULL},
 	{"Export &Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
+	{"Export image sequence", eof_write_image_sequence, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
 	{"Default INI settings", eof_menu_file_default_ini_settings, NULL, 0, NULL},
@@ -386,6 +387,7 @@ void eof_prepare_file_menu(void)
 		#else
 			eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
 		#endif
+		eof_file_menu[10].flags = 0;	//Export image sequence
 		eof_file_import_menu[0].flags = 0;	//Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = 0;	//Import>Lyric
 		eof_file_import_menu[8].flags = 0;	//Import>Queen Bee
@@ -412,6 +414,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[7].flags = D_DISABLED;	//Export chart range
 		eof_file_menu[8].flags = D_DISABLED;	//Export audio range
 		eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
+		eof_file_menu[10].flags = D_DISABLED;	//Export image sequence
 		eof_file_import_menu[0].flags = D_DISABLED;		//Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = D_DISABLED;		//Import>Lyric
 		eof_file_import_menu[8].flags = D_DISABLED;		//Import>Queen Bee
@@ -1554,8 +1557,8 @@ int eof_menu_file_preferences(void)
 		eof_disable_info_panel = 1 - eof_disable_info_panel;	//Toggle this because the function call below will toggle it again
 		eof_display_info_panel();	//Create/destroy the information panel instance accordingly
 	}
-	if(original_eof_prefer_midi_friendly_grid_snapping != eof_prefer_midi_friendly_grid_snapping)
-	{	//If the "Prefer MIDI friendly grid snaps" preference changed
+	if((original_eof_prefer_midi_friendly_grid_snapping != eof_prefer_midi_friendly_grid_snapping) && eof_song->tags->highlight_unsnapped_notes)
+	{	//If the "Prefer MIDI friendly grid snaps" preference changed, and unsnapped notes are to be highlighted
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
 			eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track

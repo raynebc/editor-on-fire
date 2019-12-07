@@ -23,6 +23,7 @@
 #include "../song.h"
 #include "../tuning.h"
 #include "../rs.h"	//For hand position generation logic
+#include "beat.h"	//For eof_add_or_edit_floating_text_event()
 #include "edit.h"	//For eof_menu_edit_paste_from_difficulty()
 #include "note.h"	//For eof_feedback_mode_update_note_selection()
 #include "song.h"
@@ -195,7 +196,6 @@ MENU eof_song_menu[] =
 	{"&File Info", eof_menu_song_file_info, NULL, 0, NULL},
 	{"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
 	{"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
-	{"Create image sequence", eof_write_image_sequence, NULL, 0, NULL},
 	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
 	{"Spectrogra&m", NULL, eof_spectrogram_menu, 0, NULL},
 	{"Highlight non grid snapped notes", eof_menu_song_highlight_non_grid_snapped_notes, NULL, 0, NULL},
@@ -212,6 +212,7 @@ MENU eof_song_menu[] =
 	{"Second &Piano roll", NULL, eof_song_piano_roll_menu, 0, NULL},
 	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
 	{"Create pre&View audio", eof_menu_song_export_song_preview, NULL, 0, NULL},
+	{"Place floating event", eof_menu_song_add_floating_text_event, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"T&Est song", NULL, eof_song_test_menu, EOF_LINUX_DISABLE, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -641,11 +642,11 @@ void eof_prepare_song_menu(void)
 		/* catalog */
 		if(!eof_song->catalog->entries && (eof_catalog_menu[5].flags == D_DISABLED))
 		{	//If there are no catalog entries and no notes selected (in which case Song>Catalog>Add would have been disabled earlier)
-			eof_song_menu[11].flags = D_DISABLED;	//Song>Catalog> submenu
+			eof_song_menu[10].flags = D_DISABLED;	//Song>Catalog> submenu
 		}
 		else
 		{
-			eof_song_menu[11].flags = 0;
+			eof_song_menu[10].flags = 0;
 		}
 
 		/* track */
@@ -671,6 +672,16 @@ void eof_prepare_song_menu(void)
 		/* Highlight non grid snapped notes */
 		if(eof_song->tags->highlight_unsnapped_notes)
 		{	//If the user has enabled the dynamic highlighting of non grid snapped notes for this track
+			eof_song_menu[7].flags = D_SELECTED;
+		}
+		else
+		{
+			eof_song_menu[7].flags = 0;
+		}
+
+		/* Show CH SP durations */
+		if(eof_show_ch_sp_durations)
+		{	//If the user has enabled the display the durations of defined Clone Hero star power deployments
 			eof_song_menu[8].flags = D_SELECTED;
 		}
 		else
@@ -678,51 +689,41 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[8].flags = 0;
 		}
 
-		/* Show CH SP durations */
-		if(eof_show_ch_sp_durations)
-		{	//If the user has enabled the display the durations of defined Clone Hero star power deployments
-			eof_song_menu[9].flags = D_SELECTED;
-		}
-		else
-		{
-			eof_song_menu[9].flags = 0;
-		}
-
 		/* leading silence */
 		if(eof_silence_loaded)
 		{	//If no chart audio is loaded
-			eof_song_menu[14].flags = D_DISABLED;	//Song>Leading silence
+			eof_song_menu[13].flags = D_DISABLED;	//Song>Leading silence
+		}
+		else
+		{
+			eof_song_menu[13].flags = 0;
+		}
+
+		/* lock tempo map */
+		if(eof_song->tags->tempo_map_locked)
+		{
+			eof_song_menu[14].flags = D_SELECTED;	//Song>Lock tempo map
 		}
 		else
 		{
 			eof_song_menu[14].flags = 0;
 		}
 
-		/* lock tempo map */
-		if(eof_song->tags->tempo_map_locked)
+		/* disable click and drag */
+		if(eof_song->tags->click_drag_disabled)
 		{
-			eof_song_menu[15].flags = D_SELECTED;	//Song>Lock tempo map
+			eof_song_menu[15].flags = D_SELECTED;	//Song>Disable click and drag
 		}
 		else
 		{
 			eof_song_menu[15].flags = 0;
 		}
 
-		/* disable click and drag */
-		if(eof_song->tags->click_drag_disabled)
-		{
-			eof_song_menu[16].flags = D_SELECTED;	//Song>Disable click and drag
-		}
-		else
-		{
-			eof_song_menu[16].flags = 0;
-		}
-
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[17].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[18].flags = 0;			//Song>Rocksmith> submenu
+			eof_song_menu[16].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[17].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -746,8 +747,8 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable these menu items
+			eof_song_menu[16].flags = D_DISABLED;
 			eof_song_menu[17].flags = D_DISABLED;
-			eof_song_menu[18].flags = D_DISABLED;
 		}
 
 		/* Second piano roll>Display */
@@ -5070,5 +5071,40 @@ int eof_menu_song_toggle_ch_sp_durations(void)
 			eof_show_ch_sp_durations = 0;	//Disable this feature
 		}
 	}
+	return 1;
+}
+
+int eof_menu_song_add_floating_text_event(void)
+{
+	EOF_TEXT_EVENT *ptr = NULL;
+	unsigned long ctr;
+	char undo_made = 0;
+
+	if(!eof_song)
+		return 0;
+
+	///Check if there is already a floating text event at this position
+	for(ctr = 0; ctr < eof_song->text_events; ctr++)
+	{	//For each text event
+		if(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS)
+		{	//If this is a floating text event
+			if(eof_song->text_event[ctr]->pos == eof_music_pos - eof_av_delay)
+			{	//If this text event is at the seek position
+				ptr = eof_song->text_event[ctr];
+			}
+		}
+	}
+
+	///Consider checking if the seek position is on a beat marker
+	for(ctr = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the project
+		if(eof_song->beat[ctr]->pos == eof_music_pos - eof_av_delay)
+		{	//If the seek position is on a beat marker
+			allegro_message("Note:  Placing a floating event at a beat marker position will not assign it to that beat and it will not move with the beat.");
+			break;
+		}
+	}
+
+	eof_add_or_edit_floating_text_event(ptr, EOF_EVENT_FLAG_FLOATING_POS, &undo_made);
 	return 1;
 }

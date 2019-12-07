@@ -190,6 +190,22 @@ DIALOG eof_events_add_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+char eof_events_add_floating_dialog_string1[] = "Add floating event";
+char eof_events_add_floating_dialog_string2[] = "Edit floating event";
+DIALOG eof_floating_events_add_dialog[] =
+{
+	/* (proc)                    (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ d_agup_window_proc,        0,  48,  314, 186, 2,   23,  0,    0,      0,   0,   eof_events_add_floating_dialog_string1,  NULL, NULL },
+	{ d_agup_text_proc,          12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
+	{ d_agup_edit_proc,          48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+	{ d_agup_text_proc,          12, 110, 60,  12,  0,   0,   0,    0,      0,   0,   "Position (ms)",NULL, NULL },
+	{ eof_verified_edit_proc,    12, 130, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
+	{ d_agup_check_proc,         12, 160, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
+	{ d_agup_button_proc,        67, 194, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+	{ d_agup_button_proc,        163,194, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
 char eof_section_add_dialog_string1[] = "Add section";
 char eof_section_add_dialog_string2[] = "Edit section";
 DIALOG eof_section_add_dialog[] =
@@ -2053,6 +2069,12 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 	}
 	else
 	{	//An existing event is being edited
+		if(ptr->flags & EOF_EVENT_FLAG_FLOATING_POS)
+		{	//If this is a floating text event
+			eof_add_or_edit_floating_text_event(ptr, flags, undo_made);	//Invoke the floating text event add/edit dialog instead
+			return;
+		}
+		newflags = ptr->flags;
 		eof_events_add_dialog[0].dp = eof_events_add_dialog_string2;	//Update the dialog window title to reflect that an event is being edited
 		if(ptr->track == eof_selected_track)
 		{	//If this event is specific to this track
@@ -2187,6 +2209,90 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 			{	//If any such events were edited to match
 				allegro_message("All instances of a Rocksmith phrase use the same solo status.  One or more matching phrases in this event's scope had solo status %s to match.", (status ? "added" : "removed"));
 			}
+		}
+	}//User clicked OK
+}
+
+void eof_add_or_edit_floating_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made)
+{
+	EOF_TEXT_EVENT temp = {{0}, 0, 0, 0, 0, 0};
+	unsigned long newtrack = 0, newpos = 0;
+
+	if(!ptr)
+	{	//If a new event is to be added
+		ptr = &temp;
+		ptr->flags = flags | EOF_EVENT_FLAG_FLOATING_POS;	//Use any defined flags (ie. track specific flag) and add the flag to define it as a floating text event
+		eof_floating_events_add_dialog[0].dp = eof_events_add_floating_dialog_string1;	//Update the dialog window title to reflect that a new event is being added
+	}
+	else
+	{	//An existing event is being edited
+		if(!(ptr->flags & EOF_EVENT_FLAG_FLOATING_POS))		//If the event being edited is not a floating text event
+			return;											//Cancel
+
+		eof_floating_events_add_dialog[0].dp = eof_events_add_floating_dialog_string2;	//Update the dialog window title to reflect that an event is being edited
+		if(ptr->track == eof_selected_track)
+		{	//If this event is specific to this track
+			eof_floating_events_add_dialog[5].flags = D_SELECTED;	//Set the checkbox specifying the event is track specific
+		}
+		else
+		{	//Otherwise clear the checkbox
+			eof_floating_events_add_dialog[5].flags = 0;
+		}
+	}
+
+	if(!undo_made)
+	{
+		return;	//Invalid parameter
+	}
+	if((ptr->track != 0) && (ptr->track != eof_selected_track))
+	{	//If this is a track specific event, and it doesn't belong to the active track
+		return;	//Don't allow it to be edited here
+	}
+
+	//Initialize the dialog
+	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
+	if(ptr != &temp)
+	{	//If an existing floating text event is being edited
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", ptr->pos);	//Initialize the event's time field with the event's position
+	}
+	else
+	{
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_music_pos - eof_av_delay);	//Initialize the event's time field with the seek position
+	}
+	(void) ustrcpy(eof_etext, ptr->text);
+
+	//Run and process the dialog results
+	eof_color_dialog(eof_floating_events_add_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_floating_events_add_dialog);
+	if(eof_popup_dialog(eof_floating_events_add_dialog, 2) == 6)
+	{	//User clicked OK
+		char *effective_text = eof_etext;	//By default, use the user-input string
+
+		if(eof_floating_events_add_dialog[5].flags & D_SELECTED)
+		{	//User opted to make this a track specific event
+			newtrack = eof_selected_track;
+		}
+		newpos = atol(eof_etext2);
+
+		if(eof_check_string(eof_etext) && (ustrcmp(ptr->text, eof_etext) || (newtrack != ptr->track) || (newpos != ptr->pos)))
+		{	//If the user entered any nonspace characters, and (in the case of editing an existing event) any of the fields were altered
+			if(*undo_made == 0)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
+			}
+			if(ptr == &temp)
+			{	//If a new floating event is to be added
+				(void) eof_song_add_text_event(eof_song, newpos, effective_text, newtrack, EOF_EVENT_FLAG_FLOATING_POS, 0);	//Add it
+				eof_sort_events(eof_song);
+			}
+			else
+			{	//Otherwise edit the existing event
+				(void) ustrcpy(ptr->text, effective_text);
+				ptr->pos = newpos;
+				ptr->track = newtrack;
+			}
+			eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
 		}
 	}//User clicked OK
 }

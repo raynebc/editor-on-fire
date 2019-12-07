@@ -121,6 +121,8 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 	//	Similarly, if (function & EOF_EVENT_FLAG_RS_EVENT) is true, the "Rocksmith event marker" option is automatically checked
 	//If ptr is not NULL, the event dialog is populated with the specified event's details and the event dialog is launched, allowing the user to edit the existing text event
 	//If *undo_made is zero, an undo state is made before altering the chart and *undo_made is set to nonzero
+void eof_add_or_edit_floating_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made);
+	//Similar to eof_add_or_edit_text_event(), but only creates/edits floating text events
 int eof_events_dialog_add_function(unsigned long function);
 	//Launches the add new text event dialog.
 	//If (function & EOF_EVENT_FLAG_RS_PHRASE) is true, the "Rocksmith phrase marker" option is automatically checked, otherwise that checkbox is initialized to clear
