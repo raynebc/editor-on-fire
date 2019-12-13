@@ -944,8 +944,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
 						{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
-							if(type == EOF_NOTE_AMAZING)
-							{	//Write a pro yellow tom marker only if this is an Expert difficulty note (ie. not a BRE note)
+							if((featurerestriction == 0) || (type == EOF_NOTE_AMAZING))
+							{	//Write a pro yellow tom marker only if this is an Expert difficulty note (ie. not a BRE note) or if a Rock Band compliant MIDI is not being written
 								eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
 								eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
 							}
@@ -1020,8 +1020,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						}
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL))
 						{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
-							if(type == EOF_NOTE_AMAZING)
-							{	//Write a pro blue tom marker only if this is an Expert difficulty note (ie. not a BRE note)
+							if((featurerestriction == 0) || (type == EOF_NOTE_AMAZING))
+							{	//Write a pro blue tom marker only if this is an Expert difficulty note (ie. not a BRE note) or if a Rock Band compliant MIDI is not being written
 								eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
 								eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
 							}
@@ -1065,8 +1065,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						}
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL))
 						{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
-							if(type == EOF_NOTE_AMAZING)
-							{	//Write a pro green tom marker only if this is an Expert difficulty note (ie. not a BRE note)
+							if((featurerestriction == 0) || (type == EOF_NOTE_AMAZING))
+							{	//Write a pro green tom marker only if this is an Expert difficulty note (ie. not a BRE note) or if a Rock Band compliant MIDI is not being written
 								eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
 								eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
 							}

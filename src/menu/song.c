@@ -5095,7 +5095,7 @@ int eof_menu_song_add_floating_text_event(void)
 		}
 	}
 
-	///Consider checking if the seek position is on a beat marker
+	///Check if the seek position is on a beat marker
 	for(ctr = 0; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the project
 		if(eof_song->beat[ctr]->pos == eof_music_pos - eof_av_delay)
