@@ -4614,6 +4614,82 @@ int eof_menu_file_gh_import(void)
 	return 1;
 }
 
+int eof_menu_file_ghl_import(void)
+{
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
+	char *initial;
+	char newchart = 0;	//Is set to nonzero if a new chart is created to store the imported GHL file
+
+	if(!eof_song || !eof_song_loaded)
+	{	//If no project is loaded
+		newchart = 1;
+	}
+
+	eof_log("eof_menu_file_ghl_import() entered", 1);
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	if((eof_last_ghl_path[uoffset(eof_last_ghl_path, ustrlen(eof_last_ghl_path) - 1)] == '\\') || (eof_last_ghl_path[uoffset(eof_last_ghl_path, ustrlen(eof_last_ghl_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_ghl_path[uoffset(eof_last_ghl_path, ustrlen(eof_last_ghl_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && file_exists(eof_last_ghl_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	{	//If the user chose for the GHL import dialog to start at the path of the last imported GHL file and that path is valid
+		initial = eof_last_ghl_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import GHL Chart", eof_filter_ghl_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
+
+		/* import chart */
+		if(newchart)
+		{	//If a project wasn't already opened when the import was started
+/*			if(!eof_command_line_gp_import(returnedfn))
+			{	//If the file was imported
+				eof_init_after_load(0);
+			}
+			else
+			{	//Import failed
+				eof_destroy_song(eof_song);
+				eof_song = NULL;
+				eof_song_loaded = 0;
+				eof_changes = 0;
+			}
+*/
+		}
+		else
+		{	//A project was already open
+			if(!eof_ghl_import_common(returnedfn))
+			{	//If the file imported
+				(void) replace_filename(eof_last_ghl_path, returnedfn_path, "", 1024);	//Set the last loaded GHL file path
+				eof_cleanup_beat_flags(eof_song);				//Update anchor flags as necessary for any time signature changes
+				eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
+				eof_beat_stats_cached = 0;
+				eof_detect_mid_measure_ts_changes();
+///				eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
+///				(void) eof_check_for_notes_preceding_sections(0);	//Warn if there are notes that precede the first section event, if there are any sections
+				eof_beat_stats_cached = 0;
+			}
+			else
+			{
+				allegro_message("Could not import GHL file!");
+			}
+		}
+		(void) replace_filename(eof_last_gp_path, returnedfn_path, "", 1024);	//Set the last loaded GP file path
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	return 1;
+}
+
 char * eof_colors_list(int index, int * size)
 {
 	switch(index)

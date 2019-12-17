@@ -928,7 +928,7 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
-
+	eof_menu_file_ghl_import();
 }
 ///ALT handling testing
 /*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))

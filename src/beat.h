@@ -8,6 +8,9 @@ extern int eof_skip_mid_beats_in_measure_numbering;
 
 unsigned long eof_get_beat(EOF_SONG * sp, unsigned long pos);
 	//Returns the beat number at or immediately before the specified position, or ULONG_MAX if the timestamp does not occur within the chart (before the first beat or after the last beat)
+unsigned long eof_get_nearest_beat(EOF_SONG * sp, unsigned long pos);
+	//Returns the beat number that is closest to the specified position, or ULONG_MAX no error
+	//If pos is exactly half-way between two beats, the earlier beat is returned
 double eof_get_beat_length(EOF_SONG * sp, unsigned long beat);
 	//Returns the difference in position between the specified beat marker and the next, or the difference between the last two beat markers if the beat marker specified is invalid
 unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat);
@@ -81,5 +84,11 @@ double eof_get_text_event_fpos_ptr(EOF_SONG *sp, EOF_TEXT_EVENT *ptr);
 double eof_get_text_event_fpos(EOF_SONG *sp, unsigned long event);
 	//Floating point versions of eof_get_text_event_pos() and eof_get_text_event_fpos()
 	//Return 0.0 on error, since DBL_MAX doesn't seem standardized in MinGW
+
+void eof_apply_tempo(unsigned long ppqn, unsigned long beatnum, char adjust);
+	//Applies the specified tempo to the specified beat and all subsequent beats up until the next anchor
+	//If adjust is nonzero, auto-adjust is performed to suit the tempo change
+void eof_remove_ts(unsigned long beatnum);
+	//Removes the time signature defined on the specified beat
 
 #endif

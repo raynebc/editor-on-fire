@@ -78,6 +78,7 @@ NCDFS_FILTER_LIST * eof_filter_exe_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_lyrics_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_dB_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gh_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_ghl_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gp_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gp_lyric_text_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_rs_files = NULL;
@@ -273,6 +274,7 @@ char        eof_last_eof_path[1024] = {0};				//The path to the folder containin
 char        eof_last_midi_path[1024] = {0};				//The path to the folder containing the last imported MIDI
 char        eof_last_db_path[1024] = {0};				//The path to the folder containing the last imported Feedback chart file
 char        eof_last_gh_path[1024] = {0};				//The path to the folder containing the last imported Guitar Hero chart file
+char        eof_last_ghl_path[1024] = {0};				//The path to the folder containing the last imported Guitar Hero Live chart file
 char        eof_last_lyric_path[1024] = {0};			//The path to the folder containing the last imported lyric file
 char        eof_last_gp_path[1024] = {0};				//The path to the folder containing the last imported Guitar Pro file
 char        eof_last_rs_path[1024] = {0};				//The path to the folder containing the last imported Rocksmith XML file
@@ -4456,6 +4458,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_gh_files, "*", "GH Chart Files (*.*)", 1);
 
+	eof_filter_ghl_files = ncdfs_filter_list_create();
+	if(!eof_filter_ghl_files)
+	{
+		allegro_message("Could not create file list filter (*.xmk)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_ghl_files, "xmk", "GHL Chart Files (*.xmk)", 1);
+
 	eof_filter_gp_files = ncdfs_filter_list_create();
 	if(!eof_filter_gp_files)
 	{
@@ -5045,6 +5055,8 @@ void eof_exit(void)
 		free(eof_filter_dB_files);
 	if(eof_filter_gh_files)
 		free(eof_filter_gh_files);
+	if(eof_filter_ghl_files)
+		free(eof_filter_ghl_files);
 	if(eof_filter_gp_files)
 		free(eof_filter_gp_files);
 	if(eof_filter_gp_lyric_text_files)

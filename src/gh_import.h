@@ -36,6 +36,10 @@ EOF_SONG * eof_import_gh_note(const char * fn);
 EOF_SONG * eof_import_gh_qb(const char *fn);
 	//Imports the specified Guitar Hero file, parsing as a QB format (ie. GHWT) file
 
+int eof_ghl_import_common(const char *fn);
+	//Imports the specified Guitar Hero file Live file into the active track
+	//Returns nonzero on error
+
 filebuffer *eof_filebuffer_load(const char * fn);
 	//Initializes a filebuffer struct, loads the specified file into memory and returns the struct
 	//Returns NULL on error

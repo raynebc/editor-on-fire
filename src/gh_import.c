@@ -10,6 +10,7 @@
 #include "midi.h"	//For eof_apply_ts()
 #include "undo.h"
 #include "utility.h"
+#include "menu/edit.h"	//For auto-adjust functions
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -2767,7 +2768,6 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	return 1;
 }
 
-
 EOF_SONG * eof_import_gh_qb(const char *fn)
 {
 	EOF_SONG * sp;
@@ -3210,6 +3210,486 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	eof_filebuffer_close(fb);	//Close the file buffer
 
 	return sp;
+}
+
+int eof_ghl_import_common(const char *fn)
+{
+	filebuffer *fb;
+	unsigned char eventid, note;
+	unsigned int barre;
+	unsigned long dword = 0, dword2 = 0, dword3 = 0, numevents = 0, numtempos = 0, numtimesigs = 0, num = 0, den = 0, tempo = 0, ctr, ctr2, beat;
+	unsigned long stringblobpos, eventblocksize, stringpos;
+	float start = 0.0, end = 0.0;
+	double bpm;
+	int error = 0, lyricwarn = 0, note_imported = 0;
+	char adjust = 0, import_tempo_map = 0;
+	char *stringptr;
+	unsigned long eventpos, eventendpos, eventposdown, eventendposdown;
+	unsigned long tracknum;
+	EOF_LEGACY_TRACK *tp = NULL;
+
+	eof_log("eof_import_gh_xmk() entered", 1);
+	eof_log("Attempting to import XMK format Guitar Hero chart", 1);
+
+	if(!eof_song)
+		return 1;	//Return failure
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Don't do anything if the active track is a pro guitar/bass track
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+
+//Erase active track if necessary
+	eof_clear_input();
+	if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this XMK file will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+	{	//If the active track is already populated and the user doesn't opt to overwrite it
+		return 0;
+	}
+	eof_erase_track(eof_song, eof_selected_track);	//Erase the active track
+
+//Load the GH file into memory
+	set_window_title("Importing XMK");
+	fb = eof_filebuffer_load(fn);
+	if(fb == NULL)
+	{
+		eof_log("Error:  Failed to buffer XMK file", 1);
+		return 1;
+	}
+
+//Parse the file header
+	eof_log("\tGHL:\tParsing header", 1);
+
+	error |= eof_filebuffer_get_dword(fb, &dword);	//Read the version number
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tVersion number = %lu", dword);
+	eof_log(eof_log_string, 1);
+
+	error |= eof_filebuffer_get_dword(fb, &dword);	//Read the checksum
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tChecksum = %lu", dword);
+	eof_log(eof_log_string, 1);
+
+	error |= eof_filebuffer_get_dword(fb, &numevents);	//Read the number of events
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tNumber of events = %lu", numevents);
+	eof_log(eof_log_string, 1);
+
+	error |= eof_filebuffer_get_dword(fb, &dword);	//Read the string table size
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tString table size = %lu", dword);
+	eof_log(eof_log_string, 1);
+
+	error |= eof_filebuffer_get_dword(fb, &dword);	//Read the unknown value
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnknown value = %lu", dword);
+	eof_log(eof_log_string, 1);
+
+	error |= eof_filebuffer_get_dword(fb, &numtempos);	//Read the number of tempo changes
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tNumber of tempo changes = %lu", numtempos);
+	eof_log(eof_log_string, 1);
+
+	error |= eof_filebuffer_get_dword(fb, &numtimesigs);	//Read the number of time signature changes
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tNumber of time signature changes = %lu", numtimesigs);
+	eof_log(eof_log_string, 1);
+
+	if(error)
+	{	//If there was an error reading any of the above
+		eof_log("Error reading XMK header.  Aborting", 1);
+		eof_filebuffer_close(fb);	//Close the file buffer
+		return error;
+	}
+
+	if(numtempos || numtimesigs)
+	{	//If there are any tempo or time signature changes
+		eof_clear_input();
+		if(alert(NULL, "Import the file's tempo map?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{
+			import_tempo_map = 1;
+		}
+	}
+
+	if(import_tempo_map && (eof_get_chart_size(eof_song) > 0))
+	{	//If the user opted to import the tempo map and there is at least one note/lyric in the project, prompt to adjust the notes/lyrics
+		eof_clear_input();
+		if(alert(NULL, "Adjust notes to imported tempo map?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{
+			adjust = 1;
+		}
+	}
+
+//Remove all tempo and time signature changes if the tempo map is being imported
+	if(import_tempo_map)
+	{	//If the user opted to import the file's tempo map
+		set_window_title("Importing XMK - Clearing tempo map");
+		if(adjust)
+		{	//If auto-adjust is to be performed
+			(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+		}
+		for(ctr = 0; ctr < eof_song->beats; ctr++)
+		{	//For each beat in the project
+			eof_remove_ts(ctr);	//Remove any defined time signature
+			eof_song->beat[ctr]->ppqn = 500000;	//Default to 120BPM
+			if(ctr)
+			{	//If this isn't the first beat
+				eof_song->beat[ctr]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag
+			}
+		}
+		eof_apply_ts(4, 4, 0, eof_song, 0);	//Default to 4/4 meter
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+		eof_calculate_beats(eof_song);	//Rebuild the beat timings
+		set_window_title("Importing XMK - Tempo changes");
+	}
+
+//Configure the active instrument track as a GHL track as appropriate
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{
+		tp = eof_song->legacy_track[tracknum];
+		eof_song->track[eof_selected_track]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Configure the track as a GHL track
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_GHL_MODE_MS;	//Denote that the new GHL lane ordering is in effect
+		tp->numlanes = 6;
+	}
+
+///It might be required to read all tempo changes, time signature changes and then apply them both lists in chronological order since both of these can affect beat timings
+
+//Parse the tempo changes
+	eof_log("\tGHL:\tParsing tempo changes", 1);
+	for(ctr = 0; ctr < numtempos; ctr++)
+	{	//For each tempo change
+		error |= eof_filebuffer_get_dword(fb, &dword);	//Read the tick position
+		error |= eof_filebuffer_get_dword(fb, (unsigned long *)&start);	//Read the timestamp of the tempo change
+		error |= eof_filebuffer_get_dword(fb, &tempo);	//Read the tempo
+		if(error)
+		{	//If there was an error reading any of the above
+			eof_log("Error reading tempo changes.  Aborting", 1);
+			eof_filebuffer_close(fb);	//Close the file buffer
+			return error;
+		}
+		bpm = 60000000.0 / (double)tempo;
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tTicks = %lu, pos = %fs, %lu ppqn (%f BPM)", dword, start, tempo, bpm);
+		eof_log(eof_log_string, 1);
+		if(import_tempo_map)
+		{	//If the user opted to import the file's tempo map
+			beat = eof_get_nearest_beat(eof_song, start * 1000);	//Find the beat closest to this tempo change's position
+			if(eof_beat_num_valid(eof_song, beat))
+			{	//If that beat was found
+				eof_apply_tempo(tempo, beat, 0);	//Apply this tempo
+				eof_calculate_beats(eof_song);		//Rebuild the beat timings
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tApplied to beat #%lu at %fs", beat, eof_song->beat[beat]->fpos / 1000.0);
+				eof_log(eof_log_string, 1);
+			}
+		}
+	}
+
+//Parse the time signature changes
+	eof_log("\tGHL:\tParsing time signature changes", 1);
+	if(import_tempo_map)
+		set_window_title("Importing XMK - TS changes");
+	for(ctr = 0; ctr < numtimesigs; ctr++)
+	{	//For each time signature change
+		error |= eof_filebuffer_get_dword(fb, &dword);	//Read the tick position
+		error |= eof_filebuffer_get_dword(fb, (unsigned long *)&start);	//Read the timestamp of the time signature change?
+		error |= eof_filebuffer_get_dword(fb, &num);	//Read the TS numerator
+		error |= eof_filebuffer_get_dword(fb, &den);	//Read the TS denominator
+		if(error)
+		{	//If there was an error reading any of the above
+			eof_log("Error reading time signature changes.  Aborting", 1);
+			eof_filebuffer_close(fb);	//Close the file buffer
+			return error;
+		}
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tTicks = %lu, pos = %fs, %lu/%lu", dword, start, num, den);
+		eof_log(eof_log_string, 1);
+		if(import_tempo_map)
+		{	//If the user opted to import the file's tempo map
+			beat = eof_get_nearest_beat(eof_song, start * 1000);	//Find the beat closest to this tempo change's position
+			if(eof_beat_num_valid(eof_song, beat))
+			{	//If that beat was found
+				(void) eof_apply_ts(num, den, beat, eof_song, 0);	//Apply this time signature
+				eof_calculate_beats(eof_song);	//Rebuild the beat timings
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tApplied to beat #%lu at %fs", beat, eof_song->beat[beat]->fpos / 1000.0);
+				eof_log(eof_log_string, 1);
+			}
+		}
+	}
+
+	if(import_tempo_map && adjust)
+	{	//If the user opted to import a tempo map
+		eof_calculate_beats(eof_song);	//Rebuild the beat timings
+		if(adjust)
+		{	//If the user opted to auto-adjust the existing notes
+			(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+		}
+	}
+
+//Parse event data
+	eof_log("\tGHL:\tParsing events", 1);
+	eventblocksize = 24 * numevents;
+	if(import_tempo_map)
+		set_window_title("Importing XMK - Events");
+	stringblobpos = fb->index + eventblocksize;	//Store the expected file position of the first string, as each event's string offset is compared to this to determine if it references a valid string
+	for(ctr = 0; ctr < numevents; ctr++)
+	{	//For each event
+		unsigned char notemask = 0;
+		unsigned long flags = 0;
+
+		//Parse event
+		error |= eof_filebuffer_get_dword(fb, &dword);	//Read the unknown value
+		error |= eof_filebuffer_get_word(fb, &barre);	//Read the barre status
+		error |= eof_filebuffer_get_byte(fb, &eventid);	//Read the event identifier
+		error |= eof_filebuffer_get_byte(fb, &note);	//Read the MIDI note value
+		error |= eof_filebuffer_get_dword(fb, (unsigned long *)&start);	//Read the event start position
+		error |= eof_filebuffer_get_dword(fb, (unsigned long *)&end);	//Read the event end position
+		error |= eof_filebuffer_get_dword(fb, &dword2);	//Read the unknown value
+		error |= eof_filebuffer_get_dword(fb, &dword3);	//Read the string offset
+		if(error)
+		{	//If there was an error reading any of the above
+			eof_log("Error reading events.  Aborting", 1);
+			eof_filebuffer_close(fb);	//Close the file buffer
+			return error;
+		}
+		stringpos = stringblobpos + (dword3 - eventblocksize);
+		if((dword3 >= eventblocksize) && (stringpos < fb->size))
+		{	//If the string offset references a string
+			stringptr = (char *)&(fb->buffer[stringpos]);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, Unk2 = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk4 = %lu, string off = %lu (file off = %lu: %s)", dword, barre, eventid, note, start, end, dword2, dword3, stringpos, stringptr);
+		}
+		else
+		{
+			stringptr = NULL;
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, Unk2 = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk4 = %lu, string off = %lu", dword, barre, eventid, note, start, end, dword2, dword3);
+		}
+		eof_log(eof_log_string, 1);
+
+		//Store event accordingly
+		if(eventid & 0x80)
+		{	//Forced HOPO marker
+			flags |= EOF_NOTE_FLAG_F_HOPO;
+		}
+		eventposdown = start * 1000.0;	//Convert the start time to milliseconds, rounding down
+		eventendposdown = end * 1000.0;	//Ditto for the end position
+		if(eof_is_any_grid_snap_position(eventposdown, NULL, NULL, NULL, NULL))
+		{	//If the rounded down timing conversion is a grid snap
+			eventpos = eventposdown;	//Use the rounded down timings
+			eventendpos = eventendposdown;
+		}
+		else if(eof_is_any_grid_snap_position(eventposdown + 1, NULL, NULL, NULL, NULL))
+		{	//If the rounded up timing conversion is a grid snap
+			eventpos = eventposdown + 1;	//Use the rounded up timings
+			eventendpos = eventendposdown + 1;
+		}
+		else
+		{	//Otherwise use timings that round to the nearest millisecond
+			eventpos = (start + 0.0005) * 1000.0;	//Convert the timing to milliseconds, rounding to the nearest interval
+			eventendpos = (end + 0.0005) * 1000.0;
+		}
+		if(eventpos > eventendpos)
+		{
+			allegro_message("Error:  Malformed file (note has a negative length)");
+			eof_log("Error:  Malformed file (note has a negative length)", 1);
+			return 1;
+		}
+		if(eventid == 3)
+		{	//Section marker
+			if(stringptr)
+			{	//If a string was found for this event
+				beat = eof_get_nearest_beat(eof_song, eventpos);	//Find the beat closest to this section's position
+				if(eof_beat_num_valid(eof_song, beat))
+				{	//If a valid beat position was found
+					char sectionstring[100] = {0};
+					unsigned long distance = (eof_song->beat[beat]->pos > eventpos) ? (eof_song->beat[beat]->pos - eventpos) : (eventpos - eof_song->beat[beat]->pos);
+
+					snprintf(sectionstring, sizeof(sectionstring) - 1, "[section %s]", stringptr);	//Format the event text to be recognized as a section
+					if(distance <= 2)
+					{	//If the section is defined within 2ms of a beat marker
+						(void) eof_song_add_text_event(eof_song, beat, sectionstring, eof_selected_track, 0, 0);	//Add it
+					}
+					else
+					{	//Otherwise add it as a floating text event
+						(void) eof_song_add_text_event(eof_song, eventpos, sectionstring, eof_selected_track, EOF_EVENT_FLAG_FLOATING_POS, 0);	//Add it
+					}
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tImported as text event \"%s\"", sectionstring);
+					eof_log(eof_log_string, 1);
+				}
+			}
+		}
+		else if(eventid == 57)
+		{	//Lyric
+			if(stringptr)
+			{	//If a string was found for this event
+				if((eof_selected_track != EOF_TRACK_VOCALS) && !lyricwarn)
+				{	//If this is a vocal file but the vocal track is not active, and the user wasn't warned about this yet
+					allegro_message("Warning:  The file contains lyrics and will import into PART VOCALS instead of the active instrument track.");
+					lyricwarn = 1;
+				}
+			}
+		}
+		else if(eventid == 1)
+		{
+			if(note == 129)
+			{	//Lyric phrase
+			}
+		}
+		else
+		{	//Default to treating it as a note
+			unsigned char lane1 = 0, type;
+			EOF_NOTE *new_note;
+
+			if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+			{	//If the user did not make an instrument track active before importing this non vocal file
+				allegro_message("Error:  You must change to an instrument track before importing an instrument GHL file.");
+				eof_log("Error:  Can not import an instrument file into the vocal track.", 1);
+				return 1;	//Return error
+			}
+
+			//Normalize the lane numbering regardless of difficulty
+			if((note >= 5) && (note <= 10))
+			{	//Easy difficulty (5 = B1, 6 = W1, 7 = B2, 8 = W2, 9 = B3, 10 = W3)
+				lane1 = 5;
+				type = 0;
+			}
+			else if((note >= 23) && (note <= 28))
+			{	//Medium difficulty (23 = B1, 24 = W1, 25 = B2, 26 = W2, 27 = B3, 28 = W3)
+				lane1 = 23;
+				type = 1;
+			}
+			else if((note >= 41) && (note <= 46))
+			{	//Hard difficulty (41 = B1, 42 = W1, 43 = B2, 44 = W2, 45 = B3, 46 = W3)
+				lane1 = 41;
+				type = 2;
+			}
+			else if((note >= 59) && (note <= 64))
+			{	//Expert difficulty (59 = B1, 60 = W1, 61 = B2, 62 = W2, 63 = B3, 64 = W3)
+				lane1 = 59;
+				type = 3;
+			}
+
+			//Remap from GHL lane numbering to EOF
+			if(lane1)
+			{	//If this is a black/white gem
+				if(note == lane1)
+				{	//B1
+					notemask = 1;
+					if(barre == 2)
+					{	//If this is a barre chord
+						notemask = 9;	//Convert to B1+W1
+					}
+				}
+				else if(note == lane1 + 1)
+				{	//W1
+					notemask = 8;
+					if(barre == 2)
+					{	//If this is a barre chord
+						notemask = 9;	//Convert to B1+W1
+					}
+				}
+				else if(note == lane1 + 2)
+				{	//B2
+					notemask = 2;
+					if(barre == 2)
+					{	//If this is a barre chord
+						notemask = 18;	//Convert to B2+W2
+					}
+				}
+				else if(note == lane1 + 3)
+				{	//W2
+					notemask = 16;
+					if(barre == 2)
+					{	//If this is a barre chord
+						notemask = 18;	//Convert to B2+W2
+					}
+				}
+				else if(note == lane1 + 4)
+				{	//B3
+					notemask = 4;
+					if(barre == 2)
+					{	//If this is a barre chord
+						notemask = 36;	//Convert to B3+W3
+					}
+				}
+				else
+				{	//W3
+					notemask = 32;
+					if(barre == 2)
+					{	//If this is a barre chord
+						notemask = 36;	//Convert to B3+W3
+					}
+				}
+			}
+			else if(note == 15)
+			{	//Easy open note
+				notemask = 32;
+				type = 0;
+				flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
+			}
+			else if(note == 33)
+			{	//Medium open note
+				notemask = 32;
+				type = 1;
+				flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
+			}
+			else if(note == 51)
+			{	//Hard open note
+				notemask = 32;
+				type = 2;
+				flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
+			}
+			else if(note == 69)
+			{	//Expert open note
+				notemask = 32;
+				type = 3;
+				flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
+			}
+			else if(note == 74)
+			{	//Star power marker
+				(void) eof_track_add_star_power_path(eof_song, eof_selected_track, eventpos, eventendpos);
+			}
+
+			if(notemask)
+			{	//If a note is to be created
+				new_note = eof_legacy_track_add_note(tp);
+				if(new_note)
+				{	//If the note was added
+					new_note->pos = eventpos;
+					new_note->length = eventendpos - eventpos;
+					new_note->flags = flags;
+					new_note->note = notemask;
+					new_note->type = type;
+					note_imported = 1;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tAdded note:  pos = %lums, len = %ldms, mask = %d, diff = %d", eventpos, eventendpos - eventpos, notemask, type);
+					eof_log(eof_log_string, 1);
+				}
+			}
+		}//Default to treating it as a note
+	}//For each event
+
+//Apply disjointed status where appropriate
+	if(note_imported && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+	{	//If instrument notes were imported
+		EOF_NOTE *n1, *n2;
+		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+		eof_track_sort_notes(eof_song, eof_selected_track);
+		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
+		{	//For each note in the track
+			n1 = eof_song->legacy_track[tracknum]->note[ctr];	//Simplify
+			for(ctr2 = ctr + 1; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
+			{	//For each note after the one from the outer loop
+				n2 = eof_song->legacy_track[tracknum]->note[ctr2];	//Simplify
+				if((n1->type == n2->type) && (n1->pos == n2->pos) && (n1->length != n2->length))
+				{	//If the two notes are in the same difficulty, start at the same position but have different lengths
+					n1->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to both notes
+					n2->eflags |= EOF_NOTE_EFLAG_DISJOINTED;
+				}
+			}
+		}
+	}
+
+//Cleanup
+	eof_sort_events(eof_song);
+	eof_truncate_chart(eof_song);
+	eof_determine_phrase_status(eof_song, eof_selected_track);
+	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
+	eof_set_color_set();
+	eof_fix_window_title();
+	eof_render();
+	eof_filebuffer_close(fb);	//Close the file buffer
+
+	return error;
 }
 
 struct QBlyric *eof_gh_read_section_names(filebuffer *fb)

@@ -75,6 +75,7 @@ int eof_menu_file_link_ps(void);			//Calls eof_menu_file_link() to link to Phase
 int eof_menu_file_link_rs_to_tab(void);		//Calls eof_menu_file_link() to link to RocksmithToTab
 int eof_menu_file_exit(void);
 int eof_menu_file_gh_import(void);	//Prompt for a Guitar Hero chart file and import it
+int eof_menu_file_ghl_import(void);	//Prompt for a Guitar Hero Live chart file and import it into the active track
 
 char * eof_ogg_list(int index, int * size);
 int eof_ogg_list_bitrate(int index);			//Returns the integer value bitrate (in kbps) that corresponds to the index from the OGG quality selection dialog, or 320 on error

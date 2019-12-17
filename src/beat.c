@@ -6,6 +6,7 @@
 #include "rs.h"
 #include "song.h"
 #include "undo.h"
+#include "menu/edit.h"	//For auto-adjust functions
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -58,6 +59,26 @@ unsigned long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	return 0;
 }
 
+unsigned long eof_get_nearest_beat(EOF_SONG * sp, unsigned long pos)
+{
+	unsigned long beat;
+
+	if(!sp)
+		return ULONG_MAX;			//Invalid parameter
+
+	beat = eof_get_beat(sp, pos);	//Find which beat the specified position is in
+	if(beat == ULONG_MAX)			//If that couldn't be determined
+		return ULONG_MAX;			//Return error
+
+	if(beat + 1 >= sp->beats)
+		return beat;	//If there is no next beat, this is the beat closes to the specified position
+
+	if(sp->beat[beat + 1]->pos - pos < pos - sp->beat[beat]->pos)
+		return beat + 1;	//If the next beat is closer to the specified position, return it
+
+	return beat;	//The beat immediately at/before the specified position is the closes one
+}
+
 double eof_get_beat_length(EOF_SONG * sp, unsigned long beat)
 {
 //	eof_log("eof_get_beat_length() entered", 3);
@@ -83,7 +104,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	unsigned long target_length = eof_music_length;
 	unsigned num = 4, den = 4, lastden = 4;
 
-	eof_log("eof_calculate_beats() entered", 1);
+	eof_log("eof_calculate_beats() entered", 2);
 
 	if(!sp)
 	{
@@ -1045,4 +1066,52 @@ double eof_get_text_event_fpos(EOF_SONG *sp, unsigned long event)
 		return 0.0;	//Invalid parameters
 
 	return eof_get_text_event_fpos_ptr(sp, sp->text_event[event]);
+}
+
+void eof_apply_tempo(unsigned long ppqn, unsigned long beatnum, char adjust)
+{
+	unsigned long ctr;
+
+	if(!eof_song || (beatnum >= eof_song->beats))
+		return;	//Invalid parameter
+
+	if(adjust)
+	{	//If auto-adjust is to be performed
+		(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+	}
+	eof_song->beat[beatnum]->ppqn = ppqn;	//Update the specified beat's tempo
+	if((beatnum > 0) && (eof_song->beat[beatnum]->ppqn != eof_song->beat[beatnum - 1]->ppqn))
+	{	//If there is a previous beat and it is a different tempo
+		eof_song->beat[beatnum]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Flag the specified beat as an anchor
+	}
+	for(ctr = beatnum + 1; ctr < eof_song->beats; ctr++)
+	{	//For all remaining beats in the project
+		if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR)	//If this beat is an anchor
+			break;	//Stop applying the tempo to beats
+		eof_song->beat[ctr]->ppqn = ppqn;	//Update the beat's tempo
+	}
+	if(adjust)
+	{	//If auto-adjust is to be performed
+		(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+	}
+}
+
+void eof_remove_ts(unsigned long beatnum)
+{
+//Clear the beat's status except for its anchor and event flags
+	unsigned long flags;
+
+	if(!eof_song || !eof_beat_num_valid(eof_song, beatnum))
+		return;	//Invalid parameter
+
+	flags = eof_song->beat[beatnum]->flags;
+	flags &= ~EOF_BEAT_FLAG_START_4_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_START_2_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_START_3_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_START_5_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_START_6_4;	//Clear this TS flag
+	flags &= ~EOF_BEAT_FLAG_CUSTOM_TS;	//Clear this TS flag
+	flags &= ~0xFF000000;	//Clear any custom TS numerator
+	flags &= ~0x00FF0000;	//Clear any custom TS denominator
+	eof_song->beat[beatnum]->flags = flags;
 }
