@@ -113,9 +113,9 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 	//Parses a linked list of anchors and returns the delta time of the specified realtime
 	//tslist is allowed to be NULL, but anchorlist must contain at least one tempo change
 	//If snaptobeat is nonzero, the converted delta time is allowed to be adjusted +/- 1 delta to line up with a beat marker (use for start times, but not lengths or end times)
-int eof_calculate_beat_delta_positions(EOF_SONG *sp);
+int eof_calculate_beat_delta_positions(EOF_SONG *sp, unsigned long timedivision);
 	//Updates the midi_pos variable of each beat in the specified chart to reflect that beat's delta tick position
-	//Time signatures in the beat map are taken into account, where a beat is considered to be (EOF_DEFAULT_TIME_DIVISION * 4 / TS_DENOMINATOR) delta ticks in length
+	//Time signatures in the beat map are taken into account, where a beat is considered to be (timedivision * 4 / TS_DENOMINATOR) delta ticks in length
 	//Returns zero on error
 
 int eof_extract_rba_midi(const char * source, const char * dest);

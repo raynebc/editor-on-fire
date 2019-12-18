@@ -473,7 +473,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		return 0;	//Return failure
 	}
 
-	if(!eof_calculate_beat_delta_positions(sp))
+	if(!eof_calculate_beat_delta_positions(sp, EOF_DEFAULT_TIME_DIVISION))
 	{	//Calculate the delta position of each beat in the chart
 		eof_log("\tCould not build beat delta positions", 1);
 		return 0;	//Return failure
@@ -2833,7 +2833,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 		return 0;	//Return failure
 	}
 
-	if(!eof_calculate_beat_delta_positions(sp))
+	if(!eof_calculate_beat_delta_positions(sp, EOF_DEFAULT_TIME_DIVISION))
 	{	//Calculate the delta position of each beat in the chart
 		eof_log("\tCould not build beat delta positions", 1);
 		return 0;	//Return failure
@@ -3507,7 +3507,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 	return delta;
 }
 
-int eof_calculate_beat_delta_positions(EOF_SONG *sp)
+int eof_calculate_beat_delta_positions(EOF_SONG *sp, unsigned long timedivision)
 {
 	unsigned long ctr, counter = 0;
 	unsigned num = 4, den = 4;
@@ -3524,7 +3524,7 @@ int eof_calculate_beat_delta_positions(EOF_SONG *sp)
 			return 0;	//Error
 		}
 
-		counter += (EOF_DEFAULT_TIME_DIVISION * 4) / den;	//Add this beat's length (in delta ticks) to the counter
+		counter += (timedivision * 4) / den;	//Add this beat's length (in delta ticks) to the counter
 	}
 
 	return 1;

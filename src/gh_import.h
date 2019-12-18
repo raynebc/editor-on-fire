@@ -21,6 +21,14 @@ typedef struct
 	int diffnum;
 } gh_section;	//This structure will be used to associate a guitar hero section with a specific track and difficulty (if applicable)
 
+typedef struct
+{
+	float position;		//Contains the realtime position of the tempo change (unused for time signature changes)
+	unsigned long delta;//Contains the delta tick position of the change
+	unsigned long num1;	//Contains the tempo in ppqn if the next number is zero, otherwise stores the time signature numerator
+	unsigned long num2;	//Is nonzero if the structure contains a time signature change, in which case it is the denominator
+} eof_ghl_change;
+
 extern unsigned long crc32_lookup[256];
 extern char crc32_lookup_initialized;
 extern EOF_SONG *eof_sections_list_all_ptr;	//eof_sections_list_all() lists the text events in this chart
@@ -36,6 +44,8 @@ EOF_SONG * eof_import_gh_note(const char * fn);
 EOF_SONG * eof_import_gh_qb(const char *fn);
 	//Imports the specified Guitar Hero file, parsing as a QB format (ie. GHWT) file
 
+int eof_ghl_qsort_changes(const void * e1, const void * e2);
+	//A quicksort comparitor function for tempo and time signature changes during GHL import
 int eof_ghl_import_common(const char *fn);
 	//Imports the specified Guitar Hero file Live file into the active track
 	//Returns nonzero on error

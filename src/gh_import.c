@@ -3212,6 +3212,35 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	return sp;
 }
 
+int eof_ghl_qsort_changes(const void * e1, const void * e2)
+{
+	const eof_ghl_change * thing1 = (eof_ghl_change *)e1;
+	const eof_ghl_change * thing2 = (eof_ghl_change *)e2;
+
+	//Sort by timestamp
+	if(thing1->position < thing2->position)
+	{
+		return -1;
+	}
+	else if(thing1->position > thing2->position)
+	{
+		return 1;
+	}
+
+	//Sort by item type (time signature changes before tempo changes)
+	if(thing1->num2)
+	{	//If the first item is a time signature
+		return -1;
+	}
+	if(thing2->num2)
+	{	//If the second item is a time signature
+		return 1;
+	}
+
+	//They are equal
+	return 0;
+}
+
 int eof_ghl_import_common(const char *fn)
 {
 	filebuffer *fb;
@@ -3224,9 +3253,10 @@ int eof_ghl_import_common(const char *fn)
 	int error = 0, lyricwarn = 0, note_imported = 0;
 	char adjust = 0, import_tempo_map = 0;
 	char *stringptr;
-	unsigned long eventpos, eventendpos, eventposdown, eventendposdown;
+	unsigned long eventpos, eventendpos, eventposdown, eventendposdown, numchanges = 0;
 	unsigned long tracknum;
 	EOF_LEGACY_TRACK *tp = NULL;
+	eof_ghl_change *changes = NULL;
 
 	eof_log("eof_import_gh_xmk() entered", 1);
 	eof_log("Attempting to import XMK format Guitar Hero chart", 1);
@@ -3314,7 +3344,7 @@ int eof_ghl_import_common(const char *fn)
 //Remove all tempo and time signature changes if the tempo map is being imported
 	if(import_tempo_map)
 	{	//If the user opted to import the file's tempo map
-		set_window_title("Importing XMK - Clearing tempo map");
+		set_window_title("Importing XMK - Resetting tempo map");
 		if(adjust)
 		{	//If auto-adjust is to be performed
 			(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
@@ -3327,6 +3357,12 @@ int eof_ghl_import_common(const char *fn)
 			{	//If this isn't the first beat
 				eof_song->beat[ctr]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag
 			}
+		}
+		if(!eof_song->tags->accurate_ts)
+		{	//If accurate TS is not enabled in song properties
+			allegro_message("The accurate TS option in song properties will be enabled as it is required by GHL charts.");
+			eof_log("\tGHL:  Enabling accurate TS", 1);
+			eof_song->tags->accurate_ts = 1;
 		}
 		eof_apply_ts(4, 4, 0, eof_song, 0);	//Default to 4/4 meter
 		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
@@ -3344,7 +3380,13 @@ int eof_ghl_import_common(const char *fn)
 		tp->numlanes = 6;
 	}
 
-///It might be required to read all tempo changes, time signature changes and then apply them both lists in chronological order since both of these can affect beat timings
+	changes = malloc(sizeof(eof_ghl_change) * (numtempos + numtimesigs));	//Create an array large enough to store all tempo and time signature changes
+	if(!changes)
+	{
+		eof_filebuffer_close(fb);	//Close the file buffer
+		eof_log("Error allocating memory", 1);
+		return 1;	//Return failure
+	}
 
 //Parse the tempo changes
 	eof_log("\tGHL:\tParsing tempo changes", 1);
@@ -3357,22 +3399,19 @@ int eof_ghl_import_common(const char *fn)
 		{	//If there was an error reading any of the above
 			eof_log("Error reading tempo changes.  Aborting", 1);
 			eof_filebuffer_close(fb);	//Close the file buffer
+			free(changes);
 			return error;
 		}
 		bpm = 60000000.0 / (double)tempo;
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tTicks = %lu, pos = %fs, %lu ppqn (%f BPM)", dword, start, tempo, bpm);
 		eof_log(eof_log_string, 1);
-		if(import_tempo_map)
-		{	//If the user opted to import the file's tempo map
-			beat = eof_get_nearest_beat(eof_song, start * 1000);	//Find the beat closest to this tempo change's position
-			if(eof_beat_num_valid(eof_song, beat))
-			{	//If that beat was found
-				eof_apply_tempo(tempo, beat, 0);	//Apply this tempo
-				eof_calculate_beats(eof_song);		//Rebuild the beat timings
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tApplied to beat #%lu at %fs", beat, eof_song->beat[beat]->fpos / 1000.0);
-				eof_log(eof_log_string, 1);
-			}
-		}
+
+		//Store the tempo change in the list
+		changes[numchanges].position = start;
+		changes[numchanges].delta = dword;
+		changes[numchanges].num1 = tempo;
+		changes[numchanges].num2 = 0;
+		numchanges++;
 	}
 
 //Parse the time signature changes
@@ -3382,33 +3421,108 @@ int eof_ghl_import_common(const char *fn)
 	for(ctr = 0; ctr < numtimesigs; ctr++)
 	{	//For each time signature change
 		error |= eof_filebuffer_get_dword(fb, &dword);	//Read the tick position
-		error |= eof_filebuffer_get_dword(fb, (unsigned long *)&start);	//Read the timestamp of the time signature change?
+		error |= eof_filebuffer_get_dword(fb, (unsigned long *)&start);	//Read the unused double word
 		error |= eof_filebuffer_get_dword(fb, &num);	//Read the TS numerator
 		error |= eof_filebuffer_get_dword(fb, &den);	//Read the TS denominator
 		if(error)
 		{	//If there was an error reading any of the above
 			eof_log("Error reading time signature changes.  Aborting", 1);
 			eof_filebuffer_close(fb);	//Close the file buffer
+			free(changes);
 			return error;
 		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tTicks = %lu, pos = %fs, %lu/%lu", dword, start, num, den);
 		eof_log(eof_log_string, 1);
-		if(import_tempo_map)
-		{	//If the user opted to import the file's tempo map
-			beat = eof_get_nearest_beat(eof_song, start * 1000);	//Find the beat closest to this tempo change's position
-			if(eof_beat_num_valid(eof_song, beat))
-			{	//If that beat was found
-				(void) eof_apply_ts(num, den, beat, eof_song, 0);	//Apply this time signature
-				eof_calculate_beats(eof_song);	//Rebuild the beat timings
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tApplied to beat #%lu at %fs", beat, eof_song->beat[beat]->fpos / 1000.0);
-				eof_log(eof_log_string, 1);
+
+		//Store the time signature change in the list
+		changes[numchanges].position = start;
+		changes[numchanges].delta = dword;
+		changes[numchanges].num1 = num;
+		changes[numchanges].num2 = den;
+		numchanges++;
+	}
+
+	if(import_tempo_map)
+	{	//If the user opted to import the file's tempo map
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:\tApplying %lu tempo and time signature changes", numchanges);
+		eof_log(eof_log_string, 1);
+		qsort(changes, (size_t)numchanges, sizeof(eof_ghl_change), eof_ghl_qsort_changes);	//Sort the time signature and tempo changes by timestamp
+
+		for(ctr = 0; ctr < numchanges; ctr++)
+		{	//For each imported tempo and time signature change
+			if(changes[ctr].num2)
+			{	//If this is a time signature change
+				unsigned long beatlength, deltactr;
+				unsigned num, den;
+
+				//Manually count delta ticks to determine on which beat this time signature occurs
+				deltactr = beat = 0;
+				while(deltactr < changes[ctr].delta)
+				{	//Until the target delta position is reached or exceeded
+					(void) eof_get_effective_ts(eof_song, &num, &den, beat, 0);	//Get the time signature in effect at this beat
+					beatlength = 960 * 4 / den;	//Get the length of this beat in delta ticks
+
+					if(deltactr + beatlength > changes[ctr].delta)
+					{	//If this change occurs between this beat and the next
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t!Mid beat time signature change (%lu/%lu at delta position %lu)", changes[ctr].num1, changes[ctr].num2, changes[ctr].delta);
+						eof_log(eof_log_string, 1);
+					}
+					deltactr += beatlength;	//Advance to the next beat
+					beat++;
+				}
+
+				while(beat >= eof_song->beats)
+				{	//While there aren't enough beats to accommodate this time signature change
+					if(!eof_song_append_beats(eof_song, 1))
+					{	//If a beat couldn't be appended
+						free(changes);
+						eof_filebuffer_close(fb);	//Close the file buffer
+						eof_log("Error adding beats", 1);
+						return 1;	//Return error
+					}
+					if(eof_chart_length < eof_song->beat[eof_song->beats - 1]->pos)
+						eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Update the chart length so the call to eof_get_nearest_beat() below works
+				}
+				if(eof_beat_num_valid(eof_song, beat))
+				{	//If that appropriate beat was found
+					(void) eof_apply_ts(changes[ctr].num1, changes[ctr].num2, beat, eof_song, 0);	//Apply this time signature
+					eof_calculate_beats(eof_song);	//Rebuild the beat timings
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tApplied %lu/%lu signature to beat #%lu (delta position %lu) at %fs", changes[ctr].num1, changes[ctr].num2, beat, deltactr, eof_song->beat[beat]->fpos / 1000.0);
+					eof_log(eof_log_string, 1);
+				}
+			}
+			else
+			{	//This is a tempo change
+				while(changes[ctr].position * 1000 > eof_song->beat[eof_song->beats - 1]->pos)
+				{	//While there aren't enough beats to accommodate this tempo change
+					if(!eof_song_append_beats(eof_song, 1))
+					{	//If a beat couldn't be appended
+						free(changes);
+						eof_filebuffer_close(fb);	//Close the file buffer
+						eof_log("Error adding beats", 1);
+						return 1;	//Return error
+					}
+					if(eof_chart_length < eof_song->beat[eof_song->beats - 1]->pos)
+						eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Update the chart length so the call to eof_get_nearest_beat() below works
+				}
+				beat = eof_get_nearest_beat(eof_song, changes[ctr].position * 1000);	//Find the beat closest to this tempo change's position
+				if(eof_beat_num_valid(eof_song, beat))
+				{	//If that beat was found
+					eof_apply_tempo(changes[ctr].num1, beat, 0);	//Apply this tempo
+					eof_calculate_beats(eof_song);		//Rebuild the beat timings
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tApplied %fBPM to beat #%lu at %fs", 60000000.0 / (double)changes[ctr].num1, beat, eof_song->beat[beat]->fpos / 1000.0);
+					eof_log(eof_log_string, 1);
+				}
 			}
 		}
 	}
+	free(changes);
+	changes = NULL;
 
 	if(import_tempo_map && adjust)
 	{	//If the user opted to import a tempo map
 		eof_calculate_beats(eof_song);	//Rebuild the beat timings
+		eof_calculate_beat_delta_positions(eof_song, 960);	//Apply MIDI timings to the beats in case they're useful during the rest of the import
 		if(adjust)
 		{	//If the user opted to auto-adjust the existing notes
 			(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
@@ -3424,7 +3538,7 @@ int eof_ghl_import_common(const char *fn)
 	for(ctr = 0; ctr < numevents; ctr++)
 	{	//For each event
 		unsigned char notemask = 0;
-		unsigned long flags = 0;
+		unsigned long flags = 0, closestgridsnap = 0;
 
 		//Parse event
 		error |= eof_filebuffer_get_dword(fb, &dword);	//Read the unknown value
@@ -3465,20 +3579,28 @@ int eof_ghl_import_common(const char *fn)
 		}
 		eventposdown = start * 1000.0;	//Convert the start time to milliseconds, rounding down
 		eventendposdown = end * 1000.0;	//Ditto for the end position
-		if(eof_is_any_grid_snap_position(eventposdown, NULL, NULL, NULL, NULL))
+		if(eof_is_any_grid_snap_position(eventposdown, NULL, NULL, NULL, &closestgridsnap))
 		{	//If the rounded down timing conversion is a grid snap
 			eventpos = eventposdown;	//Use the rounded down timings
 			eventendpos = eventendposdown;
 		}
-		else if(eof_is_any_grid_snap_position(eventposdown + 1, NULL, NULL, NULL, NULL))
-		{	//If the rounded up timing conversion is a grid snap
-			eventpos = eventposdown + 1;	//Use the rounded up timings
-			eventendpos = eventendposdown + 1;
-		}
 		else
-		{	//Otherwise use timings that round to the nearest millisecond
-			eventpos = (start + 0.0005) * 1000.0;	//Convert the timing to milliseconds, rounding to the nearest interval
-			eventendpos = (end + 0.0005) * 1000.0;
+		{
+			if((closestgridsnap >= eventposdown) && (closestgridsnap - eventposdown <= 2))
+			{	//If the rounded down timestamp is at the nearest grid snap or is no more than 2ms before the nearest grid snap
+				eventpos = closestgridsnap;	//Shift the event start position later to match the grid snap
+				eventendpos = eventendposdown + (closestgridsnap - eventposdown);	//Shift the end position as well
+			}
+			else if((eventposdown > closestgridsnap) && (eventposdown - closestgridsnap <= 2))
+			{	//If the rounded down timestamp is no more than 2ms after the nearest grid snap
+				eventpos = closestgridsnap;	//Shift the event start position earlier to match the grid snap
+				eventendpos = eventendposdown - (eventendposdown - closestgridsnap);	//Shift the end position as well
+			}
+			else
+			{	//The rounded down timestamp is not within 2ms of a grid snap
+				eventpos = (start + 0.0005) * 1000.0;	//Convert the timing to milliseconds, rounding to the nearest interval
+				eventendpos = (end + 0.0005) * 1000.0;
+			}
 		}
 		if(eventpos > eventendpos)
 		{

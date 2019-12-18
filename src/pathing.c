@@ -1293,7 +1293,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 		return 1;	//Return error
 	}
 	has_stored_tempo = eof_song_has_stored_tempo_track(eof_song) ? 1 : 0;	//Store this status
-	if(!eof_calculate_beat_delta_positions(eof_song))
+	if(!eof_calculate_beat_delta_positions(eof_song, EOF_DEFAULT_TIME_DIVISION))
 	{	//Calculate the delta position of each beat in the chart (required by eof_ConvertToDeltaTime() )
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
