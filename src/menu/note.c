@@ -101,6 +101,7 @@ MENU eof_lyric_line_menu[] =
 	{eof_lyric_line_menu_mark_text, eof_menu_lyric_line_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_lyric_line_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_lyric_line_erase_all, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_note_lyric_line_edit_timing, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Toggle Overdrive", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -3550,6 +3551,28 @@ int eof_menu_lyric_line_erase_all(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song->vocal_track[tracknum]->lines = 0;
 		eof_reset_lyric_preview_lines();
+	}
+	return 1;
+}
+
+int eof_menu_note_lyric_line_edit_timing(void)
+{
+	unsigned long ctr;
+	EOF_VOCAL_TRACK *tp;
+
+	if(!eof_song || !eof_vocals_selected)
+		return 1;
+	if(eof_selection.current >= eof_song->vocal_track[0]->lyrics)
+		return 1;	//No lyric selected
+
+	tp = eof_song->vocal_track[0];	//Simplify
+	for(ctr = 0; ctr < tp->lines; ctr++)
+	{	//For each lyric line
+		if((tp->lyric[eof_selection.current]->pos >= tp->line[ctr].start_pos) && (tp->lyric[eof_selection.current]->pos <= tp->line[ctr].end_pos))
+		{	//If the selected lyric is within this lyric phrase
+			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit lyric line");	//Set the title of the dialog
+			return eof_phrase_edit_timing(&tp->line[ctr].start_pos, &tp->line[ctr].end_pos);
+		}
 	}
 	return 1;
 }

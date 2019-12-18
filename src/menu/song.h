@@ -35,7 +35,13 @@ int eof_menu_catalog_add(void);
 int eof_menu_catalog_delete(void);
 int eof_menu_catalog_previous(void);
 int eof_menu_catalog_next(void);
-int eof_menu_song_catalog_edit(void);
+
+int eof_phrase_edit_timing(unsigned long *start, unsigned long *end);
+	//A generic dialog that allows the user to alter the given start and end positions
+	//eof_etext3 is used as the dialog title so it can be set appropriately by the calling function
+	//If the given end value is >= the given start value when the dialog is confirmed, an undo state is made and *start and *end are updated
+int eof_menu_song_catalog_edit_timing(void);
+	//Uses eof_phrase_edit_timing() to edit the timings of the active song catalog entry
 
 int eof_menu_song_seek_start(void);
 int eof_menu_song_seek_end(void);	//Seeks to the end of the audio

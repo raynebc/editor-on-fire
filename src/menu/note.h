@@ -26,6 +26,7 @@ int eof_menu_star_power_erase_all(void);
 int eof_menu_lyric_line_mark(void);
 int eof_menu_lyric_line_unmark(void);
 int eof_menu_lyric_line_erase_all(void);
+int eof_menu_note_lyric_line_edit_timing(void);	//Uses eof_phrase_edit_timing() to edit the timings of the selected lyric's lyric phrase (if such a phrase is defined)
 int eof_menu_lyric_line_toggle_overdrive(void);
 
 int eof_menu_hopo_auto(void);

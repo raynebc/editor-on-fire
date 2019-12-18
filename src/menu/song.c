@@ -126,7 +126,7 @@ MENU eof_catalog_menu[] =
 	{"&Show\tQ", eof_menu_catalog_show, NULL, 0, NULL},
 	{"Full &Width\tSHIFT+Q", eof_menu_catalog_toggle_full_width, NULL, 0, NULL},
 	{"&Edit Name", eof_menu_catalog_edit_name, NULL, 0, NULL},
-	{"Edit &Timing", eof_menu_song_catalog_edit, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_song_catalog_edit_timing, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Add\tSHIFT+W", eof_menu_catalog_add, NULL, 0, NULL},
 	{"&Delete", eof_menu_catalog_delete, NULL, 0, NULL},
@@ -4114,33 +4114,33 @@ int eof_menu_catalog_toggle_full_width(void)
 	return 1;
 }
 
-DIALOG eof_song_catalog_edit_dialog[] =
+DIALOG eof_phrase_edit_timing_dialog[] =
 {
-	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 180, 0,   0,   0,    0,      0,   0,   "Edit catalog entry",      NULL, NULL },
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                  (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   200, 180, 0,   0,   0,    0,      0,   0,   eof_etext3,           NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
-	{ d_agup_text_proc,      12,  88,  60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",                NULL, NULL },
+	{ d_agup_text_proc,      12,  88,  60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",  NULL, NULL },
 	{ eof_verified_edit_proc,12,  104, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
-	{ d_agup_button_proc,    12,  140, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
-	{ d_agup_button_proc,    110, 140, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+	{ d_agup_button_proc,    12,  140, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
+	{ d_agup_button_proc,    110, 140, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",             NULL, NULL },
+	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                 NULL, NULL }
 };
 
-int eof_menu_song_catalog_edit(void)
+int eof_phrase_edit_timing(unsigned long *start, unsigned long *end)
 {
 	unsigned long newstart, newend;
 
-	if(!eof_song_loaded || !eof_song || (eof_selected_catalog_entry >= eof_song->catalog->entries))
-		return 1;	//Do not allow this function to run if a chart is not loaded or if an invalid catalog entry is selected
+	if(!eof_song_loaded || !start || !end)
+		return 1;	//Invalid parameters
 
 	eof_render();
-	eof_color_dialog(eof_song_catalog_edit_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_song_catalog_edit_dialog);
-	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
+	eof_color_dialog(eof_phrase_edit_timing_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_phrase_edit_timing_dialog);
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", *start);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", *end);
 
-	if(eof_popup_dialog(eof_song_catalog_edit_dialog, 2) == 5)
+	if(eof_popup_dialog(eof_phrase_edit_timing_dialog, 2) == 5)
 	{	//User clicked OK
 		newstart = atol(eof_etext);
 		newend = atol(eof_etext2);
@@ -4149,11 +4149,11 @@ int eof_menu_song_catalog_edit(void)
 		{	//If the given timing is not valid
 			allegro_message("The entry must end after it begins");
 		}
-		else if((eof_song->catalog->entry[eof_selected_catalog_entry].start_pos != newstart) || (eof_song->catalog->entry[eof_selected_catalog_entry].end_pos != newend))
+		else if((*start != newstart) || (*end != newend))
 		{	//If the timing was changed
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			eof_song->catalog->entry[eof_selected_catalog_entry].start_pos = newstart;
-			eof_song->catalog->entry[eof_selected_catalog_entry].end_pos = newend;
+			*start = newstart;
+			*end = newend;
 		}
 	}
 
@@ -4161,6 +4161,15 @@ int eof_menu_song_catalog_edit(void)
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
 	return 1;
+}
+
+int eof_menu_song_catalog_edit_timing(void)
+{
+	if(!eof_song_loaded || !eof_song || (eof_selected_catalog_entry >= eof_song->catalog->entries))
+		return 1;	//Do not allow this function to run if a chart is not loaded or if an invalid catalog entry is selected
+
+	snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit catalog entry");	//Set the title of the dialog
+	return eof_phrase_edit_timing(&eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, &eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
 }
 
 int eof_menu_song_toggle_second_piano_roll(void)

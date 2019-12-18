@@ -3459,6 +3459,10 @@ int eof_ghl_import_common(const char *fn)
 		{	//Forced HOPO marker
 			flags |= EOF_NOTE_FLAG_F_HOPO;
 		}
+		else
+		{	//If not marked as a HOPO, mark as a forced strum
+			flags |= EOF_NOTE_FLAG_NO_HOPO;
+		}
 		eventposdown = start * 1000.0;	//Convert the start time to milliseconds, rounding down
 		eventendposdown = end * 1000.0;	//Ditto for the end position
 		if(eof_is_any_grid_snap_position(eventposdown, NULL, NULL, NULL, NULL))
@@ -3656,12 +3660,13 @@ int eof_ghl_import_common(const char *fn)
 		}//Default to treating it as a note
 	}//For each event
 
-//Apply disjointed status where appropriate
+//Apply disjointed and crazy status where appropriate
 	if(note_imported && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 	{	//If instrument notes were imported
 		EOF_NOTE *n1, *n2;
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+		eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status below where appropriate)
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
 		{	//For each note in the track
