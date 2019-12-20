@@ -209,6 +209,9 @@ unsigned long eof_find_midi_event_needle(unsigned char num);
 void eof_clear_midi_events(void);
 	//Frees the memory for all structures in eof_midi_event[], including any dynamically allocated strings
 	//Resets the eof_midi_event_full variable to zero
+int eof_midi_note_already_added(unsigned long deltastart, unsigned long deltaend, int note);
+	//Returns nonzero if eof_midi_event[] already has a note on/off event anywhere within the specified delta times
+	//Used to avoid writing overlapping tom markers, since tom markers are now allowed to be written for tom notes in difficulties lower than expert
 void WriteVarLen(unsigned long value, PACKFILE * fp);
 	//Writes the specified value in variable length format to the specified file handle
 int qsort_helper3(const void * e1, const void * e2);

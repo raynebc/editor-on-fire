@@ -238,6 +238,19 @@ void eof_clear_midi_events(void)
 	eof_midi_event_full = 0;
 }
 
+int eof_midi_note_already_added(unsigned long deltastart, unsigned long deltaend, int note)
+{
+	unsigned long ctr;
+
+	for(ctr = 0; ctr < eof_midi_events; ctr++)
+	{	//For each stored MIDI event
+		if((eof_midi_event[ctr]->pos >= deltastart) && (eof_midi_event[ctr]->pos <= deltaend) && (eof_midi_event[ctr]->note == note))
+			return 1;	//The note already exists
+	}
+
+	return 0;
+}
+
 void WriteVarLen(unsigned long value, PACKFILE * fp)
 {
 //	eof_log("WriteVarLen() entered");
@@ -946,8 +959,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
 							if((featurerestriction == 0) || (type == EOF_NOTE_AMAZING))
 							{	//Write a pro yellow tom marker only if this is an Expert difficulty note (ie. not a BRE note) or if a Rock Band compliant MIDI is not being written
-								eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
-								eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
+								if(type < EOF_NOTE_SPECIAL)
+								{	//But absolutely not for the BRE difficulty
+									if(!eof_midi_note_already_added(deltapos, deltapos + deltalength, RB3_DRUM_YELLOW_FORCE))
+									{	//If a yellow tom marker wasn't written for this position in another difficulty
+										eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
+										eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
+									}
+								}
 							}
 						}
 					}
@@ -1022,8 +1041,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
 							if((featurerestriction == 0) || (type == EOF_NOTE_AMAZING))
 							{	//Write a pro blue tom marker only if this is an Expert difficulty note (ie. not a BRE note) or if a Rock Band compliant MIDI is not being written
-								eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
-								eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
+								if(type < EOF_NOTE_SPECIAL)
+								{	//But absolutely not for the BRE difficulty
+									if(!eof_midi_note_already_added(deltapos, deltapos + deltalength, RB3_DRUM_BLUE_FORCE))
+									{	//If a blue tom marker wasn't written for this position in another difficulty
+										eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
+										eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
+									}
+								}
 							}
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 3, vel, 0);
@@ -1067,8 +1092,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
 							if((featurerestriction == 0) || (type == EOF_NOTE_AMAZING))
 							{	//Write a pro green tom marker only if this is an Expert difficulty note (ie. not a BRE note) or if a Rock Band compliant MIDI is not being written
-								eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
-								eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
+								if(type < EOF_NOTE_SPECIAL)
+								{	//But absolutely not for the BRE difficulty
+									if(!eof_midi_note_already_added(deltapos, deltapos + deltalength, RB3_DRUM_GREEN_FORCE))
+									{	//If a green tom marker wasn't written for this position in another difficulty
+										eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
+										eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
+									}
+								}
 							}
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 4, vel, 0);

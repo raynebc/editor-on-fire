@@ -156,7 +156,16 @@ int eof_undo_add(int type)
 	}
 	eof_undo_last_type = type;
 
+	(void) delete_file(eof_undo_filename[eof_undo_current_index]);	//Try to delete the file
+	if(exists(eof_undo_filename[eof_undo_current_index]))
+	{	//If the file could not be deleted, it probably won't be able to be overwritten either
+		allegro_message("Error:  Unable to delete undo state.  There may be a permissions issue or interference (ie. from antivirus software).");
+	}
 	(void) eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
+	if(!exists(eof_undo_filename[eof_undo_current_index]))
+	{	//If the file could not be written
+		allegro_message("Error:  Unable to write undo state.  There may be a permissions issue or interference (ie. from antivirus software).");
+	}
 	eof_undo_type[eof_undo_current_index] = type;
 	if(eof_recovery)
 	{	//If this EOF instance is maintaining auto-recovery files
@@ -218,7 +227,16 @@ int eof_undo_apply(void)
 	strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the undo, the Rocksmith WAV file should be deleted
 
 	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
+	(void) delete_file(fn);	//Try to delete the file
+	if(exists(fn))
+	{	//If the file could not be deleted, it probably won't be able to be overwritten either
+		allegro_message("Error:  Unable to delete redo state.  There may be a permissions issue or interference (ie. from antivirus software).");
+	}
 	(void) eof_save_song(eof_song, fn);
+	if(!exists(fn))
+	{	//If the file could not be written
+		allegro_message("Error:  Unable to write redo state.  There may be a permissions issue or interference (ie. from antivirus software).");
+	}
 	eof_redo_type = 0;
 	eof_undo_current_index--;
 	if(eof_undo_current_index < 0)
@@ -317,7 +335,16 @@ void eof_redo_apply(void)
 
 		strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the redo, the Rocksmith WAV file should be deleted
 
+		(void) delete_file(eof_undo_filename[eof_undo_current_index]);	//Try to delete the file
+		if(exists(eof_undo_filename[eof_undo_current_index]))
+		{	//If the file could not be deleted, it probably won't be able to be overwritten either
+			allegro_message("Error:  Unable to delete undo state.  There may be a permissions issue or interference (ie. from antivirus software).");
+		}
 		(void) eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
+		if(!exists(eof_undo_filename[eof_undo_current_index]))
+		{	//If the file could not be written
+			allegro_message("Error:  Unable to write undo state.  There may be a permissions issue or interference (ie. from antivirus software).");
+		}
 		eof_undo_current_index++;
 		if(eof_undo_current_index >= EOF_MAX_UNDO)
 		{
