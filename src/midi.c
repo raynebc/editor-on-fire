@@ -3552,6 +3552,7 @@ int eof_calculate_beat_delta_positions(EOF_SONG *sp, unsigned long timedivision)
 
 		if(eof_get_ts(sp, &num, &den, ctr) == -1)
 		{	//If the beat's time signature could not be read
+			allegro_message("eof_calculate_beat_delta_positions() error");
 			return 0;	//Error
 		}
 

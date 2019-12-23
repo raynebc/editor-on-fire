@@ -19,10 +19,13 @@ unsigned long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns the beat number of the first anchor that occurs after the specified beat, or ULONG_MAX if there is no such anchor
 int eof_beat_is_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns nonzero if the specified beat number is an anchor based on its flag or a change in tempo from the prior beat
-void eof_calculate_beats(EOF_SONG * sp);
+unsigned long eof_calculate_beats_logic(EOF_SONG * sp, int addbeats);
 	//Sets the timestamp and anchor status of each beat existing for the duration of the chart by using the tempo map
-	//Creates beats if there aren't enough to extend to one beat past the end of the chart as defined by eof_chart_length
+	//If addbeats is nonzero, creates beats if there aren't enough to extend to one beat past the end of the chart as defined by eof_chart_length
 	//Updates eof_chart_length to reflect the last beat's timestamp if the latter is larger
+	//Returns nonzero to indicate the number of beats added to the project
+unsigned long eof_calculate_beats(EOF_SONG * sp);
+	//Calls eof_calculate_beats_logic with the option to add beats as deemed necessary
 void eof_calculate_tempo_map(EOF_SONG * sp);
 	//Sets the tempo and anchor status of each beat in the EOF_SONG structure by using the configured FLOATING POINT time stamp of each beat
 double eof_calculate_beat_pos_by_prev_beat_tempo(EOF_SONG *sp, unsigned long beat);

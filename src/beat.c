@@ -95,7 +95,7 @@ double eof_get_beat_length(EOF_SONG * sp, unsigned long beat)
 	return sp->beat[sp->beats - 1]->fpos - sp->beat[sp->beats - 2]->fpos;
 }
 
-void eof_calculate_beats(EOF_SONG * sp)
+unsigned long eof_calculate_beats_logic(EOF_SONG * sp, int addbeats)
 {
 	unsigned long i;
 	double curpos = 0.0;
@@ -103,12 +103,13 @@ void eof_calculate_beats(EOF_SONG * sp)
 	unsigned long cbeat = 0;
 	unsigned long target_length = eof_music_length;
 	unsigned num = 4, den = 4, lastden = 4;
+	unsigned long beats_added = 0;
 
 	eof_log("eof_calculate_beats() entered", 2);
 
 	if(!sp)
 	{
-		return;
+		return 0;
 	}
 
 	if(eof_chart_length > eof_music_length)
@@ -123,10 +124,11 @@ void eof_calculate_beats(EOF_SONG * sp)
 		while(curpos < (double)target_length + beat_length)
 		{	//While there aren't enough beats to cover the length of the chart, add beats
 			if(!eof_song_append_beats(sp, 1))	//If a beat couldn't be appended
-				return;
+				return beats_added;
 			curpos += beat_length;
+			beats_added++;
 		}
-		return;
+		return beats_added;
 	}
 
 	sp->beat[0]->fpos = (double)sp->tags->ogg[0].midi_offset;
@@ -155,27 +157,38 @@ void eof_calculate_beats(EOF_SONG * sp)
 		lastden = den;	//Track the TS denominator in use
 		beat_length = eof_calc_beat_length(sp, i);	//Recalculate the beat length every beat because either a time signature change or a tempo change will alter it
 	}
-	cbeat = sp->beats - 1;	//The index of the last beat in the beat[] array
-	curpos += beat_length;
-	while(sp->tags->ogg[0].midi_offset + curpos < target_length + beat_length)
-	{	//While there aren't enough beats to cover the length of the chart, add beats
-		if(eof_song_add_beat(sp))
-		{	//If the beat was successfully added
-			sp->beat[sp->beats - 1]->ppqn = sp->beat[cbeat]->ppqn;
-			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[0].midi_offset + curpos;
-			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
-			curpos += beat_length;
-		}
-		else
-		{
-			eof_log("\teof_calculate_beats() failed", 1);
-			return;
+	if(addbeats)
+	{	//If the calling function wanted to add beats to extend to reflect eof_chart_length
+		cbeat = sp->beats - 1;	//The index of the last beat in the beat[] array
+		curpos += beat_length;
+		while(sp->tags->ogg[0].midi_offset + curpos < target_length + beat_length)
+		{	//While there aren't enough beats to cover the length of the chart, add beats
+			if(eof_song_add_beat(sp))
+			{	//If the beat was successfully added
+				sp->beat[sp->beats - 1]->ppqn = sp->beat[cbeat]->ppqn;
+				sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[0].midi_offset + curpos;
+				sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
+				curpos += beat_length;
+				beats_added++;
+			}
+			else
+			{
+				eof_log("\teof_calculate_beats() failed", 1);
+				return beats_added;
+			}
 		}
 	}
 	if(eof_chart_length < sp->beat[sp->beats - 1]->pos)
 	{	//If the chart length needs to be updated to reflect the beat map making the chart longer
 		eof_chart_length = sp->beat[sp->beats - 1]->pos;
 	}
+
+	return beats_added;
+}
+
+unsigned long eof_calculate_beats(EOF_SONG * sp)
+{
+	return eof_calculate_beats_logic(sp, 1);
 }
 
 void eof_calculate_tempo_map(EOF_SONG * sp)

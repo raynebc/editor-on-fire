@@ -3246,11 +3246,11 @@ int eof_ghl_import_common(const char *fn)
 	filebuffer *fb;
 	unsigned char eventid, note;
 	unsigned int barre;
-	unsigned long dword = 0, dword2 = 0, dword3 = 0, numevents = 0, numtempos = 0, numtimesigs = 0, num = 0, den = 0, tempo = 0, ctr, ctr2, beat;
+	unsigned long dword = 0, dword2 = 0, dword3 = 0, numevents = 0, numtempos = 0, numtimesigs = 0, num = 0, den = 0, tempo = 0, ctr, ctr2, loopctr, beat, retval;
 	unsigned long stringblobpos, eventblocksize, stringpos;
 	float start = 0.0, end = 0.0;
 	double bpm;
-	int error = 0, lyricwarn = 0, note_imported = 0;
+	int error = 0, lyricwarn = 0, note_imported = 0, mid_beat_ts_warned = 0, mid_beat_tempo_warned = 0, mid_beat_change;
 	char adjust = 0, import_tempo_map = 0;
 	char *stringptr;
 	unsigned long eventpos, eventendpos, eventposdown, eventendposdown, numchanges = 0;
@@ -3365,7 +3365,7 @@ int eof_ghl_import_common(const char *fn)
 		if(!eof_song->tags->accurate_ts)
 		{	//If accurate TS is not enabled in song properties
 			allegro_message("The accurate TS option in song properties will be enabled as it is required by GHL charts.");
-			eof_log("\tGHL:  Enabling accurate TS", 1);
+			eof_log("\tGHL:  \tEnabling accurate TS", 1);
 			eof_song->tags->accurate_ts = 1;
 		}
 		eof_apply_ts(4, 4, 0, eof_song, 0);	//Default to 4/4 meter
@@ -3446,12 +3446,14 @@ int eof_ghl_import_common(const char *fn)
 		numchanges++;
 	}
 
+//Update tempo map
 	if(import_tempo_map)
 	{	//If the user opted to import the file's tempo map
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:\tApplying %lu tempo and time signature changes", numchanges);
 		eof_log(eof_log_string, 1);
 		qsort(changes, (size_t)numchanges, sizeof(eof_ghl_change), eof_ghl_qsort_changes);	//Sort the time signature and tempo changes by timestamp
 
+		//Apply time signature changes and calculate the MIDI position of each beat
 		for(ctr = 0; ctr < numchanges; ctr++)
 		{	//For each imported tempo and time signature change
 			if(changes[ctr].num2)
@@ -3460,7 +3462,7 @@ int eof_ghl_import_common(const char *fn)
 				unsigned num, den;
 
 				//Manually count delta ticks to determine on which beat this time signature occurs
-				deltactr = beat = 0;
+				deltactr = beat = mid_beat_change = 0;
 				while(deltactr < changes[ctr].delta)
 				{	//Until the target delta position is reached or exceeded
 					(void) eof_get_effective_ts(eof_song, &num, &den, beat, 0);	//Get the time signature in effect at this beat
@@ -3468,8 +3470,7 @@ int eof_ghl_import_common(const char *fn)
 
 					if(deltactr + beatlength > changes[ctr].delta)
 					{	//If this change occurs between this beat and the next
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t!Mid beat time signature change (%lu/%lu at delta position %lu)", changes[ctr].num1, changes[ctr].num2, changes[ctr].delta);
-						eof_log(eof_log_string, 1);
+						mid_beat_change = 1;
 					}
 					deltactr += beatlength;	//Advance to the next beat
 					beat++;
@@ -3491,35 +3492,121 @@ int eof_ghl_import_common(const char *fn)
 				{	//If that appropriate beat was found
 					(void) eof_apply_ts(changes[ctr].num1, changes[ctr].num2, beat, eof_song, 0);	//Apply this time signature
 					eof_calculate_beats(eof_song);	//Rebuild the beat timings
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tApplied %lu/%lu signature to beat #%lu (delta position %lu) at %fs", changes[ctr].num1, changes[ctr].num2, beat, deltactr, eof_song->beat[beat]->fpos / 1000.0);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tApplied %lu/%lu signature to beat #%lu (delta position %lu)", changes[ctr].num1, changes[ctr].num2, beat, deltactr);
 					eof_log(eof_log_string, 1);
-				}
-			}
-			else
-			{	//This is a tempo change
-				while(changes[ctr].position * 1000 > eof_song->beat[eof_song->beats - 1]->pos)
-				{	//While there aren't enough beats to accommodate this tempo change
-					if(!eof_song_append_beats(eof_song, 1))
-					{	//If a beat couldn't be appended
-						free(changes);
-						eof_filebuffer_close(fb);	//Close the file buffer
-						eof_log("Error adding beats", 1);
-						return 1;	//Return error
+					if(mid_beat_change)
+					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\t!Mid beat time signature change (%lu/%lu at delta position %lu)", changes[ctr].num1, changes[ctr].num2, changes[ctr].delta);
+						eof_log(eof_log_string, 1);
+						if(!mid_beat_ts_warned)
+						{
+							allegro_message("Warning:  At least one mid beat time signature change was found.");
+							mid_beat_ts_warned = 1;
+						}
 					}
-					if(eof_chart_length < eof_song->beat[eof_song->beats - 1]->pos)
-						eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Update the chart length so the call to eof_get_nearest_beat() below works
-				}
-				beat = eof_get_nearest_beat(eof_song, changes[ctr].position * 1000);	//Find the beat closest to this tempo change's position
-				if(eof_beat_num_valid(eof_song, beat))
-				{	//If that beat was found
-					eof_apply_tempo(changes[ctr].num1, beat, 0);	//Apply this tempo
-					eof_calculate_beats(eof_song);		//Rebuild the beat timings
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tApplied %fBPM to beat #%lu at %fs", 60000000.0 / (double)changes[ctr].num1, beat, eof_song->beat[beat]->fpos / 1000.0);
-					eof_log(eof_log_string, 1);
 				}
 			}
-		}
-	}
+		}//For each imported tempo and time signature change
+		eof_calculate_beat_delta_positions(eof_song, 960);	//Define the midi position of each beat, for detecting mid-beat tempo changes below
+
+///Then apply tempo changes, checking that each is defined on a beat position, allowing the definition's timestamp to override EOF's more-accurate timing
+///Throw a warning message if any mid-beat tempo changes are found
+		//Apply all on-beat tempo changes on the first pass
+		//Apply mid-beat tempo changes on the second pass
+		for(loopctr = 0; loopctr < 2; loopctr++)
+		{	//Perform two passes of the tempo changes
+			for(ctr = 0; ctr < numchanges; ctr++)
+			{	//For each imported tempo and time signature change
+				if(!changes[ctr].num2)
+				{	//If this is a tempo change
+					int beats_added = 0;
+
+					mid_beat_change = 0;
+					while(changes[ctr].position * 1000 > eof_song->beat[eof_song->beats - 1]->pos)
+					{	//While there aren't enough beats to accommodate this tempo change
+						if(!eof_song_append_beats(eof_song, 1))
+						{	//If a beat couldn't be appended
+							free(changes);
+							eof_filebuffer_close(fb);	//Close the file buffer
+							eof_log("Error adding beats", 1);
+							return 1;	//Return error
+						}
+						beats_added = 1;
+						if(eof_chart_length < eof_song->beat[eof_song->beats - 1]->pos)
+							eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Update the chart length so the call to eof_get_nearest_beat() below works
+					}
+					if(beats_added)
+					{	//If any beats had to be added to accommodate this change
+						eof_calculate_beat_delta_positions(eof_song, 960);	//Update MIDI timings for the project's beats
+					}
+					beat = eof_get_nearest_beat(eof_song, changes[ctr].position * 1000);	//Find the beat closest to this tempo change's position
+					if(eof_beat_num_valid(eof_song, beat))
+					{	//If that beat was found
+						if(changes[ctr].delta != eof_song->beat[beat]->midi_pos)
+						{	//If the beat closest to this tempo change is not the tempo change's delta position, it is a mid-beat tempo change
+							double beatlengthms, beatlengthticks, changedelta, fraction;
+
+							mid_beat_change = 1;
+							if(eof_song->beat[beat]->midi_pos > changes[ctr].delta)
+							{	//Set beat to the beat immediately before where the tempo change is to occur
+								beat--;
+							}
+							beatlengthms = eof_get_beat_length(eof_song, beat);	//Get the beat's length in milliseconds
+							beatlengthticks = eof_song->beat[beat + 1]->midi_pos - eof_song->beat[beat]->midi_pos;	//Get the beat's length in delta ticks
+							changedelta = changes[ctr].delta - eof_song->beat[beat]->midi_pos;	//Get the number of delta ticks into this beat that this mid-beat change occurs
+							fraction = changedelta / beatlengthticks;	//Determine how far that is measured in beats
+							if(!loopctr)
+							{
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tSkipping mid-beat tempo change at beat %f (delta pos %lu)", beat + fraction, changes[ctr].delta);
+								eof_log(eof_log_string, 1);
+								continue;	//Don't process mid-beat changes on the first pass of the tempo changes
+							}
+							else
+							{
+///Anchor the beat immediately before the mid-beat change, insert a mid beat, define its position and tempo
+break;	//For now, don't process the mid-beat change
+							}
+						}
+						else
+						{	//This is an on-beat tempo change
+							if(loopctr)
+								continue;	//Don't process on-beat changes on the second pass of the tempo changes
+						}
+						eof_apply_tempo(changes[ctr].num1, beat, 0);	//Apply this tempo to the chosen beat marker
+
+	///Apply the time defined on the tempo change, since GHL's authoring is lax with timing accuracy
+						retval = eof_calculate_beats_logic(eof_song, 0);		//Rebuild the beat timings
+						if(retval)
+						{	//If beats were added during this process
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\t\t%lu beats added, rebuilding delta timings", retval);
+							eof_log(eof_log_string, 1);
+							eof_calculate_beat_delta_positions(eof_song, 960);	//Update MIDI timings for the project's beats
+						}
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tApplied %fBPM to beat #%lu at delta pos %lu (%fms)", 60000000.0 / (double)changes[ctr].num1, beat, eof_song->beat[beat]->midi_pos, eof_song->beat[beat]->fpos);
+						eof_log(eof_log_string, 1);
+						if(eof_pos_distance(eof_song->beat[beat]->fpos, changes[ctr].position * 1000.0) > 0.5)
+						{	//If the GHL timing is inaccurate by at least 0.5ms, use it because the note timings depend on that inaccurate timing
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tModifying beat position to %fms", (double)changes[ctr].position * 1000.0);
+							eof_log(eof_log_string, 1);
+							eof_song->beat[beat]->fpos = changes[ctr].position * 1000;	//Reposition the beat
+							eof_song->beat[beat]->pos = eof_song->beat[beat]->fpos + 0.5;	//Round to nearest millisecond
+							eof_recalculate_beats(eof_song, beat);	//Adjust the previous and next anchor accordingly
+						}
+						if(mid_beat_change)
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\t!Mid beat tempo change (%fBPM at delta position %lu) applied to beat at delta pos %lu", 60000000.0 / (double)changes[ctr].num1, changes[ctr].delta, eof_song->beat[beat]->midi_pos);
+							eof_log(eof_log_string, 1);
+							if(!mid_beat_tempo_warned)
+							{
+								allegro_message("Warning:  At least one mid beat tempo change was found.");
+								mid_beat_tempo_warned = 1;
+							}
+						}
+					}//If that beat was found
+				}//If this is a tempo change
+			}//For each imported tempo and time signature change
+		}//Perform two passes of the tempo changes
+	}//If the user opted to import the file's tempo map
 	free(changes);
 	changes = NULL;
 
@@ -3563,12 +3650,12 @@ int eof_ghl_import_common(const char *fn)
 		if((dword3 >= eventblocksize) && (stringpos < fb->size))
 		{	//If the string offset references a string
 			stringptr = (char *)&(fb->buffer[stringpos]);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, Unk2 = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk4 = %lu, string off = %lu (file off = %lu: %s)", dword, barre, eventid, note, start, end, dword2, dword3, stringpos, stringptr);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, barre = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk4 = %lu, string off = %lu (file off = %lu: %s)", dword, barre, eventid, note, start, end, dword2, dword3, stringpos, stringptr);
 		}
 		else
 		{
 			stringptr = NULL;
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, Unk2 = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk4 = %lu, string off = %lu", dword, barre, eventid, note, start, end, dword2, dword3);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, barre = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk4 = %lu, string off = %lu", dword, barre, eventid, note, start, end, dword2, dword3);
 		}
 		eof_log(eof_log_string, 1);
 
@@ -3693,7 +3780,7 @@ int eof_ghl_import_common(const char *fn)
 				if(note == lane1)
 				{	//B1
 					notemask = 1;
-					if(barre == 2)
+					if(barre & 2)
 					{	//If this is a barre chord
 						notemask = 9;	//Convert to B1+W1
 					}
@@ -3701,7 +3788,7 @@ int eof_ghl_import_common(const char *fn)
 				else if(note == lane1 + 1)
 				{	//W1
 					notemask = 8;
-					if(barre == 2)
+					if(barre & 2)
 					{	//If this is a barre chord
 						notemask = 9;	//Convert to B1+W1
 					}
@@ -3709,7 +3796,7 @@ int eof_ghl_import_common(const char *fn)
 				else if(note == lane1 + 2)
 				{	//B2
 					notemask = 2;
-					if(barre == 2)
+					if(barre & 2)
 					{	//If this is a barre chord
 						notemask = 18;	//Convert to B2+W2
 					}
@@ -3717,7 +3804,7 @@ int eof_ghl_import_common(const char *fn)
 				else if(note == lane1 + 3)
 				{	//W2
 					notemask = 16;
-					if(barre == 2)
+					if(barre & 2)
 					{	//If this is a barre chord
 						notemask = 18;	//Convert to B2+W2
 					}
@@ -3725,7 +3812,7 @@ int eof_ghl_import_common(const char *fn)
 				else if(note == lane1 + 4)
 				{	//B3
 					notemask = 4;
-					if(barre == 2)
+					if(barre & 2)
 					{	//If this is a barre chord
 						notemask = 36;	//Convert to B3+W3
 					}
@@ -3733,7 +3820,7 @@ int eof_ghl_import_common(const char *fn)
 				else
 				{	//W3
 					notemask = 32;
-					if(barre == 2)
+					if(barre & 2)
 					{	//If this is a barre chord
 						notemask = 36;	//Convert to B3+W3
 					}
@@ -3813,6 +3900,7 @@ int eof_ghl_import_common(const char *fn)
 	eof_sort_events(eof_song);
 	eof_truncate_chart(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
 	eof_set_color_set();
