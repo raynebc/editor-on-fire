@@ -3522,8 +3522,8 @@ int eof_ghl_import_common(const char *fn)
 					int beats_added = 0;
 
 					mid_beat_change = 0;
-					while(changes[ctr].position * 1000 > eof_song->beat[eof_song->beats - 1]->pos)
-					{	//While there aren't enough beats to accommodate this tempo change
+					while((eof_song->beats < 2) || (changes[ctr].position * 1000 > eof_song->beat[eof_song->beats - 2]->pos))
+					{	//While there aren't enough beats (plus one extra for buffer space) to accommodate this tempo change
 						if(!eof_song_append_beats(eof_song, 1))
 						{	//If a beat couldn't be appended
 							free(changes);
@@ -3532,14 +3532,23 @@ int eof_ghl_import_common(const char *fn)
 							return 1;	//Return error
 						}
 						beats_added = 1;
-						if(eof_chart_length < eof_song->beat[eof_song->beats - 1]->pos)
-							eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Update the chart length so the call to eof_get_nearest_beat() below works
 					}
 					if(beats_added)
 					{	//If any beats had to be added to accommodate this change
 						eof_calculate_beat_delta_positions(eof_song, 960);	//Update MIDI timings for the project's beats
 					}
-					beat = eof_get_nearest_beat(eof_song, changes[ctr].position * 1000);	//Find the beat closest to this tempo change's position
+					//Find the beat immediately at/before this tempo change, based on the given MIDI timing
+					for(ctr2 = 0, beat = 0; ctr2 < eof_song->beats; ctr2++)
+					{
+						if(eof_song->beat[ctr2]->midi_pos <= changes[ctr].delta)
+						{	//If this beat is at/before the tempo change
+							beat = ctr2;
+						}
+						else
+						{
+							break;
+						}
+					}
 					if(eof_beat_num_valid(eof_song, beat))
 					{	//If that beat was found
 						if(changes[ctr].delta != eof_song->beat[beat]->midi_pos)
@@ -3552,7 +3561,16 @@ int eof_ghl_import_common(const char *fn)
 								beat--;
 							}
 							beatlengthms = eof_get_beat_length(eof_song, beat);	//Get the beat's length in milliseconds
-							beatlengthticks = eof_song->beat[beat + 1]->midi_pos - eof_song->beat[beat]->midi_pos;	//Get the beat's length in delta ticks
+							if(beat + 1 < eof_song->beats)
+							{	//If the next beat's MIDI position was already calculated
+								beatlengthticks = eof_song->beat[beat + 1]->midi_pos - eof_song->beat[beat]->midi_pos;	//Get the beat's length in delta ticks
+							}
+							else
+							{	//Otherwise calculate it manually
+								unsigned den = 4;
+								(void) eof_get_effective_ts(eof_song, NULL, &den, beat, 1);
+								beatlengthticks = eof_song->beat[beat]->midi_pos + ((960 * 4) / den);
+							}
 							changedelta = changes[ctr].delta - eof_song->beat[beat]->midi_pos;	//Get the number of delta ticks into this beat that this mid-beat change occurs
 							fraction = changedelta / beatlengthticks;	//Determine how far that is measured in beats
 							if(!loopctr)
