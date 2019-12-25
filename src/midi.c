@@ -166,7 +166,6 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation, un
 void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 	void *datacopy = NULL;
-	// cppcheck-suppress memleak symbolName=datacopy	//Cppcheck generates a false positive when the allocted memory's pointer is stored into a global array
 
 	eof_log("eof_add_sysex_event() entered", 2);	//Only log this if verbose logging is on
 
@@ -204,6 +203,7 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon)
 			}
 		}
 	}
+	// cppcheck-suppress memleak symbolName=datacopy	//Cppcheck generates a false positive when the allocted memory's pointer is stored into a global array
 }
 
 unsigned long eof_find_midi_event_needle(unsigned char num)

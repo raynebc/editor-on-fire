@@ -460,16 +460,14 @@ long eof_fixup_previous_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 	if(!tp || (note >= tp->notes))
 		return -1;	//Invalid parameters
 
-	if(tp)
+	for(i = note; i > 0; i--)
 	{
-		for(i = note; i > 0; i--)
+		if(tp->note[i - 1]->type == tp->note[note]->type)
 		{
-			if(tp->note[i - 1]->type == tp->note[note]->type)
-			{
-				return i - 1;
-			}
+			return i - 1;
 		}
 	}
+
 	return -1;
 }
 
@@ -480,16 +478,14 @@ long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 	if(!tp || (note >= tp->notes))
 		return -1;	//Invalid parameters
 
-	if(tp)
+	for(i = note + 1; i < tp->notes; i++)
 	{
-		for(i = note + 1; i < tp->notes; i++)
+		if(tp->note[i]->type == tp->note[note]->type)
 		{
-			if(tp->note[i]->type == tp->note[note]->type)
-			{
-				return i;
-			}
+			return i;
 		}
 	}
+
 	return -1;
 }
 
@@ -5489,16 +5485,14 @@ long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 	if(!tp || (note >= tp->notes))
 		return -1;	//Invalid parameters
 
-	if(tp)
+	for(i = note; i > 0; i--)
 	{
-		for(i = note; i > 0; i--)
+		if(tp->note[i - 1]->type == tp->note[note]->type)
 		{
-			if(tp->note[i - 1]->type == tp->note[note]->type)
-			{
-				return i - 1;
-			}
+			return i - 1;
 		}
 	}
+
 	return -1;
 }
 
@@ -5509,16 +5503,14 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 	if(!tp || (note >= tp->notes))
 		return -1;	//Invalid parameters
 
-	if(tp)
+	for(i = note + 1; i < tp->notes; i++)
 	{
-		for(i = note + 1; i < tp->notes; i++)
+		if(tp->note[i]->type == tp->note[note]->type)
 		{
-			if(tp->note[i]->type == tp->note[note]->type)
-			{
-				return i;
-			}
+			return i;
 		}
 	}
+
 	return -1;
 }
 
@@ -5529,16 +5521,14 @@ long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITA
 	if(!tp || !np)
 		return -1;	//Invalid parameters
 
-	if(tp)
+	for(i = 0; i < tp->notes; i++)
 	{
-		for(i = 0; i < tp->notes; i++)
+		if((tp->note[i]->pos > np->pos) && (tp->note[i]->type == np->type))
 		{
-			if((tp->note[i]->pos > np->pos) && (tp->note[i]->type == np->type))
-			{
-				return i;
-			}
+			return i;
 		}
 	}
+
 	return -1;
 }
 
@@ -5549,16 +5539,14 @@ long eof_fixup_next_pro_guitar_technote(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 	if(!tp || (tnote >= tp->technotes))
 		return -1;	//Invalid parameters
 
-	if(tp)
+	for(i = tnote + 1; i < tp->technotes; i++)
 	{
-		for(i = tnote + 1; i < tp->technotes; i++)
+		if(tp->technote[i]->type == tp->technote[tnote]->type)
 		{
-			if(tp->technote[i]->type == tp->technote[tnote]->type)
-			{
-				return i;
-			}
+			return i;
 		}
 	}
+
 	return -1;
 }
 

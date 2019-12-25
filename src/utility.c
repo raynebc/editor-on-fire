@@ -111,7 +111,7 @@ void *eof_buffer_file(const char * fn, char appendnull)
 	if(fn == NULL)
 		return NULL;
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuffering file:  \"%s\"", fn);
-	eof_log(eof_log_string, 1);
+	eof_log(eof_log_string, 2);
 	fp = pack_fopen(fn, "r");
 	if(fp == NULL)
 	{

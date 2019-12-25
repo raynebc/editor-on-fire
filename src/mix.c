@@ -480,6 +480,7 @@ void eof_mix_init(void)
 	char fbuffer[1024] = {0};
 
 	eof_log("eof_mix_init() entered", 1);
+	eof_log("\tLoading audio samples", 1);
 
 	eof_sound_clap = eof_load_wav("clap.wav");
 	if(!eof_sound_clap)

@@ -3138,6 +3138,46 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The status of whether the seek position is within a defined lyric line
+	if(!ustricmp(macro, "SEEK_LYRIC_LINE_STATUS"))
+	{
+		EOF_VOCAL_TRACK *tp;
+		unsigned long ctr, seekpos = eof_music_pos - eof_av_delay;
+
+		tp = eof_song->vocal_track[0];
+		for(ctr = 0; ctr < tp->lines; ctr++)
+		{	//For each lyric line in the vocal track
+			if((seekpos >= tp->line[ctr].start_pos) && (seekpos <= tp->line[ctr].end_pos))
+			{	//If the seek position is within this lyric line
+				snprintf(dest_buffer, dest_buffer_size, "Seek pos within lyric line (%lums - %lums)", tp->line[ctr].start_pos, tp->line[ctr].end_pos);
+				return 1;
+			}
+		}
+
+		snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a lyric line");
+		return 1;
+	}
+
+	//The status of whether the seek position is within a defined slider phrase
+	if(!ustricmp(macro, "SEEK_SLIDER_STATUS"))
+	{
+		EOF_PHRASE_SECTION *ptr = NULL;
+		unsigned long ctr, seekpos = eof_music_pos - eof_av_delay;
+
+		for(ctr = 0; ctr < eof_get_num_sliders(eof_song, eof_selected_track); ctr++)
+		{	//For each slider phrase in the active track
+			ptr = eof_get_slider(eof_song, eof_selected_track, ctr);
+			if((seekpos >= ptr->start_pos) && (seekpos <= ptr->end_pos))
+			{	//If the seek position is within this slider phrase
+				snprintf(dest_buffer, dest_buffer_size, "Seek pos within slider phrase (%lums - %lums)", ptr->start_pos, ptr->end_pos);
+				return 1;
+			}
+		}
+
+		snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a slider phrase");
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)

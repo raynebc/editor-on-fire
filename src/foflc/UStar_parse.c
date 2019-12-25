@@ -382,7 +382,6 @@ void Export_UStar(FILE *outf)
 			errornumber=errno;
 		if(!newline && !current->prev->groupswithnext)	//If this piece doesn't group with previous piece and isn't the first lyric in this line
 		{
-			assert_wrapper(current->prev->groupswithnext == 0);
 			if(Lyrics.verbose>=2)	printf("\tNo grouping between \"%s\" and \"%s\"\n",(current->prev)->lyric,current->lyric);
 			fputc_err(' ',outf);	//An extra space prefix is necessary for non-grouped pieces
 		}
@@ -873,6 +872,7 @@ void RemapPitches(void)
 
 //Determine the pitch that begins AFTER the highest octave of 12 usable notes
 	maxoctave=(MAXPITCH/12)*12-12;	//The pitch of C in the octave below the maximum pitch
+	// cppcheck-suppress constArgument
 	assert_wrapper(maxoctave>minoctave);	//This better be the case or it's an invalid MINPITCH and MAXPITCH definition (MAXPITCH must be at least 12 higher than MINPITCH)
 
 	diff=minoctave - ((pitchmin/12)*12);	//Find the difference between the lowest used octave and the lowest usable octave

@@ -3757,8 +3757,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 										eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag
 										eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes
 									}
-									else if(bitmask != 32)
-									{	//Otherwise as long as the user isn't trying to delete the non GHL open note by toggling it off
+									else
+									{	//Otherwise as long as the user isn't trying to delete the non GHL open note by toggling it off (since bitmask != 32 as per the outer else condition)
 										eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the new gem will replace the open note
 									}
 								}
@@ -6498,6 +6498,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					if(usedlanes & bitmask)
 					{	//If this lane is used in the phrase
 						int x1 = lpos + sectionptr->start_pos / eof_zoom;
+						// cppcheck-suppress shadowFunction symbolName=y1
 						int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
 						int x2 = lpos + sectionptr->end_pos / eof_zoom;
 						int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;

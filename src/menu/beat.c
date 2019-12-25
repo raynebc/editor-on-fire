@@ -125,6 +125,7 @@ MENU eof_beat_menu[] =
 	{"&Paste tempo map", eof_menu_beat_paste_tempo_map, NULL, 0, NULL},
 	{"&Validate tempo map", eof_menu_beat_validate_tempo_map, NULL, 0, NULL},
 	{"Remove mid-beat status", eof_menu_beat_remove_mid_beat_status, NULL, 0, NULL},
+	{"&Move to seek pos", eof_menu_beat_move_to_seek_pos, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
@@ -304,6 +305,7 @@ void eof_prepare_beat_menu(void)
 		eof_beat_menu[11].flags = 0;	//Delete anchor
 		eof_beat_menu[12].flags = 0;	//Anchor measures
 		eof_beat_menu[14].flags = 0;	//Paste tempo map
+		eof_beat_menu[17].flags = 0;	//Move to seek pos
 
 		eof_beat_bpm_menu[0].flags = 0;	//BPM>BPM change
 		eof_beat_bpm_menu[1].flags = 0;	//BPM>Reset BPM
@@ -437,20 +439,20 @@ void eof_prepare_beat_menu(void)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
-			eof_beat_menu[19].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[20].flags = 0;	//Beat>Rocksmith>
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
-				eof_beat_menu[20].flags = D_DISABLED;
+				eof_beat_menu[21].flags = D_DISABLED;
 			}
 			else
 			{
-				eof_beat_menu[20].flags = 0;	//Place Trainer Event
+				eof_beat_menu[21].flags = 0;	//Place Trainer Event
 			}
 		}
 		else
 		{
-			eof_beat_menu[19].flags = D_DISABLED;
 			eof_beat_menu[20].flags = D_DISABLED;
+			eof_beat_menu[21].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -549,6 +551,7 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[11].flags = D_DISABLED;	//Delete anchor
 			eof_beat_menu[12].flags = D_DISABLED;	//Anchor measures
 			eof_beat_menu[14].flags = D_DISABLED;	//Paste tempo map
+			eof_beat_menu[17].flags = D_DISABLED;	//Move to seek pos
 
 			eof_beat_bpm_menu[0].flags = D_DISABLED;	//BPM>BPM change
 			eof_beat_bpm_menu[1].flags = D_DISABLED;	//BPM>Reset BPM
@@ -1109,6 +1112,7 @@ int eof_menu_beat_anchor(void)
 			(void) eof_menu_edit_cut(eof_selected_beat, 1);
 		}
 		newpos = (double)mm * 60.0 * 1000.0 + (double)ss * 1000.0 + (double)ms;
+///It's unclear why this function was designed to move the affected beat 1ms at a time or why that would be necessary
 		if(newpos > oldpos)
 		{
 			while(eof_song->beat[eof_selected_beat]->pos < newpos)
@@ -1172,6 +1176,29 @@ int eof_menu_beat_toggle_anchor(void)
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->flags ^= EOF_BEAT_FLAG_ANCHOR;
+	return 1;
+}
+
+int eof_menu_beat_move_to_seek_pos(void)
+{
+	if(!eof_song)
+		return 1;							//No project loaded
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
+	if(!eof_beat_num_valid(eof_song, eof_selected_beat))
+		return 1;							//Logic error
+	if(eof_song->beat[eof_selected_beat]->pos == eof_music_pos - eof_av_delay)
+		return 1;							//The seek position is at the selected beat's position already
+	if(eof_check_for_anchors_between_selected_beat_and_seek_pos())
+		return 1;							//Don't allow this function to move the selected beat through an anchor
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos = eof_music_pos - eof_av_delay;	//Update the selected beat's position
+	eof_recalculate_beats(eof_song, eof_selected_beat);	//Update beat timings
+	eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
+	eof_fixup_notes(eof_song);										//Update note highlighting
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
+
 	return 1;
 }
 

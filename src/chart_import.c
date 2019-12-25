@@ -783,6 +783,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 							new_note->midi_pos = current_note->chartpos;	//Track the note's original chart position to more reliably apply HOPO status
 							new_note->pos = notepos;	//Assign the position (which may have been resnapped)
 							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL) - (double)originalnotepos + 0.5;	//Determine the length (using the non resnapped position), round up
+							if(!new_note->length)
+								new_note->length = 1;	//Pad the note to 1ms length if it has no length (to ensure that each slider that is added always ends after the start position of its final note)
 							if((current_note->chartpos == lastpos) && (current_note->duration != lastduration) && lastnotewasgem)
 							{	//If the previous note was a gem (instead of a marker) and this gem and the previous one start at the same time but have different lengths
 								new_note->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to the new note
@@ -1043,6 +1045,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			{	//If this note is a slider note
 				unsigned long end = 0;
 				unsigned long start = eof_get_note_pos(sp, ctr, ctr2);	//Track the start position of this run of slider notes
+				long length;
 
 				while(ctr2 + 1 < eof_get_track_size(sp, ctr))
 				{	//While there are additional notes to check
@@ -1054,7 +1057,12 @@ EOF_SONG * eof_import_chart(const char * fn)
 						break;	//If the next note begins more than a second after this one ends, exit inner loop
 					ctr2++;		//Otherwise include this note in the slider note phrase
 				}
-				end = eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2);	//Track the end position of this run of slider notes
+				length = eof_get_note_length(sp, ctr, ctr2);
+				if(length == 1)
+				{	//If the last note in the slider phrase is only 1ms long
+					length++;	//Increase the slider length by 1ms to better avoid special cases where the note will quantize to be outside the slider during MIDI export
+				}
+				end = eof_get_note_pos(sp, ctr, ctr2) + length;	//Track the end position of this run of slider notes
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tCreating slider section from %lums to %lums", start, end);
 				eof_log(eof_log_string, 2);
 				(void) eof_track_add_section(sp, ctr, EOF_SLIDER_SECTION, 0xFF, start, end, 0, NULL);	//Add the slider phrase

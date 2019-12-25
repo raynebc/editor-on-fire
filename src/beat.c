@@ -1128,3 +1128,37 @@ void eof_remove_ts(unsigned long beatnum)
 	flags &= ~0x00FF0000;	//Clear any custom TS denominator
 	eof_song->beat[beatnum]->flags = flags;
 }
+
+int eof_check_for_anchors_between_selected_beat_and_seek_pos(void)
+{
+	unsigned long beat1, beat2;
+
+	if(!eof_song)
+		return 1;							//No project loaded
+	if(!eof_beat_num_valid(eof_song, eof_selected_beat))
+		return 1;							//Logic error
+
+	//Check for the presence of any anchored beat markers between the selected beat and the seek position
+	beat1 = beat2 = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	if(eof_selected_beat < beat1)
+	{	//If the selected beat is before the seek position
+		beat1 = eof_selected_beat;
+	}
+	else
+	{	//The selected beat is at/after the seek position
+		beat2 = eof_selected_beat;
+	}
+	while(beat1 < beat2)
+	{	//For each beat between the selected beat's start position and beat containing the end position
+		if(beat1 != eof_selected_beat)
+		{	//If this isn't the beat which is currently selected (which will move regardless of whether it's already an anchor)
+			if(eof_song->beat[beat1]->flags & EOF_BEAT_FLAG_ANCHOR)
+			{	//If this beat is an anchor
+				return 1;
+			}
+		}
+		beat1++;
+	}
+
+	return 0;	//None of the beats were anchors
+}

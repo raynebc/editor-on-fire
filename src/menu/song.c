@@ -1227,12 +1227,10 @@ int eof_menu_song_properties(void)
 	old_offset = eof_song->tags->ogg[0].midi_offset;
 	oldaccurate_ts = eof_song->tags->accurate_ts;
 	eof_cursor_visible = 0;
-	if(eof_song_loaded)
-	{
-		eof_music_paused = 1;
-		eof_stop_midi();
-		alogg_stop_ogg(eof_music_track);
-	}
+	eof_music_paused = 1;
+	eof_stop_midi();
+	alogg_stop_ogg(eof_music_track);
+
 	eof_render();
 	eof_color_dialog(eof_song_properties_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_song_properties_dialog);

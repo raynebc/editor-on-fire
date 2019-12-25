@@ -480,11 +480,9 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 			}
 			if(index > solution->deployments[deployment_num])
 			{	//If the solution indicated to deploy at a note that was already surpassed by the cache entry
-				if(logging)
-				{
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t!Invalid:  Cached scoring shows the attempted deployment is not possible.");
-					eof_log_casual(eof_log_string, 1, 0, 0);
-				}
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t!Invalid:  Cached scoring shows the attempted deployment is not possible.");
+				eof_log_casual(eof_log_string, 1, 0, 0);
+
 				return 2;	//Solution invalidated by cache
 			}
 		}
@@ -3350,7 +3348,7 @@ int eof_pos_is_within_sp_deployment(EOF_SP_PATH_SOLUTION *solution, unsigned lon
 	if(!eof_song || !solution)
 		return 0;	//Invalid parameters
 
-	if(solution && solution->score && solution->num_deployments)
+	if(solution->score && solution->num_deployments)
 	{	//If the specified star power solution structure is built and a score was determined
 		unsigned long ctr, target = ULONG_MAX, notenum, sp_start = ULONG_MAX, pos, sp_end;
 

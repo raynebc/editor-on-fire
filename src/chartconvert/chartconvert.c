@@ -1641,9 +1641,6 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 	int error = 0;
 	unsigned char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum)
 
-	if(!filename ||  !chart)
-		return 1;	//Invalid parameters
-
 	///Open file
 	if(!filename)
 	{

@@ -94,4 +94,8 @@ void eof_apply_tempo(unsigned long ppqn, unsigned long beatnum, char adjust);
 void eof_remove_ts(unsigned long beatnum);
 	//Removes the time signature defined on the specified beat
 
+int eof_check_for_anchors_between_selected_beat_and_seek_pos(void);
+	//Returns zero if there are no anchors (excluding the selected beat) between the selected beat and the seek position
+	//Returns nonzero if there are anchors or upon error
+
 #endif

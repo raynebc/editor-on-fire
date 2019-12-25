@@ -64,6 +64,7 @@ int eof_menu_beat_push_offset_back(char *undo_made);
 int eof_menu_beat_push_offset_back_menu(void);	//Calls eof_menu_beat_push_offset_back() with the option of making an undo state
 int eof_menu_beat_push_offset_up(void);
 int eof_menu_beat_toggle_anchor(void);
+int eof_menu_beat_move_to_seek_pos(void);	//Moves the selected beat to the seek position if there are no anchors between the selected beat's start and destination positions
 
 int eof_menu_beat_delete_anchor_logic(char *undo_made);
 	//If the currently selected beat is an anchor, deletes its anchor status, assigning it the previous anchor's tempo and updating beat positions
