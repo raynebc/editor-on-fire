@@ -18,10 +18,12 @@ void eof_prepare_note_menu(void);
 int eof_menu_solo_mark(void);
 int eof_menu_solo_unmark(void);
 int eof_menu_solo_erase_all(void);
+int eof_menu_solo_edit_timing(void);	//Uses eof_phrase_edit_timing() to edit the timings of the selected solo phrase (if such a phrase is defined)
 
 int eof_menu_star_power_mark(void);
 int eof_menu_star_power_unmark(void);
 int eof_menu_star_power_erase_all(void);
+int eof_menu_sp_edit_timing(void);	//Uses eof_phrase_edit_timing() to edit the timings of the selected star power phrase (if such a phrase is defined)
 
 int eof_menu_lyric_line_mark(void);
 int eof_menu_lyric_line_unmark(void);

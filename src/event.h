@@ -29,7 +29,10 @@ int eof_song_qsort_events(const void * e1, const void * e2);
 char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific);
 	//Returns nonzero if there is one or more text events that matches the specified string exactly (case sensitive)
 	// and whose flags ANDED with the specified flags is nonzero (ie. for checking for existing of a RS phrase, use a flags value of all bits set to search for any event type)
+	//If the event's flags is already 0, it will not be filtered out
 	//If track_specific is nonzero, only events with a matching track number value are checked for comparison, otherwise all events are checked
+char eof_song_contains_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific);
+	//Similar to eof_song_contains_event(), but instead checks for the existence of any section event at the specified position matching the given flags/track specificity filtering
 char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text, unsigned long track);
 	//Returns nonzero if there is one or more text events that begins with the specified string exactly (case sensitive substring)
 	//If track is nonzero, only events in that track are checked for comparison, otherwise all events are checked

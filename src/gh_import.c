@@ -3728,18 +3728,30 @@ int eof_ghl_import_common(const char *fn)
 				{	//If a valid beat position was found
 					char sectionstring[100] = {0};
 					unsigned long distance = (eof_song->beat[beat]->pos > eventpos) ? (eof_song->beat[beat]->pos - eventpos) : (eventpos - eof_song->beat[beat]->pos);
+					unsigned long targetpos, flags = 0;
 
 					snprintf(sectionstring, sizeof(sectionstring) - 1, "[section %s]", stringptr);	//Format the event text to be recognized as a section
 					if(distance <= 2)
 					{	//If the section is defined within 2ms of a beat marker
-						(void) eof_song_add_text_event(eof_song, beat, sectionstring, eof_selected_track, 0, 0);	//Add it
+						targetpos = beat;	//The section will be placed on this beat
+						eventpos = eof_song->beat[beat]->pos;	//Track that beat's millisecond position to check below whether a section exists at that timestamp
 					}
 					else
 					{	//Otherwise add it as a floating text event
-						(void) eof_song_add_text_event(eof_song, eventpos, sectionstring, eof_selected_track, EOF_EVENT_FLAG_FLOATING_POS, 0);	//Add it
+						targetpos = eventpos;	//The section will be placed at this millisecond position
+						flags = EOF_EVENT_FLAG_FLOATING_POS;
 					}
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tImported as text event \"%s\"", sectionstring);
-					eof_log(eof_log_string, 1);
+					if(eof_song_contains_section_at_pos(eof_song, eventpos, 0, ULONG_MAX, 0))
+					{	//If a section already exists at this position for ANY track
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tIgnoring text event \"%s\" as there is already a section marker at %lums", sectionstring, eventpos);
+						eof_log(eof_log_string, 1);
+					}
+					else
+					{
+						(void) eof_song_add_text_event(eof_song, targetpos, sectionstring, 0, flags, 0);	//Add the event globally (not specific to just the active track)
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tImported as text event \"%s\"", sectionstring);
+						eof_log(eof_log_string, 1);
+					}
 				}
 			}
 		}
@@ -3926,6 +3938,7 @@ int eof_ghl_import_common(const char *fn)
 	eof_fix_window_title();
 	eof_render();
 	eof_filebuffer_close(fb);	//Close the file buffer
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current since sections may have been added
 
 	return error;
 }

@@ -343,6 +343,7 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel)
 {
 	unsigned long tracknum, tracksize;
+	EOF_PHRASE_SECTION *phraseptr;
 
 	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
@@ -1705,7 +1706,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
-	//Track solo note stats
+	//Track star power note stats
 	if(!ustricmp(macro, "TRACK_SP_NOTE_STATS"))
 	{
 		unsigned long count, min = 0, max = 0, spcount;
@@ -1724,13 +1725,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
-	//Track star power count
+	//Track slider count
 	if(!ustricmp(macro, "TRACK_SLIDER_COUNT"))
 	{
 		unsigned long count = eof_get_num_sliders(eof_song, eof_selected_track);
 
 		if(count)
-		{	//If there are any star power sections in the active track
+		{	//If there are any slider sections in the active track
 			snprintf(dest_buffer, dest_buffer_size, "%lu", count);
 		}
 		else
@@ -1764,7 +1765,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
-	//Track solo note stats
+	//Track slider note stats
 	if(!ustricmp(macro, "TRACK_SLIDER_NOTE_STATS"))
 	{
 		unsigned long count, slidercount, min = 0, max = 0;
@@ -3119,62 +3120,66 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//The status of whether the seek position is within a defined star power phrase
-	if(!ustricmp(macro, "SEEK_SP_STATUS"))
+	if(!ustricmp(macro, "SEEK_SP_STATUS") || !ustricmp(macro, "SEEK_SP_STATUS_CONDITIONAL"))
 	{
-		EOF_PHRASE_SECTION *ptr = NULL;
-		unsigned long ctr, seekpos = eof_music_pos - eof_av_delay;
-
-		for(ctr = 0; ctr < eof_get_num_star_power_paths(eof_song, eof_selected_track); ctr++)
-		{	//For each star power path in the active track
-			ptr = eof_get_star_power_path(eof_song, eof_selected_track, ctr);
-			if((seekpos >= ptr->start_pos) && (seekpos <= ptr->end_pos))
-			{	//If the seek position is within this star power phrase
-				snprintf(dest_buffer, dest_buffer_size, "Seek pos within SP phrase (%lums - %lums)", ptr->start_pos, ptr->end_pos);
-				return 1;
-			}
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SP_SECTION, eof_music_pos - eof_av_delay);
+		dest_buffer[0] = '\0';
+		if(phraseptr)
+		{	//If the seek position is within a star power phrase
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos within SP phrase (%lums - %lums)", phraseptr->start_pos, phraseptr->end_pos);
 		}
-
-		snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within an SP phrase");
+		else if(!ustricmp(macro, "SEEK_SP_STATUS"))
+		{	//If this isn't %SEEK_SP_STATUS_CONDITIONAL%
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within an SP phrase");
+		}
 		return 1;
 	}
 
 	//The status of whether the seek position is within a defined lyric line
-	if(!ustricmp(macro, "SEEK_LYRIC_LINE_STATUS"))
+	if(!ustricmp(macro, "SEEK_LYRIC_LINE_STATUS") || !ustricmp(macro, "SEEK_LYRIC_LINE_STATUS_CONDITIONAL"))
 	{
-		EOF_VOCAL_TRACK *tp;
-		unsigned long ctr, seekpos = eof_music_pos - eof_av_delay;
-
-		tp = eof_song->vocal_track[0];
-		for(ctr = 0; ctr < tp->lines; ctr++)
-		{	//For each lyric line in the vocal track
-			if((seekpos >= tp->line[ctr].start_pos) && (seekpos <= tp->line[ctr].end_pos))
-			{	//If the seek position is within this lyric line
-				snprintf(dest_buffer, dest_buffer_size, "Seek pos within lyric line (%lums - %lums)", tp->line[ctr].start_pos, tp->line[ctr].end_pos);
-				return 1;
-			}
+		phraseptr = eof_get_section_instance_at_pos(eof_song, EOF_TRACK_VOCALS, EOF_LYRIC_PHRASE_SECTION, eof_music_pos - eof_av_delay);
+		dest_buffer[0] = '\0';
+		if(phraseptr)
+		{	//If the seek position is within a lyric line
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos within lyric line (%lums - %lums)", phraseptr->start_pos, phraseptr->end_pos);
 		}
-
-		snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a lyric line");
+		else if(!ustricmp(macro, "SEEK_LYRIC_LINE_STATUS"))
+		{	//If this isn't %SEEK_LYRIC_LINE_STATUS_CONDITIONAL%
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a lyric line");
+		}
 		return 1;
 	}
 
 	//The status of whether the seek position is within a defined slider phrase
-	if(!ustricmp(macro, "SEEK_SLIDER_STATUS"))
+	if(!ustricmp(macro, "SEEK_SLIDER_STATUS") || !ustricmp(macro, "SEEK_SLIDER_STATUS_CONDITIONAL"))
 	{
-		EOF_PHRASE_SECTION *ptr = NULL;
-		unsigned long ctr, seekpos = eof_music_pos - eof_av_delay;
-
-		for(ctr = 0; ctr < eof_get_num_sliders(eof_song, eof_selected_track); ctr++)
-		{	//For each slider phrase in the active track
-			ptr = eof_get_slider(eof_song, eof_selected_track, ctr);
-			if((seekpos >= ptr->start_pos) && (seekpos <= ptr->end_pos))
-			{	//If the seek position is within this slider phrase
-				snprintf(dest_buffer, dest_buffer_size, "Seek pos within slider phrase (%lums - %lums)", ptr->start_pos, ptr->end_pos);
-				return 1;
-			}
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SLIDER_SECTION, eof_music_pos - eof_av_delay);
+		dest_buffer[0] = '\0';
+		if(phraseptr)
+		{	//If the seek position is within a slider phrase
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos within slider phrase (%lums - %lums)", phraseptr->start_pos, phraseptr->end_pos);
 		}
+		else if(!ustricmp(macro, "SEEK_SLIDER_STATUS"))
+		{	//If this isn't %SEEK_SLIDER_STATUS_CONDITIONAL%
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a slider phrase");
+		}
+		return 1;
+	}
 
-		snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a slider phrase");
+	//The status of whether the seek position is within a defined solo phrase
+	if(!ustricmp(macro, "SEEK_SOLO_STATUS") || !ustricmp(macro, "SEEK_SOLO_STATUS_CONDITIONAL"))
+	{
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SOLO_SECTION, eof_music_pos - eof_av_delay);
+		dest_buffer[0] = '\0';
+		if(phraseptr)
+		{	//If the seek position is within a solo phrase
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos within solo phrase (%lums - %lums)", phraseptr->start_pos, phraseptr->end_pos);
+		}
+		else if(!ustricmp(macro, "SEEK_SOLO_STATUS"))
+		{	//If this isn't %SEEK_SOLO_STATUS_CONDITIONAL%
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a solo phrase");
+		}
 		return 1;
 	}
 

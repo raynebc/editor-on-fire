@@ -202,8 +202,8 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track
 
 	for(i = 0; i < sp->text_events; i++)
 	{
-		if((sp->text_event[i]->flags & flags) == 0)
-		{	//If the specified flags filters out this event
+		if(sp->text_event[i]->flags && ((sp->text_event[i]->flags & flags) == 0))
+		{	//If this event has any set flags and the specified flags filters out this event
 			continue;	//Skip this event
 		}
 		if(track_specific)
@@ -216,6 +216,37 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track
 		if(!ustrcmp(sp->text_event[i]->text, text))
 		{
 			return 1;	//Return match found
+		}
+	}
+	return 0;	//Return no match found
+}
+
+char eof_song_contains_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific)
+{
+	unsigned long i;
+
+	if(!sp)
+		return 0;	//Invalid parameters
+
+	for(i = 0; i < sp->text_events; i++)
+	{
+		if(sp->text_event[i]->flags && ((sp->text_event[i]->flags & flags) == 0))
+		{	//If this event has any set flags and the specified flags filters out this event
+			continue;	//Skip this event
+		}
+		if(track_specific)
+		{	//If the track specific flag is to be matched
+			if(sp->text_event[i]->track != track)
+			{	//If this event isn't in the specified track
+				continue;	//Skip this event
+			}
+		}
+		if(eof_get_text_event_pos(sp, i) == pos)
+		{	//If the text event exists at the specified position
+			if(eof_text_is_section_marker(sp->text_event[i]->text))
+			{	//If the text event is considered a section
+				return 1;	//Return match found
+			}
 		}
 	}
 	return 0;	//Return no match found

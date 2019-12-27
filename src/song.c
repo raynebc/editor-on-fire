@@ -2700,6 +2700,28 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 	return *ptr;
 }
 
+EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long pos)
+{
+	unsigned long sectioncount = 0, ctr;
+	EOF_PHRASE_SECTION *ptr = NULL;
+
+	if(!sp || (track >= sp->tracks))
+		return NULL;	//Invalid parameters
+
+	if(eof_lookup_track_section_type(sp, track, sectiontype, &sectioncount, &ptr) && ptr)
+	{	//If the array of this section type was found
+		for(ctr = 0; ctr < sectioncount; ctr++)
+		{	//For each instance
+			if((pos >= ptr[ctr].start_pos) && (pos <= ptr[ctr].end_pos))
+			{	//If the specified position is within this instance
+				return &ptr[ctr];	//Return it by reference
+			}
+		}
+	}
+
+	return NULL;	//No match found
+}
+
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
 {
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling

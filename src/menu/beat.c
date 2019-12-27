@@ -539,6 +539,11 @@ void eof_prepare_beat_menu(void)
 			eof_beat_halve_bpm_menu[0].flags = 0;
 		}
 
+		if(eof_check_for_anchors_between_selected_beat_and_seek_pos() || (eof_song->beat[eof_selected_beat]->pos == eof_music_pos - eof_av_delay))
+		{	//If there are anchors between the selected beat and seek position, or the selected beat is at the seek position already
+			eof_beat_menu[17].flags = D_DISABLED;	//Move to seek pos
+		}
+
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the chart's tempo map is locked, disable various beat operations
 			eof_beat_menu[4].flags = D_DISABLED;	//Add

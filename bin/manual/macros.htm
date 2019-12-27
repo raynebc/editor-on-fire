@@ -942,15 +942,35 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 <tr>
 <td>%SEEK_SP_STATUS%</td>
-<td>Prints whether or not the seek position is within a defined star power phrase, and if so, that phrase's start and stop timestamps.
+<td>Prints whether or not the seek position is within a defined star power phrase, and if so, that phrase's start and stop timestamps.  If not, "Seek pos is not within an SP phrase" is printed.
+</tr>
+<tr>
+<td>%SEEK_SP_STATUS_CONDITIONAL%</td>
+<td>Similar to %SEEK_SP_STATUS% but prints nothing if the seek position is not within a star power phrase.
 </tr>
 <tr>
 <td>%SEEK_LYRIC_LINE_STATUS%</td>
-<td>Prints whether or not the seek position is within a defined lyric line, and if so, that line's start and stop timestamps.
+<td>Prints whether or not the seek position is within a defined lyric line, and if so, that line's start and stop timestamps.  If not, "Seek pos is not within a lyric line" is printed.
+</tr>
+<tr>
+<td>%SEEK_LYRIC_LINE_STATUS_CONDITIONAL%</td>
+<td>Similar to %SEEK_LYRIC_LINE_STATUS% but prints nothing if the seek position is not within a lyric line.
 </tr>
 <tr>
 <td>%SEEK_SLIDER_STATUS%</td>
-<td>Prints whether or not the seek position is within a defined slider phrase, and if so, that phrase's start and stop timestamps.
+<td>Prints whether or not the seek position is within a defined slider phrase, and if so, that phrase's start and stop timestamps.  If not, "Seek pos is not within a slider phrase" is printed.
+</tr>
+<tr>
+<td>%SEEK_SLIDER_STATUS_CONDITIONAL%</td>
+<td>Similar to %SEEK_SLIDER_STATUS% but prints nothing if the seek position is not within a slider phrase.
+</tr>
+<tr>
+<td>%SEEK_SOLO_STATUS%</td>
+<td>Prints whether or not the seek position is within a defined solo phrase, and if so, that phrase's start and stop timestamps.  If not, "Seek pos is not within a solo phrase" is printed.
+</tr>
+<tr>
+<td>%SEEK_SOLO_STATUS_CONDITIONAL%</td>
+<td>Similar to %SEEK_SOLO_STATUS% but prints nothing if the seek position is not within a solo phrase.
 </tr>
 </tbody>
 </table>

@@ -721,6 +721,9 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 	//Stores the count and address of the specified section type of the specified chart into *count and **ptr
 	//Returns the address of the section array (which is also stored into ptr) upon success, or NULL upon error
 	//If the section type is not applicable for the track in question, *count is set to 0 and *ptr is set to NULL
+EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long pos);
+	//Returns a pointer to the first instance of the specified section type of the specified track that the specified position is within
+	//Returns NULL if pos is not within any such section or upon error
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name);
 	//Adds the specified section to the specified track if it's valid for the track, track 0 is used to reference certain items that are project-wide in scope
 	//For bookmark sections, the end variable represents which bookmark number is being set

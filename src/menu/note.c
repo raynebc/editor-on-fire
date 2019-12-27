@@ -57,6 +57,7 @@ MENU eof_solo_menu[] =
 	{eof_solo_menu_mark_text, eof_menu_solo_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_solo_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_solo_erase_all, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_solo_edit_timing, NULL, 0, NULL},
 	{"&Copy From", NULL, eof_menu_solo_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -85,6 +86,7 @@ MENU eof_star_power_menu[] =
 	{eof_star_power_menu_mark_text, eof_menu_star_power_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_star_power_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_star_power_erase_all, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_sp_edit_timing, NULL, 0, NULL},
 	{"&Copy From", NULL, eof_menu_sp_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -818,14 +820,17 @@ void eof_prepare_note_menu(void)
 		}
 
 		/* star power mark/remark */
+		/* edit timing */
 		if(insp)
 		{
-			eof_star_power_menu[1].flags = 0;
+			eof_star_power_menu[1].flags = 0;	//Mark/re-mark
+			eof_star_power_menu[3].flags = 0;	//Edit timing
 			(void) ustrcpy(eof_star_power_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+W");
 		}
 		else
 		{
 			eof_star_power_menu[1].flags = D_DISABLED;
+			eof_star_power_menu[3].flags = D_DISABLED;
 			(void) ustrcpy(eof_star_power_menu_mark_text, "&Mark\t" CTRL_NAME "+W");
 		}
 
@@ -841,14 +846,17 @@ void eof_prepare_note_menu(void)
 		}
 
 		/* solo mark/remark */
+		/* edit timing */
 		if(insolo)
 		{
 			eof_solo_menu[1].flags = 0;
+			eof_solo_menu[3].flags = 0;	//Edit timing
 			(void) ustrcpy(eof_solo_menu_mark_text, "Re-&Mark");
 		}
 		else
 		{
 			eof_solo_menu[1].flags = D_DISABLED;
+			eof_solo_menu[3].flags = D_DISABLED;
 			(void) ustrcpy(eof_solo_menu_mark_text, "&Mark");
 		}
 
@@ -867,13 +875,15 @@ void eof_prepare_note_menu(void)
 		if(inll)
 		{
 			eof_lyric_line_menu[1].flags = 0;	//Note>Lyrics>Lyric Lines>Remove
-			eof_lyric_line_menu[4].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
+			eof_lyric_line_menu[3].flags = 0;	//Note>Lyrics>Lyric Lines>Edit timing
+			eof_lyric_line_menu[5].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
 			(void) ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+M/X");
 		}
 		else
 		{
 			eof_lyric_line_menu[1].flags = D_DISABLED;
-			eof_lyric_line_menu[4].flags = D_DISABLED;
+			eof_lyric_line_menu[3].flags = D_DISABLED;
+			eof_lyric_line_menu[5].flags = D_DISABLED;
 			(void) ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\t" CTRL_NAME "+M/X");
 		}
 
@@ -3370,6 +3380,23 @@ int eof_menu_solo_erase_all(void)
 	return 1;
 }
 
+int eof_menu_solo_edit_timing(void)
+{
+	EOF_PHRASE_SECTION *phraseptr;
+
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 1;	//No note selected
+
+	phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SOLO_SECTION, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
+	if(phraseptr)
+	{	//If the seek position is within a solo phrase
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit solo");	//Set the title of the dialog
+		return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos);
+	}
+
+	return 1;
+}
+
 int eof_menu_star_power_mark(void)
 {
 	unsigned long j, sel_start = 0, sel_end = 0;
@@ -3452,6 +3479,23 @@ int eof_menu_star_power_erase_all(void)
 		eof_set_num_star_power_paths(eof_song, eof_selected_track, 0);
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
+	return 1;
+}
+
+int eof_menu_sp_edit_timing(void)
+{
+	EOF_PHRASE_SECTION *phraseptr;
+
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 1;	//No note selected
+
+	phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SP_SECTION, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
+	if(phraseptr)
+	{	//If the seek position is within a star power phrase
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit star power");	//Set the title of the dialog
+		return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos);
+	}
+
 	return 1;
 }
 
@@ -3557,23 +3601,18 @@ int eof_menu_lyric_line_erase_all(void)
 
 int eof_menu_note_lyric_line_edit_timing(void)
 {
-	unsigned long ctr;
-	EOF_VOCAL_TRACK *tp;
+	EOF_PHRASE_SECTION *phraseptr;
 
-	if(!eof_song || !eof_vocals_selected)
-		return 1;
-	if(eof_selection.current >= eof_song->vocal_track[0]->lyrics)
+	if((eof_selection.track != EOF_TRACK_VOCALS) || (eof_selection.current >= eof_song->vocal_track[0]->lyrics))
 		return 1;	//No lyric selected
 
-	tp = eof_song->vocal_track[0];	//Simplify
-	for(ctr = 0; ctr < tp->lines; ctr++)
-	{	//For each lyric line
-		if((tp->lyric[eof_selection.current]->pos >= tp->line[ctr].start_pos) && (tp->lyric[eof_selection.current]->pos <= tp->line[ctr].end_pos))
-		{	//If the selected lyric is within this lyric phrase
-			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit lyric line");	//Set the title of the dialog
-			return eof_phrase_edit_timing(&tp->line[ctr].start_pos, &tp->line[ctr].end_pos);
-		}
+	phraseptr = eof_get_section_instance_at_pos(eof_song, EOF_TRACK_VOCALS, EOF_LYRIC_PHRASE_SECTION, eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, eof_selection.current));
+	if(phraseptr)
+	{	//If the seek position is within a lyric line
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit lyric line");	//Set the title of the dialog
+		return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos);
 	}
+
 	return 1;
 }
 
