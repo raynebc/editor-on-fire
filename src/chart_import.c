@@ -360,6 +360,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			DestroyFeedbackChart(chart, 1);
 			return NULL;
 		}
+		(void) replace_filename(oggfn, fn, dest_name, 1024);	//Update the name of the OGG file that eof_load_ogg() is to access
 	}
 
 	/* create empty song */

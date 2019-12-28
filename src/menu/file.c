@@ -2803,6 +2803,9 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		}
 	}
 
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" created", dest_name);
+	eof_log(eof_log_string, 1);
+
 	return 0;	//Return success
 }
 

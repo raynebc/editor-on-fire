@@ -8,6 +8,7 @@
 #include "ini_import.h"	//For eof_import_ini()
 #include "main.h"
 #include "midi.h"	//For eof_apply_ts()
+#include "note.h"	//For EOF_LYRIC_PITCH_MIN and EOF_LYRIC_PITCH_MAX
 #include "undo.h"
 #include "utility.h"
 #include "menu/edit.h"	//For auto-adjust functions
@@ -3257,6 +3258,9 @@ int eof_ghl_import_common(const char *fn)
 	unsigned long tracknum;
 	EOF_LEGACY_TRACK *tp = NULL;
 	eof_ghl_change *changes = NULL;
+	unsigned long linestarted = 0, linestart = 0, lineend = 0, linewarned = 0;	//Tracks the definition of lyrics for creating lyric lines
+	EOF_LYRIC *newlyric = NULL;
+	char stringbuffer[101] = {0};	//Used to rewrite lyrics to include freestyle characters where applicable
 
 	eof_log("eof_import_gh_xmk() entered", 1);
 	eof_log("Attempting to import XMK format Guitar Hero chart", 1);
@@ -3566,7 +3570,7 @@ int eof_ghl_import_common(const char *fn)
 								beat--;
 							}
 							(void) eof_get_effective_ts(eof_song, &tsnum, &tsden, beat, 0);			//Get the time signature in effect at the tempo change
-							beatlengthticks = eof_song->beat[beat]->midi_pos + ((960 * 4) / den);	//Get the length, in delta ticks, of the beat in which the change occurs
+							beatlengthticks = (960 * 4) / den;	//Get the length, in delta ticks, of the beat in which the change occurs
 							changedelta = changes[ctr].delta - eof_song->beat[beat]->midi_pos;		//Get the number of delta ticks into that beat that this mid-beat change occurs
 							fraction = changedelta / beatlengthticks;	//Determine how far that is measured in beats
 							if(!loopctr)
@@ -3755,21 +3759,99 @@ int eof_ghl_import_common(const char *fn)
 				}
 			}
 		}
+		else if(eventid == 4)
+		{	//Section marker
+			if(stringptr)
+			{	//If a string was found for this event
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tIgnoring HOPO setting \"%s\" at %lums", stringptr, eventpos);
+				eof_log(eof_log_string, 1);
+			}
+		}
 		else if(eventid == 57)
 		{	//Lyric
 			if(stringptr)
 			{	//If a string was found for this event
-				if((eof_selected_track != EOF_TRACK_VOCALS) && !lyricwarn)
-				{	//If this is a vocal file but the vocal track is not active, and the user wasn't warned about this yet
-					allegro_message("Warning:  The file contains lyrics and will import into PART VOCALS instead of the active instrument track.");
-					lyricwarn = 1;
-				}
+				unsigned long length = strlen(stringptr);
+
+				if(length > 0)
+				{	//If the lyric is at least one character long
+					if((eof_selected_track != EOF_TRACK_VOCALS) && !lyricwarn)
+					{	//If this is a vocal file but the vocal track is not active, and the user wasn't warned about this yet
+						allegro_message("Warning:  The file contains lyrics and will import into PART VOCALS instead of the active instrument track.");
+						lyricwarn = 1;
+					}
+
+					//Re-format the lyric to suit Rock Band conventions
+					if(stringptr[0] == '@')
+					{	//This is what GHL uses for a pitch shift indicator
+						stringptr[0] = '+';	//Change it to the Rock Band indicator
+					}
+					length = strlen(stringptr);
+					if((note < EOF_LYRIC_PITCH_MIN) || (note > EOF_LYRIC_PITCH_MAX))
+					{	//If the lyric's pitch is outside the valid range
+						if(length + 2 < sizeof(stringbuffer))
+						{	//If the string plus two characters ('#' and NULL terminator) will fit in stringbuffer[]
+							snprintf(stringbuffer, sizeof(stringbuffer) - 1, "%s#", stringptr);	//Re-build the lyric string
+							stringptr = stringbuffer;	//Redirect stringptr to the new string
+						}
+					}
+					if((stringptr[0] == '=') && newlyric)
+					{	//If this lyric begins with an equal sign, and there was a previous lyric
+						unsigned long lastlength = strlen(newlyric->text), index = 0;
+
+						if(lastlength > 0)
+						{	//Double check it's at least one character long
+							if(newlyric->text[lastlength - 1] == '-')
+							{	//If it ended in a hyphen
+								newlyric->text[lastlength - 1] = '=';	//Replace it with an equal sign
+							}
+							//Rewrite this lyric's string to skip the leading equal sign
+							for(index = 0; index < length; index++)
+							{
+								stringptr[index] = stringptr[index + 1];	//Move each character one earlier, overwriting the equal sign
+							}
+						}
+					}
+
+					newlyric = eof_track_add_create_note(eof_song, EOF_TRACK_VOCALS, note, eventpos, eventendpos - eventpos, EOF_NOTE_SUPAEASY, stringptr);
+					if(!newlyric)
+					{	//If the lyric was not created
+						eof_log("\tGHL:  \t\t\tFailed to add note", 1);
+						allegro_message("Error:  Could not add lyric.");
+						return 1;	//Return failure
+					}
+
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tAdded lyric:  pos = %lums, length = %lums, text = \"%s\"", eventpos, eventendpos - eventpos, stringptr);
+					eof_log(eof_log_string, 1);
+					if(!linestarted)
+					{	//If this is the first lyric in this line
+						linestarted = 1;
+						linestart = eventpos;	//Track the start position of this line of lyrics
+					}
+					lineend = eventendpos;		//Track the ongoing end position of this line of lyrics
+				}//If the lyric is at least one character long
 			}
 		}
 		else if(eventid == 1)
 		{
 			if(note == 129)
 			{	//Lyric phrase
+				if(!linestarted)
+				{	//If there have been no lyrics in this line
+					if(!linewarned)
+					{	//If the user wasn't warned about this yet
+						allegro_message("Warning:  The file contains at least one line without lyrics that will be omitted.");
+						linewarned = 1;
+					}
+					eof_log("\tGHL:  \t\tIgnoring empty lyric line", 1);
+				}
+				else
+				{
+					(void) eof_vocal_track_add_line(eof_song->vocal_track[0], linestart, lineend, 0xFF);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tAdded lyric line from %lums t %lums", linestart, lineend);
+					eof_log(eof_log_string, 1);
+					linestarted = 0;
+				}
 			}
 		}
 		else
@@ -3777,11 +3859,10 @@ int eof_ghl_import_common(const char *fn)
 			unsigned char lane1 = 0, type;
 			EOF_NOTE *new_note;
 
-			if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
-			{	//If the user did not make an instrument track active before importing this non vocal file
-				allegro_message("Error:  You must change to an instrument track before importing an instrument GHL file.");
-				eof_log("Error:  Can not import an instrument file into the vocal track.", 1);
-				return 1;	//Return error
+			if(eof_selected_track == EOF_TRACK_VOCALS)
+			{
+				eof_log("\tGHL:  \t\tIgnoring non lyric event", 1);
+				continue;
 			}
 
 			//Normalize the lane numbering regardless of difficulty

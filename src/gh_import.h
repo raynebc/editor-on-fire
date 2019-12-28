@@ -47,7 +47,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn);
 int eof_ghl_qsort_changes(const void * e1, const void * e2);
 	//A quicksort comparitor function for tempo and time signature changes during GHL import
 int eof_ghl_import_common(const char *fn);
-	//Imports the specified Guitar Hero file Live file into the active track
+	//Imports the specified Guitar Hero Live (or Guitar Hero TV) file into the active track
 	//Returns nonzero on error
 
 filebuffer *eof_filebuffer_load(const char * fn);
