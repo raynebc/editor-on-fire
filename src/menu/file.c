@@ -4127,7 +4127,7 @@ int eof_save_helper(char *destfilename, char silent)
 		if(!eof_disable_ini_export)
 		{	//But only if the user did not disable this
 			(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", (int) sizeof(eof_temp_filename));
-			(void) eof_save_ini(eof_song, eof_temp_filename);
+			(void) eof_save_ini(eof_song, eof_temp_filename, silent);
 		}
 
 		/* save script lyrics if applicable) */

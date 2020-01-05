@@ -65,7 +65,7 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 	//tag is the display name of the tag being checked, used for logging
 
 char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag);
-	//Searches for the specified INI setting containing "[tag] ="
+	//Searches the specified project for the specified INI setting containing "[tag] ="
 	//If found, the setting number is returned through index and the pointer to the character after the equal sign in the INI setting's string is returned
 	//If no such setting was found in the project, NULL is returned
 

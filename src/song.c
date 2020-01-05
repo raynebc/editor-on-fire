@@ -3059,7 +3059,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	EOF_PRO_GUITAR_TRACK *tp;
 	char restore_tech_view;		//If tech view is in effect for a pro guitar track, it is temporarily disabled until after the track's notes have been written
 
- 	eof_log("eof_save_song() entered", 1);
+ 	eof_log("eof_save_song() entered", 2);
 
 	if((sp == NULL) || (fn == NULL))
 	{
@@ -3068,7 +3068,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Saving to file \"%s\"", fn);
-	eof_log(eof_log_string, 1);
+	eof_log(eof_log_string, 2);
 
 	unshare_drum_phrasing = sp->tags->unshare_drum_phrasing;	//Store this outside the project structure until save completes, so that both drum tracks' phrases can be written
 	sp->tags->unshare_drum_phrasing = 1;
@@ -3991,7 +3991,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		allegro_message("Warning:  Some of the project failed to save due to inability to write to files in EOF's temp folder.  Possibly caused by running out of disk space or antivirus interference.");
 	}
 
-	eof_log("\tSave completed", 1);
+	eof_log("\tSave completed", 2);
 	return 1;	//Return success
 }
 

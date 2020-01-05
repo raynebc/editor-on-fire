@@ -4,6 +4,7 @@
 #include "beat.h"
 #include "event.h"
 #include "ini.h"
+#include "ini_import.h"	//For eof_find_ini_setting_tag()
 #include "legacy.h"
 #include "tuning.h"
 
@@ -14,17 +15,17 @@
 char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_bass", "diff_guitar_coop", "diff_rhythm", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "diff_dance", "diff_bass_real_22", "diff_guitar_real_22", "diff_drums_real_ps", "diff_keys_real"};
 int eof_rb_tier_values[7] = {1, 150, 208, 267, 325, 384, 442};	//Rock Band's tier values for difficulties 0 through 6, for use in creating DTA files
 
-int eof_save_ini(EOF_SONG * sp, char * fn)
+int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 {
 	PACKFILE * fp;
 	char buffer[256] = {0};
 	char ini_string[4096] = {0};
-	unsigned long i, j, tracknum;
+	unsigned long i, j, tracknum, index = 0;
 	char *tuning_name = NULL;
 	char slidesfound = 0;
 	char hihatmarkersfound = 0;
 	char rimshotmarkersfound = 0;
-	int guitar_ghl_diff_written = 0;
+	int guitar_ghl_diff_written = 0, is_guitar_ghl_diff, is_bass_ghl_diff, guitar_ghl_diff_conflict_warned = 0, bass_ghl_diff_conflict_warned = 0;
 
 	eof_log("eof_save_ini() entered", 1);
 
@@ -121,6 +122,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		if(eof_difficulty_ini_tags[i][0] == '\0')
 			continue;	//If this track does not have a defined difficulty tag
 
+		is_guitar_ghl_diff = is_bass_ghl_diff = 0;	//Reset these statuses
 		diff_tag = eof_difficulty_ini_tags[i];	//By default, write a non GHL specific difficulty tag
 		if(eof_track_is_ghl_mode(sp, i))
 		{	//If this track has GHL mode enabled
@@ -134,10 +136,12 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 					}
 					diff_tag = "diff_guitarghl";	//Write the guitar GHL difficulty tag
 					guitar_ghl_diff_written = 1;
+					is_guitar_ghl_diff = 1;
 				}
 				else if(!ustricmp(sp->track[i]->altname, "PART BASS GHL"))
 				{	//Manually named to represent the GHL bass track
 					diff_tag = "diff_bassghl";	//Write the bass GHL difficulty tag
+					is_bass_ghl_diff = 1;
 				}
 			}
 			else
@@ -145,6 +149,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 				if(i == EOF_TRACK_BASS)
 				{	//If this is the bass track
 					diff_tag = "diff_bassghl";	//Write the bass GHL difficulty tag
+					is_bass_ghl_diff = 1;
 				}
 				else
 				{	//This is a guitar track
@@ -154,7 +159,34 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 					}
 					diff_tag = "diff_guitarghl";	//Write the guitar GHL difficulty tag
 					guitar_ghl_diff_written = 1;
+					is_guitar_ghl_diff = 1;
 				}
+			}
+		}
+
+		//Check whether the track's defined difficulty is nullified by a user defined INI entry
+		if(is_guitar_ghl_diff)
+		{	//If the INI setting that is to be written is a GHL guitar track's difficulty
+			if(eof_find_ini_setting_tag(sp, &index, "diff_guitarghl"))
+			{	//If the user manually defined the GHL guitar difficulty
+				if(!guitar_ghl_diff_conflict_warned && !silent)
+				{	//If the user wasn't warned about this already and warnings aren't being suppressed
+					allegro_message("Warning:  A GHL mode guitar track defines a difficulty that is overridden by a manually defined INI entry.");
+					guitar_ghl_diff_conflict_warned = 1;
+				}
+				continue;	//Skip this INI setting
+			}
+		}
+		if(is_bass_ghl_diff)
+		{	//If the INI setting that is to be written is a GHL bass  track's difficulty
+			if(eof_find_ini_setting_tag(sp, &index, "diff_bassghl"))
+			{	//If the user manually defined the GHL bass difficulty
+				if(!bass_ghl_diff_conflict_warned && !silent)
+				{	//If the user wasn't warned about this already and warnings aren't being suppressed
+					allegro_message("Warning:  A GHL mode bass track defines a difficulty that is overridden by a manually defined INI entry.");
+					bass_ghl_diff_conflict_warned = 1;
+				}
+				continue;	//Skip this INI setting
 			}
 		}
 

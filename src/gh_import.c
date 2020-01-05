@@ -3986,6 +3986,14 @@ int eof_ghl_import_common(const char *fn)
 		}//Default to treating it as a note
 	}//For each event
 
+//End the lyric line if one was in progress
+	if(linestarted)
+	{
+		(void) eof_vocal_track_add_line(eof_song->vocal_track[0], linestart, lineend, 0xFF);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tAdded lyric line from %lums t %lums", linestart, lineend);
+		eof_log(eof_log_string, 1);
+	}
+
 //Apply disjointed and crazy status where appropriate
 	if(note_imported && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 	{	//If instrument notes were imported
@@ -4020,6 +4028,9 @@ int eof_ghl_import_common(const char *fn)
 	eof_render();
 	eof_filebuffer_close(fb);	//Close the file buffer
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current since sections may have been added
+
+	if(!error)
+		eof_log("\tGHL import completed", 1);
 
 	return error;
 }
@@ -4790,6 +4801,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 	EOF_NOTE *newnote, *lastnote = NULL;
 	double threshold = 66.0 / 192.0;
 	unsigned long toggle_hopo_count = 0;
+	int line_content = 0, previous_line_content = 0;	//Tracks whether the current and previously parsed line was a number (1) or ASCII text (2)
 
 	if(!filename || !eof_song)
 		return 1;	//No project or invalid parameter
@@ -4831,6 +4843,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 		if(line[0] == '0')
 		{	//If this number is a zero
 			position = 0;
+			line_content = 1;	//Regard this as a number
 		}
 		else
 		{
@@ -4842,16 +4855,33 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			}
 			if(position == 0)
 			{	//If atol() couldn't convert the number
-				failed = 5;	//Invalid data
-				break;
+				line_content = 2;	//Regard this as a line of ASCII characters
+
+				if(previous_line_content != 1)
+				{	//If the previous line wasn't a valid number, ASCII text is not valid
+					failed = 5;	//Invalid data
+					break;
+				}
+				else
+				{	//Otherwise, as long as the pattern of alternating lines of numbers and ASCII text are occurring
+					format = 4;	//Consider this a section definition
+					break;
+				}
+			}
+			else
+			{
+				line_content = 1;	//Regard this as a number
 			}
 		}
 
 		if((ctr > 0) && (position <= lastposition))
 		{	//If a number is not larger than the previous line's number
-			format = 1;	//This is note data and not beat position data
+			if(!format)
+			{	//If a format hadn't already been determined
+				format = 1;	//This is note data and not beat position data
+			}
 		}
-		linesread++;	//Count how many numbers were read
+		linesread++;	//Count how many numbers or ASCII strings were read
 		lastposition = position;
 
 		//Store the first, second and third items, to avoid having to re-read them in the event of an array.txt file with only 3 values
@@ -4861,8 +4891,10 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			item2 = position;
 		else if(linesread == 3)
 			item3 = position;
+
+		previous_line_content = line_content;
 	}//Until an error has occurred
-	if(format && ((linesread % 2) && (linesread % 3)))
+	if((format == 1) && ((linesread % 2) && (linesread % 3)))
 	{	//If this was determined to be note data, but the number of lines isn't divisible by two (post GH3/GHA format) or three (GH3/GHA format)
 		failed = 6;	//Invalid data, each note is defined in two lines (one with a position, the other with its composition)
 	}
@@ -4880,7 +4912,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 
 	///If it is determined to be note data, pre-parse to determine whether it's GH3/GHA format (3 numbers define each note) or newer format (2 numbers define each note)
 	strcpy(buffer2, buffer);	//Replace buffer2 with a clean copy of buffer to re-tokenize it
-	gh3_format = 1;	//Unless the notes don't follow the expected scheme, assume GH3/GHA format
+	if(format == 1)		//If this is note data
+		gh3_format = 1;	//Unless the notes don't follow the expected scheme, assume GH3/GHA format
 	for(ctr = 0; !failed; ctr++)
 	{	//Until an error has occurred
 		if(!ctr)
@@ -5010,7 +5043,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			}
 		}
 	}
-	else
+	else if(format == 3)
 	{	//Import SP definition
 		unsigned long numnotes;
 
@@ -5035,6 +5068,82 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 
 		(void) eof_track_add_star_power_path(eof_song, eof_selected_track, item1, item1 + item2);
 		eof_determine_phrase_status(eof_song, eof_selected_track);
+	}
+	else if(format == 4)
+	{	//Import section markers
+		eof_log("\t\tImporting section markers", 1);
+
+		line_content = previous_line_content = 0;
+		for(ctr = 0; !failed; ctr++)
+		{	//Until an error has occurred
+			if(!ctr)
+			{	//If this is the first line being parsed
+				line = ustrtok(buffer, "\r\n");	//Initialize the tokenization and get first tokenized line
+			}
+			else
+			{
+				line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+			}
+
+			if(!line)	//If a tokenized line of the file was not obtained
+				break;
+			if(line[0] == '\0')	//If this line is empty
+				continue;	//Skip it
+
+			//Read the position
+			if(previous_line_content != 1)
+			{
+				if(line[0] == '0')
+				{	//If this number is a zero
+					position = 0;
+				}
+				else
+				{
+					position = atol(line);	//Convert the string into a number
+				}
+				line_content = 1;
+			}
+
+			//Add the section
+			else
+			{
+				unsigned long beat;
+
+				line_content = 2;
+				beat = eof_get_nearest_beat(eof_song, position);	//Find the beat closest to this section's position
+				if(eof_beat_num_valid(eof_song, beat))
+				{	//If a valid beat position was found
+					char sectionstring[100] = {0};
+					unsigned long distance = (eof_song->beat[beat]->pos > position) ? (eof_song->beat[beat]->pos - position) : (position - eof_song->beat[beat]->pos);
+					unsigned long targetpos, flags = 0;
+
+					snprintf(sectionstring, sizeof(sectionstring) - 1, "[section %s]", line);	//Format the event text to be recognized as a section
+					if(distance <= 2)
+					{	//If the section is defined within 2ms of a beat marker
+						targetpos = beat;	//The section will be placed on this beat
+						position = eof_song->beat[beat]->pos;	//Track that beat's millisecond position to check below whether a section exists at that timestamp
+					}
+					else
+					{	//Otherwise add it as a floating text event
+						targetpos = position;	//The section will be placed at this millisecond position
+						flags = EOF_EVENT_FLAG_FLOATING_POS;
+					}
+					if(eof_song_contains_section_at_pos(eof_song, position, 0, ULONG_MAX, 0))
+					{	//If a section already exists at this position for ANY track
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tIgnoring text event \"%s\" as there is already a section marker at %lums", sectionstring, position);
+						eof_log(eof_log_string, 1);
+					}
+					else
+					{
+						(void) eof_song_add_text_event(eof_song, targetpos, sectionstring, 0, flags, 0);	//Add the event globally (not specific to just the active track)
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported as text event \"%s\"", sectionstring);
+						eof_log(eof_log_string, 1);
+					}
+				}
+			}
+
+			previous_line_content = line_content;
+		}
 	}
 
 	///Parse file contents as either beat positions or note data
@@ -5281,7 +5390,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//The position of the last beat is the new chart length
 		}
 		else
-		{	//If notes were imported
+		{	//If anything else was imported
 			unsigned long lastpos;
 
 			eof_track_sort_notes(eof_song, eof_selected_track);
@@ -5340,7 +5449,9 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 
 			eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+			eof_sort_events(eof_song);
 		}//If notes were imported
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	}//If the import succeeded
 
 	///Free memory

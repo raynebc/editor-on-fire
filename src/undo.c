@@ -101,7 +101,7 @@ int eof_undo_add(int type)
 	char fn[1024] = {0}, temp[1024] = {0};
 	unsigned long ctr;
 
- 	eof_log("eof_undo_add() entered", 1);
+ 	eof_log("eof_undo_add() entered", 2);
 
 	if(eof_undo_states_initialized == -1)
 	{	//The undo filename array couldn't be initialized previously

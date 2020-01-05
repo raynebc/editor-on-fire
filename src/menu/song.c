@@ -1465,7 +1465,7 @@ int eof_menu_song_test(char application)
 	(void) append_filename(temppath2, temppath, "notes.mid", 1024);
 	(void) eof_export_midi(eof_song, temppath2, 0, 1, 1, 0);	//Export the temporary MIDI, make pitchless/phraseless lyric corrections automatically
 	(void) append_filename(temppath2, temppath, "song.ini", 1024);
-	(void) eof_save_ini(eof_song, temppath2);
+	(void) eof_save_ini(eof_song, temppath2, 1);
 	(void) snprintf(syscommand, sizeof(syscommand) - 1, "%sguitar.ogg", eof_song_path);
 	(void) snprintf(temppath2, sizeof(temppath2) - 1, "%sEOFTemp\\guitar.ogg", songs_path);
 	(void) eof_copy_file(syscommand, temppath2);
