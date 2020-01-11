@@ -23,7 +23,7 @@ Use up/down arrow keys to transpose notes.
 %IF_IS_VOCAL_TRACK%   Edit: L    Split: SHIFT+S  Freestyle: F
 %IF_IS_VOCAL_TRACK%   Mark lyric line: CTRL+M or CTRL+X
 %IF_IS_VOCAL_TRACK%   Play tone being moused over in piano roll: P
-%IF_IS_VOCAL_TRACK%   Place percussion note: Backspace
+%IF_IS_VOCAL_TRACK%   Place percussion note: 0 key
 %IF_IS_VOCAL_TRACK%   Middle click to edit moused over lyric.
 %IF_IS_VOCAL_TRACK%   Left click on preview piano key to play it.
 %IF_IS_VOCAL_TRACK%   Right click preview piano to move piano roll.

@@ -1872,7 +1872,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						}
 					}
 					else if(picked_track != EOF_TRACK_DANCE)
-					{	//All other legacy style tracks use the same offsets
+					{
 						if(eof_import_events[i]->game == 1)
 						{	//If the MIDI being parsed is a Power Gig MIDI, remap it to Rock Band numbering
 							diff = eof_import_events[i]->diff;

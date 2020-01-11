@@ -941,14 +941,12 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 			{	//If this is the [end] event
 				sp->beat[sp->text_event[ctr]->pos]->contains_end_event = 1;
 			}
-			else
-			{
-				count = eof_get_rs_section_instance_number(sp, track, ctr);	//Determine if this event is a Rocksmith section, and if so, which instance number it is
-				if(count)
-				{	//If the event is a Rocksmith section
-					sp->beat[sp->text_event[ctr]->pos]->contained_rs_section_event = ctr;
-					sp->beat[sp->text_event[ctr]->pos]->contained_rs_section_event_instance_number = count;
-				}
+
+			count = eof_get_rs_section_instance_number(sp, track, ctr);	//Determine if this event is a Rocksmith section, and if so, which instance number it is
+			if(count)
+			{	//If the event is a Rocksmith section
+				sp->beat[sp->text_event[ctr]->pos]->contained_rs_section_event = ctr;
+				sp->beat[sp->text_event[ctr]->pos]->contained_rs_section_event_instance_number = count;
 			}
 		}
 	}
