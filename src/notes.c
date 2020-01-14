@@ -3183,6 +3183,86 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The status of whether the seek position is within a defined trill (special drum roll) phrase
+	if(!ustricmp(macro, "SEEK_TRILL_STATUS") || !ustricmp(macro, "SEEK_TRILL_STATUS_CONDITIONAL"))
+	{
+		char *phrasename1 = "trill phrase";
+		char *phrasename2 = "special drum roll";
+		char *effectivephrasename = phrasename1;
+
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If the active track is a drum track
+			effectivephrasename = phrasename2;
+		}
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TRILL_SECTION, eof_music_pos - eof_av_delay);
+		dest_buffer[0] = '\0';
+		if(phraseptr)
+		{	//If the seek position is within a trill phrase
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos within %s (%lums - %lums)", effectivephrasename, phraseptr->start_pos, phraseptr->end_pos);
+		}
+		else if(!ustricmp(macro, "SEEK_TRILL_STATUS"))
+		{	//If this isn't %SEEK_TRILL_STATUS_CONDITIONAL%
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a %s", effectivephrasename);
+		}
+		return 1;
+	}
+
+	//The status of whether the seek position is within a defined tremolo (drum roll) phrase
+	if(!ustricmp(macro, "SEEK_TREMOLO_STATUS") || !ustricmp(macro, "SEEK_TREMOLO_STATUS_CONDITIONAL"))
+	{
+		char *phrasename1 = "tremolo phrase";
+		char *phrasename2 = "drum roll";
+		char *effectivephrasename = phrasename1;
+
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If the active track is a drum track
+			effectivephrasename = phrasename2;
+		}
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_music_pos - eof_av_delay);
+		dest_buffer[0] = '\0';
+		if(phraseptr)
+		{	//If the seek position is within a trill phrase
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos within %s (%lums - %lums)", effectivephrasename, phraseptr->start_pos, phraseptr->end_pos);
+		}
+		else if(!ustricmp(macro, "SEEK_TREMOLO_STATUS"))
+		{	//If this isn't %SEEK_TREMOLO_STATUS_CONDITIONAL%
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a %s", effectivephrasename);
+		}
+		return 1;
+	}
+
+	//The status of whether the seek position is within a defined arpeggio phrase
+	if(!ustricmp(macro, "SEEK_ARPEGGIO_STATUS") || !ustricmp(macro, "SEEK_ARPEGGIO_STATUS_CONDITIONAL"))
+	{
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_music_pos - eof_av_delay);
+		dest_buffer[0] = '\0';
+		if(phraseptr && !(phraseptr->flags & EOF_RS_ARP_HANDSHAPE))
+		{	//If the seek position is within a arpeggio phrase and is NOT marked as a handshape
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos within arpeggio (%lums - %lums)", phraseptr->start_pos, phraseptr->end_pos);
+		}
+		else if(!ustricmp(macro, "SEEK_ARPEGGIO_STATUS"))
+		{	//If this isn't %SEEK_ARPEGGIO_STATUS_CONDITIONAL%
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within an arpeggio");
+		}
+		return 1;
+	}
+
+	//The status of whether the seek position is within a defined handshape phrase
+	if(!ustricmp(macro, "SEEK_HANDSHAPE_STATUS") || !ustricmp(macro, "SEEK_HANDSHAPE_STATUS_CONDITIONAL"))
+	{
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_music_pos - eof_av_delay);
+		dest_buffer[0] = '\0';
+		if(phraseptr && (phraseptr->flags & EOF_RS_ARP_HANDSHAPE))
+		{	//If the seek position is within a arpeggio phrase and that phrase has the flag to indicate it is a handshape
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos within handshape (%lums - %lums)", phraseptr->start_pos, phraseptr->end_pos);
+		}
+		else if(!ustricmp(macro, "SEEK_HANDSHAPE_STATUS"))
+		{	//If this isn't %SEEK_HANDSHAPE_STATUS_CONDITIONAL%
+			snprintf(dest_buffer, dest_buffer_size, "Seek pos is not within a handshape");
+		}
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)

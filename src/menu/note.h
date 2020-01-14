@@ -141,6 +141,11 @@ int eof_menu_slider_unmark(void);				//Removes slider phrases that include any o
 int eof_menu_trill_erase_all(void);				//Removes all trill phrases, freeing phrase names as necessary
 int eof_menu_tremolo_erase_all(void);			//Removes all tremolo phrases, freeing phrase names as necessary
 int eof_menu_slider_erase_all(void);			//Removes all slider phrases, freeing phrase names as necessary
+int eof_menu_trill_edit_timing(void);			//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the trill phrase the last-selected note is in
+int eof_menu_tremolo_edit_timing(void);			//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the tremolo phrase the last-selected note is in
+int eof_menu_slider_edit_timing(void);			//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the slider phrase the last-selected note is in
+int eof_menu_arpeggio_edit_timing(void);		//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the arpeggio phrase the last-selected note is in
+int eof_menu_handshape_edit_timing(void);		//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the handshape phrase the last-selected note is in
 int eof_menu_note_clear_legacy_values(void);	//Resets the legacy bitmasks of all selected notes
 int eof_pro_guitar_toggle_strum_up(void);		//Toggles the strum up status for all selected pro guitar/bass notes, clearing strum down statuses where appropriate
 int eof_pro_guitar_toggle_strum_down(void);		//Toggles the strum down status for all selected pro guitar/bass notes, clearing strum up statuses where appropriate

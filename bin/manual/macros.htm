@@ -972,6 +972,47 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <td>%SEEK_SOLO_STATUS_CONDITIONAL%</td>
 <td>Similar to %SEEK_SOLO_STATUS% but prints nothing if the seek position is not within a solo phrase.
 </tr>
+<tr>
+<td>%SEEK_TRILL_STATUS%</td>
+<td>Prints whether or not the seek position is within a defined trill phrase, and if so, that phrase's start and stop timestamps.  If not, "Seek pos is not within a trill phrase" is printed.  In the case of drum tracks, trill phrases are referred to as "special drum rolls".
+</tr>
+<tr>
+<td>%SEEK_TRILL_STATUS_CONDITIONAL%</td>
+<td>Similar to %SEEK_TRILL_STATUS% but prints nothing if the seek position is not within a trill or special drum roll phrase.
+</tr>
+<tr>
+<td>%SEEK_TREMOLO_STATUS%</td>
+<td>Prints whether or not the seek position is within a defined tremolo phrase, and if so, that phrase's start and stop timestamps.  If not, "Seek pos is not within a tremolo phrase" is printed.  In the case of drum tracks, tremolo phrases are referred to as "drum rolls".
+</tr>
+<tr>
+<td>%SEEK_TREMOLO_STATUS_CONDITIONAL%</td>
+<td>Similar to %SEEK_TREMOLO_STATUS% but prints nothing if the seek position is not within a tremolo or drum roll phrase.
+</tr>
+<tr>
+<td>%SEEK_SLIDER_STATUS%</td>
+<td>Prints whether or not the seek position is within a defined slider phrase, and if so, that phrase's start and stop timestamps.  If not, "Seek pos is not within a slider phrase" is printed.
+</tr>
+<tr>
+<td>%SEEK_SLIDER_STATUS_CONDITIONAL%</td>
+<td>Similar to %SEEK_SLIDER_STATUS% but prints nothing if the seek position is not within a slider phrase.
+</tr>
+<tr>
+<td>%SEEK_ARPEGGIO_STATUS%</td>
+<td>Prints whether or not the seek position is within a defined arpeggio phrase, and if so, that phrase's start and stop timestamps.  If not, "Seek pos is not within an arpeggio" is printed.
+</tr>
+<tr>
+<td>%SEEK_ARPEGGIO_STATUS_CONDITIONAL%</td>
+<td>Similar to %SEEK_ARPEGGIO_STATUS% but prints nothing if the seek position is not within an arpeggio phrase.
+</tr>
+<tr>
+<td>%SEEK_HANDSHAPE_STATUS%</td>
+<td>Prints whether or not the seek position is within a defined handshape phrase, and if so, that phrase's start and stop timestamps.  If not, "Seek pos is not within a handshape" is printed.
+</tr>
+<tr>
+<td>%SEEK_HANDSHAPE_STATUS_CONDITIONAL%</td>
+<td>Similar to %SEEK_HANDSHAPE_STATUS% but prints nothing if the seek position is not within a handshape phrase.
+</tr>
+
 </tbody>
 </table>
 </blockquote>

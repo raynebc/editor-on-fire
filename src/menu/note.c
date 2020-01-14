@@ -133,6 +133,7 @@ MENU eof_arpeggio_menu[] =
 	{eof_arpeggio_menu_mark_text, eof_menu_arpeggio_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_arpeggio_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_arpeggio_erase_all, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_arpeggio_edit_timing, NULL, 0, NULL},
 	{"&Copy From", NULL, eof_menu_arpeggio_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -142,6 +143,7 @@ MENU eof_handshape_menu[] =
 	{eof_handshape_menu_mark_text, eof_menu_handshape_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_handshape_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_handshape_erase_all, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_handshape_edit_timing, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -190,6 +192,7 @@ MENU eof_trill_menu[] =
 	{eof_trill_menu_mark_text, eof_menu_trill_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_trill_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_trill_erase_all, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_trill_edit_timing, NULL, 0, NULL},
 	{"&Copy From", NULL, eof_menu_trill_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -218,6 +221,7 @@ MENU eof_tremolo_menu[] =
 	{eof_tremolo_menu_mark_text, eof_menu_tremolo_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_tremolo_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_tremolo_erase_all, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_tremolo_edit_timing, NULL, 0, NULL},
 	{"&Copy From", NULL, eof_menu_tremolo_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -246,6 +250,7 @@ MENU eof_slider_menu[] =
 	{eof_slider_menu_mark_text, eof_menu_slider_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_slider_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_slider_erase_all, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_slider_edit_timing, NULL, 0, NULL},
 	{"&Copy From", NULL, eof_menu_slider_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -888,26 +893,32 @@ void eof_prepare_note_menu(void)
 		}
 
 		/* arpeggio mark/remark */
+		/* edit timing */
 		if(inarpeggio)
 		{
 			eof_arpeggio_menu[1].flags = 0;				//Note>Pro Guitar>Arpeggio>Remove
+			eof_arpeggio_menu[3].flags = 0;				//Note>Pro Guitar>Arpeggio>Edit timing
 			(void) ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+Shift+G");
 		}
 		else
 		{
 			eof_arpeggio_menu[1].flags = D_DISABLED;
+			eof_arpeggio_menu[3].flags = D_DISABLED;
 			(void) ustrcpy(eof_arpeggio_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+G");
 		}
 
 		/* handshape mark/remark */
+		/* edit timing */
 		if(inhandshape)
 		{
-			eof_handshape_menu[1].flags = 0;				//Note>Pro Guitar>Handshape>Remove
+			eof_handshape_menu[1].flags = 0;			//Note>Pro Guitar>Handshape>Remove
+			eof_handshape_menu[3].flags = 0;			//Note>Pro Guitar>Handshape>Edit timing
 			(void) ustrcpy(eof_handshape_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+Shift+H");
 		}
 		else
 		{
 			eof_handshape_menu[1].flags = D_DISABLED;
+			eof_handshape_menu[3].flags = D_DISABLED;
 			(void) ustrcpy(eof_handshape_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+H");
 		}
 
@@ -1182,14 +1193,17 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* Trill mark/remark*/
+			/* edit timing */
 			if(intrill)
 			{
 				eof_trill_menu[1].flags = 0;	//Note>Trill>Remove
+				eof_trill_menu[3].flags = 0;	//Note>Trill>Edit timing
 				(void) ustrcpy(eof_trill_menu_mark_text, "Re-&Mark");
 			}
 			else
 			{
 				eof_trill_menu[1].flags = D_DISABLED;
+				eof_trill_menu[3].flags = D_DISABLED;
 				(void) ustrcpy(eof_trill_menu_mark_text, "&Mark");
 			}
 
@@ -1205,14 +1219,17 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* Tremolo mark/remark */
+			/* edit timing */
 			if(intremolo)
 			{
 				eof_tremolo_menu[1].flags = 0;	//Note>Tremolo>Remove
+				eof_tremolo_menu[3].flags = 0;	//Note>Tremolo>Edit timing
 				(void) ustrcpy(eof_tremolo_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+Shift+O");
 			}
 			else
 			{
 				eof_tremolo_menu[1].flags = D_DISABLED;
+				eof_tremolo_menu[3].flags = D_DISABLED;
 				(void) ustrcpy(eof_tremolo_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+O");
 			}
 
@@ -1248,15 +1265,18 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[13].flags = D_DISABLED;	//Note>Tremolo> submenu
 			}
 
-			/* Slider */
+			/* Slider mark/remark */
+			/* edit timing */
 			if(inslider)
 			{
 				eof_slider_menu[1].flags = 0;	//Note>Slider>Remove
+				eof_slider_menu[3].flags = 0;	//Note>Slider>Edit timing
 				(void) ustrcpy(eof_slider_menu_mark_text, "Re-&Mark\tShift+S");
 			}
 			else
 			{
 				eof_slider_menu[1].flags = D_DISABLED;
+				eof_slider_menu[3].flags = D_DISABLED;
 				(void) ustrcpy(eof_slider_menu_mark_text, "&Mark\tShift+S");
 			}
 
@@ -7091,6 +7111,105 @@ int eof_menu_slider_erase_all(void)
 		eof_set_num_sliders(eof_song, eof_selected_track, 0);
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
+	return 1;
+}
+
+int eof_menu_trill_edit_timing(void)
+{
+	char *phrasename1 = "trill";
+	char *phrasename2 = "special drum roll";
+	char *effectivephrasename = phrasename1;
+	EOF_PHRASE_SECTION *phraseptr;
+
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 1;	//No note selected
+
+	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If the active track is a drum track
+		effectivephrasename = phrasename2;
+	}
+	phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TRILL_SECTION, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
+	if(phraseptr)
+	{	//If the seek position is within a trill phrase
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit %s", effectivephrasename);	//Set the title of the dialog
+		return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos);
+	}
+
+	return 1;
+}
+
+int eof_menu_tremolo_edit_timing(void)
+{
+	char *phrasename1 = "tremolo";
+	char *phrasename2 = "drum roll";
+	char *effectivephrasename = phrasename1;
+	EOF_PHRASE_SECTION *phraseptr;
+
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 1;	//No note selected
+
+	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If the active track is a drum track
+		effectivephrasename = phrasename2;
+	}
+	phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
+	if(phraseptr)
+	{	//If the seek position is within a tremolo phrase
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit %s", effectivephrasename);	//Set the title of the dialog
+		return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos);
+	}
+
+	return 1;
+}
+
+int eof_menu_slider_edit_timing(void)
+{
+	EOF_PHRASE_SECTION *phraseptr;
+
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 1;	//No note selected
+
+	phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SLIDER_SECTION, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
+	if(phraseptr)
+	{	//If the seek position is within a slider phrase
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit slider");	//Set the title of the dialog
+		return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos);
+	}
+
+	return 1;
+}
+
+int eof_menu_arpeggio_edit_timing(void)
+{
+	EOF_PHRASE_SECTION *phraseptr;
+
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 1;	//No note selected
+
+	phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
+	if(phraseptr && !(phraseptr->flags & EOF_RS_ARP_HANDSHAPE))
+	{	//If the seek position is within an arpeggio phrase and is NOT marked as a handshape
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit arpeggio");	//Set the title of the dialog
+		return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos);
+	}
+
+	return 1;
+}
+
+int eof_menu_handshape_edit_timing(void)
+{
+	EOF_PHRASE_SECTION *phraseptr;
+
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 1;	//No note selected
+
+	phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
+	if(phraseptr && (phraseptr->flags & EOF_RS_ARP_HANDSHAPE))
+	{	//If the seek position is within an arpeggio phrase and is marked as a handshape
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit handshape");	//Set the title of the dialog
+		return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos);
+	}
+
 	return 1;
 }
 
