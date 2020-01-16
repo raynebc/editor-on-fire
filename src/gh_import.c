@@ -4947,54 +4947,57 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 	///If it is determined to be note data, pre-parse to determine whether it's GH3/GHA format (3 numbers define each note) or newer format (2 numbers define each note)
 	strcpy(buffer2, buffer);	//Replace buffer2 with a clean copy of buffer to re-tokenize it
 	if(format == 1)		//If this is note data
+	{
 		gh3_format = 1;	//Unless the notes don't follow the expected scheme, assume GH3/GHA format
-	for(ctr = 0; !failed; ctr++)
-	{	//Until an error has occurred
-		if(!ctr)
-		{	//If this is the first line being parsed
-			line = ustrtok(buffer2, "\r\n");	//Initialize the tokenization and get first tokenized line
-		}
-		else
-		{
-			line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
-		}
 
-		if(!line)	//If a tokenized line of the file was not obtained
-			break;
-		if(line[0] == '\0')	//If this line is empty
-			continue;	//Skip it
+		for(ctr = 0; !failed; ctr++)
+		{	//Until an error has occurred
+			if(!ctr)
+			{	//If this is the first line being parsed
+				line = ustrtok(buffer2, "\r\n");	//Initialize the tokenization and get first tokenized line
+			}
+			else
+			{
+				line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+			}
 
-		if(line[0] == '0')
-		{	//If this number is a zero
-			position = 0;
-		}
-		else
-		{
-			position = atol(line);	//Convert the string into a number
-		}
-		if(ctr && (position < lastposition))
-		{	//If this isn't the first note parsed, and the timestamp is smaller then the previous timestamp
-			gh3_format = 0;
-			break;
-		}
-		lastposition = position;	//Remember this timestamp for comparison with the next timestamp
-		line = ustrtok(NULL, "\r\n");	//Read the note duration
-		if(!line || (line[0] == '\0'))
-		{	//If the line couldn't be read of the line is empty
-			gh3_format = 0;
-			break;
-		}
-		line = ustrtok(NULL, "\r\n");	//Read the note bitmask
-		if(!line || (line[0] == '\0'))
-		{	//If the line couldn't be read of the line is empty
-			gh3_format = 0;
-			break;
-		}
-		note = atol(line);	//Convert the bitmask to integer format
-		if(note > 63)
-		{	//If the note bitmask is larger than expected (higher than 6 set bits)
-			gh3_format = 0;
-			break;
+			if(!line)	//If a tokenized line of the file was not obtained
+				break;
+			if(line[0] == '\0')	//If this line is empty
+				continue;	//Skip it
+
+			if(line[0] == '0')
+			{	//If this number is a zero
+				position = 0;
+			}
+			else
+			{
+				position = atol(line);	//Convert the string into a number
+			}
+			if(ctr && (position < lastposition))
+			{	//If this isn't the first note parsed, and the timestamp is smaller then the previous timestamp
+				gh3_format = 0;
+				break;
+			}
+			lastposition = position;	//Remember this timestamp for comparison with the next timestamp
+			line = ustrtok(NULL, "\r\n");	//Read the note duration
+			if(!line || (line[0] == '\0'))
+			{	//If the line couldn't be read of the line is empty
+				gh3_format = 0;
+				break;
+			}
+			line = ustrtok(NULL, "\r\n");	//Read the note bitmask
+			if(!line || (line[0] == '\0'))
+			{	//If the line couldn't be read of the line is empty
+				gh3_format = 0;
+				break;
+			}
+			note = atol(line);	//Convert the bitmask to integer format
+			if(note > 63)
+			{	//If the note bitmask is larger than expected (higher than 6 set bits)
+				gh3_format = 0;
+				break;
+			}
 		}
 	}
 
@@ -5019,6 +5022,12 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 	}
 	else if(format == 1)
 	{	//Import notes
+		if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		{	//If a legacy track isn't active
+			allegro_message("Cannot import GH instrument notes in a pro guitar or vocal track.");
+			failed = 11;	//Invalid destination track
+			return failed;
+		}
 		if(gh3_format)
 		{
 			int selection;

@@ -28,7 +28,7 @@ unsigned long eof_repair_midi_import_grid_snap(void);
 	//Returns zero on error
 int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp, int function);
 	//Checks the midi_pos variable (set during MIDI import) for the notes in each instrument track in the specified chart
-	//If any two notes in a track difficulty are within 10ms of each other but not at the same position, they are regarded as authoring errors where they were probably meant to be a chord
+	//If any two notes in a track difficulty are within 10 ticks of each other but not at the same position, they are regarded as authoring errors where they were probably meant to be a chord
 	//If function is zero, if there are such notes they are highlighted
 	//If function is nononzero, if there are any such notes, the user is prompted about whether the later gems in the unsnapped chord should be re-aligned with the earlier gem
 	//If any notes were deemed to be unsnapped chords, nonzero is returned

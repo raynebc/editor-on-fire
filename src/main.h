@@ -198,9 +198,9 @@ typedef struct
 	int scrollbar_y;
 	int string_space, string_space_unscaled;	//Defines the amount of vertical space between each lane in the piano roll when 5 lanes are in effect
 												//string_space_unscaled is set by the display size, string_space is set by eof_scale_fretboard() to account for 6 lane modes
-	int note_y[EOF_MAX_FRETS];
-	int lyric_y;				//A constant y coordinate offset (EOF_EDITOR_RENDER_OFFSET + 15 + lyric_y is the y position of the top-most lane line in the editor window)
-	int vocal_y;				//The y coordinate at which lyrics text is drawn in the editor window
+	int note_y[EOF_MAX_FRETS];	//Y coordinates for lanes that are calculated by eof_scale_fretboard()
+	int lyric_y;				//A constant y coordinate offset (EOF_EDITOR_RENDER_OFFSET + 15 + lyric_y is the y position at which lyric text is drawn in the editor window)
+	int vocal_y;				//A constant y coordinate offset (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y is the bottom of the bottom-most key in the mini piano)
 	int vocal_tail_size;		//The height of a lyric note rectangle
 	int vocal_view_size;		//A constant representing the number of piano keys to display in the left edge of the piano roll when the vocal track is active
 	int lyric_view_key_width;	//How far apart each black line is rendered to separate the white piano keys in the vocal track 3D preview (1/29 the 3D preview window)

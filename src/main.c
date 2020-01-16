@@ -1085,6 +1085,13 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	eof_scale_fretboard(5);	//Set the eof_screen_layout.note_y[] array based on a 5 lane track, for setting the fretboard height below
 	eof_screen_layout.lyric_y = 20;
 	eof_screen_layout.vocal_view_size = 13;
+
+	if(mode == EOF_DISPLAY_CUSTOM)
+	{	//Make some vocal editor adjustments for custom window sizes
+		eof_screen_layout.vocal_tail_size = (eof_screen_layout.string_space_unscaled * 4 - eof_screen_layout.lyric_y) / (eof_screen_layout.vocal_view_size + 2);	//Divide the piano roll space among the number of keys that are to be displayed when the vocal track is active, with an extra key of blank space at the top and bottom of the piano
+		eof_screen_layout.vocal_y = eof_screen_layout.note_y[4] - eof_screen_layout.vocal_tail_size;	//Position the bottom of the mini piano to one key height above the bottom of the piano roll
+	}
+
 	eof_screen_layout.lyric_view_key_width = eof_window_3d->screen->w / 29;
 	eof_screen_layout.lyric_view_key_height = eof_screen_layout.lyric_view_key_width * 4;
 	eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
