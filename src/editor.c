@@ -25,6 +25,9 @@
 #include "utility.h"	//For eof_check_string()
 #include "waveform.h"
 
+///DEBUG
+#include "gh_import.h"
+
 #ifdef USEMEMWATCH
 #include "memwatch.h"
 #endif
@@ -928,7 +931,14 @@ if(eof_key_code == KEY_PAUSE)
 {
 	eof_use_key();
 	//Debug action here
-	eof_menu_file_ghl_import();
+
+	if(eof_song_loaded)
+	{
+		char fn[1024];
+		(void) append_filename(fn, eof_song_path, eof_song->track[eof_selected_track]->name, 1024);
+		(void) replace_extension(fn, fn, "xmk", 1024);
+		(void) eof_export_ghl(eof_song, eof_selected_track, fn);
+	}
 }
 ///ALT handling testing
 /*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))

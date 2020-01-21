@@ -92,6 +92,7 @@ MENU eof_file_import_menu[] =
 	{"&Queen Bee", eof_menu_file_array_txt_import, NULL, 0, NULL},
 	{"Queen Bee (multi)", eof_menu_file_multiple_array_txt_import, NULL, 0, NULL},
 	{"Guitar Hero sections", eof_menu_file_gh3_section_import, NULL, 0, NULL},
+	{"Guitar Hero Live", eof_menu_file_ghl_import, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -393,6 +394,7 @@ void eof_prepare_file_menu(void)
 		eof_file_import_menu[8].flags = 0;	//Import>Queen Bee
 		eof_file_import_menu[9].flags = 0;	//Import>Queen Bee (multi)
 		eof_file_import_menu[10].flags = 0;	//Import>Guitar Hero sections
+		eof_file_import_menu[11].flags = 0;	//Import>Guitar Hero Live
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
@@ -420,6 +422,7 @@ void eof_prepare_file_menu(void)
 		eof_file_import_menu[8].flags = D_DISABLED;		//Import>Queen Bee
 		eof_file_import_menu[9].flags = D_DISABLED;		//Import>Queen Bee (multi)
 		eof_file_import_menu[10].flags = D_DISABLED;	//Import>Guitar Hero sections
+		eof_file_import_menu[11].flags = D_DISABLED;	//Import>Guitar Hero Live
 		eof_file_display_menu[6].flags = D_DISABLED;	//Benchmark image sequence
 	}
 
@@ -4676,8 +4679,6 @@ int eof_menu_file_ghl_import(void)
 				eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
 				eof_beat_stats_cached = 0;
 				eof_detect_mid_measure_ts_changes();
-///				eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
-///				(void) eof_check_for_notes_preceding_sections(0);	//Warn if there are notes that precede the first section event, if there are any sections
 				eof_beat_stats_cached = 0;
 			}
 			else

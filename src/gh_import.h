@@ -29,6 +29,18 @@ typedef struct
 	unsigned long num2;	//Is nonzero if the structure contains a time signature change, in which case it is the denominator
 } eof_ghl_change;
 
+typedef struct
+{
+	unsigned char barre;	//Bit 1 is nonzero if the gem is a barred gem
+	unsigned char id;
+	unsigned char note;
+	unsigned long start;	//Star position of the item (in milliseconds)
+	unsigned long end;		//End position (in milliseconds)
+	unsigned long stringoffset;	//The offset into the string table this event will use (the previous string's offset plus its length plus 1 for the NULL byte terminator)
+	char *string;			//A pointer to the string to be written
+	char string_rebuilt;	//Is nonzero if string was a newly allocated string that is to be released after export
+} eof_ghl_event;
+
 extern unsigned long crc32_lookup[256];
 extern char crc32_lookup_initialized;
 extern EOF_SONG *eof_sections_list_all_ptr;	//eof_sections_list_all() lists the text events in this chart
@@ -49,6 +61,17 @@ int eof_ghl_qsort_changes(const void * e1, const void * e2);
 int eof_ghl_import_common(const char *fn);
 	//Imports the specified Guitar Hero Live (or Guitar Hero TV) file into the active track
 	//Returns nonzero on error
+int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn);
+	//Exports the specified legacy guitar or vocal track to the specified file in GHL format
+	//Returns nonzero on error
+char *eof_ghl_export_build_string(char *text, int prefix);
+	//Allocates and builds a string as necessary for GHL export, such as reformatting section markers, pitch shifts, returning the new string by reference
+	//If the string is suitable as-is, the input pointer is returned
+	//If prefix is nonzero, the string is forced to be rebuilt and is prefixed with an equal sign, indicating the previous lyric defines the use of a displayed hyphen
+	//prefix is ignored if the string's contents reflect a pitch shift or section marker
+	//returns NULL on error
+int eof_ghl_qsort_events(const void * e1, const void * e2);
+	//A quicksort comparitor function for events built during GHL export
 
 filebuffer *eof_filebuffer_load(const char * fn);
 	//Initializes a filebuffer struct, loads the specified file into memory and returns the struct

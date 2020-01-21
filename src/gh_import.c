@@ -12,6 +12,7 @@
 #include "undo.h"
 #include "utility.h"
 #include "menu/edit.h"	//For auto-adjust functions
+#include "foflc/Lyric_storage.h"	//For DuplicateString()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -3843,6 +3844,7 @@ int eof_ghl_import_common(const char *fn)
 							{
 								stringptr[index] = stringptr[index + 1];	//Move each character one earlier, overwriting the equal sign
 							}
+							stringptr[index] = '\0';	//Truncate the string
 						}
 					}
 
@@ -3881,7 +3883,7 @@ int eof_ghl_import_common(const char *fn)
 				else
 				{
 					(void) eof_vocal_track_add_line(eof_song->vocal_track[0], linestart, lineend, 0xFF);
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tAdded lyric line from %lums t %lums", linestart, lineend);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tAdded lyric line from %lums to %lums", linestart, lineend);
 					eof_log(eof_log_string, 1);
 					linestarted = 0;
 				}
@@ -4066,6 +4068,418 @@ int eof_ghl_import_common(const char *fn)
 		eof_log("\tGHL import completed", 1);
 
 	return error;
+}
+
+int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
+{
+	PACKFILE *fp;
+	unsigned long ctr, numtempos, numtimesigs, numevents, lastppqn, eventindex, stringoffset;
+	unsigned lastnum = 0, lastden = 0, num = 0, den = 0, tick;
+	eof_ghl_event *events;
+
+	eof_log("eof_export_ghl() entered", 1);
+
+	//Validate parameters
+	if(!sp || (track >= sp->tracks) || (sp->beats < 2) || !fn)
+		return 1;	//Invalid parameters
+	if((sp->track[track]->track_format != EOF_VOCAL_TRACK_FORMAT) && !eof_track_is_legacy_guitar(sp, track))
+	{	//For now, only export vocals and legacy guitar/bass
+		return 1;	//Invalid parameters
+	}
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Exporting track \"%s\" to \"%s\"", sp->track[track]->name, fn);
+	eof_log(eof_log_string, 1);
+
+	//Count the number of tempo changes
+	numtempos = 1;	//The first beat's tempo always counts because it will always be written
+	lastppqn = sp->beat[0]->ppqn;
+	for(ctr = 1; ctr < sp->beats; ctr++)
+	{	//For each beat after the first
+		if(sp->beat[ctr]->ppqn != lastppqn)
+		{	//If this beat has a different tempo than the previous beat
+			numtempos++;
+			lastppqn = sp->beat[ctr]->ppqn;
+		}
+	}
+
+	//Count the number of time signature changes
+	numtimesigs = 0;
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
+		if(eof_get_effective_ts(sp, &num, &den, ctr, 0))
+		{	//If the time signature for this beat could be read
+			if((num != lastnum) || (den != lastden))
+			{	//If this is the first time signature, or it is different from that of the previous beat
+				numtimesigs++;
+				lastnum = num;
+				lastden = den;
+			}
+		}
+	}
+
+	//Count the number of events that will export for the track
+	numevents = 1;	//Will export at least one HOPO event
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event
+		if(eof_is_section_marker(sp->text_event[ctr], track))
+		{	//If the text event is a section from the exporting track's perspective
+			numevents++;	//It will export as a section event
+		}
+	}
+	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	{	//If a vocal track is being exported
+		numevents += eof_get_track_size(sp, track);			//Each lyric will export as an event
+		numevents += eof_get_num_lyric_sections(sp, track);	//The end of each lyric line will be marked with an event
+	}
+	else if(eof_track_is_legacy_guitar(sp, track))
+	{	//If a legacy guitar/bass track is being exported
+	}
+
+	//Build the list of events to export for the track
+	events = malloc(sizeof(eof_ghl_event) * numevents);
+	eventindex = 0;
+	if(!events)
+	{
+		eof_log("\tError saving:  Cannot allocate memory", 1);
+		return 2;	//Can't allocate memory
+	}
+	memset(events, 0, sizeof(eof_ghl_event) * numevents);	//Initialize the memory to 0
+
+	//Add a HOPO event
+	events[eventindex].id = 4;	//The XMK ID for HOPO events
+	events[eventindex].note = 0;
+	events[eventindex].start = 0;
+	events[eventindex].end = 0;
+	events[eventindex].string = DuplicateString("HOPODETECTIONGAP_SEMIQUAVER");
+///	events[eventindex].stringoffset = (24 * numevents) + stringoffset;
+///	stringoffset += strlen("HOPODETECTIONGAP_SEMIQUAVER") + 1;	//Update the string table offset for the next string (accounting for the NULL byte separating each string)
+	if(!events[eventindex].string)
+	{
+		eof_log("\tError saving:  Cannot allocate memory", 1);
+		free(events);
+		return 2;	//Can't allocate memory
+	}
+	eventindex++;
+
+	//Add the track specific events to the list
+	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+	{	//If a vocal track is being exported
+		char *old_string = NULL, *new_string = NULL;
+		int prefix = 0;
+
+		//Add lyrics to the list
+		for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+		{	//For each lyric
+			events[eventindex].id = 57;	//The XMK ID for lyric events
+			events[eventindex].note = eof_get_note_note(sp, track, ctr);	//The lyric's pitch
+			events[eventindex].start = eof_get_note_pos(sp, track, ctr);
+			events[eventindex].end = events[eventindex].start + eof_get_note_length(sp, track, ctr);
+			old_string = eof_get_note_name(sp, track, ctr);					//Store the pointer to the original string
+			new_string = eof_ghl_export_build_string(old_string, prefix);	//Recreate the lyric string if appropriate
+			if(!new_string)
+			{	//If the string couldn't be rebuilt
+				for(ctr = 0; ctr < eventindex; ctr++)
+				{	//For each event that was built so far
+					if(events[ctr].string_rebuilt)
+					{	//If this string needs to be released
+						free(events[ctr].string);
+					}
+				}
+				free(events);
+				return 3;	//Can't build strings
+			}
+			if(old_string != new_string)
+			{	//If the string was recreated
+				events[eventindex].string_rebuilt = 1;
+			}
+			events[eventindex].string = new_string;
+///			events[eventindex].stringoffset = (24 * numevents) + stringoffset;
+///			stringoffset += strlen(new_string) + 1;	//Update the string table offset for the next string (accounting for the NULL byte separating each string)
+			eventindex++;
+
+			//If this lyric ends in an equal sign, the next lyric needs to be prefixed with an equal sign
+			if(old_string[strlen(old_string) - 1] == '=')
+			{	//If the last character in the original lyric string is an equal sign
+				prefix = 1;	//The next lyric will be prefixed by a '=' character
+			}
+			else
+			{
+				prefix = 0;
+			}
+		}
+
+		//Add lyric line separators to the list
+		for(ctr = 0; ctr < eof_get_num_lyric_sections(sp, track); ctr++)
+		{	//For each lyric line
+			EOF_PHRASE_SECTION *ptr;
+
+			ptr = eof_get_lyric_section(sp, track, ctr);
+			if(ptr)
+			{	//If the lyric line was found
+				events[eventindex].id = 1;	//The XMK ID for lyric line markers
+				events[eventindex].note = 129;	//Presumably unused for lyric line markers
+				events[eventindex].start = ptr->end_pos;
+				events[eventindex].end = ptr->end_pos;
+				eventindex++;
+			}
+		}
+	}//If a vocal track is being exported
+	else if(eof_track_is_legacy_guitar(sp, track))
+	{	//If a legacy guitar/bass track is being exported
+	}
+
+	//Add sections to the list
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event
+		if(eof_is_section_marker(sp->text_event[ctr], track))
+		{	//If the text event is a section from the exporting track's perspective
+			char *old_string, *new_string;
+
+			events[eventindex].id = 3;		//The XMK ID for section events
+			events[eventindex].note = 128;	//Presumably unused for section events
+			events[eventindex].start = eof_get_text_event_pos(sp, ctr);
+			events[eventindex].end = events[eventindex].start;
+			old_string = sp->text_event[ctr]->text;	//Store the pointer to the original section marker
+			new_string = eof_ghl_export_build_string(old_string, 0);	//Recreate the lyric string if appropriate
+			if(old_string != new_string)
+			{	//If the string was recreated
+				events[eventindex].string_rebuilt = 1;
+			}
+			events[eventindex].string = new_string;
+///			events[eventindex].stringoffset = (24 * numevents) + stringoffset;
+///			stringoffset += strlen(new_string) + 1;	//Update the string table offset for the next string (accounting for the NULL byte separating each string)
+			eventindex++;
+		}
+	}
+
+	//Sort events and build string offsets
+	qsort(events, (size_t)numevents, sizeof(eof_ghl_event), eof_ghl_qsort_events);	//Sort the events before writing them to the export file
+	for(ctr = 0, stringoffset = 0; ctr < numevents; ctr++)
+	{	//For each event that was built
+		if(events[ctr].string)
+		{	//If this event has a string
+			events[ctr].stringoffset = (24 * numevents) + stringoffset;
+			stringoffset += strlen(events[ctr].string) + 1;	//Update the string table offset for the next string (accounting for the NULL byte separating each string)
+		}
+	}
+
+	//Write header
+	fp = pack_fopen(fn, "w");
+	if(!fp)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output GHL file \"%s\":  \"%s\"", fn, strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return 4;	//Can't open output file
+	}
+	(void) pack_mputl(8, fp);				//Write version number
+	(void) pack_mputl(0, fp);				//Write a blank checksum
+	(void) pack_mputl(numevents, fp);		//Write number of events
+	(void) pack_mputl(stringoffset, fp);	//Write string table size
+	(void) pack_mputl(0, fp);				//Write unknown value
+	(void) pack_mputl(numtempos, fp);		//Write number of tempo changes
+	(void) pack_mputl(numtimesigs, fp);		//Write number of time signature changes
+
+	//Write tempo map
+	//Write tempo changes
+	lastppqn = sp->beat[0]->ppqn;
+	for(ctr = 0, tick = 0; ctr < sp->beats; ctr++, tick += 960)
+	{	//For each beat, which is 960 ticks long in GHL files
+		if(!ctr || (sp->beat[ctr]->ppqn != lastppqn))
+		{	//If this is the first beat or this beat has a different tempo than the previous beat
+			float timestamp = sp->beat[ctr]->fpos / 1000.0;		//Convert to seconds
+			long timestamp_i = 0;
+
+			memcpy(&timestamp_i, &timestamp, 4);			//Convert the floating point variable to a generic 4 byte integer type
+			(void) pack_mputl(tick, fp);					//Write the tick position
+			(void) pack_mputl(timestamp_i, fp);				//Write the tick position as a 4 byte floating point value
+			(void) pack_mputl(sp->beat[ctr]->ppqn, fp);		//Write the tempo
+			lastppqn = sp->beat[ctr]->ppqn;
+		}
+	}
+
+	//Write time signature changes
+	num = den = lastnum = lastden = 0;
+	for(ctr = 0, tick = 0; ctr < sp->beats; ctr++, tick += 960)
+	{	//For each beat, which is 960 ticks long in GHL files
+		if(eof_get_effective_ts(sp, &num, &den, ctr, 0))
+		{	//If the time signature for this beat could be read
+			if((num != lastnum) || (den != lastden))
+			{	//If this is the first time signature, or it is different from that of the previous beat
+				(void) pack_mputl(tick, fp);	//Write the tick position
+				(void) pack_mputl(0, fp);		//Write the unused realtime position
+				(void) pack_mputl(num, fp);		//Write the TS numerator
+				(void) pack_mputl(den, fp);		//Write the TS denominator
+				lastnum = num;
+				lastden = den;
+			}
+		}
+	}
+
+	//Write track data
+	for(ctr = 0; ctr < numevents; ctr++)
+	{	//For each event that was built
+		float starttime, endtime;
+		long timestamp_i = 0;
+
+		(void) pack_mputl(0, fp);							//Write the unknown value
+		(void) pack_mputw(events[ctr].barre, fp);			//Write the barre status
+		(void) pack_putc(events[ctr].id, fp);				//Write the event ID
+		(void) pack_putc(events[ctr].note, fp);				//Write the note number
+
+		starttime = (float)events[ctr].start / 1000.0;
+		memcpy(&timestamp_i, &starttime, 4);				//Convert the floating point variable to a generic 4 byte integer type
+		(void) pack_mputl(timestamp_i, fp);					//Write the event start timestamp as a 4 byte floating point value
+
+		endtime = (float)events[ctr].end / 1000.0;
+		memcpy(&timestamp_i, &endtime, 4);					//Convert the floating point variable to a generic 4 byte integer type
+		(void) pack_mputl(timestamp_i, fp);					//Write the event end timestamp as a 4 byte floating point value
+
+		(void) pack_mputl(0, fp);							//Write the unknown value
+		(void) pack_mputl(events[ctr].stringoffset, fp);	//Write the string offset
+	}
+
+	//Write string table
+	for(ctr = 0; ctr < numevents; ctr++)
+	{	//For each event that was built
+		if(events[ctr].string)
+		{	//If there is a string for this event
+			unsigned long ctr2, length;
+
+			length = strlen(events[ctr].string);
+			for(ctr2 = 0; ctr2 < length; ctr2++)
+			{	//For each character in the string
+				(void) pack_putc(events[ctr].string[ctr2], fp);
+			}
+			(void) pack_putc(0, fp);	//Write the NULL terminator
+		}
+	}
+
+	//Cleanup
+	for(ctr = 0; ctr < eventindex; ctr++)
+	{	//For each event that was built so far
+		if(events[ctr].string_rebuilt)
+		{	//If this string needs to be released
+			free(events[ctr].string);
+		}
+	}
+	free(events);
+	eof_log("\tExport complete", 1);
+	pack_fclose(fp);
+	return 0;	//Return success
+}
+
+char *eof_ghl_export_build_string(char *text, int prefix)
+{
+	char *new_string;
+	unsigned long ctr;
+
+	if(!text)
+		return NULL;	//Invalid parameter
+
+	//If the lyric is a pitch shift, it will be written as an '@' character
+	if((text[0] == '+') && (text[1] == '\0'))
+	{	//If the specified string is just a pitch shift
+		new_string = DuplicateString("@");
+		return new_string;
+	}
+
+	//If the text reflects a section marker, rebuild it
+	if(eof_text_is_section_marker(text))
+	{	//If the text indicates this is a section marker
+		char *ptr = strcasestr_spec(text, "section ");
+
+		if(!ptr)
+		{	//If "section " wasn't part of the string
+			ptr = strcasestr_spec(text, "[prc_");
+			if(!ptr)
+			{	//If "[prc_" wasn't part of the string either
+				return NULL;	//Logic error
+			}
+		}
+		new_string = DuplicateString(ptr);	//Copy the string starting after the section marker prefix
+		if(!new_string)
+			return NULL;	//Couldn't allocate memory
+
+		for(ctr = 0; new_string[ctr] != '\0'; ctr++)
+		{	//Until the end of the string is reached
+			if(new_string[ctr] == ']')
+			{	//If this character is a closed bracket
+				new_string[ctr] = '\0';	//Truncate the string at this character
+				return new_string;
+			}
+		}
+	}
+
+	//If prefix is nonzero, rebuild the string to begin with a '=' character
+	if(prefix)
+	{
+		unsigned long length = strlen(text) + 1;	//Count how many characters are needed to store the rebuilt string
+
+		new_string = malloc(length + 1);	//Allocate a string large enough to store that, plus the NULL terminator
+		(void) snprintf(new_string, length + 1, "=%s", text);
+
+		return new_string;
+	}
+
+	//If the text ends in an equal sign, it needs to be re-written as a hyphen
+	if(text[strlen(text) - 1] == '=')
+	{
+		new_string = DuplicateString(text);	//Copy the string
+		if(!new_string)
+			return NULL;	//Couldn't allocate memory
+
+		new_string[strlen(new_string) - 1] = '-';
+		return new_string;
+	}
+
+	return text;	//No alterations needed
+}
+
+int eof_ghl_qsort_events(const void * e1, const void * e2)
+{
+	const eof_ghl_event * thing1 = (eof_ghl_event *)e1;
+	const eof_ghl_event * thing2 = (eof_ghl_event *)e2;
+
+	//Sort by timestamp
+	if(thing1->start < thing2->start)
+	{
+		return -1;
+	}
+	else if(thing1->start > thing2->start)
+	{
+		return 1;
+	}
+
+	//Sort by event ID, prioritize HOPO events, then by lower ID number
+	if(thing1->id == 4)
+	{	//If the first item is a HOPO event
+		return -1;
+	}
+	if(thing2->id == 4)
+	{	//If the second item is a HOPO event
+		return 1;
+	}
+	if(thing1->id < thing2->id)
+	{
+		return -1;
+	}
+	if(thing2->id < thing1->id)
+	{
+		return 1;
+	}
+
+	//Sort by note number
+	if(thing1->note < thing2->note)
+	{
+		return -1;
+	}
+	if(thing2->note < thing1->note)
+	{
+		return 1;
+	}
+
+	//They are equal
+	return 0;
 }
 
 struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
