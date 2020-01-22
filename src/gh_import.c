@@ -1079,11 +1079,11 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			}
 			else
 			{	//Otherwise ensure it's within range
-				while(voxpitch < 36)
+				while(voxpitch < EOF_LYRIC_PITCH_MIN)
 				{	//Ensure the pitch isn't less than the RB minimum of 36
 					voxpitch += 12;
 				}
-				while(voxpitch > 84)
+				while(voxpitch > EOF_LYRIC_PITCH_MAX)
 				{	//Ensure the pitch isn't greater than the RB maximum of 84
 					voxpitch -= 12;
 				}
@@ -3262,6 +3262,16 @@ int eof_ghl_qsort_changes(const void * e1, const void * e2)
 		return 1;
 	}
 
+	//sort by delta time
+	if(thing1->delta < thing2->delta)
+	{
+		return -1;
+	}
+	else if(thing1->delta > thing2->delta)
+	{
+		return 1;
+	}
+
 	//Sort by item type (time signature changes before tempo changes)
 	if(thing1->num2)
 	{	//If the first item is a time signature
@@ -3708,12 +3718,12 @@ int eof_ghl_import_common(const char *fn)
 		if((dword3 >= eventblocksize) && (stringpos < fb->size))
 		{	//If the string offset references a string
 			stringptr = (char *)&(fb->buffer[stringpos]);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, barre = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk4 = %lu, string off = %lu (file off = %lu: %s)", dword, barre, eventid, note, start, end, dword2, dword3, stringpos, stringptr);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, barre = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk2 = %lu, string off = %lu (file off = %lu: %s)", dword, barre, eventid, note, start, end, dword2, dword3, stringpos, stringptr);
 		}
 		else
 		{
 			stringptr = NULL;
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, barre = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk4 = %lu, string off = %lu", dword, barre, eventid, note, start, end, dword2, dword3);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tUnk1 = %lu, barre = %u, Event ID = %u, note = %u, start = %f, end = %f, Unk2 = %lu, string off = %lu", dword, barre, eventid, note, start, end, dword2, dword3);
 		}
 		eof_log(eof_log_string, 1);
 
@@ -3839,6 +3849,11 @@ int eof_ghl_import_common(const char *fn)
 							{	//If it ended in a hyphen
 								newlyric->text[lastlength - 1] = '=';	//Replace it with an equal sign
 							}
+							else if((lastlength > 1) && (newlyric->text[lastlength - 1] == '#') && (newlyric->text[lastlength - 2] == '-'))
+							{	//Otherwise if it's at least two characters long and ended in "-#"
+								newlyric->text[lastlength - 2] = '=';	//Replace the hyphen with an equal sign
+							}
+
 							//Rewrite this lyric's string to skip the leading equal sign
 							for(index = 0; index < length; index++)
 							{
@@ -4073,8 +4088,8 @@ int eof_ghl_import_common(const char *fn)
 int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 {
 	PACKFILE *fp;
-	unsigned long ctr, numtempos, numtimesigs, numevents, lastppqn, eventindex, stringoffset;
-	unsigned lastnum = 0, lastden = 0, num = 0, den = 0, tick;
+	unsigned long ctr, numtempos, numtimesigs, numevents, lastppqn, eventindex, stringoffset, length;
+	unsigned lastnum = 0, lastden = 0, num = 0, den = 0;
 	eof_ghl_event *events;
 
 	eof_log("eof_export_ghl() entered", 1);
@@ -4151,8 +4166,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	events[eventindex].start = 0;
 	events[eventindex].end = 0;
 	events[eventindex].string = DuplicateString("HOPODETECTIONGAP_SEMIQUAVER");
-///	events[eventindex].stringoffset = (24 * numevents) + stringoffset;
-///	stringoffset += strlen("HOPODETECTIONGAP_SEMIQUAVER") + 1;	//Update the string table offset for the next string (accounting for the NULL byte separating each string)
+	events[eventindex].string_rebuilt = 1;	//Ensure this string is freed from memory when export ends
 	if(!events[eventindex].string)
 	{
 		eof_log("\tError saving:  Cannot allocate memory", 1);
@@ -4172,9 +4186,15 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 		{	//For each lyric
 			events[eventindex].id = 57;	//The XMK ID for lyric events
 			events[eventindex].note = eof_get_note_note(sp, track, ctr);	//The lyric's pitch
+			old_string = eof_get_note_name(sp, track, ctr);					//Store the pointer to the original string
+
+			if(eof_is_freestyle(old_string))
+			{	//If this lyric is freestyle
+				events[eventindex].note = 29;	//Set a generic freestyle pitch.  eof_ghl_export_build_string() will filter out freestyle characters
+			}
+
 			events[eventindex].start = eof_get_note_pos(sp, track, ctr);
 			events[eventindex].end = events[eventindex].start + eof_get_note_length(sp, track, ctr);
-			old_string = eof_get_note_name(sp, track, ctr);					//Store the pointer to the original string
 			new_string = eof_ghl_export_build_string(old_string, prefix);	//Recreate the lyric string if appropriate
 			if(!new_string)
 			{	//If the string couldn't be rebuilt
@@ -4193,18 +4213,18 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 				events[eventindex].string_rebuilt = 1;
 			}
 			events[eventindex].string = new_string;
-///			events[eventindex].stringoffset = (24 * numevents) + stringoffset;
-///			stringoffset += strlen(new_string) + 1;	//Update the string table offset for the next string (accounting for the NULL byte separating each string)
 			eventindex++;
 
 			//If this lyric ends in an equal sign, the next lyric needs to be prefixed with an equal sign
-			if(old_string[strlen(old_string) - 1] == '=')
-			{	//If the last character in the original lyric string is an equal sign
-				prefix = 1;	//The next lyric will be prefixed by a '=' character
+			length = strlen(old_string);
+			prefix = 0;	//Unless found otherwise, don't consider this lyric as ending in an equal sign
+			if((length > 0) && (old_string[length - 1] == '='))
+			{	//If the strings ends in an equal sign
+				prefix = 1;
 			}
-			else
-			{
-				prefix = 0;
+			else if((length > 1) && (old_string[length - 2] == '=') && (old_string[length - 1] == '#'))
+			{	//If the string ends in "=#"
+				prefix = 1;
 			}
 		}
 
@@ -4246,8 +4266,6 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 				events[eventindex].string_rebuilt = 1;
 			}
 			events[eventindex].string = new_string;
-///			events[eventindex].stringoffset = (24 * numevents) + stringoffset;
-///			stringoffset += strlen(new_string) + 1;	//Update the string table offset for the next string (accounting for the NULL byte separating each string)
 			eventindex++;
 		}
 	}
@@ -4280,18 +4298,20 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	(void) pack_mputl(numtimesigs, fp);		//Write number of time signature changes
 
 	//Write tempo map
+	eof_calculate_beat_delta_positions(sp, 960);	//Update MIDI timings for the project's beats, to simplify the lookup of each beat's delta time
+
 	//Write tempo changes
 	lastppqn = sp->beat[0]->ppqn;
-	for(ctr = 0, tick = 0; ctr < sp->beats; ctr++, tick += 960)
-	{	//For each beat, which is 960 ticks long in GHL files
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
 		if(!ctr || (sp->beat[ctr]->ppqn != lastppqn))
 		{	//If this is the first beat or this beat has a different tempo than the previous beat
 			float timestamp = sp->beat[ctr]->fpos / 1000.0;		//Convert to seconds
 			long timestamp_i = 0;
 
-			memcpy(&timestamp_i, &timestamp, 4);			//Convert the floating point variable to a generic 4 byte integer type
-			(void) pack_mputl(tick, fp);					//Write the tick position
-			(void) pack_mputl(timestamp_i, fp);				//Write the tick position as a 4 byte floating point value
+			(void) pack_mputl(sp->beat[ctr]->midi_pos, fp);	//Write the tick position
+			memcpy(&timestamp_i, &timestamp, 4);			//Convert the floating point real time position to a generic 4 byte integer type
+			(void) pack_mputl(timestamp_i, fp);				//Write the real time position as a 4 byte floating point value
 			(void) pack_mputl(sp->beat[ctr]->ppqn, fp);		//Write the tempo
 			lastppqn = sp->beat[ctr]->ppqn;
 		}
@@ -4299,16 +4319,16 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 
 	//Write time signature changes
 	num = den = lastnum = lastden = 0;
-	for(ctr = 0, tick = 0; ctr < sp->beats; ctr++, tick += 960)
+	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat, which is 960 ticks long in GHL files
 		if(eof_get_effective_ts(sp, &num, &den, ctr, 0))
 		{	//If the time signature for this beat could be read
 			if((num != lastnum) || (den != lastden))
 			{	//If this is the first time signature, or it is different from that of the previous beat
-				(void) pack_mputl(tick, fp);	//Write the tick position
-				(void) pack_mputl(0, fp);		//Write the unused realtime position
-				(void) pack_mputl(num, fp);		//Write the TS numerator
-				(void) pack_mputl(den, fp);		//Write the TS denominator
+				(void) pack_mputl(sp->beat[ctr]->midi_pos, fp);	//Write the tick position
+				(void) pack_mputl(0, fp);						//Write the unused realtime position
+				(void) pack_mputl(num, fp);						//Write the TS numerator
+				(void) pack_mputl(den, fp);						//Write the TS denominator
 				lastnum = num;
 				lastden = den;
 			}
@@ -4370,7 +4390,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 
 char *eof_ghl_export_build_string(char *text, int prefix)
 {
-	char *new_string;
+	char *new_string = NULL;
 	unsigned long ctr;
 
 	if(!text)
@@ -4416,23 +4436,51 @@ char *eof_ghl_export_build_string(char *text, int prefix)
 		unsigned long length = strlen(text) + 1;	//Count how many characters are needed to store the rebuilt string
 
 		new_string = malloc(length + 1);	//Allocate a string large enough to store that, plus the NULL terminator
+		if(!new_string)
+			return NULL;	//Couldn't allocate memory
 		(void) snprintf(new_string, length + 1, "=%s", text);
 
-		return new_string;
+		text = new_string;	//Any remaining checks will examine this updated string
+	}
+
+	//If the text contains a freestyle indicator (# or ^), it needs to be filtered out
+	if(eof_is_freestyle(text))
+	{
+		if(!new_string)
+		{	//If a new string hasn't been built yet
+			new_string = DuplicateString(text);	//Create a new copy of the input string
+			if(!new_string)
+				return NULL;	//Couldn't allocate memory
+		}
+		for(ctr = 0; new_string[ctr] != '\0'; ctr++)
+		{	//For each character in the string
+			if((new_string[ctr] == '#') || (new_string[ctr] == '^'))
+			{	//If the character is a freestyle indicator
+				do{
+						new_string[ctr] = new_string[ctr + 1];	//Move all later characters back one to drop it from the string
+						ctr++;
+				}while(new_string[ctr] != '\0');
+				break;
+			}
+		}
+		text = new_string;	//Any remaining checks will examine this updated string
 	}
 
 	//If the text ends in an equal sign, it needs to be re-written as a hyphen
 	if(text[strlen(text) - 1] == '=')
 	{
-		new_string = DuplicateString(text);	//Copy the string
 		if(!new_string)
-			return NULL;	//Couldn't allocate memory
+		{	//If a new string hasn't been built yet
+			new_string = DuplicateString(text);	//Create a new copy of the input string
+			if(!new_string)
+				return NULL;	//Couldn't allocate memory
+		}
 
 		new_string[strlen(new_string) - 1] = '-';
-		return new_string;
+		text = new_string;	//Any remaining checks will examine this updated string
 	}
 
-	return text;	//No alterations needed
+	return text;	//Return the string with any changes that were made
 }
 
 int eof_ghl_qsort_events(const void * e1, const void * e2)
