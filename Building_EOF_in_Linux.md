@@ -10,7 +10,7 @@ Fortunately, building things from source is fairly simple on Linux. Many popular
 EOF has several dependencies which need to be met before it can be built.  These are:
 
   1. The standard GCC compiler, should be readily available in any Unix/Linux OS
-  1. Allegro 4.4 source (download from http://alleg.sourceforge.net/download.html)
+  1. Allegro 4.4 source (download from http://liballeg.org/old.html)
   1. libogg and libvorbis packages (download from http://xiph.org/downloads)
   1. libfftw (download from http://www.fftw.org)
   1. librubberband (download from http://breakfastquay.com/rubberband)
