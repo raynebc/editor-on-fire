@@ -88,7 +88,7 @@ sudo cp lib/librubberband.a /usr/local/lib
 ```
 
 ## Install Allegro 4 ##
-Do note that Allegro 5 will not work, it has to be one of the 4.x releases.  Download the latest 4.x release (currently it is 4.4.2) from http://liballeg.org/old.html and extract it.  Verify the path of the SDK you installed from the Xcode package earlier, such as by typing the following command in a terminal:
+Do note that Allegro 5 will not work, it has to be one of the 4.x releases.  Download the latest 4.x release (currently it is 4.4.3.1) from http://liballeg.org/old.html and extract it.  Verify the path of the SDK you installed from the Xcode package earlier, such as by typing the following command in a terminal:
 ```
 ls /SDKs/
 ```
