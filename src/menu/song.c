@@ -2633,8 +2633,8 @@ int eof_menu_song_spectrogram_settings(void)
 		if(eof_spectrogram_settings_dialog[12].flags == D_SELECTED)
 		{
 			eof_spectrogram_windowsize = atoi(eof_etext);
-			if(eof_spectrogram_windowsize == 0)
-			{
+			if(eof_spectrogram_windowsize < 2)
+			{	//eof_spectrogram_windowsize / 2 is used later and must evaluate to at least 1 to avoid malfunction
 				eof_spectrogram_windowsize = 1024;
 			}
 		}

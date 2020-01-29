@@ -712,7 +712,7 @@ int eof_process_next_spectrogram_slice(struct spectrogramstruct *spectrogram,SAM
 		return -1;	//Return error
 	}
 
-	if((slicenum > spectrogram->numslices))
+	if((slicenum >= spectrogram->numslices))
 	{	//If this is more than the number of slices that were supposed to be read
 		eof_log("\tSlicenum is too far", 1);
 		return 1;	//Return out of samples
@@ -761,7 +761,16 @@ int eof_process_next_spectrogram_slice(struct spectrogramstruct *spectrogram,SAM
 			dest=&(spectrogram->right.slices[slicenum]);	//Store results to right channel array
 		}
 		halfsize = eof_spectrogram_windowsize / 2;
+		if(halfsize == 0)
+		{	//Logic error
+			return -1;	//Return error
+		}
 		dest->amplist=(double*)malloc(sizeof(double) * (halfsize + 1));
+		if(dest->amplist == NULL)
+		{
+			eof_log("Spectrogram: Unable to allocate memory for the amplitude data", 1);
+			return -1;	//Return error
+		}
 		dest->amplist[0] = spectrogram->buffout[0];			//The first one is all real
 		for(cursamp=halfsize - 1; cursamp > 0; cursamp--)
 		{
