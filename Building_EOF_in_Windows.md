@@ -8,7 +8,7 @@ Note:  Certain new Linux distributions use Pulse Audio, which messes up the abil
 # Details #
 
 ## Building Allegro and other dependencies: ##
-First, you need to build Allegro itself, along with some other dependencies that EOF needs.  This procedure should work with version 4.4.1.1 and 4.4.2 of Allegro.  At this time EOF will NOT WORK with Allegro 5.  To build EOF from source, you will need:
+First, you need to build Allegro itself, along with some other dependencies that EOF needs.  This procedure should work with 4.4.x versions of Allegro.  At this time EOF will NOT WORK with Allegro 5.  To build EOF from source, you will need:
   1. MinGW (http://sourceforge.net/projects/mingw/)
   1. Allegro source (download from http://liballeg.org/old.html)
   1. DirectX SDK (download from https://liballeg.org/old.html)
