@@ -6297,6 +6297,15 @@ int eof_identify_xml(char *fn)
 	return retval;
 }
 
+static int exe_is_bundle(const char * fn)
+{
+	if(ustrstr(fn, ".app"))
+	{
+		return 1;
+	}
+	return 0;
+}
+
 int eof_validate_temp_folder(void)
 {
 	char correct_wd[1024], cwd[1024];
@@ -6309,7 +6318,14 @@ int eof_validate_temp_folder(void)
 	put_backslash(cwd);	//Append a file separator if necessary
 	get_executable_name(correct_wd, 1024);
 	#ifdef ALLEGRO_MACOSX
-		(void) strncat(correct_wd, "/Contents/Resources/eof/", sizeof(correct_wd) - strlen(correct_wd) - 1);
+		if(exe_is_bundle(correct_wd))
+		{
+			(void) strncat(correct_wd, "/Contents/Resources/eof/", sizeof(correct_wd) - strlen(correct_wd) - 1);
+		}
+		else
+		{
+			(void) replace_filename(correct_wd, correct_wd, "", 1024);
+		}
 	#else
 		(void) replace_filename(correct_wd, correct_wd, "", 1024);
 	#endif
