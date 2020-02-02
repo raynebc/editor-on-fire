@@ -4,6 +4,9 @@
 #ifdef ALLEGRO_WINDOWS
 	#include <winalleg.h>
 #endif
+#ifdef ALLEGRO_LEGACY
+	#include <a5alleg.h>
+#endif
 #include <locale.h>	//For setlocale()
 #include <ctype.h>
 #include <math.h>
@@ -3888,6 +3891,9 @@ void eof_render(void)
 //		eof_log("\tPerforming normal blit.", 3);
 		blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);	//Render the screen normally
 	}
+	#ifdef ALLEGRO_LEGACY
+		allegro_render_screen();
+	#endif
 
 //	eof_log("eof_render() completed.", 3);
 }

@@ -20,3 +20,6 @@ top:
 
 clean:
 	$(MAKE) -C src -f makefile.$(SYSTEM) clean
+
+legacy:
+	$(MAKE) -C src -f makefile.legacy
