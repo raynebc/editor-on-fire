@@ -4,6 +4,9 @@
 #ifdef ALLEGRO_WINDOWS
 	#include <winalleg.h>
 #endif
+#ifdef ALLEGRO_LEGACY
+	#include <a5alleg.h>
+#endif
 #include <locale.h>	//For setlocale()
 #include <ctype.h>
 #include <math.h>
@@ -3888,6 +3891,9 @@ void eof_render(void)
 //		eof_log("\tPerforming normal blit.", 3);
 		blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);	//Render the screen normally
 	}
+	#ifdef ALLEGRO_LEGACY
+		allegro_render_screen();
+	#endif
 
 //	eof_log("eof_render() completed.", 3);
 }
@@ -5588,8 +5594,57 @@ void eof_log_cwd(void)
 	}
 #endif
 
+/* use to prevent 100% CPU usage */
+static void eof_idle_logic(void)
+{
+	if(eof_new_idle_system)
+	{	//If the newer idle system was enabled via command line
+		/* rest to save CPU */
+		if(eof_has_focus)
+		{
+			#ifndef ALLEGRO_WINDOWS
+				Idle(eof_cpu_saver * 5);
+			#else
+				if(eof_disable_vsync)
+				{
+					Idle(eof_cpu_saver * 5);
+				}
+			#endif
+		}
+
+		/* make program "sleep" until it is back in focus */
+		else
+		{
+			Idle(500);
+			gametime_reset();
+		}
+	}
+	else
+	{	//If the normal idle system is in effect
+		/* rest to save CPU */
+		if(eof_has_focus)
+		{
+			rest(eof_cpu_saver * 5);
+		}
+
+		/* make program "sleep" until it is back in focus */
+		else
+		{
+			rest(500);
+			gametime_reset();
+		}
+	}
+}
+
 int main(int argc, char * argv[])
 {
+	#ifdef ALLEGRO_LEGACY
+		ALLEGRO_TIMER * timer = NULL;
+		ALLEGRO_EVENT_QUEUE * queue = NULL;
+		ALLEGRO_EVENT event;
+		int tick_count = 0;
+		int tick_limit = 5;
+	#endif
 	int updated = 0, init_failed = 0;
 	clock_t time1 = 0, time2 = 0;
 
@@ -5605,18 +5660,49 @@ int main(int argc, char * argv[])
 		}
 	#endif
 
+	#ifdef ALLEGRO_LEGACY
+		timer = al_create_timer(1.0 / 100.0);
+		if(!timer)
+		{
+			eof_log("Failed to create Allegro 5 timer", 1);
+			return -1;
+		}
+		queue = al_create_event_queue();
+		if(!queue)
+		{
+			eof_log("Failed to create Allegro 5 event queue", 1);
+			return -1;
+		}
+		al_register_event_source(queue, al_get_timer_event_source(timer));
+		al_start_timer(timer);
+	#endif
+
 	eof_log("\tEntering main program loop", 1);
 
 	time1 = clock();
 	while(!eof_quit)
 	{	//While EOF isn't meant to quit
 		/* frame skip mode */
-		while(gametime_get_frames() - gametime_tick > 0)
-		{
-			eof_logic();
-			updated = 0;
-			++gametime_tick;
-		}
+		#ifdef ALLEGRO_LEGACY
+			tick_count = 0;
+			while(!al_is_event_queue_empty(queue))
+			{
+				al_get_next_event(queue, &event);
+				tick_count++;
+				if(tick_count < tick_limit)
+				{
+					eof_logic();
+				}
+				updated = 0;
+			}
+		#else
+			while(gametime_get_frames() - gametime_tick > 0)
+			{
+				eof_logic();
+				updated = 0;
+				++gametime_tick;
+			}
+		#endif
 
 		/* update and draw the screen */
 		if(!updated)
@@ -5691,47 +5777,17 @@ int main(int argc, char * argv[])
 		}
 		else
 		{	//Chart is paused
-			if(eof_new_idle_system)
-			{	//If the newer idle system was enabled via command line
-				/* rest to save CPU */
-				if(eof_has_focus)
-				{
-					#ifndef ALLEGRO_WINDOWS
-						Idle(eof_cpu_saver * 5);
-					#else
-						if(eof_disable_vsync)
-						{
-							Idle(eof_cpu_saver * 5);
-						}
-					#endif
-				}
-
-				/* make program "sleep" until it is back in focus */
-				else
-				{
-					Idle(500);
-					gametime_reset();
-				}
-			}
-			else
-			{	//If the normal idle system is in effect
-				/* rest to save CPU */
-				if(eof_has_focus)
-				{
-					rest(eof_cpu_saver * 5);
-				}
-
-				/* make program "sleep" until it is back in focus */
-				else
-				{
-					rest(500);
-					gametime_reset();
-				}
-			}
+			#ifndef ALLEGRO_LEGACY
+				eof_idle_logic();
+			#endif
 		}//Chart is paused
 	}//While EOF isn't meant to quit
 	if(!init_failed)
 	{	//If EOF was previously able to initialize
+		#ifdef ALLEGRO_LEGACY
+			al_destroy_event_queue(queue);
+			al_destroy_timer(timer);
+		#endif
 		eof_exit();
 	}
 	return 0;
@@ -6297,6 +6353,15 @@ int eof_identify_xml(char *fn)
 	return retval;
 }
 
+static int exe_is_bundle(const char * fn)
+{
+	if(ustrstr(fn, ".app"))
+	{
+		return 1;
+	}
+	return 0;
+}
+
 int eof_validate_temp_folder(void)
 {
 	char correct_wd[1024], cwd[1024];
@@ -6309,7 +6374,14 @@ int eof_validate_temp_folder(void)
 	put_backslash(cwd);	//Append a file separator if necessary
 	get_executable_name(correct_wd, 1024);
 	#ifdef ALLEGRO_MACOSX
-		(void) strncat(correct_wd, "/Contents/Resources/eof/", sizeof(correct_wd) - strlen(correct_wd) - 1);
+		if(exe_is_bundle(correct_wd))
+		{
+			(void) strncat(correct_wd, "/Contents/Resources/eof/", sizeof(correct_wd) - strlen(correct_wd) - 1);
+		}
+		else
+		{
+			(void) replace_filename(correct_wd, correct_wd, "", 1024);
+		}
 	#else
 		(void) replace_filename(correct_wd, correct_wd, "", 1024);
 	#endif
