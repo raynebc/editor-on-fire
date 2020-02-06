@@ -354,6 +354,21 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	combined = create_sample(bits,stereo,freq,samples+decoded->len);	//Create a sample array long enough for the silence and the OGG file
 	if(combined == NULL)
 	{
+		char *temp;
+		unsigned long allocation_size = (bits / 8) * (stereo ? 2 : 1) * (samples+decoded->len);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tcreate_sample() failed (presumably couldn't allocate %lu bytes", allocation_size);
+		eof_log(eof_log_string, 1);
+		temp = malloc(allocation_size);	//Just for fun, see if malloc can allocate this manually
+		if(temp)
+		{
+			eof_log("\t\tmalloc() of that amount of memory succeeded...", 1);
+			free(temp);
+		}
+		else
+		{
+			eof_log("\t\tmalloc() of that amount of memory also failed.", 1);
+		}
+		free(oggbuffer);
 		destroy_sample(decoded);
 		return 45;	//Return failure:  Could not create a sample array for the combined audio
 	}
@@ -527,6 +542,20 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	combined = create_sample(bits,stereo,freq,samples+decoded->len);	//Create a sample array long enough for the silence and the OGG file
 	if(combined == NULL)
 	{
+		char *temp;
+		unsigned long allocation_size = (bits / 8) * (stereo ? 2 : 1) * (samples+decoded->len);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tcreate_sample() failed (presumably couldn't allocate %lu bytes)", allocation_size);
+		eof_log(eof_log_string, 1);
+		temp = malloc(allocation_size);	//Just for fun, see if malloc can allocate this manually
+		if(temp)
+		{
+			eof_log("\t\tmalloc() of that amount of memory succeeded...", 1);
+			free(temp);
+		}
+		else
+		{
+			eof_log("\t\tmalloc() of that amount of memory also failed.", 1);
+		}
 		destroy_sample(decoded);
 		return 23;	//Return failure:  Could not create a sample array for the combined audio
 	}

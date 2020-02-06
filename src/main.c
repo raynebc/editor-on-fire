@@ -6353,6 +6353,7 @@ int eof_identify_xml(char *fn)
 	return retval;
 }
 
+#ifdef ALLEGRO_MACOSX
 static int exe_is_bundle(const char * fn)
 {
 	if(ustrstr(fn, ".app"))
@@ -6361,6 +6362,7 @@ static int exe_is_bundle(const char * fn)
 	}
 	return 0;
 }
+#endif
 
 int eof_validate_temp_folder(void)
 {

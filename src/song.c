@@ -1064,20 +1064,25 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 		eof_fix_lyric(tp,i-1);
 	}//For each lyric, in reverse order
 
-	/* make sure no lines overlap */
+	/* make sure there is space between each line */
 	for(i = 0; i < tp->lines; i++)
 	{
 		for(j = 0; j < tp->lines; j++)
 		{
 			if(j != i)
-			{
+			{	//Comparing each lyric line to each other lyric line
 				if((tp->line[i].end_pos >= tp->line[j].start_pos) && (tp->line[i].start_pos <= tp->line[j].end_pos))
-				{
-					tp->line[i].end_pos = tp->line[j].start_pos - 1;
+				{	//If the lines overlap
+					tp->line[i].end_pos = tp->line[j].start_pos - 2;	//End the earlier line 2ms before the start of the later line
+				}
+				else if((tp->line[i].end_pos < tp->line[j].start_pos) && (tp->line[i].end_pos + 1 >= tp->line[j].start_pos))
+				{	//If the lines are not at least 2ms apart from each other
+					tp->line[i].end_pos = tp->line[j].start_pos - 2;	//End the earlier line 2ms before the start of the later line
 				}
 			}
 		}
 	}
+
 	/* delete empty lines */
 	for(i = tp->lines; i > 0; i--)
 	{

@@ -4143,7 +4143,13 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	}
 	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 	{	//If a vocal track is being exported
-		numevents += eof_get_track_size(sp, track);			//Each lyric will export as an event
+		for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+		{	//For each lyric
+			if(eof_get_note_note(sp, track, ctr) != VOCALPERCUSSION)
+			{	//If this is NOT a vocal percussion note
+				numevents++;	//It will export as an event
+			}
+		}
 		numevents += eof_get_num_lyric_sections(sp, track);	//The end of each lyric line will be marked with an event
 	}
 	else if(eof_track_is_legacy_guitar(sp, track))
@@ -4186,6 +4192,10 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 		{	//For each lyric
 			events[eventindex].id = 57;	//The XMK ID for lyric events
 			events[eventindex].note = eof_get_note_note(sp, track, ctr);	//The lyric's pitch
+			if(events[eventindex].note == VOCALPERCUSSION)
+			{	//If this is a vocal percussion note
+				continue;	//Do not export it
+			}
 			old_string = eof_get_note_name(sp, track, ctr);					//Store the pointer to the original string
 
 			if(eof_is_freestyle(old_string))
