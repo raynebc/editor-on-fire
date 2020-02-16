@@ -124,6 +124,7 @@ MENU eof_beat_menu[] =
 	{"&Copy tempo map", eof_menu_beat_copy_tempo_map, NULL, 0, NULL},
 	{"&Paste tempo map", eof_menu_beat_paste_tempo_map, NULL, 0, NULL},
 	{"&Validate tempo map", eof_menu_beat_validate_tempo_map, NULL, 0, NULL},
+	{"Lock tempo map", eof_menu_beat_lock_tempo_map, NULL, 0, NULL},
 	{"Remove mid-beat status", eof_menu_beat_remove_mid_beat_status, NULL, 0, NULL},
 	{"&Move to seek pos", eof_menu_beat_move_to_seek_pos, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
@@ -305,7 +306,7 @@ void eof_prepare_beat_menu(void)
 		eof_beat_menu[11].flags = 0;	//Delete anchor
 		eof_beat_menu[12].flags = 0;	//Anchor measures
 		eof_beat_menu[14].flags = 0;	//Paste tempo map
-		eof_beat_menu[17].flags = 0;	//Move to seek pos
+		eof_beat_menu[18].flags = 0;	//Move to seek pos
 
 		eof_beat_bpm_menu[0].flags = 0;	//BPM>BPM change
 		eof_beat_bpm_menu[1].flags = 0;	//BPM>Reset BPM
@@ -428,31 +429,42 @@ void eof_prepare_beat_menu(void)
 			eof_beat_events_menu[2].flags = D_DISABLED;
 		}
 
-		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_MIDBEAT)
-		{	//If the selected beat has the mid beat flag set
-			eof_beat_menu[16].flags = 0;	//Remove mid-beat status
+		/* lock tempo map */
+		if(eof_song->tags->tempo_map_locked)
+		{
+			eof_beat_menu[16].flags = D_SELECTED;	//Beat>Lock tempo map
 		}
 		else
 		{
-			eof_beat_menu[16].flags = D_DISABLED;
+			eof_beat_menu[16].flags = 0;
+		}
+
+		/* remove mid beat status */
+		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_MIDBEAT)
+		{	//If the selected beat has the mid beat flag set
+			eof_beat_menu[17].flags = 0;	//Remove mid-beat status
+		}
+		else
+		{
+			eof_beat_menu[17].flags = D_DISABLED;
 		}
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
-			eof_beat_menu[20].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[21].flags = 0;	//Beat>Rocksmith>
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
-				eof_beat_menu[21].flags = D_DISABLED;
+				eof_beat_menu[22].flags = D_DISABLED;
 			}
 			else
 			{
-				eof_beat_menu[21].flags = 0;	//Place Trainer Event
+				eof_beat_menu[22].flags = 0;	//Place Trainer Event
 			}
 		}
 		else
 		{
-			eof_beat_menu[20].flags = D_DISABLED;
 			eof_beat_menu[21].flags = D_DISABLED;
+			eof_beat_menu[22].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -541,7 +553,7 @@ void eof_prepare_beat_menu(void)
 
 		if(eof_check_for_anchors_between_selected_beat_and_seek_pos() || (eof_song->beat[eof_selected_beat]->pos == eof_music_pos - eof_av_delay))
 		{	//If there are anchors between the selected beat and seek position, or the selected beat is at the seek position already
-			eof_beat_menu[17].flags = D_DISABLED;	//Move to seek pos
+			eof_beat_menu[18].flags = D_DISABLED;	//Move to seek pos
 		}
 
 		if(eof_song->tags->tempo_map_locked)
@@ -556,7 +568,7 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[11].flags = D_DISABLED;	//Delete anchor
 			eof_beat_menu[12].flags = D_DISABLED;	//Anchor measures
 			eof_beat_menu[14].flags = D_DISABLED;	//Paste tempo map
-			eof_beat_menu[17].flags = D_DISABLED;	//Move to seek pos
+			eof_beat_menu[18].flags = D_DISABLED;	//Move to seek pos
 
 			eof_beat_bpm_menu[0].flags = D_DISABLED;	//BPM>BPM change
 			eof_beat_bpm_menu[1].flags = D_DISABLED;	//BPM>Reset BPM
@@ -2844,15 +2856,19 @@ int eof_menu_beat_adjust_bpm(double amount)
 	return 1;
 }
 
-int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp)
+int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp, char *undo_made)
 {
-	if((signature < -7) || (signature > 7) || !sp || (beatnum >= sp->beats))
+	if((signature < -7) || (signature > 7) || !sp || (beatnum >= sp->beats) || !undo_made)
 		return 0;	//Return error;
 
 	if((sp->beat[beatnum]->flags & EOF_BEAT_FLAG_KEY_SIG) && (sp->beat[beatnum]->key == signature))
 		return 0;	//Don't apply a key signature if the selected beat already has that specific key signature
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+	if(*undo_made == 0)
+	{
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+		*undo_made = 1;
+	}
 	sp->beat[beatnum]->flags |= EOF_BEAT_FLAG_KEY_SIG;	//Set this flag
 	sp->beat[beatnum]->key = signature;
 	return 1;
@@ -2860,77 +2876,92 @@ int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp)
 
 int eof_menu_beat_ks_7_flats(void)
 {
-	return eof_apply_key_signature(-7, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(-7, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_6_flats(void)
 {
-	return eof_apply_key_signature(-6, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(-6, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_5_flats(void)
 {
-	return eof_apply_key_signature(-5, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(-5, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_4_flats(void)
 {
-	return eof_apply_key_signature(-4, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(-4, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_3_flats(void)
 {
-	return eof_apply_key_signature(-3, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(-3, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_2_flats(void)
 {
-	return eof_apply_key_signature(-2, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(-2, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_1_flat(void)
 {
-	return eof_apply_key_signature(-1, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(-1, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_0_flats(void)
 {
-	return eof_apply_key_signature(0, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(0, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_1_sharp(void)
 {
-	return eof_apply_key_signature(1, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(1, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_2_sharps(void)
 {
-	return eof_apply_key_signature(2, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(2, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_3_sharps(void)
 {
-	return eof_apply_key_signature(3, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(3, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_4_sharps(void)
 {
-	return eof_apply_key_signature(4, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(4, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_5_sharps(void)
 {
-	return eof_apply_key_signature(5, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(5, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_6_sharps(void)
 {
-	return eof_apply_key_signature(6, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(6, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_7_sharps(void)
 {
-	return eof_apply_key_signature(7, eof_selected_beat, eof_song);
+	char undo_made = 1;
+	return eof_apply_key_signature(7, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_off(void)
@@ -3615,6 +3646,14 @@ int eof_menu_beat_validate_tempo_map(void)
 	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 
 	return D_O_K;
+}
+
+int eof_menu_beat_lock_tempo_map(void)
+{
+	if(eof_song)
+		eof_song->tags->tempo_map_locked ^= 1;	//Toggle this boolean variable
+	eof_fix_window_title();
+	return 1;
 }
 
 int eof_menu_beat_remove_mid_beat_status(void)

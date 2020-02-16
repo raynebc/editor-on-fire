@@ -37,7 +37,9 @@ int eof_menu_beat_ts_custom(void);	//Applies user-selected time signature and re
 int eof_menu_beat_ts_convert(void);	//Applies user-selected time signature and recalculates tempos to leave beat markers in their existing positions
 int eof_menu_beat_ts_off(void);
 
-int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp);	//Applies the specified key signature to the specified beat
+int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp, char *undo_made);
+	//Applies the specified key signature to the specified beat
+	//If *undo_made is zero, an undo state is made before altering the chart and *undo_made is set to nonzero
 int eof_menu_beat_ks_7_flats(void);
 int eof_menu_beat_ks_6_flats(void);
 int eof_menu_beat_ks_5_flats(void);
@@ -82,6 +84,8 @@ int eof_menu_beat_paste_tempo_map(void);
 	//Starting at the selected beat, applies the tempo and time signature changes stored by eof_menu_beat_copy_tempo_map()
 int eof_menu_beat_validate_tempo_map(void);
 	//Calls eof_detect_tempo_map_corruption() with the option to report a valid tempo map
+int eof_menu_beat_lock_tempo_map(void);
+	//Toggle the setting to lock the tempo map on/off
 
 int eof_menu_beat_remove_mid_beat_status(void);	//If the selected beat has the EOF_BEAT_FLAG_MIDBEAT flag set, creates an undo state and clears that flag
 int eof_menu_beat_calculate_bpm(void);

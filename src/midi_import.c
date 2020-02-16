@@ -1327,7 +1327,8 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		beat = eof_get_beat(sp, event_realtime);
 		if(eof_beat_num_valid(sp, beat))
 		{	//If the key signature is placed at a valid timestamp
-			(void) eof_apply_key_signature(eof_import_ks_events->event[ctr]->d1, beat, sp);	//Apply it to the beat
+			char undo_made = 1;
+			(void) eof_apply_key_signature(eof_import_ks_events->event[ctr]->d1, beat, sp, &undo_made);	//Apply it to the beat
 		}
 	}
 

@@ -244,6 +244,7 @@ void eof_load_config(char * fn)
 	eof_render_mid_beat_tempos_blue = get_config_int("preferences", "eof_render_mid_beat_tempos_blue", 1);
 	eof_disable_ini_export = get_config_int("preferences", "eof_disable_ini_export", 0);
 	eof_gh_import_sustain_threshold_prompt = get_config_int("preferences", "eof_gh_import_sustain_threshold_prompt", 0);
+	eof_rs_import_all_handshapes = get_config_int("preferences", "eof_rs_import_all_handshapes", 0);
 	eof_db_import_suppress_5nc_conversion = get_config_int("preferences", "eof_db_import_suppress_5nc_conversion", 0);
 	eof_dont_auto_name_double_stops = get_config_int("preferences", "eof_dont_auto_name_double_stops", 0);
 	eof_section_auto_adjust = get_config_int("preferences", "eof_section_auto_adjust", 1);
@@ -611,6 +612,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_render_mid_beat_tempos_blue", eof_render_mid_beat_tempos_blue);
 	set_config_int("preferences", "eof_disable_ini_export", eof_disable_ini_export);
 	set_config_int("preferences", "eof_gh_import_sustain_threshold_prompt", eof_gh_import_sustain_threshold_prompt);
+	set_config_int("preferences", "eof_rs_import_all_handshapes", eof_rs_import_all_handshapes);
 	set_config_int("preferences", "eof_db_import_suppress_5nc_conversion", eof_db_import_suppress_5nc_conversion);
 	set_config_int("preferences", "eof_dont_auto_name_double_stops", eof_dont_auto_name_double_stops);
 	set_config_int("preferences", "eof_section_auto_adjust", eof_section_auto_adjust);

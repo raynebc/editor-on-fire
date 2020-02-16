@@ -135,7 +135,6 @@ int eof_menu_song_add_silence(void);
 int eof_menu_catalog_edit_name(void);	//Brings up a dialog window allowing the user to define a fret catalog entry's name
 int eof_menu_song_legacy_view(void);	//Toggles the view of pro guitar tracks as legacy notes
 
-int eof_menu_song_lock_tempo_map(void);			//Toggle the setting to lock the tempo map on/off
 int eof_menu_song_disable_click_drag(void);		//Toggle the setting to disable click and drag on/off
 
 void eof_set_percussion_cue(int cue_number);	//Sets eof_sound_chosen_percussion to the cue referred by eof_audio_cues_dialog[cue_number]
@@ -202,8 +201,6 @@ int eof_run_time_range_dialog(unsigned long *start, unsigned long *end);
 	//eof_etext[] is used as the title for the dialog
 	//Returns nonzero if user clicks OK, and returns the specified timestamps through *start and *end
 	//Returns zero if user cancels, either field is empty, both fields have the same value or upon error
-int eof_menu_song_export_song_preview(void);
-	//Allows the user to define a portion of the chart audio to export to preview.wav and preview.ogg in the project folder
 
 int eof_menu_song_highlight_non_grid_snapped_notes(void);
 	//Toggles highlighting for all notes in the active track that aren't at any grid snap position

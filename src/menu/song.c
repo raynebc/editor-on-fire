@@ -205,13 +205,11 @@ MENU eof_song_menu[] =
 	{"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
 	{"Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
 	{"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
-	{"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
 	{"&Disable click and drag", eof_menu_song_disable_click_drag, NULL, 0, NULL},
 	{"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
 	{"Second &Piano roll", NULL, eof_song_piano_roll_menu, 0, NULL},
 	{"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
-	{"Create pre&View audio", eof_menu_song_export_song_preview, NULL, 0, NULL},
 	{"Place floating event", eof_menu_song_add_floating_text_event, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"T&Est song", NULL, eof_song_test_menu, EOF_LINUX_DISABLE, NULL},
@@ -699,31 +697,21 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[13].flags = 0;
 		}
 
-		/* lock tempo map */
-		if(eof_song->tags->tempo_map_locked)
+		/* disable click and drag */
+		if(eof_song->tags->click_drag_disabled)
 		{
-			eof_song_menu[14].flags = D_SELECTED;	//Song>Lock tempo map
+			eof_song_menu[14].flags = D_SELECTED;	//Song>Disable click and drag
 		}
 		else
 		{
 			eof_song_menu[14].flags = 0;
 		}
 
-		/* disable click and drag */
-		if(eof_song->tags->click_drag_disabled)
-		{
-			eof_song_menu[15].flags = D_SELECTED;	//Song>Disable click and drag
-		}
-		else
-		{
-			eof_song_menu[15].flags = 0;
-		}
-
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[16].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[17].flags = 0;			//Song>Rocksmith> submenu
+			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[16].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -747,8 +735,8 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable these menu items
+			eof_song_menu[15].flags = D_DISABLED;
 			eof_song_menu[16].flags = D_DISABLED;
-			eof_song_menu[17].flags = D_DISABLED;
 		}
 
 		/* Second piano roll>Display */
@@ -3719,14 +3707,6 @@ int eof_menu_song_seek_next_ch_sp_deployable_note(void)
 	return 1;
 }
 
-int eof_menu_song_lock_tempo_map(void)
-{
-	if(eof_song)
-		eof_song->tags->tempo_map_locked ^= 1;	//Toggle this boolean variable
-	eof_fix_window_title();
-	return 1;
-}
-
 int eof_menu_song_disable_click_drag(void)
 {
 	if(eof_song)
@@ -4597,135 +4577,6 @@ int eof_run_time_range_dialog(unsigned long *start, unsigned long *end)
 
 	eof_render();
 	return 0;	//User cancellation
-}
-
-int eof_menu_song_export_song_preview(void)
-{
-	unsigned long start = 0, stop = 0;
-	char targetpath[1024] = {0};
-	char syscommand[1024] = {0};
-	char wavname[270] = {0};
-	unsigned long oldstarttag = 0, oldendtag = 0;
-	char *oldstartstring, *oldendstring;
-
-	eof_log("eof_menu_song_export_song_preview() entered", 1);
-	eof_log("\tCreating preview audio", 1);
-
-	if(!eof_song)
-		return 0;
-
-	//Determine if the preview start and end timestamps are already stored in the project
-	oldstartstring = eof_find_ini_setting_tag(eof_song, &oldstarttag, "preview_start_time");
-	oldendstring = eof_find_ini_setting_tag(eof_song, &oldendtag, "preview_end_time");
-	if(oldstartstring && oldendstring)
-	{	//If both timestamp tags were found in the INI settings
-		char *temp;
-		for(temp = oldstartstring; *temp == ' '; temp++);	//Skip past any leading whitespace in the value portion of the INI setting
-		start = strtoul(temp, NULL, 10);
-		for(temp = oldendstring; *temp == ' '; temp++);	//Skip past any leading whitespace in the value portion of the INI setting
-		stop = strtoul(temp, NULL, 10);
-	}
-
-	//Initialize the start and end positions as appropriate
-	if(!(oldstartstring && oldendstring && (start != stop)))
-	{	//If the positions were NOT read from the INI settings
-		if(eof_seek_selection_start != eof_seek_selection_end)
-		{	//If there is a seek selection
-			start = eof_seek_selection_start;
-			stop = eof_seek_selection_end;
-		}
-		else if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
-		{	//If both the start and end points are defined with different timestamps
-			start = eof_song->tags->start_point;
-			stop = eof_song->tags->end_point;
-		}
-		else
-		{	//Default the start time to the current seek position and the stop time 30 seconds later
-			start = eof_music_pos - eof_av_delay;
-			stop = start + 30000; //30,000 ms later
-		}
-	}
-
-	strncpy(eof_etext, "Set preview timings", sizeof(eof_etext) - 1);	//Set the title of the eof_menu_song_time_range_dialog dialog
-	if(!eof_run_time_range_dialog(&start, &stop))	//If a valid time range isn't provided by the user
-		return 0;									//Cancel
-
-	if(!oldstartstring || !oldendstring || (start != strtoul(oldstartstring, NULL, 10)) || (stop != strtoul(oldendstring, NULL, 10)))
-	{	//If the project didn't already have the start/stop preview tags stored, or if the times just entered are different from those already stored
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		if(oldstartstring)
-			eof_ini_delete(oldstarttag);	//Remove any existing preview start tag
-		oldendstring = eof_find_ini_setting_tag(eof_song, &oldendtag, "preview_end_time");	//Re-lookup the index for the end tag, since the index may have just changed due to the above deletion
-		if(oldendstring)
-			eof_ini_delete(oldendtag);	//Remove any existing preview start tag
-		if(eof_song->tags->ini_settings + 2 < EOF_MAX_INI_SETTINGS)
-		{	//If the start and end INI tags can be stored into the project
-			(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_start_time = %lu", start);
-			eof_song->tags->ini_settings++;
-			(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_end_time = %lu", stop);
-			eof_song->tags->ini_settings++;
-		}
-	}
-
-	if(eof_silence_loaded)
-	{	//If no chart audio is loaded
-		return 1;
-	}
-	if(alert(NULL, "Generate preview audio files?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-	{	//If the user declined to generate audio files
-		return 1;
-	}
-
-	if(eof_ogg_settings())
-	{	//If the user selected an OGG encoding quality
-		//Determine the name to save the WAV file to
-		if(eof_song->tags->title[0] != '\0')
-		{	//If the chart has a defined song title
-			(void) snprintf(wavname, sizeof(wavname), "%s_preview.wav", eof_song->tags->title);
-		}
-		else
-		{	//Otherwise default to "guitar"
-			(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
-		}
-		(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
-		(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
-		eof_export_audio_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
-		if(!exists(targetpath))
-		{	//If the preview WAV file was not created, retry using a known acceptable file name
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError writing file \"%s\":  \"%s\", retrying with a target name of guitar_preview.wav", targetpath, strerror(errno));	//Get the Operating System's reason for the failure
-			eof_log(eof_log_string, 1);
-			(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
-			(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
-			(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
-			eof_export_audio_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
-		}
-		if(exists(targetpath))
-		{	//If the preview WAV file was created, convert it to OGG
-			(void) replace_filename(targetpath, eof_song_path, "preview.ogg", 1024);	//Build the target for the preview OGG file
-			(void) delete_file(targetpath);	//Delete the preview OGG file if it already exists
-			(void) replace_filename(targetpath, eof_song_path, "", 1024);	//Build the path for the preview files' parent folder
-			#ifdef ALLEGRO_WINDOWS
-				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
-			#else
-				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[eof_ogg_setting], targetpath, wavname, targetpath);
-			#endif
-			(void) eof_system(syscommand);
-			if(!exists(targetpath))
-			{
-				eof_log("\tError creating preview OGG file.", 1);
-			}
-		}
-		else
-		{
-			eof_log("\tError creating preview WAV file, aborting.", 1);
-		}
-	}
-	else
-	{
-		eof_log("\tUser cancellation.", 1);
-	}
-
-	return 1;
 }
 
 int eof_menu_song_highlight_non_grid_snapped_notes(void)

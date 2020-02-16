@@ -116,6 +116,7 @@ MENU eof_file_menu[] =
 	{"Export audio range", eof_menu_file_export_audio_range, NULL, D_DISABLED, NULL},
 	{"Export &Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
 	{"Export image sequence", eof_write_image_sequence, NULL, 0, NULL},
+	{"Export pre&View audio", eof_menu_file_export_song_preview, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
 	{"Default INI settings", eof_menu_file_default_ini_settings, NULL, 0, NULL},
@@ -223,10 +224,10 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  500, 270, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  275, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  275, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 275, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_window_proc,0,   48,  500, 285, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  290, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  290, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 290, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,  75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248, 75,  224, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI files",NULL, NULL },
 	{ d_agup_check_proc, 16,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -254,6 +255,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,  255, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
 	{ d_agup_check_proc, 248, 270, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
 	{ d_agup_check_proc, 248, 285, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
+	{ d_agup_check_proc, 248, 300, 218, 16,  2,   23,  0,    0,      1,   0,   "RS import loads all handshapes",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -389,6 +391,7 @@ void eof_prepare_file_menu(void)
 			eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
 		#endif
 		eof_file_menu[10].flags = 0;	//Export image sequence
+		eof_file_menu[11].flags = 0;	//Export preview audio
 		eof_file_import_menu[0].flags = 0;	//Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = 0;	//Import>Lyric
 		eof_file_import_menu[8].flags = 0;	//Import>Queen Bee
@@ -417,6 +420,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[8].flags = D_DISABLED;	//Export audio range
 		eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
 		eof_file_menu[10].flags = D_DISABLED;	//Export image sequence
+		eof_file_menu[11].flags = D_DISABLED;	//Export preview audio
 		eof_file_import_menu[0].flags = D_DISABLED;		//Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = D_DISABLED;		//Import>Lyric
 		eof_file_import_menu[8].flags = D_DISABLED;		//Import>Queen Bee
@@ -1620,6 +1624,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[28].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
 	eof_import_export_preferences_dialog[29].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
 	eof_import_export_preferences_dialog[30].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;	//GH import sustain threshold prompt
+	eof_import_export_preferences_dialog[31].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
 
 	do
 	{	//Run the dialog
@@ -1653,6 +1658,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
 			eof_disable_ini_export = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
 			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[30].flags == D_SELECTED ? 1 : 0);
+			eof_rs_import_all_handshapes = (eof_import_export_preferences_dialog[31].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1683,6 +1689,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[28].flags = 0;				//GP import beat text as sections, markers as phrases
 			eof_import_export_preferences_dialog[29].flags = 0;				//Don't write INI file
 			eof_import_export_preferences_dialog[30].flags = 0;				//GH import sustain threshold prompt
+			eof_import_export_preferences_dialog[31].flags = 0;				//RS import loads all handshapes
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -6413,6 +6420,135 @@ int eof_menu_file_export_guitar_pro(void)
 	(void) delete_file(temppath2);
 	(void) delete_file(temppath3);
 	(void) delete_file(temppath4);
+	return 1;
+}
+
+int eof_menu_file_export_song_preview(void)
+{
+	unsigned long start = 0, stop = 0;
+	char targetpath[1024] = {0};
+	char syscommand[1024] = {0};
+	char wavname[270] = {0};
+	unsigned long oldstarttag = 0, oldendtag = 0;
+	char *oldstartstring, *oldendstring;
+
+	eof_log("eof_menu_file_export_song_preview() entered", 1);
+	eof_log("\tCreating preview audio", 1);
+
+	if(!eof_song)
+		return 0;
+
+	//Determine if the preview start and end timestamps are already stored in the project
+	oldstartstring = eof_find_ini_setting_tag(eof_song, &oldstarttag, "preview_start_time");
+	oldendstring = eof_find_ini_setting_tag(eof_song, &oldendtag, "preview_end_time");
+	if(oldstartstring && oldendstring)
+	{	//If both timestamp tags were found in the INI settings
+		char *temp;
+		for(temp = oldstartstring; *temp == ' '; temp++);	//Skip past any leading whitespace in the value portion of the INI setting
+		start = strtoul(temp, NULL, 10);
+		for(temp = oldendstring; *temp == ' '; temp++);	//Skip past any leading whitespace in the value portion of the INI setting
+		stop = strtoul(temp, NULL, 10);
+	}
+
+	//Initialize the start and end positions as appropriate
+	if(!(oldstartstring && oldendstring && (start != stop)))
+	{	//If the positions were NOT read from the INI settings
+		if(eof_seek_selection_start != eof_seek_selection_end)
+		{	//If there is a seek selection
+			start = eof_seek_selection_start;
+			stop = eof_seek_selection_end;
+		}
+		else if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
+		{	//If both the start and end points are defined with different timestamps
+			start = eof_song->tags->start_point;
+			stop = eof_song->tags->end_point;
+		}
+		else
+		{	//Default the start time to the current seek position and the stop time 30 seconds later
+			start = eof_music_pos - eof_av_delay;
+			stop = start + 30000; //30,000 ms later
+		}
+	}
+
+	strncpy(eof_etext, "Set preview timings", sizeof(eof_etext) - 1);	//Set the title of the eof_menu_song_time_range_dialog dialog
+	if(!eof_run_time_range_dialog(&start, &stop))	//If a valid time range isn't provided by the user
+		return 0;									//Cancel
+
+	if(!oldstartstring || !oldendstring || (start != strtoul(oldstartstring, NULL, 10)) || (stop != strtoul(oldendstring, NULL, 10)))
+	{	//If the project didn't already have the start/stop preview tags stored, or if the times just entered are different from those already stored
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(oldstartstring)
+			eof_ini_delete(oldstarttag);	//Remove any existing preview start tag
+		oldendstring = eof_find_ini_setting_tag(eof_song, &oldendtag, "preview_end_time");	//Re-lookup the index for the end tag, since the index may have just changed due to the above deletion
+		if(oldendstring)
+			eof_ini_delete(oldendtag);	//Remove any existing preview start tag
+		if(eof_song->tags->ini_settings + 2 < EOF_MAX_INI_SETTINGS)
+		{	//If the start and end INI tags can be stored into the project
+			(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_start_time = %lu", start);
+			eof_song->tags->ini_settings++;
+			(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_end_time = %lu", stop);
+			eof_song->tags->ini_settings++;
+		}
+	}
+
+	if(eof_silence_loaded)
+	{	//If no chart audio is loaded
+		return 1;
+	}
+	if(alert(NULL, "Generate preview audio files?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+	{	//If the user declined to generate audio files
+		return 1;
+	}
+
+	if(eof_ogg_settings())
+	{	//If the user selected an OGG encoding quality
+		//Determine the name to save the WAV file to
+		if(eof_song->tags->title[0] != '\0')
+		{	//If the chart has a defined song title
+			(void) snprintf(wavname, sizeof(wavname), "%s_preview.wav", eof_song->tags->title);
+		}
+		else
+		{	//Otherwise default to "guitar"
+			(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
+		}
+		(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
+		(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
+		eof_export_audio_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
+		if(!exists(targetpath))
+		{	//If the preview WAV file was not created, retry using a known acceptable file name
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError writing file \"%s\":  \"%s\", retrying with a target name of guitar_preview.wav", targetpath, strerror(errno));	//Get the Operating System's reason for the failure
+			eof_log(eof_log_string, 1);
+			(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
+			(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
+			(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
+			eof_export_audio_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
+		}
+		if(exists(targetpath))
+		{	//If the preview WAV file was created, convert it to OGG
+			(void) replace_filename(targetpath, eof_song_path, "preview.ogg", 1024);	//Build the target for the preview OGG file
+			(void) delete_file(targetpath);	//Delete the preview OGG file if it already exists
+			(void) replace_filename(targetpath, eof_song_path, "", 1024);	//Build the path for the preview files' parent folder
+			#ifdef ALLEGRO_WINDOWS
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
+			#else
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[eof_ogg_setting], targetpath, wavname, targetpath);
+			#endif
+			(void) eof_system(syscommand);
+			if(!exists(targetpath))
+			{
+				eof_log("\tError creating preview OGG file.", 1);
+			}
+		}
+		else
+		{
+			eof_log("\tError creating preview WAV file, aborting.", 1);
+		}
+	}
+	else
+	{
+		eof_log("\tUser cancellation.", 1);
+	}
+
 	return 1;
 }
 

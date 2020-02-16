@@ -417,6 +417,7 @@ extern int         eof_imports_drop_mid_beat_tempos;
 extern int         eof_render_mid_beat_tempos_blue;
 extern int         eof_disable_ini_export;
 extern int         eof_gh_import_sustain_threshold_prompt;
+extern int         eof_rs_import_all_handshapes;
 extern int         eof_db_import_suppress_5nc_conversion;
 extern int         eof_warn_missing_bass_fhps;
 extern int         eof_4_fret_range;

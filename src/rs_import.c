@@ -2021,8 +2021,8 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											}
 											notenum = nextnote;	//Iterate to the next note in this track difficulty, if there is one
 										}
-										if(hassingle || note_offset || chord_change)
-										{	//If this handshape tag has any of these criteria
+										if(hassingle || note_offset || chord_change || eof_rs_import_all_handshapes)
+										{	//If this handshape tag has any of these criteria, or if the user enabled the preference to import all handshapes unconditionally
 											hand = 1;	//This would have required a handshape phrase to author
 										}
 									}

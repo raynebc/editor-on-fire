@@ -195,6 +195,7 @@ int         eof_imports_drop_mid_beat_tempos = 0;	//If nonzero, any beats insert
 int         eof_render_mid_beat_tempos_blue = 0;	//If nonzero, any beats that were inserted during Feedback/MIDI import due to mid beat tempo changes retain the EOF_BEAT_FLAG_MIDBEAT flag and have some special 2D rendering logic
 int         eof_disable_ini_export = 0;			//If nonzero, song.ini is not written during save even if a MIDI file is exported
 int         eof_gh_import_sustain_threshold_prompt = 0;	//If nonzero, GH import will prompt whether to apply a sustain threshold determined by half of the first beat's length (as per GH3 rules)
+int         eof_rs_import_all_handshapes = 0;	//If nonzero, RS import will load all handshapes and not just those used in specialized circumstances for authoring custom charts
 int         eof_db_import_suppress_5nc_conversion = 0;	//If nonzero, five note chords are not converted to open notes during Feedback import
 int         eof_warn_missing_bass_fhps = 1;		//If nonzero, the Rocksmith export checks will complain about FHPs not being defined for bass arrangements
 int         eof_4_fret_range = 1;				//Defines the lowest fret number at which the fret hand has a range of 4 frets, for fret hand position generation (the default value of 1 indicates this range for the entire fretboard)

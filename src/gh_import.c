@@ -35,7 +35,6 @@ int eof_gh_accent_prompt = 0;	//When the first accented note is parsed, EOF will
 int eof_gh_import_threshold_prompt = 0;		//When the imported file is determined to be in GH3/GHA format, tracks whether the user opts to use 66/192 or 100/192 quarter notes as the HOPO threshold
 int eof_gh_import_gh3_style_sections = 0;	//Will be set to nonzero if GH3 format sections are detected from whichever file is used to import section names, since they are defined differently than in newer games
 unsigned long eof_gh_import_sustain_threshold = 0;		//Set to nonzero to reflect GH3 style static sustain threshold being enforced
-unsigned long eof_gh_import_sustain_threshold_ghwt = 0;	//Set to nonzero to reflect GHWT sustain threshold (takes the current tempo into account) being enforced
 unsigned long eof_gh_import_sustain_trim = 0;			//Set to nonzero to reflect any sustain threshold based sustain trimming being applied IF the sustain threshold didn't remove the note's sustain
 
 #define GH_IMPORT_DEBUG
@@ -528,19 +527,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		//Apply sustain trim and sustain threshold if appropriate
 		if(length > 1)
 		{	//If the note can be shortened
-			unsigned long effective_sustain_threshold = eof_gh_import_sustain_threshold;
-
-			if(eof_gh_import_sustain_threshold_ghwt > eof_gh_import_sustain_threshold)
-			{	//If GHWT sustain threshold is in effect, observe it instead of the GH3 sustain threshold
-				unsigned long beat = eof_get_beat(sp, dword);
-				if(eof_beat_num_valid(sp, beat))
-				{	//This threshold takes the current tempo into account and subtracts 4
-					double bpm = 60000000.0 / sp->beat[beat]->ppqn;
-					effective_sustain_threshold = (unsigned long) (bpm + 0.568) - 4;	//For some reason, GHWT doesn't round up just starting at 0.5
-				}
-			}
-
-			if(length <= effective_sustain_threshold)
+			if(length <= eof_gh_import_sustain_threshold)
 			{	//If the sustain threshold is being applied and will truncate this note
 				length = 1;
 #ifdef GH_IMPORT_DEBUG
@@ -644,8 +631,8 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		}
 		else if(target->tracknum == EOF_TRACK_DRUM)
 		{	//If this is a drum track
-			if((newnote->type == EOF_NOTE_AMAZING) && (length >= EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD))
-			{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
+			if((newnote->type == EOF_NOTE_AMAZING) && (length > 1))
+			{	//If this is an expert difficulty drum note that passed the sustain threshold, it should be treated as a drum roll
 				int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 				unsigned long lastnoteindex = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
 
@@ -1439,7 +1426,6 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 
 	eof_gh_accent_prompt = 0;	//Reset these
 	eof_gh_import_sustain_threshold = 0;
-	eof_gh_import_sustain_threshold_ghwt = 0;
 	eof_gh_import_sustain_trim = 0;
 
 //Load the GH file into memory
@@ -2100,19 +2086,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			//Apply sustain trim and sustain threshold if appropriate
 			if(length > 1)
 			{	//If the note can be shortened
-				unsigned long effective_sustain_threshold = eof_gh_import_sustain_threshold;
-
-				if(eof_gh_import_sustain_threshold_ghwt > eof_gh_import_sustain_threshold)
-				{	//If GHWT sustain threshold is in effect, observe it instead of the GH3 sustain threshold
-					unsigned long beat = eof_get_beat(sp, dword);
-					if(eof_beat_num_valid(sp, beat))
-					{	//This threshold takes the current tempo into account and subtracts 4
-						double bpm = 60000000.0 / sp->beat[beat]->ppqn;
-						effective_sustain_threshold = (unsigned long) (bpm + 0.568) - 4;	//For some reason, GHWT doesn't round up just starting at 0.5
-					}
-				}
-
-				if(length <= effective_sustain_threshold)
+				if(length <= eof_gh_import_sustain_threshold)
 				{	//If the sustain threshold is being applied and will truncate this note
 					length = 1;
 #ifdef GH_IMPORT_DEBUG
@@ -2198,8 +2172,8 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 			else if(destination_track == EOF_TRACK_DRUM)
 			{	//If this is a drum track
-				if((newnote->type == EOF_NOTE_AMAZING) && (length >= EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD))
-				{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
+				if((newnote->type == EOF_NOTE_AMAZING) && (length > 1))
+				{	//If this is an expert difficulty drum note that passed the sustain threshold, it should be treated as a drum roll
 					int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 					unsigned long lastnoteindex = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
 
@@ -2812,7 +2786,6 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	eof_log("Attempting to import QB format Guitar Hero chart", 1);
 
 	eof_gh_import_sustain_threshold = 0;	//Reset these
-	eof_gh_import_sustain_threshold_ghwt = 0;
 	eof_gh_import_sustain_trim = 0;
 
 //Load the GH file into memory
@@ -2992,10 +2965,8 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	{	//If at least two beat timings were defined
 		if(eof_gh_import_sustain_threshold_prompt)
 		{	//If the user enabled the import preference to ask to apply this threshold
-			int choice = alert3("Apply a sustain threshold?", "GH3 uses half the first beat's length.", "GHWT uses (current BPM - 4 rounded up from 0.432 or higher) ms.", "GH3", "GHWT", "Neither", 0, 0, 0);
-
-			if(choice == 1)
-			{	//If the user opts to enforce the GH3 threshold
+			if(alert(NULL, "Apply the sustain threshold (half of the first beat's length) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to enforce the threshold
 				eof_gh_import_sustain_threshold = (sp->beat[1]->pos - sp->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 				eof_log(eof_log_string, 1);
@@ -3006,10 +2977,6 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain trim of %lums is being enforced.", eof_gh_import_sustain_trim);
 					eof_log(eof_log_string, 1);
 				}
-			}
-			else if(choice == 2)
-			{	//If the user opts to enforce the GHWT threshold
-				eof_gh_import_sustain_threshold_ghwt = 1;	//Set to nonzero, to be updated at each note based on the tempo in effect
 			}
 		}
 	}
@@ -3306,7 +3273,7 @@ int eof_ghl_import_common(const char *fn)
 	EOF_LYRIC *newlyric = NULL;
 	char stringbuffer[101] = {0};	//Used to rewrite lyrics to include freestyle characters where applicable
 
-	eof_log("eof_import_gh_xmk() entered", 1);
+	eof_log("eof_ghl_import_common() entered", 1);
 	eof_log("Importing XMK format Guitar Hero chart", 1);
 
 	if(!eof_song)
@@ -4102,6 +4069,13 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 		return 1;	//Invalid parameters
 	}
 
+	if(!sp->tags->accurate_ts)
+	{	//If accurate TS is not enabled in song properties
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\" to GHL since accurate TS is not enabled", sp->track[track]->name);
+		eof_log(eof_log_string, 1);
+		return 2;
+	}
+
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Exporting track \"%s\" to \"%s\"", sp->track[track]->name, fn);
 	eof_log(eof_log_string, 1);
 
@@ -4162,7 +4136,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	if(!events)
 	{
 		eof_log("\tError saving:  Cannot allocate memory", 1);
-		return 2;	//Can't allocate memory
+		return 3;	//Can't allocate memory
 	}
 	memset(events, 0, sizeof(eof_ghl_event) * numevents);	//Initialize the memory to 0
 
@@ -4177,7 +4151,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	{
 		eof_log("\tError saving:  Cannot allocate memory", 1);
 		free(events);
-		return 2;	//Can't allocate memory
+		return 3;	//Can't allocate memory
 	}
 	eventindex++;
 
@@ -4216,7 +4190,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 					}
 				}
 				free(events);
-				return 3;	//Can't build strings
+				return 4;	//Can't build strings
 			}
 			if(old_string != new_string)
 			{	//If the string was recreated
@@ -4297,7 +4271,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output GHL file \"%s\":  \"%s\"", fn, strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
-		return 4;	//Can't open output file
+		return 5;	//Can't open output file
 	}
 	(void) pack_mputl(8, fp);				//Write version number
 	(void) pack_mputl(0, fp);				//Write a blank checksum
@@ -5300,7 +5274,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 {
 // cppcheck-suppress shadowFunction symbolName=line
 	char *buffer, *buffer2, *line;
-	int failed = 0, format = 0, gh3_format;
+	int failed = 0, format = 0, gh3_format = 0;
 	unsigned long ctr = 0, ctr2, linesread = 0, tracknum;
 	long position, lastposition = 0, note, fixednote, data, length, accent, item1 = 0, item2 = 0, item3 = 0;
 	EOF_NOTE *newnote, *lastnote = NULL;
@@ -5313,7 +5287,6 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 
 	eof_gh_accent_prompt = 0;	//Reset these
 	eof_gh_import_sustain_threshold = 0;
-	eof_gh_import_sustain_threshold_ghwt = 0;
 	eof_gh_import_sustain_trim = 0;
 
 	///Load file into memory buffer
@@ -5753,19 +5726,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 				//Apply sustain trim and sustain threshold if appropriate
 				if(length > 1)
 				{	//If the note can be shortened
-					unsigned long effective_sustain_threshold = eof_gh_import_sustain_threshold;
-
-					if(eof_gh_import_sustain_threshold_ghwt > eof_gh_import_sustain_threshold)
-					{	//If GHWT sustain threshold is in effect, observe it instead of the GH3 sustain threshold
-						unsigned long beat = eof_get_beat(eof_song, position);
-						if(eof_beat_num_valid(eof_song, beat))
-						{	//This threshold takes the current tempo into account and subtracts 4
-							double bpm = 60000000.0 / eof_song->beat[beat]->ppqn;
-							effective_sustain_threshold = (unsigned long) (bpm + 0.568) - 4;	//For some reason, GHWT doesn't round up just starting at 0.5
-						}
-					}
-
-					if(length <= effective_sustain_threshold)
+					if(length <= eof_gh_import_sustain_threshold)
 					{	//If the sustain threshold is being applied and will truncate this note
 						length = 1;
 					}
@@ -5814,8 +5775,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 						newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
 					}
 
-					if((newnote->type == EOF_NOTE_AMAZING) && (length >= EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD))
-					{	//If this is an expert difficulty note that is at least 140ms long, it should be treated as a drum roll
+					if((newnote->type == EOF_NOTE_AMAZING) && (length > 1))
+					{	//If this is an expert difficulty drum note that passed the sustain threshold, it should be treated as a drum roll
 						int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 						unsigned long lastnoteindex = eof_get_track_size(eof_song, EOF_TRACK_DRUM) - 1;
 
