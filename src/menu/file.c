@@ -4201,7 +4201,7 @@ int eof_save_helper(char *destfilename, char silent)
 
 	if(eof_write_gh_files)
 	{	//If the user opted to save Guitar Hero related files
-		/* Save GHWT drum animations */
+		/* Save GHWT drum codes, for use in Queen Bee */
 		(void) append_filename(eof_temp_filename, newfolderpath, "ghwt_expert_drums.array.txt", (int) sizeof(eof_temp_filename));
 		eof_write_ghwt_drum_array_txt(eof_song, eof_temp_filename);
 

@@ -781,56 +781,60 @@ void eof_fix_catalog_selection(void)
 
 int eof_set_display_mode_preset(int mode)
 {
+	int ret = 1;
+
 	switch(mode)
 	{
 		case EOF_DISPLAY_640:
-			eof_set_display_mode(640, 480);
+			ret = eof_set_display_mode(640, 480);
 		break;
 
 		case EOF_DISPLAY_800:
-			eof_set_display_mode(800, 600);
+			ret = eof_set_display_mode(800, 600);
 		break;
 
 		case EOF_DISPLAY_1024:
-			eof_set_display_mode(1024, 768);
+			ret = eof_set_display_mode(1024, 768);
 		break;
 
 		case EOF_DISPLAY_CUSTOM:
-			eof_set_display_mode(eof_screen_width, eof_screen_height);
+			ret = eof_set_display_mode(eof_screen_width, eof_screen_height);
 		break;
 
 		default:
 		return 0;	//Invalid display mode
 	}
 
-	return 1;
+	return ret;
 }
 
 int eof_set_display_mode_preset_custom_width(int mode, unsigned long width)
 {
+	int ret = 1;
+
 	switch(mode)
 	{
 		case EOF_DISPLAY_640:
-			eof_set_display_mode(width, 480);
+			ret = eof_set_display_mode(width, 480);
 		break;
 
 		case EOF_DISPLAY_800:
-			eof_set_display_mode(width, 600);
+			ret = eof_set_display_mode(width, 600);
 		break;
 
 		case EOF_DISPLAY_1024:
-			eof_set_display_mode(width, 768);
+			ret = eof_set_display_mode(width, 768);
 		break;
 
 		case EOF_DISPLAY_CUSTOM:
-			eof_set_display_mode(width, eof_screen_height);
+			ret = eof_set_display_mode(width, eof_screen_height);
 		break;
 
 		default:
 		return 0;	//Invalid display mode
 	}
 
-	return 1;
+	return ret;
 }
 
 int eof_set_display_mode(unsigned long width, unsigned long height)
@@ -999,7 +1003,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	}
 
 	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, effectivewidth, effectiveheight, 0, 0))
-	{	//If the specified window size could not be set, try again
+	{	//If the specified window size could not be set, try again in full screen mode
 		if(set_gfx_mode(GFX_AUTODETECT, effectivewidth, effectiveheight, 0, 0))
 		{	//If it failed again
 			if(eof_screen_zoom)
@@ -1218,7 +1222,7 @@ void eof_fix_window_title(void)
 			(void) ustrcat(eof_window_title, "(Phase cancellation)");
 		}
 		if(eof_center_isolation)
-		{	//If center panned vocals are being removed
+		{	//If center panned vocals are being amplified
 			(void) ustrcat(eof_window_title, "(Center isolation)");
 		}
 	}
@@ -4264,7 +4268,11 @@ int eof_initialize(int argc, char * argv[])
 		return 0;
 	}
 
-	allegro_init();
+	if(allegro_init())
+	{	//If Allegro failed to initialize
+		fprintf(stderr, "Allegro can't initialize.  Exiting.");
+		return 0;
+	}
 
 	if((argc >= 3) && !ustricmp(argv[1], "-ch_sp_path_worker"))
 	{	//If this EOF instance was launched as a worker process to perform star power pathing (must be second parameter)
@@ -4278,7 +4286,6 @@ int eof_initialize(int argc, char * argv[])
 		ch_sp_path_worker_logging = 1;
 	}
 
-	set_window_title("EOF - No Song");
 	if(!ch_sp_path_worker)
 	{	//Don't bother setting up the sound system if EOF is acting as a worker process
 		if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
@@ -4415,6 +4422,7 @@ int eof_initialize(int argc, char * argv[])
 			}
 		}
 	}
+	set_window_title("EOF - No Song");				//Now that the window exists, set its title
 	eof_window_info = eof_window_note_lower_left;	//By default, the info panel is at the lower left corner
 	eof_menu_edit_zoom_level(eof_zoom_backup);	//Apply the zoom level loaded from the config file
 

@@ -18,9 +18,6 @@
 #include "memwatch.h"
 #endif
 
-//Any drum note at least this long will be considered a drum roll
-#define EOF_GH_IMPORT_DRUM_ROLL_THRESHOLD 160
-
 unsigned long crc32_lookup[256] = {0};	//A lookup table to improve checksum calculation performance
 char crc32_lookup_initialized = 0;	//Is set to nonzero when the lookup table is created
 char eof_gh_skip_size_def = 0;	//Is set to nonzero if it's determined that the size field in GH headers is omitted
@@ -4119,10 +4116,18 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	{	//If a vocal track is being exported
 		for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 		{	//For each lyric
-			if(eof_get_note_note(sp, track, ctr) != VOCALPERCUSSION)
-			{	//If this is NOT a vocal percussion note
-				numevents++;	//It will export as an event
+			char *ptr;
+
+			if(eof_get_note_note(sp, track, ctr) == VOCALPERCUSSION)
+			{	//If this is a vocal percussion note
+				continue;	//Skip it
 			}
+			ptr = eof_get_note_name(sp, track, ctr);
+			if(!ptr || (ptr[0] == '\0'))
+			{	//If the lyric has no text
+				continue;	//Skip it
+			}
+			numevents++;	//This lyric will export as an event
 		}
 		numevents += eof_get_num_lyric_sections(sp, track);	//The end of each lyric line will be marked with an event
 	}
@@ -4170,7 +4175,12 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 			{	//If this is a vocal percussion note
 				continue;	//Do not export it
 			}
+
 			old_string = eof_get_note_name(sp, track, ctr);					//Store the pointer to the original string
+			if(!old_string || (old_string[0] == '\0'))
+			{	//If the lyric has no text
+				continue;	//Do not export it
+			}
 
 			if(eof_is_freestyle(old_string))
 			{	//If this lyric is freestyle
@@ -4383,6 +4393,11 @@ char *eof_ghl_export_build_string(char *text, int prefix)
 	//If the lyric is a pitch shift, it will be written as an '@' character
 	if((text[0] == '+') && (text[1] == '\0'))
 	{	//If the specified string is just a pitch shift
+		new_string = DuplicateString("@");
+		return new_string;
+	}
+	if((text[0] == '+') && (text[1] == '-') && (text[2] == '\0'))
+	{	//Likewise, "+-" would export like a normal pitch shift
 		new_string = DuplicateString("@");
 		return new_string;
 	}

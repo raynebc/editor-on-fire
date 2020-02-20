@@ -3902,8 +3902,8 @@ int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp, int function)
 		eof_track_sort_notes(sp, ctr);	//Ensure the track is sorted
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tChecking %s", sp->track[ctr]->name);
 		eof_log(eof_log_string, 1);
-		while(altered)
-		{	//Until the notes in this track have been parsed and none needed to be moved
+
+		do{
 			altered = 0;
 			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 			{	//For each note in the track
@@ -3930,14 +3930,16 @@ int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp, int function)
 
 							pos = eof_get_note_midi_pos(sp, ctr, ctr2);	//Also update the MIDI note position
 							eof_set_note_midi_pos(sp, ctr, next, pos);
+						}
+						if(function)
+						{	//If all applicable gems must be snapped into chords before this function completes
 							altered = 1;	//Force another pass of the for loop over this track's notes
 						}
-
 						unsnapped = 1;	//Track that an unsnapped chord was found
 					}
 				}
 			}
-		}
+		}while(altered);	//Loop until the notes in this track have been parsed and none needed to be moved
 	}
 
 	return unsnapped;
