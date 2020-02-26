@@ -6858,6 +6858,10 @@ int eof_menu_file_array_txt_import(void)
 		}
 		else
 		{
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If the file imported into a drum track
+				(void) eof_gh_import_sustained_bass_drum_check(eof_song, eof_selected_track, 0);	//Warn about and highlight any sustained bass drum notes
+			}
 			eof_log("\tData loaded", 1);
 		}
 	}
@@ -6877,6 +6881,7 @@ int eof_menu_file_multiple_array_txt_import(void)
 	struct al_ffblk info = {0, 0, 0, {0}, NULL}; // for file search
 	char searchpath[1024] = {0};
 	char undo_made = 0, empty_set = 0;
+	int suppress = 0;	//Used to control the display of the notice about sustain bass drum notes
 
 	if(!eof_song)
 		return 0;
@@ -6913,6 +6918,10 @@ int eof_menu_file_multiple_array_txt_import(void)
 			}
 			else
 			{
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If the file imported into a drum track
+					suppress |= eof_gh_import_sustained_bass_drum_check(eof_song, eof_selected_track, suppress);	//Warn about and highlight any sustained bass drum notes, don't display the notice more than once
+				}
 				eof_log("\t\t\tData loaded", 1);
 				count++;
 			}

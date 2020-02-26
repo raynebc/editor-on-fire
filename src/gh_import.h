@@ -215,4 +215,10 @@ void eof_gh_import_slider_cleanup(EOF_SONG *sp);
 	//Similar to eof_gh_import_sp_cleanup(), but operates on the chart's slider phrases
 	//If the slider encompasses multiple notes, instead of just being shortened by 1ms, it is shortened to end at the end position of the last note ending within the phrase
 
+int eof_gh_import_sustained_bass_drum_check(EOF_SONG *sp, unsigned long track, int suppress);
+	//Checks the specified track, and if it is a drum track and any bass drum notes in it have a length longer than 1,
+	// a message is displayed that such notes may need alteration to suit Clone Hero/Strikeline and the notes are highlighted
+	//If suppress is nonzero, the message is not displayed, but relevant notes are still highlighted
+	//Returns 1 if the user was given the message, so subsequent calls can suppress the message (ie. during batch array.txt import)
+
 #endif

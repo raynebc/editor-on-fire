@@ -120,7 +120,7 @@ EOF_TRACK_ENTRY eof_guitar_hero_animation_tracks[EOF_GUITAR_HERO_ANIMATION_TRACK
 {
 	{0, 0, 0, 0, "", "", 0xFF, 0, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "TRIGGERS", "", EOF_NOTE_AMAZING, 5, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "BAND DRUMS", "", EOF_NOTE_AMAZING, 5, 0}
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM_PS, 0, "BAND DRUMS", "", EOF_NOTE_AMAZING, 5, 0}
 };	//These entries describe the two Guitar Hero MIDI tracks that store drum animations, used to create a drum track
 
 /* sort all notes according to position */
@@ -8069,7 +8069,7 @@ char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track)
 			if(	((note & 4) && ((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))) ||
 				((note & 8) && ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))) ||
 				((note & 16) && ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))))
-			{	//If this note contains a yellow, blue or green drum marked with pro drum notation
+			{	//If this note contains a yellow, blue or green drum marked with cymbal notation
 				return 1;	//Track has cymbals
 			}
 		}

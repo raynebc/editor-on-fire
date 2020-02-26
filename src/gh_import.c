@@ -628,8 +628,8 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		}
 		else if(target->tracknum == EOF_TRACK_DRUM)
 		{	//If this is a drum track
-			if((newnote->type == EOF_NOTE_AMAZING) && (length > 1))
-			{	//If this is an expert difficulty drum note that passed the sustain threshold, it should be treated as a drum roll
+			if(length > 1)
+			{	//If this is a drum note that passed the sustain threshold, it should be treated as a drum roll
 				int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 				unsigned long lastnoteindex = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
 
@@ -637,7 +637,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				{	//If the new drum note contains gems on more than one lane
 					phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
 				}
-				(void) eof_track_add_section(sp, EOF_TRACK_DRUM, phrasetype, 0xFF, dword, dword + length, 0, NULL);
+				(void) eof_track_add_section(sp, EOF_TRACK_DRUM, phrasetype, newnote->type, dword, dword + length, 0, NULL);
 				newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Mark it as crazy, both so it can overlap other notes and so that it will export with sustain
 			}
 			if(accentmask)
@@ -1403,6 +1403,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 		eof_truncate_chart(sp);	//Update the chart length before performing lyric cleanup
 		eof_vocal_track_fixup_lyrics(sp, EOF_TRACK_VOCALS, 0);	//Clean up the lyrics
+		(void) eof_gh_import_sustained_bass_drum_check(sp, EOF_TRACK_DRUM, 0);	//Warn about and highlight any sustained bass drum notes
 		eof_log("\tGH import completed", 1);
 	}//If a GH file was loaded
 	eof_free_ucode_table();
@@ -2169,8 +2170,8 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 			else if(destination_track == EOF_TRACK_DRUM)
 			{	//If this is a drum track
-				if((newnote->type == EOF_NOTE_AMAZING) && (length > 1))
-				{	//If this is an expert difficulty drum note that passed the sustain threshold, it should be treated as a drum roll
+				if(length > 1)
+				{	//If this is a drum note that passed the sustain threshold, it should be treated as a drum roll
 					int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 					unsigned long lastnoteindex = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
 
@@ -2178,7 +2179,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 					{	//If the new drum note contains gems on more than one lane
 						phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
 					}
-					(void) eof_track_add_section(sp, EOF_TRACK_DRUM, phrasetype, 0xFF, dword, dword + length, 0, NULL);
+					(void) eof_track_add_section(sp, EOF_TRACK_DRUM, phrasetype, newnote->type, dword, dword + length, 0, NULL);
 					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Mark it as crazy, both so it can overlap other notes and so that it will export with sustain
 				}
 				if(accentmask & 31)
@@ -5790,8 +5791,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 						newnote->flags |= EOF_DRUM_NOTE_FLAG_DBASS;	//Set the double bass flag bit
 					}
 
-					if((newnote->type == EOF_NOTE_AMAZING) && (length > 1))
-					{	//If this is an expert difficulty drum note that passed the sustain threshold, it should be treated as a drum roll
+					if(length > 1)
+					{	//If this is a drum note that passed the sustain threshold, it should be treated as a drum roll
 						int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 						unsigned long lastnoteindex = eof_get_track_size(eof_song, EOF_TRACK_DRUM) - 1;
 
@@ -5799,7 +5800,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 						{	//If the new drum note contains gems on more than one lane
 							phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
 						}
-						(void) eof_track_add_section(eof_song, EOF_TRACK_DRUM, phrasetype, 0xFF, position, position + length, 0, NULL);
+						(void) eof_track_add_section(eof_song, EOF_TRACK_DRUM, phrasetype, newnote->type, position, position + length, 0, NULL);
 						newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Mark it as crazy, both so it can overlap other notes and so that it will export with sustain
 					}
 
@@ -6068,4 +6069,32 @@ void eof_gh_import_slider_cleanup(EOF_SONG *sp)
 			}//If the phrase was found, and its length is at least 2ms
 		}//For each slider path in the track
 	}//For each track in the project
+}
+
+int eof_gh_import_sustained_bass_drum_check(EOF_SONG *sp, unsigned long track, int suppress)
+{
+	unsigned long ctr;
+	int user_alerted = 0;
+
+	if(!sp || !track || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+
+	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If the specified track is a drum track
+		for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+		{	//For each drum note in that track
+			if((eof_get_note_length(sp, track, ctr) > 1) && (eof_get_note_note(sp, track, ctr) & 1))
+			{	//If this note has a bass drum gem and its length is greater than 1
+				unsigned long flags = eof_get_note_flags(sp, track, ctr);
+				if(!user_alerted && !suppress)
+				{	//If the user wasn't told about this yet, and the message isn't being suppressed
+					allegro_message("Notice:  At least one sustained bass drum note was imported.  It will be highlighted and may need to be manually altered in order to work as desired in Clone Hero/Strikeline.");
+					user_alerted = 1;
+				}
+				eof_set_note_flags(sp, track, ctr, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Highlight the note
+			}
+		}
+	}
+
+	return user_alerted;
 }

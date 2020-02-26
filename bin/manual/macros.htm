@@ -320,6 +320,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active difficulty has any solo sections that don't have at least one note, even if the solos have notes in other difficulties.  This condition may prevent the chart from working in Clone Hero.</td>
 </tr>
 <tr>
+<td>%IF_ACTIVE_DIFFICULTY_HAS_NO_CYMBALS%</td>
+<td>Evaluates as true if the active difficulty doesn't have at least one cymbal.</td>
+</tr>
+<tr>
 <td>%IF_ANY_SOLOS_CLOSER_THAN_1_SECOND%</td>
 <td>Evaluates as true if any solo sections begin less than one second after an earlier one.  This condition may prevent the solo bonus from displaying long enough to be visible in Clone Hero.</td>
 </tr>
@@ -346,6 +350,22 @@ See the detailed explanation earlier in this document for instructions on how to
 <tr>
 <td>%IF_TRACK_HAS_NO_SLIDERS%</td>
 <td>Evaluates as true if the active track does not have any slider sections.</td>
+</tr>
+<tr>
+<td>%IF_TRACK_HAS_NO_EXPERT_PLUS_BASS%</td>
+<td>Evaluates as true if the active track doesn't have at least one expert+ bass note.</td>
+</tr>
+<tr>
+<td>%IF_TRACK_DIFFICULTY_UNDEFINED%</td>
+<td>Evaluates as true if the active track's difficulty is not defined.  This doesn't take the secondary difficulty level (vocal and drum tracks) into account.</td>
+</tr>
+<tr>
+<td>%IF_ANY_TRACK_DIFFICULTY_UNDEFINED%</td>
+<td>Evaluates as true if any populated track has no defined difficulty.  This doesn't take the secondary difficulty level (vocal and drum tracks) into account.</td>
+</tr>
+<tr>
+<td>%IF_TRACK_IS_POPULATED%</td>
+<td>Evaluates as true if the active track has any normal or tech notes.</td>
 </tr>
 <tr>
 <td>%IF_NO_LOADING_TEXT%</td>
@@ -747,6 +767,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%TRACK_DIFF_NOTE_COUNT_AND_RATIO_EXPERT_PLUS_BASS%</td>
 <td>Prints the number of expert+ bass notes in the active track difficulty, and the percentage of the track difficulty's total note count that represents.  If the active track difficulty is not Expert in either of the drum tracks, "None" is printed.</td>
+</tr>
+<tr>
+<td>%TRACK_DIFF_NOTE_COUNT_AND_RATIO_CYMBALS%</td>
+<td>Prints the number of notes with cymbals in the active track difficulty, and the percentage of the track difficulty's total note count that represents.  If the active track difficulty doesn't have any cymbals, "None" is printed.</td>
 </tr>
 <tr>
 <td>%TRACK_DIFF_COUNT_AND_RATIO_PITCHED_LYRIC%</td>

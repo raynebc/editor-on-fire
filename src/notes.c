@@ -962,6 +962,30 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//If the active difficulty has no cymbal notes
+	if(!ustricmp(macro, "IF_ACTIVE_DIFFICULTY_HAS_NO_CYMBALS"))
+	{
+		unsigned long i;
+
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If this is a drum track
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the track
+				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
+				{	//If the note is in the active difficulty
+					if(eof_note_is_cymbal(eof_song, eof_selected_track, i))
+					{	//If this note contains a yellow, blue or green cymbal
+						return 2;	//False
+					}
+				}
+			}
+		}
+
+		//No cymbals were found
+		dest_buffer[0] = '\0';
+		return 3;	//True
+	}
+
 	//If the active track has any solos with less than 1 second of space between them
 	if(!ustricmp(macro, "IF_ANY_SOLOS_CLOSER_THAN_1_SECOND"))
 	{
@@ -1091,6 +1115,73 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(!eof_get_num_sliders(eof_song, eof_selected_track))
 		{	//If there are no sliders in the active track
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the active drum track has no expert+ bass notes
+	if(!ustricmp(macro, "IF_TRACK_HAS_NO_EXPERT_PLUS_BASS"))
+	{
+		unsigned long i;
+
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If this is a drum track
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the track
+				if((eof_get_note_type(eof_song, eof_selected_track, i) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
+				{	//If the note is in the expert difficulty and has a gem on lane 1 (bass drum)
+					if(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_DRUM_NOTE_FLAG_DBASS)
+					{	//If the note has the expert+ double bass status
+						return 2;	//False
+					}
+				}
+			}
+		}
+
+		//No expert+ bass notes were found
+		dest_buffer[0] = '\0';
+		return 3;	//True
+	}
+
+	//If the active track has no defined difficulty
+	if(!ustricmp(macro, "IF_TRACK_DIFFICULTY_UNDEFINED"))
+	{
+		if(eof_song->track[eof_selected_track]->difficulty == 0xFF)
+		{	//If the difficulty level of this track is not defined
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//If the active track has no defined difficulty
+	if(!ustricmp(macro, "IF_ANY_TRACK_DIFFICULTY_UNDEFINED"))
+	{
+		unsigned long ctr;
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			if(eof_get_track_size_all(eof_song, ctr))
+			{	//If the track has any normal or tech notes
+				if(eof_song->track[ctr]->difficulty == 0xFF)
+				{	//If the difficulty level of the track is not defined
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	//If the active track has at least one note
+	if(!ustricmp(macro, "IF_TRACK_IS_POPULATED"))
+	{
+		if(eof_get_track_size_all(eof_song, eof_selected_track))
+		{	//If the active track has any normal or tech notes
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -2783,6 +2874,41 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						{	//If the note has the expert+ double bass status
 							count++;
 						}
+					}
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
+	//Display the number of notes containing cymbal drum notes (and the corresponding percentage that is of all notes) in the active drum difficulty
+	if(!ustricmp(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_CYMBALS"))
+	{
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active
+			unsigned long ctr, count = 0, totalnotecount = 0;
+
+			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				double percent;
+
+				for(ctr = 0; ctr < tracksize; ctr++)
+				{	//For each note in the track
+					if((eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_is_cymbal(eof_song, eof_selected_track, ctr)))
+					{	//If the note is in the active difficulty and has a cymbal
+						count++;
 					}
 				}
 				percent = (double)count * 100.0 / (double)totalnotecount;

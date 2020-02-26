@@ -1116,7 +1116,7 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void);
 int eof_note_is_chord(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note contains more than one gem
 int eof_note_is_single_note(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note contains exactly one gem
 int eof_note_is_tom(EOF_SONG *sp, unsigned long track, unsigned long notenum);		//Returns nonzero if the specified note contains any gems on lane 3, 4 or 5 that are not marked as cymbals
-int eof_note_is_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note contains any gems on lane 3, 4 o4 5 that are cymbals
+int eof_note_is_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note contains any gems on lane 3, 4 or 5 that are cymbals
 int eof_note_is_cymbal_bitmask(unsigned long notemask, unsigned long flags);		//Similar to eof_note_is_cymbal(), but instead accepts the note bitmask and flags as parameters
 int eof_note_is_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note is on a grid snap position
 int eof_note_is_not_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note exists and is not on a grid snap position

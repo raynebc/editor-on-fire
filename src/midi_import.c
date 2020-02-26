@@ -429,6 +429,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char sliders_exceeded_warning = 0;
 	int event_realignment_warning = 0;
 	int nonstandard_open_strum_marker_prompt = 0;	//In the event of a Sysex open strum marker that spans over multiple notes, tracks the user's choice on how to interpret them
+	char forcestrum = 0;	//Used to track whether the user opted to mark non HOPO notes as forced strum during Power Gig MIDI import (0 = not asked yet, 1 = accepted, 2 = declined)
 
 	eof_log("eof_import_midi() entered", 1);
 
@@ -871,6 +872,19 @@ EOF_SONG * eof_import_midi(const char * fn)
 										if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
 										{	//If this is the guitar track
 											rbg = 1;	//Note that the track has been found
+										}
+
+										if(!forcestrum)
+										{	//If the user wasn't asked about whether to mark non forced HOPOs as forced strums
+											eof_clear_input();
+											if(alert(NULL, "Import the Power Gig chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+											{	//If user opts to have all non HOPO notes marked for forced strumming
+												forcestrum = 1;
+											}
+											else
+											{
+												forcestrum = 2;
+											}
 										}
 									}
 								}
@@ -1517,10 +1531,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					if(midinote == 105)
 					{
 						sp->vocal_track[0]->line[last_105].end_pos = event_realtime;
-#ifdef EOF_DEBUG_MIDI_IMPORT
+//#ifdef EOF_DEBUG_MIDI_IMPORT
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[last_105].start_pos, sp->vocal_track[0]->line[last_105].end_pos);
-						eof_log(eof_log_string, 1);
-#endif
+						eof_log(eof_log_string, 3);
+//#endif
 						sp->vocal_track[0]->lines++;
 						if(overdrive_pos == sp->vocal_track[0]->line[last_105].start_pos)
 						{
@@ -1530,10 +1544,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					else if(midinote == 106)
 					{
 						sp->vocal_track[0]->line[last_106].end_pos = event_realtime;
-#ifdef EOF_DEBUG_MIDI_IMPORT
+//#ifdef EOF_DEBUG_MIDI_IMPORT
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[last_106].start_pos, sp->vocal_track[0]->line[last_106].end_pos);
-						eof_log(eof_log_string, 1);
-#endif
+						eof_log(eof_log_string, 3);
+//#endif
 						sp->vocal_track[0]->lines++;
 						if(overdrive_pos == sp->vocal_track[0]->line[last_106].start_pos)
 						{
@@ -1605,10 +1619,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart;
 								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
 								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
-#ifdef EOF_DEBUG_MIDI_IMPORT
+//#ifdef EOF_DEBUG_MIDI_IMPORT
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos, sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos);
-								eof_log(eof_log_string, 1);
-#endif
+								eof_log(eof_log_string, 3);
+//#endif
 								sp->vocal_track[0]->lines++;
 								linetrack = 0;
 							}
@@ -1631,10 +1645,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//The line this lyric is in gets marked with star power status
 									}
 								}
-#ifdef EOF_DEBUG_MIDI_IMPORT
+//#ifdef EOF_DEBUG_MIDI_IMPORT
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric:  %lums \"%s\"", sp->vocal_track[0]->lyric[note_count[picked_track]]->pos, sp->vocal_track[0]->lyric[note_count[picked_track]]->text);
-								eof_log(eof_log_string, 1);
-#endif
+								eof_log(eof_log_string, 3);
+//#endif
 								note_count[picked_track]++;
 							}
 						}
@@ -1656,10 +1670,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 				{	//Control change event
 					if(eof_import_events[i]->game == 1)
 					{	//If the MIDI is in Power Gig notation
-#ifdef EOF_DEBUG_MIDI_IMPORT
+//#ifdef EOF_DEBUG_MIDI_IMPORT
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tControl change:  Controller type %d, value %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->d2, event_miditime, event_realtime);
-						eof_log(eof_log_string, 1);
-#endif
+						eof_log(eof_log_string, 3);
+//#endif
 						if((midinote >= 80) && (midinote <= 82))
 						{	//These control change events mark "mojo" sections (the equivalent of star power phrases)
 							if(eof_import_events[i]->event[j]->d2 == 127)
@@ -2436,7 +2450,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 											if((length2 != 0) && (lengthdiff > 1))
 											{	//If the note has had its length determined and it's more than 1ms different from the note that was just imported
 												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tApplying disjointed status to note #%lu and #%lu at %lums in difficulty %d", ctr, k - 1, pos, eof_get_note_type(sp, picked_track, ctr));
-												eof_log(eof_log_string, 2);
+												eof_log(eof_log_string, 3);
 
 												eflags = eof_get_note_eflags(sp, picked_track, ctr) | EOF_NOTE_EFLAG_DISJOINTED;
 												eof_set_note_eflags(sp, picked_track, ctr, eflags);	//Add the disjointed status to the pre-existing note
@@ -3676,6 +3690,25 @@ eof_log("\tThird pass complete", 1);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		break;
+	}
+
+//Check whether notes imported from a Power Gig MIDI should be marked as force strums as per user prompt
+	if(forcestrum == 1)
+	{	//If the user opted to mark all non forced HOPOs as forced strums
+		for(i = 0; i < tracks; i++)
+		{	//For each imported track
+			if(eof_track_is_legacy_guitar(sp, i) && (eof_import_events[i]->game == 1))
+			{	//If the track is a legacy guitar/bass track and is in Power Gig format
+				for(j = 0; j < eof_get_track_size(sp, i); j++)
+				{	//For each note in the track
+					unsigned flags = eof_get_note_flags(sp, i, j);
+					if(!(flags & EOF_NOTE_FLAG_F_HOPO))
+					{	//If the note isn't a forced HOPO
+						eof_set_note_flags(sp, i, j, flags | EOF_NOTE_FLAG_NO_HOPO);	//Make it a forced strum
+					}
+				}
+			}
+		}
 	}
 
 //Check for string muted notes and force them to use the 0xFF (muted) fret value so the pro guitar fixup logic won't remove the string mute status
