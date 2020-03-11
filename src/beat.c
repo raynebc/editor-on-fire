@@ -427,7 +427,7 @@ void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat)
 	next_anchor = eof_find_next_anchor(sp, cbeat);
 	if(!eof_beat_num_valid(sp, next_anchor))
 	{
-		next_anchor = sp->beats;
+		next_anchor = sp->beats - 1;
 	}
 	if(last_anchor >= next_anchor)
 	{	//Avoid a division by zero or negative number

@@ -86,6 +86,8 @@ void eof_destroy_waveform(struct wavestruct *ptr)
 			free(ptr->right.slices);
 		free(ptr);
 	}
+
+	eof_log("\teof_destroy_waveform() completed", 3);
 }
 
 int eof_render_waveform(struct wavestruct *waveform)
@@ -441,7 +443,7 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform, SAMPLE *audio, 
 	if(waveform->is_stereo && (waveform->right.slices == NULL))
 		return -1;	//Return error
 
-	if((slicenum > waveform->numslices))	//If this is more than the number of slices that were supposed to be read
+	if((slicenum >= waveform->numslices))	//If this is more than the number of slices that were supposed to be read
 		return 1;	//Return out of samples
 
 	samplesize = audio->bits / 8;

@@ -314,6 +314,7 @@ MENU eof_note_clear_accent_menu[] =
 	{eof_note_clear_menu_string_4, eof_menu_note_clear_accent_blue, NULL, 0, NULL},
 	{eof_note_clear_menu_string_5, eof_menu_note_clear_accent_purple, NULL, 0, NULL},
 	{eof_note_clear_menu_string_6, eof_menu_note_clear_accent_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_accent_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -336,6 +337,7 @@ MENU eof_note_clear_ghost_menu[] =
 	{eof_note_clear_menu_string_4, eof_menu_note_clear_ghost_blue, NULL, 0, NULL},
 	{eof_note_clear_menu_string_5, eof_menu_note_clear_ghost_purple, NULL, 0, NULL},
 	{eof_note_clear_menu_string_6, eof_menu_note_clear_ghost_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_ghost_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2558,6 +2560,41 @@ int eof_menu_note_clear_accent_orange(void)
 	return eof_menu_note_clear_accent_lane(6);
 }
 
+int eof_menu_note_clear_accent_all(void)
+{
+	unsigned long i;
+	unsigned char undo_made = 0;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_count_selected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_get_note_accent(eof_song, eof_selected_track, i))
+			{	//If this note has accent status
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_set_note_accent(eof_song, eof_selected_track, i, 0);	//Clear the accent mask
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
 int eof_menu_note_toggle_ghost_lane(unsigned int lanenum)
 {
 	unsigned long i;
@@ -2700,6 +2737,41 @@ int eof_menu_note_clear_ghost_purple(void)
 int eof_menu_note_clear_ghost_orange(void)
 {
 	return eof_menu_note_clear_ghost_lane(6);
+}
+
+int eof_menu_note_clear_ghost_all(void)
+{
+	unsigned long i;
+	unsigned char undo_made = 0;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_count_selected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_get_note_ghost(eof_song, eof_selected_track, i))
+			{	//If this note has ghost status
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_set_note_ghost(eof_song, eof_selected_track, i, 0);	//Clear the ghost bitmask
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
 }
 
 int eof_menu_note_toggle_crazy(void)

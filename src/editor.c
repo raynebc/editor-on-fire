@@ -3899,6 +3899,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			if(KEY_EITHER_CTRL)
 			{	//If CTRL is held
 				(void) eof_menu_beat_add();
+				eof_key_code = 0;	//Clear the insert key to avoid placing a gem or launching the context menu
 			}
 		}
 
@@ -4521,13 +4522,13 @@ void eof_editor_logic(void)
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							if(eof_selection.multi[eof_selection.current] == 1)
-							{
+							{	//If the note is already selected
 								if(eof_selection.track != eof_selected_track)
 								{
 									eof_selection.track = eof_selected_track;
 									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
-								eof_selection.multi[eof_selection.current] = 2;
+								eof_selection.multi[eof_selection.current] = 2;	//Flag this note as being clicked on
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 							}
 							else
@@ -4547,13 +4548,13 @@ void eof_editor_logic(void)
 					else
 					{
 						if(eof_selection.multi[eof_selection.current] == 1)
-						{
+						{	//If the note is already selected
 							if(eof_selection.track != eof_selected_track)
 							{
 								eof_selection.track = eof_selected_track;
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
-							eof_selection.multi[eof_selection.current] = 2;
+							eof_selection.multi[eof_selection.current] = 2;	//Flag this note as being clicked on
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 						}
 						else
@@ -4588,10 +4589,15 @@ void eof_editor_logic(void)
 				/* mouse button just released, check to see what needs doing */
 				else if(eof_lclick_released == 1)
 				{
-					if(!eof_mouse_drug)
+					if(KEY_EITHER_CTRL && (eof_selection.multi[eof_selection.current] == 2))
+					{	//If a note is being deselected via CTRL+click (ignore whether the mouse moved because that seemed to make deselecting notes unreliable)
+						eof_selection.multi[eof_selection.current] = 0;
+						eof_undo_last_type = EOF_UNDO_TYPE_NONE;
+					}
+					else if(!eof_mouse_drug)
 					{
 						if(!KEY_EITHER_CTRL)
-						{
+						{	//If CTRL is not held
 							if(!KEY_EITHER_SHIFT)
 							{	//SHIFT is not held
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
@@ -4608,9 +4614,9 @@ void eof_editor_logic(void)
 							}
 						}
 						else
-						{
+						{	//CTRL is held
 							if(eof_selection.multi[eof_selection.current] == 2)
-							{
+							{	//Original CTRL+click deselection logic
 								eof_selection.multi[eof_selection.current] = 0;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 							}
@@ -5351,13 +5357,13 @@ void eof_vocal_editor_logic(void)
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							if(eof_selection.multi[eof_selection.current] == 1)
-							{
+							{	//If the note is already selected
 								if(eof_selection.track != EOF_TRACK_VOCALS)
 								{
 									eof_selection.track = EOF_TRACK_VOCALS;
 									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
-								eof_selection.multi[eof_selection.current] = 2;
+								eof_selection.multi[eof_selection.current] = 2;	//Flag this note as being clicked on
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 							}
 							else
@@ -5377,13 +5383,13 @@ void eof_vocal_editor_logic(void)
 					else
 					{
 						if(eof_selection.multi[eof_selection.current] == 1)
-						{
+						{	//If the note is already selected
 							if(eof_selection.track != EOF_TRACK_VOCALS)
 							{
 								eof_selection.track = EOF_TRACK_VOCALS;
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
-							eof_selection.multi[eof_selection.current] = 2;
+							eof_selection.multi[eof_selection.current] = 2;	//Flag this note as being clicked on
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 						}
 						else
@@ -5418,7 +5424,12 @@ void eof_vocal_editor_logic(void)
 				/* mouse button just released, check to see what needs doing */
 				else if(eof_lclick_released == 1)
 				{
-					if(!eof_mouse_drug)
+					if(KEY_EITHER_CTRL && (eof_selection.multi[eof_selection.current] == 2))
+					{	//If a note is being deselected via CTRL+click (ignore whether the mouse moved because that seemed to make deselecting notes unreliable)
+						eof_selection.multi[eof_selection.current] = 0;
+						eof_undo_last_type = EOF_UNDO_TYPE_NONE;
+					}
+					else if(!eof_mouse_drug)
 					{
 						if(!KEY_EITHER_CTRL)
 						{
@@ -5440,7 +5451,7 @@ void eof_vocal_editor_logic(void)
 						else
 						{
 							if(eof_selection.multi[eof_selection.current] == 2)
-							{
+							{	//Original CTRL+click deselection logic
 								eof_selection.multi[eof_selection.current] = 0;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 							}

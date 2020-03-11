@@ -1287,7 +1287,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	///Initialize variables for calculating MIDI export timings
 	if(!eof_build_tempo_and_ts_lists(eof_song, &anchorlist, &tslist, &timedivision))
 	{
-		eof_log("\tError saving:  Cannot build tempo or TS list", 1);
+		eof_log("\tError:  Cannot build tempo or TS list", 1);
 		return 1;	//Return error
 	}
 	has_stored_tempo = eof_song_has_stored_tempo_track(eof_song) ? 1 : 0;	//Store this status
@@ -1305,6 +1305,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+		eof_log("\tNo notes in active track difficulty, canceling", 1);
 		return 2;	//Return cancellation (Don't both doing anything if there are no notes in the active track difficulty)
 	}
 
@@ -1523,6 +1524,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	}
 	*testingptr = testing;
 
+	eof_log("\teof_ch_sp_path_setup() completed", 3);
 	return 0;	//Return success
 }
 
@@ -3266,12 +3268,19 @@ void eof_ch_sp_solution_rebuild(void)
 {
 	static unsigned long solution_track = 0xFF;		//Records the track for which the solution structure was built
 	static unsigned solution_diff = 0xFF;			//Records the difficulty for which the solution structure was built
+	unsigned long note_count = 0;
 
 	//Destroy the solution structure if necessary
 	if(eof_ch_sp_solution && ((eof_selected_track != solution_track) || (eof_note_type != solution_diff)))
 	{	//If the global solution structure was previously built, but the active track difficulty has changed
 		eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy it so it gets rebuilt
 		eof_ch_sp_solution = NULL;
+	}
+
+	(void) eof_count_selected_notes(&note_count);	//Count the number of notes in the active track difficulty
+	if(!note_count)
+	{	//If there aren't any, don't bother building the solution structure
+		return;
 	}
 
 	//Build the solution structure if necessary
@@ -3294,6 +3303,7 @@ void eof_ch_sp_solution_rebuild(void)
 			//Create and initialize the solution structure to reflect the marked SP deployments in the active track difficulty
 			if(eof_ch_sp_path_setup(NULL, &eof_ch_sp_solution, NULL))
 			{	//If the function that performs setup for the pathing logic failed
+				eof_log("\tSolution structure failed to build", 1);
 				return;	//Abort
 			}
 			tracksize = eof_get_track_size(eof_song, eof_selected_track);

@@ -2051,6 +2051,8 @@ void eof_fix_waveform_graph(void)
 			eof_waveform_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
 		}
 	}
+
+	eof_log("\teof_fix_waveform_graph() completed", 3);
 }
 
 void eof_fix_spectrogram(void)
@@ -5038,6 +5040,10 @@ void eof_exit(void)
 				fclose(fp);
 			}
 			allegro_message("Error:  Could not write config file eof.cfg.  Check logging for details.");
+		}
+		else
+		{
+			eof_log("\tConfiguration saved", 3);
 		}
 		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
 		(void) delete_file(fn);	//And delete it if it exists

@@ -252,6 +252,7 @@ int eof_menu_note_clear_accent_yellow(void);	//Clears the accent bit on lane 3 (
 int eof_menu_note_clear_accent_blue(void);		//Clears the accent bit on lane 4 (originally colored blue)
 int eof_menu_note_clear_accent_purple(void);	//Clears the accent bit on lane 5 (originally colored purple)
 int eof_menu_note_clear_accent_orange(void);	//Clears the accent bit on lane 6 (originally colored orange)
+int eof_menu_note_clear_accent_all(void);		//Clears the accent bit on all lanes
 
 int eof_menu_note_toggle_ghost_green(void);		//Toggles the ghost bit on lane 1 (originally colored green)
 int eof_menu_note_toggle_ghost_red(void);		//Toggles the ghost bit on lane 2 (originally colored red)
@@ -266,6 +267,7 @@ int eof_menu_note_clear_ghost_yellow(void);		//Clears the ghost bit on lane 3 (o
 int eof_menu_note_clear_ghost_blue(void);		//Clears the ghost bit on lane 4 (originally colored blue)
 int eof_menu_note_clear_ghost_purple(void);		//Clears the ghost bit on lane 5 (originally colored purple)
 int eof_menu_note_clear_ghost_orange(void);		//Clears the ghost bit on lane 6 (originally colored orange)
+int eof_menu_note_clear_ghost_all(void);		//Clears the ghost bit on all lanes
 
 int eof_menu_split_lyric(void);
 int eof_menu_note_edit_name(void);		//Enables the name for selected notes to be altered

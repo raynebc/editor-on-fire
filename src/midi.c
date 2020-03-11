@@ -3649,14 +3649,18 @@ EOF_MIDI_TS_LIST * eof_create_ts_list(void)
 	lp = malloc(sizeof(EOF_MIDI_TS_LIST));
 	if(!lp)
 	{
+		eof_log("\tMemory allocation failed", 1);
 		return NULL;
 	}
 
+	eof_log("\tInitializing entries", 3);
 	for(ctr = 0; ctr < EOF_MAX_TS; ctr++)
 	{	//Init all pointers in the array as NULL
 		lp->change[ctr] = NULL;
 	}
 	lp->changes = 0;
+
+	eof_log("\teof_create_ts_list() completed", 3);
 	return lp;
 }
 

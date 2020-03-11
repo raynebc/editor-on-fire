@@ -511,9 +511,15 @@ void eof_save_config(char * fn)
 	{
 		return;
 	}
+	if(eof_log_level > 2)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing to config file:  %s", fn);
+		eof_log(eof_log_string, 3);
+	}
 	set_config_file(fn);
 
 	/* write configuration */
+	eof_log("\tWriting INI entries", 3);
 	set_config_int("config", "av_delay", eof_av_delay);
 	set_config_int("config", "eof_midi_tone_delay", eof_midi_tone_delay);
 	set_config_int("config", "eof_midi_synth_instrument_guitar", eof_midi_synth_instrument_guitar + 1);	//Add one to convert back to conventional numbering
@@ -676,6 +682,7 @@ void eof_save_config(char * fn)
 	set_config_hex("colors", "eof_color_highlight1", eof_color_highlight1_raw);
 	set_config_hex("colors", "eof_color_highlight2", eof_color_highlight2_raw);
 
+	eof_log("\tSaving controller configs", 3);
 	eof_controller_save_config(&eof_guitar, "guitar");
 	eof_controller_save_config(&eof_drums, "drums");
 
@@ -685,6 +692,7 @@ void eof_save_config(char * fn)
 	set_config_int("other", "eof_5_fret_range", eof_5_fret_range);
 	set_config_int("other", "eof_6_fret_range", eof_6_fret_range);
 
+	eof_log("\tWriting GP drum import mappings", 3);
 	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_1);
 	set_config_string("other", "gp_drum_import_lane_1", gp_drum_mappings);
 	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_2);
@@ -714,6 +722,7 @@ void eof_save_config(char * fn)
 	set_config_int("other", "eof_song_folder_prompt", eof_song_folder_prompt);
 
 	//Delete existing default INI settings from config file
+	eof_log("\tRewriting default INI settings", 3);
 	num_default_settings = list_config_entries("default_ini_settings", &default_settings);
 	for(ctr = 0; ctr < num_default_settings; ctr++)
 	{	//For each default INI setting found in the config file
@@ -731,6 +740,7 @@ void eof_save_config(char * fn)
 	}
 
 	flush_config_file();
+	eof_log("\teof_save_config() completed", 3);
 }
 
 void eof_build_gp_drum_mapping_string(char *destination, size_t size, unsigned char *mapping_list)

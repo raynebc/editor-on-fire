@@ -310,6 +310,11 @@ void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 	}
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
+		if(eof_log_level > 2)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting %s config button #%d", name, i);
+			eof_log(eof_log_string, 3);
+		}
 		(void) snprintf(string, sizeof(string) - 1, "button_%d_type", i);
 		set_config_int(name, string, cp->button[i].type);
 		switch(cp->button[i].type)
@@ -345,6 +350,7 @@ void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 		}
 	}
 	set_config_int(name, "delay", cp->delay);
+	eof_log("\teof_controller_save_config() completed", 3);
 }
 
 void eof_controller_load_config(EOF_CONTROLLER * cp, char * name)

@@ -2412,6 +2412,10 @@ int eof_menu_beat_add(void)
 		return 1;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
+	if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
+	{	//If there are no anchors after the selected beat
+		return 1;	//Return without making changes
+	}
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(eof_song_add_beat(eof_song) != NULL)
