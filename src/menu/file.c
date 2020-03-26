@@ -6380,6 +6380,7 @@ int eof_menu_file_export_guitar_pro(void)
 	}
 
 	//Create temporary XML files
+	(void) eof_validate_temp_folder();	//Attempt to set the current working directory if it isn't EOF's executable/resource folder
 	original_eof_abridged_rs2_export = eof_abridged_rs2_export;	//Back up the original setting of this user preference
 	eof_abridged_rs2_export = 0;	//Force unabridged RS2 export, as RocksmithToTab doesn't currently support that XML variation
 	strncpy(temppath1, eof_temp_path_s, sizeof(temppath1) - 1);

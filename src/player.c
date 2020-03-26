@@ -18,8 +18,9 @@ void eof_music_play(char resumelastspeed)
 
 	eof_log("eof_music_play() entered", 1);
 
-	if(eof_music_catalog_playback || eof_silence_loaded)
+	if(eof_music_catalog_playback || eof_silence_loaded || !eof_music_track)
 	{
+		eof_log("\tInvalid playback conditions", 3);
 		return;
 	}
 	eof_music_paused = 1 - eof_music_paused;
@@ -75,7 +76,6 @@ void eof_music_play(char resumelastspeed)
 		unsigned long x;
 		int held;	//Tracks whether the user is holding down one of the defined controller buttons
 
-		eof_log("\tStarting playback", 1);
 		if(!resumelastspeed)
 		{	//If the previous playback speed isn't being re-used, set the speed based on the current playback rate or any keyboard modifiers used
 			speed = newspeed;
@@ -105,6 +105,7 @@ void eof_music_play(char resumelastspeed)
 		eof_music_rewind_pos = eof_music_pos;
 		/* in Windows, subtracting the buffer size (buffer_size * 2 according to the Allegro manual)
 		 * seems to get rid of the stuttering. */
+		eof_log("\t\tSeeking audio to chart position", 3);
 		#ifdef ALLEGRO_WINDOWS
 			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos - ((eof_buffer_size * (eof_smooth_pos ? 2 : 1)) * 1000 / (unsigned long)alogg_get_wave_freq_ogg(eof_music_track)));
 		#else
@@ -124,12 +125,24 @@ void eof_music_play(char resumelastspeed)
 			}
 		}while(held);
 
+		eof_log("\t\tCalling OGG playback function", 3);
 		if(eof_playback_time_stretch)
 		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting %d%% speed time stretch playback", speed / 10);
+			eof_log(eof_log_string, 1);
 			ret = alogg_play_ogg_ts(eof_music_track, eof_buffer_size, 255, 128, speed);
 		}
 		else
 		{
+			if(speed != 1000)
+			{	//Anything other than full speed
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting %d%% speed playback", speed / 10);
+				eof_log(eof_log_string, 1);
+			}
+			else
+			{
+				eof_log("\tStarting playback", 1);
+			}
 			ret = alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0);
 		}
 		if(ret == ALOGG_OK)
@@ -141,16 +154,19 @@ void eof_music_play(char resumelastspeed)
 			eof_snote = 0;
 			(void) alogg_poll_ogg(eof_music_track);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
+			eof_log("\t\tPlayback started", 3);
 		}
 		else
 		{
 			allegro_message("Can't play song!");
 			eof_music_paused = 1;
+			eof_log("\t\tPlayback failed", 3);
 		}
 	}
 	else
 	{	//Otherwise ensure chart stays paused
 		eof_music_paused = 1;
+		eof_log("\t\tPlayback canceled", 3);
 	}
 }
 

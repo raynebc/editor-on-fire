@@ -11,8 +11,8 @@
 #include "editor.h"
 #include "pathing.h"
 
-#define EOF_VERSION_STRING "EOF v1.8RC12"
-#define EOF_COPYRIGHT_STRING "(c)2008-2019 T^3 Software."
+#define EOF_VERSION_STRING "EOF v1.8RC12 (3-26-2020)"
+#define EOF_COPYRIGHT_STRING "(c)2008-2020 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #define KEY_EITHER_WIN (key[KEY_LWIN] || key[KEY_RWIN])

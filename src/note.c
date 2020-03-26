@@ -16,7 +16,7 @@ char eof_last_tab_notation[65] = {0};	//Used to store a copy of the results of t
 
 unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
-	eof_log("eof_note_count_colors() entered", 3);
+//	eof_log("eof_note_count_colors() entered", 3);
 
 	if(!sp)
 	{

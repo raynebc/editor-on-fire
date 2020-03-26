@@ -7390,7 +7390,7 @@ void eof_editor_logic_common(void)
 
 					if(!eof_song->tags->click_drag_disabled)
 					{	//If click and drag isn't disabled, check whether a beat marker is being moved
-						if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat == 0) && (eof_mickeys_x != 0) && (eof_hover_beat == eof_selected_beat) && !((eof_mickeys_x * eof_zoom < 0) && (eof_song->beat[0]->pos == 0)))
+						if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat == 0) && (eof_mickeys_x != 0) && !((eof_mickeys_x * eof_zoom < 0) && (eof_song->beat[0]->pos == 0)))
 						{	//If moving the first beat marker
 							long rdiff = eof_mickeys_x * eof_zoom;
 
@@ -7412,8 +7412,11 @@ void eof_editor_logic_common(void)
 								}
 								else
 								{	//CTRL+click and dragging the first beat marker resizes the first beat without moving the other beats
-									eof_song->beat[0]->fpos += rdiff;
-									eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round up to nearest ms
+									if((eof_song->beats > 1) && (eof_song->beat[0]->fpos + rdiff + 50 < eof_song->beat[1]->fpos))
+									{	//But only if the beat is more than 50 ms away from the next beat
+										eof_song->beat[0]->fpos += rdiff;
+										eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round up to nearest ms
+									}
 								}
 							}
 							eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;

@@ -532,7 +532,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	if(!numdifficulties)
 	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\"in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\" in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
 		eof_log(eof_log_string, 1);
 		if(bre_populated && ((*user_warned & 1024) == 0))
 		{	//If the BRE difficulty was the only one populated, warn that it is being omitted (unless the user was already warned of this)
@@ -1673,7 +1673,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}
 	if(!numdifficulties)
 	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\"in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\" in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
 		eof_log(eof_log_string, 1);
 		if(bre_populated && ((*user_warned & 1024) == 0))
 		{	//If the BRE difficulty was the only one populated, warn that it is being omitted (unless the user was already warned of this)
