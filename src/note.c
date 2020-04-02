@@ -114,6 +114,16 @@ int eof_adjust_notes(unsigned long track, int offset)
 	if(!eof_song || (track < 1) || ((track != ULONG_MAX) && (track >= eof_song->tracks)))
 		return 0;	//Invalid parameters
 
+	if(track == ULONG_MAX)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOffsetting all content by %dms", offset);
+	}
+	else
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOffsetting \"%s\" content by %dms", eof_song->track[track]->name, offset);
+	}
+	eof_log(eof_log_string, 2);
+
 	if(offset < 0)
 	{	//If content is being made earlier
 		neg_offset = -offset;	//Store the absolute value to use as a check that nothing is to be made a negative timestamp
@@ -128,11 +138,21 @@ int eof_adjust_notes(unsigned long track, int offset)
 		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, i);
 		eof_menu_track_set_tech_view_state(eof_song, i, 0);	//Disable tech view if applicable
 
+		if(track == ULONG_MAX)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing track \"%s\"", eof_song->track[i]->name);
+			eof_log(eof_log_string, 2);
+		}
+
 		//Offset the regular notes
 		for(j = 0; j < eof_get_track_size(eof_song, i); j++)
 		{	//For each note in the track
 			if(eof_get_note_pos(eof_song, i, j) < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset note at %lums to be before 0s", eof_get_note_pos(eof_song, i, j));
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
 		}
@@ -143,7 +163,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 			for(j = 0; j < eof_get_track_size(eof_song, i); j++)
 			{	//For each note in the track
 				if(eof_get_note_pos(eof_song, i, j) < neg_offset)
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset tech note at %lums to be before 0s", eof_get_note_pos(eof_song, i, j));
+					eof_log(eof_log_string, 1);
 					return 0;	//Negative timestamps not allowed
+				}
 
 				eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
 			}
@@ -155,7 +179,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 			phraseptr = eof_get_solo(eof_song, i, j);
 
 			if(phraseptr->start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset solo at %lums to be before 0s", phraseptr->start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
@@ -165,7 +193,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 			phraseptr = eof_get_star_power_path(eof_song, i, j);
 
 			if(phraseptr->start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset star power at %lums to be before 0s", phraseptr->start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
@@ -175,7 +207,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 			phraseptr = eof_get_trill(eof_song, i, j);
 
 			if(phraseptr->start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset trill at %lums to be before 0s", phraseptr->start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
@@ -185,7 +221,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 			phraseptr = eof_get_tremolo(eof_song, i, j);
 
 			if(phraseptr->start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset tremolo at %lums to be before 0s", phraseptr->start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
@@ -195,7 +235,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 			phraseptr = eof_get_arpeggio(eof_song, i, j);
 
 			if(phraseptr->start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset arpeggio at %lums to be before 0s", phraseptr->start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
@@ -205,7 +249,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 			phraseptr = eof_get_slider(eof_song, i, j);
 
 			if(phraseptr->start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset slider at %lums to be before 0s", phraseptr->start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
@@ -215,7 +263,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 			phraseptr = eof_get_lyric_section(eof_song, i, j);
 
 			if(phraseptr->start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset lyric phrase at %lums to be before 0s", phraseptr->start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
@@ -230,14 +282,22 @@ int eof_adjust_notes(unsigned long track, int offset)
 		for(j = 0; j < tp->handpositions; j++)
 		{	//For each fret hand position in the track (only change the start_pos variable, end_pos stores the fret position and not a timestamp)
 			if(tp->handposition[j].start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset hand position at %lums to be before 0s", tp->handposition[j].start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			tp->handposition[j].start_pos += offset;
 		}
 		for(j = 0; j < tp->popupmessages; j++)
 		{	//For each popup message in the track
 			if(tp->popupmessage[j].start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset popup message at %lums to be before 0s", tp->popupmessage[j].start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			tp->popupmessage[j].start_pos += offset;
 			tp->popupmessage[j].end_pos += offset;
@@ -245,7 +305,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 		for(j = 0; j < tp->tonechanges; j++)
 		{	//For each tone change in the track (only change the start_pos variable, end_pos is unused)
 			if(tp->tonechange[j].start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset tone change at %lums to be before 0s", tp->tonechange[j].start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			tp->tonechange[j].start_pos += offset;
 		}
@@ -257,7 +321,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 		for(i = 0; i < eof_song->catalog->entries; i++)
 		{
 			if(eof_song->catalog->entry[i].start_pos < neg_offset)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset catalog entry at %lums to be before 0s", eof_song->catalog->entry[i].start_pos);
+				eof_log(eof_log_string, 1);
 				return 0;	//Negative timestamps not allowed
+			}
 
 			eof_song->catalog->entry[i].start_pos += offset;
 			eof_song->catalog->entry[i].end_pos += offset;
@@ -268,7 +336,11 @@ int eof_adjust_notes(unsigned long track, int offset)
 			if(eof_song->bookmark_pos[i] != 0)
 			{
 				if(eof_song->bookmark_pos[i] < neg_offset)
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCan't offset bookmark at %lums to be before 0s", eof_song->bookmark_pos[i]);
+					eof_log(eof_log_string, 1);
 					return 0;	//Negative timestamps not allowed
+				}
 
 				eof_song->bookmark_pos[i] += offset;
 			}

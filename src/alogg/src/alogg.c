@@ -319,6 +319,14 @@ int alogg_play_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan) {
 int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int speed) {
   int ret;
 
+  if(!ogg)
+  {
+  	eof_log("\t\tInvalid OGG parameter", 2);
+  	return ALOGG_POLL_NOTPLAYING;	//Failed
+  }
+  (void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tInitializing audio playback (buffer = %d, vol = %d, pan = %d, speed = %d)", buffer_len, vol, pan, speed);
+  eof_log(eof_log_string, 2);
+
   /* start playing Ogg at normal speed */
   ret = alogg_play_ex_ogg(ogg, buffer_len, vol, pan, 1000, 0);
   if (ret != ALOGG_OK)
@@ -328,16 +336,43 @@ int alogg_play_ogg_ts(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int spee
   if (speed == 1000)
     return ALOGG_OK;
 
+  eof_log("\t\tConfiguring time stretch parameters", 2);
   ogg->time_stretch = 1;
   ogg->time_stretch_buffer_samples = (buffer_len / (ogg->stereo ? 2 : 1)) / 2;
+  eof_log("\t\tCreating rubberband state", 2);
   ogg->time_stretch_state = rubberband_new(ogg->freq, ogg->stereo ? 2 : 1, RubberBandOptionProcessRealTime |  RubberBandOptionThreadingNever, 1000.0 / (float)speed, 1.0);
+  if(ogg->time_stretch_state == NULL)
+	return ALOGG_RUBBERBAND_FAILED;	//Error
+  eof_log("\t\tCreating sample buffer", 2);
   rubberband_set_max_process_size(ogg->time_stretch_state, ogg->time_stretch_buffer_samples);
   ogg->time_stretch_buffer[0] = malloc(sizeof(float) * ogg->time_stretch_buffer_samples);
+  if(ogg->time_stretch_buffer[0] == NULL)
+  {
+  	eof_log("\t\t\tAllocation failed", 2);
+  	rubberband_delete(ogg->time_stretch_state);
+	return ALOGG_ALLOCATION_FAILED;
+  }
+  eof_log("\t\t\tAllocation succeeded", 2);
   if (ogg->stereo)
+  {
+  	eof_log("\t\tCreating second channel sample buffer", 2);
     ogg->time_stretch_buffer[1] = malloc(sizeof(float) * ogg->time_stretch_buffer_samples);
+    if(ogg->time_stretch_buffer[1] == NULL)
+	{
+		eof_log("\t\t\tAllocation failed", 2);
+		rubberband_delete(ogg->time_stretch_state);
+		free(ogg->time_stretch_buffer[0]);
+		return ALOGG_ALLOCATION_FAILED;
+	}
+	else
+	{
+		eof_log("\t\t\tAllocation succeeded", 2);
+	}
+  }
   else
     ogg->time_stretch_buffer[1] = NULL;
 
+  eof_log("\t\talogg_play_ogg_ts completed", 2);
   return ALOGG_OK;
 }
 

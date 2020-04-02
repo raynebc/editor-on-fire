@@ -43,6 +43,8 @@ extern "C" {
 #define ALOGG_POLL_BUFFERUNDERRUN    -3
 #define ALOGG_POLL_INTERNALERROR     -4
 
+#define ALOGG_RUBBERBAND_FAILED -5
+#define ALOGG_ALLOCATION_FAILED -6
 
 /* API - OGG */
 

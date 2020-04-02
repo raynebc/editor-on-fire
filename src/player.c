@@ -160,7 +160,8 @@ void eof_music_play(char resumelastspeed)
 		{
 			allegro_message("Can't play song!");
 			eof_music_paused = 1;
-			eof_log("\t\tPlayback failed", 3);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPlayback failed (error %d)", ret);
+			eof_log(eof_log_string, 3);
 		}
 	}
 	else

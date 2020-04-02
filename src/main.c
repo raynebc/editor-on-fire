@@ -743,6 +743,8 @@ void eof_switch_out_callback(void)
 	#ifndef ALLEGRO_MACOSX
 		eof_has_focus = 0;
 	#endif
+
+	eof_log("\teof_switch_out_callback() completed", 3);
 }
 
 void eof_switch_in_callback(void)
@@ -2244,6 +2246,11 @@ void eof_read_global_keys(void)
 		{
 			eof_menu_edit_undo();
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
+			while(key[KEY_Z])
+			{	//Wait for user to release Z key to avoid multiple undos without multiple key presses
+				Idle(10);
+				eof_read_keyboard_input(0);
+			}
 		}
 
 		/* redo (CTRL+R) */
@@ -2657,6 +2664,7 @@ void eof_logic(void)
 
 	if(eof_emergency_stop)
 	{	//If the switch out callback function was triggered, stop playback immediately
+		eof_log("Emergency playback stop detected", 2);
 		eof_emergency_stop_music();
 		eof_emergency_stop = 0;
 	}
