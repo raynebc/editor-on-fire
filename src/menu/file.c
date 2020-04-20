@@ -218,6 +218,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 479, 208, 16,  2,   23,  0,    0,      1,   0,   "Enable open strum by default",NULL, NULL },
 	{ d_agup_check_proc, 16,  319, 216, 16,  2,   23,  0,    0,      1,   0,   "Prefer MIDI friendly grid snaps",NULL, NULL },
 	{ d_agup_check_proc, 248, 495, 184, 16,  2,   23,  0,    0,      1,   0,   "Don't auto edit new lyrics",NULL, NULL },
+	{ d_agup_check_proc, 16,  335, 194, 16,  2,   23,  0,    0,      1,   0,   "Don't redraw on exit prompt",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1358,6 +1359,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[58].flags = eof_enable_open_strums_by_default ? D_SELECTED : 0;		//Enable open strum by default
 	eof_preferences_dialog[59].flags = eof_prefer_midi_friendly_grid_snapping ? D_SELECTED : 0;	//Prefer MIDI friendly grid snaps
 	eof_preferences_dialog[60].flags = eof_dont_auto_edit_new_lyrics ? D_SELECTED : 0;			//Don't auto edit new lyrics
+	eof_preferences_dialog[61].flags = eof_dont_redraw_on_exit_prompt ? D_SELECTED : 0;			//Don't redraw on exit prompt
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1482,6 +1484,7 @@ int eof_menu_file_preferences(void)
 			eof_enable_open_strums_by_default = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
 			eof_prefer_midi_friendly_grid_snapping = (eof_preferences_dialog[59].flags == D_SELECTED ? 1 : 0);
 			eof_dont_auto_edit_new_lyrics = (eof_preferences_dialog[60].flags == D_SELECTED ? 1 : 0);
+			eof_dont_redraw_on_exit_prompt = (eof_preferences_dialog[61].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1545,6 +1548,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[58].flags = 0;					//Enable open strum by default
 			eof_preferences_dialog[59].flags = D_SELECTED;			//Prefer MIDI friendly grid snaps
 			eof_preferences_dialog[60].flags = 0;					//Don't auto edit new lyrics
+			eof_preferences_dialog[61].flags = 0;					//Don't redraw on exit prompt
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 
@@ -2013,7 +2017,10 @@ int eof_menu_file_exit(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_clear_input();
-	(void) eof_redraw_display();
+	if(!eof_dont_redraw_on_exit_prompt)
+	{	//If the user didn't disable the redrawing of the program window on exit prompt
+		(void) eof_redraw_display();
+	}
 
 	//Re-initialize the notes panel if it was destroyed when the program window was redrawn
 	if(eof_enable_notes_panel)
@@ -5001,7 +5008,8 @@ int eof_gp_import_drum_track(int importvoice, int function)
 		}
 	}
 	eof_fixup_notes(eof_song);
-	eof_log("\t\tImport complete", 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImport complete.  %lu drum notes created", eof_get_track_size(eof_song, eof_selected_track));
+	eof_log(eof_log_string, 1);
 	return D_CLOSE;
 }
 

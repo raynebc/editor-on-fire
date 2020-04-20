@@ -3574,12 +3574,12 @@ int eof_ghl_import_common(const char *fn)
 								allegro_message("Warning:  At least one mid beat tempo change was found.");
 								mid_beat_tempo_warned = 1;
 							}
-							if(eof_song->beat[beat]->midi_pos > changes[ctr].delta)
-							{	//Set beat to the beat immediately before where the tempo change is to occur
+							if(beat && (eof_song->beat[beat]->midi_pos > changes[ctr].delta))
+							{	//Pending a bounds check, set beat to the beat immediately before where the tempo change is to occur
 								beat--;
 							}
 							(void) eof_get_effective_ts(eof_song, &tsnum, &tsden, beat, 0);			//Get the time signature in effect at the tempo change
-							beatlengthticks = (960 * 4) / den;	//Get the length, in delta ticks, of the beat in which the change occurs
+							beatlengthticks = (960.0 * 4.0) / den;	//Get the length, in delta ticks, of the beat in which the change occurs
 							changedelta = changes[ctr].delta - eof_song->beat[beat]->midi_pos;		//Get the number of delta ticks into that beat that this mid-beat change occurs
 							fraction = changedelta / beatlengthticks;	//Determine how far that is measured in beats
 							if(!loopctr)
@@ -3730,6 +3730,7 @@ int eof_ghl_import_common(const char *fn)
 		{
 			allegro_message("Error:  Malformed file (note has a negative length)");
 			eof_log("Error:  Malformed file (note has a negative length)", 1);
+			eof_filebuffer_close(fb);	//Close the file buffer
 			return 1;
 		}
 		if(eventid == 3)
@@ -3833,6 +3834,7 @@ int eof_ghl_import_common(const char *fn)
 					{	//If the lyric was not created
 						eof_log("\tGHL:  \t\t\tFailed to add note", 1);
 						allegro_message("Error:  Could not add lyric.");
+						eof_filebuffer_close(fb);	//Close the file buffer
 						return 1;	//Return failure
 					}
 
@@ -4282,6 +4284,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output GHL file \"%s\":  \"%s\"", fn, strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
+		free(events);
 		return 5;	//Can't open output file
 	}
 	(void) pack_mputl(8, fp);				//Write version number
@@ -4480,6 +4483,10 @@ char *eof_ghl_export_build_string(char *text, int prefix)
 		text = new_string;	//Any remaining checks will examine this updated string
 	}
 
+	if(new_string && (new_string != text))
+	{	//If the working copy of the string was unused but not freed yet
+		free(new_string);
+	}
 	return text;	//Return the string with any changes that were made
 }
 

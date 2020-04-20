@@ -3796,6 +3796,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	unsigned long newnotenum, sourcetrack, highestfret = 0, highestlane = 0, currentfret;
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	EOF_CATALOG_ENTRY *entry;
+	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste notes starting at the seek position instead of the original in-beat positions
 
 	if((eof_selected_catalog_entry >= eof_song->catalog->entries) || !eof_song->catalog->entries)
 		return 1;	//If a valid catalog entry is not selected, return immediately
@@ -3871,6 +3872,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		}
 	}
 
+	newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);	//Find the seek position's percentage within the current beat
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	if(eof_paste_erase_overlap)
 	{	//If the user decided to delete existing notes that are between the start and end of the pasted notes
@@ -3908,10 +3910,11 @@ int eof_menu_edit_paste_from_catalog(void)
 
 			if(first == ULONG_MAX)
 			{	//Track the start of the range of notes to clear
+				newpasteoffset = newpasteoffset - nporpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
 				clear_start = eof_put_porpos(current_beat, nporpos, 0.0);
 				first = 1;
 			}
-			clear_end = eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0);	//Track the end of each note so the end of the pasted notes can be tracked
+			clear_end = eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, newpasteoffset);	//Track the end of each note so the end of the pasted notes can be tracked
 		}//For each note in the active catalog entry's track
 		eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, clear_start, clear_end);	//Erase the notes that would get in the way of the pasted catalog entry
 
@@ -3920,6 +3923,8 @@ int eof_menu_edit_paste_from_catalog(void)
 		current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 		last_current_beat = current_beat;
 	}
+
+	newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);	//Find the seek position's percentage within the current beat
 	for(i = 0; i < eof_get_track_size(eof_song, sourcetrack); i++)
 	{	//For each note in the active catalog entry's track
 		unsigned long pos = eof_get_note_pos(eof_song, sourcetrack, i);
@@ -3929,8 +3934,9 @@ int eof_menu_edit_paste_from_catalog(void)
 			continue;	//If this note doesn't start and end within the scope of the catalog entry, skip it
 
 		if(first == ULONG_MAX)
-		{
+		{	//If this is the first note being pasted
 			first_beat = eof_get_beat(eof_song, pos);
+			newpasteoffset = newpasteoffset - eof_get_porpos(pos);	//Find the percentage offset that needs to be applied to all start/stop timestamps
 			first = 1;
 		}
 		this_beat = eof_get_beat(eof_song, pos);
@@ -3968,7 +3974,11 @@ int eof_menu_edit_paste_from_catalog(void)
 		/* paste the note */
 		if(eof_beat_num_valid(eof_song, end_beat - first_beat + start_beat))
 		{
-			new_note = eof_copy_note_simple(eof_song, sourcetrack, i, eof_selected_track, eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), eof_note_type);
+			unsigned long startpos, endpos;
+
+			startpos = eof_put_porpos(current_beat, nporpos, newpasteoffset);
+			endpos = eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, newpasteoffset);
+			new_note = eof_copy_note_simple(eof_song, sourcetrack, i, eof_selected_track, startpos, endpos - startpos, eof_note_type);
 			if(new_note)
 			{	//If the note was successfully created
 				newnotenum = eof_get_track_size(eof_song, eof_selected_track) - 1;	//The index of the new note

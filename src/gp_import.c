@@ -4758,8 +4758,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									gnp->frets[ctr4] = gracefrets[convertednum];	//Copy the fret number for this string
 									gnp->finger[ctr4] = finger[convertednum];		//Copy the finger number used to fret the note the grace note is applied to
 								}
-								if(graceonbeat || !(gnp->note & bitmask))
-									continue;	//If this is an on beat grace note or if this string isn't used by the grace note, skip it
+
+								if(!(gnp->note & bitmask))
+									continue;	//If this string isn't used by the grace note, skip it
 
 								if(gracetrans == 1)
 								{	//Grace note slides into normal note
