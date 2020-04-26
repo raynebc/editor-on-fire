@@ -3742,7 +3742,7 @@ int eof_ghl_import_common(const char *fn)
 				{	//If a valid beat position was found
 					char sectionstring[100] = {0};
 					unsigned long distance = (eof_song->beat[beat]->pos > eventpos) ? (eof_song->beat[beat]->pos - eventpos) : (eventpos - eof_song->beat[beat]->pos);
-					unsigned long targetpos, flags = 0;
+					unsigned long targetpos, eventflags = 0;
 
 					snprintf(sectionstring, sizeof(sectionstring) - 1, "[section %s]", stringptr);	//Format the event text to be recognized as a section
 					if(distance <= 2)
@@ -3753,7 +3753,7 @@ int eof_ghl_import_common(const char *fn)
 					else
 					{	//Otherwise add it as a floating text event
 						targetpos = eventpos;	//The section will be placed at this millisecond position
-						flags = EOF_EVENT_FLAG_FLOATING_POS;
+						eventflags = EOF_EVENT_FLAG_FLOATING_POS;
 					}
 					if(eof_song_contains_section_at_pos(eof_song, eventpos, 0, ULONG_MAX, 0))
 					{	//If a section already exists at this position for ANY track
@@ -3762,7 +3762,7 @@ int eof_ghl_import_common(const char *fn)
 					}
 					else
 					{
-						(void) eof_song_add_text_event(eof_song, targetpos, sectionstring, 0, flags, 0);	//Add the event globally (not specific to just the active track)
+						(void) eof_song_add_text_event(eof_song, targetpos, sectionstring, 0, eventflags, 0);	//Add the event globally (not specific to just the active track)
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tImported as text event \"%s\"", sectionstring);
 						eof_log(eof_log_string, 1);
 					}
@@ -4361,7 +4361,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	{	//For each event that was built
 		if(events[ctr].string)
 		{	//If there is a string for this event
-			unsigned long ctr2, length;
+			unsigned long ctr2;
 
 			length = strlen(events[ctr].string);
 			for(ctr2 = 0; ctr2 < length; ctr2++)
@@ -5641,7 +5641,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 					}
 					if(eof_song_contains_section_at_pos(eof_song, position, 0, ULONG_MAX, 0))
 					{	//If a section already exists at this position for ANY track
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tIgnoring text event \"%s\" as there is already a section marker at %lums", sectionstring, position);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tIgnoring text event \"%s\" as there is already a section marker at %ldms", sectionstring, position);
 						eof_log(eof_log_string, 1);
 					}
 					else

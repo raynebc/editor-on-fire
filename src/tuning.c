@@ -86,6 +86,7 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
  {"F tuning", "F tuning (-11,-11,-11,-11,-11,-11): FA#D#G#CF", 0, 6, {-11,-11,-11,-11,-11,-11}},
  {"Drop C tuning", "Drop C tuning (-4,0,0,0,0,0): CADGBE", 0, 6, {-4,0,0,0,0,0}},
  {"Drop D tuning", "Drop D tuning (-2,0,0,0,0,0): DADGBE", 0, 6, {-2,0,0,0,0,0}},
+ {"Open D tuning", "Open D tuning (-2,0,0,-1,-2,-2): DADF#AD", 0, 6, {-2,0,0,-1,-2,-2}},
  {"Open G tuning", "Open G tuning (-2,-2,0,0,0,-2): DGDGBD", 0, 6, {-2,-2,0,0,0,-2}}
 };
 

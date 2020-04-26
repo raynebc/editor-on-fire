@@ -2403,7 +2403,7 @@ void sort_chart(struct FeedbackChart *chart)
 				}
 				else
 				{
-					prev_text_ptr = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
+					prev_text_ptr->next = next_ptr;	//Point the previous link forward to the earlier of the two links just sorted
 				}
 				sorted= 0;
 				break;	//Restart the for loop

@@ -5680,24 +5680,24 @@ void eof_vocal_editor_logic(void)
 			}
 			if(eof_snap_mode == EOF_SNAP_OFF)
 			{
+				unsigned long amount = 100;	//The default amount lyric lengths will change
+
 				if(KEY_EITHER_CTRL)
-				{
-					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+				{	//IF CTRL is held
+					if(KEY_EITHER_SHIFT)
+					{	//If SHIFT is also held
+						amount = 1;
+					}
+					else
 					{
-						if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
-						{
-							eof_song->vocal_track[tracknum]->lyric[i]->length -= eof_mickey_z * 10;
-						}
+						amount = 10;
 					}
 				}
-				else
+				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 				{
-					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+					if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
 					{
-						if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
-						{
-							eof_song->vocal_track[tracknum]->lyric[i]->length -= eof_mickey_z * 100;
-						}
+						eof_song->vocal_track[tracknum]->lyric[i]->length -= eof_mickey_z * amount;
 					}
 				}
 			}
@@ -5705,7 +5705,7 @@ void eof_vocal_editor_logic(void)
 			{
 				unsigned long b;
 				if(eof_mickey_z > 0)
-				{
+				{	//If there was scroll wheel activity
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 					{
 						if((eof_selection.track != EOF_TRACK_VOCALS) || !eof_selection.multi[i])
@@ -5731,7 +5731,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 				else if(eof_mickey_z < 0)
-				{
+				{	//If there was scroll wheel activity
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 					{
 						if((eof_selection.track != EOF_TRACK_VOCALS) || !eof_selection.multi[i])

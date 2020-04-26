@@ -2348,7 +2348,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			(void) pack_fclose(inf);
 			free(gp->names);
 			free(gp->instrument_types);
-			free(gp->track[ctr]);
 			while(ctr > 0)
 			{	//Free all previously allocated track structures
 				free(gp->track[ctr - 1]);
