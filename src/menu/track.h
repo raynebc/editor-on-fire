@@ -267,4 +267,8 @@ int eof_menu_track_rs_picked_bass_arrangement(void);	//Toggle the picked bass ar
 
 int eof_menu_track_offset(void);	//Shifts all track content by a user specified offset
 
+int eof_menu_track_check_chord_snapping(void);
+	//Prompts user for a timing unit (deltas or ms) and a threshold amount and checks the active track's notes to determine whether any chords would resnap with those criteria
+	//Such instances are highlighted and the user is prompted whether to resnap those notes int chords
+
 #endif

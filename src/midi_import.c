@@ -3854,15 +3854,15 @@ eof_log("\tThird pass complete", 1);
 		memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
 	}
 
-	//Check for chord snap authoring errors
-	if(eof_midi_import_check_unsnapped_chords(sp, 0))
+	//Check all instrument tracks for chord snap authoring errors
+	if(eof_song_check_unsnapped_chords(sp, 0, 0, 0, 10))
 	{
 		allegro_message("Warning:  At least one note has a chord snap error (gems defined 1-10 delta ticks apart).  These gems have been highlighted.");
 
 		eof_clear_input();
 		if(alert(NULL, "Re-align the gems to make them proper chords?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If the user opts to automatically fix the unsnapped chords
-			eof_midi_import_check_unsnapped_chords(sp, 1);
+			eof_song_check_unsnapped_chords(sp, 0, 1, 0, 10);
 		}
 	}
 
@@ -3916,19 +3916,69 @@ unsigned long eof_repair_midi_import_grid_snap(void)
 	return 1;
 }
 
-int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp, int function)
+int eof_song_check_unsnapped_chords(EOF_SONG *sp, unsigned long track, int function, int timing, unsigned threshold)
 {
-	int unsnapped = 0, altered = 1;
-	unsigned long ctr, ctr2, this_midi_pos, next_midi_pos, flags;
+	int unsnapped = 0, altered = 1, nonzero = 0;
+	unsigned long ctr, ctr2, this_pos, next_pos, flags, start_track, end_track;
 	long next;
 
-	if(!sp)
+	if(!sp || (track >= sp->tracks))
 		return 0;	//Invalid parameter
 
-	eof_log("eof_midi_import_check_unsnapped_chords() entered", 1);
+	eof_log("eof_song_check_unsnapped_chords() entered", 1);
 
-	for(ctr = 1; ctr < sp->tracks; ctr++)
-	{	//For each track in the project
+	if(!track)
+	{	//Check all tracks
+		start_track = 1;
+		end_track = sp->tracks - 1;
+	}
+	else
+	{	//Check one track
+		start_track = track;
+		end_track = track;
+	}
+
+	//Pre-scan notes to look for at least one nonzero positioned note
+	for(ctr = start_track; (ctr <= end_track) && !nonzero; ctr++)
+	{	//For each track in scope of this function call, until a nonzero positioned note is found
+		if(ctr == EOF_TRACK_VOCALS)
+			continue;	//Skip the vocal track
+
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note in the track
+			if(!timing)
+			{	//Compare MIDI positions
+				if(eof_get_note_midi_pos(sp, ctr, ctr2))
+				{	//If this note's position is not zero
+					nonzero = 1;
+					break;
+				}
+			}
+			else
+			{	//Compare millisecond positions
+				if(eof_get_note_pos(sp, ctr, ctr2))
+				{	//If this note's position is not zero
+					nonzero = 1;
+					break;
+				}
+			}
+		}
+	}
+	if(!nonzero)
+	{	//If all notes were zero positioned
+		if(!timing)
+		{	//Compare MIDI positions
+			allegro_message("None of the notes' MIDI positions are defined.  They are only defined during file imports and are not kept during save.");
+		}
+		else
+		{	//Compare millisecond positions
+			allegro_message("All notes in the project are at 0ms");
+		}
+		return 0;
+	}
+
+	for(ctr = start_track; ctr <= end_track; ctr++)
+	{	//For each track in scope of this function call
 		if(ctr == EOF_TRACK_VOCALS)
 			continue;	//Skip the vocal track
 
@@ -3940,13 +3990,27 @@ int eof_midi_import_check_unsnapped_chords(EOF_SONG *sp, int function)
 			altered = 0;
 			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 			{	//For each note in the track
-				this_midi_pos = eof_get_note_midi_pos(sp, ctr, ctr2);
+				if(!timing)
+				{	//Compare MIDI positions
+					this_pos = eof_get_note_midi_pos(sp, ctr, ctr2);
+				}
+				else
+				{	//Compare millisecond positions
+					this_pos = eof_get_note_pos(sp, ctr, ctr2);
+				}
 				next = eof_track_fixup_next_note(sp, ctr, ctr2);	//Look for another note in this track difficulty
 				if(next > 0)
 				{	//If there is a next note
-					next_midi_pos = eof_get_note_midi_pos(sp, ctr, next);
-					if((next_midi_pos > this_midi_pos) && (next_midi_pos < this_midi_pos + 11))
-					{	//If the next note was at a different delta position, but less than 11 ticks away
+					if(!timing)
+					{	//Compare MIDI positions
+						next_pos = eof_get_note_midi_pos(sp, ctr, next);
+					}
+					else
+					{	//Compare millisecond positions
+						next_pos = eof_get_note_pos(sp, ctr, next);
+					}
+					if((next_pos > this_pos) && (next_pos <= this_pos + threshold))
+					{	//If the next note was at a different delta position, but less than the specified threshold of ticks or ms away
 						if(!function)
 						{	//If the calling function wanted to have the notes highlighted
 							flags = eof_get_note_flags(sp, ctr, ctr2);

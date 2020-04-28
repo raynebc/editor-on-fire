@@ -5,6 +5,7 @@
 #include "./edit.h"
 #include "../main.h"
 #include "../midi.h"
+#include "../midi_import.h"
 #include "../mix.h"
 #include "../pathing.h"
 #include "../player.h"
@@ -107,6 +108,7 @@ MENU eof_track_menu[] =
 	{"Find optimal CH star power path", eof_menu_track_find_ch_sp_path, NULL, 0, NULL},
 	{"Evaluate CH star power path", eof_menu_track_evaluate_user_ch_sp_path, NULL, 0, NULL},
 	{"&Offset", eof_menu_track_offset, NULL, 0, NULL},
+	{"Chord snap", eof_menu_track_check_chord_snapping, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -5519,5 +5521,51 @@ int eof_menu_track_offset(void)
 
 	eof_reset_lyric_preview_lines();
 	eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
+	return 1;
+}
+
+DIALOG eof_menu_track_check_chord_snapping_dialog[] =
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)                      (dp2) (dp3) */
+	{ d_agup_window_proc,    0,   0,   170, 135, 2,    23,  0,    0,      0,   0,   "Chord snap gems within", NULL, NULL },
+	{ eof_verified_edit_proc,12,  30,  30,  20,  0,    0,   0,    0,      3,   0,   eof_etext2,               "0123456789",  NULL },
+	{ d_agup_radio_proc,     12,  55,  86,  15,  2,    23,  0,    D_SELECTED, 0, 0, "Delta ticks",            NULL, NULL },
+	{ d_agup_radio_proc,     12,  75,  96,  15,  2,    23,  0,    0,      0,   0,   "Milliseconds",           NULL, NULL },
+	{ d_agup_button_proc,    12,  100, 68,  28,  2,    23,  '\r', D_EXIT, 0,   0,   "OK",                     NULL, NULL },
+	{ d_agup_button_proc,    90,  100, 68,  28,  2,    23,  0,    D_EXIT, 0,   0,   "Cancel",                 NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_track_check_chord_snapping(void)
+{
+	long threshold;
+	int timing = 0;
+
+	eof_etext2[0] = '\0';	//Empty the dialog's input string
+	eof_color_dialog(eof_menu_track_check_chord_snapping_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_track_check_chord_snapping_dialog);
+
+	if(eof_popup_dialog(eof_menu_track_check_chord_snapping_dialog, 1) != 4)
+		return 1;	//If the user did not click OK, return immediately
+	if(eof_etext2[0] == '\0')
+		return 1;	//If the user did not enter a threshold, return immediately
+
+	threshold = atol(eof_etext2);
+	if(threshold < 0)
+		return 1;	//If the specified value is not valid, return immediately
+	if(eof_menu_track_check_chord_snapping_dialog[3].flags == D_SELECTED)
+		timing = 1;	//User selected millisecond timing
+
+	if(eof_song_check_unsnapped_chords(eof_song, eof_selected_track, 0, timing, threshold))
+	{	//If there are notes that should be snapped into chords
+		eof_render();
+		eof_clear_input();
+		if(alert("At least one note would chord snap with the specified threshold", "These have been highlighted", "Re-align the gems to make them proper chords?", "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to automatically fix the unsnapped chords
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_song_check_unsnapped_chords(eof_song, eof_selected_track, 1, timing, threshold);
+		}
+	}
+
 	return 1;
 }
