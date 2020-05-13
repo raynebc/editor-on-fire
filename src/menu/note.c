@@ -9470,7 +9470,7 @@ int eof_pro_guitar_note_define_unpitched_slide(void)
 			{	//If a slide end value was given
 				unsigned char lowestfret = eof_pro_guitar_note_lowest_fret(eof_song->pro_guitar_track[tracknum], i);	//Determine the lowest used fret value
 
-				if(lowestfret && newend)
+				if(lowestfret)
 				{	//If the note has a fretted string, and an ending fret was defined, validate the unpitched slide ending fret
 					if(newend == lowestfret)
 					{

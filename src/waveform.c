@@ -389,8 +389,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename, unsigned long slicelen
 	alogg_destroy_ogg(oggstruct);
 	if(audio != NULL)
 		destroy_sample(audio);
-	if(oggbuffer)
-		free(oggbuffer);
+	free(oggbuffer);
 	if(done == -1)	//Unsuccessful completion
 	{
 		if(waveform)

@@ -3448,6 +3448,10 @@ int eof_menu_beat_estimate_bpm(void)
 			else
 				return D_O_K;	//Don't perform any more processing
 		}
+		else
+		{
+			startbeat = 0;
+		}
 	}
 	else
 	{
@@ -3471,16 +3475,13 @@ int eof_menu_beat_estimate_bpm(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	ppqn = 60000000.0 / result;
 	eof_song->beat[startbeat]->ppqn = ppqn;	//Apply the tempo to the first beat in the applicable range of beats
-	if(startbeat < EOF_MAX_BEATS - 1)
-	{	//Redundant check to satisfy Coverity
-		for(ctr = startbeat + 1; ctr < eof_song->beats; ctr++)
-		{	//For the remaining beats in the project
-			if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR)
-			{	//If this beat is an anchor
-				break;	//Stop updating beat tempos
-			}
-			eof_song->beat[ctr]->ppqn = ppqn;	//Apply the new tempo
+	for(ctr = startbeat + 1; ctr < eof_song->beats; ctr++)
+	{	//For the remaining beats in the project
+		if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR)
+		{	//If this beat is an anchor
+			break;	//Stop updating beat tempos
 		}
+		eof_song->beat[ctr]->ppqn = ppqn;	//Apply the new tempo
 	}
 	eof_calculate_beats(eof_song);
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current

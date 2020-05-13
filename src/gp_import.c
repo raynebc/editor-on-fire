@@ -1944,8 +1944,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 	}//If the input file was determined to be an XML file
 	(void) pack_fclose(inf2);
-	if(buffer2)
-		free(buffer2);
+	free(buffer2);
 
 
 //Initialize pointers and handles

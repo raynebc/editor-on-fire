@@ -1731,7 +1731,7 @@ int eof_menu_catalog_show(void)
 		else
 		{
 			eof_display_catalog = 1;
-			if((eof_song->catalog->entries > 0) && !eof_music_catalog_playback)
+			if(!eof_music_catalog_playback)
 			{
 				eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			}

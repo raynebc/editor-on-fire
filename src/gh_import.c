@@ -4857,7 +4857,7 @@ char *eof_sections_list_all(int index, int * size)
 int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 {
 	unsigned long numsections = 0, checksum = 0, dword = 0, ctr, lastsectionpos = 0;
-	char matched, sectionsfound = 0;
+	char sectionsfound = 0;
 	int prompt;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
 	int event_realignment_warning = 0;
@@ -4923,8 +4923,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 				}
 
 		//Match this section position with a name
-				matched = 0;
-				for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
+				for(linkptr = head; linkptr != NULL; linkptr = linkptr->next)
 				{	//For each link in the sections checksum list (until a match has been made)
 					unsigned long beatnum;
 

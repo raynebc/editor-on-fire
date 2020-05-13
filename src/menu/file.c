@@ -2820,10 +2820,34 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		}
 	}
 
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" created", dest_name);
-	eof_log(eof_log_string, 1);
+	snprintf(cfn, sizeof(cfn) - 1, "%s%s", directory, dest_name);	//Build the target file name
+	if(exists(cfn))
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" created", cfn);
+		eof_log(eof_log_string, 1);
+		return 0;	//Return success
+	}
+	else
+	{	//The file does not exist, test write permission
+		PACKFILE *fp;
 
-	return 0;	//Return success
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" was not created", cfn);
+		eof_log(eof_log_string, 1);
+
+		fp = pack_fopen(cfn, "wb");	//Attempt to create file
+		if(!fp)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Could not manually create file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+			eof_log(eof_log_string, 1);
+		}
+		else
+		{
+			pack_fclose(fp);
+			eof_log("Test file was able to be created manually, but the conversion utility could not do so", 1);
+			(void) delete_file(cfn);
+		}
+		return 4;	//Error
+	}
 }
 
 int eof_new_chart(char * filename)
