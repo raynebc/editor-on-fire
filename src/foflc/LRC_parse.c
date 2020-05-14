@@ -120,12 +120,21 @@ void LRC_Load(FILE *inf)
 				if(lineinprogress != 0)	//If the previous lyric piece did not end yet
 				{
 					endstamp=timestamp;	//This timestamp doubles as the end timestamp for last lyric piece
-					AddLyricPiece(buffer2,startstamp,endstamp,PITCHLESS,groupswithnext);	//Write lyric with no defined pitch
-					EndLyricLine();	//The previous line of lyrics is now complete
-					lineinprogress=0;	//Reset this condition
+					if(endstamp <= startstamp)
+					{
+						if(Lyrics.verbose)
+							printf("Invalid timestamp %lums on line #%lu.  Ignoring\n",endstamp, processedctr);
+					}
+					else
+					{
+						AddLyricPiece(buffer2,startstamp,endstamp,PITCHLESS,groupswithnext);	//Write lyric with no defined pitch
+						buffer2[0] = '\0';	//Empty buffer2
+						EndLyricLine();	//The previous line of lyrics is now complete
+						lineinprogress=0;	//Reset this condition
 
-					if(!Lyrics.line_on)		//Only if the Lyrics structure has no line of lyrics open (last call to EndLyricLine() closed a populated line),
-						CreateLyricLine();	//Initialize for next line of lyrics
+						if(!Lyrics.line_on)		//Only if the Lyrics structure has no line of lyrics open (last call to EndLyricLine() closed a populated line),
+							CreateLyricLine();	//Initialize for next line of lyrics
+					}
 				}
 				startstamp=timestamp;	//This is the beginning timestamp for the next lyric piece
 			}
@@ -183,6 +192,7 @@ void LRC_Load(FILE *inf)
 
 //Add lyric piece
 			AddLyricPiece(buffer2,startstamp,endstamp,PITCHLESS,groupswithnext);	//Write lyric with no defined pitch
+			buffer2[0] = '\0';	//Empty buffer2
 		}//end while(1)
 
 		if(lyricinprogress == 0)	//if the line of lyrics ended with a timestamp
@@ -204,6 +214,7 @@ void LRC_Load(FILE *inf)
 		}
 		mean+=0.5;	//Add 0.5 so it will round to nearest integer when added to startstamp below
 		AddLyricPiece(buffer2,startstamp,startstamp+mean,PITCHLESS,groupswithnext);	//Write lyric with no defined pitch
+		buffer2[0] = '\0';	//Empty buffer2
 		if(Lyrics.verbose)	(void) putchar('\n');
 	}
 

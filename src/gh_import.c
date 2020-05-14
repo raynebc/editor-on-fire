@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include <assert.h>
+#include <ctype.h>	//For toupper()
 #include "agup/agup.h"
 #include "beat.h"
 #include "dialog.h"
@@ -5303,6 +5304,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 	double threshold = 66.0 / 192.0;
 	unsigned long toggle_hopo_count = 0;
 	int line_content = 0, previous_line_content = 0;	//Tracks whether the current and previously parsed line was a number (1) or ASCII text (2)
+	int explicit_hopo = 0;	//Set to nonzero if the first line is "HOPO", indicating that all HOPOs are defined explicitly instead of there being any thresholds used
+	int this_note_explicit_hopo = 0;	//Set to nonzero if a note is explicitly marked as HOPO
 
 	if(!filename || !eof_song)
 		return 1;	//No project or invalid parameter
@@ -5340,6 +5343,12 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			break;
 		if(line[0] == '\0')	//If this line is empty
 			continue;	//Skip it
+		if(strcasestr_spec(line, "hopo"))
+		{	//If this line contains "hopo" (case insensitive)
+			explicit_hopo = 1;	//Track this
+			eof_log("\tExplicit HOPO indicator detected.", 1);
+			continue;			//Skip additional processing for the line
+		}
 
 		if(line[0] == '0')
 		{	//If this number is a zero
@@ -5348,6 +5357,10 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 		}
 		else
 		{
+			if(toupper(line[0] == 'H'))
+			{	//If this line includes explicit HOPO notation
+				line++;	//Advance to the next character so the gem number can be read
+			}
 			position = atol(line);	//Convert the string into a number
 			if(position < 0)
 			{	//If the number is an invalid position
@@ -5415,6 +5428,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 	strcpy(buffer2, buffer);	//Replace buffer2 with a clean copy of buffer to re-tokenize it
 	if(format == 1)		//If this is note data
 	{
+		int first_number_parsed = 0;
 		gh3_format = 1;	//Unless the notes don't follow the expected scheme, assume GH3/GHA format
 
 		for(ctr = 0; !failed; ctr++)
@@ -5432,6 +5446,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 				break;
 			if(line[0] == '\0')	//If this line is empty
 				continue;	//Skip it
+			if(strcasestr_spec(line, "hopo"))	//If this is the explicit HOPO notation indicator
+				continue;	//Skip it
 
 			if(line[0] == '0')
 			{	//If this number is a zero
@@ -5441,11 +5457,12 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			{
 				position = atol(line);	//Convert the string into a number
 			}
-			if(ctr && (position < lastposition))
+			if(first_number_parsed && (position < lastposition))
 			{	//If this isn't the first note parsed, and the timestamp is smaller then the previous timestamp
 				gh3_format = 0;
 				break;
 			}
+			first_number_parsed = 1;	//Track that at least one number has been parsed
 			lastposition = position;	//Remember this timestamp for comparison with the next timestamp
 			line = ustrtok(NULL, "\r\n");	//Read the note duration
 			if(!line || (line[0] == '\0'))
@@ -5458,6 +5475,10 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			{	//If the line couldn't be read of the line is empty
 				gh3_format = 0;
 				break;
+			}
+			if(toupper(line[0] == 'H'))
+			{	//If this line includes explicit HOPO notation
+				line++;	//Advance to the next character so the gem number can be read
 			}
 			note = atol(line);	//Convert the bitmask to integer format
 			if(note > 63)
@@ -5495,8 +5516,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			failed = 11;	//Invalid destination track
 			return failed;
 		}
-		if(gh3_format)
-		{
+		if(gh3_format && !explicit_hopo)
+		{	//Prompt for which HOPO threshold to use, but only if the HOPOs won't be explicitly marked per-note
 			int selection;
 
 			selection = alert("GH3/GHA charts can have one of two HOPO thresholds.", "Which should EOF use?", NULL, "66/192 qnote", "100/192 qnote", 0, 0);
@@ -5674,6 +5695,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 				break;
 			if(line[0] == '\0')	//If this line is empty
 				continue;	//Skip it
+			if(strcasestr_spec(line, "hopo"))	//If this is the explicit HOPO notation indicator
+				continue;	//Skip it
 
 			//Read the position
 			if(line[0] == '0')
@@ -5709,12 +5732,17 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 					failed = 8;	//Invalid data
 					break;
 				}
+				if(toupper(line[0] == 'H'))
+				{	//If this line includes explicit HOPO notation
+					line++;	//Advance to the next character so the gem number can be read
+				}
 				data = atol(line);
 				if(data == 0)
 				{	//If atol() couldn't convert the number
 					failed = 9;	//Invalid data
 					break;
 				}
+				this_note_explicit_hopo = 0;	//Reset this status
 				if(gh3_format)
 				{	//The line that was just read and one more are expected to define the note
 					length = data;	//That line was the duration
@@ -5724,6 +5752,11 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 					{	//If the line couldn't be read, is empty or is a zero
 						failed = 8;	//Invalid data
 						break;
+					}
+					if(toupper(line[0]) == 'H')
+					{	//If this line includes explicit HOPO notation
+						this_note_explicit_hopo = 1;	//Track this
+						line++;	//Advance to the next character so the gem number can be read
 					}
 					data = atol(line);
 					if(data == 0)
@@ -5878,7 +5911,21 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 						}
 					}
 				}
+				if(explicit_hopo)
+				{	//If explicit 'H' HOPO markers define the HOPOs in the file, this will override any HOPO status defined otherwise
+					newnote->flags &= ~(EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_HOPO);	//Clear these flags
+					if(this_note_explicit_hopo)
+					{	//If this note is explicitly marked as HOPO
+						newnote->flags |= (EOF_NOTE_FLAG_F_HOPO | EOF_NOTE_FLAG_HOPO);	//Set these flags
+					}
+				}
 				newnote->note = fixednote;	//Update the new note's bitmask
+
+				if(eof_log_level > 1)
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tGH:  Added note:  pos = %ld, len = %ld, mask = %ld, diff = %d", position, length, fixednote, eof_note_type);
+					eof_log(eof_log_string, 2);
+				}
 
 				//Apply disjointed status if appropriate
 				if(lastnote && (lastnote->pos == newnote->pos) && (lastnote->length != newnote->length))
@@ -5906,8 +5953,8 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			eof_track_sort_notes(eof_song, eof_selected_track);
 
 			//Apply auto HOPO statuses if necessary
-			if(gh3_format)
-			{	//If the notes were in GH3/GHA format, HOPO status is based on proximity to the previous note
+			if(gh3_format && !explicit_hopo)
+			{	//If the notes were in GH3/GHA format, and HOPO statuses aren't explicitly marked per-note, HOPO status is based on proximity to the previous note
 				unsigned long tracksize = eof_get_track_size(eof_song, eof_selected_track);
 
 				eof_track_sort_notes(eof_song, eof_selected_track);
