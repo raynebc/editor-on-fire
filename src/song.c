@@ -123,6 +123,30 @@ EOF_TRACK_ENTRY eof_guitar_hero_animation_tracks[EOF_GUITAR_HERO_ANIMATION_TRACK
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM_PS, 0, "BAND DRUMS", "", EOF_NOTE_AMAZING, 5, 0}
 };	//These entries describe the two Guitar Hero MIDI tracks that store drum animations, used to create a drum track
 
+EOF_TRACK_ENTRY eof_array_txt_tracks[EOF_GHOT_ARRAY_TXT_IMPORT_TRACK_COUNT] =
+{
+	{0, 0, 0, 0, "timesig", "", 0, 0, 0},	//Import time signatures first, as this affects the application of the tempo changes when beatlines are processed
+	{0, 0, 0, 0, "beatlines", "", 0, 0, 0},
+	{0, 0, 0, 0, "sections", "", 0, 0, 0},
+	{0, 0, EOF_TRACK_BASS, 0, "bass_Expert", "", EOF_NOTE_AMAZING, 0, 0},
+	{0, 0, EOF_TRACK_BASS, 0, "bass_Expert_SP", "", EOF_NOTE_AMAZING, 0, 0},
+	{0, 0, EOF_TRACK_BASS, 0, "bass_Hard", "", EOF_NOTE_MEDIUM, 0, 0},
+	{0, 0, EOF_TRACK_BASS, 0, "bass_Hard_SP", "", EOF_NOTE_MEDIUM, 0, 0},
+	{0, 0, EOF_TRACK_BASS, 0, "bass_Medium", "", EOF_NOTE_EASY, 0, 0},
+	{0, 0, EOF_TRACK_BASS, 0, "bass_Medium_SP", "", EOF_NOTE_EASY, 0, 0},
+	{0, 0, EOF_TRACK_BASS, 0, "bass_Easy", "", EOF_NOTE_SUPAEASY, 0, 0},
+	{0, 0, EOF_TRACK_BASS, 0, "bass_Easy_SP", "", EOF_NOTE_SUPAEASY, 0, 0},
+	{0, 0, EOF_TRACK_GUITAR, 0, "lead_Expert", "", EOF_NOTE_AMAZING, 0, 0},
+	{0, 0, EOF_TRACK_GUITAR, 0, "lead_Expert_SP", "", EOF_NOTE_AMAZING, 0, 0},
+	{0, 0, EOF_TRACK_GUITAR, 0, "lead_Hard", "", EOF_NOTE_MEDIUM, 0, 0},
+	{0, 0, EOF_TRACK_GUITAR, 0, "lead_Hard_SP", "", EOF_NOTE_MEDIUM, 0, 0},
+	{0, 0, EOF_TRACK_GUITAR, 0, "lead_Medium", "", EOF_NOTE_EASY, 0, 0},
+	{0, 0, EOF_TRACK_GUITAR, 0, "lead_Medium_SP", "", EOF_NOTE_EASY, 0, 0},
+	{0, 0, EOF_TRACK_GUITAR, 0, "lead_Easy", "", EOF_NOTE_SUPAEASY, 0, 0},
+	{0, 0, EOF_TRACK_GUITAR, 0, "lead_Easy_SP", "", EOF_NOTE_SUPAEASY, 0, 0},
+};	//These entries map the contents exported by a modified version of Queen Bee where all track data gets saved into a series of folders
+	//"beatlines", "sections" and "timesig" have less data defined because they are not associated with a specific track
+
 /* sort all notes according to position */
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
 {
@@ -9328,6 +9352,18 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{
 			sp->vocal_track[tracknum]->lines = 0;
+		}
+	}
+
+	//Delete text events
+	if(!diffonly)
+	{	//If the entire track is to be erased
+		for(i = sp->text_events; i > 0; i--)
+		{	//For each text event, in reverse order
+			if(sp->text_event[i - 1]->track == track)
+			{	//If the event is specific to the track being erased
+				eof_song_delete_text_event(sp, i - 1);	//Delete the event
+			}
 		}
 	}
 }

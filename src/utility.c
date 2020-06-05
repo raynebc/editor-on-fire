@@ -567,3 +567,60 @@ int eof_number_is_power_of_two(unsigned long value)
 
 	return 0;
 }
+
+int eof_parse_last_folder_name(const char *filename, char *buffer, unsigned long bufferlen)
+{
+	unsigned long index1 = 0, index2 = 0;	//The array indexes of the beginning and end of the folder name to be parsed, based on the presence of folder separators
+	unsigned long stringlen, ctr;
+	int thischar;
+
+	if(!filename || !buffer || !bufferlen)
+		return 0;	//Invalid parameters
+
+	//Find the location of the last folder separator in the filename
+	stringlen = ustrlen(filename);
+	if(stringlen < 3)
+		return 0;	//Error, at least one folder name, one separator and one filename is required as input
+	for(ctr = stringlen; ctr > 0; ctr --)
+	{	//For each character in the filename starting from the end and working backward
+		thischar = ugetat(filename, ctr - 1);	//Examine the character
+		if((thischar == '/') || (thischar == '\\'))
+		{	//If this is a forward or backward slash, consider it a folder separator
+			if(ctr < 2)		//There is no character preceding this separator
+				return 0;	//Error
+			index2 = ctr - 2;	//This is the index marking the end of the folder name
+			ctr--;	//Back up one character to prepare for the next loop
+			break;
+		}
+	}
+
+	//Find the location of the folder separator preceding the last separator in the filename, if any
+	//If no separator is found to precede the folder name begin parsed, index1 remains initialized at 0 to reflect the beginning of the input string
+	for(; ctr > 0; ctr--)
+	{	//For each remaining character in the filename until the characters have run out
+		thischar = ugetat(filename, ctr - 1);	//Examine the character
+		if((thischar == '/') || (thischar == '\\'))
+		{	//If this is a forward or backward slash, consider it a folder separator
+			index1 = ctr;	//The character after this separator is considered the beginning of the target file name
+			break;
+		}
+	}
+	thischar = ugetat(filename, index1);
+	if((thischar == '/') || (thischar == '\\'))
+	{	//If the parsed folder name is a separator, the input was valid, ie. had consecutive folder separators
+		return 0;	//Error
+	}
+
+	//Validate the length of the output buffer and write the folder name to it
+	if(index2 - index1 + 1 >= bufferlen)
+	{	//If the output buffer isn't large enough to store the folder name
+		return 0;	//Error
+	}
+	for(ctr = 0; index1 + ctr <= index2; ctr++)
+	{	//For each character from the first to the last in the identified folder name
+		usetat(buffer, ctr, ugetat(filename, index1 + ctr));	//Copy it to the output buffer
+	}
+	usetat(buffer, ctr, '\0');	//Terminate the string
+
+	return 1;	//Success
+}

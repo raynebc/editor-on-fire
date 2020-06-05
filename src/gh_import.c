@@ -5293,11 +5293,11 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 	return retval;
 }
 
-int eof_import_array_txt(const char *filename, char *undo_made)
+int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, int *prompt2, int *prompt3)
 {
 // cppcheck-suppress shadowFunction symbolName=line
 	char *buffer, *buffer2, *line;
-	int failed = 0, format = 0, gh3_format = 0;
+	int failed = 0, format = 0, gh3_format = 0, empty = 1;
 	unsigned long ctr = 0, ctr2, linesread = 0, tracknum;
 	long position, lastposition = 0, note, fixednote, data, length, accent, item1 = 0, item2 = 0, item3 = 0;
 	EOF_NOTE *newnote, *lastnote = NULL;
@@ -5307,7 +5307,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 	int explicit_hopo = 0;	//Set to nonzero if the first line is "HOPO", indicating that all HOPOs are defined explicitly instead of there being any thresholds used
 	int this_note_explicit_hopo = 0;	//Set to nonzero if a note is explicitly marked as HOPO
 
-	if(!filename || !eof_song)
+	if(!filename || !eof_song || !prompt1 || !prompt2 || !prompt3)
 		return 1;	//No project or invalid parameter
 
 	eof_gh_accent_prompt = 0;	//Reset these
@@ -5343,6 +5343,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			break;
 		if(line[0] == '\0')	//If this line is empty
 			continue;	//Skip it
+		empty = 0;
 		if(strcasestr_spec(line, "hopo"))
 		{	//If this line contains "hopo" (case insensitive)
 			explicit_hopo = 1;	//Track this
@@ -5446,6 +5447,7 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 				break;
 			if(line[0] == '\0')	//If this line is empty
 				continue;	//Skip it
+			empty = 0;
 			if(strcasestr_spec(line, "hopo"))	//If this is the explicit HOPO notation indicator
 				continue;	//Skip it
 
@@ -5503,6 +5505,14 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 			*undo_made = 1;
 	}
 
+	if(empty)
+	{
+		eof_log("\t\tEmpty file", 1);
+		free(buffer);
+		free(buffer2);
+		return 0;
+	}
+
 	if(!format)
 	{	//Import beat timings
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting %lu beat times.", linesread);
@@ -5518,16 +5528,17 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 		}
 		if(gh3_format && !explicit_hopo)
 		{	//Prompt for which HOPO threshold to use, but only if the HOPOs won't be explicitly marked per-note
-			int selection;
-
-			selection = alert("GH3/GHA charts can have one of two HOPO thresholds.", "Which should EOF use?", NULL, "66/192 qnote", "100/192 qnote", 0, 0);
-			if(selection == 2)
+			if(*prompt1 == 0)
+			{	//If a user response for this prompt wasn't recorded yet
+				*prompt1 = alert("GH3/GHA charts can have one of two HOPO thresholds.", "Which should EOF use?", NULL, "66/192 qnote", "100/192 qnote", 0, 0);
+			}
+			if(*prompt1 == 2)
 			{	//If the user selected the 100/192 threshold
 				threshold = 100.0 / 192.0;
 			}
 #ifdef GH_IMPORT_DEBUG
 			eof_log("\tGH3/GHA note format detected.", 1);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tUser selected %s HOPO threshold.", ((selection == 1) ? "66/192" : "100/192"));
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tUser selected %s HOPO threshold.", ((*prompt1 == 1) ? "66/192" : "100/192"));
 			eof_log(eof_log_string, 1);
 #endif
 		}
@@ -5539,13 +5550,21 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 		{	//If at least two beat timings are in the active project
 			if(eof_gh_import_sustain_threshold_prompt)
 			{	//If the user enabled the import preference to ask to apply this threshold
-				if(alert(NULL, "Apply the sustain threshold (half of the first beat's length) to imported notes?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				if(*prompt2 == 0)
+				{	//If a user response for this prompt wasn't recorded yet
+					*prompt2 = alert(NULL, "Apply the sustain threshold (half of the first beat's length) to imported notes?", NULL, "&Yes", "&No", 'y', 'n');
+				}
+				if(*prompt2 == 1)
 				{	//If user opts to enforce the threshold
 					eof_gh_import_sustain_threshold = (eof_song->beat[1]->pos - eof_song->beat[0]->pos) / 2;	//The threshold is half the first beat length, rounded down
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain threshold of %lums is being enforced.", eof_gh_import_sustain_threshold);
 					eof_log(eof_log_string, 1);
 
-					if(alert("Also apply sustain trimming (half the sustain threshold)", NULL, "to imported notes that pass the sustain threshold?", "&Yes", "&No", 'y', 'n') == 1)
+					if(*prompt3 == 0)
+					{	//If a user response for this prompt wasn't recorded yet
+						*prompt3 = alert("Also apply sustain trimming (half the sustain threshold)", NULL, "to imported notes that pass the sustain threshold?", "&Yes", "&No", 'y', 'n');
+					}
+					if(*prompt3 == 1)
 					{	//If user opts to apply sustain trimming
 						eof_gh_import_sustain_trim = eof_gh_import_sustain_threshold / 2;
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  The sustain trim of %lums is being enforced.", eof_gh_import_sustain_trim);
@@ -6018,6 +6037,62 @@ int eof_import_array_txt(const char *filename, char *undo_made)
 	return failed;	//Return whatever success/failure status has accumulated
 }
 
+unsigned long eof_import_array_txt_folder(const char *filename, char *undo_made, int quiet, int *prompt1, int *prompt2, int *prompt3)
+{
+	struct al_ffblk info = {0, 0, 0, {0}, NULL}; // for file search
+	char searchpath[1024] = {0};
+	char empty_set = 0;
+	int done, retval;
+	unsigned long count = 0;
+	int suppress = 0;	//Used to control the display of the notice about sustain bass drum notes
+
+	if(!filename || !undo_made || !prompt1 || !prompt2 || !prompt3)
+		return 0;	//Invalid parameters
+
+	(void) replace_filename(searchpath, filename, "*.txt", 1024);	//Build the search string to find all text files in the specified file's folder path
+	done = al_findfirst(searchpath, &info, FA_ALL);
+	if(done)
+	{	//If no file matches are found
+		if(!quiet)
+			allegro_message("No .txt files were found at this path.");
+		empty_set = 1;
+	}
+
+	while(!done)
+	{
+		(void) replace_filename(searchpath, searchpath, info.name, 1024);	//Build the path to this search result
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting \"%s\"", searchpath);
+		eof_log(eof_log_string, 1);
+		retval = eof_import_array_txt(searchpath, undo_made, prompt1, prompt2, prompt3);	//Attempt to import this search result
+
+		if(retval)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tError %d", retval);
+			eof_log(eof_log_string, 1);
+			if(!quiet)
+				allegro_message("Import failed (error %u).", retval);
+		}
+		else
+		{
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If the file imported into a drum track
+				suppress |= eof_gh_import_sustained_bass_drum_check(eof_song, eof_selected_track, suppress);	//Warn about and highlight any sustained bass drum notes, don't display the notice more than once
+			}
+			eof_log("\t\t\tData loaded", 1);
+			count++;
+		}
+
+		done = al_findnext(&info);	//Find the next .txt file in the folder path
+	}
+
+	if(!empty_set)
+	{	//If there were any file search results
+		al_findclose(&info);	//Free the memory that was allocated by Allegro to enumerate them
+	}
+
+	return count;
+}
+
 void eof_gh_import_sp_cleanup(EOF_SONG *sp)
 {
 	unsigned long track, path, numpaths, note, numnotes, notepos, notelen, newphraseend;
@@ -6045,7 +6120,10 @@ void eof_gh_import_sp_cleanup(EOF_SONG *sp)
 					notelen = eof_get_note_length(sp, track, note);
 					if((notepos >= ptr->start_pos) && (notepos + notelen <= ptr->end_pos))
 					{	//If the note begins and ends within this SP phrase
-						newphraseend = notepos + notelen;	//Track the end position of the last note beginning and ending within the phrase as a possible end position for the SP phrase
+						if((note + 1 >= numnotes) || (eof_get_note_pos(sp, track, note + 1) >= ptr->end_pos))
+						{	//If there is no next note, or if the next note starts outside the scope of the star power phrase (at or after the end of the phrase)
+							newphraseend = notepos + notelen;	//Track the end position of the last note beginning and ending within the phrase as a possible end position for the SP phrase
+						}
 					}
 					else if(notepos >= ptr->end_pos)
 					{	//If the note begins at or after the end position of the SP phrase
@@ -6098,7 +6176,10 @@ void eof_gh_import_slider_cleanup(EOF_SONG *sp)
 					notelen = eof_get_note_length(sp, track, note);
 					if((notepos >= ptr->start_pos) && (notepos + notelen <= ptr->end_pos))
 					{	//If the note begins and ends within this slider phrase
-						newphraseend = notepos + notelen;	//Track the end position of the last note beginning and ending within the phrase as a possible end position for the slider
+						if((note + 1 >= numnotes) || (eof_get_note_pos(sp, track, note + 1) >= ptr->end_pos))
+						{	//If there is no next note, or if the next note starts outside the scope of the slider phrase (at or after the end of the phrase)
+							newphraseend = notepos + notelen;	//Track the end position of the last note beginning and ending within the phrase as a possible end position for the slider
+						}
 					}
 					else if(notepos >= ptr->end_pos)
 					{	//If the note begins at or after the end position of the slider

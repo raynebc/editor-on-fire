@@ -201,11 +201,20 @@ unsigned long eof_char_to_binary(unsigned char input);
 char *eof_sections_list_all(int index, int * size);
 	//A list box function to display the text events in the EOF_SONG structure pointed at by eof_sections_list_all_ptr
 
-int eof_import_array_txt(const char *filename, char *undo_made);
+int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, int *prompt2, int *prompt3);
 	//Imports beat or note data in the format exported by Queen Bee
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
 	//If undo_made is NULL, the undo state will be made
+	//prompt1, prompt2 and prompt3 are used to store the user's answers to prompts so that subsequent calls to this function to import into the same track can skip re-prompting
+	//If any of these dereferenced prompt variables have a value of 0, the user is prompted
 	//Returns nonzero on error
+
+unsigned long eof_import_array_txt_folder(const char *filename, char *undo_made, int quiet, int *prompt1, int *prompt2, int *prompt3);
+	//Calls eof_import_array_txt() for every file whose name ends in .txt in the specified file's parent folder
+	//If suppress is nonzero, warning dialogs are not displayed (ie. for the sake of GHOT import where some folders examined up may be empty)
+	//prompt1, prompt2 and prompt3 are used to store the user's answers to prompts so that subsequent calls to this function to eof_import_array_txt() into the same track can skip re-prompting
+	//If any of these dereferenced prompt variables have a value of 0, the user is prompted
+	//Returns the number of files imported
 
 void eof_gh_import_sp_cleanup(EOF_SONG *sp);
 	//Examines the star power phrases in each of the specified chart's tracks

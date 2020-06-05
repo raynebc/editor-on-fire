@@ -50,4 +50,9 @@ PACKFILE *eof_pack_fopen_retry(const char *filename, const char *mode, unsigned 
 int eof_number_is_power_of_two(unsigned long value);
 	//Returns nonzero if the specified value is any power of two from 2^0 through 2^31
 
+int eof_parse_last_folder_name(const char *filename, char *buffer, unsigned long bufferlen);
+	//Parses the last folder name in the given filename, which is expected to contain at least one folder name, one folder separator and one filename (3 characters)
+	//The output buffer is expected to be able to store the specified number of CHARACTERS, which may be two bytes each if the folder name has Unicode characters
+	//Returns 0 on error
+
 #endif

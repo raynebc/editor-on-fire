@@ -656,7 +656,7 @@ int eof_track_rename(void)
 				//Verify that the provided name doesn't match the existing native or display name of any track in the project
 				for(ctr = 1; ctr < eof_song->tracks; ctr++)
 				{	//For each track in the project
-					if(!ustrncmp(eof_etext, eof_song->track[ctr]->name, EOF_NAME_LENGTH) || !ustrncmp(eof_etext, eof_song->track[ctr]->altname, EOF_NAME_LENGTH))
+					if(!ustrnicmp(eof_etext, eof_song->track[ctr]->name, EOF_NAME_LENGTH) || !ustrnicmp(eof_etext, eof_song->track[ctr]->altname, EOF_NAME_LENGTH))
 					{	//If the provided name matches the track's native or display name
 						allegro_message("Error:  The provided name is already in use by this track:  %s", eof_song->track[ctr]->name);
 						return 1;
@@ -5038,9 +5038,10 @@ int eof_menu_track_clone_track_from_clipboard(void)
 		(void) pack_fclose(fp);
 		return 5;	//User cancellation
 	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	eof_erase_track(eof_song, eof_selected_track);
 
 	//Read various track details
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	(void) eof_load_song_string_pf(eof_song->track[eof_selected_track]->altname, fp, sizeof(eof_song->track[eof_selected_track]->altname));	//Read the track's alternate name
 	difficulty = pack_getc(fp);
 	numdiffs = pack_getc(fp);
@@ -5529,8 +5530,8 @@ DIALOG eof_menu_track_check_chord_snapping_dialog[] =
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)                      (dp2) (dp3) */
 	{ d_agup_window_proc,    0,   0,   170, 135, 2,    23,  0,    0,      0,   0,   "Chord snap gems within", NULL, NULL },
 	{ eof_verified_edit_proc,12,  30,  30,  20,  0,    0,   0,    0,      3,   0,   eof_etext2,               "0123456789",  NULL },
-	{ d_agup_radio_proc,     12,  55,  86,  15,  2,    23,  0,    D_SELECTED, 0, 0, "Delta ticks",            NULL, NULL },
-	{ d_agup_radio_proc,     12,  75,  96,  15,  2,    23,  0,    0,      0,   0,   "Milliseconds",           NULL, NULL },
+	{ d_agup_radio_proc,     12,  55,  86,  15,  2,    23,  0,    0,      0,   0,   "Delta ticks",            NULL, NULL },
+	{ d_agup_radio_proc,     12,  75,  96,  15,  2,    23,  0,    D_SELECTED,0,0,   "Milliseconds",           NULL, NULL },
 	{ d_agup_button_proc,    12,  100, 68,  28,  2,    23,  '\r', D_EXIT, 0,   0,   "OK",                     NULL, NULL },
 	{ d_agup_button_proc,    90,  100, 68,  28,  2,    23,  0,    D_EXIT, 0,   0,   "Cancel",                 NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }

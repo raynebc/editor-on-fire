@@ -387,7 +387,14 @@ void eof_prepare_file_menu(void)
 			eof_file_menu[8].flags = 0;	//Export audio range
 		}
 		#ifdef ALLEGRO_WINDOWS
-			eof_file_menu[9].flags = 0;	//Export guitar pro
+			if(eof_song_has_pro_guitar_content(eof_song))
+			{	//If there are any notes in any of the pro guitar tracks
+				eof_file_menu[9].flags = 0;	//Export guitar pro
+			}
+			else
+			{
+				eof_file_menu[9].flags = D_DISABLED;
+			}
 		#else
 			eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
 		#endif
@@ -6867,6 +6874,7 @@ int eof_menu_file_array_txt_import(void)
 {
 	char *returnedfn = NULL;
 	int retval;
+	int prompt1 = 0, prompt2 = 0, prompt3 = 0;
 
 	if(!eof_song)
 		return 0;
@@ -6882,7 +6890,7 @@ int eof_menu_file_array_txt_import(void)
 	{
 		eof_log("\tImporting array.txt data", 1);
 
-		retval = eof_import_array_txt(returnedfn, NULL);
+		retval = eof_import_array_txt(returnedfn, NULL, &prompt1, &prompt2, &prompt3);
 		if(retval)
 		{
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError %d", retval);
@@ -6909,12 +6917,15 @@ int eof_menu_file_array_txt_import(void)
 int eof_menu_file_multiple_array_txt_import(void)
 {
 	char *returnedfn = NULL;
-	unsigned long count = 0;
-	int retval, done;
+	unsigned long count = 0, ctr;
 	struct al_ffblk info = {0, 0, 0, {0}, NULL}; // for file search
-	char searchpath[1024] = {0};
+	char foldername[100] = {0};
+	char rootfolder[1024] = {0};
+	char targetfolder[1024] = {0};
 	char undo_made = 0, empty_set = 0;
-	int suppress = 0;	//Used to control the display of the notice about sustain bass drum notes
+	char ghot_import = 0;	//Set to nonzero if contents of multiple folders are targeted for import
+	int last_track_type = 0;
+	int prompt1 = 0, prompt2 = 0, prompt3 = 0;
 
 	if(!eof_song)
 		return 0;
@@ -6928,38 +6939,85 @@ int eof_menu_file_multiple_array_txt_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		(void) replace_filename(searchpath, returnedfn, "*.txt", 1024);	//Build the search string to find all text files in the specified file's folder path
-		done = al_findfirst(searchpath, &info, FA_ALL);
-		if(done)
-		{	//If no file matches are found
-			allegro_message("\tNo .txt files were found at this path.");
-			empty_set = 1;
+		if(eof_parse_last_folder_name(returnedfn, foldername, sizeof(foldername) / 2))
+		{	//If the name of the folder containing the specified file was identified
+			for(ctr = 0; ctr < EOF_GHOT_ARRAY_TXT_IMPORT_TRACK_COUNT; ctr++)
+			{	//For each of the folder names known to be exported by the Queen Bee variant
+				if(!ustricmp(foldername, eof_array_txt_tracks[ctr].name))
+				{	//If the user selected file is in a folder name that matches
+					eof_clear_input();
+					if(alert(NULL, "Perform GHOT import of multiple folders of array.txt files?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to import multiple folders of files
+						ghot_import = 1;
+					}
+					if(ghot_import)
+					{
+						eof_log("\tUser opted to perform GHOT import", 1);
+					}
+					else
+					{
+						eof_log("\tUser declined to perform GHOT import", 1);
+					}
+					break;
+				}
+			}
 		}
 
-		while(!done)
-		{
-			(void) replace_filename(searchpath, searchpath, info.name, 1024);	//Build the path to this search result
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting \"%s\"", searchpath);
+		if(!ghot_import)
+		{	//If just importing one folder's files
+			count += eof_import_array_txt_folder(returnedfn, &undo_made, 0, &prompt1, &prompt2, &prompt3);
+		}
+		else
+		{	//If importing multiple folders' files
+			char *ptr;
+
+			//Build the path to folder that would contain these (two folder levels higher than the selected array.txt file)
+			(void) replace_filename(rootfolder, returnedfn, "", 1024);
+			ptr = ustrrchr(rootfolder, '/');	//Find the last folder separator in the path
+			if(!ptr)
+				ptr = ustrrchr(rootfolder, '\\');
+			if(!ptr)
+			{	//If there was no folder separator
+				eof_log("\tCould not parse parent folder", 1);
+				return 0;
+			}
+			*ptr = '\0';	//Truncate this from the file path
+
+			ptr = ustrrchr(rootfolder, '/');	//Find the last folder separator in the path
+			if(!ptr)
+				ptr = ustrrchr(rootfolder, '\\');
+			if(!ptr)
+			{	//If there was no folder separator
+				eof_log("\tCould not parse parent of parent folder", 1);
+				return 0;
+			}
+			(void) replace_filename(rootfolder, rootfolder, "", 1024);	//Strip the folder name from the path
+			put_backslash(rootfolder);	//Ensure it ends in a folder separator
+
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tGHOT root identified as \"%s\"", rootfolder);
 			eof_log(eof_log_string, 1);
-			retval = eof_import_array_txt(searchpath, &undo_made);	//Attempt to import this search result
 
-			if(retval)
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tError %d", retval);
+			//Build the path to each applicable folder and import all array.txt files from each
+			for(ctr = 0; ctr < EOF_GHOT_ARRAY_TXT_IMPORT_TRACK_COUNT; ctr++)
+			{	//For each entry in eof_array_txt_tracks[]
+				(void) snprintf(targetfolder, sizeof(targetfolder) - 1, "%s%s", rootfolder, eof_array_txt_tracks[ctr].name);	//Build the path to this folder
+				put_backslash(targetfolder);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting contents of \"%s\"", targetfolder);
 				eof_log(eof_log_string, 1);
-				allegro_message("Import failed (error %u).", retval);
-			}
-			else
-			{
-				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-				{	//If the file imported into a drum track
-					suppress |= eof_gh_import_sustained_bass_drum_check(eof_song, eof_selected_track, suppress);	//Warn about and highlight any sustained bass drum notes, don't display the notice more than once
-				}
-				eof_log("\t\t\tData loaded", 1);
-				count++;
-			}
+				if(eof_array_txt_tracks[ctr].track_type)
+				{	//If this folder is specific to an instrument track
+					eof_set_active_difficulty(eof_array_txt_tracks[ctr].difficulty);	//Change to the applicable track difficulty as well
+					(void) eof_menu_track_selected_track_number(eof_array_txt_tracks[ctr].track_type, 1);	//Change to the applicable track and update the tile bar
+					eof_render();	//Redraw the screen so the user can see which track prompts (ie. for HOPO threshold selection) are for
 
-			done = al_findnext(&info);	//Find the next .txt file in the folder path
+					if(eof_array_txt_tracks[ctr].track_type != last_track_type)
+					{	//If this is the first track-specific content being imported, or it's for a different track than the previous folder of files
+						prompt1 = prompt2 = prompt3 = 0;	//Reset these statuses so that the user is prompted for how this track's contents are to import
+					}
+					last_track_type = eof_array_txt_tracks[ctr].track_type;
+				}
+				count += eof_import_array_txt_folder(targetfolder, &undo_made, 1, &prompt1, &prompt2, &prompt3);
+			}
 		}
 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImported %lu files", count);

@@ -1894,7 +1894,7 @@ int eof_ini_dialog_add(DIALOG * d)
 	return D_O_K;
 }
 
-void eof_ini_delete(unsigned long index)
+void eof_ini_dialog_delete_helper(unsigned long index)
 {
 	unsigned short i;
 
@@ -1908,6 +1908,22 @@ void eof_ini_delete(unsigned long index)
 		memcpy(eof_ini_dialog_array[i], eof_ini_dialog_array[i + 1], EOF_INI_LENGTH);
 	}
 	(*eof_ini_dialog_count)--;
+}
+
+void eof_ini_delete(unsigned long index)
+{
+	unsigned short i;
+
+	if(!eof_ini_dialog_array || !eof_ini_dialog_count)
+		return;	//Target setting array not set
+	if(index >= *eof_ini_dialog_count)
+		return;	//Invalid parameter
+
+	for(i = index; i < eof_song->tags->ini_settings - 1; i++)
+	{	//For each event starting at the one being removed
+		memcpy(eof_song->tags->ini_setting[i], eof_song->tags->ini_setting[i + 1], EOF_INI_LENGTH);	//Overwrite it with the next setting, if there is one
+	}
+	eof_song->tags->ini_settings--;
 }
 
 int eof_ini_dialog_delete(DIALOG * d)
@@ -1927,7 +1943,7 @@ int eof_ini_dialog_delete(DIALOG * d)
 		{	//If it is the active project's INI settings that are being altered
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		}
-		eof_ini_delete(eof_ini_dialog[1].d1);
+		eof_ini_dialog_delete_helper(eof_ini_dialog[1].d1);
 		if(eof_ini_dialog[1].d1 >= *eof_ini_dialog_count)
 		{
 			eof_ini_dialog[1].d1--;

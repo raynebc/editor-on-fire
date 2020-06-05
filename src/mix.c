@@ -80,7 +80,7 @@ typedef struct {
 	int tone;
 } guitar_midi_note;
 
-guitar_midi_note eof_guitar_notes[EOF_MAX_NOTES] = {{0,0,0,0}};
+guitar_midi_note eof_guitar_notes[EOF_MAX_NOTES * 6] = {{0,0,0,0}};	//Each note can have 6 pitches
 int eof_mix_guitar_notes = 0;
 int eof_mix_current_guitar_note = 0;
 

@@ -584,6 +584,8 @@ extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_MIDI_TRACK_DEFINITIONS];
 	//The list of MIDI track names pertaining to each instrument and harmony track
 extern EOF_TRACK_ENTRY eof_power_gig_tracks[EOF_POWER_GIG_TRACKS_MAX];
 extern EOF_TRACK_ENTRY eof_guitar_hero_animation_tracks[EOF_GUITAR_HERO_ANIMATION_TRACKS_MAX];
+#define EOF_GHOT_ARRAY_TXT_IMPORT_TRACK_COUNT 19
+extern EOF_TRACK_ENTRY eof_array_txt_tracks[EOF_GHOT_ARRAY_TXT_IMPORT_TRACK_COUNT];
 
 struct eof_MIDI_data_track
 {
