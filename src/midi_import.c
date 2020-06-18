@@ -3801,6 +3801,7 @@ eof_log("\tThird pass complete", 1);
 					phraseptr2 = eof_get_star_power_path(sp, i, j);
 					phraseptr2->start_pos = phraseptr->start_pos;
 					phraseptr2->end_pos = phraseptr->end_pos;
+					phraseptr2->name[0] = '\0';	//Ensure the section name string is empty
 				}
 				eof_set_num_star_power_paths(sp, i, eof_get_num_star_power_paths(sp, i) + eof_get_num_solos(sp, i));
 				eof_set_num_solos(sp, i, 0);

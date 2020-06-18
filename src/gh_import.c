@@ -832,6 +832,10 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 			eof_log("\t\tError:  Could not read phrase length", 1);
 			return -1;
 		}
+#ifdef GH_IMPORT_DEBUG
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImporting tap phrase:  Start = %lums, stop = %lums", dword, dword + length);
+		eof_log(eof_log_string, 1);
+#endif
 		if(!eof_track_add_section(sp, target->tracknum, EOF_SLIDER_SECTION, 0xFF, dword, dword + length, 0, NULL))
 		{	//If there was an error adding the section
 			eof_log("\t\tError:  Could not add tap section", 1);
