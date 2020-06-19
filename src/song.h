@@ -711,6 +711,7 @@ long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long 
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
 	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically
 	//Dynamic highlighting for the track's active note set is also updated
+void eof_sanitize_phrase_names(EOF_SONG *sp, unsigned long track);	//Empties the name string of any EOF_PHRASE_SECTION items in the track that have non-printable characters (ie. uninitialized data)
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option);
 	//Used during MIDI and GP imports to mark a note as "crazy" if it overlaps with the next note in the same difficulty
 	//If option is nonzero, two notes that begin at the same timestamp are not given crazy status (ie. to improve GP import of multi-voice files, or ability for GP and dB imports to support disjointed chords)

@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <ctype.h>
 #include <errno.h>
 #include <time.h>
 #include "main.h"
@@ -5365,7 +5366,46 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		if(sp->tags->highlight_arpeggios)
 			eof_song_highlight_arpeggios(sp, track);	//Re-create the arpeggio highlighting as appropriate
 	}
+
+	eof_sanitize_phrase_names(sp, track);	//Empty any invalid names in the track's phrase items (ie. star power phrases)
+
 	eof_log("\teof_track_fixup_notes() completed", 3);
+}
+
+void eof_sanitize_phrase_names(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long sectiontype;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;	//Invalid parameters
+
+	//Process sections
+	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
+	{	//For each type of section that exists
+		unsigned long sectionnum, sectioncount = 0, ctr;
+		EOF_PHRASE_SECTION *phrase = NULL;
+
+		if(eof_lookup_track_section_type(sp, track, sectiontype, &sectioncount, &phrase) && phrase)
+		{	//If the array for this section type was successfully found
+			for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
+			{	//For each instance of this type of section in the track
+				phrase[sectionnum].name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
+
+				for(ctr = 0; ctr < EOF_SECTION_NAME_LENGTH; ctr++)
+				{	//For each character in the array
+					char thischar = phrase[sectionnum].name[ctr];
+
+					if(thischar == '\0')
+						break;	//End of string
+					if(!isprint(thischar))
+					{	//If this is a non-printable character
+						phrase[sectionnum].name[0] = '\0';	//Empty the string
+						break;
+					}
+				}
+			}
+		}
+	}
 }
 
 void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp)

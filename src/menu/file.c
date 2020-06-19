@@ -1007,7 +1007,7 @@ int eof_menu_file_lyrics_import(void)
 	{	//If the path ends in a separator
 		eof_last_lyric_path[uoffset(eof_last_lyric_path, ustrlen(eof_last_lyric_path) - 1)] = '\0';	//Remove it
 	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_lyric_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_lyric_path))
 	{	//If the user chose for the lyric import dialog to start at the path of the last imported lyric file and that path is valid
 		initial = eof_last_lyric_path;	//Use it
 	}
@@ -1121,7 +1121,7 @@ int eof_menu_file_midi_import(void)
 	{	//If the path ends in a separator
 		eof_last_midi_path[uoffset(eof_last_midi_path, ustrlen(eof_last_midi_path) - 1)] = '\0';	//Remove it
 	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_midi_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_midi_path))
 	{	//If the user chose for the MIDI import dialog to start at the path of the last imported MIDI file and that path is valid
 		initial = eof_last_midi_path;	//Use it
 	}
@@ -2579,7 +2579,7 @@ int eof_menu_file_feedback_import(void)
 	{	//If the path ends in a separator
 		eof_last_db_path[uoffset(eof_last_db_path, ustrlen(eof_last_db_path) - 1)] = '\0';	//Remove it
 	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_db_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_db_path))
 	{	//If the user chose for the Feedback import dialog to start at the path of the last imported Feedback file and that path is valid
 		initial = eof_last_db_path;	//Use it
 	}
@@ -4613,7 +4613,7 @@ int eof_menu_file_gh_import(void)
 	{	//If the path ends in a separator
 		eof_last_gh_path[uoffset(eof_last_gh_path, ustrlen(eof_last_gh_path) - 1)] = '\0';	//Remove it
 	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_gh_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_gh_path))
 	{	//If the user chose for the GH import dialog to start at the path of the last imported GH file and that path is valid
 		initial = eof_last_gh_path;	//Use it
 	}
@@ -4685,7 +4685,7 @@ int eof_menu_file_ghl_import(void)
 	{	//If the path ends in a separator
 		eof_last_ghl_path[uoffset(eof_last_ghl_path, ustrlen(eof_last_ghl_path) - 1)] = '\0';	//Remove it
 	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_ghl_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_ghl_path))
 	{	//If the user chose for the GHL import dialog to start at the path of the last imported GHL file and that path is valid
 		initial = eof_last_ghl_path;	//Use it
 	}
@@ -5449,7 +5449,7 @@ int eof_menu_file_gp_import(void)
 	{	//If the path ends in a separator
 		eof_last_gp_path[uoffset(eof_last_gp_path, ustrlen(eof_last_gp_path) - 1)] = '\0';	//Remove it
 	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_gp_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_gp_path))
 	{	//If the user chose for the GP import dialog to start at the path of the last imported GP file and that path is valid
 		initial = eof_last_gp_path;	//Use it
 	}
@@ -5805,7 +5805,7 @@ int eof_menu_file_rs_import(void)
 	{	//If the path ends in a separator
 		eof_last_rs_path[uoffset(eof_last_rs_path, ustrlen(eof_last_rs_path) - 1)] = '\0';	//Remove it
 	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_rs_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_rs_path))
 	{	//If the user chose for the Rocksmith import dialog to start at the path of the last imported Rocksmith file and that path is valid
 		initial = eof_last_rs_path;	//Use it
 	}
@@ -5935,7 +5935,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 	{	//If the path ends in a separator
 		eof_last_sonic_visualiser_path[uoffset(eof_last_sonic_visualiser_path, ustrlen(eof_last_sonic_visualiser_path) - 1)] = '\0';	//Remove it
 	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_sonic_visualiser_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_sonic_visualiser_path))
 	{	//If the user chose for the Sonic Visualiser import dialog to start at the path of the last imported file and that path is valid
 		initial = eof_last_sonic_visualiser_path;	//Use it
 	}
@@ -6171,7 +6171,7 @@ int eof_menu_file_bf_import(void)
 	{	//If the path ends in a separator
 		eof_last_bf_path[uoffset(eof_last_bf_path, ustrlen(eof_last_bf_path) - 1)] = '\0';	//Remove it
 	}
-	if(eof_imports_recall_last_path && file_exists(eof_last_bf_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_bf_path))
 	{	//If the user chose for the Rocksmith import dialog to start at the path of the last imported Rocksmith file and that path is valid
 		initial = eof_last_bf_path;	//Use it
 	}

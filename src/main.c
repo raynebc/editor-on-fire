@@ -4402,7 +4402,7 @@ int eof_initialize(int argc, char * argv[])
 	{	//If the path ends in a separator
 		eof_songs_path[uoffset(eof_songs_path, ustrlen(eof_songs_path) - 1)] = '\0';	//Remove it
 	}
-	if((eof_songs_path[0] == '\0') || !file_exists(eof_songs_path, FA_RDONLY | FA_HIDDEN | FA_DIREC, NULL))
+	if((eof_songs_path[0] == '\0') || !eof_folder_exists(eof_songs_path))
 	{	//If the user-specified song folder couldn't be loaded from the config file above, or if the folder does not exist
 		get_executable_name(eof_songs_path, 1024);	//Set it to EOF's program file folder
 		(void) replace_filename(eof_songs_path, eof_songs_path, "", 1024);
