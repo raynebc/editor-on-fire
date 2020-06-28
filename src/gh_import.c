@@ -2835,16 +2835,16 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 				eof_filebuffer_close(fb);
 				return NULL;
 			}
-			if(byte == '\0')
-			{	//If this was the end of the file name string
-				filename[index] = '\0';	//Terminate the buffered string
-				break;
-			}
 			if((size_t)index >= sizeof(filename))
 			{	//If the string name would overflow the file name buffer
 				eof_log("Error:  File name too long", 1);
 				eof_filebuffer_close(fb);
 				return NULL;
+			}
+			if(byte == '\0')
+			{	//If this was the end of the file name string
+				filename[index] = '\0';	//Terminate the buffered string
+				break;
 			}
 			filename[index++] = byte;	//Store the parsed character
 		}
