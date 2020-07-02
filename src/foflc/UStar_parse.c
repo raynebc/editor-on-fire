@@ -872,7 +872,6 @@ void RemapPitches(void)
 
 //Determine the pitch that begins AFTER the highest octave of 12 usable notes
 	maxoctave=(MAXPITCH/12)*12-12;	//The pitch of C in the octave below the maximum pitch
-	// cppcheck-suppress constArgument
 	assert_wrapper(maxoctave>minoctave);	//This better be the case or it's an invalid MINPITCH and MAXPITCH definition (MAXPITCH must be at least 12 higher than MINPITCH)
 
 	diff=minoctave - ((pitchmin/12)*12);	//Find the difference between the lowest used octave and the lowest usable octave

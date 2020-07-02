@@ -5362,7 +5362,7 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 		}
 		else
 		{
-			if(toupper(line[0] == 'H'))
+			if(toupper(line[0]) == 'H')
 			{	//If this line includes explicit HOPO notation
 				line++;	//Advance to the next character so the gem number can be read
 			}
@@ -5482,7 +5482,7 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 				gh3_format = 0;
 				break;
 			}
-			if(toupper(line[0] == 'H'))
+			if(toupper(line[0]) == 'H')
 			{	//If this line includes explicit HOPO notation
 				line++;	//Advance to the next character so the gem number can be read
 			}
@@ -5755,7 +5755,7 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 					failed = 8;	//Invalid data
 					break;
 				}
-				if(toupper(line[0] == 'H'))
+				if(toupper(line[0]) == 'H')
 				{	//If this line includes explicit HOPO notation
 					line++;	//Advance to the next character so the gem number can be read
 				}
