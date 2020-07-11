@@ -87,6 +87,7 @@ ALOGG_DLL_DECLSPEC int alogg_get_pos_bytes_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC int alogg_get_length_secs_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC int alogg_get_length_msecs_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC unsigned long alogg_get_length_msecs_ogg_ul(ALOGG_OGG *ogg);	//The same as alogg_get_length_msecs_ogg(), except that the length is casted to unsigned long
+ALOGG_DLL_DECLSPEC unsigned long alogg_get_length_samples_ogg(ALOGG_OGG *ogg);	//A custom function to return the number of samples (per channel, not combined) in the specified OGG
 ALOGG_DLL_DECLSPEC int alogg_get_length_bytes_ogg(ALOGG_OGG *ogg);
 
 ALOGG_DLL_DECLSPEC int alogg_get_bitrate_ogg(ALOGG_OGG *ogg);
@@ -96,6 +97,7 @@ ALOGG_DLL_DECLSPEC int alogg_get_wave_is_stereo_ogg(ALOGG_OGG *ogg);
 ALOGG_DLL_DECLSPEC int alogg_get_wave_freq_ogg(ALOGG_OGG *ogg);
 
 ALOGG_DLL_DECLSPEC SAMPLE *alogg_create_sample_from_ogg(ALOGG_OGG *ogg);
+ALOGG_DLL_DECLSPEC long alogg_partial_read(ALOGG_OGG *ogg, char *data, int amount);	//A custom function to decode the specified number of bytes into the data buffer
 
 ALOGG_DLL_DECLSPEC void *aloggget_output_wave_ogg(ALOGG_OGG *ogg, int *buffer_size);
 

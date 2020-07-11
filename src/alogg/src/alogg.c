@@ -886,6 +886,11 @@ unsigned long alogg_get_length_msecs_ogg_ul(ALOGG_OGG *ogg) {
 }
 
 
+unsigned long alogg_get_length_samples_ogg(ALOGG_OGG *ogg) {
+  return ov_pcm_total(&(ogg->vf), -1);
+}
+
+
 int alogg_get_length_secs_ogg(ALOGG_OGG *ogg) {
   return (int)ov_time_total(&(ogg->vf), -1);
 }
@@ -981,6 +986,11 @@ SAMPLE *alogg_create_sample_from_ogg(ALOGG_OGG *ogg) {
   return sample;
 }
 
+
+long alogg_partial_read(ALOGG_OGG *ogg, char *data, int amount)
+{
+	return ov_read(&(ogg->vf), data, amount, alogg_endianess, 2, 0, &(ogg->current_section));
+}
 
 void alogg_adjust_ogg(ALOGG_OGG *ogg, int vol, int pan, int speed, int loop) {
   /* return if we are not playing */

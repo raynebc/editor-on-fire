@@ -2043,7 +2043,7 @@ void eof_fix_waveform_graph(void)
 	if(eof_music_paused && eof_waveform)
 	{
 		eof_destroy_waveform(eof_waveform);
-		eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
+		eof_waveform = eof_create_waveform_old(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
 		if(eof_waveform)
 		{
 			eof_waveform_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
