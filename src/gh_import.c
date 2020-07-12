@@ -4433,9 +4433,10 @@ char *eof_ghl_export_build_string(char *text, int prefix)
 			if(new_string[ctr] == ']')
 			{	//If this character is a closed bracket
 				new_string[ctr] = '\0';	//Truncate the string at this character
-				return new_string;
+				break;
 			}
 		}
+		return new_string;
 	}
 
 	//If prefix is nonzero, rebuild the string to begin with a '=' character
@@ -5946,7 +5947,7 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 
 				if(eof_log_level > 1)
 				{
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tGH:  Added note:  pos = %ld, len = %ld, mask = %ld, diff = %d", position, length, fixednote, eof_note_type);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tGH:  Added note:  pos = %ld, len = %ld, mask = %ld, diff = %u", position, length, fixednote, eof_note_type);
 					eof_log(eof_log_string, 2);
 				}
 
