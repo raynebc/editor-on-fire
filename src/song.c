@@ -126,8 +126,8 @@ EOF_TRACK_ENTRY eof_guitar_hero_animation_tracks[EOF_GUITAR_HERO_ANIMATION_TRACK
 
 EOF_TRACK_ENTRY eof_array_txt_tracks[EOF_GHOT_ARRAY_TXT_IMPORT_TRACK_COUNT] =
 {
-	{0, 0, 0, 0, "timesig", "", 0, 0, 0},	//Import time signatures first, as this affects the application of the tempo changes when beatlines are processed
-	{0, 0, 0, 0, "beatlines", "", 0, 0, 0},
+	{0, 0, 0, 0, "beatlines", "", 0, 0, 0},	//Import beat timings first, as this affects the application of time signature changes
+	{0, 0, 0, 0, "timesig", "", 0, 0, 0},
 	{0, 0, 0, 0, "sections", "", 0, 0, 0},
 	{0, 0, EOF_TRACK_BASS, 0, "bass_Expert", "", EOF_NOTE_AMAZING, 0, 0},
 	{0, 0, EOF_TRACK_BASS, 0, "bass_Expert_SP", "", EOF_NOTE_AMAZING, 0, 0},

@@ -5893,7 +5893,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
 		if((sp->beat[0]->contained_section_event >= 0) && ((*user_warned & 16) == 0))
 		{	//If there is already a phrase defined on the first beat, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no COUNT phrase, but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+			allegro_message("Warning:  There is no COUNT phrase (or it's not defined in all uppercase letters), but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
 			*user_warned |= 16;
 		}
 		eof_log("\t! Adding missing COUNT phrase", 1);
@@ -5949,7 +5949,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
 		if((sp->beat[endbeat]->contained_rs_section_event >= 0) && ((*user_warned & 128) == 0))
 		{	//If there is already a RS section defined on the first beat after the last note, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no noguitar RS section, but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
+			allegro_message("Warning:  There is no noguitar RS section (or it's not defined in all lowercase letters), but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
 			*user_warned |= 128;
 		}
 		eof_log("\t! Adding missing noguitar RS section", 1);

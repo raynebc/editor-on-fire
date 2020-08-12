@@ -5596,6 +5596,15 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 				eof_log("\t\t\tWarning:  Mid beat time signature detected.  Skipping", 1);
 				break;
 			}
+
+			if(ctr + 1 >= eof_song->beats)
+			{	//If this was the last beat and the matching beat wasn't reached yet
+				if(!eof_song_append_beats(eof_song, 1))
+				{	//If a beat couldn't be added
+					eof_log("\t\t\tError allocating memory to add a beat.  Skipping", 1);
+					break;
+				}
+			}
 		}
 	}
 	else if(format == 3)
