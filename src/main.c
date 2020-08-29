@@ -4020,6 +4020,7 @@ int eof_load_data(void)
 		destroy_bitmap(eof_image[EOF_IMAGE_TAB0]);
 
 	//Load images
+	set_palette(eof_palette);
 	eof_image[EOF_IMAGE_TAB0] = eof_load_pcx("tab0.pcx");
 	eof_image[EOF_IMAGE_TAB1] = eof_load_pcx("tab1.pcx");
 	eof_image[EOF_IMAGE_TAB2] = eof_load_pcx("tab2.pcx");
