@@ -1031,6 +1031,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 			allegro_message("EOF is in safe mode!\nThings may not work as expected.");
 		}
 	}
+	set_palette(eof_palette);
 	eof_screen = create_bitmap(eof_screen_width, eof_screen_height);
 	if(!eof_screen)
 	{
