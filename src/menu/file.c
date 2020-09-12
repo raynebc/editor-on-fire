@@ -3180,7 +3180,7 @@ int eof_save_helper_checks(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum, notes_after_chart_audio, ctr, ctr2, ctr3;
-	int suggested = 0;
+	int suggested = 0, ret;
 	char oggfn[1024] = {0};
 	char newfolderpath[1024] = {0};
 	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0, slide_error = 0, note_skew_warned = 0;
@@ -3209,24 +3209,41 @@ int eof_save_helper_checks(void)
 		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
 		if(eof_song->tags->lyrics)
 		{	//If user enabled the Lyrics checkbox in song properties
+			ret = 0;
 			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
 			{	//For each lyric
 				if((eof_song->vocal_track[0]->lyric[ctr]->note == EOF_LYRIC_PERCUSSION) || (eof_find_lyric_line(ctr) != NULL))
 					continue;	//If this lyric is vocal percussion or is within a line, skip it
 
-				eof_cursor_visible = 0;
-				eof_pen_visible = 0;
-				eof_show_mouse(screen);
-				eof_clear_input();
-				eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
-				if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script or simple text formats.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
-				{	//If user opts to cancel the save
+				if(!ret)
+				{	//If the lyric is not in a lyric line and the user wasn't prompted about how to handle this
+					eof_cursor_visible = 0;
+					eof_pen_visible = 0;
+					eof_show_mouse(screen);
+					eof_clear_input();
+					eof_seek_and_render_position(EOF_TRACK_VOCALS, eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr), eof_get_note_pos(eof_song, EOF_TRACK_VOCALS, ctr));
+
+					ret = alert3("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script or simple text formats.", "Continue?", "&Yes", "&No", "&Highlight", 'y', 'n', 'h');
 					eof_show_mouse(NULL);
 					eof_cursor_visible = 1;
 					eof_pen_visible = 1;
-					return 1;	//Return cancellation
+					if(ret == 1)
+					{	//User wants to continue normally
+						break;
+					}
+					if(ret == 2)
+					{	//User canceled
+						return 1;	//Return cancellation
+					}
 				}
-				break;
+				if(ret == 3)
+				{	//User wanted to hightlight lyrics outside of lyric lines
+					eof_set_note_flags(eof_song, EOF_TRACK_VOCALS, ctr, eof_get_note_flags(eof_song, EOF_TRACK_VOCALS, ctr) | EOF_NOTE_FLAG_HIGHLIGHT);	//Add highlighting
+				}
+			}
+			if(ret == 3)
+			{	//If the user wanted to cancel after highlighting lyrics outside of lyric lines
+				return 1;	//Return cancellation
 			}
 		}//If user enabled the Lyrics checkbox in song properties
 		if(!eof_rs2_export_extended_ascii_lyrics || eof_write_fof_files || eof_write_rb_files || eof_write_bf_files || eof_write_gh_files)
@@ -3870,7 +3887,7 @@ int eof_save_helper_checks(void)
 				eof_seek_and_render_position(ctr, eof_note_type, eof_song->beat[ctr]->pos);	//Render the track so the user can see where the correction needs to be made
 				eof_clear_input();
 
-				if(alert("Warning (RS):  At least one RS section/phrase has a non alphanumeric character in its name.", "Some characters may cause the game to malfunction.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+				if(alert("Warning (RS):  At least one RS section/phrase has a non alphanumeric character in its name (letters and numbers only).", "Some characters may cause the game to malfunction.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opted to cancel the save
 					return 1;	//Return cancellation
 				}
