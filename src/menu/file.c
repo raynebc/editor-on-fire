@@ -4845,11 +4845,11 @@ int eof_gp_import_drum_track(int importvoice, int function)
 	}
 	if(function & 1)
 	{	//Import into normal drum track
-		eof_erase_track(eof_song, EOF_TRACK_DRUM);
+		eof_erase_track(eof_song, EOF_TRACK_DRUM, 1);
 	}
 	if(function & 2)
 	{	//Import into Phase Shift drum track
-		eof_erase_track(eof_song, EOF_TRACK_DRUM_PS);
+		eof_erase_track(eof_song, EOF_TRACK_DRUM_PS, 1);
 	}
 
 	//Copy notes
@@ -5103,7 +5103,7 @@ int eof_gp_import_guitar_track(int importvoice)
 		}
 		if(eof_gp_import_replaces_track)
 		{	//If the user preference to replace the entire active track with the imported track is enabled
-			eof_erase_track(eof_song, eof_selected_track);	//Erase the active track
+			eof_erase_track(eof_song, eof_selected_track, 1);	//Erase the active track
 		}
 		else
 		{
@@ -5761,7 +5761,7 @@ int eof_rs_import_common(char *fn)
 
 		if(tp)
 		{	//If the track was imported, replace the active track
-			eof_erase_track(eof_song, eof_selected_track);	//Delete all notes, tech notes, etc.
+			eof_erase_track(eof_song, eof_selected_track, 0);	//Delete all notes, tech notes, etc, PRESERVING text events which were added during import
 			tp->parent = eof_song->pro_guitar_track[tracknum]->parent;
 			tp->parent->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 			free(eof_song->pro_guitar_track[tracknum]);	//Free the active track

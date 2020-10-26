@@ -3329,7 +3329,7 @@ int eof_track_erase_track(void)
 		return 1;	//Cancel
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	eof_erase_track(eof_song, eof_selected_track);
+	eof_erase_track(eof_song, eof_selected_track, 1);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_reset_lyric_preview_lines();
 	return 1;
@@ -4275,7 +4275,7 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 
 	//Erase the destination track
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	eof_erase_track(sp, desttrack);
+	eof_erase_track(sp, desttrack, 1);
 
 	//Clone the source track
 	memcpy(sp->track[desttrack]->altname, sp->track[sourcetrack]->altname, EOF_NAME_LENGTH + 1);
@@ -5039,7 +5039,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 		return 5;	//User cancellation
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	eof_erase_track(eof_song, eof_selected_track);
+	eof_erase_track(eof_song, eof_selected_track, 1);
 
 	//Read various track details
 	(void) eof_load_song_string_pf(eof_song->track[eof_selected_track]->altname, fp, sizeof(eof_song->track[eof_selected_track]->altname));	//Read the track's alternate name
@@ -5064,7 +5064,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	}
 
 	//Update various track details
-	eof_erase_track(eof_song, eof_selected_track);
+	eof_erase_track(eof_song, eof_selected_track, 1);
 	eof_song->track[eof_selected_track]->difficulty = difficulty;
 	eof_song->track[eof_selected_track]->numdiffs = numdiffs;
 	eof_song->track[eof_selected_track]->flags = flags;
@@ -5112,7 +5112,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 				{	//If there was an error adding a beat
 					eof_log("\tError adding beat (notes).  Aborting", 1);
 					allegro_message("Error adding beat (notes).  Aborting");
-					eof_erase_track(eof_song, eof_selected_track);
+					eof_erase_track(eof_song, eof_selected_track, 1);
 					(void) pack_fclose(fp);
 					return 6;
 				}
@@ -5143,7 +5143,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			{	//If the note was not created
 				eof_log("\tError adding note.  Aborting", 1);
 				allegro_message("Error adding note.  Aborting");
-				eof_erase_track(eof_song, eof_selected_track);
+				eof_erase_track(eof_song, eof_selected_track, 1);
 				(void) pack_fclose(fp);
 				return 7;
 			}
@@ -5237,7 +5237,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 				{	//If there was an error adding a beat
 					eof_log("\tError adding beat (phrase).  Aborting", 1);
 					allegro_message("Error adding beat (phrase).  Aborting");
-					eof_erase_track(eof_song, eof_selected_track);
+					eof_erase_track(eof_song, eof_selected_track, 1);
 					(void) pack_fclose(fp);
 					return 9;
 				}
@@ -5249,7 +5249,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			{	//If the section couldn't be added
 				eof_log("\tError adding section.  Aborting", 1);
 				allegro_message("Error adding section.  Aborting");
-				eof_erase_track(eof_song, eof_selected_track);
+				eof_erase_track(eof_song, eof_selected_track, 1);
 				(void) pack_fclose(fp);
 				return 10;
 			}
@@ -5295,7 +5295,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 			{	//If there was an error adding a beat
 				eof_log("\tError adding beat (event).  Aborting", 1);
 				allegro_message("Error adding beat (event).  Aborting");
-				eof_erase_track(eof_song, eof_selected_track);
+				eof_erase_track(eof_song, eof_selected_track, 1);
 				(void) pack_fclose(fp);
 				return 11;
 			}
@@ -5307,7 +5307,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 		{	//If the event couldn't be added
 			eof_log("\tError adding event.  Aborting", 1);
 			allegro_message("Error adding event.  Aborting");
-			eof_erase_track(eof_song, eof_selected_track);
+			eof_erase_track(eof_song, eof_selected_track, 1);
 			(void) pack_fclose(fp);
 			return 12;
 		}

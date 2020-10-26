@@ -9303,7 +9303,7 @@ void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track)
 	}
 }
 
-void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char diff, char diffonly)
+void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char diff, char diffonly, char events)
 {
 	unsigned long i, tracknum;
 	EOF_PHRASE_SECTION *ptr;
@@ -9396,8 +9396,8 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 	}
 
 	//Delete text events
-	if(!diffonly)
-	{	//If the entire track is to be erased
+	if(!diffonly && events)
+	{	//If the entire track is to be erased, along with text events
 		for(i = sp->text_events; i > 0; i--)
 		{	//For each text event, in reverse order
 			if(sp->text_event[i - 1]->track == track)
@@ -9408,14 +9408,14 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 	}
 }
 
-void eof_erase_track(EOF_SONG *sp, unsigned long track)
+void eof_erase_track(EOF_SONG *sp, unsigned long track, char events)
 {
-	eof_erase_track_content(sp, track, 0, 0);
+	eof_erase_track_content(sp, track, 0, 0, events);
 }
 
 void eof_erase_track_difficulty(EOF_SONG *sp, unsigned long track, unsigned char diff)
 {
-	eof_erase_track_content(sp, track, diff, 1);
+	eof_erase_track_content(sp, track, diff, 1, 0);
 }
 
 void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long track, unsigned char fretnum)

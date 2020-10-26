@@ -794,13 +794,14 @@ void eof_enforce_lyric_gap_multiplier(EOF_SONG *sp, unsigned long track, unsigne
 	//If notenum specifies a single lyric, and the lyric before the single specified lyric ends within the gap, the former is shortened if appropriate
 	//If notenum is ULONG_MAX, and a lyric starts less than one gap away from a selected lyric that begins within the gap, that selected lyric is shortened if appropriate
 
-void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char diff, char diffonly);
+void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char diff, char diffonly, char events);
 	//If diffonly is zero, the entire specified track has its contents deleted
 	//If diffonly is nonzero, only the content from the specified track difficulty is deleted
-void eof_erase_track(EOF_SONG *sp, unsigned long track);
-	//Calls eof_erase_track_content() with the option to erase the entire track
+	//If events is nonzero, the text events are deleted as well
+void eof_erase_track(EOF_SONG *sp, unsigned long track, char events);
+	//Calls eof_erase_track_content() with the option to erase the entire track, along with text events if the events parameter is nonzero
 void eof_erase_track_difficulty(EOF_SONG *sp, unsigned long track, unsigned char diff);
-	//Calls eof_erase_track_content() with the option to erase the specified track difficulty only
+	//Calls eof_erase_track_content() with the option to erase the specified track difficulty only, preserving text events
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position

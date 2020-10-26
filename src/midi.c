@@ -598,6 +598,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		if(!featurerestriction && !format && eof_track_is_ghl_mode(sp, j))
 			isghl = 1;	//Note whether this track will export as a GHL track
 
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting track \"%s\"", sp->track[j]->name);
+		eof_log(eof_log_string, 2);
+
 		last_scale = INT_MAX;	//Reset this every track
 		if(featurerestriction == 1)
 		{	//If writing a RBN2 or C3 compliant MIDI
@@ -707,6 +710,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				type = eof_get_note_type(sp, j, i);			//Store the note type for easier use
 				accent = eof_get_note_accent(sp, j, i);		//Store the accent bitmask for easier use
 				ghost = eof_get_note_ghost(sp, j, i);		//Store the ghost bitmask for easier use
+
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tWriting note:  Pos = %lums\tLength = %ld\tMask = %lu", notepos, length, note);
+				eof_log(eof_log_string, 2);
 
 				if(isghl)
 				{	//This is a GHL track
@@ -1356,14 +1362,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				for(i = 0; i < eof_get_num_sliders(sp, j); i++)
 				{	//For each slider in the track
 					sectionptr = eof_get_slider(sp, j, i);
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAdding slider #%lu: Start = %lums, stop = %lums", i, sectionptr->start_pos, sectionptr->end_pos);
-					eof_log(eof_log_string, 2);
 					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
 					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, 1) - deltapos;		//Store the number of delta ticks representing the phrase's length
 					if(deltalength < 1)
 					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 						deltalength = 1;
 					}
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAdding slider #%lu: Start = %lums, stop = %lums (%lu ticks to %lu ticks)", i, sectionptr->start_pos, sectionptr->end_pos, deltapos, deltapos + deltalength);
+					eof_log(eof_log_string, 2);
 					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
 					phase_shift_sysex_phrase[4] = 0xFF;	//Store the difficulty ID (0xFF = all difficulties)
 					phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
@@ -1618,6 +1624,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					eof_add_midi_event(deltapos + deltalength, 0x80, 50, vel, 0);
 					eof_set_freestyle(tempstring,1);		//Ensure the lyric properly ends with a freestyle character
 				}
+
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tWriting lyric:  Pos = %lums\tLength = %ld\tText = \"%s\"", sp->vocal_track[tracknum]->lyric[i]->pos, sp->vocal_track[tracknum]->lyric[i]->length, tempstring);
+				eof_log(eof_log_string, 2);
+
 				//Write the string, which was only corrected if fixvoxpitches was nonzero and the pitch was not defined
 				if(sp->vocal_track[tracknum]->lyric[i]->note != VOCALPERCUSSION)
 				{	//Do not write a lyric string for vocal percussion notes
@@ -1887,6 +1897,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				notepos = eof_get_note_pos(sp, j, i);		//Store the note position for easier use
 				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
 				currentname = eof_get_note_name(sp, j, i);
+
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tWriting note:  Pos = %lums\tLength = %ld\tMask = %lu", notepos, length, note);
+				eof_log(eof_log_string, 2);
 
 				deltapos = eof_ConvertToDeltaTime(notepos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
 				deltalength = eof_ConvertToDeltaTime(notepos + length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;	//Store the number of delta ticks representing the note's length

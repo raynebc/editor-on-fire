@@ -3296,7 +3296,7 @@ int eof_ghl_import_common(const char *fn)
 	{	//If the active track is already populated and the user doesn't opt to overwrite it
 		return 0;
 	}
-	eof_erase_track(eof_song, eof_selected_track);	//Erase the active track
+	eof_erase_track(eof_song, eof_selected_track, 1);	//Erase the active track
 
 //Load the GH file into memory
 	set_window_title("Importing XMK");

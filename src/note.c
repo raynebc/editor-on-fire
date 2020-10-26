@@ -1421,7 +1421,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					}
 					else
 					{	//Render a normal, non SP note
-						if(noteflags & EOF_NOTE_FLAG_HOPO)
+						if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+						{	//Slider
+							imagenum = eof_colors[ctr].slider3d;
+						}
+						else if(noteflags & EOF_NOTE_FLAG_HOPO)
 						{	//If this is a HOPO note
 							imagenum = p ? eof_colors[ctr].hoponotehit3d : eof_colors[ctr].hoponote3d;
 						}

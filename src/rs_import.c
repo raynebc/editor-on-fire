@@ -15,7 +15,7 @@
 #define RS_IMPORT_DEBUG
 
 #define EOF_RS_PHRASE_IMPORT_LIMIT 200
-#define EOF_RS_EVENT_IMPORT_LIMIT 200
+#define EOF_RS_EVENT_IMPORT_LIMIT 300
 #define EOF_RS_CHORD_TEMPLATE_IMPORT_LIMIT 400
 
 int eof_parse_chord_template(char *name, size_t size, char *finger, char *frets, unsigned char *note, unsigned char *isarp, unsigned long linectr, char *input)
@@ -830,7 +830,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	{	//Until there was an error reading from the file or end of file is reached
 		#ifdef RS_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
-			eof_log(eof_log_string, 2);
+			eof_log(eof_log_string, 3);
 		#endif
 
 		//Separate the line into the opening XML tag (buffer) and the content between the opening and closing tag (buffer2)
@@ -1048,7 +1048,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				{	//If this is the start of a heroLevels tag, ignore all lines of XML until the end of the tag is reached
 					#ifdef RS_IMPORT_DEBUG
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tIgnoring <heroLevels> tag on line #%lu", linectr);
-						eof_log(eof_log_string, 1);
+						eof_log(eof_log_string, 3);
 					#endif
 				}
 				else if(strcasestr_spec(buffer, "<heroLevel "))
@@ -1097,6 +1097,9 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_PHRASE;
 						eventlist[eventlist_count]->pos = timestamp;	//Store the real timestamp, it will need to be converted to the beat number later
 						phraseitctr++;
+
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported phrase:  %lums - \"%s\"", timestamp, eventlist[eventlist_count]->text);
+						eof_log(eof_log_string, 2);
 						eventlist_count++;
 					}
 					else
@@ -1462,6 +1465,9 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_SECTION;
 					eventlist[eventlist_count]->pos = output;	//Store the real timestamp, it will need to be converted to the beat number later
 					sectionctr++;
+
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported section:  %lums - \"%s\"", output, eventlist[eventlist_count]->text);
+					eof_log(eof_log_string, 2);
 					eventlist_count++;
 				}
 				else
@@ -1524,6 +1530,9 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					eventlist[eventlist_count]->flags = EOF_EVENT_FLAG_RS_EVENT;
 					eventlist[eventlist_count]->pos = output;	//Store the real timestamp, it will need to be converted to the beat number later
 					eventctr++;
+
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported event:  %lums - \"%s\"", output, eventlist[eventlist_count]->text);
+					eof_log(eof_log_string, 2);
 					eventlist_count++;
 				}
 				else

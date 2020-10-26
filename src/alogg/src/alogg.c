@@ -10,6 +10,7 @@
 #include <string.h>
 #include <allegro.h>
 #include <alogg.h>
+#include <ctype.h>
 #include "vorbis/vorbisfile.h"
 #include "vorbis/codec.h"
 
@@ -1011,7 +1012,7 @@ char * alogg_get_ogg_comment(ALOGG_OGG *ogg, const char *comment, char * out)
 	{
 		for(j = 0; j < strlen(comment); j++)
 		{
-			if(vc->user_comments[i][j] != comment[j])
+			if(toupper(vc->user_comments[i][j]) != toupper(comment[j]))
 			{
 				break;
 			}
