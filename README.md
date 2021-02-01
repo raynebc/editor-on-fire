@@ -4,7 +4,7 @@ EOF is a song editor for Frets On Fire, Phase Shift, Rock Band, Rocksmith and Cl
 # Getting EOF #
 
 Binaries are provided for Windows and Mac OS on a somewhat regular basis and can be downloaded from here:\
-http://ignition.customsforge.com/eof
+https://ignition4.customsforge.com/eof
 
 Just click the Apple or Windows logo for your OS and download the relevant files.
 
