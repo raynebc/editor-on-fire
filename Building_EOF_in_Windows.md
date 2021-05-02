@@ -33,10 +33,12 @@ If you just want to build EOF, use the following steps (we will break the steps 
     make
     ```
 
+You should now have a working copy of EOF in the `bin` subdirectory. If you would like to enable the transcoding and audio manipulation features, please see [Adding decoding/encoding capability:](#adding-deciding-encoding-capability)
+
 
 # Details #
 
-## Setting Up a Development Environment: ##
+## Setting Up a Development Environment ##
 
 To build EOF, you will need to have a proper development environment. We will be using MSYS2 with the MinGW32 toolchain. MSYS2 can be downloaded from the following web site:
 
@@ -96,7 +98,7 @@ make
 The program should now be ready to use.
 
 
-## Adding decoding/encoding capability: ##
+## Adding Decoding/Encoding Capability ##
 During initialization, EOF will check for the existence of the LAME, oggenc2 and oggCat utilities, which are used to convert MP3 to OGG when creating a new chart or when adding leading silence.
 
 You can download LAME here (put lame.exe in EOF's program folder):
