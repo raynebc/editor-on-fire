@@ -1,6 +1,6 @@
 # Introduction #
 
-Building EOF on Windows is fairly straightforward. Here we will provide a quick setup guide as well as detailed descriptions of all the necessary steps to build EOF from source code.
+Building EOF on Windows is fairly straightforward. Here we will provide [a quick setup guide](#quick-setup) as well as [detailed descriptions](#details) of all the necessary steps to build EOF from source code.
 
 
 # Quick Setup #
@@ -31,7 +31,7 @@ If you just want to build EOF, use the following steps (we will break the steps 
     make
     ```
 
-You should now have a working copy of EOF in the `bin` subdirectory. If you would like to enable the transcoding and audio manipulation features, please see [Adding decoding/encoding capability:](#adding-decodingencoding-capability)
+You should now have a working copy of EOF in the `bin` subdirectory. If you would like to enable the transcoding and audio manipulation features, please see [Adding Decoding/Encoding Capability](#adding-decodingencoding-capability).
 
 
 # Details #
