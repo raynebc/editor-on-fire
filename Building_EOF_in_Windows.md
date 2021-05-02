@@ -33,7 +33,7 @@ If you just want to build EOF, use the following steps (we will break the steps 
     make
     ```
 
-You should now have a working copy of EOF in the `bin` subdirectory. If you would like to enable the transcoding and audio manipulation features, please see [Adding decoding/encoding capability:](#adding-deciding-encoding-capability)
+You should now have a working copy of EOF in the `bin` subdirectory. If you would like to enable the transcoding and audio manipulation features, please see [Adding decoding/encoding capability:](#adding-decoding-encoding-capability)
 
 
 # Details #
