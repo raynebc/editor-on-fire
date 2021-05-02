@@ -11,29 +11,24 @@ If you just want to build EOF, use the following steps (we will break the steps 
 
   * Install MSYS2 (https://www.msys2.org - Follow the installation instructions exactly).
   * Open the MSYS2 MinGW 32-bit terminal ('Start->MSYS2->MSYS2 MinGW 32-bit').
-  * Set up development environment, install dependencies, and build EOF.
-
-Paste the following into the MSYS2 MinGW 32-bit terminal and press enter:
-
-```
-pacman -S --needed --noconfirm base-devel mingw-w64-i686-toolchain
-pacman -S --noconfirm unzip
-pacman -S --noconfirm git
-wget https://download.tuxfamily.org/allegro/files/dx80_mgw.zip
-unzip -o dx80_mgw.zip -d /mingw32
-wget https://github.com/liballeg/allegro5/releases/download/4.4.3.1/allegro-4.4.3.1.tar.gz
-tar xzf allegro-4.4.3.1.tar.gz
-cd allegro-4.4.3.1
-mkdir build
-cd build
-cmake .. -DSHARED=OFF -DWANT_DOCS=OFF -DWANT_EXAMPLES=OFF -DWANT_TESTS=OFF -G "MSYS Makefiles"
-make
-make install
-cd ../../
-git clone https://github.com/raynebc/editor-on-fire.git
-cd editor-on-fire
-make
-```
+  * Paste the following into the MSYS2 MinGW 32-bit terminal and press enter:
+  `pacman -S --needed --noconfirm base-devel mingw-w64-i686-toolchain`
+  `pacman -S --noconfirm unzip`
+  `pacman -S --noconfirm git`
+  `wget https://download.tuxfamily.org/allegro/files/dx80_mgw.zip`
+  `unzip -o dx80_mgw.zip -d /mingw32`
+  `wget https://github.com/liballeg/allegro5/releases/download/4.4.3.1/allegro-4.4.3.1.tar.gz`
+  `tar xzf allegro-4.4.3.1.tar.gz`
+  `cd allegro-4.4.3.1`
+  `mkdir build`
+  `cd build`
+  `cmake .. -DSHARED=OFF -DWANT_DOCS=OFF -DWANT_EXAMPLES=OFF -DWANT_TESTS=OFF -G "MSYS Makefiles"`
+  `make`
+  `make install`
+  `cd ../../`
+  `git clone https://github.com/raynebc/editor-on-fire.git`
+  `cd editor-on-fire`
+  `make`
 
 
 # Details #
