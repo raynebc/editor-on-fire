@@ -5,7 +5,7 @@ Building EOF on Windows is fairly straightforward. Here we will provide [a quick
 
 # Quick Setup #
 
-If you just want to build EOF, use the following steps (we will break the steps down in the Details section if you want more information):
+If you just want to build EOF, use the following steps (we will break the steps down in the [Details](#details) section if you want more information):
 
   * Install MSYS2 (https://www.msys2.org - Follow the installation instructions exactly).
   * Open the MSYS2 MinGW 32-bit terminal ('Start->MSYS2->MSYS2 MinGW 32-bit').
