@@ -1,8 +1,6 @@
 # Introduction #
 
-Building EOF from source is much more complicated than just running it (hotfix builds are frequently posted on various related forums), but it's the way to go if you want to experiment with its programming.  It's also the only option if EOF binaries are not being released for your platform (Linux).  The steps for building on Non Windows platforms will likely be different, but should be at least similar.  Please send us your feedback for building on other platforms and we can try to make information available.
-
-Note:  Certain new Linux distributions use Pulse Audio, which messes up the ability of software to use the ALSA sound driver.  If this is preventing sound from working once you build the program, the only workarounds we currently know of are for you to remove the Pulse Audio packages or try another distro.  Unfortunately, how Operating Systems handle their driver and how Allegro developers work around such problems are out of our control.
+Building EOF on Windows is fairly straightforward. Here we will provide a quick setup guide as well as detailed descriptions of all the necessary steps to build EOF from source code.
 
 
 # Quick Setup #
