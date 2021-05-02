@@ -1,0 +1,28 @@
+CC = gcc
+CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -mwindows -static -static-libgcc -static-libstdc++ -flto -Ialogg/include -DEOF_BUILD -DALLEGRO_STATICLINK
+CXXFLAGS = $(CFLAGS)
+LIBS = -lalleg -logg -lvorbisfile -lvorbis -lm -lfftw3 -lrubberband -lstdc++ -lsamplerate -lddraw -ldsound -ldinput -ldxguid -lole32 -lwinmm
+
+include makefile.common
+
+EXENAME = eof.exe
+
+all : ../bin/$(EXENAME)
+
+../bin/$(EXENAME) : $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES) icon.o
+	gcc $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES) icon.o $(CFLAGS) $(LIBS) -o ../bin/$(EXENAME)
+
+icon.o : eof.rc
+	windres -o icon.o eof.rc
+
+clean:
+	@rm -f *.o
+	@rm -f alogg/src/*.o
+	@rm -f minibpm-1.0/src/*.o
+	@rm -f menu/*.o
+	@rm -f modules/*.o
+	@rm -f dialog/*.o
+	@rm -f agup/*.o
+	@rm -f foflc/*.o
+	@rm -f ../bin/$(EXENAME)
+	@echo Cleanup complete!
