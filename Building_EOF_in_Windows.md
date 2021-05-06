@@ -15,6 +15,7 @@ If you just want to build EOF, use the following steps (we will break the steps 
     pacman -S --needed --noconfirm base-devel mingw-w64-i686-toolchain
     pacman -S --noconfirm unzip
     pacman -S --noconfirm git
+    pacman -S --noconfirm cmake
     wget https://download.tuxfamily.org/allegro/files/dx80_mgw.zip
     unzip -o dx80_mgw.zip -d /mingw32
     wget https://github.com/liballeg/allegro5/releases/download/4.4.3.1/allegro-4.4.3.1.tar.gz
@@ -22,7 +23,7 @@ If you just want to build EOF, use the following steps (we will break the steps 
     cd allegro-4.4.3.1
     mkdir build
     cd build
-    cmake .. -DSHARED=OFF -DWANT_DOCS=OFF -DWANT_EXAMPLES=OFF -DWANT_TESTS=OFF -G "MSYS Makefiles"
+    cmake .. -DSHARED=OFF -DWANT_DOCS=OFF -DWANT_EXAMPLES=OFF -DWANT_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/mingw32 -G "MSYS Makefiles"
     make
     make install
     cd ../../
@@ -56,6 +57,10 @@ You will need git to retrieve the EOF source code. Use the following command:
 
 `pacman -S git`
 
+You will need CMake to build Allegro:
+
+`pacman -S cmake`
+
 
 ## Installing EOF Dependencies ##
 
@@ -80,7 +85,7 @@ tar xzf allegro-4.4.3.1.tar.gz
 cd allegro-4.4.3.1
 mkdir build
 cd build
-cmake .. -DSHARED=OFF -DWANT_DOCS=OFF -DWANT_EXAMPLES=OFF -DWANT_TESTS=OFF -G "MSYS Makefiles"
+cmake .. -DSHARED=OFF -DWANT_DOCS=OFF -DWANT_EXAMPLES=OFF -DWANT_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/mingw32 -G "MSYS Makefiles"
 make
 make install
 ```
