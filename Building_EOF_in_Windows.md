@@ -13,6 +13,8 @@ If you just want to build EOF, use the following steps (we will break the steps 
 
     ```
     pacman -S --needed --noconfirm base-devel mingw-w64-i686-toolchain
+    pacman -S --noconfirm mingw-w64-i686-libogg
+    pacman -S --noconfirm mingw-w64-i686-libvorbis
     pacman -S --noconfirm unzip
     pacman -S --noconfirm git
     pacman -S --noconfirm cmake
@@ -64,7 +66,15 @@ You will need CMake to build Allegro:
 
 ## Installing EOF Dependencies ##
 
-To build EOF, you will first need to install all of its dependencies. EOF uses Allegro 4 and Rubber Band so we will install those first.
+To build EOF, you will first need to install all of its dependencies. EOF uses Allegro 4, libogg, libvorbis, and Rubber Band so we will install those first.
+
+To install libogg, use the following command:
+
+`pacman -S mingw-w64-i686-libogg`
+
+To install libvorbis, use the following command:
+
+`pacman -S mingw-w64-i686-libvorbis`
 
 To install Rubber Band, use the following command:
 
