@@ -80,7 +80,7 @@ To install libvorbis, use the following command:
 
 To install FFTW, use the following command:
 
-`pacman -S mingw-w64-f686-fftw`
+`pacman -S mingw-w64-i686-fftw`
 
 To install Rubber Band, use the following command:
 
