@@ -13,11 +13,13 @@ If you just want to build EOF, use the following steps (we will break the steps 
 
     ```
     pacman -S --needed --noconfirm base-devel mingw-w64-i686-toolchain
-    pacman -S --noconfirm mingw-w64-i686-libogg
-    pacman -S --noconfirm mingw-w64-i686-libvorbis
     pacman -S --noconfirm unzip
     pacman -S --noconfirm git
     pacman -S --noconfirm cmake
+    pacman -S --noconfirm mingw-w64-i686-libogg
+    pacman -S --noconfirm mingw-w64-i686-libvorbis
+    pacman -S --noconfirm mingw-w64-i686-fftw
+    pacman -S --noconfirm mingw-w64-i686-rubberband
     wget https://download.tuxfamily.org/allegro/files/dx80_mgw.zip
     unzip -o dx80_mgw.zip -d /mingw32
     wget https://github.com/liballeg/allegro5/releases/download/4.4.3.1/allegro-4.4.3.1.tar.gz
@@ -66,7 +68,7 @@ You will need CMake to build Allegro:
 
 ## Installing EOF Dependencies ##
 
-To build EOF, you will first need to install all of its dependencies. EOF uses Allegro 4, libogg, libvorbis, and Rubber Band so we will install those first.
+To build EOF, you will first need to install all of its dependencies. EOF uses Allegro 4, libogg, libvorbis, FFTW, and Rubber Band so we will install those first.
 
 To install libogg, use the following command:
 
@@ -75,6 +77,10 @@ To install libogg, use the following command:
 To install libvorbis, use the following command:
 
 `pacman -S mingw-w64-i686-libvorbis`
+
+To install FFTW, use the following command:
+
+`pacman -S mingw-w64-f686-fftw`
 
 To install Rubber Band, use the following command:
 
