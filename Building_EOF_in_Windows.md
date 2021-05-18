@@ -51,7 +51,7 @@ First, follow the instructions on the MSYS2 web site to install MSYS2.
 
 You will need the 32-bit toolchain to build EOF, so install that with the following command (run from the MSYS terminal):
 
-`pacman -S --needed base-devel mingw-w64-x86_64-toolchain`
+`pacman -S --needed base-devel mingw-w64-i686-toolchain`
 
 You will also need the unzip utility. Use the following command:
 
