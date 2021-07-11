@@ -1701,7 +1701,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char *rssectionname;
 	unsigned char start_of_repeat, num_of_repeats;
 	char import_ts = 0;		//Will be set to nonzero if user opts to import time signatures
-	char note_is_short = 0;	//Will be set to nonzero if the note being parsed should have its sustain dropped (ie. shorter than a quarter note or is played staccato), pending techniques that overrule this
+	char note_is_short = 0;	//Will be set to nonzero if the note being parsed should have its sustain dropped (ie. shorter than a quarter note), pending techniques that overrule this
+	char note_is_staccato = 0;     //Is set to nonzero if note is staccato.
 	char parse_gpa = 0;		//Will be set to nonzero if the specified file is detected to be XML, in which case, the Go PlayAlong file will be parsed
 	size_t maxlinelength;
 	unsigned long linectr = 2, num_sync_points = 0, raw_num_sync_points = 0;
@@ -3285,6 +3286,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					double partial_beat_position, beat_length;
 					char notebends = 0;	//Tracks whether any bend points were parsed for the note, since they may be applied as tech notes instead of toward the regular note
 					char isquarterorlonger = 0, isaltered = 0;	//Boolean statuses used to more accurately track whether the "GP import truncates short notes" should take effect
+					char isquarterorshorter = 0;    //Track whether the "GP import truncates short notes" should apply to staccato notes
 					char istuplet = 0;		//Set to nonzero if the note is explicitly in a tuplet (ie. triplet), which will cause any "triplet feel" notation to be ignored
 
 					unpitchend = 0;	//Assume no unpitched slide unless one is defined
@@ -3295,6 +3297,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					tieflags = allflags = tflags = 0;
 					bendstrength = 0;
 					note_is_short = 0;
+					note_is_staccato = 0;
 					memset(finger, 0, sizeof(finger));	//Clear the finger array
 					bytemask = pack_getc(inf);	//Read beat bitmask
 					if(bytemask & 64)
@@ -3317,6 +3320,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					if(byte <= 0)
 					{	//If this is a quarter note or longer
 						isquarterorlonger = 1;	//Track this
+					}
+					if(byte >= 0)
+					{
+						isquarterorshorter = 1; // Track for staccato
 					}
 					if(bytemask & 32)
 					{	//Beat is an N-tuplet
@@ -4249,7 +4256,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}//Grace note
 							if(byte2 & 1)
 							{	//Note played staccato
-								note_is_short = 1;
+								note_is_staccato = 1;
 							}
 							if(byte2 & 2)
 							{	//Palm mute
@@ -4612,6 +4619,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							np[ctr2]->pos = laststartpos + 0.5;	//Round up to nearest millisecond
 							np[ctr2]->length = lastendpos - laststartpos + 0.5;	//Round up to nearest millisecond
 
+							if(note_is_staccato)
+							{	// Treat staccato notes as half duration
+								np[ctr2]->length *= 0.5;
+								if(!isquarterorshorter)
+								{//Notes originally half or whole, become truncated after staccato
+									note_is_short = 1;
+								}
+							}
 							if(note_is_short)
 							{	//If this note is shorter than a quarter note
 								if(!(np[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
