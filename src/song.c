@@ -7561,11 +7561,11 @@ int eof_create_image_sequence(char benchmark_only)
 
 	alogg_seek_abs_msecs_ogg_ul(eof_music_track, startpos);
 	eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
-	eof_music_pos = eof_music_actual_pos + eof_av_delay;
+	eof_set_music_pos(&eof_music_pos, eof_music_actual_pos + eof_av_delay);
 	clear_to_color(eof_screen, eof_color_light_gray);
 	blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 	numms = endpos - startpos;	//The number of milliseconds to process
-	while(eof_music_pos <  endpos)
+	while(eof_music_pos.value <  endpos)
 	{
 		if(key[KEY_ESC])
 			break;
@@ -7575,7 +7575,7 @@ int eof_create_image_sequence(char benchmark_only)
 		//Update EOF's window title to provide a status
 			curtime = clock();	//Get the current time
 			fps = (double)(framectr - lastpollctr) / ((double)(curtime - lastpolltime) / (double)CLOCKS_PER_SEC);	//Find the number of FPS rendered since the last poll
-			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "%s image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",function, (double)eof_music_pos/(double)numms * 100.0, fps);
+			(void) snprintf(windowtitle, sizeof(windowtitle) - 1, "%s image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",function, (double)eof_music_pos.value/(double)numms * 100.0, fps);
 			set_window_title(windowtitle);
 			refreshctr -= 10;
 			lastpolltime = curtime;
@@ -7594,11 +7594,11 @@ int eof_create_image_sequence(char benchmark_only)
 		#define EOF_IMAGE_SEQUENCE_FPS 30
 		framectr++;
 		refreshctr++;
-		eof_music_pos += 1000 / EOF_IMAGE_SEQUENCE_FPS;
+		eof_music_pos.value += 1000 / EOF_IMAGE_SEQUENCE_FPS;
 		remainder += 1000 % EOF_IMAGE_SEQUENCE_FPS;	//Track the remainder
 		while(remainder >= EOF_IMAGE_SEQUENCE_FPS)
 		{
-			eof_music_pos++;
+			eof_music_pos.value++;
 			remainder -= EOF_IMAGE_SEQUENCE_FPS;
 		}
 	}

@@ -64,14 +64,14 @@ void eof_music_play(char resumelastspeed)
 		if(eof_play_selection)
 		{
 			eof_music_seek(eof_music_rewind_pos);
-			eof_music_pos = eof_music_rewind_pos;
+			eof_set_music_pos(&eof_music_pos, eof_music_rewind_pos);
 		}
 		else if(!eof_smooth_pos)
 		{
-			eof_music_pos = eof_music_actual_pos;
+			eof_set_music_pos(&eof_music_pos, eof_music_actual_pos);
 		}
 	}
-	else if(eof_music_pos - eof_av_delay < eof_music_length)
+	else if(eof_music_pos.value - eof_av_delay < eof_music_length)
 	{	//Otherwise if the seek position is before the end of the audio, begin playback
 		unsigned long x;
 		int held;	//Tracks whether the user is holding down one of the defined controller buttons
@@ -102,14 +102,14 @@ void eof_music_play(char resumelastspeed)
 		{	//Otherwise just play until the end is reached or user stops playback
 			eof_play_selection = 0;
 		}
-		eof_music_rewind_pos = eof_music_pos;
+		eof_music_rewind_pos = eof_music_pos.value;
 		/* in Windows, subtracting the buffer size (buffer_size * 2 according to the Allegro manual)
 		 * seems to get rid of the stuttering. */
 		eof_log("\t\tSeeking audio to chart position", 3);
 		#ifdef ALLEGRO_WINDOWS
-			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos - ((eof_buffer_size * (eof_smooth_pos ? 2 : 1)) * 1000 / (unsigned long)alogg_get_wave_freq_ogg(eof_music_track)));
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value - ((eof_buffer_size * (eof_smooth_pos ? 2 : 1)) * 1000 / (unsigned long)alogg_get_wave_freq_ogg(eof_music_track)));
 		#else
-			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
 		#endif
 		eof_mix_find_claps();
 
@@ -187,7 +187,7 @@ void eof_catalog_play(void)
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
 		}
 		else
 		{
@@ -213,8 +213,8 @@ void eof_music_seek(unsigned long pos)
 	eof_log("eof_music_seek() entered", 1);
 
 	alogg_seek_abs_msecs_ogg_ul(eof_music_track, pos + eof_av_delay);
-	eof_music_pos = pos + eof_av_delay;
-	eof_music_actual_pos = eof_music_pos;
+	eof_set_music_pos(&eof_music_pos, pos + eof_av_delay);
+	eof_music_actual_pos = eof_music_pos.value;
 	eof_mix_seek(eof_music_actual_pos);
 	eof_reset_lyric_preview_lines();
 }
@@ -247,13 +247,13 @@ void eof_music_rewind(void)
 		{
 			amount = 100;
 		}
-		if(eof_music_pos - eof_av_delay < amount)
+		if(eof_music_pos.value - eof_av_delay < amount)
 		{
 			(void) eof_menu_song_seek_start();
 		}
 		else
 		{
-			eof_set_seek_position(eof_music_pos - amount);
+			eof_set_seek_position(eof_music_pos.value - amount);
 		}
 	}
 }
@@ -286,7 +286,7 @@ void eof_music_forward(void)
 		{
 			amount = 100;
 		}
-		target = eof_music_pos + amount;
+		target = eof_music_pos.value + amount;
 		if(target > eof_chart_length)
 		{	//If the seek would exceed the end of the chart
 			target = eof_chart_length;

@@ -10,6 +10,7 @@
 #include "control.h"
 #include "editor.h"
 #include "pathing.h"
+#include "music_pos.h"
 
 #define EOF_VERSION_STRING "EOF v1.8RC12"
 #define EOF_COPYRIGHT_STRING "(c)2008-2020 T^3 Software."
@@ -299,7 +300,8 @@ extern int         eof_silence_loaded;	//Tracks whether "second_of_silence.ogg" 
 extern int         eof_music_data_size;
 extern unsigned long eof_chart_length;
 extern unsigned long eof_music_length;
-extern int         eof_music_pos;
+extern int         eof_logic_rate;
+extern EOF_MUSIC_POS eof_music_pos;
 extern int         eof_music_pos2;
 extern int         eof_sync_piano_rolls;
 extern unsigned long eof_music_actual_pos;

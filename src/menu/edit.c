@@ -542,7 +542,7 @@ void eof_prepare_edit_menu(void)
 		/* paste from catalog */
 		if(eof_selected_catalog_entry < eof_song->catalog->entries)
 		{
-			if((eof_music_pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_music_pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos) && (eof_song->catalog->entry[eof_selected_catalog_entry].track == eof_selected_track) && (eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_note_type))
+			if((eof_music_pos.value >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_music_pos.value <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos) && (eof_song->catalog->entry[eof_selected_catalog_entry].track == eof_selected_track) && (eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_note_type))
 			{
 				eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
@@ -835,7 +835,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 	unsigned long source_id = 0;
 	unsigned long lastlinenum = 0xFFFFFFFF, linestart = 0, lineend = 0;	//Used to create lyric lines
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
-	unsigned long targetpos = eof_music_pos - eof_av_delay;	//By default, assume the paste will occur at the seek position
+	unsigned long targetpos = eof_music_pos.value - eof_av_delay;	//By default, assume the paste will occur at the seek position
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
@@ -1588,7 +1588,7 @@ int eof_menu_edit_paste_logic(int function)
 	char isghl;	//Set to nonzero if the clipboard's source track had GHL mode enabled, which changes the interpretation of lane 6 gems
 	unsigned long source_id = 0;
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
-	unsigned long targetpos = eof_music_pos - eof_av_delay;	//By default, assume the paste will occur at the seek position
+	unsigned long targetpos = eof_music_pos.value - eof_av_delay;	//By default, assume the paste will occur at the seek position
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
@@ -2566,13 +2566,13 @@ int eof_menu_edit_bookmark_helper(int b)
 	if(b >= EOF_MAX_BOOKMARK_ENTRIES)
 		return 0;	//Invalid parameter
 
-	if(eof_music_pos <= eof_av_delay)
+	if(eof_music_pos.value <= eof_av_delay)
 		return 1;	//Do not place a bookmark at a negative or zero chart position
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(eof_song->bookmark_pos[b] != eof_music_pos - eof_av_delay)
+	if(eof_song->bookmark_pos[b] != eof_music_pos.value - eof_av_delay)
 	{
-		eof_song->bookmark_pos[b] = eof_music_pos - eof_av_delay;
+		eof_song->bookmark_pos[b] = eof_music_pos.value - eof_av_delay;
 	}
 	else
 	{
@@ -3786,9 +3786,9 @@ int eof_menu_edit_paste_from_catalog(void)
 	unsigned long note_count = 0;
 	unsigned long first = ULONG_MAX;
 	unsigned long first_beat = ULONG_MAX;
-	unsigned long start_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long start_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
 	unsigned long this_beat = ULONG_MAX;
-	unsigned long current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
 	unsigned long last_current_beat = current_beat;
 	unsigned long end_beat = ULONG_MAX;
 	double nporpos, nporendpos;
@@ -3804,7 +3804,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	entry = &eof_song->catalog->entry[eof_selected_catalog_entry];
 
 	/* make sure we can paste */
-	if(eof_music_pos - eof_av_delay < eof_song->beat[0]->pos)
+	if(eof_music_pos.value - eof_av_delay < eof_song->beat[0]->pos)
 	{
 		return 1;
 	}
@@ -3812,7 +3812,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	sourcetrack = entry->track;
 
 	/* make sure we can't paste inside of the catalog entry */
-	if((sourcetrack == eof_selected_track) && (entry->type == eof_note_type) && (eof_music_pos - eof_av_delay >= entry->start_pos) && (eof_music_pos - eof_av_delay <= entry->end_pos))
+	if((sourcetrack == eof_selected_track) && (entry->type == eof_note_type) && (eof_music_pos.value - eof_av_delay >= entry->start_pos) && (eof_music_pos.value - eof_av_delay <= entry->end_pos))
 	{
 		return 1;
 	}
@@ -3872,7 +3872,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		}
 	}
 
-	newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);	//Find the seek position's percentage within the current beat
+	newpasteoffset = eof_get_porpos(eof_music_pos.value - eof_av_delay);	//Find the seek position's percentage within the current beat
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	if(eof_paste_erase_overlap)
 	{	//If the user decided to delete existing notes that are between the start and end of the pasted notes
@@ -3894,7 +3894,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			{
 				break;
 			}
-			current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
+			current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay) + (this_beat - first_beat);
 			if(!eof_beat_num_valid(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
 			{
 				break;
@@ -3920,11 +3920,11 @@ int eof_menu_edit_paste_from_catalog(void)
 
 		//Re-initialize some variables for the regular paste from catalog logic
 		first = first_beat = this_beat = end_beat = ULONG_MAX;
-		current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+		current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
 		last_current_beat = current_beat;
 	}
 
-	newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);	//Find the seek position's percentage within the current beat
+	newpasteoffset = eof_get_porpos(eof_music_pos.value - eof_av_delay);	//Find the seek position's percentage within the current beat
 	for(i = 0; i < eof_get_track_size(eof_song, sourcetrack); i++)
 	{	//For each note in the active catalog entry's track
 		unsigned long pos = eof_get_note_pos(eof_song, sourcetrack, i);
@@ -3945,7 +3945,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			break;
 		}
 		last_current_beat = current_beat;
-		current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
+		current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay) + (this_beat - first_beat);
 		if(!eof_beat_num_valid(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
 		{	//If the beat is at or after the last beat or otherwise not valid
 			break;
@@ -4689,13 +4689,13 @@ int eof_menu_edit_set_start_point(void)
 	if(!eof_song)
 		return 0;
 
-	if(eof_song->tags->start_point == eof_music_pos - eof_av_delay)
+	if(eof_song->tags->start_point == eof_music_pos.value - eof_av_delay)
 	{	//If the start point is already set to the current seek position
 		eof_song->tags->start_point = ULONG_MAX;	//Clear the start point
 	}
 	else
 	{	//Otherwise update it to the current seek position
-		eof_song->tags->start_point = eof_music_pos - eof_av_delay;
+		eof_song->tags->start_point = eof_music_pos.value - eof_av_delay;
 		if((eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
 		{	//If the start and end points are defined out of order, swap them
 			temp =eof_song->tags-> end_point;
@@ -4713,13 +4713,13 @@ int eof_menu_edit_set_end_point(void)
 	if(!eof_song)
 		return 0;
 
-	if(eof_song->tags->end_point == eof_music_pos - eof_av_delay)
+	if(eof_song->tags->end_point == eof_music_pos.value - eof_av_delay)
 	{	//If the end point is already set to the current seek position
 		eof_song->tags->end_point = ULONG_MAX;	//Clear the start point
 	}
 	else
 	{	//Otherwise update it to the current seek position
-		eof_song->tags->end_point = eof_music_pos - eof_av_delay;
+		eof_song->tags->end_point = eof_music_pos.value - eof_av_delay;
 		if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
 		{	//If the start and end points are defined out of order, swap them
 			temp = eof_song->tags->end_point;

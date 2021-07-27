@@ -444,7 +444,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	}
 	else
 	{	//Otherwise assume it's being rendered to the editor window
-		position = eof_music_pos;
+		position = eof_music_pos.value;
 		leftcoord = 300;
 	}
 	pos = position / eof_zoom;
@@ -929,7 +929,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	}
 	else
 	{	//Otherwise assume it's being rendered to the editor window
-		position = eof_music_pos;
+		position = eof_music_pos.value;
 		leftcoord = 300;
 	}
 	pos = position / eof_zoom;
@@ -1197,7 +1197,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}
 	}
 
-	npos = (long)(notepos + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+	npos = (long)(notepos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d  - 6;
 	if(npos + notelength / eof_zoom_3d < eof_3d_min_depth)
 	{				//If the note would render entirely before the visible area
 		return -1;	//Return status:  Clipping before the viewing window
@@ -1708,7 +1708,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}
 	}
 
-	npos = (long)(notepos + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+	npos = (long)(notepos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d  - 6;
 	if(npos + notelength / eof_zoom_3d < eof_3d_min_depth)
 	{
 		return -1;
@@ -1824,7 +1824,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			}
 
 			notepos2 = notepos + notelength;	//Find the position of the end of the note
-			npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+			npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos.value) / eof_zoom_3d  - 6;
 			rz2 = npos2 < eof_3d_min_depth ? eof_3d_min_depth : npos2 + 10;
 
 			//Define the slide rectangle coordinates in clockwise order
@@ -1875,7 +1875,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}
 
 		notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
-		npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+		npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos.value) / eof_zoom_3d  - 6;
 		rz2 = npos2 < eof_3d_min_depth ? eof_3d_min_depth : npos2 + 10;
 
 		if(eof_track_is_ghl_mode(eof_song, track))

@@ -1532,7 +1532,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 				eof_stop_midi();
 				alogg_stop_ogg(eof_music_track);
-				alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
+				alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
 			}
 			else
 			{
@@ -1555,7 +1555,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	}//Only allow playback controls when chart audio is loaded
 
 	/* Ensure the seek position is no further left than the first beat marker if Feedback input method is in effect */
-	if((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_music_pos < eof_song->beat[0]->pos + eof_av_delay))
+	if((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_music_pos.value < eof_song->beat[0]->pos + eof_av_delay))
 	{
 		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);
 	}
@@ -2282,7 +2282,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 	if((eof_input_mode == EOF_INPUT_CLASSIC) || (eof_input_mode == EOF_INPUT_HOLD))
 	{	//If the input method is classic or hold
-		if((eof_key_code == KEY_ENTER) && (eof_music_pos - eof_av_delay >= eof_song->beat[0]->pos) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+		if((eof_key_code == KEY_ENTER) && (eof_music_pos.value - eof_av_delay >= eof_song->beat[0]->pos) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 		{	//If the user pressed enter and the current seek position is not left of the first beat marker, and neither SHIFT nor CTRL are held
 			/* place note with default length if song is paused */
 			if(eof_music_paused)
@@ -2293,7 +2293,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					notelen = 1;
 				}
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos - eof_av_delay, notelen, eof_note_type, NULL);
+				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos.value - eof_av_delay, notelen, eof_note_type, NULL);
 				if(new_note)
 				{
 					unsigned long newnotenum = eof_get_track_size(eof_song, eof_selected_track) - 1;
@@ -2324,7 +2324,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			{
 				if(!eof_entering_note_note)
 				{
-					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos - eof_av_delay, eof_snap.length, eof_note_type, NULL);
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos.value - eof_av_delay, eof_snap.length, eof_note_type, NULL);
 					if(new_note)
 					{
 						if(eof_mark_drums_as_cymbal)
@@ -2347,7 +2347,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				else
 				{
-					eof_entering_note_note->length = (eof_music_pos - eof_av_delay) - eof_entering_note_note->pos - 10;
+					eof_entering_note_note->length = (eof_music_pos.value - eof_av_delay) - eof_entering_note_note->pos - 10;
 				}
 			}
 		}
@@ -2498,11 +2498,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos - eof_av_delay - eof_guitar.delay, 1, 0, "");
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, 0, "");
 				}
 				else
 				{
-					new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
 					if(new_note)
 					{
 						if(eof_mark_drums_as_cymbal)
@@ -2543,10 +2543,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//Strum button is pressed while a fret is held
 					if(eof_entering_note && eof_entering_note_lyric)
 					{
-						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
+						eof_entering_note_lyric->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos - eof_av_delay - eof_guitar.delay, 1, 0, "");
+					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, 0, "");
 					if(new_lyric)
 					{
 						eof_entering_note_lyric = new_lyric;
@@ -2560,11 +2560,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					if(eof_snote != eof_last_snote)
 					{
 						eof_entering_note = 0;
-						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
+						eof_entering_note_lyric->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					else
 					{
-						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
+						eof_entering_note_lyric->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 				}
@@ -2617,10 +2617,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					{	//If a note is being added from this strum
 						if(eof_entering_note && eof_entering_note_note)
 						{
-							eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
+							eof_entering_note_note->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 						}
 						eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_snote, eof_music_pos - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
+						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_snote, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
 						if(new_note)
 						{
 							unsigned long notenum = eof_get_track_size(eof_song, eof_selected_track) - 1;	//The index of the new note
@@ -2650,7 +2650,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}//If the user strummed
 				if(eof_entering_note && eof_entering_note_note)
 				{
-					eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
+					eof_entering_note_note->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 					if(eof_snote != eof_last_snote)
 					{
 						eof_entering_note = 0;
@@ -3840,7 +3840,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 							}
 							if(eof_input_mode == EOF_INPUT_FEEDBACK)
 							{	//If Feedback input mode is in use, insert a single gem at the seek position
-								targetpos = eof_music_pos - eof_av_delay;
+								targetpos = eof_music_pos.value - eof_av_delay;
 								eof_pen_note.note = bitmask;
 							}
 							else
@@ -4181,7 +4181,7 @@ void eof_editor_drum_logic(void)
 	{
 		eof_held_5 = 0;
 	}
-	if(eof_entering_note_note && (eof_music_pos - eof_av_delay - eof_drums.delay >= eof_entering_note_note->pos + 50))
+	if(eof_entering_note_note && (eof_music_pos.value - eof_av_delay - eof_drums.delay >= eof_entering_note_note->pos + 50))
 	{
 		eof_entering_note_note = NULL;
 	}
@@ -4210,13 +4210,13 @@ void eof_editor_drum_logic(void)
 	if(bitmask)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && (eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50))
+		if(eof_entering_note_note && (eof_music_pos.value - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50))
 		{	//If altering an existing note
 			eof_entering_note_note->note |= bitmask;
 		}
 		else
 		{	//If creating a new note
-			new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos - eof_av_delay - eof_drums.delay, 1, eof_note_type, NULL);
+			new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos.value - eof_av_delay - eof_drums.delay, 1, eof_note_type, NULL);
 			if(new_note)
 			{
 				if(eof_mark_drums_as_cymbal)
@@ -4250,7 +4250,7 @@ void eof_editor_logic(void)
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
 	EOF_NOTE * new_note = NULL;
-	int pos = eof_music_pos / eof_zoom;
+	int pos = eof_music_pos.value / eof_zoom;
 	int lpos;
 	long notelength;
 	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
@@ -4313,7 +4313,7 @@ void eof_editor_logic(void)
 			if(eof_input_mode == EOF_INPUT_FEEDBACK)
 			{	//If Feedback input method is in effect
 				x_tolerance = 2;	//The hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
-				eof_seek_hover_note = eof_find_hover_note(eof_music_pos - eof_av_delay, x_tolerance, 0);	//Find the seek hover note
+				eof_seek_hover_note = eof_find_hover_note(eof_music_pos.value - eof_av_delay, x_tolerance, 0);	//Find the seek hover note
 			}
 
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK))
@@ -4983,7 +4983,7 @@ void eof_editor_logic(void)
 	{	//If the chart is not paused
 		for(i = 0; i < eof_song->beats - 1; i++)
 		{
-			if((eof_music_pos >= eof_song->beat[i]->pos) && (eof_music_pos < eof_song->beat[i + 1]->pos))
+			if((eof_music_pos.value >= eof_song->beat[i]->pos) && (eof_music_pos.value < eof_song->beat[i + 1]->pos))
 			{
 				eof_hover_beat_2 = i;
 				break;
@@ -5183,7 +5183,7 @@ void eof_vocal_editor_logic(void)
 		else if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 		{
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a lyric the mouse is allowed to be to still be considered to hover over that lyric
-			int pos = eof_music_pos / eof_zoom;
+			int pos = eof_music_pos.value / eof_zoom;
 			int lpos = pos < 300 ? (eof_scaled_mouse_x - 20) * eof_zoom : ((pos - 300) + eof_scaled_mouse_x - 20) * eof_zoom;
 			int rpos; // place to store pen_lyric.pos in case we are hovering over a note and need the original position before it was changed to the note location
 			unsigned long move_offset = 0;
@@ -5215,7 +5215,7 @@ void eof_vocal_editor_logic(void)
 			if(eof_input_mode == EOF_INPUT_FEEDBACK)
 			{	//If Feedback input method is in effect
 				x_tolerance = 2;	//The hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
-				eof_seek_hover_note = eof_find_hover_note(eof_music_pos - eof_av_delay, x_tolerance, 0);	//Find the seek hover note
+				eof_seek_hover_note = eof_find_hover_note(eof_music_pos.value - eof_av_delay, x_tolerance, 0);	//Find the seek hover note
 			}
 
 			if((eof_hover_note >= 0) && !(mouse_b & 1))
@@ -5778,7 +5778,7 @@ void eof_vocal_editor_logic(void)
 	{	//If the chart is not paused
 		for(i = 0; i < eof_song->beats - 1; i++)
 		{
-			if((eof_music_pos >= eof_song->beat[i]->pos) && (eof_music_pos < eof_song->beat[i + 1]->pos))
+			if((eof_music_pos.value >= eof_song->beat[i]->pos) && (eof_music_pos.value < eof_song->beat[i + 1]->pos))
 			{
 				eof_hover_beat_2 = i;
 				break;
@@ -5804,7 +5804,7 @@ void eof_vocal_editor_logic(void)
 		{	//Full screen 3D view is not in effect
 			if((eof_scaled_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_scaled_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
 			{	//mouse is in beat marker area
-				int pos = eof_music_pos / eof_zoom;
+				int pos = eof_music_pos.value / eof_zoom;
 				int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 
 				eof_prepare_menus();
@@ -6025,7 +6025,7 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 
 	unsigned long i;
 	unsigned long tracknum;
-	int pos = eof_music_pos / eof_zoom;	//Current seek position
+	int pos = eof_music_pos.value / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beat marker
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
 	int kcol, kcol2;
@@ -6131,8 +6131,9 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 
 void eof_render_editor_window_2(void)
 {
-	int temp_type, temp_track, temp_pos, temp_hover;
+	int temp_type, temp_track, temp_hover;
 	long temp_selected;
+	EOF_MUSIC_POS temp_pos;
 
 	if(eof_display_second_piano_roll)
 	{	//If the secondary piano roll is to be displayed
@@ -6147,12 +6148,12 @@ void eof_render_editor_window_2(void)
 		}
 		if(eof_music_pos2 < 0)
 		{	//If the position hasn't been initialized
-			eof_music_pos2 = eof_music_pos;
+			eof_music_pos2 = eof_music_pos.value;
 		}
 
 		temp_type = eof_note_type;					//Remember the active difficulty
 		temp_track = eof_selected_track;			//Remember the active track number
-		temp_pos = eof_music_pos;					//Remember the active position
+		memcpy(&temp_pos, &eof_music_pos, sizeof(EOF_MUSIC_POS));
 		temp_selected = eof_selection.current;		//Remember the selected note
 		temp_hover = eof_hover_note;				//Remember the hover note
 		eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
@@ -6160,7 +6161,7 @@ void eof_render_editor_window_2(void)
 
 		if(!eof_sync_piano_rolls)
 		{	//If the secondary piano roll is tracking its own position
-			eof_music_pos = eof_music_pos2;	//Change to that position
+			eof_set_music_pos(&eof_music_pos, eof_music_pos2); //Change to that position
 		}
 		(void) eof_menu_track_selected_track_number(eof_selected_track2, 0);	//Change to the track of the secondary piano roll, update coordinates, color set, etc.
 		eof_process_beat_statistics(eof_song, eof_selected_track);		//Rebuild the beat stats so that the secondary piano roll can display the correct RS phrases and sections
@@ -6169,7 +6170,7 @@ void eof_render_editor_window_2(void)
 
 		(void) eof_menu_track_selected_track_number(temp_track, 0);	//Restore the active track number
 		eof_note_type = temp_type;									//Restore the active difficulty
-		eof_music_pos = temp_pos;									//Restore the active position
+		memcpy(&eof_music_pos, &temp_pos, sizeof(EOF_MUSIC_POS)); //Restore the active position
 		eof_selection.current = temp_selected;						//Restore the selected note
 		eof_hover_note = temp_hover;								//Restore the hover note
 		eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild the beat stats to reflect the primary piano roll so edit operations work as expected
@@ -6180,7 +6181,7 @@ unsigned long eof_determine_piano_roll_left_edge(void)
 {
 //	eof_log("eof_determine_piano_roll_left_edge() entered");
 
-	unsigned long pos = eof_music_pos / eof_zoom;
+	unsigned long pos = eof_music_pos.value / eof_zoom;
 
 	if(pos <= 320)
 	{
@@ -6195,7 +6196,7 @@ unsigned long eof_determine_piano_roll_right_edge(void)
 {
 //	eof_log("eof_determine_piano_roll_right_edge() entered", 1);
 
-	unsigned long pos = eof_music_pos / eof_zoom;
+	unsigned long pos = eof_music_pos.value / eof_zoom;
 
 	if(pos < 300)
 	{
@@ -6210,7 +6211,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 //	eof_log("eof_render_editor_window_common() entered");
 
 	unsigned long i, j, ctr, notepos, markerlength, tracksize;
-	int pos = eof_music_pos / eof_zoom;	//Current seek position
+	int pos = eof_music_pos.value / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beatmarker
 	int pmin = 0;
 	int psec = 0;
@@ -6278,7 +6279,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 ///DEBUG (print FPS instead of seek position)
 ///textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%.2f", eof_main_loop_fps);
-			textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02lu:%02lu", ((eof_music_pos - eof_av_delay) / 1000) / 60, ((eof_music_pos - eof_av_delay) / 1000) % 60);
+			textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02lu:%02lu", ((eof_music_pos.value - eof_av_delay) / 1000) / 60, ((eof_music_pos.value - eof_av_delay) / 1000) % 60);
 		}
 	}
 
@@ -6918,7 +6919,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 {
 //	eof_log("eof_render_editor_window_common2() entered");
 
-	int pos = eof_music_pos / eof_zoom;	//Current seek position compensated for zoom level
+	int pos = eof_music_pos.value / eof_zoom;	//Current seek position compensated for zoom level
 	int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
 	unsigned long i;
 	unsigned long selected_tab;
@@ -6951,7 +6952,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	/* draw the current position */
 	if(pos >= zoom)
 	{
-		vline(window->screen, lpos + (eof_music_pos - eof_av_delay) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+		vline(window->screen, lpos + (eof_music_pos.value - eof_av_delay) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 	}
 
 	/* draw the difficulty tabs (after the section names, which otherwise render a couple pixels over the tabs) */
@@ -7138,7 +7139,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	/* render the scroll bar */
 	if(window != eof_window_editor2)
 	{	//Only draw the scroll bar for the main piano roll
-		scroll_pos = ((double)(window->w - 8.0) / (double)eof_chart_length) * (double)eof_music_pos;
+		scroll_pos = ((double)(window->w - 8.0) / (double)eof_chart_length) * (double)eof_music_pos.value;
 		rectfill(window->screen, 0, eof_screen_layout.scrollbar_y, window->w - 1, window->h - 2, eof_color_light_gray);
 		draw_sprite(window->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
 
@@ -7304,7 +7305,7 @@ void eof_editor_logic_common(void)
 {
 //	eof_log("eof_editor_logic_common() entered");
 
-	int pos = eof_music_pos / eof_zoom;
+	int pos = eof_music_pos.value / eof_zoom;
 	int npos;
 	unsigned long i;
 	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
@@ -7518,7 +7519,7 @@ void eof_editor_logic_common(void)
 					eof_select_beat(eof_hover_beat);
 					alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_song->beat[eof_hover_beat]->pos + eof_av_delay);
 					eof_music_actual_pos = eof_song->beat[eof_hover_beat]->pos + eof_av_delay;
-					eof_music_pos = eof_music_actual_pos;
+					eof_set_music_pos(&eof_music_pos, eof_music_actual_pos);
 					eof_reset_lyric_preview_lines();
 					eof_rclick_released = 0;
 				}
@@ -7580,7 +7581,7 @@ void eof_editor_logic_common(void)
 	//Find hover notes/lyrics for chart and fret catalog playback
 	if(eof_music_catalog_playback || !eof_music_paused)
 	{	//If the chart or fret catalog is playing
-		int examined_music_pos = eof_music_pos;		//By default, assume the chart position is to be used to find hover notes/etc.
+		int examined_music_pos = eof_music_pos.value;		//By default, assume the chart position is to be used to find hover notes/etc.
 		int examined_track = eof_selected_track;	//By default, assume the active track is to be used to find hover notes/etc.
 		int examined_type = eof_note_type;			//By default, assume the active difficulty is to be used to find hover notes/etc.
 		int examined_pos, zoom;
@@ -7692,18 +7693,18 @@ void eof_seek_to_nearest_grid_snap(void)
 {
 	unsigned long beat;
 
-	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF) || (eof_music_pos <= eof_song->beat[0]->pos) || (eof_music_pos >= eof_song->beat[eof_song->beats - 1]->pos))
+	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF) || (eof_music_pos.value <= eof_song->beat[0]->pos) || (eof_music_pos.value >= eof_song->beat[eof_song->beats - 1]->pos))
 		return;	//Return if there's no song loaded, grid snap is off, or the seek position is outside the range of beats in the chart
 
-	beat = eof_get_beat(eof_song, eof_music_pos);	//Find which beat the current seek position is in
+	beat = eof_get_beat(eof_song, eof_music_pos.value);	//Find which beat the current seek position is in
 	if(!eof_beat_num_valid(eof_song, beat))	//If the seek position is outside the chart
 		return;
 
-	if(eof_music_pos == eof_song->beat[beat]->pos)
+	if(eof_music_pos.value == eof_song->beat[beat]->pos)
 		return;	//If the current position is on a beat marker, do not seek anywhere
 
 	//Find the distance to the previous grid snap
-	eof_snap_logic(&eof_tail_snap, eof_music_pos - eof_av_delay);
+	eof_snap_logic(&eof_tail_snap, eof_music_pos.value - eof_av_delay);
 	eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the nearest grid snap
 }
 
@@ -7853,7 +7854,7 @@ void eof_feedback_input_mode_update_selected_beat(void)
 	if(eof_input_mode == EOF_INPUT_FEEDBACK)
 	{	//If feedback input mode is in use
 		unsigned long beat;
-		unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
+		unsigned long adjustedpos = eof_music_pos.value - eof_av_delay;	//Find the actual chart position
 		beat = eof_get_beat(eof_song, adjustedpos);
 		if(beat != lastbeat)
 		{	//If the seek position is at a different beat than the last call

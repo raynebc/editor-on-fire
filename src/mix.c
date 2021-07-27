@@ -939,8 +939,8 @@ void eof_set_seek_position(unsigned long pos)
 	if(eof_music_track)
 	{	//If chart audio is loaded
 		alogg_seek_abs_msecs_ogg_ul(eof_music_track, pos);
-		eof_music_pos = pos;
-		eof_music_actual_pos = eof_music_pos;
+		eof_set_music_pos(&eof_music_pos, pos);
+		eof_music_actual_pos = eof_music_pos.value;
 		eof_mix_seek(eof_music_actual_pos);
 		eof_reset_lyric_preview_lines();
 	}

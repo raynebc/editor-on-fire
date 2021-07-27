@@ -256,7 +256,8 @@ int         eof_silence_loaded = 0;
 int         eof_music_data_size = 0;
 unsigned long eof_chart_length = 0;		//Stores the position of the last note/lyric/text event/bookmark or the end of the chart audio, whichever is longer
 unsigned long eof_music_length = 0;
-int         eof_music_pos;
+int         eof_logic_rate = 100;
+EOF_MUSIC_POS eof_music_pos;
 int         eof_music_pos2 = -1;		//The position to display in the secondary piano roll (-1 means it will initialize to the current track when it is enabled)
 int         eof_sync_piano_rolls = 1;	//If nonzero, the secondary piano roll will render with the current chart position instead of its own
 unsigned long eof_music_actual_pos;
@@ -622,7 +623,7 @@ void eof_find_lyric_preview_lines(void)
 	int next_line = -1;
 	unsigned long dist = 0;
 	int beyond = 1;
-	int adj_eof_music_pos = eof_music_pos - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
+	int adj_eof_music_pos = eof_music_pos.value - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
 
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
@@ -2662,6 +2663,7 @@ void eof_note_logic(void)
 
 void eof_logic(void)
 {
+	int speed = 1000;
 //	eof_log("eof_logic() entered");
 
 	eof_read_keyboard_input(1);	//Drop ASCII values for number pad key presses
@@ -2703,7 +2705,7 @@ void eof_logic(void)
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
 		}
 	}
 	else if(!eof_music_paused)
@@ -2712,88 +2714,25 @@ void eof_logic(void)
 		{
 			if(eof_playback_speed != eof_mix_speed)
 			{
-				if(eof_mix_speed == 1000)		//Force full speed playback
-					eof_music_pos += 10;
-				else if(eof_mix_speed == 500)	//Force half speed playback
-					eof_music_pos += 5;
-				else if(eof_mix_speed == 250)	//Force quarter speed playback
-				{
-					if(eof_frame % 2 == 0)
-					{	//Round up every even frame
-						eof_music_pos += 3;
-					}
-					else
-					{	//Round down every odd frame
-						eof_music_pos += 2;
-					}
-				}
-				else							//Something unexpected is going on
-					eof_playback_speed = eof_mix_speed;
+				speed = eof_mix_speed;
 			}
 			else
 			{
-				switch(eof_playback_speed)
-				{
-					case 1000:
-					{
-						eof_music_pos += 10;
-						break;
-					}
-					case 750:
-					{
-						if(eof_frame % 2 == 0)
-						{	//Round up every even frame
-							eof_music_pos += 8;
-						}
-						else
-						{	//Round down every odd frame
-							eof_music_pos += 7;
-						}
-						break;
-					}
-					case 500:
-					{
-						eof_music_pos += 5;
-						break;
-					}
-					case 250:
-					{
-						if(eof_frame % 2 == 0)
-						{	//Round up every even frame
-							eof_music_pos += 3;
-						}
-						else
-						{	//Round down every odd frame
-							eof_music_pos += 2;
-						}
-						break;
-					}
-					default:	//For custom playback rate
-					{
-						if(eof_frame % 2 == 0)	//If eof_frame is even
-						{
-							eof_music_pos += (eof_playback_speed / 100.0 + 0.5);	//Round up
-						}
-						else
-						{
-							eof_music_pos += eof_playback_speed / 100;	//Round down
-						}
-						break;
-					}
-				}
+				speed = eof_playback_speed;
 			}
+			eof_update_music_pos(&eof_music_pos, speed);
 		}
 		else
 		{
-			eof_music_pos = eof_music_actual_pos;
+			eof_set_music_pos(&eof_music_pos, eof_music_actual_pos);
 		}
-		if(eof_play_selection && (eof_music_pos - eof_av_delay > eof_music_end_pos))
+		if(eof_play_selection && (eof_music_pos.value - eof_av_delay > eof_music_end_pos))
 		{
 			eof_music_paused = 1;
-			eof_music_pos = eof_music_rewind_pos;
+			eof_set_music_pos(&eof_music_pos, eof_music_rewind_pos);
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
 			if(key[KEY_S])
 			{	//If S is still being held down, replay the note selection
 				eof_music_play(0);
@@ -3466,8 +3405,8 @@ void eof_render_3d_window(void)
 		if(sectionptr == NULL)
 			continue;	//If the solo section couldn't be found, skip it
 
-		sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-		sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
+		sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 		if((eof_3d_min_depth <= sez) && (eof_3d_max_depth >= sz))
 		{
 			spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
@@ -3496,8 +3435,8 @@ void eof_render_3d_window(void)
 			if(sectionptr->difficulty != eof_note_type)
 				continue;	//If this arpeggio isn't in the active difficulty, skip it
 
-			sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-			sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+			sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
+			sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 			if((eof_3d_min_depth > sez) || (eof_3d_max_depth < sz))
 				continue;	//If the arpeggio section would not render visibly, skip it
 
@@ -3525,8 +3464,8 @@ void eof_render_3d_window(void)
 	halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
 	if(eof_seek_selection_start != eof_seek_selection_end)
 	{	//If there is a seek selection
-		sz = (long)(eof_seek_selection_start + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-		sez = (long)(eof_seek_selection_end + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		sz = (long)(eof_seek_selection_start + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
+		sez = (long)(eof_seek_selection_end + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 		if((eof_3d_min_depth <= sez) && (eof_3d_max_depth >= sz))
 		{
 			spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
@@ -3589,8 +3528,8 @@ void eof_render_3d_window(void)
 							continue;	//Skip rendering it
 					}
 				}
-				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
+				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 				spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
 				spez = sez > eof_3d_max_depth ? eof_3d_max_depth : sez;
 				if((eof_3d_min_depth > sez) || (eof_3d_max_depth < sz))
@@ -3619,7 +3558,7 @@ void eof_render_3d_window(void)
 	/* draw the beat markers */
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
-		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 		if((bz >= eof_3d_min_depth) && (bz <= eof_3d_max_depth))
 		{	//If the beat is visible
 			y_projection = ocd3d_project_y(200 + offset_y_3d, bz);
@@ -3701,7 +3640,7 @@ void eof_render_3d_window(void)
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar/bass track is active
 		unsigned long popupmessage;
-		if(eof_find_effective_rs_popup_message(eof_music_pos - eof_av_delay, &popupmessage))
+		if(eof_find_effective_rs_popup_message(eof_music_pos.value - eof_av_delay, &popupmessage))
 		{	//If there is a popup message in effect at the current position
 			textout_centre_ex(eof_window_3d->screen, font, eof_song->pro_guitar_track[tracknum]->popupmessage[popupmessage].name, eof_window_3d->screen->w / 2, 4, eof_color_white, eof_color_black);
 		}
@@ -4698,7 +4637,8 @@ int eof_initialize(int argc, char * argv[])
 			eof_soft_cursor = 1;
 		}
 	}
-	gametime_init(100); // 100hz timer
+	gametime_init(eof_logic_rate); // set timer to run at logic_rate
+	eof_initialize_music_pos(&eof_music_pos, eof_logic_rate);
 
 	MIDIqueue=MIDIqueuetail=NULL;	//Initialize the MIDI queue as empty
 	set_volume_per_voice(0);		//By default, Allegro halves the volume of each voice so that it won't clip if played fully panned to either the left or right channels.  EOF doesn't use panning, so force full volume.
@@ -5232,7 +5172,7 @@ void eof_init_after_load(char initaftersavestate)
 	}
 	if(!initaftersavestate)
 	{	//If this wasn't cleanup after an undo/redo state, reset more variables
-		eof_music_pos = eof_av_delay;
+		eof_set_music_pos(&eof_music_pos, eof_av_delay);
 		eof_changes = 0;
 		eof_undo_last_type = 0;
 		eof_change_count = 0;
@@ -5687,7 +5627,7 @@ int main(int argc, char * argv[])
 	#endif
 
 	#ifdef ALLEGRO_LEGACY
-		timer = al_create_timer(1.0 / 100.0);
+		timer = al_create_timer(1.0 / (float)eof_logic_rate);
 		if(!timer)
 		{
 			eof_log("Failed to create Allegro 5 timer", 1);
@@ -5763,16 +5703,16 @@ int main(int argc, char * argv[])
 			}
 			else if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg_ul(eof_music_track)))
 			{	//Otherwise if ALOGG reported a completed/error condition or if the reported position is greater than the length of the audio
-				eof_music_pos = eof_music_actual_pos + eof_av_delay;
+				eof_set_music_pos(&eof_music_pos, eof_music_actual_pos + eof_av_delay);
 				eof_music_paused = 1;
 			}
 			else
 			{
 				if(eof_smooth_pos)
 				{
-					if((eof_music_actual_pos > eof_music_pos) || eof_music_paused)
+					if((eof_music_actual_pos > eof_music_pos.value) || eof_music_paused)
 					{
-						eof_music_pos = eof_music_actual_pos;
+						eof_set_music_pos(&eof_music_pos, eof_music_actual_pos);
 					}
 				}
 			}

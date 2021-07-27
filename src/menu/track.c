@@ -1595,7 +1595,7 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 	//Find the pointer to the fret hand position at the current seek position in this difficulty, if there is one
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
-	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos - eof_av_delay, &index, NULL, 1);
+	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos.value - eof_av_delay, &index, NULL, 1);
 	if(ptr)
 	{	//If an existing fret hand position is to be edited
 		(void) snprintf(eof_etext, 5, "%lu", ptr->end_pos);	//Populate the input box with it
@@ -1657,7 +1657,7 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 			}
 
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos - eof_av_delay, position, 0, NULL);
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos.value - eof_av_delay, position, 0, NULL);
 			eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 		}
 	}//If the user provided a number
@@ -1778,7 +1778,7 @@ int eof_track_delete_effective_fret_hand_position(void)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-	if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos - eof_av_delay, &index, NULL, 0))
+	if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos.value - eof_av_delay, &index, NULL, 0))
 	{	//If there is a fret hand position in effect at the current seek position in the active track difficulty
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_pro_guitar_track_delete_hand_position(tp, index);	//Delete the hand position
@@ -1915,7 +1915,7 @@ int eof_track_fret_hand_positions(void)
 	centre_dialog(eof_fret_hand_position_list_dialog);
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos - eof_av_delay, NULL, &diffindex, 0);	//Determine if a hand position exists at the current seek position
+	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos.value - eof_av_delay, NULL, &diffindex, 0);	//Determine if a hand position exists at the current seek position
 	eof_fret_hand_position_list_dialog[1].d1 = diffindex;	//Pre-select the hand position in effect (if one exists) at the current seek position
 	eof_fret_hand_position_list_dialog[0].dp = eof_fret_hand_position_list_dialog_title_string;	//Replace the string used for the title bar with a dynamic one
 	eof_fret_hand_position_list_dialog_undo_made = 0;			//Reset this condition
@@ -1972,7 +1972,7 @@ int eof_track_rs_popup_add(void)
 	}
 	else
 	{
-		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_music_pos - eof_av_delay);	//Otherwise initialize the start time with the current seek position
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_music_pos.value - eof_av_delay);	//Otherwise initialize the start time with the current seek position
 		(void) ustrcpy(eof_etext3, "");
 	}
 	if(eof_popup_dialog(eof_song_rs_popup_add_dialog, 1) == 6)
@@ -2120,7 +2120,7 @@ int eof_track_rs_popup_messages(void)
 
 	//Allocate and build the strings for the phrases
 	eof_rebuild_rs_popup_messages_list_strings();
-	if(eof_find_effective_rs_popup_message(eof_music_pos - eof_av_delay, &popupmessage))
+	if(eof_find_effective_rs_popup_message(eof_music_pos.value - eof_av_delay, &popupmessage))
 	{	//If a popup message is in effect at the current seek position
 		eof_rs_popup_messages_dialog[1].d1 = popupmessage;	//Pre-select the popup message from the list
 	}
@@ -2945,7 +2945,7 @@ int eof_track_manage_rs_phrases(void)
 
 	//Allocate and build the strings for the phrases
 	eof_rebuild_manage_rs_phrases_strings();
-	eof_track_manage_rs_phrases_dialog[1].d1 = eof_find_effective_rs_phrase(eof_music_pos - eof_av_delay);	//Pre-select the phrase in effect at the current position
+	eof_track_manage_rs_phrases_dialog[1].d1 = eof_find_effective_rs_phrase(eof_music_pos.value - eof_av_delay);	//Pre-select the phrase in effect at the current position
 
 	//Call the dialog
 	eof_color_dialog(eof_track_manage_rs_phrases_dialog, gui_fg_color, gui_bg_color);
@@ -3379,7 +3379,7 @@ int eof_track_rs_tone_change_add(void)
 	//Find the tone change at the current seek position, if any
 	for(ctr = 0; ctr < tp->tonechanges; ctr++)
 	{	//For each tone change in the track
-		if(tp->tonechange[ctr].start_pos != eof_music_pos - eof_av_delay)
+		if(tp->tonechange[ctr].start_pos != eof_music_pos.value - eof_av_delay)
 			continue;	//If this tone change is not at the current seek position, skip it
 
 		//Otherwise edit it instead of adding a new tone change
@@ -3412,7 +3412,7 @@ int eof_track_rs_tone_change_add(void)
 			{	//If the tone being changed to is the currently defined default tone
 					defaulttone = 1;
 			}
-			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_TONE_CHANGE, 0, eof_music_pos - eof_av_delay, defaulttone, 0, eof_etext);
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_TONE_CHANGE, 0, eof_music_pos.value - eof_av_delay, defaulttone, 0, eof_etext);
 		}
         eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes
 	}
@@ -3542,7 +3542,7 @@ int eof_track_rs_tone_changes(void)
 
 	//Allocate and build the strings for the tone changes
 	eof_track_rebuild_rs_tone_changes_list_strings();
-	if(eof_track_find_effective_rs_tone_change(eof_music_pos - eof_av_delay, &tonechange))
+	if(eof_track_find_effective_rs_tone_change(eof_music_pos.value - eof_av_delay, &tonechange))
 	{	//If a tone change had been placed at or before the current seek position
 		eof_track_rs_tone_changes_dialog[1].d1 = tonechange;	//Pre-select the tone change from the list
 	}

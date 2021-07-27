@@ -76,7 +76,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 	unsigned long height;		//Stores the heigth of the fretboard area
 	unsigned long top,bottom;	//Stores the top and bottom coordinates for the area the graph will render to
 	char numgraphs;				//Stores the number of channels to render
-	unsigned long pos = eof_music_pos / eof_zoom;
+	unsigned long pos = eof_music_pos.value / eof_zoom;
 	unsigned long curms;
 
 //	eof_log("eof_render_spectrogram() entered", 1);

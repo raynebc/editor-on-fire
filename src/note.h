@@ -30,7 +30,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	//Renders the note to the specified window, unless it would be outside the viewable area
 	//If p is nonzero, the note is rendered as highlighted (selected/hovered)
 	//If track is nonzero, the pre-existing note is rendered, otherwise the eof_pen_note is rendered
-	//The position specified should be eof_music_catalog_pos when rendering the fret catalog, or eof_music_pos when rendering the editor window
+	//The position specified should be eof_music_catalog_pos when rendering the fret catalog, or eof_music_pos.value when rendering the editor window
 	//If the note is 100% clipped, nonzero is returned
 	//-1 Clipped completely to the left of the viewing window
 	//1 Clipped completely to the right of the viewing window

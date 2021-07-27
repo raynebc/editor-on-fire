@@ -102,7 +102,7 @@ int eof_render_waveform(struct wavestruct *waveform)
 	unsigned long height;		//Stores the heigth of the fretboard area
 	unsigned long top, bottom;	//Stores the top and bottom coordinates for the area the graph will render to
 	char numgraphs;		//Stores the number of channels to render
-	unsigned long pos = eof_music_pos / eof_zoom;
+	unsigned long pos = eof_music_pos.value / eof_zoom;
 	int render_right_channel = 0;	//This caches the condition of the user having enabled the right channel to render AND the audio is stereo
 	unsigned int zeroamp;
 	struct waveformchanneldata *leftchannel;
