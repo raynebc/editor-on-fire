@@ -1,3 +1,5 @@
+PLATFORM_OFILES = menu/native.o
+
 include makefile.legacy_default_config
 include makefile.legacy_config
 include makefile.common
