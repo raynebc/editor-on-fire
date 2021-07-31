@@ -6,6 +6,7 @@
 #endif
 #ifdef ALLEGRO_LEGACY
 	#include <a5alleg.h>
+	#include <allegro5/allegro_native_dialog.h>
 #endif
 #include <locale.h>	//For setlocale()
 #include <ctype.h>
@@ -4231,6 +4232,9 @@ int eof_initialize(int argc, char * argv[])
 		(void) fprintf(stderr, "Allegro can't initialize.  Exiting.");
 		return 0;
 	}
+	#ifdef ALLEGRO_LEGACY
+		al_init_native_dialog_addon();
+	#endif
 
 	if((argc >= 3) && !ustricmp(argv[1], "-ch_sp_path_worker"))
 	{	//If this EOF instance was launched as a worker process to perform star power pathing (must be second parameter)
