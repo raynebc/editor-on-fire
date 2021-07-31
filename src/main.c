@@ -1006,6 +1006,12 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		effectivewidth = eof_screen_width_default;
 	}
 
+	#ifdef ALLEGRO_LEGACY
+		#ifdef ALLEGRO_LINUX
+			al_set_new_display_flag(ALLEGRO_GTK_TOPLEVEL);
+		#endif
+	#endif
+
 	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, effectivewidth, effectiveheight, 0, 0))
 	{	//If the specified window size could not be set, try again in full screen mode
 		if(set_gfx_mode(GFX_AUTODETECT, effectivewidth, effectiveheight, 0, 0))
