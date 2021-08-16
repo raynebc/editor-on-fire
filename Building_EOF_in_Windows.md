@@ -15,7 +15,7 @@ If you just want to build EOF, use the following steps (we will break the steps 
     pacman -S --needed --noconfirm base-devel mingw-w64-i686-toolchain
     pacman -S --noconfirm unzip
     pacman -S --noconfirm git
-    pacman -S --noconfirm cmake
+    pacman -S --noconfirm mingw-w64-i686-cmake
     pacman -S --noconfirm mingw-w64-i686-libogg
     pacman -S --noconfirm mingw-w64-i686-libvorbis
     pacman -S --noconfirm mingw-w64-i686-fftw
@@ -37,7 +37,6 @@ If you just want to build EOF, use the following steps (we will break the steps 
     ```
 
 You should now have a working copy of EOF in the `bin` subdirectory. If you would like to enable the transcoding and audio manipulation features, please see [Adding Decoding/Encoding Capability](#adding-decodingencoding-capability).
-
 
 # Details #
 
