@@ -1146,15 +1146,23 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						{	//If the open note has crazy status though
 							marker_length = 1;	//End the marker immediately to better suit Clone Hero's MIDI logic to ensure overlapped notes aren't converted to open strums
 						}
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
-						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-						phase_shift_sysex_phrase[5] = 1;	//Store the phrase ID (1 = Open Strum Bass)
-						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom open bass phrase start marker
-						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-						eof_add_sysex_event(deltapos + marker_length, 8, phase_shift_sysex_phrase, 0);	//Write the custom open bass phrase stop marker
+						if(eof_song_contains_event(sp, "[ENHANCED_OPENS]", j, 0, 1))
+						{	//If the current track has the enhanced opens modifier, write it as a normal note
+							eof_add_midi_event(deltapos, 0x90, midi_note_offset - 1, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset - 1, vel, 0);
+						}
+						else
+						{	//Otherwise write a sysex open note
+							eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
+							eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+							phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+							phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+							phase_shift_sysex_phrase[5] = 1;	//Store the phrase ID (1 = Open Strum Bass)
+							phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase, 1);	//Write the custom open bass phrase start marker
+							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+							eof_add_sysex_event(deltapos + marker_length, 8, phase_shift_sysex_phrase, 0);	//Write the custom open bass phrase stop marker
+						}
 					}
 				}
 
