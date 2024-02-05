@@ -18,7 +18,7 @@
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #define KEY_EITHER_WIN (key[KEY_LWIN] || key[KEY_RWIN])
 #ifdef ALLEGRO_MACOSX
-		#define KEY_EITHER_CTRL (key[106])
+		#define KEY_EITHER_CTRL (key[KEY_COMMAND])
 #else
 		#define KEY_EITHER_CTRL (key[KEY_LCONTROL] || key[KEY_RCONTROL])
 #endif
