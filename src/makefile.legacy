@@ -51,7 +51,6 @@ $(BUNDLE).app : ../bin/$(EXENAME)
 	@cp ../bin/tutorial/*.* $(BUNDLE).app/Contents/Resources/eof/tutorial
 	@cp ../bin/vocaltutorial/*.* $(BUNDLE).app/Contents/Resources/eof/vocaltutorial
 	@cp ../Info.plist $(BUNDLE).app/Contents
-	@cp ../PkgInfo $(BUNDLE).app/Contents
 #	@dylibbundler -od -b -x $(BUNDLE).app/Contents/MacOS/$(EXENAME) -d $(BUNDLE).app/Contents/libs
 	@echo Application bundle created!
 
