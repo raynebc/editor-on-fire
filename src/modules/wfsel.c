@@ -344,8 +344,13 @@ char * ncd_folder_select(char * title)
 {
 
 	#ifdef ALLEGRO_LEGACY
+		char * retpath = ncd_file_select_a5(2, NULL, title, NULL);
 
-		return ncd_file_select_a5(2, NULL, title, NULL);
+		if(retpath)
+		{
+			put_backslash(retpath);
+		}
+		return retpath;
 
 	#else
 
