@@ -55,7 +55,7 @@ MENU eof_file_notes_panel_menu[] =
 	{eof_file_notes_panel_menu_string, eof_menu_file_notes_panel_user, NULL, 0, NULL},
 	{"&Browse", eof_menu_file_notes_panel_browse, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Enable\t" CTRL_NAME "+P", eof_display_notes_panel, NULL, 0, NULL},
+	{"&Enable\t" CTRL_NAME "+P", eof_display_notes_panel, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -63,7 +63,7 @@ MENU eof_file_3d_preview_menu[] =
 {
 	{"Set &HOPO image scale size", eof_set_3d_hopo_scale_size, NULL, 0, NULL},
 	{"Set &Camera angle", eof_set_3d_camera_angle, NULL, 0, NULL},
-	{"&Full height", eof_3d_preview_toggle_full_height, NULL, 0, NULL},
+	{"&Full height", eof_3d_preview_toggle_full_height, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -73,7 +73,7 @@ MENU eof_file_display_menu[] =
 	{"&3D preview", NULL, eof_file_3d_preview_menu, 0, NULL},
 	{"&Display", eof_menu_file_display, NULL, 0, NULL},
 	{"Set display &Width", eof_set_display_width, NULL, 0, NULL},
-	{"x2 &Zoom", eof_toggle_display_zoom, NULL, 0, NULL},
+	{"x2 &Zoom", eof_toggle_display_zoom, NULL, D_USER, NULL},
 	{"&Redraw\tShift+F5", eof_redraw_display, NULL, 0, NULL},
 	{"Benchmark image sequence", eof_benchmark_image_sequence, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}

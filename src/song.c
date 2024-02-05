@@ -7563,7 +7563,9 @@ int eof_create_image_sequence(char benchmark_only)
 	eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 	eof_set_music_pos(&eof_music_pos, eof_music_actual_pos + eof_av_delay);
 	clear_to_color(eof_screen, eof_color_light_gray);
-	blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+	#ifndef ALLEGRO_LEGACY
+		blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+	#endif
 	numms = endpos - startpos;	//The number of milliseconds to process
 	while(eof_music_pos.value <  endpos)
 	{

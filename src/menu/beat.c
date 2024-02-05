@@ -26,13 +26,13 @@ char eof_ks_menu_off_text[32] = {0};
 
 MENU eof_beat_time_signature_menu[] =
 {
-	{"&4/4", eof_menu_beat_ts_4_4, NULL, 0, NULL},
-	{"&2/4", eof_menu_beat_ts_2_4, NULL, 0, NULL},
-	{"&3/4", eof_menu_beat_ts_3_4, NULL, 0, NULL},
-	{"&5/4", eof_menu_beat_ts_5_4, NULL, 0, NULL},
-	{"&6/4", eof_menu_beat_ts_6_4, NULL, 0, NULL},
-	{"&Custom\tShift+I", eof_menu_beat_ts_custom, NULL, 0, NULL},
-	{eof_ts_menu_off_text, eof_menu_beat_ts_off, NULL, 0, NULL},
+	{"&4/4", eof_menu_beat_ts_4_4, NULL, D_USER, NULL},
+	{"&2/4", eof_menu_beat_ts_2_4, NULL, D_USER, NULL},
+	{"&3/4", eof_menu_beat_ts_3_4, NULL, D_USER, NULL},
+	{"&5/4", eof_menu_beat_ts_5_4, NULL, D_USER, NULL},
+	{"&6/4", eof_menu_beat_ts_6_4, NULL, D_USER, NULL},
+	{"&Custom\tShift+I", eof_menu_beat_ts_custom, NULL, D_USER, NULL},
+	{eof_ts_menu_off_text, eof_menu_beat_ts_off, NULL, D_USER, NULL},
 	{"Clear all", eof_menu_beat_remove_ts, NULL, 0, NULL},
 	{"Con&Vert", eof_menu_beat_ts_convert, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -40,22 +40,22 @@ MENU eof_beat_time_signature_menu[] =
 
 MENU eof_beat_key_signature_menu[] =
 {
-	{eof_ks_menu_off_text, eof_menu_beat_ks_off, NULL, 0, NULL},
-	{"B , g# (7 flats)", eof_menu_beat_ks_7_flats, NULL, 0, NULL},
-	{"Gb , eb (6 flats)", eof_menu_beat_ks_6_flats, NULL, 0, NULL},
-	{"Db , bb (5 flats)", eof_menu_beat_ks_5_flats, NULL, 0, NULL},
-	{"Ab , f (4 flats)", eof_menu_beat_ks_4_flats, NULL, 0, NULL},
-	{"Eb , c (3 flats)", eof_menu_beat_ks_3_flats, NULL, 0, NULL},
-	{"Bb , g (2 flats)", eof_menu_beat_ks_2_flats, NULL, 0, NULL},
-	{"F , d (1 flat)", eof_menu_beat_ks_1_flat, NULL, 0, NULL},
-	{"C , a (0 flats/sharps)", eof_menu_beat_ks_0_flats, NULL, 0, NULL},
-	{"G , e (1 sharp)", eof_menu_beat_ks_1_sharp, NULL, 0, NULL},
-	{"D , b (2 sharps)", eof_menu_beat_ks_2_sharps, NULL, 0, NULL},
-	{"A , f# (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, 0, NULL},
-	{"E , c# (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, 0, NULL},
-	{"B , g# (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, 0, NULL},
-	{"Gb , eb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, 0, NULL},
-	{"Db , bb (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, 0, NULL},
+	{eof_ks_menu_off_text, eof_menu_beat_ks_off, NULL, D_USER, NULL},
+	{"B , g# (7 flats)", eof_menu_beat_ks_7_flats, NULL, D_USER, NULL},
+	{"Gb , eb (6 flats)", eof_menu_beat_ks_6_flats, NULL, D_USER, NULL},
+	{"Db , bb (5 flats)", eof_menu_beat_ks_5_flats, NULL, D_USER, NULL},
+	{"Ab , f (4 flats)", eof_menu_beat_ks_4_flats, NULL, D_USER, NULL},
+	{"Eb , c (3 flats)", eof_menu_beat_ks_3_flats, NULL, D_USER, NULL},
+	{"Bb , g (2 flats)", eof_menu_beat_ks_2_flats, NULL, D_USER, NULL},
+	{"F , d (1 flat)", eof_menu_beat_ks_1_flat, NULL, D_USER, NULL},
+	{"C , a (0 flats/sharps)", eof_menu_beat_ks_0_flats, NULL, D_USER, NULL},
+	{"G , e (1 sharp)", eof_menu_beat_ks_1_sharp, NULL, D_USER, NULL},
+	{"D , b (2 sharps)", eof_menu_beat_ks_2_sharps, NULL, D_USER, NULL},
+	{"A , f# (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, D_USER, NULL},
+	{"E , c# (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, D_USER, NULL},
+	{"B , g# (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, D_USER, NULL},
+	{"Gb , eb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, D_USER, NULL},
+	{"Db , bb (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

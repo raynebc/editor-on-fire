@@ -104,20 +104,20 @@ MENU eof_song_seek_menu[] =
 
 MENU eof_track_selected_menu[EOF_TRACKS_MAX] =
 {
-	{eof_track_selected_menu_text[0], eof_menu_track_selected_1, NULL, D_SELECTED, NULL},
-	{eof_track_selected_menu_text[1], eof_menu_track_selected_2, NULL, 0, NULL},
-	{eof_track_selected_menu_text[2], eof_menu_track_selected_3, NULL, 0, NULL},
-	{eof_track_selected_menu_text[3], eof_menu_track_selected_4, NULL, 0, NULL},
-	{eof_track_selected_menu_text[4], eof_menu_track_selected_5, NULL, 0, NULL},
-	{eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, 0, NULL},
-	{eof_track_selected_menu_text[6], eof_menu_track_selected_7, NULL, 0, NULL},
-	{eof_track_selected_menu_text[7], eof_menu_track_selected_8, NULL, 0, NULL},
-	{eof_track_selected_menu_text[8], eof_menu_track_selected_9, NULL, 0, NULL},
-	{eof_track_selected_menu_text[9], eof_menu_track_selected_10, NULL, 0, NULL},
-	{eof_track_selected_menu_text[10], eof_menu_track_selected_11, NULL, 0, NULL},
-	{eof_track_selected_menu_text[11], eof_menu_track_selected_12, NULL, 0, NULL},
-	{eof_track_selected_menu_text[12], eof_menu_track_selected_13, NULL, 0, NULL},
-	{eof_track_selected_menu_text[13], eof_menu_track_selected_14, NULL, 0, NULL},
+	{eof_track_selected_menu_text[0], eof_menu_track_selected_1, NULL, D_SELECTED | D_USER, NULL},
+	{eof_track_selected_menu_text[1], eof_menu_track_selected_2, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[2], eof_menu_track_selected_3, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[3], eof_menu_track_selected_4, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[4], eof_menu_track_selected_5, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[6], eof_menu_track_selected_7, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[7], eof_menu_track_selected_8, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[8], eof_menu_track_selected_9, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[9], eof_menu_track_selected_10, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[10], eof_menu_track_selected_11, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[11], eof_menu_track_selected_12, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[12], eof_menu_track_selected_13, NULL, D_USER, NULL},
+	{eof_track_selected_menu_text[13], eof_menu_track_selected_14, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -141,24 +141,24 @@ MENU eof_catalog_menu[] =
 
 MENU eof_waveform_menu[] =
 {
-	{"&Show\tF5", eof_menu_song_waveform, NULL, 0, NULL},
+	{"&Show\tF5", eof_menu_song_waveform, NULL, D_USER, NULL},
 	{"&Configure", eof_menu_song_waveform_settings, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_spectrogram_menu[] =
 {
-	{"&Show", eof_menu_song_spectrogram, NULL, 0, NULL},
+	{"&Show", eof_menu_song_spectrogram, NULL, D_USER, NULL},
 	{"&Configure", eof_menu_song_spectrogram_settings, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_song_proguitar_menu[] =
 {
-	{"Enable &Legacy view", eof_menu_song_legacy_view, NULL, 0, NULL},
+	{"Enable &Legacy view", eof_menu_song_legacy_view, NULL, D_USER, NULL},
 	{"&Previous chord name\t" CTRL_NAME "+Shift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
 	{"&Next chord name\t" CTRL_NAME "+Shift+E", eof_menu_next_chord_result, NULL, 0, NULL},
-	{"&Highlight notes in arpeggios", eof_menu_song_highlight_arpeggios, NULL, 0, NULL},
+	{"&Highlight notes in arpeggios", eof_menu_song_highlight_arpeggios, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

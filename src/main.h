@@ -30,6 +30,12 @@
 	#define CTRL_NAME "Ctrl"
 #endif
 
+#ifdef ALLEGRO_LEGACY
+	#define EOF_MENU_HEIGHT 0
+#else
+	#define EOF_MENU_HEIGHT 20
+#endif
+
 #define EOF_SNAP_OFF           0
 #define EOF_SNAP_QUARTER       1
 #define EOF_SNAP_EIGHTH        2

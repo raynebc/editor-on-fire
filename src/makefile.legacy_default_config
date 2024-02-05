@@ -1,4 +1,4 @@
 CC = gcc
 CFLAGS = -O2 -flto -Ialogg/include -I/usr/local/include -DEOF_BUILD -DALLEGRO_LEGACY_STATIC
 CXXFLAGS = $(CFLAGS)
-LIBS = `pkg-config allegro --libs` -lallegro -lallegro_audio -lallegro_main -logg -lvorbis -lvorbisfile -lm -lfftw3 -lrubberband -lstdc++
+LIBS = `pkg-config allegro --libs` -lallegro -lallegro_audio -lallegro_dialog -lallegro_main -logg -lvorbis -lvorbisfile -lm -lfftw3 -lrubberband -lstdc++

@@ -28,6 +28,9 @@
 #include "menu/track.h"
 #include "menu/help.h"
 #include "menu/note.h"	//For pitch macros
+#ifdef ALLEGRO_LEGACY
+	#include "menu/native.h"
+#endif
 #include "main.h"
 #include "utility.h"
 #include "player.h"
@@ -1059,7 +1062,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	{
 		editorwidth = eof_screen_width;	//Otherwise the editor windows will be full window width
 	}
-	eof_window_editor = eof_window_create(0, 20, editorwidth, (eof_screen_height / 2) - 20, eof_screen);
+	eof_window_editor = eof_window_create(0, EOF_MENU_HEIGHT, editorwidth, (eof_screen_height / 2) - EOF_MENU_HEIGHT, eof_screen);
 	if(!eof_window_editor)
 	{
 		allegro_message("Unable to create editor window!");
@@ -1076,7 +1079,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilt eof_window_editor2:  x = %d, y = %d, w = %d, h = %d", eof_window_editor2->x, eof_window_editor2->y, eof_window_editor2->w, eof_window_editor2->h);
 	eof_log(eof_log_string, 2);
 	eof_window_note_lower_left = eof_window_create(0, eof_screen_height / 2, editorwidth, eof_screen_height / 2, eof_screen);	//Make the note window the same width as the editor window
-	eof_window_note_upper_left = eof_window_create(0, 20, editorwidth, eof_screen_height / 2, eof_screen);
+	eof_window_note_upper_left = eof_window_create(0, EOF_MENU_HEIGHT, editorwidth, eof_screen_height / 2, eof_screen);
 	if(!eof_window_note_lower_left || !eof_window_note_upper_left)
 	{
 		allegro_message("Unable to create information windows!");
@@ -1088,7 +1091,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	eof_log(eof_log_string, 2);
 	if(eof_full_height_3d_preview)
 	{	//If the 3D preview is expanded to take the full program window height
-		eof_window_3d = eof_window_create(eof_screen_width - EOF_SCREEN_PANEL_WIDTH, 20, EOF_SCREEN_PANEL_WIDTH, eof_screen_height, eof_screen);
+		eof_window_3d = eof_window_create(eof_screen_width - EOF_SCREEN_PANEL_WIDTH, EOF_MENU_HEIGHT, EOF_SCREEN_PANEL_WIDTH, eof_screen_height, eof_screen);
 	}
 	else
 	{
@@ -1101,7 +1104,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	}
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilt eof_window_3d:  x = %d, y = %d, w = %d, h = %d", eof_window_3d->x, eof_window_3d->y, eof_window_3d->w, eof_window_3d->h);
 	eof_log(eof_log_string, 2);
-	eof_screen_layout.scrollbar_y = (eof_screen_height / 2) - 37;
+	eof_screen_layout.scrollbar_y = (eof_screen_height / 2) - EOF_MENU_HEIGHT - 17;
 	eof_scale_fretboard(5);	//Set the eof_screen_layout.note_y[] array based on a 5 lane track, for setting the fretboard height below
 	eof_screen_layout.lyric_y = 20;
 	eof_screen_layout.vocal_view_size = 13;
@@ -2203,23 +2206,25 @@ void eof_read_global_keys(void)
 	}
 
 	/* activate the menu when ALT is pressed */
-	if(KEY_EITHER_ALT)
-	{
-		eof_log("ALT keypress detected, activating main menu", 1);
-		clear_keybuf();
-		eof_cursor_visible = 0;
-		eof_emergency_stop_music();
-		eof_render();
-		eof_mouse_x = mouse_x;	//Store the mouse's coordinates
-		eof_mouse_y = mouse_y;
-		mouse_x = mouse_y = 0;	//Move the mouse out of the way of the menu
-		eof_show_mouse(screen);
-		mouse_callback = eof_hidden_mouse_callback;	//Install a mouse callback that will restore the mouse's original position if it moves
-		(void) eof_popup_dialog(eof_main_dialog, 0);
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		eof_show_mouse(NULL);
-	}
+	#ifndef ALLEGRO_LEGACY
+		if(KEY_EITHER_ALT)
+		{
+			eof_log("ALT keypress detected, activating main menu", 1);
+			clear_keybuf();
+			eof_cursor_visible = 0;
+			eof_emergency_stop_music();
+			eof_render();
+			eof_mouse_x = mouse_x;	//Store the mouse's coordinates
+			eof_mouse_y = mouse_y;
+			mouse_x = mouse_y = 0;	//Move the mouse out of the way of the menu
+			eof_show_mouse(screen);
+			mouse_callback = eof_hidden_mouse_callback;	//Install a mouse callback that will restore the mouse's original position if it moves
+			(void) eof_popup_dialog(eof_main_dialog, 0);
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_show_mouse(NULL);
+		}
+	#endif
 
 	/* switch between window and full screen mode */
 /*	if(KEY_EITHER_ALT && key[KEY_ENTER])
@@ -2684,17 +2689,19 @@ void eof_logic(void)
 	}
 
 	/* see if we need to activate the menu */
-	if((mouse_y < eof_image[EOF_IMAGE_MENU]->h) && (mouse_b & 1))
-	{
-		eof_cursor_visible = 0;
-		eof_emergency_stop_music();
-		eof_render();
-		clear_keybuf();
-		(void) eof_popup_dialog(eof_main_dialog, 0);
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		eof_show_mouse(NULL);
-	}
+	#ifndef ALLEGRO_LEGACY
+		if((mouse_y < eof_image[EOF_IMAGE_MENU]->h) && (mouse_b & 1))
+		{
+			eof_cursor_visible = 0;
+			eof_emergency_stop_music();
+			eof_render();
+			clear_keybuf();
+			(void) eof_popup_dialog(eof_main_dialog, 0);
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_show_mouse(NULL);
+		}
+	#endif
 
 	eof_last_note = EOF_MAX_NOTES;
 
@@ -2767,6 +2774,11 @@ void eof_logic(void)
 		eof_find_lyric_preview_lines();
 	}
 	eof_frame++;
+
+	#ifdef ALLEGRO_LEGACY
+		eof_handle_native_menu_clicks();
+		eof_update_native_menus();
+	#endif
 }
 
 static char eof_tone_name_buffer[16] = {0};
@@ -3719,17 +3731,19 @@ void eof_render(void)
 		{	//Otherwise just draw a blank screen
 			clear_to_color(eof_screen, eof_color_light_gray);
 		}
-		if(!eof_full_screen_3d && !eof_screen_zoom)
-		{	//Only blit the menu bar now if neither full screen 3D view nor x2 zoom is in effect, otherwise it will be blitted later
-			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
-				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		#ifndef ALLEGRO_LEGACY
+			if(!eof_full_screen_3d && !eof_screen_zoom)
+			{	//Only blit the menu bar now if neither full screen 3D view nor x2 zoom is in effect, otherwise it will be blitted later
+				if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+				{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+					blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+				}
+				else
+				{
+					blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+				}
 			}
-			else
-			{
-				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-			}
-		}
+		#endif
 		if(!eof_beat_stats_cached)
 		{	//If the cached beat statistics are not current
 			eof_log("\tRebuilding beat stats.", 3);
@@ -3762,14 +3776,16 @@ void eof_render(void)
 		{	//Otherwise just draw a blank screen
 			clear_to_color(eof_screen, eof_color_gray);
 		}
-		if(eof_screen_zoom)
-		{	//If x2 zoom is enabled, stretch blit the menu
-			stretch_blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU]->w, eof_image[EOF_IMAGE_MENU]->h, 0, 0, eof_image[EOF_IMAGE_MENU]->w / 2, eof_image[EOF_IMAGE_MENU]->h / 2);
-		}
-		else
-		{	//Otherwise render it normally
-			blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-		}
+		#ifndef ALLEGRO_LEGACY
+			if(eof_screen_zoom)
+			{	//If x2 zoom is enabled, stretch blit the menu
+				stretch_blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU]->w, eof_image[EOF_IMAGE_MENU]->h, 0, 0, eof_image[EOF_IMAGE_MENU]->w / 2, eof_image[EOF_IMAGE_MENU]->h / 2);
+			}
+			else
+			{	//Otherwise render it normally
+				blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+			}
+		#endif
 	}
 
 //	eof_log("\tSub-windows rendered", 3);
@@ -3814,17 +3830,19 @@ void eof_render(void)
 		rectfill(eof_screen, EOF_SCREEN_PANEL_WIDTH * 2 + 1, 0, eof_screen->w - 1, eof_screen->h - 1, eof_color_gray);	//Erase the portion to the right of the scaled 3D preview (2 panel widths), in case the window width was increased, otherwise the normal sized 3D preview will be visible
 		eof_window_info->y = 0;	//Re-position the info window to the top left corner of EOF's program window
 		eof_render_info_window();
-		if(!eof_screen_zoom)
-		{	//If x2 zoom is not enabled, render the menu now
-			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
-				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		#ifndef ALLEGRO_LEGACY
+			if(!eof_screen_zoom)
+			{	//If x2 zoom is not enabled, render the menu now
+				if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+				{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+					blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+				}
+				else
+				{
+					blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+				}
 			}
-			else
-			{
-				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-			}
-		}
+		#endif
 		eof_window_info->y = eof_screen_height / 2;	//Re-position the info window to the bottom left corner of EOF's program window
 	}
 
@@ -3842,14 +3860,16 @@ void eof_render(void)
 		//The highest quality (and most memory wasteful) solution would require another large bitmap to render the x2 program window and then the x1 menus on top, which would then be blit to screen
 		eof_log("\tPerforming x2 blit.", 3);
 		stretch_blit(eof_screen, eof_screen2, 0, 0, eof_screen_width, eof_screen_height, 0, 0, SCREEN_W, SCREEN_H);	//Stretch blit the screen to another bitmap
-		if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
-			blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);			//Normal blit the menu to that latter bitmap
-		}
-		else
-		{
-			blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-		}
+		#ifndef ALLEGRO_LEGACY
+			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);			//Normal blit the menu to that latter bitmap
+			}
+			else
+			{
+				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+			}
+		#endif
 		blit(eof_screen2, screen, 0, 0, 0, 0, eof_screen2->w, eof_screen2->h);	//Blit that latter bitmap to screen
 	}
 	else
@@ -4965,6 +4985,9 @@ int eof_initialize(int argc, char * argv[])
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 		(void) eof_display_notes_panel();
 	}
+	#ifdef ALLEGRO_LEGACY
+		eof_set_up_native_menus(eof_main_menu);
+	#endif
 
 	return 1;
 }
