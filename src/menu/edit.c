@@ -1566,13 +1566,14 @@ int eof_menu_edit_copy(void)
 int eof_menu_edit_paste_logic(int function)
 {
 	unsigned long i, j;
-	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
+	unsigned long * paste_pos = NULL;
 	unsigned long paste_count = 0;
 	unsigned long first_beat = 0;
 	unsigned long this_beat;
 	unsigned long copy_notes;
 	PACKFILE * fp;
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note;
+	EOF_EXTENDED_NOTE first_note;
 	EOF_EXTENDED_NOTE last_note;
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
@@ -1594,9 +1595,22 @@ int eof_menu_edit_paste_logic(int function)
 	unsigned long intervalbeat = 0;
 	unsigned char intervalvalue = 0, intervalnum = 0;
 
+	int ret = 0;
+
+	memset(&temp_note, 0, sizeof(EOF_EXTENDED_NOTE));
+	memset(&first_note, 0, sizeof(EOF_EXTENDED_NOTE));
+	memset(&last_note, 0, sizeof(EOF_EXTENDED_NOTE));
+	paste_pos = malloc(sizeof(unsigned long) * EOF_MAX_NOTES);
+	if(!paste_pos)
+	{
+		ret = 1;
+		goto cleanup;
+	}
+
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
-		return eof_menu_edit_paste_vocal_logic(function);	//Call the old or new vocal paste logic accordingly
+		ret = eof_menu_edit_paste_vocal_logic(function);	//Call the old or new vocal paste logic accordingly
+		goto cleanup;
 	}
 
 	if(function == 1)
@@ -1615,11 +1629,13 @@ int eof_menu_edit_paste_logic(int function)
 	if(!fp)
 	{
 		allegro_message("Clipboard error!\nNothing to paste!");
-		return 1;
+		ret = 1;
+		goto cleanup;
 	}
 	if(!oldpaste && (first_beat + this_beat >= eof_song->beats - 1))
 	{	//If new paste logic is being used, return from function if the first note would paste after the last beat
-		return 1;
+		ret = 1;
+		goto cleanup;
 	}
 	source_id = pack_igetl(fp);			//Read the source EOF instance number
 	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
@@ -1629,7 +1645,8 @@ int eof_menu_edit_paste_logic(int function)
 	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
 	if(!copy_notes)
 	{	//If there are 0 notes on the clipboard, return without making an undo
-		return 1;
+		ret = 1;
+		goto cleanup;
 	}
 	if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the source and destination track are both pro guitar format, pre-check to ensure that the pasted notes won't go above the current track's fret limit
@@ -1642,7 +1659,8 @@ int eof_menu_edit_paste_logic(int function)
 			if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this fret limit issue
 				(void) pack_fclose(fp);
-				return 0;
+				ret = 0;
+				goto cleanup;
 			}
 		}
 	}
@@ -1655,7 +1673,8 @@ int eof_menu_edit_paste_logic(int function)
 		if(alert(NULL, message, "Gems will either be dropped, or added to form all-lane chords for such notes.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to continue after being alerted of this lane limit issue
 			(void) pack_fclose(fp);
-			return 0;
+			ret = 0;
+			goto cleanup;
 		}
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
@@ -1742,7 +1761,8 @@ int eof_menu_edit_paste_logic(int function)
 			if(!eof_song_append_beats(eof_song, 1))
 			{	//If there was an error adding a beat
 				eof_log("\tError adding beat.  Aborting", 1);
-				return 1;
+				ret = 1;
+				goto cleanup;
 			}
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
@@ -1920,7 +1940,13 @@ int eof_menu_edit_paste_logic(int function)
 			}
 		}
 	}
-	return 1;
+	ret = 1;
+
+	cleanup:
+	{
+		free(paste_pos);
+	}
+	return ret;
 }
 
 int eof_menu_edit_paste(void)
