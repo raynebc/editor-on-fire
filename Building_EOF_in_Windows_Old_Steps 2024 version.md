@@ -147,8 +147,6 @@ If everything worked, it will indicate that it got to the point where it was cre
 make
 make install
 ```
-!!! It's not clear whether the link time optimization flags work correctly with this version of rubberband...
-
 Even if errors are given during the make commands, check the "lib" directory of the rubberband source folder for librubberband.a.  If it is there, then it worked enough to get the library built, go ahead and copy that file to the "lib" directory of your 32 bit compiler folder (ie. C:\mingw32\i686-w64-mingw32\lib).  Then copy the "rubberband" headers folder from the rubberband source code folder to the "include" directory of your 32 bit compiler (ie. C:\mingw32\i686-w64-mingw32\include).
 
 
