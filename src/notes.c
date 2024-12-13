@@ -2212,7 +2212,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 			unsigned char position;
 
-			position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
+			position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos.value - eof_av_delay);	//Find if there's a fret hand position in effect
 			if(position)
 			{	//If a fret hand position is in effect
 				snprintf(dest_buffer, dest_buffer_size, "%u", position);
@@ -2231,7 +2231,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 			unsigned long tone;
 
-			tone = eof_pro_guitar_track_find_effective_tone(tp, eof_music_pos - eof_av_delay);	//Find if there's a tone change in effect
+			tone = eof_pro_guitar_track_find_effective_tone(tp, eof_music_pos.value - eof_av_delay);	//Find if there's a tone change in effect
 			if(tone < EOF_MAX_PHRASES)
 			{	//If a tone change is in effect
 				snprintf(dest_buffer, dest_buffer_size, "%s", tp->tonechange[tone].name);
@@ -2255,16 +2255,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		int min, sec, ms;
 
-		ms = (eof_music_pos - eof_av_delay) % 1000;
+		ms = (eof_music_pos.value - eof_av_delay) % 1000;
 		if(!eof_display_seek_pos_in_seconds)
 		{	//If the seek position is to be displayed as minutes:seconds
-			min = ((eof_music_pos - eof_av_delay) / 1000) / 60;
-			sec = ((eof_music_pos - eof_av_delay) / 1000) % 60;
+			min = ((eof_music_pos.value - eof_av_delay) / 1000) / 60;
+			sec = ((eof_music_pos.value - eof_av_delay) / 1000) % 60;
 			snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
 		}
 		else
 		{	//If the seek position is to be displayed as seconds
-			sec = (eof_music_pos - eof_av_delay) / 1000;
+			sec = (eof_music_pos.value - eof_av_delay) / 1000;
 			snprintf(dest_buffer, dest_buffer_size, "%d.%03ds", sec, ms);
 		}
 		return 1;
@@ -2275,8 +2275,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		int sec, ms;
 
-		sec = (eof_music_pos - eof_av_delay) / 1000;
-		ms = (eof_music_pos - eof_av_delay) % 1000;
+		sec = (eof_music_pos.value - eof_av_delay) / 1000;
+		ms = (eof_music_pos.value - eof_av_delay) % 1000;
 		snprintf(dest_buffer, dest_buffer_size, "%d.%03ds", sec, ms);
 
 		return 1;
@@ -2287,9 +2287,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		int min, sec, ms;
 
-		min = ((eof_music_pos - eof_av_delay) / 1000) / 60;
-		sec = ((eof_music_pos - eof_av_delay) / 1000) % 60;
-		ms = (eof_music_pos - eof_av_delay) % 1000;
+		min = ((eof_music_pos.value - eof_av_delay) / 1000) / 60;
+		sec = ((eof_music_pos.value - eof_av_delay) / 1000) % 60;
+		ms = (eof_music_pos.value - eof_av_delay) % 1000;
 		snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
 
 		return 1;
@@ -2298,7 +2298,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position as a percentage of the chart's total length
 	if(!ustricmp(macro, "SEEK_POSITION_PERCENT"))
 	{
-		double percent = (double)(eof_music_pos - eof_av_delay) * 100.0 / eof_chart_length;
+		double percent = (double)(eof_music_pos.value - eof_av_delay) * 100.0 / eof_chart_length;
 
 		snprintf(dest_buffer, dest_buffer_size, "%.2f", percent);
 
@@ -2532,7 +2532,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score && eof_ch_sp_solution->num_deployments)
 		{	//If the global star power solution structure is built and a score was determined
 			unsigned long sp_start = 0, sp_end = 0;
-			if(eof_pos_is_within_sp_deployment(eof_ch_sp_solution, eof_music_pos - eof_av_delay, &sp_start, &sp_end))
+			if(eof_pos_is_within_sp_deployment(eof_ch_sp_solution, eof_music_pos.value - eof_av_delay, &sp_start, &sp_end))
 			{	//If the seek position is within any defined star power deployment
 				snprintf(dest_buffer, dest_buffer_size, "Seek pos within %lums to %lums deployment", sp_start, sp_end);
 			}
@@ -2578,7 +2578,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//For each note in the active track
 				pos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
 
-				if(pos > eof_music_pos - eof_av_delay)
+				if(pos > eof_music_pos.value - eof_av_delay)
 				{	//If this note is after the seek position
 					break;	//All other notes are as well, stop parsing them
 				}
@@ -3206,7 +3206,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The effective note per second rate of the current grid snap at the current seek position
 	if(!ustricmp(macro, "GRID_SNAP_SEEK_POS_LENGTH_NPS"))
 	{
-		unsigned long pos = eof_music_pos - eof_av_delay;
+		unsigned long pos = eof_music_pos.value - eof_av_delay;
 
 		if((eof_snap_mode != EOF_SNAP_OFF) && (pos < eof_song->beat[eof_song->beats - 1]->pos))
 		{	//If grid snap is enabled and the seek position is before the last beat marker
@@ -3248,7 +3248,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined star power phrase
 	if(!ustricmp(macro, "SEEK_SP_STATUS") || !ustricmp(macro, "SEEK_SP_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SP_SECTION, eof_music_pos - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SP_SECTION, eof_music_pos.value - eof_av_delay);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a star power phrase
@@ -3264,7 +3264,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined lyric line
 	if(!ustricmp(macro, "SEEK_LYRIC_LINE_STATUS") || !ustricmp(macro, "SEEK_LYRIC_LINE_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, EOF_TRACK_VOCALS, EOF_LYRIC_PHRASE_SECTION, eof_music_pos - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, EOF_TRACK_VOCALS, EOF_LYRIC_PHRASE_SECTION, eof_music_pos.value - eof_av_delay);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a lyric line
@@ -3280,7 +3280,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined slider phrase
 	if(!ustricmp(macro, "SEEK_SLIDER_STATUS") || !ustricmp(macro, "SEEK_SLIDER_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SLIDER_SECTION, eof_music_pos - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SLIDER_SECTION, eof_music_pos.value - eof_av_delay);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a slider phrase
@@ -3296,7 +3296,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined solo phrase
 	if(!ustricmp(macro, "SEEK_SOLO_STATUS") || !ustricmp(macro, "SEEK_SOLO_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SOLO_SECTION, eof_music_pos - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SOLO_SECTION, eof_music_pos.value - eof_av_delay);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a solo phrase
@@ -3320,7 +3320,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the active track is a drum track
 			effectivephrasename = phrasename2;
 		}
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TRILL_SECTION, eof_music_pos - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TRILL_SECTION, eof_music_pos.value - eof_av_delay);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a trill phrase
@@ -3344,7 +3344,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the active track is a drum track
 			effectivephrasename = phrasename2;
 		}
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_music_pos - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_music_pos.value - eof_av_delay);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a trill phrase
@@ -3360,7 +3360,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined arpeggio phrase
 	if(!ustricmp(macro, "SEEK_ARPEGGIO_STATUS") || !ustricmp(macro, "SEEK_ARPEGGIO_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_music_pos - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_music_pos.value - eof_av_delay);
 		dest_buffer[0] = '\0';
 		if(phraseptr && !(phraseptr->flags & EOF_RS_ARP_HANDSHAPE))
 		{	//If the seek position is within a arpeggio phrase and is NOT marked as a handshape
@@ -3376,7 +3376,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined handshape phrase
 	if(!ustricmp(macro, "SEEK_HANDSHAPE_STATUS") || !ustricmp(macro, "SEEK_HANDSHAPE_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_music_pos - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_music_pos.value - eof_av_delay);
 		dest_buffer[0] = '\0';
 		if(phraseptr && (phraseptr->flags & EOF_RS_ARP_HANDSHAPE))
 		{	//If the seek position is within a arpeggio phrase and that phrase has the flag to indicate it is a handshape

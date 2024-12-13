@@ -6,6 +6,7 @@
 #endif
 #ifdef ALLEGRO_LEGACY
 	#include <a5alleg.h>
+	#include <allegro5/allegro_native_dialog.h>
 #endif
 #include <locale.h>	//For setlocale()
 #include <ctype.h>
@@ -27,6 +28,9 @@
 #include "menu/track.h"
 #include "menu/help.h"
 #include "menu/note.h"	//For pitch macros
+#ifdef ALLEGRO_LEGACY
+	#include "menu/native.h"
+#endif
 #include "main.h"
 #include "utility.h"
 #include "player.h"
@@ -256,7 +260,8 @@ int         eof_silence_loaded = 0;
 int         eof_music_data_size = 0;
 unsigned long eof_chart_length = 0;		//Stores the position of the last note/lyric/text event/bookmark or the end of the chart audio, whichever is longer
 unsigned long eof_music_length = 0;
-int         eof_music_pos;
+int         eof_logic_rate = 100;
+EOF_MUSIC_POS eof_music_pos;
 int         eof_music_pos2 = -1;		//The position to display in the secondary piano roll (-1 means it will initialize to the current track when it is enabled)
 int         eof_sync_piano_rolls = 1;	//If nonzero, the secondary piano roll will render with the current chart position instead of its own
 unsigned long eof_music_actual_pos;
@@ -622,7 +627,7 @@ void eof_find_lyric_preview_lines(void)
 	int next_line = -1;
 	unsigned long dist = 0;
 	int beyond = 1;
-	int adj_eof_music_pos = eof_music_pos - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
+	int adj_eof_music_pos = eof_music_pos.value - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
 
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
@@ -1005,6 +1010,12 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		effectivewidth = eof_screen_width_default;
 	}
 
+	#ifdef ALLEGRO_LEGACY
+		#ifdef ALLEGRO_LINUX
+			al_set_new_display_flag(ALLEGRO_GTK_TOPLEVEL);
+		#endif
+	#endif
+
 	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, effectivewidth, effectiveheight, 0, 0))
 	{	//If the specified window size could not be set, try again in full screen mode
 		if(set_gfx_mode(GFX_AUTODETECT, effectivewidth, effectiveheight, 0, 0))
@@ -1051,7 +1062,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	{
 		editorwidth = eof_screen_width;	//Otherwise the editor windows will be full window width
 	}
-	eof_window_editor = eof_window_create(0, 20, editorwidth, (eof_screen_height / 2) - 20, eof_screen);
+	eof_window_editor = eof_window_create(0, EOF_MENU_HEIGHT, editorwidth, (eof_screen_height / 2) - EOF_MENU_HEIGHT, eof_screen);
 	if(!eof_window_editor)
 	{
 		allegro_message("Unable to create editor window!");
@@ -1068,7 +1079,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilt eof_window_editor2:  x = %d, y = %d, w = %d, h = %d", eof_window_editor2->x, eof_window_editor2->y, eof_window_editor2->w, eof_window_editor2->h);
 	eof_log(eof_log_string, 2);
 	eof_window_note_lower_left = eof_window_create(0, eof_screen_height / 2, editorwidth, eof_screen_height / 2, eof_screen);	//Make the note window the same width as the editor window
-	eof_window_note_upper_left = eof_window_create(0, 20, editorwidth, eof_screen_height / 2, eof_screen);
+	eof_window_note_upper_left = eof_window_create(0, EOF_MENU_HEIGHT, editorwidth, eof_screen_height / 2, eof_screen);
 	if(!eof_window_note_lower_left || !eof_window_note_upper_left)
 	{
 		allegro_message("Unable to create information windows!");
@@ -1080,7 +1091,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	eof_log(eof_log_string, 2);
 	if(eof_full_height_3d_preview)
 	{	//If the 3D preview is expanded to take the full program window height
-		eof_window_3d = eof_window_create(eof_screen_width - EOF_SCREEN_PANEL_WIDTH, 20, EOF_SCREEN_PANEL_WIDTH, eof_screen_height, eof_screen);
+		eof_window_3d = eof_window_create(eof_screen_width - EOF_SCREEN_PANEL_WIDTH, EOF_MENU_HEIGHT, EOF_SCREEN_PANEL_WIDTH, eof_screen_height, eof_screen);
 	}
 	else
 	{
@@ -1093,7 +1104,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	}
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilt eof_window_3d:  x = %d, y = %d, w = %d, h = %d", eof_window_3d->x, eof_window_3d->y, eof_window_3d->w, eof_window_3d->h);
 	eof_log(eof_log_string, 2);
-	eof_screen_layout.scrollbar_y = (eof_screen_height / 2) - 37;
+	eof_screen_layout.scrollbar_y = (eof_screen_height / 2) - EOF_MENU_HEIGHT - 17;
 	eof_scale_fretboard(5);	//Set the eof_screen_layout.note_y[] array based on a 5 lane track, for setting the fretboard height below
 	eof_screen_layout.lyric_y = 20;
 	eof_screen_layout.vocal_view_size = 13;
@@ -2195,23 +2206,25 @@ void eof_read_global_keys(void)
 	}
 
 	/* activate the menu when ALT is pressed */
-	if(KEY_EITHER_ALT)
-	{
-		eof_log("ALT keypress detected, activating main menu", 1);
-		clear_keybuf();
-		eof_cursor_visible = 0;
-		eof_emergency_stop_music();
-		eof_render();
-		eof_mouse_x = mouse_x;	//Store the mouse's coordinates
-		eof_mouse_y = mouse_y;
-		mouse_x = mouse_y = 0;	//Move the mouse out of the way of the menu
-		eof_show_mouse(screen);
-		mouse_callback = eof_hidden_mouse_callback;	//Install a mouse callback that will restore the mouse's original position if it moves
-		(void) eof_popup_dialog(eof_main_dialog, 0);
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		eof_show_mouse(NULL);
-	}
+	#ifndef ALLEGRO_LEGACY
+		if(KEY_EITHER_ALT)
+		{
+			eof_log("ALT keypress detected, activating main menu", 1);
+			clear_keybuf();
+			eof_cursor_visible = 0;
+			eof_emergency_stop_music();
+			eof_render();
+			eof_mouse_x = mouse_x;	//Store the mouse's coordinates
+			eof_mouse_y = mouse_y;
+			mouse_x = mouse_y = 0;	//Move the mouse out of the way of the menu
+			eof_show_mouse(screen);
+			mouse_callback = eof_hidden_mouse_callback;	//Install a mouse callback that will restore the mouse's original position if it moves
+			(void) eof_popup_dialog(eof_main_dialog, 0);
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_show_mouse(NULL);
+		}
+	#endif
 
 	/* switch between window and full screen mode */
 /*	if(KEY_EITHER_ALT && key[KEY_ENTER])
@@ -2662,6 +2675,7 @@ void eof_note_logic(void)
 
 void eof_logic(void)
 {
+	int speed = 1000;
 //	eof_log("eof_logic() entered");
 
 	eof_read_keyboard_input(1);	//Drop ASCII values for number pad key presses
@@ -2675,17 +2689,19 @@ void eof_logic(void)
 	}
 
 	/* see if we need to activate the menu */
-	if((mouse_y < eof_image[EOF_IMAGE_MENU]->h) && (mouse_b & 1))
-	{
-		eof_cursor_visible = 0;
-		eof_emergency_stop_music();
-		eof_render();
-		clear_keybuf();
-		(void) eof_popup_dialog(eof_main_dialog, 0);
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		eof_show_mouse(NULL);
-	}
+	#ifndef ALLEGRO_LEGACY
+		if((mouse_y < eof_image[EOF_IMAGE_MENU]->h) && (mouse_b & 1))
+		{
+			eof_cursor_visible = 0;
+			eof_emergency_stop_music();
+			eof_render();
+			clear_keybuf();
+			(void) eof_popup_dialog(eof_main_dialog, 0);
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_show_mouse(NULL);
+		}
+	#endif
 
 	eof_last_note = EOF_MAX_NOTES;
 
@@ -2703,7 +2719,7 @@ void eof_logic(void)
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
 		}
 	}
 	else if(!eof_music_paused)
@@ -2712,88 +2728,25 @@ void eof_logic(void)
 		{
 			if(eof_playback_speed != eof_mix_speed)
 			{
-				if(eof_mix_speed == 1000)		//Force full speed playback
-					eof_music_pos += 10;
-				else if(eof_mix_speed == 500)	//Force half speed playback
-					eof_music_pos += 5;
-				else if(eof_mix_speed == 250)	//Force quarter speed playback
-				{
-					if(eof_frame % 2 == 0)
-					{	//Round up every even frame
-						eof_music_pos += 3;
-					}
-					else
-					{	//Round down every odd frame
-						eof_music_pos += 2;
-					}
-				}
-				else							//Something unexpected is going on
-					eof_playback_speed = eof_mix_speed;
+				speed = eof_mix_speed;
 			}
 			else
 			{
-				switch(eof_playback_speed)
-				{
-					case 1000:
-					{
-						eof_music_pos += 10;
-						break;
-					}
-					case 750:
-					{
-						if(eof_frame % 2 == 0)
-						{	//Round up every even frame
-							eof_music_pos += 8;
-						}
-						else
-						{	//Round down every odd frame
-							eof_music_pos += 7;
-						}
-						break;
-					}
-					case 500:
-					{
-						eof_music_pos += 5;
-						break;
-					}
-					case 250:
-					{
-						if(eof_frame % 2 == 0)
-						{	//Round up every even frame
-							eof_music_pos += 3;
-						}
-						else
-						{	//Round down every odd frame
-							eof_music_pos += 2;
-						}
-						break;
-					}
-					default:	//For custom playback rate
-					{
-						if(eof_frame % 2 == 0)	//If eof_frame is even
-						{
-							eof_music_pos += (eof_playback_speed / 100.0 + 0.5);	//Round up
-						}
-						else
-						{
-							eof_music_pos += eof_playback_speed / 100;	//Round down
-						}
-						break;
-					}
-				}
+				speed = eof_playback_speed;
 			}
+			eof_update_music_pos(&eof_music_pos, speed);
 		}
 		else
 		{
-			eof_music_pos = eof_music_actual_pos;
+			eof_set_music_pos(&eof_music_pos, eof_music_actual_pos);
 		}
-		if(eof_play_selection && (eof_music_pos - eof_av_delay > eof_music_end_pos))
+		if(eof_play_selection && (eof_music_pos.value - eof_av_delay > eof_music_end_pos))
 		{
 			eof_music_paused = 1;
-			eof_music_pos = eof_music_rewind_pos;
+			eof_set_music_pos(&eof_music_pos, eof_music_rewind_pos);
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
 			if(key[KEY_S])
 			{	//If S is still being held down, replay the note selection
 				eof_music_play(0);
@@ -2821,6 +2774,11 @@ void eof_logic(void)
 		eof_find_lyric_preview_lines();
 	}
 	eof_frame++;
+
+	#ifdef ALLEGRO_LEGACY
+		eof_handle_native_menu_clicks();
+		eof_update_native_menus();
+	#endif
 }
 
 static char eof_tone_name_buffer[16] = {0};
@@ -3466,8 +3424,8 @@ void eof_render_3d_window(void)
 		if(sectionptr == NULL)
 			continue;	//If the solo section couldn't be found, skip it
 
-		sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-		sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
+		sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 		if((eof_3d_min_depth <= sez) && (eof_3d_max_depth >= sz))
 		{
 			spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
@@ -3496,8 +3454,8 @@ void eof_render_3d_window(void)
 			if(sectionptr->difficulty != eof_note_type)
 				continue;	//If this arpeggio isn't in the active difficulty, skip it
 
-			sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-			sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+			sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
+			sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 			if((eof_3d_min_depth > sez) || (eof_3d_max_depth < sz))
 				continue;	//If the arpeggio section would not render visibly, skip it
 
@@ -3525,8 +3483,8 @@ void eof_render_3d_window(void)
 	halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
 	if(eof_seek_selection_start != eof_seek_selection_end)
 	{	//If there is a seek selection
-		sz = (long)(eof_seek_selection_start + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-		sez = (long)(eof_seek_selection_end + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		sz = (long)(eof_seek_selection_start + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
+		sez = (long)(eof_seek_selection_end + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 		if((eof_3d_min_depth <= sez) && (eof_3d_max_depth >= sz))
 		{
 			spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
@@ -3589,8 +3547,8 @@ void eof_render_3d_window(void)
 							continue;	//Skip rendering it
 					}
 				}
-				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
+				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 				spz = sz < eof_3d_min_depth ? eof_3d_min_depth : sz;
 				spez = sez > eof_3d_max_depth ? eof_3d_max_depth : sez;
 				if((eof_3d_min_depth > sez) || (eof_3d_max_depth < sz))
@@ -3619,7 +3577,7 @@ void eof_render_3d_window(void)
 	/* draw the beat markers */
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
-		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d;
 		if((bz >= eof_3d_min_depth) && (bz <= eof_3d_max_depth))
 		{	//If the beat is visible
 			y_projection = ocd3d_project_y(200 + offset_y_3d, bz);
@@ -3701,7 +3659,7 @@ void eof_render_3d_window(void)
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar/bass track is active
 		unsigned long popupmessage;
-		if(eof_find_effective_rs_popup_message(eof_music_pos - eof_av_delay, &popupmessage))
+		if(eof_find_effective_rs_popup_message(eof_music_pos.value - eof_av_delay, &popupmessage))
 		{	//If there is a popup message in effect at the current position
 			textout_centre_ex(eof_window_3d->screen, font, eof_song->pro_guitar_track[tracknum]->popupmessage[popupmessage].name, eof_window_3d->screen->w / 2, 4, eof_color_white, eof_color_black);
 		}
@@ -3773,17 +3731,19 @@ void eof_render(void)
 		{	//Otherwise just draw a blank screen
 			clear_to_color(eof_screen, eof_color_light_gray);
 		}
-		if(!eof_full_screen_3d && !eof_screen_zoom)
-		{	//Only blit the menu bar now if neither full screen 3D view nor x2 zoom is in effect, otherwise it will be blitted later
-			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
-				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		#ifndef ALLEGRO_LEGACY
+			if(!eof_full_screen_3d && !eof_screen_zoom)
+			{	//Only blit the menu bar now if neither full screen 3D view nor x2 zoom is in effect, otherwise it will be blitted later
+				if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+				{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+					blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+				}
+				else
+				{
+					blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+				}
 			}
-			else
-			{
-				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-			}
-		}
+		#endif
 		if(!eof_beat_stats_cached)
 		{	//If the cached beat statistics are not current
 			eof_log("\tRebuilding beat stats.", 3);
@@ -3816,14 +3776,16 @@ void eof_render(void)
 		{	//Otherwise just draw a blank screen
 			clear_to_color(eof_screen, eof_color_gray);
 		}
-		if(eof_screen_zoom)
-		{	//If x2 zoom is enabled, stretch blit the menu
-			stretch_blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU]->w, eof_image[EOF_IMAGE_MENU]->h, 0, 0, eof_image[EOF_IMAGE_MENU]->w / 2, eof_image[EOF_IMAGE_MENU]->h / 2);
-		}
-		else
-		{	//Otherwise render it normally
-			blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-		}
+		#ifndef ALLEGRO_LEGACY
+			if(eof_screen_zoom)
+			{	//If x2 zoom is enabled, stretch blit the menu
+				stretch_blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, eof_image[EOF_IMAGE_MENU]->w, eof_image[EOF_IMAGE_MENU]->h, 0, 0, eof_image[EOF_IMAGE_MENU]->w / 2, eof_image[EOF_IMAGE_MENU]->h / 2);
+			}
+			else
+			{	//Otherwise render it normally
+				blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+			}
+		#endif
 	}
 
 //	eof_log("\tSub-windows rendered", 3);
@@ -3868,17 +3830,19 @@ void eof_render(void)
 		rectfill(eof_screen, EOF_SCREEN_PANEL_WIDTH * 2 + 1, 0, eof_screen->w - 1, eof_screen->h - 1, eof_color_gray);	//Erase the portion to the right of the scaled 3D preview (2 panel widths), in case the window width was increased, otherwise the normal sized 3D preview will be visible
 		eof_window_info->y = 0;	//Re-position the info window to the top left corner of EOF's program window
 		eof_render_info_window();
-		if(!eof_screen_zoom)
-		{	//If x2 zoom is not enabled, render the menu now
-			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
-				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		#ifndef ALLEGRO_LEGACY
+			if(!eof_screen_zoom)
+			{	//If x2 zoom is not enabled, render the menu now
+				if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+				{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+					blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+				}
+				else
+				{
+					blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+				}
 			}
-			else
-			{
-				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-			}
-		}
+		#endif
 		eof_window_info->y = eof_screen_height / 2;	//Re-position the info window to the bottom left corner of EOF's program window
 	}
 
@@ -3896,14 +3860,16 @@ void eof_render(void)
 		//The highest quality (and most memory wasteful) solution would require another large bitmap to render the x2 program window and then the x1 menus on top, which would then be blit to screen
 		eof_log("\tPerforming x2 blit.", 3);
 		stretch_blit(eof_screen, eof_screen2, 0, 0, eof_screen_width, eof_screen_height, 0, 0, SCREEN_W, SCREEN_H);	//Stretch blit the screen to another bitmap
-		if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
-			blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);			//Normal blit the menu to that latter bitmap
-		}
-		else
-		{
-			blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-		}
+		#ifndef ALLEGRO_LEGACY
+			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);			//Normal blit the menu to that latter bitmap
+			}
+			else
+			{
+				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+			}
+		#endif
 		blit(eof_screen2, screen, 0, 0, 0, 0, eof_screen2->w, eof_screen2->h);	//Blit that latter bitmap to screen
 	}
 	else
@@ -3911,9 +3877,6 @@ void eof_render(void)
 //		eof_log("\tPerforming normal blit.", 3);
 		blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);	//Render the screen normally
 	}
-	#ifdef ALLEGRO_LEGACY
-		allegro_render_screen();
-	#endif
 
 //	eof_log("eof_render() completed.", 3);
 }
@@ -4289,6 +4252,9 @@ int eof_initialize(int argc, char * argv[])
 		(void) fprintf(stderr, "Allegro can't initialize.  Exiting.");
 		return 0;
 	}
+	#ifdef ALLEGRO_LEGACY
+		al_init_native_dialog_addon();
+	#endif
 
 	if((argc >= 3) && !ustricmp(argv[1], "-ch_sp_path_worker"))
 	{	//If this EOF instance was launched as a worker process to perform star power pathing (must be second parameter)
@@ -4701,7 +4667,8 @@ int eof_initialize(int argc, char * argv[])
 			eof_soft_cursor = 1;
 		}
 	}
-	gametime_init(100); // 100hz timer
+	gametime_init(eof_logic_rate); // set timer to run at logic_rate
+	eof_initialize_music_pos(&eof_music_pos, eof_logic_rate);
 
 	MIDIqueue=MIDIqueuetail=NULL;	//Initialize the MIDI queue as empty
 	set_volume_per_voice(0);		//By default, Allegro halves the volume of each voice so that it won't clip if played fully panned to either the left or right channels.  EOF doesn't use panning, so force full volume.
@@ -5018,6 +4985,9 @@ int eof_initialize(int argc, char * argv[])
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 		(void) eof_display_notes_panel();
 	}
+	#ifdef ALLEGRO_LEGACY
+		eof_set_up_native_menus(eof_main_menu);
+	#endif
 
 	return 1;
 }
@@ -5235,7 +5205,7 @@ void eof_init_after_load(char initaftersavestate)
 	}
 	if(!initaftersavestate)
 	{	//If this wasn't cleanup after an undo/redo state, reset more variables
-		eof_music_pos = eof_av_delay;
+		eof_set_music_pos(&eof_music_pos, eof_av_delay);
 		eof_changes = 0;
 		eof_undo_last_type = 0;
 		eof_change_count = 0;
@@ -5690,7 +5660,7 @@ int main(int argc, char * argv[])
 	#endif
 
 	#ifdef ALLEGRO_LEGACY
-		timer = al_create_timer(1.0 / 100.0);
+		timer = al_create_timer(1.0 / (float)eof_logic_rate);
 		if(!timer)
 		{
 			eof_log("Failed to create Allegro 5 timer", 1);
@@ -5766,16 +5736,16 @@ int main(int argc, char * argv[])
 			}
 			else if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg_ul(eof_music_track)))
 			{	//Otherwise if ALOGG reported a completed/error condition or if the reported position is greater than the length of the audio
-				eof_music_pos = eof_music_actual_pos + eof_av_delay;
+				eof_set_music_pos(&eof_music_pos, eof_music_actual_pos + eof_av_delay);
 				eof_music_paused = 1;
 			}
 			else
 			{
 				if(eof_smooth_pos)
 				{
-					if((eof_music_actual_pos > eof_music_pos) || eof_music_paused)
+					if((eof_music_actual_pos > eof_music_pos.value) || eof_music_paused)
 					{
-						eof_music_pos = eof_music_actual_pos;
+						eof_set_music_pos(&eof_music_pos, eof_music_actual_pos);
 					}
 				}
 			}

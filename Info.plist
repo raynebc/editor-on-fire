@@ -17,21 +17,23 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
+	<key>NSHighResolutionCapable</key>
+	<false/>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
-				<string>*</string>
+				<string>eof</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>NSStringPboardType</string>
+			<string>EOF Project File</string>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>****</string>
 			</array>
 			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
+			<string>Editor</string>
 		</dict>
 	</array>
 	<key>CFBundleIconFile</key>

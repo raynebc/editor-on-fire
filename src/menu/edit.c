@@ -52,82 +52,82 @@ MENU * eof_active_edit_paste_from_menu;
 
 MENU eof_edit_snap_menu[] =
 {
-	{"1/4", eof_menu_edit_snap_quarter, NULL, 0, NULL},
-	{"1/8", eof_menu_edit_snap_eighth, NULL, 0, NULL},
-	{"1/16", eof_menu_edit_snap_sixteenth, NULL, 0, NULL},
-	{"1/32", eof_menu_edit_snap_thirty_second, NULL, 0, NULL},
-	{"1/64", eof_menu_edit_snap_sixty_forth, NULL, 0, NULL},
+	{"1/4", eof_menu_edit_snap_quarter, NULL, D_USER, NULL},
+	{"1/8", eof_menu_edit_snap_eighth, NULL, D_USER, NULL},
+	{"1/16", eof_menu_edit_snap_sixteenth, NULL, D_USER, NULL},
+	{"1/32", eof_menu_edit_snap_thirty_second, NULL, D_USER, NULL},
+	{"1/64", eof_menu_edit_snap_sixty_forth, NULL, D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"1/12", eof_menu_edit_snap_twelfth, NULL, 0, NULL},
-	{"1/24", eof_menu_edit_snap_twenty_fourth, NULL, 0, NULL},
-	{"1/48", eof_menu_edit_snap_forty_eighth, NULL, 0, NULL},
-	{"1/96", eof_menu_edit_snap_ninty_sixth, NULL, 0, NULL},
+	{"1/12", eof_menu_edit_snap_twelfth, NULL, D_USER, NULL},
+	{"1/24", eof_menu_edit_snap_twenty_fourth, NULL, D_USER, NULL},
+	{"1/48", eof_menu_edit_snap_forty_eighth, NULL, D_USER, NULL},
+	{"1/96", eof_menu_edit_snap_ninty_sixth, NULL, D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Custom\tG", eof_menu_edit_snap_custom, NULL, 0, NULL},
+	{"&Custom\tG", eof_menu_edit_snap_custom, NULL, D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Off", eof_menu_edit_snap_off, NULL, D_SELECTED, NULL},
+	{"&Off", eof_menu_edit_snap_off, NULL, D_SELECTED | D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Display grid lines\tShift+G", eof_menu_edit_toggle_grid_lines, NULL, 0, NULL},
+	{"&Display grid lines\tShift+G", eof_menu_edit_toggle_grid_lines, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_claps_menu[] =
 {
-	{"&All", eof_menu_edit_claps_all, NULL, D_SELECTED, NULL},
-	{"&Green", eof_menu_edit_claps_green, NULL, 0, NULL},
-	{"&Red", eof_menu_edit_claps_red, NULL, 0, NULL},
-	{"&Yellow", eof_menu_edit_claps_yellow, NULL, 0, NULL},
-	{"&Blue", eof_menu_edit_claps_blue, NULL, 0, NULL},
-	{"&Purple", eof_menu_edit_claps_purple, NULL, 0, NULL},
-	{"&Orange", eof_menu_edit_claps_orange, NULL, 0, NULL},
+	{"&All", eof_menu_edit_claps_all, NULL, D_SELECTED | D_USER, NULL},
+	{"&Green", eof_menu_edit_claps_green, NULL, D_USER, NULL},
+	{"&Red", eof_menu_edit_claps_red, NULL, D_USER, NULL},
+	{"&Yellow", eof_menu_edit_claps_yellow, NULL, D_USER, NULL},
+	{"&Blue", eof_menu_edit_claps_blue, NULL, D_USER, NULL},
+	{"&Purple", eof_menu_edit_claps_purple, NULL, D_USER, NULL},
+	{"&Orange", eof_menu_edit_claps_orange, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_hopo_menu[] =
 {
-	{"&RF", eof_menu_edit_hopo_rf, NULL, D_SELECTED, NULL},
-	{"&FOF", eof_menu_edit_hopo_fof, NULL, 0, NULL},
-	{"&Off", eof_menu_edit_hopo_off, NULL, 0, NULL},
-	{"&Manual", eof_menu_edit_hopo_manual, NULL, 0, NULL},
-	{"&GH3", eof_menu_edit_hopo_gh3, NULL, 0, NULL},
+	{"&RF", eof_menu_edit_hopo_rf, NULL, D_SELECTED | D_USER, NULL},
+	{"&FOF", eof_menu_edit_hopo_fof, NULL, D_USER, NULL},
+	{"&Off", eof_menu_edit_hopo_off, NULL, D_USER, NULL},
+	{"&Manual", eof_menu_edit_hopo_manual, NULL, D_USER, NULL},
+	{"&GH3", eof_menu_edit_hopo_gh3, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
 char eof_edit_zoom_menu_string[20] = "&Custom";
 MENU eof_edit_zoom_menu[] =
 {
-	{"1/1&0", eof_menu_edit_zoom_10, NULL, D_SELECTED, NULL},
-	{"1/&9", eof_menu_edit_zoom_9, NULL, 0, NULL},
-	{"1/&8", eof_menu_edit_zoom_8, NULL, 0, NULL},
-	{"1/&7", eof_menu_edit_zoom_7, NULL, 0, NULL},
-	{"1/&6", eof_menu_edit_zoom_6, NULL, 0, NULL},
-	{"1/&5", eof_menu_edit_zoom_5, NULL, 0, NULL},
-	{"1/&4", eof_menu_edit_zoom_4, NULL, 0, NULL},
-	{"1/&3", eof_menu_edit_zoom_3, NULL, 0, NULL},
-	{"1/&2", eof_menu_edit_zoom_2, NULL, 0, NULL},
-	{"1/&1", eof_menu_edit_zoom_1, NULL, 0, NULL},
-	{eof_edit_zoom_menu_string, eof_menu_edit_zoom_custom, NULL, 0, NULL},
+	{"1/1&0", eof_menu_edit_zoom_10, NULL, D_SELECTED | D_USER, NULL},
+	{"1/&9", eof_menu_edit_zoom_9, NULL, D_USER, NULL},
+	{"1/&8", eof_menu_edit_zoom_8, NULL, D_USER, NULL},
+	{"1/&7", eof_menu_edit_zoom_7, NULL, D_USER, NULL},
+	{"1/&6", eof_menu_edit_zoom_6, NULL, D_USER, NULL},
+	{"1/&5", eof_menu_edit_zoom_5, NULL, D_USER, NULL},
+	{"1/&4", eof_menu_edit_zoom_4, NULL, D_USER, NULL},
+	{"1/&3", eof_menu_edit_zoom_3, NULL, D_USER, NULL},
+	{"1/&2", eof_menu_edit_zoom_2, NULL, D_USER, NULL},
+	{"1/&1", eof_menu_edit_zoom_1, NULL, D_USER, NULL},
+	{eof_edit_zoom_menu_string, eof_menu_edit_zoom_custom, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_playback_menu[] =
 {
-	{"&Time Stretch", eof_menu_edit_playback_time_stretch, NULL, D_SELECTED, NULL},
-	{"&100%", eof_menu_edit_playback_100, NULL, D_SELECTED, NULL},
-	{"&75%", eof_menu_edit_playback_75, NULL, 0, NULL},
-	{"&50%", eof_menu_edit_playback_50, NULL, 0, NULL},
-	{"&25%", eof_menu_edit_playback_25, NULL, 0, NULL},
-	{"&Custom", eof_menu_edit_playback_custom, NULL, 0, NULL},
+	{"&Time Stretch", eof_menu_edit_playback_time_stretch, NULL, D_SELECTED | D_USER, NULL},
+	{"&100%", eof_menu_edit_playback_100, NULL, D_SELECTED | D_USER, NULL},
+	{"&75%", eof_menu_edit_playback_75, NULL, D_USER, NULL},
+	{"&50%", eof_menu_edit_playback_50, NULL, D_USER, NULL},
+	{"&25%", eof_menu_edit_playback_25, NULL, D_USER, NULL},
+	{"&Custom", eof_menu_edit_playback_custom, NULL, D_USER, NULL},
 	{"Benchmark rubberband", eof_menu_edit_benchmark_rubberband, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_speed_menu[] =
 {
-	{"&Slow", eof_menu_edit_speed_slow, NULL, D_SELECTED, NULL},
-	{"&Medium", eof_menu_edit_speed_medium, NULL, 0, NULL},
-	{"&Fast", eof_menu_edit_speed_fast, NULL, 0, NULL},
-	{"&Hyper", eof_menu_edit_speed_hyper, NULL, 0, NULL},
+	{"&Slow", eof_menu_edit_speed_slow, NULL, D_SELECTED | D_USER, NULL},
+	{"&Medium", eof_menu_edit_speed_medium, NULL, D_USER, NULL},
+	{"&Fast", eof_menu_edit_speed_fast, NULL, D_USER, NULL},
+	{"&Hyper", eof_menu_edit_speed_hyper, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -213,8 +213,8 @@ MENU eof_edit_selection_menu[] =
 
 MENU eof_edit_tones_menu[] =
 {
-	{"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, 0, NULL},
-	{"&MIDI Tones\tShift+T", eof_menu_edit_midi_tones, NULL, 0, NULL},
+	{"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, D_USER, NULL},
+	{"&MIDI Tones\tShift+T", eof_menu_edit_midi_tones, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -542,7 +542,7 @@ void eof_prepare_edit_menu(void)
 		/* paste from catalog */
 		if(eof_selected_catalog_entry < eof_song->catalog->entries)
 		{
-			if((eof_music_pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_music_pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos) && (eof_song->catalog->entry[eof_selected_catalog_entry].track == eof_selected_track) && (eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_note_type))
+			if((eof_music_pos.value >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_music_pos.value <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos) && (eof_song->catalog->entry[eof_selected_catalog_entry].track == eof_selected_track) && (eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_note_type))
 			{
 				eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
@@ -835,7 +835,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 	unsigned long source_id = 0;
 	unsigned long lastlinenum = 0xFFFFFFFF, linestart = 0, lineend = 0;	//Used to create lyric lines
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
-	unsigned long targetpos = eof_music_pos - eof_av_delay;	//By default, assume the paste will occur at the seek position
+	unsigned long targetpos = eof_music_pos.value - eof_av_delay;	//By default, assume the paste will occur at the seek position
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
@@ -1566,13 +1566,14 @@ int eof_menu_edit_copy(void)
 int eof_menu_edit_paste_logic(int function)
 {
 	unsigned long i, j;
-	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
+	unsigned long * paste_pos = NULL;
 	unsigned long paste_count = 0;
 	unsigned long first_beat = 0;
 	unsigned long this_beat;
 	unsigned long copy_notes;
 	PACKFILE * fp;
-	EOF_EXTENDED_NOTE temp_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0}, first_note = {{0}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, 0, 0, {0}, {0}, 0, 0, 0, 0, 0, 0};
+	EOF_EXTENDED_NOTE temp_note;
+	EOF_EXTENDED_NOTE first_note;
 	EOF_EXTENDED_NOTE last_note;
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
@@ -1588,15 +1589,28 @@ int eof_menu_edit_paste_logic(int function)
 	char isghl;	//Set to nonzero if the clipboard's source track had GHL mode enabled, which changes the interpretation of lane 6 gems
 	unsigned long source_id = 0;
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
-	unsigned long targetpos = eof_music_pos - eof_av_delay;	//By default, assume the paste will occur at the seek position
+	unsigned long targetpos = eof_music_pos.value - eof_av_delay;	//By default, assume the paste will occur at the seek position
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
 	unsigned char intervalvalue = 0, intervalnum = 0;
 
+	int ret = 0;
+
+	memset(&temp_note, 0, sizeof(EOF_EXTENDED_NOTE));
+	memset(&first_note, 0, sizeof(EOF_EXTENDED_NOTE));
+	memset(&last_note, 0, sizeof(EOF_EXTENDED_NOTE));
+	paste_pos = malloc(sizeof(unsigned long) * EOF_MAX_NOTES);
+	if(!paste_pos)
+	{
+		ret = 1;
+		goto cleanup;
+	}
+
 	if(eof_vocals_selected)
 	{	//The vocal track uses its own clipboard logic
-		return eof_menu_edit_paste_vocal_logic(function);	//Call the old or new vocal paste logic accordingly
+		ret = eof_menu_edit_paste_vocal_logic(function);	//Call the old or new vocal paste logic accordingly
+		goto cleanup;
 	}
 
 	if(function == 1)
@@ -1615,11 +1629,13 @@ int eof_menu_edit_paste_logic(int function)
 	if(!fp)
 	{
 		allegro_message("Clipboard error!\nNothing to paste!");
-		return 1;
+		ret = 1;
+		goto cleanup;
 	}
 	if(!oldpaste && (first_beat + this_beat >= eof_song->beats - 1))
 	{	//If new paste logic is being used, return from function if the first note would paste after the last beat
-		return 1;
+		ret = 1;
+		goto cleanup;
 	}
 	source_id = pack_igetl(fp);			//Read the source EOF instance number
 	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
@@ -1629,7 +1645,8 @@ int eof_menu_edit_paste_logic(int function)
 	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
 	if(!copy_notes)
 	{	//If there are 0 notes on the clipboard, return without making an undo
-		return 1;
+		ret = 1;
+		goto cleanup;
 	}
 	if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the source and destination track are both pro guitar format, pre-check to ensure that the pasted notes won't go above the current track's fret limit
@@ -1642,7 +1659,8 @@ int eof_menu_edit_paste_logic(int function)
 			if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this fret limit issue
 				(void) pack_fclose(fp);
-				return 0;
+				ret = 0;
+				goto cleanup;
 			}
 		}
 	}
@@ -1655,7 +1673,8 @@ int eof_menu_edit_paste_logic(int function)
 		if(alert(NULL, message, "Gems will either be dropped, or added to form all-lane chords for such notes.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to continue after being alerted of this lane limit issue
 			(void) pack_fclose(fp);
-			return 0;
+			ret = 0;
+			goto cleanup;
 		}
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
@@ -1742,7 +1761,8 @@ int eof_menu_edit_paste_logic(int function)
 			if(!eof_song_append_beats(eof_song, 1))
 			{	//If there was an error adding a beat
 				eof_log("\tError adding beat.  Aborting", 1);
-				return 1;
+				ret = 1;
+				goto cleanup;
 			}
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
@@ -1920,7 +1940,13 @@ int eof_menu_edit_paste_logic(int function)
 			}
 		}
 	}
-	return 1;
+	ret = 1;
+
+	cleanup:
+	{
+		free(paste_pos);
+	}
+	return ret;
 }
 
 int eof_menu_edit_paste(void)
@@ -2566,13 +2592,13 @@ int eof_menu_edit_bookmark_helper(int b)
 	if(b >= EOF_MAX_BOOKMARK_ENTRIES)
 		return 0;	//Invalid parameter
 
-	if(eof_music_pos <= eof_av_delay)
+	if(eof_music_pos.value <= eof_av_delay)
 		return 1;	//Do not place a bookmark at a negative or zero chart position
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(eof_song->bookmark_pos[b] != eof_music_pos - eof_av_delay)
+	if(eof_song->bookmark_pos[b] != eof_music_pos.value - eof_av_delay)
 	{
-		eof_song->bookmark_pos[b] = eof_music_pos - eof_av_delay;
+		eof_song->bookmark_pos[b] = eof_music_pos.value - eof_av_delay;
 	}
 	else
 	{
@@ -3786,9 +3812,9 @@ int eof_menu_edit_paste_from_catalog(void)
 	unsigned long note_count = 0;
 	unsigned long first = ULONG_MAX;
 	unsigned long first_beat = ULONG_MAX;
-	unsigned long start_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long start_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
 	unsigned long this_beat = ULONG_MAX;
-	unsigned long current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned long current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
 	unsigned long last_current_beat = current_beat;
 	unsigned long end_beat = ULONG_MAX;
 	double nporpos, nporendpos;
@@ -3804,7 +3830,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	entry = &eof_song->catalog->entry[eof_selected_catalog_entry];
 
 	/* make sure we can paste */
-	if(eof_music_pos - eof_av_delay < eof_song->beat[0]->pos)
+	if(eof_music_pos.value - eof_av_delay < eof_song->beat[0]->pos)
 	{
 		return 1;
 	}
@@ -3812,7 +3838,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	sourcetrack = entry->track;
 
 	/* make sure we can't paste inside of the catalog entry */
-	if((sourcetrack == eof_selected_track) && (entry->type == eof_note_type) && (eof_music_pos - eof_av_delay >= entry->start_pos) && (eof_music_pos - eof_av_delay <= entry->end_pos))
+	if((sourcetrack == eof_selected_track) && (entry->type == eof_note_type) && (eof_music_pos.value - eof_av_delay >= entry->start_pos) && (eof_music_pos.value - eof_av_delay <= entry->end_pos))
 	{
 		return 1;
 	}
@@ -3872,7 +3898,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		}
 	}
 
-	newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);	//Find the seek position's percentage within the current beat
+	newpasteoffset = eof_get_porpos(eof_music_pos.value - eof_av_delay);	//Find the seek position's percentage within the current beat
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	if(eof_paste_erase_overlap)
 	{	//If the user decided to delete existing notes that are between the start and end of the pasted notes
@@ -3894,7 +3920,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			{
 				break;
 			}
-			current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
+			current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay) + (this_beat - first_beat);
 			if(!eof_beat_num_valid(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
 			{
 				break;
@@ -3920,11 +3946,11 @@ int eof_menu_edit_paste_from_catalog(void)
 
 		//Re-initialize some variables for the regular paste from catalog logic
 		first = first_beat = this_beat = end_beat = ULONG_MAX;
-		current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+		current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
 		last_current_beat = current_beat;
 	}
 
-	newpasteoffset = eof_get_porpos(eof_music_pos - eof_av_delay);	//Find the seek position's percentage within the current beat
+	newpasteoffset = eof_get_porpos(eof_music_pos.value - eof_av_delay);	//Find the seek position's percentage within the current beat
 	for(i = 0; i < eof_get_track_size(eof_song, sourcetrack); i++)
 	{	//For each note in the active catalog entry's track
 		unsigned long pos = eof_get_note_pos(eof_song, sourcetrack, i);
@@ -3945,7 +3971,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			break;
 		}
 		last_current_beat = current_beat;
-		current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
+		current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay) + (this_beat - first_beat);
 		if(!eof_beat_num_valid(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
 		{	//If the beat is at or after the last beat or otherwise not valid
 			break;
@@ -4689,13 +4715,13 @@ int eof_menu_edit_set_start_point(void)
 	if(!eof_song)
 		return 0;
 
-	if(eof_song->tags->start_point == eof_music_pos - eof_av_delay)
+	if(eof_song->tags->start_point == eof_music_pos.value - eof_av_delay)
 	{	//If the start point is already set to the current seek position
 		eof_song->tags->start_point = ULONG_MAX;	//Clear the start point
 	}
 	else
 	{	//Otherwise update it to the current seek position
-		eof_song->tags->start_point = eof_music_pos - eof_av_delay;
+		eof_song->tags->start_point = eof_music_pos.value - eof_av_delay;
 		if((eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
 		{	//If the start and end points are defined out of order, swap them
 			temp =eof_song->tags-> end_point;
@@ -4713,13 +4739,13 @@ int eof_menu_edit_set_end_point(void)
 	if(!eof_song)
 		return 0;
 
-	if(eof_song->tags->end_point == eof_music_pos - eof_av_delay)
+	if(eof_song->tags->end_point == eof_music_pos.value - eof_av_delay)
 	{	//If the end point is already set to the current seek position
 		eof_song->tags->end_point = ULONG_MAX;	//Clear the start point
 	}
 	else
 	{	//Otherwise update it to the current seek position
-		eof_song->tags->end_point = eof_music_pos - eof_av_delay;
+		eof_song->tags->end_point = eof_music_pos.value - eof_av_delay;
 		if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
 		{	//If the start and end points are defined out of order, swap them
 			temp = eof_song->tags->end_point;

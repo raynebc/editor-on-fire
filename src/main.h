@@ -10,6 +10,7 @@
 #include "control.h"
 #include "editor.h"
 #include "pathing.h"
+#include "music_pos.h"
 
 #define EOF_VERSION_STRING "EOF v1.8RC12"
 #define EOF_COPYRIGHT_STRING "(c)2008-2020 T^3 Software."
@@ -17,7 +18,7 @@
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #define KEY_EITHER_WIN (key[KEY_LWIN] || key[KEY_RWIN])
 #ifdef ALLEGRO_MACOSX
-		#define KEY_EITHER_CTRL (key[106])
+		#define KEY_EITHER_CTRL (key[KEY_COMMAND])
 #else
 		#define KEY_EITHER_CTRL (key[KEY_LCONTROL] || key[KEY_RCONTROL])
 #endif
@@ -27,6 +28,12 @@
 	#define CTRL_NAME "Cmd"
 #else
 	#define CTRL_NAME "Ctrl"
+#endif
+
+#ifdef ALLEGRO_LEGACY
+	#define EOF_MENU_HEIGHT 0
+#else
+	#define EOF_MENU_HEIGHT 20
 #endif
 
 #define EOF_SNAP_OFF           0
@@ -299,7 +306,8 @@ extern int         eof_silence_loaded;	//Tracks whether "second_of_silence.ogg" 
 extern int         eof_music_data_size;
 extern unsigned long eof_chart_length;
 extern unsigned long eof_music_length;
-extern int         eof_music_pos;
+extern int         eof_logic_rate;
+extern EOF_MUSIC_POS eof_music_pos;
 extern int         eof_music_pos2;
 extern int         eof_sync_piano_rolls;
 extern unsigned long eof_music_actual_pos;

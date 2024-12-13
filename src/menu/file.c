@@ -55,7 +55,7 @@ MENU eof_file_notes_panel_menu[] =
 	{eof_file_notes_panel_menu_string, eof_menu_file_notes_panel_user, NULL, 0, NULL},
 	{"&Browse", eof_menu_file_notes_panel_browse, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Enable\t" CTRL_NAME "+P", eof_display_notes_panel, NULL, 0, NULL},
+	{"&Enable\t" CTRL_NAME "+P", eof_display_notes_panel, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -63,7 +63,7 @@ MENU eof_file_3d_preview_menu[] =
 {
 	{"Set &HOPO image scale size", eof_set_3d_hopo_scale_size, NULL, 0, NULL},
 	{"Set &Camera angle", eof_set_3d_camera_angle, NULL, 0, NULL},
-	{"&Full height", eof_3d_preview_toggle_full_height, NULL, 0, NULL},
+	{"&Full height", eof_3d_preview_toggle_full_height, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -73,7 +73,7 @@ MENU eof_file_display_menu[] =
 	{"&3D preview", NULL, eof_file_3d_preview_menu, 0, NULL},
 	{"&Display", eof_menu_file_display, NULL, 0, NULL},
 	{"Set display &Width", eof_set_display_width, NULL, 0, NULL},
-	{"x2 &Zoom", eof_toggle_display_zoom, NULL, 0, NULL},
+	{"x2 &Zoom", eof_toggle_display_zoom, NULL, D_USER, NULL},
 	{"&Redraw\tShift+F5", eof_redraw_display, NULL, 0, NULL},
 	{"Benchmark image sequence", eof_benchmark_image_sequence, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -856,11 +856,11 @@ int eof_menu_file_load_ogg(void)
 		eof_chart_length = new_length;
 		eof_calculate_beats(eof_song);
 	}
-	if(eof_music_pos > eof_music_length)
+	if(eof_music_pos.value > eof_music_length)
 	{
 		(void) eof_menu_song_seek_end();
 	}
-	eof_music_seek(eof_music_pos - eof_av_delay);
+	eof_music_seek(eof_music_pos.value - eof_av_delay);
 	(void) replace_filename(eof_last_ogg_path, returnedfn, "", 1024);
 	eof_log("\t\t\tOGG loaded", 1);
 
@@ -2017,7 +2017,7 @@ int eof_menu_file_exit(void)
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
-			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos);
+			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
 		}
 	}
 	eof_cursor_visible = 0;
@@ -4054,7 +4054,7 @@ int eof_save_helper(char *destfilename, char silent)
 	{	//If warning messages aren't suppressed
 		unsigned long seektrack = eof_selected_track;	//Used to store the active track difficulty and seek position to be restored after prompts to cancel save are declined
 		unsigned long seekdiff = eof_note_type;
-		unsigned long seekpos = eof_music_pos - eof_av_delay;
+		unsigned long seekpos = eof_music_pos.value - eof_av_delay;
 
 		eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_save_helper_checks() below
 		eof_beat_stats_cached = 0;
@@ -6538,7 +6538,7 @@ int eof_menu_file_export_song_preview(void)
 		}
 		else
 		{	//Default the start time to the current seek position and the stop time 30 seconds later
-			start = eof_music_pos - eof_av_delay;
+			start = eof_music_pos.value - eof_av_delay;
 			stop = start + 30000; //30,000 ms later
 		}
 	}

@@ -76,7 +76,7 @@ int eof_render_spectrogram(struct spectrogramstruct *spectrogram)
 	unsigned long height;		//Stores the heigth of the fretboard area
 	unsigned long top,bottom;	//Stores the top and bottom coordinates for the area the graph will render to
 	char numgraphs;				//Stores the number of channels to render
-	unsigned long pos = eof_music_pos / eof_zoom;
+	unsigned long pos = eof_music_pos.value / eof_zoom;
 	unsigned long curms;
 
 //	eof_log("eof_render_spectrogram() entered", 1);
@@ -397,6 +397,10 @@ void eof_render_spectrogram_col(struct spectrogramstruct *spectrogram,struct spe
  */
 int eof_color_scale(double value, double max, short int scalenum)
 {
+	if(isnan(value) || isnan(max))
+	{
+		return 0;
+	}
 	eof_generate_colorscale(scalenum);
 
 	if((eof_spectrogram_colorscale != NULL) && (eof_spectrogram_colorscale->colortable != NULL))
