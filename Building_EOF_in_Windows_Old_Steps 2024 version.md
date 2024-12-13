@@ -58,7 +58,7 @@ Libpng won't build using MSYS 1, so we'll use Cmake for it instead.  Launch a no
 cd c:\dev\libpng-1.6.44
 md build
 cd build
-cmake -G "MinGW Makefiles" -DZLIB_LIBRARY=c:/dev/lib/libzlib.dll.a -DZLIB_INCLUDE_DIR=c:/dev/include -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=c:/dev ..
+cmake -G "MinGW Makefiles" -DZLIB_LIBRARY=c:/dev/lib/libz.a -DZLIB_INCLUDE_DIR=c:/dev/include -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=c:/dev ..
 mingw32-make
 mingw32-make install
 ```
@@ -78,7 +78,7 @@ If you used the prefix correctly in the call to the configure script above, libo
 ```
 cd /c/dev/libvorbis-1.3.7
 ```
-And run the same three commands in the same order:
+And perform the same steps:
 ```
 mkdir build
 cd build
@@ -116,7 +116,7 @@ The rubberband library adds several dependencies, but it allows audio to be play
 
 First, get the Vamp SDK by downloading and building the source code (http://www.vamp-plugins.org/develop.html) or more easily by downloading the last released pre-compiled binaries for version 2.6 (https://code.soundsoftware.ac.uk/attachments/download/1518/vamp-plugin-sdk-2.6-binaries-win32-mingw.zip).  In the case of the pre-compiled binaries, copy libvamp-sdk.a from the zip file into the "lib" directory of your 32 bit compiler folder (ie. C:\mingw32\i686-w64-mingw32\lib).  The pre-compiled library package does not include the header files, so if using that instead of building the source, you will still have to download the source code (labeled "The main SDK"), copy the "vamp", "vamp-hostsdk" and "vamp-sdk" folders of header files into the 32 bit compiler's "include" directory (ie. C:\mingw32\i686-w64-mingw32\include).
 
-Next, get libsndfile (http://www.mega-nerd.com/libsndfile).  As with Vamp, it's easiest to download the pre-compiled library (the "Win32 installer").  Older releases asked where to install it, and if it asks you I recommend installing it to its own folder outside your MinGW installation to not clutter MinGW with miscellaneous files.  As of the writing of this document, the current pre-compiled release installs to c:\libsndfile automatically without asking.  Copy the libsndfile\bin\libsndfile-1.dll file to the "lib" directory of your 32 bit compiler folder (ie. C:\mingw32\i686-w64-mingw32\lib) and rename it to libsndfile.a, copy the two header files from libsndfile\include into the "include" directory of your 32 bit compiler folder (ie. C:\mingw32\i686-w64-mingw32\include) and copy the libsndfile\lib\pkgconfig\sndfile.pc file to the "lib\pkgconfig" directory of your MinGW installation (ie. C:\mingw32\lib\pkgconfig) as that seems to be where it's looked for when building rubberband.
+Next, get libsndfile (http://www.mega-nerd.com/libsndfile).  As with Vamp, it's easiest to download the pre-compiled library (the "Win32 installer").  Older releases asked where to install it, and if it asks you I recommend installing it to its own folder outside your MinGW installation to not clutter MinGW with miscellaneous files.  As of the writing of this document, the current pre-compiled release installs to c:\libsndfile automatically without asking.  Copy the libsndfile\bin\libsndfile-1.dll file to the "lib" directory of your 32 bit compiler folder (ie. C:\mingw32\i686-w64-mingw32\lib) and rename it to libsndfile.a, copy the two header files from libsndfile\include into the "include" directory of your 32 bit compiler folder (ie. C:\mingw32\i686-w64-mingw32\include) and copy the libsndfile\lib\pkgconfig\sndfile.pc file to the "lib\pkgconfig" directory of your 32 bit compiler folder (ie. C:\mingw32\i686-w64-mingw32\lib\pkgconfig) so it is found when building rubberband.
 
 Next, get libsamplerate (http://www.mega-nerd.com/SRC/download.html).  This doesn't have a pre-compiled library, so it will be built from source code.  Just as with the Vorbis libraries, it's easiest to extract the compressed folder of source files someplace simple like c:\dev.  Bring up the MSYS program again and change to the directory with libsamplerate's source files, for example:
 ```
@@ -130,7 +130,7 @@ make install
 ```
 If any of these fail keep in mind your antivirus may be interfering again.  The examples may fail to build, but if you used the prefix correctly in the call to the configure script above, libsamplerate will be properly built, including libsamplerate.a into the destination "lib" directory, samplerate.h into the "include" directory and samplerate.pc into the "lib\pkgconfig" directory.  Confirm these files were added before continuing.
 
-Next, get pkgconfig (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip).  Extract the pkg-config.exe file from that zip file's bin folder and copy it to the "bin" folder in your MinGW installation (ie. C:\mingw32\bin).  Check whether a file called intl.dll (a requirement for pkgconfig) is present in this bin folder.  If not, but there is a libintl-8.dll file, copy that and rename the copy as intl.dll.  If neither file is present, download the gettext runtime (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/gettext-runtime_0.18.1.1-2_win32.zip), extract intl.dll from that zip file's contained bin folder and put it in the mingw32\bin folder.
+Next, get pkgconfig (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip).  Extract the pkg-config.exe file from that zip file's bin folder and copy it to the "bin" folder in your 32 bit compiler folder (ie. C:\mingw32\i686-w64-mingw32\bin).  Check whether a file called intl.dll (a requirement for pkgconfig) is present in this bin folder.  If not, but there is a libintl-8.dll file, copy that and rename the copy as intl.dll.  If neither file is present, download the gettext runtime (http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/gettext-runtime_0.18.1.1-2_win32.zip), extract intl.dll from that zip file's contained bin folder and put it in the C:\mingw32\i686-w64-mingw32\bin folder.  pkg-config will expect to be defined in your PATH variable, so add its containing folder (ie. C:\mingw32\i686-w64-mingw32\bin ) to the PATH variable and re-open the command prompt for that to take effect.
 
 Next, get GLib (http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip) which is a prerequisite for pkgconfig.  Extract the libglib-2.0-0.dll file from that zip file's bin folder and copy it to the "bin" folder in your MinGW installation (ie. C:\mingw32\bin).
 
@@ -138,9 +138,9 @@ Rubberband requires a ladspa.h header file that doesn't come with MinGW, so down
 ```
 cd /c/dev/rubberband1.9
 ```
-Run the configure script, specifying the prefix path to the dev folder to reduce clutter in your MinGW installation.  Since we didn't build FFTW or Vamp from source, you have to also specify the compiler and linker arguments on the command line.  Likewise, if libsamplerate (referenced below as "SRC") was installed outside of the compiler folder, it has to have some parameters to define its location.  As with libsamplerate, Allegro's makefiles assume rubberband was installed into the compiler directory but you can optionally change the prefix path, ie:
+Run the configure script, specifying the prefix path to the dev folder to reduce clutter in your MinGW installation.  Since we didn't build FFTW or Vamp from source, you have to also specify the compiler and linker arguments on the command line.  Likewise, if libsamplerate was installed outside of the compiler folder, it has to have some parameters to define its location (SRC_CFLAGS and SRC_LIBS variables defined similarly to how FFTW_CFLAGS and FFTW_LIBS are defined in the command below).  As with libsamplerate, Allegro's makefiles assume rubberband was installed into the compiler directory but you can optionally change the prefix path, ie:
 ```
-./configure --prefix=/c/mingw32/i686-w64-mingw32 FFTW_CFLAGS="-I/c/mingw32/i686-w64-mingw32/include" FFTW_LIBS="-L/c/mingw32/i686-w64-mingw32/lib -lfftw3 -lm" Vamp_CFLAGS="-I/c/mingw32/i686-w64-mingw32/include" Vamp_LIBS="-L/c/mingw32/i686-w64-mingw32/lib -lvamp-sdk" SRC_CFLAGS="-I/c/mingw32/i686-w64-mingw32/include" SRC_LIBS="-L/c/mingw32/i686-w64-mingw32/lib" CFLAGS='-flto -ffat-lto-objects' CXXFLAGS='-flto -ffat-lto-objects' LDFLAGS='-flto'
+./configure --prefix=/c/mingw32/i686-w64-mingw32 FFTW_CFLAGS="-I/c/mingw32/i686-w64-mingw32/include" FFTW_LIBS="-L/c/mingw32/i686-w64-mingw32/lib -lfftw3 -lm" Vamp_CFLAGS="-I/c/mingw32/i686-w64-mingw32/include" Vamp_LIBS="-L/c/mingw32/i686-w64-mingw32/lib -lvamp-sdk" CFLAGS='-flto -ffat-lto-objects' CXXFLAGS='-flto -ffat-lto-objects' LDFLAGS='-flto'
 ```
 If everything worked, it will indicate that it got to the point where it was creating the makefile.  If it did, finish up with the make commands:
 ```
