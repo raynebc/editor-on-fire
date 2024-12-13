@@ -1,3 +1,5 @@
+#ifndef EOF_NO_MINIBPM
+
 #include <alogg.h>
 #include "minibpm-1.0/src/minibpm-c.h"
 
@@ -47,3 +49,5 @@ double eof_estimate_bpm(ALOGG_OGG * ogg, double startpoint, double endpoint)
 	}
 	return bpm;
 }
+
+#endif

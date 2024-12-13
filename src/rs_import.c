@@ -1098,7 +1098,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 						eventlist[eventlist_count]->pos = timestamp;	//Store the real timestamp, it will need to be converted to the beat number later
 						phraseitctr++;
 
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported phrase:  %lums - \"%s\"", timestamp, eventlist[eventlist_count]->text);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported phrase:  %ldms - \"%s\"", timestamp, eventlist[eventlist_count]->text);
 						eof_log(eof_log_string, 2);
 						eventlist_count++;
 					}
@@ -1466,7 +1466,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					eventlist[eventlist_count]->pos = output;	//Store the real timestamp, it will need to be converted to the beat number later
 					sectionctr++;
 
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported section:  %lums - \"%s\"", output, eventlist[eventlist_count]->text);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported section:  %ldms - \"%s\"", output, eventlist[eventlist_count]->text);
 					eof_log(eof_log_string, 2);
 					eventlist_count++;
 				}
@@ -1531,7 +1531,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 					eventlist[eventlist_count]->pos = output;	//Store the real timestamp, it will need to be converted to the beat number later
 					eventctr++;
 
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported event:  %lums - \"%s\"", output, eventlist[eventlist_count]->text);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tImported event:  %ldms - \"%s\"", output, eventlist[eventlist_count]->text);
 					eof_log(eof_log_string, 2);
 					eventlist_count++;
 				}

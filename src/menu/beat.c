@@ -127,6 +127,7 @@ MENU eof_beat_menu[] =
 	{"Lock tempo map", eof_menu_beat_lock_tempo_map, NULL, 0, NULL},
 	{"Remove mid-beat status", eof_menu_beat_remove_mid_beat_status, NULL, 0, NULL},
 	{"&Move to seek pos", eof_menu_beat_move_to_seek_pos, NULL, 0, NULL},
+	{"Export beat timings", eof_menu_beat_export_beat_timings, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
@@ -289,6 +290,20 @@ DIALOG eof_rocksmith_event_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+int eof_export_beat_timings_edit_proc(int msg, DIALOG *d, int c);
+DIALOG eof_export_beat_timings_dialog[]=
+{
+	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)         (dp2) (dp3) */
+	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
+	{ d_agup_text_proc,		 56,  84,  64,  8,   2,    23,  0,    0,      0,   0,   "Intervals:",NULL, NULL },
+	{ eof_export_beat_timings_edit_proc,112, 80,  66,  20,  2,   23,   0,      0,   2,   0,    eof_etext2,  "0123456789", NULL },
+	{ d_agup_radio_proc,     42,  105, 60,  15,  2,    23,  0,    0,      0,   0,   "&Millis",      NULL, NULL },
+	{ d_agup_radio_proc,     120, 105, 80,  15,  2,    23,  0,    0,      0,   0,   "&Intervals",   NULL, NULL },
+	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT, 0,   0,   "OK",        NULL, NULL },
+	{ d_agup_button_proc,    120, 125, 68,  28,  2,    23,  0,    D_EXIT, 0,   0,   "Cancel",    NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
 void eof_prepare_beat_menu(void)
 {
 	unsigned long i;
@@ -311,6 +326,7 @@ void eof_prepare_beat_menu(void)
 		eof_beat_bpm_menu[0].flags = 0;	//BPM>BPM change
 		eof_beat_bpm_menu[1].flags = 0;	//BPM>Reset BPM
 		eof_beat_bpm_menu[2].flags = 0;	//BPM>Calculate BPM
+		eof_beat_bpm_menu[3].flags = 0;	//BPM>Estimate BPM
 		eof_beat_bpm_menu[5].flags = 0;	//BPM>Double BPM
 		eof_beat_bpm_menu[6].flags = 0;	//BPM>Halve BPM
 		eof_beat_bpm_menu[4].flags = 0;	//BPM>Fix tempo for RBN
@@ -417,6 +433,12 @@ void eof_prepare_beat_menu(void)
 		{
 			eof_beat_bpm_menu[3].flags = 0;	//BPM>Estimate BPM
 		}
+
+//BPM>Estimate BPM
+#ifdef EOF_NO_MINIBPM
+		eof_beat_bpm_menu[3].flags = D_DISABLED;
+#endif // EOF_NO_MINIBPM
+
 //Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
 		{	//If there is at least one defined text event, enable Beat>All Events and Clear Events
@@ -451,20 +473,20 @@ void eof_prepare_beat_menu(void)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
-			eof_beat_menu[21].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[22].flags = 0;	//Beat>Rocksmith>
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
-				eof_beat_menu[22].flags = D_DISABLED;
+				eof_beat_menu[23].flags = D_DISABLED;
 			}
 			else
 			{
-				eof_beat_menu[22].flags = 0;	//Place Trainer Event
+				eof_beat_menu[23].flags = 0;	//Place Trainer Event
 			}
 		}
 		else
 		{
-			eof_beat_menu[21].flags = D_DISABLED;
 			eof_beat_menu[22].flags = D_DISABLED;
+			eof_beat_menu[23].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -3395,6 +3417,15 @@ int eof_events_dialog_move_down(DIALOG * d)
 	return eof_events_dialog_move(1);
 }
 
+#ifdef EOF_NO_MINIBPM
+
+int eof_menu_beat_estimate_bpm(void)
+{
+    return D_O_K;
+}
+
+#else
+
 int eof_menu_beat_estimate_bpm(void)
 {
 	unsigned long ctr, ppqn;
@@ -3488,6 +3519,8 @@ int eof_menu_beat_estimate_bpm(void)
 
 	return D_O_K;
 }
+
+#endif
 
 int eof_menu_beat_copy_tempo_map(void)
 {
@@ -3673,4 +3706,86 @@ int eof_menu_beat_remove_mid_beat_status(void)
 	eof_song->beat[eof_selected_beat]->flags &= ~EOF_BEAT_FLAG_MIDBEAT;	//Clear this status
 
 	return D_O_K;
+}
+
+int eof_export_beat_timings_edit_proc(int msg, DIALOG *d, int c)
+{
+	//Check ASCII code input
+	if(msg == MSG_CHAR)
+	{
+		unsigned c2 = (c & 255);	//The lower 8 bits is the scan code of the key press
+
+		if((c2 == 'm') || (c2 == 'M'))
+		{	//The user pressed m
+			eof_export_beat_timings_dialog[3].flags = D_SELECTED;	//Select Millis beat radio button
+			eof_export_beat_timings_dialog[4].flags = 0;			//Clear the measure radio button
+			(void) object_message(&eof_export_beat_timings_dialog[3], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
+			(void) object_message(&eof_export_beat_timings_dialog[4], MSG_DRAW, 0);
+			return D_USED_CHAR;	//Input processed
+		}
+		else if((c2 == 'i') || (c2 == 'I'))
+		{	//The user pressed i
+			eof_export_beat_timings_dialog[4].flags = D_SELECTED;	//Select the Intervals radio button
+			eof_export_beat_timings_dialog[3].flags = 0;			//Clear the beat radio button
+			(void) object_message(&eof_export_beat_timings_dialog[3], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
+			(void) object_message(&eof_export_beat_timings_dialog[4], MSG_DRAW, 0);
+			return D_USED_CHAR;	//Input processed
+		}
+	}
+
+	return eof_verified_edit_proc(msg, d, c);	//Allow the rest of the input to be filtered normally
+}
+
+int eof_menu_beat_export_beat_timings(void)
+{
+	unsigned long ctr, input = 0, output;
+	PACKFILE * fp;
+	char buffer[1024] = {0};
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_export_beat_timings_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_export_beat_timings_dialog);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", input);
+
+     eof_export_beat_timings_dialog[3].flags = D_SELECTED;                           //Select millisecond export by default
+	if(eof_popup_dialog(eof_export_beat_timings_dialog, 2) == 5)
+	{	//User clicked OK
+		(void) replace_filename(buffer, eof_song_path, "timings.txt", 1024);	//Obtain the destination filename
+		fp = pack_fopen(buffer, "w");
+		if(!fp)
+		{
+			eof_log("\tError saving:  Cannot open file for writing", 1);
+			return 0;	//Return failure
+		}
+
+		input = atoi(eof_etext2);
+		for(ctr = 0; ctr < eof_song->beats; ctr++)
+		{	//For each beat
+			if(eof_export_beat_timings_dialog[3].flags & D_SELECTED)
+			{	//Export milliseconds
+				output = eof_song->beat[ctr]->pos;
+			}
+			else
+			{	//Export intervals per second
+				if(eof_song->beat[ctr]->pos % input == 0)
+				{	//Beat position is divisible by the interval
+					output = eof_song->beat[ctr]->pos / input;
+				}
+				else
+				{	//Do floating point math and round to nearest integer
+					output = (eof_song->beat[ctr]->fpos / (double)input) + 0.5;
+				}
+			}
+			(void) snprintf(buffer, sizeof(buffer) - 1, "beat(%lu)\n", output);
+			(void) pack_fputs(buffer, fp);
+		}
+	}
+
+	//Cleanup
+	(void) pack_fclose(fp);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
 }

@@ -196,14 +196,6 @@ void eof_ch_sp_path_worker(char *job_file);
 int eof_menu_track_evaluate_user_ch_sp_path(void);
 	//For the active track difficulty, examines highlighted notes as a proposed star power path solution and reports the solution's validity/score to the user
 
-inline void eof_big_number_add(EOF_BIG_NUMBER *bignum, unsigned long addend);
-	//Adds the addend value to bignum, incrementing bignum's overflow count as appropriate
-inline void eof_big_number_increment(EOF_BIG_NUMBER *bignum);
-	//Adds one to the value of bignum, incrementing bignum's overflow count as appropriate
-inline void eof_big_number_add_big_number(EOF_BIG_NUMBER *bignum, EOF_BIG_NUMBER *addend);
-	//Adds the addend's 32 bit value to that of bignum, incrementing bignum's overflow count as appropriate
-	//Also adds addend's overflow count to bignum's
-
 void eof_set_note_ch_sp_deploy_status(EOF_SONG *sp, unsigned long track, unsigned long note, int function, char *undo_made);
 	//Alters the Clone Hero SP deployment status for the specified legacy track note, updating its EOF_NOTE_EFLAG_SP_DEPLOY flag accordingly
 	//If function is negative, CH deployment status is toggled for the note

@@ -516,8 +516,8 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 								if((vars.tracknum!=0) && (event_handler == NULL) && Lyrics.quick)	//If we're only processing for tempo changes and track names (track 0 must be processed completely)
 									return vars.processed;
 
-								if((vars.trackname != NULL) && (Lyrics.inputtrack != NULL))	//Only allow the rest of the track to be skipped if both the track name and the input track are defined
-								{															//and they match.  Track 0 is forced to process
+								if((Lyrics.inputtrack != NULL))		//Only allow the rest of the track to be skipped if both the track name and the input track are defined
+								{									//and they match.  Track 0 is forced to process
 									if((vars.tracknum!=0) && Lyrics.quick && (strcasecmp(vars.trackname,Lyrics.inputtrack) != 0))
 									{	//Not allowed to skip track 0
 										if(Lyrics.verbose>=2)	printf("Quick processing specified and this is not \"%s\".  Skipping rest of track\n",Lyrics.inputtrack);

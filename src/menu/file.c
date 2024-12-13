@@ -3830,8 +3830,6 @@ int eof_save_helper_checks(void)
 			//Otherwise the notes likely need to be synchronized
 			if(!note_skew_warned)
 			{	//If the user was not prompted yet
-				int ret;
-
 				ret = alert3(warning, NULL, "Cancel and seek to first offending note?", "Yes", "No", "Highlight all and cancel", 0, 0, 0);
 				if(ret == 2)
 				{	//User declined
@@ -5924,7 +5922,7 @@ int eof_command_line_rs_import(char *fn)
 
 int eof_menu_file_sonic_visualiser_import(void)
 {
-	char * returnedfn = NULL, *initial, *ptr, skipline;
+	char * returnedfn = NULL, *initial, *ptr;
 	PACKFILE *inf = NULL;
 	size_t maxlinelength;
 	char *buffer = NULL, error = 0, tempo_s[15] = {0}, undo_made = 0, done = 0;
@@ -6025,7 +6023,6 @@ int eof_menu_file_sonic_visualiser_import(void)
 		}
 		else if(strcasestr_spec(buffer, "<point"))
 		{	//If this is a point tag
-			skipline = 0;
 			if(!samplerate)
 			{	//If the sample rate hadn't been read yet
 				eof_log("\tError:  Sample rate not defined.  Aborting", 1);
@@ -6067,9 +6064,10 @@ int eof_menu_file_sonic_visualiser_import(void)
 			}
 			if(tempo_s[0] == '\0')
 			{	//If the tempo string is empty (the last point tag in a beat estimation defines an empty tag attribute), keep the last beat length in effect
+				tempo_f = 120.0;
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms", frame, frametime);
 				eof_log(eof_log_string, 1);
-				skipline = 1;
+				beatlen = 0;
 			}
 			else
 			{	//Otherwise convert the string to floating point
@@ -6079,58 +6077,64 @@ int eof_menu_file_sonic_visualiser_import(void)
 				eof_log(eof_log_string, 1);
 			}
 
-			if(!skipline)
-			{	//If this line contained valid tempo data
-				pointctr++;
-
-				//Apply the beat timing
-				if(!undo_made)
-				{	//If an undo hasn't been made
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				if(pointctr > 1)
-				{	//If this isn't the first point tag, apply timings for all beats between this point tag and the previous (if any)
-					while(timectr + lastbeatlen + 1 < frametime)
-					{	//While another beat fits before this frame's timestamp with at least an extra millisecond of room
-						if(beatctr >= eof_song->beats)
-						{	//If another beat needs to be added to the project
-							if(!eof_song_append_beats(eof_song, 1))
-							{	//If a beat couldn't be added
-								eof_log("\tError allocating memory to add a beat.  Aborting", 1);
-								error = 1;
-								break;
-							}
-						}
-						timectr += lastbeatlen;	//Advance the time counter by one beat length
-						eof_song->beat[beatctr]->fpos = timectr;
-						eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;	//Round up to nearest ms
-						beatctr++;
-					}
-					if(error)
-					{	//If an error was reached
-						break;	//Exit outer loop
-					}
-				}
-				else
-				{	//This is the first point tag, update the chart's MIDI delay
-					eof_song->tags->ogg[0].midi_offset = frametime + 0.5;
-				}
-				if(beatctr >= eof_song->beats)
-				{	//If another beat needs to be added to the project
-					if(!eof_song_append_beats(eof_song, 1))
-					{	//If a beat couldn't be added
-						eof_log("\tError allocating memory to add a beat.  Aborting", 1);
-						error = 1;
-						break;
-					}
-				}
-				eof_song->beat[beatctr]->fpos = frametime;
-				eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;	//Round up to nearest ms
-				beatctr++;
-				timectr = frametime;	//Track the position of the last processed beat
-				lastbeatlen = beatlen;	//Track the beat length of the last processed point tag
+			if(!lastbeatlen && beatctr)
+			{	//If the previous beat was defined with a timestamp but without a tempo change
+				lastbeatlen = frametime - eof_song->beat[beatctr - 1]->fpos;	//Define that beat's length as the time difference between it and the current beat
 			}
+
+			pointctr++;
+
+			//Apply the beat timing
+			if(!undo_made)
+			{	//If an undo hasn't been made
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			if(pointctr > 1)
+			{	//If this isn't the first point tag, apply timings for all beats between this point tag and the previous (if any)
+				while(timectr + lastbeatlen + 1 < frametime)
+				{	//While another beat fits before this frame's timestamp with at least an extra millisecond of room
+					if(beatctr >= eof_song->beats)
+					{	//If another beat needs to be added to the project
+						if(!eof_song_append_beats(eof_song, 1))
+						{	//If a beat couldn't be added
+							eof_log("\tError allocating memory to add a beat.  Aborting", 1);
+							error = 1;
+							break;
+						}
+					}
+					timectr += lastbeatlen;	//Advance the time counter by one beat length
+					eof_song->beat[beatctr]->fpos = timectr;
+					eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;	//Round up to nearest ms
+					beatctr++;
+				}
+				if(error)
+				{	//If an error was reached
+					break;	//Exit outer loop
+				}
+			}
+			else
+			{	//This is the first point tag, update the chart's MIDI delay
+				eof_song->tags->ogg[0].midi_offset = frametime + 0.5;
+			}
+			if(beatctr >= eof_song->beats)
+			{	//If another beat needs to be added to the project
+				if(!eof_song_append_beats(eof_song, 1))
+				{	//If a beat couldn't be added
+					eof_log("\tError allocating memory to add a beat.  Aborting", 1);
+					error = 1;
+					break;
+				}
+				if(eof_chart_length < eof_song->beat[eof_song->beats - 1]->pos)
+				{	//If the chart length needs to be updated to reflect the Sonic Visualizer file making the chart longer
+					eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;
+				}
+			}
+			eof_song->beat[beatctr]->fpos = frametime;
+			eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;	//Round up to nearest ms
+			beatctr++;
+			timectr = frametime;	//Track the position of the last processed beat
+			lastbeatlen = beatlen;	//Track the beat length of the last processed point tag
 		}//If this is a point tag
 		else if(strcasestr_spec(buffer, "</dataset>"))
 		{	//If this is the end of the dataset tag containing the point tags
@@ -6140,6 +6144,18 @@ int eof_menu_file_sonic_visualiser_import(void)
 		(void) pack_fgets(buffer, (int)maxlinelength, inf);	//Read next line of text
 		linectr++;	//Increment line counter
 	}//Until there was an error reading from the file or end of file is reached
+
+	if(!lastbeatlen)
+	{	//If the beats were defined as timestamps and not with tempo changes
+		if(beatctr > 2)
+		{	//Bounds check
+			lastbeatlen = eof_song->beat[beatctr - 1]->fpos - eof_song->beat[beatctr - 2]->fpos;
+		}
+		else
+		{	//Something unusual is going on, use a generic 120BPM beat length
+			lastbeatlen = 500;
+		}
+	}
 
 	if(error)
 	{
@@ -6153,7 +6169,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 	{
 		while((beatctr > 0) && (beatctr < eof_song->beats))
 		{	//While there are beats whose timings weren't covered by the imported file
-			eof_song->beat[beatctr]->fpos = eof_song->beat[beatctr - 1]->fpos + beatlen;	//Apply the beat length defined by the last point frame
+			eof_song->beat[beatctr]->fpos = eof_song->beat[beatctr - 1]->fpos + lastbeatlen;	//Apply the beat length defined by the last point frame
 			eof_song->beat[beatctr]->pos = eof_song->beat[beatctr]->fpos + 0.5;				//Round up to nearest ms
 			beatctr++;
 		}
@@ -6935,11 +6951,10 @@ int eof_menu_file_multiple_array_txt_import(void)
 {
 	char *returnedfn = NULL;
 	unsigned long count = 0, ctr;
-	struct al_ffblk info = {0, 0, 0, {0}, NULL}; // for file search
 	char foldername[100] = {0};
 	char rootfolder[1024] = {0};
 	char targetfolder[1024] = {0};
-	char undo_made = 0, empty_set = 0;
+	char undo_made = 0;
 	char ghot_import = 0;	//Set to nonzero if contents of multiple folders are targeted for import
 	int last_track_type = 0;
 	int prompt1 = 0, prompt2 = 0, prompt3 = 0;
@@ -7042,11 +7057,6 @@ int eof_menu_file_multiple_array_txt_import(void)
 
 		if(!count)
 			allegro_message("No files were imported.");
-
-		if(!empty_set)
-		{	//If there were any file search results
-			al_findclose(&info);	//Free the memory that was allocated by Allegro to enumerate them
-		}
 	}
 	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);

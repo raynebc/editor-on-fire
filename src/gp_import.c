@@ -3306,6 +3306,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					byte = pack_getc(inf);		//Read beat duration
 					if((byte < -2) || (byte > 4))
 					{	//If it's an invalid note length
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "!Invalid note length:  Measure %lu, track %lu, voice %u, beat %lu, length %d", ctr, ctr2, voice, ctr3, byte);
+						eof_log(eof_log_string, 1);
 						if(!user_warned)
 						{
 							allegro_message("Warning:  This file has an invalid note length of %d and is probably corrupt", byte);
