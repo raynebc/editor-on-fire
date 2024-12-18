@@ -236,15 +236,22 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 								memcpy(mpqn_array, &midiptr->track[curtrack].data[track_pos], 3);
 								mpqn = (mpqn_array[0]<<16) | (mpqn_array[1]<<8) | mpqn_array[2];	//Convert MPQN data to a usable value
 								realtime += (double)reldelta / midiptr->divisions * (60000.0 / currentbpm);	//Convert the relative delta time to real time and add it to the time counter
-								currentbpm = 60000000.0 / mpqn;	//Obtain the BPM value of this tempo change
+
+								if(mpqn > 0)
+                                        {    //Bounds check
+                                             currentbpm = 60000000.0 / mpqn;	//Obtain the BPM value of this tempo change
+                                        }
 
 								tempoptr = malloc(sizeof(struct eof_MIDI_tempo_change));
-								if(!tempoptr)
-								{	//Error allocating memory
+								if(!tempoptr || !mpqn)
+								{	//Error allocating memory or an invalid tempo was parsed
 									eof_MIDI_empty_event_list(head);
 									eof_MIDI_empty_tempo_list(tempohead);
 									free(trackptr);
-									eof_log("\tError allocating memory", 1);
+									if(!tempoptr)
+                                                  eof_log("\tError allocating memory", 1);
+                                             if(!mpqn)
+                                                  eof_log("\tInvalid MPQN", 1);
 									return NULL;
 								}
 								tempoptr->absdelta = absdelta;

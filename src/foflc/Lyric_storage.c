@@ -1023,7 +1023,6 @@ void PostProcessLyrics(void)
 			if(lineptr->prev != NULL)
 				(lineptr->prev)->next=NULL;		//Previous line points forward to nothing
 			free(lineptr);
-			lineptr=NULL;
 			(void) puts("(Discarded empty unfinalized line of lyrics)\n");
 			break;	//Break from for loop
 		}

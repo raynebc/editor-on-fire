@@ -926,7 +926,6 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 			memcpy(newtrack,MIDIstruct.hchunk.tracks,sizeof(struct Track_chunk)*MIDIstruct.hchunk.numtracks);	//Copy existing tracks array content into new array
 			free(MIDIstruct.hchunk.tracks);	//release old array
 			MIDIstruct.hchunk.tracks=newtrack;	//store new array
-			newtrack=NULL;
 			MIDIstruct.hchunk.numtracks++;	//Increment track count
 		}
 
@@ -2913,7 +2912,6 @@ void Export_Vrhythm(FILE *outmidi,FILE *outlyric,char *vrhythmid)
 					if(fprintf(outlyric,"%s ",notestring)<0)
 						errornumber=errno;
 					free(notestring);
-					notestring=NULL;
 				}
 				else						//Write note number instead
 					if(fprintf(outlyric,"%u ",temp->pitch)<0)	//Write pitch

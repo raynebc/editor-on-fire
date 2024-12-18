@@ -895,7 +895,11 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 		}
 
 		///Store scoring data into the last cache structure if applicable
-		if(index + 1 == solution->deployments[solution->num_deployments - 1])
+		if(solution->num_deployments == 0)
+          {
+               eof_log_casual("num_deployments is unexpectedly zero", 1, 1, 1);
+          }
+		else if(index + 1 == solution->deployments[solution->num_deployments - 1])
 		{	//If the last deployment for the solution is the next note
 			memcpy(&last_cache, &score, sizeof(EOF_SP_PATH_SCORING_STATE));	//Store the scoring data to last cache
 			last_cache.note_start = 0;					//This cache data will reflect scoring for all notes from the first one

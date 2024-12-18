@@ -2911,7 +2911,7 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 		//Otherwise it marks the end of any current phrase and the potential start of another
 		if(currentphrase)
 		{	//If another phrase has been read
-			started = 0;
+///			started = 0;   //Any ongoing phrase ends whenever the next starts, so setting this condition to 0 is meaningless
 			endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
 			maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
 			stringlen = (size_t)snprintf(NULL, 0, "%s : maxDifficulty = %u", currentphrase, maxdiff) + 1;	//Find the number of characters needed to snprintf this string

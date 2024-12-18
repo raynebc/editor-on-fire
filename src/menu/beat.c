@@ -3760,6 +3760,9 @@ int eof_menu_beat_export_beat_timings(void)
 		}
 
 		input = atoi(eof_etext2);
+		if(input < 0)
+               input = 1;     //Values less than 1 are not valid for this function
+
 		for(ctr = 0; ctr < eof_song->beats; ctr++)
 		{	//For each beat
 			if(eof_export_beat_timings_dialog[3].flags & D_SELECTED)
@@ -3780,10 +3783,11 @@ int eof_menu_beat_export_beat_timings(void)
 			(void) snprintf(buffer, sizeof(buffer) - 1, "beat(%lu)\n", output);
 			(void) pack_fputs(buffer, fp);
 		}
+
+          (void) pack_fclose(fp);
 	}
 
 	//Cleanup
-	(void) pack_fclose(fp);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);

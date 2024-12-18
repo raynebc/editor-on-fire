@@ -988,6 +988,11 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			eof_log("\t\tCould not find section", 1);
 			return 0;
 		}
+		if(fb->index < 4)
+          {
+               eof_log("\t\tMalformed GH file", 1);
+               return 0;
+          }
 	#ifdef GH_IMPORT_DEBUG
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tChecking next vocal section at file position 0x%lX", fb->index - 4);
 		eof_log(eof_log_string, 1);
@@ -2883,6 +2888,12 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		eof_filebuffer_close(fb);
 		return NULL;
 	}
+	if(fb->index < 8)
+     {
+          eof_log("Error:  Malformed GH file", 1);
+          eof_filebuffer_close(fb);
+          return NULL;
+     }
 	qbindex = fb->index - 8;	//The encapsulated QB file begins 8 bytes before the magic number
 #ifdef GH_IMPORT_DEBUG
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  QB header located at file position 0x%lX", qbindex);

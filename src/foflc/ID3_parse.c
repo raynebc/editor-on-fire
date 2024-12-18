@@ -122,7 +122,6 @@ void DisplayID3Tag(char *filename)
 				else
 					printf("\tFrame: %s = \"%s\"\n",temp->frameid,buffer);
 				free(buffer);	//Release text info frame content
-				buffer=NULL;
 			}
 			else
 				printf("\t%s frame present\n",temp->frameid);
@@ -493,7 +492,6 @@ void SYLT_Parse(struct ID3Tag *tag)
 			string2=TruncateString(string2,1);		//Remove leading/trailing whitespace, newline chars, etc.
 			printf("Timestamp: 0x%X%X%X%X\t%lu %s\t\"%s\"\t%s",timestamparray[0],timestamparray[1],timestamparray[2],timestamparray[3],timestamp,(timestampformat == 1) ? "MPEG frames" : "Milliseconds",string2,(string[0]=='\n') ? "(newline)\n" : "\n");
 			free(string2);
-			string2=NULL;
 		}
 
 	//Perform grouping logic

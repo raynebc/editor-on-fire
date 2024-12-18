@@ -6064,7 +6064,6 @@ int eof_menu_file_sonic_visualiser_import(void)
 			}
 			if(tempo_s[0] == '\0')
 			{	//If the tempo string is empty (the last point tag in a beat estimation defines an empty tag attribute), keep the last beat length in effect
-				tempo_f = 120.0;
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFrame = %ld\ttime = %fms", frame, frametime);
 				eof_log(eof_log_string, 1);
 				beatlen = 0;

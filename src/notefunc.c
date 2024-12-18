@@ -72,7 +72,10 @@ double notefunc_note_to_freq(char* note)
 		{
 			adj = -1;
 		}
-		notenum = (notenum + adj) % numnotes;
+		if(!notenum && (adj < 0))
+              notenum = numnotes - 1;   //Special case:  The flat of C will be treated as B
+          else
+               notenum = (notenum + adj) % numnotes;
 	}
 
 	//Round to two decimal places to avoid floating point weirdness
