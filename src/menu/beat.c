@@ -294,11 +294,11 @@ int eof_export_beat_timings_edit_proc(int msg, DIALOG *d, int c);
 DIALOG eof_export_beat_timings_dialog[]=
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)         (dp2) (dp3) */
-	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
+	{ d_agup_shadow_box_proc,32,  68,  174, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
 	{ d_agup_text_proc,		 56,  84,  64,  8,   2,    23,  0,    0,      0,   0,   "Intervals:",NULL, NULL },
 	{ eof_export_beat_timings_edit_proc,112, 80,  66,  20,  2,   23,   0,      0,   2,   0,    eof_etext2,  "0123456789", NULL },
-	{ d_agup_radio_proc,     42,  105, 60,  15,  2,    23,  0,    0,      0,   0,   "&Millis",      NULL, NULL },
-	{ d_agup_radio_proc,     120, 105, 80,  15,  2,    23,  0,    0,      0,   0,   "&Intervals",   NULL, NULL },
+	{ d_agup_radio_proc,     42,  105, 68,  15,  2,    23,  0,    0,      0,   0,   "&Millis",      NULL, NULL },
+	{ d_agup_radio_proc,     120, 105, 84,  15,  2,    23,  0,    D_SELECTED,      0,   0,   "&Int/sec",   NULL, NULL },
 	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT, 0,   0,   "OK",        NULL, NULL },
 	{ d_agup_button_proc,    120, 125, 68,  28,  2,    23,  0,    D_EXIT, 0,   0,   "Cancel",    NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -3746,9 +3746,8 @@ int eof_menu_beat_export_beat_timings(void)
 	eof_render();
 	eof_color_dialog(eof_export_beat_timings_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_export_beat_timings_dialog);
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", input);
+	eof_etext2[0] = '\0';
 
-     eof_export_beat_timings_dialog[3].flags = D_SELECTED;                           //Select millisecond export by default
 	if(eof_popup_dialog(eof_export_beat_timings_dialog, 2) == 5)
 	{	//User clicked OK
 		(void) replace_filename(buffer, eof_song_path, "timings.txt", 1024);	//Obtain the destination filename
@@ -3760,7 +3759,7 @@ int eof_menu_beat_export_beat_timings(void)
 		}
 
 		input = atoi(eof_etext2);
-		if(input < 0)
+		if(input < 1)
                input = 1;     //Values less than 1 are not valid for this function
 
 		for(ctr = 0; ctr < eof_song->beats; ctr++)
@@ -3771,14 +3770,7 @@ int eof_menu_beat_export_beat_timings(void)
 			}
 			else
 			{	//Export intervals per second
-				if(eof_song->beat[ctr]->pos % input == 0)
-				{	//Beat position is divisible by the interval
-					output = eof_song->beat[ctr]->pos / input;
-				}
-				else
-				{	//Do floating point math and round to nearest integer
-					output = (eof_song->beat[ctr]->fpos / (double)input) + 0.5;
-				}
+			     output = ((eof_song->beat[ctr]->fpos * (double)input) / 1000.0) + 0.5;
 			}
 			(void) snprintf(buffer, sizeof(buffer) - 1, "beat(%lu)\n", output);
 			(void) pack_fputs(buffer, fp);
