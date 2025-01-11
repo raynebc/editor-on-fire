@@ -81,3 +81,34 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 
 	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
 }
+
+int eof_edit_proc(int msg, DIALOG *d, int c)
+{
+	static char tabused = 0;	//Tracks whether the tab key was pressed but not completely processed yet
+
+	if(msg == MSG_WANTFOCUS)
+	{	//If this field wants focus
+		if(!eof_click_changes_dialog_focus)
+		{	//If the user preference to require a mouse click to change field focus is not enabled
+			return d_agup_edit_proc(msg,d,c);	//Allow the dialog system to carry out normal logic
+		}
+		if(tabused)
+		{	//If this dialog message was preceded by a tab keypress
+			tabused = 0;
+			return d_agup_edit_proc(msg,d,c);	//Allow the dialog system to carry out normal logic
+		}
+		if(d->flags & EOF_MSG_BUTTONFOCUS)
+		{	//If a custom button focus flag was set by the click event
+			d->flags &= ~EOF_MSG_BUTTONFOCUS;	//Clear it
+			return D_WANTFOCUS;	//And have the dialog system switch input focus
+		}
+		return D_O_K;	//Otherwise deny it, because simply mousing over it can cause this message
+	}
+	if(msg == MSG_CLICK)
+	{	//If this field is explicitly clicked on
+		d->flags |= EOF_MSG_BUTTONFOCUS;	//Set this custom flag to indicate a mouse click initiated the WANTFOCUS message
+		return d_agup_edit_proc(msg,d,c);	//Allow the dialog system to carry out the click processing
+	}
+
+	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
+}

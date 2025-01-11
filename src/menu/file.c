@@ -1445,6 +1445,10 @@ int eof_menu_file_preferences(void)
 			eof_add_new_notes_to_selection = (eof_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
 			eof_inverted_chords_slash = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
 			eof_click_changes_dialog_focus = (eof_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
+               if(eof_click_changes_dialog_focus)
+                    gui_mouse_focus = 0;
+               else
+                    gui_mouse_focus = 1;
 			eof_stop_playback_leave_focus = (eof_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
 			if(eof_etext3[0] != '\0')
 			{	//If the chord density threshold field is populated

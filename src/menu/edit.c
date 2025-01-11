@@ -1901,6 +1901,24 @@ int eof_menu_edit_paste_logic(int function)
 			if(temp_note.phrasenum != 0xFFFFFFFF)
 			{	//If this pasted note's source note is in an arpeggio/handshape
 				arpeggend = np->pos + np->length;	//Track end position of arpeggio
+                    if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
+                    {    //Bounds check
+                         unsigned long srcstartbeat, srcendbeat, dststartbeat;
+                         double srcendpos, dststartpos, dstendpos, beatlength;
+
+                         srcstartbeat = eof_get_beat(eof_song, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].start_pos);
+                         srcendbeat = eof_get_beat(eof_song, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].end_pos);
+                         if(srcendbeat >= srcstartbeat)
+                         {    //Validate
+						srcendpos = eof_get_porpos(eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].end_pos);	//How far into the destination beat the created phrase should end
+						beatlength = ((srcendbeat - srcstartbeat) * 100.0) + srcendpos;			//The floating point length in percent of beats that the created phrase should be
+						dststartbeat = eof_get_beat(eof_song, arpeggstart);			//Which beat the created phrase should start in
+						dststartpos = eof_get_porpos(arpeggstart);						//How far into the beat the created phrase should start
+						dstendpos = eof_put_porpos(dststartbeat, beatlength + dststartpos, 0.0);		//The timestamp at which the created phrase should end
+
+						arpeggend = dstendpos;	//If the bounds check and validation passed, this accurate timing will replace the end position of the last pasted note in the phrase
+                         }
+                    }
 			}
 			lastarpeggnum = temp_note.phrasenum;
 		}

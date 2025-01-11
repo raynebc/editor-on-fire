@@ -621,9 +621,9 @@ int alogg_poll_ogg_ts(ALOGG_OGG *ogg) {
 
   /* clear the buffer with 16bit unsigned data */
   {
-    int i;
+    int i2;
     unsigned short *j = (unsigned short *)audiobuf;
-    for (i = 0; i < (ogg->audiostream_buffer_len / 2); i++, j++)
+    for (i2 = 0; i2 < (ogg->audiostream_buffer_len / 2); i2++, j++)
       *j = 0x8000;
   }
 
@@ -763,9 +763,9 @@ int alogg_poll_ogg(ALOGG_OGG *ogg) {
 
   /* clear the buffer with 16bit unsigned data */
   {
-    int i;
+    int i2;
     unsigned short *j = (unsigned short *)audiobuf;
-    for (i = 0; i < (ogg->audiostream_buffer_len / 2); i++, j++)
+    for (i2 = 0; i2 < (ogg->audiostream_buffer_len / 2); i2++, j++)
       *j = 0x8000;
   }
 
@@ -951,9 +951,9 @@ SAMPLE *alogg_create_sample_from_ogg(ALOGG_OGG *ogg) {
   data = (char *)sample->data;
   /* clear the sample buffer in unsigned format */
   {
-    int i;
+    int i2;
     unsigned short *j = (unsigned short *)data;
-    for (i = 0; i < (sample_len_bytes / 2); i++, j++)
+    for (i2 = 0; i2 < (sample_len_bytes / 2); i2++, j++)
       *j = 0x8000;
   }
 
@@ -1338,9 +1338,9 @@ int alogg_poll_oggstream(ALOGG_OGGSTREAM *ogg) {
 
   /* clear the buffer with unsinged data*/
   {
-    int i;
+    int i2;
     unsigned short *j = (unsigned short *)audiobuf;
-    for (i = 0; i < (ogg->audiostream_buffer_len / 2); i++, j++)
+    for (i2 = 0; i2 < (ogg->audiostream_buffer_len / 2); i2++, j++)
       *j = 0x8000;
   }
 

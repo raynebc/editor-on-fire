@@ -932,6 +932,11 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 		if(Lyrics.verbose>=2)	printf("MIDI track %lu begins at byte 0x%lX\n", ctr, temp2);
 		(MIDIstruct.hchunk.tracks[ctr]).fileposition = temp2;	//Store file position for this track
 		ctr++;		//Increment track counter
+		if(temp.chunksize >= LONG_MAX)
+          {
+               (void) printf("Error:  Track %lu is too large (%lu bytes) to import\nAborting", ctr, temp.chunksize);
+               exit_wrapper(1);
+          }
 		fseek_err(inf,temp.chunksize,SEEK_CUR);		//Fast forward to next track header
 		temp2 = (unsigned long)ftell_err(inf);
 	}

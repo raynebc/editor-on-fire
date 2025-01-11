@@ -572,15 +572,15 @@ d_abitmap_edit_proc (int msg, DIALOG *d, int c)
         int l, x, b, f, p, w;
         char *s = (char *) d->dp;
         char buf[16];           /* Buffer to hold one char at a time. */
-        int c = 0;
+        int c2 = 0;
         int fg;
 
         agup_edit_adjust_position (d);
 
         if (d->flags & D_GOTFOCUS)
-            c = 1;
+            c2 = 1;
         if (d->flags & D_DISABLED)
-            c = 2;
+            c2 = 2;
 
         abitmap_draw_area (d, B_EDIT, 0, 0, d->w, text_height (font) + 8, 0, 0);
 
@@ -627,12 +627,12 @@ d_abitmap_edit_proc (int msg, DIALOG *d, int c)
 
             if (((p == d->d2) && (d->flags & D_GOTFOCUS)))
             {
-                abitmap_draw_bmp (bmp, &theme->bitmaps[B_CURSOR][c],
+                abitmap_draw_bmp (bmp, &theme->bitmaps[B_CURSOR][c2],
                     d->x + x, d->y, w, text_height (font) + 4);
-                fg =  theme->bitmaps[B_CURSOR][c].color;
+                fg =  theme->bitmaps[B_CURSOR][c2].color;
             }
             else
-                fg =  theme->bitmaps[B_EDIT][c].color;
+                fg =  theme->bitmaps[B_EDIT][c2].color;
 
             textout_ex (bmp, font, buf, d->x + x, d->y + 4, fg, -1);
 
@@ -660,12 +660,12 @@ d_abitmap_list_proc (int msg, DIALOG *d, int c)
         int height, size, i, len, bar, x, y;
         char *sel = d->dp2;
         char s[1024];
-        int c = 0;
+        int c2 = 0;
 
         if (d->flags & D_GOTFOCUS)
-            c = 1;
+            c2 = 1;
         if (d->flags & D_DISABLED)
-            c = 2;
+            c2 = 2;
 
         (*(char *(*)(int, int *)) d->dp) (-1, &size);
         height = (d->h - 4) / text_height (font);
@@ -680,7 +680,7 @@ d_abitmap_list_proc (int msg, DIALOG *d, int c)
         {
             if (d->d2 + i < size)
             {
-                int fg = theme->bitmaps[B_LIST][c].color;
+                int fg = theme->bitmaps[B_LIST][c2].color;
 
                 x = d->x + 2;
                 y = d->y + 2 + i * text_height (font);
@@ -689,7 +689,7 @@ d_abitmap_list_proc (int msg, DIALOG *d, int c)
                 {
                     abitmap_draw_area (d, B_LIST_ITEM, 0, y - d->y,
                         bar ? d->w - 12 : d->w, text_height (font), 0, 0);
-                    fg = theme->bitmaps[B_LIST_ITEM][c].color;
+                    fg = theme->bitmaps[B_LIST_ITEM][c2].color;
                 }
                 ustrzcpy (s, sizeof (s),
                           (*(char *(*)(int, int *)) d->dp) (i + d->d2, NULL));
@@ -1314,13 +1314,13 @@ abitmap_init (char const *path, DATAFILE *datafile)
                 }
                 else
                 {
-                    BITMAP *bmp;
+                    BITMAP *bmp2;
 
                     /* This shouldn't happen. Build a replacement bitmap. */
-                    bmp = create_bitmap (32, 32);
-                    clear_to_color (bmp, theme->bg_color);
-                    used_bitmap (bmp, "replacement");
-                    theme->bitmaps[bload[i].elem][j].bmp = bmp;
+                    bmp2 = create_bitmap (32, 32);
+                    clear_to_color (bmp2, theme->bg_color);
+                    used_bitmap (bmp2, "replacement");
+                    theme->bitmaps[bload[i].elem][j].bmp = bmp2;
                     TRACE ("Fatal: AGUP bitmap not present!\n");
                 }
             }

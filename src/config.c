@@ -164,6 +164,10 @@ void eof_load_config(char * fn)
 	eof_force_pro_drum_midi_notation = get_config_int("preferences", "eof_force_pro_drum_midi_notation", 1);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	eof_click_changes_dialog_focus = get_config_int("preferences", "eof_click_changes_dialog_focus", 1);
+	if(eof_click_changes_dialog_focus)
+          gui_mouse_focus = 0;
+     else
+          gui_mouse_focus = 1;
 	eof_stop_playback_leave_focus = get_config_int("preferences", "eof_stop_playback_leave_focus", 1);
 	eof_enable_logging = get_config_int("preferences", "eof_enable_logging", 1);
 	eof_log_level = get_config_int("preferences", "eof_log_level", 1);
