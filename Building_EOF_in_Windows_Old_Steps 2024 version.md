@@ -170,7 +170,7 @@ libvorbisfile-3.dll
 libvorbis-0.dll
 libogg-0.dll
 ```
-The program should now be ready to use.
+The program should now be ready to use.  To distribute the executable to another computer you should copy the contents of the bin folder to another computer and try to run it.  You may need to add other files such as libwinpthread-1.dll if the OS complains about missing libraries when the program is launched.
 
 To build in an IDE instead, create a project and manually add the source files and settings from the makefile:
 Code::Blocks instructions, in Windows (other OSs will require some different steps):
