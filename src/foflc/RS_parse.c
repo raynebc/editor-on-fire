@@ -188,7 +188,7 @@ int rs_lyric_filter_char_extended(int character)
 		return 0;	//ASCII character 158 is allowed
 	if(code < 161)
 		return 1;	//Not allowed
-    if(code < 163)
+	if(code < 163)
 		return 0;	//ASCII characters 161 and 162 are allowed
 	if(code < 165)
 		return 1;	//Not allowed

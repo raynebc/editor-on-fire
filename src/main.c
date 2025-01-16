@@ -4329,10 +4329,10 @@ int eof_initialize(int argc, char * argv[])
 
 	//Build the path to the temp subfolder
 	#ifdef ALLEGRO_WINDOWS
-        snprintf(eof_temp_path, sizeof(eof_temp_path) - 1, "temp");
-    #else
-        snprintf(eof_temp_path, sizeof(eof_temp_path) - 1, "/tmp/eof");
-    #endif
+		snprintf(eof_temp_path, sizeof(eof_temp_path) - 1, "temp");
+	#else
+		snprintf(eof_temp_path, sizeof(eof_temp_path) - 1, "/tmp/eof");
+	#endif
 	strncpy(eof_temp_path_s, eof_temp_path, sizeof(eof_temp_path_s) - 1);
 	put_backslash(eof_temp_path_s);
 

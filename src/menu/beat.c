@@ -3421,7 +3421,7 @@ int eof_events_dialog_move_down(DIALOG * d)
 
 int eof_menu_beat_estimate_bpm(void)
 {
-    return D_O_K;
+	return D_O_K;
 }
 
 #else
@@ -3760,7 +3760,7 @@ int eof_menu_beat_export_beat_timings(void)
 
 		input = atoi(eof_etext2);
 		if(input < 1)
-               input = 1;     //Values less than 1 are not valid for this function
+			input = 1;     //Values less than 1 are not valid for this function
 
 		for(ctr = 0; ctr < eof_song->beats; ctr++)
 		{	//For each beat
@@ -3770,13 +3770,13 @@ int eof_menu_beat_export_beat_timings(void)
 			}
 			else
 			{	//Export intervals per second
-			     output = ((eof_song->beat[ctr]->fpos * (double)input) / 1000.0) + 0.5;
+				output = ((eof_song->beat[ctr]->fpos * (double)input) / 1000.0) + 0.5;
 			}
 			(void) snprintf(buffer, sizeof(buffer) - 1, "beat(%lu)\n", output);
 			(void) pack_fputs(buffer, fp);
 		}
 
-          (void) pack_fclose(fp);
+		(void) pack_fclose(fp);
 	}
 
 	//Cleanup

@@ -67,9 +67,9 @@ EOF_RS_PREDEFINED_SECTION eof_rs_predefined_events[EOF_NUM_RS_PREDEFINED_EVENTS]
 {
 	{"B0", "High pitch tick (B0)"},
 	{"B1", "Low pitch tick (B1)"},
-	{"E0", "Crowd waving hands (E0)"},
-	{"E1", "Crowd happy (E1)"},
-	{"E2", "Crowd very happy (E2)"},
+	{"e0", "Crowd speed slow (e0)"},
+	{"e1", "Crowd speed default (e1)"},
+	{"e2", "Crowd speed fast (e2)"},
 	{"E3", "Crowd applause (E3)"},
 	{"D3", "Crowd critique applause (D3)"},
 	{"E13", "End crowd applause (E13)"}
@@ -1731,7 +1731,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangement>%s</arrangement>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("  <part>1</part>\n", fp);
-	(void) pack_fputs("  <offset>0.000</offset>\n", fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <offset>%.3f</offset>\n", -(sp->beat[0]->fpos / 1000.0));
+	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("  <centOffset>0</centOffset>\n", fp);
 	eof_truncate_chart(sp);	//Update the chart length
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <songLength>%.3f</songLength>\n", (double)(xml_end - 1) / 1000.0);	//Make sure the song length is not longer than the actual audio, or the chart won't reach an end in-game
@@ -3156,15 +3157,8 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 						}
 						else
 						{	//The next note (if any) is not a repeat of this note and is not completely string muted
-							if(eof_get_note_tflags(sp, track, nextnote) & EOF_NOTE_TFLAG_SPLIT_CHORD)
-							{	//If this note was created from a chord due to linknext or split statuses, it is to be ignored so the handshape can encompass it where appropriate
-								ctr3 = nextnote;	//Iterate to the next note
-							}
-							else
-							{
-								handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
-								break;	//Break from while loop
-							}
+							handshapeend = eof_get_note_pos(sp, track, ctr3) + eof_get_note_length(sp, track, ctr3);	//End the hand shape at the end of this chord
+							break;	//Break from while loop
 						}
 					}
 				}
@@ -4750,6 +4744,27 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 	return retval;	//Return not populated
 }
 
+int eof_same_excluding_ghosts(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note1, unsigned long note2)
+{
+	unsigned long ctr, bitmask;
+
+	if(!tp || (note1 >= tp->notes) || (note2 >= tp->notes))
+		return -1;	//Invalid parameters
+
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr ++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if(!(tp->note[note1]->ghost & bitmask) && !(tp->note[note2]->ghost & bitmask))
+		{	//If the string is not ghosted
+			if((tp->note[note1]->frets[ctr] & 0x7F) != (tp->note[note2]->frets[ctr] & 0x7F))
+			{	//If this string's fret value (when masking out the mute status) isn't the same for both notes
+				return 1;	//Return not equal
+			}
+		}
+	}
+
+	return 0;	//Return equal
+}
+
 int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned long note, char target)
 {
 	long prev;
@@ -4797,6 +4812,28 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 	{	//If the chord is in a handshape
 		if(handshapestatus == 1)
 			return 0;	//Chord is the first note in any handshape
+		else
+		{	// Check the previous chord in the handshape (ignoring any single notes in between)
+			long indexWithinHandShape = handshapestatus;
+			long prevInHandShape = prev;
+			while(indexWithinHandShape >= 1)
+			{	//For each note before this chord in the handshape
+				unsigned long lanecount = eof_note_count_rs_lanes(sp, track, prevInHandShape, 2);
+				if(lanecount > 1)
+				{	//If the earlier note is a chord
+					if(!eof_same_excluding_ghosts(tp, track, note, prevInHandShape))
+					{	//And it matches this chord (without regard for any ghost notes
+						return 1;
+					}
+					else
+					{	//The previous chord is different
+						return 0;
+					}
+				}
+				indexWithinHandShape--;
+				prevInHandShape  = eof_track_fixup_previous_note(sp, track, prevInHandShape);	//Check the previous note in the same track difficulty during the next loop iteration
+			}
+		}
 	}
 
 	if(eof_note_compare(sp, track, note, track, prev, 0))

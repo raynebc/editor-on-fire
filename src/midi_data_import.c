@@ -238,9 +238,9 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 								realtime += (double)reldelta / midiptr->divisions * (60000.0 / currentbpm);	//Convert the relative delta time to real time and add it to the time counter
 
 								if(mpqn > 0)
-                                        {    //Bounds check
-                                             currentbpm = 60000000.0 / mpqn;	//Obtain the BPM value of this tempo change
-                                        }
+								{    //Bounds check
+									currentbpm = 60000000.0 / mpqn;	//Obtain the BPM value of this tempo change
+								}
 
 								tempoptr = malloc(sizeof(struct eof_MIDI_tempo_change));
 								if(!tempoptr || !mpqn)
@@ -249,9 +249,9 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 									eof_MIDI_empty_tempo_list(tempohead);
 									free(trackptr);
 									if(!tempoptr)
-                                                  eof_log("\tError allocating memory", 1);
-                                             if(!mpqn)
-                                                  eof_log("\tInvalid MPQN", 1);
+										eof_log("\tError allocating memory", 1);
+									if(!mpqn)
+										eof_log("\tInvalid MPQN", 1);
 									return NULL;
 								}
 								tempoptr->absdelta = absdelta;

@@ -1551,7 +1551,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		else if(strcasestr_spec(buffer, "<levels") && !strstr(buffer, "/>"))
 		{	//If this is the levels tag and it isn't empty
 			long curdiff = 0, timevar = 0;
-			long fret = 0, palmmute, mute;
+			long fret = 0, palmmute, mute, ignore, accent;
 			unsigned long flags;
 			EOF_PRO_GUITAR_NOTE *np = NULL;
 
@@ -1738,10 +1738,12 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 										{	//If the strum direction could not be read
 											(void) strncpy(tag, "down", sizeof(tag) - 1);	//Assume down strum
 										}
-										mute = highdensity = palmmute = 0;
+										mute = highdensity = palmmute = ignore = accent = 0;
 										(void) parse_xml_attribute_number("fretHandMute", buffer, &mute);
 										(void) parse_xml_attribute_number("highDensity", buffer, &highdensity);
 										(void) parse_xml_attribute_number("palmMute", buffer, &palmmute);
+										(void) parse_xml_attribute_number("ignore", buffer, &ignore);
+										(void) parse_xml_attribute_number("accent", buffer, &accent);
 
 										//Add chord and set attributes
 										np = eof_pro_guitar_track_add_note(tp);	//Allocate, initialize and add the new note to the note array
@@ -1764,6 +1766,10 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_HD;
 										if(palmmute)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+										if(ignore)
+											np->eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;
+										if(accent)
+											flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
 										np->flags = flags;
 										np->type = curdiff;
 										note_count++;

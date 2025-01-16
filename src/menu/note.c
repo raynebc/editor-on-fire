@@ -9646,8 +9646,8 @@ int eof_pro_guitar_note_bend_strength(char undo)
 				continue;	//If this note isn't a bend, skip it
 
 			if((newstrength == eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength) &&
-			   ((tp->note != tp->technote) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)))
-			   continue;	//If the bend strength isn't different than what it already had, and this isn't a tech note or is a tech note that didn't have a bend strength defined (necessary check to allow a value of 0 to set the RS notation flag), skip it
+			((tp->note != tp->technote) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)))
+				continue;	//If the bend strength isn't different than what it already had, and this isn't a tech note or is a tech note that didn't have a bend strength defined (necessary check to allow a value of 0 to set the RS notation flag), skip it
 
 			if(undo && !undo_made)
 			{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)

@@ -10050,8 +10050,8 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 				}
 				csp->beat[0]->pos = start;	//Initialize the first beat to match the start of the export chart range
 				csp->beat[0]->fpos = start;
-				if(beatoffset)                     //Avoid an underflow
-                         beatoffset--;                 //Update the offset to reflect that the offset for text events is one beat further into the project
+				if(beatoffset)		//Avoid an underflow
+					beatoffset--;	//Update the offset to reflect that the offset for text events is one beat further into the project
 			}
 		}
 
