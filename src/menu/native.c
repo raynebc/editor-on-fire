@@ -86,7 +86,6 @@ static bool update_a4_menu_item(int id, const char * caption, int flags)
 
 static bool add_menu(MENU * mp, MENU * parent, int parent_pos)
 {
-	char buf[256];
 	int flags;
 	int this_menu = current_menu;
 
@@ -129,7 +128,7 @@ static bool add_menu(MENU * mp, MENU * parent, int parent_pos)
 			{
 				flags |= ALLEGRO_MENU_ITEM_CHECKBOX;
 			}
-			al_append_menu_item(native_menu[this_menu], mp->proc ? get_menu_text(mp->text, buf) : "", current_id, flags, NULL, NULL);
+			al_append_menu_item(native_menu[this_menu], mp->text, current_id, flags, NULL, NULL);
 			index_a4_menu_item(current_id, mp);
 			native_menu_items[this_menu]++;
 			current_id++;
@@ -154,7 +153,7 @@ static bool add_menu(MENU * mp, MENU * parent, int parent_pos)
 		}
 		if(parent->text)
 		{
-			al_append_menu_item(native_menu[parent_pos], get_menu_text(parent->text, buf), current_id, flags, NULL, native_menu[this_menu]);
+			al_append_menu_item(native_menu[parent_pos], parent->text, current_id, flags, NULL, native_menu[this_menu]);
 			index_a4_menu_item(current_id, parent);
 			native_menu_items[parent_pos]++;
 			current_id++;
