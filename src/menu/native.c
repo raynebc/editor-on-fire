@@ -155,7 +155,7 @@ static bool add_menu(MENU * mp, MENU * parent, int parent_pos)
 		if(parent->text)
 		{
 			al_append_menu_item(native_menu[parent_pos], get_menu_text(parent->text, buf), current_id, flags, NULL, native_menu[this_menu]);
-			index_a4_menu_item(current_id, mp);
+			index_a4_menu_item(current_id, parent);
 			native_menu_items[parent_pos]++;
 			current_id++;
 		}
