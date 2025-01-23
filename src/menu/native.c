@@ -113,9 +113,8 @@ static bool add_menu(MENU * mp, MENU * parent, int parent_pos)
 				return false;
 			}
 		}
-
 		/* Add menu item to current menu. */
-		else
+		else if (mp->proc)
 		{
 			flags = 0;
 			if(mp->flags & D_SELECTED)
@@ -135,6 +134,9 @@ static bool add_menu(MENU * mp, MENU * parent, int parent_pos)
 			native_menu_items[this_menu]++;
 			current_id++;
 		}
+		else /* A separator */
+			al_append_menu_item(native_menu[this_menu], NULL, 0, 0, NULL, NULL);
+
 		mp++;
 	}
 
