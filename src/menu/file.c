@@ -2921,21 +2921,32 @@ int eof_new_chart(char * filename)
 	}
 	else if(!ustricmp("mp3", get_extension(oggfilename)))
 	{
-		tag.fp=fopen(oggfilename,"rb");	//Open user-specified file for reading
+		#ifdef ALLEGRO_WINDOWS
+			//Windows has its own function to open files that have non ASCII characters in the file path
+			wchar_t widepath[1024] = {0};
+
+			(void) uconvert(oggfilename, U_UTF8, (char *)(&widepath[0]), U_UNICODE, 2048);
+			tag.fp=_wfopen(widepath, L"rb");
+		#else
+			tag.fp=fopen(oggfilename,"rb");	//Open user-specified file for reading
+		#endif
+
 		if(tag.fp != NULL)
 		{	//If the file was able to be opened
+			eof_allocate_ucode_table();		//Prepare for extended ASCII to Unicode conversion
 			year[0]='\0';	//Empty the year string
 
 			if(ID3FrameProcessor(&tag))		//If ID3v2 frames are found
 			{
 				(void) GrabID3TextFrame(&tag,"TPE1",eof_etext,(unsigned long)(sizeof(eof_etext)/sizeof(char)));		//Store the Artist info in eof_etext[]
-				eof_sanitize_string(eof_etext);		//Filter out unprintable and extended ASCII
+				eof_convert_from_extended_ascii(eof_etext, 1024);
 				(void) GrabID3TextFrame(&tag,"TIT2",eof_etext2,(unsigned long)(sizeof(eof_etext2)/sizeof(char)));	//Store the Title info in eof_etext2[]
-				eof_sanitize_string(eof_etext2);	//Filter out unprintable and extended ASCII
+				eof_convert_from_extended_ascii(eof_etext2, 1024);
 				(void) GrabID3TextFrame(&tag,"TYER",year,(unsigned long)(sizeof(year)/sizeof(char)));				//Store the Year info in year[]
 				eof_sanitize_string(year);			//Filter out unprintable and extended ASCII
+				eof_convert_from_extended_ascii(eof_etext2, 1024);
 				(void) GrabID3TextFrame(&tag,"TALB",album,(unsigned long)(sizeof(album)/sizeof(char)));				//Store the Album info in album[]
-				eof_sanitize_string(album);			//Filter out unprintable and extended ASCII
+				eof_convert_from_extended_ascii(album, 256);
 				(void) GrabID3TextFrame(&tag,"TCON",genre,(unsigned long)(sizeof(genre)/sizeof(char)));				//Store the Genre info in genre[]
 				eof_sanitize_string(album);			//Filter out unprintable and extended ASCII
 				if((genre[0] != '\0') && (genre[1] == '\0'))
@@ -2954,20 +2965,37 @@ int eof_new_chart(char * filename)
 			//ID3v1 fields are 30 characters long maximum (31 bytes as a string), while the year field is 4 characters long (5 bytes as a string)
 			if(tag.id3v1present > 1)	//If there were fields defined in an ID3v1 tag
 			{
+				char buffer[1024] = {0};
 				if((eof_etext[0]=='\0') && (tag.id3v1artist != NULL))
-					(void) ustrcpy(eof_etext, tag.id3v1artist);
+				{
+					(void) strncpy(buffer, tag.id3v1artist, 1023);
+					eof_convert_from_extended_ascii(buffer, 1024);
+					(void) ustrcpy(eof_etext, buffer);
+				}
 				if((eof_etext2[0]=='\0') && (tag.id3v1title != NULL))
-					(void) ustrcpy(eof_etext2, tag.id3v1title);
+				{
+					(void) strncpy(buffer, tag.id3v1title, 1023);
+					eof_convert_from_extended_ascii(buffer, 1024);
+					(void) ustrcpy(eof_etext2, buffer);
+				}
 				if((year[0]=='\0') && (tag.id3v1year != NULL))
+				{
 					(void) ustrcpy(year, tag.id3v1year);
+				}
 				if((album[0]=='\0') && (tag.id3v1album != NULL))
-					(void) ustrcpy(album, tag.id3v1album);
+				{
+					(void) strncpy(buffer, tag.id3v1album, 1023);
+					eof_convert_from_extended_ascii(buffer, 1024);
+					buffer[255] = '\0';	//Ensure this will fit in the album string
+					(void) ustrcpy(album, buffer);
+				}
 			}
 
 			DestroyID3(&tag);	//Release the list of ID3 frames
 
 			(void) fclose(tag.fp);	//Close file
 			tag.fp=NULL;
+			eof_free_ucode_table();
 		}
 	}
 
