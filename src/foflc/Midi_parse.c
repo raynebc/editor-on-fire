@@ -4,6 +4,7 @@
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
 #include "Lyric_storage.h"
 #include "Midi_parse.h"
 
