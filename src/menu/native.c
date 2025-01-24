@@ -40,19 +40,23 @@ static const char * get_menu_text(const char * in, char * out)
 		strcpy(out, "placeholder");
 		return out;
 	}
-	for(i = 0; i < strlen(in); i++)
-	{
-		if(in[i] == '\t')
+	#ifdef ALLEGRO_WINDOWS
+		strcpy(out, in);
+	#else
+		for(i = 0; i < strlen(in); i++)
 		{
-			break;
+			if(in[i] == '\t')
+			{
+				break;
+			}
+			else if(in[i] != '&')
+			{
+				out[c] = in[i];
+				c++;
+				out[c] = 0;
+			}
 		}
-		else if(in[i] != '&')
-		{
-			out[c] = in[i];
-			c++;
-			out[c] = 0;
-		}
-	}
+	#endif
 	return out;
 }
 
