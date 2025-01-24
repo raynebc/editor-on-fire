@@ -1011,8 +1011,10 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	}
 
 	#ifdef ALLEGRO_LEGACY
-		#ifdef ALLEGRO_LINUX
-			al_set_new_display_flag(ALLEGRO_GTK_TOPLEVEL);
+		#ifdef ALLEGRO_UNIX
+			#ifndef ALLEGRO_MACOSX
+				al_set_new_display_flags(ALLEGRO_GTK_TOPLEVEL);
+			#endif
 		#endif
 	#endif
 
