@@ -173,6 +173,7 @@ void eof_prepare_track_menu(void);
 int eof_menu_track_open_strum(void);		//Toggle the ability to use a sixth lane in the active legacy guitar/bass track
 int eof_menu_track_five_lane_drums(void);	//Toggle the ability to use a fifth lane in PART DRUM on/off
 int eof_menu_track_disable_double_bass_drums(void);	//Toggle the setting to disable expert+ bass drum gem export on/off
+int eof_menu_track_drumsrock_enable_drumsrock_export(void);	//Toggle the setting to export a drum track to Drums Rock format
 int eof_menu_track_unshare_drum_phrasing(void);
 	//By default, the drum and PS drum tracks use the same star power, solo, drum roll and special drum roll phrases
 	//This function toggles that setting on/off

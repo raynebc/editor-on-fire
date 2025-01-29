@@ -67,9 +67,9 @@
 
 char        eof_note_type_name_fof[EOF_MAX_DIFFICULTIES][10] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_note_type_name_rb[EOF_MAX_DIFFICULTIES][10] = {" Easy", " Medium", " Hard", " Expert", " BRE"};
-char        (*eof_note_type_name)[10] = eof_note_type_name_rb;	//By default, use Rock Band difficulty names
 char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][32] = {" Lyrics", " ", " ", " ", " "};
 char        eof_dance_tab_name[EOF_MAX_DIFFICULTIES][32] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
+char        (*eof_note_type_name)[10] = eof_note_type_name_rb;	//By default, use Rock Band difficulty names
 char        eof_track_diff_populated_status[256] = {0};
 char        eof_track_diff_populated_tech_note_status[256] = {0};
 char        eof_track_diff_highlighted_status[256] = {0};
@@ -504,6 +504,16 @@ unsigned char gp_drum_import_lane_4_cymbal[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 unsigned char gp_drum_import_lane_5[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 unsigned char gp_drum_import_lane_5_cymbal[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT] = {0};
+
+/* Drums Rock note mappings */
+unsigned char drums_rock_export_lane_1 = 2;			//Gem 2 is kick drum
+unsigned char drums_rock_export_lane_2 = 1;			//Gem 1 is snare
+unsigned char drums_rock_export_lane_3 = 3;			//Gem 3 is high tom
+unsigned char drums_rock_export_lane_3_cymbal = 6;		//Gem 6 is ride cymbal
+unsigned char drums_rock_export_lane_4 = 3;
+unsigned char drums_rock_export_lane_4_cymbal = 6;
+unsigned char drums_rock_export_lane_5 = 4;			//Gem 4 is low tom
+unsigned char drums_rock_export_lane_5_cymbal = 5;		//Gem 5 is crash cymbal
 
 char *ogg_profile_name = NULL;	//This pointer is used by eof_load_ogg to set the file name in the current OGG profile
 
@@ -1213,6 +1223,10 @@ void eof_fix_window_title(void)
 		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{	//If GHL mode is enabled for the active track
 			(void) ustrcat(eof_window_title, "(GHL)");
+		}
+		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
+		{
+			(void) ustrcat(eof_window_title, "(Drums Rock)");
 		}
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the tempo map is locked
@@ -3391,9 +3405,17 @@ void eof_render_3d_window(void)
 		numlanes = 5;
 		lastlane = 4;	//Don't render trill/tremolo markers for the 6th lane (render for lanes 0 through 4)
 	}
+	else if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+	{	//Special case:  Drums Rock mode will draw the 3D preview as 6 lanes
+		numlanes = 6;
+		lastlane = 4;
+	}
 	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !eof_render_bass_drum_in_lane)
 	{	//If a drum track is active and the user hasn't enabled the preference to render the bass drum in its own lane
-		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane, 0 (unless user enabled the preference to render bass drum in its own lane)
+		if(!eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+		{	//And if the track isn't being treated as a Drums Rock track
+			firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane, 0 (unless user enabled the preference to render bass drum in its own lane)
+		}
 	}
 
 	if(eof_full_height_3d_preview)
@@ -3509,7 +3531,10 @@ void eof_render_3d_window(void)
 		long xoffset = 0;	//This will be used to offset the trill/tremolo lane fill as necessary to center the fill over that lane's gem
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If a drum track is active
-			xoffset = halflanewidth;	//Drum gems render half a lane width further right (in between fret lines instead of centered over the lines)
+			if(!eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+			{	//And if the track isn't being treated as a Drums Rock track
+				xoffset = halflanewidth;	//Drum gems render half a lane width further right (in between fret lines instead of centered over the lines)
+			}
 		}
 
 		//Build the lane X coordinate array
@@ -5305,6 +5330,11 @@ void eof_set_3D_lane_positions(unsigned long track)
 	{	//Special case:  Legacy guitar tracks can use a sixth lane but their 3D representation still only draws 5 lanes
 		newnumlanes = 5;
 	}
+	else if(eof_track_is_drums_rock_mode(eof_song, track))
+	{	//Special case:  Drums Rock mode causes the drum track to preview as a 6 lane track
+		newnumlanes = 6;
+		numlaneswidth = 5;	//Draw six lines on the 3D fretboard like with pro guitar
+	}
 	else if(track && (eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !eof_render_bass_drum_in_lane)
 	{	//Special case:  The drum track renders with only 4 lanes (unless the user enabled the preference to render the bass drum in a dedicated lane)
 		if(eof_five_lane_drums_enabled())
@@ -6060,7 +6090,16 @@ void eof_set_color_set(void)
 	if(!eof_song)
 		return;
 
-	if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+	{
+		eof_colors[0] = eof_color_orange_struct;
+		eof_colors[1] = eof_color_blue_struct;
+		eof_colors[2] = eof_color_yellow_struct;
+		eof_colors[3] = eof_color_red_struct;
+		eof_colors[4] = eof_color_green_struct;
+		eof_colors[5] = eof_color_purple_struct;
+	}
+	else if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 	{	//Guitar Hero Live only uses two gem colors
 		eof_colors[0] = eof_color_ghl_black_struct;		//Lane 1 is B1
 		eof_colors[1] = eof_color_ghl_black_struct;

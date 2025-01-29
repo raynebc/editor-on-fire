@@ -24,6 +24,7 @@
 #include "../tuning.h"
 #include "../rs.h"
 #include "../rs_import.h"
+#include "../dr.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
 #include "../song.h"
 #include "../bf_import.h"
@@ -4055,6 +4056,21 @@ int eof_save_helper_checks(void)
 		}//For each track (until the user is warned about any offending notes)
 	}//If the user wants to save Rocksmith capable files
 
+	//Drums Rock related checks
+	if(eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM) || eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM_PS))
+	{	//If a Drums Rock track is to be exported
+		(void) replace_filename(oggfn, eof_song_path, "preview.ogg", 1024);
+		if(!exists(oggfn))
+		{	//If the project has no preview audio defined
+			eof_clear_input();
+			allegro_message("Warning:  There is no preview audio defined.  Please use \"File>Export preview audio\" and save the project again to save it to each Drums Rock chart difficulty.");
+		}
+		if(eof_check_drums_rock_track(eof_song, EOF_TRACK_DRUM) || eof_check_drums_rock_track(eof_song, EOF_TRACK_DRUM_PS))
+		{	//If user opted to cancel the save due to any prompted issues
+			return 1;	//Return cancellation
+		}
+	}
+
 	return 0;
 }
 
@@ -4529,6 +4545,24 @@ int eof_save_helper(char *destfilename, char silent)
 		(void) eof_export_bandfuse(eof_song, eof_temp_filename, &user_warned);
 	}//If the user wants to save Bandfuse capable files
 
+	/* export Drums Rock files for one drum track if enabled */
+	if(eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM))
+	{
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 0);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 1);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 2);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 3);
+//		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 4);
+	}
+	else if(eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM_PS))
+	{
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 0);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 1);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 2);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 3);
+//		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 4);
+	}
+
 	/* save OGG file if necessary*/
 	if(!eof_silence_loaded)
 	{	//Only try to save an audio file if one is loaded
@@ -4557,7 +4591,8 @@ int eof_save_helper(char *destfilename, char silent)
 	eof_undo_last_type = 0;
 	eof_change_count = 0;
 	eof_fix_window_title();
-	eof_process_beat_statistics(eof_song, eof_selected_track);	//Re-cache beat information (from the perspective of the active track), since temporary MIDI events may have been added/removed and can cause cached section event numbers to be invalid
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
+	eof_process_beat_statistics(eof_song, eof_selected_track);		//Re-cache beat information (from the perspective of the active track), since temporary MIDI events may have been added/removed and can cause cached section event numbers to be invalid
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

@@ -10,6 +10,7 @@
 #include "modules/ocd3d.h"
 #include "dialog.h"
 #include "beat.h"
+#include "dr.h"
 #include "editor.h"
 #include "main.h"
 #include "midi.h"
@@ -6415,6 +6416,43 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					{
 						if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the slider section would render between the left and right edges of the piano roll, render a dark purple rectangle above the fretboard area
 							rectfill(window->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 5 + eof_screen_layout.note_y[0], eof_color_dark_purple);
+					}
+				}
+			}
+
+	/* draw drum notes with too many gems markers */
+			if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+			{	//If Drums Rock mode is enabled
+				int markerpos;
+				col = makecol(176, 48, 96);	//Store maroon color
+				for(i = 0; i < tracksize; i++)
+				{	//For each note in this track
+					bitmask = eof_get_note_note(eof_song, eof_selected_track, i);
+					if(eof_reduce_drums_rock_note_mask(bitmask) != bitmask)
+					{	//If this note would be reduced to two lanes during Drums Rock export
+						//Render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
+						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+						notelength = eof_get_note_length(eof_song, eof_selected_track, i);
+						if((eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i)) || (notepos + notelength < start) || (notepos > stop))
+							continue;	//If this note isn't in the active difficulty, or would render before the left edge of the piano roll or after the right edge, skip it
+
+						markerlength = notelength / eof_zoom;
+						if(markerlength < eof_screen_layout.note_size)
+						{	//If this marker isn't at least as wide as a note gem
+							markerlength = eof_screen_layout.note_size;	//Make it longer
+						}
+						markerpos = lpos + (notepos / eof_zoom);
+						if(notepos + notelength >= start)
+						{	//If the notes ends at or right of the left edge of the screen
+							if(markerpos <= window->screen->w)
+							{	//If the marker starts at or left of the right edge of the screen (is visible)
+								rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+							}
+							else
+							{	//Otherwise this and all remaining undefined legacy mask markers are not visible
+								break;	//Stop rendering them
+							}
+						}
 					}
 				}
 			}

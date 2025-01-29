@@ -629,6 +629,17 @@ DIALOG eof_note_name_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+DIALOG eof_drum_roll_count_dialog[] =
+{
+	/* (proc)                         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1)  (d2) (dp)              (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,          0,    0,   "Edit drum roll count", NULL, NULL },
+	{ d_agup_text_proc,       12,  84,  96,  8,   2,   23,  0,    0,            0,    0,   "Number:",          NULL, NULL },
+	{ eof_verified_edit_proc, 80,  80,  222, 20,  2,   23,  0,    0,          3,   0,   eof_etext,        "0123456789", NULL },
+	{ d_agup_button_proc,   67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,    0,   "OK",             NULL, NULL },
+	{ d_agup_button_proc,  163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
 DIALOG eof_name_search_replace_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2) (dp3) */
@@ -6875,6 +6886,10 @@ int eof_menu_trill_mark(void)
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing trill phrase, create one
 		(void) eof_track_add_trill(eof_song, eof_selected_track, sel_start, sel_end);
+		if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+		{	//If the active track has Drums Rock mode enabled
+			(void) eof_menu_note_edit_name();	//Prompt the user for the drum roll count as well
+		}
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -6935,6 +6950,10 @@ int eof_menu_tremolo_mark(void)
 			targetdiff = eof_note_type;	//A new tremolo phrase will apply to the active track difficulty instead
 		}
 		(void) eof_track_add_tremolo(eof_song, eof_selected_track, sel_start, sel_end, targetdiff);
+		if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+		{	//If the active track has Drums Rock mode enabled
+			(void) eof_menu_note_edit_name();	//Prompt the user for the drum roll count as well
+		}
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -7321,15 +7340,21 @@ int eof_menu_note_edit_name(void)
 {
 	unsigned long i;
 	char *notename = NULL, undo_made = 0, auto_apply = 0;
+	DIALOG *dialog_to_use = eof_note_name_dialog;
 
 	if(!eof_music_catalog_playback)
 	{
 		int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
+		if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+		{	//If Drums Rock mode is enabled for the active track
+			dialog_to_use = eof_drum_roll_count_dialog;		//Use a different variation of the dialog
+		}
+
 		eof_cursor_visible = 0;
 		eof_render();
-		eof_color_dialog(eof_note_name_dialog, gui_fg_color, gui_bg_color);
-		centre_dialog(eof_note_name_dialog);
+		eof_color_dialog(dialog_to_use, gui_fg_color, gui_bg_color);
+		centre_dialog(dialog_to_use);
 
 		notename = eof_get_note_name(eof_song, eof_selected_track, eof_selection.current);	//Get the last selected note's name
 		if(notename == NULL)
@@ -7341,9 +7366,22 @@ int eof_menu_note_edit_name(void)
 			(void) ustrcpy(eof_etext, notename);
 		}
 
-		if(eof_popup_dialog(eof_note_name_dialog, 2) == 3)	//User hit OK
+		if(eof_popup_dialog(dialog_to_use, 2) == 3)	//User hit OK
 		{
-			if((eof_etext[0] == '\0') && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+			{	//If Drums Rock mode is enabled for the active track
+				unsigned long number = 0;
+				(void) eof_read_macro_number(eof_etext, &number);		//Convert the specified string into a number
+				if(!number || (number > 100))
+				{	//If the number wasn't parsed, or was outside the bounds of [1,100]
+					allegro_message("Drum roll count must be between 1 and 100");
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					eof_show_mouse(screen);
+					return D_O_K;
+				}
+			}
+			else if((eof_etext[0] == '\0') && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If the user kept the name field empty and this is a pro guitar track, offer to apply auto-detected names
 				eof_clear_input();
 				if(alert(NULL, "Apply automatically-detected chord names?", NULL, "&Yes", "&No", 'y', 'n') == 1)

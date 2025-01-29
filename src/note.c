@@ -3,6 +3,7 @@
 #include "modules/ocd3d.h"
 #include "main.h"
 #include "bf.h"	//For eof_pro_guitar_note_lookup_string_fingering()
+#include "dr.h"
 #include "note.h"
 #include "rs.h"	//For eof_note_has_high_chord_density()
 #include "tuning.h"
@@ -886,6 +887,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			nameptr = prevnotename;
 		}
 	}
+	if(eof_track_is_drums_rock_mode(eof_song, track))
+	{	//Special case:  Drums Rock mode is enabled
+		nameptr = notename;	//Display the note name as-is since it instead defines the drum roll count
+	}
 	if(window == eof_window_info)
 	{	//If rendering to the info window
 		textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
@@ -1170,6 +1175,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned long notenote = 0;
 	unsigned imagenum = 0;	//Used to store the appropriate image index to use for rendering the specified note
 
+	int render_bass_drum_in_lane = 0;	//Tracks whether this is a drum track and bass drums are to be rendered as a gem in a lane instead of a line
+
 	//Validate parameters
 	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_get_track_size(eof_song, track)))
 	{	//If an invalid track or note number was passed
@@ -1213,9 +1220,17 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		numlanes = 5;
 	}
 
-	if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !eof_render_bass_drum_in_lane)
+	if(((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && eof_render_bass_drum_in_lane) || eof_track_is_drums_rock_mode(eof_song, track))
+		render_bass_drum_in_lane = 1;
+
+	if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !render_bass_drum_in_lane)
 	{	//If this is a drum track and the bass drum isn't being rendered in its own lane
 		xoffset = (56.0 * (4.0 / (numlanes-1))) / 2;	//This value is half of the 3D lane's width
+	}
+
+	if(eof_track_is_drums_rock_mode(eof_song, track))
+	{	//Special case:  Drums Rock mode will alter the note mask to  contain no more than 2 gems
+		notenote = eof_reduce_drums_rock_note_mask(notenote);
 	}
 
 	for(ctr = 0, mask = 1; ctr < eof_count_track_lanes(eof_song, track); ctr++, mask <<= 1)
@@ -1225,7 +1240,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			continue;	//If this lane is not used, skip it
 
 		drawline = 0;	//Reset this condition
-		if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (mask == 1) && !eof_render_bass_drum_in_lane)
+		if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (mask == 1) && !render_bass_drum_in_lane)
 		{	//If this is a drum track, the bass drum gem is being drawn and it isn't being rendered in its own lane
 			drawline = 1;
 			if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
@@ -1438,26 +1453,40 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			}//If rendering a Guitar Hero Live style track
 			else if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If rendering a drum note
-				if(((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
-				{	//If this is a cymbal note, render with the cymbal image
-					if(noteflags & EOF_NOTE_FLAG_SP)
-					{	//If this cymbal note is star power, render it in silver
-						imagenum = p ? EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT : EOF_IMAGE_NOTE_WHITE_CYMBAL;
+				if(eof_track_is_drums_rock_mode(eof_song, track))
+				{	//Drums Rock mode render logic
+					if((mask == 2) || (mask == 16))
+					{	//Lanes 2 (blue) and 5 (green) always display as cymbals
+						imagenum = p ? eof_colors[ctr].cymbalhit3d : eof_colors[ctr].cymbal3d;
 					}
 					else
-					{	//Otherwise render in the appropriate color
-						imagenum = p ? eof_colors[ctr].cymbalhit3d : eof_colors[ctr].cymbal3d;
+					{	//All other lanes always display as non cymbals
+						imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
 					}
 				}
 				else
-				{	//Otherwise render with the standard note image
-					if(noteflags & EOF_NOTE_FLAG_SP)
-					{	//If this drum note is star power, render it in silver
-						imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT: EOF_IMAGE_NOTE_WHITE;
+				{	//Normal drum render logic
+					if(((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
+					{	//If this is a cymbal note, render with the cymbal image
+						if(noteflags & EOF_NOTE_FLAG_SP)
+						{	//If this cymbal note is star power, render it in silver
+							imagenum = p ? EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT : EOF_IMAGE_NOTE_WHITE_CYMBAL;
+						}
+						else
+						{	//Otherwise render in the appropriate color
+							imagenum = p ? eof_colors[ctr].cymbalhit3d : eof_colors[ctr].cymbal3d;
+						}
 					}
 					else
-					{	//Otherwise render in the appropriate color
-						imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
+					{	//Otherwise render with the standard note image
+						if(noteflags & EOF_NOTE_FLAG_SP)
+						{	//If this drum note is star power, render it in silver
+							imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT: EOF_IMAGE_NOTE_WHITE;
+						}
+						else
+						{	//Otherwise render in the appropriate color
+							imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
+						}
 					}
 				}
 			}//If rendering a drum note
@@ -1644,6 +1673,10 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			(void) snprintf(prevnotename, sizeof(prevnotename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
 			nameptr = prevnotename;
 		}
+	}
+	if(eof_track_is_drums_rock_mode(eof_song, track))
+	{	//Special case:  Drums Rock mode is enabled
+		nameptr = notename;	//Display the note name as-is since it instead defines the drum roll count
 	}
 	z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
 	z3d = z3d < eof_3d_min_depth ? eof_3d_min_depth : z3d;

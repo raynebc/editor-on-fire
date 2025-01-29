@@ -335,6 +335,10 @@ typedef struct
 	//Specifies that a pro guitar track is to be presented in Rocksmith as an alternate arrangement
 #define EOF_TRACK_FLAG_RS_PICKED_BASS 128
 	//Specifies that a bass pro guitar track is to be presented in Rocksmith as a picked bass arrangement instead of a fingered bass arrangement
+#define EOF_TRACK_FLAG_DRUMS_ROCK 256
+	//Specifies that a drum track will export in Drums Rock format
+#define EOF_TRACK_FLAG_EXTENDED 2147483648UL	//The MSB will be set if an additional extended flag variable is present for the track in the project file
+											//This flag will only be used during project save/load to determine whether another flags variable is written/read
 
 
 ///Difficulty numbers
@@ -359,7 +363,7 @@ typedef struct
 	char altname[EOF_NAME_LENGTH + 1];	//Specifies the alternate name of the track (for RS export and MIDI export of GHL tracks)
 	unsigned char difficulty;			//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty).  0xFF means the difficulty is undefined
 	unsigned char numdiffs;				//Specifies the number of difficulties usable in this track, including BRE (is set to 5 unless the track's EOF_TRACK_FLAG_UNLIMITED_DIFFS flag is set)
-	unsigned long flags;				//Various flags.  In the case of the normal drum track and the vocal track, the low nibble of the most significant byte stores the difficulty level (or 0xF if undefined)
+	unsigned long flags;				//Various flags.  In the case of the normal drum track and the vocal track, the low nibble of the most significant byte stores the difficulty level of the pro drum or harmony difficulty respectively (or 0xF if undefined)
 } EOF_TRACK_ENTRY;
 
 #define EOF_LEGACY_TRACKS_MAX		8
@@ -987,6 +991,8 @@ int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a legacy guitar track
 int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track has GHL mode enabled
+int eof_track_is_drums_rock_mode(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified track has Drums Rock mode enabled
 
 int eof_note_swap_ghl_black_white_gems(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//If the specified track is a GHL track, modifies the specified note so that the white and black gems are swapped

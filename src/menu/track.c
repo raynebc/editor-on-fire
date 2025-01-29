@@ -89,12 +89,19 @@ MENU eof_track_clone_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_track_drumsrock_menu[] =
+{
+	{"&Enable Drums Rock", eof_menu_track_drumsrock_enable_drumsrock_export, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_menu[] =
 {
 	{"Pro &Guitar", NULL, eof_track_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_track_rocksmith_menu, 0, NULL},
 	{"&Phase Shift", NULL, eof_track_phaseshift_menu, 0, NULL},
-	{"Set &Difficulty", NULL, eof_track_menu_set_difficulty, 0, NULL},
+	{"&Drums Rock", NULL, eof_track_drumsrock_menu, 0, NULL},
+	{"Set di&Fficulty", NULL, eof_track_menu_set_difficulty, 0, NULL},
 	{"Re&name", eof_track_rename, NULL, 0, NULL},
 	{"Disable expert+ bass drum", eof_menu_track_disable_double_bass_drums, NULL, 0, NULL},
 	{"Erase track", eof_track_erase_track, NULL, 0, NULL},
@@ -218,6 +225,23 @@ void eof_prepare_track_menu(void)
 			eof_track_menu[1].flags = D_DISABLED;
 		}
 
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active
+			eof_track_menu[3].flags = 0;	//Track>Drums Rock> submenu
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
+			{	//If Drums Rock export is enabled for this track
+				eof_track_drumsrock_menu[0].flags = D_SELECTED;
+			}
+			else
+			{
+				eof_track_drumsrock_menu[0].flags = 0;
+			}
+		}
+		else
+		{	//Otherwise disable this menu
+			eof_track_menu[3].flags = D_DISABLED;
+		}
+
 		/* enable open strum */
 		if(eof_open_strum_enabled(eof_selected_track))
 		{
@@ -241,28 +265,28 @@ void eof_prepare_track_menu(void)
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 			{	//If GHL mode is enabled for the active track
 				eof_track_phaseshift_menu[0].flags |= D_DISABLED;	//Prevent user from disabling the open strum option
-				eof_track_menu[13].flags = D_SELECTED;				//Track>Enable GHL mode
+				eof_track_menu[14].flags = D_SELECTED;				//Track>Enable GHL mode
 			}
 			else
 			{
-				eof_track_menu[13].flags = 0;
+				eof_track_menu[14].flags = 0;
 			}
 		}
 		else
 		{
-			eof_track_menu[13].flags = D_DISABLED;			//Track>Enable GHL mode
+			eof_track_menu[14].flags = D_DISABLED;			//Track>Enable GHL mode
 		}
 
 		/* (Clone Hero pathing functions) */
 		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS))
 		{	//If the active track is a legacy guitar/bass track or the keys track
-			eof_track_menu[14].flags = 0;					//Track>Find optimal CH star power path
-			eof_track_menu[15].flags = 0;					//Track>Evaluate CH star power path
+			eof_track_menu[15].flags = 0;					//Track>Find optimal CH star power path
+			eof_track_menu[16].flags = 0;					//Track>Evaluate CH star power path
 		}
 		else
 		{
-			eof_track_menu[14].flags = D_DISABLED;			//Track>Find optimal CH star power path
-			eof_track_menu[15].flags = D_DISABLED;			//Track>Evaluate CH star power path
+			eof_track_menu[15].flags = D_DISABLED;			//Track>Find optimal CH star power path
+			eof_track_menu[16].flags = D_DISABLED;			//Track>Evaluate CH star power path
 		}
 
 		/* enable five lane drums */
@@ -278,11 +302,11 @@ void eof_prepare_track_menu(void)
 		/* Disable expert+ bass drum */
 		if(eof_song->tags->double_bass_drum_disabled)
 		{
-			eof_track_menu[5].flags = D_SELECTED;	//Track>Disable expert+ bass drum
+			eof_track_menu[6].flags = D_SELECTED;	//Track>Disable expert+ bass drum
 		}
 		else
 		{
-			eof_track_menu[5].flags = 0;
+			eof_track_menu[6].flags = 0;
 		}
 
 		/* Unshare drum phrasing */
@@ -3245,9 +3269,14 @@ int eof_menu_track_open_strum(void)
 
 int eof_menu_track_five_lane_drums(void)
 {
-	unsigned long tracknum = eof_song->track[EOF_TRACK_DRUM]->tracknum;
-	unsigned long tracknum2 = eof_song->track[EOF_TRACK_DRUM_PS]->tracknum;
+	unsigned long tracknum;
+	unsigned long tracknum2;
 
+	if(!eof_song)
+		return 1;
+
+	tracknum = eof_song->track[EOF_TRACK_DRUM]->tracknum;
+	tracknum2 = eof_song->track[EOF_TRACK_DRUM_PS]->tracknum;
 	if(eof_five_lane_drums_enabled())
 	{	//Turn off five lane drums
 		eof_song->track[EOF_TRACK_DRUM]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
@@ -3263,7 +3292,7 @@ int eof_menu_track_five_lane_drums(void)
 		eof_song->legacy_track[tracknum2]->numlanes = 6;
 	}
 
-	eof_set_3D_lane_positions(0);	//Update xchart[] by force
+	eof_set_3D_lane_positions(0);		//Update xchart[] by force
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	return 1;
 }
@@ -3280,6 +3309,30 @@ int eof_menu_track_disable_double_bass_drums(void)
 	if(eof_song)
 		eof_song->tags->double_bass_drum_disabled ^= 1;	//Toggle this boolean variable
 	eof_fix_window_title();
+	return 1;
+}
+
+int eof_menu_track_drumsrock_enable_drumsrock_export(void)
+{
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 1;	//Invalid parameters
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
+
+	eof_song->track[eof_selected_track]->flags ^= EOF_TRACK_FLAG_DRUMS_ROCK;	//Toggle this flag
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
+	{	//If it was just turned on
+		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the "Enable five lane drums" feature
+		eof_song->legacy_track[tracknum]->numlanes = 6;
+		eof_set_3D_lane_positions(0);		//Update xchart[] by force
+		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+	}
+
+	eof_fix_window_title();
+	eof_set_color_set();		//This setting changes the color set
+
 	return 1;
 }
 
