@@ -8226,9 +8226,9 @@ int eof_track_is_drums_rock_mode(EOF_SONG *sp, unsigned long track)
 {
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;
-	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+	if(eof_song->track[track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 0;
-	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
+	if(eof_song->track[track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
 	{	//If this is a drum track with the Drums Rock flag enabled
 		return 1;
 	}

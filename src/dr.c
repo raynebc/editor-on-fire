@@ -226,16 +226,16 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	}
 	pack_fputs("Song Name,Author Name,Difficulty,Song Duration in seconds,Song Map\n", fp);
 	eof_build_sanitized_drums_rock_string(eof_song->tags->title, temp_string);
-	(void) pack_fwrite(temp_string, ustrsize(temp_string), fp);	//Write song title
+	(void) pack_fputs(temp_string, fp);	//Write song title
 	(void) pack_putc(',', fp);
 	eof_build_sanitized_drums_rock_string(eof_song->tags->artist, temp_string);
-	(void) pack_fwrite(temp_string, ustrsize(temp_string), fp);	//Write artist name
+	(void) pack_fputs(temp_string, fp);	//Write artist name
 	(void) pack_putc(',', fp);
 	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u", diff);
-	(void) pack_fwrite(temp_string, ustrsize(temp_string), fp);	//Write difficulty level
+	(void) pack_fputs(temp_string, fp);	//Write difficulty level
 	(void) pack_putc(',', fp);
 	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%lu", eof_music_length / 1000);
-	(void) pack_fwrite(temp_string, ustrsize(temp_string), fp);	//Write song length
+	(void) pack_fputs(temp_string, fp);	//Write song length
 	(void) pack_putc(',', fp);
 	(void) pack_putc('0', fp);		//Write song map
 	(void) pack_fclose(fp);
@@ -288,15 +288,15 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 
 		//Write the note data
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "%.2f,", (double) eof_get_note_pos(sp, track, ctr) / 1000.0);
-		(void) pack_fwrite(temp_string, ustrsize(temp_string), fp);	//Write timestamp
+		(void) pack_fputs(temp_string, fp);	//Write timestamp
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "%lu,", enemytype);
-		(void) pack_fwrite(temp_string, ustrsize(temp_string), fp);	//Write enemy type
+		(void) pack_fputs(temp_string, fp);	//Write enemy type
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "%lu,%lu,1,", gem1, gem2);
-		(void) pack_fwrite(temp_string, ustrsize(temp_string), fp);	//Write enemy color 1, color 2 and number of enemies fields
+		(void) pack_fputs(temp_string, fp);	//Write enemy color 1, color 2 and number of enemies fields
 		if(drumrollcount)
 		{	//If this note is a drum roll
 			(void) snprintf(temp_string, sizeof(temp_string) - 1, "%lu,", drumrollcount);
-			(void) pack_fwrite(temp_string, ustrsize(temp_string), fp);	//Write drum roll interval (hit count)
+			(void) pack_fputs(temp_string, fp);	//Write drum roll interval (hit count)
 		}
 		else
 		{
@@ -326,7 +326,7 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 				aux = 8;
 		}
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "%lu\n", aux);
-		(void) pack_fwrite(temp_string, ustrsize(temp_string), fp);	//Write Aux value and end the line
+		(void) pack_fputs(temp_string, fp);	//Write Aux value and end the line
 	}
 	(void) pack_fclose(fp);
 
