@@ -6,8 +6,9 @@
 int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff);
 	//Exports Drums Rock files for the specified drum track difficulty in a subfolder of the project folder
 
-unsigned char eof_reduce_drums_rock_note_mask(unsigned char note);
-	//For the specified Drums Rock layout note bitmask, filters it down to a maximum of two gems suitable to export to Drums Rock format
+unsigned char eof_reduce_drums_rock_note_mask(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//For the specified note , filters it down to a maximum of two gems (or single gems for any notes in a drum roll) suitable to export to Drums Rock format
+	//Expects eof_determine_phrase_status() to have been called for the applicable track to set drum roll flags for the note
 
 unsigned long eof_get_note_name_as_number(EOF_SONG * sp, unsigned long track, unsigned long notenum);
 	//Examines the specified note's name, if defined, and returns it as an unsigned long

@@ -4379,7 +4379,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}//Version 5 or newer GP file
 								if(slide_in_from_warned == 1)
 								{	//If this is the first slide in from above/below technique encountered, warn user
-									allegro_message("Imported slide in from above/below notes will be highlighted, as Rocksmith does not directly support this technique.");
+									allegro_message("Imported slide in from above/below notes will be highlighted, as Rocksmith does not directly support this technique.  They will be converted into short pitched slides.");
 									slide_in_from_warned++;	//Change the value so this prompt isn't immediately triggered on the next loop iteration
 								}
 							}//Slide
@@ -4861,7 +4861,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
 			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || !(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (ctr2 + 1 >= gp->track[ctr]->notes))
-				continue;	//If this not isn't marked as being an undetermined direction of slide, or there's no note that follows, skip it
+				continue;	//If this note isn't marked as being an undetermined direction of slide, or there's no note that follows, skip it
 
 			startfret = 0;
 			for(ctr3 = 0, bitmask = 1; ctr3 < 7; ctr3++, bitmask<<=1)
@@ -4922,6 +4922,60 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 		}//For each note in the track
 	}//For each imported track
+
+//Convert slide in from above/below notation to pitched slides that each link to a note 1/16 beat after them
+	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	{	//For each imported track
+		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+		{	//For each note in the track
+			EOF_PRO_GUITAR_NOTE *gnp;
+
+			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
+				continue;	//If this note wasn't marked as an unpitched slide during import (slide in from above/below note)
+
+			gnp = eof_pro_guitar_track_add_note(gp->track[ctr]);		//Add a new note to the current track
+			if(gnp)
+			{	//If the note was able to be allocated
+				int dir = 0;	//Tracks whether the slide in is to convert into an upward (>0) or downward (<0) slide
+				unsigned long beatnum = eof_get_beat(eof_song, gp->track[ctr]->note[ctr2]->pos);
+				unsigned long beatlength = eof_get_beat_length(eof_song, beatnum);
+
+				//Find the direction of the slide and apply it to the note, place the newly added note 1/16 beat after the slide beginning and link it
+				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if(ctr3 < gp->track[ctr]->numstrings)
+					{	//If this is a string used in the track
+						if(gp->track[ctr]->note[ctr2]->note & bitmask)
+						{	//If this is a string used in the note
+							if(!dir)
+							{	//If the direction was not found yet
+								gp->track[ctr]->note[ctr2]->length = 1;
+								gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Clear the unpitched slide flag
+								gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Denote that the slide end will be defined
+								gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;			//Link it to the newly added note
+								if(gp->track[ctr]->note[ctr2]->frets[ctr3] > gp->track[ctr]->note[ctr2]->unpitchend)
+								{	//Downward slide
+									dir = -1;
+									gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+								}
+								else
+								{	//Upward slide
+									dir = 1;
+									gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+								}
+							}
+							gnp->pos = gp->track[ctr]->note[ctr2]->pos + ((double)beatlength / 16.0) + 0.5;	//Place the newly added note 1/16 beat forward
+							gnp->note |= bitmask;	//Copy the gem to the newly added note
+							gnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Increase/decrease the fret number to reflect the slide direction
+							gp->track[ctr]->note[ctr2]->slideend = gnp->frets[ctr3];		//And set that as the end of the pitched slide
+							gp->track[ctr]->note[ctr2]->unpitchend = 0;
+						}
+					}
+				}
+			}
+		}
+		eof_pro_guitar_track_sort_notes(gp->track[ctr]);	//Sort the track again in case notes were added
+	}
 
 //Remove string muted notes from chords that contain at least one non muted note
 	for(ctr = 0; ctr < gp->numtracks; ctr++)

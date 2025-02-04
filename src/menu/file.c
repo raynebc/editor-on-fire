@@ -84,11 +84,11 @@ MENU eof_file_import_menu[] =
 {
 	{"&Sonic visualiser", eof_menu_file_sonic_visualiser_import, NULL, 0, NULL},
 	{"&MIDI\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
-	{"&Feedback (.chart)\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
+	{"&Feedback (.chart)", eof_menu_file_feedback_import, NULL, 0, NULL},
 	{"Guitar &Hero", eof_menu_file_gh_import, NULL, 0, NULL},
 	{"&Lyric\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
 	{"&Guitar Pro\tF12", eof_menu_file_gp_import, NULL, 0, NULL},
-	{"&Rocksmith", eof_menu_file_rs_import, NULL, 0, NULL},
+	{"&Rocksmith\tF7", eof_menu_file_rs_import, NULL, 0, NULL},
 	{"&Bandfuse", eof_menu_file_bf_import, NULL, 0, NULL},
 	{"&Queen Bee", eof_menu_file_array_txt_import, NULL, 0, NULL},
 	{"Queen Bee (multi)", eof_menu_file_multiple_array_txt_import, NULL, 0, NULL},

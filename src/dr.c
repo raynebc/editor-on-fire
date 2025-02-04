@@ -8,24 +8,6 @@
 #include "memwatch.h"
 #endif
 
-/*
-
-Export difficulty:
-1.  Create subfolder ("Artist - Song - Difficulty")
-2.  Create info.csv
-3.  Create notes.csv
-	For up to the first two gems in each note, check each bit in the note mask to track whether one or two gems are used, and which colors they are
-	For now, have a global variable for each lane and each cymbal, with a value mapping them to a specific note type for Drums Rock, and have these mappings defined as config file entries
-4.  Create preview.ogg if it doesn't exist yet
-5.  Create song.ogg if it doesn't exist yet
-
-Export chart
-1.  Check each note in PART DRUMS to see if any of them have more than 2 gems
-	If so, offer to cancel save and seek to first offending note, offer to highlight all offending notes
-2.  Export each populated difficulty in PART DRUMS
-
-*/
-
 char        eof_note_type_name_dr[5][10] = {"Easy", "Medium", "Hard", "Extreme", "Extreme+"};
 
 unsigned long eof_get_note_name_as_number(EOF_SONG * sp, unsigned long track, unsigned long notenum)
@@ -45,7 +27,7 @@ unsigned long eof_get_note_name_as_number(EOF_SONG * sp, unsigned long track, un
 int eof_check_drums_rock_track(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long ctr;
-	int ret, drum_roll_warned = 0;
+	int ret, drum_roll_count_warned = 0, drum_roll_chord_warned = 0;
 
 	if(!eof_track_is_drums_rock_mode(sp, track))
 		return 0;	//Not a Drums Rock enabled track
@@ -61,12 +43,12 @@ int eof_check_drums_rock_track(EOF_SONG * sp, unsigned long track)
 
 			if(!number || (number > 100))
 			{	//If the drum roll hit count is not valid
-				if(!drum_roll_warned)
+				if(!drum_roll_count_warned)
 				{	//If the user wasn't warned about this yet
 					ret = alert3("Drums Rock:  At least one drum roll does not have a valid hit count", NULL, "Cancel and seek to first offending roll?", "Yes", "No", "Highlight all and cancel", 0, 0, 0);
 					if(ret == 2)
 					{	//User declined
-						drum_roll_warned = 1;
+						drum_roll_count_warned = 1;
 						break;	//Stop checking the drum rolls
 					}
 
@@ -76,16 +58,50 @@ int eof_check_drums_rock_track(EOF_SONG * sp, unsigned long track)
 						return 1;	//Return cancellation
 					}
 
-					drum_roll_warned = 3;
+					drum_roll_count_warned = 3;
 				}
-				if(drum_roll_warned == 3)
+				if(drum_roll_count_warned == 3)
 				{	//User opted to highlight all offending drum rolls
 					eof_set_note_flags(sp, track, ctr, flags | EOF_NOTE_FLAG_HIGHLIGHT);
 				}
 			}
 		}
 	}
-	if(drum_roll_warned == 3)
+	if(drum_roll_count_warned == 3)
+		return 1;	//Return cancellation
+
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the track
+		unsigned long flags = eof_get_note_flags(sp, track, ctr);
+		if((flags & EOF_NOTE_FLAG_IS_TREMOLO) || (flags & EOF_NOTE_FLAG_IS_TRILL))
+		{	//If the note is in a drum roll or special drum roll
+			if(eof_note_count_colors(sp, track, ctr) > 1)
+			{	//If the note in drum roll is a chord
+				if(!drum_roll_chord_warned)
+				{	//If the user wasn't warned about this yet
+					ret = alert3("Drums Rock:  At least one note in drum roll is a chord", "This isn't supported in-game", "Cancel and seek to first offending note?", "Yes", "No", "Highlight all and cancel", 0, 0, 0);
+					if(ret == 2)
+					{	//User declined
+						drum_roll_chord_warned = 1;
+						break;	//Stop checking the drum rolls
+					}
+
+					eof_seek_and_render_position(track, eof_get_note_type(sp, track, ctr), eof_get_note_pos(sp, track, ctr));	//Seek to the first offending note
+					if(ret == 1)
+					{	//If the user opted to cancel the save
+						return 1;	//Return cancellation
+					}
+
+					drum_roll_chord_warned = 3;
+				}
+				if(drum_roll_chord_warned == 3)
+				{	//User opted to highlight all offending drum rolls
+					eof_set_note_flags(sp, track, ctr, flags | EOF_NOTE_FLAG_HIGHLIGHT);
+				}
+			}
+		}
+	}
+	if(drum_roll_chord_warned == 3)
 		return 1;	//User cancellation
 
 	//Check for drum notes with more than two gems
@@ -101,32 +117,47 @@ int eof_check_drums_rock_track(EOF_SONG * sp, unsigned long track)
 	return 0;	//No issues
 }
 
-unsigned char eof_reduce_drums_rock_note_mask(unsigned char note)
+unsigned char eof_reduce_drums_rock_note_mask(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
-	unsigned ctr, mask, count = 0;
-	unsigned char newnote = 0;
+	unsigned ctr, bitmask, count = 0;
+	unsigned char newnote = 0, notemask, is_drum_roll = 0;
+	unsigned long flags;
+
+	notemask = eof_get_note_note(sp, track, note);
+	flags = eof_get_note_flags(sp, track, note);
+	if((flags & EOF_NOTE_FLAG_IS_TREMOLO) || (flags & EOF_NOTE_FLAG_IS_TRILL))
+		is_drum_roll = 1;	//Track that the note is in a drum roll
 
 	//Special rule:  If a drum chord includes bass, always keep that gem
-	if(note & 8)
+	if(notemask & 8)
 	{
+		if(is_drum_roll)
+			return 8;		//Drum rolls only keep the first gem
+
 		newnote |= 8;
 		count++;
 	}
 
 	//Special rule:  If a drum chord includes snare, always keep that gem
-	if(note & 4)
+	if(notemask & 4)
 	{
+		if(is_drum_roll)
+			return 4;		//Drum rolls only keep the first gem
+
 		newnote |= 4;
 		count++;
 	}
 
 	//Keep up to a total of two gems from whatever is remaining
-	for(ctr = 0, mask = 1; (ctr < 6) && (count < 2); ctr++, mask <<= 1)
+	for(ctr = 0, bitmask = 1; (ctr < 6) && (count < 2); ctr++, bitmask <<= 1)
 	{	//For each of the 6 supported lanes, only until two gems are selected to be kept
-		if((note & mask) && !(newnote & mask))
+		if((notemask & bitmask) && !(newnote & bitmask))
 		{	//If there is a gem on this lane that isn't already copied into the output mask
+			if(is_drum_roll)
+				return bitmask;	//Drum rolls only keep the first gem
+
 			count++;
-			newnote |= mask;	//Set it in the new note mask
+			newnote |= bitmask;	//Set it in the new note mask
 		}
 	}
 
@@ -252,23 +283,44 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	eof_determine_phrase_status(sp, track);	//Update the trill and tremolo status of each note (used to mark drum rolls)
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
-		unsigned long flags, ctr2, bitmask, gem1 = 0, gem2 = 0, enemytype = 0, drumrollcount = 0, aux;
+		unsigned long flags, ctr2, bitmask, gem1 = 0, gem2 = 0, enemytype = 0, drumrollcount = 0, aux, value;
 		unsigned char notemask;
 
 		//Process note for export
-		notemask = eof_reduce_drums_rock_note_mask(eof_get_note_note(sp, track, ctr));	//Convert the note bitmask for Drums Rock
+		notemask = eof_reduce_drums_rock_note_mask(sp, track, ctr);	//Convert the note bitmask for Drums Rock
 		for(ctr2 = 0, bitmask = 1, gem1= 0, gem2 = 0; ctr2 < 6; ctr2++, bitmask <<= 1)
 		{	//For each of the 6 supported lanes
 			if(notemask & bitmask)
 			{	//If this lane is used
+				switch(ctr2)
+				{	//The gem numbers do not match the left to right lane ordering of how they display in-game
+					case 0:
+						value = 3;	//Orange exports as gem 3
+					break;
+					case 1:
+						value = 5;	//Blue exports as gem 5
+					break;
+					case 2:
+						value = 1;	//Yellow exports as gem 1
+					break;
+					case 3:
+						value = 2;	//Red exports as gem 2
+					break;
+					case 4:
+						value = 6;	//Green exports as gem 6
+					break;
+					default:
+						value = 4;	//Purple exports as gem 4
+					break;
+				}
 				if(!gem1)
 				{	//If this is the first gem seen for this note
-					gem1 = gem2 = ctr2 + 1;	//Drums rock lane ordering begins with 1 instead of 0
-					enemytype = 1;			//Export as single gem drum note
+					gem1 = gem2 = value;
+					enemytype = 1;	//Export as single gem drum note
 				}
 				else
 				{	//This is the second gem seen for this note
-					gem2 = ctr2 + 1;	//Drums rock lane ordering begins with 1 instead of 0
+					gem2 = value;
 					enemytype = 2;			//Export as dual gem drum note
 					break;	//There will be no third gem to export
 				}
@@ -280,6 +332,7 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 			drumrollcount = eof_get_note_name_as_number(sp, track, ctr);
 
 			enemytype = 3;	//Export as a drum roll
+			gem2 = gem1;		//Drums Rock only supports one lane per drum roll
 			if(!drumrollcount || (drumrollcount > 100))
 			{	//If the drum roll hit count is not valid, write it as 3
 				drumrollcount = 3;

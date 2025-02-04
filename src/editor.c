@@ -1290,7 +1290,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 	/* toggle expert+ bass drum (CTRL+E) */
 	/* next chord name match (CTRL+SHIFT+E) */
-	/* place section event (SHIFT+E) */
+	/* place RS event (SHIFT+E) */
 	/* next catalog entry (E) */
 	if(eof_key_char == 'e')
 	{
@@ -1313,9 +1313,12 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_use_key();
 			}
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-			{	//SHIFT+E will place a section event
+			{	//SHIFT+E will place a Rocksmith event
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				(void) eof_menu_beat_add_section();
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If a pro guitar track is active
+					(void) eof_rocksmith_event_dialog_add();
+				}
 				eof_use_key();
 			}
 		}
@@ -6428,7 +6431,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				for(i = 0; i < tracksize; i++)
 				{	//For each note in this track
 					bitmask = eof_get_note_note(eof_song, eof_selected_track, i);
-					if(eof_reduce_drums_rock_note_mask(bitmask) != bitmask)
+					if(eof_reduce_drums_rock_note_mask(eof_song, eof_selected_track, i) != bitmask)
 					{	//If this note would be reduced to two lanes during Drums Rock export
 						//Render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
 						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);

@@ -514,6 +514,7 @@ unsigned char drums_rock_export_lane_4 = 3;
 unsigned char drums_rock_export_lane_4_cymbal = 6;
 unsigned char drums_rock_export_lane_5 = 4;			//Gem 4 is low tom
 unsigned char drums_rock_export_lane_5_cymbal = 5;		//Gem 5 is crash cymbal
+unsigned char drums_rock_export_lane_6 = 5;			//Gem 6 is not standard
 
 char *ogg_profile_name = NULL;	//This pointer is used by eof_load_ogg to set the file name in the current OGG profile
 
@@ -2459,11 +2460,14 @@ void eof_read_global_keys(void)
 			eof_use_key();
 		}
 
-	/* feedback import (F7) */
+	/* Rocksmith import (F7) */
 		else if(eof_key_code == KEY_F7)
-		{	//Launch Feedback chart import
+		{	//Launch Rocksmith import
 			clear_keybuf();
-			(void) eof_menu_file_feedback_import();
+			if(!eof_song || (eof_song && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)))
+			{	//If a chart is loaded, only allow this import to run when a pro guitar track is active
+				(void) eof_menu_file_rs_import();
+			}
 			eof_use_key();
 		}
 
