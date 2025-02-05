@@ -1521,6 +1521,8 @@ int eof_menu_edit_copy(void)
 	}
 	(void) pack_iputl(eof_log_id, fp);			//Store the source EOF instance number
 	(void) pack_iputl(eof_selected_track, fp);	//Store the source track number
+	(void) pack_putc(eof_note_type, fp);		//Store the source difficulty
+	(void) pack_iputl(first_pos, fp);			//Store the first copied note's original timestamp
 	(void) pack_putc(eof_track_is_ghl_mode(eof_song, eof_selected_track), fp);	//Store the GHL mode status
 	(void) pack_iputl(copy_notes, fp);			//Store the number of notes that will be stored to clipboard
 	(void) pack_iputl(first_beat, fp);			//Store the beat number of the first note that will be stored to clipboard
@@ -1577,6 +1579,8 @@ int eof_menu_edit_paste_logic(int function)
 	EOF_EXTENDED_NOTE last_note;
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
+	unsigned sourcediff = 0;		//Will store the difficulty that this clipboard data was from
+	unsigned long firstnotepos = 0;	//Will store the original timestamp of the first note in the clipboard data
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long srctracknum;
 	unsigned long highestfret, highestlane;
@@ -1637,10 +1641,12 @@ int eof_menu_edit_paste_logic(int function)
 		ret = 1;
 		goto cleanup;
 	}
-	source_id = pack_igetl(fp);			//Read the source EOF instance number
+	source_id = pack_igetl(fp);		//Read the source EOF instance number
 	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
 	srctracknum = eof_song->track[sourcetrack]->tracknum;
-	isghl = pack_getc(fp);				//Read the GHL mode status
+	sourcediff = pack_getc(fp);		//Read the source difficulty of the clipboard data
+	firstnotepos = pack_igetl(fp);		//Read the original timestamp of the first note on the clipboard
+	isghl = pack_getc(fp);			//Read the GHL mode status
 	copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
 	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
 	if(!copy_notes)
@@ -1721,9 +1727,12 @@ int eof_menu_edit_paste_logic(int function)
 			allegro_message("Error re-opening clipboard");
 			return 1;
 		}
-		source_id = pack_igetl(fp);			//Read the source EOF instance number
+		source_id = pack_igetl(fp);		//Read the source EOF instance number
 		sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
-		isghl = pack_getc(fp);				//Read the GHL mode status
+		srctracknum = eof_song->track[sourcetrack]->tracknum;
+		sourcediff = pack_getc(fp);		//Read the source difficulty of the clipboard data
+		firstnotepos = pack_igetl(fp);		//Read the original timestamp of the first note on the clipboard
+		isghl = pack_getc(fp);			//Read the GHL mode status
 		copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
 		first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
 	}
@@ -1921,6 +1930,34 @@ int eof_menu_edit_paste_logic(int function)
 				}
 			}
 			lastarpeggnum = temp_note.phrasenum;
+		}
+
+		//Recreate tech notes from the source notes
+		if(source_id == eof_log_id)
+		{	//If the copy/paste is being performed within the same EOF instance
+			unsigned long techctr;
+			EOF_PRO_GUITAR_TRACK *stp = eof_song->pro_guitar_track[srctracknum];	//Simplify
+			EOF_PRO_GUITAR_TRACK *dtp = eof_song->pro_guitar_track[tracknum];		//Simplify
+			unsigned long originalnotepos = temp_note.pos + firstnotepos;			//The original position of the copied note
+			unsigned long originalnoteend = originalnotepos + temp_note.length;		//The original end position of the copied note
+			double relpos;	//How far into the copied note (between 0 and 1) the tech note exists
+
+			for(techctr = 0; techctr < stp->technotes; techctr++)
+			{	//For each tech note in the source track
+				if((stp->technote[techctr]->type == sourcediff) && (stp->technote[techctr]->pos >= originalnotepos) && (stp->technote[techctr]->pos <= originalnoteend))
+				{	//If the tech note overlaps the original copied note (same difficulty, within the start and stop timestamps)
+					EOF_PRO_GUITAR_NOTE *tnp;
+					relpos = ((double)stp->technote[techctr]->pos - originalnotepos) / (double)temp_note.length;	//Get the tech note's relative position within the copied note
+
+					tnp = eof_pro_guitar_track_add_tech_note(dtp);	//Allocate a new tech note
+					if(tnp)
+					{	//If the tech note was created
+						memcpy(tnp, stp->technote[techctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the tech note from the clipboard source
+						tnp->type = eof_note_type;	//Update the difficulty level of the new tech note
+						tnp->pos = (double)newnotepos + ((double)newnotelength * relpos) + 0.5;	//Set the timestamp of the new tech note, placing it at the same relative position in the note as per the original tech note, rounding to nearest millisecond
+					}
+				}
+			}
 		}
 	}//For each note in the clipboard file
 	if(source_id == eof_log_id)

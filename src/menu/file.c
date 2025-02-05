@@ -4548,19 +4548,19 @@ int eof_save_helper(char *destfilename, char silent)
 	/* export Drums Rock files for one drum track if enabled */
 	if(eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM))
 	{
-		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 0);
-		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 1);
-		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 2);
-		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 3);
-//		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 4);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 0, newfolderpath);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 1, newfolderpath);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 2, newfolderpath);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 3, newfolderpath);
+//		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 4, newfolderpath);
 	}
 	else if(eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM_PS))
 	{
-		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 0);
-		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 1);
-		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 2);
-		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 3);
-//		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 4);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 0, newfolderpath);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 1, newfolderpath);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 2, newfolderpath);
+		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 3, newfolderpath);
+//		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 4, newfolderpath);
 	}
 
 	/* save OGG file if necessary*/

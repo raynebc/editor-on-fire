@@ -202,7 +202,7 @@ void eof_build_sanitized_drums_rock_string(char *input, char *output)
 	uinsert(output, index, '\0');	//Terminate the output string
 }
 
-int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff)
+int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff, char *destpath)
 {
 	PACKFILE *fp;
 	int err;
@@ -215,13 +215,15 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 		return 0;	//Invalid difficulty level
 	if(!eof_track_is_drums_rock_mode(sp, track))
 		return 0;	//Not a valid track or Drums Rock is not enabled
+	if(!destpath)
+		return 0;	//Invalid destination folder path
 
 	(void) eof_detect_difficulties(sp, track);	//Update difficulties to reflect the track being exported
 	if(!eof_track_diff_populated_status[diff])
 		return 0;	//This difficulty is empty
 
 	//Build the path to the Drums Rock folder for this track difficulty
-	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the project folder path
+	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
 	put_backslash(eof_temp_filename);
 	if(eof_check_string(eof_song->tags->artist))
 	{	//If the artist of the song is defined
@@ -285,6 +287,9 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	{	//For each note in the track
 		unsigned long flags, ctr2, bitmask, gem1 = 0, gem2 = 0, enemytype = 0, drumrollcount = 0, aux, value;
 		unsigned char notemask;
+
+		if(eof_get_note_type(sp, track, ctr) != diff)
+			continue;	//If this note isn't in the target difficulty, skip it
 
 		//Process note for export
 		notemask = eof_reduce_drums_rock_note_mask(sp, track, ctr);	//Convert the note bitmask for Drums Rock
