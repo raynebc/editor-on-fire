@@ -506,15 +506,15 @@ unsigned char gp_drum_import_lane_5_cymbal[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 
 /* Drums Rock note mappings */
-unsigned char drums_rock_export_lane_1 = 2;			//Gem 2 is kick drum
-unsigned char drums_rock_export_lane_2 = 1;			//Gem 1 is snare
-unsigned char drums_rock_export_lane_3 = 3;			//Gem 3 is high tom
-unsigned char drums_rock_export_lane_3_cymbal = 6;		//Gem 6 is ride cymbal
-unsigned char drums_rock_export_lane_4 = 3;
-unsigned char drums_rock_export_lane_4_cymbal = 6;
-unsigned char drums_rock_export_lane_5 = 4;			//Gem 4 is low tom
-unsigned char drums_rock_export_lane_5_cymbal = 5;		//Gem 5 is crash cymbal
-unsigned char drums_rock_export_lane_6 = 5;			//Gem 6 is not standard
+unsigned char drums_rock_remap_lane_1 = 4;			//Lane 4 is kick drum in Drums Rock
+unsigned char drums_rock_remap_lane_2 = 3;			//Lane 3 is snare
+unsigned char drums_rock_remap_lane_3 = 1;			//Lane 1 is high tom
+unsigned char drums_rock_remap_lane_3_cymbal = 5;		//Lane 5 is ride cymbal
+unsigned char drums_rock_remap_lane_4 = 1;
+unsigned char drums_rock_remap_lane_4_cymbal = 5;
+unsigned char drums_rock_remap_lane_5 = 6;			//Lane 6 is low tom
+unsigned char drums_rock_remap_lane_5_cymbal = 2;		//Lane 2 is crash cymbal
+unsigned char drums_rock_remap_lane_6 = 2;			//Lane 6 is not standard in Rock Band, remap same as crash cymbal
 
 char *ogg_profile_name = NULL;	//This pointer is used by eof_load_ogg to set the file name in the current OGG profile
 
@@ -1227,7 +1227,14 @@ void eof_fix_window_title(void)
 		}
 		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
 		{
-			(void) ustrcat(eof_window_title, "(Drums Rock)");
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP)
+			{	//If note remapping is also enabled
+				(void) ustrcat(eof_window_title, "(Drums Rock, remapped)");
+			}
+			else
+			{
+				(void) ustrcat(eof_window_title, "(Drums Rock)");
+			}
 		}
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the tempo map is locked
@@ -3392,6 +3399,16 @@ void eof_render_3d_window(void)
 		}
 	}
 
+	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+	{	//If Drums Rock export is enabled for the track being rendered, apply a Drums Rock color set just for 3D preview
+		eof_colors[0] = eof_color_orange_struct;
+		eof_colors[1] = eof_color_blue_struct;
+		eof_colors[2] = eof_color_yellow_struct;
+		eof_colors[3] = eof_color_red_struct;
+		eof_colors[4] = eof_color_green_struct;
+		eof_colors[5] = eof_color_purple_struct;
+	}
+
 	if(!eof_background)
 	{	//If a background image was NOT loaded
 		clear_to_color(eof_window_3d->screen, eof_color_gray);	//Clear the 3D preview portion of the screen
@@ -3710,6 +3727,11 @@ void eof_render_3d_window(void)
 		eof_menu_pro_guitar_track_enable_tech_view(tp);
 		eof_hover_note = temphover;				//Restore the hover note
 		eof_selection.track = temptrack;		//Restore the selection track
+	}
+
+	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+	{	//If the color set was changed for Drums Rock, restore the user-selected color set
+		eof_set_color_set();
 	}
 }
 
@@ -6094,7 +6116,7 @@ void eof_set_color_set(void)
 	if(!eof_song)
 		return;
 
-	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+/*	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
 	{
 		eof_colors[0] = eof_color_orange_struct;
 		eof_colors[1] = eof_color_blue_struct;
@@ -6103,7 +6125,7 @@ void eof_set_color_set(void)
 		eof_colors[4] = eof_color_green_struct;
 		eof_colors[5] = eof_color_purple_struct;
 	}
-	else if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+	else*/ if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 	{	//Guitar Hero Live only uses two gem colors
 		eof_colors[0] = eof_color_ghl_black_struct;		//Lane 1 is B1
 		eof_colors[1] = eof_color_ghl_black_struct;

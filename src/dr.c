@@ -117,17 +117,74 @@ int eof_check_drums_rock_track(EOF_SONG * sp, unsigned long track)
 	return 0;	//No issues
 }
 
-unsigned char eof_reduce_drums_rock_note_mask(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned char eof_convert_drums_rock_note_mask(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned ctr, bitmask, count = 0;
 	unsigned char newnote = 0, notemask, is_drum_roll = 0;
 	unsigned long flags;
+
+	if(!sp || (track >= sp->tracks))
+		return 0;	//Invalid parameters
 
 	notemask = eof_get_note_note(sp, track, note);
 	flags = eof_get_note_flags(sp, track, note);
 	if((flags & EOF_NOTE_FLAG_IS_TREMOLO) || (flags & EOF_NOTE_FLAG_IS_TRILL))
 		is_drum_roll = 1;	//Track that the note is in a drum roll
 
+	//Perform remapping logic if enabled
+	if(sp->track[track]->flags  & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP)
+	{	//If remapping was enabled
+		unsigned char remapped = 0;
+
+		if(notemask & 1)
+		{	//Remap lane 1 gem
+			remapped |= 1 << (drums_rock_remap_lane_1 - 1);
+		}
+		if(notemask & 2)
+		{	//Remap lane 2 gem
+			remapped |= 1 << (drums_rock_remap_lane_2 - 1);
+		}
+		if(notemask & 4)
+		{	//Remap lane 3 gem
+			if(flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
+			{	//Remap lane 3 cymbal
+				remapped |= 1 << (drums_rock_remap_lane_3_cymbal - 1);
+			}
+			else
+			{	//Remap lane 3 tom
+				remapped |= 1 << (drums_rock_remap_lane_3 - 1);
+			}
+		}
+		if(notemask & 8)
+		{	//Remap lane 4 gem
+			if(flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
+			{	//Remap lane 4 cymbal
+				remapped |= 1 << (drums_rock_remap_lane_4_cymbal - 1);
+			}
+			else
+			{	//Remap lane 4 tom
+				remapped |= 1 << (drums_rock_remap_lane_4 - 1);
+			}
+		}
+		if(notemask & 16)
+		{	//Remap lane 5 gem
+			if(flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
+			{	//Remap lane 5 cymbal
+				remapped |= 1 << (drums_rock_remap_lane_5_cymbal - 1);
+			}
+			else
+			{	//Remap lane 5 tom
+				remapped |= 1 << (drums_rock_remap_lane_5 - 1);
+			}
+		}
+		if(notemask & 32)
+		{	//Remap lane 6 gem
+			remapped |= 1 << (drums_rock_remap_lane_6 - 1);
+		}
+		notemask = remapped;	//The rest of the function will use this converted note mask
+	}
+
+	//Ensure the bitmask contains no more than 2 gems (or 1 if it is in a drum roll)
 	//Special rule:  If a drum chord includes bass, always keep that gem
 	if(notemask & 8)
 	{
@@ -292,7 +349,7 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 			continue;	//If this note isn't in the target difficulty, skip it
 
 		//Process note for export
-		notemask = eof_reduce_drums_rock_note_mask(sp, track, ctr);	//Convert the note bitmask for Drums Rock
+		notemask = eof_convert_drums_rock_note_mask(sp, track, ctr);	//Convert the note bitmask for Drums Rock
 		for(ctr2 = 0, bitmask = 1, gem1= 0, gem2 = 0; ctr2 < 6; ctr2++, bitmask <<= 1)
 		{	//For each of the 6 supported lanes
 			if(notemask & bitmask)

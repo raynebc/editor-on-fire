@@ -482,6 +482,34 @@ void eof_load_config(char * fn)
 
 	eof_song_folder_prompt = get_config_int("other", "eof_song_folder_prompt", 0);
 
+	drums_rock_remap_lane_1 = get_config_int("other", "drums_rock_remap_lane_1", 4);
+	if(drums_rock_remap_lane_1 > 6)
+		drums_rock_remap_lane_1 = 4;	//If the defined value is invalid, reset to default
+	drums_rock_remap_lane_2 = get_config_int("other", "drums_rock_remap_lane_2", 3);
+	if(drums_rock_remap_lane_2 > 6)
+		drums_rock_remap_lane_2 = 3;	//If the defined value is invalid, reset to default
+	drums_rock_remap_lane_3 = get_config_int("other", "drums_rock_remap_lane_3", 1);
+	if(drums_rock_remap_lane_3 > 6)
+		drums_rock_remap_lane_3 = 1;	//If the defined value is invalid, reset to default
+	drums_rock_remap_lane_3_cymbal = get_config_int("other", "drums_rock_remap_lane_3_cymbal", 5);
+	if(drums_rock_remap_lane_3_cymbal > 6)
+		drums_rock_remap_lane_3_cymbal = 5;	//If the defined value is invalid, reset to default
+	drums_rock_remap_lane_4 = get_config_int("other", "drums_rock_remap_lane_4", 1);
+	if(drums_rock_remap_lane_4 > 6)
+		drums_rock_remap_lane_4 = 1;	//If the defined value is invalid, reset to default
+	drums_rock_remap_lane_4_cymbal = get_config_int("other", "drums_rock_remap_lane_4_cymbal", 5);
+	if(drums_rock_remap_lane_4_cymbal > 6)
+		drums_rock_remap_lane_4_cymbal = 5;	//If the defined value is invalid, reset to default
+	drums_rock_remap_lane_5 = get_config_int("other", "drums_rock_remap_lane_5", 6);
+	if(drums_rock_remap_lane_5 > 6)
+		drums_rock_remap_lane_5 = 6;	//If the defined value is invalid, reset to default
+	drums_rock_remap_lane_5_cymbal = get_config_int("other", "drums_rock_remap_lane_5_cymbal", 2);
+	if(drums_rock_remap_lane_5_cymbal > 6)
+		drums_rock_remap_lane_5_cymbal = 2;	//If the defined value is invalid, reset to default
+	drums_rock_remap_lane_6 = get_config_int("other", "drums_rock_remap_lane_6", 2);
+	if(drums_rock_remap_lane_6 > 6)
+		drums_rock_remap_lane_6 = 2;	//If the defined value is invalid, reset to default
+
 	//Convert MIDI tones to zero numbering
 	if(eof_midi_synth_instrument_guitar > 0)
 		eof_midi_synth_instrument_guitar--;
@@ -726,6 +754,16 @@ void eof_save_config(char * fn)
 
 	set_config_string("other", "eof_lyric_gap_multiplier", eof_lyric_gap_multiplier_string);
 	set_config_int("other", "eof_song_folder_prompt", eof_song_folder_prompt);
+
+	set_config_int("other", "drums_rock_remap_lane_1", drums_rock_remap_lane_1);
+	set_config_int("other", "drums_rock_remap_lane_2", drums_rock_remap_lane_2);
+	set_config_int("other", "drums_rock_remap_lane_3", drums_rock_remap_lane_3);
+	set_config_int("other", "drums_rock_remap_lane_3_cymbal", drums_rock_remap_lane_3_cymbal);
+	set_config_int("other", "drums_rock_remap_lane_4", drums_rock_remap_lane_4);
+	set_config_int("other", "drums_rock_remap_lane_4_cymbal", drums_rock_remap_lane_4_cymbal);
+	set_config_int("other", "drums_rock_remap_lane_5", drums_rock_remap_lane_5);
+	set_config_int("other", "drums_rock_remap_lane_5_cymbal", drums_rock_remap_lane_5_cymbal);
+	set_config_int("other", "drums_rock_remap_lane_6", drums_rock_remap_lane_6);
 
 	//Delete existing default INI settings from config file
 	eof_log("\tRewriting default INI settings", 3);

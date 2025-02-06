@@ -337,6 +337,9 @@ typedef struct
 	//Specifies that a bass pro guitar track is to be presented in Rocksmith as a picked bass arrangement instead of a fingered bass arrangement
 #define EOF_TRACK_FLAG_DRUMS_ROCK 256
 	//Specifies that a drum track will export in Drums Rock format
+#define EOF_TRACK_FLAG_DRUMS_ROCK_REMAP 512
+	//Specifies that if Drums Rock export is enabled, the tom and cymbal notes will be remapped automatically such as to suit a conversion from Rock Band to Drums Rock style charting
+	//These remappings are defined in the drums_rock_remap_lane_* variables
 #define EOF_TRACK_FLAG_EXTENDED 2147483648UL	//The MSB will be set if an additional extended flag variable is present for the track in the project file
 											//This flag will only be used during project save/load to determine whether another flags variable is written/read
 

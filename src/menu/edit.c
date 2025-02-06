@@ -1591,6 +1591,7 @@ int eof_menu_edit_paste_logic(int function)
 	char clipboard_path[50];
 	int warning = 0;
 	char isghl;	//Set to nonzero if the clipboard's source track had GHL mode enabled, which changes the interpretation of lane 6 gems
+	char technotesadded = 0;	//Tracks whether tech notes were created when pasting pro guitar notes into normal view
 	unsigned long source_id = 0;
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
 	unsigned long targetpos = eof_music_pos.value - eof_av_delay;	//By default, assume the paste will occur at the seek position
@@ -1955,6 +1956,7 @@ int eof_menu_edit_paste_logic(int function)
 						memcpy(tnp, stp->technote[techctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the tech note from the clipboard source
 						tnp->type = eof_note_type;	//Update the difficulty level of the new tech note
 						tnp->pos = (double)newnotepos + ((double)newnotelength * relpos) + 0.5;	//Set the timestamp of the new tech note, placing it at the same relative position in the note as per the original tech note, rounding to nearest millisecond
+						technotesadded = 1;
 					}
 				}
 			}
@@ -1976,6 +1978,10 @@ int eof_menu_edit_paste_logic(int function)
 	(void) pack_fclose(fp);
 	eof_truncate_chart(eof_song);	//Update chart variables for any beats that were added to accommodate the paste
 	eof_track_sort_notes(eof_song, eof_selected_track);
+	if(technotesadded)
+	{	//If tech notes were recreated when pasting normal notes
+		eof_pro_guitar_track_sort_tech_notes(eof_song->pro_guitar_track[tracknum]);	//Sort them
+	}
 	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);

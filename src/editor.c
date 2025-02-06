@@ -5931,10 +5931,21 @@ void eof_render_editor_notes(EOF_WINDOW *window)
 {
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
 	unsigned long i, numnotes;
-	char drawhighlight = 0;
+	char drawhighlight = 0, reset_colors = 0;
 
 	if(!eof_song_loaded || !window)
 		return;	//Invalid parameter
+
+	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track) && !(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP))
+	{	//If Drums Rock export is enabled for the track being rendered, and note remapping is not being used, apply a Drums Rock color set just for 2D preview
+		eof_colors[0] = eof_color_orange_struct;
+		eof_colors[1] = eof_color_blue_struct;
+		eof_colors[2] = eof_color_yellow_struct;
+		eof_colors[3] = eof_color_red_struct;
+		eof_colors[4] = eof_color_green_struct;
+		eof_colors[5] = eof_color_purple_struct;
+		reset_colors = 1;	//Remember to restore the color set later
+	}
 
 	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	start = eof_determine_piano_roll_left_edge();
@@ -5974,6 +5985,11 @@ void eof_render_editor_notes(EOF_WINDOW *window)
 				}
 			}
 		}
+	}
+
+	if(reset_colors)
+	{	//If the color set was changed for Drums Rock preview, restore the user-selected color set
+		eof_set_color_set();
 	}
 }
 
@@ -6431,7 +6447,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				for(i = 0; i < tracksize; i++)
 				{	//For each note in this track
 					bitmask = eof_get_note_note(eof_song, eof_selected_track, i);
-					if(eof_reduce_drums_rock_note_mask(eof_song, eof_selected_track, i) != bitmask)
+					if(eof_convert_drums_rock_note_mask(eof_song, eof_selected_track, i) != bitmask)
 					{	//If this note would be reduced to two lanes during Drums Rock export
 						//Render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
 						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);

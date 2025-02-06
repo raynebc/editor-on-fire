@@ -92,6 +92,7 @@ MENU eof_track_clone_menu[] =
 MENU eof_track_drumsrock_menu[] =
 {
 	{"&Enable Drums Rock", eof_menu_track_drumsrock_enable_drumsrock_export, NULL, 0, NULL},
+	{"Drums Rock &Remap notes", eof_menu_track_drumsrock_enable_remap, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -235,6 +236,14 @@ void eof_prepare_track_menu(void)
 			else
 			{
 				eof_track_drumsrock_menu[0].flags = 0;
+			}
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP)
+			{	//If Drums Rock remapping export is enabled for this track
+				eof_track_drumsrock_menu[1].flags = D_SELECTED;
+			}
+			else
+			{
+				eof_track_drumsrock_menu[1].flags = 0;
 			}
 		}
 		else
@@ -3324,6 +3333,31 @@ int eof_menu_track_drumsrock_enable_drumsrock_export(void)
 	{	//If it was just turned on
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the "Enable five lane drums" feature
+		eof_song->legacy_track[tracknum]->numlanes = 6;
+		eof_set_3D_lane_positions(0);		//Update xchart[] by force
+		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+	}
+
+	eof_fix_window_title();
+	eof_set_color_set();		//This setting changes the color set
+
+	return 1;
+}
+
+int eof_menu_track_drumsrock_enable_remap(void)
+{
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 1;	//Invalid parameters
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
+
+	eof_song->track[eof_selected_track]->flags ^= EOF_TRACK_FLAG_DRUMS_ROCK_REMAP;	//Toggle this flag
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP)
+	{	//If it was just turned on, enable Drums Rock export automatically
+		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_DRUMS_ROCK;
 		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the "Enable five lane drums" feature
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 		eof_set_3D_lane_positions(0);		//Update xchart[] by force

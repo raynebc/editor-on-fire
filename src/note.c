@@ -1230,7 +1230,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	if(eof_track_is_drums_rock_mode(eof_song, track))
 	{	//Special case:  Drums Rock mode will alter the note mask to  contain no more than 2 gems
-		notenote = eof_reduce_drums_rock_note_mask(eof_song, track, notenum);
+		notenote = eof_convert_drums_rock_note_mask(eof_song, track, notenum);
 	}
 
 	for(ctr = 0, mask = 1; ctr < eof_count_track_lanes(eof_song, track); ctr++, mask <<= 1)

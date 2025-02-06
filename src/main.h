@@ -589,6 +589,16 @@ extern int eof_color_highlight2_raw;
 extern int eof_color_highlight1;
 extern int eof_color_highlight2;
 
+extern eof_color eof_color_green_struct;
+extern eof_color eof_color_red_struct;
+extern eof_color eof_color_yellow_struct;
+extern eof_color eof_color_blue_struct;
+extern eof_color eof_color_orange_struct;
+extern eof_color eof_color_purple_struct;
+extern eof_color eof_color_black_struct;
+extern eof_color eof_color_ghl_black_struct;
+extern eof_color eof_color_ghl_white_struct;
+
 extern char eof_string_lane_1[5];
 extern char eof_string_lane_2[5];
 extern char eof_string_lane_3[5];
@@ -674,6 +684,17 @@ extern unsigned char gp_drum_import_lane_4_cymbal[EOF_GP_DRUM_MAPPING_COUNT];
 extern unsigned char gp_drum_import_lane_5[EOF_GP_DRUM_MAPPING_COUNT];
 extern unsigned char gp_drum_import_lane_5_cymbal[EOF_GP_DRUM_MAPPING_COUNT];
 extern unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT];
+
+/* Drums Rock note mappings */
+extern unsigned char drums_rock_remap_lane_1;
+extern unsigned char drums_rock_remap_lane_2;
+extern unsigned char drums_rock_remap_lane_3;
+extern unsigned char drums_rock_remap_lane_3_cymbal;
+extern unsigned char drums_rock_remap_lane_4;
+extern unsigned char drums_rock_remap_lane_4_cymbal;
+extern unsigned char drums_rock_remap_lane_5;
+extern unsigned char drums_rock_remap_lane_5_cymbal;
+extern unsigned char drums_rock_remap_lane_6;
 
 extern DIALOG eof_import_to_track_dialog[];
 
