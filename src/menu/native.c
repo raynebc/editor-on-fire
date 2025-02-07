@@ -132,7 +132,7 @@ static bool add_menu(MENU * mp, MENU * parent, int parent_pos)
 			{
 				flags |= ALLEGRO_MENU_ITEM_CHECKBOX;
 			}
-			al_append_menu_item(native_menu[this_menu], mp->text, current_id, flags, NULL, NULL);
+			al_append_menu_item(native_menu[this_menu], (mp->text && strlen(mp->text)) ? mp->text : "blank", current_id, flags, NULL, NULL);
 			index_a4_menu_item(current_id, mp);
 			native_menu_items[this_menu]++;
 			current_id++;
