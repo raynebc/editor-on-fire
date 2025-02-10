@@ -387,6 +387,21 @@ int eof_note_menu_read_gp_lyric_texts(void);
 int eof_menu_note_simplify_chords(void);
 	//Removes the top-most (highest lane) gem on each selected chord
 
+int eof_menu_note_simplify_chords_low(void);
+	//Removes the lowest lane gem on each selected chord
+
+int eof_menu_note_simplify_cymbals(void);
+	//Removes cymbal gems from each selected note
+
+int eof_menu_note_simplify_toms(void);
+	//Removes tom gems (lane 3, 4 or 5 drum gems that are not cymbals) from each selected note
+
+int eof_menu_note_simplify_bass_drum(void);
+	//Removes bass drum gems from each selected note
+
+int eof_menu_note_simplify_double_bass_drum(void);
+	//Removes double bass drum gems from each selected note
+
 int eof_menu_pro_guitar_toggle_string_mute(void);
 	//For each selected note, applies string mute status to all used strings if any of the note's used strings aren't already string muted,
 	//otherwise clears string mute status from all used strings in the note

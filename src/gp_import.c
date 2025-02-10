@@ -4821,7 +4821,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 							}
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tGrace note #%lu:  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, gnp->pos, gnp->length);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tGrace note #%lu (%s beat):  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, (graceonbeat ? "On" : "Before"), gnp->pos, gnp->length);
 							assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
 							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
 							{	//For each of this track's natively supported strings
@@ -4930,8 +4930,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{	//For each note in the track
 			EOF_PRO_GUITAR_NOTE *gnp;
 
-			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
-				continue;	//If this note wasn't marked as an unpitched slide during import (slide in from above/below note)
+			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))		//If this note wasn't marked as an unpitched slide during import
+				if(!(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_HIGHLIGHT))				//If this note wasn't highlighted (to tell it apart from unpitched slide out notes)
+					continue;															//Skip the note
 
 			gnp = eof_pro_guitar_track_add_note(gp->track[ctr]);		//Add a new note to the current track
 			if(gnp)

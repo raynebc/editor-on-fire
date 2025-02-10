@@ -567,6 +567,17 @@ MENU eof_note_clone_hero_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_simplify_menu[] =
+{
+	{"C&Hords", eof_menu_note_simplify_chords, NULL, 0, NULL},
+	{"Chords (&Low)", eof_menu_note_simplify_chords_low, NULL, 0, NULL},
+	{"&Cymbals", eof_menu_note_simplify_cymbals, NULL, 0, NULL},
+	{"&Toms", eof_menu_note_simplify_toms, NULL, 0, NULL},
+	{"&Bass drum", eof_menu_note_simplify_bass_drum, NULL, 0, NULL},
+	{"&Expert+ bass drum", eof_menu_note_simplify_double_bass_drum, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_menu[] =
 {
 	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
@@ -591,8 +602,8 @@ MENU eof_note_menu[] =
 	{"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
 	{"Re&Flect", NULL, eof_note_reflect_menu, 0, NULL},
 	{"&Clone Hero", NULL, eof_note_clone_hero_menu, 0, NULL},
+	{"Simplif&Y", NULL, eof_note_simplify_menu, 0, NULL},
 	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
-	{"Simplif&Y chords", eof_menu_note_simplify_chords, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -10064,6 +10075,238 @@ int eof_menu_note_simplify_chords(void)
 				eof_set_note_note(eof_song, eof_selected_track, ctr, note);	//Update the note
 				break;
 			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_simplify_chords_low(void)
+{
+	unsigned long ctr, ctr2, bitmask, note;
+	unsigned char undo_made = 0;
+	int note_selection_updated;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type))
+			continue;	//If the note is not selected, skip it
+		if(eof_note_count_colors(eof_song, eof_selected_track, ctr) <= 1)
+			continue;	//If the note doesn't have at least two gems, skip it
+
+		note = eof_get_note_note(eof_song, eof_selected_track, ctr);	//Get the note's bitmask
+		for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+		{	//For each of the 6 supported strings
+			if(note & bitmask)
+			{	//When the first (lowest numbered) populated lane is reached
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+					undo_made = 1;
+				}
+				note &= ~ bitmask;	//Clear that lane
+				eof_set_note_note(eof_song, eof_selected_track, ctr, note);	//Update the note
+				break;
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_simplify_cymbals(void)
+{
+	unsigned long ctr, note, newnote, flags, newflags;
+	unsigned char undo_made = 0;
+	int note_selection_updated;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 0;	//Do not allow this function to run when not in a drum track
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type))
+			continue;	//If the note is not selected, skip it
+
+		note = newnote = eof_get_note_note(eof_song, eof_selected_track, ctr);	//Get the note's bitmask
+		flags = newflags = eof_get_note_flags(eof_song, eof_selected_track, ctr);	//Get the note's flags
+		if((note & 4) && (flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+		{	//If the note contains a yellow cymbal
+			newnote &= ~4;	//Clear this gem
+			newflags &= ~EOF_DRUM_NOTE_FLAG_Y_CYMBAL;	//Clear this flag
+		}
+		if((note & 8) && (flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+		{	//If the note contains a blue cymbal
+			newnote &= ~8;	//Clear this gem
+			newflags &= ~EOF_DRUM_NOTE_FLAG_B_CYMBAL;	//Clear this flag
+		}
+		if((note & 16) && (flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+		{	//If the note contains a green cymbal
+			newnote &= ~16;	//Clear this gem
+			newflags &= ~EOF_DRUM_NOTE_FLAG_G_CYMBAL;	//Clear this flag
+		}
+		if(newnote != note)
+		{	//If the note is being altered
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			eof_set_note_note(eof_song, eof_selected_track, ctr, newnote);	//Update the note
+			eof_set_note_flags(eof_song, eof_selected_track, ctr, newflags);
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_simplify_toms(void)
+{
+	unsigned long ctr, note, newnote, flags, newflags;
+	unsigned char undo_made = 0;
+	int note_selection_updated;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 0;	//Do not allow this function to run when not in a drum track
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type))
+			continue;	//If the note is not selected, skip it
+
+		note = newnote = eof_get_note_note(eof_song, eof_selected_track, ctr);	//Get the note's bitmask
+		flags = newflags = eof_get_note_flags(eof_song, eof_selected_track, ctr);	//Get the note's flags
+		if((note & 4) && !(flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+		{	//If the note contains a yellow tom
+			newnote &= ~4;	//Clear this gem
+		}
+		if((note & 8) && !(flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+		{	//If the note contains a blue tom
+			newnote &= ~8;	//Clear this gem
+		}
+		if((note & 16) && !(flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+		{	//If the note contains a green tom
+			newnote &= ~16;	//Clear this gem
+		}
+		if(newnote != note)
+		{	//If the note is being altered
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			eof_set_note_note(eof_song, eof_selected_track, ctr, newnote);	//Update the note
+			eof_set_note_flags(eof_song, eof_selected_track, ctr, newflags);
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_simplify_double_bass_drum(void)
+{
+	unsigned long ctr, note, newnote, flags, newflags;
+	unsigned char undo_made = 0, type;
+	int note_selection_updated;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 0;	//Do not allow this function to run when not in a drum track
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		type = eof_get_note_type(eof_song, eof_selected_track, ctr);
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (type != eof_note_type))
+			continue;	//If the note is not selected, skip it
+		if(type != EOF_NOTE_AMAZING)
+			continue;	//if the note is not in the expert difficulty, skip it
+
+		note = newnote = eof_get_note_note(eof_song, eof_selected_track, ctr);	//Get the note's bitmask
+		flags = newflags = eof_get_note_flags(eof_song, eof_selected_track, ctr);	//Get the note's flags
+		if((note & 1) && (flags & EOF_DRUM_NOTE_FLAG_DBASS))
+		{	//If the note contains an Expert+ bass drum note
+			newnote &= ~1;	//Clear this gem
+			newflags &= ~EOF_DRUM_NOTE_FLAG_DBASS;	//Clear this flag
+		}
+		if(newnote != note)
+		{	//If the note is being altered
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			eof_set_note_note(eof_song, eof_selected_track, ctr, newnote);	//Update the note
+			eof_set_note_flags(eof_song, eof_selected_track, ctr, newflags);
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_simplify_bass_drum(void)
+{
+	unsigned long ctr, note;
+	unsigned char undo_made = 0, type;
+	int note_selection_updated;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 0;	//Do not allow this function to run when not in a drum track
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		type = eof_get_note_type(eof_song, eof_selected_track, ctr);
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (type != eof_note_type))
+			continue;	//If the note is not selected, skip it
+
+		note = eof_get_note_note(eof_song, eof_selected_track, ctr);	//Get the note's bitmask
+		if(note & 1)
+		{	//If the note contains a bass drum note
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			note &= ~1;	//Clear the bass drum gem
+			eof_set_note_note(eof_song, eof_selected_track, ctr, note);	//Update the note
 		}
 	}
 	if(note_selection_updated)

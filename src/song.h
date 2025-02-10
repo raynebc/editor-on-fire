@@ -31,7 +31,7 @@
 //The original 32 status flags are all used up by some common and some track-specific statuses
 #define EOF_NOTE_FLAG_HOPO       1	//This flag will be set by eof_determine_phrase_status() if the note displays as a HOPO, either manually or automatically
 #define EOF_NOTE_FLAG_SP         2	//This flag will be set by eof_determine_phrase_status() if the note is in a star power section
-#define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks, and will force pro guitar/bass chords to display with a chord box
+#define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks, and will force pro guitar/bass chords to display with a chord box, and will allow non BRE drum notes to export to MIDI with a length longer than 1 detla
 #define EOF_NOTE_FLAG_F_HOPO     8	//Manually defines the note as being HOPO
 #define EOF_NOTE_FLAG_NO_HOPO    16	//Manually defines the note as being forced strum
 #define EOF_NOTE_FLAG_HIGHLIGHT  1073741824	//This flag will represent a note that is highlighted (in yellow, by default) in the editor window (permanently, until manually cleared)

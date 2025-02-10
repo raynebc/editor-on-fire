@@ -6116,6 +6116,7 @@ void eof_set_color_set(void)
 	if(!eof_song)
 		return;
 
+//Drums Rock coloring is applied within the 2D and 3D render functions since the color set in the editor window depends on whether the remapping function is in effect
 /*	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
 	{
 		eof_colors[0] = eof_color_orange_struct;
@@ -6215,17 +6216,44 @@ void eof_set_color_set(void)
 			eof_colors[5] = eof_color_purple_struct;
 		}
 	}
-	//Update the strings for the Note>Toggle and Note>Clear menus
-	for(x = 0; x < 6; x++)
-	{
-		 snprintf(eof_note_toggle_menu_strings[x], sizeof(eof_note_toggle_menu_string_1) - 1, "%s\tShift+%d", eof_colors[x].colorname, x+1);
-		 strncpy(eof_note_clear_menu_strings[x], eof_colors[x].colorname, sizeof(eof_note_clear_menu_string_1) - 1);
-	}
 
+	//Update the strings for the Note>Toggle and Note>Clear menus
 	//Update the strings for the Edit>Clap Notes menu
-	for(x = 0; x < 6; x++)
-	{
-		eof_edit_claps_menu[x + 1].text = eof_colors[x].colorname;
+	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track) && !(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP))
+	{	//If Drums Rock mode is enabled and remapping is not enabled, the editor window is using Drums Rock lane colors
+		strncpy(eof_note_toggle_menu_strings[0], "&Orange\tShift+1", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_toggle_menu_strings[1], "&Blue\tShift+2", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_toggle_menu_strings[2], "&Yellow\tShift+3", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_toggle_menu_strings[3], "&Red\tShift+4", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_toggle_menu_strings[4], "&Green\tShift+5", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_toggle_menu_strings[5], "&Purple\tShift+6", sizeof(eof_note_clear_menu_string_1) - 1);
+
+		strncpy(eof_note_clear_menu_strings[0], "&Orange", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_clear_menu_strings[1], "&Blue", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_clear_menu_strings[2], "&Yellow", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_clear_menu_strings[3], "&Red", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_clear_menu_strings[4], "&Green", sizeof(eof_note_clear_menu_string_1) - 1);
+		strncpy(eof_note_clear_menu_strings[5], "&Purple", sizeof(eof_note_clear_menu_string_1) - 1);
+
+		eof_edit_claps_menu[1].text = eof_color_orange_name;
+		eof_edit_claps_menu[2].text = eof_color_blue_name;
+		eof_edit_claps_menu[3].text = eof_color_yellow_name;
+		eof_edit_claps_menu[4].text = eof_color_red_name;
+		eof_edit_claps_menu[5].text = eof_color_green_name;
+		eof_edit_claps_menu[6].text = eof_color_purple_name;
+	}
+	else
+	{	//Otherwise the editor window reflects the color set defined in preferences
+		for(x = 0; x < 6; x++)
+		{
+			 snprintf(eof_note_toggle_menu_strings[x], sizeof(eof_note_toggle_menu_string_1) - 1, "%s\tShift+%d", eof_colors[x].colorname, x+1);
+			 strncpy(eof_note_clear_menu_strings[x], eof_colors[x].colorname, sizeof(eof_note_clear_menu_string_1) - 1);
+		}
+
+		for(x = 0; x < 6; x++)
+		{
+			eof_edit_claps_menu[x + 1].text = eof_colors[x].colorname;
+		}
 	}
 }
 
