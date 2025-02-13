@@ -399,6 +399,12 @@ int eof_menu_note_simplify_toms(void);
 int eof_menu_note_simplify_bass_drum(void);
 	//Removes bass drum gems from each selected note
 
+int eof_menu_note_simplify_string_mute(void);
+	//Removes string muted gems from each selected pro guitar note
+
+int eof_menu_note_simplify_ghost(void);
+	//Removes ghost gems from each selected pro guitar note
+
 int eof_menu_note_simplify_double_bass_drum(void);
 	//Removes double bass drum gems from each selected note
 

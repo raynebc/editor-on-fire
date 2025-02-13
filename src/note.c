@@ -828,8 +828,12 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 						((mask == 8) && (noteflags & EOF_DRUM_NOTE_FLAG_B_COMBO)) ||
 						((mask == 16) && (noteflags & EOF_DRUM_NOTE_FLAG_G_COMBO)))
 					{	//If the note is a tom/cymbal combo
-						circlefill(window->screen, x, y + dotsize / 2, dotsize * 1.5, eof_color_black);	//Draw a large dot in the center of the triangle
+						circlefill(window->screen, x, y + dotsize / 2, dotsize * 1.5, pcol);	//Draw a large dot in the center of the triangle
 					}
+				}
+				if(noteflags & EOF_NOTE_FLAG_CRAZY)
+				{	//If the cymbal has crazy status
+					circlefill(window->screen, x, y + dotsize / 2, dotsize - 1, eof_color_black);	//Draw a dot in the center of the triangle
 				}
 			}
 		}//If this lane is populated

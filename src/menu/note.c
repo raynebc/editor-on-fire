@@ -575,6 +575,8 @@ MENU eof_note_simplify_menu[] =
 	{"&Toms", eof_menu_note_simplify_toms, NULL, 0, NULL},
 	{"&Bass drum", eof_menu_note_simplify_bass_drum, NULL, 0, NULL},
 	{"&Expert+ bass drum", eof_menu_note_simplify_double_bass_drum, NULL, 0, NULL},
+	{"&String mutes", eof_menu_note_simplify_string_mute, NULL, 0, NULL},
+	{"&Ghost", eof_menu_note_simplify_ghost, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -841,8 +843,8 @@ void eof_prepare_note_menu(void)
 		else
 		{	//NO NOTES/LYRICS SELECTED
 			eof_star_power_menu[0].flags = D_DISABLED;	//Note>Star Power>Mark/Remark
-			eof_solo_menu[0].flags = D_DISABLED; 		//Note>Solos>Mark/Remark
-			eof_lyric_line_menu[0].flags = D_DISABLED;	//Note>Lyrics>Lyric Lines>Mark/Remark
+			eof_solo_menu[0].flags = D_DISABLED; 			//Note>Solos>Mark/Remark
+			eof_lyric_line_menu[0].flags = D_DISABLED;		//Note>Lyrics>Lyric Lines>Mark/Remark
 			eof_note_menu[5].flags = D_DISABLED; 		//Note>Solos> submenu
 			eof_note_menu[6].flags = D_DISABLED; 		//Note>Star Power> submenu
 			eof_note_menu[14].flags = D_DISABLED;		//Note>Slider> submenu
@@ -1110,10 +1112,18 @@ void eof_prepare_note_menu(void)
 			if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 			{	//When a drum track is not active
 				eof_note_menu[16].flags = D_DISABLED;	//Note>Drum> submenu
+				eof_note_simplify_menu[2].flags = D_DISABLED;	//Note>Simplify>Cymbals
+				eof_note_simplify_menu[3].flags = D_DISABLED;	//Note>Simplify>Toms
+				eof_note_simplify_menu[4].flags = D_DISABLED;	//Note>Simplify>Bass drum
+				eof_note_simplify_menu[5].flags = D_DISABLED;	//Note>Simplify>Expert+ bass
 			}
 			else
 			{
 				eof_note_menu[16].flags = 0;
+				eof_note_simplify_menu[2].flags = 0;
+				eof_note_simplify_menu[3].flags = 0;
+				eof_note_simplify_menu[4].flags = 0;
+				eof_note_simplify_menu[5].flags = 0;
 
 				if(eof_selected_track == EOF_TRACK_DRUM_PS)
 				{	//If the PS drum track is active
@@ -1174,6 +1184,8 @@ void eof_prepare_note_menu(void)
 
 				eof_note_menu[17].flags = 0;			//Note>Pro Guitar> submenu
 				eof_note_menu[18].flags = 0;			//Note>Rocksmith> submenu
+				eof_note_simplify_menu[6].flags = 0;	//Note>Simplify>String mutes
+				eof_note_simplify_menu[7].flags = 0;	//Note>Simplify>Ghost
 				if(tp->note == tp->technote)
 				{	//If tech view is in effect
 					eof_note_rocksmith_menu[8].flags = 0;			//Note>Rocksmith>Move tech note to prev note
@@ -1214,6 +1226,8 @@ void eof_prepare_note_menu(void)
 			{
 				eof_note_menu[17].flags = D_DISABLED;
 				eof_note_menu[18].flags = D_DISABLED;
+				eof_note_simplify_menu[6].flags = D_DISABLED;
+				eof_note_simplify_menu[7].flags = D_DISABLED;
 			}
 
 			/* Trill mark/remark*/
@@ -1411,6 +1425,45 @@ int eof_menu_note_transpose_up(void)
 			}
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+
+			//Transpose tech notes if applicable, must be transposed first because after the normal note set is transposed, the applicable tech notes won't be identifiable
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				EOF_PRO_GUITAR_TRACK *tp;
+				unsigned long normalnote = 0;	//The normal note that a tech note is found to apply to
+
+				tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+				if(tp->note != tp->technote)
+				{	//If tech view is not in effect, check whether any of the tech notes apply to normal notes about to be transposed
+					for(i = 0; i < tp->technotes; i++)
+					{	//For each tech note in the active track
+						if(tp->technote[i]->type == eof_note_type)
+						{	//If the tech note is in the active difficulty
+							if(eof_pro_guitar_tech_note_overlaps_a_note(tp, i, 0xFF, &normalnote))
+							{	//If this tech note overlaps any normal note on any string
+								if(normalnote < EOF_MAX_NOTES)
+								{	//Bounds check
+									if(eof_selection.multi[normalnote])
+									{	//If the normal note this tech note overlaps is selected
+										unsigned long higheststringmask = 1 << (tp->numstrings - 1);
+
+										if(!(tp->technote[i]->note & higheststringmask))
+										{	//If this tech note has no gems on the highest valid lane, it can transpose up one lane
+											tp->technote[i]->note = (tp->technote[i]->note << 1) & max;
+											for(j = 0; j < 7; j++)
+											{	//For the 7 supported lower frets
+												tp->technote[i]->frets[j] = tp->technote[i]->frets[j+1];		//Cycle fret values down from upper lane
+											}
+											tp->technote[i]->frets[0] = 0xFF;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
 				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
@@ -1488,6 +1541,43 @@ int eof_menu_note_transpose_down(void)
 		{
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+
+			//Transpose tech notes if applicable, must be transposed first because after the normal note set is transposed, the applicable tech notes won't be identifiable
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				EOF_PRO_GUITAR_TRACK *tp;
+				unsigned long normalnote = 0;	//The normal note that a tech note is found to apply to
+
+				tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+				if(tp->note != tp->technote)
+				{	//If tech view is not in effect, check whether any of the tech notes apply to normal notes about to be transposed
+					for(i = 0; i < tp->technotes; i++)
+					{	//For each tech note in the active track
+						if(tp->technote[i]->type == eof_note_type)
+						{	//If the tech note is in the active difficulty
+							if(eof_pro_guitar_tech_note_overlaps_a_note(tp, i, 0xFF, &normalnote))
+							{	//If this tech note overlaps any normal note on any string
+								if(normalnote < EOF_MAX_NOTES)
+								{	//Bounds check
+									if(eof_selection.multi[normalnote])
+									{	//If the normal note this tech note overlaps is selected
+										if(!(tp->technote[i]->note & 1))
+										{	//If this tech note has no gems on lane 1, it can transpose down one lane
+											tp->technote[i]->note = (tp->technote[i]->note >> 1) & 63;
+											for(j = 0; j < 7; j++)
+											{	//For the 7 supported lower frets
+												tp->technote[i]->frets[j] = tp->technote[i]->frets[j+1];		//Cycle fret values down from upper lane
+											}
+											tp->technote[i]->frets[7] = 0xFF;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
 				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
@@ -1624,7 +1714,7 @@ int eof_menu_note_resnap_logic(int any)
 		}
 		else
 		{
-			(void) eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &newnotepos, 0);	//Store the closest beat interval position of any size into newnotepos
+			(void) eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &newnotepos, eof_prefer_midi_friendly_grid_snapping);	//Store the closest beat interval position of any size into newnotepos, taking the "prefer MIDI friendly grid snaps" preference into account
 			if(newnotepos == ULONG_MAX)
 			{	//If the nearest beat interval position was NOT determined
 				newnotepos = notepos;	//Have the note retain its current timestamp
@@ -1675,7 +1765,7 @@ int eof_menu_note_resnap_logic(int any)
 		}
 		else
 		{
-			(void) eof_is_any_beat_interval_position(tailpos, NULL, NULL, NULL, &newnotepos, 0);	//Store the closest beat interval position of any size into newnotepos
+			(void) eof_is_any_beat_interval_position(tailpos, NULL, NULL, NULL, &newnotepos, eof_prefer_midi_friendly_grid_snapping);	//Store the closest beat interval position of any size into newnotepos, taking the "prefer MIDI friendly grid snaps" preference into account
 			if(newnotepos == ULONG_MAX)
 			{	//If the nearest beat interval position was NOT determined
 				newnotepos = tailpos;	//Have the tail retain its current ending timestamp
@@ -10177,6 +10267,10 @@ int eof_menu_note_simplify_cymbals(void)
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	if(undo_made)
+	{	//If at least one gem was cleared
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to ensure notes with all lanes clear are deleted
+	}
 	return 1;
 }
 
@@ -10228,6 +10322,10 @@ int eof_menu_note_simplify_toms(void)
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	if(undo_made)
+	{	//If at least one gem was cleared
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to ensure notes with all lanes clear are deleted
+	}
 	return 1;
 }
 
@@ -10275,6 +10373,10 @@ int eof_menu_note_simplify_double_bass_drum(void)
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	if(undo_made)
+	{	//If at least one gem was cleared
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to ensure notes with all lanes clear are deleted
+	}
 	return 1;
 }
 
@@ -10313,6 +10415,104 @@ int eof_menu_note_simplify_bass_drum(void)
 	{	//If the only note modified was the seek hover note
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	if(undo_made)
+	{	//If at least one gem was cleared
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to ensure notes with all lanes clear are deleted
+	}
+	return 1;
+}
+
+int eof_menu_note_simplify_string_mute(void)
+{
+	unsigned long ctr, ctr2, bitmask, tracknum;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	int note_selection_updated;
+	EOF_PRO_GUITAR_NOTE *np;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar track is active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the active track
+		if(!eof_selection.multi[ctr])
+			continue;	//If the note is not selected, skip it
+
+		np = eof_song->pro_guitar_track[tracknum]->note[ctr];
+		for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+		{	//For each of the 6 supported strings
+			if(np->note & bitmask)
+			{	//If the string is in use
+				if(np->frets[ctr2] & 0x80)
+				{	//If the MSB is set, it denotes string muted status
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+						undo_made = 1;
+					}
+
+					np->note &= ~bitmask;		//Remove this gem
+					np->frets[ctr2] = 0;
+				}
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	if(undo_made)
+	{	//If at least one gem was cleared
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to ensure notes with all lanes clear are deleted
+	}
+	return 1;
+}
+
+int eof_menu_note_simplify_ghost(void)
+{
+	unsigned long ctr, ctr2, bitmask, tracknum;
+	char undo_made = 0;
+	int note_selection_updated;
+	EOF_PRO_GUITAR_NOTE *np;
+
+ 	eof_log("eof_menu_note_toggle_ghost() entered", 1);
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar/bass track is active
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		np = eof_song->pro_guitar_track[tracknum]->note[ctr];	//Simplify
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (np->type == eof_note_type))
+		{	//If the note is selected and is in the active difficulty
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
+			{	//For each of the 6 usable strings
+				if((np->note & bitmask) && (np->ghost & bitmask))
+				{	//If this string is in use and is a ghost gem
+					if(!undo_made)
+					{	//Make an undo state before making the first change
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					np->note &= ~bitmask;	//Clear this gem
+					np->ghost &= ~bitmask;
+				}
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	if(undo_made)
+	{	//If at least one gem was cleared
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to ensure notes with all lanes clear are deleted
 	}
 	return 1;
 }

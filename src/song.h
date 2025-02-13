@@ -657,7 +657,9 @@ unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track);					
 unsigned long eof_get_chart_size(EOF_SONG *sp);												//Returns the number of notes/lyrics in the chart, or 0 on error
 int eof_song_has_pro_guitar_content(EOF_SONG *sp);											//Returns nonzero if any of the pro guitar tracks in the specified chart have any normal or tech notes
 unsigned long eof_get_used_lanes(unsigned long track, unsigned long startpos, unsigned long endpos, char type);
-	//Returns a bitmask representing all lanes used within the specified track difficulty during the specified time span
+	//Returns a bitmask representing all lanes used within the specified track difficulty during the specified time span, used to render trill/tremolo markers
+unsigned long eof_get_used_lanes_drums_rock_remapped(unsigned long track, unsigned long startpos, unsigned long endpos, char type);
+	//Similar to eof_get_used_lanes(), but reflects that Drums Rock mode is enabled and that the drum notes are being remapped
 unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track);							//Returns the number of solos in the specified track, or 0 on error
 void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number);			//Sets the number of solos in the specified track
 EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned long solonum);	//Returns a pointer to the specified solo, or NULL on error

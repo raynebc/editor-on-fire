@@ -24,6 +24,7 @@
 #include "menu/song.h"
 #include "menu/track.h"	//For the tech view enable/disable functions
 #include "agup/agup.h"
+#include "dr.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -6749,6 +6750,23 @@ unsigned long eof_get_used_lanes(unsigned long track, unsigned long startpos, un
 		if((eof_get_note_type(eof_song, track, ctr) == type) && (eof_get_note_pos(eof_song, track, ctr) >= startpos) && (eof_get_note_pos(eof_song, track, ctr) <= endpos))
 		{	//If the note is in the specified difficulty and is within the specified time range
 			bitmask |= eof_get_note_note(eof_song, track, ctr);	//Add its bitmask to the result
+		}
+	}
+
+	return bitmask;
+}
+
+unsigned long eof_get_used_lanes_drums_rock_remapped(unsigned long track, unsigned long startpos, unsigned long endpos, char type)
+{
+	unsigned long ctr, bitmask = 0;
+	unsigned char note;
+
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, track); ctr++)
+	{	//For each note in the specified track
+		if((eof_get_note_type(eof_song, track, ctr) == type) && (eof_get_note_pos(eof_song, track, ctr) >= startpos) && (eof_get_note_pos(eof_song, track, ctr) <= endpos))
+		{	//If the note is in the specified difficulty and is within the specified time range
+			note = eof_convert_drums_rock_note_mask(eof_song, track,ctr);	//Remap the drum note
+			bitmask |= note;	//Add its bitmask to the result
 		}
 	}
 

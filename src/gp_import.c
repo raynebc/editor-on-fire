@@ -4931,8 +4931,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			EOF_PRO_GUITAR_NOTE *gnp;
 
 			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))		//If this note wasn't marked as an unpitched slide during import
-				if(!(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_HIGHLIGHT))				//If this note wasn't highlighted (to tell it apart from unpitched slide out notes)
-					continue;															//Skip the note
+				continue;	//Skip the note
+			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_HIGHLIGHT))		//If this note wasn't highlighted (to tell it apart from unpitched slide out notes)
+				continue;	//Skip the note
 
 			gnp = eof_pro_guitar_track_add_note(gp->track[ctr]);		//Add a new note to the current track
 			if(gnp)

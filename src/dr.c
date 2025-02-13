@@ -132,8 +132,8 @@ unsigned char eof_convert_drums_rock_note_mask(EOF_SONG *sp, unsigned long track
 		is_drum_roll = 1;	//Track that the note is in a drum roll
 
 	//Perform remapping logic if enabled
-	if(sp->track[track]->flags  & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP)
-	{	//If remapping was enabled
+	if((sp->track[track]->flags  & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP) && !(flags & EOF_NOTE_FLAG_CRAZY))
+	{	//If remapping was enabled and the note is not marked with crazy status
 		unsigned char remapped = 0;
 
 		if(notemask & 1)
@@ -445,6 +445,23 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	}
 	(void) pack_fclose(fp);
 
+	//Write Metadata.cfg
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Metadata.cfg", (int) sizeof(eof_temp_filename));
+	fp = pack_fopen(eof_temp_filename, "w");
+	if(!fp)
+	{
+		eof_log("\tError saving:  Cannot open Metadata.cfg for writing", 1);
+		return 0;	//Return failure
+	}
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "title=%s - %s\n", sp->tags->artist, sp->tags->title);
+	(void) pack_fputs(temp_string, fp);		//Write song title
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "description=%s, %s\n", sp->tags->frettist, sp->tags->loading_text);
+	(void) pack_fputs(temp_string, fp);		//Write description
+	(void) pack_fputs("isPublic=true\n", fp);
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "tags=%s, %s\n", eof_note_type_name_dr[diff], sp->tags->genre);
+	(void) pack_fputs(temp_string, fp);		//Write tags
+	(void) pack_fclose(fp);
+
 	//Write song.ogg if it doesn't exist
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "song.ogg", (int) sizeof(eof_temp_filename));
 	if(!exists(eof_temp_filename))
@@ -457,7 +474,18 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 		(void) replace_filename(eof_temp_filename, eof_temp_filename, "preview.ogg", (int) sizeof(eof_temp_filename));
 		if(!exists(eof_temp_filename))
 		{	//If preview.ogg doesn't exist in the Drums Rock export subfolder
-			(void) eof_copy_file(temp_filename2, eof_temp_filename);	//Copies the source file to the destination file.  Returns 0 upon error
+			(void) eof_copy_file(temp_filename2, eof_temp_filename);	//Copy preview.ogg there
+		}
+	}
+
+	//Write album.jpg if it doesn't exist in the destination and it exists in the project folder
+	(void) replace_filename(temp_filename2, eof_song_path, "album.jpg", 1024);
+	if(exists(temp_filename2))
+	{	//If the project folder has album.jpg
+		(void) replace_filename(eof_temp_filename, eof_temp_filename, "album.jpg", (int) sizeof(eof_temp_filename));
+		if(!exists(eof_temp_filename))
+		{	//If album.jpg doesn't exist in the Drums Rock export subfolder
+			(void) eof_copy_file(temp_filename2, eof_temp_filename);	//Copy album.jpg there
 		}
 	}
 

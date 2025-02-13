@@ -3602,7 +3602,14 @@ void eof_render_3d_window(void)
 				if((eof_3d_min_depth > sez) || (eof_3d_max_depth < sz))
 					continue;	//If the section would not render to the visible portion of the screen, skip it
 
-				usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
+				if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track) && (eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP))
+				{	//If Drums Rock mode is in effect and the drums are being remapped, the drum roll markers need to be remapped as well
+					usedlanes = eof_get_used_lanes_drums_rock_remapped(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
+				}
+				else
+				{	//Otherwise the 3D preview will reflect the gems as-is
+					usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
+				}
 				for(ctr = firstlane, bitmask = (1 << firstlane); ctr <= lastlane; ctr++, bitmask <<= 1)
 				{	//For each of the usable lanes (that are allowed to have lane specific marker rendering)
 					if(usedlanes & bitmask)
