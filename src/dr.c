@@ -10,24 +10,29 @@
 
 char        eof_note_type_name_dr[5][10] = {"Easy", "Medium", "Hard", "Extreme", "Extreme+"};
 
-unsigned long eof_get_note_name_as_number(EOF_SONG * sp, unsigned long track, unsigned long notenum)
+unsigned long eof_get_note_name_as_number(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long *number)
 {
-	unsigned long count = 0;
+	unsigned long value = 0;
 	char *name;
 	int retval;
 
-	name = eof_get_note_name(sp, track, notenum);
-	retval = eof_read_macro_number(name, &count);		//Convert the note name into a number
-	if(!retval)
-		return 0;	//Error parsing number
+	if(!number)
+		return 0;	//Invalid parameter
 
-	return count;
+	name = eof_get_note_name(sp, track, notenum);
+
+	retval = eof_read_macro_number(name, &value);		//Convert the note name into a number
+	if(!retval)
+		return 0;	//Return error
+
+	*number = value;
+	return 1;	//Return success
 }
 
 int eof_check_drums_rock_track(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long ctr;
-	int ret, drum_roll_count_warned = 0, drum_roll_chord_warned = 0;
+	int ret, err, drum_roll_count_warned = 0, drum_roll_chord_warned = 0;
 
 	if(!eof_track_is_drums_rock_mode(sp, track))
 		return 0;	//Not a Drums Rock enabled track
@@ -39,9 +44,11 @@ int eof_check_drums_rock_track(EOF_SONG * sp, unsigned long track)
 		unsigned long flags = eof_get_note_flags(sp, track, ctr);
 		if((flags & EOF_NOTE_FLAG_IS_TREMOLO) || (flags & EOF_NOTE_FLAG_IS_TRILL))
 		{	//If the note is in a drum roll or special drum roll
-			unsigned long number = eof_get_note_name_as_number(sp, track, ctr);
+			unsigned long number = 0;
 
-			if(!number || (number > 100))
+			err = eof_get_note_name_as_number(sp, track, ctr, &number);
+
+			if(err || (number > 100))
 			{	//If the drum roll hit count is not valid
 				if(!drum_roll_count_warned)
 				{	//If the user wasn't warned about this yet
@@ -262,7 +269,7 @@ void eof_build_sanitized_drums_rock_string(char *input, char *output)
 int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff, char *destpath)
 {
 	PACKFILE *fp;
-	int err;
+	int err, ret;
 	char temp_string[1024], temp_filename2[1024];
 	unsigned long ctr;
 
@@ -391,13 +398,16 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 		flags = eof_get_note_flags(sp, track, ctr);
 		if((flags & EOF_NOTE_FLAG_IS_TREMOLO) || (flags & EOF_NOTE_FLAG_IS_TRILL))
 		{	//If the note is in a drum roll or special drum roll
-			drumrollcount = eof_get_note_name_as_number(sp, track, ctr);
-
-			enemytype = 3;	//Export as a drum roll
-			gem2 = gem1;		//Drums Rock only supports one lane per drum roll
-			if(!drumrollcount || (drumrollcount > 100))
+			ret = eof_get_note_name_as_number(sp, track, ctr, &drumrollcount);
+			if(!ret || (drumrollcount > 100))
 			{	//If the drum roll hit count is not valid, write it as 3
 				drumrollcount = 3;
+			}
+
+			if(drumrollcount)
+			{	//if the drum roll count is not explicitly defined as 0 for this note to disable the roll
+				enemytype = 3;	//Export as a drum roll
+				gem2 = gem1;		//Drums Rock only supports one lane per drum roll
 			}
 		}
 

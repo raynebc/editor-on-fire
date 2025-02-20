@@ -3785,6 +3785,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 							{	//Otherwise alter the note's normal bitmask
 								note = eof_get_note_note(eof_song, eof_selected_track, effective_hover_note);
 								note ^= bitmask;
+								if(note == 0)
+								{	//If the note will have all lanes cleared, delete applicable tech notes
+									eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, effective_hover_note);
+								}
 								eof_set_note_note(eof_song, eof_selected_track, effective_hover_note, note);
 							}
 							if(eof_mark_drums_as_cymbal)
@@ -4820,6 +4824,7 @@ void eof_editor_logic(void)
 								note ^= bitmask;	//as it would look by toggling the pen note's gem
 								if(note == 0)
 								{	//If the note just had all lanes cleared, delete the note
+									eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, eof_hover_note);
 									eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
 									eof_selection.current = EOF_MAX_NOTES - 1;
 									eof_track_sort_notes(eof_song, eof_selected_track);
@@ -6924,7 +6929,9 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	{
 		if(eof_song->bookmark_pos[i] > 0)	//If this bookmark exists
 		{
-			vline(window->screen, lpos + eof_song->bookmark_pos[i] / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_light_blue);
+			xcoord = lpos + eof_song->bookmark_pos[i] / eof_zoom;
+			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_light_blue);
+			textprintf_centre_ex(window->screen, eof_font, xcoord , bottomlane_y + 1, eof_color_light_blue, eof_color_black, "%lu", i);	//Display it
 		}
 	}
 

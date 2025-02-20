@@ -1822,6 +1822,7 @@ int eof_menu_note_delete(void)
 	{	//For each note (in reverse order)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
 		{
+			eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);	//Delete any tech notes applying to this note
 			eof_track_delete_note(eof_song, eof_selected_track, i - 1);
 			eof_selection.multi[i - 1] = 0;
 		}
@@ -1840,6 +1841,8 @@ int eof_menu_note_delete_with_lower_difficulties(void)
 	unsigned long ctr;
 	char undo_made = 0;
 
+	(void) eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
 	eof_track_sort_notes(eof_song, eof_selected_track);	//Ensure the notes are sorted ascending by timestamp and then by difficulty
 	for(ctr = eof_get_track_size(eof_song, eof_selected_track); ctr > 0; ctr--)
 	{	//For each note in the track, in reverse order
@@ -1853,6 +1856,11 @@ int eof_menu_note_delete_with_lower_difficulties(void)
 			eof_track_delete_note_with_difficulties(eof_song, eof_selected_track, ctr - 1, -1);	//Delete this note as well as all notes at the same position in lower difficulties
 		}
 	}
+
+	(void) eof_menu_edit_deselect_all();	//Clear selection data
+	eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_determine_phrase_status(eof_song, eof_selected_track);
 
 	return 1;
 }
@@ -1894,6 +1902,10 @@ int eof_menu_note_toggle_green(void)
 			else if(eof_selected_track == EOF_TRACK_BASS)
 			{	//When a lane 1 bass note is added, open bass must be forced clear, because they use conflicting MIDI notation
 				note &= ~(32);	//Clear the bit for lane 6 (open bass)
+			}
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
 			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 			if(!note)
@@ -1939,6 +1951,10 @@ int eof_menu_note_toggle_red(void)
 		{	//Otherwise alter the note's normal bitmask
 			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			note ^= 2;	//Toggle off lane 2
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 			if(!note)
 			{	//If all gems in the note have been toggled off
@@ -1984,6 +2000,10 @@ int eof_menu_note_toggle_yellow(void)
 		{	//Otherwise alter the note's normal bitmask
 			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			note ^= 4;	//Toggle off lane 3
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 			if(!note)
 			{	//If all gems in the note have been toggled off
@@ -2039,6 +2059,10 @@ int eof_menu_note_toggle_blue(void)
 		{	//Otherwise alter the note's normal bitmask
 			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			note ^= 8;	//Toggle off lane 4
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 			if(!note)
 			{	//If all gems in the note have been toggled off
@@ -2094,6 +2118,10 @@ int eof_menu_note_toggle_purple(void)
 		{	//Otherwise alter the note's normal bitmask
 			note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 			note ^= 16;	//Toggle off lane 5
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 			if(!note)
 			{	//If all gems in the note have been toggled off
@@ -2155,7 +2183,7 @@ int eof_menu_note_toggle_orange(void)
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i - 1);
 				eof_set_note_note(eof_song, eof_selected_track, i - 1, 32);	//Clear all lanes except lane 6
 				flags &= ~(EOF_NOTE_FLAG_CRAZY);		//Clear the crazy flag, which is invalid for open strum notes
-				flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
+				flags &= ~(EOF_NOTE_FLAG_F_HOPO);		//Clear the HOPO flags, which are invalid for open strum notes
 				flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
 				eof_set_note_flags(eof_song, eof_selected_track, i - 1, flags);
 			}
@@ -2163,6 +2191,10 @@ int eof_menu_note_toggle_orange(void)
 			{	//Otherwise alter the note's normal bitmask
 				note = eof_get_note_note(eof_song, eof_selected_track, i - 1);
 				note ^= 32;	//Toggle off lane 6
+				if(!note)
+				{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+					eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+				}
 				eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 				if(!note)
 				{	//If all gems in the note have been toggled off
@@ -2218,6 +2250,10 @@ int eof_menu_note_clear_green(void)
 		}
 		else
 		{	//Otherwise alter the note's normal bitmask
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 		}
 		if(!note)
@@ -2275,6 +2311,10 @@ int eof_menu_note_clear_red(void)
 		}
 		else
 		{	//Otherwise alter the note's normal bitmask
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 		}
 		if(!note)
@@ -2332,6 +2372,10 @@ int eof_menu_note_clear_yellow(void)
 		}
 		else
 		{	//Otherwise alter the note's normal bitmask
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 		}
 		if(!note)
@@ -2389,6 +2433,10 @@ int eof_menu_note_clear_blue(void)
 		}
 		else
 		{	//Otherwise alter the note's normal bitmask
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 		}
 		if(!note)
@@ -2446,6 +2494,10 @@ int eof_menu_note_clear_purple(void)
 		}
 		else
 		{	//Otherwise alter the note's normal bitmask
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 		}
 		if(!note)
@@ -2509,6 +2561,10 @@ int eof_menu_note_clear_orange(void)
 		}
 		else
 		{	//Otherwise alter the note's normal bitmask
+			if(!note)
+			{	//If the note's last gem is being toggled off, delete any overlapping tech notes first
+				eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);
+			}
 			eof_set_note_note(eof_song, eof_selected_track, i - 1, note);
 		}
 		if(!note)
@@ -7442,6 +7498,7 @@ int eof_menu_note_edit_name(void)
 	unsigned long i;
 	char *notename = NULL, undo_made = 0, auto_apply = 0;
 	DIALOG *dialog_to_use = eof_note_name_dialog;
+	int ret;
 
 	if(!eof_music_catalog_playback)
 	{
@@ -7472,10 +7529,10 @@ int eof_menu_note_edit_name(void)
 			if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
 			{	//If Drums Rock mode is enabled for the active track
 				unsigned long number = 0;
-				(void) eof_read_macro_number(eof_etext, &number);		//Convert the specified string into a number
-				if(!number || (number > 100))
-				{	//If the number wasn't parsed, or was outside the bounds of [1,100]
-					allegro_message("Drum roll count must be between 1 and 100");
+				ret = eof_read_macro_number(eof_etext, &number);		//Convert the specified string into a number
+				if(!ret || (number > 100))
+				{	//If the number wasn't parsed, or was out of bounds
+					allegro_message("Drum roll count must be between 0 and 100");
 					eof_cursor_visible = 1;
 					eof_pen_visible = 1;
 					eof_show_mouse(screen);

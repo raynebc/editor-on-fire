@@ -12,9 +12,9 @@ unsigned char eof_convert_drums_rock_note_mask(EOF_SONG *sp, unsigned long track
 	//Expects eof_determine_phrase_status() to have been called for the applicable track to set drum roll flags for the note
 	//If the track has the EOF_TRACK_FLAG_DRUMS_ROCK_REMAP flag enabled, the note bitmask will be remapped based on the drums_rock_remap_lane_* variables
 
-unsigned long eof_get_note_name_as_number(EOF_SONG * sp, unsigned long track, unsigned long notenum);
-	//Examines the specified note's name, if defined, and returns it as an unsigned long
-	//Returns 0 if the number could not be parsed or if the name is not defined
+unsigned long eof_get_note_name_as_number(EOF_SONG * sp, unsigned long track, unsigned long notenum, unsigned long *number);
+	//Examines the specified note's name, if defined, and stores it into the pointer
+	//Returns 0 if the number could not be parsed, is not defined or upon error
 
 int eof_check_drums_rock_track(EOF_SONG * sp, unsigned long track);
 	//Performs various Drums Rock related quality checks on the specified track and prompts the user whether to cancel save and seek to/highlight issues

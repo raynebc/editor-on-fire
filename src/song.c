@@ -4317,12 +4317,14 @@ void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, 
 		{	//For each note in the track AFTER the specified one, in reverse order
 			if((notepos == eof_get_note_pos(sp, track, ctr - 1)) && (eof_get_note_type(sp, track, ctr - 1) > eof_note_type))
 			{	//If this note is at the same position and in a higher difficulty
+				eof_track_delete_overlapping_tech_notes(sp, track, ctr - 1);	//Delete any tech notes applying to this note
 				eof_track_delete_note(sp, track, ctr - 1);
 			}
 		}
 	}
 
 	//Delete the note in the active difficulty
+	eof_track_delete_overlapping_tech_notes(sp, track, notenum);	//Delete any tech notes applying to this note
 	eof_track_delete_note(sp, track, notenum);
 	eof_selection.multi[notenum] = 0;
 
@@ -4333,7 +4335,40 @@ void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, 
 		{	//For each note in the track BEFORE the specified one, in reverse order
 			if((notepos == eof_get_note_pos(sp, track, ctr - 1)) && (eof_get_note_type(sp, track, ctr - 1) < eof_note_type))
 			{	//If this note is at the same position and in a lower difficulty
-				eof_track_delete_note(eof_song, eof_selected_track, ctr - 1);
+				eof_track_delete_overlapping_tech_notes(sp, track, ctr - 1);	//Delete any tech notes applying to this note
+				eof_track_delete_note(sp, track, ctr - 1);
+			}
+		}
+	}
+}
+
+void eof_track_delete_overlapping_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long targetnormalnote)
+{
+	unsigned long i;
+
+	if(!sp || (track >= sp->tracks))
+		return;	//Invalid parameters
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		EOF_PRO_GUITAR_TRACK *tp;
+		unsigned long normalnote = 0;	//The normal note that a tech note is found to apply to
+
+		tp = eof_song->pro_guitar_track[sp->track[track]->tracknum];
+		if(tp->note != tp->technote)
+		{	//If tech view is not in effect for the target track, check whether any of the tech notes apply to the specified normal note
+			for(i = tp->technotes; i > 0; i--)
+			{	//For each tech note in the target track, in reverse order
+				if(tp->technote[i - 1]->type == eof_get_note_type(sp, track, targetnormalnote))
+				{	//If the tech note is in the target note's difficulty
+					if(eof_pro_guitar_tech_note_overlaps_a_note(tp, i - 1, 0xFF, &normalnote))
+					{	//If this tech note overlaps any normal note on any string
+						if(normalnote == targetnormalnote)
+						{	//If the tech note overlaps the target
+							eof_pro_guitar_track_delete_tech_note(tp, i - 1);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -5567,6 +5602,21 @@ void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long n
 		{
 			tp->pgnotes--;	//Update the normal note counter
 		}
+	}
+}
+
+void eof_pro_guitar_track_delete_tech_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long technote)
+{
+	unsigned long i;
+
+	if(tp && (technote < tp->technotes))
+	{
+		free(tp->technote[technote]);
+		for(i = technote; i < tp->technotes - 1; i++)
+		{
+			tp->technote[i] = tp->technote[i + 1];
+		}
+		tp->technotes--;
 	}
 }
 

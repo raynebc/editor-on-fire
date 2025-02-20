@@ -2029,8 +2029,9 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck)
 {
-	unsigned long index = 0, flags = 0, eflags = 0;
+	unsigned long index = 0, flags = 0, eflags = 0, number = 0;
 	char buffer2[5] = {0};
+	int ret;
 
 	if(!track || (track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
 	{
@@ -2313,6 +2314,16 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	{
 		if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If this is a drum track, white the notation for special drum roll
+			//Special case:  A note marked as a drum roll with a name of "0" will have drum roll status suppressed during Drums Rock export
+			if(eof_track_is_drums_rock_mode(eof_song, track))
+			{	//If Drums Rock mode is enabled for this track
+				ret = eof_get_note_name_as_number(eof_song, track, note, &number);
+				if(ret && !number)
+				{	//If the name for this note is defined as the number 0
+					buffer[index++] = '!';
+				}
+			}
+
 			buffer[index++] = 'S';
 			buffer[index++] = 'D';
 			buffer[index++] = 'R';
@@ -2328,6 +2339,16 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	{
 		if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If this is a drum track, white the notation for drum roll
+			//Special case:  A note marked as a drum roll with a name of "0" will have drum roll status suppressed during Drums Rock export
+			if(eof_track_is_drums_rock_mode(eof_song, track))
+			{	//If Drums Rock mode is enabled for this track
+				ret = eof_get_note_name_as_number(eof_song, track, note, &number);
+				if(ret && !number)
+				{	//If the name for this note is defined as the number 0
+					buffer[index++] = '!';
+				}
+			}
+
 			buffer[index++] = 'D';
 			buffer[index++] = 'R';
 		}

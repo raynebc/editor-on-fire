@@ -15,6 +15,7 @@
 #include "tuning.h"
 #include "undo.h"
 #include "foflc/RS_parse.h"	//For shrink_xml_text()
+#include "menu/edit.h"	//For eof_sanitize_note_flags()
 #include "menu/track.h"	//For tech view functions
 #endif
 
@@ -5038,6 +5039,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
 		eof_pro_guitar_track_fix_fingerings(gp->track[ctr], NULL, 0);	//Erase partial note fingerings, replicate valid finger definitions (within imported track only) to matching notes without finger definitions, don't make any additional undo states for corrections to the imported track
+	}
+
+//Sanitize note statuses in case there are any conflicts
+	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	{	//For each imported track
+		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+		{	//For each note in the track
+			eof_sanitize_note_flags(&gp->track[ctr]->note[ctr2]->flags, EOF_TRACK_PRO_GUITAR, EOF_TRACK_PRO_GUITAR);	//Clean up status flags to suit a pro guitar track
+		}
 	}
 
 //Clean up

@@ -674,6 +674,8 @@ void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, 
 	// if operation is 0, only the specified note is deleted
 	// if operation is > 0, notes at the same timestamp as the specified note in ANY difficulty is deleted
 	//The specified track's notes are pre-sorted in order to ensure this function operates properly
+void eof_track_delete_overlapping_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long targetnormalnote);
+	//Deletes all tech notes that overlap the specified normal pro guitar note, only if tech view is not in effect, or does nothing if the specified track isn't a pro guitar track
 void eof_song_empty_track(EOF_SONG * sp, unsigned long track);								//Deletes all notes from the track
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);				//Performs the appropriate logic to resize the specified track
 unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
@@ -849,6 +851,7 @@ void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a qu
 void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the specified track's tech notes, first by timestamp, second by difficulty, third by note mask
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the pro guitar notes array
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
+void eof_pro_guitar_track_delete_tech_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long technote);	//Removes and frees the specified tech note from the tech notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITAR_NOTE * np);	//Similar to eof_fixup_next_pro_guitar_note, but returns the index of the first note in tp that is AFTER the specified note's timestamp and is in the same difficulty

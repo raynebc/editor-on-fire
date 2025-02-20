@@ -1911,19 +1911,19 @@ int eof_menu_edit_paste_logic(int function)
 			if(temp_note.phrasenum != 0xFFFFFFFF)
 			{	//If this pasted note's source note is in an arpeggio/handshape
 				arpeggend = np->pos + np->length;	//Track end position of arpeggio
-				if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
+				if(temp_note.phrasenum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
 				{	//Bounds check
 					unsigned long srcstartbeat, srcendbeat, dststartbeat;
 					double srcendpos, dststartpos, dstendpos, beatlength;
 
-					srcstartbeat = eof_get_beat(eof_song, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].start_pos);
-					srcendbeat = eof_get_beat(eof_song, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].end_pos);
+					srcstartbeat = eof_get_beat(eof_song, eof_song->pro_guitar_track[srctracknum]->arpeggio[temp_note.phrasenum].start_pos);
+					srcendbeat = eof_get_beat(eof_song, eof_song->pro_guitar_track[srctracknum]->arpeggio[temp_note.phrasenum].end_pos);
 					if(srcendbeat >= srcstartbeat)
 					{	//Validate
-						srcendpos = eof_get_porpos(eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].end_pos);	//How far into the destination beat the created phrase should end
-						beatlength = ((srcendbeat - srcstartbeat) * 100.0) + srcendpos;			//The floating point length in percent of beats that the created phrase should be
-						dststartbeat = eof_get_beat(eof_song, arpeggstart);				//Which beat the created phrase should start in
+						srcendpos = eof_get_porpos(eof_song->pro_guitar_track[srctracknum]->arpeggio[temp_note.phrasenum].end_pos);	//How far into the destination beat the created phrase should end
 						dststartpos = eof_get_porpos(arpeggstart);						//How far into the beat the created phrase should start
+						beatlength = ((srcendbeat - srcstartbeat) * 100.0) + srcendpos - dststartpos;			//The floating point length in percent of beats that the created phrase should be
+						dststartbeat = eof_get_beat(eof_song, arpeggstart);				//Which beat the created phrase should start in
 						dstendpos = eof_put_porpos(dststartbeat, beatlength + dststartpos, 0.0);		//The timestamp at which the created phrase should end
 
 						arpeggend = dstendpos;	//If the bounds check and validation passed, this accurate timing will replace the end position of the last pasted note in the phrase
@@ -4139,42 +4139,39 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;		//Erase the pro guitar pinch harmonic flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;				//Erase the pro hammer on flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;				//Erase the pro hammer off flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Erase the pro tap flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Erase the pro slide up flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;				//Erase the pro tap flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;			//Erase the pro slide up flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Erase the pro slide down flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Erase the pro string mute flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Erase the pro string mute flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;		//Erase the pro palm mute flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Erase the pro strum up flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;		//Erase the pro strum down flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;		//Erase the pro strum mid flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Erase the pro bend flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;		//Erase the pro harmonic flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Erase the pro guitar slide reverse flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Erase the pro guitar vibrato flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Erase the pro guitar Rocksmith status flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_POP;			//Erase the pro guitar pop flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLAP;			//Erase the pro guitar slap flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;		//Erase the pro guitar linknext flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;		//Erase the pro guitar slide reverse flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;			//Erase the pro guitar vibrato flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Erase the pro guitar Rocksmith status flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_POP;				//Erase the pro guitar pop flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLAP;				//Erase the pro guitar slap flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;			//Erase the pro guitar linknext flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HD;				//Erase the pro guitar high density flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;			//Erase the pro guitar split flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;				//Erase the pro guitar split flag
 		}
 		else
 		{	//If it is pasting into a pro guitar track
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
-			{	//If both the hammer on AND the pull off flags are set, clear both
+			{	//If both the hammer on AND the pull off flags are set, clear the latter
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;
-				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;
 			}
 			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 			{	//If the tap flag is set
 				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
-				{	//If the hammer on flag is also set, clear both
-					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+				{	//If the hammer on flag is also set, clear the latter
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;
 				}
 				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
-				{	//If the pull off flag is also set, clear both
-					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+				{	//If the pull off flag is also set, clear the latter
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;
 				}
 			}
@@ -4188,13 +4185,11 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Clear the slide reverse flag
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
-			{	//If both the string mute AND the palm mute flags are set, clear both
-				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+			{	//If both the string mute AND the palm mute flags are set, clear the latter
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_POP))
-			{	//If the slap and pop flags are both set, clear both
-				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+			{	//If the slap and pop flags are both set, clear the latter
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_POP;
 			}
 		}//If it is pasting into a pro guitar track
@@ -4275,13 +4270,30 @@ void eof_menu_edit_paste_clear_range(unsigned long track, int note_type, unsigne
 	int type;
 
 	for(i = eof_get_track_size(eof_song, track); i > 0; i--)
-	{	//For each note in the specified track
+	{	//For each note in the specified track, in reverse order
 		notepos = eof_get_note_pos(eof_song, track, i - 1);
 		type = eof_get_note_type(eof_song, track, i - 1);
 
 		if((type == note_type) && ((notepos <= end) && (notepos >= start)))
 		{	//If the note is in the target difficulty, begins at or before the specified end position and the note ends at or after the specified start position
 			eof_track_delete_note(eof_song, track, i - 1);	//Delete the note
+		}
+	}
+
+	//Perform the same logic, but for tech notes
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the specified track is a pro guitar track
+		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
+
+		for(i = tp->technotes; i > 0; i--)
+		{	//For each tech note in the specified track, in reverse order
+			notepos = tp->technote[i - 1]->pos;
+			type = tp->technote[i - 1]->type;
+
+			if((type == note_type) && ((notepos <= end) && (notepos >= start)))
+			{	//If the tech note is in the target difficulty, begins at or before the specified end position and the note ends at or after the specified start position
+				eof_pro_guitar_track_delete_tech_note(tp, i - 1);	//Delete it
+			}
 		}
 	}
 }
