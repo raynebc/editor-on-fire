@@ -56,6 +56,7 @@ int eof_menu_file_export_guitar_pro(void);	//Calls the third party RocksmithToTa
 int eof_menu_file_export_song_preview(void);
 	//Allows the user to define a portion of the chart audio to export to preview.wav and preview.ogg in the project folder
 int eof_menu_file_midi_import(void);
+int eof_menu_file_drums_rock_import(void);
 int eof_menu_file_settings(void);
 int eof_menu_file_default_ini_settings(void);
 int eof_menu_file_preferences(void);

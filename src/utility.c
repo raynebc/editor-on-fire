@@ -111,7 +111,7 @@ void *eof_buffer_file(const char * fn, char appendnull)
 	if(fn == NULL)
 		return NULL;
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuffering file:  \"%s\"", fn);
-	eof_log(eof_log_string, 2);
+	eof_log(eof_log_string, 3);
 	fp = pack_fopen(fn, "r");
 	if(fp == NULL)
 	{
@@ -468,6 +468,28 @@ void eof_sanitize_string(char *str)
 	}
 }
 
+void eof_build_sanitized_filename_string(char *input, char *output)
+{
+	char *forbidden = "\\/:*?\"<>|";	//These are the characters that cannot be used in filenames in Windows
+	unsigned long ctr, index = 0;
+
+	if(!input || !output || (input == output))
+		return;	//Invalid parameters
+
+	output[0] = '\0';	//Terminate the output string
+
+	for(ctr = 0; input[ctr] != '\0'; ctr++)
+	{	//For each character in the input string
+		int character = ugetat(input, ctr);
+		if(ustrchr(forbidden, character) == NULL)
+		{	//If this character is not one of the ones unable to be used in a filename
+			uinsert(output, index++, character);	//Append it to the output string
+		}
+	}
+
+	uinsert(output, index, '\0');	//Terminate the output string
+}
+
 int eof_is_illegal_filename_character(char c)
 {
 	switch(c)
@@ -623,4 +645,30 @@ int eof_parse_last_folder_name(const char *filename, char *buffer, unsigned long
 	usetat(buffer, ctr, '\0');	//Terminate the string
 
 	return 1;	//Success
+}
+
+int eof_byte_to_binary_string(unsigned char value, char *buffer)
+{
+	unsigned long index, ctr, bitmask;
+
+	if(!buffer)
+		return -1;	//Return error
+
+	for(ctr = 0, index = 0, bitmask = 0x80; ctr < 8; ctr++, bitmask >>= 1)
+	{	//For each bit in the 8 bit value, from most significant to least significant
+		if(value & bitmask)
+		{	//If this bit is set
+			buffer[index++] = '1';	//Append a 1 to the string
+		}
+		else if(index)
+		{	//If the bit isn't set, but a previous bit was
+			buffer[index++] = '0';	//Append a 0 to the string
+		}
+	}
+	if(!index)
+	{	//If no bits in value were set
+		buffer[index++] = '0';	//Append a 0 to the string
+	}
+	buffer[index] = '\0';	//Terminate the string
+	return 0;	//Return success
 }

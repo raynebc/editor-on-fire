@@ -94,6 +94,7 @@ MENU eof_file_import_menu[] =
 	{"Queen Bee (multi)", eof_menu_file_multiple_array_txt_import, NULL, 0, NULL},
 	{"Guitar Hero sections", eof_menu_file_gh3_section_import, NULL, 0, NULL},
 	{"Guitar Hero Live", eof_menu_file_ghl_import, NULL, 0, NULL},
+	{"&Drums Rock", eof_menu_file_drums_rock_import, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -407,6 +408,12 @@ void eof_prepare_file_menu(void)
 		eof_file_import_menu[9].flags = 0;	//Import>Queen Bee (multi)
 		eof_file_import_menu[10].flags = 0;	//Import>Guitar Hero sections
 		eof_file_import_menu[11].flags = 0;	//Import>Guitar Hero Live
+
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			eof_file_import_menu[12].flags = 0;	//Import>Drums Rock
+		else
+			eof_file_import_menu[12].flags = D_DISABLED;
+
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
@@ -436,6 +443,7 @@ void eof_prepare_file_menu(void)
 		eof_file_import_menu[9].flags = D_DISABLED;		//Import>Queen Bee (multi)
 		eof_file_import_menu[10].flags = D_DISABLED;	//Import>Guitar Hero sections
 		eof_file_import_menu[11].flags = D_DISABLED;	//Import>Guitar Hero Live
+		eof_file_import_menu[12].flags = D_DISABLED;	//Import>Drums Rock
 		eof_file_display_menu[6].flags = D_DISABLED;	//Benchmark image sequence
 	}
 
@@ -1193,6 +1201,84 @@ int eof_menu_file_midi_import(void)
 	eof_pen_visible = 1;
 
 	eof_log("\tMIDI loaded", 1);
+
+	return 1;
+}
+
+int eof_menu_file_drums_rock_import(void)
+{
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
+	char *initial;
+	unsigned long ctr;
+	int retval = 1;
+
+	eof_log("eof_menu_file_drums_rock_import() entered", 1);
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+
+	if(!eof_song || !eof_song_loaded)
+		return 1;	//Don't do anything unless a project is loaded
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Don't do anything unless the active track is a drum track
+
+	if((eof_last_dr_path[uoffset(eof_last_dr_path, ustrlen(eof_last_dr_path) - 1)] == '\\') || (eof_last_dr_path[uoffset(eof_last_dr_path, ustrlen(eof_last_dr_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_dr_path[uoffset(eof_last_dr_path, ustrlen(eof_last_dr_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_dr_path))
+	{	//If the user chose for the DR import dialog to start at the path of the last imported DR file and that path is valid
+		initial = eof_last_dr_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import Drums Rock", eof_filter_dr_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		eof_log("\tImporting Drums Rock", 1);
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
+
+		retval = eof_import_drums_rock_track_diff(returnedfn);
+		if(retval == 1)
+		{
+			allegro_message("Could not import Drums Rock file!");
+		}
+		else if(retval == 0)
+		{
+			eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);
+			(void) replace_filename(eof_last_dr_path, returnedfn_path, "", 1024);	//Set the last loaded DR file path
+			eof_log("\tDrums Rock file loaded", 1);
+		}
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+
+	if(retval == 0)
+	{	//If the file was imported
+		if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK))
+			(void) eof_menu_track_drumsrock_enable_drumsrock_export();	//If drums rock mode isn't already enabled for the active track, enable it now
+
+		if(eof_song->beats > 1)
+		{	//Bounds check
+			for(ctr = 0; ctr < eof_song->beats - 1; ctr++)
+			{
+				if(eof_song->beat[ctr]->ppqn != eof_song->beat[ctr + 1]->ppqn)
+				{	//If there's at least one tempo change in this project
+					if(alert("The project has a tempo map, but Drums Rock timing has lower accuracy.", "It's suggested to repair the grid snap of imported notes", "and correct by the detected skew.  Perform this?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to repair the grid snapping
+						(void) eof_menu_track_repair_grid_snap();
+					}
+					break;
+				}
+			}
+		}
+	}
 
 	return 1;
 }
@@ -5550,6 +5636,7 @@ int eof_menu_file_gp_import(void)
 			if(!eof_command_line_gp_import(returnedfn))
 			{	//If the file was imported
 				eof_init_after_load(0);
+				(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
 			}
 			else
 			{	//Import failed
@@ -6067,7 +6154,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 	{	//Until there was an error reading from the file or end of file is reached
 		#ifdef RS_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
-			eof_log(eof_log_string, 2);
+			eof_log(eof_log_string, 3);
 		#endif
 
 		//Separate the line into the opening XML tag (buffer) and the content between the opening and closing tag (buffer2)

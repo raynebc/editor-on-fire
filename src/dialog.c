@@ -75,7 +75,7 @@ void eof_prepare_menus(void)
 {
 	unsigned long i;
 
-	eof_log("eof_prepare_menus() entered", 2);
+	eof_log("eof_prepare_menus() entered", 3);
 
 	if(eof_song && eof_song_loaded)
 	{	//If a chart is loaded
@@ -126,7 +126,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	int dflag = 0;
 	DIALOG_PLAYER * player;
 
-	eof_log("eof_popup_dialog() entered", 2);
+	eof_log("eof_popup_dialog() entered", 3);
 
 	if(!dp)	//If this pointer is NULL for any reason
 		return D_O_K;

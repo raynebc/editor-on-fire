@@ -290,6 +290,7 @@ void eof_load_config(char * fn)
 	(void) ustrcpy(eof_last_eof_path, get_config_string("paths", "eof_path", ""));
 	(void) ustrcpy(eof_last_ogg_path, get_config_string("paths", "ogg_path", ""));
 	(void) ustrcpy(eof_last_midi_path, get_config_string("paths", "midi_path", ""));
+	(void) ustrcpy(eof_last_dr_path, get_config_string("paths", "dr_path", ""));
 	(void) ustrcpy(eof_last_db_path, get_config_string("paths", "db_path", ""));
 	(void) ustrcpy(eof_last_gh_path, get_config_string("paths", "gh_path", ""));
 	(void) ustrcpy(eof_last_ghl_path, get_config_string("paths", "ghl_path", ""));
@@ -683,6 +684,7 @@ void eof_save_config(char * fn)
 	set_config_string("paths", "eof_path", eof_last_eof_path);
 	set_config_string("paths", "ogg_path", eof_last_ogg_path);
 	set_config_string("paths", "midi_path", eof_last_midi_path);
+	set_config_string("paths", "dr_path", eof_last_dr_path);
 	set_config_string("paths", "db_path", eof_last_db_path);
 	set_config_string("paths", "gh_path", eof_last_gh_path);
 	set_config_string("paths", "ghl_path", eof_last_ghl_path);

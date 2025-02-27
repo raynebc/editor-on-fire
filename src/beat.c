@@ -861,7 +861,7 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 	unsigned long i, ctr, count;
 	unsigned curnum = 0, curden = 0;
 
-	eof_log("eof_process_beat_statistics() entered", 2);
+	eof_log("eof_process_beat_statistics() entered", 3);
 
 	if(!sp)
 		return;

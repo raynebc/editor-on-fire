@@ -5128,7 +5128,7 @@ void eof_load_chord_shape_definitions(char *fn)
 		if(num_eof_chord_shapes < EOF_MAX_CHORD_SHAPES)
 		{	//If another chord shape definition can be stored
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
-			eof_log(eof_log_string, 2);
+			eof_log(eof_log_string, 3);
 
 			//Load chord shape definition
 			if(strcasestr_spec(buffer, "<chordTemplate"))

@@ -1,3 +1,6 @@
+#ifndef _lyric_storage_h_
+#define _lyric_storage_h_
+
 //To test the conditional compiling, pass the following preprocessor definition to the compiler to cause the exit and assert wrapper functions to use setjmp() to return to EOF
 //#define EOF_BUILD
 
@@ -35,10 +38,6 @@ Export functions are expected to:
 	-Round timestamps, durations, etc. where appropriate
 	-Leave the contents of the Lyric structure unchanged where feasible (except for instances where the written lyric must be altered, such as to define grouping for SKAR export)
 */
-
-
-#ifndef _lyric_storage_h_
-#define _lyric_storage_h_
 
 #include <stdio.h>			//For the FILE declaration
 #include <setjmp.h>			//For the jmp_buf declaration
@@ -338,7 +337,10 @@ char *ResizedAppend(char *src1,const char *src2,char dealloc);
 char *Append(const char *src1,const char *src2);
 	//The same as ResizedAppend(), but does not take de-allocation into account, allowing the easier use of const char * types
 char *strcasestr_spec(char *str1,const char *str2);
-	//Performs a case INSENSITIVE search of str2 in str1, returning the character AFTER the match in str1 if it exists, else NULL
+	//Performs a case INSENSITIVE search of str2 in str1, returning the character AFTER the first match in str1 if it exists, else NULL
+char *strcasestr_normal(char *str1,const char *str2);
+	//Performs a case INSENSITIVE search of str2 in str1, returning the character of the first match in str1 if it exists, else NULL
+	//Defined here because strcasestr() is not a standard C library function
 char *ConvertNoteNum(unsigned char notenum);
 	//Takes a note number from 0 through 127 and returns a string representation of the note name, such as "C#-1" or "G9"
 char *RemoveLeadingZeroes(char *str);
@@ -473,4 +475,4 @@ void DEBUG_QUERY_LAST_PIECE(void);	//Debugging to query the info for the last ly
 void DEBUG_DUMP_LYRICS(void);		//Debugging to display all lyrics
 
 
-#endif /* #ifndef _lyric_storage_h_ */
+#endif // #ifndef _lyric_storage_h_

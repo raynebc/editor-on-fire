@@ -5371,7 +5371,7 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "eof_track_fixup_notes() entered for track %lu", track);
-	eof_log(eof_log_string, 2);
+	eof_log(eof_log_string, 3);
 
 	if((sp == NULL) || !track || (track >= sp->tracks) || !sp->tags)
 		return;

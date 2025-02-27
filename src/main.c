@@ -80,6 +80,7 @@ char      * eof_input_name[EOF_INPUT_NAME_NUM + 1] = {"Classic", "Piano Roll", "
 NCDFS_FILTER_LIST * eof_filter_music_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_ogg_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_midi_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_dr_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_eof_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_exe_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_lyrics_files = NULL;
@@ -275,13 +276,14 @@ EOF_SONG    * eof_song = NULL;
 EOF_NOTE    eof_pen_note;
 EOF_LYRIC   eof_pen_lyric;
 char        eof_temp_path[20] = {0};					//The relative path to the temp folder used by EOF
-char        eof_temp_path_s[20] = {0};					//The relative path to the temp folder used by EOF, with a path separator appended
+char        eof_temp_path_s[20] = {0};				//The relative path to the temp folder used by EOF, with a path separator appended
 char        eof_filename[1024] = {0};					//The full path of the EOF file that is loaded
-char        eof_song_path[1024] = {0};					//The path to active project's parent folder
-char        eof_songs_path[1024] = {0};					//The path to the user's song folder
-char        eof_last_ogg_path[1024] = {0};				//The path to the folder containing the last loaded OGG file
+char        eof_song_path[1024] = {0};				//The path to active project's parent folder
+char        eof_songs_path[1024] = {0};				//The path to the user's song folder
+char        eof_last_ogg_path[1024] = {0};			//The path to the folder containing the last loaded OGG file
 char        eof_last_eof_path[1024] = {0};				//The path to the folder containing the last loaded project
-char        eof_last_midi_path[1024] = {0};				//The path to the folder containing the last imported MIDI
+char        eof_last_midi_path[1024] = {0};			//The path to the folder containing the last imported MIDI
+char        eof_last_dr_path[1024] = {0};				//The path to the folder containing the last imported Drums Rock chart
 char        eof_last_db_path[1024] = {0};				//The path to the folder containing the last imported Feedback chart file
 char        eof_last_gh_path[1024] = {0};				//The path to the folder containing the last imported Guitar Hero chart file
 char        eof_last_ghl_path[1024] = {0};				//The path to the folder containing the last imported Guitar Hero Live chart file
@@ -725,7 +727,7 @@ void eof_find_lyric_preview_lines(void)
 
 void eof_emergency_stop_music(void)
 {
-	eof_log("eof_emergency_stop_music() entered", 2);
+	eof_log("eof_emergency_stop_music() entered", 3);
 
 	if(eof_song_loaded)
 	{
@@ -2233,7 +2235,7 @@ void eof_read_global_keys(void)
 	#ifndef ALLEGRO_LEGACY
 		if(KEY_EITHER_ALT)
 		{
-			eof_log("ALT keypress detected, activating main menu", 1);
+			eof_log("ALT keypress detected, activating main menu", 3);
 			clear_keybuf();
 			eof_cursor_visible = 0;
 			eof_emergency_stop_music();
@@ -4506,6 +4508,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_midi_files, "mid;rba", "MIDI Files (*.mid, *.rba)", 1);
 
+	eof_filter_dr_files = ncdfs_filter_list_create();
+	if(!eof_filter_dr_files)
+	{
+		allegro_message("Could not create file list filter (*.csv)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_dr_files, "csv", "Drums Rock files (*.csv)", 1);
+
 	eof_filter_dB_files = ncdfs_filter_list_create();
 	if(!eof_filter_dB_files)
 	{
@@ -5117,6 +5127,8 @@ void eof_exit(void)
 		free(eof_filter_ogg_files);
 	if(eof_filter_midi_files)
 		free(eof_filter_midi_files);
+	if(eof_filter_dr_files)
+		free(eof_filter_dr_files);
 	if(eof_filter_eof_files)
 		free(eof_filter_eof_files);
 	if(eof_filter_exe_files)
@@ -5234,8 +5246,6 @@ void eof_stop_midi(void)
 
 void eof_init_after_load(char initaftersavestate)
 {
-	unsigned long tracknum, tracknum2;
-
 	eof_log("\tInitializing after load", 1);
 	eof_log("eof_init_after_load() entered", 1);
 
@@ -5280,13 +5290,6 @@ void eof_init_after_load(char initaftersavestate)
 		(void) eof_menu_edit_deselect_all();	//Deselect all notes
 		(void) eof_detect_tempo_map_corruption(eof_song, 0);
 	}
-	tracknum = eof_song->track[EOF_TRACK_DRUM]->tracknum;
-	if((eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_SIX_LANES) || (eof_song->legacy_track[tracknum]->numlanes == 6))
-	{	//If the normal drum track uses 6 lanes, update the PS drum track's settings to match
-		tracknum2 = eof_song->track[EOF_TRACK_DRUM_PS]->tracknum;
-		eof_song->track[EOF_TRACK_DRUM_PS]->flags |= eof_song->track[EOF_TRACK_DRUM]->flags;
-		eof_song->legacy_track[tracknum2]->numlanes = eof_song->legacy_track[tracknum]->numlanes;
-	}
 	if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
 	{	//If the PS deal drums difficulty is defined in the high nibble of the normal drum track's flags (deprecated)
 		eof_song->track[EOF_TRACK_DRUM_PS]->difficulty = (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28;	//Use it to set the PS drum track's difficulty
@@ -5313,7 +5316,7 @@ void eof_scale_fretboard(unsigned long numlanes)
 	unsigned long ctr;
 	double lanewidth;
 
-	eof_log("eof_scale_fretboard() entered", 2);
+	eof_log("eof_scale_fretboard() entered", 3);
 
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
 
@@ -6118,7 +6121,7 @@ void eof_set_color_set(void)
 {
 	int x;
 
-	eof_log("eof_set_color_set() entered", 2);
+//	eof_log("eof_set_color_set() entered", 2);
 
 	if(!eof_song)
 		return;

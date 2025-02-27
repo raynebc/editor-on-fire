@@ -1605,8 +1605,8 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 	unsigned long i;
 	unsigned char maxdiff = 4;	//By default, each track supports 5 difficulties
 
-	eof_log("\tChanging active track", 2);
-	eof_log("eof_menu_track_selected_track_number() entered", 2);
+	eof_log("\tChanging active track", 3);
+	eof_log("eof_menu_track_selected_track_number() entered", 3);
 
 	if(!eof_song)
 		return 0;	//Error

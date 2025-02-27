@@ -1431,7 +1431,7 @@ void *malloc_err(size_t size)
 #endif
 
 char *strcasestr_spec(char *str1,const char *str2)
-{	//Performs a case INSENSITIVE search of str2 in str1, returning the character AFTER the match in str1 if it exists, else NULL
+{	//Performs a case INSENSITIVE search of str2 in str1, returning the character AFTER the first match in str1 if it exists, else NULL
 	char *temp1=NULL;	//Used for string matching
 	const char *temp2=NULL;
 
@@ -1448,6 +1448,33 @@ char *strcasestr_spec(char *str1,const char *str2)
 			}
 			if((*temp2) == '\0')	//If all characters in str2 were matched
 				return temp1;		//Return pointer to character after the match in str1
+		}
+		str1++;	//Increment index into string
+	}
+
+	return NULL;	//No match was found, return NULL
+}
+
+char *strcasestr_normal(char *str1,const char *str2)
+{	//Performs a case INSENSITIVE search of str2 in str1, returning the character of the first match in str1 if it exists, else NULL
+	char *temp1=NULL;	//Used for string matching
+	const char *temp2=NULL;
+	char *match=NULL;
+
+	assert_wrapper((str1 != NULL) && (str2 != NULL));
+
+	while(*str1 != '\0')	//Until end of str1 is reached
+	{
+		if(tolower(*str1) == tolower(*str2))	//If the first character in both strings match
+		{
+			match = str1;
+			for(temp1=str1,temp2=str2;((*temp1 != '\0') && (*temp2 != '\0'));temp1++,temp2++)
+			{	//Compare remaining characters in str2 with those starting at current index into str1
+				if(tolower(*temp1) != tolower(*temp2))
+					break;	//string mismatch, break loop and keep looking
+			}
+			if((*temp2) == '\0')	//If all characters in str2 were matched
+				return match;		//Return pointer to first character of the match in str1
 		}
 		str1++;	//Increment index into string
 	}

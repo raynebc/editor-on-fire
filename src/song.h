@@ -754,6 +754,7 @@ void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 int eof_track_add_tremolo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos, unsigned char diff);
 	//Adds a tremolo phrase at the specified start and stop timestamp
 	//If diff is not 0xFF, and the specified track is a pro guitar track, the tremolo phrase will apply to the specified track difficulty only
+	//Returns 0 on error
 unsigned long eof_get_num_tremolos(EOF_SONG *sp, unsigned long track);		//Returns the number of tremolo phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified tremolo phrase, or NULL on error
 void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of tremolo phrases in the specified track

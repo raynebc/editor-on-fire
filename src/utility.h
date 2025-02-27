@@ -33,6 +33,10 @@ int rs_lyric_substitute_char_utf8(int character, int function);
 int eof_string_has_non_ascii(char *str);	//Returns nonzero if any characters in the UTF-8 encoded string have non ASCII characters (any character valued over 127)
 int eof_string_has_non_alphanumeric(char *str);	//Returns nonzero if any characters in the UTF-8 encoded string have non alphanumeric ASCII characters
 void eof_sanitize_string(char *str);		//Replaces any non-printable or non ASCII (characters numbered higher than 127) characters with spaces
+void eof_build_sanitized_filename_string(char *input, char *output);
+	//Builds a copy of the input string that filters out all characters that aren't allowed in filenames ( \ / : * ? " < > | )
+	//Do not pass more than one folder's or file's name as the path separators will be removed as a result
+	//input and output must be different pointers
 int eof_char_is_hex(int c);
 	//Returns nonzero if c is a numerical digit or an upper/lower case letter A, B, C, D, E or F
 int eof_string_is_hexadecimal(char *string);
@@ -54,5 +58,10 @@ int eof_parse_last_folder_name(const char *filename, char *buffer, unsigned long
 	//Parses the last folder name in the given filename, which is expected to contain at least one folder name, one folder separator and one filename (3 characters)
 	//The output buffer is expected to be able to store the specified number of CHARACTERS, which may be two bytes each if the folder name has Unicode characters
 	//Returns 0 on error
+
+int eof_byte_to_binary_string(unsigned char value, char *buffer);
+	//Places a binary string representation of the given 8 bit value into the given buffer, which must be able to store at least 9 bytes
+	//Leading zeroes are dropped
+	//Returns nonzero on error
 
 #endif
