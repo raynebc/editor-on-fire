@@ -69,4 +69,6 @@ char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag);
 	//If found, the setting number is returned through index and the pointer to the character after the equal sign in the INI setting's string is returned
 	//If no such setting was found in the project, NULL is returned
 
+int eof_is_unicode(const char *filename);
+	//If *function is nonzero, the filename is UNICODE
 #endif
