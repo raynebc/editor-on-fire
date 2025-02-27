@@ -68,6 +68,10 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		eof_log("\tCannot open INI file, skipping", 1);
 		return 0;
 	}
+	eof_log("\tChecking if INI file is UNICODE", 1);
+	if (!eof_is_unicode(textbuffer)) //If NOT UNICODE give error
+		return 0;
+
 	eof_log("\tTokenizing INI file buffer", 1);
 	(void) ustrtok(textbuffer, "\r\n");
 	eof_log("\tParsing INI file buffer", 1);
@@ -753,4 +757,44 @@ char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag)
 	}
 
 	return NULL;	//No match found
+}
+
+int eof_is_unicode(const char *filename)
+{
+	int is_unicode = 0;
+	uint8_t bom[3] = {0};
+	FILE *file = fopen(filename, "rb");
+	//No need to check the file, as eof_import_ini already handles it.
+	int ch;
+
+	//Check for byte order mark
+	if (fread(bom, 1, 3, file) == 3) { //Check if fread returns 3 bytes
+		if (bom[0] == 0xEF && bom[1] == 0xBB && bom[2] == 0xBF) //UTF-8 BOM
+			is_unicode = 1;
+		if (bom[0] == 0xFF && bom[1] == 0xFE) //UTF-16 LE BOM
+			is_unicode = 1;
+		if (bom[0] == 0xFE && bom[1] == 0xFF) //UTF-16 BE BOM
+			is_unicode = 1;
+	}
+	//Try finding NON-ASCII characters if bom check fails
+	if (!is_unicode) {
+		//Reset the FILE Pointer to the starting of the file
+		rewind(file);
+
+		//Read for NON-ASCII characters
+		while ((ch = fgetc(file)) != EOF)
+		{
+			if (ch >= 0x80) {
+				is_unicode = 1;
+				break;
+			}
+		}
+	}
+	if (is_unicode)
+		eof_log("\tfile is UNICODE", 1);
+	else
+		eof_log("\tfile is NOT UNICODE", 1);
+
+	fclose(file);
+	return is_unicode;
 }

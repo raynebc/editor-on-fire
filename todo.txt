@@ -1,6 +1,6 @@
 Unversioned To-Do List
 ----------------------
-[ ]INI import should see if file is unicode before processing.
+[X]INI import should see if file is unicode before processing.
    [ ]Don't think there is a way to do this. Instead we should attempt to import as
       usual and if the artist and title fields are empty, attempt to use unicode.
 [ ]Adjust timing of audio cues so that they peak at the time they are supposed
