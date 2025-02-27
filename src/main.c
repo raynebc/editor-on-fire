@@ -241,6 +241,7 @@ char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whet
 unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes in the PS drum track will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by these shortcuts:  CTRL+# to set fret numbers, CTRL+(plus/minus) increment/decrement fret values, CTRL+G to toggle ghost status
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
+char		eof_fingering_view = 0;				//Specifies whether pro guitar notes will render in the piano roll with finger values instead of fret values
 unsigned char eof_2d_render_top_option = 5;		//Specifies what item displays at the top of the 2D panel (defaults to note names)
 char        eof_render_grid_lines = 0;			//Specifies whether grid snap positions will render in the editor window
 char        eof_show_ch_sp_durations = 0;		//Specifies whether durations for defined star power deployments will render in the editor window
@@ -395,6 +396,7 @@ int eof_color_blue;
 int eof_color_dark_blue;
 int eof_color_light_blue;
 int eof_color_lighter_blue;
+int eof_color_even_lighter_blue;
 int eof_color_turquoise;
 int eof_color_yellow;
 int eof_color_purple;
@@ -1216,6 +1218,10 @@ void eof_fix_window_title(void)
 			if(tp->note == tp->technote)
 			{	//If tech view is enabled
 				(void) ustrcat(eof_window_title, "(Tech view)");
+			}
+			if(eof_fingering_view)
+			{	//If fingering view is enabled
+				(void) ustrcat(eof_window_title, "(Fingering view)");
 			}
 			if(eof_legacy_view)
 			{	//If legacy view is enabled
@@ -2480,11 +2486,14 @@ void eof_read_global_keys(void)
 			eof_use_key();
 		}
 
-	/* lyric import (F8) */
+	/* Fingering view (F8) */
 		else if(eof_key_code == KEY_F8)
 		{
 			clear_keybuf();
-			(void) eof_menu_file_lyrics_import();
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If a pro guitar track is active
+				(void) eof_menu_song_rocksmith_fingering_view();
+			}
 			eof_use_key();
 		}
 
@@ -4203,6 +4212,7 @@ int eof_load_data(void)
 	eof_color_dark_blue = makecol(0, 0, 96);
 	eof_color_light_blue = makecol(96, 96, 255);
 	eof_color_lighter_blue = makecol(160, 160, 255);
+	eof_color_even_lighter_blue = makecol(200, 200, 255);
 	eof_color_turquoise = makecol(51,166,153);	//(use (68,221,204) for light turquoise)
 	eof_color_yellow = makecol(255, 255, 0);
 	eof_color_purple = makecol(255, 0, 255);

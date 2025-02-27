@@ -471,6 +471,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	{
 		dcol = eof_color_black;	//"Crazy" notes render with a black dot in the center
 		tcol = eof_color_white;	//In which case, render the fret number (pro guitar) with the opposite color
+		if(eof_fingering_view)
+			tcol = eof_color_red;	//Unless fingering view is in effect, in which case render text in red to contrast better over the blue background color
 	}
 
 	if(track != 0)
@@ -790,8 +792,17 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 				if(!eof_legacy_view && (track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is disabled, this is a pro guitar note and a pro guitar track is active, perform pro guitar specific rendering
-					//Render the fret number over the center of the note (but only if the active track is a pro guitar track)
-					BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 2, tcol, dcol, font);	//Allow 2 pixels for padding
+					BITMAP *fretbmp;
+
+					if(!eof_fingering_view)
+					{	//Render the fret number over the center of the note (but only if the active track is a pro guitar track)
+						fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 2, tcol, dcol, font);	//Allow 2 pixels for padding
+					}
+					else
+					{	//Render the finger number instead
+						snprintf(notation, 2, "%u", eof_song->pro_guitar_track[tracknum]->note[notenum]->finger[ctr]);	//Build a string out of this gem's fingering definition
+						fretbmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, eof_color_even_lighter_blue, font);
+					}
 					if(fretbmp != NULL)
 					{	//Render the bitmap on top of the 2D note and then destroy the bitmap
 						draw_sprite(window->screen, fretbmp, x - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem

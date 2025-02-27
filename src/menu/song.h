@@ -196,6 +196,9 @@ int eof_check_fret_hand_positions(void);
 int eof_check_fret_hand_positions_menu(void);
 	//Calls eof_check_fret_hand_positions_option specifying to report if there were no corrections needed (to be called from menu)
 
+int eof_menu_song_rocksmith_fingering_view(void);
+	//Toggles fingering view, which will cause pro guitar notes to display in the piano roll with fingering values instead of fret values
+
 int eof_run_time_range_dialog(unsigned long *start, unsigned long *end);
 	//Runs the dialog to accept start and end timestamps from the user
 	//The input fields are initialized to the values at *start and *end

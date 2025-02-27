@@ -4818,138 +4818,33 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		{	//Select "Neither"
 			eof_pro_guitar_note_dialog[62].flags = D_SELECTED;
 		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT)
-		{	//Select "Accent"
-			eof_pro_guitar_note_dialog[63].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Accent"
-			eof_pro_guitar_note_dialog[63].flags = 0;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC)
-		{	//Select "P.Harm"
-			eof_pro_guitar_note_dialog[64].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "P.Harm"
-			eof_pro_guitar_note_dialog[64].flags = 0;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
-		{	//Select "Vibrato"
-			eof_pro_guitar_note_dialog[65].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Vibrato"
-			eof_pro_guitar_note_dialog[65].flags = 0;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
-		{	//Select "Harmonic"
-			eof_pro_guitar_note_dialog[66].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Harmonic"
-			eof_pro_guitar_note_dialog[66].flags = 0;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-		{	//Select "Bend"
-			eof_pro_guitar_note_dialog[67].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Bend"
-			eof_pro_guitar_note_dialog[67].flags = 0;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)
-		{	//Select "Linknext"
-			eof_pro_guitar_note_dialog[68].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Linknext"
-			eof_pro_guitar_note_dialog[68].flags = 0;
-		}
-		if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE)
-		{	//Select "Ignore"
-			eof_pro_guitar_note_dialog[69].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Ignore"
-			eof_pro_guitar_note_dialog[69].flags = 0;
-		}
-		if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN)
-		{	//Select "Sustain"
-			eof_pro_guitar_note_dialog[70].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Sustain"
-			eof_pro_guitar_note_dialog[70].flags = 0;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
-		{	//Select "Hi Dens"
-			eof_pro_guitar_note_dialog[73].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Hi Dens"
-			eof_pro_guitar_note_dialog[73].flags = 0;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT)
-		{	//Select "Split"
-			eof_pro_guitar_note_dialog[74].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Split"
-			eof_pro_guitar_note_dialog[74].flags = 0;
-		}
-		if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)
-		{	//Select "Chordify"
-			eof_pro_guitar_note_dialog[75].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Chordify"
-			eof_pro_guitar_note_dialog[75].flags = 0;
-		}
-		if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
-		{	//Select "Fingerless"
-			eof_pro_guitar_note_dialog[76].flags = D_SELECTED;
-		}
-		else
-		{	//Clear "Fingerless"
-			eof_pro_guitar_note_dialog[76].flags = 0;
-		}
+		eof_pro_guitar_note_dialog[63].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT) ? D_SELECTED : 0;		//Update "Accent" checkbox value
+		eof_pro_guitar_note_dialog[64].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC) ? D_SELECTED : 0;	//Update "P.Harm" checkbox value
+		eof_pro_guitar_note_dialog[65].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) ? D_SELECTED : 0;		//Update "Vibrato" checkbox value
+		eof_pro_guitar_note_dialog[66].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC) ? D_SELECTED : 0;	//Update "Harmonic" checkbox value
+		eof_pro_guitar_note_dialog[67].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) ? D_SELECTED : 0;			//Update "Bend" checkbox value
+		eof_pro_guitar_note_dialog[68].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) ? D_SELECTED : 0;		//Update "Linknext" checkbox value
+		eof_pro_guitar_note_dialog[69].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE) ? D_SELECTED : 0;		//Update "Ignore" checkbox value
+		eof_pro_guitar_note_dialog[70].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) ? D_SELECTED : 0;	//Update "Sustain" checkbox value
+		eof_pro_guitar_note_dialog[73].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HD) ? D_SELECTED : 0;			//Update "Hi Dens" checkbox value
+		eof_pro_guitar_note_dialog[74].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) ? D_SELECTED : 0;			//Update "Split" checkbox value
+		eof_pro_guitar_note_dialog[75].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) ? D_SELECTED : 0;	//Update "Chordify" checkbox value
+		eof_pro_guitar_note_dialog[76].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS) ? D_SELECTED : 0;	//Update "Fingerless" checkbox value
 
 		//The remaining statuses depend on whether tech view is in effect
 		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		{	//If tech view isn't in effect for the current track
 			eof_pro_guitar_note_dialog[71].flags = D_DISABLED;	//"Stop" status
 			eof_pro_guitar_note_dialog[77].flags = D_DISABLED;	//"Pre-bend" status
-			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS)
-			{	//Select "Ghost HS"
-				eof_pro_guitar_note_dialog[72].flags = D_SELECTED;
-			}
-			else
-			{	//Clear "Ghost HS"
-				eof_pro_guitar_note_dialog[72].flags = 0;
-			}
+			eof_pro_guitar_note_dialog[72].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS) ? D_SELECTED : 0;	//Update "Ghost HS" checkbox value
 		}
 		else
 		{	//Tech view is in effect
 			eof_pro_guitar_note_dialog[37].flags = D_DISABLED;	//Reverse slide
-			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP)
-			{	//Select "Stop"
-				eof_pro_guitar_note_dialog[71].flags = D_SELECTED;
-			}
-			else
-			{	//Clear "Stop"
-				eof_pro_guitar_note_dialog[71].flags = 0;
-			}
+			eof_pro_guitar_note_dialog[71].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP) ? D_SELECTED : 0;	//Update "Stop" checkbox value
 			eof_pro_guitar_note_dialog[72].flags = D_DISABLED;	//"Ghost HS" status
 			eof_pro_guitar_note_dialog[75].flags = D_DISABLED;	//"Chordify" status
-			if(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
-			{	//Select "Pre-bend"
-				eof_pro_guitar_note_dialog[77].flags = D_SELECTED;
-			}
-			else
-			{	//Clear "Pre-bend"
-				eof_pro_guitar_note_dialog[77].flags = 0;
-			}
+			eof_pro_guitar_note_dialog[77].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND) ? D_SELECTED : 0;	//Update "Pre-bend" checkbox value
 		}
 
 		bitmask = 0;

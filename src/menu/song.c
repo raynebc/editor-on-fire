@@ -164,6 +164,7 @@ MENU eof_song_proguitar_menu[] =
 
 MENU eof_song_rocksmith_menu[] =
 {
+	{"&Fingering view\tF8", eof_menu_song_rocksmith_fingering_view, NULL, 0, NULL},
 	{"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
 	{"Check &Fret hand positions", eof_check_fret_hand_positions_menu, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
@@ -352,24 +353,8 @@ void eof_prepare_song_menu(void)
 			eof_song_seek_menu[15].flags = 0;
 		}
 
-		/* seek end */
-		if(eof_music_pos.value >= eof_music_length - 1)
-		{	//If the seek position is already at the end of the chart
-			eof_song_seek_menu[3].flags = D_DISABLED;	//Seek end
-		}
-		else
-		{
-			eof_song_seek_menu[3].flags = 0;
-		}
-
-		if(eof_music_pos.value - eof_av_delay < eof_song->beat[eof_song->beats - 1]->pos)
-		{	//If the seek position is before the last beat marker
-			eof_song_seek_menu[16].flags = 0;	//Next beat
-		}
-		else
-		{
-			eof_song_seek_menu[16].flags = D_DISABLED;	//Next beat
-		}
+		eof_song_seek_menu[3].flags = (eof_music_pos.value >= eof_music_length - 1) ? D_DISABLED : 0;	//Update "Seek>End of audio" enable status, depending on whether the seek position is already at the end of the chart
+		eof_song_seek_menu[16].flags = (eof_music_pos.value - eof_av_delay < eof_song->beat[eof_song->beats - 1]->pos) ? 0 : D_DISABLED;	//Update "Next beat" enable status, depending on whether the seek position is before the last beat marker
 
 		/* Song>Catalog>Show */
 		/* Song>Catalog>Edit name */
@@ -377,14 +362,7 @@ void eof_prepare_song_menu(void)
 		/* seek catalog entry */
 		if(eof_song->catalog->entries > 0)
 		{	//If there are any fret catalog entries
-			if(eof_display_catalog)
-			{
-				eof_catalog_menu[0].flags = D_SELECTED;	//Show catalog
-			}
-			else
-			{
-				eof_catalog_menu[0].flags = 0;
-			}
+			eof_catalog_menu[0].flags = eof_display_catalog ? D_SELECTED : 0;	//Update "Song>Catalog>Show" check status
 			eof_catalog_menu[2].flags = 0;		//Enable "Edit name"
 			eof_catalog_menu[3].flags = 0;		//Enable "Edit timing"
 			eof_song_seek_menu[5].flags = 0;	//Enable Seek>Catalog entry
@@ -398,25 +376,8 @@ void eof_prepare_song_menu(void)
 			eof_song_seek_menu[5].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
-		/* Song>Catalog>Full width */
-		if(eof_catalog_full_width)
-		{
-			eof_catalog_menu[1].flags = D_SELECTED;	//Full width
-		}
-		else
-		{
-			eof_catalog_menu[1].flags = 0;
-		}
-
-		/* rewind */
-		if(eof_music_pos.value == eof_music_rewind_pos)
-		{
-			eof_song_seek_menu[6].flags = D_DISABLED;	//Rewind
-		}
-		else
-		{
-			eof_song_seek_menu[6].flags = 0;
-		}
+		eof_catalog_menu[1].flags = eof_catalog_full_width ? D_SELECTED : 0;	//Update "Song>Catalog>Full width" check status
+		eof_song_seek_menu[6].flags = (eof_music_pos.value == eof_music_rewind_pos) ? D_DISABLED : 0;	//Update Rewind enable status
 
 		(void) eof_count_selected_notes(&totalnotecount);	//Count the number of notes in the active track difficulty
 
@@ -448,65 +409,12 @@ void eof_prepare_song_menu(void)
 			eof_song_seek_note_menu[1].flags = D_DISABLED;
 		}
 
-		/* seek previous note */
-		if(seekp)
-		{
-			eof_song_seek_note_menu[2].flags = 0;	//Note>Previous note
-		}
-		else
-		{
-			eof_song_seek_note_menu[2].flags = D_DISABLED;
-		}
-
-		/* seek next note */
-		if(seekn)
-		{
-			eof_song_seek_note_menu[3].flags = 0;	//Note>Next note
-		}
-		else
-		{
-			eof_song_seek_note_menu[3].flags = D_DISABLED;
-		}
-
-		/* seek previous highlighed note */
-		if(seekph)
-		{
-			eof_song_seek_note_menu[4].flags = 0;	//Note>Previous h.l. note
-		}
-		else
-		{
-			eof_song_seek_note_menu[4].flags = D_DISABLED;
-		}
-
-		/* seek next highlighted note */
-		if(seeknh)
-		{
-			eof_song_seek_note_menu[5].flags = 0;	//Note>Next h.l. note
-		}
-		else
-		{
-			eof_song_seek_note_menu[5].flags = D_DISABLED;
-		}
-
-		/* seek previous screen */
-		if(eof_music_pos.value <= eof_av_delay)
-		{
-			eof_song_seek_menu[9].flags = D_DISABLED;	//Previous screen
-		}
-		else
-		{
-			eof_song_seek_menu[9].flags = 0;
-		}
-
-		/* seek next screen */
-		if(eof_music_pos.value >= eof_music_length - 1)
-		{
-			eof_song_seek_menu[10].flags = D_DISABLED;	//Next screen
-		}
-		else
-		{
-			eof_song_seek_menu[10].flags = 0;
-		}
+		eof_song_seek_note_menu[2].flags = seekp ? 0 : D_DISABLED;	//Update Song>Seek>Note>Previous enable status
+		eof_song_seek_note_menu[3].flags = seekn ? 0 : D_DISABLED;	//Update Song>Seek>Note>Next enable status
+		eof_song_seek_note_menu[4].flags = seekph ? 0 : D_DISABLED;	//Update "Song>Seek>Note>Previous h.l" enable status
+		eof_song_seek_note_menu[5].flags = seeknh ? 0 : D_DISABLED;	//Update "Song>Seek>Note>Next h.l" enable status
+		eof_song_seek_menu[9].flags = (eof_music_pos.value <= eof_av_delay) ? D_DISABLED : 0;	//Update "Song>Seek>Previous screen" enable status
+		eof_song_seek_menu[10].flags = (eof_music_pos.value >= eof_music_length - 1) ? D_DISABLED : 0;	//Update "Song>Seek>Next screen" enable status
 
 		/* previous/next grid snap/anchor */
 		if(eof_snap_mode == EOF_SNAP_OFF)
@@ -539,14 +447,7 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* seek bookmark */
-		if(bmcount == 0)
-		{
-			eof_song_seek_menu[0].flags = D_DISABLED;	//Bookmark
-		}
-		else
-		{
-			eof_song_seek_menu[0].flags = 0;
-		}
+		eof_song_seek_menu[0].flags = bmcount ? 0 : D_DISABLED;	//Update Song>Seek>Bookmark menu enable status
 
 		/* Previous TS change */
 		eof_song_seek_menu[19].flags = D_DISABLED;	//Previous TS change
@@ -579,35 +480,9 @@ void eof_prepare_song_menu(void)
 			i++;	//Check next beat
 		}
 
-		/* Seek to next CH SP deployable note */
-		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
-		{	//If a compatible track format is active
-			eof_song_seek_menu[23].flags = 0;
-		}
-		else
-		{
-			eof_song_seek_menu[23].flags = D_DISABLED;
-		}
-
-		/* display semitones as flat */
-		if(eof_display_flats)
-		{
-			eof_song_menu[4].flags = D_SELECTED;	//Song>Display semitones as flat
-		}
-		else
-		{
-			eof_song_menu[4].flags = 0;
-		}
-
-		/* add catalog entry */
-		if(eof_count_selected_notes(NULL))	//If there are notes selected
-		{
-			eof_catalog_menu[5].flags = 0;
-		}
-		else
-		{
-			eof_catalog_menu[5].flags = D_DISABLED;
-		}
+		eof_song_seek_menu[23].flags = (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT) ? 0 : D_DISABLED;	//Update "Song>Seek>Next CH SP deployable note" enable status
+		eof_song_menu[4].flags = eof_display_flats ? D_SELECTED : 0;	//Update "Song>Display semitones as flat" check status
+		eof_catalog_menu[5].flags = eof_count_selected_notes(NULL) ? 0 : D_DISABLED;		//Update Song>Catalog>Add enable status, depending on whether any notes are selected
 
 		/* remove catalog entry */
 		/* find previous */
@@ -667,45 +542,10 @@ void eof_prepare_song_menu(void)
 			}
 		}
 
-		/* Highlight non grid snapped notes */
-		if(eof_song->tags->highlight_unsnapped_notes)
-		{	//If the user has enabled the dynamic highlighting of non grid snapped notes for this track
-			eof_song_menu[7].flags = D_SELECTED;
-		}
-		else
-		{
-			eof_song_menu[7].flags = 0;
-		}
-
-		/* Show CH SP durations */
-		if(eof_show_ch_sp_durations)
-		{	//If the user has enabled the display the durations of defined Clone Hero star power deployments
-			eof_song_menu[8].flags = D_SELECTED;
-		}
-		else
-		{
-			eof_song_menu[8].flags = 0;
-		}
-
-		/* leading silence */
-		if(eof_silence_loaded)
-		{	//If no chart audio is loaded
-			eof_song_menu[13].flags = D_DISABLED;	//Song>Leading silence
-		}
-		else
-		{
-			eof_song_menu[13].flags = 0;
-		}
-
-		/* disable click and drag */
-		if(eof_song->tags->click_drag_disabled)
-		{
-			eof_song_menu[14].flags = D_SELECTED;	//Song>Disable click and drag
-		}
-		else
-		{
-			eof_song_menu[14].flags = 0;
-		}
+		eof_song_menu[7].flags = eof_song->tags->highlight_unsnapped_notes ? D_SELECTED : 0;	//Update "Song>Highlight non grid snapped notes" check status
+		eof_song_menu[8].flags = eof_show_ch_sp_durations ? D_SELECTED : 0;	//Update "Song>Show CH SP durations" check status
+		eof_song_menu[13].flags = eof_silence_loaded ? D_DISABLED : 0;	//Update "Song>Leading silence" enable status
+		eof_song_menu[14].flags = eof_song->tags->click_drag_disabled ? D_SELECTED : 0;	//Update "Song>Disable click and drag" check status
 
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -724,14 +564,7 @@ void eof_prepare_song_menu(void)
 				eof_song_proguitar_menu[2].flags = D_DISABLED;
 			}
 
-			if(eof_song->tags->highlight_arpeggios)
-			{
-				eof_song_proguitar_menu[3].flags = D_SELECTED;	//Song>Pro Guitar>Highlight notes in arpeggios
-			}
-			else
-			{
-				eof_song_proguitar_menu[3].flags = 0;
-			}
+			eof_song_proguitar_menu[3].flags = eof_song->tags->highlight_arpeggios ? D_SELECTED : 0;	//Update "Song>Pro guitar>Highlight notes in arpeggios" check status
 		}
 		else
 		{	//Otherwise disable these menu items
@@ -739,45 +572,10 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[16].flags = D_DISABLED;
 		}
 
-		/* Second piano roll>Display */
-		if(eof_display_second_piano_roll)
-		{
-			eof_song_piano_roll_menu[0].flags = D_SELECTED;
-		}
-		else
-		{
-			eof_song_piano_roll_menu[0].flags = 0;
-		}
-
-		/* Second piano roll>Sync with main piano roll */
-		if(eof_sync_piano_rolls)
-		{
-			eof_song_piano_roll_menu[2].flags = D_SELECTED;
-		}
-		else
-		{
-			eof_song_piano_roll_menu[2].flags = 0;
-		}
-
-		/* Export chord techniques */
-		if(eof_song->tags->rs_chord_technique_export)
-		{
-			eof_song_rocksmith_menu[3].flags = D_SELECTED;
-		}
-		else
-		{
-			eof_song_rocksmith_menu[3].flags = 0;
-		}
-
-		/* Suppress DD warnings */
-		if(eof_song->tags->rs_export_suppress_dd_warnings)
-		{
-			eof_song_rocksmith_menu[4].flags = D_SELECTED;
-		}
-		else
-		{
-			eof_song_rocksmith_menu[4].flags = 0;
-		}
+		eof_song_piano_roll_menu[0].flags = eof_display_second_piano_roll ? D_SELECTED : 0;	//Update "Song>Second piano roll>Display" check status
+		eof_song_piano_roll_menu[2].flags = eof_sync_piano_rolls ? D_SELECTED : 0;	//Update "Song>Second piano roll>Sync with main piano roll" check status
+		eof_song_rocksmith_menu[4].flags = eof_song->tags->rs_chord_technique_export ? D_SELECTED : 0;	//Update "Song>Rocksmith>Export chord techniques" check status
+		eof_song_rocksmith_menu[5].flags = eof_song->tags->rs_export_suppress_dd_warnings ? D_SELECTED : 0;	//Update "Song>Rocksmith>Suppress DD warnings" check status
 
 		/* Second piano roll>Compare */
 		if(!eof_display_second_piano_roll)
@@ -4212,6 +4010,13 @@ int eof_menu_song_toggle_piano_roll_sync(void)
 		eof_music_pos2 = eof_music_pos.value;	//Synchronize the piano rolls
 	}
 	eof_sync_piano_rolls ^= 1;	//Toggle this setting
+	return 1;
+}
+
+int eof_menu_song_rocksmith_fingering_view(void)
+{
+	eof_fingering_view ^= 1;	//Toggle this boolean variable
+	eof_fix_window_title();
 	return 1;
 }
 
