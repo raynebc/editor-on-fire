@@ -7163,7 +7163,7 @@ int eof_track_add_tremolo(EOF_SONG *sp, unsigned long track, unsigned long start
 {
 	unsigned long tracknum;
 
- 	eof_log("eof_track_add_tremolo() entered", 1);
+ 	eof_log("eof_track_add_tremolo() entered", 3);
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;	//Return error

@@ -1886,8 +1886,8 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							diff = -1;	//No defined difficulty
 						}
 					}
-					else if(picked_track != EOF_TRACK_DANCE)
-					{
+					else
+					{	//Any other type of legacy track
 						if(eof_import_events[i]->game == 1)
 						{	//If the MIDI being parsed is a Power Gig MIDI, remap it to Rock Band numbering
 							diff = eof_import_events[i]->diff;

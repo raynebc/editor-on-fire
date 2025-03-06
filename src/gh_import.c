@@ -2172,7 +2172,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 					{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required), but only if the user opted to do so
 						newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
 					}
-					if((accentmask != 0xF) && !gh3_format)
+					if(accentmask != 0xF)
 					{	//"Crazy" guitar/bass notes have an accent mask that isn't 0xF, and the chart wasn't determined to be in GH3/GHA format
 						newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
 					}
@@ -3645,8 +3645,8 @@ int eof_ghl_import_common(const char *fn)
 						{	//If the GHL timing is inaccurate by at least 0.5ms, use it because the note timings depend on that inaccurate timing
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tModifying beat position to %fms", (double)changes[ctr].position * 1000.0);
 							eof_log(eof_log_string, 1);
-							eof_song->beat[beat]->fpos = changes[ctr].position * 1000;	//Reposition the beat
-							eof_song->beat[beat]->pos = eof_song->beat[beat]->fpos + 0.5;	//Round to nearest millisecond
+							eof_song->beat[beat]->fpos = (double)changes[ctr].position * 1000.0;	//Reposition the beat
+							eof_song->beat[beat]->pos = eof_song->beat[beat]->fpos + 0.5;		//Round to nearest millisecond
 							eof_recalculate_beats(eof_song, beat);	//Adjust the previous and next anchor accordingly
 						}
 						if(mid_beat_change)

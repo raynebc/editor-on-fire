@@ -2494,7 +2494,7 @@ void eof_rebuild_trainer_strings(void)
 	}
 	else
 	{
-		eof_place_trainer_dialog[3].flags = 0 | D_DISABLED;		//Otherwise clear this box
+		eof_place_trainer_dialog[3].flags = D_DISABLED;		//Otherwise clear this box
 	}
 	if(eof_song_contains_event(eof_song, eof_etext3, relevant_track, 0xFFFF, 1))
 	{	//If this training event is already defined in the active track
@@ -2502,7 +2502,7 @@ void eof_rebuild_trainer_strings(void)
 	}
 	else
 	{
-		eof_place_trainer_dialog[5].flags = 0 | D_DISABLED;		//Otherwise clear this box
+		eof_place_trainer_dialog[5].flags = D_DISABLED;		//Otherwise clear this box
 	}
 	if(eof_song_contains_event(eof_song, eof_etext4, relevant_track, 0xFFFF, 1))
 	{	//If this training event is already defined in the active track
@@ -2510,7 +2510,7 @@ void eof_rebuild_trainer_strings(void)
 	}
 	else
 	{
-		eof_place_trainer_dialog[7].flags = 0 | D_DISABLED;		//Otherwise clear this box
+		eof_place_trainer_dialog[7].flags = D_DISABLED;		//Otherwise clear this box
 	}
 }
 

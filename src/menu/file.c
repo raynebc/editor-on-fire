@@ -227,38 +227,39 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  500, 285, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  290, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  290, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 290, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
-	{ d_agup_check_proc, 16,  75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
-	{ d_agup_check_proc, 248, 75,  224, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI files",NULL, NULL },
-	{ d_agup_check_proc, 16,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
-	{ d_agup_check_proc, 248, 90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
-	{ d_agup_check_proc, 16,  105, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
+	{ d_agup_window_proc,0,   48,  500, 300, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  305, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  305, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 305, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_check_proc, 16,    75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
+	{ d_agup_check_proc, 248,  75,  224, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI files",NULL, NULL },
+	{ d_agup_check_proc, 16,    90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
+	{ d_agup_check_proc, 248,  90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 2 files",NULL, NULL },
+	{ d_agup_check_proc, 16,   105, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
 	{ d_agup_check_proc, 248, 105, 208, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/CH/Phase Shift files",NULL, NULL },
-	{ d_agup_check_proc, 16,  120, 212, 16,  2,   23,  0,    0,      1,   0,   "Save separate Guitar Hero files",NULL, NULL },
+	{ d_agup_check_proc, 16,   120, 212, 16,  2,   23,  0,    0,      1,   0,   "Save separate Guitar Hero files",NULL, NULL },
 	{ d_agup_check_proc, 248, 120, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
-	{ d_agup_check_proc, 16,  135, 222, 16,  2,   23,  0,    0,      1,   0,   "Save LRC, ELRC, QRC lyric files",NULL, NULL },
+	{ d_agup_check_proc, 16,   135, 222, 16,  2,   23,  0,    0,      1,   0,   "Save LRC, ELRC, QRC lyric files",NULL, NULL },
 	{ d_agup_check_proc, 248, 135, 222, 16,  2,   23,  0,    0,      1,   0,   "Force pro drum MIDI notation",NULL, NULL },
-	{ d_agup_check_proc, 16,  150, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
+	{ d_agup_check_proc, 16,   150, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
 	{ d_agup_check_proc, 248, 150, 186, 16,  2,   23,  0,    0,      1,   0,   "RBN export slider as HOPO",NULL, NULL },
-	{ d_agup_check_proc, 16,  165, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
+	{ d_agup_check_proc, 16,   165, 226, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short chords",NULL, NULL },
 	{ d_agup_check_proc, 248, 165, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import replaces active track",NULL, NULL },
-	{ d_agup_check_proc, 16,  180, 226, 16,  2,   23,  0,    0,      1,   0,   "Imports drop mid beat tempos",NULL, NULL },
+	{ d_agup_check_proc, 16,   180, 226, 16,  2,   23,  0,    0,      1,   0,   "Imports drop mid beat tempos",NULL, NULL },
 	{ d_agup_check_proc, 248, 180, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import nat. harmonics only",NULL, NULL },
-	{ d_agup_check_proc, 16,  195, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
+	{ d_agup_check_proc, 16,   195, 210, 16,  2,   23,  0,    0,      1,   0,   "Import dialogs recall last path",NULL, NULL },
 	{ d_agup_check_proc, 248, 195, 124, 16,  2,   23,  0,    0,      1,   0,   "Import/Export TS",NULL, NULL },
-	{ d_agup_check_proc, 16,  210, 214, 16,  2,   23,  0,    0,      1,   0,   "dB import skips 5nc conversion",NULL, NULL },
+	{ d_agup_check_proc, 16,   210, 214, 16,  2,   23,  0,    0,      1,   0,   "dB import skips 5nc conversion",NULL, NULL },
 	{ d_agup_check_proc, 248, 210, 214, 16,  2,   23,  0,    0,      1,   0,   "Warn about missing bass FHPs",NULL, NULL },
-	{ d_agup_check_proc, 16,  225, 202, 16,  2,   23,  0,    0,      1,   0,   "Abridged Rocksmith 2 export",NULL, NULL },
+	{ d_agup_check_proc, 16,   225, 202, 16,  2,   23,  0,    0,      1,   0,   "Abridged Rocksmith 2 export",NULL, NULL },
 	{ d_agup_check_proc, 248, 225, 220, 16,  2,   23,  0,    0,      1,   0,   "Allow RS2 extended ASCII lyrics",NULL, NULL },
-	{ d_agup_check_proc, 16,  240, 224, 16,  2,   23,  0,    0,      1,   0,   "Don't warn about INI differences",NULL, NULL },
+	{ d_agup_check_proc, 16,   240, 224, 16,  2,   23,  0,    0,      1,   0,   "Don't warn about INI differences",NULL, NULL },
 	{ d_agup_check_proc, 248, 240, 202, 16,  2,   23,  0,    0,      1,   0,   "Render mid beat tempos blue",NULL, NULL },
-	{ d_agup_check_proc, 16,  255, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
-	{ d_agup_check_proc, 248, 270, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
-	{ d_agup_check_proc, 248, 285, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
-	{ d_agup_check_proc, 248, 300, 218, 16,  2,   23,  0,    0,      1,   0,   "RS import loads all handshapes",NULL, NULL },
+	{ d_agup_check_proc, 16,   255, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
+	{ d_agup_check_proc, 16,   270, 310, 16,  2,   23,  0,    0,      1,   0,   "RS2 export version 8 (DLC Builder) style XML",NULL, NULL },
+	{ d_agup_check_proc, 16,   285, 218, 16,  2,   23,  0,    0,      1,   0,   "RS import loads all handshapes",NULL, NULL },
+	{ d_agup_check_proc, 248, 285, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
+	{ d_agup_check_proc, 248, 300, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1698,12 +1699,12 @@ int eof_menu_file_import_export_preferences(void)
 	eof_color_dialog(eof_import_export_preferences_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_import_export_preferences_dialog);
 	//Use the currently configured settings to populate the dialog selections
-	eof_import_export_preferences_dialog[4].flags = eof_write_rb_files ? D_SELECTED : 0;					//Save separate Rock Band files
+	eof_import_export_preferences_dialog[4].flags = eof_write_rb_files ? D_SELECTED : 0;						//Save separate Rock Band files
 	eof_import_export_preferences_dialog[5].flags = eof_write_music_midi ? D_SELECTED : 0;					//Save separate musical MIDI files
-	eof_import_export_preferences_dialog[6].flags = eof_write_rs_files ? D_SELECTED : 0;					//Save separate Rocksmith 1 files
+	eof_import_export_preferences_dialog[6].flags = eof_write_rs_files ? D_SELECTED : 0;						//Save separate Rocksmith 1 files
 	original_rs1_export_setting = eof_write_rs_files;	//Back up this setting to track whether it is changed in the dialog
 	eof_import_export_preferences_dialog[7].flags = eof_write_rs2_files ? D_SELECTED : 0;					//Save separate Rocksmith 2 files
-	eof_import_export_preferences_dialog[8].flags = eof_write_bf_files ? D_SELECTED : 0;					//Save separate Bandfuse files
+	eof_import_export_preferences_dialog[8].flags = eof_write_bf_files ? D_SELECTED : 0;						//Save separate Bandfuse files
 	eof_import_export_preferences_dialog[9].flags = eof_write_fof_files ? D_SELECTED : 0;					//Save FoF/CH/Phase Shift files
 	eof_import_export_preferences_dialog[10].flags = eof_write_gh_files ? D_SELECTED : 0;					//Save Guitar Hero files
 	eof_import_export_preferences_dialog[11].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
@@ -1713,20 +1714,21 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[15].flags = eof_rbn_export_slider_hopo ? D_SELECTED : 0;			//RBN export slider as HOPO
 	eof_import_export_preferences_dialog[16].flags = eof_gp_import_truncate_short_chords ? D_SELECTED : 0;	//GP import truncates short chords
 	eof_import_export_preferences_dialog[17].flags = eof_gp_import_replaces_track ? D_SELECTED : 0;			//GP import replaces active track
-	eof_import_export_preferences_dialog[18].flags = eof_imports_drop_mid_beat_tempos ? D_SELECTED : 0;		//Imports drop mid beat tempos
+	eof_import_export_preferences_dialog[18].flags = eof_imports_drop_mid_beat_tempos ? D_SELECTED : 0;	//Imports drop mid beat tempos
 	eof_import_export_preferences_dialog[19].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;		//GP import nat. harmonics only
 	eof_import_export_preferences_dialog[20].flags = eof_imports_recall_last_path ? D_SELECTED : 0;			//Import dialogs recall last path
 	eof_import_export_preferences_dialog[21].flags = eof_use_ts ? D_SELECTED : 0;							//Import/Export TS
 	eof_import_export_preferences_dialog[22].flags = eof_db_import_suppress_5nc_conversion ? D_SELECTED : 0;//dB import skips 5nc conversion
 	eof_import_export_preferences_dialog[23].flags = eof_warn_missing_bass_fhps ? D_SELECTED : 0;			//Warn about missing bass FHPs
 	eof_import_export_preferences_dialog[24].flags = eof_abridged_rs2_export ? D_SELECTED : 0;				//Abridged Rocksmith 2 export
-	eof_import_export_preferences_dialog[25].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;	//Allow RS2 extended ASCII lyrics
-	eof_import_export_preferences_dialog[26].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;	//Don't warn about INI differences
+	eof_import_export_preferences_dialog[25].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;		//Allow RS2 extended ASCII lyrics
+	eof_import_export_preferences_dialog[26].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;		//Don't warn about INI differences
 	eof_import_export_preferences_dialog[27].flags = eof_render_mid_beat_tempos_blue ? D_SELECTED : 0;		//Render mid beat tempos blue
 	eof_import_export_preferences_dialog[28].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
-	eof_import_export_preferences_dialog[29].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
-	eof_import_export_preferences_dialog[30].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;	//GH import sustain threshold prompt
-	eof_import_export_preferences_dialog[31].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
+	eof_import_export_preferences_dialog[29].flags = eof_rs2_export_version_8 ? D_SELECTED : 0;				//RS2 export version 8 (DLC Builder) style XML
+	eof_import_export_preferences_dialog[30].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
+	eof_import_export_preferences_dialog[31].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
+	eof_import_export_preferences_dialog[32].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
 
 	do
 	{	//Run the dialog
@@ -1758,9 +1760,10 @@ int eof_menu_file_import_export_preferences(void)
 			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[26].flags == D_SELECTED ? 1 : 0);
 			eof_render_mid_beat_tempos_blue = (eof_import_export_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
-			eof_disable_ini_export = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
-			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[30].flags == D_SELECTED ? 1 : 0);
-			eof_rs_import_all_handshapes = (eof_import_export_preferences_dialog[31].flags == D_SELECTED ? 1 : 0);
+			eof_rs2_export_version_8 = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
+			eof_rs_import_all_handshapes = (eof_import_export_preferences_dialog[30].flags == D_SELECTED ? 1 : 0);
+			eof_disable_ini_export = (eof_import_export_preferences_dialog[31].flags == D_SELECTED ? 1 : 0);
+			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[32].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1789,9 +1792,10 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[26].flags = 0;				//Don't warn about INI differences
 			eof_import_export_preferences_dialog[27].flags = D_SELECTED;	//Render mid beat tempos blue
 			eof_import_export_preferences_dialog[28].flags = 0;				//GP import beat text as sections, markers as phrases
-			eof_import_export_preferences_dialog[29].flags = 0;				//Don't write INI file
-			eof_import_export_preferences_dialog[30].flags = 0;				//GH import sustain threshold prompt
-			eof_import_export_preferences_dialog[31].flags = 0;				//RS import loads all handshapes
+			eof_import_export_preferences_dialog[29].flags = 0;				//RS2 export version 8 (DLC Builder) style XML
+			eof_import_export_preferences_dialog[30].flags = 0;				//RS import loads all handshapes
+			eof_import_export_preferences_dialog[31].flags = 0;				//Don't write INI file
+			eof_import_export_preferences_dialog[32].flags = 0;				//GH import sustain threshold prompt
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2053,7 +2057,7 @@ int eof_menu_file_link(unsigned char application)
 					(void) ustrcpy(eof_fof_executable_path, returnedfn);
 					(void) ustrcpy(eof_fof_songs_path, returnfolder);
 				}
-				else if(application == 1)
+				else
 				{	//User is linking to Phase Shift
 					(void) ustrcpy(eof_ps_executable_name, get_filename(returnedfn));
 					(void) ustrcpy(eof_ps_executable_path, returnedfn);
@@ -2762,25 +2766,34 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 	if(printflen > 0)
 	{
 		tempstr=malloc_err((size_t)printflen);
-		(void) snprintf(tempstr, sizeof(tempstr) - 1, "\nOffset: %.3f",chart->offset);
-		chartinfo=ResizedAppend(chartinfo,tempstr,1);
-		free(tempstr);
+		if(tempstr)
+		{
+			(void) snprintf(tempstr, sizeof(tempstr) - 1, "\nOffset: %.3f",chart->offset);
+			chartinfo=ResizedAppend(chartinfo,tempstr,1);
+			free(tempstr);
+		}
 	}
 	printflen=snprintf(NULL,0,"\nResolution: %lu",chart->resolution)+1;	//Find the number of characters needed to snprintf this string
 	if(printflen > 0)
 	{
 		tempstr=malloc_err((size_t)printflen);
-		(void) snprintf(tempstr, sizeof(tempstr) - 1,"\nResolution: %lu",chart->resolution);
-		chartinfo=ResizedAppend(chartinfo,tempstr,1);
-		free(tempstr);
+		if(tempstr)
+		{
+			(void) snprintf(tempstr, sizeof(tempstr) - 1,"\nResolution: %lu",chart->resolution);
+			chartinfo=ResizedAppend(chartinfo,tempstr,1);
+			free(tempstr);
+		}
 	}
 	printflen=snprintf(NULL,0,"\n%lu Instrument tracks loaded",chart->tracksloaded)+1;	//Find the number of characters needed to snprintf this string
 	if(printflen > 0)
 	{
 		tempstr=malloc_err((size_t)printflen);
-		(void) snprintf(tempstr, sizeof(tempstr) - 1,"\n%lu Instrument tracks loaded",chart->tracksloaded);
-		chartinfo=ResizedAppend(chartinfo,tempstr,1);
-		free(tempstr);
+		if(tempstr)
+		{
+			(void) snprintf(tempstr, sizeof(tempstr) - 1,"\n%lu Instrument tracks loaded",chart->tracksloaded);
+			chartinfo=ResizedAppend(chartinfo,tempstr,1);
+			free(tempstr);
+		}
 	}
 
 	allegro_message("%s",chartinfo);

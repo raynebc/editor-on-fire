@@ -514,13 +514,15 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 
 int eof_import_drums_rock_track_diff(char * fn)
 {
-	char *buffer = NULL, *buffer2 = NULL, *ptr, undo_made = 0, binary[9] = {0};
+	char *buffer = NULL, *buffer2 = NULL, *ptr, undo_made = 0, binary[9] = {0}, *suberror = "";
 	PACKFILE *inf = NULL;
 	EOF_PHRASE_SECTION *rp;
 	size_t maxlinelength;
-	int error = 0, drumrollerror = 0;
+	int error = 0, drumrollerror = 0, retval;
 	unsigned long linectr = 1, value = 0, ctr, ctr2, ctr3;
-	int retval;
+	EOF_NOTE *np;
+	unsigned char gemconversion[7] = {0, 4, 8, 1, 32, 2, 16};	//Remap Drums Rocks's gem numbering to EOF note bitmask
+	unsigned char note;
 
 	eof_log("\tImporting Drums Rock file", 1);
 	eof_log("eof_import_drums_rock_track_diff() entered", 1);
@@ -542,7 +544,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 		maxlinelength = (size_t)FindLongestLineLength_ALLEGRO(fn, 0);
 		if(!maxlinelength)
 		{
-			eof_log("\tError finding the largest line in info.csv file.  Skipping", 1);
+			eof_log("\tError finding the largest line in info.csv file.", 1);
 			error = 1;
 		}
 		else
@@ -573,7 +575,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 			{	//Validate contents of first line
 				if(strcasestr_normal(buffer, "Song Name,Author Name,Difficulty,Song Duration in seconds,Song Map") != buffer)
 				{	//If the first line doesn't begin with the expected field definitions
-					eof_log("info.csv header row content not recognized, skipping info.csv parse", 1);
+					eof_log("info.csv header row content not recognized", 1);
 					error = 1;
 				}
 			}
@@ -623,6 +625,9 @@ int eof_import_drums_rock_track_diff(char * fn)
 				}
 			}
 		}
+
+		if(error)
+			eof_log("Parsing of info.csv skipped", 1);
 
 		//Cleanup
 		(void) pack_fclose(inf);
@@ -739,7 +744,6 @@ int eof_import_drums_rock_track_diff(char * fn)
 		double timestamp;
 		unsigned long enemytype, auxcolor1, auxcolor2, interval;
 		char *intervalstring = NULL;
-		char *suberror = "";
 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
 		eof_log(eof_log_string, 3);
@@ -753,6 +757,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 		{
 			suberror = "Could not read timestamp";
 			error = 1;
+			break;	//Stop parsing file
 		}
 
 		ptr = ustrtok(NULL, ",");	//Get the next tokenized field (enemy type)
@@ -763,12 +768,14 @@ int eof_import_drums_rock_track_diff(char * fn)
 			{
 				suberror = "Invalid enemy type";
 				error = 1;	//The enemy type was not parsed or is invalid
+				break;	//Stop parsing file
 			}
 		}
 		else
 		{
 			suberror = "Could not read enemy type";
 			error = 1;
+			break;	//Stop parsing file
 		}
 
 		ptr = ustrtok(NULL, ",");	//Get the next tokenized field (aux color 1)
@@ -779,12 +786,14 @@ int eof_import_drums_rock_track_diff(char * fn)
 			{
 				suberror = "Invalid aux color 1";
 				error = 1;	//The aux color 1 value was not parsed or is invalid
+				break;	//Stop parsing file
 			}
 		}
 		else
 		{
 			suberror = "Could not read aux color 1";
 			error = 1;
+			break;	//Stop parsing file
 		}
 
 		ptr = ustrtok(NULL, ",");	//Get the next tokenized field (aux color 2)
@@ -795,12 +804,14 @@ int eof_import_drums_rock_track_diff(char * fn)
 			{
 				suberror = "Invalid aux color 2";
 				error = 1;	//The aux color 2 value was not parsed or is invalid
+				break;	//Stop parsing file
 			}
 		}
 		else
 		{
 			suberror = "Could not read aux color 2";
 			error = 1;
+			break;	//Stop parsing file
 		}
 
 		ptr = ustrtok(NULL, ",");	//Get the next tokenized field (Number of enemies), which is ignored
@@ -808,6 +819,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 		{
 			suberror = "Could not read number of enemies";
 			error = 1;
+			break;	//Stop parsing file
 		}
 
 		intervalstring = ustrtok(NULL, ",");	//Get the next tokenized field (interval)
@@ -818,50 +830,42 @@ int eof_import_drums_rock_track_diff(char * fn)
 			{
 				suberror = "Invalid interval";
 				error = 1;	//The interval value must be defined because the note is a drum roll, but it was not parsed or is invalid
+				break;	//Stop parsing file
 			}
 		}
 		else
 		{
 			suberror = "Could not read interval";
 			error = 1;
+			break;	//Stop parsing file
 		}
 
-		ptr = ustrtok(NULL, ",");	//Get the next tokenized field (Aux), which is ignored
+		(void) ustrtok(NULL, ",");	//Get the next tokenized field (Aux), which is intentionally ignored
 
-		if(error)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Drums Rock import failed on line #%lu of notes.csv:  Malformed note (%s).", linectr, suberror);
+		//Create note
+		if(auxcolor1 > 6)
+			auxcolor1 = 0;	//Bounds check
+		if(auxcolor2 > 6)
+			auxcolor2 = 0;	//Bounds check
+		note = gemconversion[auxcolor1];
+		if(enemytype == 2)
+			note += gemconversion[auxcolor2];	//Add the second note's bitmask if this is a chord
+		if(enemytype != 3)
+			intervalstring = "";		//If this note isn't a drum roll, ensure it is created with no name string
+
+		np = eof_track_add_create_note(eof_song, eof_selected_track, note, timestamp + 0.5, 1, eof_note_type, intervalstring);
+		if(!np)
+		{	//If the note was not added
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Drums Rock import failed on line #%lu of notes.csv:  Unable to add note.  Aborting.", linectr);
 			eof_log(eof_log_string, 1);
+			error = 2;
+			break;	//Stop parsing file
 		}
 		else
-		{	//Create note
-			EOF_NOTE *np;
-			unsigned char gemconversion[7] = {0, 4, 8, 1, 32, 2, 16};	//Remap Drums Rocks's gem numbering to EOF note bitmask
-			unsigned char note;
-
-			if(auxcolor1 > 6)
-				auxcolor1 = 0;	//Bounds check
-			if(auxcolor2 > 6)
-				auxcolor2 = 0;	//Bounds check
-			note = gemconversion[auxcolor1];
-			if(enemytype == 2)
-				note += gemconversion[auxcolor2];	//Add the second note's bitmask if this is a chord
-			if(enemytype != 3)
-				intervalstring = "";		//If this note isn't a drum roll, ensure it is created with no name string
-
-			np = eof_track_add_create_note(eof_song, eof_selected_track, note, timestamp + 0.5, 1, eof_note_type, intervalstring);
-			if(!np)
-			{	//If the note was not added
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Drums Rock import failed on line #%lu of notes.csv:  Unable to add note.  Aborting.", linectr);
-				eof_log(eof_log_string, 1);
-				error = 1;
-			}
-			else
-			{
-				(void) eof_byte_to_binary_string(note, binary);	//Make a string representation of the note bitmask
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAdded note:  Mask = %u (%s), pos = %lu, enemytype = %lu", note, binary, (unsigned long)(timestamp + 0.5), enemytype);
-				eof_log(eof_log_string, 2);
-			}
+		{
+			(void) eof_byte_to_binary_string(note, binary);	//Make a string representation of the note bitmask
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAdded note:  Mask = %u (%s), pos = %lu, enemytype = %lu", note, binary, (unsigned long)(timestamp + 0.5), enemytype);
+			eof_log(eof_log_string, 2);
 
 			if(enemytype == 3)
 			{	//If this note is a drum roll
@@ -873,11 +877,18 @@ int eof_import_drums_rock_track_diff(char * fn)
 		linectr++;	//Increment line counter
 	}//Until there was an error or end of file is reached
 
+	if(error == 1)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Drums Rock import failed on line #%lu of notes.csv:  Malformed note (%s).", linectr, suberror);
+		eof_log(eof_log_string, 1);
+	}
+
 	//Cleanup
 	(void) pack_fclose(inf);
 	eof_track_sort_notes(eof_song, eof_selected_track);
 
 	//Create drum rolls
+	eof_log("\tCreating drum rolls", 2);
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the active track
 		if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)

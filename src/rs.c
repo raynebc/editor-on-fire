@@ -1722,7 +1722,14 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Write the beginning of the XML file
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
-	(void) pack_fputs("<song version=\"7\">\n", fp);
+	if(!eof_rs2_export_version_8)
+	{	//The original XML format supported by the Rocksmith Custom Song Toolkit
+		(void) pack_fputs("<song version=\"7\">\n", fp);
+	}
+	else
+	{	//A slight variation used by the newer DLC Builder tool
+		(void) pack_fputs("<song version=\"8\">\n", fp);
+	}
 	(void) pack_fputs("<!-- " EOF_VERSION_STRING " -->\n", fp);	//Write EOF's version in an XML comment
 	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64, 0, 0, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
@@ -2893,6 +2900,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				if(tflags & EOF_NOTE_TFLAG_HD)
 				{	//If this chord has chordify status and one of its individual notes has pre-bend status
 					highdensity = 1;	//Export the chord as high density to ensure proper display of the bend notes
+				}
+				if(eof_rs2_export_version_8 && highdensity)
+				{	//If this chord would export with high density, but the user enabled the export preference to alter the way these are written (to suit DLC Builder's handling)
+					highdensity = 0;	//Remove this status
+					chordtagend = chordifiedend;	//Write the chord tag as ending in a single line with no sub tags
 				}
 				(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" chordId=\"%lu\" ", (double)notepos / 1000.0, chordid);
 				eof_conditionally_append_xml_long(buffer, sizeof(buffer), "linkNext", tech.linknext, 0);

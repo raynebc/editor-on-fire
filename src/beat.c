@@ -41,10 +41,6 @@ unsigned long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	{
 		return ULONG_MAX;
 	}
-	if(sp->beats < 1)
-	{	//This is not a valid beat count
-		return ULONG_MAX;
-	}
 	for(i = 1; i < sp->beats; i++)
 	{	//For each beat after the first
 		if(sp->beat[i]->pos > pos)

@@ -168,6 +168,8 @@ void eof_write_tempo_track(char *trackname, struct Tempo_change *anchorlist, EOF
 void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon);
 	//Stores a copy of the Sysex message data (used for custom phrase markers in Phase Shift) to eof_midi_event[]
 	//sysexon indicates whether the message is a Sysex phrase on marker, to be used for sorting purposes
+void eof_add_phase_shift_sysex_phrase(unsigned long deltastart, unsigned long deltastop, unsigned char diff, unsigned char phraseid);
+	//Writes the specified Sysex phrase on and off events to eof_midi_event[] using eof_add_sysex_event()
 void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision);
 	//Write all stored MIDI track data from sp->midi_data_head to the output file
 int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistptr, EOF_MIDI_TS_LIST **tslistptr, unsigned long *timedivision);

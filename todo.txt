@@ -1,8 +1,6 @@
 Unversioned To-Do List
 ----------------------
-[ ]INI import should see if file is unicode before processing.
-   [ ]Don't think there is a way to do this. Instead we should attempt to import as
-      usual and if the artist and title fields are empty, attempt to use unicode.
+[ ]Port to Allegro 5
 [ ]Adjust timing of audio cues so that they peak at the time they are supposed
    to be heard.
 [X]Import/export vocal percussion data.
@@ -13,9 +11,9 @@ Unversioned To-Do List
 
 EOF 1.8 To-Do List
 ------------------
-[ ]Implement new EOF project format
-[ ]Implement pro drums as proper phrases
-[ ]Update MIDI import to be able to load scores into the project
+[X]Implement new EOF project format
+[X]Implement pro drums as proper phrases
+[?]Update MIDI import to be able to load scores into the project
 [ ]Implement delta timing
 [ ]Refactor code.
    [ ]Make editor into separate modules.
