@@ -86,7 +86,7 @@ MENU eof_file_import_menu[] =
 	{"&MIDI\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
 	{"&Feedback (.chart)", eof_menu_file_feedback_import, NULL, 0, NULL},
 	{"Guitar &Hero", eof_menu_file_gh_import, NULL, 0, NULL},
-	{"&Lyric", eof_menu_file_lyrics_import, NULL, 0, NULL},
+	{"&Lyric\tShift+F8", eof_menu_file_lyrics_import, NULL, 0, NULL},
 	{"&Guitar Pro\tF12", eof_menu_file_gp_import, NULL, 0, NULL},
 	{"&Rocksmith\tF7", eof_menu_file_rs_import, NULL, 0, NULL},
 	{"&Bandfuse", eof_menu_file_bf_import, NULL, 0, NULL},

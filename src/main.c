@@ -2491,7 +2491,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F8)
 		{
 			clear_keybuf();
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_song  && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a pro guitar track is active
 				(void) eof_menu_song_rocksmith_fingering_view();
 			}

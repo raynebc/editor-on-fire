@@ -3639,6 +3639,13 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 #endif
 
+	/* Lyric import (SHIFT+F8) */
+			if(eof_key_code == KEY_F8)
+			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_file_lyrics_import();
+			}
+
 			if(eof_key_code == KEY_F11)
 			{	//Cycle the "Top of 2D pane shows" preference
 				eof_shift_used = 1;	//Track that the SHIFT key was used
