@@ -94,12 +94,12 @@ void eof_prepare_menus(void)
 	}
 
 	eof_prepare_main_menu();
-	eof_prepare_beat_menu();
 	eof_prepare_file_menu();
 	eof_prepare_edit_menu();
 	eof_prepare_song_menu();
 	eof_prepare_track_menu();
 	eof_prepare_note_menu();
+	eof_prepare_beat_menu();
 	eof_prepare_context_menu();
 }
 
@@ -288,3 +288,36 @@ int eof_unused_menu_function(void)
 {
 	return 1;
 }
+
+int eof_create_filtered_menu(MENU *input_menu, MENU *output_menu, unsigned menu_size)
+{
+	unsigned long input_size, ctr, index;
+
+	//Validate parameters
+	if(!input_menu || !output_menu)
+		return 0;	//Invalid parameters
+
+	for(ctr = input_size = 0; input_menu[ctr].text != NULL; ctr++)
+	{	//For each entry in the input menu
+		if(!(input_menu[ctr].flags & D_HIDDEN))
+			input_size++;	//Count each menu entry without the D_HIDDEN flag
+	}
+	input_size++;	//Add one for the NULL row marking the end of the menu
+
+	if(input_size > menu_size)
+		return 0;	//Output array is not large enough
+
+	//Copy menu items to output array
+	for(ctr = index = 0; input_menu[ctr].text != NULL; ctr++)
+	{	//For each entry in the input menu
+		if(!(input_menu[ctr].flags & D_HIDDEN))
+		{	//If the entry is not hidden
+			output_menu[index] = input_menu[ctr];	//Copy it to the output array
+			index++;
+		}
+	}
+	output_menu[index] = input_menu[ctr];	//Copy the NULL row to the output array
+
+	return 1;	//Success
+}
+

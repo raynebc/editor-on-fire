@@ -2,9 +2,12 @@
 #define EOF_MENU_BEAT_H
 
 #include "../song.h"
+#include "../dialog.h"
 
 extern MENU eof_beat_time_signature_menu[];
 extern MENU eof_beat_menu[];
+extern MENU eof_filtered_beat_menu[EOF_SCRATCH_MENU_SIZE];
+extern MENU *eof_effective_beat_menu;
 extern char eof_ts_menu_off_text[32];
 
 extern MENU eof_beat_key_signature_menu[];

@@ -29,6 +29,7 @@
 #include "song.h"
 #include "file.h"	//For eof_menu_prompt_save_changes()
 #include "track.h"	//For tech view functions
+#include "main.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -216,6 +217,8 @@ MENU eof_song_menu[] =
 	{"T&Est song", NULL, eof_song_test_menu, EOF_LINUX_DISABLE, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
+
+MENU eof_filtered_song_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_create_filtered_menu() to contain the contents of eof_song_menu[] minus the hidden items
 
 char (*eof_ini_dialog_array)[EOF_INI_LENGTH] = NULL;	//Used to point to whichever array of strings is to be edited by the INI dialog functions
 unsigned short *eof_ini_dialog_count = NULL;			//Used to point to the counter tracking the number of strings in the above array
@@ -567,9 +570,9 @@ void eof_prepare_song_menu(void)
 			eof_song_proguitar_menu[3].flags = eof_song->tags->highlight_arpeggios ? D_SELECTED : 0;	//Update "Song>Pro guitar>Highlight notes in arpeggios" check status
 		}
 		else
-		{	//Otherwise disable these menu items
-			eof_song_menu[15].flags = D_DISABLED;
-			eof_song_menu[16].flags = D_DISABLED;
+		{	//Otherwise disable and hide these menu items
+			eof_song_menu[15].flags = D_DISABLED | D_HIDDEN;
+			eof_song_menu[16].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		eof_song_piano_roll_menu[0].flags = eof_display_second_piano_roll ? D_SELECTED : 0;	//Update "Song>Second piano roll>Display" check status
@@ -597,6 +600,15 @@ void eof_prepare_song_menu(void)
 		{
 			eof_song_piano_roll_menu[3].flags = 0;
 			eof_song_piano_roll_menu[4].flags = 0;
+		}
+
+		if(eof_create_filtered_menu(eof_song_menu, eof_filtered_song_menu, EOF_SCRATCH_MENU_SIZE))
+		{	//If the Song menu was recreated to filter out hidden items
+			eof_main_menu[2].child = eof_filtered_song_menu;	//Use this in the main menu
+		}
+		else
+		{	//Otherwise use the unabridged Song menu
+			eof_main_menu[2].child = eof_song_menu;
 		}
 	}//If a chart is loaded
 }

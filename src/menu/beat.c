@@ -16,6 +16,7 @@
 #include "beat.h"
 #include "edit.h"
 #include "song.h"
+#include "main.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -134,6 +135,9 @@ MENU eof_beat_menu[] =
 	{"Place &Trainer event", eof_menu_beat_trainer_event, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
+
+MENU eof_filtered_beat_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_create_filtered_menu() to contain the contents of eof_song_menu[] minus the hidden items
+MENU *eof_effective_beat_menu = eof_beat_menu;	//This is invoked by right clicking in the beat marker area in Feedback or Rex Mundi input modes
 
 char stored_event_track_notice[] = "Warning:  A stored MIDI track will override chart-wide text events";
 char no_notice[] = "";
@@ -484,9 +488,9 @@ void eof_prepare_beat_menu(void)
 			}
 		}
 		else
-		{
-			eof_beat_menu[22].flags = D_DISABLED;
-			eof_beat_menu[23].flags = D_DISABLED;
+		{	//Otherwise disable and hide these items
+			eof_beat_menu[22].flags = D_DISABLED | D_HIDDEN;
+			eof_beat_menu[23].flags = D_DISABLED | D_HIDDEN;
 		}
 //Re-flag the active Time Signature for the selected beat
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -617,6 +621,17 @@ void eof_prepare_beat_menu(void)
 		else
 		{	//Otherwise disable it
 			eof_beat_time_signature_menu[8].flags = D_DISABLED;
+		}
+
+		if(eof_create_filtered_menu(eof_beat_menu, eof_filtered_beat_menu, EOF_SCRATCH_MENU_SIZE))
+		{	//If the Beat menu was recreated to filter out hidden items
+			eof_main_menu[5].child = eof_filtered_beat_menu;	//Use this in the main menu
+			eof_effective_beat_menu = eof_filtered_beat_menu;	//And in the context menu
+		}
+		else
+		{	//Otherwise use the unabridged Beat menu
+			eof_main_menu[5].child = eof_beat_menu;
+			eof_effective_beat_menu = eof_beat_menu;
 		}
 	}//If a song is loaded
 }

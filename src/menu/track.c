@@ -15,6 +15,7 @@
 #include "../undo.h"
 #include "song.h"
 #include "track.h"
+#include "main.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -120,6 +121,8 @@ MENU eof_track_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_filtered_track_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_create_filtered_menu() to contain the contents of eof_track_menu[] minus the hidden items
+
 MENU eof_track_rocksmith_arrangement_menu[] =
 {
 	{"&Undefined", eof_track_rocksmith_arrangement_undefined, NULL, 0, NULL},
@@ -221,9 +224,18 @@ void eof_prepare_track_menu(void)
 			}
 		}
 		else
-		{	//Otherwise disable these menu items
-			eof_track_menu[0].flags = D_DISABLED;
-			eof_track_menu[1].flags = D_DISABLED;
+		{	//Otherwise disable and hide these menu items
+			eof_track_menu[0].flags = D_DISABLED | D_HIDDEN;
+			eof_track_menu[1].flags = D_DISABLED | D_HIDDEN;
+		}
+
+		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		{	//If a legacy track is active
+			eof_track_menu[2].flags = 0;	//Track>Phase Shift
+		}
+		else
+		{	//Otherwise hide and disable this menu
+			eof_track_menu[2].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -247,8 +259,8 @@ void eof_prepare_track_menu(void)
 			}
 		}
 		else
-		{	//Otherwise disable this menu
-			eof_track_menu[3].flags = D_DISABLED;
+		{	//Otherwise disable and hide this menu
+			eof_track_menu[3].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		/* enable open strum */
@@ -282,20 +294,20 @@ void eof_prepare_track_menu(void)
 			}
 		}
 		else
-		{
-			eof_track_menu[14].flags = D_DISABLED;			//Track>Enable GHL mode
+		{	//Otherwise disable and hide this item
+			eof_track_menu[14].flags = D_DISABLED | D_HIDDEN;			//Track>Enable GHL mode
 		}
 
 		/* (Clone Hero pathing functions) */
-		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS))
-		{	//If the active track is a legacy guitar/bass track or the keys track
+		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS) || (eof_selected_track == EOF_TRACK_DRUM))
+		{	//If the active track is a legacy guitar/bass track or the keys track or the normal drum track
 			eof_track_menu[15].flags = 0;					//Track>Find optimal CH star power path
 			eof_track_menu[16].flags = 0;					//Track>Evaluate CH star power path
 		}
 		else
-		{
-			eof_track_menu[15].flags = D_DISABLED;			//Track>Find optimal CH star power path
-			eof_track_menu[16].flags = D_DISABLED;			//Track>Evaluate CH star power path
+		{	//Otherwise disable and hide these items
+			eof_track_menu[15].flags = D_DISABLED | D_HIDDEN;			//Track>Find optimal CH star power path
+			eof_track_menu[16].flags = D_DISABLED | D_HIDDEN;			//Track>Evaluate CH star power path
 		}
 
 		/* enable five lane drums */
@@ -425,6 +437,15 @@ void eof_prepare_track_menu(void)
 			{	//The difficulty level is undefined
 				eof_track_menu_set_difficulty[7].flags = D_SELECTED;	//Check the undefined submenu item
 			}
+		}
+
+		if(eof_create_filtered_menu(eof_track_menu, eof_filtered_track_menu, EOF_SCRATCH_MENU_SIZE))
+		{	//If the Track menu was recreated to filter out hidden items
+			eof_main_menu[3].child = eof_filtered_track_menu;	//Use this in the main menu
+		}
+		else
+		{	//Otherwise use the unabridged Track menu
+			eof_main_menu[3].child = eof_track_menu;
 		}
 	}//If a chart is loaded
 }

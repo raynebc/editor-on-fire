@@ -2,6 +2,7 @@
 #define EOF_MENU_SONG_H
 
 #include "../song.h"
+#include "../dialog.h"
 
 extern MENU eof_track_selected_menu[];
 extern MENU eof_catalog_menu[];
@@ -15,6 +16,7 @@ extern MENU eof_waveform_menu[];
 extern MENU eof_spectrogram_menu[];
 extern MENU eof_song_proguitar_menu[];
 extern MENU eof_song_menu[];
+extern MENU eof_filtered_song_menu[EOF_SCRATCH_MENU_SIZE];
 
 extern char (*eof_ini_dialog_array)[EOF_INI_LENGTH];
 extern unsigned short *eof_ini_dialog_count;

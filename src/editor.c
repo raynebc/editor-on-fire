@@ -5081,7 +5081,7 @@ void eof_editor_logic(void)
 				{	//mouse is in beat marker area
 					lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 					eof_prepare_menus();
-					(void) do_menu(eof_beat_menu, lpos, mouse_y);
+					(void) do_menu(eof_effective_beat_menu, lpos, mouse_y);
 					eof_clear_input();
 				}
 				else if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
@@ -5824,7 +5824,7 @@ void eof_vocal_editor_logic(void)
 				int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 
 				eof_prepare_menus();
-				(void) do_menu(eof_beat_menu, lpos, mouse_y);
+				(void) do_menu(eof_effective_beat_menu, lpos, mouse_y);
 				eof_clear_input();
 			}
 			else if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))

@@ -2,8 +2,10 @@
 #define EOF_MENU_NOTE_H
 
 #include <allegro.h>
+#include "../dialog.h"
 
 extern MENU eof_note_menu[];
+extern MENU eof_filtered_note_menu[EOF_SCRATCH_MENU_SIZE];
 
 extern DIALOG eof_lyric_dialog[];
 extern DIALOG eof_split_lyric_dialog[];
@@ -102,6 +104,12 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
 int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void);
 	//Calls eof_menu_note_edit_pro_guitar_note_frets_fingers() specifying function 0
+long eof_previous_pro_guitar_note_needing_finger_definitions(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);
+	//Finds the nearest note occurring before the specified one that doesn't have its fingering fully defined (ignoring muted notes)
+	//Assumes all notes in the track are sorted
+long eof_next_pro_guitar_note_needing_finger_definitions(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);
+	//Finds the nearest note occurring after the specified one that doesn't have its fingering fully defined (ignoring muted notes)
+	//Assumes all notes in the track are sorted
 int eof_correct_chord_fingerings_option(char report, char *undo_made);
 	//Checks each pro guitar track in the active chart for chords that have incorrect fingering (defined when it shouldn't be or vice-versa)
 	//If at least one such chord matches a chord shape definition, the function will prompt the user whether to automatically fill in fingering where possible

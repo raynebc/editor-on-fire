@@ -17,6 +17,8 @@
 #include "note.h"
 #include "song.h"	//For eof_menu_track_selected_track_number()
 #include "track.h"	//For tech view functions
+#include "main.h"
+#include "context.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -30,7 +32,7 @@ char eof_handshape_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_mark_text[32] = "&Mark";
 char eof_tremolo_menu_mark_text[32] = "&Mark";
 char eof_slider_menu_mark_text[32] = "&Mark";
-char eof_trill_menu_text[32] = "Tr&Ill";
+char eof_trill_menu_text[32] = "&TrIll";
 char eof_tremolo_menu_text[32] = "Tre&Molo";
 
 MENU eof_menu_solo_copy_menu[EOF_TRACKS_MAX] =
@@ -414,6 +416,8 @@ MENU eof_note_drum_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_filtered_note_drum_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_create_filtered_menu() to contain the contents of eof_note_drum_menu[] minus the hidden items
+
 MENU eof_note_proguitar_menu[] =
 {
 	{"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
@@ -580,9 +584,11 @@ MENU eof_note_simplify_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_filtered_note_simplify_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_create_filtered_menu() to contain the contents of eof_note_simplify_menu[] minus the hidden items
+
 MENU eof_note_menu[] =
 {
-	{"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
+	{"Toggle", NULL, eof_note_toggle_menu, 0, NULL},
 	{"Cle&Ar", NULL, eof_note_clear_menu, 0, NULL},
 	{"Transpose", NULL, eof_note_transpose_menu, 0, NULL},
 	{"&Highlight", NULL, eof_note_highlight_menu, 0, NULL},
@@ -591,7 +597,6 @@ MENU eof_note_menu[] =
 	{"Star &Power", NULL, eof_star_power_menu, 0, NULL},
 	{"Delete", NULL, eof_menu_delete, 0, NULL},
 	{"&Name", NULL, eof_note_name_menu, 0, NULL},
-	{"", NULL, NULL, 0, NULL},
 	{"Cra&Zy", NULL, eof_note_crazy_menu, 0, NULL},
 	{"H&OPO", NULL, eof_legacy_hopo_menu, 0, NULL},
 	{eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
@@ -608,6 +613,8 @@ MENU eof_note_menu[] =
 	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
+
+MENU eof_filtered_note_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_create_filtered_menu() to contain the contents of eof_note_menu[] minus the hidden items
 
 DIALOG eof_lyric_dialog[] =
 {
@@ -827,11 +834,11 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[6].flags = 0; //Note>Star Power> submenu
 			if(((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (eof_selected_track == EOF_TRACK_KEYS))
 			{	//If a legacy guitar or keys note is selected
-				eof_note_menu[14].flags = 0;		//Note>Slider> submenu
+				eof_note_menu[13].flags = 0;		//Note>Slider> submenu
 			}
 			else
-			{
-				eof_note_menu[14].flags = D_DISABLED;
+			{	//Otherwise disable and hide this item
+				eof_note_menu[13].flags = D_DISABLED | D_HIDDEN;
 			}
 
 			if(vselected == 1)
@@ -847,7 +854,7 @@ void eof_prepare_note_menu(void)
 			eof_lyric_line_menu[0].flags = D_DISABLED;		//Note>Lyrics>Lyric Lines>Mark/Remark
 			eof_note_menu[5].flags = D_DISABLED; 		//Note>Solos> submenu
 			eof_note_menu[6].flags = D_DISABLED; 		//Note>Star Power> submenu
-			eof_note_menu[14].flags = D_DISABLED;		//Note>Slider> submenu
+			eof_note_menu[13].flags = D_DISABLED;		//Note>Slider> submenu
 		}
 
 		/* star power mark/remark */
@@ -1033,23 +1040,23 @@ void eof_prepare_note_menu(void)
 		}
 
 		if(eof_vocals_selected)
-		{	//PART VOCALS SELECTED
-			eof_note_menu[0].flags = D_DISABLED;	//Note>Toggle
-			eof_note_menu[1].flags = D_DISABLED;	//Note>Clear
-			eof_note_menu[5].flags = D_DISABLED;	//Note>Solos
-			eof_note_menu[6].flags = D_DISABLED;	//Note>Star power
-			eof_note_menu[8].flags = D_DISABLED;	//Note>Edit Name
-			eof_note_menu[10].flags = D_DISABLED;	//Note>Toggle Crazy
-			eof_note_menu[11].flags = D_DISABLED;	//Note>HOPO
-			eof_note_menu[12].flags = D_DISABLED;	//Note>Trill> submenu
-			eof_note_menu[13].flags = D_DISABLED;	//Note>Tremolo> submenu
-			eof_note_menu[16].flags = D_DISABLED;	//Note>Drum> submenu
-			eof_note_menu[17].flags = D_DISABLED;	//Note>Pro Guitar> submenu
-			eof_note_menu[18].flags = D_DISABLED;	//Note>Rocksmith> submenu
-			eof_note_reflect_menu[0].flags = D_DISABLED;	//Note>Reflect>Vertical
-			eof_note_reflect_menu[2].flags = D_DISABLED;	//Note>Reflect>Both
+		{	//PART VOCALS SELECTED, disable and hide many items
+			eof_note_menu[0].flags = D_DISABLED | D_HIDDEN;	//Note>Toggle
+			eof_note_menu[1].flags = D_DISABLED | D_HIDDEN;	//Note>Clear
+			eof_note_menu[5].flags = D_DISABLED | D_HIDDEN;	//Note>Solos
+			eof_note_menu[6].flags = D_DISABLED | D_HIDDEN;	//Note>Star power
+			eof_note_menu[8].flags = D_DISABLED | D_HIDDEN;	//Note>Edit Name
+			eof_note_menu[9].flags = D_DISABLED | D_HIDDEN;	//Note>Toggle Crazy
+			eof_note_menu[10].flags = D_DISABLED | D_HIDDEN;	//Note>HOPO
+			eof_note_menu[11].flags = D_DISABLED | D_HIDDEN;	//Note>Trill> submenu
+			eof_note_menu[12].flags = D_DISABLED | D_HIDDEN;	//Note>Tremolo> submenu
+			eof_note_menu[15].flags = D_DISABLED | D_HIDDEN;	//Note>Drum> submenu
+			eof_note_menu[16].flags = D_DISABLED | D_HIDDEN;	//Note>Pro Guitar> submenu
+			eof_note_menu[17].flags = D_DISABLED | D_HIDDEN;	//Note>Rocksmith> submenu
+			eof_note_menu[19].flags = D_DISABLED | D_HIDDEN;	//Note>Reflect> submenu
+			eof_note_menu[21].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify> submenu
 
-			eof_note_menu[19].flags = 0;	//Note>Lyrics> submenu
+			eof_note_menu[18].flags = 0;	//Note>Lyrics> submenu
 			if((eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (vselected == 1))
 			{	//Only enable edit and split lyric if only one lyric is selected
 				eof_note_lyrics_menu[0].flags = 0;	//Note>Lyrics>Edit Lyric
@@ -1092,34 +1099,37 @@ void eof_prepare_note_menu(void)
 		}//PART VOCALS SELECTED
 		else
 		{	//PART VOCALS NOT SELECTED
-			eof_note_menu[0].flags = 0; 			//Note>Toggle
-			eof_note_menu[1].flags = 0; 			//Note>Clear
-			eof_note_menu[8].flags = 0;				//Note>Edit Name
-			eof_note_menu[12].flags = 0;			//Note>Trill> submenu
-			eof_note_menu[13].flags = 0;			//Note>Tremolo> submenu
-			eof_note_menu[19].flags = D_DISABLED;	//Note>Lyrics> submenu
+			eof_note_menu[0].flags = 0; 		//Note>Toggle
+			eof_note_menu[1].flags = 0; 		//Note>Clear
+			eof_note_menu[8].flags = 0;		//Note>Edit Name
+			eof_note_menu[11].flags = 0;		//Note>Trill> submenu
+			eof_note_menu[12].flags = 0;		//Note>Tremolo> submenu
+			eof_note_menu[19].flags = 0;		//Note>Reflect> submenu
+			eof_note_menu[21].flags = 0;		//Note>Simplify> submenu
+
+			eof_note_menu[18].flags = D_DISABLED | D_HIDDEN;	//Note>Lyrics> submenu
 
 			/* toggle crazy */
 			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 			{	//When a guitar or drum track is active
-				eof_note_menu[10].flags = 0;				//Note>Toggle Crazy
+				eof_note_menu[9].flags = 0;				//Note>Toggle Crazy
 			}
 			else
-			{
-				eof_note_menu[10].flags = D_DISABLED;
+			{	//Otherwise disable and hide this
+				eof_note_menu[9].flags = D_DISABLED | D_HIDDEN;
 			}
 
 			if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 			{	//When a drum track is not active
-				eof_note_menu[16].flags = D_DISABLED;	//Note>Drum> submenu
-				eof_note_simplify_menu[2].flags = D_DISABLED;	//Note>Simplify>Cymbals
-				eof_note_simplify_menu[3].flags = D_DISABLED;	//Note>Simplify>Toms
-				eof_note_simplify_menu[4].flags = D_DISABLED;	//Note>Simplify>Bass drum
-				eof_note_simplify_menu[5].flags = D_DISABLED;	//Note>Simplify>Expert+ bass
+				eof_note_menu[15].flags = D_DISABLED | D_HIDDEN;	//Note>Drum> submenu
+				eof_note_simplify_menu[2].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify>Cymbals
+				eof_note_simplify_menu[3].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify>Toms
+				eof_note_simplify_menu[4].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify>Bass drum
+				eof_note_simplify_menu[5].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify>Expert+ bass
 			}
 			else
 			{
-				eof_note_menu[16].flags = 0;
+				eof_note_menu[15].flags = 0;
 				eof_note_simplify_menu[2].flags = 0;
 				eof_note_simplify_menu[3].flags = 0;
 				eof_note_simplify_menu[4].flags = 0;
@@ -1127,7 +1137,7 @@ void eof_prepare_note_menu(void)
 
 				if(eof_selected_track == EOF_TRACK_DRUM_PS)
 				{	//If the PS drum track is active
-					eof_note_drum_menu[9].flags = 0;	//Enable toggle Y note as open hi hat
+					eof_note_drum_menu[9].flags = 0;		//Enable toggle Y note as open hi hat
 					eof_note_drum_menu[10].flags = 0;	//Enable toggle Y note as pedal hi hat
 					eof_note_drum_menu[11].flags = 0;	//Enable toggle Y note as sizzle hi hat
 					eof_note_drum_menu[13].flags = 0;	//Enable mark new Y notes as submenu
@@ -1138,16 +1148,16 @@ void eof_prepare_note_menu(void)
 					eof_note_drum_menu[18].flags = 0;	//Enable toggle G cymbal+tom
 				}
 				else
-				{
-					eof_note_drum_menu[9].flags = D_DISABLED;
-					eof_note_drum_menu[10].flags = D_DISABLED;
-					eof_note_drum_menu[11].flags = D_DISABLED;
-					eof_note_drum_menu[13].flags = D_DISABLED;
-					eof_note_drum_menu[14].flags = D_DISABLED;
-					eof_note_drum_menu[15].flags = D_DISABLED;
-					eof_note_drum_menu[16].flags = D_DISABLED;
-					eof_note_drum_menu[17].flags = D_DISABLED;
-					eof_note_drum_menu[18].flags = D_DISABLED;
+				{	//Otherwise disable and hide these items
+					eof_note_drum_menu[9].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[10].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[11].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[13].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[14].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[15].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[16].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[17].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[18].flags = D_DISABLED | D_HIDDEN;
 				}
 			}
 
@@ -1164,17 +1174,17 @@ void eof_prepare_note_menu(void)
 			/* HOPO */
 			if(track_behavior == EOF_GUITAR_TRACK_BEHAVIOR)
 			{	//When a guitar track is active
-				eof_note_menu[11].flags = 0;	//Enable Note>HOPO> submenu
-				eof_note_menu[11].child = eof_legacy_hopo_menu;	//Set it to the legacy guitar HOPO menu
+				eof_note_menu[10].flags = 0;	//Enable Note>HOPO> submenu
+				eof_note_menu[10].child = eof_legacy_hopo_menu;	//Set it to the legacy guitar HOPO menu
 			}
 			else if(track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR)
 			{
-				eof_note_menu[11].flags = 0;	//Enable Note>HOPO> submenu
-				eof_note_menu[11].child = eof_pro_guitar_hopo_menu;	//Set it to the pro guitar HOPO menu
+				eof_note_menu[10].flags = 0;	//Enable Note>HOPO> submenu
+				eof_note_menu[10].child = eof_pro_guitar_hopo_menu;	//Set it to the pro guitar HOPO menu
 			}
 			else
-			{
-				eof_note_menu[11].flags = D_DISABLED;
+			{	//Otherwise disable and hide this menu
+				eof_note_menu[10].flags = D_DISABLED | D_HIDDEN;
 			}
 
 			/* Pro Guitar mode notation> */
@@ -1182,8 +1192,8 @@ void eof_prepare_note_menu(void)
 			{	//If the active track is a pro guitar track
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
-				eof_note_menu[17].flags = 0;			//Note>Pro Guitar> submenu
-				eof_note_menu[18].flags = 0;			//Note>Rocksmith> submenu
+				eof_note_menu[16].flags = 0;			//Note>Pro Guitar> submenu
+				eof_note_menu[17].flags = 0;			//Note>Rocksmith> submenu
 				eof_note_simplify_menu[6].flags = 0;	//Note>Simplify>String mutes
 				eof_note_simplify_menu[7].flags = 0;	//Note>Simplify>Ghost
 				if(tp->note == tp->technote)
@@ -1223,11 +1233,11 @@ void eof_prepare_note_menu(void)
 				}
 			}
 			else
-			{
-				eof_note_menu[17].flags = D_DISABLED;
-				eof_note_menu[18].flags = D_DISABLED;
-				eof_note_simplify_menu[6].flags = D_DISABLED;
-				eof_note_simplify_menu[7].flags = D_DISABLED;
+			{	//A pro guitar track is not active
+				eof_note_menu[16].flags = D_DISABLED | D_HIDDEN;
+				eof_note_menu[17].flags = D_DISABLED | D_HIDDEN;
+				eof_note_simplify_menu[6].flags = D_DISABLED | D_HIDDEN;
+				eof_note_simplify_menu[7].flags = D_DISABLED | D_HIDDEN;
 			}
 
 			/* Trill mark/remark*/
@@ -1285,22 +1295,22 @@ void eof_prepare_note_menu(void)
 			/* Rename Trill and Tremolo menus as necessary for the drum track */
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
 			{	//If a legacy/pro guitar/bass/keys track is active, set the guitar terminology for trill and tremolo sections
-				(void) ustrcpy(eof_trill_menu_text, "Trill");
-				(void) ustrcpy(eof_tremolo_menu_text, "Tremolo");
+				(void) ustrcpy(eof_trill_menu_text, "&Trill");
+				(void) ustrcpy(eof_tremolo_menu_text, "Tre&molo");
 			}
 			else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a legacy drum track is active, set the drum terminology for trill and tremolo sections
-				(void) ustrcpy(eof_trill_menu_text, "Special Drum Roll");
-				(void) ustrcpy(eof_tremolo_menu_text, "Drum Roll");
+				(void) ustrcpy(eof_trill_menu_text, "Special Drum R&Oll");
+				(void) ustrcpy(eof_tremolo_menu_text, "Drum Rol&L");
 			}
 			else
-			{	//Disable these submenus unless a track that can use them is active
-				eof_note_menu[12].flags = D_DISABLED;	//Note>Trill> submenu
-				eof_note_menu[13].flags = D_DISABLED;	//Note>Tremolo> submenu
+			{	//Disable and hide these submenus unless a track that can use them is active
+				eof_note_menu[11].flags = D_DISABLED | D_HIDDEN;	//Note>Trill> submenu
+				eof_note_menu[12].flags = D_DISABLED | D_HIDDEN;	//Note>Tremolo> submenu
 			}
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
-			{	//If this is a keys track, ensure the tremolo menu still gets disabled
-				eof_note_menu[13].flags = D_DISABLED;	//Note>Tremolo> submenu
+			{	//If this is a keys track, ensure the tremolo menu still gets disabled and hidden
+				eof_note_menu[12].flags = D_DISABLED | D_HIDDEN;	//Note>Tremolo> submenu
 			}
 
 			/* Slider mark/remark */
@@ -1371,7 +1381,7 @@ void eof_prepare_note_menu(void)
 		/* Note>Clone Hero */
 		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS))
 		{	//If a legacy guitar or the keys track is active
-			eof_note_menu[21].flags = 0;	//Note>Clone Hero>
+			eof_note_menu[20].flags = 0;	//Note>Clone Hero>
 
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 			{	//If GHL mode is enabled
@@ -1385,8 +1395,35 @@ void eof_prepare_note_menu(void)
 			}
 		}
 		else
-		{
-			eof_note_menu[21].flags = D_DISABLED;	//Note>Clone Hero>
+		{	//Otherwise disable and hide this menu
+			eof_note_menu[20].flags = D_DISABLED | D_HIDDEN;	//Note>Clone Hero>
+		}
+
+		if(eof_create_filtered_menu(eof_note_menu, eof_filtered_note_menu, EOF_SCRATCH_MENU_SIZE))
+		{	//If the Note menu was recreated to filter out hidden items
+			eof_main_menu[4].child = eof_filtered_note_menu;	//Use this in the main menu
+			eof_right_click_menu_note[0].child = eof_filtered_note_menu;	//And the context menu
+		}
+		else
+		{	//Otherwise use the unabridged Note menu
+			eof_main_menu[4].child = eof_note_menu;
+			eof_right_click_menu_note[0].child = eof_note_menu;
+		}
+		if(eof_create_filtered_menu(eof_note_drum_menu, eof_filtered_note_drum_menu, EOF_SCRATCH_MENU_SIZE))
+		{	//If the Note>Drum menu was recreated to filter out hidden items
+			eof_note_menu[15].child = eof_filtered_note_drum_menu;	//Use this in the Note menu
+		}
+		else
+		{	//Otherwise use the unabridged Note>Drum menu
+			eof_note_menu[15].child = eof_note_drum_menu;
+		}
+		if(eof_create_filtered_menu(eof_note_simplify_menu, eof_filtered_note_simplify_menu, EOF_SCRATCH_MENU_SIZE))
+		{	//If the Note>Simplify menu was recreated to filter out hidden items
+			eof_note_menu[21].child = eof_filtered_note_simplify_menu;	//Use this in the Note menu
+		}
+		else
+		{	//Otherwise use the unabridged Note>Simplify menu
+			eof_note_menu[21].child = eof_note_simplify_menu;
 		}
 	}//if(eof_song && eof_song_loaded)
 }
@@ -5441,7 +5478,7 @@ char *eof_finger_strings[6] = {eof_finger_string_lane_1, eof_finger_string_lane_
 DIALOG eof_pro_guitar_note_frets_dialog[] =
 {
 	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
-	{d_agup_window_proc,    0,   48,  214, 248,2,   23,  0,    0,      0,         0,   "Edit note frets / fingering",NULL, NULL },
+	{d_agup_window_proc,    0,   48,  214, 278,2,   23,  0,    0,      0,         0,   "Edit note frets / fingering",NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
 	{d_agup_text_proc,      60,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
@@ -5475,10 +5512,12 @@ DIALOG eof_pro_guitar_note_frets_dialog[] =
 	{d_agup_check_proc,		170, 229, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
 	{d_agup_button_proc,    10,   256, 20,  28, 2,   23,  0,    D_EXIT, 0,       0,   "<-",         NULL,          NULL },
-	{d_agup_button_proc,    35,   256, 35,  28, 2,   23,  '\r',  D_EXIT, 0,       0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    75,   256,  50,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Apply",         NULL,          NULL },
-	{d_agup_button_proc,    130,  256, 55,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Cancel",     NULL,          NULL },
+	{d_agup_button_proc,    35,   270, 35,  28, 2,   23,  '\r',  D_EXIT, 0,       0,   "OK",         NULL,          NULL },
+	{d_agup_button_proc,    75,   270,  50,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Apply",         NULL,          NULL },
+	{d_agup_button_proc,    130,  270, 55,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Cancel",     NULL,          NULL },
 	{d_agup_button_proc,    188,  256, 20,  28, 2,   23,  0,   D_EXIT, 0,       0,   "->",         NULL,          NULL },
+	{d_agup_button_proc,    10,   286, 20,  28, 2,   23,  0,    D_EXIT, 0,       0,   "<<",         NULL,          NULL },
+	{d_agup_button_proc,    188,  286, 20,  28, 2,   23,  0,   D_EXIT, 0,       0,   ">>",         NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -5505,6 +5544,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	EOF_PRO_GUITAR_NOTE *np;
 	char retry, fingeringdefined, offerupdatefingering;
 	long previous_note = 0, next_note = 0;
+	long previous_undefined_note = 0, next_undefined_note = 0;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
@@ -5532,6 +5572,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	{	//Prepare the dialog
 		retval = 0;
 
+		if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+			break;	//If it came to be that there is no longer a valid selected note, close the dialog
+
 		//Find the next/previous notes if applicable
 		previous_note = eof_track_fixup_previous_note(eof_song, eof_selected_track, eof_selection.current);
 		if(previous_note >= 0)
@@ -5550,6 +5593,26 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 		else
 		{
 			eof_pro_guitar_note_frets_dialog[32].flags = D_HIDDEN;	//Otherwise hide it
+		}
+
+		//Find the next/previous notes requiring finger definitions if applicable
+		previous_undefined_note = eof_previous_pro_guitar_note_needing_finger_definitions(tp, eof_selection.current);
+		if(previous_undefined_note >= 0)
+		{	//If there is a previous note lacking finger definitions
+			eof_pro_guitar_note_frets_dialog[33].flags = D_EXIT;		//Make the << button clickable
+		}
+		else
+		{
+			eof_pro_guitar_note_frets_dialog[33].flags = D_HIDDEN;	//Otherwise hide it
+		}
+		next_undefined_note = eof_next_pro_guitar_note_needing_finger_definitions(tp, eof_selection.current);
+		if(next_undefined_note >= 0)
+		{	//If there is a next note lacking finger definitions
+			eof_pro_guitar_note_frets_dialog[34].flags = D_EXIT;		//Make the >> button clickable
+		}
+		else
+		{
+			eof_pro_guitar_note_frets_dialog[34].flags = D_HIDDEN;	//Otherwise hide it
 		}
 
 		//Update the fret text boxes (listed from top to bottom as string 1 through string 6)
@@ -5944,7 +6007,25 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			np = tp->note[eof_selection.current];	//Update note pointer
 			eof_render();	//Redraw the screen
 		}
-	}while((retval == 28) || (retval == 30) || (retval == 32));	//Re-run this dialog if the user clicked previous, apply or next
+		else if(retval == 33)
+		{	//If user clicked << (next note without finger definitions)
+			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+			eof_selection.current = previous_undefined_note;		//Set the previous note with undefined fingerings as the currently selected note
+			eof_selection.multi[previous_undefined_note] = 1;	//Ensure the note selection includes the next note
+			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, previous_undefined_note) + eof_av_delay);	//Seek to that note
+			np = tp->note[eof_selection.current];	//Update note pointer
+			eof_render();	//Redraw the screen
+		}
+		else if(retval == 34)
+		{	//If user clicked >> (next note without finger definitions)
+			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+			eof_selection.current = next_undefined_note;	//Set the next note with undefined fingerings as the currently selected note
+			eof_selection.multi[next_undefined_note] = 1;	//Ensure the note selection includes the next note
+			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, next_undefined_note) + eof_av_delay);	//Seek to that note
+			np = tp->note[eof_selection.current];	//Update note pointer
+			eof_render();	//Redraw the screen
+		}
+	}while((retval == 28) || (retval == 30) || (retval == 32) || (retval == 33) || (retval == 34));	//Re-run this dialog if the user clicked previous, apply, next, << or >>
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -5955,6 +6036,44 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;	//Return OK selected
+}
+
+long eof_previous_pro_guitar_note_needing_finger_definitions(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
+{
+	unsigned long i;
+
+	if(!tp || (note >= tp->notes))
+		return -1;	//Invalid parameters
+
+	for(i = note; i > 0; i--)
+	{	//Starting from the specified note and going in reverse order
+		if(tp->note[i - 1]->type == tp->note[note]->type)
+		{	//If the previous note is in the same difficulty
+			if(eof_pro_guitar_note_fingering_valid(tp, i - 1, 0) != 1)
+				return i - 1;	//If this note doesn't have fingering fully defined, return it
+		}
+	}
+
+	return -1;
+}
+
+long eof_next_pro_guitar_note_needing_finger_definitions(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
+{
+	unsigned long i;
+
+	if(!tp || (note >= tp->notes))
+		return -1;	//Invalid parameters
+
+	for(i = note + 1; i < tp->notes; i++)
+	{	//Starting from the specified note
+		if(tp->note[i]->type == tp->note[note]->type)
+		{	//If the next note is in the same difficulty
+			if(eof_pro_guitar_note_fingering_valid(tp, i, 0) != 1)
+				return i;	//If this note doesn't have fingering fully defined, return it
+		}
+	}
+
+	return -1;
 }
 
 int eof_correct_chord_fingerings(void)

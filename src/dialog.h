@@ -10,6 +10,9 @@
 	#define EOF_LINUX_DISABLE D_DISABLED
 #endif
 
+#define EOF_SCRATCH_MENU_SIZE 30
+//A copy of each top level menu array of this number of elements will be created by eof_create_filtered_menu() to remove hidden menu items, since Allegro doesn't natively support D_HIDDEN for MENU objects
+
 extern char eof_etext[1024];
 extern char eof_etext2[1024];
 extern char eof_etext3[1024];
@@ -43,5 +46,10 @@ int eof_popup_dialog(DIALOG * dp, int n);
 void eof_color_dialog(DIALOG * dp, int fg, int bg);	//Applies the global foreground and background colors to the dialog
 
 int eof_unused_menu_function(void);	//A function that can be put into a dialog menu when the function will not be used (ie. copy from submenus that are pro guitar specific)
+
+int eof_create_filtered_menu(MENU *input_menu, MENU *output_menu, unsigned menu_size);
+	//A function that copies all non-hidden items (containing the D_HIDDEN flag) from the input menu into the output menu
+	//menu_size defines the number of elements the output menu is capable of storing
+	//returns zero on error
 
 #endif

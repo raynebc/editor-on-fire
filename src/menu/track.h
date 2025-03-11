@@ -2,8 +2,10 @@
 #define EOF_MENU_TRACK_H
 
 #include "../song.h"
+#include "../dialog.h"
 
 extern MENU eof_track_menu[];
+extern MENU eof_filtered_track_menu[EOF_SCRATCH_MENU_SIZE];
 extern MENU eof_track_rocksmith_menu[];
 extern MENU eof_track_proguitar_menu[];
 
