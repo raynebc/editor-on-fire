@@ -429,6 +429,7 @@ extern int         eof_disable_ini_export;
 extern int         eof_gh_import_sustain_threshold_prompt;
 extern int         eof_rs_import_all_handshapes;
 extern int         eof_rs2_export_version_8;
+extern int         eof_midi_export_enhanced_open_marker;
 extern int         eof_db_import_suppress_5nc_conversion;
 extern int         eof_warn_missing_bass_fhps;
 extern int         eof_4_fret_range;

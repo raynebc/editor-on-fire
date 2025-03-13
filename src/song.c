@@ -743,15 +743,6 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}
 	}
 
-	//Check to ensure that open notes don't conflict with other notes/statuses
-	for(i = 0; i < tp->notes; i++)
-	{	//For each note in the track
-		if(eof_legacy_guitar_note_is_open(sp, track, i))
-		{	//If this is an open note
-			tp->note[i]->note = 32;							//Clear all lanes except lane 6
-		}
-	}
-
 	//Update selection
 	for(i = 0; i < tp->notes; i++)
 	{	//For each note
@@ -8806,7 +8797,7 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 
 	thisflags = eof_get_note_flags(sp, track, note);	//Get the note's flags so it can be checked for "crazy" status
 	thisnote = eof_get_note_note(sp, track, note);		//Also get its note bitflag
-	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (thisflags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
+	if((sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (thisflags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
 	{	//If this is a pro guitar note and it has linknext status
 		effective_min_note_distance = 0;	//The note is allowed to extend all the way up to the next note
 	}

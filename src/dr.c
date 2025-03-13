@@ -885,6 +885,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 
 	//Cleanup
 	(void) pack_fclose(inf);
+	free(buffer);
 	eof_track_sort_notes(eof_song, eof_selected_track);
 
 	//Create drum rolls

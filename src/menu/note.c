@@ -6035,6 +6035,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	if(retval == 31)
+		return 0;	//Return user cancelation
+
 	return 1;	//Return OK selected
 }
 

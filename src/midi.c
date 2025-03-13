@@ -459,8 +459,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	long length, deltalength;				//Used to cap drum notes
 	char prodrums = 0;						//Tracks whether the drum track being written includes Pro drum notation
 	char expertplus = 0;					//Tracks whether an expert+.mid track should be created to hold the Expert+ drum track
-	unsigned char expertpluswritten = 0;	//Tracks whether an expert+.mid track has been written
-	char eventstrackwritten = 0;			//Tracks whether an events track has been written
+	unsigned char expertpluswritten = 0;		//Tracks whether an expert+.mid track has been written
+	char eventstrackwritten = 0;				//Tracks whether an events track has been written
 	char beattrackwritten = 0;				//Tracks whether a beat track has been written
 	unsigned long trackcounter = 0;			//Tracks the number of tracks to write to file
 	char trackctr;							//Used in the temp data creation to handle Expert+
@@ -600,6 +600,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		char restore_tech_view = 0;				//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 		char isghl = 0;							//Set to nonzero if the track is to be exported as a GHL track (non GHWT MIDI format, no export feature restrictions, track flag indicates GHL mode active)
 		char ghlname[EOF_NAME_LENGTH + 1 + 4];	//GHL tracks have a " GHL" suffix applied to their name during export
+		char write_enhanced_opens = 0;			//Set to nonzero if an "[ENHANCED_OPENS]" text event is defined anywhere in the track, or upon the encountering of the first legacy guitar open note/chord if the eof_midi_export_enhanced_open_marker preference is enabled
 
 		if(eof_get_track_size_normal(sp, j) == 0)	//If this track has no notes
 			continue;	//Skip the track
@@ -609,6 +610,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			continue;	//Skip the track
 		if(!featurerestriction && !format && eof_track_is_ghl_mode(sp, j))
 			isghl = 1;	//Note whether this track will export as a GHL track
+		if(eof_song_contains_event(sp, "[ENHANCED_OPENS]", j, 0, 1))
+			write_enhanced_opens = 1;	//Note that the current track has the enhanced opens modifier
 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting track \"%s\"", sp->track[j]->name);
 		eof_log(eof_log_string, 2);
@@ -848,13 +851,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						if(format == 1)
 						{	//If writing the GHWT MIDI variant
 							note = 31;	//Convert it to a 5 lane chord
-						}
-						else
-						{
-							if(note & ~32)
-							{	//If this note also has a gem on any lanes other than 6
-								note = 32;	//Clear all lanes except lane 6
-							}
 						}
 					}
 				}
@@ -1124,15 +1120,25 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						{	//If the open note has crazy status though
 							marker_length = 1;	//End the marker immediately to better suit Clone Hero's MIDI logic to ensure overlapped notes aren't converted to open strums
 						}
-						if(eof_song_contains_event(sp, "[ENHANCED_OPENS]", j, 0, 1))
-						{	//If the current track has the enhanced opens modifier, write it as a normal note
+						if(!write_enhanced_opens && eof_midi_export_enhanced_open_marker)
+						{	//If an "[ENHANCED_OPENS]" text event was not manually defined by the user, but the applicable export preference was enabled to use this notation
+							eof_log("\t! Adding missing [ENHANCED_OPENS] event", 1);
+							(void) eof_song_add_text_event(sp, 0, "[ENHANCED_OPENS]", j, 0, 1);	//Add it as a temporary event on the first beat in this track
+							write_enhanced_opens = 1;	//Ensure enhanced open notation will be used below
+						}
+
+						if(write_enhanced_opens)
+						{	//If enhanced open notes are being used, write it as 1 note below lane 1
 							eof_add_midi_event(deltapos, 0x90, midi_note_offset - 1, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset - 1, vel, 0);
 						}
 						else
 						{	//Otherwise write a sysex open note
-							eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
-							eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+							if(note == 32)
+							{	//If this is just an open note (not an open chord, which would contain at least one gem on a lane other than lane 6)
+								eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
+								eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+							}
 							eof_add_phase_shift_sysex_phrase(deltapos, deltapos + marker_length, type, 1);	//Write custom open strum bass phrase markers
 						}
 					}
@@ -2493,7 +2499,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			eventstrackwritten = 1;
 		}//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
 	}//Do not write an events track in a pro guitar upgrade MIDI
-	//Remove all temporary text events that were added for the sake of RBN compatibility
+
+	//Remove all temporary text events that were added during this export
 	for(i = sp->text_events; i > 0; i--)
 	{	//For each text event (in reverse order)
 		if(sp->text_event[i-1]->is_temporary)
@@ -2647,9 +2654,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	}
 
 /* write text event track if there are any events */
-	//If RBN compatibility is in effect, the events track will be populated by force with at least the required events
-	if((sp->text_events) || ((featurerestriction == 1) || (featurerestriction == 3)))
-	{	//If there are manually defined text events, or if writing a RBN2 or C3 compliant MIDI (which requires certain events)
+	if(eventstrackwritten)
+	{	//If the events track was built and is cited as present in the MIDI header's track count
 		(void) eof_dump_midi_track(eventtempname,fp);
 		if(expertpluswritten)
 		{
@@ -4211,6 +4217,12 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 				ppqn = (dataptr[eventindex]<<16) | (dataptr[eventindex+1]<<8) | dataptr[eventindex+2];	//Read the 3 byte big endian value
 ///				eventindex += 3;	//This updated value for eventindex is not used
 				lastppqn = ppqn;	//Remember this value
+				if(lastppqn == 0)
+				{	//If an invalid value was read
+					eof_destroy_tempo_list(anchorlist);	//Destroy list
+					eof_destroy_ts_list(tslist);
+					return 0;			//Return failure
+				}
 				temp = eof_add_to_tempo_list(eventptr->deltatime, eventptr->realtime + sp->beat[0]->fpos, 60000000.0/lastppqn, anchorlist);	//Store the tempo change, taking the MIDI delay into account
 				if(temp == NULL)
 				{	//Test the return value of eof_add_to_tempo_list()

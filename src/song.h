@@ -117,6 +117,7 @@
 #define EOF_NOTE_TFLAG_GENERIC2    524288	//This flag is reserved for generic purposes
 #define EOF_NOTE_TFLAG_SP_END      524288	//	Such as marking which notes are the last in a star power phrase during star power pathing
 #define EOF_NOTE_TFLAG_GRACE      1048576	//This flag will indicate that the note was defined in an imported guitar pro file as a before the beat grace note, which can be converted to flam notes in the case of a percussion track
+#define EOF_NOTE_TFLAG_OPEN_STRUM 2097152	//This flag will indicate that the note was imported via MIDI as a Sysex marked open strum marker, which will need to have its note mask converted to discard the lane 1 gem (a limitation of this Sysex notation is that it can't denote an open chord of just a lane 1 gem)
 
 
 ///Extended note flags

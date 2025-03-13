@@ -11,6 +11,7 @@ extern EOF_SONG *eof_song_qsort_events_ptr;
 EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long pos, char * text, unsigned long track, unsigned long flags, char is_temporary);
 	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.
 	//Track specifies which track this event will be associated with, or 0 or if it's not track specific.
+	//The provided flags are assigned to the new event, such as to define it as a floating text event or Rocksmith related event
 	//A boolean status is tracked to regard whether the event is considered temporary.
 	//Returns the newly allocated structure or NULL upon error
 void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offset, int dir);

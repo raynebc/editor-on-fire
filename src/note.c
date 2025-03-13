@@ -1182,7 +1182,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned long mask;	//Used to mask out colors in the for loop
 	unsigned long numlanes, tracknum;
 	long xoffset = 0;	//This will be used to draw bitmaps half a lane further left when the bass drum isn't rendering in a lane and drum gems render centered over fret lines instead of between them
-	int drawline;		//Set to nonzero if a bass drum style line is to be drawn for the gem, set to 2 if a smaller rectangle is to be drawn in the center of the larger one, to denote HOPO open notes
+	int drawline = 0;	//Set to nonzero if a bass drum style line is to be drawn for the gem
+	int drawlineonly = 1;	//Set to zero if the note could render as more than just a bass drum style line (ie. drum notes or open chords)
 	int linecol = eof_color_red;		//The color of the line to be drawn
 	int offset_y_3d = 0;	//If full height 3D preview is in effect, y coordinates will be shifted down by one panel height, otherwise will shift by 0
 
@@ -1258,412 +1259,418 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		notenote = eof_convert_drums_rock_note_mask(eof_song, track, notenum);
 	}
 
-	for(ctr = 0, mask = 1; ctr < eof_count_track_lanes(eof_song, track); ctr++, mask <<= 1)
-	{	//For each lane used in this note
-		//Determine if this gem is to be drawn as a 3D rectangle instead of a bitmap
-		if(!(notenote & mask))
-			continue;	//If this lane is not used, skip it
-
-		drawline = 0;	//Reset this condition
-		if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (mask == 1) && !render_bass_drum_in_lane)
-		{	//If this is a drum track, the bass drum gem is being drawn and it isn't being rendered in its own lane
-			drawline = 1;
-			if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
-				linecol = p ? eof_color_white : eof_color_silver;
-			else if(noteflags & EOF_DRUM_NOTE_FLAG_DBASS)
-			{	//Or if it is double bass
-				if(!eof_song->tags->double_bass_drum_disabled)	//If the user has not disabled expert+ bass drum notes
-					linecol = p ? makecol(255, 192, 192) : eof_color_red;	//Render it in red
-				else
-					linecol = p ? makecol(192, 192, 255) : eof_color_blue;	//Render it in blue
-			}
-			else										//Otherwise render it in the standard lane one color for the current color set
-				linecol = p ? eof_colors[0].hit : eof_colors[0].color;
-		}
-		else if(eof_render_3d_rs_chords && (eof_note_count_rs_lanes(eof_song, track, notenum, 2) >= 2) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) &&
-				((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (eof_note_has_high_chord_density(eof_song, track, notenum, 2))))
-		{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means
-			long prevnote = eof_track_fixup_previous_note(eof_song, track, notenum);
-
-			if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (!(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) && !(eof_get_note_eflags(eof_song, track, notenum) & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)))
-			{	//If this chord has "hi dens" status, or if it isn't marked with split or chordify statuses
-				drawline = 1;
-				if(!prevnote)
-				{	//If there was a previous note
-					EOF_PRO_GUITAR_TRACK * tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];	//Simplify
-
-					if(strcmp(eof_get_note_name(eof_song, track, prevnote), eof_get_note_name(eof_song, track, notenum)))
-					{	//If the previous note had a different name defined
-						drawline = 0;
-					}
-					if(eof_pro_guitar_note_compare_fingerings(tp->note[prevnote], tp->note[notenum]))
-					{	//If the previous note had a different chord fingering defined
-						drawline = 0;
-					}
-				}
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
-				{	//The high density status overrides all other conditions
-					drawline = 1;
-				}
-				if(drawline)
-				{	//If conditions were met to render this chord as a repeat line
-					ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
-					linecol = p ? eof_color_cyan : eof_color_dark_cyan;
-				}
-			}
-		}
-		else if(!eof_track_is_ghl_mode(eof_song, track) && (mask == 32) && eof_track_is_legacy_guitar(eof_song, track))
-		{	//If this is NOT a GHL style track and if drawing lane 6 of a legacy guitar track (renders similarly to a bass drum note)
-			if(eof_open_strum_enabled(track))
-			{	//If open strum is enabled for the track
-				drawline = 1;
-				if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
-					linecol = p ? eof_color_white : eof_color_silver;
-				else										//Otherwise render it in the standard lane six color for the current color set
-					linecol = p ? eof_colors[5].hit : eof_colors[5].color;
-			}
+	//Check whether a line is to be rendered for this note
+	if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (notenote & 1) && !render_bass_drum_in_lane)
+	{	//If this is a drum track, it includes a bass drum gem is being drawn and bass drum isn't being rendered in its own lane
+		drawline = 1;
+		drawlineonly = 0;	//Drum notes can have other gems render on top of the line
+		notenote--;		//Remove the bass drum gem so it isn't rendered in the for loop below
+		if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
+			linecol = p ? eof_color_white : eof_color_silver;
+		else if(noteflags & EOF_DRUM_NOTE_FLAG_DBASS)
+		{	//Or if it is double bass
+			if(!eof_song->tags->double_bass_drum_disabled)	//If the user has not disabled expert+ bass drum notes
+				linecol = p ? makecol(255, 192, 192) : eof_color_red;	//Render it in red
 			else
-			{
-				continue;	//Skip rendering this gem
+				linecol = p ? makecol(192, 192, 255) : eof_color_blue;	//Render it in blue
+		}
+		else										//Otherwise render it in the standard lane one color for the current color set
+			linecol = p ? eof_colors[0].hit : eof_colors[0].color;
+	}
+	else if(eof_render_3d_rs_chords && (eof_note_count_rs_lanes(eof_song, track, notenum, 2) >= 2) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) &&
+			((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (eof_note_has_high_chord_density(eof_song, track, notenum, 2))))
+	{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means
+		long prevnote = eof_track_fixup_previous_note(eof_song, track, notenum);
+
+		if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (!(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) && !(eof_get_note_eflags(eof_song, track, notenum) & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY)))
+		{	//If this chord has "hi dens" status, or if it isn't marked with split or chordify statuses
+			drawline = 1;
+			if(!prevnote)
+			{	//If there was a previous note
+				EOF_PRO_GUITAR_TRACK * tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];	//Simplify
+
+				if(strcmp(eof_get_note_name(eof_song, track, prevnote), eof_get_note_name(eof_song, track, notenum)))
+				{	//If the previous note had a different name defined
+					drawline = 0;
+				}
+				if(eof_pro_guitar_note_compare_fingerings(tp->note[prevnote], tp->note[notenum]))
+				{	//If the previous note had a different chord fingering defined
+					drawline = 0;
+				}
+			}
+			if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD)
+			{	//The high density status overrides all other conditions
+				drawline = 1;
+			}
+			if(drawline)
+			{	//If conditions were met to render this chord as a repeat line
+				ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
+				linecol = p ? eof_color_cyan : eof_color_dark_cyan;
 			}
 		}
-		else if(eof_track_is_ghl_mode(eof_song, track) && (noteflags & EOF_GUITAR_NOTE_FLAG_GHL_OPEN))
-		{	//If this is a GHL style track and the note is an open note
+	}
+	else if(!eof_track_is_ghl_mode(eof_song, track) && (notenote & 32) && eof_track_is_legacy_guitar(eof_song, track))
+	{	//If this is NOT a GHL style track, is a legacy guitar track and contains a gem on lane 6 (renders similarly to a bass drum note)
+		if(eof_open_strum_enabled(track))
+		{	//If open strum is enabled for the track
 			drawline = 1;
-			if(noteflags & EOF_NOTE_FLAG_SP)			//If this open note has star power, render it in silver
+			drawlineonly = 0;	//Open chords can have other gems render on top of the line
+			notenote -= 32;	//Remove the lane 6 gem so it doesn't render in the for loop below
+			if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
 				linecol = p ? eof_color_white : eof_color_silver;
+			else										//Otherwise render it in the standard lane six color for the current color set
+				linecol = p ? eof_colors[5].hit : eof_colors[5].color;
 		}
+	}
+	else if(eof_track_is_ghl_mode(eof_song, track) && (noteflags & EOF_GUITAR_NOTE_FLAG_GHL_OPEN))
+	{	//If this is a GHL style track and the note is an open note
+		drawline = 1;
+		if(noteflags & EOF_NOTE_FLAG_SP)			//If this open note has star power, render it in silver
+			linecol = p ? eof_color_white : eof_color_silver;
+	}
 
-		if(drawline)
-		{	//If rendering a line
-			rz = npos;
-			ez = npos + 14;
-			point[0] = ocd3d_project_x(bx - 10, rz);
+	//Render the line if applicable
+	if(drawline)
+	{	//If rendering a line
+		rz = npos;
+		ez = npos + 14;
+		point[0] = ocd3d_project_x(bx - 10, rz);
+		point[1] = ocd3d_project_y(200 + offset_y_3d, rz);
+		point[2] = ocd3d_project_x(bx - 10, ez);
+		point[3] = ocd3d_project_y(200 + offset_y_3d, ez);
+		point[4] = ocd3d_project_x(bx + 232, ez);
+		point[5] = point[3];
+		point[6] = ocd3d_project_x(bx + 232, rz);
+		point[7] = point[1];
+
+		if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
+		{	//If none of the coordinate projections failed
+			polygon(eof_window_3d->screen, 4, point, linecol);
+		}
+		if(noteflags & EOF_NOTE_FLAG_HOPO)
+		{	//If the note is a HOPO, ie. open note, render a smaller black rectangle inside the first
+			rz = npos + 5;
+			ez = npos + 9;
+			point[0] = ocd3d_project_x(bx - 10 + 15, rz);
 			point[1] = ocd3d_project_y(200 + offset_y_3d, rz);
-			point[2] = ocd3d_project_x(bx - 10, ez);
+			point[2] = ocd3d_project_x(bx - 10 + 15, ez);
 			point[3] = ocd3d_project_y(200 + offset_y_3d, ez);
-			point[4] = ocd3d_project_x(bx + 232, ez);
+			point[4] = ocd3d_project_x(bx + 232 - 15, ez);
 			point[5] = point[3];
-			point[6] = ocd3d_project_x(bx + 232, rz);
+			point[6] = ocd3d_project_x(bx + 232 - 15, rz);
 			point[7] = point[1];
 
 			if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
 			{	//If none of the coordinate projections failed
-				polygon(eof_window_3d->screen, 4, point, linecol);
-			}
-			if(noteflags & EOF_NOTE_FLAG_HOPO)
-			{	//If the note is a HOPO, ie. open note, render a smaller black rectangle inside the first
-				rz = npos + 5;
-				ez = npos + 9;
-				point[0] = ocd3d_project_x(bx - 10 + 15, rz);
-				point[1] = ocd3d_project_y(200 + offset_y_3d, rz);
-				point[2] = ocd3d_project_x(bx - 10 + 15, ez);
-				point[3] = ocd3d_project_y(200 + offset_y_3d, ez);
-				point[4] = ocd3d_project_x(bx + 232 - 15, ez);
-				point[5] = point[3];
-				point[6] = ocd3d_project_x(bx + 232 - 15, rz);
-				point[7] = point[1];
-
-				if((point[0] != -65536) && (point[1] != -65536) && (point[2] != -65536) && (point[3] != -65536) && (point[4] != -65536) && (point[6] != -65536))
-				{	//If none of the coordinate projections failed
-					polygon(eof_window_3d->screen, 4, point, eof_color_black);
-				}
+				polygon(eof_window_3d->screen, 4, point, eof_color_black);
 			}
 		}
-		else
-		{	//If rendering a bitmap
-			#define EOF_HALF_3D_IMAGE_WIDTH 24
-			#define EOF_3D_IMAGE_HEIGHT 48
+	}
 
-			//The full size (non HOPO) GHL gems are larger than the normal 5 lane gems
-			#define EOF_GHL_HALF_3D_IMAGE_WIDTH 36
-			#define EOF_GHL_3D_IMAGE_HEIGHT 72
+	//Render any gems using bitmaps if applicable
+	for(ctr = 0, mask = 1; ctr < eof_count_track_lanes(eof_song, track); ctr++, mask <<= 1)
+	{	//For each lane used in this note
+		if(drawline && drawlineonly)	//If this note rendered as a line and could not render with any other gems
+			break;				//Don't render any
 
-			unsigned lanenum = ctr;	//For non GHL modes, each fret generally get its own lane
-			unsigned long half_image_width;
-			unsigned long image_height;
-			double height_scale = 1.0;
+		//Determine if this gem is to be drawn as a 3D rectangle instead of a bitmap
+		if(!(notenote & mask))
+			continue;	//If this lane is not used, skip it
 
-			if(eof_track_is_ghl_mode(eof_song, track))
-			{	//If rendering a Guitar Hero Live style track
-				lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6, open notes are rendered with the if(drawline) block above
+		if((mask == 32) && !eof_track_is_ghl_mode(eof_song, track) && eof_track_is_legacy_guitar(eof_song, track) && !eof_open_strum_enabled(track))
+			continue;	//If this is a lane 6 gem in a legacy track, GHL mode is not enabled and open strum is not enabled, skip rendering this gem
 
-				if(noteflags & EOF_NOTE_FLAG_SP)
-				{	//If this is a SP note
-					if(ctr < 3)
-					{	//The first three lanes are black notes
-						unsigned long barremask = mask | (mask << 3);	//This represents the note mask of the gem and a gem 3 lanes higher
+		#define EOF_HALF_3D_IMAGE_WIDTH 24
+		#define EOF_3D_IMAGE_HEIGHT 48
 
-						if((notenote & barremask) == barremask)
-						{	//If this is to be rendered as a barre note
-							if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-							{	//Barre SP GHL slider
-								imagenum = EOF_IMAGE_NOTE_GHL_BARRE_SP_SLIDER;
-							}
-							else if(noteflags & EOF_NOTE_FLAG_HOPO)
-							{	//If this is a HOPO note
-								imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO;
-							}
-							else
-							{	//This is not a HOPO note
-								imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_SP_HIT : EOF_IMAGE_NOTE_GHL_BARRE_SP;
-							}
-							notenote &= ~barremask;		//Prevent drawing another gem for the other gem in the barre, since the barre note graphic already represents both
-						}
-						else if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-						{	//Black SP GHL slider
-							imagenum = EOF_IMAGE_NOTE_GHL_BLACK_SP_SLIDER;
-						}
-						else if(noteflags & EOF_NOTE_FLAG_HOPO)
-						{	//If this is a HOPO note
-							imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO;
-						}
-						else
-						{	//This is not a HOPO note
-							imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP;
-						}
-					}
-					else
-					{	//The next three lanes are white notes
-						if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-						{	//White SP GHL slider
-							imagenum = EOF_IMAGE_NOTE_GHL_WHITE_SP_SLIDER;
-						}
-						else if(noteflags & EOF_NOTE_FLAG_HOPO)
-						{	//If this is a HOPO note
-							imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO;
-						}
-						else
-						{	//This is not a HOPO note
-							imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP;
-						}
-					}
-				}
-				else
-				{	//This is not a SP note
+		//The full size (non HOPO) GHL gems are larger than the normal 5 lane gems
+		#define EOF_GHL_HALF_3D_IMAGE_WIDTH 36
+		#define EOF_GHL_3D_IMAGE_HEIGHT 72
+
+		unsigned lanenum = ctr;	//For non GHL modes, each fret generally get its own lane
+		unsigned long half_image_width;
+		unsigned long image_height;
+		double height_scale = 1.0;
+
+		if(eof_track_is_ghl_mode(eof_song, track))
+		{	//If rendering a Guitar Hero Live style track
+			lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6, open notes are rendered with the previous drawline logic
+
+			if(noteflags & EOF_NOTE_FLAG_SP)
+			{	//If this is a SP note
+				if(ctr < 3)
+				{	//The first three lanes are black notes
 					unsigned long barremask = mask | (mask << 3);	//This represents the note mask of the gem and a gem 3 lanes higher
 
-					if((ctr < 3) && ((notenote & barremask) == barremask))
+					if((notenote & barremask) == barremask)
 					{	//If this is to be rendered as a barre note
 						if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-						{	//Barre GHL slider
-							imagenum = EOF_IMAGE_NOTE_GHL_BARRE_SLIDER;
+						{	//Barre SP GHL slider
+							imagenum = EOF_IMAGE_NOTE_GHL_BARRE_SP_SLIDER;
 						}
 						else if(noteflags & EOF_NOTE_FLAG_HOPO)
 						{	//If this is a HOPO note
-							imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BARRE_HOPO;
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BARRE_SP_HOPO;
 						}
 						else
 						{	//This is not a HOPO note
-							imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_HIT : EOF_IMAGE_NOTE_GHL_BARRE;
+							imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_SP_HIT : EOF_IMAGE_NOTE_GHL_BARRE_SP;
 						}
 						notenote &= ~barremask;		//Prevent drawing another gem for the other gem in the barre, since the barre note graphic already represents both
 					}
-					else
-					{	//Render a normal, non SP note
-						if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
-						{	//Slider
-							imagenum = eof_colors[ctr].slider3d;
-						}
-						else if(noteflags & EOF_NOTE_FLAG_HOPO)
-						{	//If this is a HOPO note
-							imagenum = p ? eof_colors[ctr].hoponotehit3d : eof_colors[ctr].hoponote3d;
-						}
-						else
-						{	//This is not a HOPO note
-							imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
-						}
-					}
-				}
-			}//If rendering a Guitar Hero Live style track
-			else if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If rendering a drum note
-				if(eof_track_is_drums_rock_mode(eof_song, track))
-				{	//Drums Rock mode render logic
-					if((mask == 2) || (mask == 16))
-					{	//Lanes 2 (blue) and 5 (green) always display as cymbals
-						imagenum = p ? eof_colors[ctr].cymbalhit3d : eof_colors[ctr].cymbal3d;
-					}
-					else
-					{	//All other lanes always display as non cymbals
-						imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
-					}
-				}
-				else
-				{	//Normal drum render logic
-					if(((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
-					{	//If this is a cymbal note, render with the cymbal image
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this cymbal note is star power, render it in silver
-							imagenum = p ? EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT : EOF_IMAGE_NOTE_WHITE_CYMBAL;
-						}
-						else
-						{	//Otherwise render in the appropriate color
-							imagenum = p ? eof_colors[ctr].cymbalhit3d : eof_colors[ctr].cymbal3d;
-						}
-					}
-					else
-					{	//Otherwise render with the standard note image
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this drum note is star power, render it in silver
-							imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT: EOF_IMAGE_NOTE_WHITE;
-						}
-						else
-						{	//Otherwise render in the appropriate color
-							imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
-						}
-					}
-				}
-			}//If rendering a drum note
-			else if(track == EOF_TRACK_DANCE)
-			{	//If rendering a dance note
-				imagenum = p ? eof_colors[ctr].arrowhit3d : eof_colors[ctr].arrow3d;
-			}
-			else
-			{	//If rendering a normal note
-				unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
-
-				imagenum = 0;
-				if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
-				{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
-					EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
-
-					if(tp->note[notenum]->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
-					{	//If the note is tapped
-						imagenum = p ? EOF_IMAGE_NOTE_BLACK_HIT : EOF_IMAGE_NOTE_BLACK;	//Draw the note in black
-					}
-					else
-					{
-						unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(tp, notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
-
-						if(fingering < 6)
-						{	//If the finger was determined
-							color = fingering;	//Use the fingering's appropriate color
-						}
-						else
-						{	//Otherwise use the default silvering coloring
-							noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
-						}
-					}
-				}
-
-				if(!imagenum)
-				{	//If the appropriate 3D image wasn't determined yet
-					if(eof_track_is_legacy_guitar(eof_song, track) && (noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
-					{	//If the specified note is a slider note
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If it is also an SP note
-							imagenum = EOF_IMAGE_NOTE_WHITE_SLIDER;
-						}
-						else
-						{
-							imagenum = eof_colors[color].slider3d;
-						}
+					else if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+					{	//Black SP GHL slider
+						imagenum = EOF_IMAGE_NOTE_GHL_BLACK_SP_SLIDER;
 					}
 					else if(noteflags & EOF_NOTE_FLAG_HOPO)
 					{	//If this is a HOPO note
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this is also a SP note
-							imagenum = p ? EOF_IMAGE_NOTE_HWHITE_HIT : EOF_IMAGE_NOTE_HWHITE;
-						}
-						else
-						{
-							imagenum = p ? eof_colors[color].hoponotehit3d : eof_colors[color].hoponote3d;
-						}
+						imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP_HOPO;
 					}
 					else
 					{	//This is not a HOPO note
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this is an SP note
-							imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT : EOF_IMAGE_NOTE_WHITE;
-						}
-						else
-						{
-							imagenum = p ? eof_colors[color].notehit3d : eof_colors[color].note3d;
-						}
+						imagenum = p ? EOF_IMAGE_NOTE_GHL_BLACK_SP_HIT : EOF_IMAGE_NOTE_GHL_BLACK_SP;
 					}
-				}//If the appropriate 3D image wasn't determined yet
-			}//If rendering a normal note
-
-			//Render the note
-			if(eof_full_height_3d_preview)
-			{	//If full height 3D preview is in effect, stretch the gems to double height to make them look less squished
-				BITMAP **dest_bitmap;	//This will refer to either stretch_bitmap or hopo_stretch_bitmap accordingly
-
-				//Re-use either the normal or HOPO size bitmaps from a previous call to eof_note_draw_3d() where possible to reduce overhead
-				if(noteflags & EOF_NOTE_FLAG_HOPO)
-				{	//If the note being rendered is a HOPO note
-					dest_bitmap = &eof_hopo_stretch_bitmap;
 				}
 				else
-				{
-					dest_bitmap = &eof_stretch_bitmap;
-				}
-				height_scale = (double)eof_window_3d->screen->h / eof_window_3d->screen->w;
-				image_height = ((double)eof_image[imagenum]->h * height_scale) + 0.5;	//Scale the image height based on the 3D window dimensions to try to retain a correct aspect ratio
-
-				if(eof_full_screen_3d)
-				{	//The full screen 3D feature makes the notes look even more squished
-					image_height *= 2;	//Make the notes even taller
-				}
-				half_image_width = eof_image[imagenum]->w / 2;
-				if(((*dest_bitmap) == NULL) || ((*dest_bitmap)->w != eof_image[imagenum]->w) || ((*dest_bitmap)->h != image_height))
-				{	//If the temporary bitmap must be recreated to store the image
-					if(*dest_bitmap != NULL)
-						destroy_bitmap(*dest_bitmap);
-					*dest_bitmap = create_bitmap(eof_image[imagenum]->w, image_height);
-					eof_log("\t\tRebuilding 3D stretched image cache", 3);
-				}
-
-				if(*dest_bitmap)
-				{	//If the bitmap was created or can be reused
-					stretch_blit(eof_image[imagenum], *dest_bitmap, 0, 0, eof_image[imagenum]->w, eof_image[imagenum]->h, 0, 0, (*dest_bitmap)->w, (*dest_bitmap)->h);
-					ocd3d_draw_bitmap(eof_window_3d->screen, *dest_bitmap, xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
+				{	//The next three lanes are white notes
+					if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+					{	//White SP GHL slider
+						imagenum = EOF_IMAGE_NOTE_GHL_WHITE_SP_SLIDER;
+					}
+					else if(noteflags & EOF_NOTE_FLAG_HOPO)
+					{	//If this is a HOPO note
+						imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP_HOPO;
+					}
+					else
+					{	//This is not a HOPO note
+						imagenum = p ? EOF_IMAGE_NOTE_GHL_WHITE_SP_HIT : EOF_IMAGE_NOTE_GHL_WHITE_SP;
+					}
 				}
 			}
 			else
-			{	//Normal logic
-				image_height = eof_image[imagenum]->h;
-				half_image_width = eof_image[imagenum]->w / 2;
-				ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
+			{	//This is not a SP note
+				unsigned long barremask = mask | (mask << 3);	//This represents the note mask of the gem and a gem 3 lanes higher
+
+				if((ctr < 3) && ((notenote & barremask) == barremask))
+				{	//If this is to be rendered as a barre note
+					if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+					{	//Barre GHL slider
+						imagenum = EOF_IMAGE_NOTE_GHL_BARRE_SLIDER;
+					}
+					else if(noteflags & EOF_NOTE_FLAG_HOPO)
+					{	//If this is a HOPO note
+						imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_HOPO_HIT : EOF_IMAGE_NOTE_GHL_BARRE_HOPO;
+					}
+					else
+					{	//This is not a HOPO note
+						imagenum = p ? EOF_IMAGE_NOTE_GHL_BARRE_HIT : EOF_IMAGE_NOTE_GHL_BARRE;
+					}
+					notenote &= ~barremask;		//Prevent drawing another gem for the other gem in the barre, since the barre note graphic already represents both
+				}
+				else
+				{	//Render a normal, non SP note
+					if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+					{	//Slider
+						imagenum = eof_colors[ctr].slider3d;
+					}
+					else if(noteflags & EOF_NOTE_FLAG_HOPO)
+					{	//If this is a HOPO note
+						imagenum = p ? eof_colors[ctr].hoponotehit3d : eof_colors[ctr].hoponote3d;
+					}
+					else
+					{	//This is not a HOPO note
+						imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
+					}
+				}
+			}
+		}//If rendering a Guitar Hero Live style track
+		else if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If rendering a drum note
+			if(eof_track_is_drums_rock_mode(eof_song, track))
+			{	//Drums Rock mode render logic
+				if((mask == 2) || (mask == 16))
+				{	//Lanes 2 (blue) and 5 (green) always display as cymbals
+					imagenum = p ? eof_colors[ctr].cymbalhit3d : eof_colors[ctr].cymbal3d;
+				}
+				else
+				{	//All other lanes always display as non cymbals
+					imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
+				}
+			}
+			else
+			{	//Normal drum render logic
+				if(((noteflags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_DRUM_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_DRUM_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
+				{	//If this is a cymbal note, render with the cymbal image
+					if(noteflags & EOF_NOTE_FLAG_SP)
+					{	//If this cymbal note is star power, render it in silver
+						imagenum = p ? EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT : EOF_IMAGE_NOTE_WHITE_CYMBAL;
+					}
+					else
+					{	//Otherwise render in the appropriate color
+						imagenum = p ? eof_colors[ctr].cymbalhit3d : eof_colors[ctr].cymbal3d;
+					}
+				}
+				else
+				{	//Otherwise render with the standard note image
+					if(noteflags & EOF_NOTE_FLAG_SP)
+					{	//If this drum note is star power, render it in silver
+						imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT: EOF_IMAGE_NOTE_WHITE;
+					}
+					else
+					{	//Otherwise render in the appropriate color
+						imagenum = p ? eof_colors[ctr].notehit3d : eof_colors[ctr].note3d;
+					}
+				}
+			}
+		}//If rendering a drum note
+		else if(track == EOF_TRACK_DANCE)
+		{	//If rendering a dance note
+			imagenum = p ? eof_colors[ctr].arrowhit3d : eof_colors[ctr].arrow3d;
+		}
+		else
+		{	//If rendering a normal note
+			unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
+
+			imagenum = 0;
+			if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+			{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
+				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+
+				if(tp->note[notenum]->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+				{	//If the note is tapped
+					imagenum = p ? EOF_IMAGE_NOTE_BLACK_HIT : EOF_IMAGE_NOTE_BLACK;	//Draw the note in black
+				}
+				else
+				{
+					unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(tp, notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+
+					if(fingering < 6)
+					{	//If the finger was determined
+						color = fingering;	//Use the fingering's appropriate color
+					}
+					else
+					{	//Otherwise use the default silvering coloring
+						noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
+					}
+				}
 			}
 
-			if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-			{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
-				BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Allow one extra character's width for padding
-				if(fretbmp != NULL)
-				{	//Render the bitmap on top of the 3D note and then destroy the bitmap
-					if(eof_full_height_3d_preview)
-					{	//If the fret number bitmap should be scaled also
-						BITMAP *scaledbmp = create_bitmap(fretbmp->w, (double)fretbmp->h * height_scale);
-						if(scaledbmp)
-						{	//If the scaled bitmap was created
-							stretch_blit(fretbmp, scaledbmp, 0, 0, fretbmp->w, fretbmp->h, 0, 0, scaledbmp->w, scaledbmp->h);
-							destroy_bitmap(fretbmp);
-							fretbmp = scaledbmp;
-						}
+			if(!imagenum)
+			{	//If the appropriate 3D image wasn't determined yet
+				if(eof_track_is_legacy_guitar(eof_song, track) && (noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+				{	//If the specified note is a slider note
+					if(noteflags & EOF_NOTE_FLAG_SP)
+					{	//If it is also an SP note
+						imagenum = EOF_IMAGE_NOTE_WHITE_SLIDER;
 					}
-					ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[lanenum] - 8, 200 - (image_height / 2) + offset_y_3d, npos);
-					destroy_bitmap(fretbmp);
-				}
-			}
-			else if(track == EOF_TRACK_DRUM_PS)
-			{	//If this was a note in the Phase Shift drum track
-				if(	((mask == 4) && (noteflags & EOF_DRUM_NOTE_FLAG_Y_COMBO)) ||
-					((mask == 8) && (noteflags & EOF_DRUM_NOTE_FLAG_B_COMBO)) ||
-					((mask == 16) && (noteflags & EOF_DRUM_NOTE_FLAG_G_COMBO)))
-				{	//If the gem just drawn is a tom/cymbal combo
-					int x, y, x2;
-					x = ocd3d_project_x(xchart[lanenum] - xoffset, npos);
-					y = ocd3d_project_y(200 - (image_height / 4) + offset_y_3d, npos);
-					x2 = ocd3d_project_x(xchart[lanenum] + (xchart[1] - xchart[0]) - xoffset, npos);	//The x coordinate one lane over
-					if((x != -65536) && (y != -65536))
-					{	//If none of the coordinate projections failed
-						circlefill(eof_window_3d->screen, x, y, (x2 - x) / 6, eof_color_black);	//Draw a large dot in the center of the cymbal's 3D image
+					else
+					{
+						imagenum = eof_colors[color].slider3d;
 					}
 				}
+				else if(noteflags & EOF_NOTE_FLAG_HOPO)
+				{	//If this is a HOPO note
+					if(noteflags & EOF_NOTE_FLAG_SP)
+					{	//If this is also a SP note
+						imagenum = p ? EOF_IMAGE_NOTE_HWHITE_HIT : EOF_IMAGE_NOTE_HWHITE;
+					}
+					else
+					{
+						imagenum = p ? eof_colors[color].hoponotehit3d : eof_colors[color].hoponote3d;
+					}
+				}
+				else
+				{	//This is not a HOPO note
+					if(noteflags & EOF_NOTE_FLAG_SP)
+					{	//If this is an SP note
+						imagenum = p ? EOF_IMAGE_NOTE_WHITE_HIT : EOF_IMAGE_NOTE_WHITE;
+					}
+					else
+					{
+						imagenum = p ? eof_colors[color].notehit3d : eof_colors[color].note3d;
+					}
+				}
+			}//If the appropriate 3D image wasn't determined yet
+		}//If rendering a normal note
+
+		//Render the note
+		if(eof_full_height_3d_preview)
+		{	//If full height 3D preview is in effect, stretch the gems to double height to make them look less squished
+			BITMAP **dest_bitmap;	//This will refer to either stretch_bitmap or hopo_stretch_bitmap accordingly
+
+			//Re-use either the normal or HOPO size bitmaps from a previous call to eof_note_draw_3d() where possible to reduce overhead
+			if(noteflags & EOF_NOTE_FLAG_HOPO)
+			{	//If the note being rendered is a HOPO note
+				dest_bitmap = &eof_hopo_stretch_bitmap;
 			}
-		}//If rendering a bitmap
+			else
+			{
+				dest_bitmap = &eof_stretch_bitmap;
+			}
+			height_scale = (double)eof_window_3d->screen->h / eof_window_3d->screen->w;
+			image_height = ((double)eof_image[imagenum]->h * height_scale) + 0.5;	//Scale the image height based on the 3D window dimensions to try to retain a correct aspect ratio
+
+			if(eof_full_screen_3d)
+			{	//The full screen 3D feature makes the notes look even more squished
+				image_height *= 2;	//Make the notes even taller
+			}
+			half_image_width = eof_image[imagenum]->w / 2;
+			if(((*dest_bitmap) == NULL) || ((*dest_bitmap)->w != eof_image[imagenum]->w) || ((*dest_bitmap)->h != image_height))
+			{	//If the temporary bitmap must be recreated to store the image
+				if(*dest_bitmap != NULL)
+					destroy_bitmap(*dest_bitmap);
+				*dest_bitmap = create_bitmap(eof_image[imagenum]->w, image_height);
+				eof_log("\t\tRebuilding 3D stretched image cache", 3);
+			}
+
+			if(*dest_bitmap)
+			{	//If the bitmap was created or can be reused
+				stretch_blit(eof_image[imagenum], *dest_bitmap, 0, 0, eof_image[imagenum]->w, eof_image[imagenum]->h, 0, 0, (*dest_bitmap)->w, (*dest_bitmap)->h);
+				ocd3d_draw_bitmap(eof_window_3d->screen, *dest_bitmap, xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
+			}
+		}
+		else
+		{	//Normal logic
+			image_height = eof_image[imagenum]->h;
+			half_image_width = eof_image[imagenum]->w / 2;
+			ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
+		}
+
+		if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
+			BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Allow one extra character's width for padding
+			if(fretbmp != NULL)
+			{	//Render the bitmap on top of the 3D note and then destroy the bitmap
+				if(eof_full_height_3d_preview)
+				{	//If the fret number bitmap should be scaled also
+					BITMAP *scaledbmp = create_bitmap(fretbmp->w, (double)fretbmp->h * height_scale);
+					if(scaledbmp)
+					{	//If the scaled bitmap was created
+						stretch_blit(fretbmp, scaledbmp, 0, 0, fretbmp->w, fretbmp->h, 0, 0, scaledbmp->w, scaledbmp->h);
+						destroy_bitmap(fretbmp);
+						fretbmp = scaledbmp;
+					}
+				}
+				ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[lanenum] - 8, 200 - (image_height / 2) + offset_y_3d, npos);
+				destroy_bitmap(fretbmp);
+			}
+		}
+		else if(track == EOF_TRACK_DRUM_PS)
+		{	//If this was a note in the Phase Shift drum track
+			if(	((mask == 4) && (noteflags & EOF_DRUM_NOTE_FLAG_Y_COMBO)) ||
+				((mask == 8) && (noteflags & EOF_DRUM_NOTE_FLAG_B_COMBO)) ||
+				((mask == 16) && (noteflags & EOF_DRUM_NOTE_FLAG_G_COMBO)))
+			{	//If the gem just drawn is a tom/cymbal combo
+				int x, y, x2;
+				x = ocd3d_project_x(xchart[lanenum] - xoffset, npos);
+				y = ocd3d_project_y(200 - (image_height / 4) + offset_y_3d, npos);
+				x2 = ocd3d_project_x(xchart[lanenum] + (xchart[1] - xchart[0]) - xoffset, npos);	//The x coordinate one lane over
+				if((x != -65536) && (y != -65536))
+				{	//If none of the coordinate projections failed
+					circlefill(eof_window_3d->screen, x, y, (x2 - x) / 6, eof_color_black);	//Draw a large dot in the center of the cymbal's 3D image
+				}
+			}
+		}
 	}//For each lane used in this note
 
 	if(eof_hide_note_names)
@@ -2314,6 +2321,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{	//An GHL open note
 			buffer[index++] = 'O';
 		}
+		else if(!eof_track_is_ghl_mode(eof_song, track) && (eof_get_note_note(eof_song, track, note) & 32))
+		{	//An open note/chord in a non GHL track
+			buffer[index++] = 'O';
+		}
 		if(flags & EOF_NOTE_FLAG_F_HOPO)
 		{	//If the note is a forced HOPO
 			buffer[index++] = 'h';
@@ -2947,7 +2958,7 @@ int eof_legacy_guitar_note_is_open(EOF_SONG *sp, unsigned long track, unsigned l
 	else
 	{	//The specified note is in a non GHL track
 		if(eof_get_note_note(sp, track, note) & 32)
-			return 1;	//A note containing a gem on lane 6 is considered an open note
+			return 1;	//A note containing a gem on lane 6 is considered an open note/chord
 	}
 
 	return 0;

@@ -406,7 +406,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	unsigned long first_note;
 	unsigned long hopo_on_pos[4] = {0};		//Used for forced HOPO On parsing
-	unsigned long hopo_off_pos[4] = {0};	//Used for forced HOPO Off parsing
+	unsigned long hopo_off_pos[4] = {0};		//Used for forced HOPO Off parsing
+	unsigned long enhanced_open_pos[4] = {0};	//Used for enhanced open parsing
 	int hopodiff = 0;						//Used for forced HOPO On/Off parsing
 	unsigned long strumpos[4] = {0};	//Used for pro guitar strum direction parsing
 	char strumtype[4] = {0};			//Used for pro guitar strum direction parsing
@@ -414,7 +415,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned long arpegpos[4] = {0};	//Used for pro guitar arpeggio parsing
 	int arpegdiff;						//Used for pro guitar arpeggio parsing
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
-	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
+	unsigned long tracknum;			//Used to de-obfuscate the legacy track number
 	int phrasediff;						//Used for parsing Sysex phrase markers
 	int slidediff;						//Used for parsing slide markers
 	unsigned char slidevelocity[4] = {0};	//Used for parsing slide markers
@@ -441,6 +442,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	eof_work_midi = load_midi(fn);
 	if(!eof_work_midi)
 	{
+		eof_log("\tAllegro failed to import the MIDI", 1);
 		return 0;
 	}
 
@@ -2055,7 +2057,28 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							}
 						}
 						else
-						{	/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
+						{	/* store forced HOPO and enhanced open chord markers, when the note off for this marker occurs, search for note with same position and apply it to that note */
+							//Enhanced open chords are marked as lane 1 - 1
+							if(midinote == 60 - 1)
+							{
+								diff = -1;	//Enhanced open markers will not be processed as regular gems
+								enhanced_open_pos[0] = event_realtime;
+							}
+							else if(midinote == 72 - 1)
+							{
+								diff = -1;	//Enhanced open markers will not be processed as regular gems
+								enhanced_open_pos[1] = event_realtime;
+							}
+							else if(midinote == 84 - 1)
+							{
+								diff = -1;	//Enhanced open markers will not be processed as regular gems
+								enhanced_open_pos[2] = event_realtime;
+							}
+							else if(midinote == 96 - 1)
+							{
+								diff = -1;	//Enhanced open markers will not be processed as regular gems
+								enhanced_open_pos[3] = event_realtime;
+							}
 							//Forced HOPO on are marked as lane 1 + 5
 							if(midinote == 60 + 5)
 							{
@@ -2269,8 +2292,64 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
 						}
 						else
-						{	/* detect forced HOPO */
+						{	/* detect forced HOPO and enhanced open markers */
 							unsigned long *hopo_pos = NULL;	//Will be set to point to hopo_on_pos[] or hopo_off_pos[] if appropriate
+							unsigned char enhanced_open_diff = 0xFF;		//Will be set to a valid difficulty number if the marker is for an enhanced open chord
+
+							//Enhanced open chords are marked as lane 1 - 1
+							if(midinote == 60 - 1)
+							{
+								enhanced_open_diff = 0;
+							}
+							else if(midinote == 72 - 1)
+							{
+								enhanced_open_diff = 1;
+							}
+							else if(midinote == 84 - 1)
+							{
+								enhanced_open_diff = 2;
+							}
+							else if(midinote == 96 - 1)
+							{
+								enhanced_open_diff = 3;
+							}
+							if(enhanced_open_diff < 4)
+							{	//If the note off event was associated with the ending of an enhanced open chord marker
+								char enhanced_open_gems_found = 0;	//Track whether gems were found within the marker
+
+								sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+								tracknum = sp->track[picked_track]->tracknum;
+								sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+								for(k = note_count[picked_track]; k > first_note; k--)
+								{	//Check (in reverse) for each note that has been imported
+									if((eof_get_note_type(sp, picked_track, k - 1) == enhanced_open_diff) && (eof_get_note_pos(sp, picked_track, k - 1) >= enhanced_open_pos[enhanced_open_diff]) && (eof_get_note_pos(sp, picked_track, k - 1) <= event_realtime))
+									{	//If the note is in the same difficulty as the enhanced open chord phrase, and its timestamp falls between the enhanced open chord On/Off marker
+										unsigned long notenote = eof_get_note_note(sp, picked_track, k - 1);
+
+										notenote |= 32;	//Toggle on lane 6 for this note
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) into enhanced open chord (Mask = %u)", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1) | 32);
+										eof_log(eof_log_string, 3);
+										eof_set_note_note(sp, picked_track, k - 1, notenote);
+										enhanced_open_gems_found = 1;
+									}
+								}
+								if(!enhanced_open_gems_found)
+								{	//Special case:  If there are no gems within the scope of this marker, it indicates an open strum
+									lane = 5;	//Set the conditions for the logic below to create a gem on lane 6
+									diff = enhanced_open_diff;
+									notenum = note_count[picked_track];
+									if(notenum < EOF_MAX_NOTES)
+									{	//If the track's capacity has not been exceeded, add the note for this open strum and allow the logic further below set the length
+										eof_set_note_note(sp, picked_track, notenum, lane_chart[lane]);
+										eof_set_note_pos(sp, picked_track, notenum, event_realtime);
+										eof_set_note_midi_pos(sp, picked_track, notenum, event_miditime);
+										eof_set_note_length(sp, picked_track, notenum, 0);
+										eof_set_note_flags(sp, picked_track, notenum, 0);
+										eof_set_note_type(sp, picked_track, notenum, diff);
+										note_count[picked_track]++;
+									}
+								}
+							}
 
 							//Forced HOPO on are marked as lane 1 + 5
 							if(midinote == 60 + 5)
@@ -2499,8 +2578,9 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 												for(k = first_note; k < note_count[picked_track]; k++)
 												{	//Check for each note that has been imported
 													unsigned long notepos = eof_get_note_pos(sp, picked_track, k);
-													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_note(sp, picked_track, k) == 1))
-													{	//If the note is in the same difficulty as the open strum phrase and it is a lane 1 gem
+													unsigned long notenote = eof_get_note_note(sp, picked_track, k);
+													if(eof_get_note_type(sp, picked_track, k) == phrasediff)
+													{	//If the note is in the same difficulty as the open strum phrase
 														if((notepos >= openstrumpos[phrasediff]) && (notepos <= event_realtime))
 														{	//If the note is within the phrase on and off marker
 															if(!first)
@@ -2531,16 +2611,23 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 
 															if((nonstandard_open_strum_marker_prompt != 2) || (notepos == firstpos))
 															{	//If this note isn't being excluded from being marked as an open note as per the above prompt
-																(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to have a note mask of 33", k, eof_get_note_type(sp, picked_track, k), notepos, eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
+																(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u, Length=%ld) to include lane 6 gem", k, eof_get_note_type(sp, picked_track, k), notepos, eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
 																eof_log(eof_log_string, 3);
 
-																eof_set_note_note(sp, picked_track, k, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
+																if(notenote == 1)
+																{	//Special case:  Since Sysex open strums required a lane 1 gem to mark the note, it can't be interpreted as a lane 1 open chord (what would be a lane 1 + lane 6 combo note)
+																	unsigned long notetflags = eof_get_note_tflags(sp, picked_track, k);
+																	notetflags |= EOF_NOTE_TFLAG_OPEN_STRUM;
+																	eof_set_note_tflags(sp, picked_track, k, notetflags);	//Track that this note will need to be converted to just a lane 6 gem after import, lane 1 must be kept until the end event for the note is processed properly
+																}
+																notenote |= 32;	//Toggle on lane 6 for this note
+																eof_set_note_note(sp, picked_track, k, notenote);
 																sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 																tracknum = sp->track[picked_track]->tracknum;
 																sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
 															}
 														}//If the note is within the phrase on and off marker
-													}//If the note is in the same difficulty as the open strum phrase and it is a lane 1 gem
+													}//If the note is in the same difficulty as the open strum phrase
 												}//Check for each note that has been imported
 											}//If not importing into a dance track
 										}
@@ -3871,6 +3958,29 @@ eof_log("\tThird pass complete", 1);
 	for(i = 1; i < sp->tracks; i++)
 	{	//For each track
 		eof_track_find_crazy_notes(sp, i, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status or merge into chords as appropriate)
+	}
+
+//Check for imported Sysex open strum notes and correct their note masks, run this at the end of the import to ensure the MIDI timing stays intact for the eof_song_check_unsnapped_chords() usage above
+	eof_sort_notes(sp);	//This check requires that notes at the same timestamp have been combined
+	eof_fixup_notes(sp);
+	for(i = 0; i < tracks; i++)
+	{	//For each imported track
+		if(eof_track_is_legacy_guitar(sp, i))
+		{	//If the track is a legacy guitar/bass track
+			for(j = 0; j < eof_get_track_size(sp, i); j++)
+			{	//For each note in the track
+				if(eof_get_note_note(sp, i, j) == 33)
+				{	//If this is a lane 1 and 6 chord
+					unsigned tflags = eof_get_note_tflags(sp, i, j);
+					if(tflags & EOF_NOTE_TFLAG_OPEN_STRUM)
+					{	//If the note is interpreted as an open strum note and not an open chord
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%s cleanup note #%lu (Diff=%u, Pos=%lu, Mask=%u) to remove gems other than lane 6", sp->track[i]->name, j, eof_get_note_type(sp, i, j), eof_get_note_pos(sp, i, j), eof_get_note_note(sp, i, j));
+						eof_log(eof_log_string, 3);
+						eof_set_note_note(sp, i, j, 32);	//Remove all gems except lane 6
+					}
+				}
+			}
+		}
 	}
 
 //#ifdef EOF_DEBUG_MIDI_IMPORT
