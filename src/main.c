@@ -1495,7 +1495,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	char restore_tech_view = 0;
 
-	eof_log("eof_determine_phrase_status() entered", 2);
+	eof_log("eof_determine_phrase_status() entered", 3);
 
 	if(!sp || (track >= sp->tracks) || !track)
 		return;	//Invalid parameters

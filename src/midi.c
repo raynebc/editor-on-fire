@@ -8,6 +8,7 @@
 #include "midi_import.h"	//For eof_parse_var_len()
 #include "mix.h"	//For eof_set_seek_position()
 #include "rs.h"		//For automated fret hand position generation functions
+#include "silence.h"	//For save_wav()
 #include "song.h"
 #include "undo.h"
 #include "utility.h"
@@ -3259,6 +3260,438 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 	eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 	eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+
+	return 1;	//Return success
+}
+
+int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char diff, char *fn)
+{
+	unsigned char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
+	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
+	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
+	PACKFILE * fp;
+	unsigned long i, k, bitmask, deltapos, deltalength;
+	unsigned long delta = 0, nextdeltapos;
+	int vel = 79, channel = 0;			//Immerrock seems to use velocity 79 for the notes
+	unsigned long lastdelta=0;			//Keeps track of the last anchor's absolute delta time
+	unsigned long totaltrackcounter = 0;	//Tracks the number of tracks to write to file
+	EOF_MIDI_TS_LIST *tslist=NULL;		//List containing TS changes
+	EOF_MIDI_KS_LIST *kslist;
+	char notetempname[25] = {0};	//The temporary file created to store the binary content for the note MIDI track
+	char tempotempname[30];
+	unsigned char pitchmask, pitches[6] = {0};
+	char notename[EOF_NAME_LENGTH+1] = {0};
+	char *arrangement_name;
+	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
+	int lastevent = 0;	//Track the last event written so running status can be utilized
+	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
+	char has_notes = 0;		//Track whether there's at least one note in the target track difficulty
+	int error = 0;
+	long next;
+
+	eof_log("eof_export_immerrock_midi() entered", 1);
+
+	if(!sp || !fn || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	{
+		eof_log("\tError saving:  Invalid parameters", 1);
+		return 0;	//Return failure
+	}
+
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 0;	//Return failure
+	}
+
+	if(!eof_calculate_beat_delta_positions(sp, EOF_DEFAULT_TIME_DIVISION))
+	{	//Calculate the delta position of each beat in the chart
+		eof_log("\tCould not build beat delta positions", 1);
+		return 0;	//Return failure
+	}
+
+	has_stored_tempo = eof_song_has_stored_tempo_track(sp) ? 1 : 0;	//Store this status
+
+	//Build tempo and TS lists
+	if(!eof_build_tempo_and_ts_lists(sp, &anchorlist, &tslist, &timedivision))
+	{
+		eof_log("\tError saving:  Cannot build tempo or TS list", 1);
+		return 0;	//Return failure
+	}
+	kslist = eof_build_ks_list(sp);		//Build a list of key signature changes
+	if(!kslist)
+	{
+		eof_log("\tError saving:  Cannot build key signature list", 1);
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+		return 0;	//Return failure
+	}
+	header[12] = timedivision >> 8;		//Update the MIDI header to reflect the time division (which may have changed if a stored tempo track is present)
+	header[13] = timedivision & 0xFF;
+
+	//Generate temporary filenames
+	(void) snprintf(tempotempname, sizeof(tempotempname) - 1, "%stempo.tmp", eof_temp_path_s);
+	(void) snprintf(notetempname, sizeof(notetempname) - 1, "%seofnote.tmp", eof_temp_path_s);
+
+	eof_sort_notes(sp);
+	eof_sort_events(sp);
+	eof_clear_midi_events();
+	memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
+
+	//Write notes
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the track
+		unsigned long pos = eof_get_note_pos(sp, track, i);	//Cache this value
+		unsigned long length = eof_get_note_length(sp, track, i);
+		unsigned long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Immerrock, pad to a minimum length of 1/64 (in #/4 meter) if possible
+
+		if(eof_get_note_type(sp, track, i) != diff)	//If this note isn't in the target difficulty
+			continue;	//Skip it
+
+		pitchmask = eof_get_midi_pitches(sp, track, i, pitches);	//Determine how many exportable pitches this note/lyric has
+		if(!pitchmask)
+			continue;	//If no pitches would be exported for this note/lyric, skip it
+
+		//Write note pitches
+		deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+		deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
+		next = eof_track_fixup_next_note(sp, track, i);	//Look up the next note in this track
+		if(next >= 0)
+		{	//If there is another note
+			nextdeltapos = eof_ConvertToDeltaTime(eof_get_note_pos(sp, track, next), anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store its tick position
+		}
+		else
+		{
+			nextdeltapos = 0;
+		}
+		if(deltalength < 1)
+		{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+			deltalength = 1;
+		}
+		if(deltalength < pad)
+		{	//If the note being exported is shorter than 1/64
+			if(!nextdeltapos || (nextdeltapos > deltapos + pad))
+			{	//If there is no next note or there is one and it is far away enough
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPadding note #%lu (pos = %lu, deltapos = %lu, length = %lu, delta length = %lu) to %lu delta ticks", i, pos, deltapos, length, deltalength, pad);
+				eof_log(eof_log_string, 1);
+				deltalength = pad;
+			}
+		}
+		for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
+		{	//For each of the 6 possible values in the pitch array
+			if(pitchmask & bitmask)
+			{	//If this pitch is defined in the array
+				channel = k;	//Immerrock uses channel 0 for the thickest string
+				eof_add_midi_event(deltapos, 0x90, pitches[k], vel, channel);
+				eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], vel, channel);
+			}
+		}
+
+		//Write note name if applicable
+		if(eof_build_note_name(sp, track, i, notename))
+		{	//If the note's name was manually defined or could be detected automatically
+			char * tempstring = malloc((size_t)ustrsizez(notename));	//Allocate memory to store a copy of the note name, because chord detection will overwrite notename[] each time it is used
+			if(tempstring != NULL)
+			{	//If allocation was successful
+				memcpy(tempstring, notename, (size_t)ustrsizez(notename));	//Copy the string to the newly allocated memory
+				eof_add_midi_text_event(deltapos, tempstring, 1, 0xFFFFFFFF);	//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory (provide a high index to ensure it doesn't influence sort order)
+			}
+		}
+
+		if(eof_midi_event_full)
+		{	//If the track exceeded the number of MIDI events that could be written
+			allegro_message("Error:  Too many MIDI events, aborting MIDI export.");
+			eof_log("Error:  Too many MIDI events, aborting MIDI export.", 1);
+			error = 1;
+		}
+		has_notes = 1;
+	}//For each note in the track
+
+	if(!has_notes)
+	{	//If this track has no notes (in the normal note set)
+		eof_log("\tEmpty track difficulty.  Skipping export", 1);
+		error = 2;
+	}
+
+	if(error)
+	{
+		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+		return error;
+	}
+
+	//Cleanup
+	for(i = 0; i < 128; i++)
+	{	//Ensure that any notes that are still on are terminated
+		if(eof_midi_note_status[i] == 0)
+			continue;	//If this note was not left on, skip it
+
+		//Otherwise send an alert message, as this is abnormal
+		allegro_message("MIDI export error:  Note %lu was not turned off", i);
+		eof_log("MIDI export error:  Note %lu was not turned off", 1);
+		if(endbeatnum)
+		{	//If the chart has a manually defined end event, that's probably the cause
+			eof_clear_input();
+			eof_log("\tend event was manually defined", 1);
+			if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If user opts to seek to the offending event
+				eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+				eof_selected_beat = endbeatnum;
+			}
+		}
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
+		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+		eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+		return 0;	//Return failure
+	}
+	qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+	eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
+
+	//Build temp file
+	/* open the file */
+	fp = pack_fopen(notetempname, "w");
+	if(!fp)
+	{
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+		eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+		eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+		return 0;	//Return failure
+	}
+
+	/* determine the track name */
+	arrangement_name = sp->track[track]->name;	//By default, the track's native name will be used
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
+	{	//If this track has an alternate name defined
+		arrangement_name = sp->track[track]->altname;	//Use it
+	}
+	else if(strcasestr_spec(sp->track[track]->name, "PART ") != NULL)
+	{	//If this track's native name begins as expected
+		arrangement_name = strcasestr_spec(sp->track[track]->name, "PART ");	//Use the end part of the name
+	}
+
+	/* write the track name */
+	WriteVarLen(0, fp);
+	(void) pack_putc(0xFF, fp);
+	(void) pack_putc(0x03, fp);
+	WriteVarLen(ustrsize(arrangement_name), fp);
+	(void) pack_fwrite(arrangement_name, ustrsize(arrangement_name), fp);
+
+	/* add MIDI events */
+	lastdelta = 0;
+	for(i = 0; i < eof_midi_events; i++)
+	{
+		if(eof_midi_event[i]->filtered)
+			continue;	//If this event is filtered, skip it
+
+		delta = eof_midi_event[i]->pos;
+		if(eof_midi_event[i]->type == 0x01)
+		{	//Write a note name text event
+			eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+			lastevent = 0;	//Reset running status after a meta/sysex event
+		}
+		else if(eof_midi_event[i]->type == 0x05)
+		{	//Write a lyric event
+			eof_write_lyric_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+			lastevent = 0;	//Reset running status after a meta/sysex event
+		}
+		else
+		{	//Write normal MIDI note events
+			WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+			if(eof_midi_event[i]->type + eof_midi_event[i]->channel != lastevent)
+			{	//With running status, the MIDI event type needn't be written if it's the same as the previous event
+				(void) pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
+			}
+			(void) pack_putc(eof_midi_event[i]->note, fp);
+			(void) pack_putc(eof_midi_event[i]->velocity, fp);
+			lastevent = eof_midi_event[i]->type + eof_midi_event[i]->channel;
+		}
+		if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
+		{	//If this event has allocated memory to release
+			free(eof_midi_event[i]->dp);	//Free it now
+			eof_midi_event[i]->dp = NULL;
+			eof_midi_event[i]->allocation = 0;
+		}
+		lastdelta = delta;					//Store this event's absolute delta time
+	}
+
+	/* write end of track */
+	WriteVarLen(0, fp);
+	(void) pack_putc(0xFF, fp);
+	(void) pack_putc(0x2F, fp);
+	(void) pack_putc(0x00, fp);
+	(void) pack_fclose(fp);
+
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+
+/* make tempo track */
+	fp = pack_fopen(tempotempname, "w");
+	if(!fp)
+	{
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
+		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+		eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+		eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+		return 0;	//Return failure
+	}
+	eof_write_tempo_track(NULL, anchorlist, tslist, kslist, fp);	//Write the tempo track to the temp file
+	(void) pack_fclose(fp);
+
+/* write the main MIDI file */
+	fp = pack_fopen(fn, "w");
+	if(!fp)
+	{
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
+		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return 0;	//Return failure
+	}
+
+	/* write header data */
+	totaltrackcounter = 2;			//One tempo track and one instrument track are being written
+	header[11] = totaltrackcounter;	//Write the total number of tracks present into the MIDI header
+	(void) pack_fwrite(header, 14, fp);
+
+/* write tempo track */
+	(void) eof_dump_midi_track(tempotempname,fp);
+
+/* write the instrument track */
+	(void) eof_dump_midi_track(notetempname,fp);
+
+/* cleanup */
+	(void) pack_fclose(fp);	//Close the output file
+	(void) delete_file(notetempname);
+	(void) delete_file(tempotempname);
+
+	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+	eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
+	eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+
+	return 1;	//Return success
+}
+
+int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff, char *destpath)
+{
+	PACKFILE *fp;
+	int err;
+	char temp_string[1024], temp_filename2[1024];
+	char *arrangement_name;
+	SAMPLE *decoded;
+	double avg_tempo;
+
+	//Use song metadata and difficulty level to build the "Artist - Song - Arrangement - Difficulty" string and build a subfolder of that name in the project folder
+	if(!sp || !destpath)
+		return 0;	//Invalid destination folder path
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//Not a valid track
+	if(!eof_get_track_diff_size_normal(sp, track, diff))
+		return 0;	//Empty difficulty level
+	eof_log("eof_export_immerrock_track_diff() entered", 1);
+
+
+	//Build the path to the Immerrock folder for this track difficulty
+	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
+	put_backslash(eof_temp_filename);
+	temp_string[0] = '\0';	//Empty this string
+	if(eof_check_string(eof_song->tags->artist))
+	{	//If the artist of the song is defined
+		(void) ustrcat(temp_string, eof_song->tags->artist);
+		(void) ustrcat(temp_string, " - ");
+	}
+	if(eof_check_string(eof_song->tags->title))
+	{	//If the title of the song is defined
+		(void) ustrcat(temp_string, eof_song->tags->title);
+		(void) ustrcat(temp_string, " - ");
+	}
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
+	{	//If the track has an alternate name
+		arrangement_name = sp->track[track]->altname;
+	}
+	else
+	{	//Otherwise use the track's native name
+		arrangement_name = sp->track[track]->name;
+	}
+	(void) ustrcat(temp_string, arrangement_name);
+	(void) ustrcat(temp_string, " - ");
+	(void) ustrcat(temp_string, eof_note_type_name[diff]);
+	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
+	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
+
+	//Build the subfolder if it doesn't already exist
+	if(!eof_folder_exists(eof_temp_filename))
+	{	//If the export subfolder doesn't already exist
+		err = eof_mkdir(eof_temp_filename);
+		if(err && !eof_folder_exists(eof_temp_filename))
+		{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Could not create folder!\n%s", eof_temp_filename);
+			eof_log(eof_log_string, 1);
+			return 0;	//Return failure:  Could not create export folder
+		}
+	}
+
+
+	//Write song.wav
+	put_backslash(eof_temp_filename);
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "song.wav", (int) sizeof(eof_temp_filename));
+	decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
+	if(!decoded)
+	{
+		eof_log("\tFailed to decode chart audio into memory", 1);
+		err = 1;
+	}
+	else
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+		eof_log(eof_log_string, 2);
+		if(!save_wav(eof_temp_filename, decoded) || !exists(eof_temp_filename))
+		{	//If the wave file was not successfully created
+			eof_log("\tFailed to write chart audio to PCM format", 1);
+			err = 1;
+		}
+		destroy_sample(decoded);	//Release buffered chart audio
+	}
+	if(err)
+	{
+		allegro_message("Could not export audio!\n%s", eof_temp_filename);
+		return 0;	//Return failure
+	}
+
+
+	//Write Meta.txt
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Meta.txt", (int) sizeof(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
+	fp = pack_fopen(eof_temp_filename, "w");
+	if(!fp)
+	{
+		eof_log("\tError saving:  Cannot open Meta.txt for writing", 1);
+		return 0;	//Return failure
+	}
+	avg_tempo = 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats);
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s-%s-%lu-%lu-%s", sp->tags->artist, sp->tags->title, (unsigned long)(avg_tempo + 0.5), eof_music_length / 1000, sp->tags->year);
+	(void) pack_fputs(temp_string, fp);	//Write song length
+	(void) pack_fclose(fp);
+
+
+	//Write GGLead.mid
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "GGLead.mid", (int) sizeof(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
+	if(!eof_export_immerrock_midi(sp, track, diff, eof_temp_filename))
+	{
+		eof_log("\tFailed to export Immerrock MIDI", 1);
+		return 0;	//Return failure
+	}
+
 
 	return 1;	//Return success
 }

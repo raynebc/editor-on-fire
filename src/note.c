@@ -1304,7 +1304,6 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			}
 			if(drawline)
 			{	//If conditions were met to render this chord as a repeat line
-				ctr = eof_count_track_lanes(eof_song, track) + 1;	//Set a condition that will exit the for loop after this line is drawn
 				linecol = p ? eof_color_cyan : eof_color_dark_cyan;
 			}
 		}

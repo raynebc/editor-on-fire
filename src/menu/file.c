@@ -1709,7 +1709,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[7].flags = eof_write_rs2_files ? D_SELECTED : 0;					//Save separate Rocksmith 2 files
 	eof_import_export_preferences_dialog[8].flags = eof_write_bf_files ? D_SELECTED : 0;						//Save separate Bandfuse files
 	eof_import_export_preferences_dialog[9].flags = eof_write_fof_files ? D_SELECTED : 0;					//Save FoF/CH/Phase Shift files
-	eof_import_export_preferences_dialog[10].flags = eof_write_gh_files ? D_SELECTED : 0;					//Save Guitar Hero files
+	eof_import_export_preferences_dialog[10].flags = eof_write_gh_files ? D_SELECTED : 0;					//Save separate Guitar Hero files
 	eof_import_export_preferences_dialog[11].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 	eof_import_export_preferences_dialog[12].flags = eof_write_lrc_files ? D_SELECTED : 0;					//Save LRC, ELRC, QRC lyric files
 	eof_import_export_preferences_dialog[13].flags = eof_force_pro_drum_midi_notation ? D_SELECTED : 0;		//Force pro drum MIDI notation
@@ -1778,7 +1778,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[7].flags = D_SELECTED;		//Save separate Rocksmith 2 files
 			eof_import_export_preferences_dialog[8].flags = 0;				//Save separate Bandfuse files
 			eof_import_export_preferences_dialog[9].flags = D_SELECTED;		//Save FoF/CH/Phase Shift files
-			eof_import_export_preferences_dialog[10].flags = 0;				//Save Guitar Hero files
+			eof_import_export_preferences_dialog[10].flags = 0;				//Save separate Guitar Hero files
 			eof_import_export_preferences_dialog[11].flags = 0;				//Don't write Rocksmith WAV file
 			eof_import_export_preferences_dialog[12].flags = 0;				//Save LRC, ELRC, QRC lyric files
 			eof_import_export_preferences_dialog[13].flags = D_SELECTED;		//Force pro drum MIDI notation
@@ -4418,6 +4418,12 @@ int eof_save_helper(char *destfilename, char silent)
 		/* Save GH3 MIDI variant */
 		(void) append_filename(eof_temp_filename, newfolderpath, "notes_gh3.mid", (int) sizeof(eof_temp_filename));
 		midi_export_success &= eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases, 2);
+
+		/* Save GHL charts */
+		(void) append_filename(eof_temp_filename, newfolderpath, "guitar_3x2.xmk", (int) sizeof(eof_temp_filename));
+		(void) eof_export_ghl(eof_song, EOF_TRACK_GUITAR, eof_temp_filename);
+		(void) append_filename(eof_temp_filename, newfolderpath, "vocals.xmk", (int) sizeof(eof_temp_filename));
+		(void) eof_export_ghl(eof_song, EOF_TRACK_VOCALS, eof_temp_filename);
 	}
 
 	if(eof_write_rb_files)

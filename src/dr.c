@@ -263,30 +263,29 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	unsigned long ctr;
 
 	//Use song metadata and difficulty level to build the "Artist - Song - Difficulty" string and build a subfolder of that name in the project folder
-	//write info.csv, notes.csv, preview.ogg, song.ogg
 	if(diff > 3)
 		return 0;	//Invalid difficulty level
 	if(!eof_track_is_drums_rock_mode(sp, track))
 		return 0;	//Not a valid track or Drums Rock is not enabled
 	if(!destpath)
 		return 0;	//Invalid destination folder path
-
-	(void) eof_detect_difficulties(sp, track);	//Update difficulties to reflect the track being exported
-	if(!eof_track_diff_populated_status[diff])
+	if(!eof_get_track_diff_size(sp, track, diff))
 		return 0;	//This difficulty is empty
+
+ 	eof_log("eof_export_drums_rock_track_diff() entered", 1);
 
 	//Build the path to the Drums Rock folder for this track difficulty
 	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
 	put_backslash(eof_temp_filename);
 	temp_string[0] = '\0';	//Empty this string
-	if(eof_check_string(eof_song->tags->artist))
+	if(eof_check_string(sp->tags->artist))
 	{	//If the artist of the song is defined
-		(void) ustrcat(temp_string, eof_song->tags->artist);
+		(void) ustrcat(temp_string, sp->tags->artist);
 		(void) ustrcat(temp_string, " - ");
 	}
-	if(eof_check_string(eof_song->tags->title))
+	if(eof_check_string(sp->tags->title))
 	{	//If the title of the song is defined
-		(void) ustrcat(temp_string, eof_song->tags->title);
+		(void) ustrcat(temp_string, sp->tags->title);
 		(void) ustrcat(temp_string, " - ");
 	}
 	(void) ustrcat(temp_string, eof_note_type_name_dr[diff]);
@@ -307,6 +306,8 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	//Write info.csv
 	put_backslash(eof_temp_filename);
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "info.csv", (int) sizeof(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
 	fp = pack_fopen(eof_temp_filename, "w");
 	if(!fp)
 	{
@@ -314,10 +315,10 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 		return 0;	//Return failure
 	}
 	pack_fputs("Song Name,Author Name,Difficulty,Song Duration in seconds,Song Map\n", fp);
-	eof_build_sanitized_drums_rock_string(eof_song->tags->title, temp_string);
+	eof_build_sanitized_drums_rock_string(sp->tags->title, temp_string);
 	(void) pack_fputs(temp_string, fp);	//Write song title
 	(void) pack_putc(',', fp);
-	eof_build_sanitized_drums_rock_string(eof_song->tags->artist, temp_string);
+	eof_build_sanitized_drums_rock_string(sp->tags->artist, temp_string);
 	(void) pack_fputs(temp_string, fp);	//Write artist name
 	(void) pack_putc(',', fp);
 	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u", diff);
@@ -331,6 +332,8 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 
 	//Write notes.csv
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "notes.csv", (int) sizeof(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
 	fp = pack_fopen(eof_temp_filename, "w");
 	if(!fp)
 	{
@@ -449,6 +452,8 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 
 	//Write Metadata.cfg
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Metadata.cfg", (int) sizeof(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
 	fp = pack_fopen(eof_temp_filename, "w");
 	if(!fp)
 	{
@@ -476,7 +481,7 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	(void) pack_fputs(temp_string, fp);		//Write difficulty tag
 	if(sp->tags->genre[0] != '\0')
 	{	//If there is a defined genre
-		(void) snprintf(temp_string, sizeof(temp_string) - 1, ", %s", sp->tags->genre);
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, ",%s", sp->tags->genre);
 		(void) pack_fputs(temp_string, fp);		//Write genre tag
 	}
 	(void) pack_fputs("\n", fp);
@@ -485,7 +490,11 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	//Write song.ogg if it doesn't exist
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "song.ogg", (int) sizeof(eof_temp_filename));
 	if(!exists(eof_temp_filename))
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+		eof_log(eof_log_string, 2);
 		(void) eof_save_ogg(eof_temp_filename);
+	}
 
 	//Write preview.ogg if it doesn't exist and it has been created for the project
 	(void) replace_filename(temp_filename2, eof_song_path, "preview.ogg", 1024);
@@ -505,6 +514,8 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 		(void) replace_filename(eof_temp_filename, eof_temp_filename, "album.jpg", (int) sizeof(eof_temp_filename));
 		if(!exists(eof_temp_filename))
 		{	//If album.jpg doesn't exist in the Drums Rock export subfolder
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+			eof_log(eof_log_string, 2);
 			(void) eof_copy_file(temp_filename2, eof_temp_filename);	//Copy album.jpg there
 		}
 	}

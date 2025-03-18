@@ -4205,6 +4205,45 @@ unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track)
 	return eof_get_track_size(sp, track);	//Otherwise defer to the normal track size function
 }
 
+unsigned long eof_get_track_diff_size_normal(EOF_SONG *sp, unsigned long track, char diff)
+{
+	unsigned long tracknum, ctr, count;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
+		return 0;
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		for(ctr = 0, count = 0; ctr < sp->pro_guitar_track[tracknum]->pgnotes; ctr++)
+		{	//For each normal note in the specified track
+			if(sp->pro_guitar_track[tracknum]->pgnote[ctr]->type == diff)
+				count++;
+		}
+
+		return count;
+	}
+
+	return eof_get_track_size(sp, track);	//Otherwise defer to the normal track size function
+}
+
+unsigned long eof_get_track_diff_size(EOF_SONG *sp, unsigned long track, char diff)
+{
+	unsigned long ctr, count, total;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
+		return 0;
+
+	total = eof_get_track_size(sp, track);
+	for(ctr = 0, count = 0; ctr < total; ctr++)
+	{	//For each note in the specified track
+		if(eof_get_note_type(sp, track, ctr) == diff)
+			count++;
+	}
+
+	return count;
+}
+
 unsigned long eof_get_chart_size(EOF_SONG *sp)
 {
 	unsigned long notectr = 0, trackctr;

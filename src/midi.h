@@ -91,6 +91,12 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format);
 	//If format is nonzero, a format suitable for Fretlight M-Player is written, where low E uses channel 15 and high E uses channel 10 (16 - lane number),
 	//  all velocities are written as 127 and track names are prefixed with "FMP - " as required by the Fretlight M-Player program.
 	//  In this format, each pro guitar/bass track is written twice (once each in Synthesia and Fretlight formats) to allow synth playback of arrangements in Fretlight M-Player
+int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char diff, char *fn);
+	//Exports the specified pro guitar track difficulty to a MIDI file suited for use in the game Immerrock
+int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff, char *destpath);
+	//Exports Immerrock files for the specified drum track difficulty in a folder with multiple files
+	//destpath will be the folder level at which each difficulty's file folder will be written
+	//If the specified track is not a pro guitar track, or the specified difficulty has no notes, no files or folders are created
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp);
 	//Parses the chart, returning a linked list of anchors (tempo changes), or NULL on error

@@ -113,9 +113,6 @@ void eof_load_config(char * fn)
 	eof_hide_drum_tails = get_config_int("preferences", "hide_drum_tails", 0);
 	eof_hide_note_names = get_config_int("preferences", "eof_hide_note_names", 0);
 	eof_disable_sound_processing = get_config_int("preferences", "eof_disable_sound_processing", 0);
-	eof_disable_3d_rendering = get_config_int("preferences", "eof_disable_3d_rendering", 0);
-	eof_disable_2d_rendering = get_config_int("preferences", "eof_disable_2d_rendering", 0);
-	eof_disable_info_panel = get_config_int("preferences", "eof_disable_info_panel", 0);
 	eof_enable_notes_panel = get_config_int("preferences", "eof_enable_notes_panel", 0);
 	eof_chart_volume = get_config_int("preferences", "eof_chart_volume", 100);
 	if((eof_chart_volume < 0) || (eof_chart_volume > 100))
@@ -585,9 +582,6 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "hide_drum_tails", eof_hide_drum_tails);
 	set_config_int("preferences", "eof_hide_note_names", eof_hide_note_names);
 	set_config_int("preferences", "eof_disable_sound_processing", eof_disable_sound_processing);
-	set_config_int("preferences", "eof_disable_3d_rendering", eof_disable_3d_rendering);
-	set_config_int("preferences", "eof_disable_2d_rendering", eof_disable_2d_rendering);
-	set_config_int("preferences", "eof_disable_info_panel", eof_disable_info_panel);
 	set_config_int("preferences", "eof_enable_notes_panel", eof_enable_notes_panel);
 	set_config_int("preferences", "eof_chart_volume", eof_chart_volume);
 	set_config_int("preferences", "eof_clap_volume", eof_clap_volume);

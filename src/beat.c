@@ -101,7 +101,7 @@ unsigned long eof_calculate_beats_logic(EOF_SONG * sp, int addbeats)
 	unsigned num = 4, den = 4, lastden = 4;
 	unsigned long beats_added = 0;
 
-	eof_log("eof_calculate_beats() entered", 2);
+	eof_log("eof_calculate_beats() entered", 3);
 
 	if(!sp)
 	{

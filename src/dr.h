@@ -4,7 +4,7 @@
 #include "song.h"
 
 int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff, char *destpath);
-	//Exports Drums Rock files for the specified drum track difficulty in a subfolder of the project folder
+	//Exports Drums Rock files for the specified drum track difficulty in a folder with multiple files
 	//destpath will be the folder level at which each difficulty's file folder will be written
 
 unsigned char eof_convert_drums_rock_note_mask(EOF_SONG *sp, unsigned long track, unsigned long note);

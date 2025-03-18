@@ -3682,9 +3682,9 @@ int eof_ghl_import_common(const char *fn)
 
 		//Parse event
 		error |= eof_filebuffer_get_dword(fb, &dword);	//Read the unknown value (seems like it may just be sequential numbering for each event type, ie. notes, section markers, etc)
-		error |= eof_filebuffer_get_word(fb, &barre);	//Read the barre status
+		error |= eof_filebuffer_get_word(fb, &barre);		//Read the barre status
 		error |= eof_filebuffer_get_byte(fb, &eventid);	//Read the event identifier
-		error |= eof_filebuffer_get_byte(fb, &note);	//Read the MIDI note value
+		error |= eof_filebuffer_get_byte(fb, &note);		//Read the MIDI note value
 		error |= eof_filebuffer_get_dword(fb, (unsigned long *)&start);	//Read the event start position
 		error |= eof_filebuffer_get_dword(fb, (unsigned long *)&end);	//Read the event end position
 		error |= eof_filebuffer_get_dword(fb, &dword2);	//Read the unknown value
@@ -3709,6 +3709,7 @@ int eof_ghl_import_common(const char *fn)
 		eof_log(eof_log_string, 1);
 
 		//Store event accordingly
+///This detection of HOPO is probably wrong, use the actual HOPO and forced strum event IDs documented further down
 		if(eventid & 0x80)
 		{	//Forced HOPO marker
 			flags |= EOF_NOTE_FLAG_F_HOPO;
@@ -3972,6 +3973,7 @@ int eof_ghl_import_common(const char *fn)
 					}
 				}
 			}
+			//Interpret event ID
 			else if(note == 15)
 			{	//Easy open note
 				notemask = 32;
@@ -3997,9 +3999,15 @@ int eof_ghl_import_common(const char *fn)
 				flags |= EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
 			}
 			else if(note == 74)
-			{	//Star power marker
+			{	//Star power marker (event IDs for lower difficulties should be ignored in favor of importing them from expert which is expected to fully defined)
 				(void) eof_track_add_star_power_path(eof_song, eof_selected_track, eventpos, eventendpos);
 			}
+///Add handling for forced HOPO events (easy/medium/hard/expert = 136/144/152/160)
+///Add handling for forced strum events (easy/medium/hard/expert = 161/162/163/164)
+///Add handling for solo marker (103)
+///Add handling for tap marker (104)
+///Add handling for missplay events (106-114, defined in control.xmk)
+///Add handling for sections (defined in control.xmk)
 
 			if(notemask)
 			{	//If a note is to be created
@@ -4080,14 +4088,21 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	//Validate parameters
 	if(!sp || (track >= sp->tracks) || (sp->beats < 2) || !fn)
 		return 1;	//Invalid parameters
-	if((sp->track[track]->track_format != EOF_VOCAL_TRACK_FORMAT) && !eof_track_is_legacy_guitar(sp, track))
-	{	//For now, only export vocals and legacy guitar/bass
+	if((sp->track[track]->track_format != EOF_VOCAL_TRACK_FORMAT) && !eof_track_is_ghl_mode(sp, track))
+	{	//For now, only export vocals and legacy GHL mode guitar/bass
 		return 1;	//Invalid parameters
 	}
 
 	if(!sp->tags->accurate_ts)
 	{	//If accurate TS is not enabled in song properties
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\" to GHL since accurate TS is not enabled", sp->track[track]->name);
+		eof_log(eof_log_string, 1);
+		return 2;
+	}
+
+	if(eof_get_track_size(sp, track) == 0)
+	{	//If the track has no notes/lyrics
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Track \"%s\" has no notes, skipping GHL export", sp->track[track]->name);
 		eof_log(eof_log_string, 1);
 		return 2;
 	}
@@ -4152,6 +4167,7 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	}
 	else if(eof_track_is_legacy_guitar(sp, track))
 	{	//If a legacy guitar/bass track is being exported
+///Count the number of notes and the number of star power phrases
 	}
 
 	//Build the list of events to export for the track
@@ -4203,7 +4219,14 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 
 			if(eof_is_freestyle(old_string))
 			{	//If this lyric is freestyle
-				events[eventindex].note = 29;	//Set a generic freestyle pitch.  eof_ghl_export_build_string() will filter out freestyle characters
+				if(eof_get_note_length(sp, track, ctr) < 125)
+				{	//If the vocal note is short
+					events[eventindex].note = 29;	//Set a generic freestyle pitch.  eof_ghl_export_build_string() will filter out freestyle characters
+				}
+				else
+				{	//Susained vocal notes use MIDI note 26 instead
+					events[eventindex].note = 26;
+				}
 			}
 
 			events[eventindex].start = eof_get_note_pos(sp, track, ctr);
@@ -4259,6 +4282,8 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	}//If a vocal track is being exported
 	else if(eof_track_is_legacy_guitar(sp, track))
 	{	//If a legacy guitar/bass track is being exported
+///Each note and star power phrase is an event to export
+///Verify the event id needed
 	}
 
 	//Add sections to the list
@@ -4306,10 +4331,10 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 	(void) pack_mputl(8, fp);				//Write version number
 	(void) pack_mputl(0, fp);				//Write a blank checksum
 	(void) pack_mputl(numevents, fp);		//Write number of events
-	(void) pack_mputl(stringoffset, fp);	//Write string table size
+	(void) pack_mputl(stringoffset, fp);		//Write string table size
 	(void) pack_mputl(0, fp);				//Write unknown value
-	(void) pack_mputl(numtempos, fp);		//Write number of tempo changes
-	(void) pack_mputl(numtimesigs, fp);		//Write number of time signature changes
+	(void) pack_mputl(numtempos, fp);	//Write number of tempo changes
+	(void) pack_mputl(numtimesigs, fp);	//Write number of time signature changes
 
 	//Write tempo map
 	eof_calculate_beat_delta_positions(sp, 960);	//Update MIDI timings for the project's beats, to simplify the lookup of each beat's delta time
@@ -4323,10 +4348,10 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 			float timestamp = sp->beat[ctr]->fpos / 1000.0;		//Convert to seconds
 			long timestamp_i = 0;
 
-			(void) pack_mputl(sp->beat[ctr]->midi_pos, fp);	//Write the tick position
+			(void) pack_mputl(sp->beat[ctr]->midi_pos, fp);		//Write the tick position
 			memcpy(&timestamp_i, &timestamp, 4);			//Convert the floating point real time position to a generic 4 byte integer type
 			(void) pack_mputl(timestamp_i, fp);				//Write the real time position as a 4 byte floating point value
-			(void) pack_mputl(sp->beat[ctr]->ppqn, fp);		//Write the tempo
+			(void) pack_mputl(sp->beat[ctr]->ppqn, fp);			//Write the tempo
 			lastppqn = sp->beat[ctr]->ppqn;
 		}
 	}
@@ -4341,8 +4366,8 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 			{	//If this is the first time signature, or it is different from that of the previous beat
 				(void) pack_mputl(sp->beat[ctr]->midi_pos, fp);	//Write the tick position
 				(void) pack_mputl(0, fp);						//Write the unused realtime position
-				(void) pack_mputl(num, fp);						//Write the TS numerator
-				(void) pack_mputl(den, fp);						//Write the TS denominator
+				(void) pack_mputl(num, fp);					//Write the TS numerator
+				(void) pack_mputl(den, fp);					//Write the TS denominator
 				lastnum = num;
 				lastden = den;
 			}
@@ -4355,20 +4380,20 @@ int eof_export_ghl(EOF_SONG *sp, unsigned long track, char *fn)
 		float starttime, endtime;
 		long timestamp_i = 0;
 
-		(void) pack_mputl(0, fp);							//Write the unknown value
-		(void) pack_mputw(events[ctr].barre, fp);			//Write the barre status
+		(void) pack_mputl(0, fp);						//Write the unknown value
+		(void) pack_mputw(events[ctr].barre, fp);		//Write the barre status
 		(void) pack_putc(events[ctr].id, fp);				//Write the event ID
-		(void) pack_putc(events[ctr].note, fp);				//Write the note number
+		(void) pack_putc(events[ctr].note, fp);			//Write the note number
 
 		starttime = (float)events[ctr].start / 1000.0;
-		memcpy(&timestamp_i, &starttime, 4);				//Convert the floating point variable to a generic 4 byte integer type
-		(void) pack_mputl(timestamp_i, fp);					//Write the event start timestamp as a 4 byte floating point value
+		memcpy(&timestamp_i, &starttime, 4);			//Convert the floating point variable to a generic 4 byte integer type
+		(void) pack_mputl(timestamp_i, fp);			//Write the event start timestamp as a 4 byte floating point value
 
 		endtime = (float)events[ctr].end / 1000.0;
-		memcpy(&timestamp_i, &endtime, 4);					//Convert the floating point variable to a generic 4 byte integer type
-		(void) pack_mputl(timestamp_i, fp);					//Write the event end timestamp as a 4 byte floating point value
+		memcpy(&timestamp_i, &endtime, 4);			//Convert the floating point variable to a generic 4 byte integer type
+		(void) pack_mputl(timestamp_i, fp);			//Write the event end timestamp as a 4 byte floating point value
 
-		(void) pack_mputl(0, fp);							//Write the unknown value
+		(void) pack_mputl(0, fp);						//Write the unknown value
 		(void) pack_mputl(events[ctr].stringoffset, fp);	//Write the string offset
 	}
 
