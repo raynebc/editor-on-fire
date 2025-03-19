@@ -3437,43 +3437,43 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						else if(word == 1)
 						{	//Chord diagram format 1, ie. GP4
 							(void) pack_getc(inf);			//Read sharp/flat indicator
-							(void) pack_fseek(inf, 3);		//Unknown data
+							(void) pack_fseek(inf, 3);			//Unknown data
 							(void) pack_getc(inf);			//Read chord root
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);	//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							(void) pack_getc(inf);			//Read chord type
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);	//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							(void) pack_getc(inf);			//9th/11th/13th option
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);	//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							pack_ReadDWORDLE(inf, &dword);	//Read bass note (lowest note played in string)
 							(void) pack_getc(inf);			//+/- option
-							(void) pack_fseek(inf, 4);		//Unknown data
+							(void) pack_fseek(inf, 4);			//Unknown data
 							word = pack_getc(inf);			//Read chord name string length
 							(void) pack_fread(buffer, 20, inf);	//Read chord name (which is padded to 20 bytes)
-							buffer[word] = '\0';			//Ensure string is terminated to be the right length
-							(void) pack_fseek(inf, 2);		//Unknown data
+							buffer[word] = '\0';				//Ensure string is terminated to be the right length
+							(void) pack_fseek(inf, 2);			//Unknown data
 							(void) pack_getc(inf);			//Tonality of the fifth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);	//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							(void) pack_getc(inf);			//Tonality of the ninth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);	//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							(void) pack_getc(inf);			//Tonality of the eleventh
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);	//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							pack_ReadDWORDLE(inf, &dword);	//Base fret for diagram
 							for(ctr4 = 0; ctr4 < 7; ctr4++)

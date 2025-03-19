@@ -3633,7 +3633,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			if(eof_key_code == KEY_F5)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				(void) eof_redraw_display();
+				(void) eof_reset_display();
 				eof_use_key();
 			}
 #endif

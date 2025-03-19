@@ -33,7 +33,7 @@ jmp_buf jumpbuffer;			//Used in the conditional compiling code to allow this pro
 							//in the event of an exception that would normally terminate the program
 jmp_buf FLjumpbuffer;		//This is used by FLC's internal logic to provide for exception handling (ie. in validating MIDI files with DetectLyricFormat())
 char useFLjumpbuffer=0;		//Boolean:  If nonzero, FLC's logic intercepts in exit_wrapper() regardless of whether EOF_BUILD is defined
-const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle","XML","JamBand","Rocksmith XML","Rocksmith 2 XML","Plain script","QRC"};
+const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle","XML","JamBand","Rocksmith XML","Rocksmith 2 XML","Plain script","QRC", "Immerrock LRC"};
 
 
 

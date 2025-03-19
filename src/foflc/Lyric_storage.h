@@ -78,8 +78,9 @@ Export functions are expected to:
 #define RS2_FORMAT 16
 #define PLAIN_FORMAT 17
 #define QRC_FORMAT 18
+#define ILRC_FORMAT 19
 
-#define NUMBEROFLYRICFORMATS 18
+#define NUMBEROFLYRICFORMATS 19
 	//This defined number should be equal to the number of defined lyric macros above, for use with the LYRICFORMATNAMES[] array
 
 //#define NDEBUG		//This will disable the assert macros in the source file if defined
@@ -122,13 +123,13 @@ struct Lyric_Piece
 
 struct Lyric_Line
 {
-	struct Lyric_Piece *pieces;		//A linked list of lyric pieces
+	struct Lyric_Piece *pieces;	//A linked list of lyric pieces
 	struct Lyric_Piece *curpiece;	//Conductor of the lyric piece linked list
 	struct Lyric_Line *prev;		//Pointer to previous line of lyrics in the linked list
 	struct Lyric_Line *next;		//Pointer to next line of lyrics in the linked list
-	unsigned long piececount;		//The number of lyric pieces in this line.  Incremented upon adding a lyric piece
-	unsigned long start;			//The start offset of the first piece of lyrics in the line in milliseconds
-	unsigned long duration;			//The sum of all durations of the contained lyric pieces
+	unsigned long piececount;	//The number of lyric pieces in this line.  Incremented upon adding a lyric piece
+	unsigned long start;		//The start offset of the first piece of lyrics in the line in milliseconds
+	unsigned long duration;	//The end position of the line's last lyric minus the start position of the line's first lyric
 };
 
 struct _LYRICSSTRUCT_{

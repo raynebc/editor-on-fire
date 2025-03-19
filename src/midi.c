@@ -17,6 +17,7 @@
 #include "menu/track.h"	//For eof_fret_hand_position_list_dialog_undo_made
 #include "foflc/Lyric_storage.h"	//For RBA extraction
 #include "foflc/Midi_parse.h"
+#include "lc_import.h"	//For EOF_EXPORT_TO_LC()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -3582,11 +3583,13 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff, char *destpath)
 {
 	PACKFILE *fp;
-	int err;
-	char temp_string[1024], temp_filename2[1024];
+	int err = 0;
+	int jumpcode = 0;	//Used to catch failure by EOF_EXPORT_TO_LC()
+	char temp_string[1024], section[101], temp_filename2[1024], *ptr;
 	char *arrangement_name;
 	SAMPLE *decoded;
 	double avg_tempo;
+	unsigned long ctr;
 
 	//Use song metadata and difficulty level to build the "Artist - Song - Arrangement - Difficulty" string and build a subfolder of that name in the project folder
 	if(!sp || !destpath)
@@ -3642,27 +3645,30 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 	//Write song.wav
 	put_backslash(eof_temp_filename);
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "song.wav", (int) sizeof(eof_temp_filename));
-	decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
-	if(!decoded)
-	{
-		eof_log("\tFailed to decode chart audio into memory", 1);
-		err = 1;
-	}
-	else
-	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
-		eof_log(eof_log_string, 2);
-		if(!save_wav(eof_temp_filename, decoded) || !exists(eof_temp_filename))
-		{	//If the wave file was not successfully created
-			eof_log("\tFailed to write chart audio to PCM format", 1);
+	if(!exists(eof_temp_filename))
+	{	//If the WAV file doesn't already exist at the destination
+		decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
+		if(!decoded)
+		{
+			eof_log("\tFailed to decode chart audio into memory", 1);
 			err = 1;
 		}
-		destroy_sample(decoded);	//Release buffered chart audio
-	}
-	if(err)
-	{
-		allegro_message("Could not export audio!\n%s", eof_temp_filename);
-		return 0;	//Return failure
+		else
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+			eof_log(eof_log_string, 2);
+			if(!save_wav(eof_temp_filename, decoded) || !exists(eof_temp_filename))
+			{	//If the wave file was not successfully created
+				eof_log("\tFailed to write chart audio to PCM format", 1);
+				err = 1;
+			}
+			destroy_sample(decoded);	//Release buffered chart audio
+		}
+		if(err)
+		{
+			allegro_message("Could not export audio!\n%s", eof_temp_filename);
+			return 0;	//Return failure
+		}
 	}
 
 
@@ -3680,6 +3686,100 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s-%s-%lu-%lu-%s", sp->tags->artist, sp->tags->title, (unsigned long)(avg_tempo + 0.5), eof_music_length / 1000, sp->tags->year);
 	(void) pack_fputs(temp_string, fp);	//Write song length
 	(void) pack_fclose(fp);
+	fp = NULL;
+
+
+	//Write Sections.txt
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event in the project
+		if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == track))
+		{	//If the text event has no associated track or is specific to the exported track
+			ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event
+			if(ptr)
+			{	//If it exists
+				unsigned long eventpos;
+				unsigned min, sec, ms;
+
+				if(!fp)
+				{	//If this is the first section event encountered
+					(void) replace_filename(eof_temp_filename, eof_temp_filename, "Sections.txt", (int) sizeof(eof_temp_filename));
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+					eof_log(eof_log_string, 2);
+					fp = pack_fopen(eof_temp_filename, "w");
+					if(!fp)
+					{
+						eof_log("\tError saving:  Cannot open Sections.txt for writing", 1);
+						return 0;	//Return failure
+					}
+				}
+				strncpy(section, ptr, sizeof(temp_string) - 1);		//Copy the portion of the text event that came after "section "
+				if(section[strlen(section) - 1] == ']')
+				{	//If that included a trailing closing bracket
+					section[strlen(section) - 1] = '\0';	//Truncate it from the end of the string
+				}
+				eventpos = eof_get_text_event_pos(sp, ctr);
+				min = eventpos / 60000;
+				sec = (eventpos / 1000) % 60;
+				ms = eventpos % 1000;
+				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\%s\"\n", min, sec, ms, section);	//Use this if Immerrock can display section names
+				(void) pack_fputs(temp_string, fp);	//Write section entry
+			}
+		}
+	}
+	(void) pack_fclose(fp);
+
+
+	//Write Lyrics.txt
+	if(sp->vocal_track[0]->lyrics)
+	{	//If there are lyrics, export them in Immerrock's LRC variant format
+		EOF_VOCAL_TRACK *tp = sp->vocal_track[0];	//Simplify
+		EOF_LYRIC *temp_lyric = NULL;
+		char newline = 0;
+		unsigned long last_ending = tp->lyric[tp->lyrics - 1]->pos + tp->lyric[tp->lyrics - 1]->length;
+
+		if(last_ending + 10000 <= eof_music_length)
+		{	//If the last lyric ends at least 10 seconds before the end of the chart audio
+			temp_lyric = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, last_ending + 3000, 1000, 0, "Hide();");	//Append a temporary control event to hide the lyrics 3 seconds after that ending
+			if(eof_vocal_track_add_line(tp, last_ending + 3000, last_ending + 4000, 0xFF))
+				newline = 1;	//Track whether a new lyric line was successfully added to encompass that control event
+		}
+		qsort(tp->line, (size_t)tp->lines, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);	//Sort the lyric lines
+		(void) replace_filename(eof_temp_filename, eof_temp_filename, "Lyrics.txt", (int) sizeof(eof_temp_filename));
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+		eof_log(eof_log_string, 2);
+		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+		{	//Lyric export failed
+			(void) puts("Assert() handled successfully!");
+			allegro_message("Immerrock lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
+		}
+		else
+		{
+			(void) EOF_EXPORT_TO_LC(sp,eof_temp_filename,NULL,ILRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to Immerrock LRC format
+		}
+		if(newline)
+		{	//If a temporary lyric line was added
+			if(tp->line[tp->lines - 1].start_pos != last_ending + 3000)
+			{	//If the last lyric line in the vocal track isn't the one that was created just above
+				eof_log("!Logic error.  Lost the temporary lyric line in Immerrock lyric export", 1);
+			}
+			else
+			{	//Delete the line
+				eof_vocal_track_delete_line(tp, tp->lines - 1);
+			}
+		}
+		if(temp_lyric)
+		{	//If a temporary lyric was added
+			if(tp->lyric[tp->lyrics - 1]->pos != last_ending + 3000)
+			{	//If the last lyric in the vocal track isn't the one that was created just above
+				eof_log("!Logic error.  Lost the temporary lyric in Immerrock lyric export", 1);
+			}
+			else
+			{	//Delete the lyric
+				eof_vocal_track_delete_lyric(tp, tp->lyrics - 1);
+			}
+		}
+	}
 
 
 	//Write GGLead.mid

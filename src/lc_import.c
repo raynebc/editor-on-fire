@@ -501,8 +501,9 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 			Export_UStar(outf);
 		break;
 
-		case LRC_FORMAT:	//Export as simple LRC
+		case LRC_FORMAT:		//Export as simple LRC
 		case ELRC_FORMAT:	//Export as extended LRC
+		case ILRC_FORMAT:	//Export as Immerrock LRC
 			outf = fopen_err(Lyrics.outfilename,"wt");	//LRC is a text format
 			Export_LRC(outf);
 		break;

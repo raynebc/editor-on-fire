@@ -522,10 +522,11 @@ void WriteLRCTimestamp(FILE *outf,char openchar,char closechar,unsigned long tim
 {	//Accepts the time given in milliseconds and writes a timestamp to specified FILE stream, using the specified characters at
 	//the beginning and end of the timestamp: ie. <##:##.##> or [##:##.##]
 	unsigned long minutes, seconds, millis;	//Values to store the converted timestamp
+	int ret;
 
-	assert_wrapper(outf != NULL);			//This must not be NULL
+	assert_wrapper(outf != NULL);		//This must not be NULL
 	assert_wrapper(!isdigit(openchar));		//This must not be a number
-	assert_wrapper(!isdigit(closechar));	//This must not be a number
+	assert_wrapper(!isdigit(closechar));		//This must not be a number
 
 //Convert the given time from milliseconds to minutes, seconds and remaining milliseconds
 	millis=time;
@@ -541,7 +542,14 @@ void WriteLRCTimestamp(FILE *outf,char openchar,char closechar,unsigned long tim
 		millis=millis/10;
 
 //Write timestamp
-	if(fprintf(outf,"%c%02lu:%02lu.%02lu%c",openchar,minutes,seconds,millis,closechar) < 0)
+	if(!openchar && closechar)
+		ret = fprintf(outf,"%02lu:%02lu.%02lu%c",minutes,seconds,millis,closechar);	//Write timestamp without any opening character
+	else if(openchar && !closechar)
+		ret = fprintf(outf,"%c%02lu:%02lu.%02lu",openchar,minutes,seconds,millis);	//Write timestamp without any closing character
+	else
+		ret = fprintf(outf,"%c%02lu:%02lu.%02lu%c",openchar,minutes,seconds,millis,closechar);	//Write timestamp with both opening and closing characters
+
+	if(ret < 0)
 	{
 		printf("Error writing timestamp: %s\nAborting\n",strerror(errno));
 		exit_wrapper(1);
@@ -551,7 +559,8 @@ void WriteLRCTimestamp(FILE *outf,char openchar,char closechar,unsigned long tim
 void Export_LRC(FILE *outf)
 {
 	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
-	struct Lyric_Piece *temp=NULL;		//A conductor for the lyric pieces list
+	struct Lyric_Line *lastline=NULL;	//Tracks the previously written line for extra processing
+	struct Lyric_Piece *temp=NULL;	//A conductor for the lyric pieces list
 	int errornumber=0;
 
 	assert_wrapper(outf != NULL);			//This must not be NULL
@@ -560,30 +569,33 @@ void Export_LRC(FILE *outf)
 	if(Lyrics.verbose)	printf("\nExporting LRC lyrics to file \"%s\"\n\nWriting tags\n",Lyrics.outfilename);
 
 //Write tags
-	if(Lyrics.Title != NULL)
-		if(fprintf(outf,"[ti:%s]\n",Lyrics.Title) < 0)
-			errornumber=errno;
+	if(Lyrics.out_format != ILRC_FORMAT)
+	{	//If not writing the Immerrock variant of LRC
+		if(Lyrics.Title != NULL)
+			if(fprintf(outf,"[ti:%s]\n",Lyrics.Title) < 0)
+				errornumber=errno;
 
-	if(Lyrics.Artist != NULL)
-		if(fprintf(outf,"[ar:%s]\n",Lyrics.Artist) < 0)
-			errornumber=errno;
+		if(Lyrics.Artist != NULL)
+			if(fprintf(outf,"[ar:%s]\n",Lyrics.Artist) < 0)
+				errornumber=errno;
 
-	if(Lyrics.Album != NULL)
-		if(fprintf(outf,"[al:%s]\n",Lyrics.Album) < 0)
-			errornumber=errno;
+		if(Lyrics.Album != NULL)
+			if(fprintf(outf,"[al:%s]\n",Lyrics.Album) < 0)
+				errornumber=errno;
 
-	if(Lyrics.Editor != NULL)
-		if(fprintf(outf,"[by:%s]\n",Lyrics.Editor) < 0)
-			errornumber=errno;
+		if(Lyrics.Editor != NULL)
+			if(fprintf(outf,"[by:%s]\n",Lyrics.Editor) < 0)
+				errornumber=errno;
 
-	if(Lyrics.Offset != NULL)
-		if(fprintf(outf,"[offset:%s]\n",Lyrics.Offset) < 0)
-			errornumber=errno;
+		if(Lyrics.Offset != NULL)
+			if(fprintf(outf,"[offset:%s]\n",Lyrics.Offset) < 0)
+				errornumber=errno;
 
-	if(errornumber != 0)
-	{
-		printf("Error exporting tags: %s\nAborting\n",strerror(errornumber));
-		exit_wrapper(1);
+		if(errornumber != 0)
+		{
+			printf("Error exporting tags: %s\nAborting\n",strerror(errornumber));
+			exit_wrapper(1);
+		}
 	}
 
 //Write lyrics
@@ -597,13 +609,28 @@ void Export_LRC(FILE *outf)
 
 		temp=curline->pieces;	//Starting with the first piece of lyric in this line
 
+	//For Immerrock LRC export, if there is >= 10 seconds of distance between lyric lines, insert a blank lyric 3 seconds after the previous line's ending
+		if((Lyrics.out_format == ILRC_FORMAT) && lastline && (lastline->start + lastline->duration + 10000 <= temp->start))
+		{	//If the previously exported line of lyrics ends at least 10 seconds before the start of this line of lyrics
+			WriteLRCTimestamp(outf,0,' ',lastline->start + lastline->duration + 3000);	//Write timestamp of 3 seconds after the end of the previous lyric line
+			fputs_err("\"\"\n",outf);	//Write two double quote marks and a newline
+		}
+
 	//Write the line's initial timestamp
 		if(temp != NULL)	//Check for NULL again to satisfy cppcheck
-			WriteLRCTimestamp(outf,'[',']',temp->start);	//Write timestamp of first lyric (using brackets)
+		{
+			if(Lyrics.out_format != ILRC_FORMAT)
+				WriteLRCTimestamp(outf,'[',']',temp->start);	//Write timestamp of first lyric (using brackets)
+			else	//Immerrock variant is slightly different
+				WriteLRCTimestamp(outf,0,' ',temp->start);	//Write timestamp of first lyric with no opening character, but with a whitespace after
+		}
 
 		while(temp != NULL)	//For each piece of lyric in this line
 		{
 			assert_wrapper(temp->lyric != NULL);
+
+			if(Lyrics.out_format == ILRC_FORMAT)
+				fputc_err('"',outf);	//Immerrock variant LRC has each line of lyric text surrounded by double quotes
 
 		//Write lyric
 			fputs_err(temp->lyric,outf);
@@ -619,6 +646,9 @@ void Export_LRC(FILE *outf)
 				if(Lyrics.out_format == ELRC_FORMAT)	//Only if outputting in extended LRC format, write next/last timstamp in this line
 					WriteLRCTimestamp(outf,'<','>',temp->start + temp->duration);
 
+				if(Lyrics.out_format == ILRC_FORMAT)
+					fputc_err('"',outf);	//Immerrock variant LRC has each line of lyric text surrounded by double quotes
+
 				fputc_err('\n',outf);
 			}
 			else if(Lyrics.out_format == ELRC_FORMAT)
@@ -628,6 +658,7 @@ void Export_LRC(FILE *outf)
 			temp=temp->next;	//Advance to next lyric piece as normal
 		}//while(temp != NULL)
 
+		lastline=curline;
 		curline=curline->next;	//Advance to next line of lyrics
 
 		if(Lyrics.verbose)	(void) putchar('\n');

@@ -36,6 +36,7 @@
 #include "note.h"	//For eof_correct_chord_fingerings()
 #include "song.h"
 #include "track.h"	//For tone name functions
+#include "help.h"	//For eof_reset_display()
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -75,7 +76,6 @@ MENU eof_file_display_menu[] =
 	{"&Display", eof_menu_file_display, NULL, 0, NULL},
 	{"Set display &Width", eof_set_display_width, NULL, 0, NULL},
 	{"x2 &Zoom", eof_toggle_display_zoom, NULL, D_USER, NULL},
-	{"&Redraw\tShift+F5", eof_redraw_display, NULL, 0, NULL},
 	{"Benchmark image sequence", eof_benchmark_image_sequence, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -426,7 +426,7 @@ void eof_prepare_file_menu(void)
 			eof_file_import_menu[5].flags = D_DISABLED;
 			eof_file_import_menu[6].flags = D_DISABLED;
 		}
-		eof_file_display_menu[6].flags = 0;	//Benchmark image sequence
+		eof_file_display_menu[5].flags = 0;	//Benchmark image sequence
 	}
 	else
 	{
@@ -439,14 +439,14 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
 		eof_file_menu[10].flags = D_DISABLED;	//Export image sequence
 		eof_file_menu[11].flags = D_DISABLED;	//Export preview audio
-		eof_file_import_menu[0].flags = D_DISABLED;		//Import>Sonic Visualiser
-		eof_file_import_menu[4].flags = D_DISABLED;		//Import>Lyric
-		eof_file_import_menu[8].flags = D_DISABLED;		//Import>Queen Bee
-		eof_file_import_menu[9].flags = D_DISABLED;		//Import>Queen Bee (multi)
+		eof_file_import_menu[0].flags = D_DISABLED;	//Import>Sonic Visualiser
+		eof_file_import_menu[4].flags = D_DISABLED;	//Import>Lyric
+		eof_file_import_menu[8].flags = D_DISABLED;	//Import>Queen Bee
+		eof_file_import_menu[9].flags = D_DISABLED;	//Import>Queen Bee (multi)
 		eof_file_import_menu[10].flags = D_DISABLED;	//Import>Guitar Hero sections
 		eof_file_import_menu[11].flags = D_DISABLED;	//Import>Guitar Hero Live
 		eof_file_import_menu[12].flags = D_DISABLED;	//Import>Drums Rock
-		eof_file_display_menu[6].flags = D_DISABLED;	//Benchmark image sequence
+		eof_file_display_menu[5].flags = D_DISABLED;	//Benchmark image sequence
 	}
 
 	if(eof_screen_zoom)
@@ -2127,7 +2127,7 @@ int eof_menu_file_exit(void)
 	eof_clear_input();
 	if(!eof_dont_redraw_on_exit_prompt)
 	{	//If the user didn't disable the redrawing of the program window on exit prompt
-		(void) eof_redraw_display();
+		(void) eof_reset_display();
 	}
 
 	//Re-initialize the notes panel if it was destroyed when the program window was redrawn
@@ -5890,23 +5890,6 @@ int eof_set_3d_camera_angle(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
-
-	return D_O_K;
-}
-
-int eof_redraw_display(void)
-{
-	(void) eof_set_display_mode(eof_screen_width, eof_screen_height);
-
-	//Update coordinate related items
-	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
-	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
-	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
-
-	eof_cursor_visible = 1;
-	eof_pen_visible = 1;
-	eof_show_mouse(screen);
-	eof_render();
 
 	return D_O_K;
 }

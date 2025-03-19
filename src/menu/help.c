@@ -16,8 +16,10 @@ MENU eof_help_menu[] =
 	{"&Vocals Tutorial", eof_menu_help_vocals_tutorial, NULL, 0, NULL},
 	{"&Pro Guitar Tutorial", eof_menu_help_pro_guitar_tutorial, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Keys\tF1", eof_menu_help_keys, NULL, 0, NULL},
+	{"Reset &Display\tShift+F5", eof_reset_display, NULL, 0, NULL},
+	{"Reset audi&O", eof_reset_audio, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
+	{"&Keys\tF1", eof_menu_help_keys, NULL, 0, NULL},
 	{"&About", eof_menu_help_about, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -159,4 +161,44 @@ int eof_menu_help_about(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	return 1;
+}
+
+int eof_reset_display(void)
+{
+	(void) eof_set_display_mode(eof_screen_width, eof_screen_height);
+
+	//Update coordinate related items
+	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
+	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	eof_render();
+
+	return D_O_K;
+}
+
+int eof_reset_audio(void)
+{
+	remove_sound();
+
+	if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
+	{	//If Allegro failed to initialize the sound AND midi
+		if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
+		{
+			allegro_message("Can't set up sound!  Error: %s",allegro_error);
+			return 0;
+		}
+		eof_midi_initialized = 0;	//Couldn't set up MIDI
+	}
+	else
+	{
+		install_timer();	//Needed to use midi_out()
+		eof_midi_initialized = 1;
+	}
+
+	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+	return D_O_K;
 }
