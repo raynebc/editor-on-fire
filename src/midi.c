@@ -25,11 +25,16 @@
 
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
 static unsigned long eof_midi_events = 0;
-static char eof_midi_event_full = 0;			//Is set to nonzero when an overflow of the eof_midi_event[] array was prevented, is reset by eof_clear_midi_events()
-static char eof_midi_note_status[128] = {0};	//Used by some functions to track the on/off status of notes 0 through 127
+static char eof_midi_event_full = 0;				//Is set to nonzero when an overflow of the eof_midi_event[] array was prevented, is reset by eof_clear_midi_events()
+static char eof_midi_note_status[16][128] = {0};		//Used by some functions to track the on/off status of notes 0 through 127 on each of the 16 usable MIDI channels
 unsigned long enddelta = 0, endbeatnum = 0;		//If these becomes nonzero, they define the position of a user-defined end event
 
 void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel)
+{
+	eof_add_midi_event_indexed(pos, type, note, velocity, channel, 0);	//Add the event with an index value of 0
+}
+
+void eof_add_midi_event_indexed(unsigned long pos, int type, int note, int velocity, int channel, unsigned long index)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 	char note_off = 0;	//Will be set to non zero if this is a note off event
 	char note_on = 0;	//Will be set to non zero if this is a note on event
@@ -61,21 +66,23 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 			eof_midi_event[eof_midi_events]->note = note;
 			eof_midi_event[eof_midi_events]->velocity = velocity;
 			eof_midi_event[eof_midi_events]->channel = channel;
+			eof_midi_event[eof_midi_events]->dp = NULL;
 			eof_midi_event[eof_midi_events]->allocation = 0;
 			eof_midi_event[eof_midi_events]->filtered = 0;
-			eof_midi_event[eof_midi_events]->dp = NULL;
 			eof_midi_event[eof_midi_events]->on = note_on;
 			eof_midi_event[eof_midi_events]->off = note_off;
+			eof_midi_event[eof_midi_events]->index = index;
+			eof_midi_event[eof_midi_events]->sysexon = 0;
 			eof_midi_event[eof_midi_events]->length = 0;	//The calling function is required to set this for HOPO on/off marker's Note Off event
 			eof_midi_event[eof_midi_events]->needle = 0;	//Calling function must manually set this if wanted
 			eof_midi_events++;
 
-			if((note >= 0) && (note <= 127))
+			if((note >= 0) && (note <= 127) && (channel >= 0) && (channel < 16))
 			{	//If the note is in bounds of a legal MIDI note, track the writing of each on/off status
 				if(note_off)	//Note Off
-					eof_midi_note_status[note] = 0;
+					eof_midi_note_status[channel][note] = 0;
 				else if(note_on)	//Note On
-					eof_midi_note_status[note] = 1;
+					eof_midi_note_status[channel][note] = 1;
 			}
 		}
 	}
@@ -190,7 +197,9 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon)
 					eof_midi_event[eof_midi_events]->filtered = 0;
 					eof_midi_event[eof_midi_events]->on = 0;
 					eof_midi_event[eof_midi_events]->off = 0;
+					eof_midi_event[eof_midi_events]->index = 0;
 					eof_midi_event[eof_midi_events]->sysexon = sysexon;
+					eof_midi_event[eof_midi_events]->length = 0;
 					eof_midi_event[eof_midi_events]->needle = 0;	//Calling function must manually set this if wanted
 					eof_midi_events++;
 				}
@@ -429,6 +438,50 @@ int qsort_helper3(const void * e1, const void * e2)
 	return 0;
 }
 
+int qsort_helper_immerrock(const void * e1, const void * e2)
+{
+//	eof_log("qsort_helper_immerrock() entered");
+
+	EOF_MIDI_EVENT ** thing1 = (EOF_MIDI_EVENT **)e1;
+	EOF_MIDI_EVENT ** thing2 = (EOF_MIDI_EVENT **)e2;
+
+	/* Chronological order takes precedence in sorting */
+	if((*thing1)->pos < (*thing2)->pos)
+		return -1;
+	if((*thing1)->pos > (*thing2)->pos)
+		return 1;
+
+	/* Channel number takes second precedence */
+	if((*thing1)->channel < (*thing2)->channel)
+		return -1;
+	if((*thing1)->channel > (*thing2)->channel)
+		return 1;
+
+	/* The index variable takes third precedence */
+	if((*thing1)->index && (*thing2)->index)
+	{	//If the index values of both events are nonzero
+		if((*thing1)->index < (*thing2)->index)
+			return -1;
+		if((*thing2)->index < (*thing1)->index)
+			return 1;
+	}
+
+	/* Note number takes fourth precedence */
+	if((*thing1)->note < (*thing2)->note)
+		return -1;
+	if((*thing1)->note > (*thing2)->note)
+		return 1;
+
+	/* Note off before Note on takes fifth precedence */
+	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x80))
+		return 1;
+	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0x90))
+		return -1;
+
+	// they are equal...
+	return 0;
+}
+
 /* write MTrk data to a temp file so we can calculate the length in bytes of the track
    write MThd data and copy MTrk data from the temp file using the size of the temp file as the track length
    delete the temp file
@@ -449,7 +502,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	PACKFILE * fp;
 	PACKFILE * fp3 = NULL;					//File pointer for the Expert+ file
 	unsigned long i, j, k;
-	unsigned long ctr;
+	unsigned long ctr, channelctr;
 	unsigned long delta = 0, delta2 = 0;
 	int midi_note_offset = 0;
 	int vel;
@@ -1381,29 +1434,32 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				return 0;	//Return failure
 			}
 
-			for(i = 0; i < 128; i++)
-			{	//Ensure that any notes that are still on are terminated
-				if(eof_midi_note_status[i] == 0)
-					continue;	//If this note was not left on, skip it
+			for(channelctr = 0; channelctr < 16; channelctr++)
+			{	//For each of the usable MIDI channels
+				for(i = 0; i < 128; i++)
+				{	//Ensure that any notes that are still on are terminated
+					if(eof_midi_note_status[channelctr][i] == 0)
+						continue;	//If this note was not left on, skip it
 
-				//Otherwise send an alert message, as this is abnormal
-				allegro_message("MIDI export error:  Note %lu was not turned off", i);
-				eof_log("MIDI export error:  Note %lu was not turned off", 1);
-				if(endbeatnum)
-				{	//If the chart has a manually defined end event, that's probably the cause
-					eof_log("\tend event was manually defined", 1);
-					eof_clear_input();
-					if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user opts to seek to the offending event
-						eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
-						eof_selected_beat = endbeatnum;
+					//Otherwise send an alert message, as this is abnormal
+					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					eof_log("MIDI export error:  Note %lu was not turned off", 1);
+					if(endbeatnum)
+					{	//If the chart has a manually defined end event, that's probably the cause
+						eof_log("\tend event was manually defined", 1);
+						eof_clear_input();
+						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user opts to seek to the offending event
+							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+							eof_selected_beat = endbeatnum;
+						}
 					}
+					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+					eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+					eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+					return 0;	//Return failure
 				}
-				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-				eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
-				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-				return 0;	//Return failure
 			}
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Post-sort event content:  %lu events", eof_midi_events);
@@ -1684,29 +1740,32 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				return 0;	//Return failure
 			}
 
-			for(i = 0;i < 128; i++)
-			{	//Ensure that any notes that are still on are terminated
-				if(eof_midi_note_status[i] == 0)
-					continue;	//If this note was not left on, skip it
+			for(channelctr = 0; channelctr < 16; channelctr++)
+			{	//For each of the usable MIDI channels
+				for(i = 0;i < 128; i++)
+				{	//Ensure that any notes that are still on are terminated
+					if(eof_midi_note_status[channelctr][i] == 0)
+						continue;	//If this note was not left on, skip it
 
-				//Otherwise send an alert message, as this is abnormal
-				allegro_message("MIDI export error:  Note %lu was not turned off", i);
-				eof_log("MIDI export error:  Note %lu was not turned off", 1);
-				if(endbeatnum)
-				{	//If the chart has a manually defined end event, that's probably the cause
-					eof_log("\tend event was manually defined", 1);
-					eof_clear_input();
-					if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user opts to seek to the offending event
-						eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
-						eof_selected_beat = endbeatnum;
+					//Otherwise send an alert message, as this is abnormal
+					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					eof_log("MIDI export error:  Note %lu was not turned off", 1);
+					if(endbeatnum)
+					{	//If the chart has a manually defined end event, that's probably the cause
+						eof_log("\tend event was manually defined", 1);
+						eof_clear_input();
+						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user opts to seek to the offending event
+							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+							eof_selected_beat = endbeatnum;
+						}
 					}
+					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+					eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+					eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+					return 0;	//Return failure
 				}
-				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-				eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
-				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-				return 0;	//Return failure
 			}
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
@@ -2281,29 +2340,32 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				return 0;	//Return failure
 			}
 
-			for(i = 0; i < 128; i++)
-			{	//Ensure that any notes that are still on are terminated
-				if(eof_midi_note_status[i] == 0)
-					continue;	//If this note was not left on, skip it
+			for(channelctr = 0; channelctr < 16; channelctr++)
+			{	//For each of the usable MIDI channels
+				for(i = 0; i < 128; i++)
+				{	//Ensure that any notes that are still on are terminated
+					if(eof_midi_note_status[channelctr][i] == 0)
+						continue;	//If this note was not left on, skip it
 
-				//Otherwise send an alert message, as this is abnormal
-				allegro_message("MIDI export error:  Note %lu was not turned off", i);
-				eof_log("MIDI export error:  Note %lu was not turned off", 1);
-				if(endbeatnum)
-				{	//If the chart has a manually defined end event, that's probably the cause
-					eof_clear_input();
-					eof_log("\tend event was manually defined", 1);
-					if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user opts to seek to the offending event
-						eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
-						eof_selected_beat = endbeatnum;
+					//Otherwise send an alert message, as this is abnormal
+					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					eof_log("MIDI export error:  Note %lu was not turned off", 1);
+					if(endbeatnum)
+					{	//If the chart has a manually defined end event, that's probably the cause
+						eof_clear_input();
+						eof_log("\tend event was manually defined", 1);
+						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user opts to seek to the offending event
+							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+							eof_selected_beat = endbeatnum;
+						}
 					}
+					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+					eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+					eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+					return 0;	//Return failure
 				}
-				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-				eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
-				return 0;	//Return failure
 			}
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
@@ -2744,13 +2806,21 @@ unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned l
 
 		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 		{	//For each of the 6 supported strings
-			if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))
-			{	//If this string is used (and not muted)
+			if(tp->note[note]->note & bitmask)
+			{	//If this string is used
 				if(!(tp->note[note]->ghost & bitmask))
 				{	//If this string is not ghosted
+					unsigned char effective_fret_value =  tp->note[note]->frets[ctr];
+					if(tp->note[note]->frets[ctr] & 0x80)
+					{	//If this string is muted
+						effective_fret_value = 0;	//Have the pitch array element for this string reflect an open note
+					}
 					//This note is found by adding default tuning for the string, the offset defining the current tuning, the position of any capo in use and the fret number being played
-					pitches[ctr] = tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo;	//Store it in the pitch array
-					pitchmask |= bitmask;	//Set the appropriate bit in the mask
+					pitches[ctr] = tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + effective_fret_value + tp->capo;	//Store it in the pitch array
+					if(!(tp->note[note]->frets[ctr] & 0x80))
+					{	//If this string is not muted
+						pitchmask |= bitmask;	//Set the appropriate bit in the mask
+					}
 				}
 			}
 		}
@@ -2765,7 +2835,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
 	PACKFILE * fp;
-	unsigned long i, j, k, bitmask, deltapos, deltalength;
+	unsigned long i, j, k, bitmask, deltapos, deltalength, channelctr;
 	unsigned long delta = 0;
 	int vel, channel = 0;
 	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
@@ -2997,29 +3067,32 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 			}//For each note/lyric in the track
 
 			//Cleanup
-			for(i = 0; i < 128; i++)
-			{	//Ensure that any notes that are still on are terminated
-				if(eof_midi_note_status[i] == 0)
-					continue;	//If this note was not left on, skip it
+			for(channelctr = 0; channelctr < 16; channelctr++)
+			{	//For each of the usable MIDI channels
+				for(i = 0; i < 128; i++)
+				{	//Ensure that any notes that are still on are terminated
+					if(eof_midi_note_status[channelctr][i] == 0)
+						continue;	//If this note was not left on, skip it
 
-				//Otherwise send an alert message, as this is abnormal
-				allegro_message("MIDI export error:  Note %lu was not turned off", i);
-				eof_log("MIDI export error:  Note %lu was not turned off", 1);
-				if(endbeatnum)
-				{	//If the chart has a manually defined end event, that's probably the cause
-					eof_clear_input();
-					eof_log("\tend event was manually defined", 1);
-					if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user opts to seek to the offending event
-						eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
-						eof_selected_beat = endbeatnum;
+					//Otherwise send an alert message, as this is abnormal
+					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					eof_log("MIDI export error:  Note %lu was not turned off", 1);
+					if(endbeatnum)
+					{	//If the chart has a manually defined end event, that's probably the cause
+						eof_clear_input();
+						eof_log("\tend event was manually defined", 1);
+						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user opts to seek to the offending event
+							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+							eof_selected_beat = endbeatnum;
+						}
 					}
+					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+					eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+					eof_clear_midi_events();		//Free any memory allocated for the MIDI event array
+					return 0;	//Return failure
 				}
-				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-				eof_clear_midi_events();		//Free any memory allocated for the MIDI event array
-				return 0;	//Return failure
 			}
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
@@ -3271,9 +3344,10 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
 	PACKFILE * fp;
-	unsigned long i, k, bitmask, deltapos, deltalength;
+	unsigned long i, k, bitmask, deltapos, deltalength, channelctr;
 	unsigned long delta = 0, nextdeltapos;
-	int vel = 79, channel = 0;			//Immerrock seems to use velocity 79 for the notes
+	int channel;
+	int technique_vel[6] = {1, 6, 11, 16, 21, 26};	//Technique markers denote the affected string based on the velocity (ie. low E techniques are written with velocity 1)
 	unsigned long lastdelta=0;			//Keeps track of the last anchor's absolute delta time
 	unsigned long totaltrackcounter = 0;	//Tracks the number of tracks to write to file
 	EOF_MIDI_TS_LIST *tslist=NULL;		//List containing TS changes
@@ -3289,6 +3363,10 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	char has_notes = 0;		//Track whether there's at least one note in the target track difficulty
 	int error = 0;
 	long next;
+	unsigned long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Immerrock, pad to a minimum length of 1/64 (in #/4 meter) if possible
+	EOF_PRO_GUITAR_TRACK *tp;
+	int is_muted;				//Track whether a note is fully string muted
+	unsigned long index = 1;	//Used to set the sort order for multiple pairs of note on/off events at the same timestamp as required by Immerrock
 
 	eof_log("eof_export_immerrock_midi() entered", 1);
 
@@ -3339,20 +3417,25 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
 	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
 	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 
 	//Write notes
 	for(i = 0; i < eof_get_track_size(sp, track); i++)
 	{	//For each note in the track
-		unsigned long pos = eof_get_note_pos(sp, track, i);	//Cache this value
-		unsigned long length = eof_get_note_length(sp, track, i);
-		unsigned long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Immerrock, pad to a minimum length of 1/64 (in #/4 meter) if possible
+		unsigned long pos	, length, note, flags;
 
 		if(eof_get_note_type(sp, track, i) != diff)	//If this note isn't in the target difficulty
 			continue;	//Skip it
 
 		pitchmask = eof_get_midi_pitches(sp, track, i, pitches);	//Determine how many exportable pitches this note/lyric has
-		if(!pitchmask)
-			continue;	//If no pitches would be exported for this note/lyric, skip it
+		is_muted = eof_is_string_muted(sp, track, i);			//Determine if all played strings in the note are string muted (which would result in pitchmask being 0)
+		if(!pitchmask && !is_muted)
+			continue;	//If no pitches would be exported for this note/lyric, and that's not due to all played strings being string muted, skip it
+
+		pos = eof_get_note_pos(sp, track, i);	//Cache these
+		length = eof_get_note_length(sp, track, i);
+		note = eof_get_note_note(sp, track, i);
+		flags = eof_get_note_flags(sp, track, i);
 
 		//Write note pitches
 		deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
@@ -3380,12 +3463,63 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 			}
 		}
 		for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
-		{	//For each of the 6 possible values in the pitch array
-			if(pitchmask & bitmask)
-			{	//If this pitch is defined in the array
+		{	//For each of the 6 usable strings
+			if(note & bitmask)
+			{	//If this string is used
 				channel = k;	//Immerrock uses channel 0 for the thickest string
-				eof_add_midi_event(deltapos, 0x90, pitches[k], vel, channel);
-				eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], vel, channel);
+				eof_add_midi_event(deltapos, 0x90, pitches[k], 79, channel);				//Velocity 79 indicates a note pitch definition
+				eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], 79, channel);
+			}
+		}
+
+		//Write note techniques
+		///Techniques are written in a way where each string has to have markers start and stop at the same timestamp
+		///eof_add_midi_event_indexed() is used for these to ensure a correct sort order when qsort() is used
+		for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
+		{	//For each of the 6 usable strings (using velocities 1, 6, 11, 16, 21, 26 respectively)
+			if(note & bitmask)
+			{	//If this string is used
+				///Change all of these so the note off for each marker is the same timestamp as the note on
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+				{	//If this note is palm muted
+					eof_add_midi_event_indexed(deltapos, 0x90, 12, technique_vel[k], 15, index++);		//Note 12, channel 15 with the string's dedicated velocity number indicates palm mute in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x80, 12, 0, 15, index++);
+				}
+				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (tp->note[i]->frets[k] & 0x80))
+				{	//If this note is fully string muted, or this specific string is
+					eof_add_midi_event_indexed(deltapos, 0x90, 13, technique_vel[k], 15, index++);		//Note 13, channel 15 with the string's dedicated velocity number indicates string mute in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x80, 13, 0, 15, index++);
+				}
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+				{	//If this note is a natural harmonic
+					eof_add_midi_event_indexed(deltapos, 0x90, 14, technique_vel[k], 15, index++);		//Note 14, channel 15 with the string's dedicated velocity number indicates natural harmonic in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x80, 14, 0, 15, index++);
+				}
+				if(flags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
+				{	//If this note is a hammer on or a pull off
+					eof_add_midi_event_indexed(deltapos, 0x90, 15, technique_vel[k], 15, index++);		//Note 15, channel 15 with the string's dedicated velocity number indicates hammer on or pull off in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x80, 15, 0, 15, index++);
+				}
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+				{	//If this note is tapped
+					eof_add_midi_event_indexed(deltapos, 0x90, 17, technique_vel[k], 15, index++);		//Note 17, channel 15 with the string's dedicated velocity number indicates tapping in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x80, 17, 0, 15, index++);
+				}
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
+				{	//If this note is down strummed/picked
+					eof_add_midi_event_indexed(deltapos, 0x90, 18, technique_vel[k], 15, index++);		//Note 18, channel 15 with the string's dedicated velocity number indicates down strum in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x80, 18, 0, 15, index++);
+				}
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+				{	//If this note is up strummed/picked
+					eof_add_midi_event_indexed(deltapos, 0x90, 19, technique_vel[k], 15, index++);		//Note 19, channel 15 with the string's dedicated velocity number indicates up strum in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x80, 19, 0, 15, index++);
+				}
+				if(flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				{	//If this note slides up or down
+					eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[k], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates slide up or down in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x80, 20, 0, 15, index++);
+				}
 			}
 		}
 
@@ -3426,32 +3560,36 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	}
 
 	//Cleanup
-	for(i = 0; i < 128; i++)
-	{	//Ensure that any notes that are still on are terminated
-		if(eof_midi_note_status[i] == 0)
-			continue;	//If this note was not left on, skip it
+	for(channelctr = 0; channelctr < 16; channelctr++)
+	{	//For each of the usable MIDI channels
+		for(i = 0; i < 128; i++)
+		{	//Ensure that any notes that are still on are terminated
+			if(eof_midi_note_status[channelctr][i] == 0)
+				continue;	//If this note was not left on, skip it
 
-		//Otherwise send an alert message, as this is abnormal
-		allegro_message("MIDI export error:  Note %lu was not turned off", i);
-		eof_log("MIDI export error:  Note %lu was not turned off", 1);
-		if(endbeatnum)
-		{	//If the chart has a manually defined end event, that's probably the cause
-			eof_clear_input();
-			eof_log("\tend event was manually defined", 1);
-			if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-			{	//If user opts to seek to the offending event
-				eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
-				eof_selected_beat = endbeatnum;
+			//Otherwise send an alert message, as this is abnormal
+			allegro_message("MIDI export error:  Note %lu was not turned off", i);
+			eof_log("MIDI export error:  Note %lu was not turned off", 1);
+			if(endbeatnum)
+			{	//If the chart has a manually defined end event, that's probably the cause
+				eof_clear_input();
+				eof_log("\tend event was manually defined", 1);
+				if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to seek to the offending event
+					eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+					eof_selected_beat = endbeatnum;
+				}
 			}
+			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+			eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
+			eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+			eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+			return 0;	//Return failure
 		}
-		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
-		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-		eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
-		return 0;	//Return failure
 	}
-	qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
-	eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
+	///Due to how Immerrock defines techniques, the same MIDI note can be turned on and off multiple times at the same timestamp on the same channel
+	///Removing overlapping notes will break this notation, so just use the Immerrock specialized quicksort
+	qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper_immerrock);
 
 	//Build temp file
 	/* open the file */
@@ -3712,7 +3850,7 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 						return 0;	//Return failure
 					}
 				}
-				strncpy(section, ptr, sizeof(temp_string) - 1);		//Copy the portion of the text event that came after "section "
+				strncpy(section, ptr, sizeof(section) - 1);		//Copy the portion of the text event that came after "section "
 				if(section[strlen(section) - 1] == ']')
 				{	//If that included a trailing closing bracket
 					section[strlen(section) - 1] = '\0';	//Truncate it from the end of the string
@@ -3736,13 +3874,13 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 		EOF_LYRIC *temp_lyric = NULL;
 		char newline = 0;
 		unsigned long last_ending = tp->lyric[tp->lyrics - 1]->pos + tp->lyric[tp->lyrics - 1]->length;
+		unsigned long hide_pos;	//The timestamp at which a "Hide();" lyric entry will be added, which is required to avoid a game crash if lyrics are displayed
 
-		if(last_ending + 10000 <= eof_music_length)
-		{	//If the last lyric ends at least 10 seconds before the end of the chart audio
-			temp_lyric = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, last_ending + 3000, 1000, 0, "Hide();");	//Append a temporary control event to hide the lyrics 3 seconds after that ending
-			if(eof_vocal_track_add_line(tp, last_ending + 3000, last_ending + 4000, 0xFF))
-				newline = 1;	//Track whether a new lyric line was successfully added to encompass that control event
-		}
+		hide_pos = last_ending + 3000;
+		temp_lyric = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, hide_pos, 1000, 0, "Hide();");	//Append a temporary control event to hide the lyrics 3 seconds after that ending
+		if(eof_vocal_track_add_line(tp, hide_pos, hide_pos + 1000, 0xFF))
+			newline = 1;	//Track whether a new lyric line was successfully added to encompass that control event
+
 		qsort(tp->line, (size_t)tp->lines, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);	//Sort the lyric lines
 		(void) replace_filename(eof_temp_filename, eof_temp_filename, "Lyrics.txt", (int) sizeof(eof_temp_filename));
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
@@ -3759,7 +3897,7 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 		}
 		if(newline)
 		{	//If a temporary lyric line was added
-			if(tp->line[tp->lines - 1].start_pos != last_ending + 3000)
+			if(tp->line[tp->lines - 1].start_pos != hide_pos)
 			{	//If the last lyric line in the vocal track isn't the one that was created just above
 				eof_log("!Logic error.  Lost the temporary lyric line in Immerrock lyric export", 1);
 			}
@@ -3770,7 +3908,7 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 		}
 		if(temp_lyric)
 		{	//If a temporary lyric was added
-			if(tp->lyric[tp->lyrics - 1]->pos != last_ending + 3000)
+			if(tp->lyric[tp->lyrics - 1]->pos != hide_pos)
 			{	//If the last lyric in the vocal track isn't the one that was created just above
 				eof_log("!Logic error.  Lost the temporary lyric in Immerrock lyric export", 1);
 			}
@@ -4796,7 +4934,8 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 
 void eof_check_for_note_overlap(void)
 {
-	unsigned long ctr, ctr2;
+	unsigned long ctr, ctr2, channelctr;
+	int channel;
 
 	eof_log("eof_check_for_note_overlap() entered", 1);
 	memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
@@ -4805,9 +4944,10 @@ void eof_check_for_note_overlap(void)
 		if(eof_midi_event[ctr]->filtered)
 			continue;	//If this event is already filtered out, skip it
 
+		channel = eof_midi_event[ctr]->channel;	//Keep track of which channel this MIDI event pertains to
 		if(eof_midi_event[ctr]->on)
 		{	//If this is a note on event
-			if(eof_midi_note_status[eof_midi_event[ctr]->note] == 1)
+			if(eof_midi_note_status[channel][eof_midi_event[ctr]->note] == 1)
 			{	//If this note was already on
 				eof_midi_event[ctr]->filtered = 1;	//Filter this event from being written to MIDI
 				for(ctr2 = ctr + 1; ctr2 < eof_midi_events; ctr2++)
@@ -4821,29 +4961,32 @@ void eof_check_for_note_overlap(void)
 			}
 			else
 			{
-				eof_midi_note_status[eof_midi_event[ctr]->note] = 1;	//Track that it is now on
+				eof_midi_note_status[channel][eof_midi_event[ctr]->note] = 1;	//Track that it is now on
 			}
 		}
 		else if(eof_midi_event[ctr]->off)
 		{	//If this is a note off event
-			if(eof_midi_note_status[eof_midi_event[ctr]->note] == 0)
+			if(eof_midi_note_status[channel][eof_midi_event[ctr]->note] == 0)
 			{	//If this note was already off
 				eof_midi_event[ctr]->filtered = 1;	//Filter this event from being written to MIDI
 			}
 			else
 			{
-				eof_midi_note_status[eof_midi_event[ctr]->note] = 0;	//Track that it is now off
+				eof_midi_note_status[channel][eof_midi_event[ctr]->note] = 0;	//Track that it is now off
 			}
 		}
 	}
 
 	//Check eof_midi_note_status[] to make sure no notes remain on
-	for(ctr = 0; ctr < 128; ctr++)
-	{
-		if(eof_midi_note_status[ctr] != 0)
+	for(channelctr = 0; channelctr < 16; channelctr++)
+	{	//For each of the usable MIDI channels
+		for(ctr = 0; ctr < 128; ctr++)
 		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Note %lu is not ended.", ctr);
-			eof_log(eof_log_string, 1);
+			if(eof_midi_note_status[channelctr][ctr] != 0)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWarning:  Note %lu is not ended.", ctr);
+				eof_log(eof_log_string, 1);
+			}
 		}
 	}
 }

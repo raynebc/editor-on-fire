@@ -39,19 +39,19 @@
 											//This flag will only be used during project save/load to determine whether another flags variable is written/read
 
 //The following flags pertain to pro guitar notes
-#define EOF_PRO_GUITAR_NOTE_FLAG_ACCENT         32			//This flag will represent a note that is played as an accent
-#define EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC     64			//This flag will represent a note that is played as a pinch harmonic
-#define EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT       128			//This flag will represent a note that is linked to the next note in the track difficulty
-#define EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE  256			//This flag will represent a note that has an unpitched slide
+#define EOF_PRO_GUITAR_NOTE_FLAG_ACCENT         		32			//This flag will represent a note that is played as an accent
+#define EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC    	64			//This flag will represent a note that is played as a pinch harmonic
+#define EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT       		128			//This flag will represent a note that is linked to the next note in the track difficulty
+#define EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE  	256			//This flag will represent a note that has an unpitched slide
 #define EOF_PRO_GUITAR_NOTE_FLAG_HO				512			//This flag will represent a hammer on
 #define EOF_PRO_GUITAR_NOTE_FLAG_PO				1024		//This flag will represent a pull off
-#define EOF_PRO_GUITAR_NOTE_FLAG_TAP			2048		//This flag will represent a tapped note
-#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP		4096		//This flag will represent a note that slides up to the next note
+#define EOF_PRO_GUITAR_NOTE_FLAG_TAP				2048		//This flag will represent a tapped note
+#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP			4096		//This flag will represent a note that slides up to the next note
 #define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN		8192		//This flag will represent a note that slides down to the next note
-#define EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE	16384		//This flag will represent a note whose strings are muted by the fretting hand
+#define EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE		16384		//This flag will represent a note whose strings are muted by the fretting hand
 #define EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE		32768		//This flag will represent a note whose strings are muted by the strumming hand
 #define EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM		262144		//This flag will represent a chord that is played by strumming up
-#define EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM		524288		//This flag will represent a chord that is played by strumming down
+#define EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM	524288		//This flag will represent a chord that is played by strumming down
 #define EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM		1048576		//This flag will represent a chord that is played by strumming in the middle of the strings (ie. barely playing or not playing strings 1 and 6)
 #define EOF_PRO_GUITAR_NOTE_FLAG_BEND			2097152		//This flag will represent a note that is bent after it is picked
 #define EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC		4194304		//This flag will represent a note that is played as a harmonic

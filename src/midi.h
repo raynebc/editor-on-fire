@@ -80,7 +80,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches);
 	//Returns a bitmask defining which elements in the pitches array are populated to define the pitches used by the specified note/lyric
-	//Gems that are string muted or ghosted are ignored
+	//Gems that are string muted or ghosted are not reflected in this bitmask
+	//String muted gems have their open string pitches reflected in the pitches array, for use with Immerrock export
 	//Each pitch is returned through *pitches array, which must be at least 6 elements large
 	//0 is returned on error or if the specified note contains no pitches (pitchless or percussion lyric, or fully string muted or fully ghosted pro guitar note)
 int eof_export_music_midi(EOF_SONG *sp, char *fn, char format);
@@ -200,9 +201,12 @@ void eof_check_for_hopo_phrase_overlap(void);
 	//This can happen in very special circumstances (ie. A hopo off note that overlaps a hopo on note and a hopo off note at the same time)
 	//The "length" value of the MIDI event is required to be > 0 in order for the end marker note from being made earlier, to guarantee the marker cannot be chagned to 0 deltas in length
 
-void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel);
+void eof_add_midi_event_indexed(unsigned long pos, int type, int note, int velocity, int channel, unsigned long index);
 	//Creates a new structure to store the specified values and appends it to eof_midi_event[]
 	//Note on/off events are also tracked in the eof_midi_note_status[] array
+	//The index value is used for special sorting rules in the quick sort comparitor functions
+void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel);
+	//Calls eof_add_midi_event_indexed() to add an event with an index of 0
 void eof_add_midi_lyric_event(unsigned long pos, char * text, char allocation);
 	//Creates a new structure to store the specified lyric event and appends it to eof_midi_event[]
 	//The allocation boolean value specifies whether the string is using dynamically allocated memory and should be freed when the array is emptied
@@ -224,6 +228,10 @@ void WriteVarLen(unsigned long value, PACKFILE * fp);
 	//Writes the specified value in variable length format to the specified file handle
 int qsort_helper3(const void * e1, const void * e2);
 	//A sort algorithm used when quick sorting the eof_midi_event[] array
+int qsort_helper_immerrock(const void * e1, const void * e2);
+	//A sort algorithm used when quick sorting the eof_midi_event[] array for use with Immerrock, which has some unique requirements
+	//such as properly sorting pairs or note on and off events that are all at the same timestamp, using the index variable to define sort order
+	//If index is nonzero for both events being compared, the lower number sorts earlier
 
 void eof_write_ghwt_drum_array_txt(EOF_SONG *sp, char *fn);
 	//Writes a text file containing timestamps and codes for the specified chart's expert drum track difficulty, for use with authoring drum charts for Guitar Hero World Tour

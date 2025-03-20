@@ -630,7 +630,16 @@ void Export_LRC(FILE *outf)
 			assert_wrapper(temp->lyric != NULL);
 
 			if(Lyrics.out_format == ILRC_FORMAT)
+			{
+				unsigned long ctr;
+				for(ctr = 0; temp->lyric[ctr] != '\0'; ctr++)
+				{	//For each character in this lyric
+					if(temp->lyric[ctr] == '"')
+						temp->lyric[ctr] = '\'';	//Replace double quotation marks with single quotation marks, since Immerock can't display the former in lyrics
+				}
+
 				fputc_err('"',outf);	//Immerrock variant LRC has each line of lyric text surrounded by double quotes
+			}
 
 		//Write lyric
 			fputs_err(temp->lyric,outf);
