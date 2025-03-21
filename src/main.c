@@ -156,6 +156,7 @@ int         eof_write_rb_files = 0;				//If nonzero, extra files are written dur
 int         eof_write_music_midi = 0;			//If nonzero, extra MIDI files are written during save that contains normal MIDI pitches and can be used for other MIDI based games like Songs2See and Synthesia and also for Fretlight
 int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
 int         eof_write_rs2_files = 0;			//If nonzero, extra files are written during save that are used for authoring Rocksmith 2014 customs
+int         eof_write_immerrock_files;;		//If nonzero, extra files are written during save that are used for authoring Immerrock customs
 int         eof_abridged_rs2_export = 1;		//If nonzero, default XML attributes are omitted from RS2 export
 int         eof_abridged_rs2_export_warning_suppressed = 0;	//Set to nonzero if the user has suppressed the warning that abridged RS2 files require a version of the toolkit >= 2.8.2.0
 int         eof_rs2_export_extended_ascii_lyrics = 0;	//If nonzero, a larger set of text characters are allowed to export to RS2 lyrics
@@ -412,7 +413,7 @@ int eof_info_color;
 
 int eof_color_set = EOF_COLORS_DEFAULT;
 eof_color eof_colors[6];	//Contain the color definitions for each lane
-eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct, eof_color_black_struct, eof_color_ghl_black_struct, eof_color_ghl_white_struct;
+eof_color eof_color_green_struct, eof_color_red_struct, eof_color_light_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct, eof_color_black_struct, eof_color_ghl_black_struct, eof_color_ghl_white_struct;
 eof_color eof_lane_1_struct, eof_lane_2_struct, eof_lane_3_struct, eof_lane_4_struct, eof_lane_5_struct, eof_lane_6_struct;
 	//Color data
 
@@ -6004,6 +6005,22 @@ void eof_init_colors(void)
 	eof_color_red_struct.arrowhit3d = EOF_IMAGE_NOTE_RED_ARROW_HIT;
 	eof_color_red_struct.slider3d = EOF_IMAGE_NOTE_RED_SLIDER;
 	eof_color_red_struct.colorname = eof_color_red_name;
+	//Init light red
+	///To-do:  Consider adding new bitmaps for this color or edit copies of the normal red bitmaps in memory to make them lighter
+	eof_color_light_red_struct.color = eof_color_light_red;
+	eof_color_light_red_struct.hit = makecol(255, 210, 210);
+	eof_color_light_red_struct.lightcolor = makecol(255,162,162);
+	eof_color_light_red_struct.border = eof_color_white;
+	eof_color_light_red_struct.note3d = EOF_IMAGE_NOTE_RED_HIT;
+	eof_color_light_red_struct.notehit3d = EOF_IMAGE_NOTE_RED_HIT;
+	eof_color_light_red_struct.hoponote3d = EOF_IMAGE_NOTE_HRED;
+	eof_color_light_red_struct.hoponotehit3d = EOF_IMAGE_NOTE_HRED_HIT;
+	eof_color_light_red_struct.cymbal3d = EOF_IMAGE_NOTE_RED_HIT;
+	eof_color_light_red_struct.cymbalhit3d = EOF_IMAGE_NOTE_RED_HIT;
+	eof_color_light_red_struct.arrow3d = EOF_IMAGE_NOTE_RED_ARROW_HIT;
+	eof_color_light_red_struct.arrowhit3d = EOF_IMAGE_NOTE_RED_ARROW_HIT;
+	eof_color_light_red_struct.slider3d = EOF_IMAGE_NOTE_RED_SLIDER;
+	eof_color_light_red_struct.colorname = eof_color_red_name;
 	//Init yellow
 	eof_color_yellow_struct.color = eof_color_yellow;
 	eof_color_yellow_struct.hit = makecol(255, 255, 192);
@@ -6138,17 +6155,9 @@ void eof_set_color_set(void)
 	if(!eof_song)
 		return;
 
-//Drums Rock coloring is applied within the 2D and 3D render functions since the color set in the editor window depends on whether the remapping function is in effect
-/*	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
-	{
-		eof_colors[0] = eof_color_orange_struct;
-		eof_colors[1] = eof_color_blue_struct;
-		eof_colors[2] = eof_color_yellow_struct;
-		eof_colors[3] = eof_color_red_struct;
-		eof_colors[4] = eof_color_green_struct;
-		eof_colors[5] = eof_color_purple_struct;
-	}
-	else*/ if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+//Note:  Drums Rock coloring is applied within the 2D and 3D render functions since the color set in the editor window depends on whether the remapping function is in effect
+
+	if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 	{	//Guitar Hero Live only uses two gem colors
 		eof_colors[0] = eof_color_ghl_black_struct;		//Lane 1 is B1
 		eof_colors[1] = eof_color_ghl_black_struct;
@@ -6237,6 +6246,15 @@ void eof_set_color_set(void)
 			eof_colors[4] = eof_color_orange_struct;
 			eof_colors[5] = eof_color_purple_struct;
 		}
+	}
+	else if(eof_color_set == EOF_COLORS_IR)
+	{	//If user is using the Immerrock color set
+		eof_colors[0] = eof_color_red_struct;
+		eof_colors[1] = eof_color_orange_struct;
+		eof_colors[2] = eof_color_yellow_struct;
+		eof_colors[3] = eof_color_blue_struct;
+		eof_colors[4] = eof_color_purple_struct;
+		eof_colors[5] = eof_color_light_red_struct;
 	}
 
 	//Update the strings for the Note>Toggle and Note>Clear menus

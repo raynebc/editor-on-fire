@@ -935,9 +935,6 @@ if(eof_key_code == KEY_PAUSE)
 
 	if(eof_song_loaded)
 	{
-		char newfolderpath[1024] = {0};
-		(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
-		(void) eof_export_immerrock_track_diff(eof_song, eof_selected_track, eof_note_type, newfolderpath);
 	}
 }
 ///ALT handling testing

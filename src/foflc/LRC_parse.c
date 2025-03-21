@@ -603,6 +603,12 @@ void Export_LRC(FILE *outf)
 
 	curline=Lyrics.lines;	//Point lyric line conductor to first line of lyrics
 
+	if(Lyrics.out_format == ILRC_FORMAT)
+	{	//Immerrock format prefers starting with an empty lyric line at 0 seconds
+		WriteLRCTimestamp(outf,0,' ', 0);
+		fputs_err("\"\"\n",outf);
+	}
+
 	while(curline != NULL)	//For each line of lyrics
 	{
 		if(Lyrics.verbose)	printf("\tLyric line: ");

@@ -94,10 +94,14 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format);
 	//  In this format, each pro guitar/bass track is written twice (once each in Synthesia and Fretlight formats) to allow synth playback of arrangements in Fretlight M-Player
 int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char diff, char *fn);
 	//Exports the specified pro guitar track difficulty to a MIDI file suited for use in the game Immerrock
-int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff, char *destpath);
-	//Exports Immerrock files for the specified drum track difficulty in a folder with multiple files
-	//destpath will be the folder level at which each difficulty's file folder will be written
-	//If the specified track is not a pro guitar track, or the specified difficulty has no notes, no files or folders are created
+int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath);
+	//Exports Immerrock files for the specified pro guitar tracks, for the specified difficulty in a folder with multiple files
+	//gglead, ggrhythm and ggbass are the track numbers to export as these arrangements, or 0 if that arrangement is not specified for export
+	//destpath will be the folder level at which the folder of Immerrock files will be written
+	//If the specified tracks are not pro guitar tracks, or have no notes in the specified difficulty, no files or folders are created
+void eof_export_immerrock(void);
+	//Chooses up to one lead, one rhythm and one bass arrangement for export based on the defined arrangement type of the active project's tracks
+	//Uses eof_export_immerrock_diff() to export content for these arrangements so that all easy difficulty level content is in one folder, medium in another folder, etc.
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp);
 	//Parses the chart, returning a linked list of anchors (tempo changes), or NULL on error

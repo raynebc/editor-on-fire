@@ -3551,9 +3551,9 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 
 	if(error)
 	{
-		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
+		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 		eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return error;
@@ -3584,6 +3584,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 			eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
 			eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 			eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+			eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 			return 0;	//Return failure
 		}
 	}
@@ -3597,9 +3598,10 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	if(!fp)
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-		eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
 		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 		eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
 		return 0;	//Return failure
 	}
@@ -3677,6 +3679,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
 		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 		eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
 		return 0;	//Return failure
 	}
@@ -3690,6 +3693,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
 		eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+		eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;	//Return failure
@@ -3714,32 +3719,63 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 	eof_destroy_ts_list(tslist);			//Free memory used by the TS change list
 	eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+	eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+	eof_log("\t\tImmerrock MIDI export complete", 1);
 
 	return 1;	//Return success
 }
 
-int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned char diff, char *destpath)
+int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath)
 {
 	PACKFILE *fp;
 	int err = 0;
 	int jumpcode = 0;	//Used to catch failure by EOF_EXPORT_TO_LC()
 	char temp_string[1024], section[101], temp_filename2[1024], *ptr;
-	char *arrangement_name;
 	SAMPLE *decoded;
 	double avg_tempo;
-	unsigned long ctr;
+	unsigned long arrctr, ctr;
+	unsigned long arr[3] = {gglead, ggrhythm, ggbass};
+	int arr_populated[3] = {0, 0, 0};
+	char *diff_strings[3] = {"Lead_Difficulty", "Rhythm_Difficulty", "Bass_Difficulty"};
+	char *tuning_strings[3] = {"Lead_Tuning=", "Rhythm_Tuning=", "Bass_Tuning="};
+	char *midi_names[3] = {"GGLead.mid", "GGRhythm.mid", "GGBass.mid"};
+	char *blank_name = "";
+	char *diff_name = blank_name;
 
-	//Use song metadata and difficulty level to build the "Artist - Song - Arrangement - Difficulty" string and build a subfolder of that name in the project folder
+	//Validate parameters
 	if(!sp || !destpath)
-		return 0;	//Invalid destination folder path
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 0;	//Not a valid track
-	if(!eof_get_track_diff_size_normal(sp, track, diff))
-		return 0;	//Empty difficulty level
-	eof_log("eof_export_immerrock_track_diff() entered", 1);
+		return 0;	//Invalid parameters
+	if((gglead >= sp->tracks) || (ggrhythm >= sp->tracks) || (ggbass >= sp->tracks))
+		return 0;	//Invalid tracks
+	if(gglead && sp->track[gglead]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//Not a valid lead track
+	if(ggrhythm && sp->track[ggrhythm]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//Not a valid lead track
+	if(ggbass && sp->track[ggbass]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//Not a valid lead track
+
+	eof_log("eof_export_immerrock_track_diff() entered", 2);
+	if(gglead && eof_get_track_diff_size_normal(sp, gglead, diff))
+		arr_populated[0] = 1;
+	if(ggrhythm && eof_get_track_diff_size_normal(sp, ggrhythm, diff))
+		arr_populated[1] = 1;
+	if(ggbass && eof_get_track_diff_size_normal(sp, ggbass, diff))
+		arr_populated[2] = 1;
+	if(!arr_populated[0] && !arr_populated[1] && !arr_populated[2])
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNo arrangements have notes in difficulty %u.", diff);
+		eof_log(eof_log_string, 1);
+		return 0;	//None of the arrangements have notes in the specified difficulty
+	}
+	if(diff < 4)
+	{	//If this is one of the four named Rock Band style difficulty levels
+		diff_name =&( eof_note_type_name_rb[diff][1]);	//Skip the first character in this string, which is used to track the difficulty populated status
+	}
 
 
 	//Build the path to the Immerrock folder for this track difficulty
+	//Use song metadata and difficulty level to build the "Artist - Song - Difficulty" string and build a subfolder of that name in the project folder
 	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
 	put_backslash(eof_temp_filename);
 	temp_string[0] = '\0';	//Empty this string
@@ -3753,17 +3789,7 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 		(void) ustrcat(temp_string, eof_song->tags->title);
 		(void) ustrcat(temp_string, " - ");
 	}
-	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
-	{	//If the track has an alternate name
-		arrangement_name = sp->track[track]->altname;
-	}
-	else
-	{	//Otherwise use the track's native name
-		arrangement_name = sp->track[track]->name;
-	}
-	(void) ustrcat(temp_string, arrangement_name);
-	(void) ustrcat(temp_string, " - ");
-	(void) ustrcat(temp_string, eof_note_type_name[diff]);
+	(void) ustrcat(temp_string, diff_name);
 	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
 	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
 
@@ -3811,6 +3837,7 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 
 
 	//Write Meta.txt
+	///Meta.txt will be deprecated.  Remove it after the game formally supports Info.txxt
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Meta.txt", (int) sizeof(eof_temp_filename));
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
 	eof_log(eof_log_string, 2);
@@ -3821,17 +3848,102 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 		return 0;	//Return failure
 	}
 	avg_tempo = 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats);
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s-%s-%lu-%lu-%s", sp->tags->artist, sp->tags->title, (unsigned long)(avg_tempo + 0.5), eof_music_length / 1000, sp->tags->year);
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s-%s (%s)-%lu-%lu-%s", sp->tags->artist, sp->tags->title, diff_name, (unsigned long)(avg_tempo + 0.5), eof_music_length / 1000, sp->tags->year);
 	(void) pack_fputs(temp_string, fp);	//Write song length
 	(void) pack_fclose(fp);
-	fp = NULL;
+
+
+	//Write Info.txt
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Info.txt", (int) sizeof(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
+	fp = pack_fopen(eof_temp_filename, "w");
+	if(!fp)
+	{
+		eof_log("\tError saving:  Cannot open Info.txt for writing", 1);
+		return 0;	//Return failure
+	}
+	if(eof_check_string(sp->tags->artist))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Artist=%s\n", sp->tags->artist);
+		(void) pack_fputs(temp_string, fp);	//Write artist name
+	}
+	if(eof_check_string(sp->tags->title))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Title=%s (%s)\n", sp->tags->title, diff_name);
+		(void) pack_fputs(temp_string, fp);	//Write song title
+	}
+	if(eof_check_string(sp->tags->album))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Album=%s\n", sp->tags->album);
+		(void) pack_fputs(temp_string, fp);	//Write album name
+	}
+	if(eof_check_string(sp->tags->year))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Year=%s\n", sp->tags->year);
+		(void) pack_fputs(temp_string, fp);	//Write release year
+	}
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Min:Sec=%lu:%02lu\n", eof_music_length / 60000, (eof_music_length / 1000) % 60);
+	(void) pack_fputs(temp_string, fp);	//Write song length
+	avg_tempo = 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats);
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "BPM=%lu\n", (unsigned long)(avg_tempo + 0.5));
+	(void) pack_fputs(temp_string, fp);	//Write average tempo
+	(void) pack_fputs("Lead_Fingering=0\n", fp);		//Immerrock fingering definitions not implemented yet
+	(void) pack_fputs("Rhythm_Fingering=0\n", fp);	//Immerrock fingering definitions not implemented yet
+	(void) pack_fputs("Bass_Fingering=0\n", fp);		//Immerrock fingering definitions not implemented yet
+
+	//Write difficulty levels
+	for(arrctr = 0; arrctr < 3; arrctr++)
+	{	//For each of the 3 arrangements that can be exported
+		if(arr[arrctr])
+		{	//If this arrangement is being exported
+			if(sp->track[arr[arrctr]]->difficulty != 0xFF)
+			{	//If this tracks's difficulty is defined
+				unsigned char difflevel = sp->track[arr[arrctr]]->difficulty;
+				if(difflevel < 1)	//Bounds check
+					difflevel = 1;
+				if(difflevel > 5)
+					difflevel = 5;
+				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s=%u\n", diff_strings[arrctr], difflevel);
+				(void) pack_fputs(temp_string, fp);	//Write song length
+			}
+		}
+	}
+
+	//Write tuning strings
+	for(arrctr = 0; arrctr < 3; arrctr++)
+	{	//For each of the 3 arrangements that can be exported
+		if(!arr_populated[arrctr])	//If this arrangement doesn't have notes to export
+			continue;		//Skit ip
+
+		(void) pack_fputs(tuning_strings[arrctr], fp);
+		for(ctr = 0; ctr < sp->pro_guitar_track[sp->track[arr[arrctr]]->tracknum]->numstrings; ctr++)
+		{	//For each string used in the track
+			if(ctr != 0)
+			{	//If this isn't the first string, append a comma and a space after the last tuning that was written
+				(void) pack_putc(',', fp);
+				(void) pack_putc(' ', fp);
+			}
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "%d", sp->pro_guitar_track[sp->track[arr[arrctr]]->tracknum]->tuning[ctr] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
+			(void) pack_fputs(temp_string, fp);	//Append the string's tuning value
+		}
+		(void) pack_putc('\n', fp);
+	}
+
+	if(eof_check_string(sp->tags->genre))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Genre=%s\n", sp->tags->genre);
+		(void) pack_fputs(temp_string, fp);	//Write genre
+	}
+	(void) pack_fclose(fp);
 
 
 	//Write Sections.txt
+	fp = NULL;	//The file will only be opened for writing if at least one section marker is found
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event in the project
-		if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == track))
-		{	//If the text event has no associated track or is specific to the exported track
+		if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == gglead) || (sp->text_event[ctr]->track == ggrhythm) || (sp->text_event[ctr]->track == ggbass))
+		{	//If the text event has no associated track or is specific to any of the arrangements specified for export
 			ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event
 			if(ptr)
 			{	//If it exists
@@ -3920,18 +4032,117 @@ int eof_export_immerrock_track_diff(EOF_SONG * sp, unsigned long track, unsigned
 	}
 
 
-	//Write GGLead.mid
-	(void) replace_filename(eof_temp_filename, eof_temp_filename, "GGLead.mid", (int) sizeof(eof_temp_filename));
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
-	eof_log(eof_log_string, 2);
-	if(!eof_export_immerrock_midi(sp, track, diff, eof_temp_filename))
-	{
-		eof_log("\tFailed to export Immerrock MIDI", 1);
-		return 0;	//Return failure
+	//Write arrangement MIDIs
+	for(arrctr = 0; arrctr < 3; arrctr++)
+	{	//For each of the 3 arrangements that can be exported
+		if(arr_populated[arrctr])
+		{	//If this arrangement was previously found to have notes in the specified difficulty
+			(void) replace_filename(eof_temp_filename, eof_temp_filename, midi_names[arrctr], (int) sizeof(eof_temp_filename));
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+			eof_log(eof_log_string, 2);
+			if(!eof_export_immerrock_midi(sp, arr[arrctr], diff, eof_temp_filename))
+			{
+				eof_log("\tFailed to export Immerrock MIDI", 1);
+				return 0;	//Return failure
+			}
+		}
 	}
 
-
 	return 1;	//Return success
+}
+
+void eof_export_immerrock(void)
+{
+	unsigned long gglead = 0, ggrhythm = 0, ggbass = 0;		//The three arrangements identified for export
+	char *condition1 = "No arrangements were identified for export.\n";
+	char *condition2 = "At least one track has no defined arrangement type.\n";
+	char *condition3 = "At least two tracks have the same arrangement type.\n";
+	char *blank = "";
+	char warn_any = 0, *warn1 = blank, *warn2 = blank, *warn3 = blank;
+	unsigned long ctr, tracknum;
+	char newfolderpath[1024] = {0};
+
+	if(!eof_song || !eof_song_loaded)
+		return;	//If no project is loaded
+
+	eof_log("Exporting Immerrock files", 1);
+
+	//Select the tracks to export
+	for(ctr = 1; ctr < eof_song->tracks; ctr++)
+	{	//For each track
+		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If it is a pro guitar track
+			if(eof_get_track_size_normal(eof_song, ctr))
+			{	//If the track has any normal notes
+				tracknum = eof_song->track[ctr]->tracknum;	//Simplify
+				switch(eof_song->pro_guitar_track[tracknum]->arrangement)
+				{
+					case 2:	//Rhythm arrangement
+						if(ggrhythm)
+						{
+							warn_any = 1;
+							warn3 = condition3;	//A rhythm arrangement was already found
+						}
+						else
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as rhythm arrangement", eof_song->track[ctr]->name);
+							eof_log(eof_log_string, 2);
+							ggrhythm = ctr;
+						}
+					break;
+
+					case 3:	//Lead arrrangement
+						if(gglead)
+						{
+							warn_any = 1;
+							warn3 = condition3;	//A rhythm arrangement was already found
+						}
+						else
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as lead arrangement", eof_song->track[ctr]->name);
+							eof_log(eof_log_string, 2);
+							gglead = ctr;
+						}
+					break;
+
+					case 4:	//Bass arrangement
+						if(ggbass)
+						{
+							warn_any = 1;
+							warn3 = condition3;	//A rhythm arrangement was already found
+						}
+						else
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as rhythm arrangement", eof_song->track[ctr]->name);
+							eof_log(eof_log_string, 2);
+							ggbass = ctr;
+						}
+					break;
+
+					case 0:	//Undefined arrangement
+					default:	//Invalid arrangement type
+						warn_any = 1;
+						warn2 = condition2;
+					break;
+				}
+			}
+		}
+	}
+	if(!gglead && !ggrhythm && !ggbass)
+	{
+		warn_any = 1;
+		warn1 = condition1;
+	}
+
+	//Export all difficulty levels of the selected arrangements
+	(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 0, newfolderpath);	//Export easy
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 1, newfolderpath);	//Export medium
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 2, newfolderpath);	//Export hard
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 3, newfolderpath);	//Export expert
+
+	if(warn_any)
+		allegro_message("%s%s%s", warn1, warn2, warn3);
 }
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)

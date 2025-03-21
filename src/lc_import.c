@@ -354,10 +354,10 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 		Lyrics.plain = 1;
 		Lyrics.grouping = 2;	//Enable line grouping for script.txt export
 	}
-	else if((format == LRC_FORMAT) || (format == ELRC_FORMAT) || (format == QRC_FORMAT))
+	else if((format == LRC_FORMAT) || (format == ELRC_FORMAT) || (format == QRC_FORMAT) || (format == ILRC_FORMAT))
 	{
-		if(format == LRC_FORMAT)
-		{	//Normal LRC format is line synced
+		if((format == LRC_FORMAT) || (format == ILRC_FORMAT))
+		{	//Normal LRC (and the Immerrock variant) format is line synced
 			Lyrics.noplus = 1;		//Disable plus output
 			Lyrics.grouping = 2;	//Enable line grouping
 		}
@@ -588,5 +588,6 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 	}
 
 	(void) delete_file(tempoutputfilename);	//Delete the temporary lyric file
+	eof_log("EOF_EXPORT_TO_LC() completed", 1);
 	return 1;	//Return success
 }

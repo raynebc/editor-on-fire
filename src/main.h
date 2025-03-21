@@ -63,12 +63,13 @@
 #define EOF_INPUT_GUITAR_STRUM 5
 #define EOF_INPUT_FEEDBACK     6
 
-#define EOF_NUM_COLOR_SETS     5
+#define EOF_NUM_COLOR_SETS     6
 #define EOF_COLORS_DEFAULT     0
 #define EOF_COLORS_RB          1
 #define EOF_COLORS_GH          2
 #define EOF_COLORS_RS          3
 #define EOF_COLORS_BF          4
+#define EOF_COLORS_IR          5
 
 #define EOF_MAX_IMAGES 114
 
@@ -383,6 +384,7 @@ extern int         eof_write_rb_files;
 extern int         eof_write_music_midi;
 extern int         eof_write_rs_files;
 extern int         eof_write_rs2_files;
+extern int         eof_write_immerrock_files;
 extern int         eof_abridged_rs2_export;
 extern int         eof_abridged_rs2_export_warning_suppressed;
 extern int         eof_rs2_export_extended_ascii_lyrics;
@@ -596,6 +598,7 @@ extern int eof_color_highlight2;
 
 extern eof_color eof_color_green_struct;
 extern eof_color eof_color_red_struct;
+extern eof_color eof_color_light_red_struct;
 extern eof_color eof_color_yellow_struct;
 extern eof_color eof_color_blue_struct;
 extern eof_color eof_color_orange_struct;

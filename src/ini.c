@@ -546,7 +546,7 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 	for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 	{	//For each string used in the track
 		if(i != 0)
-		{	//If this isn't the first past, append a space after the last tuning that was written
+		{	//If this isn't the first string, append a space after the last tuning that was written
 			(void) ustrcat(buffer2, " ");
 		}
 		(void) snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
@@ -560,7 +560,7 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 	for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 	{	//For each string used in the track
 		if(i != 0)
-		{	//If this isn't the first past, append a space after the last tuning that was written
+		{	//If this isn't the first string, append a space after the last tuning that was written
 			(void) ustrcat(buffer2, " ");
 		}
 		(void) snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2

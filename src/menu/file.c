@@ -238,7 +238,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   105, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
 	{ d_agup_check_proc, 248, 105, 208, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/CH/Phase Shift files",NULL, NULL },
 	{ d_agup_check_proc, 16,   120, 212, 16,  2,   23,  0,    0,      1,   0,   "Save separate Guitar Hero files",NULL, NULL },
-	{ d_agup_check_proc, 248, 120, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ d_agup_check_proc, 248, 120, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Immerrock files",NULL, NULL },
 	{ d_agup_check_proc, 16,   135, 222, 16,  2,   23,  0,    0,      1,   0,   "Save LRC, ELRC, QRC lyric files",NULL, NULL },
 	{ d_agup_check_proc, 248, 135, 222, 16,  2,   23,  0,    0,      1,   0,   "Force pro drum MIDI notation",NULL, NULL },
 	{ d_agup_check_proc, 16,   150, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
@@ -261,6 +261,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 285, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
 	{ d_agup_check_proc, 16,   300, 244, 16,  2,   23,  0,    0,      1,   0,   "MIDI export CH/YARG open note/chord markers",NULL, NULL },
 	{ d_agup_check_proc, 248, 315, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
+	{ d_agup_check_proc, 248, 330, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1389,38 +1390,38 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
 	eof_preferences_dialog[11].flags = eof_inverted_notes ? D_SELECTED : 0;					//Inverted notes
 	eof_preferences_dialog[12].flags = eof_lefty_mode ? D_SELECTED : 0;						//Lefty mode
-	eof_preferences_dialog[13].flags = eof_note_auto_adjust ? D_SELECTED : 0;				//Note auto adjust
+	eof_preferences_dialog[13].flags = eof_note_auto_adjust ? D_SELECTED : 0;					//Note auto adjust
 	eof_preferences_dialog[14].flags = eof_enable_logging ? D_SELECTED : 0;					//Enable logging
-	eof_preferences_dialog[15].flags = eof_hide_drum_tails ? D_SELECTED : 0;				//Hide drum note tails
+	eof_preferences_dialog[15].flags = eof_hide_drum_tails ? D_SELECTED : 0;					//Hide drum note tails
 	eof_preferences_dialog[16].flags = eof_hide_note_names ? D_SELECTED : 0;				//Hide note names
-	eof_preferences_dialog[17].flags = eof_disable_sound_processing ? D_SELECTED : 0;		//Disable sound effects
-	eof_preferences_dialog[18].flags = eof_disable_3d_rendering ? D_SELECTED : 0;			//Disable 3D rendering
-	eof_preferences_dialog[19].flags = eof_disable_2d_rendering ? D_SELECTED : 0;			//Disable 2D rendering
+	eof_preferences_dialog[17].flags = eof_disable_sound_processing ? D_SELECTED : 0;			//Disable sound effects
+	eof_preferences_dialog[18].flags = eof_disable_3d_rendering ? D_SELECTED : 0;				//Disable 3D rendering
+	eof_preferences_dialog[19].flags = eof_disable_2d_rendering ? D_SELECTED : 0;				//Disable 2D rendering
 	eof_preferences_dialog[20].flags = eof_disable_info_panel ? D_SELECTED : 0;				//Hide info panel
-	eof_preferences_dialog[21].flags = eof_paste_erase_overlap ? D_SELECTED : 0;			//Paste erases overlap
-	eof_preferences_dialog[22].flags = eof_note_tails_clickable ? D_SELECTED : 0;			//Make note tails clickable
+	eof_preferences_dialog[21].flags = eof_paste_erase_overlap ? D_SELECTED : 0;				//Paste erases overlap
+	eof_preferences_dialog[22].flags = eof_note_tails_clickable ? D_SELECTED : 0;				//Make note tails clickable
 	eof_preferences_dialog[23].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
-	eof_preferences_dialog[28].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;		//3D render bass drum in a lane
-	eof_preferences_dialog[29].flags = eof_fb_seek_controls ? D_SELECTED : 0;				//dB style seek controls
-	eof_preferences_dialog[31].d1 = eof_input_mode;											//Input method
-	original_input_mode = eof_input_mode;													//Store this value
-	eof_preferences_dialog[33].d1 = eof_color_set;											//Color set
-	eof_preferences_dialog[34].flags = eof_new_note_length_1ms ? D_SELECTED : 0;			//New notes are made 1ms long
-	eof_preferences_dialog[35].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render RS style chords
+	eof_preferences_dialog[28].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;			//3D render bass drum in a lane
+	eof_preferences_dialog[29].flags = eof_fb_seek_controls ? D_SELECTED : 0;					//dB style seek controls
+	eof_preferences_dialog[31].d1 = eof_input_mode;										//Input method
+	original_input_mode = eof_input_mode;											//Store this value
+	eof_preferences_dialog[33].d1 = eof_color_set;										//Color set
+	eof_preferences_dialog[34].flags = eof_new_note_length_1ms ? D_SELECTED : 0;				//New notes are made 1ms long
+	eof_preferences_dialog[35].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;				//3D render RS style chords
 	eof_preferences_dialog[36].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
-	eof_preferences_dialog[37].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;	//Display seek pos. in seconds
+	eof_preferences_dialog[37].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;		//Display seek pos. in seconds
 	eof_preferences_dialog[38].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;		//Add new notes to selection
-	eof_preferences_dialog[39].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
-	eof_preferences_dialog[40].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;		//Click to change dialog focus
-	eof_preferences_dialog[41].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;		//EOF leaving focus stops playback
+	eof_preferences_dialog[39].flags = eof_inverted_chords_slash ? D_SELECTED : 0;				//Treat inverted chords as slash
+	eof_preferences_dialog[40].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;			//Click to change dialog focus
+	eof_preferences_dialog[41].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;			//EOF leaving focus stops playback
 	eof_preferences_dialog[44].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
-	eof_preferences_dialog[45].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
-	eof_preferences_dialog[46].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;	//Don't auto-name double stops
-	eof_preferences_dialog[47].flags = eof_section_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust sections/FHPs
-	eof_preferences_dialog[48].flags = eof_technote_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust tech notes
-	eof_preferences_dialog[49].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;	//Fingering checks include mutes
+	eof_preferences_dialog[45].flags = eof_auto_complete_fingering ? D_SELECTED : 0;			//Offer to auto complete fingering
+	eof_preferences_dialog[46].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;		//Don't auto-name double stops
+	eof_preferences_dialog[47].flags = eof_section_auto_adjust ? D_SELECTED : 0;				//Auto-Adjust sections/FHPs
+	eof_preferences_dialog[48].flags = eof_technote_auto_adjust ? D_SELECTED : 0;				//Auto-Adjust tech notes
+	eof_preferences_dialog[49].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;		//Fingering checks include mutes
 	eof_preferences_dialog[50].flags = eof_ghl_conversion_swaps_bw_gems ? D_SELECTED : 0;	//GHL conversion swaps B/W gems
-	eof_preferences_dialog[51].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;		//2D render RS piano roll
+	eof_preferences_dialog[51].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;			//2D render RS piano roll
 	eof_preferences_dialog[52].flags = eof_preferences_dialog[53].flags = eof_preferences_dialog[54].flags = 0;	//Clear the min. note distance radio buttons
 	if(!eof_min_note_distance_intervals)
 	{	//If the min. note distance is ms
@@ -1452,12 +1453,12 @@ int eof_menu_file_preferences(void)
 		eof_etext3[0] = '\0';	//Otherwise empty the string
 	}
 	eof_preferences_dialog[55].flags = eof_disable_backups ? D_SELECTED : 0;					//Disable automatic backups
-	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;				//New notes are force strum
+	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;			//New notes are force strum
 	eof_preferences_dialog[57].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;			//Use FoF difficulty naming
 	eof_preferences_dialog[58].flags = eof_enable_open_strums_by_default ? D_SELECTED : 0;		//Enable open strum by default
 	eof_preferences_dialog[59].flags = eof_prefer_midi_friendly_grid_snapping ? D_SELECTED : 0;	//Prefer MIDI friendly grid snaps
 	eof_preferences_dialog[60].flags = eof_dont_auto_edit_new_lyrics ? D_SELECTED : 0;			//Don't auto edit new lyrics
-	eof_preferences_dialog[61].flags = eof_dont_redraw_on_exit_prompt ? D_SELECTED : 0;			//Don't redraw on exit prompt
+	eof_preferences_dialog[61].flags = eof_dont_redraw_on_exit_prompt ? D_SELECTED : 0;		//Don't redraw on exit prompt
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1710,7 +1711,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[8].flags = eof_write_bf_files ? D_SELECTED : 0;						//Save separate Bandfuse files
 	eof_import_export_preferences_dialog[9].flags = eof_write_fof_files ? D_SELECTED : 0;					//Save FoF/CH/Phase Shift files
 	eof_import_export_preferences_dialog[10].flags = eof_write_gh_files ? D_SELECTED : 0;					//Save separate Guitar Hero files
-	eof_import_export_preferences_dialog[11].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_import_export_preferences_dialog[11].flags = eof_write_immerrock_files ? D_SELECTED : 0;					//Save separate Immerrock files
 	eof_import_export_preferences_dialog[12].flags = eof_write_lrc_files ? D_SELECTED : 0;					//Save LRC, ELRC, QRC lyric files
 	eof_import_export_preferences_dialog[13].flags = eof_force_pro_drum_midi_notation ? D_SELECTED : 0;		//Force pro drum MIDI notation
 	eof_import_export_preferences_dialog[14].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;	//GP import truncates short notes
@@ -1733,6 +1734,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[31].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
 	eof_import_export_preferences_dialog[32].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;//MIDI export CH/YARG open note/chord markers
 	eof_import_export_preferences_dialog[33].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
+	eof_import_export_preferences_dialog[34].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 
 	do
 	{	//Run the dialog
@@ -1746,7 +1748,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_write_bf_files = (eof_import_export_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
 			eof_write_fof_files = (eof_import_export_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
 			eof_write_gh_files = (eof_import_export_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
-			eof_disable_rs_wav = (eof_import_export_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
+			eof_write_immerrock_files = (eof_import_export_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
 			eof_write_lrc_files = (eof_import_export_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
 			eof_force_pro_drum_midi_notation = (eof_import_export_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_truncate_short_notes = (eof_import_export_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
@@ -1769,6 +1771,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_disable_ini_export = (eof_import_export_preferences_dialog[31].flags == D_SELECTED ? 1 : 0);
 			eof_midi_export_enhanced_open_marker = (eof_import_export_preferences_dialog[32].flags == D_SELECTED ? 1 : 0);
 			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[33].flags == D_SELECTED ? 1 : 0);
+			eof_disable_rs_wav = (eof_import_export_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1779,7 +1782,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[8].flags = 0;				//Save separate Bandfuse files
 			eof_import_export_preferences_dialog[9].flags = D_SELECTED;		//Save FoF/CH/Phase Shift files
 			eof_import_export_preferences_dialog[10].flags = 0;				//Save separate Guitar Hero files
-			eof_import_export_preferences_dialog[11].flags = 0;				//Don't write Rocksmith WAV file
+			eof_import_export_preferences_dialog[11].flags = 0;				//Save separate Immerrock files
 			eof_import_export_preferences_dialog[12].flags = 0;				//Save LRC, ELRC, QRC lyric files
 			eof_import_export_preferences_dialog[13].flags = D_SELECTED;		//Force pro drum MIDI notation
 			eof_import_export_preferences_dialog[14].flags = D_SELECTED;		//GP import truncates short notes
@@ -1802,6 +1805,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[31].flags = 0;				//Don't write INI file
 			eof_import_export_preferences_dialog[32].flags = 0;				//MIDI export CH/YARG open note/chord markers
 			eof_import_export_preferences_dialog[33].flags = 0;				//GH import sustain threshold prompt
+			eof_import_export_preferences_dialog[34].flags = 0;				//Don't write Rocksmith WAV file
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -4674,6 +4678,12 @@ int eof_save_helper(char *destfilename, char silent)
 //		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 4, newfolderpath);
 	}
 
+	/* export Immerrock files for all populated difficulties if enabled */
+	if(eof_write_immerrock_files)
+	{
+		eof_export_immerrock();
+	}
+
 	/* save OGG file if necessary*/
 	if(!eof_silence_loaded)
 	{	//Only try to save an audio file if one is loaded
@@ -4961,6 +4971,10 @@ char * eof_colors_list(int index, int * size)
 		case 4:
 		{
 			return "Bandfuse";
+		}
+		case 5:
+		{
+			return "Immerrock";
 		}
 
 		default:
