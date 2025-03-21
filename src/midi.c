@@ -3348,6 +3348,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	unsigned long delta = 0, nextdeltapos;
 	int channel;
 	int technique_vel[6] = {1, 6, 11, 16, 21, 26};	//Technique markers denote the affected string based on the velocity (ie. low E techniques are written with velocity 1)
+	int finger_marker[6] = {0, 31, 32, 33, 34, 35};	//These are the finger placement marker note numbers for index (finger value 1) through thumb (finger value 5)
 	unsigned long lastdelta=0;			//Keeps track of the last anchor's absolute delta time
 	unsigned long totaltrackcounter = 0;	//Tracks the number of tracks to write to file
 	EOF_MIDI_TS_LIST *tslist=NULL;		//List containing TS changes
@@ -3363,14 +3364,14 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	char has_notes = 0;		//Track whether there's at least one note in the target track difficulty
 	int error = 0;
 	long next;
-	unsigned long pad = EOF_DEFAULT_TIME_DIVISION / 16;	//To make this notation more visible in Immerrock, pad to a minimum length of 1/64 (in #/4 meter) if possible
+	unsigned long pad = EOF_DEFAULT_TIME_DIVISION / 2;	//To make notes more visible in Immerrock, pad to a minimum length of 1/8 (in #/4 meter) if possible without overlapping other notes
 	EOF_PRO_GUITAR_TRACK *tp;
 	int is_muted;				//Track whether a note is fully string muted
 	unsigned long index = 1;	//Used to set the sort order for multiple pairs of note on/off events at the same timestamp as required by Immerrock
 
 	eof_log("eof_export_immerrock_midi() entered", 1);
 
-	if(!sp || !fn || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !fn || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
@@ -3423,6 +3424,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	for(i = 0; i < eof_get_track_size(sp, track); i++)
 	{	//For each note in the track
 		unsigned long pos	, length, note, flags;
+		unsigned char finger;
 
 		if(eof_get_note_type(sp, track, i) != diff)	//If this note isn't in the target difficulty
 			continue;	//Skip it
@@ -3519,6 +3521,14 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				{	//If this note slides up or down
 					eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[k], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates slide up or down in Immerrock
 					eof_add_midi_event_indexed(deltapos, 0x80, 20, 0, 15, index++);
+				}
+
+		//Write finger placement markers
+				finger = tp->pgnote[i]->finger[k];
+				if((finger > 0) && (finger < 6))
+				{	//If this string has a defined fingering that is valid
+					eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[k], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x80, finger_marker[finger], 0, 15, index++);
 				}
 			}
 		}
