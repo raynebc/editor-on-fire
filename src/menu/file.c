@@ -6,30 +6,31 @@
 #include "../foflc/Lyric_storage.h"
 #include "../foflc/ID3_parse.h"
 #include "../foflc/RS_parse.h"	//For XML parsing functions
-#include "../lc_import.h"
-#include "../midi_import.h"
-#include "../chart_import.h"
-#include "../config.h"	//For eof_lookup_drum_mapping()
 #include "../gh_import.h"
 #include "../gp_import.h"
-#include "../player.h"
+#include "../dialog/proc.h"
+#include "../bf.h"
+#include "../bf_import.h"
+#include "../chart_import.h"
+#include "../config.h"	//For eof_lookup_drum_mapping()
 #include "../dialog.h"
-#include "../undo.h"
-#include "../utility.h"
-#include "../midi.h"
+#include "../dr.h"
 #include "../ini.h"
 #include "../ini_import.h"
-#include "../dialog/proc.h"
+#include "../ir.h"
+#include "../lc_import.h"
+#include "../midi_import.h"
+#include "../main.h"	//For eof_import_to_track_dialog[] declaration
+#include "../midi.h"
 #include "../mix.h"
-#include "../tuning.h"
+#include "../player.h"
 #include "../rs.h"
 #include "../rs_import.h"
-#include "../dr.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
 #include "../song.h"
-#include "../bf_import.h"
-#include "../bf.h"
-#include "../main.h"	//For eof_import_to_track_dialog[] declaration
+#include "../tuning.h"
+#include "../undo.h"
+#include "../utility.h"
 #include "beat.h"	//For eof_menu_beat_reset_offset()
 #include "edit.h"	//For eof_menu_edit_undo()
 #include "file.h"
@@ -98,10 +99,29 @@ MENU eof_file_import_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_file_menu_preferences[] =
+MENU eof_file_preferences_menu[] =
 {
 	{"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
 	{"&Import/Export", eof_menu_file_import_export_preferences, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_file_export_menu[] =
+{
+	{"&Chart range", eof_menu_file_export_chart_range, NULL, D_DISABLED, NULL},
+	{"&Audio range", eof_menu_file_export_audio_range, NULL, D_DISABLED, NULL},
+	{"&Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
+	{"Image &Sequence", eof_write_image_sequence, NULL, 0, NULL},
+	{"&Preview audio", eof_menu_file_export_song_preview, NULL, 0, NULL},
+	{"&Immerrock", eof_menu_file_export_immerrock_track_diff, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_file_menu_link_to[] =
+{
+	{"&FOF", eof_menu_file_link_fof, NULL, EOF_LINUX_DISABLE, NULL},
+	{"&Phase Shift", eof_menu_file_link_ps, NULL, EOF_LINUX_DISABLE, NULL},
+	{"&RocksmithToTab", eof_menu_file_link_rs_to_tab, NULL, EOF_LINUX_DISABLE, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -114,21 +134,15 @@ MENU eof_file_menu[] =
 	{"&Quick save\t" CTRL_NAME "+Q", eof_menu_file_quick_save, NULL, D_DISABLED, NULL},
 	{"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
 	{"&Import", NULL, eof_file_import_menu, 0, NULL},
-	{"&Export chart range", eof_menu_file_export_chart_range, NULL, D_DISABLED, NULL},
-	{"Export audio range", eof_menu_file_export_audio_range, NULL, D_DISABLED, NULL},
-	{"Export &Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
-	{"Export image sequence", eof_write_image_sequence, NULL, 0, NULL},
-	{"Export pre&View audio", eof_menu_file_export_song_preview, NULL, 0, NULL},
+	{"&Export", NULL, eof_file_export_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
 	{"Default INI settings", eof_menu_file_default_ini_settings, NULL, 0, NULL},
-	{"&Preferences", NULL, eof_file_menu_preferences, 0, NULL},
+	{"&Preferences", NULL, eof_file_preferences_menu, 0, NULL},
 	{"&Display", NULL, eof_file_display_menu, 0, NULL},
 	{"&Controllers", eof_menu_file_controllers, NULL, 0, NULL},
 	{"Song Folder", eof_menu_file_song_folder, NULL, 0, NULL},
-	{"Link to FOF", eof_menu_file_link_fof, NULL, EOF_LINUX_DISABLE, NULL},
-	{"Link to Phase Shift", eof_menu_file_link_ps, NULL, EOF_LINUX_DISABLE, NULL},
-	{"Link to RocksmithToTab", eof_menu_file_link_rs_to_tab, NULL, EOF_LINUX_DISABLE, NULL},
+	{"Lin&K to", NULL, eof_file_menu_link_to, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"E&xit\tEsc", eof_menu_file_exit, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -378,37 +392,37 @@ void eof_prepare_file_menu(void)
 {
 	if(eof_song && eof_song_loaded)
 	{	//If a chart is loaded
+		int has_pg_notes = eof_song_has_pro_guitar_content(eof_song);
+
 		eof_file_menu[2].flags = 0;	//Save
 		eof_file_menu[3].flags = 0;	//Save As
 		eof_file_menu[4].flags = 0;	//Quick save
 		eof_file_menu[5].flags = 0;	//Load OGG
-		eof_file_menu[7].flags = 0;	//Export chart range
+		eof_file_menu[7].flags = 0;	//Export>
 		if(eof_silence_loaded)
 		{	//If no chart audio is loaded
-			eof_file_menu[8].flags = D_DISABLED;	//Export audio range
+			eof_file_export_menu[1].flags = D_DISABLED;	//Export>Audio range
 		}
 		else
 		{
-			eof_file_menu[8].flags = 0;	//Export audio range
+			eof_file_export_menu[1].flags = 0;	//Export>Audio range
 		}
 		#ifdef ALLEGRO_WINDOWS
-			if(eof_song_has_pro_guitar_content(eof_song))
+			if(has_pg_notes)
 			{	//If there are any notes in any of the pro guitar tracks
-				eof_file_menu[9].flags = 0;	//Export guitar pro
+				eof_file_export_menu[2].flags = 0;	//Export>Guitar pro
 			}
 			else
 			{
-				eof_file_menu[9].flags = D_DISABLED;
+				eof_file_export_menu[2].flags = D_DISABLED;
 			}
 		#else
-			eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
+			eof_file_export_menu[2].flags = D_DISABLED;	//Export>Guitar pro
 		#endif
-		eof_file_menu[10].flags = 0;	//Export image sequence
-		eof_file_menu[11].flags = 0;	//Export preview audio
-		eof_file_import_menu[0].flags = 0;	//Import>Sonic Visualiser
-		eof_file_import_menu[4].flags = 0;	//Import>Lyric
-		eof_file_import_menu[8].flags = 0;	//Import>Queen Bee
-		eof_file_import_menu[9].flags = 0;	//Import>Queen Bee (multi)
+		eof_file_import_menu[0].flags = 0;		//Import>Sonic Visualiser
+		eof_file_import_menu[4].flags = 0;		//Import>Lyric
+		eof_file_import_menu[8].flags = 0;		//Import>Queen Bee
+		eof_file_import_menu[9].flags = 0;		//Import>Queen Bee (multi)
 		eof_file_import_menu[10].flags = 0;	//Import>Guitar Hero sections
 		eof_file_import_menu[11].flags = 0;	//Import>Guitar Hero Live
 
@@ -421,11 +435,13 @@ void eof_prepare_file_menu(void)
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
 			eof_file_import_menu[6].flags = 0; // Import>Rocksmith
+			eof_file_export_menu[5].flags = eof_get_track_diff_size_normal(eof_song, eof_selected_track, eof_note_type) ? 0 : D_DISABLED;	//Export>Immerrock
 		}
 		else
 		{
 			eof_file_import_menu[5].flags = D_DISABLED;
 			eof_file_import_menu[6].flags = D_DISABLED;
+			eof_file_export_menu[5].flags = D_DISABLED;
 		}
 		eof_file_display_menu[5].flags = 0;	//Benchmark image sequence
 	}
@@ -435,11 +451,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[3].flags = D_DISABLED;	//Save As
 		eof_file_menu[4].flags = D_DISABLED;	//Quick save
 		eof_file_menu[5].flags = D_DISABLED;	//Load OGG
-		eof_file_menu[7].flags = D_DISABLED;	//Export chart range
-		eof_file_menu[8].flags = D_DISABLED;	//Export audio range
-		eof_file_menu[9].flags = D_DISABLED;	//Export guitar pro
-		eof_file_menu[10].flags = D_DISABLED;	//Export image sequence
-		eof_file_menu[11].flags = D_DISABLED;	//Export preview audio
+		eof_file_menu[7].flags = D_DISABLED;	//Export>
 		eof_file_import_menu[0].flags = D_DISABLED;	//Import>Sonic Visualiser
 		eof_file_import_menu[4].flags = D_DISABLED;	//Import>Lyric
 		eof_file_import_menu[8].flags = D_DISABLED;	//Import>Queen Bee
@@ -450,33 +462,11 @@ void eof_prepare_file_menu(void)
 		eof_file_display_menu[5].flags = D_DISABLED;	//Benchmark image sequence
 	}
 
-	if(eof_screen_zoom)
-	{	//If x2 zoom is enabled
-		eof_file_display_menu[4].flags = D_SELECTED;
-	}
-	else
-	{
-		eof_file_display_menu[4].flags = 0;
-	}
-
-	if(eof_full_height_3d_preview)
-	{
-		eof_file_3d_preview_menu[2].flags = D_SELECTED;	//Display>3D Preview>Full height
-	}
-	else
-	{
-		eof_file_3d_preview_menu[2].flags = 0;
-	}
+	eof_file_display_menu[4].flags = eof_screen_zoom ? D_SELECTED : 0;	//File>Display>x2 zoom
+	eof_file_3d_preview_menu[2].flags = eof_full_height_3d_preview ? D_SELECTED : 0;	//Display>3D Preview>Full height
 
 	//Notes panel stuff
-	if(eof_enable_notes_panel)
-	{	//If the notes panel is enabled
-		eof_file_notes_panel_menu[8].flags = D_SELECTED;	//File>Display>Notes Panel>Enable
-	}
-	else
-	{
-		eof_file_notes_panel_menu[8].flags = 0;
-	}
+	eof_file_notes_panel_menu[8].flags = eof_enable_notes_panel ? D_SELECTED : 0;		//File>Display>Notes Panel>Enable
 	if(exists(eof_last_browsed_notes_panel_path))
 	{	//If the last browsed Notes panel file path is valid, display the relative file name for the user's reference
 		(void) snprintf(eof_file_notes_panel_menu_string, sizeof(eof_file_notes_panel_menu_string) - 1, "&User defined (%s)", get_filename(eof_last_browsed_notes_panel_path));
@@ -6796,6 +6786,37 @@ int eof_menu_file_export_song_preview(void)
 	{
 		eof_log("\tUser cancellation.", 1);
 	}
+
+	return 1;
+}
+
+int eof_menu_file_export_immerrock_track_diff(void)
+{
+	unsigned long gglead = 0, ggrhythm = 0, ggbass = 0, tracknum;
+
+	eof_log("eof_menu_file_export_immerrock_track_diff() entered", 1);
+	eof_log("\tExporting active track difficulty", 1);
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	switch(eof_song->pro_guitar_track[tracknum]->arrangement)
+	{
+		case 2:	//Rhythm arrangement
+			ggrhythm = eof_selected_track;
+		break;
+
+		case 4:	//Bass arrangement
+			ggbass = eof_selected_track;
+		break;
+
+		case 3:	//Lead arrrangement (the default type if the active track doesn't have a specified arrangement type)
+		default:
+			gglead = eof_selected_track;
+	}
+	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, eof_note_type, eof_temp_filename);
 
 	return 1;
 }

@@ -4264,7 +4264,7 @@ int eof_song_has_pro_guitar_content(EOF_SONG *sp)
 	if(!sp)
 		return 0;	//Invalid parameter
 
-	if(eof_get_track_size_all(sp, EOF_TRACK_PRO_BASS) || eof_get_track_size_all(sp, EOF_TRACK_PRO_BASS_22) || eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR) || eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR_22) || eof_get_track_size_all(sp, EOF_TRACK_PRO_GUITAR_B))
+	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_BASS) || eof_get_track_size_normal(sp, EOF_TRACK_PRO_BASS_22) || eof_get_track_size_normal(sp, EOF_TRACK_PRO_GUITAR) || eof_get_track_size_normal(sp, EOF_TRACK_PRO_GUITAR_22) || eof_get_track_size_normal(sp, EOF_TRACK_PRO_GUITAR_B))
 	{	//If there are any notes or tech notes in any of the pro guitar tracks
 		return 1;
 	}
@@ -8332,6 +8332,37 @@ int eof_track_is_drums_rock_mode(EOF_SONG *sp, unsigned long track)
 	}
 
 	return 0;
+}
+
+int eof_pro_guitar_track_diff_has_fingering(EOF_SONG *sp, unsigned long track, unsigned char diff)
+{
+	unsigned long notectr, stringctr, bitmask;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+	if(eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
+	for(notectr = 0; notectr < tp->pgnotes; notectr++)
+	{	//For each note in the track
+		if(tp->pgnote[notectr]->type != diff)
+			continue;	//If this note isn't in the target difficulty, skip it
+
+		for(stringctr = 0, bitmask = 1; stringctr < 6; stringctr++, bitmask <<= 1)
+		{	//For each of the 6 usable strings
+			if(tp->pgnote[notectr]->note & bitmask)
+			{	//If this string is used
+				if(tp->pgnote[notectr]->finger[stringctr])
+				{	//If this string's fingering is defined
+					return 1;
+				}
+			}
+		}
+	}
+
+	return 0;	//No fingering found
 }
 
 int eof_note_swap_ghl_black_white_gems(EOF_SONG *sp, unsigned long track, unsigned long note)

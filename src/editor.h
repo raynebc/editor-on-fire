@@ -118,6 +118,7 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window);
 	//Renders to the specified editor window
 void eof_render_editor_window_2(void);
 	//If the user opted to display the secondary piano roll, temporarily swaps the active track difficulty with that of the secondary piano roll and renders it
+	//In the case of pro guitar tracks, fingering view is disabled for the secondary piano if both the primary and secondary piano rolls are of the same track
 unsigned long eof_get_number_displayed_tabs(void);
 	//Determines how many tabs are to be rendered for the active track, based on the program window width and whether the difficulty limit has been removed from the track
 void eof_render_editor_window_common(EOF_WINDOW *window);

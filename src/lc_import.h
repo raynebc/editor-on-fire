@@ -2,6 +2,7 @@
 #define LC_IMPORT_H
 
 #include "song.h"
+#include "foflc/Lyric_storage.h"
 
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2);
 	//Performs a lyric import from the specified file to the specified EOF_VOCAL_TRACK structure

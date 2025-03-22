@@ -1,6 +1,8 @@
 #ifndef EOF_SILENCE_H
 #define EOF_SILENCE_H
 
+#include <allegro.h>
+
 int eof_add_silence(char * oggfn, unsigned long ms);	//Backs up the currently loaded OGG file if it hasn't been already and appends it to an OGG (containing only silence) of the specified length
 SAMPLE * create_silence_sample(unsigned long ms);
 	//Creates and returns a SAMPLE array of the specified number of milliseconds' worth of silent PCM data, or NULL on error

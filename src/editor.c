@@ -6147,6 +6147,7 @@ void eof_render_editor_window_2(void)
 	int temp_type, temp_track, temp_hover;
 	long temp_selected;
 	EOF_MUSIC_POS temp_pos;
+	char eof_fingering_view_state = eof_fingering_view;
 
 	if(eof_display_second_piano_roll)
 	{	//If the secondary piano roll is to be displayed
@@ -6163,11 +6164,15 @@ void eof_render_editor_window_2(void)
 		{	//If the position hasn't been initialized
 			eof_music_pos2 = eof_music_pos.value;
 		}
+		if(eof_fingering_view && (eof_selected_track == eof_selected_track2))
+		{	//If both piano rolls are displaying the same track, ensure fingering view will not apply to the secondary piano roll so the user can see more information
+			eof_fingering_view = 0;
+		}
 
 		temp_type = eof_note_type;					//Remember the active difficulty
-		temp_track = eof_selected_track;			//Remember the active track number
+		temp_track = eof_selected_track;				//Remember the active track number
 		memcpy(&temp_pos, &eof_music_pos, sizeof(EOF_MUSIC_POS));
-		temp_selected = eof_selection.current;		//Remember the selected note
+		temp_selected = eof_selection.current;			//Remember the selected note
 		temp_hover = eof_hover_note;				//Remember the hover note
 		eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
 		eof_hover_note = -1;						//Clear the hover note
@@ -6181,12 +6186,13 @@ void eof_render_editor_window_2(void)
 		eof_note_type = eof_note_type2;									//Set the secondary piano roll's difficulty
 		eof_render_editor_window(eof_window_editor2);					//Render this track difficulty to the secondary piano roll screen
 
-		(void) eof_menu_track_selected_track_number(temp_track, 0);	//Restore the active track number
+		(void) eof_menu_track_selected_track_number(temp_track, 0);		//Restore the active track number
 		eof_note_type = temp_type;									//Restore the active difficulty
-		memcpy(&eof_music_pos, &temp_pos, sizeof(EOF_MUSIC_POS)); //Restore the active position
-		eof_selection.current = temp_selected;						//Restore the selected note
+		memcpy(&eof_music_pos, &temp_pos, sizeof(EOF_MUSIC_POS)); 	//Restore the active position
+		eof_selection.current = temp_selected;							//Restore the selected note
 		eof_hover_note = temp_hover;								//Restore the hover note
-		eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild the beat stats to reflect the primary piano roll so edit operations work as expected
+		eof_fingering_view = eof_fingering_view_state;					//Restore the fingering view state
+		eof_process_beat_statistics(eof_song, eof_selected_track);			//Rebuild the beat stats to reflect the primary piano roll so edit operations work as expected
 	}//If the secondary piano roll is to be displayed
 }
 
