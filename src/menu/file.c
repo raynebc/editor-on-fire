@@ -6816,7 +6816,7 @@ int eof_menu_file_export_immerrock_track_diff(void)
 			gglead = eof_selected_track;
 	}
 	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
-	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, eof_note_type, eof_temp_filename);
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, eof_note_type, eof_temp_filename, 1);
 
 	return 1;
 }

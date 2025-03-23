@@ -243,9 +243,10 @@ char        eof_mark_drums_as_cymbal = 0;		//Allows the user to specify whether 
 char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whether expert bass drum notes will be placed with expert+ notation by default
 unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes in the PS drum track will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by these shortcuts:  CTRL+# to set fret numbers, CTRL+(plus/minus) increment/decrement fret values, CTRL+G to toggle ghost status
-char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
-char		eof_fingering_view = 0;				//Specifies whether pro guitar notes will render in the piano roll with finger values instead of fret values
-unsigned char eof_2d_render_top_option = 5;		//Specifies what item displays at the top of the 2D panel (defaults to note names)
+char	       eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
+char	       eof_fingering_view = 0;				//Specifies whether pro guitar notes will render in the piano roll with finger values instead of fret values
+char        eof_flat_dd_view = 0;				//Specifies whether the piano roll and 3D view will show a flattened view of the active dynamic difficulty
+unsigned char eof_2d_render_top_option = 5;	//Specifies what item displays at the top of the 2D panel (defaults to note names)
 char        eof_render_grid_lines = 0;			//Specifies whether grid snap positions will render in the editor window
 char        eof_show_ch_sp_durations = 0;		//Specifies whether durations for defined star power deployments will render in the editor window
 
@@ -1225,6 +1226,10 @@ void eof_fix_window_title(void)
 			if(eof_fingering_view)
 			{	//If fingering view is enabled
 				(void) ustrcat(eof_window_title, "(Fingering view)");
+			}
+			if(eof_flat_dd_view && eof_track_has_dynamic_difficulty(eof_song, eof_selected_track))
+			{
+				(void) ustrcat(eof_window_title, "(Flat DD view)");
 			}
 			if(eof_legacy_view)
 			{	//If legacy view is enabled
@@ -3375,6 +3380,7 @@ void eof_render_3d_window(void)
 	char ts_text[16] = {0}, tempo_text[16] = {0};
 	long tr;
 	int offset_y_3d = 0;	//If full height 3D preview is in effect, y coordinates will be shifted down by one panel height, otherwise will shift by 0
+	char dd_view = 0;
 
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
@@ -3685,6 +3691,9 @@ void eof_render_3d_window(void)
 	/* draw the position marker */
 	line(eof_window_3d->screen, seek_x1_projection, seek_y_projection, seek_x2_projection, seek_y_projection, eof_color_green);
 
+	if(eof_track_has_dynamic_difficulty(eof_song, eof_selected_track) && eof_flat_dd_view)
+		dd_view = 1;	//Track whether to perform the more logic intense dynamic difficulty checking
+
 //	int first_note = -1;	//Used for debugging
 //	int last_note = 0;		//Used for debugging
 	/* draw the note tails and notes */
@@ -3693,8 +3702,13 @@ void eof_render_3d_window(void)
 	{	//Render 3D notes from last to first so that the earlier notes are in front
 		int p;
 
-		if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i - 1))
-			continue;	//If this note isn't in the active difficulty, skip it
+		if(dd_view)
+		{	//If flat DD view is in effect
+			if(!eof_note_applies_to_diff(eof_song, eof_selected_track, i - 1, eof_note_type))
+				continue;	//If flat DD view is in effect and this note doesn't apply to the active dynamic difficulty, skip rendering it
+		}
+		else if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i - 1))
+			continue;	//If the note doesn't apply to the active static difficulty, skip rendering it
 
 		p = ((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0;	//Cache this result to use it twice
 		tr = eof_note_tail_draw_3d(eof_selected_track, i-1, p);
@@ -3790,7 +3804,7 @@ void eof_render(void)
 	{	//If a project is loaded
 //		eof_log("\tProject is loaded.", 3);
 		if(eof_window_title_dirty)
-		{	//If the window title needs to be redrawn
+		{	//If the window title needs to be recreated
 			eof_fix_window_title();
 		}
 		if(eof_background)

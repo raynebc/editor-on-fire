@@ -656,6 +656,10 @@ unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track);						//Retu
 unsigned long eof_get_track_size_all(EOF_SONG *sp, unsigned long track);					//For pro guitar tracks, returns the sum of the note count of both the active and tech note sets, otherwise returns the result of eof_get_track_size()
 unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track);				//For pro guitar tracks, returns the note count of the normal note set only, otherwise returns the result of eof_get_track_size()
 unsigned long eof_get_track_diff_size(EOF_SONG *sp, unsigned long track, char diff);			//Returns the number of notes/lyrics in the specified track difficulty (or just that of its active note set if a pro guitar track is specified), or 0 on error
+unsigned long eof_get_track_flattened_diff_size(EOF_SONG *sp, unsigned long track, char diff);
+	//Returns the number of notes/lyrics applicable to the specified track difficulty (or just that of its active note set if a pro guitar track is specified), or 0 on error
+	//Takes dynamic difficulty into account using eof_note_applies_to_diff()
+int eof_track_has_dynamic_difficulty(EOF_SONG *sp, unsigned long track);					//Returns nonzero if the specified track is a pro guitar track with the difficulty limit removed
 unsigned long eof_get_track_diff_size_normal(EOF_SONG *sp, unsigned long track, char diff);	//For pro guitar tracks, returns the note count of the specified track difficulty in the normal note set only, otherwise returns the result of eof_get_track_size()
 unsigned long eof_get_chart_size(EOF_SONG *sp);										//Returns the number of notes/lyrics in the chart, or 0 on error
 int eof_song_has_pro_guitar_content(EOF_SONG *sp);										//Returns nonzero if any of the pro guitar tracks in the specified chart have any normal notes
@@ -682,6 +686,12 @@ void eof_track_delete_overlapping_tech_notes(EOF_SONG *sp, unsigned long track, 
 void eof_song_empty_track(EOF_SONG * sp, unsigned long track);								//Deletes all notes from the track
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);				//Performs the appropriate logic to resize the specified track
 unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
+int eof_note_applies_to_diff(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char diff);
+	//Returns nonzero if the note is the one in effect at its position in the specified track difficulty
+	//If the note is in the specified difficulty directly, 1 is returned
+	//In the case of dynamic difficulty, the highest difficulty note at or below the target difficulty at a timestamp
+	// is the one that takes precedence as it overrides all notes of a lower difficulty at that timestamp,
+	//If the note is in a difficulty <= the specified difficulty, but is in effect due to dynamic difficulty, 2 is returned
 void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char type);	//Sets the type (difficulty/lyric set) of the specified track's note/lyric
 unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the position of the specified track's note/lyric, or 0 on error
 unsigned long eof_get_note_endpos(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the end position of the specified track's note/lyric, or 0 on error
@@ -718,7 +728,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);
 	//Calls the appropriate sort function for the specified track.  eof_selection.multi[] is preserved before the sort and recreated afterward, since sorting invalidates
 	// the selection array due to note numbering being changed
-	//Functions that depend on notes being sorted should be able to expect that notes are sorted primarily by timestamp and secondarily by difficulty number
+	//Functions that depend on notes being sorted should be able to expect that notes are sorted primarily by timestamp (ascending order) and secondarily by difficulty number (ascending order)
 int eof_song_qsort_phrase_sections(const void * e1, const void * e2);	//A generic qsort comparitor that will sort phrase sections into chronological order
 long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one before the specified note/lyric number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none

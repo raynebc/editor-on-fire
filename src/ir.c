@@ -44,6 +44,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	EOF_PRO_GUITAR_TRACK *tp;
 	int is_muted;				//Track whether a note is fully string muted
 	unsigned long index = 1;	//Used to set the sort order for multiple pairs of note on/off events at the same timestamp as required by Immerrock
+	unsigned long notes_written = 0;
 
 	eof_log("eof_export_immerrock_midi() entered", 1);
 
@@ -102,8 +103,10 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		unsigned long pos	, length, note, flags;
 		unsigned char finger;
 
-		if(eof_get_note_type(sp, track, i) != diff)	//If this note isn't in the target difficulty
+		if(!eof_note_applies_to_diff(sp, track, i, diff))
+		{	//If this note isn't in the target difficulty (static or dynamic as applicable)
 			continue;	//Skip it
+		}
 
 		pitchmask = eof_get_midi_pitches(sp, track, i, pitches);	//Determine how many exportable pitches this note/lyric has
 		is_muted = eof_is_string_muted(sp, track, i);			//Determine if all played strings in the note are string muted (which would result in pitchmask being 0)
@@ -227,6 +230,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 			error = 1;
 		}
 		has_notes = 1;
+		notes_written++;
 	}//For each note in the track
 
 	if(!has_notes)
@@ -407,12 +411,13 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 	eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-	eof_log("\t\tImmerrock MIDI export complete", 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImmerrock MIDI export complete.  %lu notes written", notes_written);
+	eof_log(eof_log_string, 1);
 
 	return 1;	//Return success
 }
 
-int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath)
+int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option)
 {
 	PACKFILE *fp;
 	int err = 0;
@@ -426,6 +431,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	char *tuning_strings[3] = {"Lead_Tuning=", "Rhythm_Tuning=", "Bass_Tuning="};
 	char *midi_names[3] = {"GGLead.mid", "GGRhythm.mid", "GGBass.mid"};
 	char *blank_name = "";
+	char numbered_diff[10] = {0};
 	char *diff_name = blank_name;
 
 	//Validate parameters
@@ -441,12 +447,24 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 		return 0;	//Not a valid lead track
 
 	eof_log("eof_export_immerrock_track_diff() entered", 2);
-	if(gglead && eof_get_track_diff_size_normal(sp, gglead, diff))
-		arr_populated[0] = 1;
-	if(ggrhythm && eof_get_track_diff_size_normal(sp, ggrhythm, diff))
-		arr_populated[1] = 1;
-	if(ggbass && eof_get_track_diff_size_normal(sp, ggbass, diff))
-		arr_populated[2] = 1;
+	if(diff == 0xFF)
+	{	//If all dynamic difficulties are to be flattened and exported
+		if(gglead && eof_get_track_flattened_diff_size(sp, gglead, diff))
+			arr_populated[0] = 1;
+		if(ggrhythm && eof_get_track_flattened_diff_size(sp, ggrhythm, diff))
+			arr_populated[1] = 1;
+		if(ggbass && eof_get_track_flattened_diff_size(sp, ggbass, diff))
+			arr_populated[2] = 1;
+	}
+	else
+	{	//Otherwise only the specified difficulty is to be exported
+		if(gglead && eof_get_track_diff_size_normal(sp, gglead, diff))
+			arr_populated[0] = 1;
+		if(ggrhythm && eof_get_track_diff_size_normal(sp, ggrhythm, diff))
+			arr_populated[1] = 1;
+		if(ggbass && eof_get_track_diff_size_normal(sp, ggbass, diff))
+			arr_populated[2] = 1;
+	}
 	if(!arr_populated[0] && !arr_populated[1] && !arr_populated[2])
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNo arrangements have notes in difficulty %u.", diff);
@@ -456,6 +474,18 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	if(diff < 4)
 	{	//If this is one of the four named Rock Band style difficulty levels
 		diff_name =&( eof_note_type_name_rb[diff][1]);	//Skip the first character in this string, which is used to track the difficulty populated status
+	}
+	else
+	{
+		if(diff < 0xFF)
+		{	//For anything less than a specified difficulty of 0xFF, include that difficulty number
+			snprintf(numbered_diff, sizeof(numbered_diff) - 1, "DD %d", diff);
+		}
+		else
+		{
+			snprintf(numbered_diff, sizeof(numbered_diff) - 1, "DD max");
+		}
+		diff_name = numbered_diff;
 	}
 
 
@@ -474,11 +504,37 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 		(void) ustrcat(temp_string, eof_song->tags->title);
 		(void) ustrcat(temp_string, " - ");
 	}
+	if(option == 1)
+	{	//If a single arrangement is being exported, include its name in the export folder name
+		char *arrangement_name;
+		unsigned long effective_arrangement;
+
+		if(gglead)
+			effective_arrangement = gglead;
+		else if(ggrhythm)
+			effective_arrangement = ggrhythm;
+		else
+			effective_arrangement = ggbass;
+
+		if(effective_arrangement && (effective_arrangement < sp->tracks))
+		{	//Bounds check
+			if((sp->track[effective_arrangement]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[effective_arrangement]->altname[0] != '\0'))
+			{	//If the track has an alternate name
+				arrangement_name = sp->track[effective_arrangement]->altname;
+			}
+			else
+			{	//Otherwise use the track's native name
+				arrangement_name = sp->track[effective_arrangement]->name;
+			}
+			(void) ustrcat(temp_string, arrangement_name);
+			(void) ustrcat(temp_string, " - ");
+		}
+	}
 	(void) ustrcat(temp_string, diff_name);
-	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
-	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
 
 	//Build the subfolder if it doesn't already exist
+	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
+	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
 	if(!eof_folder_exists(eof_temp_filename))
 	{	//If the export subfolder doesn't already exist
 		err = eof_mkdir(eof_temp_filename);
@@ -724,17 +780,22 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 
 void eof_export_immerrock(void)
 {
-	unsigned long gglead = 0, ggrhythm = 0, ggbass = 0;		//The three arrangements identified for export
-	char *condition1 = "No arrangements were identified for export.\n";
-	char *condition2 = "At least one track has no defined arrangement type.\n";
-	char *condition3 = "At least two tracks have the same arrangement type.\n";
+	unsigned long gglead = 0, ggrhythm = 0, ggbass = 0;			//The arrangements identified for export with static difficulties
+	unsigned long ddgglead = 0, ddggrhythm = 0, ddggbass = 0;	//The arrangements identified for export as a single dynamic difficulty
+	char *condition1 = "! No arrangements were identified for export.\n";
+	char *condition2 = "! At least one track has no defined arrangement type.  Set this with Track>Rocksmith>Arrangement Type\n";
+	char *condition3 = "! At least two tracks have the same arrangement type.\n";
 	char *blank = "";
 	char warn_any = 0, *warn1 = blank, *warn2 = blank, *warn3 = blank;
 	unsigned long ctr, tracknum;
 	char newfolderpath[1024] = {0};
+	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 
 	if(!eof_song || !eof_song_loaded)
 		return;	//If no project is loaded
+
+	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
 
 	eof_log("Exporting Immerrock files", 1);
 
@@ -749,44 +810,71 @@ void eof_export_immerrock(void)
 				switch(eof_song->pro_guitar_track[tracknum]->arrangement)
 				{
 					case 2:	//Rhythm arrangement
-						if(ggrhythm)
+						if(ggrhythm || ddggrhythm)
 						{
 							warn_any = 1;
 							warn3 = condition3;	//A rhythm arrangement was already found
 						}
 						else
 						{
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as rhythm arrangement", eof_song->track[ctr]->name);
-							eof_log(eof_log_string, 2);
-							ggrhythm = ctr;
+							if(eof_track_has_dynamic_difficulty(eof_song, ctr))
+							{	//If this track has dynamic difficulty, only the highest difficulty level will export
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as rhythm arrangement (dynamic difficulty)", eof_song->track[ctr]->name);
+								eof_log(eof_log_string, 2);
+								ddggrhythm = ctr;
+							}
+							else
+							{
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as rhythm arrangement (static difficulties)", eof_song->track[ctr]->name);
+								eof_log(eof_log_string, 2);
+								ggrhythm = ctr;
+							}
 						}
 					break;
 
 					case 3:	//Lead arrrangement
-						if(gglead)
+						if(gglead || ddgglead)
 						{
 							warn_any = 1;
 							warn3 = condition3;	//A rhythm arrangement was already found
 						}
 						else
 						{
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as lead arrangement", eof_song->track[ctr]->name);
-							eof_log(eof_log_string, 2);
-							gglead = ctr;
+							if(eof_track_has_dynamic_difficulty(eof_song, ctr))
+							{	//If this track has dynamic difficulty, only the highest difficulty level will export
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as lead arrangement (dynamic difficulty)", eof_song->track[ctr]->name);
+								eof_log(eof_log_string, 2);
+								ddgglead = ctr;
+							}
+							else
+							{
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as lead arrangement (static difficulties)", eof_song->track[ctr]->name);
+								eof_log(eof_log_string, 2);
+								gglead = ctr;
+							}
 						}
 					break;
 
 					case 4:	//Bass arrangement
-						if(ggbass)
+						if(ggbass || ddggbass)
 						{
 							warn_any = 1;
 							warn3 = condition3;	//A rhythm arrangement was already found
 						}
 						else
 						{
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as rhythm arrangement", eof_song->track[ctr]->name);
-							eof_log(eof_log_string, 2);
-							ggbass = ctr;
+							if(eof_track_has_dynamic_difficulty(eof_song, ctr))
+							{	//If this track has dynamic difficulty, only the highest difficulty level will export
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as bass arrangement (dynamic difficulty)", eof_song->track[ctr]->name);
+								eof_log(eof_log_string, 2);
+								ddggbass = ctr;
+							}
+							else
+							{
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSelected \"%s\" as bass arrangement (static difficulties)", eof_song->track[ctr]->name);
+								eof_log(eof_log_string, 2);
+								ggbass = ctr;
+							}
 						}
 					break;
 
@@ -807,11 +895,18 @@ void eof_export_immerrock(void)
 
 	//Export all difficulty levels of the selected arrangements
 	(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
-	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 0, newfolderpath);	//Export easy
-	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 1, newfolderpath);	//Export medium
-	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 2, newfolderpath);	//Export hard
-	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 3, newfolderpath);	//Export expert
+	if(ddgglead || ddggrhythm || ddggbass)
+	{	//If any of the chosen arrangements will have the flattened dynamic difficulties exported
+		eof_export_immerrock_diff(eof_song, ddgglead, ddggrhythm, ddggbass, 0xFF, newfolderpath, 0);	//Export the full flattened dynamic difficulty of each
+	}
+	//Then export the first four difficulties of any of the chosen arrangements that don't have dynamic difficulties
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 0, newfolderpath, 0);	//Export easy
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 1, newfolderpath, 0);	//Export medium
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 2, newfolderpath, 0);	//Export hard
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 3, newfolderpath, 0);	//Export expert
 
 	if(warn_any)
-		allegro_message("%s%s%s", warn1, warn2, warn3);
+		allegro_message("Immerrock Export:\n%s%s%s", warn1, warn2, warn3);
+
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
 }

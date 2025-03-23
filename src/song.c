@@ -4244,6 +4244,39 @@ unsigned long eof_get_track_diff_size(EOF_SONG *sp, unsigned long track, char di
 	return count;
 }
 
+int eof_track_has_dynamic_difficulty(EOF_SONG *sp, unsigned long track)
+{
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
+		return 0;	//Invalid parameters
+
+	if((sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
+		return 1;	//If the specified track is a pro guitar track with difficulty limit removed, it is considered to have dynamic difficulty
+
+	return 0;	//Not dynamic difficulty
+}
+
+unsigned long eof_get_track_flattened_diff_size(EOF_SONG *sp, unsigned long track, char diff)
+{
+	unsigned long ctr, count, total;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
+		return 0;	//Invalid parameters
+
+	if(eof_track_has_dynamic_difficulty(sp, track))
+	{	//If this is a pro guitar track configured to have dynamic difficulty levels
+		total = eof_get_track_size(sp, track);
+		for(ctr = 0, count = 0; ctr < total; ctr++)
+		{	//For each note in the specified track
+			if(eof_note_applies_to_diff(sp, track, ctr, diff))	//If the flattened difficulty level would contain this note
+				count++;
+		}
+
+		return count;
+	}
+
+	return eof_get_track_diff_size(sp, track, diff);	//Otherwise count the notes in the static difficulty level
+}
+
 unsigned long eof_get_chart_size(EOF_SONG *sp)
 {
 	unsigned long notectr = 0, trackctr;
@@ -4489,6 +4522,39 @@ unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long
 	}
 
 	return 0xFF;	//Return error
+}
+
+int eof_note_applies_to_diff(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char diff)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+
+	if(eof_track_has_dynamic_difficulty(sp, track))
+	{	//If this is a pro guitar track configured to have dynamic difficulty levels
+		tracknum = sp->track[track]->tracknum;
+		tp = sp->pro_guitar_track[tracknum];
+
+		if(tp->note[note]->type > diff)
+			return 0;	//This note is above the specified dynamic difficulty, it cannot apply to the specified difficulty
+		if(tp->note[note]->type == diff)
+			return 1;	//This note is in the specified dynamic difficulty, it applies to the specified difficulty
+		for(ctr = 1; note + ctr < tp->notes; ctr++)
+		{	//For the remaining notes in the track
+			if(tp->note[note + ctr]->type > diff)
+				return 2;	//The next note is above the specified difficulty, the specified note applies to the specified difficulty
+			if(tp->note[note + ctr]->pos != tp->note[note]->pos)
+				return 2;	//The next note is at a different timestamp and can't override the specified note, the specified note applies to the specified difficulty
+			if(tp->note[note + 1]->type > tp->note[note]->type)
+				return 0;	//The next note is in a higher difficulty level than this note, and is at or below the specified difficulty, the specified note cannot apply to the specified difficulty
+		}
+
+		return 2;	//If the specified note hasn't been disqualified, it applies to the specified difficulty
+	}
+
+	return (eof_get_note_type(sp, track, note) == diff);	//Otherwise return nonzero if the note is directly in the specified difficulty level
 }
 
 unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note)

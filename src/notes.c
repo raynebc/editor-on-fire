@@ -2316,10 +2316,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Number of notes selected
 	if(!ustricmp(macro, "TRACK_DIFF_NOTE_COUNT"))
 	{
-		unsigned long count = 0;
+		unsigned long count;
 
-		(void) eof_count_selected_notes(&count);	//Count the number of notes in the active track difficulty
-		snprintf(dest_buffer, dest_buffer_size, "%lu", count);	//Count the number of selected notes, don't track the count of notes in the active track difficulty
+		if(eof_flat_dd_view)
+			count = eof_get_track_flattened_diff_size(eof_song, eof_selected_track, eof_note_type);
+		else
+			count = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);
+
+		snprintf(dest_buffer, dest_buffer_size, "%lu", count);
 		return 1;
 	}
 

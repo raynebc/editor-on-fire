@@ -166,6 +166,7 @@ MENU eof_song_proguitar_menu[] =
 MENU eof_song_rocksmith_menu[] =
 {
 	{"&Fingering view\tF8", eof_menu_song_rocksmith_fingering_view, NULL, 0, NULL},
+	{"Flat &DD view", eof_menu_song_flat_dd_view, NULL, 0, NULL},
 	{"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
 	{"Check &Fret hand positions", eof_check_fret_hand_positions_menu, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
@@ -576,9 +577,10 @@ void eof_prepare_song_menu(void)
 		}
 
 		eof_song_piano_roll_menu[0].flags = eof_display_second_piano_roll ? D_SELECTED : 0;	//Update "Song>Second piano roll>Display" check status
-		eof_song_piano_roll_menu[2].flags = eof_sync_piano_rolls ? D_SELECTED : 0;	//Update "Song>Second piano roll>Sync with main piano roll" check status
-		eof_song_rocksmith_menu[4].flags = eof_song->tags->rs_chord_technique_export ? D_SELECTED : 0;	//Update "Song>Rocksmith>Export chord techniques" check status
-		eof_song_rocksmith_menu[5].flags = eof_song->tags->rs_export_suppress_dd_warnings ? D_SELECTED : 0;	//Update "Song>Rocksmith>Suppress DD warnings" check status
+		eof_song_piano_roll_menu[2].flags = eof_sync_piano_rolls ? D_SELECTED : 0;			//Update "Song>Second piano roll>Sync with main piano roll" check status
+		eof_song_rocksmith_menu[1].flags = eof_flat_dd_view ? D_SELECTED : 0;				//Update "Song>Rocksmith>Flat DD view"
+		eof_song_rocksmith_menu[5].flags = eof_song->tags->rs_chord_technique_export ? D_SELECTED : 0;		//Update "Song>Rocksmith>Export chord techniques" check status
+		eof_song_rocksmith_menu[6].flags = eof_song->tags->rs_export_suppress_dd_warnings ? D_SELECTED : 0;	//Update "Song>Rocksmith>Suppress DD warnings" check status
 
 		/* Second piano roll>Compare */
 		if(!eof_display_second_piano_roll)
@@ -4028,6 +4030,13 @@ int eof_menu_song_toggle_piano_roll_sync(void)
 int eof_menu_song_rocksmith_fingering_view(void)
 {
 	eof_fingering_view ^= 1;	//Toggle this boolean variable
+	eof_fix_window_title();
+	return 1;
+}
+
+int eof_menu_song_flat_dd_view(void)
+{
+	eof_flat_dd_view ^= 1;	//Toggle this boolean variable
 	eof_fix_window_title();
 	return 1;
 }

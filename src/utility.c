@@ -157,17 +157,22 @@ int eof_copy_file(const char * src, const char * dest)
 	if(!ustricmp(src,dest))		//Special case:  The input and output file are the same
 		return 0;				//Return success without copying any files
 
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCopying file \"%s\" to \"%s\"", src, dest);
+	eof_log(eof_log_string, 2);
+
 	src_size = (unsigned long)file_size_ex(src);
 	if(src_size > LONG_MAX)
 		return 0;	//Unable to validate I/O due to Allegro's usage of signed values
 	src_fp = pack_fopen(src, "r");
 	if(!src_fp)
 	{
+		eof_log("\tFailed to open source file for reading", 1);
 		return 0;
 	}
 	dest_fp = pack_fopen(dest, "w");
 	if(!dest_fp)
 	{
+		eof_log("\tFailed to open destination file for writing", 1);
 		(void) pack_fclose(src_fp);
 		return 0;
 	}
@@ -176,6 +181,7 @@ int eof_copy_file(const char * src, const char * dest)
 	if(ptr != NULL)
 	{	//If a buffer large enough to store the input file was created
 		long long_src_size = src_size;
+		eof_log("\tBuffer copying", 1);
 		if((pack_fread(ptr, long_src_size, src_fp) != long_src_size) || (pack_fwrite(ptr, long_src_size, dest_fp) != long_src_size))
 		{	//If there was an error reading from file or writing from memory
 			free(ptr);	//Release buffer
@@ -185,6 +191,7 @@ int eof_copy_file(const char * src, const char * dest)
 	}
 	else
 	{	//Otherwise copy the slow way (one byte at a time)
+		eof_log("\tByte by byte copying", 1);
 		for(i = 0; i < src_size; i++)
 		{
 			(void) pack_putc(pack_getc(src_fp), dest_fp);
@@ -192,6 +199,7 @@ int eof_copy_file(const char * src, const char * dest)
 	}
 	(void) pack_fclose(src_fp);
 	(void) pack_fclose(dest_fp);
+	eof_log("\tCopy successful", 1);
 	return 1;
 }
 
@@ -478,6 +486,7 @@ void eof_build_sanitized_filename_string(char *input, char *output)
 
 	output[0] = '\0';	//Terminate the output string
 
+	//Filter out invalid characters
 	for(ctr = 0; input[ctr] != '\0'; ctr++)
 	{	//For each character in the input string
 		int character = ugetat(input, ctr);
@@ -486,8 +495,19 @@ void eof_build_sanitized_filename_string(char *input, char *output)
 			uinsert(output, index++, character);	//Append it to the output string
 		}
 	}
-
 	uinsert(output, index, '\0');	//Terminate the output string
+
+	//Remove trailing whitespace, which are not valid in folder or file names
+	while(index > 1)
+	{	//While there's at least one character in the string
+		if(isspace(ugetat(output, index - 1)))
+		{	//If the last character in the string is any whitespace character
+			uinsert(output, index - 1, '\0');	//Truncate it off the output string
+			index--;
+		}
+		else
+			break;
+	}
 }
 
 int eof_is_illegal_filename_character(char c)

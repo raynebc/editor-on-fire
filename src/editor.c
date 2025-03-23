@@ -5924,7 +5924,7 @@ void eof_render_editor_notes(EOF_WINDOW *window)
 {
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
 	unsigned long i, numnotes;
-	char drawhighlight = 0, reset_colors = 0;
+	char drawhighlight = 0, reset_colors = 0, dd_view = 0;
 
 	if(!eof_song_loaded || !window)
 		return;	//Invalid parameter
@@ -5939,6 +5939,8 @@ void eof_render_editor_notes(EOF_WINDOW *window)
 		eof_colors[5] = eof_color_purple_struct;
 		reset_colors = 1;	//Remember to restore the color set later
 	}
+	if(eof_track_has_dynamic_difficulty(eof_song, eof_selected_track) && eof_flat_dd_view)
+		dd_view = 1;	//Track whether to perform the more logic intense dynamic difficulty checking
 
 	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	start = eof_determine_piano_roll_left_edge();
@@ -5948,9 +5950,17 @@ void eof_render_editor_notes(EOF_WINDOW *window)
 	}
 	eof_last_tab_notation[0] = '\0';	//Erase the tab notation summary string to ensure the first rendered notes has its notation fully displayed
 	for(i = 0; i < numnotes; i++)
-	{	//Render all visible notes in the list
-		if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) >= start))
-		{	//If this note is in the selected instrument difficulty and would render at or after the left edge of the piano roll
+	{	//Render all visible notes in the track
+		if(dd_view)
+		{	//If flat DD view is in effect
+			if(!eof_note_applies_to_diff(eof_song, eof_selected_track, i, eof_note_type))
+				continue;	//If flat DD view is in effect and this note doesn't apply to the active dynamic difficulty, skip rendering it
+		}
+		else if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i))
+			continue;	//If the note doesn't apply to the active static difficulty, skip rendering it
+
+		if(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) >= start)
+		{	//If this note would render at or after the left edge of the piano roll
 			if(drawhighlight && (eof_hover_note == i))
 			{	//If the input mode is piano roll, rex mundi or Feedback and the chart is paused, and the note is being moused over
 				(void) eof_note_draw(eof_selected_track, i, ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, window);
@@ -6019,12 +6029,12 @@ void eof_render_editor_window(EOF_WINDOW *window)
 	if(render_tech_notes && tp)
 	{	//If tech notes are to render on top of the regular notes
 		eof_menu_pro_guitar_track_disable_tech_view(tp);	//Switch back to the regular note array
-		temphover = eof_hover_note;				//Temporarily clear the hover note, since any hover note in effect at this time applies to the tech notes and not the normal notes
+		temphover = eof_hover_note;			//Temporarily clear the hover note, since any hover note in effect at this time applies to the tech notes and not the normal notes
 		eof_hover_note = -1;
 		temptrack = eof_selection.track;		//Likewise temporarily clear the selection track number
 		eof_selection.track = 0;
 		eof_render_editor_notes(window);		//Render its notes
-		eof_hover_note = temphover;				//Restore the hover note
+		eof_hover_note = temphover;			//Restore the hover note
 		eof_selection.track = temptrack;		//Restore the selection track
 		eof_menu_pro_guitar_track_enable_tech_view(tp);	//Switch back to the tech note array
 	}
@@ -6481,20 +6491,29 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	for(i = 0; i < tracksize; i++)
 	{	//For each note in this track
 		int markerpos;
+		int color = 0;	//Tracks whether a condition to highlight the note  has been met
+
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
 		notelength = eof_get_note_length(eof_song, eof_selected_track, i);
 		if(notepos > stop)
 		{	//If the note would render beyond the right edge of the piano roll
 			break;	//This note and all remaining notes are too far ahead to render on-screen
 		}
-		if((eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i)) || (notepos + notelength < start))
-			continue;	//If this note is not in the active difficulty or would render before the left edge of the piano roll, skip it
-		if(!eof_note_is_highlighted(eof_song, eof_selected_track, i))
-			continue;	//If this note is not flagged to be highlighted, skip it
+		if(notepos + notelength < start)
+			continue;	//If this note would render before the left edge of the piano roll, skip it
 		if(notepos + notelength < start)
 			continue;	//If this note ends before the left edge of the screen (is not visible), skip it
+		if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i))
+		{	//If the note doesn't exist in the active static difficulty
+			if(eof_flat_dd_view && eof_note_applies_to_diff(eof_song, eof_selected_track, i, eof_note_type))
+				color = eof_color_light_red;	//But is in effect in the active flattened dynamic difficulty, render a red background for it
+			else
+				continue;	//Otherwise skip it
+		}
+		if(!color && !eof_note_is_highlighted(eof_song, eof_selected_track, i))
+			continue;	//If this note is not to be rendered with a red background and otherwise isn't flagged to be highlighted, skip it
 
-		//Otherwise render a yellow colored background
+		//Render a yellow/blue/red colored background
 		markerlength = notelength / eof_zoom;
 		if(markerlength < eof_screen_layout.note_size)
 		{	//If this marker isn't at least as wide as a note gem
@@ -6503,10 +6522,13 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		markerpos = lpos + (notepos / eof_zoom);
 		if(markerpos <= window->screen->w)
 		{	//If the marker starts at or left of the right edge of the screen (is visible)
-			int color = eof_color_highlight1;
-			if(!(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT))
-			{	//If this note does not have static highlighting
-				color = eof_color_highlight2;	//Used the defined dynamic highlighting color (cyan by default)
+			if(!color)
+			{	//If the note is outside of the active track difficulty, red highlight will take priority over static or dynamic highlighting
+				color = eof_color_highlight1;
+				if(!(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT))
+				{	//If this note does not have static highlighting
+					color = eof_color_highlight2;	//Used the defined dynamic highlighting color (cyan by default)
+				}
 			}
 			rectfill(window->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, color);
 		}
@@ -7056,6 +7078,11 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 			}
 		}
 		draw_sprite(window->screen, eof_image[EOF_IMAGE_TAB_FG], 8 + (selected_tab * 80) - 2, 8);	//The foreground tab is 4 pixels wider, so center it over the adjacent tabs
+		if(eof_flat_dd_view && eof_track_has_dynamic_difficulty(eof_song, eof_selected_track))
+		{	//If flat DD view is in effect for the active track, fill the difficulty tab with light red as a visual indicator
+			int x = 8 + (selected_tab * 80);
+			rectfill(window->screen, x, 9, x+78, eof_image[EOF_IMAGE_TAB_FG]->h+1, eof_color_light_red);
+		}
 
 		//Draw difficulty tab text
 		for(i = 0; i < numtabs; i++)

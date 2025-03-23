@@ -652,6 +652,7 @@ extern unsigned long eof_mark_drums_as_hi_hat;
 extern unsigned long eof_pro_guitar_fret_bitmask;
 extern char        eof_legacy_view;
 extern char        eof_fingering_view;
+extern char        eof_flat_dd_view;
 extern unsigned char eof_2d_render_top_option;
 extern char        eof_render_grid_lines;
 extern char        eof_show_ch_sp_durations;

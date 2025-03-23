@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <ctype.h>
 #include "chart_import.h"
 #include "dr.h"
 #include "main.h"
@@ -259,8 +260,9 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 {
 	PACKFILE *fp;
 	int err, ret;
-	char temp_string[1024], temp_filename2[1024];
+	char temp_string[1024], temp_filename2[1024], tag_in_progress;
 	unsigned long ctr;
+	double avg_tempo;
 
 	//Use song metadata and difficulty level to build the "Artist - Song - Difficulty" string and build a subfolder of that name in the project folder
 	if(diff > 3)
@@ -451,6 +453,7 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	(void) pack_fclose(fp);
 
 	//Write Metadata.cfg
+	tag_in_progress = 0;
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Metadata.cfg", (int) sizeof(eof_temp_filename));
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
 	eof_log(eof_log_string, 2);
@@ -463,25 +466,72 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	(void) snprintf(temp_string, sizeof(temp_string) - 1, "title=%s - %s\n", sp->tags->artist, sp->tags->title);
 	(void) pack_fputs(temp_string, fp);		//Write song title
 	(void) pack_fputs("description=", fp);	//Write description
-	if(sp->tags->frettist[0] != '\0')
-	{	//If the charter name is defined
-		(void) pack_fputs(sp->tags->frettist, fp);
-		if(sp->tags->loading_text[0] != '\0')
-		{	//If there is also loading text
-			(void) pack_fputs(", ", fp);	//Append a comma and a space
-		}
+	if(eof_check_string(sp->tags->title))
+	{	//If a song title is defined
+		tag_in_progress = 1;
+		(void) pack_fputs("Song:  ", fp);
+		(void) pack_fputs(sp->tags->title, fp);
 	}
-	if(sp->tags->loading_text[0] != '\0')
+	if(eof_check_string(sp->tags->artist))
+	{	//If artist name is defined
+		if(tag_in_progress)
+			(void) pack_fputs(" | ", fp);	//Use spaces and a pipe character to separate fields in the description tag
+		tag_in_progress = 1;
+		(void) pack_fputs("Artist:  ", fp);
+		(void) pack_fputs(sp->tags->artist, fp);
+	}
+	if(eof_check_string(sp->tags->genre))
+	{	//If the genre is defined
+		if(tag_in_progress)
+			(void) pack_fputs(" | ", fp);	//Use spaces and a pipe character to separate fields in the description tag
+		tag_in_progress = 1;
+		(void) pack_fputs("Genre:  ", fp);
+		(void) pack_fputs(sp->tags->genre, fp);
+	}
+	if(eof_check_string(sp->tags->frettist))
+	{	//If the chart author is defined
+		if(tag_in_progress)
+			(void) pack_fputs(" | ", fp);	//Use spaces and a pipe character to separate fields in the description tag
+		tag_in_progress = 1;
+		(void) pack_fputs("Charter:  ", fp);
+		(void) pack_fputs(sp->tags->frettist, fp);
+	}
+	if(tag_in_progress)
+		(void) pack_fputs(" | ", fp);	//Use spaces and a pipe character to separate fields in the description tag
+	tag_in_progress = 1;
+	(void) pack_fputs("Difficulty:  ", fp);
+	(void) pack_fputs(eof_note_type_name_dr[diff], fp);
+
+	avg_tempo = 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats);
+	(void) pack_fputs(" | ", fp);	//Use spaces and a pipe character to separate fields in the description tag
+	(void) pack_fputs("Average BPM:  ", fp);
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%lu", (unsigned long)(avg_tempo + 0.5));
+	(void) pack_fputs(temp_string, fp);
+
+	(void) pack_fputs(" | ", fp);	//Use spaces and a pipe character to separate fields in the description tag
+	(void) pack_fputs("Total notes:  ", fp);
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%lu", eof_get_track_diff_size(sp, track, diff));
+	(void) pack_fputs(temp_string, fp);
+
+	if(eof_check_string(sp->tags->loading_text))
 	{	//If there is loading text
+		(void) pack_fputs(" | ", fp);	//Use spaces and a pipe character to separate fields in the description tag
 		(void) pack_fputs(sp->tags->loading_text, fp);
 	}
 	(void) pack_fputs("\n", fp);
 	(void) pack_fputs("isPublic=true\n", fp);
 	(void) snprintf(temp_string, sizeof(temp_string) - 1, "tags=%s", eof_note_type_name_dr[diff]);
 	(void) pack_fputs(temp_string, fp);		//Write difficulty tag
-	if(sp->tags->genre[0] != '\0')
+	if(eof_check_string(sp->tags->genre))
 	{	//If there is a defined genre
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, ",%s", sp->tags->genre);
+		for(ctr = 0; ctr < ustrlen(temp_string); ctr++)
+		{	//For each character in the genre string
+			if(isspace(ugetat(temp_string, ctr)))
+			{	//If it is whitespace
+				usetat(temp_string, ctr, '_');	//Replace it with an underscore
+			}
+		}
 		(void) pack_fputs(temp_string, fp);		//Write genre tag
 	}
 	(void) pack_fputs("\n", fp);
