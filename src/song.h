@@ -692,6 +692,7 @@ int eof_note_applies_to_diff(EOF_SONG *sp, unsigned long track, unsigned long no
 	//In the case of dynamic difficulty, the highest difficulty note at or below the target difficulty at a timestamp
 	// is the one that takes precedence as it overrides all notes of a lower difficulty at that timestamp,
 	//If the note is in a difficulty <= the specified difficulty, but is in effect due to dynamic difficulty, 2 is returned
+	//Dynamic difficulty testing requires that the notes are sorted
 void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char type);	//Sets the type (difficulty/lyric set) of the specified track's note/lyric
 unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the position of the specified track's note/lyric, or 0 on error
 unsigned long eof_get_note_endpos(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the end position of the specified track's note/lyric, or 0 on error
@@ -732,6 +733,7 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);
 int eof_song_qsort_phrase_sections(const void * e1, const void * e2);	//A generic qsort comparitor that will sort phrase sections into chronological order
 long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one before the specified note/lyric number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
+long eof_track_fixup_next_note_applicable_to_diff(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char diff);	//Returns the next note after the specified one that is applicable to the specified difficulty, or -1 if there is none
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
 	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically
 	//Dynamic highlighting for the track's active note set is also updated

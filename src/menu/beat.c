@@ -1286,7 +1286,7 @@ int eof_menu_beat_delete_anchor_logic(char *undo_made)
 				break;
 			}
 		}
-		eof_song->beat[eof_selected_beat]->flags = 0;
+		eof_song->beat[eof_selected_beat]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag, retain all other flags
 		if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
 		{	//If there's not an anchor after the selected beat
 			(void) eof_song_resize_beats(eof_song, eof_selected_beat);

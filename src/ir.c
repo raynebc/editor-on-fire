@@ -121,7 +121,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		//Write note pitches
 		deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
 		deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
-		next = eof_track_fixup_next_note(sp, track, i);	//Look up the next note in this track
+		next = eof_track_fixup_next_note_applicable_to_diff(sp, track, i, diff);	//Look up the next note applicable to this difficulty
 		if(next >= 0)
 		{	//If there is another note
 			nextdeltapos = eof_ConvertToDeltaTime(eof_get_note_pos(sp, track, next), anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store its tick position
@@ -134,13 +134,26 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 			deltalength = 1;
 		}
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNote #%lu (pos = %lu, deltapos = %lu, length = %lu, delta length = %lu)", i, pos, deltapos, length, deltalength);
+		eof_log(eof_log_string, 2);
 		if(deltalength < pad)
 		{	//If the note being exported is shorter than 1/64
 			if(!nextdeltapos || (nextdeltapos > deltapos + pad))
 			{	//If there is no next note or there is one and it is far away enough
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPadding note #%lu (pos = %lu, deltapos = %lu, length = %lu, delta length = %lu) to %lu delta ticks", i, pos, deltapos, length, deltalength, pad);
-				eof_log(eof_log_string, 1);
+				eof_log(eof_log_string, 2);
 				deltalength = pad;
+			}
+			else if(deltapos + pad >= nextdeltapos)
+			{	//The next note isn't the full pad length away to avoid overlapping
+				if(nextdeltapos > deltapos + 1)
+				{	//If the note can be extended at least 1 ms without overlapping the next note
+					unsigned long extend = nextdeltapos - deltapos - 1;	//This is as far as the note can be extended;
+
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPadding note #%lu (pos = %lu, deltapos = %lu, length = %lu, delta length = %lu) to %lu delta ticks (less than the desired padding of %lu ticks)", i, pos, deltapos, length, deltalength, extend, pad);
+					eof_log(eof_log_string, 2);
+					deltalength = extend;
+				}
 			}
 		}
 		for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
@@ -657,6 +670,8 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 		(void) pack_putc('\n', fp);
 	}
 
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "ChartDelay=%ld\n", sp->tags->ogg[0].midi_offset);
+	(void) pack_fputs(temp_string, fp);	//Write chart offset
 	if(eof_check_string(sp->tags->genre))
 	{	//If the string has anything other than whitespace
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Genre=%s\n", sp->tags->genre);

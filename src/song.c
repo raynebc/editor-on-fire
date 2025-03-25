@@ -6520,6 +6520,26 @@ long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long 
 	return -1;
 }
 
+long eof_track_fixup_next_note_applicable_to_diff(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char diff)
+{
+	long nextnote = note;
+	long lasttest = 0;
+
+	while(1)
+	{
+		nextnote = eof_track_fixup_next_note(sp, track, nextnote);
+		if(nextnote <= 0)
+			return -1;	//There is no next note
+		if(eof_note_applies_to_diff(sp, track, nextnote, diff))
+			return nextnote;	//This note applies to the target difficulty
+		if(nextnote <= lasttest)
+			break;			//There is a logic error and the note tested this loop iteration isn't a higher index than the previous iteration, break from loop
+		lasttest = nextnote;		//Track whether the loop is stuck
+	}
+
+	return -1;	//Error or could not find a next note applicable to the target difficulty
+}
+
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option)
 {
 	unsigned long i, pos1, pos2;
