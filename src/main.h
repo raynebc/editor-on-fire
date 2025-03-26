@@ -12,8 +12,8 @@
 #include "pathing.h"
 #include "music_pos.h"
 
-#define EOF_VERSION_STRING "EOF v1.8RC12"
-#define EOF_COPYRIGHT_STRING "(c)2008-2020 T^3 Software."
+#define EOF_VERSION_STRING "EOF v1.8RC13"
+#define EOF_COPYRIGHT_STRING "(c)2008-2025 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #define KEY_EITHER_WIN (key[KEY_LWIN] || key[KEY_RWIN])
@@ -386,7 +386,6 @@ extern int         eof_write_rs_files;
 extern int         eof_write_rs2_files;
 extern int         eof_write_immerrock_files;
 extern int         eof_abridged_rs2_export;
-extern int         eof_abridged_rs2_export_warning_suppressed;
 extern int         eof_rs2_export_extended_ascii_lyrics;
 extern int         eof_disable_ini_difference_warnings;
 extern int         eof_write_bf_files;

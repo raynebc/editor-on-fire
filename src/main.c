@@ -150,7 +150,7 @@ int         eof_full_height_3d_preview = 0;
 EOF_TEXT_PANEL *eof_notes_panel = NULL;			//The text panel instance defining the Notes panel
 EOF_TEXT_PANEL *eof_info_panel = NULL;			//The text panel instance defining the Information panel
 int         eof_paste_erase_overlap = 0;
-int         eof_write_fof_files = 1;			//If nonzero, files are written during save that are used for Frets on Fire, Guitar Hero and Phase Shift authoring
+int         eof_write_fof_files = 1;			//If nonzero, files are written during save that are used for Frets on Fire, Clone Hero, Phase Shift (and similar rhythm game) authoring
 int         eof_write_gh_files = 0;				//If nonzero, extra GH3 and GHWT MIDIs are written, as well as the GHWT drum animations file
 int         eof_write_rb_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rock Band customs
 int         eof_write_music_midi = 0;			//If nonzero, extra MIDI files are written during save that contains normal MIDI pitches and can be used for other MIDI based games like Songs2See and Synthesia and also for Fretlight
@@ -158,7 +158,6 @@ int         eof_write_rs_files = 0;				//If nonzero, extra files are written dur
 int         eof_write_rs2_files = 0;			//If nonzero, extra files are written during save that are used for authoring Rocksmith 2014 customs
 int         eof_write_immerrock_files;;		//If nonzero, extra files are written during save that are used for authoring Immerrock customs
 int         eof_abridged_rs2_export = 1;		//If nonzero, default XML attributes are omitted from RS2 export
-int         eof_abridged_rs2_export_warning_suppressed = 0;	//Set to nonzero if the user has suppressed the warning that abridged RS2 files require a version of the toolkit >= 2.8.2.0
 int         eof_rs2_export_extended_ascii_lyrics = 0;	//If nonzero, a larger set of text characters are allowed to export to RS2 lyrics
 int         eof_disable_ini_difference_warnings = 0;	//If nonzero, warnings will be given during project load if there are tags in song.ini that don't match the contents of the EOF project
 int         eof_write_bf_files = 0;				//If nonzero, an extra XML file is written during save that is used for authoring Bandfuse customs
@@ -5021,15 +5020,6 @@ int eof_initialize(int argc, char * argv[])
 		if(recovered)
 		{	//If a project was recovered
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
-		}
-	}
-
-	//Warn about toolkit support for abridged RS2 files
-	if(eof_abridged_rs2_export && !eof_abridged_rs2_export_warning_suppressed)
-	{	//If abridged RS2 export is enabled and this warning hasn't been permanently dismissed
-		if(alert3("Warning:  The abridged RS2 file export preference is enabled.", "These XML files are only supported in Rocksmith Custom Song Toolkit 2.8.2.0 or newer.", "Ensure you have a new enough toolkit or disable this option in File>Preferences>Import/Export", "&OK", "Don't warn again", "&OK", 'O', 0, 'O') == 2)
-		{	//If the user opts to permanently suppress this warning
-			eof_abridged_rs2_export_warning_suppressed = 1;
 		}
 	}
 
