@@ -1330,6 +1330,28 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_TRACK_HAS_DD"))
+	{
+		if(eof_track_has_dynamic_difficulty(eof_song, eof_selected_track))
+		{	//If the active track has the difficulty limit removed
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_FLAT_DD_VIEW_ACTIVE"))
+	{
+		if(eof_flat_dd_view)
+		{	//If the flat DD view feature is in effect
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -2313,16 +2335,22 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
-	//Number of notes selected
+	//Number of notes in active track difficulty
 	if(!ustricmp(macro, "TRACK_DIFF_NOTE_COUNT"))
 	{
 		unsigned long count;
 
-		if(eof_flat_dd_view)
-			count = eof_get_track_flattened_diff_size(eof_song, eof_selected_track, eof_note_type);
-		else
-			count = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);
+		count = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);
+		snprintf(dest_buffer, dest_buffer_size, "%lu", count);
+		return 1;
+	}
 
+	//Number of notes in the flattened active track difficulty
+	if(!ustricmp(macro, "TRACK_FLATTENED_DIFF_NOTE_COUNT"))
+	{
+		unsigned long count;
+
+		count = eof_get_track_flattened_diff_size(eof_song, eof_selected_track, eof_note_type);
 		snprintf(dest_buffer, dest_buffer_size, "%lu", count);
 		return 1;
 	}

@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include "../agup/agup.h"
 #include "../dialog/proc.h"
+#include "../foflc/Lyric_storage.h"
 #include "../dialog.h"
 #include "./edit.h"
 #include "../main.h"
@@ -184,16 +185,16 @@ void eof_prepare_track_menu(void)
 			{	//If this track's arrangement type is bass
 				if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_PICKED_BASS)
 				{	//If the track is defined as a picked bass track
-					eof_track_rocksmith_menu[10].flags = D_SELECTED;
+					eof_track_rocksmith_menu[11].flags = D_SELECTED;
 				}
 				else
 				{
-					eof_track_rocksmith_menu[10].flags = 0;
+					eof_track_rocksmith_menu[11].flags = 0;
 				}
 			}
 			else
 			{	//Otherwise disable the picked bass option
-				eof_track_rocksmith_menu[10].flags = D_DISABLED;
+				eof_track_rocksmith_menu[11].flags = D_DISABLED;
 			}
 
 			//Update checkmarks on the arrangement type submenu
@@ -2487,6 +2488,7 @@ MENU eof_track_rocksmith_menu[] =
 	{"&Tone change", NULL, eof_track_rocksmith_tone_change_menu, 0, NULL},
 	{"Remove difficulty limit", eof_track_rocksmith_toggle_difficulty_limit, NULL, 0, NULL},
 	{"Insert new difficulty", eof_track_rocksmith_insert_difficulty, NULL, 0, NULL},
+	{"Dynamic difficulty &List", eof_rocksmith_dynamic_difficulty_list, NULL, 0, NULL},
 	{"&Manage RS phrases\t" CTRL_NAME "+Shift+M", eof_track_manage_rs_phrases, NULL, 0, NULL},
 	{"Flatten this difficulty", eof_track_flatten_difficulties, NULL, 0, NULL},
 	{"Un-flatten track", eof_track_unflatten_difficulties, NULL, 0, NULL},
@@ -2737,11 +2739,87 @@ int eof_track_delete_difficulty(void)
 	return 1;
 }
 
+char *eof_rocksmith_dynamic_difficulty_list_array[256] = {0};
+
+DIALOG eof_rocksmith_dynamic_difficulty_list_dialog[] =
+{
+	/* (proc)                        (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
+	{ d_agup_window_proc, 0,   0,   500, 450, 2,   23,  0,    0,      0,   0,   "Dynamic difficulty list", NULL, NULL },
+	{ d_agup_list_proc,        12,  35, 470, 360, 2,   23,  0,    0,      0,   0,   (void *)eof_rocksmith_dynamic_difficulty_list_proc, NULL, NULL },
+	{ d_agup_button_proc, 12,  410, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+char * eof_rocksmith_dynamic_difficulty_list_proc(int index, int * size)
+{
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return NULL;
+
+	if(index < 0)
+	{	//Signal to return the list count
+		if(size)
+			*size = eof_song->track[eof_selected_track]->numdiffs;
+		return  NULL;
+	}
+	else if(index < eof_song->track[eof_selected_track]->numdiffs)
+	{	//Return the specified list item
+		return eof_rocksmith_dynamic_difficulty_list_array[index];
+	}
+	return NULL;
+}
+
+int eof_rocksmith_dynamic_difficulty_list(void)
+{
+	unsigned long ctr;
+	char temp_string[256];
+	unsigned long last_flattened_size = 0;
+	unsigned long this_flattened_size;
+	unsigned long complete_flattened_size = eof_get_track_flattened_diff_size(eof_song, eof_selected_track, 0xFF);
+	long delta;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_rocksmith_dynamic_difficulty_list_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_rocksmith_dynamic_difficulty_list_dialog);
+
+	//Build a string for each dynamic difficulty in the active track
+	for(ctr = 0; ctr < eof_song->track[eof_selected_track]->numdiffs; ctr++)
+	{
+		this_flattened_size = eof_get_track_flattened_diff_size(eof_song, eof_selected_track, ctr);
+		delta = this_flattened_size - last_flattened_size;
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "#%lu : %lu notes, %lu notes flattened (%c%ld notes, %.2f%% of all notes)", ctr, eof_get_track_diff_size(eof_song, eof_selected_track, ctr), this_flattened_size, (delta < 0 ? '-' : '+'), labs(delta), (double)this_flattened_size * 100.0/complete_flattened_size);
+		eof_rocksmith_dynamic_difficulty_list_array[ctr] = DuplicateString(temp_string);
+		last_flattened_size = this_flattened_size;
+	}
+
+	(void) eof_popup_dialog(eof_rocksmith_dynamic_difficulty_list_dialog, 1);
+
+	//Release strings from memory
+	for(ctr = 0; ctr < eof_song->track[eof_selected_track]->numdiffs; ctr++)
+	{
+		if(eof_rocksmith_dynamic_difficulty_list_array[ctr])
+		{
+			free(eof_rocksmith_dynamic_difficulty_list_array[ctr]);
+			eof_rocksmith_dynamic_difficulty_list_array[ctr] = NULL;
+		}
+	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	return D_O_K;
+}
+
 DIALOG eof_track_fret_hand_positions_copy_from_dialog[] =
 {
-	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy fret hand positions from diff #", NULL, NULL },
-	{ d_agup_list_proc,  12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_fret_hand_positions_copy_from_list,NULL, NULL },
+	/* (proc)                       (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+	{ d_agup_window_proc,0,  48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy fret hand positions from diff #", NULL, NULL },
+	{ d_agup_list_proc,      12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_rocksmith_dynamic_difficulty_list_proc,NULL, NULL },
 	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
 	{ d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }

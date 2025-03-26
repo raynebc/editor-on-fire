@@ -4671,7 +4671,7 @@ int eof_save_helper(char *destfilename, char silent)
 	/* export Immerrock files for all populated difficulties if enabled */
 	if(eof_write_immerrock_files)
 	{
-		eof_export_immerrock();
+		eof_export_immerrock(silent);
 	}
 
 	/* save OGG file if necessary*/

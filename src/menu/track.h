@@ -42,6 +42,13 @@ int eof_track_rocksmith_insert_difficulty(void);
 int eof_track_delete_difficulty(void);
 	//Deletes the active difficulty's content, decrementing all higher difficulty's content accordingly
 
+char *eof_rocksmith_dynamic_difficulty_list_array[256];
+	//Stores the pointer to each difficulty level's string that is allocated
+char * eof_rocksmith_dynamic_difficulty_list_proc(int index, int * size);
+	//List procedure for eof_rocksmith_dynamic_difficulty_list()
+int eof_rocksmith_dynamic_difficulty_list(void);
+	//Lists statistics about each dynamic difficulty level in the track
+
 int eof_track_rename(void);				//Allows the user to define an alternate name for the active track
 
 int eof_track_tuning(void);				//Allows the active track's tuning to be defined

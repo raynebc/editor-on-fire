@@ -408,6 +408,14 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>%IF_GRID_SNAP_ENABLED%</td>
 <td>Evaluates as true as long as grid snap isn't set to off.</td>
 </tr>
+<tr>
+<td>%IF_TRACK_HAS_DD%</td>
+<td>Evaluates as true if the active track is a pro guitar track and its difficulty level limit has been removed.</td>
+</tr>
+<tr>
+<td>%IF_FLAT_DD_VIEW_ACTIVE%</td>
+<td>Evaluates as true if the flat DD view feature is enabled, regardless of the active track's contents.</td>
+</tr>
 </tbody>
 </table><br>
 
@@ -739,6 +747,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%TRACK_DIFF_NOTE_COUNT%</td>
 <td>Prints the number of notes that exist in the active track difficulty.</td>
+</tr>
+<tr>
+<td>%TRACK_FLATTENED_DIFF_NOTE_COUNT%</td>
+<td>Prints the number of notes that exist in the active flattened track difficulty (taking dynamic difficulty into account).</td>
 </tr>
 <tr>
 <td>%TRACK_DIFF_NUMBER_NOTES_WITH_GEM_COUNT_[NUMBER]%</td>

@@ -484,9 +484,30 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 		eof_log(eof_log_string, 1);
 		return 0;	//None of the arrangements have notes in the specified difficulty
 	}
+	//File>Save will call this function with a difficulty parameter of 0xFF to export the tracks with dynamic difficulty, or with a lesser value for all static difficulty tracks
+	//File>Export>Immerrock only specifies the difficulty number to export, so the dynamic difficulty status of the track should be determined in order to
+	//  properly choose a difficulty name or number to use
 	if(diff < 4)
-	{	//If this is one of the four named Rock Band style difficulty levels
-		diff_name =&( eof_note_type_name_rb[diff][1]);	//Skip the first character in this string, which is used to track the difficulty populated status
+	{	//Determine whether difficulty name applies instead of number
+		int use_diff_numbering = 1;
+
+		if(gglead && !eof_track_has_dynamic_difficulty(sp, gglead))
+			use_diff_numbering = 0;
+		if(ggrhythm && !eof_track_has_dynamic_difficulty(sp, ggrhythm))
+			use_diff_numbering = 0;
+		if(ggbass && !eof_track_has_dynamic_difficulty(sp, ggbass))
+			use_diff_numbering = 0;
+
+		if(!use_diff_numbering)
+		{	//If any of the tracks being exported do not have dynamic difficulty, then either File>Save is being used to save the static difficulty tracks
+			// or File>Export>Immerrock is being used to export one static difficulty track
+			diff_name =&( eof_note_type_name_rb[diff][1]);	//Skip the first character in this string, which is used to track the difficulty populated status
+		}
+		else
+		{	//File>Export>Immerrock is being used to export one dynamic difficulty level of one track
+			snprintf(numbered_diff, sizeof(numbered_diff) - 1, "DD %d", diff);
+			diff_name = numbered_diff;
+		}
 	}
 	else
 	{
@@ -686,9 +707,17 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	{	//For each text event in the project
 		if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == gglead) || (sp->text_event[ctr]->track == ggrhythm) || (sp->text_event[ctr]->track == ggbass))
 		{	//If the text event has no associated track or is specific to any of the arrangements specified for export
-			ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event
+			ptr = NULL;
+			if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
+			{	//If this text event is flagged as a Rocksmith section
+				ptr = sp->text_event[ctr]->text;	//Use the section name verbatim
+			}
+			else
+			{	//Otherwise use the presence of "section " as a way to identify the section marker
+				ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event, getting the pointer to the character that follows it
+			}
 			if(ptr)
-			{	//If it exists
+			{	//If the text event is considered a section marker
 				unsigned long eventpos;
 				unsigned min, sec, ms;
 
@@ -704,10 +733,13 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 						return 0;	//Return failure
 					}
 				}
-				strncpy(section, ptr, sizeof(section) - 1);		//Copy the portion of the text event that came after "section "
-				if(section[strlen(section) - 1] == ']')
-				{	//If that included a trailing closing bracket
-					section[strlen(section) - 1] = '\0';	//Truncate it from the end of the string
+				strncpy(section, ptr, sizeof(section) - 1);		//Copy the section name
+				if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION))
+				{	//If the section name isn't a Rocksmith section, modify the string if necessary
+					if(section[strlen(section) - 1] == ']')
+					{	//If that included a trailing closing bracket
+						section[strlen(section) - 1] = '\0';	//Truncate it from the end of the string
+					}
 				}
 				eventpos = eof_get_text_event_pos(sp, ctr);
 				min = eventpos / 60000;
@@ -793,7 +825,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	return 1;	//Return success
 }
 
-void eof_export_immerrock(void)
+void eof_export_immerrock(char silent)
 {
 	unsigned long gglead = 0, ggrhythm = 0, ggbass = 0;			//The arrangements identified for export with static difficulties
 	unsigned long ddgglead = 0, ddggrhythm = 0, ddggbass = 0;	//The arrangements identified for export as a single dynamic difficulty
@@ -805,6 +837,7 @@ void eof_export_immerrock(void)
 	unsigned long ctr, tracknum;
 	char newfolderpath[1024] = {0};
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
+	int pro_guitar_content_present = 0;
 
 	if(!eof_song || !eof_song_loaded)
 		return;	//If no project is loaded
@@ -821,6 +854,7 @@ void eof_export_immerrock(void)
 		{	//If it is a pro guitar track
 			if(eof_get_track_size_normal(eof_song, ctr))
 			{	//If the track has any normal notes
+				pro_guitar_content_present = 1;
 				tracknum = eof_song->track[ctr]->tracknum;	//Simplify
 				switch(eof_song->pro_guitar_track[tracknum]->arrangement)
 				{
@@ -902,8 +936,8 @@ void eof_export_immerrock(void)
 			}
 		}
 	}
-	if(!gglead && !ggrhythm && !ggbass)
-	{
+	if(pro_guitar_content_present && !gglead && !ggrhythm && !ggbass && !ddgglead && !ddggrhythm && !ddggbass)
+	{	//If at least one pro guitar track in the project had normal notes, but no arrangements were selected for export
 		warn_any = 1;
 		warn1 = condition1;
 	}
@@ -920,8 +954,10 @@ void eof_export_immerrock(void)
 	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 2, newfolderpath, 0);	//Export hard
 	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 3, newfolderpath, 0);	//Export expert
 
-	if(warn_any)
+	if(!silent && warn_any)
+	{	//If there are any warnings to display, and warnings aren't suppressed (ie. not performing quick save)
 		allegro_message("Immerrock Export:\n%s%s%s", warn1, warn2, warn3);
+	}
 
 	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
 }

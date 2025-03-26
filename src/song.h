@@ -359,15 +359,15 @@ typedef struct
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
 {
-	char track_format;					//Specifies which track format this is, using one of the macros above
-	char track_behavior;				//Specifies which behavior this track follows, using one of the macros above
-	char track_type;					//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
+	char track_format;						//Specifies which track format this is, using one of the macros above
+	char track_behavior;					//Specifies which behavior this track follows, using one of the macros above
+	char track_type;						//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
 	unsigned long tracknum;				//Specifies which number of that type this track is, used as an index into the type-specific track arrays
 	char name[EOF_NAME_LENGTH + 1];		//Specifies the name of the track
 	char altname[EOF_NAME_LENGTH + 1];	//Specifies the alternate name of the track (for RS export and MIDI export of GHL tracks)
-	unsigned char difficulty;			//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty).  0xFF means the difficulty is undefined
+	unsigned char difficulty;				//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty).  0xFF means the difficulty is undefined
 	unsigned char numdiffs;				//Specifies the number of difficulties usable in this track, including BRE (is set to 5 unless the track's EOF_TRACK_FLAG_UNLIMITED_DIFFS flag is set)
-	unsigned long flags;				//Various flags.  In the case of the normal drum track and the vocal track, the low nibble of the most significant byte stores the difficulty level of the pro drum or harmony difficulty respectively (or 0xF if undefined)
+	unsigned long flags;					//Various flags.  In the case of the normal drum track and the vocal track, the low nibble of the most significant byte stores the difficulty level of the pro drum or harmony difficulty respectively (or 0xF if undefined)
 } EOF_TRACK_ENTRY;
 
 #define EOF_LEGACY_TRACKS_MAX		8
