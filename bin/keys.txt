@@ -268,14 +268,6 @@ Note and Beat Editing:
 
         Cycle through grid snap settings.
 
-    - / =
-
-        Decrease / increase the BPM of the selected beat by 1.
-
-        Hold Shift to decrease / increase by 0.1BPM instead.
-
-	Hold Ctrl and Shift to decrease / increase by 0.01BPM instead.
-
 
 Editing a PART_VOCALS track works the same as any other track but there are a few extra keys that only pertain to this kind of track. The preview pane displays a large piano which can be used to aid in the editing process. Here are the keys:
 
@@ -314,7 +306,7 @@ Vocal Track Editing:
 
 Miscellaneous Controls:
 
-    +/-:
+    -/=:
 
         Increase/decrease the tempo of the beat (if Feedback input method is in use) or anchor
         (if any other input method is in use) immediately at or before the current seek
