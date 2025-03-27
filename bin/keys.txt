@@ -65,7 +65,9 @@ Playback and Seek controls:
 
     Alt+Scroll wheel:
 
-        Seek 5% of one screen forward or backward
+        Seek 5% of one screen forward or backward.  The amount this function seeks can
+        be customized by editing eof.cfg when EOF is not running and changing the value
+        of the eof_scroll_seek_percent entry.
 
 
     M:
@@ -266,6 +268,14 @@ Note and Beat Editing:
 
         Cycle through grid snap settings.
 
+    - / =
+
+        Decrease / increase the BPM of the selected beat by 1.
+
+        Hold Shift to decrease / increase by 0.1BPM instead.
+
+	Hold Ctrl and Shift to decrease / increase by 0.01BPM instead.
+
 
 Editing a PART_VOCALS track works the same as any other track but there are a few extra keys that only pertain to this kind of track. The preview pane displays a large piano which can be used to aid in the editing process. Here are the keys:
 
@@ -365,7 +375,7 @@ Miscellaneous Controls:
     ALT+Numpad minus / ALT+Numpad plus:
 
         Decreases or increases the depth of the 3D preview camera, to show less or more of
-        the track before the display cuts off.
+        the track before the display cuts off.  This resets to default when EOF relaunches.
 
     ALT+P:
 
@@ -378,6 +388,11 @@ Miscellaneous Controls:
         Toggle the "Center isolation" playback option (also available in File>Settings).
         This audio trick is typically used to emphasize the vocals in the stereo audio, but
         it can also include other sounds depending on how the recording was mixed.
+
+    SHIFT + left click (beats)
+
+        set the start and end points to reflect the portion of the chart from the
+        previously-selected beat to the start position of the newly-selected beat.
 
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.
