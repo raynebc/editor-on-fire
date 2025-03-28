@@ -578,6 +578,7 @@ void eof_prepare_song_menu(void)
 
 		eof_song_piano_roll_menu[0].flags = eof_display_second_piano_roll ? D_SELECTED : 0;	//Update "Song>Second piano roll>Display" check status
 		eof_song_piano_roll_menu[2].flags = eof_sync_piano_rolls ? D_SELECTED : 0;			//Update "Song>Second piano roll>Sync with main piano roll" check status
+		eof_song_rocksmith_menu[0].flags = eof_fingering_view ? D_SELECTED : 0;				//Update "Song>Rocksmith>Fingering view"
 		eof_song_rocksmith_menu[1].flags = eof_flat_dd_view ? D_SELECTED : 0;				//Update "Song>Rocksmith>Flat DD view"
 		eof_song_rocksmith_menu[5].flags = eof_song->tags->rs_chord_technique_export ? D_SELECTED : 0;		//Update "Song>Rocksmith>Export chord techniques" check status
 		eof_song_rocksmith_menu[6].flags = eof_song->tags->rs_export_suppress_dd_warnings ? D_SELECTED : 0;	//Update "Song>Rocksmith>Suppress DD warnings" check status

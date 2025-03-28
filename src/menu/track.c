@@ -2782,6 +2782,17 @@ int eof_rocksmith_dynamic_difficulty_list(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
+	if(!eof_track_has_dynamic_difficulty(eof_song, eof_selected_track))
+	{
+		allegro_message("This track does not have dynamic difficulty enabled (Track>Rocksmith>Remove Difficulty Limit).");
+		return 1;
+	}
+	if(!complete_flattened_size)
+	{	//If no notes were counted for the active track
+		allegro_message("This track or the active note set (normal notes or tech notes) is empty.");
+		return 1;
+	}
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_rocksmith_dynamic_difficulty_list_dialog, gui_fg_color, gui_bg_color);

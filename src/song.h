@@ -658,6 +658,7 @@ unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track);				/
 unsigned long eof_get_track_diff_size(EOF_SONG *sp, unsigned long track, char diff);			//Returns the number of notes/lyrics in the specified track difficulty (or just that of its active note set if a pro guitar track is specified), or 0 on error
 unsigned long eof_get_track_flattened_diff_size(EOF_SONG *sp, unsigned long track, char diff);
 	//Returns the number of notes/lyrics applicable to the specified track difficulty (or just that of its active note set if a pro guitar track is specified), or 0 on error
+	//If the specified track does not have dynamic difficulty, only the notes in the exact specified difficulty count
 	//Takes dynamic difficulty into account using eof_note_applies_to_diff()
 int eof_track_has_dynamic_difficulty(EOF_SONG *sp, unsigned long track);					//Returns nonzero if the specified track is a pro guitar track with the difficulty limit removed
 unsigned long eof_get_track_diff_size_normal(EOF_SONG *sp, unsigned long track, char diff);	//For pro guitar tracks, returns the note count of the specified track difficulty in the normal note set only, otherwise returns the result of eof_get_track_size()
