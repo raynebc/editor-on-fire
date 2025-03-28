@@ -446,6 +446,8 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	char *blank_name = "";
 	char numbered_diff[10] = {0};
 	char *diff_name = blank_name;
+	unsigned long eventpos;
+	unsigned min, sec, ms;
 
 	//Validate parameters
 	if(!sp || !destpath)
@@ -594,23 +596,6 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	}
 
 
-	//Write Meta.txt
-	///Meta.txt will be deprecated.  Remove it after the game formally supports Info.txxt
-	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Meta.txt", (int) sizeof(eof_temp_filename));
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
-	eof_log(eof_log_string, 2);
-	fp = pack_fopen(eof_temp_filename, "w");
-	if(!fp)
-	{
-		eof_log("\tError saving:  Cannot open Meta.txt for writing", 1);
-		return 0;	//Return failure
-	}
-	avg_tempo = 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats);
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s-%s (%s)-%lu-%lu-%s", sp->tags->artist, sp->tags->title, diff_name, (unsigned long)(avg_tempo + 0.5), eof_music_length / 1000, sp->tags->year);
-	(void) pack_fputs(temp_string, fp);	//Write song length
-	(void) pack_fclose(fp);
-
-
 	//Write Info.txt
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Info.txt", (int) sizeof(eof_temp_filename));
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
@@ -718,9 +703,6 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 			}
 			if(ptr)
 			{	//If the text event is considered a section marker
-				unsigned long eventpos;
-				unsigned min, sec, ms;
-
 				if(!fp)
 				{	//If this is the first section event encountered
 					(void) replace_filename(eof_temp_filename, eof_temp_filename, "Sections.txt", (int) sizeof(eof_temp_filename));
@@ -731,6 +713,13 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 					{
 						eof_log("\tError saving:  Cannot open Sections.txt for writing", 1);
 						return 0;	//Return failure
+					}
+					else
+					{	//Insert an empty section at 0 seconds to suit Immerrock's preferences in its Phrase Refiner feature
+						if(eof_get_text_event_pos(sp, ctr) > 0)
+						{	//As long as the first defined section isn't already at 0 seconds
+							(void) pack_fputs("0:0 \"\"\n", fp);	//Write an empty section at that position
+						}
 					}
 				}
 				strncpy(section, ptr, sizeof(section) - 1);		//Copy the section name
@@ -750,6 +739,14 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 			}
 		}
 	}
+
+	//Append an empty section after all of the note content in the project to suit Immerrock's preferences in its Phrase Refiner feature
+	eventpos = eof_determine_chart_length(sp) + 1;	//Obtain the timestamp of the end of the project's content, plus 1 millisecond
+	min = eventpos / 60000;
+	sec = (eventpos / 1000) % 60;
+	ms = eventpos % 1000;
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\"\n", min, sec, ms);
+	(void) pack_fputs(temp_string, fp);	//Write an empty section  at that position
 	(void) pack_fclose(fp);
 
 

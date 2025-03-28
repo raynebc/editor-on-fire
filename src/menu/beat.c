@@ -1401,7 +1401,7 @@ int eof_menu_beat_reset_bpm(void)
 
 	if(eof_selected_beat != 0)
 	{	//If a beat besides the first is selected
-		if(alert(NULL, "Erase all BPM changes after the first beat or the selected beat?", NULL, "First", "Selected", 0, 0) == 2)
+		if(alert(NULL, "Erase all BPM changes after the first beat, or all BPM changes after the selected beat?", NULL, "First", "Selected", 0, 0) == 2)
 		{	//If the user opted to only erase BPM changes after the selected beat
 			startbeat = eof_selected_beat;
 		}

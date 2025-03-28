@@ -100,7 +100,7 @@ void eof_load_config(char * fn)
 	/* read preferences */
 	eof_inverted_notes = get_config_int("preferences", "invert_notes", 0);
 	eof_lefty_mode = get_config_int("preferences", "lefty", 0);
-	eof_input_mode = get_config_int("preferences", "input_mode", EOF_INPUT_PIANO_ROLL);
+	eof_input_mode = get_config_int("preferences", "input_mode", EOF_INPUT_REX);
 	eof_ogg_setting = get_config_int("preferences", "ogg_quality", 1);
 	eof_use_ts = get_config_int("preferences", "use_ts", 1);
 	if(!eof_use_ts)

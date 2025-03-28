@@ -1613,8 +1613,8 @@ int eof_menu_file_preferences(void)
 			eof_etext[0] = '\0';									//Min. note length
 			eof_preferences_dialog[28].flags = 0;					//3D render bass drum in a lane
 			eof_preferences_dialog[29].flags = 0;					//dB style seek controls
-			eof_preferences_dialog[31].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
-			eof_preferences_dialog[33].d1 = EOF_COLORS_DEFAULT;		//Color set
+			eof_preferences_dialog[31].d1 = EOF_INPUT_REX;			//Input method
+			eof_preferences_dialog[33].d1 = EOF_COLORS_DEFAULT;	//Color set
 			eof_preferences_dialog[34].flags = 0;					//New notes are made 1ms long
 			eof_preferences_dialog[35].flags = 0;					//3D render RS style chords
 			eof_preferences_dialog[36].flags = D_SELECTED;			//Rewind when playback is at end
