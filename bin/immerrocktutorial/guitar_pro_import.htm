@@ -1,0 +1,26 @@
+<HTML>
+<HEAD>
+<TITLE>EOF Tutorial</TITLE>
+<STYLE TYPE="text/css">
+p {text-indent: 1cm}
+</STYLE>
+</head></STYLE>
+</HEAD>
+<BODY BGCOLOR="313131" TEXT="FFFFFF" LINK="FFFFFF" VLINK="FFFFFF" ALINK="FFFFFF" >
+
+<center><IMG SRC="logo.png" ALT="Logo" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
+<center>A song editor for "Frets On Fire"</center><br>
+
+<h1><a name="gpimport">GUITAR PRO IMPORT GUIDE</a></h1>
+Even though you can manually author all pro guitar content in EOF, many people prefer to import a Guitar Pro file.  Some even author an arrangement from scratch in Guitar Pro and then import it.  How you decide to use Guitar Pro files, if at all, is completely at your discretion.  EOF is able to import Guitar Pro 5 (.gp5) and older versions of the format.  The newer Guitar Pro formats (.gpx or .gp) aren’t understood by EOF at this time, but I hope to add support for .gp in the future.<br><br>
+
+Guitar Pro files have been a popular tablature format for many years, so they can be found on the Internet easily.  One popular website is <a href="https://www.ultimate-guitar.com/">https://www.ultimate-guitar.com/</a><br><br>
+
+As discussed earlier in this tutorial, if you have exported Guitar Pro XML timing from Go PlayAlong, you can import that and don’t have to manually beat sync the project.  You can do this by using “File>Import>Guitar Pro” and browsing for the XML file you exported from Go PlayAlong.  The XML file internally references the Guitar Pro file by name, so as long as the Guitar Pro file is named correctly, in the same folder as the Go PlayAlong XML file and in a supported format (.gp5 or older), EOF should be able to import the timing and then import the tablature.<br><br>
+
+Otherwise it’s best if you beat-sync the project (as described in the [<a href="index.htm#creating">CREATING AND BEAT SYNCING A PROJECT</a>] section) before importing a Guitar Pro file.  If your project is beat-synced, change to the desired pro guitar track (using Song>Track or the CTRL+Tab shortcuts) and use “File>Import>Guitar Pro”.<br><br>
+
+EOF’s Guitar Pro import is reasonably reliable, but there are occasionally bugs such as when there are complex measure repeat patterns in the tablature or when a Guitar Pro 5 file was exported from a newer version of Guitar Pro (sometimes the file is written incorrectly due to a bug with Guitar Pro 6 or newer).  Usually though, if the file can open in the official Guitar Pro 5, or in TuxGuitar (a free guitar tablature editing program, <a href="https://www.tuxguitar.app/">https://www.tuxguitar.app/</a>), and it appears accurate, EOF should be able to import it accurately as well.  As with other imports, test the beat sync during playback with the metronome (Edit>Metronome, or press the M key).  Test note sync during playback with clap ("Edit>Claps" or press the C key).  If you’re satisfied with the content, proceed to export to Immerrock format [<a href="immerrock_export.htm">IMMERROCK EXPORT GUIDE</a>]
+
+</BODY>
+</HTML>

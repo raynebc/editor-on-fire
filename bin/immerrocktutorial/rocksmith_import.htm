@@ -1,0 +1,37 @@
+<HTML>
+<HEAD>
+<TITLE>EOF Tutorial</TITLE>
+<STYLE TYPE="text/css">
+p {text-indent: 1cm}
+</STYLE>
+</head></STYLE>
+</HEAD>
+<BODY BGCOLOR="313131" TEXT="FFFFFF" LINK="FFFFFF" VLINK="FFFFFF" ALINK="FFFFFF" >
+
+<center><IMG SRC="logo.png" ALT="Logo" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
+<center>A song editor for "Frets On Fire"</center><br>
+
+<h1><a name="rsimport">ROCKSMITH IMPORT GUIDE</a></h1>
+
+<h1><a name="dynamic_difficulties"></a>ABOUT DYNAMIC DIFFICULTIES</h1>
+Traditionally, guitar rhythm games have had 4 difficulty levels per instrument.  Rocksmith radically changed this by having a dynamic difficulty system where an arrangement is broken up into small parts called phrases that are alike in content (ie. a riff that is used throughout the song).  As the player performs that small part well or poorly, the matching phrases in the arrangement levels up or down in difficulty while the song is still playing.  For this reason, you will likely notice that Rocksmith custom charts generally have many difficulty levels compared to a static number of them and that different difficulty levels define notes in different places instead of each difficulty level defining all the playable notes from start to finish.  This is because dynamic difficulties are additive, in that they add or replace notes to the difficulty level below them, allowing the arrangement to start with a very simplified version of the guitar transcription and very gradually increase it in difficulty until it has become the complete transcription.  This difficulty system is unique to Rocksmith.  Conceptually, consider this like a multi-layer image format, where each layer adds new data to the layers below it.  As it can be difficult to visualize how a dynamic difficulty would appear in-game, EOF offers a way to “flatten” the difficulty levels to see the complete note content for that difficulty level instead of just the notes it adds to the difficulties below.  To use this feature, enable the “Song>Rocksmith>Flat DD view” function.  When this feature is in effect, the notes from lower difficulty levels that would be present for Immerrock export will display in the piano roll with a red highlighting to make them stand out.  These red highlighted notes are there only to be seen.  They cannot be edited or selected.  The Information panel will also include a second note count highlighted in red, to show how many notes are in the flattened active difficulty level.  As an example of how dramatically this changes what is shown in the piano roll, this arrangement has 22 dynamic difficulties and the highest one only defines 56 notes to add to/replace in the difficulty level below it:
+<center><IMG SRC="Flat_DD_view_before.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
+
+But when enabling flat DD view to see the complete arrangement, the flattened note count shows that the complete arrangement has a total of 1089 notes that will export:<br>
+<center><IMG SRC="Flat_DD_view_after.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
+
+<h1><a name="importing_content"></a>IMPORTING ROCKSMITH CONTENT</h1>
+To find Rocksmith content, <a href="https://ignition4.customsforge.com/">https://ignition4.customsforge.com/</a> is the only and only resource you need to visit.  As of now there are over 1500 charts listed, and you can easily search or filter to find something you’re interested in.  Many of these charts in the song list have recorded playthroughs so you can see if it’s to your liking.  I’m told that they are even working on allowing you to cross reference the custom song catalog against a Spotify playlist so you would be able to find all of your favorite songs easily without having to search for each of them or scrolling through the entire catalog.  There is also a strong community of chart authors in Discord (<a href="https://discord.gg/cfzada">https://discord.gg/cfzada</a>) and their CustomsForge forum (<a href="https://customsforge.com/">https://customsforge.com/</a>).<br><br>
+
+Like Rock Band custom charts, Rocksmith custom charts have a proprietary format whose contents require a special program to extract.  For Rocksmith charts, that is the DLC Builder:<br>
+<a href="https://github.com/iminashi/Rocksmith2014.NET/releases">https://github.com/iminashi/Rocksmith2014.NET/releases</a><br><br>
+
+Using this program is very easy.  Just download it, install it and open it up.  You’ll want to click the gear icon at the top right corner of the program, click the Import category, select the “To Ogg Files” radio button and optionally enable the “Create EOF project” option (the program will create an EOF project that you could open with File>Load.  In the event that EOF can’t properly import the Rocksmith XML file, this may be a good secondary option) and click close.  Now, when you drag and drop a .psarc chart that you downloaded from CustomsForge onto the DLC Builder window (or when you use “File>Import PSARC File”, browse to a folder location for it to extract to and click “Select folder”, it will create a folder and add several XML files and at least one OGG audio file.  It will even extract album art in a DDS format, but Immerrock can’t read this format.  You can optionally convert it with a free image editor like GIMP (<a href="https://www.gimp.org/">https://www.gimp.org/</a>) or find another place online to get the album art if you want to include that with your Immerrock export.<br><br>
+
+Among the files that DLC Builder extracted, the ones you will need are ones beginning with “arr_”, which indicate they are arrangements.  “arr_vocals” is a lyric file that you can import into EOF with “File>Import>Lyric”.  The bass arrangement will have a name like “arr_bass” while guitar arrangements will have names like “arr_lead” and “arr_rhythm”, and you can import these one at a time by changing to the desired track to import the arrangement into and using “File>Import>Rocksmith”.  Unless there’s a problem, it should change the difficulty tabs to numbers (dynamic difficulty):
+<center><IMG SRC="RS_import.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
+
+Test the beat sync during playback with the metronome (Edit>Metronome, or press the M key).  Test note sync during playback with clap ("Edit>Claps" or press the C key).  If the import did not work well, you can instead try opening the EOF project that the DLC Builder created (File>Load).  If you’re satisfied with the content, proceed to export to Immerrock format [<a href="immerrock_export.htm">IMMERROCK EXPORT GUIDE</a>]
+
+</BODY>
+</HTML>
