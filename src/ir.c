@@ -683,6 +683,11 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Genre=%s\n", sp->tags->genre);
 		(void) pack_fputs(temp_string, fp);	//Write genre
 	}
+	if(eof_check_string(sp->tags->frettist))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Author=%s\n", sp->tags->frettist);
+		(void) pack_fputs(temp_string, fp);	//Write chart author
+	}
 	(void) pack_fclose(fp);
 
 
