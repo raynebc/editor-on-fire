@@ -10,9 +10,9 @@ this program.ble with the software and we'll see if we can resolve the problem.
 Description
 -----------
 
-EOF is a song editor for the game Frets On Fire. Since playing the game I have
-wanted to make my own songs but I was disappointed in the usability of other
-software. I set out to make my own editor that makes song creation easy.
+EOF is a song editor for the many rhythm games. Since playing Frets on Fire I
+have wanted to make my own songs but I was disappointed in the usability of
+other software. I set out to make my own editor that makes song creation easy.
 
 
 Installation
