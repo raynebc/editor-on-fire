@@ -55,7 +55,7 @@ int eof_menu_file_export_audio_range(void);	//Similar to eof_menu_file_export_ch
 int eof_menu_file_export_guitar_pro(void);		//Calls the third party RocksmithToTab program to create a GP5 file of the project's guitar/bass arrangements
 int eof_menu_file_export_song_preview(void);
 	//Allows the user to define a portion of the chart audio to export to preview.wav and preview.ogg in the project folder
-int eof_menu_file_export_immerrock_track_diff(void);	//Exports the active pro guitar track difficulty to Immerrock format using eof_export_immerrock_diff()
+int eof_menu_file_export_immerrock_track_diff(void);	//Exports the active pro guitar track difficulty to IMMERROCK format using eof_export_immerrock_diff()
 int eof_menu_file_midi_import(void);
 int eof_menu_file_drums_rock_import(void);
 int eof_menu_file_settings(void);

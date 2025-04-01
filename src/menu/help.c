@@ -15,7 +15,7 @@ MENU eof_help_menu[] =
 	{"&Tutorial", eof_menu_help_tutorial, NULL, 0, NULL},
 	{"&Vocals Tutorial", eof_menu_help_vocals_tutorial, NULL, 0, NULL},
 	{"&Pro Guitar Tutorial", eof_menu_help_pro_guitar_tutorial, NULL, 0, NULL},
-	{"&Immerrock Tutorial", eof_menu_help_immerrock_tutorial, NULL, 0, NULL},
+	{"&IMMERROCK Tutorial", eof_menu_help_immerrock_tutorial, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Reset &Display\tShift+F5", eof_reset_display, NULL, 0, NULL},
 	{"Reset audi&O", eof_reset_audio, NULL, 0, NULL},

@@ -113,7 +113,7 @@ MENU eof_file_export_menu[] =
 	{"&Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
 	{"Image &Sequence", eof_write_image_sequence, NULL, 0, NULL},
 	{"&Preview audio", eof_menu_file_export_song_preview, NULL, 0, NULL},
-	{"&Immerrock", eof_menu_file_export_immerrock_track_diff, NULL, 0, NULL},
+	{"&IMMERROCK", eof_menu_file_export_immerrock_track_diff, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -252,7 +252,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   105, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Bandfuse files",NULL, NULL },
 	{ d_agup_check_proc, 248, 105, 208, 16,  2,   23,  0,    0,      1,   0,   "Save FoF/CH/Phase Shift files",NULL, NULL },
 	{ d_agup_check_proc, 16,   120, 212, 16,  2,   23,  0,    0,      1,   0,   "Save separate Guitar Hero files",NULL, NULL },
-	{ d_agup_check_proc, 248, 120, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate Immerrock files",NULL, NULL },
+	{ d_agup_check_proc, 248, 120, 200, 16,  2,   23,  0,    0,      1,   0,   "Save separate IMMERROCK files",NULL, NULL },
 	{ d_agup_check_proc, 16,   135, 222, 16,  2,   23,  0,    0,      1,   0,   "Save LRC, ELRC, QRC lyric files",NULL, NULL },
 	{ d_agup_check_proc, 248, 135, 222, 16,  2,   23,  0,    0,      1,   0,   "Force pro drum MIDI notation",NULL, NULL },
 	{ d_agup_check_proc, 16,   150, 218, 16,  2,   23,  0,    0,      1,   0,   "GP import truncates short notes",NULL, NULL },
@@ -435,7 +435,7 @@ void eof_prepare_file_menu(void)
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
 			eof_file_import_menu[6].flags = 0; // Import>Rocksmith
-			eof_file_export_menu[5].flags = eof_get_track_diff_size_normal(eof_song, eof_selected_track, eof_note_type) ? 0 : D_DISABLED;	//Export>Immerrock
+			eof_file_export_menu[5].flags = eof_get_track_diff_size_normal(eof_song, eof_selected_track, eof_note_type) ? 0 : D_DISABLED;	//Export>IMMERROCK
 		}
 		else
 		{
@@ -689,13 +689,17 @@ int eof_menu_file_load(void)
 		(void) eof_import_ini(eof_song, temp_filename, warn);	//Read song.ini and prompt to replace values of existing settings in the project if they are different (unless user preference suppresses the prompts)
 
 		/* attempt to load the first OGG profile's OGG */
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAttempting to load first OGG profile \"%s\"", eof_song->tags->ogg[0].filename);
+		eof_log(eof_log_string, 1);
 		(void) replace_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, 1024);
 		if(!eof_load_ogg_quick(temp_filename))
 		{
+			eof_log("\tCouldn't load OGG, trying guitar.ogg", 1);
 			/* upon fail, fall back to "guitar.ogg" */
 			(void) append_filename(temp_filename, eof_song_path, "guitar.ogg", 1024);
 			if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 			{
+				eof_log("\tCouldn't load guitar.ogg, continuing with no audio", 1);
 				eof_destroy_song(eof_song);
 				eof_song = NULL;
 				eof_song_loaded = 0;
@@ -825,7 +829,8 @@ int eof_menu_file_load_ogg(void)
 		return 1;
 	}
 
-	/* failed to load new OGG so reload old one */
+	/* try to load the specified OGG, or fail back to the previous audio */
+	ogg_profile_name = eof_song->tags->ogg[0].filename;	//Allow eof_load_ogg() to update the name of the file in the OGG profile
 	if(!eof_load_ogg(returnedfn, 0))
 	{	//If eof_load_ogg() failed, eof_loaded_ogg_name contains the name of the file that was loaded before
 		eof_log("\tFailed to load specified OGG.", 1);
@@ -1701,7 +1706,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[8].flags = eof_write_bf_files ? D_SELECTED : 0;						//Save separate Bandfuse files
 	eof_import_export_preferences_dialog[9].flags = eof_write_fof_files ? D_SELECTED : 0;					//Save FoF/CH/Phase Shift files
 	eof_import_export_preferences_dialog[10].flags = eof_write_gh_files ? D_SELECTED : 0;					//Save separate Guitar Hero files
-	eof_import_export_preferences_dialog[11].flags = eof_write_immerrock_files ? D_SELECTED : 0;					//Save separate Immerrock files
+	eof_import_export_preferences_dialog[11].flags = eof_write_immerrock_files ? D_SELECTED : 0;				//Save separate IMMERROCK files
 	eof_import_export_preferences_dialog[12].flags = eof_write_lrc_files ? D_SELECTED : 0;					//Save LRC, ELRC, QRC lyric files
 	eof_import_export_preferences_dialog[13].flags = eof_force_pro_drum_midi_notation ? D_SELECTED : 0;		//Force pro drum MIDI notation
 	eof_import_export_preferences_dialog[14].flags = eof_gp_import_truncate_short_notes ? D_SELECTED : 0;	//GP import truncates short notes
@@ -1772,7 +1777,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[8].flags = 0;				//Save separate Bandfuse files
 			eof_import_export_preferences_dialog[9].flags = D_SELECTED;		//Save FoF/CH/Phase Shift files
 			eof_import_export_preferences_dialog[10].flags = 0;				//Save separate Guitar Hero files
-			eof_import_export_preferences_dialog[11].flags = 0;				//Save separate Immerrock files
+			eof_import_export_preferences_dialog[11].flags = 0;				//Save separate IMMERROCK files
 			eof_import_export_preferences_dialog[12].flags = 0;				//Save LRC, ELRC, QRC lyric files
 			eof_import_export_preferences_dialog[13].flags = D_SELECTED;		//Force pro drum MIDI notation
 			eof_import_export_preferences_dialog[14].flags = D_SELECTED;		//GP import truncates short notes
@@ -2996,12 +3001,13 @@ int eof_new_chart(char * filename)
 	eof_color_dialog(eof_file_new_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_file_new_dialog);
 	(void) ustrcpy(eof_etext, "");		//Used to store the Artist tag
-	(void) ustrcpy(eof_etext2, "");	//Used to store the Title tag
+	(void) ustrcpy(eof_etext2, "");		//Used to store the Title tag
 	(void) ustrcpy(eof_etext3, "");
-	(void) ustrcpy(eof_etext4, "");	//Used to store the filename created with %Artist% - %Title%
+	(void) ustrcpy(eof_etext4, "");		//Used to store the filename created with %Artist% - %Title%
 	eof_render();
 	if(!ustricmp("ogg", get_extension(oggfilename)))
 	{
+		eof_log("\tOGG file selected.", 2);
 		temp_buffer = eof_buffer_file(oggfilename, 0);
 		temp_buffer_size = (int) file_size_ex(oggfilename);
 		if(temp_buffer)
@@ -3105,6 +3111,8 @@ int eof_new_chart(char * filename)
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
+		alogg_destroy_ogg(temp_ogg);
+		free(temp_buffer);
 		return 1;	//Return failure
 	}
 
@@ -3178,6 +3186,8 @@ int eof_new_chart(char * filename)
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
+		alogg_destroy_ogg(temp_ogg);
+		free(temp_buffer);
 		return 1;	//Return failure
 	}
 
@@ -3230,13 +3240,21 @@ int eof_new_chart(char * filename)
 	put_backslash(eof_song_path);
 	(void) ustrcpy(eof_last_eof_path, eof_song_path);
 	if(temp_ogg)
-	{
+	{	//If the user-specified audio file was an OGG file and was successfully loaded earlier in this function
 		eof_music_track = temp_ogg;
 		eof_music_data = temp_buffer;
 		eof_music_data_size = temp_buffer_size;
-		(void) ustrcpy(eof_loaded_ogg_name, eof_etext3);
-		put_backslash(eof_loaded_ogg_name);
-		(void) ustrcat(eof_loaded_ogg_name, "guitar.ogg");
+		if(exists(oggfilename))
+		{	//As long as oggfilename still reflects a valid path to the OGG file
+			(void) ustrncpy(eof_loaded_ogg_name, oggfilename, sizeof(eof_loaded_ogg_name) - 1);
+			(void) ustrcpy(eof_song->tags->ogg[0].filename, get_filename(eof_loaded_ogg_name));	//Apply this file name to the OGG profile
+		}
+		else
+		{	//Due to some error, oggfilename isn't valid and should be reset to reflect the default filename of guitar.ogg (which is already applied to the OGG profile's file name)
+			(void) ustrcpy(eof_loaded_ogg_name, eof_etext3);
+			put_backslash(eof_loaded_ogg_name);
+			(void) ustrcat(eof_loaded_ogg_name, "guitar.ogg");
+		}
 	}
 	else
 	{
@@ -4668,7 +4686,7 @@ int eof_save_helper(char *destfilename, char silent)
 //		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 4, newfolderpath);
 	}
 
-	/* export Immerrock files for all populated difficulties if enabled */
+	/* export IMMERROCK files for all populated difficulties if enabled */
 	if(eof_write_immerrock_files)
 	{
 		eof_export_immerrock(silent);
@@ -4677,7 +4695,7 @@ int eof_save_helper(char *destfilename, char silent)
 	/* save OGG file if necessary*/
 	if(!eof_silence_loaded)
 	{	//Only try to save an audio file if one is loaded
-		(void) append_filename(eof_temp_filename, newfolderpath, "guitar.ogg", (int) sizeof(eof_temp_filename));
+		(void) append_filename(eof_temp_filename, newfolderpath, get_filename(eof_loaded_ogg_name), (int) sizeof(eof_temp_filename));	//Rebuild the file path based on the currently loaded OGG filename
 		if(function == 1)
 		{	//If performing "Save" function, only write guitar.ogg if it is missing
 			if(!exists(eof_temp_filename))
@@ -4964,7 +4982,7 @@ char * eof_colors_list(int index, int * size)
 		}
 		case 5:
 		{
-			return "Immerrock";
+			return "IMMERROCK";
 		}
 
 		default:

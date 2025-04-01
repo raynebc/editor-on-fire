@@ -570,7 +570,7 @@ void Export_LRC(FILE *outf)
 
 //Write tags
 	if(Lyrics.out_format != ILRC_FORMAT)
-	{	//If not writing the Immerrock variant of LRC
+	{	//If not writing the IMMERROCK variant of LRC
 		if(Lyrics.Title != NULL)
 			if(fprintf(outf,"[ti:%s]\n",Lyrics.Title) < 0)
 				errornumber=errno;
@@ -604,7 +604,7 @@ void Export_LRC(FILE *outf)
 	curline=Lyrics.lines;	//Point lyric line conductor to first line of lyrics
 
 	if(Lyrics.out_format == ILRC_FORMAT)
-	{	//Immerrock format prefers starting with an empty lyric line at 0 seconds
+	{	//IMMERROCK format prefers starting with an empty lyric line at 0 seconds
 		WriteLRCTimestamp(outf,0,' ', 0);
 		fputs_err("\"\"\n",outf);
 	}
@@ -615,7 +615,7 @@ void Export_LRC(FILE *outf)
 
 		temp=curline->pieces;	//Starting with the first piece of lyric in this line
 
-	//For Immerrock LRC export, if there is >= 10 seconds of distance between lyric lines, insert a blank lyric 3 seconds after the previous line's ending
+	//For IMMERROCK LRC export, if there is >= 10 seconds of distance between lyric lines, insert a blank lyric 3 seconds after the previous line's ending
 		if((Lyrics.out_format == ILRC_FORMAT) && lastline && (lastline->start + lastline->duration + 10000 <= temp->start))
 		{	//If the previously exported line of lyrics ends at least 10 seconds before the start of this line of lyrics
 			WriteLRCTimestamp(outf,0,' ',lastline->start + lastline->duration + 3000);	//Write timestamp of 3 seconds after the end of the previous lyric line
@@ -627,7 +627,7 @@ void Export_LRC(FILE *outf)
 		{
 			if(Lyrics.out_format != ILRC_FORMAT)
 				WriteLRCTimestamp(outf,'[',']',temp->start);	//Write timestamp of first lyric (using brackets)
-			else	//Immerrock variant is slightly different
+			else	//IMMERROCK variant is slightly different
 				WriteLRCTimestamp(outf,0,' ',temp->start);	//Write timestamp of first lyric with no opening character, but with a whitespace after
 		}
 
@@ -644,7 +644,7 @@ void Export_LRC(FILE *outf)
 						temp->lyric[ctr] = '\'';	//Replace double quotation marks with single quotation marks, since Immerock can't display the former in lyrics
 				}
 
-				fputc_err('"',outf);	//Immerrock variant LRC has each line of lyric text surrounded by double quotes
+				fputc_err('"',outf);	//IMMERROCK variant LRC has each line of lyric text surrounded by double quotes
 			}
 
 		//Write lyric
@@ -662,7 +662,7 @@ void Export_LRC(FILE *outf)
 					WriteLRCTimestamp(outf,'<','>',temp->start + temp->duration);
 
 				if(Lyrics.out_format == ILRC_FORMAT)
-					fputc_err('"',outf);	//Immerrock variant LRC has each line of lyric text surrounded by double quotes
+					fputc_err('"',outf);	//IMMERROCK variant LRC has each line of lyric text surrounded by double quotes
 
 				fputc_err('\n',outf);
 			}

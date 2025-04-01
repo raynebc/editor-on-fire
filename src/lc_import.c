@@ -357,7 +357,7 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 	else if((format == LRC_FORMAT) || (format == ELRC_FORMAT) || (format == QRC_FORMAT) || (format == ILRC_FORMAT))
 	{
 		if((format == LRC_FORMAT) || (format == ILRC_FORMAT))
-		{	//Normal LRC (and the Immerrock variant) format is line synced
+		{	//Normal LRC (and the IMMERROCK variant) format is line synced
 			Lyrics.noplus = 1;		//Disable plus output
 			Lyrics.grouping = 2;	//Enable line grouping
 		}
@@ -503,7 +503,7 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 
 		case LRC_FORMAT:		//Export as simple LRC
 		case ELRC_FORMAT:	//Export as extended LRC
-		case ILRC_FORMAT:	//Export as Immerrock LRC
+		case ILRC_FORMAT:	//Export as IMMERROCK LRC
 			outf = fopen_err(Lyrics.outfilename,"wt");	//LRC is a text format
 			Export_LRC(outf);
 		break;

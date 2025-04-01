@@ -107,7 +107,7 @@ void eof_color_dialog(DIALOG * dp, int fg, int bg)
 {
 	int i;
 
-	eof_log("eof_color_dialog() entered", 2);
+	eof_log("eof_color_dialog() entered", 3);
 
 	if(dp == NULL)
 		return;	//Invalid DIALOG pointer

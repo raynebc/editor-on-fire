@@ -156,7 +156,7 @@ int         eof_write_rb_files = 0;				//If nonzero, extra files are written dur
 int         eof_write_music_midi = 0;			//If nonzero, extra MIDI files are written during save that contains normal MIDI pitches and can be used for other MIDI based games like Songs2See and Synthesia and also for Fretlight
 int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
 int         eof_write_rs2_files = 0;			//If nonzero, extra files are written during save that are used for authoring Rocksmith 2014 customs
-int         eof_write_immerrock_files;;		//If nonzero, extra files are written during save that are used for authoring Immerrock customs
+int         eof_write_immerrock_files;;		//If nonzero, extra files are written during save that are used for authoring IMMERROCK customs
 int         eof_abridged_rs2_export = 1;		//If nonzero, default XML attributes are omitted from RS2 export
 int         eof_rs2_export_extended_ascii_lyrics = 0;	//If nonzero, a larger set of text characters are allowed to export to RS2 lyrics
 int         eof_disable_ini_difference_warnings = 0;	//If nonzero, warnings will be given during project load if there are tags in song.ini that don't match the contents of the EOF project
@@ -523,7 +523,7 @@ unsigned char drums_rock_remap_lane_5 = 6;			//Lane 6 is low tom
 unsigned char drums_rock_remap_lane_5_cymbal = 2;		//Lane 2 is crash cymbal
 unsigned char drums_rock_remap_lane_6 = 2;			//Lane 6 is not standard in Rock Band, remap same as crash cymbal
 
-char *ogg_profile_name = NULL;	//This pointer is used by eof_load_ogg to set the file name in the current OGG profile
+char *ogg_profile_name = NULL;	//This pointer is used by eof_load_ogg to set the file name in the current OGG profile, if it isn't NULL
 
 void eof_show_mouse(BITMAP * bp)
 {
@@ -2019,6 +2019,11 @@ int eof_load_ogg(char * filename, char function)
 			{	//This pointer should refer to the file name string in the default OGG profile
 				(void) ustrcpy(ogg_profile_name, dest_name);		//Update the OGG profile with the appropriate file name
 				ogg_profile_name = NULL;	//Reset this pointer
+			}
+			if(eof_song)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tOGG profile file name is now \"%s\"", eof_song->tags->ogg[0].filename);
+				eof_log(eof_log_string, 2);
 			}
 		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", output);
@@ -6252,7 +6257,7 @@ void eof_set_color_set(void)
 		}
 	}
 	else if(eof_color_set == EOF_COLORS_IR)
-	{	//If user is using the Immerrock color set
+	{	//If user is using the IMMERROCK color set
 		eof_colors[0] = eof_color_red_struct;
 		eof_colors[1] = eof_color_orange_struct;
 		eof_colors[2] = eof_color_yellow_struct;

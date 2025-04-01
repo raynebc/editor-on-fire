@@ -111,11 +111,11 @@ void *eof_buffer_file(const char * fn, char appendnull)
 	if(fn == NULL)
 		return NULL;
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuffering file:  \"%s\"", fn);
-	eof_log(eof_log_string, 3);
+	eof_log(eof_log_string, 2);
 	fp = pack_fopen(fn, "r");
 	if(fp == NULL)
 	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCannot open specified file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCannot open specified file \"%s\":  \"%s\"", fn, strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return NULL;
 	}
@@ -139,6 +139,8 @@ void *eof_buffer_file(const char * fn, char appendnull)
 		((char *)data)[buffersize - 1] = 0;	//Write a 0 byte at the end of the buffer
 	}
 	(void) pack_fclose(fp);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile buffered to address 0x%08lX", (unsigned long)data);
+	eof_log(eof_log_string, 2);
 	return data;
 }
 

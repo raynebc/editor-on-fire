@@ -20,7 +20,7 @@ void WriteLRCTimestamp(FILE *outf,char openchar,char closechar,unsigned long tim
 	//If openchar or closechar are zero, that character is not written
 void Export_LRC(FILE *outf);
 	//Exports the Lyric structure to specified file in simple or extended LRC format (based on the value of Lyrics.out_format)
-	//Or if Lyrics.out_format is ILRC_FORMAT, lyrics export in a format that is essentially LRC with slightly different formatting and no metadata tags, for use with the game Immerrock
+	//Or if Lyrics.out_format is ILRC_FORMAT, lyrics export in a format that is essentially LRC with slightly different formatting and no metadata tags, for use with the game IMMERROCK
 void Export_QRC(FILE *outf);
 	//Exports the Lyric structure to the specified file in QRC format (an ELRC variant popular in China)
 

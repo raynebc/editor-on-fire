@@ -40,10 +40,10 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	char has_notes = 0;		//Track whether there's at least one note in the target track difficulty
 	int error = 0;
 	long next;
-	unsigned long pad = EOF_DEFAULT_TIME_DIVISION / 2;	//To make notes more visible in Immerrock, pad to a minimum length of 1/8 (in #/4 meter) if possible without overlapping other notes
+	unsigned long pad = EOF_DEFAULT_TIME_DIVISION / 2;	//To make notes more visible in IMMERROCK, pad to a minimum length of 1/8 (in #/4 meter) if possible without overlapping other notes
 	EOF_PRO_GUITAR_TRACK *tp;
 	int is_muted;				//Track whether a note is fully string muted
-	unsigned long index = 1;	//Used to set the sort order for multiple pairs of note on/off events at the same timestamp as required by Immerrock
+	unsigned long index = 1;	//Used to set the sort order for multiple pairs of note on/off events at the same timestamp as required by IMMERROCK
 	unsigned long notes_written = 0;
 
 	eof_log("eof_export_immerrock_midi() entered", 1);
@@ -160,7 +160,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		{	//For each of the 6 usable strings
 			if(note & bitmask)
 			{	//If this string is used
-				channel = k;	//Immerrock uses channel 0 for the thickest string
+				channel = k;	//IMMERROCK uses channel 0 for the thickest string
 				eof_add_midi_event(deltapos, 0x90, pitches[k], 79, channel);				//Velocity 79 indicates a note pitch definition
 				eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], 79, channel);
 			}
@@ -176,42 +176,42 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				///Change all of these so the note off for each marker is the same timestamp as the note on
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 				{	//If this note is palm muted
-					eof_add_midi_event_indexed(deltapos, 0x90, 12, technique_vel[k], 15, index++);		//Note 12, channel 15 with the string's dedicated velocity number indicates palm mute in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x90, 12, technique_vel[k], 15, index++);		//Note 12, channel 15 with the string's dedicated velocity number indicates palm mute in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 12, 0, 15, index++);
 				}
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (tp->note[i]->frets[k] & 0x80))
 				{	//If this note is fully string muted, or this specific string is
-					eof_add_midi_event_indexed(deltapos, 0x90, 13, technique_vel[k], 15, index++);		//Note 13, channel 15 with the string's dedicated velocity number indicates string mute in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x90, 13, technique_vel[k], 15, index++);		//Note 13, channel 15 with the string's dedicated velocity number indicates string mute in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 13, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
 				{	//If this note is a natural harmonic
-					eof_add_midi_event_indexed(deltapos, 0x90, 14, technique_vel[k], 15, index++);		//Note 14, channel 15 with the string's dedicated velocity number indicates natural harmonic in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x90, 14, technique_vel[k], 15, index++);		//Note 14, channel 15 with the string's dedicated velocity number indicates natural harmonic in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 14, 0, 15, index++);
 				}
 				if(flags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
 				{	//If this note is a hammer on or a pull off
-					eof_add_midi_event_indexed(deltapos, 0x90, 15, technique_vel[k], 15, index++);		//Note 15, channel 15 with the string's dedicated velocity number indicates hammer on or pull off in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x90, 15, technique_vel[k], 15, index++);		//Note 15, channel 15 with the string's dedicated velocity number indicates hammer on or pull off in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 15, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 				{	//If this note is tapped
-					eof_add_midi_event_indexed(deltapos, 0x90, 17, technique_vel[k], 15, index++);		//Note 17, channel 15 with the string's dedicated velocity number indicates tapping in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x90, 17, technique_vel[k], 15, index++);		//Note 17, channel 15 with the string's dedicated velocity number indicates tapping in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 17, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
 				{	//If this note is down strummed/picked
-					eof_add_midi_event_indexed(deltapos, 0x90, 18, technique_vel[k], 15, index++);		//Note 18, channel 15 with the string's dedicated velocity number indicates down strum in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x90, 18, technique_vel[k], 15, index++);		//Note 18, channel 15 with the string's dedicated velocity number indicates down strum in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 18, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 				{	//If this note is up strummed/picked
-					eof_add_midi_event_indexed(deltapos, 0x90, 19, technique_vel[k], 15, index++);		//Note 19, channel 15 with the string's dedicated velocity number indicates up strum in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x90, 19, technique_vel[k], 15, index++);		//Note 19, channel 15 with the string's dedicated velocity number indicates up strum in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 19, 0, 15, index++);
 				}
 				if(flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides up or down
-					eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[k], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates slide up or down in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[k], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates slide up or down in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 20, 0, 15, index++);
 				}
 
@@ -219,7 +219,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				finger = tp->pgnote[i]->finger[k];
 				if((finger > 0) && (finger < 6))
 				{	//If this string has a defined fingering that is valid
-					eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[k], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in Immerrock
+					eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[k], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, finger_marker[finger], 0, 15, index++);
 				}
 			}
@@ -291,8 +291,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 			return 0;	//Return failure
 		}
 	}
-	///Due to how Immerrock defines techniques, the same MIDI note can be turned on and off multiple times at the same timestamp on the same channel
-	///Removing overlapping notes will break this notation, so just use the Immerrock specialized quicksort
+	///Due to how IMMERROCK defines techniques, the same MIDI note can be turned on and off multiple times at the same timestamp on the same channel
+	///Removing overlapping notes will break this notation, so just use the IMMERROCK specialized quicksort
 	qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper_immerrock);
 
 	//Build temp file
@@ -424,7 +424,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 	eof_clear_midi_events();			//Free any memory allocated for the MIDI event array
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImmerrock MIDI export complete.  %lu notes written", notes_written);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tIMMERROCK MIDI export complete.  %lu notes written", notes_written);
 	eof_log(eof_log_string, 1);
 
 	return 1;	//Return success
@@ -487,7 +487,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 		return 0;	//None of the arrangements have notes in the specified difficulty
 	}
 	//File>Save will call this function with a difficulty parameter of 0xFF to export the tracks with dynamic difficulty, or with a lesser value for all static difficulty tracks
-	//File>Export>Immerrock only specifies the difficulty number to export, so the dynamic difficulty status of the track should be determined in order to
+	//File>Export>IMMERROCK only specifies the difficulty number to export, so the dynamic difficulty status of the track should be determined in order to
 	//  properly choose a difficulty name or number to use
 	if(diff < 4)
 	{	//Determine whether difficulty name applies instead of number
@@ -502,11 +502,11 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 
 		if(!use_diff_numbering)
 		{	//If any of the tracks being exported do not have dynamic difficulty, then either File>Save is being used to save the static difficulty tracks
-			// or File>Export>Immerrock is being used to export one static difficulty track
+			// or File>Export>IMMERROCK is being used to export one static difficulty track
 			diff_name =&( eof_note_type_name_rb[diff][1]);	//Skip the first character in this string, which is used to track the difficulty populated status
 		}
 		else
-		{	//File>Export>Immerrock is being used to export one dynamic difficulty level of one track
+		{	//File>Export>IMMERROCK is being used to export one dynamic difficulty level of one track
 			snprintf(numbered_diff, sizeof(numbered_diff) - 1, "DD %d", diff);
 			diff_name = numbered_diff;
 		}
@@ -525,7 +525,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	}
 
 
-	//Build the path to the Immerrock folder for this track difficulty
+	//Build the path to the IMMERROCK folder for this track difficulty
 	//Use song metadata and difficulty level to build the "Artist - Song - Difficulty" string and build a subfolder of that name in the project folder
 	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
 	put_backslash(eof_temp_filename);
@@ -588,6 +588,8 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Song.ogg", (int) sizeof(eof_temp_filename));
 	if(!exists(eof_temp_filename))
 	{	//If the OGG file doesn't already exist at the destination
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+		eof_log(eof_log_string, 2);
 		if(!eof_copy_file(eof_loaded_ogg_name, eof_temp_filename))
 		{
 			allegro_message("Could not export audio!\n%s", eof_temp_filename);
@@ -693,6 +695,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 
 	//Write Sections.txt
 	fp = NULL;	//The file will only be opened for writing if at least one section marker is found
+	eof_log("\tParsing sections.",  2);
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event in the project
 		if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == gglead) || (sp->text_event[ctr]->track == ggrhythm) || (sp->text_event[ctr]->track == ggbass))
@@ -710,6 +713,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 			{	//If the text event is considered a section marker
 				if(!fp)
 				{	//If this is the first section event encountered
+					eof_log("\t\tFound first section, creating sections.txt", 2);
 					(void) replace_filename(eof_temp_filename, eof_temp_filename, "Sections.txt", (int) sizeof(eof_temp_filename));
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
 					eof_log(eof_log_string, 2);
@@ -720,7 +724,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 						return 0;	//Return failure
 					}
 					else
-					{	//Insert an empty section at 0 seconds to suit Immerrock's preferences in its Phrase Refiner feature
+					{	//Insert an empty section at 0 seconds to suit IMMERROCK's preferences in its Phrase Refiner feature
 						if(eof_get_text_event_pos(sp, ctr) > 0)
 						{	//As long as the first defined section isn't already at 0 seconds
 							(void) pack_fputs("0:0 \"\"\n", fp);	//Write an empty section at that position
@@ -739,25 +743,28 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 				min = eventpos / 60000;
 				sec = (eventpos / 1000) % 60;
 				ms = eventpos % 1000;
-				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\%s\"\n", min, sec, ms, section);	//Use this if Immerrock can display section names
+				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\%s\"\n", min, sec, ms, section);	//Use this if IMMERROCK can display section names
 				(void) pack_fputs(temp_string, fp);	//Write section entry
 			}
 		}
 	}
 
-	//Append an empty section after all of the note content in the project to suit Immerrock's preferences in its Phrase Refiner feature
-	eventpos = eof_determine_chart_length(sp) + 1;	//Obtain the timestamp of the end of the project's content, plus 1 millisecond
-	min = eventpos / 60000;
-	sec = (eventpos / 1000) % 60;
-	ms = eventpos % 1000;
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\"\n", min, sec, ms);
-	(void) pack_fputs(temp_string, fp);	//Write an empty section  at that position
-	(void) pack_fclose(fp);
+	//Append an empty section after all of the note content in the project to suit IMMERROCK's preferences in its Phrase Refiner feature
+	if(fp)
+	{	//If any sections were written
+		eventpos = eof_determine_chart_length(sp) + 1;	//Obtain the timestamp of the end of the project's content, plus 1 millisecond
+		min = eventpos / 60000;
+		sec = (eventpos / 1000) % 60;
+		ms = eventpos % 1000;
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\"\n", min, sec, ms);
+		(void) pack_fputs(temp_string, fp);	//Write an empty section  at that position
+		(void) pack_fclose(fp);
+	}
 
 
 	//Write Lyrics.txt
 	if(sp->vocal_track[0]->lyrics)
-	{	//If there are lyrics, export them in Immerrock's LRC variant format
+	{	//If there are lyrics, export them in IMMERROCK's LRC variant format
 		EOF_VOCAL_TRACK *tp = sp->vocal_track[0];	//Simplify
 		EOF_LYRIC *temp_lyric = NULL;
 		char newline = 0;
@@ -777,17 +784,17 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 		{	//Lyric export failed
 			(void) puts("Assert() handled successfully!");
-			allegro_message("Immerrock lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
+			allegro_message("IMMERROCK lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 		}
 		else
 		{
-			(void) EOF_EXPORT_TO_LC(sp,eof_temp_filename,NULL,ILRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to Immerrock LRC format
+			(void) EOF_EXPORT_TO_LC(sp,eof_temp_filename,NULL,ILRC_FORMAT);	//Import lyrics into FLC lyrics structure and export to IMMERROCK LRC format
 		}
 		if(newline)
 		{	//If a temporary lyric line was added
 			if(tp->line[tp->lines - 1].start_pos != hide_pos)
 			{	//If the last lyric line in the vocal track isn't the one that was created just above
-				eof_log("!Logic error.  Lost the temporary lyric line in Immerrock lyric export", 1);
+				eof_log("!Logic error.  Lost the temporary lyric line in IMMERROCK lyric export", 1);
 			}
 			else
 			{	//Delete the line
@@ -798,7 +805,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 		{	//If a temporary lyric was added
 			if(tp->lyric[tp->lyrics - 1]->pos != hide_pos)
 			{	//If the last lyric in the vocal track isn't the one that was created just above
-				eof_log("!Logic error.  Lost the temporary lyric in Immerrock lyric export", 1);
+				eof_log("!Logic error.  Lost the temporary lyric in IMMERROCK lyric export", 1);
 			}
 			else
 			{	//Delete the lyric
@@ -818,7 +825,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 			eof_log(eof_log_string, 2);
 			if(!eof_export_immerrock_midi(sp, arr[arrctr], diff, eof_temp_filename))
 			{
-				eof_log("\tFailed to export Immerrock MIDI", 1);
+				eof_log("\tFailed to export IMMERROCK MIDI", 1);
 				return 0;	//Return failure
 			}
 		}
@@ -847,7 +854,7 @@ void eof_export_immerrock(char silent)
 	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
 	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
 
-	eof_log("Exporting Immerrock files", 1);
+	eof_log("Exporting IMMERROCK files", 1);
 
 	//Select the tracks to export
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -958,8 +965,9 @@ void eof_export_immerrock(char silent)
 
 	if(!silent && warn_any)
 	{	//If there are any warnings to display, and warnings aren't suppressed (ie. not performing quick save)
-		allegro_message("Immerrock Export:\n%s%s%s", warn1, warn2, warn3);
+		allegro_message("IMMERROCK Export:\n%s%s%s", warn1, warn2, warn3);
 	}
 
 	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
+	eof_log("\tIMMERROCK export complete.", 1);
 }

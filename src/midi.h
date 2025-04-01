@@ -88,7 +88,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches);
 	//Returns a bitmask defining which elements in the pitches array are populated to define the pitches used by the specified note/lyric
 	//Gems that are string muted or ghosted are not reflected in this bitmask
-	//String muted gems have their open string pitches reflected in the pitches array, for use with Immerrock export
+	//String muted gems have their open string pitches reflected in the pitches array, for use with IMMERROCK export
 	//Each pitch is returned through *pitches array, which must be at least 6 elements large
 	//0 is returned on error or if the specified note contains no pitches (pitchless or percussion lyric, or fully string muted or fully ghosted pro guitar note)
 int eof_export_music_midi(EOF_SONG *sp, char *fn, char format);
@@ -230,7 +230,7 @@ void WriteVarLen(unsigned long value, PACKFILE * fp);
 int qsort_helper3(const void * e1, const void * e2);
 	//A sort algorithm used when quick sorting the eof_midi_event[] array
 int qsort_helper_immerrock(const void * e1, const void * e2);
-	//A sort algorithm used when quick sorting the eof_midi_event[] array for use with Immerrock, which has some unique requirements
+	//A sort algorithm used when quick sorting the eof_midi_event[] array for use with IMMERROCK, which has some unique requirements
 	//such as properly sorting pairs or note on and off events that are all at the same timestamp, using the index variable to define sort order
 	//If index is nonzero for both events being compared, the lower number sorts earlier
 
