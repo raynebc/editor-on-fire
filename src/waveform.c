@@ -168,6 +168,11 @@ int eof_render_waveform(struct wavestruct *waveform)
 //determine the y axis location and graph height of each channel's graph
 	height = (bottom - top) / numgraphs;
 	ycoord1 = top + (height / 2);	//The first graph will render with respect to the top of the graphing area
+	if(eof_waveform_renderscale_enabled && (eof_waveform_renderscale != 100))
+	{	//If the user enabled scaling the waveform graph's height and defined a scale factor
+		height *= ((double)eof_waveform_renderscale / 100.0);		//If the user configured the waveform to render taller than normal, apply this scaling after the ycoord logic
+	}
+
 	if(numgraphs == 1)
 	{
 		if(eof_waveform_renderleftchannel)

@@ -2905,7 +2905,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 #ifdef GP_IMPORT_DEBUG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeat #%lu set at pos = %lu, fpos = %f", ctr, eof_song->beat[ctr]->pos, eof_song->beat[ctr]->fpos);
-			eof_log(eof_log_string, 1);
+			eof_log(eof_log_string, 2);
 			if((ctr > 0) && (eof_song->beat[ctr - 1]->fpos >= eof_song->beat[ctr]->fpos))
 			{	//If this beat isn't after the previous beat
 				eof_log("\t\t\tError:  Invalid beat position.", 1);
@@ -2977,6 +2977,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(sync_points);
 		free(num);
 		free(den);
+		eof_calculate_tempo_map(eof_song);	//Update the tempo changes of the beats to reflect the millisecond timing just applied
+		eof_log("Sync points applied", 1);
 	}//If synchronization data was imported from the input Go PlayAlong file
 
 

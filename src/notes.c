@@ -1653,7 +1653,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "TRACK_DIFFICULTY"))
 	{
 		if(eof_song->track[eof_selected_track]->difficulty == 0xFF)
-			snprintf(dest_buffer, dest_buffer_size, "(Undefined)");
+			snprintf(dest_buffer, dest_buffer_size, "(Unset)");
 		else
 			snprintf(dest_buffer, dest_buffer_size, "%u", eof_song->track[eof_selected_track]->difficulty);
 		return 1;
@@ -1670,7 +1670,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			}
 			else
 			{
-				(void) snprintf(dest_buffer, dest_buffer_size, "(Pro: Undefined)");
+				(void) snprintf(dest_buffer, dest_buffer_size, "(Pro: Unset)");
 			}
 		}
 		else if(eof_selected_track == EOF_TRACK_VOCALS)
@@ -3487,6 +3487,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{
 			snprintf(dest_buffer, dest_buffer_size, "(Error)");
 		}
+		return 1;
+	}
+
+	//The active zoom level
+	if(!ustricmp(macro, "ZOOM_LEVEL"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "1/%u", eof_zoom);
 		return 1;
 	}
 

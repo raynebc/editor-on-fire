@@ -131,6 +131,7 @@ MENU eof_catalog_menu[] =
 	{"", NULL, NULL, 0, NULL},
 	{"&Add\tSHIFT+W", eof_menu_catalog_add, NULL, 0, NULL},
 	{"&Delete", eof_menu_catalog_delete, NULL, 0, NULL},
+	{"&Reorder", eof_menu_catalog_reorder, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Previous\tW", eof_menu_catalog_previous, NULL, 0, NULL},
 	{"&Next\tE", eof_menu_catalog_next, NULL, 0, NULL},
@@ -1654,6 +1655,76 @@ int eof_menu_catalog_delete(void)
 	return 1;
 }
 
+DIALOG eof_menu_catalog_reorder_dialog[] =
+{
+	/* (proc)                          (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ d_agup_window_proc,  0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   eof_etext,   NULL, NULL },
+	{ d_agup_text_proc,        12,  84,  64,  8,    2,   23,   0,      0,      0,   0,   "#:",         NULL, NULL },
+	{ eof_verified_edit_proc,  48,  80, 254, 20,  2,   23,   0,      0,      3,   0,   eof_etext2,  "0123456789", NULL },
+	{ d_agup_button_proc,    67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",       NULL, NULL },
+	{ d_agup_button_proc,  163, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",  NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_catalog_reorder(void)
+{
+	EOF_CATALOG_ENTRY temp;
+	unsigned long firstvalid = 1, lastvalid ,newindex;
+
+	if(eof_song->catalog->entries < 2)
+		return 1;	//If there are not at least two catalog entries, return immediately
+
+	if(eof_selected_catalog_entry == 0)
+		firstvalid = 2;	//The first catalog entry can only be reordered to a later index
+
+	if(eof_selected_catalog_entry + 1 == eof_song->catalog->entries)
+		lastvalid = eof_song->catalog->entries - 1;	//The last catalog entry can only be reordered to an earlier index
+	else
+		lastvalid = eof_song->catalog->entries;
+
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Reorder catalog entry from %lu to [%lu,%lu]", eof_selected_catalog_entry + 1, firstvalid, lastvalid);
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_catalog_entry_name_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_catalog_entry_name_dialog);
+	eof_etext2[0] = '\0';		//Empty this string
+	if(eof_popup_dialog(eof_menu_catalog_reorder_dialog, 2) == 3)
+	{	//User hit OK
+		newindex = atol(eof_etext2);
+		if((newindex >= firstvalid) && (newindex !=(eof_selected_catalog_entry + 1)) && (newindex < eof_song->catalog->entries + 1))
+		{	//If a valid index was given and it isn't the same as the catalog entry's current order number
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			newindex--;	//Change to 0 numbering
+			while(eof_selected_catalog_entry != newindex)
+			{	//Until the active catalog entry has been sorted to the target index
+				if(eof_selected_catalog_entry > newindex)
+				{	//Swap it with the previous entry
+					temp = eof_song->catalog->entry[eof_selected_catalog_entry - 1];	//Back up the previous entry
+					eof_song->catalog->entry[eof_selected_catalog_entry - 1] = eof_song->catalog->entry[eof_selected_catalog_entry];	//Overwrite it with the active catalog entry
+					eof_song->catalog->entry[eof_selected_catalog_entry] = temp;		//Write the former previous entry in the active entry's old place
+					eof_selected_catalog_entry--;		//Update active catalog entry's index
+					if(!eof_selected_catalog_entry)
+						break;	//If it is now the first catalog entry, it cannot possibly sort earlier
+				}
+				else
+				{	//Swap it with the next entry
+					temp = eof_song->catalog->entry[eof_selected_catalog_entry + 1];	//Back up the next entry
+					eof_song->catalog->entry[eof_selected_catalog_entry + 1] = eof_song->catalog->entry[eof_selected_catalog_entry];	//Overwrite it with the active catalog entry
+					eof_song->catalog->entry[eof_selected_catalog_entry] = temp;		//Write the former previous entry in the active entry's old place
+					eof_selected_catalog_entry++;	//Update active catalog entry's index
+					if(eof_selected_catalog_entry + 1 >= eof_song->catalog->entries)
+						break;	//If it is now the last catalog entry, it cannot possibly sort later
+				}
+			}
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	return D_O_K;
+}
+
 int eof_menu_catalog_previous(void)
 {
 	if((eof_song->catalog->entries > 0) && !eof_music_catalog_playback)
@@ -2249,16 +2320,18 @@ int eof_display_flats_menu(void)
 
 DIALOG eof_waveform_settings_dialog[] =
 {
-	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                        (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  200, 200, 2,   23,  0,    0,      0,   0,   "Configure Waveform Graph", NULL, NULL },
-	{ d_agup_text_proc,   16,  80,  64,  8,	  2,   23,  0,    0,      0,   0,   "Fit into:",                NULL, NULL },
-	{ d_agup_radio_proc,  16,  100, 110, 15,  2,   23,  0,    0,      0,   0,   "Fretboard area",           NULL, NULL },
-	{ d_agup_radio_proc,  16,  120, 110, 15,  2,   23,  0,    0,      0,   0,   "Editor window",            NULL, NULL },
-	{ d_agup_text_proc,   16,  140, 80,  16,  2,   23,  0,    0,	  1,   0,   "Display channels:",        NULL, NULL },
-	{ d_agup_check_proc,  16,  160, 45,  16,  2,   23,  0,    0,	  1,   0,   "Left",                     NULL, NULL },
-	{ d_agup_check_proc,  16,  180, 55,  16,  2,   23,  0,    0,	  1,   0,   "Right",                    NULL, NULL },
-	{ d_agup_button_proc, 16,  208, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                       NULL, NULL },
-	{ d_agup_button_proc, 116, 208, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                   NULL, NULL },
+	/* (proc)                        (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                        (dp2) (dp3) */
+	{ d_agup_window_proc, 0,  48,  200, 220, 2,   23,  0,    0,      0,   0,   "Configure Waveform Graph", NULL, NULL },
+	{ d_agup_text_proc,      16,  80,  64,  8,	  2,   23,  0,    0,      0,   0,   "Fit into:",                NULL, NULL },
+	{ d_agup_radio_proc,    16,  100, 110, 15,  2,   23,  0,    0,      0,   0,   "Fretboard area",           NULL, NULL },
+	{ d_agup_radio_proc,    16,  120, 110, 15,  2,   23,  0,    0,      0,   0,   "Editor window",            NULL, NULL },
+	{ d_agup_check_proc,    16, 140, 120, 16,  2,   23,  0,    0,      1,   0,   "Scale Y axis (%)",      NULL, NULL },
+	{ eof_verified_edit_proc,145,140, 30,  20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
+	{ d_agup_text_proc,      16,  160, 80,  16,  2,   23,  0,    0,	  1,   0,   "Display channels:",        NULL, NULL },
+	{ d_agup_check_proc,   16,  180, 45,  16,  2,   23,  0,    0,	  1,   0,   "Left",                     NULL, NULL },
+	{ d_agup_check_proc,   16,  200, 55,  16,  2,   23,  0,    0,	  1,   0,   "Right",                    NULL, NULL },
+	{ d_agup_button_proc, 16,  228, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                       NULL, NULL },
+	{ d_agup_button_proc,116, 228, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                   NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -2279,43 +2352,35 @@ int eof_menu_song_waveform_settings(void)
 	{	//If fit into editor window is active
 		eof_waveform_settings_dialog[3].flags = D_SELECTED;
 	}
-
-	eof_waveform_settings_dialog[5].flags = eof_waveform_settings_dialog[6].flags = 0;
+	eof_waveform_settings_dialog[4].flags = eof_waveform_renderscale_enabled ? D_SELECTED : 0;
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%u", eof_waveform_renderscale);
+	eof_waveform_settings_dialog[7].flags = eof_waveform_settings_dialog[8].flags = 0;
 	if(eof_waveform_renderleftchannel)
 	{	//If the left channel is selected to be rendered
-		eof_waveform_settings_dialog[5].flags = D_SELECTED;
+		eof_waveform_settings_dialog[7].flags = D_SELECTED;
 	}
 	if(eof_waveform_renderrightchannel)
 	{	//If the right channel is selected to be rendered
-		eof_waveform_settings_dialog[6].flags = D_SELECTED;
+		eof_waveform_settings_dialog[8].flags = D_SELECTED;
 	}
 
-	if(eof_popup_dialog(eof_waveform_settings_dialog, 0) == 7)		//User clicked OK
+	if(eof_popup_dialog(eof_waveform_settings_dialog, 0) == 9)		//User clicked OK
 	{
-		if(eof_waveform_settings_dialog[2].flags == D_SELECTED)
-		{	//User selected to render into fretboard area
-			eof_waveform_renderlocation = 0;
-		}
-		else
-		{	//User selected to render into editor window
-			eof_waveform_renderlocation = 1;
-		}
-		if(eof_waveform_settings_dialog[5].flags == D_SELECTED)
-		{	//User selected to render the left channel
-			eof_waveform_renderleftchannel = 1;
+		long value;
+
+		eof_waveform_renderlocation = (eof_waveform_settings_dialog[2].flags == D_SELECTED) ? 0 : 1;		//Render into fretboard or into editor window
+		value = atol(eof_etext);
+		if((value < 10) || (value > 999))
+		{
+			allegro_message("Only scaling values from 10 to 999 %% are allowed");
 		}
 		else
 		{
-			eof_waveform_renderleftchannel = 0;
+			eof_waveform_renderscale = value;
 		}
-		if(eof_waveform_settings_dialog[6].flags == D_SELECTED)
-		{	//User selected to render the right channel
-			eof_waveform_renderrightchannel = 1;
-		}
-		else
-		{
-			eof_waveform_renderrightchannel = 0;
-		}
+		eof_waveform_renderscale_enabled = (eof_waveform_settings_dialog[4].flags == D_SELECTED) ? 1 : 0;	//Render tall waveform graph or not
+		eof_waveform_renderleftchannel = (eof_waveform_settings_dialog[7].flags == D_SELECTED) ? 1 : 0;		//Render left channel or not
+		eof_waveform_renderrightchannel = (eof_waveform_settings_dialog[8].flags == D_SELECTED) ? 1 : 0;	//Render right channel or not
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

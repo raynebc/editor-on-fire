@@ -334,6 +334,10 @@ void eof_load_config(char * fn)
 	eof_waveform_renderlocation = get_config_int("waveform", "eof_waveform_renderlocation", 0);
 	eof_waveform_renderleftchannel = get_config_int("waveform", "eof_waveform_renderleftchannel", 1);
 	eof_waveform_renderrightchannel = get_config_int("waveform", "eof_waveform_renderrightchannel", 0);
+	eof_waveform_renderscale_enabled = get_config_int("waveform", "eof_waveform_renderscale_enabled", 0);
+	eof_waveform_renderscale = get_config_int("waveform", "eof_waveform_renderscale", 100);
+	if((eof_waveform_renderscale < 10) || (eof_waveform_renderscale > 999))
+		eof_waveform_renderscale = 100;	//Bounds check
 
 	/* read highlight colors */
 	eof_color_highlight1_raw = get_config_hex("colors", "eof_color_highlight1", 0xFFFF00UL);	//The RGB equivalent of makecol(255, 255, 0), AKA yellow
@@ -711,6 +715,8 @@ void eof_save_config(char * fn)
 	set_config_int("waveform", "eof_waveform_renderlocation", eof_waveform_renderlocation);
 	set_config_int("waveform", "eof_waveform_renderleftchannel", eof_waveform_renderleftchannel);
 	set_config_int("waveform", "eof_waveform_renderrightchannel", eof_waveform_renderrightchannel);
+	set_config_int("waveform", "eof_waveform_renderscale_enabled", eof_waveform_renderscale_enabled);
+	set_config_int("waveform", "eof_waveform_renderscale", eof_waveform_renderscale);
 
 	/* write highlight colors (raw format to avoid color corruption on subsequent launches of EOF) */
 	set_config_hex("colors", "eof_color_highlight1", eof_color_highlight1_raw);

@@ -589,6 +589,8 @@ extern int eof_color_waveform_rms;
 extern char eof_waveform_renderlocation;
 extern char eof_waveform_renderleftchannel;
 extern char eof_waveform_renderrightchannel;
+extern char eof_waveform_renderscale_enabled;
+extern unsigned eof_waveform_renderscale;
 
 extern int eof_color_highlight1_raw;
 extern int eof_color_highlight2_raw;

@@ -488,9 +488,11 @@ int eof_color_waveform_rms_raw;
 int eof_color_waveform_trough;				//The colors build by makecol()
 int eof_color_waveform_peak;
 int eof_color_waveform_rms;
-char eof_waveform_renderlocation = 0;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
-char eof_waveform_renderleftchannel = 1;	//Specifies whether the left channel's graph should render
-char eof_waveform_renderrightchannel = 0;	//Specifies whether the right channel's graph should render
+char eof_waveform_renderlocation = 0;			//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
+char eof_waveform_renderleftchannel = 1;		//Specifies whether the left channel's graph should render
+char eof_waveform_renderrightchannel = 0;		//Specifies whether the right channel's graph should render
+char eof_waveform_renderscale_enabled = 0;	//Specifies whether waveform graph height scaling is enabled
+unsigned eof_waveform_renderscale = 100;		//Specifies a scale factor for the render height to make the graph taller and more visible
 
 /* highlight color settings */
 int eof_color_highlight1_raw;	//The raw hex formatted RRGGBB colors that need to be converted

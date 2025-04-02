@@ -35,6 +35,7 @@ void eof_prepare_song_menu(void);
 int eof_menu_catalog_show(void);
 int eof_menu_catalog_add(void);
 int eof_menu_catalog_delete(void);
+int eof_menu_catalog_reorder(void);
 int eof_menu_catalog_previous(void);
 int eof_menu_catalog_next(void);
 

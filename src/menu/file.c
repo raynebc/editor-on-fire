@@ -5628,8 +5628,15 @@ int eof_gp_import_common(const char *fn)
 		return 1;	//Return failure
 	}
 
-	eof_log("Cleaning up beats", 1);
-	eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+	if(!eof_music_length)
+	{	//If eof_truncate_chart() is run before audio is loaded, eof_music_length will be 0 and imported beat timings will be lost as beats are dropped from an empty project
+		eof_log("Skipping beat cleanup while no audio is loaded, to avoid losing tempo mapping", 1);
+	}
+	else
+	{
+		eof_log("Cleaning up beats", 1);
+		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+	}
 	eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
 	eof_log("Cleaning up imported notes", 1);
 	eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark notes that overlap others as crazy, if they don't begin at the same timestamp (ie. should become a normal chord)
@@ -5739,6 +5746,10 @@ int eof_command_line_gp_import(char *fn)
 		eof_song_loaded = 0;
 		return 4;	//Return error
 	}
+
+//Run beat cleanup now that chart audio is loaded
+	eof_log("Cleaning up beats", 1);
+	eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 
 	return 0;	//Return success
 }
