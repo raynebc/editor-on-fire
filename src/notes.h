@@ -43,6 +43,7 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 	//Returns 1 on a normal conversion
 int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel);
 	//Matches the macro against supported macro strings
+	//panel is passed in the event that a control macro is being processed, or if information about the panel itself is being expanded
 	//If a match is found, the corresponding text is generated and written to the destination buffer
 	//The controls structure is altered appropriately when relevant control macros are parsed
 	//Returns 1 if a normal macro is expanded to the destination buffer, or if a control macro was processed

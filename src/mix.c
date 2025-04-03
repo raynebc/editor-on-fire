@@ -78,9 +78,10 @@ typedef struct {
 	unsigned char channel;
 	int note;
 	int tone;
+	unsigned long length;
 } guitar_midi_note;
 
-guitar_midi_note eof_guitar_notes[EOF_MAX_NOTES * 6] = {{0,0,0,0}};	//Each note can have 6 pitches
+guitar_midi_note eof_guitar_notes[EOF_MAX_NOTES * 6] = {{0,0,0,0,0}};	//Each note can have 6 pitches (one on each string)
 int eof_mix_guitar_notes = 0;
 int eof_mix_current_guitar_note = 0;
 
@@ -400,6 +401,7 @@ void eof_mix_find_claps(void)
 		int tone;
 		EOF_PRO_GUITAR_TRACK *track = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 
+		eof_midi_reset_instrument = 1;	//Ensure the active track's MIDI instrument gets set for MIDI channels 0 through 5
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the track
 			int j = 0;
@@ -421,6 +423,7 @@ void eof_mix_find_claps(void)
 					eof_guitar_notes[eof_mix_guitar_notes].channel = j;
 					eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j] + track->capo;
 					eof_guitar_notes[eof_mix_guitar_notes].tone = tone;
+					eof_guitar_notes[eof_mix_guitar_notes].length = track->note[i]->length;
 					eof_mix_guitar_notes++;
 				}
 			}
@@ -820,13 +823,14 @@ void eof_mix_play_note(int note)
 	}
 }
 
-void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
+EOF_MIDI_PLAYBACK_STATUS_STRUCT eof_midi_channel_status[6] = {0};
+unsigned char eof_midi_reset_instrument = 1;
+
+void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch, unsigned long duration)
 {
-	unsigned char SET_PATCH_DATA[2] = {0xC0, 28}; 		// 28 = Electric Guitar (clean)
 	unsigned char NOTE_ON_DATA[3] = {0x90, 0x0, 127};	//Data sequence for a Note On, channel 1, Note 0
 	unsigned char NOTE_OFF_DATA[3] = {0x80, 0x0, 127};	//Data sequence for a Note Off, channel 1, Note 0
-	static unsigned char lastnote[16] = {0};			//Remembers the last note that was played on each channel, so it can be turned off
-	static unsigned char lastnotedefined[16] = {0};
+	char debug[101];
 
 	if(midi_driver == NULL)
 	{	//Ensure Allegro's MIDI driver is loaded
@@ -836,25 +840,66 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch)
 	{	//Bounds check
 		channel = 15;
 	}
-	SET_PATCH_DATA[0] = 0xC0 | channel;
+	if(eof_midi_reset_instrument)
+	{	//If this function is signalled to set the instrument number on channels 0 through 5
+		//Manually reset the instrument voice in effect to avoid the possibility of playing with the wrong voice if multiple EOF instances are in use
+		unsigned char SET_PATCH_DATA[12] = {0xC0, 0, 0xC0 | 1, 0, 0xC0 | 2, 0, 0xC0 | 3, 0, 0xC0 | 4, 0, 0xC0 | 5, 0};	//Commands to set the instrument for channels 0 through 5
+		SET_PATCH_DATA[1] = SET_PATCH_DATA[3] = SET_PATCH_DATA[5] = SET_PATCH_DATA[7] = SET_PATCH_DATA[9] = SET_PATCH_DATA[11] = patch;	//Apply the instrument number
+		midi_out(SET_PATCH_DATA, 12);	//Send the twelve bytes of commands
+		eof_midi_reset_instrument = 0;
+	}
+
 	NOTE_ON_DATA[0] = 0x90 | channel;
 	NOTE_OFF_DATA[0] = 0x80 | channel;
 
-	//Manually reset the instrument voice in effect to avoid the possibility of playing with the wrong voice if multiple EOF instances are in use
-	SET_PATCH_DATA[1] = patch;	//Alter the data sequence to the appropriate channel number
-	midi_out(SET_PATCH_DATA, 2);
-
 	if(note < EOF_MAX_VOCAL_TONES)
-	{
-		NOTE_ON_DATA[1] = note;	//Alter the data sequence to be the appropriate note number
-		if(lastnotedefined[channel])
-		{
-			NOTE_OFF_DATA[1] = lastnote[channel];
-			midi_out(NOTE_OFF_DATA, 3);	//Turn off the last note that was played
+	{	//If the note is valid
+		if(eof_midi_channel_status[channel].on)
+		{	//If the note last played on this channel has not been stopped
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tForcing MIDI channel %u note %u off before playing note %d", channel, eof_midi_channel_status[channel].note, note);
+			eof_log(eof_log_string, 3);
+			NOTE_OFF_DATA[1] = eof_midi_channel_status[channel].note;	//The note number in question
+			midi_out(NOTE_OFF_DATA, 3);	//Signal the MIDI controller to turn the note off
 		}
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tPlaying MIDI channel %u note %d", channel, note);
+		eof_log(eof_log_string, 3);
+		NOTE_ON_DATA[1] = note;		//Alter the data sequence to be the appropriate note number
 		midi_out(NOTE_ON_DATA, 3);	//Turn on this note
-		lastnote[channel] = note;
-		lastnotedefined[channel] = 1;
+		eof_midi_channel_status[channel].note = note;	//Track the state of this MIDI note
+		eof_midi_channel_status[channel].on = 1;
+		eof_midi_channel_status[channel].stop_time = clock() + (duration * CLOCKS_PER_SEC / 1000);
+		if(eof_expand_notes_window_macro("ACTIVE_MIDI_TONES", debug, sizeof(debug), eof_info_panel) == 1)
+		{	//Dump the MIDI channel statuses to log
+			eof_log(debug, 3);
+		}
+	}
+}
+
+void eof_update_midi_timers(void)
+{
+	unsigned char NOTE_OFF_DATA[3] = {0x80, 0x0, 127};	//Data sequence for a Note Off, channel 1, Note 0
+	clock_t current_time = clock();
+	unsigned channel;
+
+	if(midi_driver == NULL)
+	{	//Ensure Allegro's MIDI driver is loaded
+		return;
+	}
+
+	for(channel = 0; channel < 6; channel++)
+	{	//For each of the MIDI channels being tracked in eof_midi_channel_status
+		if(eof_midi_channel_status[channel].on)
+		{	//If a note on this channel is still on
+			if(current_time >= eof_midi_channel_status[channel].stop_time)
+			{	//If it is at or beyond the time to stop the note
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGracefully ending MIDI channel %u note %d", channel, eof_midi_channel_status[channel].note);
+				eof_log(eof_log_string, 3);
+				NOTE_OFF_DATA[0] = 0x80 | channel;
+				NOTE_OFF_DATA[1] = eof_midi_channel_status[channel].note;	//The note number in question
+				midi_out(NOTE_OFF_DATA, 3);	//Signal the MIDI controller to turn the note off
+				eof_midi_channel_status[channel].on = 0;
+			}
+		}
 	}
 }
 
@@ -874,13 +919,13 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 		return;	//Invalid parameters
 	tone = eof_lookup_midi_tone(sp, track, note);
 
-	eof_all_midi_notes_off();	//Try to stop any MIDI notes currently being played
+	eof_midi_reset_instrument = 1;	//Ensure the active track's MIDI instrument gets set for MIDI channels 0 through 5
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 	{	//For each of the 6 supported strings
 		if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))
 		{	//If this string is used (and not muted)
 			//This note is found by adding default tuning for the string, the offset defining the current tuning and the fret number being played
-			eof_midi_play_note_ex(tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo, ctr, tone);	//Play the MIDI note
+			eof_midi_play_note_ex(tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo, ctr, tone, 3000);	//Play the MIDI note for 1000ms
 		}
 	}
 }
@@ -952,7 +997,10 @@ void eof_play_queued_midi_tones(void)
 	{	// Using a while loop to allow all notes in a chord to fire at the same time
 		if(eof_mix_midi_tones_enabled)
 		{
-			eof_midi_play_note_ex(eof_guitar_notes[eof_mix_current_guitar_note].note, eof_guitar_notes[eof_mix_current_guitar_note].channel, eof_guitar_notes[eof_mix_current_guitar_note].tone);	//Play the MIDI note
+			unsigned long length = eof_guitar_notes[eof_mix_current_guitar_note].length;	//By default, play the MIDI tone at the originating note's length
+			if(length < 250)
+				length = 250;	//Unless it's shorter than 250ms, in which case pad it so it plays long enough to be heard
+			eof_midi_play_note_ex(eof_guitar_notes[eof_mix_current_guitar_note].note, eof_guitar_notes[eof_mix_current_guitar_note].channel, eof_guitar_notes[eof_mix_current_guitar_note].tone, length);	//Play the MIDI note
 		}
 		eof_mix_current_guitar_note++;
 		eof_mix_next_guitar_note = eof_guitar_notes[eof_mix_current_guitar_note].pos;

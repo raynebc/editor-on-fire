@@ -222,7 +222,7 @@ void eof_music_seek(unsigned long pos)
 void eof_music_rewind(void)
 {
 	unsigned long amount = 0;
-	eof_log("eof_music_rewind() entered", 2);
+	eof_log("eof_music_rewind() entered", 3);
 
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)

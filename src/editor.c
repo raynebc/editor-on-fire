@@ -1520,12 +1520,12 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	if((eof_key_code == KEY_SPACE) && !eof_silence_loaded)
 	{	//Only allow playback controls when chart audio is loaded (use the scan code because CTRL+SHIFT+Space cannot be reliably detected via ASCII value)
 		if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-		{
+		{	//Play song catalog
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_catalog_play();
 		}
 		else
-		{
+		{	//Play/pause
 			if(eof_music_catalog_playback)
 			{
 				eof_music_catalog_playback = 0;
@@ -1538,7 +1538,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			{
 				eof_music_play(0);
 				if(eof_music_paused)
-				{
+				{	//If playback was just stopped
 					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 					if(eof_undo_last_type == EOF_UNDO_TYPE_RECORD)
 					{
@@ -1548,6 +1548,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					{	//If Feedback input method is in effect
 						eof_seek_to_nearest_grid_snap();	//Seek to the nearest grid snap position when playback is stopped
 					}
+					eof_stop_midi();
 				}
 			}
 		}

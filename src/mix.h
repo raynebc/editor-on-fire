@@ -65,19 +65,39 @@ SAMPLE *eof_load_wav(char *filename);
 	//Loads the specified WAV file from /resources if it exists, otherwise loads it from eof.dat
 void eof_mix_init(void);	//Inits variables and loads cues (clap, metronome tick, vocal tones)
 void eof_mix_exit(void);	//Releases memory used by audio cues
-void eof_mix_start_helper(void);	//Finds the next clap, tick and vocal tone timestamps?
+void eof_mix_start_helper(void);	//Finds the next clap, tick, vocal tone and MIDI tone timestamps
 void eof_mix_start(int speed);	//Prepares variables for chart playback
 void eof_mix_seek(unsigned long pos);	//Performs a seek and updates the position of the next of each audio cue
 SAMPLE *eof_mix_load_ogg_sample(char *fn);	//Loads the specified OGG sample from a dat file, returning it in SAMPLE format
 
 void eof_mix_find_claps(void);		//Populates counters and arrays for the sound cues based on the active track difficulty's contents
 void eof_mix_play_note(int note);	//Plays the vocal tone for the specified note, if available
-void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch);
-	//Sends MIDI commands to stop a note on the specified channel, change to the "clean guitar" MIDI instrument and plays the note
-	//If patch is nonzero, MIDI commands to set it as the active instrument number are sent
-void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned long note);	//Immediately plays all the MIDI tones in the specified pro guitar note
-void eof_play_queued_midi_tones(void);	//Advances through and plays MIDI tones queued by eof_mix_find_claps(), similarly to how the OGG callback function plays other cues
-int eof_lookup_midi_tone(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the appropriate MIDI instrument number to use for the specified note, or 0 on error
+
+typedef struct
+{
+	unsigned char note;	//The note number being played on this channel
+	unsigned char on;		//Boolean:  Note has not been stopped
+	clock_t stop_time;		//The clock time at which the note should be stopped with MIDI commands
+} EOF_MIDI_PLAYBACK_STATUS_STRUCT;
+
+extern EOF_MIDI_PLAYBACK_STATUS_STRUCT eof_midi_channel_status[6];
+	//The states of MIDI note playback for each of the channels EOF uses (0 through 5) to play pro guitar MIDI tones
+	//eof_midi_play_note_ex() will set these statuses and eof_update_midi_timers() will be called within the main program loop to turn notes off when due
+extern unsigned char eof_midi_reset_instrument;
+	//If nonzero, signals to eof_midi_play_note_ex() to send Program Change MIDI events to define the instrument number to be played by the MIDI engine
+	//This should be triggered whenever chart playback is started, whenever the active track changes or when a pro guitar note's tone is manually sounded by clicking on it
+void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch, unsigned long duration);
+	//Tracks the status of notes played on MIDI channels 0 through 5 using eof_midi_channel_status[] and starts/stops notes accordingly
+	//If eof_midi_reset_instrument is nonzero, the specified instrument patch number is set for all 6 MIDI channels
+	//The specified duration in milliseconds is written as a clock time at which eof_update_midi_timers() should turn the note off if it is still playing
+void eof_update_midi_timers(void);
+	//Checks and updates the playback status of each channel in per eof_midi_channel_status[] and if any note is due to be stopped, a MIDI command is sent to do so
+void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Immediately plays all the MIDI tones in the specified pro guitar note
+void eof_play_queued_midi_tones(void);
+	//Advances through and plays MIDI tones queued by eof_mix_find_claps(), similarly to how the OGG callback function plays other cues
+int eof_lookup_midi_tone(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns the appropriate MIDI instrument number to use for the specified note, or 0 on error
 
 void eof_set_seek_position(unsigned long pos);
 	//Updates variables to set the audio and seek position to the specified timestamp in ms

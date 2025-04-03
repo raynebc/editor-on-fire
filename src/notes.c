@@ -3497,6 +3497,28 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Active MIDI tones
+	if(!ustricmp(macro, "ACTIVE_MIDI_TONES"))
+	{
+		unsigned channel;
+		char temp[20];
+		dest_buffer[0] = '\0';	//Empty this string
+		for(channel = 0; channel < 6; channel++)
+		{	//For each of the six MIDI channels EOF uses to play tones
+			if(!eof_midi_channel_status[channel].on)
+			{
+				strncat(dest_buffer, "x ", dest_buffer_size - strlen(dest_buffer) - 1);	//Append the tone information
+			}
+			else
+			{
+				clock_t timeleft = ((eof_midi_channel_status[channel].stop_time - clock()) * 1000) / CLOCKS_PER_SEC;
+				snprintf(temp, sizeof(temp) - 1, "%u (%ldms) ", eof_midi_channel_status[channel].note, timeleft);
+				strncat(dest_buffer, temp, dest_buffer_size - strlen(dest_buffer) - 1);	//Append the tone information
+			}
+		}
+		return 1;
+	}
+
 	return 0;	//Macro not supported
 }
 

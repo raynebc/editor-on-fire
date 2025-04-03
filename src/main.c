@@ -2825,6 +2825,7 @@ void eof_logic(void)
 	{
 		eof_find_lyric_preview_lines();
 	}
+	eof_update_midi_timers();
 	eof_frame++;
 
 	#ifdef ALLEGRO_LEGACY
@@ -5252,9 +5253,14 @@ void eof_all_midi_notes_off(void)
 	{
 		unsigned char ALL_NOTES_OFF[3] = {0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
 
+		eof_log("\tMIDI emergency off", 3);
+
 		midi_driver->raw_midi(ALL_NOTES_OFF[0]);
 		midi_driver->raw_midi(ALL_NOTES_OFF[1]);
 		midi_driver->raw_midi(ALL_NOTES_OFF[2]);
+
+		//Update the note statuses in eof_midi_channel_status[]
+		eof_midi_channel_status[0].on = eof_midi_channel_status[1].on = eof_midi_channel_status[2].on = eof_midi_channel_status[3].on = eof_midi_channel_status[4].on = eof_midi_channel_status[5].on = 0;
 	}
 }
 
