@@ -89,8 +89,8 @@
 //32, 64, 128, 256, 2048, 4096, 8192, 16384, 32768, 262144, etc. are currently unused for legacy guitar notes
 
 //The following flags pertain to legacy and pro guitar notes
-#define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
-#define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
+#define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill (or special drum roll) section
+#define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo (or drum roll) section
 
 
 ///Temporary note flags

@@ -197,8 +197,9 @@ MENU eof_edit_selection_deselect_menu[] =
 MENU eof_edit_selection_menu[] =
 {
 	{"&Select", NULL, eof_edit_selection_select_menu, 0, NULL},
-	{"Select &All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
+	{"Select all\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
 	{"&Conditional select\tALT+C", eof_menu_edit_select_conditional, NULL, 0, NULL},
+	{"St&Atus select", eof_menu_edit_select_status, NULL, 0, NULL},
 	{"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
 	{"&Precise select like\tShift+L", eof_menu_edit_precise_select_like, NULL, 0, NULL},
 	{"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
@@ -207,6 +208,7 @@ MENU eof_edit_selection_menu[] =
 	{"&Deselect", NULL, eof_edit_selection_deselect_menu, 0, NULL},
 	{"Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
 	{"Conditional d&Eselect\tALT+D", eof_menu_edit_deselect_conditional, NULL, 0, NULL},
+	{"Stat&Us deselect", eof_menu_edit_deselect_status, NULL, 0, NULL},
 	{"Invert selection", eof_menu_edit_invert_selection, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -318,32 +320,33 @@ void eof_prepare_edit_menu(void)
 		if(vselected)
 		{	//If any notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = 0;		//copy
-			eof_edit_selection_menu[3].flags = 0;	//select like
-			eof_edit_selection_menu[4].flags = 0;	//precise select like
+			eof_edit_selection_menu[4].flags = 0;	//select like
+			eof_edit_selection_menu[5].flags = 0;	//precise select like
 
 			/* select rest */
 			if(eof_selection.current != (eof_get_track_size(eof_song, eof_selected_track) - 1))
 			{	//If the selected note isn't the last in the track
-				eof_edit_selection_menu[5].flags = 0;
+				eof_edit_selection_menu[6].flags = 0;
 			}
 			else
 			{
-				eof_edit_selection_menu[5].flags = D_DISABLED;
+				eof_edit_selection_menu[6].flags = D_DISABLED;
 			}
 
 			if(eof_selection.current != 0)
 			{
-				eof_edit_selection_menu[6].flags = 0;	//select previous
+				eof_edit_selection_menu[7].flags = 0;	//select previous
 			}
 			else
 			{
-				eof_edit_selection_menu[6].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
+				eof_edit_selection_menu[7].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
 			}
 
-			eof_edit_selection_menu[8].flags = 0;	//deselect>
-			eof_edit_selection_menu[9].flags = 0;	//deselect all
-			eof_edit_selection_menu[10].flags = 0;	//conditional deselect
-			eof_edit_selection_menu[11].flags = 0;	//invert selection
+			eof_edit_selection_menu[9].flags = 0;	//deselect>
+			eof_edit_selection_menu[10].flags = 0;	//deselect all
+			eof_edit_selection_menu[11].flags = 0;	//conditional deselect
+			eof_edit_selection_menu[12].flags = 0;	//status deselect
+			eof_edit_selection_menu[13].flags = 0;	//invert selection
 			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a drum track is active
 				eof_edit_selection_deselect_menu[2].flags = 0;	//deselect>Toms
@@ -358,14 +361,15 @@ void eof_prepare_edit_menu(void)
 		else
 		{	//If no notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = D_DISABLED;			//copy
-			eof_edit_selection_menu[3].flags = D_DISABLED;	//select like
-			eof_edit_selection_menu[4].flags = D_DISABLED;	//precise select like
-			eof_edit_selection_menu[5].flags = D_DISABLED;	//select rest
-			eof_edit_selection_menu[6].flags = D_DISABLED;	//select previous
-			eof_edit_selection_menu[8].flags = D_DISABLED;	//deselect>
-			eof_edit_selection_menu[9].flags = D_DISABLED;	//deselect all
-			eof_edit_selection_menu[10].flags = D_DISABLED;	//conditional deselect
-			eof_edit_selection_menu[11].flags = D_DISABLED;	//invert selection
+			eof_edit_selection_menu[4].flags = D_DISABLED;	//select like
+			eof_edit_selection_menu[5].flags = D_DISABLED;	//precise select like
+			eof_edit_selection_menu[6].flags = D_DISABLED;	//select rest
+			eof_edit_selection_menu[7].flags = D_DISABLED;	//select previous
+			eof_edit_selection_menu[9].flags = D_DISABLED;	//deselect>
+			eof_edit_selection_menu[10].flags = D_DISABLED;	//deselect all
+			eof_edit_selection_menu[11].flags = D_DISABLED;	//conditional deselect
+			eof_edit_selection_menu[12].flags = D_DISABLED;	//status deselect
+			eof_edit_selection_menu[13].flags = D_DISABLED;	//invert selection
 		}
 
 		/* paste, old paste */
@@ -3306,22 +3310,22 @@ int eof_menu_edit_conditional_selection_logic(int function)
 		}
 	}
 	if(eof_menu_edit_conditional_selection_dialog[14].flags == D_SELECTED)
-	{	//Lane 3 cymbal cyecked
+	{	//Lane 3 cymbal checked
 		cymbal_match_bitmask |= 4;
 	}
 	if(eof_menu_edit_conditional_selection_dialog[15].flags == D_SELECTED)
-	{	//Lane 4 cymbal cyecked
+	{	//Lane 4 cymbal checked
 		cymbal_match_bitmask |= 8;
 	}
 	if(eof_menu_edit_conditional_selection_dialog[16].flags == D_SELECTED)
-	{	//Lane 5 cymbal cyecked
+	{	//Lane 5 cymbal checked
 		cymbal_match_bitmask |= 16;
 	}
 
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the track
 		if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)
-			continue;	//If the note is not in the active track ddifficulty, skip it
+			continue;	//If the note is not in the active track difficulty, skip it
 
 		if(!function)
 		{	//Perform conditional deselection
@@ -3661,6 +3665,280 @@ int eof_menu_edit_invert_selection(void)
 		}
 	}
 	return 1;
+}
+
+char eof_menu_edit_pgstatus_selection_dialog_string[25];
+DIALOG eof_menu_edit_pgstatus_selection_dialog[] =
+{
+	/*	(proc)                   (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)  (d1) (d2)  (dp)                       (dp2) (dp3) */
+	{d_agup_window_proc, 0,   0,   376, 420,2,   23,  0,    0,          0,   0,   eof_menu_edit_pgstatus_selection_dialog_string, NULL, NULL },
+	{d_agup_radio_proc,    16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                 NULL, NULL },
+	{d_agup_radio_proc,    72,  32,  62,  16, 2,   23,  0,    0,           1,   0,   "Do not",                  NULL, NULL },
+	{d_agup_radio_proc,    16,  52,  116, 16, 2,   23,  0,  D_SELECTED, 2,  0,  "Contain any of", NULL, NULL },
+	{d_agup_radio_proc,  134, 52,  108, 16, 2,   23,  0,    0,           2,   0,   "Contain all of",       NULL, NULL },
+	{d_agup_radio_proc,  244, 52,  116, 16, 2,   23,  0,    0,           2,   0,   "Contain exactly",    NULL, NULL },
+	{d_agup_text_proc,      16,  92,  64,  8,  2,   23,  0,    0,            0,   0,   "These statuses:",     NULL, NULL },
+	{d_agup_check_proc,   16, 112,  85,  16, 2,   23,  0,    0,           0,   0,   "Star power",            NULL, NULL },
+	{d_agup_check_proc,   130, 112,  60,  16, 2,   23,  0,    0,         0,   0,   "Crazy",                    NULL, NULL },
+	{d_agup_check_proc,   16,  132, 55,  16, 2,   23,  0,    0,          0,   0,   "Trill",                       NULL, NULL },
+	{d_agup_check_proc,   130,  132, 68,  16, 2,   23,  0,    0,        0,   0,   "Tremolo",               NULL, NULL },
+	{d_agup_check_proc,     16,  152, 75,  16,  2,  23,  0,    0,         0,   0,   "Chordify",               NULL, NULL },
+	{d_agup_check_proc,   130,  152, 100, 16, 2,   23,  0,    0,        0,   0,   "Reverse slide",        NULL, NULL },
+	{d_agup_text_proc,      26,  172, 64,  8,  2,   23,  0,    0,           0,   0,   "Slide:",                    NULL, NULL },
+	{d_agup_check_proc,   70,  172, 40,  16, 2,   23,  0,    0,          0,   0,   "Up",                        NULL, NULL },
+	{d_agup_check_proc,   130,  172, 55,  16, 2,   23,  0,    0,        0,   0,   "Down",                   NULL, NULL },
+	{d_agup_check_proc,   200,  172, 85,  16, 2,   23,  0,    0,        0,   0,   "Unpitched",            NULL, NULL },
+	{d_agup_text_proc,      26,  192, 64,  8,  2,   23,  0,    0,           0,   0,   "Mute:",                   NULL, NULL },
+	{d_agup_check_proc,   70,  192, 60,  16, 2,   23,  0,    0,          0,   0,   "String",                   NULL, NULL },
+	{d_agup_check_proc,   130,  192, 50,  16, 2,   23,  0,    0,        0,   0,   "Palm",                     NULL, NULL },
+	{d_agup_text_proc,      26,  212, 64,  8,  2,   23,  0,    0,           0,   0,   "Strum:",                   NULL, NULL },
+	{d_agup_check_proc,   70,  212, 40,  16, 2,   23,  0,    0,          0,   0,   "Up",                        NULL, NULL },
+	{d_agup_check_proc,   130,  212, 45,  16, 2,   23,  0,    0,        0,   0,   "Mid",                      NULL, NULL },
+	{d_agup_check_proc,  200, 212, 60,  16, 2,   23,  0,    0,          0,   0,   "Down",                   NULL, NULL },
+	{d_agup_text_proc,      26,  232, 64,  8,  2,   23,  0,    0,           0,   0,   "Bass:",                     NULL, NULL },
+	{d_agup_check_proc,   70,  232, 45,  16, 2,   23,  0,    0,          0,   0,   "Pop",                      NULL, NULL },
+	{d_agup_check_proc,   130,  232, 50,  16, 2,   23,  0,    0,        0,   0,   "Slap",                      NULL, NULL },
+	{d_agup_check_proc,   16,  252, 40,  16, 2,   23,  0,    0,          0,   0,   "HO",                       NULL, NULL },
+	{d_agup_check_proc,   130,  252, 40,  16, 2,   23,  0,    0,        0,   0,   "PO",                        NULL, NULL },
+	{d_agup_check_proc,  250, 252, 45,  16, 2,   23,  0,    0,          0,   0,   "Tap",                       NULL, NULL },
+	{d_agup_check_proc,   16,  272, 64,  16, 2,   23,  0,    0,          0,   0,   "Accent",                  NULL, NULL },
+	{d_agup_check_proc,   130,  272, 64,  16, 2,   23,  0,    0,        0,   0,   "P.Harm",                 NULL, NULL },
+	{d_agup_check_proc,  250, 272, 64,  16, 2,   23,  0,    0,          0,   0,   "Vibrato",                 NULL, NULL },
+	{d_agup_check_proc,   16,  292, 80,  16, 2,   23,  0,    0,          0,   0,   "Harmonic",             NULL, NULL },
+	{d_agup_check_proc,   130,  292, 55,  16, 2,   23,  0,    0,        0,   0,   "Bend",                     NULL, NULL },
+	{d_agup_check_proc,  250, 292, 75,  16, 2,   23,  0,    0,          0,   0,   "Linknext",               NULL, NULL },
+	{d_agup_check_proc,   16,  312, 60,  16, 2,   23,  0,    0,          0,   0,   "Ignore",                  NULL, NULL },
+	{d_agup_check_proc,   130,  312, 66,  16, 2,   23,  0,    0,        0,   0,   "Sustain",                 NULL, NULL },
+	{d_agup_check_proc,  250, 312, 50,  16, 2,   23,  0,    0,          0,   0,   "Stop",                     NULL, NULL },
+	{d_agup_check_proc,   16,  332, 80,  16, 2,   23,  0,    0,          0,   0,   "Ghost HS",              NULL, NULL },
+	{d_agup_check_proc,   130,  332, 68,  16, 2,   23,  0,    0,        0,   0,   "Hi Dens",                NULL, NULL },
+	{d_agup_check_proc,  250, 332, 50,  16, 2,   23,  0,    0,          0,   0,   "Split",                      NULL, NULL },
+	{d_agup_check_proc,   16,  352, 80,  16, 2,   23,  0,    0,          0,   0,   "Fingerless",             NULL, NULL },
+	{d_agup_check_proc,   130,  352, 75,  16, 2,   23,  0,    0,        0,   0,   "Pre-bend",              NULL, NULL },
+	{d_agup_button_proc, 16,  378, 68,  28, 2,   23,  '\r', D_EXIT,  0,   0,   "OK",                        NULL, NULL },
+	{d_agup_button_proc, 108,  378, 68,  28, 2,   23,  '\r', D_EXIT,  0,   0,   "All",                       NULL, NULL },
+	{d_agup_button_proc, 200,  378, 68,  28, 2,   23,  '\r', D_EXIT,  0,   0,  "None",                   NULL, NULL },
+	{d_agup_button_proc, 292, 378, 68,  28, 2,   23,  0,  D_EXIT,   0,   0,   "Cancel",                  NULL, NULL },
+	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_check_pgnote_status_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_flags, unsigned long match_eflags)
+{
+	int match = 0;		//This will be set to nonzero if the user's criteria apply to the note, and will ultimately be checked against the "Do" or "Do not" criterion
+
+	unsigned long thisnote_flags = eof_get_note_flags(sp, track, notenum);
+	unsigned long thisnote_eflags = eof_get_note_eflags(sp, track, notenum);
+
+	//There are some flags that this dialog does not check for.  allflags and alleflags will represent all of the flags that are relevant for "contain exactly" status comparison
+	unsigned long allflags =	EOF_NOTE_FLAG_SP | EOF_NOTE_FLAG_CRAZY | EOF_NOTE_FLAG_IS_TRILL | EOF_NOTE_FLAG_IS_TREMOLO | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN |
+							EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE | EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM | EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM |
+							EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO | EOF_PRO_GUITAR_NOTE_FLAG_TAP |
+							EOF_PRO_GUITAR_NOTE_FLAG_ACCENT | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_PRO_GUITAR_NOTE_FLAG_BEND |
+							EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT | EOF_PRO_GUITAR_NOTE_FLAG_HD | EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
+	unsigned long alleflags = EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY | EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE | EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN | EOF_PRO_GUITAR_NOTE_EFLAG_STOP | EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS | EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS | EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
+
+	if(eof_menu_edit_pgstatus_selection_dialog[3].flags == D_SELECTED)
+	{	//Contain any of
+		if((thisnote_flags & match_flags) || (thisnote_eflags & match_eflags))
+		{	//If the specified note contains any of the specified flags or extended flags
+			match = 1;
+		}
+	}
+	else if(eof_menu_edit_pgstatus_selection_dialog[4].flags == D_SELECTED)
+	{	//Contain all of
+		if(((thisnote_flags & match_flags) == match_flags) && ((thisnote_eflags & match_eflags) == match_eflags))
+		{	//If the specified note contains all of the specified flags and extended flags
+			match = 1;
+		}
+	}
+	else
+	{	//Contain exactly
+		if(((thisnote_flags & allflags) == match_flags) && ((thisnote_eflags & alleflags) == match_eflags))
+		{	//If the specified note contains exactly the specified flags and extended flags (disregarding the flags that the dialog doesn't account for, such as EOF_NOTE_FLAG_HOPO)
+			match = 1;
+		}
+	}
+
+	if(eof_menu_edit_pgstatus_selection_dialog[1].flags == D_SELECTED)
+	{	//"Do" is selected, return nonzero if a match has been made
+		if(match)
+		{
+			return 1;
+		}
+	}
+	else
+	{	//"Do not" is selected, return nonzero if a match has not been made
+		if(!match)
+		{
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int eof_menu_edit_pgstatus_selection_logic(int function)
+{
+	unsigned long flags = 0, eflags = 0, ctr;
+	int retval;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return error
+	if(!function && (eof_selection.track != eof_selected_track))
+		return 1;	//No notes in the active track are selected so none can become deselected
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this dialog to run when a pro guitar format track is not active
+
+	if(!function)
+	{	//Perform status deselection
+		strncpy(eof_menu_edit_pgstatus_selection_dialog_string, "Deselect notes that", sizeof(eof_menu_edit_pgstatus_selection_dialog_string) - 1);
+	}
+	else
+	{	//Perform status selection
+		strncpy(eof_menu_edit_pgstatus_selection_dialog_string, "Select notes that", sizeof(eof_menu_edit_pgstatus_selection_dialog_string) - 1);
+	}
+	eof_color_dialog(eof_menu_edit_pgstatus_selection_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_pgstatus_selection_dialog);
+
+	//Process the dialog
+	do{
+		retval = eof_popup_dialog(eof_menu_edit_pgstatus_selection_dialog, 0);
+
+		if(retval == 44)
+		{	//User clicked OK
+			if(eof_menu_edit_pgstatus_selection_dialog[7].flags == D_SELECTED)		//Star power
+				flags |= EOF_NOTE_FLAG_SP;
+			if(eof_menu_edit_pgstatus_selection_dialog[8].flags == D_SELECTED)		//Crazy
+				flags |= EOF_NOTE_FLAG_CRAZY;
+			if(eof_menu_edit_pgstatus_selection_dialog[9].flags == D_SELECTED)		//Trill
+				flags |= EOF_NOTE_FLAG_IS_TRILL;
+			if(eof_menu_edit_pgstatus_selection_dialog[10].flags == D_SELECTED)	//Tremolo
+				flags |= EOF_NOTE_FLAG_IS_TREMOLO;
+			if(eof_menu_edit_pgstatus_selection_dialog[11].flags == D_SELECTED)	//Chordify
+				eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY;
+			if(eof_menu_edit_pgstatus_selection_dialog[12].flags == D_SELECTED)	//Reverse slide
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
+			if(eof_menu_edit_pgstatus_selection_dialog[14].flags == D_SELECTED)	//Slide up
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+			if(eof_menu_edit_pgstatus_selection_dialog[15].flags == D_SELECTED)	//Slide down
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+			if(eof_menu_edit_pgstatus_selection_dialog[16].flags == D_SELECTED)	//Unpitched slide
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+			if(eof_menu_edit_pgstatus_selection_dialog[18].flags == D_SELECTED)	//String mute
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+			if(eof_menu_edit_pgstatus_selection_dialog[19].flags == D_SELECTED)	//Palm mute
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+			if(eof_menu_edit_pgstatus_selection_dialog[21].flags == D_SELECTED)	//Up strum
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+			if(eof_menu_edit_pgstatus_selection_dialog[22].flags == D_SELECTED)	//Mid strum
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;
+			if(eof_menu_edit_pgstatus_selection_dialog[23].flags == D_SELECTED)	//Down strum
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
+			if(eof_menu_edit_pgstatus_selection_dialog[25].flags == D_SELECTED)	//Bass pop
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+			if(eof_menu_edit_pgstatus_selection_dialog[26].flags == D_SELECTED)	//Bass slap
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+			if(eof_menu_edit_pgstatus_selection_dialog[27].flags == D_SELECTED)	//Hammer on
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
+			if(eof_menu_edit_pgstatus_selection_dialog[28].flags == D_SELECTED)	//Pull off
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;
+			if(eof_menu_edit_pgstatus_selection_dialog[29].flags == D_SELECTED)	//Tap
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+			if(eof_menu_edit_pgstatus_selection_dialog[30].flags == D_SELECTED)	//Accent
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+			if(eof_menu_edit_pgstatus_selection_dialog[31].flags == D_SELECTED)	//Pinch harmonic
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+			if(eof_menu_edit_pgstatus_selection_dialog[32].flags == D_SELECTED)	//Vibrato
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+			if(eof_menu_edit_pgstatus_selection_dialog[33].flags == D_SELECTED)	//Natural harmonic
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+			if(eof_menu_edit_pgstatus_selection_dialog[34].flags == D_SELECTED)	//Bend
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+			if(eof_menu_edit_pgstatus_selection_dialog[35].flags == D_SELECTED)	//Linknext
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
+			if(eof_menu_edit_pgstatus_selection_dialog[36].flags == D_SELECTED)	//Ignore
+				eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;
+			if(eof_menu_edit_pgstatus_selection_dialog[37].flags == D_SELECTED)	//Sustain
+				eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;
+			if(eof_menu_edit_pgstatus_selection_dialog[38].flags == D_SELECTED)	//Stop
+				eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
+			if(eof_menu_edit_pgstatus_selection_dialog[39].flags == D_SELECTED)	//Ghost HS
+				eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS;
+			if(eof_menu_edit_pgstatus_selection_dialog[40].flags == D_SELECTED)	//Hi Density
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_HD;
+			if(eof_menu_edit_pgstatus_selection_dialog[41].flags == D_SELECTED)	//Split
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
+			if(eof_menu_edit_pgstatus_selection_dialog[42].flags == D_SELECTED)	//Fingerless
+				eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS;
+			if(eof_menu_edit_pgstatus_selection_dialog[43].flags == D_SELECTED)	//Pre-bend
+				eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
+		}
+		else if(retval == 45)
+		{	//User clicked "All" button
+			for(ctr = 7; ctr < 44; ctr++)
+				eof_menu_edit_pgstatus_selection_dialog[ctr].flags = D_SELECTED;	//Check all checkboxes
+		}
+		else if(retval == 46)
+		{	//User clicked "None" button
+			for(ctr = 7; ctr < 44; ctr++)
+				eof_menu_edit_pgstatus_selection_dialog[ctr].flags = 0;	//Uncheck all checkboxes
+		}
+		else
+		{	//User clicked cancel
+			return D_O_K;
+		}
+	}while(retval != 44);	//Run the dialog until the user clicks OK
+
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)
+			continue;	//If the note is not in the active track ddifficulty, skip it
+
+		if(!function)
+		{	//Perform status deselection
+			if(eof_selection.multi[ctr] && eof_check_pgnote_status_selection(eof_song, eof_selected_track, ctr, flags, eflags))
+			{	//If this note is selected and matches the conditions the user specified
+				eof_selection.multi[ctr] = 0;	//Deselect the note
+			}
+		}
+		else
+		{	//Perform status selection
+			if(eof_check_pgnote_status_selection(eof_song, eof_selected_track, ctr, flags, eflags))
+			{	//If this note matches the conditions the user specified
+				if(eof_selection.track != eof_selected_track)
+				{	//If no notes in the current track are currently selected
+					(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
+					eof_selection.track = eof_selected_track;	//Indicate that the active track is the one with notes selected
+				}
+				eof_selection.multi[ctr] = 1;	//Select the note
+			}
+		}
+	}//For each note in the track
+	if(eof_selection.current != EOF_MAX_NOTES - 1)
+	{	//If there was a last selected note
+		if(eof_selection.multi[eof_selection.current] == 0)
+		{	//And it's not selected anymore
+			eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note
+		}
+	}
+
+	return D_O_K;
+}
+
+int eof_menu_edit_deselect_status(void)
+{
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		return eof_menu_edit_pgstatus_selection_logic(0);
+
+	return D_O_K;
+}
+
+int eof_menu_edit_select_status(void)
+{
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		return eof_menu_edit_pgstatus_selection_logic(1);
+
+	return D_O_K;
 }
 
 int eof_menu_edit_paste_from_supaeasy(void)

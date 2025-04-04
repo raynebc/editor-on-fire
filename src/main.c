@@ -5826,7 +5826,6 @@ int main(int argc, char * argv[])
 		{	//Chart is not paused
 			int ret = alogg_poll_ogg(eof_music_track);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
-			eof_play_queued_midi_tones();	//Played cued MIDI tones for pro guitar/bass notes
 			if((ret == ALOGG_POLL_PLAYJUSTFINISHED) && !eof_rewind_at_end)
 			{	//If the end of the chart has been reached during playback, and the user did not want the chart to automatically rewind
 				(void) eof_menu_song_seek_end();	//Re-seek to end of the audio

@@ -76,7 +76,17 @@ int eof_menu_edit_conditional_selection_logic(int function);
 	//If function is zero, notes in the active track are deselected based on the criteria set in eof_menu_edit_conditional_selection_dialog[]
 	//otherwise such notes are selected
 int eof_menu_edit_deselect_conditional(void);		//Allows user to specify conditions for deselecting notes from the current selection
-int eof_menu_edit_select_conditional(void);			//Allows user to specify conditions for selecting notes in the current track
+int eof_menu_edit_select_conditional(void);			//Allows user to specify conditions for selecting notes in the current track difficulty
+
+int eof_check_pgnote_status_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_flags, unsigned long match_eflags);
+	//Examines the specified pro guitarnote and returns nonzero if it matches the conditions selected in eof_menu_edit_pgstatus_selection_dialog[]
+	//match_flags is a bitmask reflecting the checked status flags in the dialog
+	//match_eflags is a bitmask reflecting the checked extended status flags in the dialog
+int eof_menu_edit_pgstatus_selection_logic(int function);
+	//If function is zero, notes in the active track are deselected based on the criteria set in eof_menu_edit_status_selection_dialog[]
+	//otherwise such notes are selected
+int eof_menu_edit_deselect_status(void);		//Allows user to specify statuses for deselecting notes from the current selection
+int eof_menu_edit_select_status(void);			//Allows user to specify statuses for selecting notes in the current track difficulty
 
 int eof_menu_edit_select_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long));
 	//Passes notes in the active track difficulty to the specified function that accepts a song structure pointer, a track number and a note number (in that order)

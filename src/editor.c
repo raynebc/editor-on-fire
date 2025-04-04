@@ -1549,6 +1549,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 						eof_seek_to_nearest_grid_snap();	//Seek to the nearest grid snap position when playback is stopped
 					}
 					eof_stop_midi();
+					stop_midi();	//In some cases, it doesn't look like the above is enough to halt playback
 				}
 			}
 		}

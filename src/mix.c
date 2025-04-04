@@ -167,6 +167,9 @@ void eof_mix_callback_common(void)
 		eof_mix_current_percussion++;
 		eof_mix_next_percussion = eof_mix_percussion_pos[eof_mix_current_percussion];
 	}
+
+	//Trigger MIDI tones
+	eof_play_queued_midi_tones();	//Played queued MIDI tones for pro guitar/bass notes
 }
 
 void eof_mix_callback_stereo(void * buf, int length)
