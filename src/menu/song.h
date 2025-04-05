@@ -39,6 +39,11 @@ int eof_menu_catalog_reorder(void);
 int eof_menu_catalog_previous(void);
 int eof_menu_catalog_next(void);
 
+int eof_phrase_edit_timing_edit_proc(int msg, DIALOG *d, int c);
+	//An edit proc that catches S, E and N keystrokes to alter the radio buttons in eof_phrase_edit_timing_dialog[]
+	//Sends all other input to eof_verified_edit_proc()
+int eof_phrase_edit_timing_radio_proc(int msg, DIALOG *d, int c);
+	//A radio button procedure that updates the input fields of eof_phrase_edit_timing_dialog[]
 int eof_phrase_edit_timing(unsigned long *start, unsigned long *end);
 	//A generic dialog that allows the user to alter the given start and end positions
 	//eof_etext3 is used as the dialog title so it can be set appropriately by the calling function

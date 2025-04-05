@@ -80,8 +80,9 @@ typedef struct
 	clock_t stop_time;		//The clock time at which the note should be stopped with MIDI commands
 } EOF_MIDI_PLAYBACK_STATUS_STRUCT;
 
-extern EOF_MIDI_PLAYBACK_STATUS_STRUCT eof_midi_channel_status[6];
+extern EOF_MIDI_PLAYBACK_STATUS_STRUCT eof_midi_channel_status[16];
 	//The states of MIDI note playback for each of the channels EOF uses (0 through 5) to play pro guitar MIDI tones
+	//Since 16 channels are usable in MIDI, the array will accommodate the full range of channels for future-proofing
 	//eof_midi_play_note_ex() will set these statuses and eof_update_midi_timers() will be called within the main program loop to turn notes off when due
 extern unsigned char eof_midi_reset_instrument;
 	//If nonzero, signals to eof_midi_play_note_ex() to send Program Change MIDI events to define the instrument number to be played by the MIDI engine

@@ -826,7 +826,7 @@ void eof_mix_play_note(int note)
 	}
 }
 
-EOF_MIDI_PLAYBACK_STATUS_STRUCT eof_midi_channel_status[6] = {0};
+EOF_MIDI_PLAYBACK_STATUS_STRUCT eof_midi_channel_status[16] = {0};
 unsigned char eof_midi_reset_instrument = 1;
 
 void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch, unsigned long duration)

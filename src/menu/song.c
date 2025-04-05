@@ -4007,18 +4007,100 @@ int eof_menu_catalog_toggle_full_width(void)
 	return 1;
 }
 
+unsigned long eof_phrase_edit_timing_original_start;	//Track the start and end timestamps for the phrase whose timing is being edited, so they can be restored during radio button changes
+unsigned long eof_phrase_edit_timing_original_end;
 DIALOG eof_phrase_edit_timing_dialog[] =
 {
-	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                  (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 180, 0,   0,   0,    0,      0,   0,   eof_etext3,           NULL, NULL },
+	/* (proc)                         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                  (dp2) (dp3) */
+	{ d_agup_window_proc,  0,   0,   200, 228, 0,   0,   0,    0,      0,   0,   eof_etext3,           NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
-	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
-	{ d_agup_text_proc,      12,  88,  60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",  NULL, NULL },
-	{ eof_verified_edit_proc,12,  104, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
-	{ d_agup_button_proc,    12,  140, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
-	{ d_agup_button_proc,    110, 140, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",             NULL, NULL },
+	{ eof_phrase_edit_timing_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
+	{ d_agup_text_proc,       12,  88,  60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",  NULL, NULL },
+	{ eof_phrase_edit_timing_edit_proc,12,  104, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
+	{ d_agup_text_proc,       12,  136,  60,  12,  0,   0,   0,    0,      0,   0,   "Seek pos defines",                NULL, NULL },
+	{ eof_phrase_edit_timing_radio_proc,  12, 155, 50,  15,  2,   23,  0,  0,  0,   0,   "&Start",           (void *)6,    NULL },	//Use dp2 to store the object number, for use in eof_phrase_edit_timing_radio_proc()
+	{ eof_phrase_edit_timing_radio_proc,  65, 155, 45,  15,  2,   23,  0,  0, 0,   0,   "&End",           (void *)7,    NULL },
+	{ eof_phrase_edit_timing_radio_proc,  115, 155, 65,  15,  2,   23,  0, D_SELECTED,0,   0,   "&Neither", (void *)8,    NULL },
+	{ d_agup_button_proc,    12,  188, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
+	{ d_agup_button_proc,    110, 188, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",             NULL, NULL },
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                 NULL, NULL }
 };
+
+int eof_phrase_edit_timing_edit_proc(int msg, DIALOG *d, int c)
+{
+	int junk = 0;
+
+	if(msg == MSG_CHAR)
+	{
+		char input_char = tolower(c & 0xFF);
+		if((input_char == 's') && !(eof_phrase_edit_timing_dialog[6].flags & D_DISABLED))
+		{	//User pressed S key and the Start radio button is not disabled
+			eof_phrase_edit_timing_dialog[6].flags = D_SELECTED;	//Select the Start radio button
+			eof_phrase_edit_timing_dialog[7].flags &= ~D_SELECTED;	//Unselect the End radio button (keeping any disabled status it may have)
+			eof_phrase_edit_timing_dialog[8].flags = 0;			//Unselect the Neither radio button
+			(void) object_message(&eof_phrase_edit_timing_dialog[6], MSG_CLICK, 0);	//Send click event to the Start radio button
+			(void) dialog_message(eof_phrase_edit_timing_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+			return D_USED_CHAR;	//Drop the character
+		}
+		else if((input_char == 'e') && !(eof_phrase_edit_timing_dialog[7].flags & D_DISABLED))
+		{	//User pressed E key and the End radio button is not disabled
+			eof_phrase_edit_timing_dialog[6].flags &= ~D_SELECTED;	//Unselect the Start radio button (keeping any disabled status it may have)
+			eof_phrase_edit_timing_dialog[7].flags = D_SELECTED;	//Select the End radio button
+			eof_phrase_edit_timing_dialog[8].flags = 0;			//Unselect the Neither radio button
+			(void) object_message(&eof_phrase_edit_timing_dialog[7], MSG_CLICK, 0);	//Send click event to the End radio button
+			(void) dialog_message(eof_phrase_edit_timing_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+			return D_USED_CHAR;	//Drop the character
+		}
+		else if(input_char == 'n')
+		{	//User pressed N key
+			eof_phrase_edit_timing_dialog[6].flags &= ~D_SELECTED;	//Unselect the Start radio button (keeping any disabled status it may have)
+			eof_phrase_edit_timing_dialog[7].flags &= ~D_SELECTED;	//Unselect the End radio button (keeping any disabled status it may have)
+			eof_phrase_edit_timing_dialog[8].flags = D_SELECTED;		//Select the Neither radio button
+			(void) object_message(&eof_phrase_edit_timing_dialog[8], MSG_CLICK, 0);	//Send click event to the Neither radio button
+			(void) dialog_message(eof_phrase_edit_timing_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+			return D_USED_CHAR;	//Drop the character
+		}
+	}
+
+	return eof_verified_edit_proc(msg, d, c);	//Allow the input character to be returned to the verified edit proc to filter characters as per usual
+}
+
+int eof_phrase_edit_timing_radio_proc(int msg, DIALOG *d, int c)
+{
+	uintptr_t selected_option;
+
+	if(msg != MSG_CLICK)
+		return d_agup_radio_proc(msg, d, c);	//If this isn't a click message, allow the input to be processed
+
+	if(!d)	//If this pointer is NULL for any reason
+		return d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
+
+	selected_option = (uintptr_t)d->dp2;	//Find out which radio button was clicked on
+	if(selected_option == 6)
+	{	//Start radio button
+		eof_phrase_edit_timing_dialog[2].flags = D_DISABLED;	//Start position input field
+		snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", eof_music_pos.value - eof_av_delay);	//Populate the start field with the current seek position
+		eof_phrase_edit_timing_dialog[4].flags = 0;			//End position input field
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_phrase_edit_timing_original_end);	//Populate the end field with the phrase's original end time
+	}
+	else if(selected_option == 7)
+	{	//End radio button
+		eof_phrase_edit_timing_dialog[2].flags = 0;			//Start position input field
+		snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", eof_phrase_edit_timing_original_start);	//Populate the start field with the phrase's original start time
+		eof_phrase_edit_timing_dialog[4].flags = D_DISABLED;	//End position input field
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_music_pos.value - eof_av_delay);	//Populate the end field with the current seek position
+	}
+	else
+	{	//Neither
+		eof_phrase_edit_timing_dialog[2].flags = 0;	//Start position input field
+		snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", eof_phrase_edit_timing_original_start);	//Populate the start field with the phrase's original start time
+		eof_phrase_edit_timing_dialog[4].flags = 0;	//End position input field
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_phrase_edit_timing_original_end);	//Populate the end field with the phrase's original end time
+	}
+
+	(void) d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
+	return D_REDRAW;
+}
 
 int eof_phrase_edit_timing(unsigned long *start, unsigned long *end)
 {
@@ -4027,13 +4109,21 @@ int eof_phrase_edit_timing(unsigned long *start, unsigned long *end)
 	if(!eof_song_loaded || !start || !end)
 		return 1;	//Invalid parameters
 
+	eof_phrase_edit_timing_original_start = *start;
+	eof_phrase_edit_timing_original_end = *end;
 	eof_render();
 	eof_color_dialog(eof_phrase_edit_timing_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_phrase_edit_timing_dialog);
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", *start);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", *end);
 
-	if(eof_popup_dialog(eof_phrase_edit_timing_dialog, 2) == 5)
+	eof_phrase_edit_timing_dialog[6].flags = (eof_music_pos.value - eof_av_delay >= *end) ? D_DISABLED : 0;	//If the seek position is at/after the end timestamp, disable the Start radio button
+	eof_phrase_edit_timing_dialog[7].flags = (eof_music_pos.value - eof_av_delay <= *start) ? D_DISABLED : 0;	//If the seek position is at/before the start timestamp, disable the End radio button
+	eof_phrase_edit_timing_dialog[8].flags = D_SELECTED;	//Always select the "Neither" radio option by default
+	eof_phrase_edit_timing_dialog[2].flags = 0;			//Enable Start position input field
+	eof_phrase_edit_timing_dialog[4].flags = 0;			//Enable End position input field
+
+	if(eof_popup_dialog(eof_phrase_edit_timing_dialog, 2) == 9)
 	{	//User clicked OK
 		newstart = atol(eof_etext);
 		newend = atol(eof_etext2);
