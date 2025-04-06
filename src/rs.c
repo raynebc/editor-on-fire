@@ -5816,7 +5816,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 	if(tech.bend)
 	{	//If the note is a bend, write the bendValues subtag and close the note tag
 		unsigned long bendpoints, firstbend = 0, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported note
-		unsigned long bendpointswritten = 0;	//Used to track how many bend points are written, to prevent more than 22 being written for any one note/chordnote
+		unsigned long bendpointswritten = 0;	//Used to track how many bend points are written, to prevent more than 32 being written for any one note/chordnote
 		long nextnote;
 
 		bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, notenum, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string

@@ -2202,6 +2202,35 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Selected pro guitar note MIDI tones
+	if(!ustricmp(macro, "PRO_GUITAR_NOTE_MTONES"))
+	{
+		if(eof_selection.current < tracksize)
+		{	//If a note is selected
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If a pro guitar track is active
+				char temp[10];
+				unsigned char pitchmask, pitches[6] = {0}, ctr, bitmask;
+
+				dest_buffer[0] = '\0';	//Empty this string
+				pitchmask = eof_get_midi_pitches(eof_song, eof_selected_track, eof_selection.current, pitches);	//Determine how many exportable pitches this note/lyric has
+				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+				{	//For each of the six usable strings
+					if(pitchmask & bitmask)
+					{	//If this string has a pitch
+						snprintf(temp, sizeof(temp) - 1, "%s%u", ctr ? "," : "", pitches[ctr]);
+					}
+					else
+					{
+						snprintf(temp, sizeof(temp) - 1, "_");
+					}
+					strncat(dest_buffer, temp, dest_buffer_size - strlen(dest_buffer) - 1);	//Append the tone information
+				}
+			}
+		}
+		return 1;
+	}
+
 	//Selected note NPS
 	if(!ustricmp(macro, "SELECTED_NOTE_NPS"))
 	{

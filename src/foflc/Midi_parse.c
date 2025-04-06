@@ -443,7 +443,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 			break;
 
 			case 0xE:	//Pitch Bend
-				if(Lyrics.verbose>=2)	printf("Event: Channel Aftertouch (Channel=%d): Pitch value=%d\n",vars.eventtype&0xF,((vars.parameters[1]&0x7F)<<7)+(vars.parameters[0]&0x7F));
+				if(Lyrics.verbose>=2)	printf("Event: Pitch bend (Channel=%d): Pitch value=%d\n",vars.eventtype&0xF,((vars.parameters[1]&0x7F)<<7)+(vars.parameters[0]&0x7F));
 			break;
 			case 0xF:	//Meta Event (only if the lower half of eventtype = 0xF)
 //Events 0xF0 and 0xF7 are SysEx events, 0xFF is a meta event

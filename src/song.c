@@ -8159,7 +8159,8 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 
 int eof_get_pro_guitar_note_finger_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *finger_string)
 {
-	unsigned long i, bitmask, index, fretvalue, fingervalue;
+	unsigned long i, bitmask, index, fingervalue;
+	char last_fingered = 0;
 
 	if(!tp || (note >= tp->notes) || !finger_string)
 	{	//If there was an invalid parameter
@@ -8168,24 +8169,20 @@ int eof_get_pro_guitar_note_finger_string(EOF_PRO_GUITAR_TRACK *tp, unsigned lon
 
 	for(i = 0, bitmask = 1, index = 0; i < tp->numstrings; i++, bitmask<<=1)
 	{	//For each of the track's usable strings
-		if(index != 0)
-		{	//If another fret value was already written to this string
-			finger_string[index++] = ' ';	//Insert a space as padding for the previous number
-		}
 		if(tp->note[note]->note & bitmask)
 		{	//If the string is populated for the selected pro guitar note
-			fretvalue = tp->note[note]->frets[i];
 			fingervalue = tp->note[note]->finger[i];
-			if(!(fretvalue & 0x80) && ((fretvalue & 0x7F) >= 10))
-			{	//If this string is not muted and uses a fret number that takes two digits to render
-				finger_string[index++] = ' ';	//Insert another space
-			}
 			if(fingervalue == 0)
 			{	//If this string's fingering is undefined
 				finger_string[index++] = '_';	//Write an underscore to indicate string not played
+				last_fingered = 0;
 			}
 			else
 			{
+				if(last_fingered)
+				{
+					finger_string[index++] = ',';	//Insert a comma as padding for the previous number for readability
+				}
 				if(fingervalue < 5)
 				{
 					finger_string[index++] = '0' + fingervalue;
@@ -8194,11 +8191,13 @@ int eof_get_pro_guitar_note_finger_string(EOF_PRO_GUITAR_TRACK *tp, unsigned lon
 				{	//If this string's fingering defines use of the thumb or is higher than expected
 					finger_string[index++] = 'T';
 				}
+				last_fingered = 1;
 			}
 		}
 		else
 		{
 			finger_string[index++] = '_';	//Write an underscore to indicate string not played
+			last_fingered = 0;
 		}
 	}
 	finger_string[index] = '\0';	//Terminate the string
@@ -8219,10 +8218,6 @@ int eof_get_pro_guitar_note_tone_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	for(i = 0, bitmask = 1, index = 0; i < tp->numstrings; i++, bitmask<<=1)
 	{	//For each of the track's usable strings
 		notename = -1;
-		if(index != 0)
-		{	//If another fret value was already written to this string
-			tone_string[index++] = ' ';	//Insert a space as padding for the previous number
-		}
 		if(tp->note[note]->note & bitmask)
 		{	//If the string is populated for the selected pro guitar note
 			fretvalue = tp->note[note]->frets[i];

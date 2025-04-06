@@ -14,13 +14,68 @@
 #endif
 
 #define EOF_DEFAULT_TIME_DIVISION 480 // default time division used to convert midi_pos to msec_pos
+
+int qsort_helper_immerrock(const void * e1, const void * e2)
+{
+//	eof_log("qsort_helper_immerrock() entered");
+
+	EOF_MIDI_EVENT ** thing1 = (EOF_MIDI_EVENT **)e1;
+	EOF_MIDI_EVENT ** thing2 = (EOF_MIDI_EVENT **)e2;
+
+	/* Chronological order takes precedence in sorting */
+	if((*thing1)->pos < (*thing2)->pos)
+		return -1;
+	if((*thing1)->pos > (*thing2)->pos)
+		return 1;
+
+	/* Channel number takes second precedence */
+	if((*thing1)->channel < (*thing2)->channel)
+		return -1;
+	if((*thing1)->channel > (*thing2)->channel)
+		return 1;
+
+	/* The index variable takes third precedence */
+	if((*thing1)->index && (*thing2)->index)
+	{	//If the index values of both events are nonzero
+		if((*thing1)->index < (*thing2)->index)
+			return -1;
+		if((*thing2)->index < (*thing1)->index)
+			return 1;
+	}
+
+	/* Note number takes fourth precedence */
+	if((*thing1)->note < (*thing2)->note)
+		return -1;
+	if((*thing1)->note > (*thing2)->note)
+		return 1;
+
+	/* Note off before Note on takes fifth precedence */
+	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x80))
+		return 1;
+	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0x90))
+		return -1;
+
+	// they are equal...
+	return 0;
+}
+
+void eof_add_midi_pitch_bend_event(unsigned long pos, unsigned quarter_steps, int channel)
+{
+	unsigned long bendvalue = 8192 + (quarter_steps * 640);	//This is encoded in the MIDI event as the 7 least significant bits written in one byte, then the 7 most significant bits written as another byte
+	unsigned char lsb, msb;
+
+	lsb = bendvalue & 0x7F;			//The first seven bits of the bend value
+	msb = (bendvalue >> 7) & 0x7F;	//The next seven bits of the bend value
+	eof_add_midi_event(pos, 0xE0, lsb, msb, channel);
+}
+
 int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char diff, char *fn)
 {
 	unsigned char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
 	PACKFILE * fp;
-	unsigned long i, k, bitmask, deltapos, deltalength, channelctr;
+	unsigned long i, stringnum, bitmask, deltapos, deltalength, channelctr;
 	unsigned long delta = 0, nextdeltapos;
 	int channel;
 	int technique_vel[6] = {1, 6, 11, 16, 21, 26};	//Technique markers denote the affected string based on the velocity (ie. low E techniques are written with velocity 1)
@@ -156,74 +211,166 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				}
 			}
 		}
-		for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
+		for(stringnum = 0, bitmask = 1; stringnum < 6; stringnum++, bitmask <<= 1)
 		{	//For each of the 6 usable strings
 			if(note & bitmask)
 			{	//If this string is used
-				channel = k;	//IMMERROCK uses channel 0 for the thickest string
-				eof_add_midi_event(deltapos, 0x90, pitches[k], 79, channel);				//Velocity 79 indicates a note pitch definition
-				eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], 79, channel);
+				channel = stringnum;	//IMMERROCK uses channel 0 for the thickest string
+				eof_add_midi_event(deltapos, 0x90, pitches[stringnum], 79, channel);				//Velocity 79 indicates a note pitch definition
+				eof_add_midi_event(deltapos + deltalength, 0x80, pitches[stringnum], 79, channel);
 			}
 		}
 
 		//Write note techniques
 		///Techniques are written in a way where each string has to have markers start and stop at the same timestamp
 		///eof_add_midi_event_indexed() is used for these to ensure a correct sort order when qsort() is used
-		for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
+		for(stringnum = 0, bitmask = 1; stringnum < 6; stringnum++, bitmask <<= 1)
 		{	//For each of the 6 usable strings (using velocities 1, 6, 11, 16, 21, 26 respectively)
+			channel = stringnum;	//IMMERROCK uses channel 0 for the thickest string
 			if(note & bitmask)
 			{	//If this string is used
+				EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};		//Used to process bend points
+
 				///Change all of these so the note off for each marker is the same timestamp as the note on
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 				{	//If this note is palm muted
-					eof_add_midi_event_indexed(deltapos, 0x90, 12, technique_vel[k], 15, index++);		//Note 12, channel 15 with the string's dedicated velocity number indicates palm mute in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, 12, technique_vel[stringnum], 15, index++);		//Note 12, channel 15 with the string's dedicated velocity number indicates palm mute in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 12, 0, 15, index++);
 				}
-				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (tp->note[i]->frets[k] & 0x80))
+				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (tp->note[i]->frets[stringnum] & 0x80))
 				{	//If this note is fully string muted, or this specific string is
-					eof_add_midi_event_indexed(deltapos, 0x90, 13, technique_vel[k], 15, index++);		//Note 13, channel 15 with the string's dedicated velocity number indicates string mute in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, 13, technique_vel[stringnum], 15, index++);		//Note 13, channel 15 with the string's dedicated velocity number indicates string mute in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 13, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
 				{	//If this note is a natural harmonic
-					eof_add_midi_event_indexed(deltapos, 0x90, 14, technique_vel[k], 15, index++);		//Note 14, channel 15 with the string's dedicated velocity number indicates natural harmonic in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, 14, technique_vel[stringnum], 15, index++);		//Note 14, channel 15 with the string's dedicated velocity number indicates natural harmonic in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 14, 0, 15, index++);
 				}
 				if(flags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
 				{	//If this note is a hammer on or a pull off
-					eof_add_midi_event_indexed(deltapos, 0x90, 15, technique_vel[k], 15, index++);		//Note 15, channel 15 with the string's dedicated velocity number indicates hammer on or pull off in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, 15, technique_vel[stringnum], 15, index++);		//Note 15, channel 15 with the string's dedicated velocity number indicates hammer on or pull off in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 15, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 				{	//If this note is tapped
-					eof_add_midi_event_indexed(deltapos, 0x90, 17, technique_vel[k], 15, index++);		//Note 17, channel 15 with the string's dedicated velocity number indicates tapping in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, 17, technique_vel[stringnum], 15, index++);		//Note 17, channel 15 with the string's dedicated velocity number indicates tapping in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 17, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
 				{	//If this note is down strummed/picked
-					eof_add_midi_event_indexed(deltapos, 0x90, 18, technique_vel[k], 15, index++);		//Note 18, channel 15 with the string's dedicated velocity number indicates down strum in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, 18, technique_vel[stringnum], 15, index++);		//Note 18, channel 15 with the string's dedicated velocity number indicates down strum in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 18, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 				{	//If this note is up strummed/picked
-					eof_add_midi_event_indexed(deltapos, 0x90, 19, technique_vel[k], 15, index++);		//Note 19, channel 15 with the string's dedicated velocity number indicates up strum in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, 19, technique_vel[stringnum], 15, index++);		//Note 19, channel 15 with the string's dedicated velocity number indicates up strum in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 19, 0, 15, index++);
 				}
 				if(flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides up or down
-					eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[k], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates slide up or down in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[stringnum], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates slide up or down in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 20, 0, 15, index++);
 				}
 
-		//Write finger placement markers
-				finger = tp->pgnote[i]->finger[k];
+				//Write finger placement markers
+				finger = tp->pgnote[i]->finger[stringnum];
 				if((finger > 0) && (finger < 6))
 				{	//If this string has a defined fingering that is valid
-					eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[k], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[stringnum], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, finger_marker[finger], 0, 15, index++);
 				}
-			}
-		}
+
+				//Write bend points
+				(void) eof_get_rs_techniques(sp, track, i, stringnum, &tech, 2, 1);	//Determine techniques used by this note/chordNote
+				if(tech.bend)
+				{	//If the note is a bend, write all applicable bend points
+					unsigned long bendpoints, firstbend = 0, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported note
+					unsigned long stringdeltalength;		//Will track the length of this specific string's length in delta ticks (taking the stop tech note technique into account if applicable)
+					unsigned long ctr;
+					long nextnote;
+
+					stringdeltalength = eof_ConvertToDeltaTime(pos + tech.length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
+					bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, i, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string
+					if(!bendpoints)
+					{	//If there are none, write a bend point 1/3 into the note
+						eof_add_midi_pitch_bend_event(deltapos + (stringdeltalength / 3), tech.bendstrength_q, channel);
+					}
+					else
+					{	//If there's at least one bend tech note that overlaps the note being exported
+						long pre_bend;
+						unsigned long techflags;
+
+						nextnote = eof_fixup_next_pro_guitar_note(tp, i);
+						if(nextnote > 0)
+						{	//If there was a next note
+							if(pos + length == tp->pgnote[nextnote]->pos)
+							{	//And this note extends all the way to it with no gap in between (this note has linkNext status)
+								length--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
+							}
+						}
+
+						//If there is a pre-bend tech note, it must be written first and any other pre-bend tech notes or bend tech notes at the note's starting position are to be ignored
+						pre_bend = eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(tp, i, bitmask);
+						if(pre_bend >= 0)
+						{	//If an applicable pre-bend tech note was found
+							techflags = tp->technote[pre_bend]->flags;
+							if((techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (techflags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+							{	//If the tech note is a bend and has a bend strength defined
+								if(tp->technote[pre_bend]->bendstrength & 0x80)
+								{	//If this bend strength is defined in quarter steps
+									bendstrength_q = tp->technote[pre_bend]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
+								}
+								else
+								{	//The bend strength is defined in half steps
+									bendstrength_q = tp->technote[pre_bend]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
+								}
+							}
+							else
+							{	//The bend strength is not defined, use a default value of 1 half step
+								bendstrength_q = 2;
+							}
+
+							//Write the bend point explicitly at the note's start position regardless of the tech note's actual position
+							eof_add_midi_pitch_bend_event(deltapos, bendstrength_q, channel);
+						}
+
+						for(ctr = firstbend; ctr < tp->technotes; ctr++)
+						{	//For all tech notes, starting with the first applicable bend tech note
+							unsigned long deltatechpos;
+
+							if(tp->technote[ctr]->pos > pos + length)
+							{	//If this tech note (and all those that follow) are after the end position of this note
+								break;	//Break from loop, no more overlapping notes will be found
+							}
+							if((tp->technote[ctr]->type != tp->pgnote[i]->type) || !(bitmask & tp->technote[ctr]->note))
+								continue;	//If the tech note isn't in the same difficulty as the pro guitar single note being exported or if it doesn't use the same string, skip it
+							if((tp->technote[ctr]->pos < pos) || (tp->technote[ctr]->pos > pos + length))
+								continue;	//If this tech note does not overlap with the specified pro guitar regular note, skip it
+							if(tp->technote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+								continue;	//If this is a pre-bend tech note, skip it as there's only one valid pre-bend per string and it was written already
+							if((pre_bend >= 0) && (tp->technote[ctr]->pos == pos))
+								continue;	//If a pre-bend tech note was written, and this tech note is at the note's start position, skip it as the pre-bend takes precedent in this conflict
+
+							techflags = tp->technote[ctr]->flags;
+							if((techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (techflags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+							{	//If the tech note is a bend and has a bend strength defined, write the bend point at the specified position within the note
+								if(tp->technote[ctr]->bendstrength & 0x80)
+								{	//If this bend strength is defined in quarter steps
+									bendstrength_q = tp->technote[ctr]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
+								}
+								else
+								{	//The bend strength is defined in half steps
+									bendstrength_q = tp->technote[ctr]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
+								}
+								deltatechpos = eof_ConvertToDeltaTime(tp->technote[ctr]->pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+								eof_add_midi_pitch_bend_event(deltatechpos, bendstrength_q, channel);
+							}
+						}
+					}
+				}//If the note is a bend, write all applicable bend points
+			}//If this string is used
+		}//For each of the 6 usable strings
 
 		//Write note name if applicable
 		if(eof_build_note_name(sp, track, i, notename))

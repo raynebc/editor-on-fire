@@ -37,7 +37,14 @@ void eof_add_midi_event_indexed(unsigned long pos, int type, int note, int veloc
 	char note_off = 0;	//Will be set to non zero if this is a note off event
 	char note_on = 0;	//Will be set to non zero if this is a note on event
 
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding MIDI event:  Pos = %lu, type = 0x%X, note = %d, vel = %d, ch = %d", pos, type, note, velocity, channel);
+	if((type == 0x80) || (type == 0x90))
+	{	//Note on or off event
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding MIDI event:  Pos = %lu, type = 0x%X, note = %d, vel = %d, ch = %d", pos, type, note, velocity, channel);
+	}
+	else
+	{	//Other type of event
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding MIDI event:  Pos = %lu, type = 0x%X, par 1 = %d, par 2 = %d, ch = %d", pos, type, note, velocity, channel);
+	}
 	eof_log(eof_log_string, 2);
 
 	if(eof_midi_enddelta && (pos > eof_midi_enddelta))
@@ -431,50 +438,6 @@ int qsort_helper3(const void * e1, const void * e2)
 		if((*thing2)->index < (*thing1)->index)
 			return 1;
 	}
-
-	// they are equal...
-	return 0;
-}
-
-int qsort_helper_immerrock(const void * e1, const void * e2)
-{
-//	eof_log("qsort_helper_immerrock() entered");
-
-	EOF_MIDI_EVENT ** thing1 = (EOF_MIDI_EVENT **)e1;
-	EOF_MIDI_EVENT ** thing2 = (EOF_MIDI_EVENT **)e2;
-
-	/* Chronological order takes precedence in sorting */
-	if((*thing1)->pos < (*thing2)->pos)
-		return -1;
-	if((*thing1)->pos > (*thing2)->pos)
-		return 1;
-
-	/* Channel number takes second precedence */
-	if((*thing1)->channel < (*thing2)->channel)
-		return -1;
-	if((*thing1)->channel > (*thing2)->channel)
-		return 1;
-
-	/* The index variable takes third precedence */
-	if((*thing1)->index && (*thing2)->index)
-	{	//If the index values of both events are nonzero
-		if((*thing1)->index < (*thing2)->index)
-			return -1;
-		if((*thing2)->index < (*thing1)->index)
-			return 1;
-	}
-
-	/* Note number takes fourth precedence */
-	if((*thing1)->note < (*thing2)->note)
-		return -1;
-	if((*thing1)->note > (*thing2)->note)
-		return 1;
-
-	/* Note off before Note on takes fifth precedence */
-	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x80))
-		return 1;
-	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0x90))
-		return -1;
 
 	// they are equal...
 	return 0;

@@ -6636,7 +6636,9 @@ int eof_menu_file_export_guitar_pro(void)
 		retval = alert3("RocksmithToTab is not properly linked", "First download and extract the program", "Then use \"File>Link to RocksmithToTab\" to browse to the program", "OK", "Download", "Link", 0, 0, 0);
 		if(retval == 2)
 		{	//If the user opted to download the program
+			allegro_message("Note:   cabalistic's original release has not been updated in a long time as of 2025.  spontiroli forked the project and added some fixes.");
 			(void) eof_system("start https://sourceforge.net/projects/rocksmithtotab/");
+			(void) eof_system("start https://github.com/spontiroli/rocksmith2tab");
 		}
 		else if(retval == 3)
 		{	//If the user opted to link the program

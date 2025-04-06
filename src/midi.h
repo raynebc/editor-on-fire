@@ -229,10 +229,6 @@ void WriteVarLen(unsigned long value, PACKFILE * fp);
 	//Writes the specified value in variable length format to the specified file handle
 int qsort_helper3(const void * e1, const void * e2);
 	//A sort algorithm used when quick sorting the eof_midi_event[] array
-int qsort_helper_immerrock(const void * e1, const void * e2);
-	//A sort algorithm used when quick sorting the eof_midi_event[] array for use with IMMERROCK, which has some unique requirements
-	//such as properly sorting pairs or note on and off events that are all at the same timestamp, using the index variable to define sort order
-	//If index is nonzero for both events being compared, the lower number sorts earlier
 
 void eof_write_ghwt_drum_array_txt(EOF_SONG *sp, char *fn);
 	//Writes a text file containing timestamps and codes for the specified chart's expert drum track difficulty, for use with authoring drum charts for Guitar Hero World Tour
