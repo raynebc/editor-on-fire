@@ -99,7 +99,16 @@ In this example, the first if macro is evaluated, and then only if it is true, t
 </tr>
 </tbody>
 </table>
-The first <b>%ENDIF%</b> macro ended the scope of <b>%IF_NOTE_IS_SELECTED%</b> that occurred immediately before it, and the second <b>%ENDIF%</b> macro ended the scope of the <b>%IF_IS_VOCAL_TRACK%</b> macro even earlier.  Ultimately, "This text always prints." will be printed regardless of whether any lyrics are selected or whether the vocal track is even active.
+The first <b>%ENDIF%</b> macro ended the scope of <b>%IF_NOTE_IS_SELECTED%</b> that occurred immediately before it, and the second <b>%ENDIF%</b> macro ended the scope of the <b>%IF_IS_VOCAL_TRACK%</b> macro even earlier.  Ultimately, "This text always prints." will be printed regardless of whether any lyrics are selected or whether the vocal track is even active.<br><br>
+You can negate a conditional macro by putting an exclamation point ! after the opening % character in the macro.  What this does is invert the result of the conditional macro so that a true result is evaluated as false and vice-versa.  This will allow you to more efficiently test the false result of a conditional macro without having to have an empty true scope and then use an %ELSE% scope just to print what you wanted in the event of a false result.  For example:
+<table border="1" cellpadding="3">
+<tbody>
+<tr>
+<td><b>%!IF_IS_VOCAL_TRACK%</b>The active track is not a vocal track.</td>
+</tr>
+</tbody>
+</table>
+The negated conditional result means that as long as the active track is not the vocal track, "The active track is not a vocal track" is printed.
 </blockquote>
 
 

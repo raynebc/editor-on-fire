@@ -828,7 +828,8 @@ void eof_log_casual(const char *text, int level, int prefix, int newline);
 	//If newline is nonzero, a newline character is appended to the provided text
 void eof_log_notes(EOF_SONG *sp, unsigned long track);
 	//Debug function that logs the position and length of each note in the specified track
-extern char eof_log_string[2048];	//A string reserved for use with eof_log()
+#define EOF_LOG_STRING_SIZE 2048
+extern char eof_log_string[EOF_LOG_STRING_SIZE];	//A string reserved for use with eof_log()
 extern unsigned int eof_log_id;
 	//This will be set to a random value when logging is started, so if multiple instances of EOF are writing to the same
 	//log file (Windows does not prevent this), each instance's log entries can be identified separately from each other.

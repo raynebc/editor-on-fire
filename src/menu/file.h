@@ -194,6 +194,7 @@ int eof_menu_file_notes_panel_notes(void);			//Reloads the Notes panel with the 
 int eof_menu_file_notes_panel_note_controls(void);	//Reloads the Notes panel with the built-in note_controls.panel.txt file
 int eof_menu_file_notes_panel_information(void);	//Reloads the Notes panel with the built-in info.panel.txt file
 int eof_menu_file_notes_panel_note_counts(void);	//Reloads the Notes panel with the built-in note_counts.panel.txt file
+int eof_menu_file_notes_panel_immerrock(void);		//Reloads the Notes panel with the built-in immerrock.panel.txt file
 int eof_menu_file_notes_panel_clone_hero(void);		//Reloads the Notes panel with the built-in clone_hero.panel.txt file
 int eof_menu_file_notes_panel_user(void);
 	//Reloads the Notes panel with the last text file the user manually browsed to

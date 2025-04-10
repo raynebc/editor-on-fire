@@ -1,3 +1,4 @@
+#include <math.h>
 #include "beat.h"
 #include "event.h"
 #include "lc_import.h"
@@ -43,13 +44,23 @@ int qsort_helper_immerrock(const void * e1, const void * e2)
 			return 1;
 	}
 
-	/* Note number takes fourth precedence */
+	/* Note on/off event takes fourth precedence */
+	if((((*thing1)->type == 0x90) || ((*thing1)->type == 0x80)) && (((*thing2)->type != 0x90) || ((*thing2)->type != 0x80)))
+	{	//If the first event is a note on/off event and the other is not
+		return -1;
+	}
+	if((((*thing2)->type == 0x90) || ((*thing2)->type == 0x80)) && (((*thing1)->type != 0x90) || ((*thing2)->type != 0x80)))
+	{	//If the second event is a note on/off event and the other is not
+		return 1;
+	}
+
+	/* Note number takes fifth precedence */
 	if((*thing1)->note < (*thing2)->note)
 		return -1;
 	if((*thing1)->note > (*thing2)->note)
 		return 1;
 
-	/* Note off before Note on takes fifth precedence */
+	/* Note off before Note on takes sixth precedence */
 	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x80))
 		return 1;
 	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0x90))
@@ -59,14 +70,20 @@ int qsort_helper_immerrock(const void * e1, const void * e2)
 	return 0;
 }
 
-void eof_add_midi_pitch_bend_event(unsigned long pos, unsigned quarter_steps, int channel)
+void eof_add_midi_pitch_bend_event(unsigned long pos, unsigned value, int channel, unsigned long index)
 {
-	unsigned long bendvalue = 8192 + (quarter_steps * 640);	//This is encoded in the MIDI event as the 7 least significant bits written in one byte, then the 7 most significant bits written as another byte
 	unsigned char lsb, msb;
 
-	lsb = bendvalue & 0x7F;			//The first seven bits of the bend value
-	msb = (bendvalue >> 7) & 0x7F;	//The next seven bits of the bend value
-	eof_add_midi_event(pos, 0xE0, lsb, msb, channel);
+	lsb = value & 0x7F;			//The first seven bits of the bend value
+	msb = (value >> 7) & 0x7F;	//The next seven bits of the bend value
+	eof_add_midi_event_indexed(pos, 0xE0, lsb, msb, channel, index);
+}
+
+void eof_add_midi_pitch_bend_event_qsteps(unsigned long pos, unsigned quarter_steps, int channel, unsigned long index)
+{
+	unsigned long bendvalue = 8192 + (quarter_steps * 640);	//This is encoded in the MIDI event as the 7 least significant bits written in one byte, then the 7 most significant bits written as another byte
+
+	eof_add_midi_pitch_bend_event(pos, bendvalue, channel, index);
 }
 
 int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char diff, char *fn)
@@ -293,8 +310,9 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					stringdeltalength = eof_ConvertToDeltaTime(pos + tech.length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
 					bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, i, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string
 					if(!bendpoints)
-					{	//If there are none, write a bend point 1/3 into the note
-						eof_add_midi_pitch_bend_event(deltapos + (stringdeltalength / 3), tech.bendstrength_q, channel);
+					{	//If there are no bend points, write a bend point 1/3 into the note, and one at the note's end position to enforce the bend strength extending all the way to the end
+						eof_add_midi_pitch_bend_event_qsteps(deltapos + (stringdeltalength / 3), tech.bendstrength_q, channel, index++);
+						eof_add_midi_pitch_bend_event_qsteps(deltapos + stringdeltalength, tech.bendstrength_q, channel, index++);
 					}
 					else
 					{	//If there's at least one bend tech note that overlaps the note being exported
@@ -332,7 +350,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 							}
 
 							//Write the bend point explicitly at the note's start position regardless of the tech note's actual position
-							eof_add_midi_pitch_bend_event(deltapos, bendstrength_q, channel);
+							eof_add_midi_pitch_bend_event_qsteps(deltapos, bendstrength_q, channel, index++);
 						}
 
 						for(ctr = firstbend; ctr < tp->technotes; ctr++)
@@ -364,11 +382,57 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 									bendstrength_q = tp->technote[ctr]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
 								}
 								deltatechpos = eof_ConvertToDeltaTime(tp->technote[ctr]->pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
-								eof_add_midi_pitch_bend_event(deltatechpos, bendstrength_q, channel);
+								eof_add_midi_pitch_bend_event_qsteps(deltatechpos, bendstrength_q, channel, index++);
 							}
 						}
 					}
 				}//If the note is a bend, write all applicable bend points
+				eof_add_midi_pitch_bend_event(deltapos + deltalength + 1, 8192, channel, index++);	//Set the pitch bend back to neutral 1 delta tick after the end of the note
+
+				//Write vibrato
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+				{
+					unsigned long x, time;
+					long height;
+					double y;
+					double wave_period = 240;	//This is how many delta ticks it will take for the wave pattern to repeat
+					unsigned long pitch_bend_spacing = 28;	//How far apart in milliseconds the pitch bends are to be written
+					double wave_amplitude = 384;	//This is how many units above or below the neutral value the pitch bend value changes (IMMERROCK prefers 384, which is 30% of a half-step's bend value)
+
+///Logic to export bend points every 30 delta ticks instead of based on realtime
+/*					for(x = 0; x < deltalength; x += 30)
+					{	//For each 30 delta tick interval of the note being exported
+						y = sin(x * M_PI / 120.0);			//Solve for y where the sine wave is calculated to repeat its pattern every 240 ticks (where y would equal sin(2 * pi)
+						if(y < 0)
+							height = (320.0 * y) - 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is 1/8 step (320 pitch bend units).  Round down to nearest negative integer
+						else
+							height = (320.0 * y) + 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is 1/8 step (320 pitch bend units).  Round up to nearest positive integer
+						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height, channel, index++);	//Add a pitch bend that is the given value above or below neutral
+*/
+
+					for(time = 0; time < length; time += pitch_bend_spacing)
+					{	//For each time interval of the note being exported
+						x = ((double)time * (double)deltalength) / (double)length;	//Get the delta tick amount into the note that this realtime position is
+						y = sin(x * M_PI * 2.0 / wave_period);		//Solve for y where the sine wave is calculated to repeat its pattern in the given number of delta ticks (an x value of wave_period is where y would equal sin(2 * pi), where a sine wave officially repeats itself)
+						if(y < 0)
+							height = (wave_amplitude * y) - 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is the specified number of pitch bend units.  Round down to nearest negative integer
+						else
+							height = (wave_amplitude * y) + 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is the specified number of pitch bend units.  Round up to nearest positive integer
+						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height, channel, index++);	//Add a pitch bend that is the given value above or below neutral
+					}
+
+					if(deltalength != x)
+					{	//If the last written vibrato pitch bend was not at the stop timestamp of the note
+						x = deltalength;	//The delta tick of the note's end position
+						y = sin(x * M_PI * 2.0 / wave_period);		//Solve for y where the sine wave is calculated to repeat its pattern in the given number of delta ticks (an x value of wave_period is where y would equal sin(2 * pi), where a sine wave officially repeats itself)
+						if(y < 0)
+							height = (wave_amplitude * y) - 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is the specified number of pitch bend units.  Round down to nearest negative integer
+						else
+							height = (wave_amplitude * y) + 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is the specified number of pitch bend units.  Round up to nearest positive integer
+						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height, channel, index++);	//Add a pitch bend that is the given value above or below neutral
+					}
+					eof_add_midi_pitch_bend_event(deltapos + deltalength + 1, 8192, channel, index++);	//Set the pitch bend back to neutral 1 delta tick after the end of the note
+				}
 			}//If this string is used
 		}//For each of the 6 usable strings
 
@@ -577,12 +641,92 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	return 1;	//Return success
 }
 
+int eof_search_image_files(char *folderpath, char *filenamebase, char *match, unsigned long match_arraysize)
+{
+	char filename[1024] = {0}, filepath[1024] = {0};
+
+	if(!folderpath || !filenamebase || !match)
+		return 0;
+
+	//Build the full path to filenamebase.jpg
+	strncpy(filename, filenamebase, sizeof(filename) - 1);
+	(void) replace_extension(filename, filename, "jpg", sizeof(filename) - 1);
+	(void) replace_filename(filepath, folderpath, filename, sizeof(filename) - 1);
+
+	//Test whether filenamebase.jpg exists
+	if(exists(filepath))
+	{
+		strncpy(match, filepath, match_arraysize);
+		return 1;	//Return match
+	}
+
+	//Test whether filenamebase.png exists
+	(void) replace_extension(filepath, filepath, "png", sizeof(filename) - 1);
+	if(exists(filepath))
+	{
+		strncpy(match, filepath, match_arraysize);
+		return 1;	//Return match
+	}
+
+	//Test whether filenamebase.tiff exists
+	(void) replace_extension(filepath, filepath, "tiff", sizeof(filename) - 1);
+	if(exists(filepath))
+	{
+		strncpy(match, filepath, match_arraysize);
+		return 1;	//Return match
+	}
+
+	return 0;	//No matches
+}
+
+int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename, unsigned long filenamesize, char force_recheck)
+{
+	static clock_t last_checktime = 0;
+	static char first_check = 1;
+	static char filematch[1024];
+	clock_t this_checktime;
+
+	if(!folderpath || !album_art_filename || !filenamesize)
+		return 0;	//Invalid parameter
+
+	album_art_filename[0] = '\0';	//Empty this string
+	this_checktime = clock();
+	if(force_recheck || first_check || ((this_checktime - last_checktime) / CLOCKS_PER_SEC >=  10))
+	{	//If the calling function demands a recheck, if this is the first call to the function or at least 10 seconds have passed since this function performed file system checks
+		eof_search_image_files(folderpath, "cover", album_art_filename, filenamesize);
+		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "cover" exists in the export folder
+			eof_search_image_files(folderpath, "album", album_art_filename, filenamesize);
+		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "album" exists in the export folder
+			eof_search_image_files(folderpath, "label", album_art_filename, filenamesize);
+		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "label" exists in the export folder
+			eof_search_image_files(folderpath, "image", album_art_filename, filenamesize);
+
+		if(exists(album_art_filename))
+		{	//If a JPG, PNG or TIFF file with a base filename of "album", "cover", "label" or "image" exist in the target folder
+			strncpy(filematch, album_art_filename, sizeof(filematch) - 1);	//Cache the result
+		}
+		else
+			filematch[0] = '\0';	//Cache a lack of result
+
+		last_checktime = clock();	//Cache the clock time of these file I/O operations
+	}
+
+	first_check = 0;
+	if(filematch[0] != '\0')
+	{
+		strncpy(album_art_filename, filematch, filenamesize);
+		return 1;	//Return cached result
+	}
+
+	return 0;
+}
+
 int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option)
 {
 	PACKFILE *fp;
 	int err = 0;
 	int jumpcode = 0;	//Used to catch failure by EOF_EXPORT_TO_LC()
-	char temp_string[1024], section[101], temp_filename2[1024], *ptr;
+	char temp_string[1024], section[101], temp_filename2[1024], *ptr, album_art_filename[1024];
 	double avg_tempo;
 	unsigned long arrctr, ctr;
 	unsigned long arr[3] = {gglead, ggrhythm, ggbass};
@@ -960,6 +1104,28 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 			}
 		}
 	}
+
+
+	//Write album art
+	album_art_filename[0] = '\0';	//Empty this string
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "", (int) sizeof(eof_temp_filename));	//Build path to export folder
+	if(!eof_search_image_files(eof_temp_filename, "cover", album_art_filename, sizeof(album_art_filename) - 1))
+	{	//If no JPG, PNG or TIFF file with a base filename of "cover" exists in the export folder
+		eof_log("\tAlbum art not found in export folder, checking project folder.", 2);
+		eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, 1);	//Check for any suitable files in the project folder
+		if(exists(album_art_filename))
+		{	//If a JPG, PNG or TIFF file with a base filename of "album", "cover", "label" or "image" exist in the project folder
+			(void) replace_extension(temp_filename2, "Cover.jpg", get_extension(album_art_filename), sizeof(temp_filename2) - 1);	//Build output filename based on the extension of the found file
+			(void) replace_filename(eof_temp_filename, eof_temp_filename, get_filename(temp_filename2), (int) sizeof(eof_temp_filename));	//Build path to destination file
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+			eof_log(eof_log_string, 2);
+			(void) eof_copy_file(album_art_filename, eof_temp_filename);	//Copy the album art to the export folder
+		}
+		else
+			eof_log("\tAlbum art not found in project folder.", 2);
+	}
+	else
+		eof_log("\tAlbum art already exists in export folder, skipping copy", 2);
 
 
 	//Write arrangement MIDIs

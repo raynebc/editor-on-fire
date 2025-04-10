@@ -39,11 +39,11 @@ void eof_add_midi_event_indexed(unsigned long pos, int type, int note, int veloc
 
 	if((type == 0x80) || (type == 0x90))
 	{	//Note on or off event
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding MIDI event:  Pos = %lu, type = 0x%X, note = %d, vel = %d, ch = %d", pos, type, note, velocity, channel);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding MIDI event:  Pos = %lu, type = 0x%X, note = %d, vel = %d, ch = %d, index = %lu", pos, type, note, velocity, channel, index);
 	}
 	else
 	{	//Other type of event
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding MIDI event:  Pos = %lu, type = 0x%X, par 1 = %d, par 2 = %d, ch = %d", pos, type, note, velocity, channel);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding MIDI event:  Pos = %lu, type = 0x%X, par 1 = %d, par 2 = %d, ch = %d, index = %lu", pos, type, note, velocity, channel, index);
 	}
 	eof_log(eof_log_string, 2);
 

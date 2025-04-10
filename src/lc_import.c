@@ -211,6 +211,9 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	fclose_err(inf);	//Ensure this file gets closed
 	inf=NULL;
 
+///DEBUG
+DEBUG_DUMP_LYRICS();
+
 	if(EOF_TRANSFER_FROM_LC(tp, &Lyrics) != 0)	//Pass the Lyrics global variable by reference
 	{
 		ReleaseMemory(1);	//Release memory allocated during lyric import
@@ -218,7 +221,9 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	}
 
 	ReleaseMemory(1);	//Release memory allocated during lyric import
+
 	eof_convert_all_lyrics_from_extended_ascii(tp);
+
 	return 1;	 		//Return finished EOF lyric structure
 }
 
@@ -432,9 +437,10 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 				AddLyricPiece(buffer, tp->lyric[lyrctr]->pos, tp->lyric[lyrctr]->pos + tp->lyric[lyrctr]->length, pitch, 0);
 					//Add the lyric to the Lyrics structure
 
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding lyric:  %lums:  \"%s\"", thislyrtime, buffer);
-				eof_log(eof_log_string, 2);
-
+#ifdef EOF_BUILD
+(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding lyric:  %lums:  \"%s\"", thislyrtime, buffer);
+eof_log(eof_log_string, 2);
+#endif
 				if((Lyrics.lastpiece != NULL) && (Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-'))	//If the piece that was just added ended in a hyphen
 					Lyrics.lastpiece->groupswithnext = 1;	//Set its grouping status
 			}//If this lyric's text isn't an empty string

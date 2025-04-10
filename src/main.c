@@ -5554,7 +5554,6 @@ void eof_stop_logging(void)
 	}
 }
 
-#define EOF_LOG_STRING_SIZE 2048
 char eof_log_string[EOF_LOG_STRING_SIZE] = {0};
 void eof_log(const char *text, int level)
 {

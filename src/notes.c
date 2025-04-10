@@ -5,6 +5,7 @@
 #endif
 #include "beat.h"		//For eof_get_measure()
 #include "ini_import.h"
+#include "ir.h"
 #include "main.h"
 #include "midi.h"
 #include "mix.h"
@@ -83,15 +84,17 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 	unsigned long src_index = 0, dest_index = 0, macro_index;
 	char src_char, macro[TEXT_PANEL_BUFFER_SIZE+1], expanded_macro[TEXT_PANEL_BUFFER_SIZE+1];
 	int macro_status;
+	char invert = 0;	//If the first character after a % in the macro is an exclamation point, it will invert the true/false result of any conditional check
 
 	if(!src_buffer || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
 
-	dest_buffer[0] = '\0';		//Empty the destination buffer
+	dest_buffer[0] = '\0';	//Empty the destination buffer
 	if(src_buffer[0] == ';')	//A line beginning with a semicolon is a comment
 		return 1;
 	while((src_buffer[src_index] != '\0') || (dest_index + 1 >= dest_buffer_size))
 	{	//Until the end of the source or destination buffer are reached
+		invert = 0;	//Reset this status
 		src_char = src_buffer[src_index++];	//Read the next character
 
 		if(src_char != '%')
@@ -102,6 +105,11 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 		else if(src_buffer[src_index] != '%')
 		{	//If the next character isn't also a percent sign (to be ignored as padding), parse the content up until the next percent sign and process it as a macro to be expanded
 			macro_index = 0;
+			if(src_buffer[src_index] == '!')
+			{	//If the first character after the opening % is an exclamation point
+				src_index++;	//Seek to the next character
+				invert = 1;	//Invert the boolean result of this macro if it's a conditional macro
+			}
 			while(src_buffer[src_index] != '\0')
 			{	//Until the end of the source buffer is reached
 				src_char = src_buffer[src_index++];	//Read the next character
@@ -156,6 +164,13 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 						char nextcondition = 0;						//Tracks whether the next conditional macro is an if (1), an else (2), an endif (3) or none of those (0)
 						unsigned long index = src_index;			//Used to iterate through the source buffer for processing macros
 
+						if(invert)
+						{	//If an exclamation point is inverting the boolean result
+							if(macro_status == 2)
+								macro_status = 3;	//Change a true result to false
+							else
+								macro_status = 2;	//Change a false result to true
+						}
 						while(1)
 						{	//Process conditional macros until the correct branching is handled
 							nextcondition = 0;				//Reset this status so that if no conditional macros are found, the while loop can exit
@@ -342,8 +357,9 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 
 int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel)
 {
-	unsigned long tracknum, tracksize;
+	unsigned long tracknum, tracksize, ctr;
 	EOF_PHRASE_SECTION *phraseptr;
+	char album_art_filename[1024];
 
 	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
@@ -1044,8 +1060,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If either drum track is active
-			unsigned long ctr;
-
 			for(ctr = 0; ctr < tracksize; ctr++)
 			{	//For each note in the track
 				if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
@@ -1091,7 +1105,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_selected_track == EOF_TRACK_VOCALS)
 		{	//The vocals track handles star power on a per lyric line basis
-			unsigned long ctr;
 			for(ctr = 0; ctr < eof_get_num_lyric_sections(eof_song, eof_selected_track); ctr++)
 			{	//For each lyric line
 				EOF_PHRASE_SECTION *ptr = eof_get_lyric_section(eof_song, eof_selected_track, ctr);
@@ -1161,7 +1174,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//If the active track has no defined difficulty
 	if(!ustricmp(macro, "IF_ANY_TRACK_DIFFICULTY_UNDEFINED"))
 	{
-		unsigned long ctr;
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
 			if(eof_get_track_size_all(eof_song, ctr))
@@ -1202,7 +1214,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_NO_PREVIEW_START_TIME"))
 	{
-		unsigned long entrynum = 0, ctr;
+		unsigned long entrynum = 0;
 		char *ptr, *temp;
 		int nonzeroes = 0;
 
@@ -1350,6 +1362,114 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 
 		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_PROJECT_HAS_IR_ALBUM_ART"))
+	{
+		album_art_filename[0] = '\0';	//Empth this string
+		if(eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, 0))
+		{	//If the project folder has any suitably named album art for use with IMMERROCK
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_ANY_LYRICS_ARE_OUTSIDE_LINES"))
+	{
+		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
+		{	//For each lyric
+			if((eof_song->vocal_track[0]->lyric[ctr]->note == EOF_LYRIC_PERCUSSION) || (eof_find_lyric_line(ctr) != NULL))
+				continue;	//If this lyric is vocal percussion or is within a line, skip it
+
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_SONG_TITLE_IS_DEFINED"))
+	{
+		if(eof_song && eof_check_string(eof_song->tags->title))
+		{	//If the song title string has anything other than whitespace
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_ARTIST_NAME_IS_DEFINED"))
+	{
+		if(eof_song && eof_check_string(eof_song->tags->artist))
+		{	//If the artist name string has anything other than whitespace
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_CHART_AUTHOR_IS_DEFINED"))
+	{
+		if(eof_song && eof_check_string(eof_song->tags->frettist))
+		{	//If the charter name string has anything other than whitespace
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_ALBUM_NAME_IS_DEFINED"))
+	{
+		if(eof_song && eof_check_string(eof_song->tags->album))
+		{	//If the album name string has anything other than whitespace
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_GENRE_IS_DEFINED"))
+	{
+		if(eof_song && eof_check_string(eof_song->tags->genre))
+		{	//If the genre string has anything other than whitespace
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_YEAR_IS_DEFINED"))
+	{
+		if(eof_song && eof_check_string(eof_song->tags->year))
+		{	//If the year string has anything other than whitespace
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_ANY_LYRIC_LINES_ARE_DEFINED"))
+	{
+		if(eof_song &&  eof_song->vocal_track[0]->lines)
+		{	//If at least one lyric line exists
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_ANY_LYRICS_ARE_NON_ASCII"))
+	{
+		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
+		{	//For each lyric
+			if((eof_song->vocal_track[0]->lyric[ctr]->text[0] != '\0') && (eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text)))
+			{	//If any of the lyrics that contain text have non ASCII characters
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+			return 2;	//False
+		}
 	}
 
 	//Resumes normal macro parsing after a failed conditional macro test
@@ -1681,7 +1801,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			}
 			else
 			{
-				(void) snprintf(dest_buffer, dest_buffer_size, "(Harmony: Undefined)");
+				(void) snprintf(dest_buffer, dest_buffer_size, "(Harmony: Unset)");
 			}
 		}
 		else
@@ -1793,7 +1913,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Star power lyric line count
 	if(!ustricmp(macro, "SP_LYRIC_LINE_COUNT"))
 	{
-		unsigned long ctr, count = 0, linecount;
+		unsigned long count = 0, linecount;
 
 		linecount = eof_get_num_lyric_sections(eof_song, EOF_TRACK_VOCALS);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
 		for(ctr = 0; ctr < linecount; ctr++)
@@ -2210,7 +2330,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a pro guitar track is active
 				char temp[10];
-				unsigned char pitchmask, pitches[6] = {0}, ctr, bitmask;
+				unsigned char pitchmask, pitches[6] = {0}, bitmask;
 
 				dest_buffer[0] = '\0';	//Empty this string
 				pitchmask = eof_get_midi_pitches(eof_song, eof_selected_track, eof_selection.current, pitches);	//Determine how many exportable pitches this note/lyric has
@@ -2234,7 +2354,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected note NPS
 	if(!ustricmp(macro, "SELECTED_NOTE_NPS"))
 	{
-		unsigned long start = 0, end = 0, ctr, selected = 0;
+		unsigned long start = 0, end = 0, selected = 0;
 
 		if(eof_get_selected_note_range(&start, &end, 0))
 		{	//If at least one note is selected
@@ -2633,7 +2753,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->resulting_sp_meter)
 		{	//If the global star power solution structure is built and the star power meter array is allocated
-			unsigned long ctr, index, pos, target;
+			unsigned long index, pos, target;
 
 			for(ctr = 0, index = 0, target = ULONG_MAX; ctr < tracksize; ctr++)
 			{	//For each note in the active track
@@ -2819,7 +2939,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
@@ -2853,7 +2973,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
@@ -2887,7 +3007,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -2920,7 +3040,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if((eof_note_type == EOF_NOTE_AMAZING) && (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 		{	//If the expert difficulty in either drum track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -2958,7 +3078,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If a drum track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -2993,7 +3113,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
@@ -3029,7 +3149,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
@@ -3065,7 +3185,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
@@ -3101,7 +3221,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
@@ -3137,7 +3257,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long ctr, count = 0, totalnotecount = 0;
+			unsigned long count = 0, totalnotecount = 0;
 			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
@@ -3171,7 +3291,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific pitch
 	if(strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_"))
 	{
-		unsigned long ctr, count = 0, pitch;
+		unsigned long count = 0, pitch;
 		char *count_string = strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_");	//Get a pointer to the text that is expected to be the pitch
 
 		if(eof_vocals_selected)
@@ -3199,7 +3319,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific pitch
 	if(strcasestr_spec(macro, "TRACK_COUNT_HIGHLIGHTED_NOTES"))
 	{
-		unsigned long ctr, count;
+		unsigned long count;
 
 		for(ctr = 0, count = 0; ctr < tracksize; ctr++)
 		{	//For each note in the active track
@@ -3450,6 +3570,61 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//The active zoom level
+	if(!ustricmp(macro, "ZOOM_LEVEL"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "1/%u", eof_zoom);
+		return 1;
+	}
+
+	//Active MIDI tones
+	if(!ustricmp(macro, "ACTIVE_MIDI_TONES"))
+	{
+		unsigned channel;
+		char temp[20];
+		dest_buffer[0] = '\0';	//Empty this string
+		for(channel = 0; channel < 6; channel++)
+		{	//For each of the six MIDI channels EOF uses to play tones
+			if(!eof_midi_channel_status[channel].on)
+			{
+				strncat(dest_buffer, "x ", dest_buffer_size - strlen(dest_buffer) - 1);	//Append the tone information
+			}
+			else
+			{
+				clock_t timeleft = ((eof_midi_channel_status[channel].stop_time - clock()) * 1000) / CLOCKS_PER_SEC;
+				snprintf(temp, sizeof(temp) - 1, "%u (%ldms) ", eof_midi_channel_status[channel].note, timeleft);
+				strncat(dest_buffer, temp, dest_buffer_size - strlen(dest_buffer) - 1);	//Append the tone information
+			}
+		}
+		return 1;
+	}
+
+	if(!ustricmp(macro, "IR_ALBUM_ART_FILENAME"))
+	{
+		album_art_filename[0] = '\0';	//Empth this string
+		if(eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, 0))
+		{	//If the project folder has any suitably named album art for use with IMMERROCK
+			snprintf(dest_buffer, dest_buffer_size, "%s", get_filename(album_art_filename));
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "(Album art not found)");
+		}
+		return 1;
+	}
+
+	if(!ustricmp(macro, "PRINT_LYRIC_LINE_COUNT_STRING"))
+	{
+		if(eof_song)
+		{
+			if(eof_song->vocal_track[0]->lines == 1)
+				snprintf(dest_buffer, dest_buffer_size, "1 lyric line is defined");
+			else
+				snprintf(dest_buffer, dest_buffer_size, "%lu lyric lines are defined", eof_song->vocal_track[0]->lines);
+		}
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
@@ -3515,35 +3690,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		else
 		{
 			snprintf(dest_buffer, dest_buffer_size, "(Error)");
-		}
-		return 1;
-	}
-
-	//The active zoom level
-	if(!ustricmp(macro, "ZOOM_LEVEL"))
-	{
-		snprintf(dest_buffer, dest_buffer_size, "1/%u", eof_zoom);
-		return 1;
-	}
-
-	//Active MIDI tones
-	if(!ustricmp(macro, "ACTIVE_MIDI_TONES"))
-	{
-		unsigned channel;
-		char temp[20];
-		dest_buffer[0] = '\0';	//Empty this string
-		for(channel = 0; channel < 6; channel++)
-		{	//For each of the six MIDI channels EOF uses to play tones
-			if(!eof_midi_channel_status[channel].on)
-			{
-				strncat(dest_buffer, "x ", dest_buffer_size - strlen(dest_buffer) - 1);	//Append the tone information
-			}
-			else
-			{
-				clock_t timeleft = ((eof_midi_channel_status[channel].stop_time - clock()) * 1000) / CLOCKS_PER_SEC;
-				snprintf(temp, sizeof(temp) - 1, "%u (%ldms) ", eof_midi_channel_status[channel].note, timeleft);
-				strncat(dest_buffer, temp, dest_buffer_size - strlen(dest_buffer) - 1);	//Append the tone information
-			}
 		}
 		return 1;
 	}

@@ -12,6 +12,11 @@
 #include "SRT_parse.h"
 #include "XML_parse.h"
 
+#ifdef EOF_BUILD
+//For EOF debug logging
+#include "../main.h"
+#endif
+
 #ifdef S_SPLINT_S
 //Ensure Splint checks the code for EOF's code base
 #define EOF_BUILD
@@ -367,6 +372,10 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 		else
 			printf("\tProcessing lyric piece '%s':\tdur=%lu\tpit=%u\t",str,end-start,pitch);
 	}
+#ifdef EOF_BUILD
+(void) snprintf(eof_log_string, EOF_LOG_STRING_SIZE - 1, "\tProcessing lyric piece '%s':\tdur=%lu\tpit=%u\t", str, end - start, pitch);
+eof_log(eof_log_string, 2);
+#endif
 
 //Parse the string looking for the freestyle vocal modifiers # and ^
 	if((strchr(str,'#') != NULL) || (strchr(str,'^') != NULL))	//If the string contains '#' or '^'
@@ -2344,16 +2353,32 @@ void DEBUG_DUMP_LYRICS(void)
 	struct Lyric_Line *curline=NULL;
 	struct Lyric_Piece *curpiece=NULL;
 	unsigned long linectr=0;
+#ifdef EOF_BUILD
+char tempstr[1024];
+(void) snprintf(eof_log_string, EOF_LOG_STRING_SIZE - 1, "DEBUG_DUMP_LYRICS:");
+eof_log(eof_log_string, 2);
+#endif
 
 	for(curline=Lyrics.lines,linectr=1;curline!=NULL;curline=curline->next,linectr++)
 	{	//For each line of lyrics
 		printf("Line %lu: \"",linectr);
+#ifdef EOF_BUILD
+snprintf(eof_log_string, EOF_LOG_STRING_SIZE - 1, "\tLine %lu: \"", linectr);
+#endif
 		for(curpiece=curline->pieces;curpiece!=NULL;curpiece=curpiece->next)
 		{	//For each lyric in the ilne
 			assert_wrapper(curpiece->lyric != NULL);
 			printf("'%s' ",curpiece->lyric);
+#ifdef EOF_BUILD
+snprintf(tempstr, sizeof(tempstr) - 1, "'%s' ", curpiece->lyric);
+strncat(eof_log_string, tempstr, EOF_LOG_STRING_SIZE - 1);
+#endif
 		}
 		(void) puts("\"");
+#ifdef EOF_BUILD
+strncat(eof_log_string, "\"", EOF_LOG_STRING_SIZE - 1);
+eof_log(eof_log_string, 2);
+#endif
 	}
 }
 
