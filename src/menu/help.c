@@ -3,6 +3,7 @@
 #include "../main.h"
 #include "../dialog.h"
 #include "../utility.h"
+#include "file.h"
 #include "help.h"
 
 #ifdef USEMEMWATCH
@@ -197,6 +198,15 @@ int eof_reset_display(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
+	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+
+	//Re-initialize the notes panel if it was destroyed when the program window was redrawn
+	if(eof_enable_notes_panel)
+	{
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+		(void) eof_display_notes_panel();
+	}
+
 	eof_render();
 
 	return D_O_K;

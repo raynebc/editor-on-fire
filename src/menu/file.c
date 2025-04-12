@@ -467,7 +467,7 @@ void eof_prepare_file_menu(void)
 	eof_file_3d_preview_menu[2].flags = eof_full_height_3d_preview ? D_SELECTED : 0;	//Display>3D Preview>Full height
 
 	//Notes panel stuff
-	eof_file_notes_panel_menu[8].flags = eof_enable_notes_panel ? D_SELECTED : 0;		//File>Display>Notes Panel>Enable
+	eof_file_notes_panel_menu[9].flags = eof_enable_notes_panel ? D_SELECTED : 0;		//File>Display>Notes Panel>Enable
 	if(exists(eof_last_browsed_notes_panel_path))
 	{	//If the last browsed Notes panel file path is valid, display the relative file name for the user's reference
 		(void) snprintf(eof_file_notes_panel_menu_string, sizeof(eof_file_notes_panel_menu_string) - 1, "&User defined (%s)", get_filename(eof_last_browsed_notes_panel_path));

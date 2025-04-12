@@ -19,6 +19,7 @@
 int qsort_helper_immerrock(const void * e1, const void * e2)
 {
 //	eof_log("qsort_helper_immerrock() entered");
+	char event1_is_note_on = 0, event1_is_note_off = 0, event2_is_note_on = 0, event2_is_note_off = 0;
 
 	EOF_MIDI_EVENT ** thing1 = (EOF_MIDI_EVENT **)e1;
 	EOF_MIDI_EVENT ** thing2 = (EOF_MIDI_EVENT **)e2;
@@ -44,12 +45,46 @@ int qsort_helper_immerrock(const void * e1, const void * e2)
 			return 1;
 	}
 
+	/* Track whether events 1 or 2 are note on/off events to simplify remaining checks */
+	if((*thing1)->type == 0x90)
+	{	//Event 1 is a note on event
+		if(((*thing1)->velocity) == 0)
+			event1_is_note_off = 1;	//Note on with velocity 0 is always treated as a note off
+		else
+			event1_is_note_on = 1;
+	}
+	if((*thing2)->type == 0x90)
+	{	//Event 2 is a note on event
+		if(((*thing2)->velocity) == 0)
+			event2_is_note_off = 1;	//Note on with velocity 0 is always treated as a note off
+		else
+			event2_is_note_on = 1;
+	}
+	if((*thing1)->type == 0x80)
+	{	//Event 1 is a note off event
+		event1_is_note_off = 1;
+	}
+	if((*thing2)->type == 0x80)
+	{	//Event 2 is a note off event
+		event2_is_note_off = 1;
+	}
+
+	/* Pitch bend before note off takes fourth precedence */
+	if(((*thing1)->type == 0xE0) && event2_is_note_off)
+	{	//If the first event is a pitch bend and the other is a note off
+		return -1;
+	}
+	if(((*thing2)->type == 0xE0) && event1_is_note_off)
+	{	//If the first event is a note off and the other is a pitch bend
+		return 1;
+	}
+
 	/* Note on/off event takes fourth precedence */
-	if((((*thing1)->type == 0x90) || ((*thing1)->type == 0x80)) && (((*thing2)->type != 0x90) || ((*thing2)->type != 0x80)))
+	if((event1_is_note_off || event1_is_note_on) && (!event2_is_note_off && !event2_is_note_on))
 	{	//If the first event is a note on/off event and the other is not
 		return -1;
 	}
-	if((((*thing2)->type == 0x90) || ((*thing2)->type == 0x80)) && (((*thing1)->type != 0x90) || ((*thing2)->type != 0x80)))
+	if((event2_is_note_off || event2_is_note_on) && (!event1_is_note_off && !event1_is_note_on))
 	{	//If the second event is a note on/off event and the other is not
 		return 1;
 	}
@@ -61,9 +96,9 @@ int qsort_helper_immerrock(const void * e1, const void * e2)
 		return 1;
 
 	/* Note off before Note on takes sixth precedence */
-	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x80))
+	if(event1_is_note_on && event2_is_note_off)
 		return 1;
-	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0x90))
+	if(event1_is_note_off && event2_is_note_on)
 		return -1;
 
 	// they are equal...
@@ -385,7 +420,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 								eof_add_midi_pitch_bend_event_qsteps(deltatechpos, bendstrength_q, channel, index++);
 							}
 						}
-					}
+						eof_add_midi_pitch_bend_event_qsteps(deltapos + deltalength, bendstrength_q, channel, index++);	//Enforce the last-defined bend point at the end position of the note so the game reflects it is still in effect up to then
+					}//If there's at least one bend tech note that overlaps the note being exported
 				}//If the note is a bend, write all applicable bend points
 				eof_add_midi_pitch_bend_event(deltapos + deltalength + 1, 8192, channel, index++);	//Set the pitch bend back to neutral 1 delta tick after the end of the note
 
@@ -395,7 +431,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					unsigned long x, time;
 					long height;
 					double y;
-					double wave_period = 240;	//This is how many delta ticks it will take for the wave pattern to repeat
+					double wave_period = 120;	//This is how many delta ticks it will take for the wave pattern to repeat (240 = every half beat)
 					unsigned long pitch_bend_spacing = 28;	//How far apart in milliseconds the pitch bends are to be written
 					double wave_amplitude = 384;	//This is how many units above or below the neutral value the pitch bend value changes (IMMERROCK prefers 384, which is 30% of a half-step's bend value)
 
@@ -721,6 +757,117 @@ int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename
 	return 0;
 }
 
+int eof_detect_immerrock_arrangements(unsigned long *lead, unsigned long *rhythm, unsigned long *bass)
+{
+	unsigned long ctr, tracknum;
+
+	if(!eof_song || !lead || !rhythm || !bass)
+		return 0;	//Invalid parameters
+
+	*lead = *rhythm = *bass = 0;	//Reset these values
+
+	//Select the tracks to export
+	for(ctr = 1; ctr < eof_song->tracks; ctr++)
+	{	//For each track
+		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If it is a pro guitar track
+			if(eof_get_track_size_normal(eof_song, ctr))
+			{	//If the track has any normal notes
+				tracknum = eof_song->track[ctr]->tracknum;	//Simplify
+				switch(eof_song->pro_guitar_track[tracknum]->arrangement)
+				{
+					case 2:	//Rhythm arrangement
+						if(!(*rhythm))
+							*rhythm = ctr;	//Track the first rhythm arrangement encountered
+					break;
+
+					case 3:	//Lead arrrangement
+						if(!(*lead))
+							*lead = ctr;	//Track the first lead arrangement encountered
+					break;
+
+					case 4:	//Bass arrangement
+						if(!(*bass))
+							*bass = ctr;	//Track the first bass arrangement encountered
+					break;
+				}
+			}
+		}
+	}
+
+	return 1;
+}
+
+unsigned long eof_count_immerrock_sections(void)
+{
+	unsigned long ctr, lead = 0, rhythm = 0, bass = 0, section_count = 0;
+	char *ptr;
+
+	if(!eof_song)
+		return 0;
+
+	(void) eof_detect_immerrock_arrangements(&lead, &rhythm, &bass);
+
+	for(ctr = 0; ctr < eof_song->text_events; ctr++)
+	{	//For each text event in the project
+		if(!eof_song->text_event[ctr]->track || (eof_song->text_event[ctr]->track == lead) || (eof_song->text_event[ctr]->track == rhythm) || (eof_song->text_event[ctr]->track == bass))
+		{	//If the text event has no associated track or is specific to any of the arrangements specified for export
+			ptr = NULL;
+			if(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
+			{	//If this text event is flagged as a Rocksmith section
+				ptr = eof_song->text_event[ctr]->text;	//Use the section name verbatim
+			}
+			else
+			{	//Otherwise use the presence of "section " as a way to identify the section marker
+				ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event, getting the pointer to the character that follows it
+			}
+			if(ptr)
+			{	//If the text event is considered a section marker
+				section_count++;
+			}
+		}
+	}
+
+	return section_count;
+}
+
+unsigned long eof_count_immerrock_chords_missing_fingering(unsigned long *total)
+{
+	unsigned long ctr, tracknum, count = 0, totalcount = 0;
+	char restore_tech_view;
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned char diff = eof_note_type;	//By default, only check notes in the active track difficulty
+
+	if(!eof_song || eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;		//Only run when a pro guitar track is active
+
+	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0); //Disable tech view if applicable
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(eof_track_has_dynamic_difficulty(eof_song, eof_selected_track))
+		diff = eof_song->track[eof_selected_track]->numdiffs;	//If this is a dynamic difficulty track, check the highest difficulty level, flattened
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the active track
+		if(!eof_note_applies_to_diff(eof_song, eof_selected_track, ctr, diff))
+		{	//If this note isn't in the target difficulty (static or dynamic as applicable)
+			continue;	//Skip it
+		}
+		if(eof_note_count_rs_lanes(eof_song, eof_selected_track, ctr, 1) > 1)
+		{	//If the note has at least two gems that aren't ghosted or muted
+			if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
+			{	//If the fingering is not deemed valid for this note
+				count++;
+			}
+			totalcount++;
+		}
+	}
+	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view); //Re-enable tech view if applicable
+	if(total != NULL)
+		*total = totalcount;
+	return count;
+}
+
 int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option)
 {
 	PACKFILE *fp;
@@ -998,7 +1145,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 			}
 			else
 			{	//Otherwise use the presence of "section " as a way to identify the section marker
-				ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event, getting the pointer to the character that follows it
+				ptr = strcasestr_spec(sp->text_event[ctr]->text, "section ");	//Find this substring within the text event, getting the pointer to the character that follows it
 			}
 			if(ptr)
 			{	//If the text event is considered a section marker

@@ -69,8 +69,8 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
 
  //Additional 6 string guitar tunings
  {"Eb tuning", "Eb tuning (-1,-1,-1,-1,-1,-1): D#G#C#F#A#D#", 0, 6, {-1,-1,-1,-1,-1,-1}},
- {"Eb tuning", "Eb tuning (-1,-1,-1,-1,-1): EADGB", 0, 5, {-1,-1,-1,-1,-1}},
- {"Eb tuning", "Eb tuning (-1,-1,-1,-1): EADG", 0, 4, {-1,-1,-1,-1}},
+ {"Eb tuning", "Eb tuning (-1,-1,-1,-1,-1): D#G#C#F#A#", 0, 5, {-1,-1,-1,-1,-1}},
+ {"Eb tuning", "Eb tuning (-1,-1,-1,-1): D#G#C#F#", 0, 4, {-1,-1,-1,-1}},
  {"Eb drop Db tuning", "Eb drop Db tuning (-3,-1,-1,-1,-1,-1): C#G#C#F#A#D#", 0, 6, {-3,-1,-1,-1,-1,-1}},
  {"D tuning", "D tuning (-2,-2,-2,-2,-2,-2): DGCFAD", 0, 6, {-2,-2,-2,-2,-2,-2}},
  {"D drop C tuning", "D drop C tuning (-4,-2,-2,-2,-2,-2): CGCFAD", 0, 6, {-4,-2,-2,-2,-2,-2}},
@@ -87,7 +87,9 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
  {"Drop C tuning", "Drop C tuning (-4,0,0,0,0,0): CADGBE", 0, 6, {-4,0,0,0,0,0}},
  {"Drop D tuning", "Drop D tuning (-2,0,0,0,0,0): DADGBE", 0, 6, {-2,0,0,0,0,0}},
  {"Open D tuning", "Open D tuning (-2,0,0,-1,-2,-2): DADF#AD", 0, 6, {-2,0,0,-1,-2,-2}},
- {"Open G tuning", "Open G tuning (-2,-2,0,0,0,-2): DGDGBD", 0, 6, {-2,-2,0,0,0,-2}}
+ {"Open G tuning", "Open G tuning (-2,-2,0,0,0,-2): DGDGBD", 0, 6, {-2,-2,0,0,0,-2}},
+ {"Bass tuning", "Bass tuning (-4,-5,-5,-5,-5): BEADG", 0, 5, {-5,-5,-5,-5,-4}},
+ {"Bass tuning", "Bass tuning (-4,-4,-5,-5,-5,-5): BEADGC", 0, 6, {-5,-5,-5,-5,-4,-4}}
 };
 
 EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =

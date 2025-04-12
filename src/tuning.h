@@ -43,7 +43,7 @@ typedef struct
 	char tuning[EOF_TUNING_LENGTH];
 } EOF_TUNING_DEFINITION;
 
-#define EOF_NUM_TUNING_DEFINITIONS 39
+#define EOF_NUM_TUNING_DEFINITIONS 41
 extern EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS];
 extern char eof_tuning_unknown[];
 
@@ -66,7 +66,7 @@ int eof_lookup_default_string_tuning(EOF_PRO_GUITAR_TRACK *tp, unsigned long tra
 	//-1 is returned upon error
 int eof_lookup_default_string_tuning_absolute(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum);
 	//Determines the default tuning of the given string for the given pro guitar/bass track, taking the number of strings into account for pro bass
-	//The returned number is the absolute MIDI note note upon success
+	//The returned number is the absolute MIDI note upon success
 	//-1 is returned upon error
 int eof_lookup_tuned_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum, int halfsteps);
 	//Determines the note of the specified string tuned the specified number of half steps above/below default tuning, taking the number of strings into account for pro bass

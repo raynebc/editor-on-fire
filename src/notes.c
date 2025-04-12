@@ -1468,8 +1468,75 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				dest_buffer[0] = '\0';
 				return 3;	//True
 			}
-			return 2;	//False
 		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_IR_LEAD_ARRANGEMENT_DEFINED"))
+	{
+		unsigned long lead = 0, rhythm = 0, bass = 0;
+		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
+		{	//If the arrangement designations were determined
+			if(lead)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_IR_RHYTHM_ARRANGEMENT_DEFINED"))
+	{
+		unsigned long lead = 0, rhythm = 0, bass = 0;
+		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
+		{	//If the arrangement designations were determined
+			if(rhythm)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_IR_BASS_ARRANGEMENT_DEFINED"))
+	{
+		unsigned long lead = 0, rhythm = 0, bass = 0;
+		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
+		{	//If the arrangement designations were determined
+			if(bass)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_IR_SECTIONS_DEFINED"))
+	{
+		if(eof_count_immerrock_sections())
+		{	//If at least one section event is found
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_IR_TRACK_HAS_CHORDS_MISSING_FINGERING"))
+	{
+		if(eof_count_immerrock_chords_missing_fingering(NULL))
+		{	//If at least one chord is missing finger definitions
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
 	}
 
 	//Resumes normal macro parsing after a failed conditional macro test
@@ -3622,6 +3689,30 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			else
 				snprintf(dest_buffer, dest_buffer_size, "%lu lyric lines are defined", eof_song->vocal_track[0]->lines);
 		}
+		return 1;
+	}
+
+	if(!ustricmp(macro, "PRINT_IR_SECTION_COUNT_STRING"))
+	{
+		if(eof_song)
+		{
+			unsigned long count = eof_count_immerrock_sections();
+			if(count == 1)
+				snprintf(dest_buffer, dest_buffer_size, "1 section is defined");
+			else
+				snprintf(dest_buffer, dest_buffer_size, "%lu sections are defined", count);
+		}
+		return 1;
+	}
+
+	if(!ustricmp(macro, "PRINT_IR_MISSING_FINGERING_COUNT_STRING"))
+	{
+		unsigned long count, total = 0;
+		count = eof_count_immerrock_chords_missing_fingering(&total);
+		if(total == 1)
+			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chord is missing finger placement", count, total);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chords are missing finger placement", count, total);
 		return 1;
 	}
 

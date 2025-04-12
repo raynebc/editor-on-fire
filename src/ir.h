@@ -31,6 +31,20 @@ int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename
 	//If no file match is found, zero is returned and the album_art_filename string is emptied
 	//If a match is found, the matching file name is written to the album_art_filename string (bounds limited to filenamesize) and nonzero is returned
 	//Unless force_recheck is nonzero, the lookup results are cached and not replaced unless at least 10 seconds have passed since the last recheck
+int eof_detect_immerrock_arrangements(unsigned long *lead, unsigned long *rhythm, unsigned long *bass);
+	//Examines the arrangement type of the active project's pro guitar tracks as would export to IMMERROCK format
+	//The first populated lead, rhythm and bass arrangement's track numbers are stored via reference
+	//Returns nonzero on success
+unsigned long eof_count_immerrock_sections(void);
+	//Counts the number of text events that would export as section events
+	//Returns 0 if there are no such events, or upon error
+unsigned long eof_count_immerrock_chords_missing_fingering(unsigned long *total);
+	//Counts the number of chords in the active pro guitar track that have incomplete fingering and returns the count
+	//If the active track has dynamic difficulty, the flattened version of the highest difficulty level is checked, otherwise the active static difficulty is checked
+	//Only notes with at least two non ghosted/muted gems are examined, and muted strings are not required to have fingering defined
+	//If total is not NULL, the number of applicable chords that were checked are returned through it
+	//Returns zero on error
+
 int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option);
 	//Exports IMMERROCK files for the specified pro guitar tracks, for the specified difficulty in a folder with multiple files
 	//gglead, ggrhythm and ggbass are the track numbers to export as these arrangements, or 0 if that arrangement is not specified for export

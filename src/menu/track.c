@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <ctype.h>
 #include "../agup/agup.h"
 #include "../dialog/proc.h"
 #include "../foflc/Lyric_storage.h"
@@ -835,6 +836,15 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 	//Check scan code input
 	if(msg == MSG_CHAR)
 	{
+		if(tolower(c2 & 0xFF) == 'p')
+		{	//User pressed the P key
+///			return d_agup_edit_proc(msg, d, c);
+//			int junk = 0;
+//			(void) object_message(&eof_pro_guitar_tuning_dialog[23], MSG_CLICK, 0);	//Send click event to the Preset button
+//			(void) object_message(&eof_pro_guitar_tuning_dialog[23], D_EXIT, 0);	//Send click event to the Preset button
+//			(void) dialog_message(eof_pro_guitar_tuning_dialog, D_EXIT, 0, &junk);
+//			return D_EXIT;
+		}
 		if((c2 >> 8 == KEY_BACKSPACE) || (c2 >> 8 == KEY_DEL))
 		{	//If the backspace or delete keys are trapped
 			match = 1;	//Ensure the full function runs, so that the strings are rebuilt
@@ -1083,7 +1093,7 @@ DIALOG eof_pro_guitar_tuning_dialog[] =
 	{d_agup_text_proc,      110, 252, 28,  12,  0,   0,   0,    0,      0,         0,   string_1_name,NULL,          NULL },
 
 	{d_agup_button_proc,    12,  280, 68,  28, 0,   0,   '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    92,  280, 68,  28, 0,   0,   0,    D_EXIT, 0,         0,   "Preset",     NULL,          NULL },
+	{d_agup_button_proc,    92,  280, 68,  28, 0,   0,   'p',    D_EXIT, 0,         0,   "Preset",     NULL,          NULL },
 	{d_agup_button_proc,    172, 280, 68,  28, 0,   0,   0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -2575,6 +2585,7 @@ int eof_track_rocksmith_toggle_difficulty_limit(void)
 		}
 	}
 
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->track[eof_selected_track]->flags ^= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Toggle this flag
 	if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
 	{	//If the difficulty limit is in place

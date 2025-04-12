@@ -143,7 +143,8 @@ Note and Beat Editing:
     CTRL+[ , CTRL+]
 
         Move selected note(s) backward ([) or forward (]) by one
-        grid snap.
+        grid snap.  If grid snap is disabled, notes move by one
+        millisecond instead.
 
     Mouse Wheel:
 
