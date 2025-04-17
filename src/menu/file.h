@@ -10,6 +10,7 @@ extern MENU eof_file_menu[];
 
 extern DIALOG eof_settings_dialog[];
 extern DIALOG eof_preferences_dialog[];
+extern DIALOG eof_pg_preferences_dialog[];
 extern DIALOG eof_display_dialog[];
 extern DIALOG eof_custom_display_size_dialog[];
 extern DIALOG eof_ogg_settings_dialog[];
@@ -62,6 +63,7 @@ int eof_menu_file_settings(void);
 int eof_menu_file_default_ini_settings(void);
 int eof_menu_file_preferences(void);
 int eof_menu_file_import_export_preferences(void);
+int eof_menu_file_gp_preferences(void);
 int eof_menu_file_display(void);
 int eof_set_display_width(void);			//Overrides the current program window width with a user defined value
 int eof_set_3d_hopo_scale_size(void);		//Sets the scale size for non-GHL 3D HOPO gems

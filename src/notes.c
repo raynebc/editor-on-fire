@@ -1487,12 +1487,42 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_IS_IR_LEAD_ARRANGEMENT"))
+	{
+		unsigned long lead = 0, rhythm = 0, bass = 0;
+		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
+		{	//If the arrangement designations were determined
+			if(lead == eof_selected_track)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
 	if(!ustricmp(macro, "IF_IR_RHYTHM_ARRANGEMENT_DEFINED"))
 	{
 		unsigned long lead = 0, rhythm = 0, bass = 0;
 		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
 		{	//If the arrangement designations were determined
 			if(rhythm)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_IS_IR_RHYTHM_ARRANGEMENT"))
+	{
+		unsigned long lead = 0, rhythm = 0, bass = 0;
+		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
+		{	//If the arrangement designations were determined
+			if(rhythm == eof_selected_track)
 			{
 				dest_buffer[0] = '\0';
 				return 3;	//True
@@ -1517,6 +1547,21 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_IS_IR_BASS_ARRANGEMENT"))
+	{
+		unsigned long lead = 0, rhythm = 0, bass = 0;
+		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
+		{	//If the arrangement designations were determined
+			if(bass == eof_selected_track)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
 	if(!ustricmp(macro, "IF_IR_SECTIONS_DEFINED"))
 	{
 		if(eof_count_immerrock_sections())
@@ -1532,6 +1577,30 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_count_immerrock_chords_missing_fingering(NULL))
 		{	//If at least one chord is missing finger definitions
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_SEEK_POS_IS_IN_IR_SECTION"))
+	{
+		char section[50];
+
+		if(eof_lookup_immerrock_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
+		{	//If a section name was found to be in effect at the seek position
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_IR_EXPORT_ENABLED"))
+	{
+		if(eof_write_immerrock_files)
+		{	//If the "Save separate IMMERROCK files" export preference is enabled
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -3713,6 +3782,18 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chord is missing finger placement", count, total);
 		else
 			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chords are missing finger placement", count, total);
+		return 1;
+	}
+
+	if(!ustricmp(macro, "SEEK_IR_SECTION_CONDITIONAL"))
+	{
+		char section[50];
+
+		if(eof_lookup_immerrock_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
+		{	//If a section name was found to be in effect at the seek position
+			snprintf(dest_buffer, dest_buffer_size, "%s", section);
+		}
+
 		return 1;
 	}
 

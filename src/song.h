@@ -870,7 +870,9 @@ int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The com
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 void eof_pro_guitar_track_delete_tech_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long technote);	//Removes and frees the specified tech note from the tech notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
-long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
+long eof_fixup_previous_pro_guitar_pgnote(EOF_PRO_GUITAR_TRACK * tp, unsigned long pgnote);	//Similar to eof_fixup_previous_pro_guitar_note(), but explicitly searches in the normal note set (even when tech view is in effect)
+long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number in the active note set that is in the same difficulty, or -1 if there is none
+long eof_fixup_next_pro_guitar_pgnote(EOF_PRO_GUITAR_TRACK * tp, unsigned long pgnote);	//Similar to eof_fixup_next_pro_guitar_note(), but explicitly searches in the normal note set (even when tech view is in effect)
 long eof_fixup_next_pro_guitar_note_ptr(EOF_PRO_GUITAR_TRACK * tp, EOF_PRO_GUITAR_NOTE * np);	//Similar to eof_fixup_next_pro_guitar_note, but returns the index of the first note in tp that is AFTER the specified note's timestamp and is in the same difficulty
 long eof_fixup_next_pro_guitar_technote(EOF_PRO_GUITAR_TRACK * tp, unsigned long tnote);	//Returns the tech note one after the specified tech note number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_first_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned char diff);	//Returns the first note/lyric in the specified track difficulty, or -1 if there is none
@@ -1217,5 +1219,9 @@ int eof_check_for_notes_preceding_sections(int function);
 	//If function is zero, the user is alerted to this and zero is returned
 	//If function is nonzero, the user gets alerted and is prompted whether to cancel save
 	// If the user opts to cancel, nonzero is returned, otherwise zero is returned
+
+unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, unsigned long targetpos);
+	//Examines any bend status and bend tech notes on the specified string of the specified note and returns the bend strength (in quarternotes) in effect at the given timestamp
+	//Returns 0 if there is no applicable bend defined, if pos is after the end of the note, or upon error
 
 #endif

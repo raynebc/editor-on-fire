@@ -2142,6 +2142,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	for(track_ctr=0; track_ctr<track_count; track_ctr++)
 	{	//For each track in the project
 		(void) eof_load_song_string_pf(temp.name,fp,sizeof(temp.name));	//Read the track name
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading track %lu (%s)", track_ctr, temp.name);
+		eof_log(eof_log_string, 2);
 		temp.track_format = pack_getc(fp);		//Read the track format
 		temp.track_behavior = pack_getc(fp);	//Read the track behavior
 		temp.track_type = pack_getc(fp);		//Read the track type
@@ -2248,6 +2250,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				{	//For each string
 					tp->tuning[ctr] = pack_getc(fp);	//Read the string's tuning
 				}
+				tp->arrangement = 0;	//By default, eof_song_add_track() sets the arrangement type of the bass tracks to bass for the sake of a new project default, but during save, the arrangement type is only explicitly written when it isn't set to "undefined" (zero).  Undefined needs to be assumed unless an arrangement definition is found
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_NOTES)
 				{
@@ -2371,6 +2374,11 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						{	//Ensure this logic only runs for a pro guitar track
 							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 							tp->arrangement = pack_getc(fp);	//Read the track arrangement type
+							if(tp->arrangement < 5)
+							{	//Bounds check
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLoaded arrangement type %u (%s)", tp->arrangement, &(eof_track_rocksmith_arrangement_menu[tp->arrangement].text[1]));
+								eof_log(eof_log_string, 2);
+							}
 						}
 					break;
 
@@ -5734,6 +5742,24 @@ long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 	return -1;
 }
 
+long eof_fixup_previous_pro_guitar_pgnote(EOF_PRO_GUITAR_TRACK * tp, unsigned long pgnote)
+{
+	unsigned long i;
+
+	if(!tp || (pgnote >= tp->pgnotes))
+		return -1;	//Invalid parameters
+
+	for(i = pgnote; i > 0; i--)
+	{
+		if(tp->pgnote[i - 1]->type == tp->pgnote[pgnote]->type)
+		{
+			return i - 1;
+		}
+	}
+
+	return -1;
+}
+
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
 {
 	unsigned long i;
@@ -5744,6 +5770,24 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 	for(i = note + 1; i < tp->notes; i++)
 	{
 		if(tp->note[i]->type == tp->note[note]->type)
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+long eof_fixup_next_pro_guitar_pgnote(EOF_PRO_GUITAR_TRACK * tp, unsigned long pgnote)
+{
+	unsigned long i;
+
+	if(!tp || (pgnote >= tp->pgnotes))
+		return -1;	//Invalid parameters
+
+	for(i = pgnote + 1; i < tp->pgnotes; i++)
+	{
+		if(tp->pgnote[i]->type == tp->pgnote[pgnote]->type)
 		{
 			return i;
 		}
@@ -8428,9 +8472,6 @@ int eof_pro_guitar_track_diff_has_fingering(EOF_SONG *sp, unsigned long track, u
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
 	for(notectr = 0; notectr < tp->pgnotes; notectr++)
 	{	//For each note in the track
-		if(tp->pgnote[notectr]->type != diff)
-			continue;	//If this note isn't in the target difficulty, skip it
-
 		for(stringctr = 0, bitmask = 1; stringctr < 6; stringctr++, bitmask <<= 1)
 		{	//For each of the 6 usable strings
 			if(tp->pgnote[notectr]->note & bitmask)
@@ -11078,4 +11119,115 @@ int eof_check_for_notes_preceding_sections(int function)
 	}
 
 	return 0;
+}
+
+unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, unsigned long targetpos)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long pos, length;
+	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};		//Used to process bend points
+	unsigned long effective_bendstrength = 0;	//The current defined bend strength in quarter steps
+
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Invalid parameters
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(notenum > tp->pgnotes)
+		return 0;	//Invalid parameters
+
+	pos = tp->pgnote[notenum]->pos;
+	length = tp->pgnote[notenum]->length;
+	if(targetpos > pos + length)
+		return 0;	//Specified timestamp is after the note
+
+	(void) eof_get_rs_techniques(sp, track, notenum, stringnum, &tech, 2, 1);	//Determine techniques used by this note/chordNote
+	if(tech.bend)
+	{	//If the note is a bend, examine all applicable bend points
+		unsigned long bendpoints, firstbend = 0;	//Used to parse any bend tech notes that may affect the exported note
+		unsigned long ctr;
+		long nextnote;
+		unsigned long bitmask = 1 << stringnum;
+
+		bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, notenum, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string
+		if(!bendpoints)
+		{	//If there are no bend points, the bend implcitly occurs 1/3 into the note and lasts for the duration of the note
+			if(targetpos >= (double)pos + ((double)length / 3) + 0.5)
+				return tech.bendstrength_q;	//Any point at/after 1/3 into this note on this string is the defined bend value
+
+			return 0;	//Any point before 1/3 into the note on this string has no bend in effect
+		}
+		else
+		{	//If there's at least one bend tech note that overlaps the note being examined
+			long pre_bend;
+			unsigned long techflags;
+
+			nextnote = eof_fixup_next_pro_guitar_pgnote(tp, notenum);
+			if(nextnote > 0)
+			{	//If there was a next note
+				if(pos + length == tp->pgnote[nextnote]->pos)
+				{	//And this note extends all the way to it with no gap in between (this note has linkNext status)
+					length--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
+				}
+			}
+
+			//If there is a pre-bend tech note, it must be written first and any other pre-bend tech notes or bend tech notes at the note's starting position are to be ignored
+			pre_bend = eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(tp, notenum, bitmask);
+			if(pre_bend >= 0)
+			{	//If an applicable pre-bend tech note was found
+				techflags = tp->technote[pre_bend]->flags;
+				if((techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (techflags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+				{	//If the tech note is a bend and has a bend strength defined
+					if(tp->technote[pre_bend]->bendstrength & 0x80)
+					{	//If this bend strength is defined in quarter steps
+						effective_bendstrength = tp->technote[pre_bend]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
+					}
+					else
+					{	//The bend strength is defined in half steps
+						effective_bendstrength = tp->technote[pre_bend]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
+					}
+				}
+				else
+				{	//The bend strength is not defined, use a default value of 1 half step
+					effective_bendstrength = 2;
+				}
+
+				if(targetpos == pos)
+					return effective_bendstrength;	//If the target position is the start of the note, it is the pre-bend strength
+			}
+
+			for(ctr = firstbend; ctr < tp->technotes; ctr++)
+			{	//For all tech notes, starting with the first applicable bend tech note
+				if(tp->technote[ctr]->pos > pos + length)
+				{	//If this tech note (and all those that follow) are after the end position of this note
+					break;	//Break from loop, no more overlapping notes will be found
+				}
+				if((tp->technote[ctr]->type != tp->pgnote[notenum]->type) || !(bitmask & tp->technote[ctr]->note))
+					continue;	//If the tech note isn't in the same difficulty as the pro guitar single note being exported or if it doesn't use the same string, skip it
+				if((tp->technote[ctr]->pos < pos) || (tp->technote[ctr]->pos > pos + length))
+					continue;	//If this tech note does not overlap with the specified pro guitar regular note, skip it
+				if(tp->technote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
+					continue;	//If this is a pre-bend tech note, skip it as there's only one valid pre-bend per string and it was written already
+				if((pre_bend >= 0) && (tp->technote[ctr]->pos == pos))
+					continue;	//If a pre-bend tech note was written, and this tech note is at the note's start position, skip it as the pre-bend takes precedent in this conflict
+
+				techflags = tp->technote[ctr]->flags;
+				if((techflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && (techflags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+				{	//If the tech note is a bend and has a bend strength defined, write the bend point at the specified position within the note
+					if(targetpos < tp->technote[ctr]->pos)
+						return effective_bendstrength;	//If this bend tech note is after the target position, return the last defined bend strength
+
+					if(tp->technote[ctr]->bendstrength & 0x80)
+					{	//If this bend strength is defined in quarter steps
+						effective_bendstrength = tp->technote[ctr]->bendstrength & 0x7F;	//Obtain the defined bend strength in quarter steps (mask out the MSB)
+					}
+					else
+					{	//The bend strength is defined in half steps
+						effective_bendstrength = tp->technote[ctr]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
+					}
+				}
+			}
+		}//If there's at least one bend tech note that overlaps the note being examined
+	}//If the note is a bend, examine all applicable bend points
+
+	return effective_bendstrength;	//If all bend tech notes have been examined, but the target position isn't before any of them, return the last defined bend strength
 }

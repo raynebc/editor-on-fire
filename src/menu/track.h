@@ -8,6 +8,7 @@ extern MENU eof_track_menu[];
 extern MENU eof_filtered_track_menu[EOF_SCRATCH_MENU_SIZE];
 extern MENU eof_track_rocksmith_menu[];
 extern MENU eof_track_proguitar_menu[];
+extern MENU eof_track_rocksmith_arrangement_menu[];
 
 extern DIALOG eof_pro_guitar_tuning_dialog[];
 extern DIALOG eof_note_set_num_frets_strings_dialog[];

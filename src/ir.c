@@ -434,6 +434,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					double wave_period = 120;	//This is how many delta ticks it will take for the wave pattern to repeat (240 = every half beat)
 					unsigned long pitch_bend_spacing = 28;	//How far apart in milliseconds the pitch bends are to be written
 					double wave_amplitude = 384;	//This is how many units above or below the neutral value the pitch bend value changes (IMMERROCK prefers 384, which is 30% of a half-step's bend value)
+					unsigned long bend_amount;	//This will reflect how much the note is bending in addition to any vibrato being performed
 
 ///Logic to export bend points every 30 delta ticks instead of based on realtime
 /*					for(x = 0; x < deltalength; x += 30)
@@ -450,22 +451,24 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					{	//For each time interval of the note being exported
 						x = ((double)time * (double)deltalength) / (double)length;	//Get the delta tick amount into the note that this realtime position is
 						y = sin(x * M_PI * 2.0 / wave_period);		//Solve for y where the sine wave is calculated to repeat its pattern in the given number of delta ticks (an x value of wave_period is where y would equal sin(2 * pi), where a sine wave officially repeats itself)
+						bend_amount = eof_get_bend_strength_at_pos(sp, track, i, stringnum, pos + x) * 640;	//The pitch bend event will also add in the amount that the note bends
 						if(y < 0)
 							height = (wave_amplitude * y) - 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is the specified number of pitch bend units.  Round down to nearest negative integer
 						else
 							height = (wave_amplitude * y) + 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is the specified number of pitch bend units.  Round up to nearest positive integer
-						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height, channel, index++);	//Add a pitch bend that is the given value above or below neutral
+						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height + bend_amount, channel, index++);	//Add a pitch bend that is the given value above or below neutral
 					}
 
 					if(deltalength != x)
 					{	//If the last written vibrato pitch bend was not at the stop timestamp of the note
 						x = deltalength;	//The delta tick of the note's end position
 						y = sin(x * M_PI * 2.0 / wave_period);		//Solve for y where the sine wave is calculated to repeat its pattern in the given number of delta ticks (an x value of wave_period is where y would equal sin(2 * pi), where a sine wave officially repeats itself)
+						bend_amount = eof_get_bend_strength_at_pos(sp, track, i, stringnum, pos + length) * 640;	//The pitch bend event will also add in the amount that the note bends
 						if(y < 0)
 							height = (wave_amplitude * y) - 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is the specified number of pitch bend units.  Round down to nearest negative integer
 						else
 							height = (wave_amplitude * y) + 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is the specified number of pitch bend units.  Round up to nearest positive integer
-						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height, channel, index++);	//Add a pitch bend that is the given value above or below neutral
+						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height + bend_amount, channel, index++);	//Add a pitch bend that is the given value above or below neutral
 					}
 					eof_add_midi_pitch_bend_event(deltapos + deltalength + 1, 8192, channel, index++);	//Set the pitch bend back to neutral 1 delta tick after the end of the note
 				}
@@ -729,16 +732,16 @@ int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename
 	this_checktime = clock();
 	if(force_recheck || first_check || ((this_checktime - last_checktime) / CLOCKS_PER_SEC >=  10))
 	{	//If the calling function demands a recheck, if this is the first call to the function or at least 10 seconds have passed since this function performed file system checks
-		eof_search_image_files(folderpath, "cover", album_art_filename, filenamesize);
-		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "cover" exists in the export folder
-			eof_search_image_files(folderpath, "album", album_art_filename, filenamesize);
-		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "album" exists in the export folder
-			eof_search_image_files(folderpath, "label", album_art_filename, filenamesize);
-		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "label" exists in the export folder
-			eof_search_image_files(folderpath, "image", album_art_filename, filenamesize);
+		eof_search_image_files(folderpath, "Cover", album_art_filename, filenamesize);
+		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "Cover" exists in the export folder
+			eof_search_image_files(folderpath, "Album", album_art_filename, filenamesize);
+		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "Album" exists in the export folder
+			eof_search_image_files(folderpath, "Label", album_art_filename, filenamesize);
+		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "Label" exists in the export folder
+			eof_search_image_files(folderpath, "Image", album_art_filename, filenamesize);
 
 		if(exists(album_art_filename))
-		{	//If a JPG, PNG or TIFF file with a base filename of "album", "cover", "label" or "image" exist in the target folder
+		{	//If a JPG, PNG or TIFF file with a base filename of "Album", "Cover", "Label" or "Image" exist in the target folder
 			strncpy(filematch, album_art_filename, sizeof(filematch) - 1);	//Cache the result
 		}
 		else
@@ -868,7 +871,55 @@ unsigned long eof_count_immerrock_chords_missing_fingering(unsigned long *total)
 	return count;
 }
 
-int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option)
+int eof_lookup_immerrock_effective_section_at_pos(EOF_SONG *sp, unsigned long pos, char *section_name, unsigned long section_name_size)
+{
+	unsigned long lead = 0, rhythm = 0, bass = 0, ctr;
+	char *ptr;
+
+	if(!sp || !section_name || (section_name_size < 11))
+		return 0;	//Invalid parameters
+
+	if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
+	{	//If the arrangement designations were determined
+		section_name[0] = '\0';	//Empty this string
+		for(ctr = 0; ctr < eof_song->text_events; ctr++)
+		{	//For each text event in the project
+			if(eof_get_text_event_pos(eof_song, ctr) > pos)
+				break;	//If this text event and all others are after the target position, stop checking events
+
+			if(!eof_song->text_event[ctr]->track || (eof_song->text_event[ctr]->track == lead) || (eof_song->text_event[ctr]->track == rhythm) || (eof_song->text_event[ctr]->track == bass))
+			{	//If the text event has no associated track or is specific to any of the arrangements specified for export
+				ptr = NULL;
+				if(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
+				{	//If this text event is flagged as a Rocksmith section
+					ptr = eof_song->text_event[ctr]->text;	//Use the section name verbatim
+				}
+				else
+				{	//Otherwise use the presence of "section " as a way to identify the section marker
+					ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event, getting the pointer to the character that follows it
+				}
+				if(ptr)
+				{	//If the text event is considered a section marker
+					strncpy(section_name, ptr, section_name_size);		//Copy the section name
+					if(!(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION))
+					{	//If the section name isn't a Rocksmith section, modify the string if necessary
+						if(section_name[strlen(section_name) - 1] == ']')
+						{	//If that included a trailing closing bracket
+							section_name[strlen(section_name) - 1] = '\0';	//Truncate it from the end of the string
+						}
+					}
+				}
+			}
+		}
+		if(section_name[0] != '\0')
+		{	//If a section event was found to be at/before the seek position
+			return 1;	//Return section found
+		}
+	}
+	return 0;	//No matching section found
+}
+
+int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option)
 {
 	PACKFILE *fp;
 	int err = 0;
@@ -884,7 +935,7 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	char *blank_name = "";
 	char numbered_diff[10] = {0};
 	char *diff_name = blank_name;
-	unsigned long eventpos;
+	unsigned long eventpos, lasteventpos = 0, eventswritten = 0;
 	unsigned min, sec, ms;
 
 	//Validate parameters
@@ -1134,11 +1185,17 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	//Write Sections.txt
 	fp = NULL;	//The file will only be opened for writing if at least one section marker is found
 	eof_log("\tParsing sections.",  2);
+	eof_sort_events(sp);		//Ensure all events are sorted chronologically
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event in the project
 		if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == gglead) || (sp->text_event[ctr]->track == ggrhythm) || (sp->text_event[ctr]->track == ggbass))
 		{	//If the text event has no associated track or is specific to any of the arrangements specified for export
 			ptr = NULL;
+			eventpos = eof_get_text_event_pos(sp, ctr);
+			if(eventswritten && (eventpos == lasteventpos))
+			{	//If this event is at the same position as the last section event that was exported
+				continue;	//Skip it
+			}
 			if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
 			{	//If this text event is flagged as a Rocksmith section
 				ptr = sp->text_event[ctr]->text;	//Use the section name verbatim
@@ -1177,12 +1234,13 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 						section[strlen(section) - 1] = '\0';	//Truncate it from the end of the string
 					}
 				}
-				eventpos = eof_get_text_event_pos(sp, ctr);
 				min = eventpos / 60000;
 				sec = (eventpos / 1000) % 60;
 				ms = eventpos % 1000;
 				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\%s\"\n", min, sec, ms, section);	//Use this if IMMERROCK can display section names
 				(void) pack_fputs(temp_string, fp);	//Write section entry
+				lasteventpos = eventpos;	//Track the position of the last event that was exported
+				eventswritten++;			//Track how many events were exported
 			}
 		}
 	}
@@ -1256,12 +1314,12 @@ int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long
 	//Write album art
 	album_art_filename[0] = '\0';	//Empty this string
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "", (int) sizeof(eof_temp_filename));	//Build path to export folder
-	if(!eof_search_image_files(eof_temp_filename, "cover", album_art_filename, sizeof(album_art_filename) - 1))
-	{	//If no JPG, PNG or TIFF file with a base filename of "cover" exists in the export folder
+	if(!eof_search_image_files(eof_temp_filename, "Cover", album_art_filename, sizeof(album_art_filename) - 1))
+	{	//If no JPG, PNG or TIFF file with a base filename of "Cover" exists in the export folder
 		eof_log("\tAlbum art not found in export folder, checking project folder.", 2);
 		eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, 1);	//Check for any suitable files in the project folder
 		if(exists(album_art_filename))
-		{	//If a JPG, PNG or TIFF file with a base filename of "album", "cover", "label" or "image" exist in the project folder
+		{	//If a JPG, PNG or TIFF file with a base filename of "Album", "Cover", "Label" or "Image" exist in the project folder
 			(void) replace_extension(temp_filename2, "Cover.jpg", get_extension(album_art_filename), sizeof(temp_filename2) - 1);	//Build output filename based on the extension of the found file
 			(void) replace_filename(eof_temp_filename, eof_temp_filename, get_filename(temp_filename2), (int) sizeof(eof_temp_filename));	//Build path to destination file
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);

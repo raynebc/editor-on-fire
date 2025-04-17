@@ -104,6 +104,7 @@ MENU eof_file_preferences_menu[] =
 {
 	{"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
 	{"&Import/Export", eof_menu_file_import_export_preferences, NULL, 0, NULL},
+	{"Pro &Guitar", eof_menu_file_gp_preferences, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -209,33 +210,25 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_text_proc,  150, 368, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
 	{ d_agup_list_proc,  129, 383, 100, 95,  2,   23,  0,    0,      0,   0,   (void *)eof_colors_list,       NULL, NULL },
 	{ d_agup_check_proc, 248, 191, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
-	{ d_agup_check_proc, 248, 271, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
+	{ d_agup_check_proc, 248, 271, 190, 16,  2,   23,  0,    0,      1,   0,   "Don't redraw on exit prompt",NULL, NULL },
 	{ d_agup_check_proc, 248, 287, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
 	{ d_agup_check_proc, 248, 303, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
 	{ d_agup_check_proc, 16,  271, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
-	{ d_agup_check_proc, 16,  287, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+	{ d_agup_check_proc, 16,  287, 210, 16,  2,   23,  0,    0,      1,   0,   "Don't auto edit new lyrics",NULL, NULL },
 	{ d_agup_check_proc, 16,  255, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
 	{ d_agup_check_proc, 248, 319, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
 	{ d_agup_text_proc,  16,  186, 200, 12,  0,   0,   0,    0,      0,   0,   "Chord density threshold (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,204,186,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
-	{ d_agup_check_proc, 16,  239, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
-	{ d_agup_check_proc, 248, 351, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
-	{ d_agup_check_proc, 248, 367, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
+	{ d_agup_check_proc, 16,  239, 340, 16,  2,   23,  0,    0,      1,   0,   "Prefer MIDI friendly grid snaps",NULL, NULL },
+	{ d_agup_check_proc, 248, 239, 230, 16,  2,   23,  0,    0,      1,   0,   "GHL conversion swaps B/W gems",NULL, NULL },
+	{ d_agup_check_proc, 248, 351, 224, 16,  2,   23,  0,    0,      1,   0,   "Enable open strum by default",NULL, NULL },
+	{ d_agup_check_proc, 248, 367, 206, 16,  2,   23,  0,    0,      1,   0,   "Disable automatic backups",NULL, NULL },
 	{ d_agup_check_proc, 248, 383, 184, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust sections/FHPs",NULL, NULL },
-	{ d_agup_check_proc, 248, 399, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
-	{ d_agup_check_proc, 248, 415, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
-	{ d_agup_check_proc, 248, 431, 230, 16,  2,   23,  0,    0,      1,   0,   "GHL conversion swaps B/W gems",NULL, NULL },
-	{ d_agup_check_proc, 248, 447, 168, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
 	{ d_agup_radio_proc, 190, 144, 40,  16,  2,   23,  0,    0,      2,   0,   "ms",          NULL, NULL },
 	{ d_agup_radio_proc, 230, 144, 92,  16,  2,   23,  0,    0,      2,   0,   "1/# measure", NULL, NULL },
 	{ d_agup_radio_proc, 322, 144, 68,  16,  2,   23,  0,    0,      2,   0,   "1/# beat",    NULL, NULL },
-	{ d_agup_check_proc, 248, 463, 186, 16,  2,   23,  0,    0,      1,   0,   "Disable automatic backups",NULL, NULL },
 	{ d_agup_check_proc, 248, 175, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
 	{ d_agup_check_proc, 248, 159, 206, 16,  2,   23,  0,    0,      1,   0,   "Use FoF difficulty naming",NULL, NULL },
-	{ d_agup_check_proc, 248, 479, 208, 16,  2,   23,  0,    0,      1,   0,   "Enable open strum by default",NULL, NULL },
-	{ d_agup_check_proc, 16,  319, 216, 16,  2,   23,  0,    0,      1,   0,   "Prefer MIDI friendly grid snaps",NULL, NULL },
-	{ d_agup_check_proc, 248, 495, 184, 16,  2,   23,  0,    0,      1,   0,   "Don't auto edit new lyrics",NULL, NULL },
-	{ d_agup_check_proc, 16,  335, 194, 16,  2,   23,  0,    0,      1,   0,   "Don't redraw on exit prompt",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -277,6 +270,24 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   300, 244, 16,  2,   23,  0,    0,      1,   0,   "MIDI export CH/YARG open note/chord markers",NULL, NULL },
 	{ d_agup_check_proc, 248, 315, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
 	{ d_agup_check_proc, 248, 330, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_pg_preferences_dialog[] =
+{
+	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
+	{ d_agup_window_proc,0,   48,  482, 226, 2,   23,  0,    0,      0,   0,   "Pro Guitar Preferences", NULL, NULL },
+	{ d_agup_button_proc,12,  234, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  234, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 234, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+	{ d_agup_check_proc, 16,  75, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
+	{ d_agup_check_proc, 16,  91, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+	{ d_agup_check_proc, 248, 91, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
+	{ d_agup_check_proc, 16, 107, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
+	{ d_agup_check_proc, 248, 107, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
+	{ d_agup_check_proc, 16, 123, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
+	{ d_agup_check_proc, 248, 123, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
+	{ d_agup_check_proc, 16, 139, 168, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1403,33 +1414,30 @@ int eof_menu_file_preferences(void)
 	original_input_mode = eof_input_mode;											//Store this value
 	eof_preferences_dialog[33].d1 = eof_color_set;										//Color set
 	eof_preferences_dialog[34].flags = eof_new_note_length_1ms ? D_SELECTED : 0;				//New notes are made 1ms long
-	eof_preferences_dialog[35].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;				//3D render RS style chords
+	eof_preferences_dialog[35].flags = eof_dont_redraw_on_exit_prompt ? D_SELECTED : 0;		//Don't redraw on exit prompt
 	eof_preferences_dialog[36].flags = eof_rewind_at_end ? D_SELECTED : 0;					//Rewind when playback is at end
 	eof_preferences_dialog[37].flags = eof_display_seek_pos_in_seconds ? D_SELECTED : 0;		//Display seek pos. in seconds
 	eof_preferences_dialog[38].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;		//Add new notes to selection
-	eof_preferences_dialog[39].flags = eof_inverted_chords_slash ? D_SELECTED : 0;				//Treat inverted chords as slash
+	eof_preferences_dialog[39].flags = eof_dont_auto_edit_new_lyrics ? D_SELECTED : 0;			//Don't auto edit new lyrics
 	eof_preferences_dialog[40].flags = eof_click_changes_dialog_focus ? D_SELECTED : 0;			//Click to change dialog focus
 	eof_preferences_dialog[41].flags = eof_stop_playback_leave_focus ? D_SELECTED : 0;			//EOF leaving focus stops playback
-	eof_preferences_dialog[44].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
-	eof_preferences_dialog[45].flags = eof_auto_complete_fingering ? D_SELECTED : 0;			//Offer to auto complete fingering
-	eof_preferences_dialog[46].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;		//Don't auto-name double stops
-	eof_preferences_dialog[47].flags = eof_section_auto_adjust ? D_SELECTED : 0;				//Auto-Adjust sections/FHPs
-	eof_preferences_dialog[48].flags = eof_technote_auto_adjust ? D_SELECTED : 0;				//Auto-Adjust tech notes
-	eof_preferences_dialog[49].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;		//Fingering checks include mutes
-	eof_preferences_dialog[50].flags = eof_ghl_conversion_swaps_bw_gems ? D_SELECTED : 0;	//GHL conversion swaps B/W gems
-	eof_preferences_dialog[51].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;			//2D render RS piano roll
-	eof_preferences_dialog[52].flags = eof_preferences_dialog[53].flags = eof_preferences_dialog[54].flags = 0;	//Clear the min. note distance radio buttons
+	eof_preferences_dialog[44].flags = eof_prefer_midi_friendly_grid_snapping ? D_SELECTED : 0;	//Prefer MIDI friendly grid snaps
+	eof_preferences_dialog[45].flags = eof_ghl_conversion_swaps_bw_gems ? D_SELECTED : 0;	//GHL conversion swaps B/W gems
+	eof_preferences_dialog[46].flags = eof_enable_open_strums_by_default ? D_SELECTED : 0;		//Enable open strum by default
+	eof_preferences_dialog[47].flags = eof_disable_backups ? D_SELECTED : 0;					//Disable automatic backups
+	eof_preferences_dialog[48].flags = eof_section_auto_adjust ? D_SELECTED : 0;				//Auto-Adjust sections/FHPs
+	eof_preferences_dialog[49].flags = eof_preferences_dialog[50].flags = eof_preferences_dialog[51].flags = 0;	//Clear the min. note distance radio buttons
 	if(!eof_min_note_distance_intervals)
 	{	//If the min. note distance is ms
-		eof_preferences_dialog[52].flags = D_SELECTED;	//Select the "ms" radio button
+		eof_preferences_dialog[49].flags = D_SELECTED;	//Select the "ms" radio button
 	}
 	else if(eof_min_note_distance_intervals == 1)
 	{
-		eof_preferences_dialog[53].flags = D_SELECTED;	//Select the "1/# measure" radio button
+		eof_preferences_dialog[50].flags = D_SELECTED;	//Select the "1/# measure" radio button
 	}
 	else
 	{
-		eof_preferences_dialog[54].flags = D_SELECTED;	//Select the "1/# beat" radio button
+		eof_preferences_dialog[51].flags = D_SELECTED;	//Select the "1/# beat" radio button
 	}
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
@@ -1448,13 +1456,8 @@ int eof_menu_file_preferences(void)
 	{
 		eof_etext3[0] = '\0';	//Otherwise empty the string
 	}
-	eof_preferences_dialog[55].flags = eof_disable_backups ? D_SELECTED : 0;					//Disable automatic backups
-	eof_preferences_dialog[56].flags = eof_new_note_forced_strum ? D_SELECTED : 0;			//New notes are force strum
-	eof_preferences_dialog[57].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;			//Use FoF difficulty naming
-	eof_preferences_dialog[58].flags = eof_enable_open_strums_by_default ? D_SELECTED : 0;		//Enable open strum by default
-	eof_preferences_dialog[59].flags = eof_prefer_midi_friendly_grid_snapping ? D_SELECTED : 0;	//Prefer MIDI friendly grid snaps
-	eof_preferences_dialog[60].flags = eof_dont_auto_edit_new_lyrics ? D_SELECTED : 0;			//Don't auto edit new lyrics
-	eof_preferences_dialog[61].flags = eof_dont_redraw_on_exit_prompt ? D_SELECTED : 0;		//Don't redraw on exit prompt
+	eof_preferences_dialog[52].flags = eof_new_note_forced_strum ? D_SELECTED : 0;			//New notes are force strum
+	eof_preferences_dialog[53].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;			//Use FoF difficulty naming
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1527,11 +1530,11 @@ int eof_menu_file_preferences(void)
 			eof_input_mode = eof_preferences_dialog[31].d1;
 			eof_color_set = eof_preferences_dialog[33].d1;
 			eof_new_note_length_1ms = (eof_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
-			eof_render_3d_rs_chords = (eof_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
+			eof_dont_redraw_on_exit_prompt = (eof_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
 			eof_rewind_at_end = (eof_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
 			eof_display_seek_pos_in_seconds = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
 			eof_add_new_notes_to_selection = (eof_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
-			eof_inverted_chords_slash = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
+			eof_dont_auto_edit_new_lyrics = (eof_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
 			eof_click_changes_dialog_focus = (eof_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
 			if(eof_click_changes_dialog_focus)
 				gui_mouse_focus = 0;
@@ -1551,25 +1554,22 @@ int eof_menu_file_preferences(void)
 				eof_chord_density_threshold = 0;
 			}
 			if(!eof_min_note_distance_intervals && ((original_eof_min_note_distance != eof_min_note_distance) || (original_eof_chord_density_threshold != eof_chord_density_threshold)))
-			{	//If the minimum note distance or chord density threshold values were changes, and the minimum note distance setting is in ms
+			{	//If the minimum note distance or chord density threshold values were changed, and the minimum note distance setting is in ms
 				if(eof_chord_density_threshold < eof_min_note_distance)
 				{	//If EOF is configured to truncate note tails to enforce a distance longer than the chord density threshold
 					allegro_message("Warning:  Configuring the minimum note distance to be longer than the chord density\nthreshold will eliminate chord repeat lines for all chords that aren't close enough to\neach others' start positions.");
 				}
 			}
-			eof_enforce_chord_density = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
-			eof_auto_complete_fingering = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
-			eof_dont_auto_name_double_stops = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
-			eof_section_auto_adjust = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
-			eof_technote_auto_adjust = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
-			eof_fingering_checks_include_mutes = (eof_preferences_dialog[49].flags == D_SELECTED ? 1 : 0);
-			eof_ghl_conversion_swaps_bw_gems = (eof_preferences_dialog[50].flags == D_SELECTED ? 1 : 0);
-			eof_render_2d_rs_piano_roll = (eof_preferences_dialog[51].flags == D_SELECTED ? 1 : 0);
-			if(eof_preferences_dialog[52].flags == D_SELECTED)
+			eof_prefer_midi_friendly_grid_snapping = (eof_preferences_dialog[44].flags == D_SELECTED ? 1 : 0);
+			eof_ghl_conversion_swaps_bw_gems = (eof_preferences_dialog[45].flags == D_SELECTED ? 1 : 0);
+			eof_enable_open_strums_by_default = (eof_preferences_dialog[46].flags == D_SELECTED ? 1 : 0);
+			eof_disable_backups = (eof_preferences_dialog[47].flags == D_SELECTED ? 1 : 0);
+			eof_section_auto_adjust = (eof_preferences_dialog[48].flags == D_SELECTED ? 1 : 0);
+			if(eof_preferences_dialog[49].flags == D_SELECTED)
 			{	//min. note distance is in ms
 				eof_min_note_distance_intervals = 0;
 			}
-			else if(eof_preferences_dialog[53].flags == D_SELECTED)
+			else if(eof_preferences_dialog[50].flags == D_SELECTED)
 			{	//min. note distance is 1/# measure
 				eof_min_note_distance_intervals = 1;
 			}
@@ -1577,13 +1577,8 @@ int eof_menu_file_preferences(void)
 			{	//min. note distance is 1/# beat
 				eof_min_note_distance_intervals = 2;
 			}
-			eof_disable_backups = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
-			eof_new_note_forced_strum = (eof_preferences_dialog[56].flags == D_SELECTED ? 1 : 0);
-			eof_use_fof_difficulty_naming = (eof_preferences_dialog[57].flags == D_SELECTED ? 1 : 0);
-			eof_enable_open_strums_by_default = (eof_preferences_dialog[58].flags == D_SELECTED ? 1 : 0);
-			eof_prefer_midi_friendly_grid_snapping = (eof_preferences_dialog[59].flags == D_SELECTED ? 1 : 0);
-			eof_dont_auto_edit_new_lyrics = (eof_preferences_dialog[60].flags == D_SELECTED ? 1 : 0);
-			eof_dont_redraw_on_exit_prompt = (eof_preferences_dialog[61].flags == D_SELECTED ? 1 : 0);
+			eof_new_note_forced_strum = (eof_preferences_dialog[52].flags == D_SELECTED ? 1 : 0);
+			eof_use_fof_difficulty_naming = (eof_preferences_dialog[53].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1622,32 +1617,24 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[31].d1 = EOF_INPUT_REX;			//Input method
 			eof_preferences_dialog[33].d1 = EOF_COLORS_DEFAULT;	//Color set
 			eof_preferences_dialog[34].flags = 0;					//New notes are made 1ms long
-			eof_preferences_dialog[35].flags = 0;					//3D render RS style chords
+			eof_preferences_dialog[35].flags = 0;					//Don't redraw on exit prompt
 			eof_preferences_dialog[36].flags = D_SELECTED;			//Rewind when playback is at end
 			eof_preferences_dialog[37].flags = 0;					//Display seek pos. in seconds
 			eof_preferences_dialog[38].flags = 0;					//Add new notes to selection
-			eof_preferences_dialog[39].flags = 0;					//Treat inverted chords as slash
+			eof_preferences_dialog[39].flags = 0;					//Don't auto edit new lyrics
 			eof_preferences_dialog[40].flags = D_SELECTED;			//Click to change dialog focus
 			eof_preferences_dialog[41].flags = D_SELECTED;			//EOF leaving focus stops playback
 			(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "10000");	//Chord density threshold
-			eof_preferences_dialog[44].flags = 0;					//Apply crazy to repeated chords separated by a rest
-			eof_preferences_dialog[45].flags = D_SELECTED;			//Offer to auto complete fingering
-			eof_preferences_dialog[46].flags = 0;					//Don't auto-name double stops
-			eof_preferences_dialog[47].flags = D_SELECTED;			//Auto-Adjust sections/FHPs
-			eof_preferences_dialog[48].flags = D_SELECTED;			//Auto-Adjust tech notes
-			eof_preferences_dialog[49].flags = 0;					//Fingering checks include mutes
-			eof_preferences_dialog[50].flags = 0;					//GHL conversion swaps B/W gems
-			eof_preferences_dialog[51].flags = 0;					//2D render RS piano roll
-			eof_preferences_dialog[52].flags = D_SELECTED;			//min. note distance is in ms
-			eof_preferences_dialog[53].flags = 0;					//min. note distance is 1/# measure
-			eof_preferences_dialog[54].flags = 0;					//min. note distance is 1/# beat
-			eof_preferences_dialog[55].flags = 0;					//Disable automatic backups
-			eof_preferences_dialog[56].flags = 0;					//New notes are force strum
-			eof_preferences_dialog[57].flags = 0;					//Use FoF difficulty naming
-			eof_preferences_dialog[58].flags = 0;					//Enable open strum by default
-			eof_preferences_dialog[59].flags = D_SELECTED;			//Prefer MIDI friendly grid snaps
-			eof_preferences_dialog[60].flags = 0;					//Don't auto edit new lyrics
-			eof_preferences_dialog[61].flags = 0;					//Don't redraw on exit prompt
+			eof_preferences_dialog[44].flags = D_SELECTED;			//Prefer MIDI friendly grid snaps
+			eof_preferences_dialog[45].flags = 0;					//GHL conversion swaps B/W gems
+			eof_preferences_dialog[46].flags = 0;					//Enable open strum by default
+			eof_preferences_dialog[47].flags = 0;					//Disable automatic backups
+			eof_preferences_dialog[48].flags = D_SELECTED;			//Auto-Adjust sections/FHPs
+			eof_preferences_dialog[49].flags = D_SELECTED;			//min. note distance is in ms
+			eof_preferences_dialog[50].flags = 0;					//min. note distance is 1/# measure
+			eof_preferences_dialog[51].flags = 0;					//min. note distance is 1/# beat
+			eof_preferences_dialog[52].flags = 0;					//New notes are force strum
+			eof_preferences_dialog[53].flags = 0;					//Use FoF difficulty naming
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 
@@ -1812,6 +1799,79 @@ int eof_menu_file_import_export_preferences(void)
 	{	//If the preference for exporting RS1 file was changed
 		eof_delete_rocksmith_wav();	//Delete the Rocksmith WAV file since the amount of silence appended to it will differ
 	}
+	return 1;
+}
+
+int eof_menu_file_gp_preferences(void)
+{
+	int retval;
+
+	eof_log("Guitar Pro Preferences logic starting", 2);
+
+	if(eof_song_loaded)
+	{
+		if(!eof_music_paused)
+		{
+			eof_music_play(0);
+		}
+	}
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_pg_preferences_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pg_preferences_dialog);
+
+	//Use the currently configured settings to populate the dialog selections
+	eof_pg_preferences_dialog[4].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
+	eof_pg_preferences_dialog[5].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
+	eof_pg_preferences_dialog[6].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render RS style chords
+	eof_pg_preferences_dialog[7].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
+	eof_pg_preferences_dialog[8].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;	//Don't auto-name double stops
+	eof_pg_preferences_dialog[9].flags = eof_technote_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust tech notes
+	eof_pg_preferences_dialog[10].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;	//Fingering checks include mutes
+	eof_pg_preferences_dialog[11].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;			//2D render RS piano roll
+
+	eof_log("\tLaunching Guitar Pro Preferences dialog", 2);
+
+	do
+	{	//Run the dialog
+		retval = eof_popup_dialog(eof_pg_preferences_dialog, 0);	//Run the dialog
+		if(retval == 1)
+		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
+			eof_log("\t\"OK\" clicked.  Applying changes if any.", 2);
+
+			eof_enforce_chord_density = (eof_pg_preferences_dialog[4].flags == D_SELECTED ? 1 : 0);
+			eof_inverted_chords_slash = (eof_pg_preferences_dialog[5].flags == D_SELECTED ? 1 : 0);
+			eof_render_3d_rs_chords = (eof_pg_preferences_dialog[6].flags == D_SELECTED ? 1 : 0);
+			eof_auto_complete_fingering = (eof_pg_preferences_dialog[7].flags == D_SELECTED ? 1 : 0);
+			eof_dont_auto_name_double_stops = (eof_pg_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
+			eof_technote_auto_adjust = (eof_pg_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
+			eof_fingering_checks_include_mutes = (eof_pg_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
+			eof_render_2d_rs_piano_roll = (eof_pg_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
+		}//If the user clicked OK
+		else if(retval == 2)
+		{	//If the user clicked "Default, change all selections to EOF's default settings
+			eof_log("\t\"Default\" clicked.  Applying default settings.", 2);
+
+			eof_pg_preferences_dialog[4].flags = 0;					//Apply crazy to repeated chords separated by a rest
+			eof_pg_preferences_dialog[5].flags = 0;					//Treat inverted chords as slash
+			eof_pg_preferences_dialog[6].flags = 0;					//3D render RS style chords
+			eof_pg_preferences_dialog[7].flags = D_SELECTED;		//Offer to auto complete fingering
+			eof_pg_preferences_dialog[8].flags = 0;					//Don't auto-name double stops
+			eof_pg_preferences_dialog[9].flags = D_SELECTED;		//Auto-Adjust tech notes
+			eof_pg_preferences_dialog[10].flags = 0;				//Fingering checks include mutes
+			eof_pg_preferences_dialog[11].flags = 0;				//2D render RS piano roll
+		}//If the user clicked "Default
+	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
+
+	eof_log("\tGuitar Pro Preferences dialog closed.  Cleaning up.", 2);
+
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_set_color_set();
+
+	eof_log("Guitar Pro Preferences logic exiting.", 2);
 	return 1;
 }
 
@@ -5966,11 +6026,16 @@ int eof_rs_import_common(char *fn)
 			eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
 			eof_log("Cleaning up imported notes", 1);
 			eof_song->track[eof_selected_track]->numdiffs = eof_detect_difficulties(eof_song, eof_selected_track);	//Update the number of difficulties used in this track
+			eof_track_sort_notes(eof_song, eof_selected_track);	//Sort the notes
 			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
 			eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 1);	//Activate the tech note set
+			eof_track_sort_notes(eof_song, eof_selected_track);	//Sort the tech notes
 			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the tech notes
 			eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Activate the normal note set
 			(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
+			eof_sort_events(eof_song);
+			eof_delete_blank_events(eof_song);
+			eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
 		}
 		else
 		{

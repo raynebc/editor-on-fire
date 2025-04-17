@@ -26,7 +26,7 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 	//match_arraysize is the number of bytes the match array can store, to avoid
 	// buffer overflow
 int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename, unsigned long filenamesize, char force_recheck);
-	//Checks for the presence of any JPG, PNG or TIF file with a base filename of "cover", "album", "label" or "image" in the given folder path
+	//Checks for the presence of any JPG, PNG or TIF file with a base filename of "Cover", "Album", "Label" or "Image" in the given folder path
 	//If invalid parameters are given, zero is returned
 	//If no file match is found, zero is returned and the album_art_filename string is emptied
 	//If a match is found, the matching file name is written to the album_art_filename string (bounds limited to filenamesize) and nonzero is returned
@@ -44,8 +44,11 @@ unsigned long eof_count_immerrock_chords_missing_fingering(unsigned long *total)
 	//Only notes with at least two non ghosted/muted gems are examined, and muted strings are not required to have fingering defined
 	//If total is not NULL, the number of applicable chords that were checked are returned through it
 	//Returns zero on error
+int eof_lookup_immerrock_effective_section_at_pos(EOF_SONG *sp, unsigned long pos, char *section_name, unsigned long section_name_size);
+	//Examines the text events and stores the name of the section event immediately at/before thse specified position (if any) into section_name[]
+	//Returns 1 if a matching section is found.  If none is found, section_name[] is empties and 0 is returned.  0 is returned upon error
 
-int eof_export_immerrock_diff(EOF_SONG * sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option);
+int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option);
 	//Exports IMMERROCK files for the specified pro guitar tracks, for the specified difficulty in a folder with multiple files
 	//gglead, ggrhythm and ggbass are the track numbers to export as these arrangements, or 0 if that arrangement is not specified for export
 	//destpath will be the folder level at which the folder of IMMERROCK files will be written
