@@ -12,6 +12,9 @@ Changelog: 2.39 to 2.40b (in progress)
 	Fixed various memory leaks that could occur when parsing errors are encountered.
 	Improved UltraStar import to skip the Byte Order Mark (BOM, a Unicode encoding mechanism) if one is present at the beginning of the imported file.  Previously the presence of the BOM would cause the import to fail.
 	Improved LRC/ELRC import to allow the hundredths timing field to contain a third digit, in which case it will be interpreted as defining the field in milliseconds.
+	Added an "ILRC" export variant of LRC format used for the Augmented Reality game IMMERROCK.
+	Corrected the debug logging of MIDI files to correctly identify pitch bend events.
+	Improved Rocksmith lyric import so that if there are no end of lyric line markers present (+ character at the end of lyrics), ends of lyric lines are added automatically based on letter capitalization and end of sentence punctuation (periods, question marks, exclamation marks).
 
 Changelog: 2.38 to 2.39
 	Some code cleanup.

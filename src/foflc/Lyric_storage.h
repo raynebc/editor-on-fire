@@ -223,6 +223,7 @@ struct _LYRICSSTRUCT_{
 	char rocksmithver;			//If this has a value of 2, + characters are appended to the last lyric in each line, as this is Rocksmith 2014's line break mechanism
 								//If this has a value of 3, some extended ASCII characters are allowed and the XML tag's encoding attribute reflects windows-1252 encoding
 								//If this has a value of 4, all extended ASCII characters are allowed and the XML tag's encoding attribute reflects windows-1252 encoding
+	char message;				//Can be set by an import or export function to indicate some condition was encountered
 
 //Filenames
 	char *outfilename;		//Stores the name of the output file

@@ -177,6 +177,11 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		case RS2_FORMAT:
 			inf=fopen_err(Lyrics.infilename,"rt");	//Rocksmith XML is a text format
 			RS_Load(inf);
+			if(Lyrics.message == 1)
+			{
+				RS_detect_lyric_lines();
+				allegro_message("Fewer than two end of line markers were encountered during import.  They have been automatically separated into lyric lines if possible.");
+			}
 		break;
 
 		default:

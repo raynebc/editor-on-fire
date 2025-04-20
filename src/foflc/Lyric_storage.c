@@ -136,6 +136,7 @@ void InitLyrics(void)
 	Lyrics.nosrctag=NULL;
 	Lyrics.nofstyle=0;
 	Lyrics.plain=0;
+	Lyrics.message=0;
 }
 
 void CreateLyricLine(void)

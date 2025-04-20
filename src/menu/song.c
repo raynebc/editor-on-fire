@@ -128,6 +128,7 @@ MENU eof_catalog_menu[] =
 	{"Full &Width\tSHIFT+Q", eof_menu_catalog_toggle_full_width, NULL, 0, NULL},
 	{"&Edit Name", eof_menu_catalog_edit_name, NULL, 0, NULL},
 	{"Edit &Timing", eof_menu_song_catalog_edit_timing, NULL, 0, NULL},
+	{"&Copy", eof_menu_song_catalog_copy, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Add\tSHIFT+W", eof_menu_catalog_add, NULL, 0, NULL},
 	{"&Delete", eof_menu_catalog_delete, NULL, 0, NULL},
@@ -487,38 +488,41 @@ void eof_prepare_song_menu(void)
 
 		eof_song_seek_menu[23].flags = (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT) ? 0 : D_DISABLED;	//Update "Song>Seek>Next CH SP deployable note" enable status
 		eof_song_menu[4].flags = eof_display_flats ? D_SELECTED : 0;	//Update "Song>Display semitones as flat" check status
-		eof_catalog_menu[5].flags = eof_count_selected_notes(NULL) ? 0 : D_DISABLED;		//Update Song>Catalog>Add enable status, depending on whether any notes are selected
+		eof_catalog_menu[6].flags = eof_count_selected_notes(NULL) ? 0 : D_DISABLED;		//Update Song>Catalog>Add enable status, depending on whether any notes are selected
 
+		/* copy */
 		/* remove catalog entry */
 		/* find previous */
 		/* find next */
 		if(eof_selected_catalog_entry < eof_song->catalog->entries)
-		{
-			eof_catalog_menu[6].flags = 0;
-			eof_catalog_menu[11].flags = 0;
+		{	//If a valid catalog entry is selected
+			eof_catalog_menu[4].flags = 0;
+			eof_catalog_menu[7].flags = 0;
 			eof_catalog_menu[12].flags = 0;
+			eof_catalog_menu[13].flags = 0;
 		}
 		else
 		{
-			eof_catalog_menu[6].flags = D_DISABLED;
-			eof_catalog_menu[11].flags = D_DISABLED;
+			eof_catalog_menu[4].flags = D_DISABLED;
+			eof_catalog_menu[7].flags = D_DISABLED;
 			eof_catalog_menu[12].flags = D_DISABLED;
+			eof_catalog_menu[13].flags = D_DISABLED;
 		}
 
 		/* previous/next catalog entry */
 		if(eof_song->catalog->entries > 1)
 		{
-			eof_catalog_menu[8].flags = 0;
 			eof_catalog_menu[9].flags = 0;
+			eof_catalog_menu[10].flags = 0;
 		}
 		else
 		{
-			eof_catalog_menu[8].flags = D_DISABLED;
 			eof_catalog_menu[9].flags = D_DISABLED;
+			eof_catalog_menu[10].flags = D_DISABLED;
 		}
 
 		/* catalog */
-		if(!eof_song->catalog->entries && (eof_catalog_menu[5].flags == D_DISABLED))
+		if(!eof_song->catalog->entries && (eof_catalog_menu[6].flags == D_DISABLED))
 		{	//If there are no catalog entries and no notes selected (in which case Song>Catalog>Add would have been disabled earlier)
 			eof_song_menu[10].flags = D_DISABLED;	//Song>Catalog> submenu
 		}
@@ -4153,6 +4157,92 @@ int eof_menu_song_catalog_edit_timing(void)
 
 	snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit catalog entry");	//Set the title of the dialog
 	return eof_phrase_edit_timing(&eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, &eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
+}
+
+int eof_menu_song_catalog_copy(void)
+{
+	unsigned long i;
+	unsigned long first_pos = 0, note_pos;
+	char first_pos_read = 0;
+	unsigned long first_beat = 0;
+	char first_beat_read = 0;
+	unsigned long copy_notes = 0;
+	PACKFILE * fp;
+	char clipboard_path[50];
+	unsigned long track, start, end;
+	unsigned char type;
+
+	if(!eof_song_loaded || !eof_song || (eof_selected_catalog_entry >= eof_song->catalog->entries))
+		return 1;	//Do not allow this function to run if a chart is not loaded or if an invalid catalog entry is selected
+
+	/* first, count the applicable notes */
+	track = eof_song->catalog->entry[eof_selected_catalog_entry].track;	//Simplify
+	type = eof_song->catalog->entry[eof_selected_catalog_entry].type;
+	start = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos;
+	end = eof_song->catalog->entry[eof_selected_catalog_entry].end_pos;
+	for(i = 0; i < eof_get_track_size(eof_song, track); i++)
+	{	//For each note in the catalog entry's track
+		if(eof_get_note_type(eof_song, track, i) == type)
+		{	//If this note is in the song catalog entry's difficulty
+			if((eof_get_note_pos(eof_song, track, i) >= start) && (eof_get_note_pos(eof_song, track, i) + eof_get_note_length(eof_song, track, i) <= end))
+			{	//If this note is fully contained within the catalog entry
+				copy_notes++;
+				note_pos = eof_get_note_pos(eof_song, track, i);
+				if(!first_pos_read || (note_pos < first_pos))
+				{	//Track the position of the first note in the selection
+					first_pos = note_pos;
+					first_pos_read = 1;
+				}
+				if(!first_beat_read)
+				{
+					first_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, track, i));
+					first_beat_read = 1;
+				}
+			}
+		}
+	}
+	if(copy_notes == 0)
+	{
+		return 1;
+	}
+
+	/* get ready to write clipboard to disk */
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 1;
+	}
+
+	(void) snprintf(clipboard_path, sizeof(clipboard_path) - 1, "%seof.clipboard", eof_temp_path_s);
+	fp = pack_fopen(clipboard_path, "w");
+	if(!fp)
+	{
+		allegro_message("Clipboard error!");
+		return 1;
+	}
+	(void) pack_iputl(eof_log_id, fp);			//Store the source EOF instance number
+	(void) pack_iputl(track, fp);				//Store the source track number
+	(void) pack_putc(eof_note_type, fp);		//Store the source difficulty
+	(void) pack_iputl(first_pos, fp);			//Store the first copied note's original timestamp
+	(void) pack_putc(eof_track_is_ghl_mode(eof_song, track), fp);	//Store the GHL mode status
+	(void) pack_iputl(copy_notes, fp);			//Store the number of notes that will be stored to clipboard
+	(void) pack_iputl(first_beat, fp);			//Store the beat number of the first note that will be stored to clipboard
+
+	for(i = 0; i < eof_get_track_size(eof_song, track); i++)
+	{	//For each note in the active track
+		if(eof_get_note_type(eof_song, track, i) == type)
+		{	//If this note is in the song catalog entry's difficulty
+			if((eof_get_note_pos(eof_song, track, i) >= start) && (eof_get_note_pos(eof_song, track, i) + eof_get_note_length(eof_song, track, i) <= end))
+			{	//If this note is fully contained within the catalog entry
+				/* write note data to disk */
+				eof_write_clipboard_note(fp, eof_song, track, i, first_pos);
+				eof_write_clipboard_position_snap_data(fp, eof_get_note_pos(eof_song, track, i));	//Write the grid snap position data for this note's position
+			}
+		}
+	}
+	(void) pack_fclose(fp);
+
+	return 1;
 }
 
 int eof_menu_song_toggle_second_piano_roll(void)

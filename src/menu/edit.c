@@ -4276,7 +4276,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			if(first == ULONG_MAX)
 			{	//Track the start of the range of notes to clear
 				newpasteoffset = newpasteoffset - nporpos;	//Find the percentage offset that needs to be applied to all start/stop timestamps
-				clear_start = eof_put_porpos(current_beat, nporpos, 0.0);
+				clear_start = eof_put_porpos(current_beat, nporpos, newpasteoffset);
 				first = 1;
 			}
 			clear_end = eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, newpasteoffset);	//Track the end of each note so the end of the pasted notes can be tracked

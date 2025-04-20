@@ -717,6 +717,7 @@ void RS_Load(FILE *inf)
 	char lyric[256], lyric2[256];
 	char *index = NULL;
 	int readerrordetected = 0;
+	unsigned long endlinemarkers = 0;	//Tracks the number of end of line + markers
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -791,7 +792,10 @@ void RS_Load(FILE *inf)
 				}
 				AddLyricPiece(lyric2, timevar, timevar + length, note, 0);	//Add lyric
 				if(index)				//If a + character was filtered out of the lyric
+				{
+					endlinemarkers++;	//Count the number of these that were encountered
 					EndLyricLine();		//End lyric line, as this is a line break mechanism in RS2014 formatted lyrics
+				}
 
 				(void) fgets_err(buffer, (int)maxlinelength, inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 				processedctr++;
@@ -808,8 +812,149 @@ void RS_Load(FILE *inf)
 
 
 	ForceEndLyricLine();
-
 	free(buffer);	//No longer needed, release the memory before exiting function
+	if(endlinemarkers < 2)
+		Lyrics.message = 1;	//Track that fewer than 2 line ending markers were encountered
 
 	if(Lyrics.verbose)	printf("\nRocksmith import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);
+}
+
+void RS_detect_lyric_lines(void)
+{
+	struct Lyric_Line *curline=NULL;		//Conductor of the lyric line linked list
+	struct Lyric_Piece *temp=NULL;		//A conductor for the lyric pieces list
+	unsigned long ctr, length, upper;
+	char punctuation;		//Tracks whether the last lyric that was processed ended in a line ending punctuation character ('.' , '?' or '!')
+	char splitcondition1;	//Is nonzero if the lyric's first character is an upper case letter and all remaining characters (if any) are lowercase, and the lyric isn't just the letter 'i' or begin with 'i' and an apostrophe.  The only exception is if a capital I is found when the previous lyric ended in a line ending punctuation character
+	char splitcondition2;	//Is nonzero if the lyric begins at least 2 seconds after the end of the previous lyric in the same line
+	char linessplit = 0;		//Tracks whether lyric lines were split, in which case each line's piececount and duration should be corrected to pass future validation logic
+
+	if(Lyrics.verbose)	printf("\nDetecting missing lyric end of line markers for Rocksmith lyrics");
+
+	curline=Lyrics.lines;	//Point lyric line conductor to first line of lyrics
+	while(curline != NULL)	//For each line of lyrics
+	{
+		punctuation = 0;			//Reset this boolean
+		temp=curline->pieces;	//Starting with the first piece of lyric in this line
+		while(temp != NULL)				//For each piece of lyric in this line
+		{
+			if(temp->prev != NULL)
+			{	//If this isn't the first lyric in the line
+				//Test condition 1:  The first and only the first character in a lyric being a capital letter (excluding the letter i and contractions beginning with the letter i, unless the previous lyric ended in a punctuation character that ends a sentence)
+				splitcondition1 = splitcondition2 = 0;		//Reset these booleans
+				length = strlen(temp->lyric);
+
+				if(length)
+				{	//The lyric is at least 1 character long
+					if(isupper(temp->lyric[0]))
+					{	//The first character is an upper case letter
+						if(length > 1)
+						{	//If there is at least one more character
+							if((temp->lyric[0] == 'I') && (temp->lyric[1] == '\''))
+							{	//If the lyric is the letter i in upper case followed by an apostrophe
+								if(!punctuation)
+								{	//If the previous lyric didn't end in punctuation marking the end of a sentence
+									splitcondition1 = 0;		//This isn't evidence of the first lyric in a line because in this case I is always supposed to be capitalized
+								}
+							}
+							else
+							{
+								upper = 0;	//Reset this to track whether any of the remaining characters were upper case letters
+								for(ctr = 1; ctr < length; ctr++)
+								{	//For the remaining characters in the lyric
+									if(isupper(temp->lyric[ctr]))
+									{
+										upper = 1;
+										break;
+									}
+								}
+								if(!upper)
+								{	//If none of the remainer of the lyric was upper case letters
+									splitcondition1 = 1;	//This lyric may be considered as the first lyric in a line
+								}
+							}
+						}
+						else if((tolower(temp->lyric[0]) != 'i') || punctuation)
+						{	//If a single character lyric is upper case and isn't just the letter i, with the exception of capital i when the previous lyric ended in a punctuation character that ends a sentence
+							splitcondition1 = 1;	//This lyric may be considered as the first lyric in a line
+						}
+					}
+					if((temp->lyric[length - 1] == '.') || (temp->lyric[length - 1] == '?') || (temp->lyric[length - 1] == '!'))
+					{	//If this lyric ends in punctuation that would end a sentence
+						punctuation = 1;
+					}
+					else
+						punctuation = 0;
+				}
+				else
+				{
+					punctuation = 0;
+				}
+
+				//Test condition 2:  The lyric begins at least 2 seconds after the end of the previous lyric
+				if(temp->start >= temp->prev->start + temp->prev->duration + 2000)
+				{
+					splitcondition2 = 1;	//This lyric may be considered as the first lyric in a line
+				}
+
+				if(splitcondition1 || splitcondition2)
+				{	//If either condition for splitting the current line of lyrics were met
+					struct Lyric_Line *newline;
+
+					//Terminate the current lyric line at the previous lyric
+					temp->prev->next = NULL;	//The previous lyric is now the last lyric in its line
+					temp->prev = NULL;		//This lyric is now the first lyric in its line
+
+					//Create a new lyric line and initialize it to begin with the current lyric
+					newline=(struct Lyric_Line *)malloc_err(sizeof(struct Lyric_Line));
+					memset(newline, 0, sizeof(struct Lyric_Line));	//Init the new lyric line structure to all zeroes
+					newline->pieces = temp;
+
+					//Insert the new lyric line into the doubly linked list
+					if(curline->next)
+						curline->next->prev = newline;	//If there is a next line, it now points backward to the new line
+					newline->next = curline->next;	//The new lyric line will point forward to any line the current line pointed forward to
+					curline->next = newline;			//The current line points forward to the new line
+					newline->prev = curline;			//The new line points backward to the current line
+
+					curline = newline;	//Update conductor to point to the new line
+					linessplit = 1;
+				}
+			}//If this isn't the first lyric in the line
+
+			temp=temp->next;	//Advance to next lyric piece as normal
+		}//end while(temp != NULL)
+
+		curline=curline->next;	//Advance to next line of lyrics
+	}
+
+	//If any lyric lines were split, repair the variables in the lyric lines
+	if(linessplit)
+	{
+		unsigned long linecount = 0;
+		curline=Lyrics.lines;	//Point lyric line conductor to first line of lyrics
+		while(curline != NULL)	//For each line of lyrics
+		{
+			unsigned long piececount = 0;
+			linecount++;
+			temp=curline->pieces;	//Starting with the first piece of lyric in this line
+			while(temp != NULL)
+			{	//For each piece of lyric in this line
+				if(temp->prev == NULL)
+				{	//If this is the first lyric in the line
+					curline->start = temp->start;	//Update the line's start time
+				}
+				if(temp->next == NULL)
+				{	//If this is the last lyric in the line
+					curline->duration = temp->start + temp->duration - curline->start;	//Update the line's duration
+				}
+				piececount++;		//Count the number of lyrics in ths line
+				temp=temp->next;	//Advance to next lyric piece as normal
+			}
+
+			curline->piececount = piececount;	//Update the line's piece count
+			curline=curline->next;	//Advance to next line of lyrics
+		}
+		Lyrics.linecount = linecount;	//Update the Lyrics structure's line counter
+	}
 }

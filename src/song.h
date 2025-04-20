@@ -890,11 +890,12 @@ int eof_pro_guitar_track_add_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long st
 	//Adds a tremolo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 	//If diff is not 0xFF, the tremolo phrase will apply to the specified track difficulty only
 void eof_pro_guitar_track_delete_tremolo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
-void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue);
-	//Alters each selected pro guitar note's fret values on used strings (that match the eof_pro_guitar_fret_bitmask bitmask) based on the parameters:
+void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value);
+	//If fingering view is NOT in effect, alters each selected pro guitar note's fret values on used strings (that match the eof_pro_guitar_fret_bitmask bitmask) based on the parameters:
 	//If function is 0, the applicable strings' fret values are set to the specified value
 	//If function is 1, the applicable strings' fret values are incremented
 	//If function is 2, the applicable strings' fret values are decremented
+	//If fingering view is in effect, the selected notes' finger values on used strings (that match the eof_pro_guitar_fret_bitmask bitmask) are set instead
 int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newnumstrings);
 	//If there are any gems on a string higher than the specified number of strings for the specified track, the highest used string number is returned
 	//0 is returned if there are no conflicts

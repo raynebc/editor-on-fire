@@ -3166,132 +3166,132 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				//CTRL+G sets the used frets of selected notes to be ghosted
 				if(eof_key_code == KEY_TILDE)
 				{
-					eof_set_pro_guitar_fret_number(0,0);
+					eof_set_pro_guitar_fret_or_finger_number(0,0);
 					eof_use_key();
 				}
 				if(eof_key_char == '1')
 				{
-					eof_set_pro_guitar_fret_number(0,1);
+					eof_set_pro_guitar_fret_or_finger_number(0,1);
 					eof_use_key();
 				}
 				else if(eof_key_char == '2')
 				{
-					eof_set_pro_guitar_fret_number(0,2);
+					eof_set_pro_guitar_fret_or_finger_number(0,2);
 					eof_use_key();
 				}
 				else if(eof_key_char == '3')
 				{
-					eof_set_pro_guitar_fret_number(0,3);
+					eof_set_pro_guitar_fret_or_finger_number(0,3);
 					eof_use_key();
 				}
 				else if(eof_key_char == '4')
 				{
-					eof_set_pro_guitar_fret_number(0,4);
+					eof_set_pro_guitar_fret_or_finger_number(0,4);
 					eof_use_key();
 				}
 				else if(eof_key_char == '5')
 				{
-					eof_set_pro_guitar_fret_number(0,5);
+					eof_set_pro_guitar_fret_or_finger_number(0,5);
 					eof_use_key();
 				}
 				else if(eof_key_char == '6')
 				{
-					eof_set_pro_guitar_fret_number(0,6);
+					eof_set_pro_guitar_fret_or_finger_number(0,6);
 					eof_use_key();
 				}
 				else if(eof_key_char == '7')
 				{
-					eof_set_pro_guitar_fret_number(0,7);
+					eof_set_pro_guitar_fret_or_finger_number(0,7);
 					eof_use_key();
 				}
 				else if(eof_key_char == '8')
 				{
-					eof_set_pro_guitar_fret_number(0,8);
+					eof_set_pro_guitar_fret_or_finger_number(0,8);
 					eof_use_key();
 				}
 				else if(eof_key_char == '9')
 				{
-					eof_set_pro_guitar_fret_number(0,9);
+					eof_set_pro_guitar_fret_or_finger_number(0,9);
 					eof_use_key();
 				}
 				else if(eof_key_char == '0')
 				{
-					eof_set_pro_guitar_fret_number(0,10);
+					eof_set_pro_guitar_fret_or_finger_number(0,10);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F1)
 				{
-					eof_set_pro_guitar_fret_number(0,11);
+					eof_set_pro_guitar_fret_or_finger_number(0,11);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F2)
 				{
-					eof_set_pro_guitar_fret_number(0,12);
+					eof_set_pro_guitar_fret_or_finger_number(0,12);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F3)
 				{
-					eof_set_pro_guitar_fret_number(0,13);
+					eof_set_pro_guitar_fret_or_finger_number(0,13);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F4)
 				{
-					eof_set_pro_guitar_fret_number(0,14);
+					eof_set_pro_guitar_fret_or_finger_number(0,14);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F5)
 				{
-					eof_set_pro_guitar_fret_number(0,15);
+					eof_set_pro_guitar_fret_or_finger_number(0,15);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F6)
 				{
-					eof_set_pro_guitar_fret_number(0,16);
+					eof_set_pro_guitar_fret_or_finger_number(0,16);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F7)
 				{
-					eof_set_pro_guitar_fret_number(0,17);
+					eof_set_pro_guitar_fret_or_finger_number(0,17);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F8)
 				{
-					eof_set_pro_guitar_fret_number(0,18);
+					eof_set_pro_guitar_fret_or_finger_number(0,18);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F9)
 				{
-					eof_set_pro_guitar_fret_number(0,19);
+					eof_set_pro_guitar_fret_or_finger_number(0,19);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F10)
 				{
-					eof_set_pro_guitar_fret_number(0,20);
+					eof_set_pro_guitar_fret_or_finger_number(0,20);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F11)
 				{
-					eof_set_pro_guitar_fret_number(0,21);
+					eof_set_pro_guitar_fret_or_finger_number(0,21);
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_F12)
 				{
-					eof_set_pro_guitar_fret_number(0,22);
+					eof_set_pro_guitar_fret_or_finger_number(0,22);
 					eof_use_key();
 				}
 				else if(eof_key_char == 'x')
 				{
-					eof_set_pro_guitar_fret_number(0,255);	//CTRL+X sets frets to (muted)
+					eof_set_pro_guitar_fret_or_finger_number(0,255);	//CTRL+X sets frets to (muted)
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_MINUS)			//Use the scan code because CTRL+- can't be reliably detected via ASCII value
 				{
-					eof_set_pro_guitar_fret_number(2,0);	//Decrement fret value
+					eof_set_pro_guitar_fret_or_finger_number(2,0);	//Decrement fret value
 					eof_use_key();
 				}
 				else if(eof_key_code == KEY_EQUALS)			//Use the scan code because CTRL+= can't be reliably detected via ASCII value
 				{
-					eof_set_pro_guitar_fret_number(1,0);	//Increment fret value
+					eof_set_pro_guitar_fret_or_finger_number(1,0);	//Increment fret value
 					eof_use_key();
 				}
 				else if(eof_key_char == 'g')				//CTRL+G toggles ghost status
@@ -4930,11 +4930,11 @@ void eof_editor_logic(void)
 				{	//increment/decrement fret value
 					if(eof_mickey_z > 0)
 					{	//Decrement fret value
-						eof_set_pro_guitar_fret_number(2,0);	//Decrement fret value
+						eof_set_pro_guitar_fret_or_finger_number(2,0);	//Decrement fret value
 					}
 					else if(eof_mickey_z < 0)
 					{	//Increment fret value
-						eof_set_pro_guitar_fret_number(1,0);	//Increment fret value
+						eof_set_pro_guitar_fret_or_finger_number(1,0);	//Increment fret value
 					}
 				}
 				else
@@ -6194,8 +6194,8 @@ void eof_render_editor_window_2(void)
 			eof_set_music_pos(&eof_music_pos, eof_music_pos2); //Change to that position
 		}
 		(void) eof_menu_track_selected_track_number(eof_selected_track2, 0);	//Change to the track of the secondary piano roll, update coordinates, color set, etc.
-		eof_process_beat_statistics(eof_song, eof_selected_track);		//Rebuild the beat stats so that the secondary piano roll can display the correct RS phrases and sections
-		eof_note_type = eof_note_type2;									//Set the secondary piano roll's difficulty
+		eof_process_beat_statistics(eof_song, eof_selected_track);			//Rebuild the beat stats so that the secondary piano roll can display the correct RS phrases and sections
+		eof_note_type = eof_note_type2;								//Set the secondary piano roll's difficulty
 		eof_render_editor_window(eof_window_editor2);					//Render this track difficulty to the secondary piano roll screen
 
 		(void) eof_menu_track_selected_track_number(temp_track, 0);		//Restore the active track number
@@ -7225,6 +7225,10 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 		if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		{	//If tech view is active in the secondary piano roll
 			strncat(temp, "(Tech view)", 100);
+		}
+		if(eof_fingering_view)
+		{	//If fingering view is in effect
+			strncat(temp, "(Fingering view)", 100);
 		}
 		if(eof_track_diff_highlighted_status[eof_note_type2])
 		{	//If any notes in the secondary piano roll's active tab have highlighting

@@ -5,7 +5,10 @@ void Export_RS(FILE *outf);
 	//Exports the loaded lyric structure to output file in Rocksmith XML format
 void RS_Load(FILE *inf);
 	//Perform all code necessary to load a Rocksmith format lyric file
+	//Will set Lyrics.message to 1 if there were not at least two end of line markers ('+' as the last character in a lyric entry) encountered and line markers had to be estimated
 
+void RS_detect_lyric_lines(void);
+	//Attempts to compensate for a lack of end of line lyric markers by splitting up lines of lyrics based on letter capitalization and lyric distance
 int rs_filter_char(int character, char rs_filter, int islyric, int isphrase_section, int ischordname);
 	//Returns nonzero if the character isn't an ASCII character (ie. greater than 127) or otherwise isn't a printable character
 	//If islyric is zero, returns nonzero if character is any of the following characters:  ( } ,  \  : { " )

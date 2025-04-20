@@ -7478,20 +7478,21 @@ void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number
 	}
 }
 
-void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
+void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value)
 {
 	unsigned long ctr, ctr2, bitmask, tracknum;
 	char undo_made = 0;
-	unsigned char oldfretvalue = 0, newfretvalue = 0;
+	unsigned char oldvalue = 0, newvalue = 0;
 	int note_selection_updated;
 
- 	eof_log("eof_set_pro_guitar_fret_number() entered", 1);
+ 	eof_log("eof_set_pro_guitar_fret_or_finger_number() entered", 1);
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return;	//Do not allow this function to run unless a pro guitar/bass track is active
-
 	if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		return;	//Don't allow this function to run if tech view is in effect, since tech notes completely disregard their fret values
+	if(eof_fingering_view && (value > 4))
+		return;	//If fingering view is in effect, don't allow an invalid finger number to be set
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -7505,40 +7506,53 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 			if(!(eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask) || !(eof_pro_guitar_fret_bitmask & bitmask))
 				continue;	//If this string is not in use or it is not enabled for fret shortcut manipulation, skip it
 
-			oldfretvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
-			newfretvalue = oldfretvalue;
-
-			if(function && (oldfretvalue == 0xFF))	//Don't allow a muted gem with no defined fret value to be incremented/decremented
-				continue;
-
-			switch(function)
-			{
-				case 0:	//Set fret value
-					newfretvalue = fretvalue;
-				break;
-
-				case 1:	//Increment fret value
-					if(oldfretvalue != 0xFF)	//Don't increment a muted note
-						newfretvalue++;
-				break;
-
-				case 2:	//Decrement fret value
-					if(oldfretvalue > 0)	//Don't decrement an open note
-						newfretvalue--;
-				break;
-
-				default:
-				break;
-			}
-			if(((newfretvalue & 0x7F) <= eof_song->pro_guitar_track[tracknum]->numfrets) || (newfretvalue == 0xFF))
-			{	//Only set the fret value (when masking out the mute bit) if it is valid
-				if(!undo_made && (newfretvalue != oldfretvalue))
+			if(eof_fingering_view)
+			{	//If fingering view is in effect, alter the finger value
+				oldvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->finger[ctr2];	//Simplify
+				if(!undo_made && (value != oldvalue))
 				{	//Make an undo state before making the first change
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
-				eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] = newfretvalue;	//Update the string's fret value
-				memset(eof_song->pro_guitar_track[tracknum]->note[ctr]->finger, 0, 8);			//Initialize all fingers to undefined
+				eof_song->pro_guitar_track[tracknum]->note[ctr]->finger[ctr2] = value;	//Update the string's finger value
+			}
+			else
+			{	//Otherwise edit the fret value
+				oldvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
+				newvalue = oldvalue;
+
+				if(function && (oldvalue == 0xFF))	//Don't allow a muted gem with no defined fret value to be incremented/decremented
+					continue;
+
+				switch(function)
+				{
+					case 0:	//Set fret value
+						newvalue = value;
+					break;
+
+					case 1:	//Increment fret value
+						if(oldvalue != 0xFF)	//Don't increment a muted note
+							newvalue++;
+					break;
+
+					case 2:	//Decrement fret value
+						if(oldvalue > 0)	//Don't decrement an open note
+							newvalue--;
+					break;
+
+					default:
+					break;
+				}
+				if(((newvalue & 0x7F) <= eof_song->pro_guitar_track[tracknum]->numfrets) || (newvalue == 0xFF))
+				{	//Only set the fret value (when masking out the mute bit) if it is valid
+					if(!undo_made && (newvalue != oldvalue))
+					{	//Make an undo state before making the first change
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] = newvalue;		//Update the string's fret value
+					memset(eof_song->pro_guitar_track[tracknum]->note[ctr]->finger, 0, 8);		//Initialize all fingers to undefined
+				}
 			}
 		}
 	}
