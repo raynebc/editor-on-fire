@@ -15,7 +15,7 @@ MENU eof_right_click_menu_normal[] =
 	{"&Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
 	{"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
 	{"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
-	{"&Full screen 3D view\t" CTRL_NAME "+F", eof_enable_full_screen_3d, NULL, 0, NULL},
+	{"&Full screen 3D view", eof_enable_full_screen_3d, NULL, 0, NULL},
 	{"Second piano &Roll", NULL, eof_song_piano_roll_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
@@ -31,7 +31,7 @@ MENU eof_right_click_menu_note[] =
 	{"&Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
 	{"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
 	{"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
-	{"&Full screen 3D view\t" CTRL_NAME "+F", eof_enable_full_screen_3d, NULL, 0, NULL},
+	{"&Full screen 3D view", eof_enable_full_screen_3d, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}

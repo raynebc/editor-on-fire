@@ -475,6 +475,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"&Toggle", NULL, eof_note_rocksmith_toggle_menu, 0, NULL},
 	{"&Remove", NULL, eof_note_rocksmith_remove_menu, 0, NULL},
 	{"Edit frets/fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
+	{"Edit fingering\t" CTRL_NAME "+F", eof_menu_note_edit_pro_guitar_note_fingers, NULL, 0, NULL},
 	{"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
 	{"Define unpitched slide\t" CTRL_NAME "+U", eof_pro_guitar_note_define_unpitched_slide, NULL, 0, NULL},
 	{"Remove &Unpitched slide", eof_menu_note_remove_unpitched_slide, NULL, 0, NULL},
@@ -1198,21 +1199,21 @@ void eof_prepare_note_menu(void)
 				eof_note_simplify_menu[7].flags = 0;	//Note>Simplify>Ghost
 				if(tp->note == tp->technote)
 				{	//If tech view is in effect
-					eof_note_rocksmith_menu[8].flags = 0;			//Note>Rocksmith>Move tech note to prev note
-					eof_note_rocksmith_menu[9].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
+					eof_note_rocksmith_menu[9].flags = 0;			//Note>Rocksmith>Move tech note to prev note
+					eof_note_rocksmith_menu[10].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
 					eof_note_proguitar_menu[8].flags = 0;			//Note>Pro Guitar>Toggle pre-bend
 				}
 				else
 				{
-					eof_note_rocksmith_menu[8].flags = D_DISABLED;
+					eof_note_rocksmith_menu[9].flags = D_DISABLED;
 					eof_note_proguitar_menu[8].flags = D_DISABLED;	//Note>Pro Guitar>Toggle pre-bend
 					if(vselected > 1)
 					{	//If multiple notes are selected
-						eof_note_rocksmith_menu[9].flags = 0;		//Note>Rocksmith>Generate FHPs
+						eof_note_rocksmith_menu[10].flags = 0;		//Note>Rocksmith>Generate FHPs
 					}
 					else
 					{	//Only one note is selected
-						eof_note_rocksmith_menu[9].flags = D_DISABLED;
+						eof_note_rocksmith_menu[10].flags = D_DISABLED;
 					}
 				}
 
@@ -5475,10 +5476,12 @@ char eof_finger_string_lane_5[4] = {0};
 char eof_finger_string_lane_6[4] = {0};
 char *eof_finger_strings[6] = {eof_finger_string_lane_1, eof_finger_string_lane_2, eof_finger_string_lane_3, eof_finger_string_lane_4, eof_finger_string_lane_5, eof_finger_string_lane_6};
 
+char eof_pro_guitar_note_frets_dialog_function_0_string[] = "Edit note frets / fingering";
+char eof_pro_guitar_note_frets_dialog_function_1_string[] = "Edit note fingering";
 DIALOG eof_pro_guitar_note_frets_dialog[] =
 {
 	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
-	{d_agup_window_proc,    0,   48,  214, 278,2,   23,  0,    0,      0,         0,   "Edit note frets / fingering",NULL, NULL },
+	{d_agup_window_proc,    0,   48,  214, 278,2,   23,  0,    0,      0,         0,   eof_pro_guitar_note_frets_dialog_function_0_string,NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
 	{d_agup_text_proc,      60,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
@@ -5503,13 +5506,13 @@ DIALOG eof_pro_guitar_note_frets_dialog[] =
 	{eof_verified_edit_proc,130, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "01234XxTt",NULL },
 	{eof_verified_edit_proc,130, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "01234XxTt",NULL },
 
-	{d_agup_text_proc,      170, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
-	{d_agup_check_proc,		170, 109, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		170, 133, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		170, 157, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		170, 181, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		170, 205, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		170, 229, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_text_proc,       170, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
+	{d_agup_check_proc,    170, 109, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,    170, 133, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,    170, 157, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,    170, 181, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,    170, 205, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,    170, 229, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
 	{d_agup_button_proc,    10,   256, 20,  28, 2,   23,  0,    D_EXIT, 0,       0,   "<-",         NULL,          NULL },
 	{d_agup_button_proc,    35,   270, 35,  28, 2,   23,  '\r',  D_EXIT, 0,       0,   "OK",         NULL,          NULL },
@@ -5530,10 +5533,178 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void)
 	return eof_menu_note_edit_pro_guitar_note_frets_fingers(0, &undo_made);
 }
 
+long edit_pg_dialog_previous_note = 0, edit_pg_dialog_next_note = 0, edit_pg_dialog_previous_undefined_note = 0, edit_pg_dialog_next_undefined_note = 0;
+
+int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog, char function)
+{
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long ctr, stringcount;
+	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PRO_GUITAR_NOTE *np;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//Do not allow this function to run unless the pro guitar track is active
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 0;	//Do not allow this function to run if a valid note is not selected
+
+	//Find the next/previous notes if applicable
+	edit_pg_dialog_previous_note = eof_track_fixup_previous_note(eof_song, eof_selected_track, eof_selection.current);
+	if(edit_pg_dialog_previous_note >= 0)
+	{	//If there is a previous note
+		eof_pro_guitar_note_frets_dialog[28].flags = D_EXIT;		//Make the previous note button clickable
+	}
+	else
+	{
+		eof_pro_guitar_note_frets_dialog[28].flags = D_HIDDEN;	//Otherwise hide it
+	}
+	edit_pg_dialog_next_note = eof_track_fixup_next_note(eof_song, eof_selected_track, eof_selection.current);
+	if(edit_pg_dialog_next_note >= 0)
+	{	//If there is a next note
+		eof_pro_guitar_note_frets_dialog[32].flags = D_EXIT;		//Make the next note button clickable
+	}
+	else
+	{
+		eof_pro_guitar_note_frets_dialog[32].flags = D_HIDDEN;	//Otherwise hide it
+	}
+
+	//Find the next/previous notes requiring finger definitions if applicable
+	tp = eof_song->pro_guitar_track[tracknum];
+	edit_pg_dialog_previous_undefined_note = eof_previous_pro_guitar_note_needing_finger_definitions(tp, eof_selection.current);
+	if(edit_pg_dialog_previous_undefined_note >= 0)
+	{	//If there is a previous note lacking finger definitions
+		eof_pro_guitar_note_frets_dialog[33].flags = D_EXIT;		//Make the << button clickable
+	}
+	else
+	{
+		eof_pro_guitar_note_frets_dialog[33].flags = D_HIDDEN;	//Otherwise hide it
+	}
+	edit_pg_dialog_next_undefined_note = eof_next_pro_guitar_note_needing_finger_definitions(tp, eof_selection.current);
+	if(edit_pg_dialog_next_undefined_note >= 0)
+	{	//If there is a next note lacking finger definitions
+		eof_pro_guitar_note_frets_dialog[34].flags = D_EXIT;		//Make the >> button clickable
+	}
+	else
+	{
+		eof_pro_guitar_note_frets_dialog[34].flags = D_HIDDEN;	//Otherwise hide it
+	}
+
+	//Update the fret text boxes (listed from top to bottom as string 1 through string 6)
+	np = tp->note[eof_selection.current];	//Simplify
+	stringcount = eof_count_track_lanes(eof_song, eof_selected_track);
+	if(eof_legacy_view)
+	{	//Special case:  If legacy view is enabled, correct stringcount
+		stringcount = tp->numstrings;
+	}
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+	{	//For each of the 6 supported strings
+		if(ctr < stringcount)
+		{	//If this track uses this string, copy the fret value to the appropriate string
+			eof_pro_guitar_note_frets_dialog[12 - (2 * ctr)].flags = 0;		//Ensure this text boxes' label is enabled
+			eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);		//Correct the string number for this label
+			eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = 0;		//Ensure this fret # input box is enabled
+			if(tp->note[eof_selection.current]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+			{	//If the note has fingerless status
+				eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_HIDDEN;	//Hide this finger # input box
+			}
+			else
+			{	//Otherwise ensure this finger # input box is enabled
+				eof_pro_guitar_note_frets_dialog[20 - ctr].flags = 0;			//Ensure this finger # input box is enabled
+			}
+			eof_pro_guitar_note_frets_dialog[27 - ctr].flags = 0;			//Ensure this mute check box is enabled
+			if(np->note & bitmask)
+			{	//If this string is already defined as being in use, copy its fret value to the string
+				if(np->frets[ctr] == 0xFF)
+				{	//If this string is muted with no fret value specified
+					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
+					eof_finger_strings[ctr][0] = '\0';	//Empty the fingering string
+					eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_SELECTED;	//Check the mute box for this string
+				}
+				else
+				{	//If this string has a fret value specified
+					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", np->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
+
+					if(np->frets[ctr] & 0x80)
+					{	//If the fret number's MSB is set, the string is muted
+						eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_SELECTED;	//Check the mute box for this string
+					}
+					if(np->finger[ctr] != 0)
+					{	//If the finger used to fret this string is defined
+						(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%u", np->finger[ctr]);	//Create the finger string
+						if(eof_finger_strings[ctr][0] == '5')
+						{	//If this is the value for the thumb
+							eof_finger_strings[ctr][0] = '0';	//Convert to 0, which specifies the thumb in Rocksmith numbering
+						}
+					}
+					else
+					{
+						eof_finger_strings[ctr][0] = '\0';	//Otherwise empty the string
+					}
+				}
+			}
+			else
+			{	//Otherwise empty the fret and finger strings
+				eof_fret_strings[ctr][0] = '\0';
+				eof_finger_strings[ctr][0] = '\0';
+				if(function)
+				{	//If the calling function wanted finger input boxes for unused strings disabled
+					eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_DISABLED;		//Ensure this finger # input box is disabled
+				}
+				else if(tp->note[eof_selection.current]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+				{	//If the note has fingerless status
+					eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_HIDDEN;		//Ensure this finger # input box is hidden
+				}
+				else
+				{
+					eof_pro_guitar_note_frets_dialog[20 - ctr].flags = 0;				//Ensure this finger # input box is enabled
+				}
+			}
+			if(function)
+			{	//If the calling function wanted fret input boxes disabled
+				eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = D_DISABLED;	//Ensure this text box is disabled
+			}
+			else
+			{
+				eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = 0;		//Ensure this text box is enabled
+			}
+		}
+		else
+		{	//Otherwise disable the inputs for this string
+			eof_pro_guitar_note_frets_dialog[12 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text boxes' label is hidden
+			eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text box is hidden
+			eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_HIDDEN;		//Ensure this finger # input box is hidden
+			eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_HIDDEN;		//Ensure this mute check box is hidden
+			eof_fret_strings[ctr][0] = '\0';
+			eof_finger_strings[ctr][0] = '\0';
+		}
+	}//For each of the 6 supported strings
+
+	if(dialog == 1)
+	{	//In the "Edit note fingering" use of this function
+		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+		{	//For each of the 6 supported strings
+			if(ctr < stringcount)
+			{	//If this track uses this string
+				eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = D_DISABLED;	//Disable edits for the fret number input field
+				eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_HIDDEN;		//Hide the mute check box
+			}
+		}
+		eof_pro_guitar_note_frets_dialog[21].flags = D_HIDDEN;	//Hide the mute column header
+		eof_pro_guitar_note_frets_dialog[0].dp = eof_pro_guitar_note_frets_dialog_function_1_string;	//Correct the dialog's title bar
+	}
+	else
+	{	//In the "Edit note frets/fingering" use of this function
+		eof_pro_guitar_note_frets_dialog[21].flags = 0;	//Show the mute column header
+		eof_pro_guitar_note_frets_dialog[0].dp = eof_pro_guitar_note_frets_dialog_function_0_string;	//Correct the dialog's title bar
+	}
+
+	return 1;
+}
+
 int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_made)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long ctr, ctr2, trackctr, stringcount, i;
+	unsigned long ctr, ctr2, trackctr, i;
 	long fretvalue, fingervalue, highfretvalue;
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	char allmuted;					//Used to track whether all used strings are string muted
@@ -5543,8 +5714,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	EOF_PRO_GUITAR_TRACK *tp, *tp2;
 	EOF_PRO_GUITAR_NOTE *np;
 	char retry, fingeringdefined, offerupdatefingering;
-	long previous_note = 0, next_note = 0;
-	long previous_undefined_note = 0, next_undefined_note = 0;
+	char rerun;	//Tracks whether the dialog will re-initialize and run again, such as if any buttons other than OK or cancel were used
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
@@ -5552,9 +5722,6 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 		return 0;
 
 	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
-		return 0;	//Do not allow this function to run if a valid note isn't selected
-
 	tp = eof_song->pro_guitar_track[tracknum];
 	highfretvalue = tp->numfrets;
 	if(!eof_music_paused)
@@ -5569,143 +5736,15 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	centre_dialog(eof_pro_guitar_note_frets_dialog);
 
 	do
-	{	//Prepare the dialog
-		retval = 0;
-
+	{
 		if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
-			break;	//If it came to be that there is no longer a valid selected note, close the dialog
+			return 0;	//Do not allow this function to run if a valid note isn't selected
 
-		//Find the next/previous notes if applicable
-		previous_note = eof_track_fixup_previous_note(eof_song, eof_selected_track, eof_selection.current);
-		if(previous_note >= 0)
-		{	//If there is a previous note
-			eof_pro_guitar_note_frets_dialog[28].flags = D_EXIT;		//Make the previous note button clickable
-		}
-		else
-		{
-			eof_pro_guitar_note_frets_dialog[28].flags = D_HIDDEN;	//Otherwise hide it
-		}
-		next_note = eof_track_fixup_next_note(eof_song, eof_selected_track, eof_selection.current);
-		if(next_note >= 0)
-		{	//If there is a next note
-			eof_pro_guitar_note_frets_dialog[32].flags = D_EXIT;		//Make the next note button clickable
-		}
-		else
-		{
-			eof_pro_guitar_note_frets_dialog[32].flags = D_HIDDEN;	//Otherwise hide it
-		}
-
-		//Find the next/previous notes requiring finger definitions if applicable
-		previous_undefined_note = eof_previous_pro_guitar_note_needing_finger_definitions(tp, eof_selection.current);
-		if(previous_undefined_note >= 0)
-		{	//If there is a previous note lacking finger definitions
-			eof_pro_guitar_note_frets_dialog[33].flags = D_EXIT;		//Make the << button clickable
-		}
-		else
-		{
-			eof_pro_guitar_note_frets_dialog[33].flags = D_HIDDEN;	//Otherwise hide it
-		}
-		next_undefined_note = eof_next_pro_guitar_note_needing_finger_definitions(tp, eof_selection.current);
-		if(next_undefined_note >= 0)
-		{	//If there is a next note lacking finger definitions
-			eof_pro_guitar_note_frets_dialog[34].flags = D_EXIT;		//Make the >> button clickable
-		}
-		else
-		{
-			eof_pro_guitar_note_frets_dialog[34].flags = D_HIDDEN;	//Otherwise hide it
-		}
-
-		//Update the fret text boxes (listed from top to bottom as string 1 through string 6)
-		np = tp->note[eof_selection.current];	//Simplify
-		stringcount = eof_count_track_lanes(eof_song, eof_selected_track);
-		if(eof_legacy_view)
-		{	//Special case:  If legacy view is enabled, correct stringcount
-			stringcount = tp->numstrings;
-		}
-		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
-		{	//For each of the 6 supported strings
-			if(ctr < stringcount)
-			{	//If this track uses this string, copy the fret value to the appropriate string
-				eof_pro_guitar_note_frets_dialog[12 - (2 * ctr)].flags = 0;		//Ensure this text boxes' label is enabled
-				eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);		//Correct the string number for this label
-				eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = 0;		//Ensure this fret # input box is enabled
-				if(tp->note[eof_selection.current]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
-				{	//If the note has fingerless status
-					eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_HIDDEN;	//Hide this finger # input box
-				}
-				else
-				{	//Otherwise ensure this finger # input box is enabled
-					eof_pro_guitar_note_frets_dialog[20 - ctr].flags = 0;			//Ensure this finger # input box is enabled
-				}
-				eof_pro_guitar_note_frets_dialog[27 - ctr].flags = 0;			//Ensure this mute check box is enabled
-				if(np->note & bitmask)
-				{	//If this string is already defined as being in use, copy its fret value to the string
-					if(np->frets[ctr] == 0xFF)
-					{	//If this string is muted with no fret value specified
-						(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
-						eof_finger_strings[ctr][0] = '\0';	//Empty the fingering string
-						eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_SELECTED;	//Check the mute box for this string
-					}
-					else
-					{	//If this string has a fret value specified
-						(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", np->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
-
-						if(np->frets[ctr] & 0x80)
-						{	//If the fret number's MSB is set, the string is muted
-							eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_SELECTED;	//Check the mute box for this string
-						}
-						if(np->finger[ctr] != 0)
-						{	//If the finger used to fret this string is defined
-							(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%u", np->finger[ctr]);	//Create the finger string
-							if(eof_finger_strings[ctr][0] == '5')
-							{	//If this is the value for the thumb
-								eof_finger_strings[ctr][0] = '0';	//Convert to 0, which specifies the thumb in Rocksmith numbering
-							}
-						}
-						else
-						{
-							eof_finger_strings[ctr][0] = '\0';	//Otherwise empty the string
-						}
-					}
-				}
-				else
-				{	//Otherwise empty the fret and finger strings
-					eof_fret_strings[ctr][0] = '\0';
-					eof_finger_strings[ctr][0] = '\0';
-					if(function)
-					{	//If the calling function wanted finger input boxes for unused strings disabled
-						eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_DISABLED;		//Ensure this finger # input box is disabled
-					}
-					else if(tp->note[eof_selection.current]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
-					{	//If the note has fingerless status
-						eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_HIDDEN;		//Ensure this finger # input box is hidden
-					}
-					else
-					{
-						eof_pro_guitar_note_frets_dialog[20 - ctr].flags = 0;				//Ensure this finger # input box is enabled
-					}
-				}
-				if(function)
-				{	//If the calling function wanted fret input boxes disabled
-					eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = D_DISABLED;	//Ensure this text box is disabled
-				}
-				else
-				{
-					eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = 0;		//Ensure this text box is enabled
-				}
-			}
-			else
-			{	//Otherwise disable the inputs for this string
-				eof_pro_guitar_note_frets_dialog[12 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text boxes' label is hidden
-				eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text box is hidden
-				eof_pro_guitar_note_frets_dialog[20 - ctr].flags = D_HIDDEN;		//Ensure this finger # input box is hidden
-				eof_pro_guitar_note_frets_dialog[27 - ctr].flags = D_HIDDEN;		//Ensure this mute check box is hidden
-				eof_fret_strings[ctr][0] = '\0';
-				eof_finger_strings[ctr][0] = '\0';
-			}
-		}//For each of the 6 supported strings
+		eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(0, function);	//Prepare the dialog
 
 		//Run and process the dialog
+		rerun = 0;
+		retval = 0;
 		bitmask = 0;
 		retry = fingeringdefined = offerupdatefingering = 0;
 		retval = eof_popup_dialog(eof_pro_guitar_note_frets_dialog, 0);
@@ -5916,32 +5955,10 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				}//For each note in the track
 
 				//Offer to update the fingering for all notes in the track matching the selected note (which all selected notes now match because they were altered if they didn't)
-				if(fingeringdefined && eof_auto_complete_fingering && !(tp->note[eof_selection.current]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS))
-				{	//If the fingering is defined, and the user didn't disable this auto-completion feature, and the selected note isn't designated as having no fingering
-					for(trackctr = 1; trackctr < eof_song->tracks; trackctr++)
-					{	//For each track in the project
-						if(eof_song->track[trackctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If this isn't a pro guitar track
-							continue;	//Skip it
-
-						tp2 = eof_song->pro_guitar_track[eof_song->track[trackctr]->tracknum];
-						for(ctr = 0; ctr < tp2->notes; ctr++)
-						{	//For each note in the track
-							if((trackctr == eof_selected_track) && (ctr == eof_selection.current))	//If this is the selected note that was just edited
-								continue;	//Skip it
-							if(eof_note_compare(eof_song, eof_selected_track, eof_selection.current, trackctr, ctr, 0))	//If this note doesn't match the one that was just edited
-								continue;	//Skip it
-							if(eof_pro_guitar_note_fingering_valid(tp2, ctr, 1) == 1)	//If this note's fingering is already fully defined
-								continue;	//Skip it
-							if(tp2->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
-								continue;	//If this note is designated as having no fingering, skip it
-
-							offerupdatefingering = 1;	//Note that the user should be prompted whether to update the fingering array of all matching notes
-							break;
-						}
-					}
-					eof_clear_input();
-					if(function || (offerupdatefingering && (alert(NULL, "Update all instances of this note to use this fingering?", NULL, "&Yes", "&No", 'y', 'n') == 1)))
-					{	//If the user opts to update the fingering array of all matching notes (or if the calling function wanted all instances to be updated automatically)
+				if(eof_note_count_colors(eof_song, eof_selected_track, eof_selection.current) > 1)
+				{	//If the note that was edited is a chord
+					if(fingeringdefined && eof_auto_complete_fingering && !(tp->note[eof_selection.current]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS))
+					{	//If the fingering is defined, and the user didn't disable this auto-completion feature, and the selected note isn't designated as having no fingering
 						for(trackctr = 1; trackctr < eof_song->tracks; trackctr++)
 						{	//For each track in the project
 							if(eof_song->track[trackctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If this isn't a pro guitar track
@@ -5959,19 +5976,44 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 								if(tp2->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
 									continue;	//If this note is designated as having no fingering, skip it
 
-								if(!*undo_made)
-								{	//If an undo state hasn't been made yet
-									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-									*undo_made = 1;
-								}
-								for(ctr2 = 0; ctr2 < 6; ctr2++)
-								{	//For each of the 6 usable strings
-									tp2->note[ctr]->finger[ctr2] = (tp2->note[ctr]->finger[ctr2] & 0x80) + (np->finger[ctr2] & 0x7F);	//Overwrite the finger number, but keep the original mute status intact
+								offerupdatefingering = 1;	//Note that the user should be prompted whether to update the fingering array of all matching notes
+								break;
+							}
+						}
+						eof_clear_input();
+						if(function || (offerupdatefingering && (alert(NULL, "Update all instances of this note to use this fingering?", NULL, "&Yes", "&No", 'y', 'n') == 1)))
+						{	//If the user opts to update the fingering array of all matching notes (or if the calling function wanted all instances to be updated automatically)
+							for(trackctr = 1; trackctr < eof_song->tracks; trackctr++)
+							{	//For each track in the project
+								if(eof_song->track[trackctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If this isn't a pro guitar track
+									continue;	//Skip it
+
+								tp2 = eof_song->pro_guitar_track[eof_song->track[trackctr]->tracknum];
+								for(ctr = 0; ctr < tp2->notes; ctr++)
+								{	//For each note in the track
+									if((trackctr == eof_selected_track) && (ctr == eof_selection.current))	//If this is the selected note that was just edited
+										continue;	//Skip it
+									if(eof_note_compare(eof_song, eof_selected_track, eof_selection.current, trackctr, ctr, 0))	//If this note doesn't match the one that was just edited
+										continue;	//Skip it
+									if(eof_pro_guitar_note_fingering_valid(tp2, ctr, 1) == 1)	//If this note's fingering is already fully defined
+										continue;	//Skip it
+									if(tp2->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+										continue;	//If this note is designated as having no fingering, skip it
+
+									if(!*undo_made)
+									{	//If an undo state hasn't been made yet
+										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+										*undo_made = 1;
+									}
+									for(ctr2 = 0; ctr2 < 6; ctr2++)
+									{	//For each of the 6 usable strings
+										tp2->note[ctr]->finger[ctr2] = (tp2->note[ctr]->finger[ctr2] & 0x80) + (np->finger[ctr2] & 0x7F);	//Overwrite the finger number, but keep the original mute status intact
+									}
 								}
 							}
 						}
-					}
-				}//If the fingering is defined
+					}//If the fingering is defined...
+				}//If the note that was edited is a chord
 
 				//Check for a conflict with the track's fret limit
 				if(highfretvalue > tp->numfrets)
@@ -5984,48 +6026,41 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				}
 				eof_pro_guitar_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic for this track in order to enforce the fret limit
 			}//If the finger entries weren't invalid
-			if(retval == 30)
-			{	//If the user clicked Apply, re-render the screen to reflect any changes made
-				eof_render();
-			}
 		}//If user clicked OK or Apply
 		else if(retval == 28)
 		{	//If user clicked <- (previous note)
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-			eof_selection.current = previous_note;	//Set the previous note as the currently selected note
-			eof_selection.multi[previous_note] = 1;	//Ensure the note selection includes the previous note
-			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, previous_note) + eof_av_delay);	//Seek to previous note
-			np = tp->note[eof_selection.current];	//Update note pointer
-			eof_render();	//Redraw the screen
+			rerun = 1;
+			eof_selection.current = edit_pg_dialog_previous_note;	//Set the previous note as the currently selected note
 		}
 		else if(retval == 32)
 		{	//If user clicked -> (next note)
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-			eof_selection.current = next_note;	//Set the next note as the currently selected note
-			eof_selection.multi[next_note] = 1;	//Ensure the note selection includes the next note
-			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, next_note) + eof_av_delay);	//Seek to next note
-			np = tp->note[eof_selection.current];	//Update note pointer
-			eof_render();	//Redraw the screen
+			rerun = 1;
+			eof_selection.current = edit_pg_dialog_next_note;	//Set the next note as the currently selected note
 		}
 		else if(retval == 33)
 		{	//If user clicked << (next note without finger definitions)
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-			eof_selection.current = previous_undefined_note;		//Set the previous note with undefined fingerings as the currently selected note
-			eof_selection.multi[previous_undefined_note] = 1;	//Ensure the note selection includes the next note
-			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, previous_undefined_note) + eof_av_delay);	//Seek to that note
-			np = tp->note[eof_selection.current];	//Update note pointer
-			eof_render();	//Redraw the screen
+			rerun = 1;
+			eof_selection.current = edit_pg_dialog_previous_undefined_note;		//Set the previous note with undefined fingerings as the currently selected note
 		}
 		else if(retval == 34)
 		{	//If user clicked >> (next note without finger definitions)
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-			eof_selection.current = next_undefined_note;	//Set the next note with undefined fingerings as the currently selected note
-			eof_selection.multi[next_undefined_note] = 1;	//Ensure the note selection includes the next note
-			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, next_undefined_note) + eof_av_delay);	//Seek to that note
-			np = tp->note[eof_selection.current];	//Update note pointer
-			eof_render();	//Redraw the screen
+			rerun = 1;
+			eof_selection.current = edit_pg_dialog_next_undefined_note;	//Set the next note with undefined fingerings as the currently selected note
 		}
-	}while((retval == 28) || (retval == 30) || (retval == 32) || (retval == 33) || (retval == 34));	//Re-run this dialog if the user clicked previous, apply, next, << or >>
+		if(rerun)
+		{	//If the dialog is being run again, update the selection and rendered seek position
+			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+			eof_selection.multi[eof_selection.current] = 1;	//Ensure the note selection includes the newly-selected note
+			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current) + eof_av_delay);	//Seek to that note
+			eof_render();	//Redraw the screen
+			np = tp->note[eof_selection.current];	//Update note pointer
+		}
+		if(retval == 30)
+		{	//If the user clicked Apply, re-render the screen to reflect any changes made, but don't recreate the selection array as per above logic
+			rerun = 1;
+			eof_render();
+		}
+	}while(rerun);	//Re-run this dialog if the user clicked previous, apply, next, << or >>
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -6036,6 +6071,153 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	if(retval == 31)
+		return 0;	//Return user cancelation (button click)
+	if(retval == -1)
+		return 0;	//Return user cancelation (Escape key)
+
+	return 1;	//Return OK selected
+}
+
+int eof_menu_note_edit_pro_guitar_note_fingers(void)
+{
+	char undo_made = 0;
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long ctr, i;
+	long fingervalue;
+	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
+	int retval, retval2, note_selection_updated;
+	static char dont_ask = 0;	//Is set to nonzero if the user opts to suppress the prompt regarding modifying multiple selected notes
+	EOF_PRO_GUITAR_TRACK *tp;
+	char rerun;	//Tracks whether the dialog will re-initialize and run again, such as if any buttons other than OK or cancel were used
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//Do not allow this function to run unless the pro guitar track is active
+	if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		return 0;	//If tech view is in effect, don't run the dialog
+
+	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 0;	//Do not allow this function to run if a valid note isn't selected
+
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(!eof_music_paused)
+	{
+		eof_music_play(0);
+	}
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_pro_guitar_note_frets_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pro_guitar_note_frets_dialog);
+
+	do
+	{
+		eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(1, 0);	//Prepare the dialog
+
+		//Run and process the dialog
+		rerun = 0;
+		bitmask = 0;
+		retval = eof_popup_dialog(eof_pro_guitar_note_frets_dialog, 0);
+		if((retval == 29) || (retval == 30))
+		{	//If user clicked OK or Apply
+			//Apply changes
+			if(eof_count_selected_notes(NULL) > 1)
+			{	//If multiple notes are selected, warn the user
+				eof_clear_input();
+				if(!dont_ask)
+				{	//If the user didn't suppress this prompt
+					retval2 = alert3(NULL, "Warning:  This information will be applied to the existing gems of all selected notes.", NULL, "&OK", "&Cancel", "OK, don't ask again", 'y', 'n', 0);
+					if(retval2 == 2)
+					{	//If user opts to cancel the operation
+						retval = 17;	//Track this as a user cancellation
+						break;		//Break from inner while loop
+					}
+					if(retval2 == 3)
+					{	//If this user is suppressing this prompt
+						dont_ask = 1;
+					}
+				}
+			}
+
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the track
+				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+					continue;	//If the note isn't selected or in the active track difficulty, skip it
+				if(tp->note[i]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+					continue;	//If the note is designated as having no fingering, skip it
+
+				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					fingervalue = 0;
+					if(eof_finger_strings[ctr][0] != '\0')
+					{	//If there is a finger value specified for this string
+						if((eof_finger_strings[ctr][0] == 't') || (eof_finger_strings[ctr][0] == 'T'))
+						{	//If the user used the letter T
+							eof_finger_strings[ctr][0] = '0';	//Convert to the numeric Rocksmith notation for the thumb
+						}
+						fingervalue = eof_finger_strings[ctr][0] - '0';	//Convert the ASCII numerical character to decimal
+						if(fingervalue == 0)
+						{	//User defined use of the thumb
+							fingervalue = 5;	//Translate into EOF's notation for the thumb
+						}
+
+						if((tp->note[i]->note & bitmask) && (fingervalue != tp->note[i]->finger[ctr]))
+						{	//If the note has a gem on this string and its finger value is to be changed
+							if(!undo_made)
+							{	//If an undo state hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							tp->note[i]->finger[ctr] = fingervalue;
+						}
+					}
+				}//For each of the 6 supported strings
+			}//For each note in the track
+		}//If user clicked OK or Apply
+		else if(retval == 28)
+		{	//If user clicked <- (previous note)
+			rerun = 1;
+			eof_selection.current = edit_pg_dialog_previous_note;	//Set the previous note as the currently selected note
+		}
+		else if(retval == 32)
+		{	//If user clicked -> (next note)
+			rerun = 1;
+			eof_selection.current = edit_pg_dialog_next_note;	//Set the next note as the currently selected note
+		}
+		else if(retval == 33)
+		{	//If user clicked << (next note without finger definitions)
+			rerun = 1;
+			eof_selection.current = edit_pg_dialog_previous_undefined_note;		//Set the previous note with undefined fingerings as the currently selected note
+		}
+		else if(retval == 34)
+		{	//If user clicked >> (next note without finger definitions)
+			rerun = 1;
+			eof_selection.current = edit_pg_dialog_next_undefined_note;	//Set the next note with undefined fingerings as the currently selected note
+		}
+		if(rerun)
+		{	//If the dialog is being run again, update the selection and rendered seek position
+			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+			eof_selection.multi[eof_selection.current] = 1;	//Ensure the note selection includes the newly-selected note
+			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current) + eof_av_delay);	//Seek to that note
+			eof_render();	//Redraw the screen
+		}
+		if(retval == 30)
+		{	//If the user clicked Apply, re-render the screen to reflect any changes made, but don't recreate the selection array as per above logic
+			rerun = 1;
+			eof_render();
+		}
+	}while(rerun);	//Re-run this dialog if the user clicked previous, apply, next, << or >>
+
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	if(retval == 17)
 		return 0;	//Return user cancelation
 
 	return 1;	//Return OK selected

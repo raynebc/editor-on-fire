@@ -436,6 +436,11 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					double wave_amplitude = 384;	//This is how many units above or below the neutral value the pitch bend value changes (IMMERROCK prefers 384, which is 30% of a half-step's bend value)
 					unsigned long bend_amount;	//This will reflect how much the note is bending in addition to any vibrato being performed
 
+					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT)
+					{	//If this note also has accent status
+						wave_amplitude *= 2;	//Double the amplitude of the pitch bends to emphasize a stronger vibrato effect
+					}
+
 ///Logic to export bend points every 30 delta ticks instead of based on realtime
 /*					for(x = 0; x < deltalength; x += 30)
 					{	//For each 30 delta tick interval of the note being exported

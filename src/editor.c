@@ -2155,10 +2155,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 	}
 
-	/* toggle full screen 3D view (CTRL+F)*/
+	/* Edit note fingering (CTRL+F)*/
 	if((eof_key_char == 'f') && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 	{
-		eof_full_screen_3d ^= 1;		//Toggle this setting on/off
+		(void) eof_menu_note_edit_pro_guitar_note_fingers();
 		eof_use_key();
 	}
 

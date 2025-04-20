@@ -92,18 +92,36 @@ int eof_menu_set_freestyle_off(void);		//Removes freestyle for all selected lyri
 int eof_menu_toggle_freestyle(void);		//Toggles the freestyle status of all selected lyrics
 int eof_menu_lyric_remove_pitch(void);		//Removes the pitch for all selected lyrics
 
+long edit_pg_dialog_previous_note,  edit_pg_dialog_next_note, edit_pg_dialog_previous_undefined_note, edit_pg_dialog_next_undefined_note;
+	//Variables set by eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog() to allow the calling function to seek to notes when <- , << , >> or -> buttons are clicked
+
 int eof_menu_note_edit_pro_guitar_note(void);		//Allows a pro guitar note's properties to be defined
+int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog, char function);
+	//Updates the contents of the eof_pro_guitar_note_frets_dialog[] array based on eof_selection.current
+	//If dialog is 0, the dialog is prepared for the "Edit note frets / fingering" function,
+	//	in which case the fret value input fields and mute checkboxes are made editable
+	//The function parameter is passed from eof_menu_note_edit_pro_guitar_note_frets_fingers() as
+	//	defined by its calling function to conditionally disable fret or finger input fields, such as when
+	//	the dialog is invoked for automated finger checks
+	//If dialog is 1, the dialog is prepared for the "Edit note fingering" function,
+	//	in which case the fret value input fields and disabled for editing, the mute checkboxes are hidden
+	//The dialog title bar is updated to reflect which function is being performed
+	//Returns nonzero on success
 int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_made);
 	//Allows a pro guitar note's fret and fingering values to be defined.
 	//Rocksmith uses finger 0 to define use of the thumb, but EOF uses a value of 0 for undefined, so a user-specified value of 0, 't' or 'T' will be translated and stored as 5.
 	//If function is zero, either the fret values or the fingerings can be edited, and if the latter is changed,
-	//	this function will offer to update the finger arrays for matching non-selected matching notes in the active track
+	//	this function will offer to update the finger arrays for non-selected matching chords in the active track
 	//If function is nonzero, the fret value input boxes are disabled, the finger input boxes for unused strings are disabled,
 	//	and changes to the fingerings are automatically applied to all matching non-selected notes in the active track
+	//     the nonzero function usage is for the eof_correct_chord_fingerings_option() function and related logic
 	//Returns zero if user canceled making edits
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
 int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void);
 	//Calls eof_menu_note_edit_pro_guitar_note_frets_fingers() specifying function 0
+int eof_menu_note_edit_pro_guitar_note_fingers(void);
+	//Allows fingering to be defined for selected notes with gems on the applicable strings
+	//Fret values and note bitmasks are not altered by this function
 long eof_previous_pro_guitar_note_needing_finger_definitions(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);
 	//Finds the nearest note occurring before the specified one that doesn't have its fingering fully defined (ignoring muted notes)
 	//Assumes all notes in the track are sorted

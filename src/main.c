@@ -2238,10 +2238,6 @@ void eof_read_global_keys(void)
 	/* exit program (Esc or close button) */
 	if((eof_key_code == KEY_ESC) || eof_close_button_clicked)
 	{	//Use the key code for Escape instead of the ASCII char, since CTLR+[ triggers the same ASCII character value of 27
-		if(!eof_dont_redraw_on_exit_prompt)
-		{	//If the user didn't disable the redrawing of the program window on exit prompt
-			(void) eof_reset_display();
-		}
 		eof_menu_file_exit();
 		eof_use_key(); //If user cancelled quitting, make sure these keys are cleared
 	}
