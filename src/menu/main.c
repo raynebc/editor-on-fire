@@ -38,8 +38,8 @@ void eof_prepare_main_menu(void)
 		eof_main_menu[5].flags = 0; // Beat
 
 		/* disable Note menu when no notes are selected */
-		if(eof_count_selected_notes(NULL) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+		if(eof_count_selected_and_unselected_notes(NULL) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)) || eof_count_notes_starting_in_time_range(eof_song, eof_selected_track, eof_note_type, eof_song->tags->start_point, eof_song->tags->end_point))
+		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use, or one or more notes exist between the start and end points in the active track difficulty
 			eof_main_menu[4].flags = 0; // Note
 		}
 	}

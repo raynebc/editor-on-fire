@@ -80,7 +80,7 @@ void eof_music_play(char resumelastspeed)
 		{	//If the previous playback speed isn't being re-used, set the speed based on the current playback rate or any keyboard modifiers used
 			speed = newspeed;
 		}
-		if(key[KEY_S] && (eof_count_selected_notes(NULL) > 0))
+		if(key[KEY_S] && (eof_count_selected_and_unselected_notes(NULL) > 0))
 		{	//If S is being held, and there are selected notes, play back the audio from the first selected note to the last
 			eof_music_end_pos = 0;
 			eof_music_rewind_pos = eof_chart_length;

@@ -97,6 +97,7 @@ MENU eof_file_import_menu[] =
 	{"Guitar Hero sections", eof_menu_file_gh3_section_import, NULL, 0, NULL},
 	{"Guitar Hero Live", eof_menu_file_ghl_import, NULL, 0, NULL},
 	{"&Drums Rock", eof_menu_file_drums_rock_import, NULL, 0, NULL},
+	{"GP style lyric text", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -443,6 +444,7 @@ void eof_prepare_file_menu(void)
 		else
 			eof_file_import_menu[12].flags = D_DISABLED;
 
+		eof_file_import_menu[13].flags = 0;	//Import>GP style lyric text
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
@@ -471,6 +473,7 @@ void eof_prepare_file_menu(void)
 		eof_file_import_menu[10].flags = D_DISABLED;	//Import>Guitar Hero sections
 		eof_file_import_menu[11].flags = D_DISABLED;	//Import>Guitar Hero Live
 		eof_file_import_menu[12].flags = D_DISABLED;	//Import>Drums Rock
+		eof_file_import_menu[13].flags = D_DISABLED;	//Import>GP style lyric text
 		eof_file_display_menu[5].flags = D_DISABLED;	//Benchmark image sequence
 	}
 

@@ -401,10 +401,12 @@ int eof_menu_copy_sliders_track_14(void);
 int eof_menu_copy_sliders_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the slider phrases from the specified source track to the destination track
 
-int eof_feedback_mode_update_note_selection(void);
-	//If Feedback input mode is in use, eof_selection.multi[] indicates no notes are selected and there is a seek hover note, note #eof_seek_hover_note is marked as selected in the array and nonzero is returned
-	//This allows the selection array to reflect the note at the seek position if no notes are explicitly selected, and after note manipulation, the seek hover note can be unselected
-	//Otherwise zero is returned and the array is not altered
+int eof_update_implied_note_selection(void);
+	//To be called if eof_selection.multi[] indicates no notes are selected in the active track difficulty, to conditionally update the selection:
+	//1.  If the start and end points are defined and not equal to each other, replace selection with any notes in the active track difficulty starting within that span of time and return nonzero
+	//2.  If Feedback input mode is in use, and there is a seek hover note, replace selection with the eof_seek_hover_note and return nonzero
+	//This allows the selection array to reflect notes that aren't explicitly selected, and after appropriate note manipulation, the selection can be erased
+	//If neither of the above two criteria are met, the existing note selection is not modified and zero is returnedd
 
 int eof_note_menu_read_gp_lyric_texts(void);
 	//Prompts user to browse for a text file containing lyric texts formatted in the style of Guitar Pro
@@ -476,5 +478,8 @@ int eof_menu_note_swap_ghl_black_white_gems(void);
 int eof_menu_note_remove_disjointed(void);
 int eof_menu_note_toggle_disjointed(void);
 	//Removes or toggles disjointed status for selected legacy notes
+
+int eof_menu_note_split_lyric_line_after_selected(void);
+	//For each selected lyric, splits/ends the lyric line containing the lyric at the lyric's end position
 
 #endif

@@ -11,7 +11,7 @@
 #include "../dialog/proc.h"
 #include "../utility.h"
 #include "edit.h"
-#include "note.h"	//For eof_feedback_mode_update_note_selection()
+#include "note.h"	//For eof_update_implied_note_selection()
 #include "song.h"
 #include "track.h"	//For tech view functions
 
@@ -244,8 +244,8 @@ MENU eof_edit_menu[] =
 	{"", NULL, NULL, 0, NULL},
 	{"&Bookmark", NULL, eof_edit_bookmark_menu, 0, NULL},
 	{"&Selection", NULL, eof_edit_selection_menu, 0, NULL},
-	{"Set start point", eof_menu_edit_set_start_point, NULL, 0, NULL},
-	{"Set end point", eof_menu_edit_set_end_point, NULL, 0, NULL},
+	{"Set start point\tALT+Home", eof_menu_edit_set_start_point, NULL, 0, NULL},
+	{"Set end point\tALT+End", eof_menu_edit_set_end_point, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -316,7 +316,7 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* copy */
-		vselected = eof_count_selected_notes(NULL);
+		vselected = eof_count_selected_and_unselected_notes(NULL);
 		if(vselected)
 		{	//If any notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = 0;		//copy
@@ -740,7 +740,7 @@ int eof_menu_edit_copy_vocal(void)
 	if(!eof_vocals_selected)
 		return 1;	//Return error
 
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -812,9 +812,8 @@ int eof_menu_edit_copy_vocal(void)
 	}//For each lyric
 	(void) pack_fclose(fp);
 	if(note_selection_updated)
-	{	//If the only note modified was the seek hover note
-		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-		eof_selection.current = EOF_MAX_NOTES - 1;
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
 }
@@ -1484,7 +1483,7 @@ int eof_menu_edit_copy(void)
 		return eof_menu_edit_copy_vocal();
 	}
 
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -1562,9 +1561,8 @@ int eof_menu_edit_copy(void)
 	}
 	(void) pack_fclose(fp);
 	if(note_selection_updated)
-	{	//If the only note modified was the seek hover note
-		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-		eof_selection.current = EOF_MAX_NOTES - 1;
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
 }
@@ -2745,7 +2743,7 @@ int eof_menu_edit_select_like_function(char thorough)
 {
 	unsigned long i, j, ntypes = 0;
 	unsigned long ntype[100] = {0};	//This tracks each unique selected note to allow multiple dislike notes to be selected during a "select like" operation
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 
 	if(eof_selection.track != eof_selected_track)
 	{
@@ -2796,9 +2794,8 @@ int eof_menu_edit_select_like_function(char thorough)
 		}
 	}
 	if(note_selection_updated)
-	{	//If the only note modified was the seek hover note
-		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-		eof_selection.current = EOF_MAX_NOTES - 1;
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
 }
@@ -2827,7 +2824,7 @@ int eof_menu_edit_select_rest(void)
 {
 	unsigned long i;
 
-	if(eof_count_selected_notes(NULL) == 0)
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
 	{
 		return 1;
 	}
@@ -4378,7 +4375,7 @@ int eof_menu_edit_select_previous(void)
 {
 	unsigned long i;
 
-	if(eof_count_selected_notes(NULL) == 0)	//If no notes are selected
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)	//If no notes are selected
 	{
 		return 1;
 	}
@@ -5064,8 +5061,6 @@ int eof_menu_edit_deselect_off_beat_notes(void)
 
 int eof_menu_edit_set_start_point(void)
 {
-	unsigned long temp;
-
 	if(!eof_song)
 		return 0;
 
@@ -5077,10 +5072,8 @@ int eof_menu_edit_set_start_point(void)
 	{	//Otherwise update it to the current seek position
 		eof_song->tags->start_point = eof_music_pos.value - eof_av_delay;
 		if((eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
-		{	//If the start and end points are defined out of order, swap them
-			temp =eof_song->tags-> end_point;
-			eof_song->tags->end_point = eof_song->tags->start_point;
-			eof_song->tags->start_point = temp;
+		{	//If the start and end points are defined out of order, assume the user wants to start a new selection and clear the end point
+			eof_song->tags->end_point = ULONG_MAX;
 		}
 	}
 	return 1;
@@ -5088,8 +5081,6 @@ int eof_menu_edit_set_start_point(void)
 
 int eof_menu_edit_set_end_point(void)
 {
-	unsigned long temp;
-
 	if(!eof_song)
 		return 0;
 
@@ -5101,10 +5092,8 @@ int eof_menu_edit_set_end_point(void)
 	{	//Otherwise update it to the current seek position
 		eof_song->tags->end_point = eof_music_pos.value - eof_av_delay;
 		if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
-		{	//If the start and end points are defined out of order, swap them
-			temp = eof_song->tags->end_point;
-			eof_song->tags->end_point = eof_song->tags->start_point;
-			eof_song->tags->start_point = temp;
+		{	//If the start and end points are defined out of order, assume the user wants to start a new selection and clear the start point
+			eof_song->tags->start_point = ULONG_MAX;
 		}
 	}
 	return 1;

@@ -25,7 +25,7 @@
 #include "../rs.h"	//For hand position generation logic
 #include "beat.h"	//For eof_add_or_edit_floating_text_event()
 #include "edit.h"	//For eof_menu_edit_paste_from_difficulty()
-#include "note.h"	//For eof_feedback_mode_update_note_selection()
+#include "note.h"	//For eof_update_implied_note_selection()
 #include "song.h"
 #include "file.h"	//For eof_menu_prompt_save_changes()
 #include "track.h"	//For tech view functions
@@ -385,7 +385,7 @@ void eof_prepare_song_menu(void)
 		eof_catalog_menu[1].flags = eof_catalog_full_width ? D_SELECTED : 0;	//Update "Song>Catalog>Full width" check status
 		eof_song_seek_menu[6].flags = (eof_music_pos.value == eof_music_rewind_pos) ? D_DISABLED : 0;	//Update Rewind enable status
 
-		(void) eof_count_selected_notes(&totalnotecount);	//Count the number of notes in the active track difficulty
+		(void) eof_count_selected_and_unselected_notes(&totalnotecount);	//Count the number of notes in the active track difficulty
 
 		if(totalnotecount)
 		{	//If there are any notes in the active track difficulty
@@ -488,7 +488,21 @@ void eof_prepare_song_menu(void)
 
 		eof_song_seek_menu[23].flags = (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT) ? 0 : D_DISABLED;	//Update "Song>Seek>Next CH SP deployable note" enable status
 		eof_song_menu[4].flags = eof_display_flats ? D_SELECTED : 0;	//Update "Song>Display semitones as flat" check status
-		eof_catalog_menu[6].flags = eof_count_selected_notes(NULL) ? 0 : D_DISABLED;		//Update Song>Catalog>Add enable status, depending on whether any notes are selected
+
+		//Update Song>Catalog>Add enable status, depending on whether any notes are selected (explicitly or implicitly)
+		if(eof_count_selected_and_unselected_notes(NULL))
+		{	//If at least one note in the active track difficulty is explicitly selected
+			eof_catalog_menu[6].flags = 0;
+		}
+		else if(eof_update_implied_note_selection())
+		{	//If at least one note in the active track difficulty is implicitly selected
+			eof_catalog_menu[6].flags = 0;
+			(void) eof_menu_edit_deselect_all();	//Clear the note selection
+		}
+		else
+		{	//No notes are selected
+			eof_catalog_menu[6].flags = D_DISABLED;
+		}
 
 		/* copy */
 		/* remove catalog entry */
@@ -1589,9 +1603,9 @@ int eof_menu_catalog_add(void)
 	long next;
 	char first = 1;
 
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 
-	if(!eof_count_selected_notes(NULL))	//If there are still no notes selected
+	if(!eof_count_selected_and_unselected_notes(NULL))	//If there are still no notes selected
 		return 1;
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -1621,14 +1635,18 @@ int eof_menu_catalog_add(void)
 			last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
 		}
 	}
+	if(note_selection_updated)
+	{	//If notes were selected based on start/end points, use these for the section timings
+		first_pos = eof_song->tags->start_point;
+		last_pos = eof_song->tags->end_point;
+	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	(void) eof_track_add_section(eof_song, 0, EOF_FRET_CATALOG_SECTION, eof_note_type, first_pos, last_pos, eof_selected_track, NULL);
 	eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 
 	if(note_selection_updated)
-	{	//If the only note modified was the seek hover note
-		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-		eof_selection.current = EOF_MAX_NOTES - 1;
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
 }
@@ -4106,7 +4124,7 @@ int eof_phrase_edit_timing_radio_proc(int msg, DIALOG *d, int c)
 	return D_REDRAW;
 }
 
-int eof_phrase_edit_timing(unsigned long *start, unsigned long *end)
+int eof_phrase_edit_timing(unsigned long *start, unsigned long *end, unsigned long startval, unsigned long endval)
 {
 	unsigned long newstart, newend;
 
@@ -4118,8 +4136,8 @@ int eof_phrase_edit_timing(unsigned long *start, unsigned long *end)
 	eof_render();
 	eof_color_dialog(eof_phrase_edit_timing_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_phrase_edit_timing_dialog);
-	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", *start);
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", *end);
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", startval);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", endval);
 
 	eof_phrase_edit_timing_dialog[6].flags = (eof_music_pos.value - eof_av_delay >= *end) ? D_DISABLED : 0;	//If the seek position is at/after the end timestamp, disable the Start radio button
 	eof_phrase_edit_timing_dialog[7].flags = (eof_music_pos.value - eof_av_delay <= *start) ? D_DISABLED : 0;	//If the seek position is at/before the start timestamp, disable the End radio button
@@ -4152,11 +4170,31 @@ int eof_phrase_edit_timing(unsigned long *start, unsigned long *end)
 
 int eof_menu_song_catalog_edit_timing(void)
 {
+	int note_selection_updated;
+	unsigned long start, end;
+
 	if(!eof_song_loaded || !eof_song || (eof_selected_catalog_entry >= eof_song->catalog->entries))
 		return 1;	//Do not allow this function to run if a chart is not loaded or if an invalid catalog entry is selected
 
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account)
+	if(note_selection_updated)
+	{	//If notes were selected based on start/end points, use these for the section timings
+		start = eof_song->tags->start_point;
+		end = eof_song->tags->end_point;
+	}
+	else
+	{
+		start = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos;
+		end = eof_song->catalog->entry[eof_selected_catalog_entry].end_pos;
+	}
 	snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit catalog entry");	//Set the title of the dialog
-	return eof_phrase_edit_timing(&eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, &eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
+	eof_phrase_edit_timing(&eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, &eof_song->catalog->entry[eof_selected_catalog_entry].end_pos, start, end);
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+
+	return 1;
 }
 
 int eof_menu_song_catalog_copy(void)

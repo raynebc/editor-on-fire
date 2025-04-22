@@ -977,6 +977,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* select previous (SHIFT+Home) */
 	/* seek to beginning (Home) */
 	/* seek to first beat (CTRL+SHIFT+Home) */
+	/* set start point (ALT+Home) */
 	if(eof_key_code == KEY_HOME)
 	{
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
@@ -993,6 +994,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_song_seek_first_beat();
 		}
+		else if(KEY_EITHER_ALT)
+		{	//If ALT is pressed but neither CTRL nor SHIFT are held
+			(void) eof_menu_edit_set_start_point();
+		}
 		else
 		{
 			(void) eof_menu_song_seek_start();
@@ -1004,6 +1009,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* select rest (SHIFT+End) */
 	/* seek to end of audio (End) */
 	/* seek to end of chart (CTRL+SHIFT+End) */
+	/* set end point (ALT+End) */
 	if(eof_key_code == KEY_END)
 	{
 		if(KEY_EITHER_CTRL)
@@ -1022,6 +1028,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		{	//If only SHIFT is being held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_edit_select_rest();
+		}
+		else if(KEY_EITHER_ALT)
+		{	//If ALT is pressed but neither CTRL nor SHIFT are held
+			(void) eof_menu_edit_set_end_point();
 		}
 		else
 		{	//If neither SHIFT nor CTRL are being held
@@ -2108,7 +2118,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			else if(!KEY_EITHER_SHIFT)
 			{	//Only ALT is held
 				unsigned long totalnotecount = 0;
-				(void) eof_count_selected_notes(&totalnotecount);
+				(void) eof_count_selected_and_unselected_notes(&totalnotecount);
 				if(totalnotecount)
 				{	//If there are any notes in the active track difficulty
 					(void) eof_menu_edit_select_conditional();
@@ -2948,7 +2958,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
 			if(!KEY_EITHER_CTRL && KEY_EITHER_ALT && !KEY_EITHER_SHIFT)
 			{	//If only ALT is held
-				if(eof_count_selected_notes(NULL))
+				if(eof_count_selected_and_unselected_notes(NULL))
 				{	//If any notes in the active track difficulty are selected
 					(void) eof_menu_edit_deselect_conditional();
 				}
@@ -4366,7 +4376,7 @@ void eof_editor_logic(void)
 				while(mouse_b & 4);	//Wait until the middle mouse button is released before proceeding (this depends on automatic mouse polling, so EOF cannot call poll_mouse() manually or this becomes an infinite loop)
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If a pro guitar track is active
-					if(eof_count_selected_notes(NULL))
+					if(eof_count_selected_and_unselected_notes(NULL))
 					{	//If any notes in the active track difficulty are selected
 						(void) eof_menu_note_edit_pro_guitar_note();
 					}
@@ -4429,7 +4439,7 @@ void eof_editor_logic(void)
 			if(!eof_full_screen_3d && (mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
-				unsigned long selected_count = eof_count_selected_notes(NULL);	//Get count now so this function doesn't modify the eof_selection structure while it's being manipulated
+				unsigned long selected_count = eof_count_selected_and_unselected_notes(NULL);	//Get count now so this function doesn't modify the eof_selection structure while it's being manipulated
 
 				eof_click_x = eof_scaled_mouse_x;
 				eof_click_y = eof_scaled_mouse_y;
@@ -5071,7 +5081,7 @@ void eof_editor_logic(void)
 				{	//mouse is in the fretboard area
 					if(eof_hover_note >= 0)
 					{
-						if(eof_count_selected_notes(NULL) == 0)
+						if(eof_count_selected_and_unselected_notes(NULL) == 0)
 						{	//No notes are selected
 							eof_selection.current = eof_hover_note;
 							eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
@@ -5096,7 +5106,7 @@ void eof_editor_logic(void)
 						}
 					}
 					eof_prepare_menus();
-					if(eof_count_selected_notes(NULL) > 0)
+					if(eof_count_selected_and_unselected_notes(NULL) > 0)
 					{
 						(void) do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
 					}
@@ -5255,7 +5265,7 @@ void eof_vocal_editor_logic(void)
 			if(!eof_full_screen_3d && (mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
-				unsigned long selected_count = eof_count_selected_notes(NULL);	//Get count now so this function doesn't modify the eof_selection structure while it's being manipulated
+				unsigned long selected_count = eof_count_selected_and_unselected_notes(NULL);	//Get count now so this function doesn't modify the eof_selection structure while it's being manipulated
 
 				eof_click_x = eof_scaled_mouse_x;
 				eof_click_y = eof_scaled_mouse_y;
@@ -5673,7 +5683,7 @@ void eof_vocal_editor_logic(void)
 					eof_rclick_released = 1;
 				}
 			}
-			if((eof_mickey_z != 0) && eof_count_selected_notes(NULL))
+			if((eof_mickey_z != 0) && eof_count_selected_and_unselected_notes(NULL))
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
 			}
@@ -5814,7 +5824,7 @@ void eof_vocal_editor_logic(void)
 			{	//mouse is in the fretboard area
 				if(eof_hover_note >= 0)
 				{
-					if(eof_count_selected_notes(NULL) == 0)
+					if(eof_count_selected_and_unselected_notes(NULL) == 0)
 					{	//If no notes are selected
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
@@ -5839,7 +5849,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 				eof_prepare_menus();
-				if(eof_count_selected_notes(NULL) > 0)
+				if(eof_count_selected_and_unselected_notes(NULL) > 0)
 				{
 					(void) do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
 					eof_clear_input();

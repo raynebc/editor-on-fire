@@ -722,12 +722,14 @@ void eof_reset_lyric_preview_lines(void);	//Resets the preview line variables to
 void eof_find_lyric_preview_lines(void);	//Sets the first and second preview line variables
 void eof_emergency_stop_music(void);	//Stops audio playback
 void eof_fix_catalog_selection(void);	//Ensures that a valid catalog entry is active, if any
-unsigned long eof_count_selected_notes(unsigned long *total);
+unsigned long eof_count_selected_and_unselected_notes(unsigned long *total);
 	//Returns the number of notes selected in the active track difficulty, sets values in the eof_selection structure
 	//If total is not NULL, its value is incremented once for each note in the active difficulty, regardless of whether it's selected (to count the number of notes in the active difficulty)
 	//Reset *total to 0 before calling if the intention is to get a count of all notes in the active track difficulty
+unsigned long eof_count_selected_notes_a(unsigned long track, unsigned char diff);
+	//Returns the number of notes in the specified track difficulty that are selected, or 0 upon error
 unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned long *sel_end, char function);
-	//Returns the number of notes in the selected note range that are explicitly selected, allowing an easy way to check if more than one note is selected
+	//Returns the number of notes in the active track difficulty that are explicitly selected, allowing an easy way to check if some number of  them are selected
 	//If sel_start and sel_end are not NULL, information about the first and last selected note are returned through them
 	//If function is zero, the information returned is the index number of the notes, otherwise it is their timestamps
 	//The notes are expected to be sorted.  Zero is returned on error.

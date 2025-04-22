@@ -1312,7 +1312,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	}
 
 	///Initialize arrays and structures
-	(void) eof_count_selected_notes(&note_count);	//Count the number of notes in the active track difficulty
+	(void) eof_count_selected_and_unselected_notes(&note_count);	//Count the number of notes in the active track difficulty
 	if(!note_count)
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
@@ -2476,7 +2476,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 
 	//Evaluate solutions
 	solutionctr = first_deploy;	//The first worker process will be directed to calculate this solution set
-	(void) eof_count_selected_notes(&trackdiffsize);	//Count the number of notes in the active track difficulty
+	(void) eof_count_selected_and_unselected_notes(&trackdiffsize);	//Count the number of notes in the active track difficulty
 	*deployment_notes = 0;			//Reset this count so the first solution will be counted as the one with the most notes played during SP deployments
 	while(!done && !error && !canceled)
 	{	//Until the supervisor's job is completed
@@ -3289,7 +3289,7 @@ void eof_ch_sp_solution_rebuild(void)
 		eof_ch_sp_solution = NULL;
 	}
 
-	(void) eof_count_selected_notes(&note_count);	//Count the number of notes in the active track difficulty
+	(void) eof_count_selected_and_unselected_notes(&note_count);	//Count the number of notes in the active track difficulty
 	if(!note_count)
 	{	//If there aren't any, don't bother building the solution structure
 		return;

@@ -1225,4 +1225,8 @@ unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, un
 	//Examines any bend status and bend tech notes on the specified string of the specified note and returns the bend strength (in quarternotes) in effect at the given timestamp
 	//Returns 0 if there is no applicable bend defined, if pos is after the end of the note, or upon error
 
+unsigned long eof_count_notes_starting_in_time_range(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long start, unsigned long stop);
+	//Returns the number of notes in the specified track difficulty that start within the specified time range (inclusive), or 0 upon error
+	//For the purposes of this function, a start or stop timestamp of ULONG_MAX (the value of the start/end point variables when undefined) are considered invalid
+
 #endif

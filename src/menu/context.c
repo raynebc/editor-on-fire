@@ -62,7 +62,7 @@ void eof_prepare_context_menu(void)
 
 	if(eof_song && eof_song_loaded)
 	{
-		vselected = eof_count_selected_notes(NULL);
+		vselected = eof_count_selected_and_unselected_notes(NULL);
 		if(vselected)
 		{	//If at least one note is selected, enable the Copy function
 			eof_right_click_menu_normal[0].flags = 0;

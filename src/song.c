@@ -20,7 +20,7 @@
 #include "menu/beat.h"	//For eof_menu_beat_delete_logic()
 #include "menu/edit.h"
 #include "menu/file.h"
-#include "menu/note.h"	//For eof_feedback_mode_update_note_selection()
+#include "menu/note.h"	//For eof_update_implied_note_selection()
 #include "menu/song.h"
 #include "menu/track.h"	//For the tech view enable/disable functions
 #include "agup/agup.h"
@@ -7494,7 +7494,7 @@ void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value
 	if(eof_fingering_view && (value > 4))
 		return;	//If fingering view is in effect, don't allow an invalid finger number to be set
 
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -7561,9 +7561,8 @@ void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value
 		eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 	}
 	if(note_selection_updated)
-	{	//If the only note modified was the seek hover note
-		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-		eof_selection.current = EOF_MAX_NOTES - 1;
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 }
 
@@ -7936,7 +7935,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 		}
 	}
 
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 	adjustment = amount;	//This would be the amount to adjust the note by
 	for(i = 0; i < eof_get_track_size(sp, eof_selected_track); i++)
 	{	//For each note in the track
@@ -8057,9 +8056,8 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 	}//For each note in the track
 	eof_track_fixup_notes(sp, eof_selected_track, 1);
 	if(note_selection_updated)
-	{	//If the only note modified was the seek hover note
-		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-		eof_selection.current = EOF_MAX_NOTES - 1;
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 }
 
@@ -8633,7 +8631,7 @@ unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track, char scope
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Only run this on a pro guitar/bass track
 
-	note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 	tracknum = sp->track[track]->tracknum;
 	for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the specified pro guitar track
@@ -8654,9 +8652,8 @@ unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track, char scope
 	}
 
 	if(note_selection_updated)
-	{	//If the only note modified was the seek hover note
-		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-		eof_selection.current = EOF_MAX_NOTES - 1;
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return highestfret;
 }
@@ -11244,4 +11241,26 @@ unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, un
 	}//If the note is a bend, examine all applicable bend points
 
 	return effective_bendstrength;	//If all bend tech notes have been examined, but the target position isn't before any of them, return the last defined bend strength
+}
+
+unsigned long eof_count_notes_starting_in_time_range(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long start, unsigned long stop)
+{
+	unsigned long i, notepos, count = 0;
+
+	if(!sp || !track || (track >= sp->tracks) || (start > stop) || (start == ULONG_MAX) || (stop == ULONG_MAX))
+		return 0;	//Invalid parameters
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the track
+		if(eof_get_note_type(sp, track, i) == diff)
+		{	//If this note is in the specified difficulty
+			notepos = eof_get_note_pos(sp, track, i);
+			if(notepos > stop)
+				break;	//If this and all remaining notes are after the specified time range, stop counting
+			if(notepos >= start)
+				count++;	//If this note starts within the specified time range, increment the counter
+		}
+	}
+
+	return count;
 }

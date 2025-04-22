@@ -44,8 +44,8 @@ int eof_phrase_edit_timing_edit_proc(int msg, DIALOG *d, int c);
 	//Sends all other input to eof_verified_edit_proc()
 int eof_phrase_edit_timing_radio_proc(int msg, DIALOG *d, int c);
 	//A radio button procedure that updates the input fields of eof_phrase_edit_timing_dialog[]
-int eof_phrase_edit_timing(unsigned long *start, unsigned long *end);
-	//A generic dialog that allows the user to alter the given start and end positions
+int eof_phrase_edit_timing(unsigned long *start, unsigned long *end, unsigned long startval, unsigned long endval);
+	//A generic dialog that allows the user to alter the given start and end variables, which initialize in the dialog as startval and endval
 	//eof_etext3 is used as the dialog title so it can be set appropriately by the calling function
 	//If the given end value is >= the given start value when the dialog is confirmed, an undo state is made and *start and *end are updated
 int eof_menu_song_catalog_edit_timing(void);

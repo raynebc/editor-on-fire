@@ -1784,9 +1784,9 @@ int eof_figure_difficulty(void)
 }
 
 /* total is used to determine the total number of notes including unselected notes */
-unsigned long eof_count_selected_notes(unsigned long *total)
+unsigned long eof_count_selected_and_unselected_notes(unsigned long *total)
 {
-//	eof_log("eof_count_selected_notes() entered");
+//	eof_log("eof_count_selected_and_unselected_notes() entered");
 
 	unsigned long count = 0, i;
 	long last = -1;
@@ -1828,16 +1828,39 @@ unsigned long eof_count_selected_notes(unsigned long *total)
 	return count;
 }
 
+unsigned long eof_count_selected_notes(unsigned long track, unsigned char diff)
+{
+	unsigned long i, count = 0;
+
+	if(!eof_song || (track >= eof_song->tracks))
+		return 0;	//No chart is loaded or invalid track number
+	if(eof_selection.track != track)
+		return 0;	//The note selection applies to a different track
+
+	for(i = 0; i < eof_get_track_size(eof_song, track); i++)
+	{	//For each note in the specified track
+		if(eof_selection.multi[i] && (eof_get_note_type(eof_song, track, i) == diff))
+		{	//If this note is in the specified track, is selected and is in the specified difficulty
+			count++;
+		}
+	}
+
+	return count;
+}
+
 unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned long *sel_end, char function)
 {
 	unsigned long ctr, start, end, pos, startpos, endpos = 0, count = 0;
 	long length, after;
 	char first = 1;
 
+	if(eof_selection.track != eof_selected_track)
+		return 0;	//If the note selection does not apply to the active track, none of the active track's notes can be selected
+
 	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 	{	//For each note in the active track
-		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[ctr] || (eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type))
-			continue;	//If the note is not selected, skip it
+		if(!eof_selection.multi[ctr] || (eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type))
+			continue;	//If the note is not selected, or not in the active track difficulty, skip it
 
 		pos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
 		length = eof_get_note_length(eof_song, eof_selected_track, ctr);
@@ -2605,7 +2628,7 @@ void eof_lyric_logic(void)
 				{
 					if(KEY_EITHER_CTRL && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics))
 					{
-						if(eof_count_selected_notes(NULL) == 1)
+						if(eof_count_selected_and_unselected_notes(NULL) == 1)
 						{
 							eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);
 							eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note = eof_hover_key;
@@ -3792,6 +3815,7 @@ void eof_render_notes_window(void)
 
 void eof_render(void)
 {
+	char notes_are_selected = 0;
 //	eof_log("eof_render() entered.", 3);
 
 	/* don't draw if window is out of focus */
@@ -3806,6 +3830,10 @@ void eof_render(void)
 	if(eof_song_loaded)
 	{	//If a project is loaded
 //		eof_log("\tProject is loaded.", 3);
+		if(eof_count_selected_and_unselected_notes(NULL) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)) || eof_count_notes_starting_in_time_range(eof_song, eof_selected_track, eof_note_type, eof_song->tags->start_point, eof_song->tags->end_point))
+		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use, or one or more notes exist between the start and end points in the active track difficulty
+			notes_are_selected = 1;	//Check this status once and re-use multiple times in this function
+		}
 		if(eof_window_title_dirty)
 		{	//If the window title needs to be recreated
 			eof_fix_window_title();
@@ -3825,8 +3853,8 @@ void eof_render(void)
 		#ifndef ALLEGRO_LEGACY
 			if(!eof_full_screen_3d && !eof_screen_zoom)
 			{	//Only blit the menu bar now if neither full screen 3D view nor x2 zoom is in effect, otherwise it will be blitted later
-				if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-				{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+				if(notes_are_selected)
+				{
 					blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 				}
 				else
@@ -3924,8 +3952,8 @@ void eof_render(void)
 		#ifndef ALLEGRO_LEGACY
 			if(!eof_screen_zoom)
 			{	//If x2 zoom is not enabled, render the menu now
-				if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-				{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+				if(notes_are_selected)
+				{
 					blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 				}
 				else
@@ -3952,8 +3980,8 @@ void eof_render(void)
 		eof_log("\tPerforming x2 blit.", 3);
 		stretch_blit(eof_screen, eof_screen2, 0, 0, eof_screen_width, eof_screen_height, 0, 0, SCREEN_W, SCREEN_H);	//Stretch blit the screen to another bitmap
 		#ifndef ALLEGRO_LEGACY
-			if((eof_count_selected_notes(NULL) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
-			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+			if(notes_are_selected)
+			{
 				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen2, 0, 0, 0, 0, eof_screen->w, eof_screen->h);			//Normal blit the menu to that latter bitmap
 			}
 			else
