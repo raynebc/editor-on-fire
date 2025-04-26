@@ -3567,45 +3567,7 @@ int eof_menu_split_lyric(void)
 
 int eof_menu_solo_mark(void)
 {
-	unsigned long j, sel_start = 0, sel_end = 0;
-	long insp = -1;
-	EOF_PHRASE_SECTION *soloptr = NULL;
-	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-
-	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
-	{	//If no notes are selected
-		return 1;	//Return without doing anything
-	}
-	if(note_selection_updated)
-	{	//If notes were selected based on start/end points, use these for the phrase timings
-		sel_start = eof_song->tags->start_point;
-		sel_end = eof_song->tags->end_point;
-	}
-	for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
-	{	//For each solo in the track
-		soloptr = eof_get_solo(eof_song, eof_selected_track, j);
-		if((sel_end >= soloptr->start_pos) && (sel_start <= soloptr->end_pos))
-		{
-			insp = j;
-		}
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(insp < 0)
-	{
-		(void) eof_track_add_solo(eof_song, eof_selected_track, sel_start, sel_end);
-	}
-	else
-	{
-		soloptr = eof_get_solo(eof_song, eof_selected_track, insp);
-		soloptr->start_pos = sel_start;
-		soloptr->end_pos = sel_end;
-	}
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
-	return 1;
+	return eof_menu_section_mark(EOF_SOLO_SECTION);
 }
 
 int eof_menu_solo_unmark(void)
@@ -3687,48 +3649,7 @@ int eof_menu_solo_edit_timing(void)
 
 int eof_menu_star_power_mark(void)
 {
-	unsigned long j, sel_start = 0, sel_end = 0;
-	long insp = -1;
-	EOF_PHRASE_SECTION *starpowerptr = NULL;
-	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-
-	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
-	{	//If no notes are selected
-		return 1;	//Return without doing anything
-	}
-	if(note_selection_updated)
-	{	//If notes were selected based on start/end points, use these for the section timings
-		sel_start = eof_song->tags->start_point;
-		sel_end = eof_song->tags->end_point;
-	}
-	for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
-	{	//For each star power path in the active track
-		starpowerptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
-		if((sel_end >= starpowerptr->start_pos) && (sel_start <= starpowerptr->end_pos))
-		{
-			insp = j;
-		}
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(insp < 0)
-	{
-		(void) eof_track_add_star_power_path(eof_song, eof_selected_track, sel_start, sel_end);
-	}
-	else
-	{
-		starpowerptr = eof_get_star_power_path(eof_song, eof_selected_track, insp);
-		if(starpowerptr != NULL)
-		{
-			starpowerptr->start_pos = sel_start;
-			starpowerptr->end_pos = sel_end;
-		}
-	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
-	return 1;
+	return eof_menu_section_mark(EOF_SP_SECTION);
 }
 
 int eof_menu_star_power_unmark(void)
@@ -3810,55 +3731,11 @@ int eof_menu_sp_edit_timing(void)
 
 int eof_menu_lyric_line_mark(void)
 {
-	unsigned long i, j, tracknum, sel_start = 0, sel_end = 0;
-	int originalflags = 0; //Used to apply the line's original flags after the line is recreated
-	int note_selection_updated;
+	int retval = eof_menu_section_mark(EOF_LYRIC_PHRASE_SECTION);
 
-	if(!eof_song || !eof_vocals_selected)
-		return 1;
-
-	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected lyrics in the active difficulty
-	{	//If no lyrics are selected
-		return 1;	//Return without doing anything
-	}
-	if(note_selection_updated)
-	{	//If notes were selected based on start/end points, use these for the section timings
-		sel_start = eof_song->tags->start_point;
-		sel_end = eof_song->tags->end_point;
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Create the undo state before removing/adding phrase(s)
-	for(j = eof_song->vocal_track[tracknum]->lines; j > 0; j--)
-	{
-		if((sel_end >= eof_song->vocal_track[tracknum]->line[j-1].start_pos) && (sel_start <= eof_song->vocal_track[tracknum]->line[j-1].end_pos))
-		{
-			originalflags=eof_song->vocal_track[tracknum]->line[j-1].flags;	//Save this line's flags before deleting it
-			eof_vocal_track_delete_line(eof_song->vocal_track[tracknum], j-1);
-		}
-	}
-	(void) eof_vocal_track_add_line(eof_song->vocal_track[tracknum], sel_start, sel_end, 0xFF);
-
-	if(eof_song->vocal_track[tracknum]->lines > 0)
-		eof_song->vocal_track[tracknum]->line[eof_song->vocal_track[tracknum]->lines-1].flags = originalflags;	//Restore the line's flags
-
-	/* check for overlapping lines */
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lines; i++)
-	{
-		for(j = i; j < eof_song->vocal_track[tracknum]->lines; j++)
-		{
-			if((i != j) && (eof_song->vocal_track[tracknum]->line[i].start_pos <= eof_song->vocal_track[tracknum]->line[j].end_pos) && (eof_song->vocal_track[tracknum]->line[j].start_pos <= eof_song->vocal_track[tracknum]->line[i].end_pos))
-			{
-				eof_song->vocal_track[tracknum]->line[i].start_pos = eof_song->vocal_track[tracknum]->line[j].end_pos + 1;
-			}
-		}
-	}
 	eof_reset_lyric_preview_lines();
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
-	return 1;
+
+	return retval;
 }
 
 int eof_menu_lyric_line_unmark(void)
@@ -7029,92 +6906,9 @@ int eof_menu_note_remove_palm_muting(void)
 
 int eof_menu_arpeggio_mark_logic(int handshape)
 {
-	unsigned long i, j, sel_start = 0, sel_end = 0;
-	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
-	unsigned long existingphrasenum = 0;	//Is set to the last arpeggio phrase number that encompasses existing notes
-	unsigned long tracknum;
-	unsigned long flags;
-	int note_selection_updated;
-	EOF_PRO_GUITAR_TRACK *tp;
-	EOF_PHRASE_SECTION *pp = NULL;	//A pointer to the modified or newly-created arpeggio phrase
+	unsigned long section_type = handshape ? EOF_HANDSHAPE_SECTION : EOF_ARPEGGIO_SECTION;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Do not allow this function to run unless a pro guitar track is active
-
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	tp = eof_song->pro_guitar_track[tracknum];
-	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-	//Find the start and end position of the collection of selected notes in the active difficulty
-	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
-	{	//If no notes are selected
-		return 1;	//Return without doing anything
-	}
-	if(note_selection_updated)
-	{	//If notes were selected based on start/end points, use these for the section timings
-		sel_start = eof_song->tags->start_point;
-		sel_end = eof_song->tags->end_point;
-	}
-	for(j = 0; j < tp->arpeggios; j++)
-	{	//For each arpeggio section in the track
-		if((sel_end >= tp->arpeggio[j].start_pos) && (sel_start <= tp->arpeggio[j].end_pos) && (tp->arpeggio[j].difficulty == eof_note_type))
-		{	//If the selection of notes is within this arpeggio's start and end position, and the arpeggio is also in the active difficulty
-			existingphrase = 1;	//Note it
-			existingphrasenum = j;
-		}
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(!existingphrase)
-	{	//If the selected notes are not within an existing arpeggio phrase, create one applying to the active difficulty
-		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, sel_start, sel_end, 0, NULL);
-
-		//The new arpeggio will have been sorted so it has to be properly found
-		for(j = 0; j < tp->arpeggios; j++)
-		{	//For each arpeggio section in the track
-			if((sel_end >= tp->arpeggio[j].start_pos) && (sel_start <= tp->arpeggio[j].end_pos) && (tp->arpeggio[j].difficulty == eof_note_type))
-			{	//If the selection of notes is within this arpeggio's start and end position, and the arpeggio is also in the active difficulty
-				pp = &tp->arpeggio[j];
-				break;
-			}
-		}
-	}
-	else
-	{	//Otherwise edit the existing phrase
-		tp->arpeggio[existingphrasenum].start_pos = sel_start;
-		tp->arpeggio[existingphrasenum].end_pos = sel_end;
-		pp = &tp->arpeggio[existingphrasenum];
-	}
-
-	if(pp)
-	{	//Unless an error occurred
-		if(handshape)
-		{	//If the phrase added/edited is intended to be a handshape
-			pp->flags |= EOF_RS_ARP_HANDSHAPE;	//Set this flag
-		}
-		else
-		{
-			pp->flags &= ~EOF_RS_ARP_HANDSHAPE;	//Otherwise clear the flag
-		}
-	}
-
-	//Mark notes inside of arpeggio phrases with crazy status
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if(!handshape)
-		{	//If an arpeggio phrase (but NOT a handshape phrase) was created
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && ((eof_get_note_pos(eof_song, eof_selected_track, i) >= sel_start) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sel_end)))
-			{	//If the note is in the active track difficulty and is within the created/edited phrase
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				flags |= EOF_NOTE_FLAG_CRAZY;	//Set the note's crazy flag
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-			}
-		}
-	}
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
-	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic immediately in order to correct the arpeggio's base chord
-	return 1;
+	return eof_menu_section_mark(section_type);
 }
 
 int eof_menu_arpeggio_mark(void)
@@ -7250,173 +7044,31 @@ int eof_menu_handshape_erase_all(void)
 
 int eof_menu_trill_mark(void)
 {
-	unsigned long j, sel_start = 0, sel_end = 0;
-	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
-	unsigned long existingphrasenum = 0;	//Is set to the last trill phrase number that encompasses existing notes
-	EOF_PHRASE_SECTION *sectionptr;
-	int note_selection_updated;
+	int retval = eof_menu_section_mark(EOF_TRILL_SECTION);
 
-	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_KEYS_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_KEYS_TRACK_BEHAVIOR))
-		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum/keys track is active
+	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+	{	//If the active track has Drums Rock mode enabled
+		(void) eof_menu_note_edit_name();	//Prompt the user for the drum roll count as well
+	}
 
-	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
-	{	//If no notes are selected
-		return 1;	//Return without doing anything
-	}
-	if(note_selection_updated)
-	{	//If notes were selected based on start/end points, use these for the section timings
-		sel_start = eof_song->tags->start_point;
-		sel_end = eof_song->tags->end_point;
-	}
-	for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
-	{	//For each trill section in the track
-		sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
-		if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
-		{	//If the selection of notes is within this trill section's start and end position
-			existingphrase = 1;	//Note it
-			existingphrasenum = j;
-		}
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(!existingphrase)
-	{	//If the selected notes are not within an existing trill phrase, create one
-		(void) eof_track_add_trill(eof_song, eof_selected_track, sel_start, sel_end);
-		if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
-		{	//If the active track has Drums Rock mode enabled
-			(void) eof_menu_note_edit_name();	//Prompt the user for the drum roll count as well
-		}
-	}
-	else
-	{	//Otherwise edit the existing phrase
-		sectionptr = eof_get_trill(eof_song, eof_selected_track, existingphrasenum);
-		sectionptr->start_pos = sel_start;
-		sectionptr->end_pos = sel_end;
-	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
-	return 1;
+	return retval;
 }
 
 int eof_menu_tremolo_mark(void)
 {
-	unsigned long j, sel_start = 0, sel_end = 0;
-	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
-	unsigned long existingphrasenum = 0;	//Is set to the last tremolo phrase number that encompasses existing notes
-	EOF_PHRASE_SECTION *sectionptr;
-	int note_selection_updated;
+	int retval = eof_menu_section_mark(EOF_TREMOLO_SECTION);
 
-	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
-		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
+	if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
+	{	//If the active track has Drums Rock mode enabled
+		(void) eof_menu_note_edit_name();	//Prompt the user for the drum roll count as well
+	}
 
-	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
-	{	//If no notes are selected
-		return 1;	//Return without doing anything
-	}
-	if(note_selection_updated)
-	{	//If notes were selected based on start/end points, use these for the section timings
-		sel_start = eof_song->tags->start_point;
-		sel_end = eof_song->tags->end_point;
-	}
-	for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
-	{	//For each tremolo section in the track
-		sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
-		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-		{	//If the track's difficulty limit has been removed
-			if(sectionptr->difficulty != eof_note_type)	//And the tremolo section does not apply to the active track difficulty
-				continue;
-		}
-		else
-		{
-			if(sectionptr->difficulty != 0xFF)	//Otherwise if the tremolo section does not apply to all track difficulties
-				continue;
-		}
-		if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
-		{	//If the selection of notes is within this tremolo section's start and end position
-			existingphrase = 1;	//Note it
-			existingphrasenum = j;
-		}
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(!existingphrase)
-	{	//If the selected notes are not within an existing tremolo phrase, create one
-		unsigned char targetdiff = 0xFF;	//By default, tremolo phrases apply to all difficulties
-		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-		{	//If this track has had its difficulty limit removed (Rocksmith authoring)
-			targetdiff = eof_note_type;	//A new tremolo phrase will apply to the active track difficulty instead
-		}
-		(void) eof_track_add_tremolo(eof_song, eof_selected_track, sel_start, sel_end, targetdiff);
-		if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
-		{	//If the active track has Drums Rock mode enabled
-			(void) eof_menu_note_edit_name();	//Prompt the user for the drum roll count as well
-		}
-	}
-	else
-	{	//Otherwise edit the existing phrase
-		sectionptr = eof_get_tremolo(eof_song, eof_selected_track, existingphrasenum);
-		sectionptr->start_pos = sel_start;
-		sectionptr->end_pos = sel_end;
-	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
-	return 1;
+	return retval;
 }
 
 int eof_menu_slider_mark(void)
 {
-	unsigned long j, sel_start = 0, sel_end = 0;
-	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
-	unsigned long existingphrasenum = 0;	//Is set to the last slider phrase number that encompasses existing notes
-	EOF_PHRASE_SECTION *sectionptr;
-	int note_selection_updated;
-
-	if(!eof_track_is_legacy_guitar(eof_song, eof_selected_track) && (eof_selected_track != EOF_TRACK_KEYS))
-		return 1;	//Do not allow this function to run unless a legacy guitar track or the keys track is active
-
-	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
-	{	//If no notes are selected
-		return 1;	//Return without doing anything
-	}
-	if(note_selection_updated)
-	{	//If notes were selected based on start/end points, use these for the section timings
-		sel_start = eof_song->tags->start_point;
-		sel_end = eof_song->tags->end_point;
-	}
-
-	for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
-	{	//For each slider section in the track
-		sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
-		if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
-		{	//If the selection of notes is within this slider section's start and end position
-			existingphrase = 1;	//Note it
-			existingphrasenum = j;
-		}
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(!existingphrase)
-	{	//If the selected notes are not within an existing slider phrase, create one
-		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_SLIDER_SECTION, 0xFF, sel_start, sel_end, 0, NULL);
-	}
-	else
-	{	//Otherwise edit the existing phrase
-		sectionptr = eof_get_slider(eof_song, eof_selected_track, existingphrasenum);
-		sectionptr->start_pos = sel_start;
-		sectionptr->end_pos = sel_end;
-	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
-	return 1;
+	return eof_menu_section_mark(EOF_SLIDER_SECTION);
 }
 
 int eof_menu_trill_unmark(void)

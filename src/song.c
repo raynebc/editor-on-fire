@@ -2557,7 +2557,12 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 		track = EOF_TRACK_DRUM;
 	}
 	tracknum = sp->track[track]->tracknum;
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(sectiontype == EOF_FRET_CATALOG_SECTION)
+	{	//Fret catalog entries are not track format specific
+		*count = sp->catalog->entries;
+		*ptr = sp->catalog->entry;
+	}
+	else if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{	//Legacy track format
 		EOF_LEGACY_TRACK *tp = sp->legacy_track[tracknum];;
 
@@ -2694,6 +2699,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 				*ptr = tp->trill;
 			break;
 			case EOF_ARPEGGIO_SECTION:
+			case EOF_HANDSHAPE_SECTION:
 				*count = tp->arpeggios;
 				*ptr = tp->arpeggio;
 			break;
@@ -2775,8 +2781,8 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			case EOF_FRET_CATALOG_SECTION:
 				if(sp->catalog->entries < EOF_MAX_CATALOG_ENTRIES)
 				{
-					sp->catalog->entry[sp->catalog->entries].track = flags;		//For now, EOF still numbers tracks starting from number 0
-					sp->catalog->entry[sp->catalog->entries].type = difficulty;	//Store the fret catalog section's associated difficulty
+					sp->catalog->entry[sp->catalog->entries].flags = flags;		//For now, EOF still numbers tracks starting from number 0
+					sp->catalog->entry[sp->catalog->entries].difficulty = difficulty;	//Store the fret catalog section's associated difficulty
 					sp->catalog->entry[sp->catalog->entries].start_pos = start;
 					sp->catalog->entry[sp->catalog->entries].end_pos = end;
 					if(name == NULL)
@@ -2836,6 +2842,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		return eof_track_add_trill(sp, track, start, end);
 
 		case EOF_ARPEGGIO_SECTION:	//Arpeggio section
+		case EOF_HANDSHAPE_SECTION:	//Handshape section (an arpeggio section with an additional status flag)
 			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
 				count = sp->pro_guitar_track[tracknum]->arpeggios;
@@ -2980,6 +2987,102 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		break;
 	}
 	return 0;	//Return error
+}
+
+int eof_menu_section_mark(unsigned long section_type)
+{
+	unsigned long j, sel_start = 0, sel_end = 0, section_count = 0, track, flags;
+	unsigned char diff;
+	long insp = -1;
+	EOF_PHRASE_SECTION *sectionptr = NULL, *instanceptr;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
+	{	//If no notes are selected
+		return 1;	//Return without doing anything
+	}
+	if(note_selection_updated)
+	{	//If notes were selected based on start/end points, use these for the section timings
+		sel_start = eof_song->tags->start_point;
+		sel_end = eof_song->tags->end_point;
+	}
+	if(eof_lookup_track_section_type(eof_song, eof_selected_track, section_type, &section_count, &sectionptr))
+	{	//If the section array was found
+		if(section_type != EOF_FRET_CATALOG_SECTION)
+		{	//Fret catalog entries are allowed to overlap, other sections generally are not
+			track = eof_selected_track;	//For all sections marked with this function, catalog entries excluded, the active track is the one the section applies to
+			diff = 0xFF;				//And does not apply to a specific difficulty
+			flags = 0;					//All non catalog section types are initialized with no flags
+			for(j = 0; j < section_count; j++)
+			{	//For each instance of the section in the active track
+				instanceptr = &sectionptr[j];
+				if(instanceptr && (sel_end >= instanceptr->start_pos) && (sel_start <= instanceptr->end_pos))
+				{
+					insp = j;
+				}
+			}
+		}
+		else
+		{
+			track = 0;					//Fret catalog entries are expected to be stored in track 0 (global)
+			flags = eof_selected_track;	//And the flags variable stores the track that the catalog entry applies to
+			diff = eof_note_type;		//And applicable to a track difficulty
+		}
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(insp < 0)
+		{	//If selected notes are not within an existing section, add one
+			(void) eof_track_add_section(eof_song, track, section_type, diff, sel_start, sel_end, flags, "");	//Add a section of the specified type
+			instanceptr = eof_get_section_instance_at_pos(eof_song, track, section_type, sel_start);	//Get the pointer to the new section
+		}
+		else
+		{	//Otherwise edit the existing section
+			instanceptr = &sectionptr[insp];
+			if(instanceptr != NULL)
+			{
+				instanceptr->start_pos = sel_start;
+				instanceptr->end_pos = sel_end;
+			}
+		}
+
+		//Section specific logic
+		if(instanceptr)
+		{
+			if(section_type == EOF_FRET_CATALOG_SECTION)
+			{	//If the section that was added is a fret catalog
+				if(instanceptr->end_pos - instanceptr->start_pos < 100)
+				{	//If it isn't at least 100ms long
+					instanceptr->end_pos = instanceptr->start_pos + 100;	//Pad it to that length
+				}
+			}
+			else if(section_type == EOF_HANDSHAPE_SECTION)
+			{	//If the section that was added/edited is a handshape
+				instanceptr->flags |= EOF_RS_ARP_HANDSHAPE;	//Set this flag
+			}
+			else if(section_type == EOF_ARPEGGIO_SECTION)
+			{	//If the section that was added/edited is an arpeggio
+				unsigned long i;
+
+				instanceptr->flags &= ~EOF_RS_ARP_HANDSHAPE;	//Otherwise clear the handshape flag
+
+				//Mark notes inside of arpeggio phrases with crazy status
+				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+				{	//For each note in the active track
+					if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && ((eof_get_note_pos(eof_song, eof_selected_track, i) >= sel_start) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sel_end)))
+					{	//If the note is in the active track difficulty and is within the created/edited phrase
+						flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+						flags |= EOF_NOTE_FLAG_CRAZY;	//Set the note's crazy flag
+						eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+					}
+				}
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	eof_determine_phrase_status(eof_song, eof_selected_track);
+	return 1;
 }
 
 int eof_save_song_string_pf(char *buffer, PACKFILE *fp)
@@ -3462,10 +3565,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				for(ctr=0; ctr < sp->catalog->entries; ctr++)
 				{	//For each fret catalog entry in the project
 					(void) eof_save_song_string_pf(sp->catalog->entry[ctr].name, fp);	//Write the section name string
-					(void) pack_putc(sp->catalog->entry[ctr].type, fp);					//Write the associated difficulty
+					(void) pack_putc(sp->catalog->entry[ctr].difficulty, fp);			//Write the associated difficulty
 					(void) pack_iputl(sp->catalog->entry[ctr].start_pos, fp);			//Write the catalog entry's position
 					(void) pack_iputl(sp->catalog->entry[ctr].end_pos, fp);				//Write the catalog entry's end position
-					(void) pack_iputl(sp->catalog->entry[ctr].track, fp);				//Write the flags (associated track number)
+					(void) pack_iputl(sp->catalog->entry[ctr].flags, fp);				//Write the flags (associated track number)
 				}
 			}
 		}

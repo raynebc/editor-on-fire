@@ -546,15 +546,15 @@ void eof_prepare_edit_menu(void)
 		/* paste from catalog */
 		if(eof_selected_catalog_entry < eof_song->catalog->entries)
 		{
-			if((eof_music_pos.value >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_music_pos.value <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos) && (eof_song->catalog->entry[eof_selected_catalog_entry].track == eof_selected_track) && (eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_note_type))
+			if((eof_music_pos.value >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_music_pos.value <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos) && (eof_song->catalog->entry[eof_selected_catalog_entry].flags == eof_selected_track) && (eof_song->catalog->entry[eof_selected_catalog_entry].difficulty == eof_note_type))
 			{
 				eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
-			else if((eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS) && !eof_vocals_selected)
+			else if((eof_song->catalog->entry[eof_selected_catalog_entry].flags == EOF_TRACK_VOCALS) && !eof_vocals_selected)
 			{
 				eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
-			else if((eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS) && eof_vocals_selected)
+			else if((eof_song->catalog->entry[eof_selected_catalog_entry].flags != EOF_TRACK_VOCALS) && eof_vocals_selected)
 			{
 				eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
@@ -4157,7 +4157,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	EOF_NOTE * new_note = NULL;
 	unsigned long newnotenum, sourcetrack, highestfret = 0, highestlane = 0, currentfret;
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
-	EOF_CATALOG_ENTRY *entry;
+	EOF_PHRASE_SECTION *entry;
 	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste notes starting at the seek position instead of the original in-beat positions
 
 	if((eof_selected_catalog_entry >= eof_song->catalog->entries) || !eof_song->catalog->entries)
@@ -4171,10 +4171,10 @@ int eof_menu_edit_paste_from_catalog(void)
 		return 1;
 	}
 
-	sourcetrack = entry->track;
+	sourcetrack = entry->flags;
 
 	/* make sure we can't paste inside of the catalog entry */
-	if((sourcetrack == eof_selected_track) && (entry->type == eof_note_type) && (eof_music_pos.value - eof_av_delay >= entry->start_pos) && (eof_music_pos.value - eof_av_delay <= entry->end_pos))
+	if((sourcetrack == eof_selected_track) && (entry->difficulty == eof_note_type) && (eof_music_pos.value - eof_av_delay >= entry->start_pos) && (eof_music_pos.value - eof_av_delay <= entry->end_pos))
 	{
 		return 1;
 	}
@@ -4185,7 +4185,7 @@ int eof_menu_edit_paste_from_catalog(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, sourcetrack); i++)
 	{	//For each note in the active catalog entry's track
-		if((eof_get_note_type(eof_song, sourcetrack, i) != entry->type) || (eof_get_note_pos(eof_song, sourcetrack, i) < entry->start_pos) || (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) > entry->end_pos))
+		if((eof_get_note_type(eof_song, sourcetrack, i) != entry->difficulty) || (eof_get_note_pos(eof_song, sourcetrack, i) < entry->start_pos) || (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) > entry->end_pos))
 			continue;	//If the note isn't in the scope of the current catalog entry, skip it
 
 		note_count++;
@@ -4244,7 +4244,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			unsigned long pos = eof_get_note_pos(eof_song, sourcetrack, i);
 
 			/* this note needs to be copied */
-			if((eof_get_note_type(eof_song, sourcetrack, i) != entry->type) || (pos < entry->start_pos) || (pos + eof_get_note_length(eof_song, sourcetrack, i) > entry->end_pos))
+			if((eof_get_note_type(eof_song, sourcetrack, i) != entry->difficulty) || (pos < entry->start_pos) || (pos + eof_get_note_length(eof_song, sourcetrack, i) > entry->end_pos))
 				continue;	//If this note doesn't start and end within the scope of the catalog entry, skip it
 
 			if(first == ULONG_MAX)
@@ -4292,7 +4292,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		unsigned long pos = eof_get_note_pos(eof_song, sourcetrack, i);
 
 		/* this note needs to be copied */
-		if((eof_get_note_type(eof_song, sourcetrack, i) != entry->type) || (pos < entry->start_pos) || (pos + eof_get_note_length(eof_song, sourcetrack, i) > entry->end_pos))
+		if((eof_get_note_type(eof_song, sourcetrack, i) != entry->difficulty) || (pos < entry->start_pos) || (pos + eof_get_note_length(eof_song, sourcetrack, i) > entry->end_pos))
 			continue;	//If this note doesn't start and end within the scope of the catalog entry, skip it
 
 		if(first == ULONG_MAX)

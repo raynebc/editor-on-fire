@@ -2941,7 +2941,7 @@ void eof_render_fret_catalog_window(void)
 {
 	unsigned long i;
 	int pos;
-	int lpos, npos;
+	int lpos;
 	unsigned long tracknum;
 	int xcoord;
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
@@ -2980,10 +2980,10 @@ void eof_render_fret_catalog_window(void)
 	if(eof_display_catalog && eof_song->catalog->entries)
 	{//If show catalog is selected and there's at least one entry
 		eof_set_2D_lane_positions(eof_selected_track);	//Update the ychart[] array
-		if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track] == NULL)
+		if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags] == NULL)
 			return;	//If this is NULL for some reason (broken track array or corrupt catalog entry, abort rendering it
 
-		tracknum = eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->tracknum;	//Information about the active fret catalog entry is going to be displayed
+		tracknum = eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->tracknum;	//Information about the active fret catalog entry is going to be displayed
 		textprintf_ex(eof_window_info->screen, font, 2, 0, eof_info_color, -1, "Fret Catalog");
 		textprintf_ex(eof_window_info->screen, font, 2, 12, eof_color_white, -1, "-------------------");
 		if(eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0')
@@ -2994,9 +2994,9 @@ void eof_render_fret_catalog_window(void)
 		{
 			textprintf_ex(eof_window_info->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		}
-		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
-			(void) snprintf(temp, sizeof(temp) - 1, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name);
+			(void) snprintf(temp, sizeof(temp) - 1, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->name);
 			textout_ex(eof_window_info->screen, font, temp, 2, 53, eof_color_white, -1);
 		}
 
@@ -3034,7 +3034,7 @@ void eof_render_fret_catalog_window(void)
 				{	//Ensure the top and bottom lines extend to the left of the piano roll
 					hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 				}
-				else if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
+				else if(eof_song->catalog->entry[eof_selected_catalog_entry].flags != EOF_TRACK_VOCALS)
 				{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
 					hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 				}
@@ -3042,35 +3042,27 @@ void eof_render_fret_catalog_window(void)
 			vline(eof_window_info->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
 
 			// render information about the entry
-			if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format != EOF_VOCAL_TRACK_FORMAT)
+			if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->track_format != EOF_VOCAL_TRACK_FORMAT)
 			{	//If the catalog entry is not from a vocal track, determine the name of the active difficulty
-				if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+				if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 				{	//If this track is not limited to 5 difficulties
-					snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %u", eof_song->catalog->entry[eof_selected_catalog_entry].type);
+					snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %u", eof_song->catalog->entry[eof_selected_catalog_entry].difficulty);
 					difficulty_name = diff_string;
 				}
-				else if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_DANCE)
+				else if(eof_song->catalog->entry[eof_selected_catalog_entry].flags == EOF_TRACK_DANCE)
 				{	//The dance track has different difficulty names
-					difficulty_name = eof_dance_tab_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].type];
+					difficulty_name = eof_dance_tab_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].difficulty];
 				}
 				else
 				{	//All other tracks use the same difficulty names
-					difficulty_name = eof_note_type_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].type];
+					difficulty_name = eof_note_type_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].difficulty];
 				}
 			}
-			textprintf_ex(eof_window_info->screen, font, 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 10, eof_color_white, -1, "%s , %s , %lums - %lums", eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name, difficulty_name + 1, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
+			textprintf_ex(eof_window_info->screen, font, 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 10, eof_color_white, -1, "%s , %s , %lums - %lums", eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->name, difficulty_name + 1, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
 			// draw beat lines
-			if(pos < 140)
-			{
-				npos = 20;
-			}
-			else
-			{
-				npos = 20 - ((pos - 140));
-			}
 			for(i = 0; i < eof_song->beats; i++)
 			{
-				xcoord = npos + eof_song->beat[i]->pos / eof_zoom;
+				xcoord = lpos + eof_song->beat[i]->pos / eof_zoom;
 				if(xcoord >= eof_window_info->screen->w)
 				{	//If this beat line would render off the edge of the screen
 					break;	//Stop rendering them
@@ -3080,7 +3072,7 @@ void eof_render_fret_catalog_window(void)
 					vline(eof_window_info->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 				}
 			}
-			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
+			if(eof_song->catalog->entry[eof_selected_catalog_entry].flags == EOF_TRACK_VOCALS)
 			{	//If drawing a vocal catalog entry
 				// clear lyric text area
 				rectfill(eof_window_info->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_info->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
@@ -3101,31 +3093,25 @@ void eof_render_fret_catalog_window(void)
 			}//If drawing a vocal catalog entry
 			else
 			{	//If drawing a non vocal catalog entry
-				for(i = 0; i < eof_get_track_size(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track); i++)
+				for(i = 0; i < eof_get_track_size(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].flags); i++)
 				{	//For each note in the entry's track
-					notepos = eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i);	//Get the note's position
+					notepos = eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].flags, i);	//Get the note's position
 					if(notepos > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
 					{	//If this note is after the end of the catalog entry
 						break;	//Stop processing notes
 					}
-					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_get_note_type(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i)) &&
+					if((eof_song->catalog->entry[eof_selected_catalog_entry].difficulty == eof_get_note_type(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].flags, i)) &&
 					  (notepos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
 					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is in the catalog entry
-						(void) eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].track, i, i == eof_hover_note_2 ? 2 : 0, eof_window_info);
+						(void) eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].flags, i, i == eof_hover_note_2 ? 2 : 0, eof_window_info);
 					}
 				}
 			}//If drawing a non vocal catalog entry
 			// draw the current position
 			if(pos > zoom)
 			{
-				if(pos < 140)
-				{
-					vline(eof_window_info->screen, 20 + pos - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
-				}
-				else
-				{
-					vline(eof_window_info->screen, 20 + 140 - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
-				}
+				xcoord = lpos + (eof_music_catalog_pos - eof_av_delay) / eof_zoom;	//eof_music_catalog_pos is normally stored with its position skewed by the AV delay
+				vline(eof_window_info->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 			}
 		}//if(eof_song->catalog->entries > 0)
 	}//If show catalog is selected

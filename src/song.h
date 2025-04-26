@@ -246,11 +246,11 @@ typedef struct
 
 typedef struct
 {
-	unsigned long midi_start_pos;
-	unsigned long midi_end_pos;
+//	unsigned long midi_start_pos;	//Not implemented
+//	unsigned long midi_end_pos;		//Not implemented
 	unsigned long start_pos;
 	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as the fret number for fret hand positions or whether a tone change is to the default tone)
-	unsigned long flags;	//Store various phrase-specific data, such as a fret catalog entry's source track
+	unsigned long flags;		//Store various phrase-specific data, such as whether a lyric line is an overdrive lyric line, or which track a fret catalog entry pertains to
 	char name[EOF_SECTION_NAME_LENGTH + 1];
 	unsigned char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions, RS tremolos), or 0xFF if it otherwise applies to all difficulties
 
@@ -302,7 +302,7 @@ typedef struct
 #define EOF_SP_SECTION					2
 #define EOF_BOOKMARK_SECTION			3
 #define EOF_FRET_CATALOG_SECTION		4
-#define EOF_LYRIC_PHRASE_SECTION		5
+#define EOF_LYRIC_PHRASE_SECTION		5	//This is a lyric line
 #define EOF_YELLOW_CYMBAL_SECTION       6	//Unused
 #define EOF_BLUE_CYMBAL_SECTION         7		//Unused
 #define EOF_GREEN_CYMBAL_SECTION        8	//Unused
@@ -316,7 +316,8 @@ typedef struct
 #define EOF_FRET_HAND_POS_SECTION       16
 #define EOF_RS_POPUP_MESSAGE            17
 #define EOF_RS_TONE_CHANGE              18
-#define EOF_NUM_SECTION_TYPES           18
+#define EOF_HANDSHAPE_SECTION		19	//Almost the same as EOF_ARPEGGIO_SECTION, but with a status flag
+#define EOF_NUM_SECTION_TYPES           19
 
 
 ///Track flags
@@ -545,16 +546,6 @@ typedef struct
 
 } EOF_SONG_TAGS;
 
-typedef struct
-{
-	unsigned long track;
-	unsigned char type;
-	unsigned long start_pos;
-	unsigned long end_pos;
-	char name[EOF_NAME_LENGTH + 1];
-
-} EOF_CATALOG_ENTRY;
-
 #define EOF_TEXT_EVENT_LENGTH 255
 typedef struct
 {
@@ -575,7 +566,7 @@ typedef struct
 
 typedef struct
 {
-	EOF_CATALOG_ENTRY entry[EOF_MAX_CATALOG_ENTRIES];
+	EOF_PHRASE_SECTION entry[EOF_MAX_CATALOG_ENTRIES];
 	unsigned long entries;
 
 } EOF_CATALOG;
@@ -747,6 +738,7 @@ void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigne
 int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the note's length value to (pos - [note]->pos)
+
 EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long *count, EOF_PHRASE_SECTION **ptr);
 	//Stores the count and address of the specified section type of the specified chart into *count and **ptr
 	//Returns the address of the section array (which is also stored into ptr) upon success, or NULL upon error
@@ -762,6 +754,9 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 	//For applicable section types, name may point to a section name string in which case it will be copied to the section's name array, or NULL in which case it will be ignored
 	//The difficulty field is used for catalog, arpeggio and tremolo (if Rocksmith numbered difficulties are in effect) sections and fret hand positions
 	//Returns zero on error
+int eof_menu_section_mark(unsigned long section_type);
+	//Performs the logic to mark/re-mark sections that is common among solo, star power, etc. sections
+
 unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track);		//Returns the number of lanes in the specified track, or the default of 5.  The value returned is expected to be less than EOF_MAX_FRETS
 int eof_track_add_trill(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a trill phrase at the specified start and stop timestamp
 unsigned long eof_get_num_trills(EOF_SONG *sp, unsigned long track);		//Returns the number of trill phrases in the specified track, or 0 on error

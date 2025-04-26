@@ -382,10 +382,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = 1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].flags = 1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
-				sp->catalog->entry[i].type = eof_note_amazing;
+				sp->catalog->entry[i].difficulty = eof_note_amazing;
 				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
@@ -459,10 +459,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = 1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].flags = 1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
-				sp->catalog->entry[i].type = eof_note_amazing;
+				sp->catalog->entry[i].difficulty = eof_note_amazing;
 				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
@@ -536,10 +536,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = pack_igetl(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].flags = pack_igetl(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
-				sp->catalog->entry[i].type = eof_note_amazing;
+				sp->catalog->entry[i].difficulty = eof_note_amazing;
 				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
@@ -608,10 +608,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = pack_igetl(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].flags = pack_igetl(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
-				sp->catalog->entry[i].type = eof_note_amazing;
+				sp->catalog->entry[i].difficulty = eof_note_amazing;
 				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
@@ -679,8 +679,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
-				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].flags = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].difficulty = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].name[0] = '\0';
@@ -783,8 +783,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
-				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].flags = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].difficulty = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].name[0] = '\0';
@@ -900,8 +900,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
-				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].flags = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].difficulty = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].name[0] = '\0';
@@ -1035,8 +1035,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
-				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].flags = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].difficulty = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].name[0] = '\0';
@@ -1172,8 +1172,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
-				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].flags = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].difficulty = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].name[0] = '\0';
@@ -1314,8 +1314,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->catalog->entries = pack_igetl(fp);
 			for(i = 0; i < sp->catalog->entries; i++)
 			{
-				sp->catalog->entry[i].track = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
-				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].flags = pack_getc(fp)+1;	//All EOF project formats before revision 'H' numbered tracks starting from 0 instead of 1, correct for this
+				sp->catalog->entry[i].difficulty = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].name[0] = '\0';

@@ -1599,56 +1599,9 @@ int eof_menu_catalog_show(void)
 
 int eof_menu_catalog_add(void)
 {
-	unsigned long first_pos = 0, last_pos = 0, i;
-	long next;
-	char first = 1;
-
-	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-
-	if(!eof_count_selected_and_unselected_notes(NULL))	//If there are still no notes selected
-		return 1;
-
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
-			continue;	//If this note is not selected, skip it
-
-		if(first)
-		{	//If this was the first selected note found
-			first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
-			first = 0;
-		}
-		if(eof_get_note_length(eof_song, eof_selected_track, i) < 100)
-		{
-			last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + 100;
-			next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);
-			if(next >= 0)
-			{
-				if(last_pos >= eof_get_note_pos(eof_song, eof_selected_track, next))
-				{
-					last_pos = eof_get_note_pos(eof_song, eof_selected_track, next) - 1;
-				}
-			}
-		}
-		else
-		{
-			last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-		}
-	}
-	if(note_selection_updated)
-	{	//If notes were selected based on start/end points, use these for the section timings
-		first_pos = eof_song->tags->start_point;
-		last_pos = eof_song->tags->end_point;
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	(void) eof_track_add_section(eof_song, 0, EOF_FRET_CATALOG_SECTION, eof_note_type, first_pos, last_pos, eof_selected_track, NULL);
-	eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
-
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
-	return 1;
+	int retval = eof_menu_section_mark(EOF_FRET_CATALOG_SECTION);
+	eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;	//If the first catalog entry was just created, initialize the catalog position
+	return retval;
 }
 
 int eof_menu_catalog_delete(void)
@@ -1661,7 +1614,7 @@ int eof_menu_catalog_delete(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = eof_selected_catalog_entry; i < eof_song->catalog->entries - 1; i++)
 	{
-		memcpy(&eof_song->catalog->entry[i], &eof_song->catalog->entry[i + 1], sizeof(EOF_CATALOG_ENTRY));
+		memcpy(&eof_song->catalog->entry[i], &eof_song->catalog->entry[i + 1], sizeof(EOF_PHRASE_SECTION));
 	}
 	eof_song->catalog->entries--;
 	if((eof_selected_catalog_entry >= eof_song->catalog->entries) && (eof_selected_catalog_entry > 0))
@@ -1690,7 +1643,7 @@ DIALOG eof_menu_catalog_reorder_dialog[] =
 
 int eof_menu_catalog_reorder(void)
 {
-	EOF_CATALOG_ENTRY temp;
+	EOF_PHRASE_SECTION temp;
 	unsigned long firstvalid = 1, lastvalid ,newindex;
 
 	if(eof_song->catalog->entries < 2)
@@ -2626,7 +2579,7 @@ DIALOG eof_catalog_entry_name_dialog[] =
 	/* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
 	{ d_agup_window_proc,  0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Edit catalog entry name",               NULL, NULL },
 	{ d_agup_text_proc,    12,  84,  64,  8,   2,   23,   0,      0,      0,   0,   "Text:",         NULL, NULL },
-	{ d_agup_edit_proc,    48,  80,  254, 20,  2,   23,   0,      0,      EOF_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
+	{ d_agup_edit_proc,    48,  80,  254, 20,  2,   23,   0,      0,      EOF_SECTION_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
 	{ d_agup_button_proc,  67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",               NULL, NULL },
 	{ d_agup_button_proc,  163, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -3998,14 +3951,14 @@ int eof_find_note_sequence_time_range(EOF_SONG *sp, unsigned long target_track, 
 
 int eof_menu_catalog_find(char direction)
 {
-	EOF_CATALOG_ENTRY *entry;
+	EOF_PHRASE_SECTION *entry;
 	unsigned long hit_pos = 0;
 
 	if(!eof_song || !eof_song->catalog->entries || (eof_selected_catalog_entry >= eof_song->catalog->entries))
 		return 1;
 
 	entry = &eof_song->catalog->entry[eof_selected_catalog_entry];	//Simplify the code below
-	if(eof_find_note_sequence_time_range(eof_song, entry->track, entry->type, entry->start_pos, entry->end_pos, eof_selected_track, eof_note_type, eof_music_pos.value - eof_av_delay, direction, &hit_pos))
+	if(eof_find_note_sequence_time_range(eof_song, entry->flags, entry->difficulty, entry->start_pos, entry->end_pos, eof_selected_track, eof_note_type, eof_music_pos.value - eof_av_delay, direction, &hit_pos))
 	{	//If a match was found
 		eof_set_seek_position(hit_pos + eof_av_delay);	//Seek to the match position
 	}
@@ -4045,6 +3998,7 @@ DIALOG eof_phrase_edit_timing_dialog[] =
 	{ eof_phrase_edit_timing_radio_proc,  115, 155, 65,  15,  2,   23,  0, D_SELECTED,0,   0,   "&Neither", (void *)8,    NULL },
 	{ d_agup_button_proc,    12,  188, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
 	{ d_agup_button_proc,    110, 188, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",             NULL, NULL },
+	{ d_agup_button_proc,    110, 56, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy",             NULL, NULL },
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                 NULL, NULL }
 };
 
@@ -4127,6 +4081,7 @@ int eof_phrase_edit_timing_radio_proc(int msg, DIALOG *d, int c)
 int eof_phrase_edit_timing(unsigned long *start, unsigned long *end, unsigned long startval, unsigned long endval)
 {
 	unsigned long newstart, newend;
+	int retval;
 
 	if(!eof_song_loaded || !start || !end)
 		return 1;	//Invalid parameters
@@ -4145,22 +4100,33 @@ int eof_phrase_edit_timing(unsigned long *start, unsigned long *end, unsigned lo
 	eof_phrase_edit_timing_dialog[2].flags = 0;			//Enable Start position input field
 	eof_phrase_edit_timing_dialog[4].flags = 0;			//Enable End position input field
 
-	if(eof_popup_dialog(eof_phrase_edit_timing_dialog, 2) == 9)
-	{	//User clicked OK
+	do{
+		retval = eof_popup_dialog(eof_phrase_edit_timing_dialog, 2);
 		newstart = atol(eof_etext);
 		newend = atol(eof_etext2);
-
-		if(newstart >= newend)
-		{	//If the given timing is not valid
-			allegro_message("The entry must end after it begins");
+		if(retval == 9)
+		{	//User clicked OK
+			if(newstart >= newend)
+			{	//If the given timing is not valid
+				allegro_message("The entry must end after it begins");
+			}
+			else if((*start != newstart) || (*end != newend))
+			{	//If the timing was changed
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*start = newstart;
+				*end = newend;
+			}
 		}
-		else if((*start != newstart) || (*end != newend))
-		{	//If the timing was changed
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			*start = newstart;
-			*end = newend;
+		else if(retval == 11)
+		{	//User clicked "Copy" button
+			if(newstart < newend)
+			{
+				eof_song->tags->start_point = newstart;
+				eof_song->tags->end_point = newend;
+				eof_render();	//Redraw the screen to show the start and end markers
+			}
 		}
-	}
+	}while(retval == 11);	//Run the dialog again if the Copy button was clicked
 
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -4214,8 +4180,8 @@ int eof_menu_song_catalog_copy(void)
 		return 1;	//Do not allow this function to run if a chart is not loaded or if an invalid catalog entry is selected
 
 	/* first, count the applicable notes */
-	track = eof_song->catalog->entry[eof_selected_catalog_entry].track;	//Simplify
-	type = eof_song->catalog->entry[eof_selected_catalog_entry].type;
+	track = eof_song->catalog->entry[eof_selected_catalog_entry].flags;	//Simplify
+	type = eof_song->catalog->entry[eof_selected_catalog_entry].difficulty;
 	start = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos;
 	end = eof_song->catalog->entry[eof_selected_catalog_entry].end_pos;
 	for(i = 0; i < eof_get_track_size(eof_song, track); i++)

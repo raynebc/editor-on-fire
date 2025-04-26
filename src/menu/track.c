@@ -4453,7 +4453,7 @@ int eof_menu_track_clone_track_14(void)
 
 int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
 {
-	unsigned long stracknum, dtracknum, noteset, notesetcount = 1, ctr;
+	unsigned long stracknum, dtracknum, noteset, notesetcount = 1, ctr, tracknameflag;
 	EOF_TRACK_ENTRY *parent;
 	EOF_PRO_GUITAR_NOTE **setptr;
 	int populated = 1;	//Set to nonzero if the destination track is found to contain no notes
@@ -4486,10 +4486,11 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 	eof_erase_track(sp, desttrack, 1);
 
 	//Clone the source track
-	memcpy(sp->track[desttrack]->altname, sp->track[sourcetrack]->altname, EOF_NAME_LENGTH + 1);
 	sp->track[desttrack]->difficulty = sp->track[sourcetrack]->difficulty;
 	sp->track[desttrack]->numdiffs = sp->track[sourcetrack]->numdiffs;
-	sp->track[desttrack]->flags = sp->track[sourcetrack]->flags;
+	tracknameflag = sp->track[desttrack]->flags & EOF_TRACK_FLAG_ALT_NAME;	//Remember the destination track's alternate name flag status
+	sp->track[desttrack]->flags = (sp->track[sourcetrack]->flags & ~EOF_TRACK_FLAG_ALT_NAME);	//Copy the flags, with the exception of the source track's alternate name flag
+	sp->track[desttrack]->flags |= tracknameflag;	//Restore the destination track's original alternate name flag value
 	stracknum = sp->track[sourcetrack]->tracknum;
 	dtracknum = sp->track[desttrack]->tracknum;
 	switch(sp->track[sourcetrack]->track_format)
@@ -5188,6 +5189,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	unsigned char notesetcount = 1, noteset;
 	EOF_PRO_GUITAR_NOTE *np;
 	unsigned long beats = 0, notes = 0, technotes = 0, sections = 0, events = 0;
+	char altname[EOF_NAME_LENGTH + 1];
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0, intervalpos = 0;
@@ -5250,10 +5252,29 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	eof_erase_track(eof_song, eof_selected_track, 1);
 
 	//Read various track details
-	(void) eof_load_song_string_pf(eof_song->track[eof_selected_track]->altname, fp, sizeof(eof_song->track[eof_selected_track]->altname));	//Read the track's alternate name
+	(void) eof_load_song_string_pf(altname, fp, sizeof(altname));	//Read the track's alternate name
+	for(ctr = 1; ctr < eof_song->tracks; ctr++)
+	{	//For each track in the project
+		if(ctr == eof_selected_track)
+			continue;	//It doesn't matter if the active track already has the name it would inherit from the clipboard
+
+		if(!ustrnicmp(altname, eof_song->track[ctr]->name, sizeof(altname)) || !ustrnicmp(altname, eof_song->track[ctr]->altname, sizeof(altname)))
+		{	//If the provided name matches the track's native or display name
+			altname[0] = '\0';	//The clipboard track's alternate name is in use, don't apply it to the active track
+			break;
+		}
+	}
+	if(altname[0] != '\0')
+	{	//If the alternate name was not invalidated, apply it to the active track
+		strncpy(eof_song->track[eof_selected_track]->altname, altname, sizeof(eof_song->track[eof_selected_track]->altname));
+	}
 	difficulty = pack_getc(fp);
 	numdiffs = pack_getc(fp);
 	flags = pack_igetl(fp);
+	if(altname[0] == '\0')
+	{	//If the alternate name on the active track is not being altered, ensure the relevant track flag is cleared
+		flags &= ~EOF_TRACK_FLAG_ALT_NAME;
+	}
 	if(s_track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//Read pro guitar track specific data
 		lanecount = pack_getc(fp);

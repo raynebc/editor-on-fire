@@ -6332,7 +6332,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
 	{	//If both the start and end points are defined with different timestamps
 		if((eof_song->tags->end_point >= start) && (eof_song->tags->start_point <= stop))	//If the start/end marker would render between the left and right edges of the piano roll, render a light gray rectangle beneath the beat markers
-			rectfill(window->screen, lpos + eof_song->tags->start_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET - 4, lpos + eof_song->tags->end_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, eof_color_light_red);
+			rectfill(window->screen, lpos + eof_song->tags->start_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET - 4, lpos + eof_song->tags->end_point / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_light_red);
 	}
 
 	/* draw solo sections */
@@ -7704,8 +7704,8 @@ void eof_editor_logic_common(void)
 		if(eof_music_catalog_playback)
 		{	//If the fret catalog is playing
 			examined_music_pos = eof_music_catalog_pos;	//Use the fret catalog position instead
-			examined_track = eof_song->catalog->entry[eof_selected_catalog_entry].track;	//Use the fret catalog entry's track instead
-			examined_type = eof_song->catalog->entry[eof_selected_catalog_entry].type;	//Use the fret catalog entry's difficulty instead
+			examined_track = eof_song->catalog->entry[eof_selected_catalog_entry].flags;	//Use the fret catalog entry's track instead
+			examined_type = eof_song->catalog->entry[eof_selected_catalog_entry].difficulty;	//Use the fret catalog entry's difficulty instead
 		}
 
 		//Find the hover note
