@@ -756,7 +756,7 @@ void eof_mix_seek(unsigned long pos)
 {
 	int i;
 
-	eof_log("eof_mix_seek() entered", 3);
+//	eof_log("eof_mix_seek() entered", 3);
 
 	eof_mix_next_clap = -1;
 	eof_mix_next_metronome = -1;

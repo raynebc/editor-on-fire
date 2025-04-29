@@ -1013,7 +1013,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 		}
 		else
 		{
-			snprintf(numbered_diff, sizeof(numbered_diff) - 1, "DD max");
+			numbered_diff[0] = '\0';	//Empty the string
 		}
 		diff_name = numbered_diff;
 	}
@@ -1027,12 +1027,12 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	if(eof_check_string(eof_song->tags->artist))
 	{	//If the artist of the song is defined
 		(void) ustrcat(temp_string, eof_song->tags->artist);
-		(void) ustrcat(temp_string, " - ");
 	}
 	if(eof_check_string(eof_song->tags->title))
 	{	//If the title of the song is defined
+		if(temp_string[0] != '\0')
+			(void) ustrcat(temp_string, " - ");
 		(void) ustrcat(temp_string, eof_song->tags->title);
-		(void) ustrcat(temp_string, " - ");
 	}
 	if(option == 1)
 	{	//If a single arrangement is being exported, include its name in the export folder name
@@ -1056,11 +1056,17 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 			{	//Otherwise use the track's native name
 				arrangement_name = sp->track[effective_arrangement]->name;
 			}
+			if(temp_string[0] != '\0')
+				(void) ustrcat(temp_string, " - ");
 			(void) ustrcat(temp_string, arrangement_name);
-			(void) ustrcat(temp_string, " - ");
 		}
 	}
-	(void) ustrcat(temp_string, diff_name);
+	if(diff_name[0] != '\0')
+	{	//If a specific difficulty other than the flattened maximum dynamic difficulty is being exported
+		if(temp_string[0] != '\0')
+			(void) ustrcat(temp_string, " - ");
+		(void) ustrcat(temp_string, diff_name);
+	}
 
 	//Build the subfolder if it doesn't already exist
 	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
@@ -1109,7 +1115,14 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	}
 	if(eof_check_string(sp->tags->title))
 	{	//If the string has anything other than whitespace
-		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Title=%s (%s)\n", sp->tags->title, diff_name);
+		if(diff_name[0] != '\0')
+		{	//If a specific difficulty other than the flattened maximum dynamic difficulty is being exported
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "Title=%s (%s)\n", sp->tags->title, diff_name);
+		}
+		else
+		{
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "Title=%s\n", sp->tags->title);
+		}
 		(void) pack_fputs(temp_string, fp);	//Write song title
 	}
 	if(eof_check_string(sp->tags->album))

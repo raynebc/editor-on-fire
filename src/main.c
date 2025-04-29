@@ -628,7 +628,7 @@ long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double o
 
 void eof_reset_lyric_preview_lines(void)
 {
-	eof_log("eof_reset_lyric_preview_lines() entered", 3);
+//	eof_log("eof_reset_lyric_preview_lines() entered", 3);
 
 	eof_preview_line[0] = 0;
 	eof_preview_line[1] = 0;
@@ -3872,7 +3872,7 @@ void eof_render(void)
 	}
 	else
 	{	//If no project is loaded
-		eof_log("\tProject is not loaded.", 3);
+//		eof_log("\tProject is not loaded.", 3);
 		if(eof_background)
 		{	//If a background image was loaded
 			blit(eof_background, eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);	//Display it
@@ -5257,13 +5257,13 @@ void eof_exit(void)
 
 void eof_all_midi_notes_off(void)
 {
-	eof_log("eof_all_midi_notes_off() entered", 3);
+//	eof_log("eof_all_midi_notes_off() entered", 3);
 
 	if(midi_driver)
 	{
 		unsigned char ALL_NOTES_OFF[3] = {0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
 
-		eof_log("\tMIDI emergency off", 3);
+//		eof_log("\tMIDI emergency off", 3);
 
 		midi_driver->raw_midi(ALL_NOTES_OFF[0]);
 		midi_driver->raw_midi(ALL_NOTES_OFF[1]);
@@ -5278,7 +5278,7 @@ void eof_stop_midi(void)
 {
 	if(eof_midi_initialized)
 	{
-		eof_log("eof_stop_midi() entered", 3);
+//		eof_log("eof_stop_midi() entered", 3);
 
 		eof_all_midi_notes_off();
 	}

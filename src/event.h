@@ -27,11 +27,14 @@ void eof_delete_blank_events(EOF_SONG *sp);
 int eof_song_qsort_events(const void * e1, const void * e2);
 	//The comparitor function used to quicksort the events array
 	//Requires that eof_song_qsort_events_ptr has been set to the song structure whose events are being sorted
-char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific);
-	//Returns nonzero if there is one or more text events that matches the specified string exactly (case sensitive)
+unsigned long eof_song_lookup_first_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific);
+	//Returns the index number of the first event matching the specified string exactly (case sensitive), or ULONG_MAX if no such event is found or upon error
 	// and whose flags ANDED with the specified flags is nonzero (ie. for checking for existing of a RS phrase, use a flags value of all bits set to search for any event type)
 	//If the event's flags is already 0, it will not be filtered out
 	//If track_specific is nonzero, only events with a matching track number value are checked for comparison, otherwise all events are checked
+char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific);
+	//Uses eof_song_lookup_first_event() to determine whether there is at least one event matching the specified criteria (the event text is case sensitive)
+	//Returns nonzero if there is at least one such event
 char eof_song_contains_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific);
 	//Similar to eof_song_contains_event(), but instead checks for the existence of any section event at the specified position matching the given flags/track specificity filtering
 char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text, unsigned long track);

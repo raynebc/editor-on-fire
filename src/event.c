@@ -193,12 +193,12 @@ int eof_song_qsort_events(const void * e1, const void * e2)
 	return 1;
 }
 
-char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific)
+unsigned long eof_song_lookup_first_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific)
 {
 	unsigned long i;
 
 	if(!sp || !text)
-		return 0;	//Invalid parameters
+		return ULONG_MAX;	//Invalid parameters
 
 	for(i = 0; i < sp->text_events; i++)
 	{
@@ -215,9 +215,20 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track
 		}
 		if(!ustrcmp(sp->text_event[i]->text, text))
 		{
-			return 1;	//Return match found
+			return i;	//Return match found
 		}
 	}
+	return ULONG_MAX;	//Return no match found
+}
+
+char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific)
+{
+	if(!sp || !text)
+		return 0;	//Invalid parameters
+
+	if(eof_song_lookup_first_event(sp, text, track, flags, track_specific) != ULONG_MAX)
+		return 1;		//Return match found
+
 	return 0;	//Return no match found
 }
 

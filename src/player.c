@@ -11,7 +11,7 @@
 
 void eof_music_play(char resumelastspeed)
 {
-	static int speed = 1000;
+	static int speed = 1000;		//1000 is 100% playback speed
 	unsigned long i;
 	int ret, newspeed = 1000;
 	int ctrl_held = 0;
@@ -126,25 +126,27 @@ void eof_music_play(char resumelastspeed)
 		}while(held);
 
 		eof_log("\t\tCalling OGG playback function", 3);
-		if(eof_playback_time_stretch)
-		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting %d%% speed time stretch playback", speed / 10);
-			eof_log(eof_log_string, 1);
-			ret = alogg_play_ogg_ts(eof_music_track, eof_buffer_size, 255, 128, speed);
+		if(speed == 1000)
+		{	//100% speed playback
+			eof_log("\tStarting playback", 1);
+			ret = alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0);
 		}
 		else
 		{
-			if(speed != 1000)
-			{	//Anything other than full speed
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting %d%% speed playback", speed / 10);
+			if(eof_playback_time_stretch)
+			{	//Time stretched playback at any speed other than 100%
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting %d%% speed time stretch playback", speed / 10);
 				eof_log(eof_log_string, 1);
+				ret = alogg_play_ogg_ts(eof_music_track, eof_buffer_size, 255, 128, speed);
 			}
 			else
-			{
-				eof_log("\tStarting playback", 1);
+			{	//Non time stretched playback at any speed other than 100%
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting %d%% speed playback", speed / 10);
+				eof_log(eof_log_string, 1);
+				ret = alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0);
 			}
-			ret = alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0);
 		}
+
 		if(ret == ALOGG_OK)
 		{
 			eof_mix_start(speed);
@@ -222,7 +224,7 @@ void eof_music_seek(unsigned long pos)
 void eof_music_rewind(void)
 {
 	unsigned long amount = 0;
-	eof_log("eof_music_rewind() entered", 3);
+//	eof_log("eof_music_rewind() entered", 3);
 
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)
@@ -261,7 +263,7 @@ void eof_music_rewind(void)
 void eof_music_forward(void)
 {
 	unsigned long amount = 0, target;
-	eof_log("eof_music_forward() entered", 3);
+//	eof_log("eof_music_forward() entered", 3);
 
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)

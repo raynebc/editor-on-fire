@@ -4823,6 +4823,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									gnp->length = 1;
 								}
 							}
+							eof_pro_guitar_track_sort_notes(gp->track[ctr2]);	//Sort so that the grace note is earlier than the note it applies to, to allow the tie note logic to work as expected
 #ifdef GP_IMPORT_DEBUG
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tGrace note #%lu (%s beat):  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, (graceonbeat ? "On" : "Before"), gnp->pos, gnp->length);
 							assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity

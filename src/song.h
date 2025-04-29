@@ -157,7 +157,7 @@
 
 ///Phrase flags
 #define EOF_LYRIC_LINE_FLAG_OVERDRIVE 1
-#define EOF_RS_ARP_HANDSHAPE          2	//A modifier for arpeggio sections that will cause the section to export to XML without "-arp" appended to the chord template name
+#define EOF_RS_ARP_HANDSHAPE               2	//A modifier for arpeggio sections that will cause the section to export to XML without "-arp" appended to the chord template name
 										//It will also not force notes within the phrase to have crazy status or for chords to split into single notes
 
 
@@ -550,7 +550,7 @@ typedef struct
 typedef struct
 {
 	char text[EOF_TEXT_EVENT_LENGTH + 1];
-	unsigned long pos;
+	unsigned long pos;	//The beat number containing this event
 	unsigned long track;	//The track this event is tied to, or 0 if it goes into the EVENTS track (such as a generic section marker)
 	char is_temporary;		//This is nonzero if the event is considered temporary (doesn't trigger undo/redo when added/deleted), required RBN events are added this way during save
 	unsigned flags;

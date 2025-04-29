@@ -2763,7 +2763,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
 	unsigned long ctr;
 
- 	eof_log("eof_track_add_section() entered", 3);
+// 	eof_log("eof_track_add_section() entered", 3);
 
 	if((sp == NULL) || ((track != 0) && (track >= sp->tracks)))
 		return 0;	//Return error
