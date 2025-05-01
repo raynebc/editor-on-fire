@@ -56,16 +56,19 @@ void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offse
 	{
 		return;
 	}
+	for(i = beat; i < sp->beats; i++)
+	{	//For each beat starting with the specified beat
+		sp->beat[i]->flags &= ~(EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
+	}
 	for(i = 0; i < sp->text_events; i++)
 	{	//For each text event
 		if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
 		{	//If this text event is assigned to a beat marker
 			if(sp->text_event[i]->pos < beat)
 				continue;	//If this event's beat is before the move takes effect, skip it
-
 			if(sp->text_event[i]->pos >= sp->beats)
 				continue;	//Do not allow an out of bound access
-			sp->beat[sp->text_event[i]->pos]->flags &= ~(EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
+
 			if(dir < 0)
 			{
 				if(offset > sp->text_event[i]->pos)
@@ -206,12 +209,13 @@ unsigned long eof_song_lookup_first_event(EOF_SONG *sp, const char *text, unsign
 		{	//If this event has any set flags and the specified flags filters out this event
 			continue;	//Skip this event
 		}
-		if(track_specific)
-		{	//If the track specific flag is to be matched
-			if(sp->text_event[i]->track != track)
-			{	//If this event isn't in the specified track
-				continue;	//Skip this event
-			}
+		if((track_specific == 1) && (sp->text_event[i]->track != track))
+		{	//If the track specific flag is to be matched exactly, but the event isn't assigned to the specified track
+			continue;	//Skip this event
+		}
+		if((track_specific == 2) && (sp->text_event[i]->track != track) && (sp->text_event[i]->track != 0))
+		{	//If the event must either be assigned to the specified track directly, or be applicable to the track on account of being project-wide, but neither condition is met
+			continue;	//Skip this event
 		}
 		if(!ustrcmp(sp->text_event[i]->text, text))
 		{

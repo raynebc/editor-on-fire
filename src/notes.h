@@ -9,25 +9,30 @@
 typedef struct
 {
 	//Pointers/paths
-	char filename[1024];	//The full path to the text file defining the content for this panel
+	char filename[1024];		//The full path to the text file defining the content for this panel
 	char *text;				//The pointer to the memory buffer containing the above text file
-	EOF_WINDOW *window;		//The window to which the panel will render
+	EOF_WINDOW *window;	//The window to which the panel will render
 
 	//Print controls
-	int xpos, ypos;	//The current output coordinates of text being printed to the Notes panel
-	int color;		//The text color in use
-	int bgcolor;	//The background color used for that text
+	int xpos, ypos;		//The current output coordinates of text being printed to the Notes panel
+	int color;			//The text color in use
+	int bgcolor;		//The background color used for that text
 	int allowempty;	//A %EMPTY% macro was parsed, allow an empty output line to print to the Notes panel
 
 	//Parsing controls
-	int flush;		//Set to nonzero if a %FLUSH% macro is parsed, signaling eof_expand_notes_window_text() to output the current content of the output buffer
+	int flush;			//Set to nonzero if a %FLUSH% macro is parsed, signaling eof_expand_notes_window_text() to output the current content of the output buffer
 					// and then resume parsing the current line of text
 	int contentprinted;	//Set to nonzero if content was printed for a line, such as by using %FLUSH% even if the output buffer is empty when the end of line is parsed
 	int symbol;		//After a flush, this character will be printed to the Notes panel using the symbol font (ie. to print guitar tab characters)
-	int endline;	//After a flush, a nonzero value for this variable will end processing of the current line
-	int endpanel;	//After a flush, a nonzero value for this variable will end processing of the entire panel
+	int endline;		//After a flush, a nonzero value for this variable will end processing of the current line
+	int endpanel;		//After a flush, a nonzero value for this variable will end processing of the entire panel
 
+	//Other
+	char logged;		//Is set to 1 after the notes panel processing was logged for one frame, if exhaustive logging is enabled, to reduce the repeated duplicate logging
 } EOF_TEXT_PANEL;
+
+extern char eof_notes_macro_pitched_slide_missing_linknext[50];	//Stores a string identifying the first culprit of the %IF_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT% condition
+extern char eof_notes_macro_note_starting_on_tone_change[100];	//Stores a string identifying the first culprit of the %IF_RS_ANY_TONE_CHANGES_ON_NOTE% condition
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin);
 	//Creates a text panel and buffers the specified filename into its text variable
@@ -59,6 +64,12 @@ int eof_read_macro_color(char *string, int *color);
 int eof_read_macro_number(char *string, unsigned long *number);
 	//Accepts a string and converts the decimal number representation and stores it into *number
 	//Returns 0 if no number was parsed or upon error
+int eof_read_macro_string(char *string, char *output_string);
+	//Accepts a pointer to part of a string, parses the remainder of the string and stores it into output_string
+	//To account for being unable to use spaces in macro names, Individual underscores are converted to a whitespace,
+	//double underscores "__" are converted into single underscores, using underscore as an escape character
+	//output_string is expected to be a memory buffer at least as large as the input string
+	//Returns 0 upon error
 int eof_read_macro_gem_designations(char *string, unsigned char *bitmask, unsigned char *tomsmask, unsigned char *cymbalsmask);
 	//Accepts a string and converts the gem designations into bitmasks
 	//For non GHL tracks:  'G' = lane 1, 'R' = lane 2, 'Y' = lane 3, 'B' = lane 4, 'O' = lane 5, 'P' = lane 6, 'S' = open strum

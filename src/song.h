@@ -550,7 +550,7 @@ typedef struct
 typedef struct
 {
 	char text[EOF_TEXT_EVENT_LENGTH + 1];
-	unsigned long pos;	//The beat number containing this event
+	unsigned long pos;	//The beat number containing this event, unless the event has the EOF_EVENT_FLAG_FLOATING_POS flag in which case this is a millisecond position
 	unsigned long track;	//The track this event is tied to, or 0 if it goes into the EVENTS track (such as a generic section marker)
 	char is_temporary;		//This is nonzero if the event is considered temporary (doesn't trigger undo/redo when added/deleted), required RBN events are added this way during save
 	unsigned flags;

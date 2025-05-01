@@ -4,6 +4,7 @@
 	#include <winalleg.h>
 #endif
 #include "beat.h"		//For eof_get_measure()
+#include "event.h"
 #include "ini_import.h"
 #include "ir.h"
 #include "main.h"
@@ -22,6 +23,9 @@
 #endif
 
 #define TEXT_PANEL_BUFFER_SIZE 2047
+
+char eof_notes_macro_pitched_slide_missing_linknext[50];
+char eof_notes_macro_note_starting_on_tone_change[100];
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -63,7 +67,7 @@ EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 		return NULL;
 	}
 
-	eof_notes_panel_logged = 0;	//Enable exhaustive logging of this panel's processing for the next frame
+	panel->logged = 0;	//Enable exhaustive logging of this panel's processing for the next frame
 	return panel;
 }
 
@@ -158,10 +162,10 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 					}
 					else if((macro_status == 2) || (macro_status == 3))
 					{	//If this was a conditional macro
-						char *ifptr, *elseptr, *endifptr, *nextptr;	//Used to track conditional macro handling
-						char *eraseptr = NULL;						//Used to erase ELSE condition when the condition was true
-						unsigned nested_level = 0;					//Track how many conditional if-else-endif macro levels we're currently nested, so we can make the correct parsing branch
-						char nextcondition = 0;						//Tracks whether the next conditional macro is an if (1), an else (2), an endif (3) or none of those (0)
+						char *ifptr, *ifnptr, *elseptr, *endifptr, *nextptr;		//Used to track conditional macro handling
+						char *eraseptr = NULL;	//Used to erase ELSE condition when the condition was true
+						unsigned nested_level = 0;				//Track how many conditional if-else-endif macro levels we're currently nested, so we can make the correct parsing branch
+						char nextcondition = 0;					//Tracks whether the next conditional macro is an if (1), an else (2), an endif (3) or none of those (0)
 						unsigned long index = src_index;			//Used to iterate through the source buffer for processing macros
 
 						if(invert)
@@ -171,11 +175,31 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 							else
 								macro_status = 2;	//Change a false result to true
 						}
+						if(!panel->logged)
+						{
+							if(macro_status == 2)
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tFalse%s", invert ? " (negated true)" : "");
+							else
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTrue%s", invert ? " (negated false)" : "");
+							eof_log(eof_log_string, 3);
+						}
 						while(1)
 						{	//Process conditional macros until the correct branching is handled
 							nextcondition = 0;				//Reset this status so that if no conditional macros are found, the while loop can exit
 							nextptr = &src_buffer[index];	//Unless another conditional macro is found, this pointer will not advance
 							ifptr = strcasestr_spec(&src_buffer[index], "%IF_");		//Search for the next instance of an if conditional macro
+							ifnptr = strcasestr_spec(&src_buffer[index], "%!IF_");		//Search for the next instance of an if-not conditional macro
+							if(ifnptr)
+							{	//If there is an if-not macro
+								if(!ifptr)
+								{	//If there is not a normal if macro
+									ifptr = ifnptr;	//The if-not macro is the next conditional macro
+								}
+								else if(ifnptr < ifptr)
+								{	//If there is a normal if macro, but the if-not macro appears earlier in the string
+									ifptr = ifnptr;	//The if-not macro is the next conditional macro
+								}
+							}
 							elseptr = strcasestr_spec(&src_buffer[index], "%ELSE%");	//Search for the next instance of the else conditional macro
 							endifptr = strcasestr_spec(&src_buffer[index], "%ENDIF%");	//Search for the next instance of the end of conditional test macro
 
@@ -283,6 +307,11 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 
 									for(padindex = 0; eraseptr[padindex] != '\0'; padindex++)
 										eraseptr[padindex] = '%';	//Replace the rest of the line with padding characters
+									if(padindex && !panel->logged)
+									{
+										snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Updated conditional branching:  \"%s\"", src_buffer);
+										eof_log(eof_log_string, 3);
+									}
 								}
 								break;	//Exit macro parse while loop
 							}
@@ -322,6 +351,11 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 
 										for(padindex = 0; &eraseptr[padindex] < endifptr - 7; padindex++)
 											eraseptr[padindex] = '%';	//Replace all characters from the %ELSE% macro up until the beginning of this %ENDIF% macro instance with padding characters
+										if(padindex && !panel->logged)
+										{
+											snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Updated conditional branching:  \"%s\"", src_buffer);
+											eof_log(eof_log_string, 3);
+										}
 										break;	//Exit macro parse while loop
 									}
 								}
@@ -339,6 +373,7 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 					else
 					{	//Macro failed to convert
 						snprintf(dest_buffer, dest_buffer_size, "Unrecognized macro \"%s\"", macro);
+						eof_log(dest_buffer, 3);
 						return 1;
 					}
 				}//The closing percent sign of the macro was reached
@@ -360,13 +395,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	unsigned long tracknum, tracksize, ctr;
 	EOF_PHRASE_SECTION *phraseptr;
 	char album_art_filename[1024];
+	char *count_string, *name_string, name_buffer[101];
 
 	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
 	if(!eof_song)
 		return 0;	//No chart loaded
 
-	if((eof_log_level > 2) && !eof_notes_panel_logged)
+	if((eof_log_level > 2) && !panel->logged)
 	{	//If exhaustive logging is enabled and this panel hasn't been logged since it was loaded
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tProcessing Notes macro \"%s\"", macro);
 		eof_log(eof_log_string, 3);
@@ -1039,10 +1075,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//If the active difficulty has notes with a specific gem count
-	if(strcasestr_spec(macro, "IF_TRACK_DIFF_HAS_NOTES_WITH_GEM_COUNT_"))
-	{
+	count_string = strcasestr_spec(macro, "IF_TRACK_DIFF_HAS_NOTES_WITH_GEM_COUNT_");	//Get a pointer to the text that would be the gem count
+	if(count_string)
+	{	//If the macro is this string
 		unsigned long gemcount;
-		char *count_string = strcasestr_spec(macro, "IF_TRACK_DIFF_HAS_NOTES_WITH_GEM_COUNT_");	//Get a pointer to the text that is expected to be the gem count
 
 		if(eof_read_macro_number(count_string, &gemcount))
 		{	//If the gem count was successfully parsed
@@ -1608,6 +1644,336 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	count_string = strcasestr_spec(macro, "IF_PG_NOTE_OCCURS_BEFORE_MILLIS_");	//Get a pointer to the text that would be the millisecond count
+	if(count_string)
+	{	//If the macro is this string
+		unsigned long ctr2, mscount;
+		EOF_PRO_GUITAR_TRACK *tp;
+
+		if(eof_read_macro_number(count_string, &mscount))
+		{	//If the millisecond count was successfully parsed
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track in the project
+				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+					continue;	//Skip non pro guitar tracks
+
+				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+				for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
+				{	//For each normal note in the track
+					if(tp->pgnote[ctr2]->pos < mscount)
+					{	//If the note begins before the specified time
+						dest_buffer[0] = '\0';
+						return 3;	//True
+					}
+					else
+						 break;	//This and all remaining notes in the track are at or after the specified time, skip checking these
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	//Test this before "IF_RS_PHRASE_DEFINED_", because the latter is a substring and would be matched
+	name_string = strcasestr_spec(macro, "IF_RS_PHRASE_DEFINED_MULTIPLE_TIMES_");	//Get a pointer to the text that would be the phrase name
+	if(name_string)
+	{	//If the macro is this string
+		char match = 0;
+		unsigned long lastmatchpos = 0, thismatchpos;
+
+		if(eof_read_macro_string(name_string, name_buffer))
+		{	//If the phrase name was successfully parsed
+			for(ctr = 0; ctr < eof_song->text_events; ctr++)
+			{	//For each event in the project
+				if(!eof_song->text_event[ctr]->track || (eof_song->text_event[ctr]->track == eof_selected_track))
+				{	//If the event applies to either all tracks or the active track
+					if(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_PHRASE)
+					{	//If the event is a Rocksmith phrase
+						if(!ustrcmp(eof_song->text_event[ctr]->text, name_buffer))
+						{	//If the event text matches the text in the macro
+							thismatchpos = eof_get_text_event_pos(eof_song, ctr);	//Get the position of this event in milliseconds
+							if(match)
+							{	//If this isn't the first matching event
+								if(lastmatchpos != thismatchpos)
+								{	//If the previous match was at a different timestamp
+									dest_buffer[0] = '\0';
+									return 3;	//True
+								}
+							}
+							match = 1;
+							lastmatchpos = thismatchpos;
+						}
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	name_string = strcasestr_spec(macro, "IF_RS_PHRASE_DEFINED_");	//Get a pointer to the text that would be the phrase name
+	if(name_string)
+	{	//If the macro is this string
+		if(eof_read_macro_string(name_string, name_buffer))
+		{	//If the phrase name was successfully parsed
+			if(eof_song_contains_event(eof_song, name_buffer, eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2))
+			{	//If the phrase is defined in an event specific to the active track or to the entire project
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	name_string = strcasestr_spec(macro, "IF_RS_SECTION_DEFINED_");	//Get a pointer to the text that would be the section name
+	if(name_string)
+	{	//If the macro is this string
+		if(eof_read_macro_string(name_string, name_buffer))
+		{	//If the phrase name was successfully parsed
+			if(eof_song_contains_event(eof_song, name_buffer, eof_selected_track, EOF_EVENT_FLAG_RS_SECTION, 2))
+			{	//If the phrase is defined in an event specific to the active track or to the entire project
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
+	name_string = strcasestr_spec(macro, "IF_RS_NOTES_EXIST_BEFORE_PHRASE_");	//Get a pointer to the text that would be the phrase name
+	if(name_string)
+	{	//If the macro is this string
+		if(eof_read_macro_string(name_string, name_buffer))
+		{	//If the phrase name was successfully parsed
+			unsigned long ctr2, match = eof_song_lookup_first_event(eof_song, name_buffer, eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
+			if(match < eof_song->text_events)
+			{	//If there was an instance of the specified phrase applicable to the active track (specifically or project-wide)
+				unsigned long matchpos = eof_get_text_event_pos(eof_song, match);	//Get the position of this event in milliseconds
+				EOF_PRO_GUITAR_TRACK *tp;
+
+				for(ctr = 1; ctr < eof_song->tracks; ctr++)
+				{	//For each track in the project
+					if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+						continue;	//Skip non pro guitar tracks
+
+					tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+					for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
+					{	//For each normal note in the track
+						if(tp->pgnote[ctr2]->pos < matchpos)
+						{	//If the note begins before the specified time
+							dest_buffer[0] = '\0';
+							return 3;	//True
+						}
+						else
+							 break;	//This and all remaining notes in the track are at or after the specified time, skip checking these
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	name_string = strcasestr_spec(macro, "IF_RS_NOTES_AT_OR_AFTER_PHRASE_");	//Get a pointer to the text that would be the phrase name
+	if(name_string)
+	{	//If the macro is this string
+		if(eof_read_macro_string(name_string, name_buffer))
+		{	//If the phrase name was successfully parsed
+			unsigned long ctr2, match = eof_song_lookup_first_event(eof_song, name_buffer, eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
+			if(match < eof_song->text_events)
+			{	//If there was an instance of the specified phrase applicable to the active track (specifically or project-wide)
+				unsigned long matchpos = eof_get_text_event_pos(eof_song, match);	//Get the position of this event in milliseconds
+				EOF_PRO_GUITAR_TRACK *tp;
+
+				for(ctr = 1; ctr < eof_song->tracks; ctr++)
+				{	//For each track in the project
+					if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+						continue;	//Skip non pro guitar tracks
+
+					tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+					for(ctr2 = tp->pgnotes; ctr2 > 0; ctr2--)
+					{	//For each normal note in the track, in reverse order for better efficiency
+						if(tp->pgnote[ctr2 - 1]->pos + tp->pgnote[ctr2 - 1]->length >= matchpos)
+						{	//If the note ends at or after the specified time
+							dest_buffer[0] = '\0';
+							return 3;	//True
+						}
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_MIN_NOTE_DISTANCE_NOT_BEAT_OR_MEASURE_BASED"))
+	{
+		if(!eof_min_note_distance_intervals || !eof_min_note_distance)
+		{	//If the minimum note distance is not in beat or measure intervals, or the interval number is zero
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT"))
+	{
+		unsigned long stringnum, notectr, bitmask;
+		EOF_PRO_GUITAR_TRACK *tp;
+		EOF_RS_TECHNIQUES tech = {0};
+
+		eof_notes_macro_pitched_slide_missing_linknext[0] = '\0';	//Erase this string
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//Skip non pro guitar tracks
+
+			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
+			{	//For each normal note in the track
+				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+				{	//For each string used in this track
+					(void) eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 2, 1);		//Determine techniques used by this note (including applicable technotes using this string)
+					if((tech.slideto > 0) && !tech.linknext)
+					{	//If this string of the note slides to a fret, but does not have linknext status
+						snprintf(eof_notes_macro_pitched_slide_missing_linknext, sizeof(eof_notes_macro_pitched_slide_missing_linknext) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
+						dest_buffer[0] = '\0';
+						return 3;	//True
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_ANY_TONE_CHANGES_ON_NOTE"))
+	{
+		unsigned long tonectr, notectr;
+		EOF_PRO_GUITAR_TRACK *tp;
+
+		eof_notes_macro_note_starting_on_tone_change[0] = '\0';	//Erase this string
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//Skip non pro guitar tracks
+
+			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+			for(tonectr = 0; tonectr < tp->tonechanges; tonectr++)
+			{	//For each tone change in this track
+				for(notectr = 0; notectr < tp->pgnotes; notectr++)
+				{	//For each normal note in this track
+					if(tp->pgnote[notectr]->pos > tp->tonechange[tonectr].start_pos)
+						break;	//If this and all remaining notes occur after the tone change, stop checking notes for this track
+
+					if(tp->pgnote[notectr]->pos == tp->tonechange[tonectr].start_pos)
+					{	//If this note starts exactly at this tone change's timestamp
+						snprintf(eof_notes_macro_note_starting_on_tone_change, sizeof(eof_notes_macro_note_starting_on_tone_change) - 1, "\"%s\" - %s - diff %u : pos %lums", tp->tonechange[tonectr].name, eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
+						dest_buffer[0] = '\0';
+						return 3;	//True
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_NOTES_TO_SOON_AFTER_COUNT_PHRASE"))
+	{
+		unsigned long ctr2, match = eof_song_lookup_first_event(eof_song, "COUNT", eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
+		if(match < eof_song->text_events)
+		{	//If there was an instance of the COUNT phrase applicable to the active track (specifically or project-wide)
+			unsigned num = 0, den = 0;
+			EOF_PRO_GUITAR_TRACK *tp;
+			unsigned long matchbeat = matchbeat = eof_get_text_event_beat(eof_song, match);	//Get the beat containing the event
+
+			if(eof_get_effective_ts(eof_song, &num, &den, matchbeat, 0))
+			{	//If the time signature of the beat containing the event could be determined
+				if(matchbeat + num < eof_song->beats)
+				{	//If the beat that would be one measure further into the chart exists
+					unsigned long targetpos = eof_song->beat[matchbeat + num]->pos;	//The position of that beat
+
+					for(ctr = 1; ctr < eof_song->tracks; ctr++)
+					{	//For each track in the project
+						if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+							continue;	//Skip non pro guitar tracks
+
+						tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+						for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
+						{	//For each normal note in the track
+							if(tp->pgnote[ctr2]->pos < targetpos)
+							{	//If the note begins before the specified time
+								dest_buffer[0] = '\0';
+								return 3;	//True
+							}
+							else
+								 break;	//This and all remaining notes in the track are at or after the specified time, skip checking these
+						}
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_ONLY_ONE_TONE_CHANGE"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If the active track is a pro guitar track
+			eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
+			if(eof_track_rs_tone_names_list_strings_num == 1)
+			{	//If only one tone name is used
+				eof_track_destroy_rs_tone_names_list_strings();
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+			eof_track_destroy_rs_tone_names_list_strings();
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_NO_DEFAULT_TONE_DEFINED"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If the active track is a pro guitar track
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
+			eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
+			if(eof_track_rs_tone_names_list_strings_num > 1)
+			{	//If multiple tones are used
+				if(tp->defaulttone[0] == '\0')
+				{
+					eof_track_destroy_rs_tone_names_list_strings();
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+			eof_track_destroy_rs_tone_names_list_strings();
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_NO_FHPS_DEFINED"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If the active track is a pro guitar track
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
+
+			if(!tp->handpositions)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -1635,10 +2001,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//Move the text output up by a given number of pixels
-	if(strcasestr_spec(macro, "MOVE_UP_PIXELS_"))
-	{
+	count_string = strcasestr_spec(macro, "MOVE_UP_PIXELS_");	//Get a pointer to the text that would be the pixel count
+	if(count_string)
+	{	//If the macro is this string
 		unsigned long pixelcount;
-		char *count_string = strcasestr_spec(macro, "MOVE_UP_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
 
 		if(eof_read_macro_number(count_string, &pixelcount))
 		{	//If the pixel count was successfully parsed
@@ -1658,10 +2024,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//Move the text output down by a given number of pixels
-	if(strcasestr_spec(macro, "MOVE_DOWN_PIXELS_"))
-	{
+	count_string = strcasestr_spec(macro, "MOVE_DOWN_PIXELS_");		//Get a pointer to the text that would be the pixel count
+	if(count_string)
+	{	//If the macro is this string
 		unsigned long pixelcount;
-		char *count_string = strcasestr_spec(macro, "MOVE_DOWN_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
 
 		if(eof_read_macro_number(count_string, &pixelcount))
 		{	//If the pixel count was successfully parsed
@@ -1675,20 +2041,21 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "MOVE_LEFT_ONE_PIXEL"))
 	{
 		dest_buffer[0] = '\0';
-		panel->xpos--;	//Update the x coordinate for Notes panel printing
+		if(panel->xpos)
+			panel->xpos--;	//Update the x coordinate for Notes panel printing
 		return 1;
 	}
 
 	//Move the text output left by a given number of pixels
-	if(strcasestr_spec(macro, "MOVE_LEFT_PIXELS_"))
-	{
+	count_string = strcasestr_spec(macro, "MOVE_LEFT_PIXELS_");	//Get a pointer to the text that would be the pixel count
+	if(count_string)
+	{	//If the macro is this string
 		unsigned long pixelcount;
-		char *count_string = strcasestr_spec(macro, "MOVE_LEFT_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
 
 		if(eof_read_macro_number(count_string, &pixelcount))
 		{	//If the pixel count was successfully parsed
 			dest_buffer[0] = '\0';
-			if(panel->xpos)
+			if(panel->xpos >= pixelcount)
 				panel->xpos -= pixelcount;	//Update the x coordinate for Notes panel printing
 			return 1;
 		}
@@ -1703,10 +2070,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//Move the text output right by a given number of pixels
-	if(strcasestr_spec(macro, "MOVE_RIGHT_PIXELS_"))
+	count_string = strcasestr_spec(macro, "MOVE_RIGHT_PIXELS_");	//Get a pointer to the text that would be the pixel count
+	if(count_string)
 	{
 		unsigned long pixelcount;
-		char *count_string = strcasestr_spec(macro, "MOVE_RIGHT_PIXELS_");	//Get a pointer to the text that is expected to be the pixel count
 
 		if(eof_read_macro_number(count_string, &pixelcount))
 		{	//If the pixel count was successfully parsed
@@ -1775,6 +2142,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		dest_buffer[0] = '\0';
 		panel->flush = 1;
 		panel->endpanel = 1;
+		return 1;
+	}
+
+	//Reset x position to left edge and move down one line
+	if(!ustricmp(macro, "NEWLINE"))
+	{
+		dest_buffer[0] = '\0';
+		panel->allowempty = 0;
+		panel->xpos = 2;
+		panel->ypos +=12;
 		return 1;
 	}
 
@@ -3003,10 +3380,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific gem count
-	if(strcasestr_spec(macro, "TRACK_DIFF_NUMBER_NOTES_WITH_GEM_COUNT_"))
-	{
+	count_string = strcasestr_spec(macro, "TRACK_DIFF_NUMBER_NOTES_WITH_GEM_COUNT_");	//Get a pointer to the text that would be the gem count
+	if(count_string)
+	{	//If the macro is this string
 		unsigned long count, gemcount, totalnotecount = 0;
-		char *count_string = strcasestr_spec(macro, "TRACK_DIFF_NUMBER_NOTES_WITH_GEM_COUNT_");	//Get a pointer to the text that is expected to be the gem count
 
 		if(eof_read_macro_number(count_string, &gemcount))
 		{	//If the gem count was successfully parsed
@@ -3425,10 +3802,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific pitch
-	if(strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_"))
-	{
+	count_string = strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_");	//Get a pointer to the text that would be the pitch
+	if(count_string)
+	{	//If the macro is this string
 		unsigned long count = 0, pitch;
-		char *count_string = strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_");	//Get a pointer to the text that is expected to be the pitch
 
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
@@ -3797,6 +4174,20 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "RS_FIRST_PITCHED_SLIDE_LACKING_LINKNEXT"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_pitched_slide_missing_linknext);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "RS_FIRST_TONE_CHANGE_STARTING_ON_A_NOTE"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_note_starting_on_tone_change);
+
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
@@ -3944,6 +4335,37 @@ int eof_read_macro_number(char *string, unsigned long *number)
 
 	*number = value;
 	return 1;		//Return success
+}
+
+int eof_read_macro_string(char *string, char *output_string)
+{
+	unsigned long ctr, index;
+
+	if(!string || !output_string)
+		return 0;	//Invalid parameters
+
+	for(ctr = 0, index = 0; string[ctr] != '\0'; ctr++)
+	{	//For each character in the input string
+		if(string[ctr] == '_')
+		{	//Underscore has special treatment
+			if(string[ctr + 1] == '_')
+			{	//If the next character is also underscore
+				output_string[index++] = '_';	//Convert to a single underscore
+				ctr++;	//An extra input character was used
+			}
+			else
+			{
+				output_string[index++] = ' ';	//Convert to a space character
+			}
+		}
+		else
+		{
+			output_string[index++] = string[ctr];	//Copy the character as-is
+		}
+	}
+	output_string[index] = '\0';	//Terminate the output string
+
+	return 1;	//Success
 }
 
 int eof_read_macro_gem_designations(char *string, unsigned char *bitmask, unsigned char *tomsmask, unsigned char *cymbalsmask)
@@ -4155,13 +4577,13 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	if(!panel || !panel->window || !panel->text)	//If the provided panel isn't valid
 		return;			//Invalid parameter
 
-	if((eof_log_level > 2) && !eof_notes_panel_logged)
+	if((eof_log_level > 2) && !panel->logged)
 	{	//If exhaustive logging is enabled and this panel hasn't been logged since it was loaded
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRendering text panel for file \"%s\"", panel->filename);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRendering text panel for file \"%s\"", panel->filename);
 		eof_log(eof_log_string, 3);
 	}
 
-	if(!eof_notes_panel_logged)
+	if(!panel->logged)
 		eof_log("\t\tClearing window to gray", 3);
 	if(opaque && !eof_background)
 	{	//If the calling function specified opacity for the info panel and a background image is NOT loaded
@@ -4169,7 +4591,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	}
 
 	//Initialize the panel array
-	if(!eof_notes_panel_logged)
+	if(!panel->logged)
 		eof_log("\t\tInitializing panel variables", 3);
 	panel->ypos = 0;
 	panel->xpos = 2;
@@ -4182,7 +4604,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	panel->endline = 0;
 	panel->endpanel = 0;
 
-	if((eof_log_level > 2) && !eof_notes_panel_logged)
+	if((eof_log_level > 2) && !panel->logged)
 	{	//If exhaustive logging is enabled and this panel hasn't been logged since it was loaded
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text beginning with line:  %.20s", panel->text);
 		eof_log(eof_log_string, 3);
@@ -4213,14 +4635,14 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 			if(panel->allowempty || panel->contentprinted || (buffer2[0] != '\0'))
 			{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
 				//If content was printed earlier in the line and flushed to the Notes panel, allow the coordinates to reset to the next line
-				if(!eof_notes_panel_logged)
+				if(!panel->logged)
 					eof_log("\t\t\tPrinting line", 3);
 				textout_ex(panel->window->screen, font, buffer2, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
 				panel->allowempty = 0;	//Reset this condition, it has to be enabled per-line
 				panel->xpos = 2;			//Reset the x coordinate to the beginning of the line
 				panel->ypos +=12;
 				panel->contentprinted = 0;
-				if(!eof_notes_panel_logged)
+				if(!panel->logged)
 					eof_log("\t\t\tLine printed", 3);
 			}
 
@@ -4231,7 +4653,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 				break;	//Break from while loop
 			}
 			linectr++;		//Track the line number being processed for debugging purposes
-			if(!eof_notes_panel_logged)
+			if(!panel->logged)
 			{
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text line #%lu", linectr);
 				eof_log(eof_log_string, 3);
@@ -4246,7 +4668,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	//Print any remaining content in the output buffer
 	if(dst_index && (dst_index < TEXT_PANEL_BUFFER_SIZE))
 	{	//If there are any characters in the destination buffer, and there is room in the buffer for the NULL terminator
-		if(!eof_notes_panel_logged)
+		if(!panel->logged)
 			eof_log("\t\tProcessing remainder of buffer", 3);
 		buffer[dst_index] = '\0';	//NULL terminate the buffer
 		retval = eof_expand_notes_window_text(buffer, buffer2, TEXT_PANEL_BUFFER_SIZE, panel);
@@ -4258,17 +4680,17 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		}
 		if((retval == 2) || (buffer2[0] != '\0'))
 		{	//If the printing of an empty line was allowed by the %EMPTY% macro or this line isn't empty
-			if(!eof_notes_panel_logged)
+			if(!panel->logged)
 				eof_log("\t\t\tPrinting line", 3);
 			textout_ex(panel->window->screen, font, buffer2, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
 			panel->ypos +=12;
-			if(!eof_notes_panel_logged)
+			if(!panel->logged)
 				eof_log("\t\t\tLine printed", 3);
 		}
 	}
 
 	//Draw a border around the edge of the notes panel
-	if(!eof_notes_panel_logged)
+	if(!panel->logged)
 		eof_log("\t\tPrinting completed.  Rendering panel border", 3);
 	if(opaque)
 	{	//But only if this panel wasn't meant to obscure whatever it's drawn on top of
@@ -4278,9 +4700,9 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		vline(panel->window->screen, panel->window->w - 2, 1, panel->window->h - 2, eof_color_white);
 	}
 
-	if(!eof_notes_panel_logged)
+	if(!panel->logged)
 		eof_log("\t\tText panel render complete.", 3);
-	eof_notes_panel_logged = 1;	//Prevent repeated logging of this panel file
+	panel->logged = 1;	//Prevent repeated logging of this panel file
 }
 
 unsigned long eof_count_num_notes_with_gem_count(unsigned long gemcount)

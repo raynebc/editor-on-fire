@@ -1529,7 +1529,7 @@ int eof_menu_note_transpose_up(void)
 				}
 				///Update fret values first, because eof_set_note_note() will clear fret values for unused strings
 				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
+				{	//If a pro guitar note will tranpose, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 7; j > 0; j--)
 					{	//For the upper 7 frets
 						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
@@ -1544,7 +1544,13 @@ int eof_menu_note_transpose_up(void)
 				{	//Otherwise set the note's normal bitmask
 					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
-			}
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If a pro guitar track is active, update the note's ghost bitmask
+					note = eof_get_note_ghost(eof_song, eof_selected_track, i);
+					note = (note << 1) & max;
+					eof_set_note_ghost(eof_song, eof_selected_track, i, note);
+				}
+			}//For each note in the active track
 		}
 	}
 	if(note_selection_updated)
@@ -1632,7 +1638,7 @@ int eof_menu_note_transpose_down(void)
 				note = (note >> 1) & 63;
 				///Update fret values first, because eof_set_note_note() will clear fret values for unused strings
 				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
+				{	//If a pro guitar note will tranpose, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 0; j < 7; j++)
 					{	//For the 7 supported lower frets
 						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
@@ -1646,6 +1652,12 @@ int eof_menu_note_transpose_down(void)
 				else
 				{	//Otherwise set the note's normal bitmask
 					eof_set_note_note(eof_song, eof_selected_track, i, note);
+				}
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If a pro guitar track is active, update the note's ghost bitmask
+					note = eof_get_note_ghost(eof_song, eof_selected_track, i);
+					note = (note >> 1) & 63;
+					eof_set_note_ghost(eof_song, eof_selected_track, i, note);
 				}
 			}
 		}

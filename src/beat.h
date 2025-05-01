@@ -87,6 +87,9 @@ double eof_get_text_event_fpos_ptr(EOF_SONG *sp, EOF_TEXT_EVENT *ptr);
 double eof_get_text_event_fpos(EOF_SONG *sp, unsigned long event);
 	//Floating point versions of eof_get_text_event_pos() and eof_get_text_event_fpos()
 	//Return 0.0 on error, since DBL_MAX doesn't seem standardized in MinGW
+unsigned long eof_get_text_event_beat(EOF_SONG *sp, unsigned long event);
+	//Returns the beat number containing the specified text event, taking into account whether the event is a floating event
+	//Returns ULONG_MAX on error
 
 void eof_apply_tempo(unsigned long ppqn, unsigned long beatnum, char adjust);
 	//Applies the specified tempo to the specified beat and all subsequent beats up until the next anchor

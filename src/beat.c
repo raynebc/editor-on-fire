@@ -1075,6 +1075,30 @@ double eof_get_text_event_fpos(EOF_SONG *sp, unsigned long event)
 	return eof_get_text_event_fpos_ptr(sp, sp->text_event[event]);
 }
 
+unsigned long eof_get_text_event_beat(EOF_SONG *sp, unsigned long event)
+{
+	unsigned long matchbeat, matchpos;
+
+	if(!sp || (event >= sp->text_events))
+		return ULONG_MAX;	//Invalid parameters
+
+	if(sp->text_event[event]->flags & EOF_EVENT_FLAG_FLOATING_POS)
+	{	//If this is a floating text event
+		matchpos = eof_get_text_event_pos(sp, event);	//Get the position of this event in milliseconds
+		matchbeat = eof_get_beat(sp, matchpos);		//Obtain the beat that this event is in
+		if(matchbeat >= sp->beats)
+		{	//Logic error
+			return ULONG_MAX;
+		}
+	}
+	else
+	{	//This event is assigned to a beat
+		matchbeat = sp->text_event[event]->pos;		//Obtain the assigned beat number
+	}
+
+	return matchbeat;
+}
+
 void eof_apply_tempo(unsigned long ppqn, unsigned long beatnum, char adjust)
 {
 	unsigned long ctr;

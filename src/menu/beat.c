@@ -989,12 +989,13 @@ int eof_menu_beat_push_offset_back(char *undo_made)
 	if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
 	{	//If the beats array was successfully resized
 		for(i = eof_song->beats - 1; i > 0; i--)
-		{
-			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+		{	//For each beat, in reverse order
+			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));	//The beat becomes a copy of the beat before it
 		}
+		//Re-initialize the first beat
 		eof_song->beat[0]->fpos = eof_song->beat[1]->fpos - backamount;
 		eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round to nearest ms
-		eof_song->beat[1]->flags = 0;
+		eof_song->beat[0]->flags = EOF_BEAT_FLAG_ANCHOR;
 		eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
 		eof_move_text_events(eof_song, 0, 1, 1);
 		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current

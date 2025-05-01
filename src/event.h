@@ -31,7 +31,8 @@ unsigned long eof_song_lookup_first_event(EOF_SONG *sp, const char *text, unsign
 	//Returns the index number of the first event matching the specified string exactly (case sensitive), or ULONG_MAX if no such event is found or upon error
 	// and whose flags ANDED with the specified flags is nonzero (ie. for checking for existing of a RS phrase, use a flags value of all bits set to search for any event type)
 	//If the event's flags is already 0, it will not be filtered out
-	//If track_specific is nonzero, only events with a matching track number value are checked for comparison, otherwise all events are checked
+	//If track_specific is 1, only events with a matching track number value are checked for comparison, otherwise all events are checked
+	//If track_specific is 2, the event must either be in the specified track or applicable to all tracks in order to match
 char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific);
 	//Uses eof_song_lookup_first_event() to determine whether there is at least one event matching the specified criteria (the event text is case sensitive)
 	//Returns nonzero if there is at least one such event

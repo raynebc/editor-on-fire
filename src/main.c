@@ -464,7 +464,6 @@ char eof_midi_initialized = 0;			//Specifies whether Allegro was able to set up 
 FILE *eof_log_fp = NULL;	//Is set to NULL if logging is disabled
 char eof_log_level = 0;		//The logging level is set in the config file (1 = normal, 2 = verbose, 3 = exhaustive)
 char eof_enable_logging = 1;	//Is set to 0 if logging is disabled
-char eof_notes_panel_logged = 0;	//Is set to 1 after the notes panel processing was logged for one frame, if exhaustive logging is enabled, to reduce the repeated duplicate logging
 
 int eof_custom_zoom_level = 0;	//Tracks any user-defined custom zoom level
 int eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note names containing flats.  By default, display as sharps instead

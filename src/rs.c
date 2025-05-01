@@ -5938,7 +5938,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		endbeat++;	//Otherwise set it to the first beat that follows the end of the last note
 	}
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	if(!eof_song_contains_event(sp, "COUNT", track, EOF_EVENT_FLAG_RS_PHRASE, 1) && !eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1))
+	if(!eof_song_contains_event(sp, "COUNT", track, EOF_EVENT_FLAG_RS_PHRASE, 2))
 	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
 		if((sp->beat[0]->contained_section_event >= 0) && ((*user_warned & 16) == 0))
 		{	//If there is already a phrase defined on the first beat, and the user wasn't warned of this problem yet
@@ -5994,7 +5994,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	//Check if any RS sections need to be added
 	eof_sort_events(sp);	//Re-sort events
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 1) && !eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1))
+	if(!eof_song_contains_event(sp, "noguitar", track, EOF_EVENT_FLAG_RS_SECTION, 2))
 	{	//If the user did not define a noguitar RS section that applies to either the track being exported or all tracks
 		if((sp->beat[endbeat]->contained_rs_section_event >= 0) && ((*user_warned & 128) == 0))
 		{	//If there is already a RS section defined on the first beat after the last note, and the user wasn't warned of this problem yet

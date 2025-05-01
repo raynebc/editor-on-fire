@@ -298,22 +298,22 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 	//Expects the notes to be sorted in order to maximize performance
 
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target, char checktechnotes);
-	//Reads the flags of the specified note and sets variables in the specified techniques structure
+	//Reads the flags of the specified note and sets variables in the specified techniques structure to reflect the cumulative set of techniques used by the normal note and overlapping tech notes on the specified string
 	//The structure is explicitly block filled with zeroes to ensure that memory comparison functions between two instances of the technique structure will behave as expected
 	//  If checktechnotes is nonzero, the techniques of any tech notes applicable to the specified string of the note are taken into account
 	//  If the specified note extends all the way to the next note (has linkNext status), only the tech notes before the next note's position are checked
-	//stringnum is used to set the fret and pitched/unpitched slide end fret values (which take the track's capo into account) for a specified string,
+	//stringnum is used to look up the fret and pitched/unpitched slide end fret values (which take the track's capo into account) for a specified string,
 	//  as well as determining which tech notes affect the note on the specified string (if checktechnotes is nonzero), and must be a value from 0 to 5.
 	//  The correct end position for each slide is tracked for the specified string by determining how many frets the slide is
 	//If the note has pop or slap status, the length in the techniques structure is set to 0 to reflect
 	//	that Rocksmith requires such techniques to be on non sustained notes
 	//Unless the note has bend or slide status, the length in the techniques structure is set to 0 if the note has EOF's minimum length of 1ms
 	//A flags bitmask is returned that is nonzero if the note contains any statuses that would necessitate chordNote subtag(s) if the examined note is a chord
-	//  If the target is RS2 and checktechnotes is nonzero, the LSB of these flags will be set if any technotes overlap the note on any strings, regardless of the techniques they have
+	//  If the target is 2 (RS2) and checktechnotes is nonzero, the LSB of these flags will be set if any technotes overlap the note on any strings, regardless of the techniques they have
 	//If ptr is NULL, no logic is performed besides returning the flags that the note contains that would necessitate chordNote subtag(s) if the examined note is a chord
 	//If target is 1, then Rocksmith 1 authoring rules are followed and a note cannot be both a slide/bend AND a pop/slap note, as they have conflicting sustain requirements
 	//The capo position is added to the end position of pitched and unpitched slides, as required by Rocksmith in order for them to display correctly for capo'd arrangements
-	//If the target is RS2, any gem with a fret value > 22 has ignore status applied automatically because the game will not score such gems
+	//If the target is 2 (RS2), any gem with a fret value > 22 has ignore status applied automatically because the game will not score such gems
 
 int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsigned short *user_warned, int target);
 	//Count and end phrases are added automatically if they are found to be missing
