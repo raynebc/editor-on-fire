@@ -210,7 +210,10 @@ EOF_PHRASE_SECTION *eof_pro_guitar_track_find_effective_fret_hand_position_defin
 	//If non NULL is returned, the index of the effective fret hand position is returned through *index if its pointer isn't NULL, and the position's index within the specified difficulty is returned through *diffindex if its pointer isn't NULL
 	//If NULL is returned, neither *index nor *diffindex are altered
 unsigned long eof_find_effective_rs_phrase(unsigned long position);
-	//Returns the phrase number in effect (at or before) at the specified timestamp, or 0 if no phrase was in effect at that position
+	//Returns the eof_track_manage_rs_phrases() dialog's phrase number in effect (at or before) at the specified timestamp, or 0 if no phrase was in effect at that position
+	//This function assumes that the beat statistics are properly cached for the active track
+unsigned long eof_find_effective_rs_section(unsigned long position);
+	//Returns the section number in effect (at or before) at the specified timestamp, or 0 if no phrase was in effect at that position
 	//This function assumes that the beat statistics are properly cached for the active track
 int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop, unsigned char diff);
 	//Returns nonzero if there are any notes in the specified track difficulty within the specified time range
@@ -305,15 +308,21 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	//stringnum is used to look up the fret and pitched/unpitched slide end fret values (which take the track's capo into account) for a specified string,
 	//  as well as determining which tech notes affect the note on the specified string (if checktechnotes is nonzero), and must be a value from 0 to 5.
 	//  The correct end position for each slide is tracked for the specified string by determining how many frets the slide is
+	//  If no end position is defined for a pitched slide, one fret above/below is assumed depending on the slide direction
+	//  If no bend strength is defind for a bend, one half step is assumed
 	//If the note has pop or slap status, the length in the techniques structure is set to 0 to reflect
 	//	that Rocksmith requires such techniques to be on non sustained notes
 	//Unless the note has bend or slide status, the length in the techniques structure is set to 0 if the note has EOF's minimum length of 1ms
 	//A flags bitmask is returned that is nonzero if the note contains any statuses that would necessitate chordNote subtag(s) if the examined note is a chord
-	//  If the target is 2 (RS2) and checktechnotes is nonzero, the LSB of these flags will be set if any technotes overlap the note on any strings, regardless of the techniques they have
-	//If ptr is NULL, no logic is performed besides returning the flags that the note contains that would necessitate chordNote subtag(s) if the examined note is a chord
-	//If target is 1, then Rocksmith 1 authoring rules are followed and a note cannot be both a slide/bend AND a pop/slap note, as they have conflicting sustain requirements
 	//The capo position is added to the end position of pitched and unpitched slides, as required by Rocksmith in order for them to display correctly for capo'd arrangements
-	//If the target is 2 (RS2), any gem with a fret value > 22 has ignore status applied automatically because the game will not score such gems
+	//If ptr is NULL, no logic is performed besides returning the flags that the note contains that would necessitate chordNote subtag(s) if the examined note is a chord
+	//Target is a bitflag for different target export options:
+	//  If target & 1, then Rocksmith 1 authoring rules are followed and a note cannot be both a slide/bend AND a pop/slap note, as they have conflicting sustain requirements
+	//  If target & 2 (RS2), a note that is both a pitched and an unpitched slide is treated as an unpitched slide only
+	//  If target & 2 (RS2) and checktechnotes is nonzero, the LSB of these returned flags will be set if any technotes overlap the note on any strings, regardless of the techniques they have
+	//  If target & 2 (RS2), any gem with a fret value > 22 has ignore status applied automatically because the game will not score such gems
+	//  If target & 4 (RS2), no default slide amount or bend strength is assumed if those are undefined for the note being examined
+	//    This would allow the calling function to examine the return flags to see if the note bends/slides but the bendstrength variables are 0 or the slideto variable is -1
 
 int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsigned short *user_warned, int target);
 	//Count and end phrases are added automatically if they are found to be missing
@@ -344,5 +353,9 @@ void eof_conditionally_append_xml_long(char *buffer, size_t buffsize, char *name
 void eof_conditionally_append_xml_float(char *buffer, size_t buffsize, char *name, double value, double defaultval);
 	//Appends text to buffer in the format of "[name] = [value] " (with a trailing space) depending on whether abridged RS2 export is enabled
 	// If it is, the attribute and value are not appended unless the specified value and default value are different
+
+int eof_lookup_rocksmith_effective_section_at_pos(EOF_SONG *sp, unsigned long pos, char *section_name, unsigned long section_name_size);
+	//Examines the text events applicable for the active track and stores the name of the section event immediately at/before thse specified position (if any) into section_name[]
+	//Returns 1 if a matching section is found.  If none is found, section_name[] is emptied and 0 is returned.  0 is returned upon error
 
 #endif

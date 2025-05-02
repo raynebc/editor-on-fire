@@ -3937,6 +3937,16 @@ int eof_track_rs_tone_changes_delete_all(DIALOG * d)
 	{
 		return D_O_K;
 	}
+
+	//Release strings
+	for(i = 0; i < tp->tonechanges; i++)
+	{	//Free previously allocated strings
+		free(eof_track_rs_tone_changes_list_strings[i]);
+	}
+	free(eof_track_rs_tone_changes_list_strings);
+	eof_track_rs_tone_changes_list_strings = NULL;
+
+	//Delete tone changes
 	for(i = tp->tonechanges; i > 0; i--)
 	{	//For each tone change (in reverse order)
 		if(!eof_track_rs_tone_changes_dialog_undo_made)
@@ -4256,6 +4266,7 @@ int eof_track_rs_tone_names_rename(DIALOG * d)
 				if(!strcmp(tp->tonechange[ctr].name, eof_track_rs_tone_names_list_strings[namenum]))
 				{	//If this is a tone change whose name is being changed
 					strncpy(tp->tonechange[ctr].name, eof_etext, EOF_SECTION_NAME_LENGTH);	//Update the tone name
+					tp->tonechange[ctr].name[sizeof(tp->tonechange[ctr].name) - 1] = '\0';	//Redundant NULL termination to satisfy Coverity
 				}
 			}
 		}
@@ -5266,7 +5277,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	}
 	if(altname[0] != '\0')
 	{	//If the alternate name was not invalidated, apply it to the active track
-		strncpy(eof_song->track[eof_selected_track]->altname, altname, sizeof(eof_song->track[eof_selected_track]->altname));
+		strncpy(eof_song->track[eof_selected_track]->altname, altname, sizeof(eof_song->track[eof_selected_track]->altname) - 1);
 	}
 	difficulty = pack_getc(fp);
 	numdiffs = pack_getc(fp);

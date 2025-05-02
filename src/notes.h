@@ -33,6 +33,10 @@ typedef struct
 
 extern char eof_notes_macro_pitched_slide_missing_linknext[50];	//Stores a string identifying the first culprit of the %IF_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT% condition
 extern char eof_notes_macro_note_starting_on_tone_change[100];	//Stores a string identifying the first culprit of the %IF_RS_ANY_TONE_CHANGES_ON_NOTE% condition
+extern char eof_notes_macro_note_subceeding_fhp[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_NOTE_SUBCEEDS_FHP% condition
+extern char eof_notes_macro_note_exceeding_fhp[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_NOTE_EXCEEDS_FHP_BY_#% condition
+extern char eof_notes_macro_pitched_slide_missing_end_fret[50];	//Stores a string identifying the first culprit of the %IF_RS_ANY_PITCHED_SLIDES_LACK_END_FRET#% condition
+extern char eof_notes_macro_bend_missing_strength[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_BENDS_LACK_STRENGTH_DEFINITION#% condition
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin);
 	//Creates a text panel and buffers the specified filename into its text variable

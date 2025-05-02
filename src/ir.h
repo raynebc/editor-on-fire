@@ -46,7 +46,7 @@ unsigned long eof_count_immerrock_chords_missing_fingering(unsigned long *total)
 	//Returns zero on error
 int eof_lookup_immerrock_effective_section_at_pos(EOF_SONG *sp, unsigned long pos, char *section_name, unsigned long section_name_size);
 	//Examines the text events and stores the name of the section event immediately at/before thse specified position (if any) into section_name[]
-	//Returns 1 if a matching section is found.  If none is found, section_name[] is empties and 0 is returned.  0 is returned upon error
+	//Returns 1 if a matching section is found.  If none is found, section_name[] is emptied and 0 is returned.  0 is returned upon error
 
 int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option);
 	//Exports IMMERROCK files for the specified pro guitar tracks, for the specified difficulty in a folder with multiple files

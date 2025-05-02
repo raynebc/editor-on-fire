@@ -675,8 +675,8 @@ int eof_song_append_beats(EOF_SONG * sp, unsigned long beats)
 	}
 	for(i = 0; i < beats; i++)
 	{
-		if(!eof_song_add_beat(sp))
-		{
+		if(!eof_song_add_beat(sp) || (sp->beats < 1))
+		{	//If another beat was not added or if there is not at least one beat in the project at this point
 			return 0;	//Return failure
 		}
 		if(sp->beats >= 2)

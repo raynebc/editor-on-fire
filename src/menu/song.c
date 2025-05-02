@@ -2879,7 +2879,9 @@ int eof_menu_song_seek_previous_measure(void)
 		{	//If this beat has a time signature change
 			break;	//Break from the loop
 		}
-		b--;	//Check previous beat on next loop
+		if(!b)
+			break;	//If there are no previous beat, break from loop
+		b--;	//Otherwise check the previous beat during the next loop
 	}
 	if(!eof_beat_num_valid(eof_song, b))
 	{	//If no time signature was found
@@ -2923,7 +2925,9 @@ int eof_menu_song_seek_next_measure(void)
 		{	//If this beat has a time signature change
 			break;	//Break from the loop
 		}
-		b--;	//Check previous beat on next loop
+		if(!b)
+			break;	//If there are no previous beat, break from loop
+		b--;	//Otherwise check the previous beat during the next loop
 	}
 	if(!eof_beat_num_valid(eof_song, b))
 	{	//If no time signature was found
@@ -2968,7 +2972,9 @@ int eof_menu_song_seek_previous_ts_change(void)
 				break;	//Break from the loop
 			}
 		}
-		b--;	//Check previous beat
+		if(!b)
+			break;	//If there are no previous beat, break from loop
+		b--;	//Otherwise check the previous beat during the next loop
 	}
 
 	if(eof_beat_num_valid(eof_song, b))

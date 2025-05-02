@@ -5373,19 +5373,29 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			//Track the slide to position of the last tech note affecting the specified note
 			if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
 			{	//If this tech note doesn't have definitions for bend strength or the ending fret for slides
-				if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-				{	//If this note bends
-					thistechbends = 1;	//Assume a 1 half step bend
+				if((target & 4) == 0)
+				{	//If the automatic assumption of definitions is not being suppressed by the calling function
+					if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+					{	//If this note bends
+						thistechbends = 1;	//Assume a 1 half step bend
+					}
+					if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this tech note has slide up technique
+						techslideto = fret + 1;		//Assume a 1 fret slide
+						techslideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+					}
+					else if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+					{	//If this tech note has slide down technique
+						techslideto = fret - 1;		//Assume a 1 fret slide
+						techslideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+					}
 				}
-				if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-				{	//If this tech note has slide up technique
-					techslideto = fret + 1;		//Assume a 1 fret slide until logic is added for the author to add this information
-					techslideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
-				}
-				else if(thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-				{	//If this tech note has slide down technique
-					techslideto = fret - 1;		//Assume a 1 fret slide until logic is added for the author to add this information
-					techslideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+				else
+				{
+					if(thistechflags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+					{	//If this tech note slides up or down
+						ptr->slideto = -1;	//Explicitly store an undefined result in the technique structure
+					}
 				}
 			}
 			else
@@ -5456,21 +5466,31 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		{	//If this string is fretted (open notes don't have slide or bend attributes written)
 			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
 			{	//If this note doesn't have definitions for bend strength or the ending fret for slides
-				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-				{	//If this note bends
-					ptr->bend = 1;
-					ptr->bendstrength_h = 1;	//Assume a 1 half step bend
-					ptr->bendstrength_q = 2;
+				if((target & 4) == 0)
+				{	//If the automatic assumption of definitions is not being suppressed by the calling function
+					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+					{	//If this note bends
+						ptr->bend = 1;
+						ptr->bendstrength_h = 1;	//Assume a 1 half step bend
+						ptr->bendstrength_q = 2;
+					}
+					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this note slides up and the user hasn't defined the ending fret of the slide
+						ptr->slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+						ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+					}
+					else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+					{	//If this note slides down and the user hasn't defined the ending fret of the slide
+						ptr->slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+						ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+					}
 				}
-				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-				{	//If this note slides up and the user hasn't defined the ending fret of the slide
-					ptr->slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
-					ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
-				}
-				else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-				{	//If this note slides down and the user hasn't defined the ending fret of the slide
-					ptr->slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
-					ptr->slideto += tp->capo;	//Apply the capo position, so the slide ending is on the correct fret in-game
+				else
+				{
+					if(flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+					{	//If this note slides up or down
+						ptr->slideto = -1;	//Explicitly store an undefined result in the technique structure
+					}
 				}
 			}
 			else
@@ -5504,14 +5524,14 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				{	//Don't allow the unpitched slide if its end fret isn't properly defined or if it slides to the same fret this note/chord is already at
 					unpitchedslidediff = tp->note[notenum]->unpitchend - lowestfret;	//Determine how many frets this slide travels
 					ptr->unpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position
-					if(target == 2)
+					if(target & 2)
 					{	//If the target game is Rocksmith 2
 						ptr->slideto = -1;	//Don't allow the note to export as both an unpitched and a pitched slide at the same time
 						techslideto = -1;	//Prevent the code block below from allowing a tech note to override this constraint
 					}
 				}
 			}
-			if((target == 2) && checktechnotes)
+			if((target & 2) && checktechnotes)
 			{	//If the target game is Rocksmith 2 and tech notes are being taken into account
 				if(techbends)
 				{	//If there was at least one bend tech note found affecting the specified string
@@ -5561,14 +5581,14 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		ptr->linknext = (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) ? 1 : 0;
 		if((ptr->pop > 0) || (ptr->slap > 0))
 		{	//If the note has pop or slap notation
-			if(target == 1)
+			if(target & 1)
 			{	//In Rocksmith 1, a slap/pop note cannot also be a slide/bend, because slap/pop notes require a sustain of 0 and slide/bend requires a nonzero sustain
 				ptr->slideto = -1;	//Avoid allowing a 0 length slide note from crashing the game
 				ptr->bend = ptr->bendstrength_h = ptr->bendstrength_q = 0;	//Avoid allowing a 0 length bend note from crashing the game
 				ptr->length = 0;	//Remove all sustain for the note, otherwise Rocksmith 1 won't display the pop/slap sustain technique
 			}
 		}
-		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE) && (target == 2))
+		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE) && (target & 2))
 		{	//If the note's extended flags indicate the ignore status is applied and Rocksmith 2 export is in effect
 			ptr->ignore = 1;
 		}
@@ -5576,11 +5596,11 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		{
 			ptr->ignore = 0;
 		}
-		if((target == 2) && (fret > 22))
+		if((target & 2) && (fret > 22))
 		{	//If Rocksmith 2 export is in effect and this string's fret value is over 22
 			ptr->ignore = 1;	//Export it with ignore status since the game will not score this anyway
 		}
-		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (target == 2))
+		if((eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && (target & 2))
 		{	//If the note's extended flags indicate the sustain status is applied and Rocksmith 2 export is in effect
 			ptr->sustain = 1;
 			keeplength = 1;
@@ -5591,7 +5611,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		}
 		if(!keeplength)
 		{	//If the note doesn't need to keep its sustain
-			if((ptr->length == 1) && (target == 2))
+			if((ptr->length == 1) && (target & 2))
 			{	//Only if this note has the absolute minimum possible length and the target is Rocksmith 2
 				if(!(eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
 				{	//If the note doesn't have sustain or linknext status
@@ -5624,12 +5644,12 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	flags &= (	EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO |
 				EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_NOTE_FLAG_IS_TREMOLO | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC |
 				EOF_PRO_GUITAR_NOTE_FLAG_TAP | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);
-	if((target == 2) && checktechnotes && (eof_pro_guitar_note_bitmask_has_tech_note(tp, notenum, tp->note[notenum]->note, NULL)))
+	if((target & 2) && checktechnotes && (eof_pro_guitar_note_bitmask_has_tech_note(tp, notenum, tp->note[notenum]->note, NULL)))
 	{	//If the target is Rocksmith 2, technotes are to be observed and any tech notes apply to at least one string of this note
 		flags |= 1;	//Ensure the return value is nonzero, to reflect that the specified note will need chordNote tags written during export if the note is a chord
 	}
 
-	if((target == 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN))
+	if((target & 2) && (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN))
 	{	//If the target is Rocksmith 2 and this note has the sustain status applied
 		flags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;	//Ensure flags is nonzero so the calling function knows the a chord with such status exports with chordNote tags
 	}
@@ -6248,4 +6268,42 @@ void eof_conditionally_append_xml_float(char *buffer, size_t buffsize, char *nam
 		return;
 
 	(void) strncat(buffer, buffer2, buffsize - strlen(buffer) - 1);	//Append the string
+}
+
+int eof_lookup_rocksmith_effective_section_at_pos(EOF_SONG *sp, unsigned long pos, char *section_name, unsigned long section_name_size)
+{
+	unsigned long ctr;
+	char *ptr;
+
+	if(!sp || !section_name || (section_name_size < 11))
+		return 0;	//Invalid parameters
+
+	section_name[0] = '\0';	//Empty this string
+	for(ctr = 0; ctr < eof_song->text_events; ctr++)
+	{	//For each text event in the project
+		if(eof_get_text_event_pos(eof_song, ctr) > pos)
+			break;	//If this text event and all others are after the target position, stop checking events
+
+		if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+		{	//If this text event is assigned to a beat marker
+			if(eof_is_section_marker(sp->text_event[ctr], eof_selected_track))
+			{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
+				ptr = eof_song->text_event[ctr]->text;	//Use the section name verbatim
+				strncpy(section_name, ptr, section_name_size);		//Copy the section name
+				if(!(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION))
+				{	//If the section name isn't a Rocksmith section, modify the string if necessary
+					if(section_name[strlen(section_name) - 1] == ']')
+					{	//If that included a trailing closing bracket
+						section_name[strlen(section_name) - 1] = '\0';	//Truncate it from the end of the string
+					}
+				}
+			}
+		}
+	}
+	if(section_name[0] != '\0')
+	{	//If a section event was found to be at/before the seek position
+		return 1;	//Return section found
+	}
+
+	return 0;	//No matching section found
 }

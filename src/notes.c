@@ -26,6 +26,10 @@
 
 char eof_notes_macro_pitched_slide_missing_linknext[50];
 char eof_notes_macro_note_starting_on_tone_change[100];
+char eof_notes_macro_note_subceeding_fhp[50];
+char eof_notes_macro_note_exceeding_fhp[50];
+char eof_notes_macro_pitched_slide_missing_end_fret[50];
+char eof_notes_macro_bend_missing_strength[50];
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -1609,6 +1613,20 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_RS_SECTIONS_DEFINED"))
+	{
+		for(ctr = 0; ctr < eof_song->beats; ctr++)
+		{	//For each beat in the chart
+			if(eof_song->beat[ctr]->contained_rs_section_event >= 0)
+			{	//If this beat has a Rocksmith section
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
 	if(!ustricmp(macro, "IF_IR_TRACK_HAS_CHORDS_MISSING_FINGERING"))
 	{
 		if(eof_count_immerrock_chords_missing_fingering(NULL))
@@ -1625,6 +1643,19 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		char section[50];
 
 		if(eof_lookup_immerrock_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
+		{	//If a section name was found to be in effect at the seek position
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_SEEK_POS_IS_IN_RS_SECTION"))
+	{
+		char section[50];
+
+		if(eof_lookup_rocksmith_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
 		{	//If a section name was found to be in effect at the seek position
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -1746,7 +1777,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{	//If the macro is this string
 		if(eof_read_macro_string(name_string, name_buffer))
 		{	//If the phrase name was successfully parsed
-			unsigned long ctr2, match = eof_song_lookup_first_event(eof_song, name_buffer, eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
+			unsigned long match = eof_song_lookup_first_event(eof_song, name_buffer, eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
 			if(match < eof_song->text_events)
 			{	//If there was an instance of the specified phrase applicable to the active track (specifically or project-wide)
 				unsigned long matchpos = eof_get_text_event_pos(eof_song, match);	//Get the position of this event in milliseconds
@@ -1758,15 +1789,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						continue;	//Skip non pro guitar tracks
 
 					tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
-					for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
-					{	//For each normal note in the track
-						if(tp->pgnote[ctr2]->pos < matchpos)
-						{	//If the note begins before the specified time
+					if(tp->pgnotes)
+					{	//If there's at least normal one note in the track
+						if(tp->pgnote[0]->pos < matchpos)
+						{	//If the first normal note begins before the specified time
 							dest_buffer[0] = '\0';
 							return 3;	//True
 						}
-						else
-							 break;	//This and all remaining notes in the track are at or after the specified time, skip checking these
 					}
 				}
 			}
@@ -1780,16 +1809,18 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{	//If the macro is this string
 		if(eof_read_macro_string(name_string, name_buffer))
 		{	//If the phrase name was successfully parsed
-			unsigned long ctr2, match = eof_song_lookup_first_event(eof_song, name_buffer, eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
-			if(match < eof_song->text_events)
-			{	//If there was an instance of the specified phrase applicable to the active track (specifically or project-wide)
-				unsigned long matchpos = eof_get_text_event_pos(eof_song, match);	//Get the position of this event in milliseconds
-				EOF_PRO_GUITAR_TRACK *tp;
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track in the project
+				unsigned long ctr2, match;
 
-				for(ctr = 1; ctr < eof_song->tracks; ctr++)
-				{	//For each track in the project
-					if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-						continue;	//Skip non pro guitar tracks
+				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+					continue;	//Skip non pro guitar tracks
+
+				match = eof_song_lookup_first_event(eof_song, name_buffer, ctr, EOF_EVENT_FLAG_RS_PHRASE, 2);
+				if(match < eof_song->text_events)
+				{	//If there was an instance of the specified phrase applicable to the track (specifically or project-wide)
+					unsigned long matchpos = eof_get_text_event_pos(eof_song, match);	//Get the position of this event in milliseconds
+					EOF_PRO_GUITAR_TRACK *tp;
 
 					tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 					for(ctr2 = tp->pgnotes; ctr2 > 0; ctr2--)
@@ -1835,12 +1866,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//For each normal note in the track
 				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 				{	//For each string used in this track
-					(void) eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 2, 1);		//Determine techniques used by this note (including applicable technotes using this string)
-					if((tech.slideto > 0) && !tech.linknext)
-					{	//If this string of the note slides to a fret, but does not have linknext status
-						snprintf(eof_notes_macro_pitched_slide_missing_linknext, sizeof(eof_notes_macro_pitched_slide_missing_linknext) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
-						dest_buffer[0] = '\0';
-						return 3;	//True
+					if(tp->pgnote[notectr]->note & bitmask)
+					{	//If this string is used by the note
+						(void) eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 2, 1);		//Determine techniques used by this note (including applicable technotes using this string)
+						if((tech.slideto > 0) && !tech.linknext)
+						{	//If this string of the note slides to a fret, but does not have linknext status
+							snprintf(eof_notes_macro_pitched_slide_missing_linknext, sizeof(eof_notes_macro_pitched_slide_missing_linknext) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
+							dest_buffer[0] = '\0';
+							return 3;	//True
+						}
 					}
 				}
 			}
@@ -1883,12 +1917,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_RS_NOTES_TO_SOON_AFTER_COUNT_PHRASE"))
 	{
-		unsigned long ctr2, match = eof_song_lookup_first_event(eof_song, "COUNT", eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
+		unsigned long match = eof_song_lookup_first_event(eof_song, "COUNT", eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
 		if(match < eof_song->text_events)
 		{	//If there was an instance of the COUNT phrase applicable to the active track (specifically or project-wide)
 			unsigned num = 0, den = 0;
 			EOF_PRO_GUITAR_TRACK *tp;
-			unsigned long matchbeat = matchbeat = eof_get_text_event_beat(eof_song, match);	//Get the beat containing the event
+			unsigned long matchbeat = eof_get_text_event_beat(eof_song, match);	//Get the beat containing the event
 
 			if(eof_get_effective_ts(eof_song, &num, &den, matchbeat, 0))
 			{	//If the time signature of the beat containing the event could be determined
@@ -1902,15 +1936,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							continue;	//Skip non pro guitar tracks
 
 						tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
-						for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
-						{	//For each normal note in the track
-							if(tp->pgnote[ctr2]->pos < targetpos)
-							{	//If the note begins before the specified time
+						if(tp->pgnotes)
+						{	//If there's at least one normal note in the track
+							if(tp->pgnote[0]->pos < targetpos)
+							{	//If the first note begins before the specified time
 								dest_buffer[0] = '\0';
 								return 3;	//True
 							}
-							else
-								 break;	//This and all remaining notes in the track are at or after the specified time, skip checking these
 						}
 					}
 				}
@@ -1958,16 +1990,160 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	if(!ustricmp(macro, "IF_RS_NO_FHPS_DEFINED"))
+	if(!ustricmp(macro, "IF_TRACK_DIFF_HAS_NO_FHPS"))
 	{
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If the active track is a pro guitar track
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
 
-			if(!tp->handpositions)
-			{
-				dest_buffer[0] = '\0';
-				return 3;	//True
+			for(ctr = 0; ctr < tp->handpositions; ctr++)
+			{	//For each fret hand position defined in this track
+				if(tp->handposition[ctr].difficulty == eof_note_type)
+				{	//If the fret hand position is in the active track difficulty
+					return 2;	//False
+				}
+			}
+		}
+
+		dest_buffer[0] = '\0';
+		return 3;	//True
+	}
+
+	if(!ustricmp(macro, "IF_RS_ANY_NOTE_SUBCEEDS_FHP"))
+	{
+		EOF_PRO_GUITAR_TRACK *tp;
+		unsigned char lowestfret, fhp;
+		unsigned long ctr2;
+
+		eof_notes_macro_note_subceeding_fhp[0] = '\0';	//Erase this string
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//Skip non pro guitar tracks
+
+			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+			for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
+			{	//For each normal note in the track
+				lowestfret = eof_pro_guitar_note_lowest_fret(tp, ctr2);	//Find the lowest used fret for the note
+				fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Find if there's a fret hand position in effect for the note
+				if(lowestfret && fhp && (lowestfret < fhp))
+				{	//If there is a fretted string for this note, and it is below the defined FHP (if any)
+					snprintf(eof_notes_macro_note_subceeding_fhp, sizeof(eof_notes_macro_note_subceeding_fhp) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Write a string identifying the offending note
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	count_string = strcasestr_spec(macro, "IF_RS_ANY_NON_TAP_NOTE_EXCEEDS_FHP_BY_");	//Get a pointer to the text that would be the fret count
+	if(count_string)
+	{	//If the macro is this string
+		EOF_PRO_GUITAR_TRACK *tp;
+		unsigned char highestfret, fhp;
+		unsigned long ctr2, fretcount;
+
+		eof_notes_macro_note_exceeding_fhp[0] = '\0';	//Erase this string
+		if(eof_read_macro_number(count_string, &fretcount))
+		{	//If the millisecond count was successfully parsed
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track in the project
+				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+					continue;	//Skip non pro guitar tracks
+
+				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+				for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
+				{	//For each normal note in the track
+					if(!(tp->pgnote[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP))
+					{	//If this isn't a note with tap status
+						highestfret = eof_pro_guitar_note_highest_fret(tp, ctr2);	//Find the highest used fret for the note
+						fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Find if there's a fret hand position in effect for the note
+						if(highestfret && fhp && (highestfret > fhp + fretcount))
+						{	//If there is a fretted string for this note, and it is exceeds the given the defined FHP (if any) by the given amount
+							snprintf(eof_notes_macro_note_exceeding_fhp, sizeof(eof_notes_macro_note_exceeding_fhp) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Write a string identifying the offending note
+							dest_buffer[0] = '\0';
+							return 3;	//True
+						}
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_ANY_PITCHED_SLIDES_LACK_END_FRET"))
+	{
+		unsigned long stringnum, notectr, bitmask;
+		EOF_PRO_GUITAR_TRACK *tp;
+		EOF_RS_TECHNIQUES tech = {0};
+
+		eof_notes_macro_pitched_slide_missing_end_fret[0] = '\0';	//Erase this string
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//Skip non pro guitar tracks
+
+			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
+			{	//For each normal note in the track
+				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+				{	//For each string used in this track
+					if(tp->pgnote[notectr]->note & bitmask)
+					{	//If this string is used by the note
+						//Determine techniques used by this note (including applicable technotes using this string), do NOT assume a slide end fret if none is defined
+						unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 4, 1);
+						if(retflags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+						{	//If the note uses slide technique on this string
+							if(tech.slideto < 0)
+							{	//If no end of slide position is actually defined
+								snprintf(eof_notes_macro_pitched_slide_missing_end_fret, sizeof(eof_notes_macro_pitched_slide_missing_end_fret) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
+								dest_buffer[0] = '\0';
+								return 3;	//True
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_ANY_BENDS_LACK_STRENGTH_DEFINITION"))
+	{
+		unsigned long stringnum, notectr, bitmask;
+		EOF_PRO_GUITAR_TRACK *tp;
+		EOF_RS_TECHNIQUES tech = {0};
+
+		eof_notes_macro_bend_missing_strength[0] = '\0';	//Erase this string
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//Skip non pro guitar tracks
+
+			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
+			{	//For each normal note in the track
+				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+				{	//For each string used in this track
+					if(tp->pgnote[notectr]->note & bitmask)
+					{	//If this string is used by the note
+						//Determine techniques used by this note (including applicable technotes using this string), do NOT assume a slide end fret if none is defined
+						unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 4, 1);
+						if(retflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+						{	//If the note uses bend technique on this string
+							if(tech.bendstrength_q == 0)
+							{	//If no bend strength is actually defined
+								snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
+								dest_buffer[0] = '\0';
+								return 3;	//True
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -4151,6 +4327,26 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "PRINT_RS_SECTION_COUNT_STRING"))
+	{
+		if(eof_song)
+		{
+			unsigned long count = 0;
+			for(ctr = 0; ctr < eof_song->beats; ctr++)
+			{	//For each beat in the chart
+				if(eof_song->beat[ctr]->contained_rs_section_event >= 0)
+				{	//If this beat has a Rocksmith section
+					count++;	//Update Rocksmith section instance counter
+				}
+			}
+			if(count == 1)
+				snprintf(dest_buffer, dest_buffer_size, "1 section is defined");
+			else
+				snprintf(dest_buffer, dest_buffer_size, "%lu sections are defined", count);
+		}
+		return 1;
+	}
+
 	if(!ustricmp(macro, "PRINT_IR_MISSING_FINGERING_COUNT_STRING"))
 	{
 		unsigned long count, total = 0;
@@ -4162,11 +4358,34 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "PRINT_RS_MISSING_FINGERING_COUNT_STRING"))
+	{
+		unsigned long count, total = 0;
+		count = eof_count_immerrock_chords_missing_fingering(&total);
+		if(total == 1)
+			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chord is missing finger definition", count, total);
+		else
+			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chords are missing finger definition", count, total);
+		return 1;
+	}
+
 	if(!ustricmp(macro, "SEEK_IR_SECTION_CONDITIONAL"))
 	{
 		char section[50];
 
 		if(eof_lookup_immerrock_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
+		{	//If a section name was found to be in effect at the seek position
+			snprintf(dest_buffer, dest_buffer_size, "%s", section);
+		}
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "SEEK_RS_SECTION_CONDITIONAL"))
+	{
+		char section[50];
+
+		if(eof_lookup_rocksmith_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
 		{	//If a section name was found to be in effect at the seek position
 			snprintf(dest_buffer, dest_buffer_size, "%s", section);
 		}
@@ -4184,6 +4403,34 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "RS_FIRST_TONE_CHANGE_STARTING_ON_A_NOTE"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_note_starting_on_tone_change);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "RS_FIRST_NOTE_SUBCEEDING_FHP"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_note_subceeding_fhp);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "RS_FIRST_NON_TAP_NOTE_EXCEEDING_FHP"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_note_exceeding_fhp);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "RS_FIRST_PITCHED_SLIDE_LACKING_END_FRET"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_pitched_slide_missing_end_fret);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "RS_FIRST_BEND_LACKING_STRENGTH_DEFINITION"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_bend_missing_strength);
 
 		return 1;
 	}
