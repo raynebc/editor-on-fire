@@ -184,4 +184,8 @@ unsigned char eof_set_active_difficulty(unsigned char diff);
 	//Changes the active difficulty of the active track, if the given difficulty is valid
 	//Returns the maximum number of difficulty levels supported by the active track
 
+void eof_constrain_mouse(void);
+	//If the mouse constraint boundaries were defined during a mouse click and drag operation,
+	//Check if the mouse has left the boundary and if so, force it back into the boundary
+
 #endif

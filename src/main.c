@@ -203,6 +203,7 @@ int         eof_gh_import_sustain_threshold_prompt = 0;	//If nonzero, GH import 
 int         eof_rs_import_all_handshapes = 0;	//If nonzero, RS import will load all handshapes and not just those used in specialized circumstances for authoring custom charts
 int         eof_rs2_export_version_8 = 0;		//If nonzero, high density chords will export to RS2 XML without the highDensity status and without chordnote tags, to suit compatibility differences with DLC builder versus the Rocksmith custom song toolkit
 int         eof_midi_export_enhanced_open_marker = 0;	//If nonzero, open notes and chords export to MIDI with the use of an "[ENHANCED_OPENS]" text event and a MIDI marker one note below lane 1
+int         eof_gp_import_remove_accent_from_staccato = 0;	//If nonzero, staccato notes have accent status removed during GP import
 int         eof_db_import_suppress_5nc_conversion = 0;	//If nonzero, five note chords are not converted to open notes during Feedback import
 int         eof_warn_missing_bass_fhps = 1;		//If nonzero, the Rocksmith export checks will complain about FHPs not being defined for bass arrangements
 int         eof_4_fret_range = 1;				//Defines the lowest fret number at which the fret hand has a range of 4 frets, for fret hand position generation (the default value of 1 indicates this range for the entire fretboard)
@@ -357,8 +358,8 @@ int         eof_mouse_z;
 int         eof_mickey_z;
 int         eof_mickeys_x;
 int         eof_mickeys_y;
-int         eof_lclick_released = 1;	//Tracks the handling of the left mouse button in general
-int         eof_blclick_released = 1;	//Tracks the handling of the left mouse button when used on beat markers
+int         eof_lclick_released = 1;	//Is zero if the left mouse buttin is held and the mouse is NOT on a beat marker
+int         eof_blclick_released = 1;	//Is zero if the left mouse button is held and the mouse is on a beat marker
 int         eof_rclick_released = 1;	//Tracks the handling of the right mouse button in general
 int         eof_mclick_released = 1;	//Tracks the handling of the middle mouse button in general
 int         eof_click_x;
@@ -371,6 +372,15 @@ int         eof_hover_type = -1;
 int         eof_mouse_drug = 0;
 int         eof_paste_at_mouse = 0;
 int         eof_notes_moved = 0;
+
+/* Coordinate regions */
+int eof_mouse_area = 0;		//Is set within the editor logic to summarize the region of the editor the mouse is within (1 = difficulty tabs, 2 = beat markers, 3 = fretboard, 4 = vocal mini keyboard, 0 = other)
+int eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_x2, eof_mini_keyboard_boundary_y1, eof_mini_keyboard_boundary_y2;	//Inclusive coordinate boundaries for the mini keyboard area
+int eof_fretboard_boundary_x1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y1, eof_fretboard_boundary_y2;					//Inclusive coordinate boundaries for the fretboard area
+int eof_beat_marker_boundary_x1, eof_beat_marker_boundary_x2, eof_beat_marker_boundary_y1, eof_beat_marker_boundary_y2;			//Inclusive coordinate boundaries for the beat marker area
+int eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_y2;		//Inclusive coordinate boundaries for the difficulty tab area
+int eof_mouse_boundary_x1 = 0, eof_mouse_boundary_x2 = 0, eof_mouse_boundary_y1 = 0, eof_mouse_boundary_y2 = 0;				//Inclusive coordinate boundaries constraining the mouse during a click and drag operation
+char eof_mouse_bound = 0;																							//Tracks whether the mouse is bound bound within the above set of coordinates
 
 /* grid snap data */
 char          eof_snap_mode = EOF_SNAP_OFF;
@@ -1149,6 +1159,23 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	set_display_switch_callback(SWITCH_IN, eof_switch_in_callback);
 	set_close_button_callback(eof_close_button_callback);
 	PrepVSyncIdle();
+
+	//Define mouse coordinate boundaries (the difficulty tab boundaries are track format specific and need to be updated outside of this function)
+	eof_mini_keyboard_boundary_x1 = 0;
+	eof_mini_keyboard_boundary_x2 = 20 - 1;
+	eof_mini_keyboard_boundary_y1 =  eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET;
+	eof_mini_keyboard_boundary_y2 = eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET - 1;
+
+	eof_fretboard_boundary_x1 = 0;
+	eof_fretboard_boundary_x2 = eof_screen_width - 1;
+	eof_fretboard_boundary_y1 = eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET + 1;
+	eof_fretboard_boundary_y2 = eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET - 1;
+
+	eof_beat_marker_boundary_x1 = 0;
+	eof_beat_marker_boundary_x2 = eof_screen_width - 1;
+	eof_beat_marker_boundary_y1 = eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19;
+	eof_beat_marker_boundary_y2 = eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8 - 1;
+
 	return 1;
 }
 
@@ -2571,7 +2598,7 @@ void eof_lyric_logic(void)
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 	unsigned long i, k;
 	unsigned long tracknum;
-	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	int eof_scaled_mouse_x, eof_scaled_mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(eof_song == NULL)	//Do not allow lyric processing to occur if no song is loaded
 		return;
@@ -2580,6 +2607,9 @@ void eof_lyric_logic(void)
 		return;
 
 	eof_hover_key = -1;
+	eof_constrain_mouse();	//Move the mouse back into its constraint boundary if necessary
+	eof_scaled_mouse_x = mouse_x;
+	eof_scaled_mouse_y = mouse_y;
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
 		eof_scaled_mouse_x = mouse_x / 2;
@@ -2681,9 +2711,12 @@ void eof_lyric_logic(void)
 
 void eof_note_logic(void)
 {
-	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	int eof_scaled_mouse_x, eof_scaled_mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 //	eof_log("eof_note_logic() entered");
 
+	eof_constrain_mouse();	//Move the mouse back into its constraint boundary if necessary
+	eof_scaled_mouse_x = mouse_x;
+	eof_scaled_mouse_y = mouse_y;
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
 		eof_scaled_mouse_x = mouse_x / 2;

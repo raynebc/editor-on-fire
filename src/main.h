@@ -431,6 +431,7 @@ extern int         eof_gh_import_sustain_threshold_prompt;
 extern int         eof_rs_import_all_handshapes;
 extern int         eof_rs2_export_version_8;
 extern int         eof_midi_export_enhanced_open_marker;
+extern int         eof_gp_import_remove_accent_from_staccato;
 extern int         eof_db_import_suppress_5nc_conversion;
 extern int         eof_warn_missing_bass_fhps;
 extern int         eof_4_fret_range;
@@ -545,10 +546,18 @@ extern int         eof_hover_type;
 extern int         eof_mouse_drug;
 extern int         eof_paste_at_mouse;
 
+extern int eof_mouse_area;
+extern int eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_x2, eof_mini_keyboard_boundary_y1, eof_mini_keyboard_boundary_y2;
+extern int eof_fretboard_boundary_x1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y1, eof_fretboard_boundary_y2;
+extern int eof_beat_marker_boundary_x1, eof_beat_marker_boundary_x2, eof_beat_marker_boundary_y1, eof_beat_marker_boundary_y2;
+extern int eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_y2;
+extern int eof_mouse_boundary_x1, eof_mouse_boundary_x2, eof_mouse_boundary_y1, eof_mouse_boundary_y2;
+extern char eof_mouse_bound;
+
 extern char          eof_snap_mode;
 extern char          eof_last_snap_mode;
 extern int           eof_snap_interval;
-extern char			 eof_custom_snap_measure;
+extern char        eof_custom_snap_measure;
 
 extern char          eof_hopo_view;
 

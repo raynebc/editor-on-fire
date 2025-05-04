@@ -237,10 +237,10 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  500, 315, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  320, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  320, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 320, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,  "Cancel",              NULL, NULL },
+	{ d_agup_window_proc,0,   48,  500, 330, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  335, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  335, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 335, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,  "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,    75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248,  75,  224, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI files",NULL, NULL },
 	{ d_agup_check_proc, 16,    90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -269,9 +269,10 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   270, 310, 16,  2,   23,  0,    0,      1,   0,   "RS2 export version 8 (DLC Builder) style XML",NULL, NULL },
 	{ d_agup_check_proc, 16,   285, 218, 16,  2,   23,  0,    0,      1,   0,   "RS import loads all handshapes",NULL, NULL },
 	{ d_agup_check_proc, 248, 285, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
-	{ d_agup_check_proc, 16,   300, 244, 16,  2,   23,  0,    0,      1,   0,   "MIDI export CH/YARG open note/chord markers",NULL, NULL },
-	{ d_agup_check_proc, 248, 315, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
-	{ d_agup_check_proc, 248, 330, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ d_agup_check_proc, 16,   300, 315, 16,  2,   23,  0,    0,      1,   0,   "MIDI export CH/YARG open note/chord markers",NULL, NULL },
+	{ d_agup_check_proc, 16,   315, 300, 16,  2,   23,  0,    0,      1,   0,   "GP import remove accent from staccato notes",NULL, NULL },
+	{ d_agup_check_proc, 248, 330, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
+	{ d_agup_check_proc, 248, 345, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1720,8 +1721,9 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[30].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
 	eof_import_export_preferences_dialog[31].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
 	eof_import_export_preferences_dialog[32].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;//MIDI export CH/YARG open note/chord markers
-	eof_import_export_preferences_dialog[33].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
-	eof_import_export_preferences_dialog[34].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_import_export_preferences_dialog[33].flags = eof_gp_import_remove_accent_from_staccato ? D_SELECTED : 0;//GP import remove accent from staccato notes
+	eof_import_export_preferences_dialog[34].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
+	eof_import_export_preferences_dialog[35].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 
 	do
 	{	//Run the dialog
@@ -1757,8 +1759,9 @@ int eof_menu_file_import_export_preferences(void)
 			eof_rs_import_all_handshapes = (eof_import_export_preferences_dialog[30].flags == D_SELECTED ? 1 : 0);
 			eof_disable_ini_export = (eof_import_export_preferences_dialog[31].flags == D_SELECTED ? 1 : 0);
 			eof_midi_export_enhanced_open_marker = (eof_import_export_preferences_dialog[32].flags == D_SELECTED ? 1 : 0);
-			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[33].flags == D_SELECTED ? 1 : 0);
-			eof_disable_rs_wav = (eof_import_export_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_remove_accent_from_staccato = (eof_import_export_preferences_dialog[33].flags == D_SELECTED ? 1 : 0);
+			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
+			eof_disable_rs_wav = (eof_import_export_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1791,8 +1794,9 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[30].flags = 0;				//RS import loads all handshapes
 			eof_import_export_preferences_dialog[31].flags = 0;				//Don't write INI file
 			eof_import_export_preferences_dialog[32].flags = 0;				//MIDI export CH/YARG open note/chord markers
-			eof_import_export_preferences_dialog[33].flags = 0;				//GH import sustain threshold prompt
-			eof_import_export_preferences_dialog[34].flags = 0;				//Don't write Rocksmith WAV file
+			eof_import_export_preferences_dialog[33].flags = 0;				//GP import remove accent from staccato notes
+			eof_import_export_preferences_dialog[34].flags = 0;				//GH import sustain threshold prompt
+			eof_import_export_preferences_dialog[35].flags = 0;				//Don't write Rocksmith WAV file
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -4608,6 +4612,7 @@ int eof_save_helper(char *destfilename, char silent)
 				}
 				else
 				{
+					eof_log("Exporting Rocksmith 1 lyrics", 1);
 					(void) EOF_EXPORT_TO_LC(eof_song,eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith format
 				}
 			}
@@ -4644,6 +4649,7 @@ int eof_save_helper(char *destfilename, char silent)
 				}
 				else
 				{
+					eof_log("Exporting Rocksmith 2 lyrics", 1);
 					(void) EOF_EXPORT_TO_LC(eof_song, eof_temp_filename, NULL, RS2_FORMAT);	//Import lyrics into FLC lyrics structure and export to Rocksmith 2014 format
 				}
 

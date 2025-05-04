@@ -1703,6 +1703,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	unsigned char start_of_repeat, num_of_repeats;
 	char import_ts = 0;		//Will be set to nonzero if user opts to import time signatures
 	char note_is_short = 0;	//Will be set to nonzero if the note being parsed should have its sustain dropped (ie. shorter than a quarter note or is played staccato), pending techniques that overrule this
+	char note_is_staccato = 0;	//Will be set to nonzero if the note being parsed has staccato technique
 	char parse_gpa = 0;		//Will be set to nonzero if the specified file is detected to be XML, in which case, the Go PlayAlong file will be parsed
 	size_t maxlinelength;
 	unsigned long linectr = 2, num_sync_points = 0, raw_num_sync_points = 0;
@@ -3298,6 +3299,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					tieflags = allflags = tflags = 0;
 					bendstrength = 0;
 					note_is_short = 0;
+					note_is_staccato = 0;
 					memset(finger, 0, sizeof(finger));	//Clear the finger array
 					bytemask = pack_getc(inf);	//Read beat bitmask
 					if(bytemask & 64)
@@ -4255,6 +4257,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(byte2 & 1)
 							{	//Note played staccato
 								note_is_short = 1;
+								note_is_staccato = 1;
 							}
 							if(byte2 & 2)
 							{	//Palm mute
@@ -4433,11 +4436,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}//Note effects
 						if(bytemask & 64)
 						{	//Heavy accented or accented note
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+							if(!eof_gp_import_remove_accent_from_staccato || !note_is_staccato)
+							{	//As long as the import preference to remove accent from staccato notes isn't applicable
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;	//Apply accent status as defined
+								eof_log("\t\t\tAccent suppressed on staccato note", 2);
+							}
 						}
 						if((fileversion >= 500) && (bytemask & 2))
 						{	//Heavy accented note (GP5 or higher only)
-							flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+							if(!eof_gp_import_remove_accent_from_staccato || !note_is_staccato)
+							{	//As long as the import preference to remove accent from staccato notes isn't applicable
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+								eof_log("\t\t\tAccent suppressed on staccato note", 2);
+							}
 						}
 						if((thisgemtype == 2) || tie_note)
 						{	//If the note on this string was a tie note or the entire note itself was a tie

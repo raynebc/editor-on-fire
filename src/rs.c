@@ -450,8 +450,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	unsigned long originalbeatcount;	//If beats are padded to reach the beginning of the next measure (for DDC), this will track the project's original number of beats
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 	char highlight_bad_slides = 0;	//Set to nonzero if the user opts to highlight notes that slide to or above fret 22
+	clock_t start_time, cur_time;
 
 	eof_log("eof_export_rocksmith_1_track() entered", 1);
+	start_time = clock();
 
 	if(!sp || !fn || !sp->beats || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
 	{
@@ -1554,6 +1556,10 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRocksmith 1 export completed in %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 1);
+
 	return 1;	//Return success
 }
 
@@ -1588,8 +1594,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char match;		//Used for testing whether partially ghosted chords are inside of arpeggio phrases
 	char highlight_bad_slides = 0;	//Set to nonzero if the user opts to highlight notes that slide to or above fret 25
 	int original_eof_display_second_piano_roll;	//Used to store the status of the second piano roll. which must be disabled during this export to prevent problems caused when eof_detect_difficulties() is called various times during export
+	clock_t start_time, cur_time;
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
+	start_time = clock();
 
 	if(!sp || !fn || !sp->beats || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !user_warned)
 	{
@@ -2010,6 +2018,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		if(!linked)
 			continue;	//If the previous note does not have linknext status applied to any string, skip this note
 
+		eof_log("\tCreating temporary notes to export chords with linknext as single notes.", 3);
 		tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
 		for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 		{	//For each of the 6 supported strings
@@ -3230,6 +3239,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 
 	eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
+
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRocksmith 2 export completed in %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 1);
+
 	return 1;	//Return success
 }
 
@@ -3608,6 +3622,8 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	unsigned limit = 21;	//Rocksmith 2's fret hand position limit is 21
 	long lastnoteslide = 0;	//Tracks the number of frets the last processed note slid (for adding FHPs to track when the fret hand slides)
 	long nextnote;
+
+ 	eof_log("eof_generate_efficient_hand_positions_logic() entered", 3);
 
 	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters

@@ -2150,6 +2150,28 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_LEFT_MOUSE_BUTTON_HELD"))
+	{
+		if(!eof_lclick_released)
+		{	//If the left button is not in a released state
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_MOUSE_CONSTRAINED"))
+	{
+		if(eof_mouse_bound)
+		{	//If the mouse coordinates are constrained
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -4435,6 +4457,53 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "LEFT_CLICK_X_COORD"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%u", eof_click_x);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "LEFT_CLICK_Y_COORD"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%u", eof_click_y);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "MOUSE_AREA"))
+	{
+		dest_buffer[0] = '\0';
+		if(eof_mouse_area == 1)
+			snprintf(dest_buffer, dest_buffer_size, "Difficulty tabs (%u, %u) - (%u, %u)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
+		else if(eof_mouse_area == 2)
+			snprintf(dest_buffer, dest_buffer_size, "Beat markers (%u, %u) - (%u, %u)", eof_beat_marker_boundary_x1, eof_beat_marker_boundary_y1, eof_beat_marker_boundary_x2, eof_beat_marker_boundary_y2);
+		else if(eof_mouse_area == 3)
+			snprintf(dest_buffer, dest_buffer_size, "Fretboard (%u, %u) - (%u, %u)", eof_fretboard_boundary_x1, eof_fretboard_boundary_y1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y2);
+		else if(eof_mouse_area == 4)
+			snprintf(dest_buffer, dest_buffer_size, "Mini keyboard (%u, %u) - (%u, %u)", eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_y1, eof_mini_keyboard_boundary_x2, eof_mini_keyboard_boundary_y2);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "MOUSE_CONSTRAINT"))
+	{
+		dest_buffer[0] = '\0';
+		if(eof_mouse_bound)
+		{	//If the mouse coordinates are constrained
+			snprintf(dest_buffer, dest_buffer_size, "(%u, %u) - (%u, %u)", eof_mouse_boundary_x1, eof_mouse_boundary_y1, eof_mouse_boundary_x2, eof_mouse_boundary_y2);
+		}
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "DIFFICULTY_TAB_AREA"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "(%u, %u) - (%u, %u)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
+
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
@@ -4501,6 +4570,18 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{
 			snprintf(dest_buffer, dest_buffer_size, "(Error)");
 		}
+		return 1;
+	}
+
+	if(!ustricmp(macro, "DEBUG_eof_lclick_released"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "eof_lclick_released is %d", eof_lclick_released);
+		return 1;
+	}
+
+	if(!ustricmp(macro, "DEBUG_eof_blclick_released"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "eof_blclick_released is %d", eof_blclick_released);
 		return 1;
 	}
 

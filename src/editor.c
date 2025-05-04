@@ -904,7 +904,7 @@ void eof_read_editor_keys(void)
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	unsigned long note;
 	unsigned char do_pg_up = 0, do_pg_dn = 0;
-	int eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinate that accounts for the x2 zoom display feature
+	int eof_scaled_mouse_x, eof_scaled_mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(!eof_song_loaded)
 		return;	//Don't handle these keyboard shortcuts unless a chart is loaded
@@ -913,8 +913,12 @@ void eof_read_editor_keys(void)
 	{	//Special case:  Legacy guitar tracks can use a sixth lane but hide that lane if it is not enabled
 		numlanes = 5;
 	}
+	eof_constrain_mouse();	//Move the mouse back into its constraint boundary if necessary
+	eof_scaled_mouse_x = mouse_x;
+	eof_scaled_mouse_y = mouse_y;
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
+		eof_scaled_mouse_x = mouse_x / 2;
 		eof_scaled_mouse_y = mouse_y / 2;
 	}
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -1332,7 +1336,6 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 	/* toggle green cymbal (CTRL+G in a drum track) */
 	/* convert GHL open (CTRL+G in a legacy guitar track) */
-	/* custom grid snap (G) */
 	/* display grid lines (SHIFT+G) */
 	/* toggle green cymbal+tom (CTRL+ALT+G in the PS drum track) */
 	if(eof_key_char == 'g')
@@ -1356,11 +1359,6 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			{	//SHIFT is held
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_menu_edit_toggle_grid_lines();
-				eof_use_key();
-			}
-			else
-			{	//Neither SHIFT nor CTRL are held
-				(void) eof_menu_edit_snap_custom();
 				eof_use_key();
 			}
 		}
@@ -3691,7 +3689,9 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			int ghl_open = 0;	//Set to nonzero if the 7 key is used to place an open note in a GHL track
 
 			eof_hover_piece = -1;
-			if((eof_input_mode == EOF_INPUT_FEEDBACK) || ((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)))
+			if((eof_scaled_mouse_x >= eof_fretboard_boundary_x1) && (eof_scaled_mouse_x <= eof_fretboard_boundary_x2) && (eof_scaled_mouse_y >= eof_fretboard_boundary_y1) && (eof_scaled_mouse_y <= eof_fretboard_boundary_y2))
+				eof_mouse_area = 3;
+			if((eof_input_mode == EOF_INPUT_FEEDBACK) || (eof_mouse_area == 3))
 			{	//If the mouse is in the fretboard area (or Feedback input method is in use)
 				if(KEY_EITHER_SHIFT)
 				{
@@ -4265,18 +4265,23 @@ void eof_editor_logic(void)
 	int pos = eof_music_pos.value / eof_zoom;
 	int lpos;
 	long notelength;
-	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	int eof_scaled_mouse_x, eof_scaled_mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(!eof_song_loaded)
 		return;
 	if(eof_vocals_selected)
 		return;
 
+	eof_constrain_mouse();	//Move the mouse back into its constraint boundary if necessary
+	eof_scaled_mouse_x = mouse_x;
+	eof_scaled_mouse_y = mouse_y;
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
 		eof_scaled_mouse_x = mouse_x / 2;
 		eof_scaled_mouse_y = mouse_y / 2;
 	}
+	eof_mouse_area = 0;	//Reset this before the common editor logic, which can set this variable depending on the mouse coordinates
+
 	eof_editor_logic_common();
 
 	if((eof_pen_note.note & 32) && eof_track_is_legacy_guitar(eof_song, eof_selected_track) && !eof_open_strum_enabled(eof_selected_track))
@@ -4301,8 +4306,9 @@ void eof_editor_logic(void)
 		}
 
 		/* mouse is in the fretboard area (or Feedback input method is in use) */
-		if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+		if((eof_scaled_mouse_x >= eof_fretboard_boundary_x1) && (eof_scaled_mouse_x <= eof_fretboard_boundary_x2) && (eof_scaled_mouse_y >= eof_fretboard_boundary_y1) && (eof_scaled_mouse_y <= eof_fretboard_boundary_y2))
 		{	//If the mouse is in the fretboard area
+			eof_mouse_area = 3;
 			if(eof_scaled_mouse_x < eof_window_editor->x + eof_window_editor->w)
 			{	//If the mouse is within the horizontal boundaries of the editor window
 				infretboard = 1;
@@ -4429,7 +4435,7 @@ void eof_editor_logic(void)
 					}
 					eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 				}
-			}
+			}//If the middle click hasn't been processed yet
 			else
 			{	//If the middle mouse button is not held
 				eof_mclick_released = 1;	//Track that the middle click button has been release and is ready to be processed again the next time it is clicked
@@ -4444,6 +4450,14 @@ void eof_editor_logic(void)
 				eof_click_x = eof_scaled_mouse_x;
 				eof_click_y = eof_scaled_mouse_y;
 				eof_lclick_released = 0;
+
+				//Place boundary to force mouse to stay within the fretboard area
+				eof_mouse_boundary_x1 = eof_fretboard_boundary_x1;
+				eof_mouse_boundary_x2 = eof_fretboard_boundary_x2;
+				eof_mouse_boundary_y1 = eof_fretboard_boundary_y1;
+				eof_mouse_boundary_y2 = eof_fretboard_boundary_y2;
+				eof_mouse_bound = 1;
+
 				if(eof_hover_note >= 0)
 				{
 					if(eof_selection.current != EOF_MAX_NOTES - 1)
@@ -4644,14 +4658,13 @@ void eof_editor_logic(void)
 							}
 						}
 					}
+					eof_determine_phrase_status(eof_song, eof_selected_track);	//Reduce processing by only running this function when the mouse button has been released
+					eof_mouse_bound = eof_mouse_boundary_x1 = eof_mouse_boundary_x2 = eof_mouse_boundary_y1 = eof_mouse_boundary_y2 = 0;	//Release the mouse from its boundary
 					eof_lclick_released = 2;	//Set the "left click release handled" status
 				}
 				else
 				{
-					if(eof_mouse_drug)
-					{
-						eof_mouse_drug = 0;
-					}
+					eof_mouse_drug = 0;
 				}
 			}//If the left mouse button is NOT pressed
 			if(!eof_full_screen_3d && !eof_song->tags->click_drag_disabled && (mouse_b & 1) && !eof_lclick_released && (lpos >= 0))
@@ -4660,16 +4673,16 @@ void eof_editor_logic(void)
 				{
 					eof_mouse_drug++;
 					if(eof_mouse_drug == 11)
-					{
+					{	//Update x coordinate tracking every 11 frames?
 						eof_mickeys_x = eof_scaled_mouse_x - eof_click_x;
 					}
 				}
 				if((eof_mickeys_x != 0) && !eof_mouse_drug)
-				{
+				{	//The mouse button has has been held for at least this frame and the mouse has moved at least one pixel left/right during the hold
 					eof_mouse_drug++;
 				}
 				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1))
-				{
+				{	//The mouse button has been held for at least ten frames and a note is selected
 					if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)
 					{	//Move notes by grid snap
 						if(eof_pen_note.pos < eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current))
@@ -4697,78 +4710,78 @@ void eof_editor_logic(void)
 						}
 					}
 					if(move_offset)
-					{
+					{	//If notes are to be moved
 						eof_auto_adjust_sections(eof_song, eof_selected_track, move_offset, move_direction, 0, &undo_made);	//Move sections accordingly
 						(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, move_offset, move_direction, 0, &undo_made);	//Move tech notes accordingly
-					}
-					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-					{	//For each note in the active track
-						if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
-							continue;	//If the note is not selected, skip it
 
-						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-						if(notepos == eof_selection.current_pos)
-						{
-							if(move_direction < 0)
-							{	//Left mouse movement
-								eof_selection.current_pos -= move_offset;
-							}
-							else
-							{	//Right mouse movement
-								eof_selection.current_pos += move_offset;
-							}
-						}
-						if(move_direction < 0)
-						{	//If the user is moving notes left
-							if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
-							{	//If the move would make the note position negative or otherwise earlier than the first beat
-								move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
-							}
-						}
-						if(move_offset == 0)
-						{	//If the offset has become 0
-							break;	//Don't move the notes
-						}
-						if(!undo_made)
-						{	//Only create the undo state before moving the first note
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							undo_made = 1;
-						}
-
-						if(undo_made)
-						{	//If an undo state has been created by this point
-							eof_notes_moved = 1;	//Ensure note cleanup occurs
-						}
-						eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
-						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated note position
-						notelength = eof_get_note_length(eof_song, eof_selected_track, i);
-						if(notepos + notelength >= eof_chart_length)
-						{	//If the moved note is at or after the end of the chart
-							revert |= 1;
-							revert_amount = notepos + notelength - eof_chart_length;	//This positive value will be subtracted from the note via the revert loop
-						}
-						else if(notepos <= eof_song->beat[0]->pos)
-						{	//If the moved note is at or before the first beat marker
-							revert |= 2;
-							revert_amount = eof_song->beat[0]->pos - notepos;			//This negative value will be subtracted from the note via the revert loop
-						}
-					}
-					if(revert)
-					{
-						if(revert == 3)
-						{	//If something unexpected happened and the drag operation resulted in both edges of the chart having note(s) pushed beyond the edge
-							allegro_message("Logic error in eof_editor_logic() note drag handling");
-						}
 						for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-						{
-							if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+						{	//For each note in the active track
+							if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+								continue;	//If the note is not selected, skip it
+
+							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+							if(notepos == eof_selection.current_pos)
 							{
-								eof_set_note_pos(eof_song, eof_selected_track, i, eof_get_note_pos(eof_song, eof_selected_track, i) - revert_amount);
+								if(move_direction < 0)
+								{	//Left mouse movement
+									eof_selection.current_pos -= move_offset;
+								}
+								else
+								{	//Right mouse movement
+									eof_selection.current_pos += move_offset;
+								}
+							}
+							if(move_direction < 0)
+							{	//If the user is moving notes left
+								if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
+								{	//If the move would make the note position negative or otherwise earlier than the first beat
+									move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
+								}
+							}
+							if(move_offset == 0)
+							{	//If the offset has become 0
+								break;	//Don't move the notes
+							}
+							if(!undo_made)
+							{	//Only create the undo state before moving the first note
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+
+							if(undo_made)
+							{	//If an undo state has been created by this point
+								eof_notes_moved = 1;	//Ensure note cleanup occurs
+							}
+							eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
+							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated note position
+							notelength = eof_get_note_length(eof_song, eof_selected_track, i);
+							if(notepos + notelength >= eof_chart_length)
+							{	//If the moved note is at or after the end of the chart
+								revert |= 1;
+								revert_amount = notepos + notelength - eof_chart_length;	//This positive value will be subtracted from the note via the revert loop
+							}
+							else if(notepos <= eof_song->beat[0]->pos)
+							{	//If the moved note is at or before the first beat marker
+								revert |= 2;
+								revert_amount = eof_song->beat[0]->pos - notepos;			//This negative value will be subtracted from the note via the revert loop
 							}
 						}
-					}
-					eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
-				}
+						if(revert)
+						{
+							if(revert == 3)
+							{	//If something unexpected happened and the drag operation resulted in both edges of the chart having note(s) pushed beyond the edge
+								allegro_message("Logic error in eof_editor_logic() note drag handling");
+							}
+							for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+							{
+								if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+								{
+									eof_set_note_pos(eof_song, eof_selected_track, i, eof_get_note_pos(eof_song, eof_selected_track, i) - revert_amount);
+								}
+							}
+						}
+					}//If notes are to be moved
+				}//The mouse button has been held for at least ten frames and a note is selected
 			}//If neither full screen 3D view is in use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 			if(!eof_full_screen_3d && ((mouse_b & 2) || eof_key_code == KEY_INSERT) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_chart_length))
 			{	//Full screen 3D view is not in effect, right mouse click or Insert key pressed, and the pen note is valid
@@ -4924,7 +4937,7 @@ void eof_editor_logic(void)
 							(void) eof_detect_difficulties(eof_song, eof_selected_track);
 						}
 					}
-					eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
+					eof_determine_phrase_status(eof_song, eof_selected_track);
 				}//All three of these input methods toggle gems when clicking on the right mouse button
 			}//Full screen 3D view is not in effect, right mouse click or Insert key pressed, and the pen note is valid
 			if(!(mouse_b & 2) && !(eof_key_code == KEY_INSERT))
@@ -5006,49 +5019,57 @@ void eof_editor_logic(void)
 
 	/* select difficulty */
 	numtabs = eof_get_number_displayed_tabs();
-	if((eof_scaled_mouse_y >= eof_window_editor->y + 7) && (eof_scaled_mouse_y < eof_window_editor->y + 20 + 8) && (eof_scaled_mouse_x > 12) && (eof_scaled_mouse_x < 12 + numtabs * 80 + 12 - 1) && (mouse_b & 1) && !eof_full_screen_3d)
+	eof_difficulty_tab_boundary_x1 = 13;
+	eof_difficulty_tab_boundary_x2 = 12 + numtabs * 80 + 12 - 1 - 1;
+	eof_difficulty_tab_boundary_y1 = eof_window_editor->y + 7;
+	eof_difficulty_tab_boundary_y2 = eof_window_editor->y + 20 + 8 - 1;
+	if((eof_scaled_mouse_x >= eof_difficulty_tab_boundary_x1) && (eof_scaled_mouse_x <= eof_difficulty_tab_boundary_x2) && (eof_scaled_mouse_y >= eof_difficulty_tab_boundary_y1) && (eof_scaled_mouse_y <= eof_difficulty_tab_boundary_y2))
 	{	//If the left mouse button is held down and the mouse is over one of the difficulty tabs, and full screen 3d mode isn't in effect
-		eof_hover_type = (eof_scaled_mouse_x - 12) / 80;	//Determine which tab number was clicked
-		if(eof_hover_type < 0)
-		{	//Bounds check
-			eof_hover_type = 0;
-		}
-		else if(eof_hover_type >= numtabs)
-		{
-			eof_hover_type = numtabs - 1;
-		}
-		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-		{	//If this track is not limited to 5 difficulties
-			if(eof_hover_type == numtabs - 1)
-			{	//If the last tab was clicked
-				eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - 1;	//Change to the highest difficulty in the track
+		eof_mouse_area = 1;
+		if((mouse_b & 1) && !eof_full_screen_3d)
+		{	//If the left mouse button is held down, and full screen 3d mode isn't in effect
+			eof_hover_type = (eof_scaled_mouse_x - 12) / 80;	//Determine which tab number was clicked
+			if(eof_hover_type < 0)
+			{	//Bounds check
+				eof_hover_type = 0;
 			}
-			else if(eof_hover_type > 0)
-			{	//If the first tab (which will already change to the track's lowest difficulty) wasn't clicked
-				if(eof_note_type < numtabs / 2)
-				{	//If the tabs represent the lowest difficulties
-					eof_hover_type = eof_hover_type - 1;
-				}
-				else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - (numtabs / 2))
-				{	//If the tabs represent the highest difficulties
-					eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - numtabs + 1 + eof_hover_type;
-				}
-				else
-				{	//If the center tab represents the active difficulty
-					eof_hover_type = eof_hover_type + eof_note_type - (numtabs / 2);
-				}
+			else if(eof_hover_type >= numtabs)
+			{
+				eof_hover_type = numtabs - 1;
 			}
-			mouse_b &= ~1;	//Clear the left mouse button status or else the tab logic will run during next loop and cause the highest difficulty to be accepted
-		}
-		if(eof_note_type != eof_hover_type)
-		{
-			eof_note_type = eof_hover_type;
-			eof_mix_find_claps();
-			eof_mix_start_helper();
-			eof_fix_window_title();
-			(void) eof_detect_difficulties(eof_song, eof_selected_track);
-			eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
-			eof_ch_sp_solution = NULL;
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+			{	//If this track is not limited to 5 difficulties
+				if(eof_hover_type == numtabs - 1)
+				{	//If the last tab was clicked
+					eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - 1;	//Change to the highest difficulty in the track
+				}
+				else if(eof_hover_type > 0)
+				{	//If the first tab (which will already change to the track's lowest difficulty) wasn't clicked
+					if(eof_note_type < numtabs / 2)
+					{	//If the tabs represent the lowest difficulties
+						eof_hover_type = eof_hover_type - 1;
+					}
+					else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - (numtabs / 2))
+					{	//If the tabs represent the highest difficulties
+						eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - numtabs + 1 + eof_hover_type;
+					}
+					else
+					{	//If the center tab represents the active difficulty
+						eof_hover_type = eof_hover_type + eof_note_type - (numtabs / 2);
+					}
+				}
+				mouse_b &= ~1;	//Clear the left mouse button status or else the tab logic will run during next loop and cause the highest difficulty to be accepted
+			}
+			if(eof_note_type != eof_hover_type)
+			{
+				eof_note_type = eof_hover_type;
+				eof_mix_find_claps();
+				eof_mix_start_helper();
+				eof_fix_window_title();
+				(void) eof_detect_difficulties(eof_song, eof_selected_track);
+				eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
+				eof_ch_sp_solution = NULL;
+			}
 		}
 	}
 	else
@@ -5070,15 +5091,16 @@ void eof_editor_logic(void)
 		{	//Full screen 3D view is not in effect
 			if(eof_scaled_mouse_x < eof_window_editor->x + eof_window_editor->w)
 			{	//If the mouse is within the horizontal boundaries of the editor window
-				if((eof_scaled_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_scaled_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
+				if((eof_scaled_mouse_x >= eof_beat_marker_boundary_x1) && (eof_scaled_mouse_x <= eof_beat_marker_boundary_x2) && (eof_scaled_mouse_y >= eof_beat_marker_boundary_y1) && (eof_scaled_mouse_y < eof_beat_marker_boundary_y2))
 				{	//mouse is in beat marker area
 					lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 					eof_prepare_menus();
 					(void) do_menu(eof_effective_beat_menu, lpos, mouse_y);
 					eof_clear_input();
 				}
-				else if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+				else if((eof_scaled_mouse_x >= eof_fretboard_boundary_x1) && (eof_scaled_mouse_x <= eof_fretboard_boundary_x2) && (eof_scaled_mouse_y >= eof_fretboard_boundary_y1) && (eof_scaled_mouse_y <= eof_fretboard_boundary_y2))
 				{	//mouse is in the fretboard area
+					eof_mouse_area = 3;
 					if(eof_hover_note >= 0)
 					{
 						if(eof_count_selected_and_unselected_notes(NULL) == 0)
@@ -5135,7 +5157,7 @@ void eof_vocal_editor_logic(void)
 	unsigned long i, notepos;
 	unsigned long tracknum;
 	EOF_SNAP_DATA drag_snap = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0}; // help with dragging across snap locations
-	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	int eof_scaled_mouse_x, eof_scaled_mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(!eof_song_loaded)
 		return;
@@ -5143,11 +5165,15 @@ void eof_vocal_editor_logic(void)
 		return;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	eof_constrain_mouse();	//Move the mouse back into its constraint boundary if necessary
+	eof_scaled_mouse_x = mouse_x;
+	eof_scaled_mouse_y = mouse_y;
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
 		eof_scaled_mouse_x = mouse_x / 2;
 		eof_scaled_mouse_y = mouse_y / 2;
 	}
+	eof_mouse_area = 0;	//Reset this before the common editor logic, which can set this variable depending on the mouse coordinates
 	eof_editor_logic_common();
 
 	if(eof_music_paused)
@@ -5164,8 +5190,9 @@ void eof_vocal_editor_logic(void)
 		}
 
 		/* mouse is in the mini keyboard area */
-		if((eof_scaled_mouse_x < 20) && (eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+		if((eof_scaled_mouse_x >= eof_mini_keyboard_boundary_x1) && (eof_scaled_mouse_x <= eof_mini_keyboard_boundary_x2) && (eof_scaled_mouse_y >= eof_mini_keyboard_boundary_y1) && (eof_scaled_mouse_y <= eof_mini_keyboard_boundary_y2))
 		{
+			eof_mouse_area = 4;
 			eof_pen_lyric.pos = -1;
 			eof_pen_lyric.length = 1;
 			eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - eof_scaled_mouse_y) / eof_screen_layout.vocal_tail_size;
@@ -5189,7 +5216,7 @@ void eof_vocal_editor_logic(void)
 		}
 
 		/* mouse is in the fretboard area */
-		else if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+		else if((eof_scaled_mouse_x >= eof_fretboard_boundary_x1) && (eof_scaled_mouse_x <= eof_fretboard_boundary_x2) && (eof_scaled_mouse_y >= eof_fretboard_boundary_y1) && (eof_scaled_mouse_y <= eof_fretboard_boundary_y2))
 		{
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a lyric the mouse is allowed to be to still be considered to hover over that lyric
 			int pos = eof_music_pos.value / eof_zoom;
@@ -5201,6 +5228,7 @@ void eof_vocal_editor_logic(void)
 			int revert_amount = 0;
 			char undo_made = 0;
 
+			eof_mouse_area = 3;
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_lyric.pos = eof_snap.pos;
@@ -5270,6 +5298,14 @@ void eof_vocal_editor_logic(void)
 				eof_click_x = eof_scaled_mouse_x;
 				eof_click_y = eof_scaled_mouse_y;
 				eof_lclick_released = 0;
+
+				//Place boundary to force mouse to stay within the fretboard area
+				eof_mouse_boundary_x1 = eof_fretboard_boundary_x1;
+				eof_mouse_boundary_x2 = eof_fretboard_boundary_x2;
+				eof_mouse_boundary_y1 = eof_fretboard_boundary_y1;
+				eof_mouse_boundary_y2 = eof_fretboard_boundary_y2;
+				eof_mouse_bound = 1;
+
 				if(eof_hover_note >= 0)
 				{
 					if(eof_selection.current != EOF_MAX_NOTES - 1)
@@ -5476,6 +5512,8 @@ void eof_vocal_editor_logic(void)
 							}
 						}
 					}
+					eof_determine_phrase_status(eof_song, eof_selected_track);
+					eof_mouse_bound = eof_mouse_boundary_x1 = eof_mouse_boundary_x2 = eof_mouse_boundary_y1 = eof_mouse_boundary_y2 = 0;	//Release the mouse from its boundary
 					eof_lclick_released = 2;	//Set the "left click release handled" status
 				}
 				else
@@ -5492,7 +5530,7 @@ void eof_vocal_editor_logic(void)
 				{
 					eof_mouse_drug++;
 					if(eof_mouse_drug == 11)
-					{
+					{	//Update x coordinate tracking every 11 frames?
 						eof_mickeys_x = eof_scaled_mouse_x - eof_click_x;
 					}
 				}
@@ -5501,7 +5539,7 @@ void eof_vocal_editor_logic(void)
 					eof_mouse_drug++;
 				}
 				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1))
-				{
+				{	//The mouse button has been held for at least ten frames and a note is selected
 					if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)
 					{	//Move notes by grid snap
 						eof_snap_logic(&drag_snap, lpos - eof_peg_x);
@@ -5531,60 +5569,62 @@ void eof_vocal_editor_logic(void)
 						}
 					}
 					if(move_offset)
+					{	//If notes are to be moved
 						eof_auto_adjust_sections(eof_song, EOF_TRACK_VOCALS, move_offset, move_direction, 0, &undo_made);	//Move lyric sections accordingly
-					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-					{	//For each lyric in the track
-						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-						if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
-							continue;	//If this lyric is not selected, skip it
-
-						if(notepos == eof_selection.current_pos)
-						{
-							if(move_direction < 0)
-							{	//Left mouse movement
-								eof_selection.current_pos -= move_offset;
-							}
-							else
-							{	//Right mouse movement
-								eof_selection.current_pos += move_offset;
-							}
-						}
-						if(move_direction < 0)
-						{	//If the user is moving lyrics left
-							if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
-							{	//If the move would make the lyric position negative or otherwise earlier than the first beat
-								move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
-							}
-						}
-						if(move_offset == 0)
-						{	//If the offset has become 0
-							break;	//Don't move the notes
-						}
-						if(!undo_made)
-						{	//Only create the undo state before moving the first note
-							eof_notes_moved = 1;
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							undo_made = 1;
-						}
-						eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
-						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated lyric position
-						if(notepos + eof_song->vocal_track[tracknum]->lyric[i]->length >= eof_chart_length)
-						{
-							revert = 1;
-							revert_amount = notepos + eof_song->vocal_track[tracknum]->lyric[i]->length - eof_chart_length;
-						}
-					}
-					if(revert)
-					{
 						for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-						{
-							if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+						{	//For each lyric in the track
+							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+							if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+								continue;	//If this lyric is not selected, skip it
+
+							if(notepos == eof_selection.current_pos)
 							{
-								eof_song->vocal_track[tracknum]->lyric[i]->pos -= revert_amount;
+								if(move_direction < 0)
+								{	//Left mouse movement
+									eof_selection.current_pos -= move_offset;
+								}
+								else
+								{	//Right mouse movement
+									eof_selection.current_pos += move_offset;
+								}
+							}
+							if(move_direction < 0)
+							{	//If the user is moving lyrics left
+								if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
+								{	//If the move would make the lyric position negative or otherwise earlier than the first beat
+									move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
+								}
+							}
+							if(move_offset == 0)
+							{	//If the offset has become 0
+								break;	//Don't move the notes
+							}
+							if(!undo_made)
+							{	//Only create the undo state before moving the first note
+								eof_notes_moved = 1;
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
+							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated lyric position
+							if(notepos + eof_song->vocal_track[tracknum]->lyric[i]->length >= eof_chart_length)
+							{
+								revert = 1;
+								revert_amount = notepos + eof_song->vocal_track[tracknum]->lyric[i]->length - eof_chart_length;
 							}
 						}
-					}
-				}
+						if(revert)
+						{
+							for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+							{
+								if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+								{
+									eof_song->vocal_track[tracknum]->lyric[i]->pos -= revert_amount;
+								}
+							}
+						}
+					}//If notes are to be moved
+				}//The mouse button has been held for at least ten frames and a note is selected
 			}//If neither full screen 3D view is is use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || (eof_key_code == KEY_INSERT))) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && ((eof_key_char == '1') || (eof_key_char == '2') || (eof_key_char == '3') || (eof_key_char == '4') || (eof_key_char == '5') || (eof_key_char == '6'))) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || (eof_key_char == '0')))
 			{	//If full screen 3D view is not in effect and input to add a note is provided
@@ -5777,7 +5817,7 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_last_tone = -1;
 			}
-		}
+		}//Mouse is in the fretboard area
 		else
 		{
 			eof_pen_visible = 0;
@@ -5811,7 +5851,7 @@ void eof_vocal_editor_logic(void)
 		}
 		else
 		{	//Full screen 3D view is not in effect
-			if((eof_scaled_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_scaled_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
+			if((eof_scaled_mouse_x >= eof_beat_marker_boundary_x1) && (eof_scaled_mouse_x <= eof_beat_marker_boundary_x2) && (eof_scaled_mouse_y >= eof_beat_marker_boundary_y1) && (eof_scaled_mouse_y < eof_beat_marker_boundary_y2))
 			{	//mouse is in beat marker area
 				int pos = eof_music_pos.value / eof_zoom;
 				int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
@@ -5820,8 +5860,9 @@ void eof_vocal_editor_logic(void)
 				(void) do_menu(eof_effective_beat_menu, lpos, mouse_y);
 				eof_clear_input();
 			}
-			else if((eof_scaled_mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (eof_scaled_mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+			else if((eof_scaled_mouse_x >= eof_fretboard_boundary_x1) && (eof_scaled_mouse_x <= eof_fretboard_boundary_x2) && (eof_scaled_mouse_y >= eof_fretboard_boundary_y1) && (eof_scaled_mouse_y <= eof_fretboard_boundary_y2))
 			{	//mouse is in the fretboard area
+				eof_mouse_area = 3;
 				if(eof_hover_note >= 0)
 				{
 					if(eof_count_selected_and_unselected_notes(NULL) == 0)
@@ -7423,7 +7464,7 @@ void eof_editor_logic_common(void)
 	int pos = eof_music_pos.value / eof_zoom;
 	int npos;
 	unsigned long i;
-	int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+	int eof_scaled_mouse_x, eof_scaled_mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
 
 	if(!eof_song_loaded)
 		return;
@@ -7436,6 +7477,9 @@ void eof_editor_logic_common(void)
 	eof_mickey_z = eof_mouse_z - mouse_z;
 	eof_mouse_z = mouse_z;
 
+	eof_constrain_mouse();	//Move the mouse back into its constraint boundary if necessary
+	eof_scaled_mouse_x = mouse_x;
+	eof_scaled_mouse_y = mouse_y;
 	if(eof_screen_zoom)
 	{	//If x2 zoom is in effect, take that into account for the mouse position
 		eof_scaled_mouse_x = mouse_x / 2;
@@ -7445,12 +7489,13 @@ void eof_editor_logic_common(void)
 	if(eof_music_paused)
 	{	//If the chart is paused
 		/* mouse is in beat marker area */
-		if((eof_scaled_mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (eof_scaled_mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
+		if((eof_scaled_mouse_x >= eof_beat_marker_boundary_x1) && (eof_scaled_mouse_x <= eof_beat_marker_boundary_x2) && (eof_scaled_mouse_y >= eof_beat_marker_boundary_y1) && (eof_scaled_mouse_y <= eof_beat_marker_boundary_y2))
 		{
+			eof_mouse_area = 2;
 			if(eof_scaled_mouse_x < eof_window_editor->x + eof_window_editor->w)
 			{	//If the mouse is within the horizontal boundaries of the editor window
 				if(eof_blclick_released)
-				{	//If the left mouse button is released
+				{	//If the left mouse button is released, determine whether the mouse is over a beat marker
 					for(i = 0; i < eof_song->beats; i++)
 					{
 						if(pos < 300)
@@ -7467,7 +7512,10 @@ void eof_editor_logic_common(void)
 						}
 						else if(eof_scaled_mouse_x < npos + 16)
 						{	//Otherwise if the mouse is within the left and right boundaries of this beat's click window
-							eof_hover_beat = i;
+							if(!(mouse_b & 1))
+							{	//Do not allow the hover beat to change while the left mouse button is being held
+								eof_hover_beat = i;
+							}
 							break;
 						}
 					}
@@ -7488,7 +7536,14 @@ void eof_editor_logic_common(void)
 					}
 
 					if(eof_blclick_released)
-					{
+					{	//If the start of the click hasn't been processed yet
+						//Place boundary to force mouse to stay within the beat marker area
+						eof_mouse_boundary_x1 = eof_beat_marker_boundary_x1;
+						eof_mouse_boundary_x2 = eof_beat_marker_boundary_x2;
+						eof_mouse_boundary_y1 = eof_beat_marker_boundary_y1;
+						eof_mouse_boundary_y2 = eof_beat_marker_boundary_y2;
+						eof_mouse_bound = 1;
+
 						if(eof_beat_num_valid(eof_song, eof_hover_beat))
 						{	//If the hover beat is a valid beat
 							if(KEY_EITHER_SHIFT)
@@ -7504,8 +7559,8 @@ void eof_editor_logic_common(void)
 						eof_mouse_drug = 0;
 					}
 
-					if(!eof_song->tags->click_drag_disabled)
-					{	//If click and drag isn't disabled, check whether a beat marker is being moved
+					if(eof_beat_num_valid(eof_song, eof_hover_beat) && !eof_song->tags->click_drag_disabled)
+					{	//If a beat was hovered over BEFORE the left mouse button was clicked, and click and drag isn't disabled, check whether a beat marker is being moved
 						if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat == 0) && (eof_mickeys_x != 0) && !((eof_mickeys_x * eof_zoom < 0) && (eof_song->beat[0]->pos == 0)))
 						{	//If moving the first beat marker
 							long rdiff = eof_mickeys_x * eof_zoom;
@@ -7594,6 +7649,7 @@ void eof_editor_logic_common(void)
 					if(!eof_blclick_released)
 					{	//If the release of the left mouse button has not been processed
 						eof_blclick_released = 1;
+						eof_mouse_bound = eof_mouse_boundary_x1 = eof_mouse_boundary_x2 = eof_mouse_boundary_y1 = eof_mouse_boundary_y2 = 0;	//Release the mouse from its boundary
 						if(!eof_song->tags->click_drag_disabled && (!eof_song->tags->tempo_map_locked || (eof_selected_beat == 0)))
 						{	//If click and drag is not disabled and either the tempo map is not locked or the first beat marker was manipulated, allow the marker to be moved
 							if(eof_mouse_drug && (eof_song->tags->ogg[0].midi_offset != eof_last_midi_offset))
@@ -7643,7 +7699,7 @@ void eof_editor_logic_common(void)
 					eof_rclick_released = 1;
 				}
 			}//If the mouse is within the horizontal boundaries of the editor window
-		}//mouse is in beat marker area
+		}//Mouse is in beat marker area
 		else
 		{
 			eof_hover_beat = ULONG_MAX;
@@ -8033,4 +8089,48 @@ unsigned long eof_get_number_displayed_tabs(void)
 	}
 
 	return numtabs;
+}
+
+void eof_constrain_mouse(void)
+{
+	if(eof_mouse_bound)
+	{	//If the mouse is being constrained within a boundary during a click and drag operation, enforce the coordinate constraints
+		int eof_scaled_mouse_x = mouse_x, eof_scaled_mouse_y = mouse_y;	//Rescaled mouse coordinates that account for the x2 zoom display feature
+		char mouse_leashed = 0;
+
+		if(eof_screen_zoom)
+		{	//If x2 zoom is in effect, take that into account for the mouse position
+			eof_scaled_mouse_x = mouse_x / 2;
+			eof_scaled_mouse_y = mouse_y / 2;
+		}
+
+		if(eof_scaled_mouse_x < eof_mouse_boundary_x1)
+		{
+			eof_scaled_mouse_x = eof_mouse_boundary_x1;
+			mouse_leashed = 1;
+		}
+		if(eof_scaled_mouse_x > eof_mouse_boundary_x2)
+		{
+			eof_scaled_mouse_x = eof_mouse_boundary_x2;
+			mouse_leashed = 1;
+		}
+		if(eof_scaled_mouse_y < eof_mouse_boundary_y1)
+		{
+			eof_scaled_mouse_y = eof_mouse_boundary_y1;
+			mouse_leashed = 1;
+		}
+		if(eof_scaled_mouse_y > eof_mouse_boundary_y2)
+		{
+			eof_scaled_mouse_y = eof_mouse_boundary_y2;
+			mouse_leashed = 1;
+		}
+		if(mouse_leashed)
+		{	//If the mouse has to be moved back into its constrained boundary
+			int newx, newy;
+
+			newx = eof_scaled_mouse_x + (eof_screen_zoom ? eof_scaled_mouse_x : 0);	//Take x2 zoom into account and get the constrained coordinates
+			newy = eof_scaled_mouse_y + (eof_screen_zoom ? eof_scaled_mouse_y : 0);
+			position_mouse(newx, newy);
+		}
+	}
 }

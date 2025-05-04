@@ -1383,6 +1383,7 @@ void eof_export_immerrock(char silent)
 	char newfolderpath[1024] = {0};
 	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct notes are exported
 	int pro_guitar_content_present = 0;
+	clock_t start_time, cur_time;
 
 	if(!eof_song || !eof_song_loaded)
 		return;	//If no project is loaded
@@ -1391,6 +1392,7 @@ void eof_export_immerrock(char silent)
 	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
 
 	eof_log("Exporting IMMERROCK files", 1);
+	start_time = clock();
 
 	//Select the tracks to export
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -1506,4 +1508,8 @@ void eof_export_immerrock(char silent)
 
 	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
 	eof_log("\tIMMERROCK export complete.", 1);
+
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIMMERROCK export completed in %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 1);
 }

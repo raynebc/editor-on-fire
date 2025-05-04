@@ -63,7 +63,7 @@ MENU eof_edit_snap_menu[] =
 	{"1/48", eof_menu_edit_snap_forty_eighth, NULL, D_USER, NULL},
 	{"1/96", eof_menu_edit_snap_ninty_sixth, NULL, D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Custom\tG", eof_menu_edit_snap_custom, NULL, D_USER, NULL},
+	{"&Custom", eof_menu_edit_snap_custom, NULL, D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Off", eof_menu_edit_snap_off, NULL, D_SELECTED | D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},

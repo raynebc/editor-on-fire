@@ -1212,7 +1212,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	unsigned char numdiffs = 5, note_type;
 	EOF_PRO_GUITAR_TRACK *tp;
 
- 	eof_log("eof_detect_difficulties() entered", 3);
+// 	eof_log("eof_detect_difficulties() entered", 3);
 
  	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
@@ -3012,6 +3012,8 @@ int eof_menu_section_mark(unsigned long section_type)
 		{	//Fret catalog entries are allowed to overlap, other sections generally are not
 			track = eof_selected_track;	//For all sections marked with this function, catalog entries excluded, the active track is the one the section applies to
 			diff = 0xFF;				//And does not apply to a specific difficulty
+			if((section_type == EOF_HANDSHAPE_SECTION) || (section_type == EOF_ARPEGGIO_SECTION))
+				diff = eof_note_type;	//The exception is arpeggio/handshape phrases, which will be defined for the active track difficulty
 			flags = 0;					//All non catalog section types are initialized with no flags
 			for(j = 0; j < section_count; j++)
 			{	//For each instance of the section in the active track
@@ -5071,7 +5073,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 	EOF_LYRIC *ptr2 = NULL;
 	EOF_PRO_GUITAR_NOTE *ptr3 = NULL;
 
- 	eof_log("eof_track_add_create_note() entered", 3);
+// 	eof_log("eof_track_add_create_note() entered", 3);
 
 	if(!sp || !track || (track >= sp->tracks))
 	{
@@ -5698,7 +5700,7 @@ int eof_song_qsort_phrases_diff_timestamp(const void * e1, const void * e2)
 
 void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
 {
- 	eof_log("eof_pro_guitar_track_sort_fret_hand_positions() entered", 3);
+// 	eof_log("eof_pro_guitar_track_sort_fret_hand_positions() entered", 3);
 
 	if(tp)
 	{
@@ -5719,7 +5721,7 @@ void eof_pro_guitar_track_sort_arpeggios(EOF_PRO_GUITAR_TRACK* tp)
 void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
 {
 	unsigned long ctr;
- 	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 3);
+// 	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 3);
 
 	if(tp && (index < tp->handpositions))
 	{
