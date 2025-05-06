@@ -3165,6 +3165,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 
 	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
+	/* set pro guitar finger values (CTRL+~, CTRL+#, when fingering view is enabled) */
 	/* toggle ghost status (CTRL+G in a pro guitar track) */
 	/* Mark/Remark arpeggio (CTRL+SHIFT+G in a pro guitar track) */
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)

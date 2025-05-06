@@ -7613,6 +7613,8 @@ void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value
 
 			if(eof_fingering_view)
 			{	//If fingering view is in effect, alter the finger value
+				if(value == 0)
+					value = 5;	//Convert from Rocksmith's numbering (0 = thumb) to EOF's numbering (5 = thumb)
 				oldvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->finger[ctr2];	//Simplify
 				if(!undo_made && (value != oldvalue))
 				{	//Make an undo state before making the first change
