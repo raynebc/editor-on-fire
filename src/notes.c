@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include <ctype.h>
+#include <math.h>
 #ifdef ALLEGRO_WINDOWS
 	#include <winalleg.h>
 #endif
@@ -405,6 +406,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 0;	//Invalid parameters
 	if(!eof_song)
 		return 0;	//No chart loaded
+
+	if(eof_selected_beat >= eof_song->beats)
+		eof_selected_beat = 0;	//If eof_selected_beat had become invalid, select the first beat
 
 	if((eof_log_level > 2) && !panel->logged)
 	{	//If exhaustive logging is enabled and this panel hasn't been logged since it was loaded
@@ -1869,7 +1873,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						(void) eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 2, 1);		//Determine techniques used by this note (including applicable technotes using this string)
 						if((tech.slideto > 0) && !tech.linknext)
 						{	//If this string of the note slides to a fret, but does not have linknext status
-							snprintf(eof_notes_macro_pitched_slide_missing_linknext, sizeof(eof_notes_macro_pitched_slide_missing_linknext) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
+							char time_string[15] = {0};
+							eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+							snprintf(eof_notes_macro_pitched_slide_missing_linknext, sizeof(eof_notes_macro_pitched_slide_missing_linknext) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
 							return 3;	//True
 						}
@@ -1902,7 +1908,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 					if(tp->pgnote[notectr]->pos == tp->tonechange[tonectr].start_pos)
 					{	//If this note starts exactly at this tone change's timestamp
-						snprintf(eof_notes_macro_note_starting_on_tone_change, sizeof(eof_notes_macro_note_starting_on_tone_change) - 1, "\"%s\" - %s - diff %u : pos %lums", tp->tonechange[tonectr].name, eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
+						char time_string[15] = {0};
+						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						snprintf(eof_notes_macro_note_starting_on_tone_change, sizeof(eof_notes_macro_note_starting_on_tone_change) - 1, "%s -diff %u: pos %s (%s)", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string, tp->tonechange[tonectr].name);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						return 3;	//True
 					}
@@ -2026,7 +2034,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Find if there's a fret hand position in effect for the note
 				if(lowestfret && fhp && (lowestfret < fhp))
 				{	//If there is a fretted string for this note, and it is below the defined FHP (if any)
-					snprintf(eof_notes_macro_note_subceeding_fhp, sizeof(eof_notes_macro_note_subceeding_fhp) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Write a string identifying the offending note
+					char time_string[15] = {0};
+					eof_notes_panel_print_time(tp->pgnote[ctr2]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+					snprintf(eof_notes_macro_note_subceeding_fhp, sizeof(eof_notes_macro_note_subceeding_fhp) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, time_string);	//Write a string identifying the offending note
 					dest_buffer[0] = '\0';
 					return 3;	//True
 				}
@@ -2060,7 +2070,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Find if there's a fret hand position in effect for the note
 						if(highestfret && fhp && (highestfret > fhp + fretcount))
 						{	//If there is a fretted string for this note, and it is exceeds the given the defined FHP (if any) by the given amount
-							snprintf(eof_notes_macro_note_exceeding_fhp, sizeof(eof_notes_macro_note_exceeding_fhp) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, tp->pgnote[ctr2]->pos);	//Write a string identifying the offending note
+							char time_string[15] = {0};
+							eof_notes_panel_print_time(tp->pgnote[ctr2]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+							snprintf(eof_notes_macro_note_exceeding_fhp, sizeof(eof_notes_macro_note_exceeding_fhp) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
 							return 3;	//True
 						}
@@ -2097,7 +2109,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						{	//If the note uses slide technique on this string
 							if(tech.slideto < 0)
 							{	//If no end of slide position is actually defined
-								snprintf(eof_notes_macro_pitched_slide_missing_end_fret, sizeof(eof_notes_macro_pitched_slide_missing_end_fret) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
+								char time_string[15] = {0};
+								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+								snprintf(eof_notes_macro_pitched_slide_missing_end_fret, sizeof(eof_notes_macro_pitched_slide_missing_end_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								return 3;	//True
 							}
@@ -2135,7 +2149,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						{	//If the note uses bend technique on this string
 							if(tech.bendstrength_q == 0)
 							{	//If no bend strength is actually defined
-								snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %lums", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, tp->pgnote[notectr]->pos);	//Write a string identifying the offending note
+								char time_string[15] = {0};
+								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+								snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								return 3;	//True
 							}
@@ -2163,6 +2179,28 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_mouse_bound)
 		{	//If the mouse coordinates are constrained
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_SELECTED_BEAT_HAS_KEY_SIGNATURE"))
+	{
+		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_KEY_SIG)
+		{	//If the selected beat has a defined key signature
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_FRET_VALUE_SHORTCUTS_LIMITED"))
+	{
+		if(eof_pro_guitar_fret_bitmask != 63)
+		{	//If the user has reduced the fret value shortcut bitmask from the default of all strings
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -2348,6 +2386,22 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		panel->allowempty = 0;
 		panel->xpos = 2;
 		panel->ypos +=12;
+		return 1;
+	}
+
+	//Change time print format to milliseconds
+	if(!ustricmp(macro, "TIME_FORMAT_MS"))
+	{
+		dest_buffer[0] = '\0';
+		panel->timeformat = 0;
+		return 1;
+	}
+
+	//Change time print format to mm:ss.ms
+	if(!ustricmp(macro, "TIME_FORMAT_MM_SS_MS"))
+	{
+		dest_buffer[0] = '\0';
+		panel->timeformat = 1;
 		return 1;
 	}
 
@@ -2788,7 +2842,22 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Selected beat position
 	if(!ustricmp(macro, "SELECTED_BEAT_POS"))
 	{
-		snprintf(dest_buffer, dest_buffer_size, "%f", eof_song->beat[eof_selected_beat]->fpos);
+		if(!panel->timeformat)
+		{	//If timestamps are to be printed in milliseconds
+			snprintf(dest_buffer, dest_buffer_size, "%f", eof_song->beat[eof_selected_beat]->fpos);
+		}
+		else
+		{
+			int min, sec, inttime;
+			double ms, time;
+
+			inttime = eof_song->beat[eof_selected_beat]->pos;	//Simplify
+			time = eof_song->beat[eof_selected_beat]->fpos;	//Simplify
+			ms = fmod(time, 1000.0);
+			min = (inttime / 1000) / 60;
+			sec = (inttime / 1000) % 60;
+			snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%f", min, sec, ms);
+		}
 		return 1;
 	}
 
@@ -2827,7 +2896,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "SELECTED_NOTE_POS"))
 	{
 		if(eof_selection.current < tracksize)
-			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
+			eof_notes_panel_print_time(eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), dest_buffer, dest_buffer_size, panel->timeformat);	//Print in the current time format
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
@@ -3137,7 +3206,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		ms = (eof_music_pos.value - eof_av_delay) % 1000;
 		if(!eof_display_seek_pos_in_seconds)
-		{	//If the seek position is to be displayed as minutes:seconds
+		{	//If the seek position is to be displayed as minutes:seconds.milliseconds
 			min = ((eof_music_pos.value - eof_av_delay) / 1000) / 60;
 			sec = ((eof_music_pos.value - eof_av_delay) / 1000) % 60;
 			snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
@@ -3165,12 +3234,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position in minutes:seconds.milliseconds format
 	if(!ustricmp(macro, "SEEK_POSITION_MIN_SEC"))
 	{
-		int min, sec, ms;
-
-		min = ((eof_music_pos.value - eof_av_delay) / 1000) / 60;
-		sec = ((eof_music_pos.value - eof_av_delay) / 1000) % 60;
-		ms = (eof_music_pos.value - eof_av_delay) % 1000;
-		snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
+		eof_notes_panel_print_time(eof_music_pos.value - eof_av_delay, dest_buffer, dest_buffer_size, 0);	//Print in mm:ss.ms format
 
 		return 1;
 	}
@@ -3217,7 +3281,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "START_POINT"))
 	{
 		if(eof_song->tags->start_point != ULONG_MAX)
-			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_song->tags->start_point);
+			eof_notes_panel_print_time(eof_song->tags->start_point, dest_buffer, dest_buffer_size, panel->timeformat);	//Print in the current time format
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
@@ -3227,7 +3291,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "END_POINT"))
 	{
 		if(eof_song->tags->end_point != ULONG_MAX)
-			snprintf(dest_buffer, dest_buffer_size, "%lu", eof_song->tags->end_point);
+			eof_notes_panel_print_time(eof_song->tags->end_point, dest_buffer, dest_buffer_size, panel->timeformat);	//Print in the current time format
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
@@ -3257,9 +3321,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		else
 		{
 			if(eof_custom_snap_measure == 0)
-				snprintf(dest_buffer, dest_buffer_size, "%s (1/%d beat)", eof_snap_name[(int)eof_snap_mode], eof_snap_interval);
+				snprintf(dest_buffer, dest_buffer_size, "1/%d b", eof_snap_interval);
 			else
-				snprintf(dest_buffer, dest_buffer_size, "%s (1/%d measure)", eof_snap_name[(int)eof_snap_mode], eof_snap_interval);
+				snprintf(dest_buffer, dest_buffer_size, "1/%d m", eof_snap_interval);
 		}
 
 		return 1;
@@ -4107,7 +4171,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if(eof_beat_num_valid(eof_song, beat))
 			{	//If the beat was found
 				eof_snap_logic(&temp, eof_song->beat[beat]->pos);	//Find grid snap length (in ms) starting at this beat
-				snprintf(dest_buffer, dest_buffer_size, "%.2fms (%.2f NPS)", temp.snap_length, 1000.0 / temp.snap_length);
+				snprintf(dest_buffer, dest_buffer_size, "%.2fms , %.2fNPS", temp.snap_length, 1000.0 / temp.snap_length);
 			}
 			else
 			{
@@ -4916,7 +4980,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		clear_to_color(panel->window->screen, eof_color_gray);
 	}
 
-	//Initialize the panel array
+	//Initialize the panel structure
 	if(!panel->logged)
 		eof_log("\t\tInitializing panel variables", 3);
 	panel->ypos = 0;
@@ -4924,6 +4988,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	panel->color = eof_color_white;
 	panel->bgcolor = -1;	//Transparent background for text
 	panel->allowempty = 0;
+	panel->timeformat = 0;
 	panel->flush = 0;
 	panel->contentprinted = 0;
 	panel->symbol = 0;
@@ -5221,4 +5286,24 @@ unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, uns
 		*maxptr = max;
 
 	return totalcount;
+}
+
+void eof_notes_panel_print_time(unsigned long time, char *dest_buffer, unsigned long dest_buffer_size, int timeformat)
+{
+	int min, sec, ms;
+
+	if(!dest_buffer || !dest_buffer_size)
+		return;
+
+	if(!timeformat)
+	{	//Display simply in milliseconds
+		snprintf(dest_buffer, dest_buffer_size, "%lums", time);
+	}
+	else
+	{	//Display in mm:ss.ms
+		ms = time % 1000;
+		min = (time / 1000) / 60;
+		sec = (time / 1000) % 60;
+		snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
+	}
 }

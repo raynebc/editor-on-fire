@@ -2918,91 +2918,91 @@ int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp, 
 
 int eof_menu_beat_ks_7_flats(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(-7, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_6_flats(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(-6, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_5_flats(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(-5, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_4_flats(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(-4, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_3_flats(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(-3, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_2_flats(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(-2, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_1_flat(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(-1, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_0_flats(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(0, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_1_sharp(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(1, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_2_sharps(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(2, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_3_sharps(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(3, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_4_sharps(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(4, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_5_sharps(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(5, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_6_sharps(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(6, eof_selected_beat, eof_song, &undo_made);
 }
 
 int eof_menu_beat_ks_7_sharps(void)
 {
-	char undo_made = 1;
+	char undo_made = 0;
 	return eof_apply_key_signature(7, eof_selected_beat, eof_song, &undo_made);
 }
 

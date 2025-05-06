@@ -18,6 +18,7 @@ typedef struct
 	int color;			//The text color in use
 	int bgcolor;		//The background color used for that text
 	int allowempty;	//A %EMPTY% macro was parsed, allow an empty output line to print to the Notes panel
+	int timeformat;	//If zero, timestamps that would print from expansion macros print as #ms milliseconds.  If nonzero, they print as mm:ss.ms
 
 	//Parsing controls
 	int flush;			//Set to nonzero if a %FLUSH% macro is parsed, signaling eof_expand_notes_window_text() to output the current content of the output buffer
@@ -114,5 +115,9 @@ unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, uns
 	//The note count in the section with the fewest notes is returned via *min if minptr is not NULL
 	//The note count in the section with the most notes is returned via *max if maxptr is not NULL
 	//Returns the total number of section notes in the active track, or 0 on error
+
+void eof_notes_panel_print_time(unsigned long time, char *dest_buffer, unsigned long dest_buffer_size, int timeformat);
+	//Writes the specified timestamp to the specified buffer
+	//If timeformat is zero, the time is written as milliseconds, otherwise as mm:ss.ms
 
 #endif
