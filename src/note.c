@@ -800,6 +800,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					}
 					else
 					{	//Render the finger number instead
+						unsigned fingernum = eof_song->pro_guitar_track[tracknum]->note[notenum]->finger[ctr];	//By default, the string's fingering will display as-is
+
 						if(eof_pro_guitar_note_fingering_valid(eof_song->pro_guitar_track[tracknum], notenum, 0) != 1)
 						{	//If the fingering is not deemed valid for this note
 							dcol = eof_color_light_red;
@@ -810,7 +812,14 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 						{
 							dcol = eof_color_even_lighter_blue;
 						}
-						snprintf(notation, 2, "%u", eof_song->pro_guitar_track[tracknum]->note[notenum]->finger[ctr]);	//Build a string out of this gem's fingering definition
+						if(!fingernum)
+							snprintf(notation, 2, " ");		//Fingering not defined for this string
+						else
+						{
+							if(fingernum == 5)
+								fingernum = 0;	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
+							snprintf(notation, 2, "%u", fingernum);
+						}
 						fretbmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, font);
 					}
 					if(fretbmp != NULL)

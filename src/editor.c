@@ -5148,6 +5148,11 @@ void eof_editor_logic(void)
 		}//Full screen 3D view is not in effect
 		eof_show_mouse(NULL);
 	}//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
+
+	if(!(mouse_b & 1))
+	{	//If the left mouse button is not being held at this point
+		eof_mouse_bound = eof_mouse_boundary_x1 = eof_mouse_boundary_x2 = eof_mouse_boundary_y1 = eof_mouse_boundary_y2 = 0;	//Release the mouse from its boundary
+	}
 }
 
 void eof_vocal_editor_logic(void)

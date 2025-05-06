@@ -3995,7 +3995,7 @@ void eof_render(void)
 		//Blitting straight to screen causes flickery menus
 		//Drawing the menu half size and then stretching it to full size makes it unreadable, but that may be better than not rendering them at all
 		//The highest quality (and most memory wasteful) solution would require another large bitmap to render the x2 program window and then the x1 menus on top, which would then be blit to screen
-		eof_log("\tPerforming x2 blit.", 3);
+//		eof_log("\tPerforming x2 blit.", 3);
 		stretch_blit(eof_screen, eof_screen2, 0, 0, eof_screen_width, eof_screen_height, 0, 0, SCREEN_W, SCREEN_H);	//Stretch blit the screen to another bitmap
 		#ifndef ALLEGRO_LEGACY
 			if(notes_are_selected)
@@ -4807,10 +4807,10 @@ int eof_initialize(int argc, char * argv[])
 	eof_log("\tInitializing audio", 1);
 	eof_mix_init();
 	if(!eof_soft_cursor)
-	{
+	{	//If not using the software mouse
 		if(show_os_cursor(2) < 0)
-		{
-			eof_soft_cursor = 1;
+		{	//If the OS mouse cannot be displayed
+			eof_soft_cursor = 1;	//Revert to the software mouse
 		}
 	}
 	gametime_init(eof_logic_rate); // set timer to run at logic_rate

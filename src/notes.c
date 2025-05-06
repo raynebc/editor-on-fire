@@ -1678,7 +1678,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "IF_PG_NOTE_OCCURS_BEFORE_MILLIS_");	//Get a pointer to the text that would be the millisecond count
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long ctr2, mscount;
+		unsigned long mscount;
 		EOF_PRO_GUITAR_TRACK *tp;
 
 		if(eof_read_macro_number(count_string, &mscount))
@@ -1689,15 +1689,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					continue;	//Skip non pro guitar tracks
 
 				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
-				for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
-				{	//For each normal note in the track
-					if(tp->pgnote[ctr2]->pos < mscount)
-					{	//If the note begins before the specified time
+				if(tp->pgnotes)
+				{	//If there's at least one normal note in the track
+					if(tp->pgnote[0]->pos < mscount)
+					{	//If the first normal note begins before the specified time
 						dest_buffer[0] = '\0';
 						return 3;	//True
 					}
-					else
-						 break;	//This and all remaining notes in the track are at or after the specified time, skip checking these
 				}
 			}
 		}

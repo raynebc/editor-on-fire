@@ -1997,10 +1997,10 @@ void eof_apply_display_settings(int mode)
 	}
 	set_palette(eof_palette);
 	if(!eof_soft_cursor)
-	{
+	{	//If not using the software mouse
 		if(show_os_cursor(2) < 0)
-		{
-			eof_soft_cursor = 1;
+		{	//If the OS mouse cannot be displayed
+			eof_soft_cursor = 1;	//Revert to the software mouse
 		}
 	}
 	else
@@ -2937,10 +2937,10 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		}
 
 		if(!eof_soft_cursor)
-		{
+		{	//If not using the software mouse
 			if(show_os_cursor(2) < 0)
-			{
-				eof_soft_cursor = 1;
+			{	//If the OS mouse cannot be displayed
+				eof_soft_cursor = 1;	//Revert to the software mouse
 			}
 		}
 
@@ -3057,10 +3057,10 @@ int eof_new_chart(char * filename)
 		return 1;	//Return failure
 
 	if(!eof_soft_cursor)
-	{
+	{	//If not using the software mouse
 		if(show_os_cursor(2) < 0)
-		{
-			eof_soft_cursor = 1;
+		{	//If the OS mouse cannot be displayed
+			eof_soft_cursor = 1;	//Revert to the software mouse
 		}
 	}
 
@@ -6000,6 +6000,7 @@ int eof_set_3d_camera_angle(void)
 
 int eof_toggle_display_zoom(void)
 {
+	eof_log("\tToggling x2 zoom", 1);
 	eof_screen_zoom ^= 1;	//Toggle this value
 	(void) eof_set_display_mode(eof_screen_width, eof_screen_height);	//Redefine graphic primitive sizes to fit 480 height display mode
 
@@ -6007,6 +6008,14 @@ int eof_toggle_display_zoom(void)
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
+
+	//Re-initialize the notes panel if it was destroyed when the program window was redrawn
+	if(eof_enable_notes_panel)
+	{
+		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
+		(void) eof_display_notes_panel();
+	}
+
 	eof_render();
 	eof_prepare_file_menu();		//The checkmark indicating the status of this feature doesn't reliably update when activating/de-activating by keyboard, force it to update
 	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard

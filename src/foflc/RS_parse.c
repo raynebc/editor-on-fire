@@ -66,6 +66,8 @@ void Export_RS(FILE *outf)
 
 		while(temp != NULL)				//For each piece of lyric in this line
 		{
+			unsigned long duration = temp->duration;	//By default, the lyric's length exports as-is
+
 			if(Lyrics.rocksmithver == 2)
 			{	//If Rocksmith 2014 format is being exported, the maximum length per lyric is 48 characters
 				expand_xml_text(buffer2, sizeof(buffer2) - 1, temp->lyric, 48, 2, 1, 0, NULL);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field.  Allow characters that are supported in lyrics but not other parts of the RS XML.
@@ -98,7 +100,11 @@ void Export_RS(FILE *outf)
 			else
 				suffix = nonewline;
 
-			if(fprintf(outf,"  <vocal time=\"%.3f\" note=\"%u\" length=\"%.3f\" lyric=\"%s%s\"/>\n", (double)temp->start / 1000.0, temp->pitch, (double)temp->duration / 1000.0, buffer3, suffix) < 0)
+			if(temp->next && (temp->next->start >= temp->start + temp->duration + 1000) && (temp->lyric[strlen(temp->lyric) - 1] != '-'))
+			{	//If there is a next lyric, it starts at least a second after the end of this lyric and this lyric doesn't end in a hyphen to force the game to group it into the same line, Rocksmith 2014 would automatically inject a line break after this lyric
+				duration = temp->next->start - 500 - temp->start;	//Pad this lyric to end only half a second before the next lyric to prevent this line break injection and enforce the defined lyric lines
+			}
+			if(fprintf(outf,"  <vocal time=\"%.3f\" note=\"%u\" length=\"%.3f\" lyric=\"%s%s\"/>\n", (double)temp->start / 1000.0, temp->pitch, (double)duration / 1000.0, buffer3, suffix) < 0)
 			{
 				printf("Error exporting lyric %lu\t%lu\ttext\t%s%s: %s\nAborting\n",temp->start,temp->duration,temp->lyric,suffix,strerror(errno));
 				exit_wrapper(2);
