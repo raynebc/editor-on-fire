@@ -66,6 +66,8 @@ int eof_lookup_default_string_tuning(EOF_PRO_GUITAR_TRACK *tp, unsigned long tra
 	//-1 is returned upon error
 int eof_lookup_default_string_tuning_absolute(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum);
 	//Determines the default tuning of the given string for the given pro guitar/bass track, taking the number of strings into account for pro bass
+	//The track parameter is used as a means to determine if the track in question is either of the native bass tracks, which are assumed to be
+	// bass arrangements even when the arrangement type is undefined
 	//The returned number is the absolute MIDI note upon success
 	//-1 is returned upon error
 int eof_lookup_tuned_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum, int halfsteps);
@@ -106,6 +108,8 @@ char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureopt
 
 int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track);
 	//Returns nonzero if the track number reflects a bass track, or if the track's arrangement type is set to 4 (Bass)
+	//The track parameter is used as a means to determine if the track in question is either of the native bass tracks, which are assumed to be
+	// bass arrangements even when the arrangement type is undefined
 
 int eof_track_is_drop_tuned(EOF_PRO_GUITAR_TRACK *tp);
 	//Returns nonzero if the specified track's lowest string is tuned below standard more half steps than all other strings

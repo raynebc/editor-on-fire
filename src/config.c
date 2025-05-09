@@ -66,6 +66,14 @@ void eof_load_config(char * fn)
 	set_default_controller_config();
 	set_config_file(fn);
 
+	if(!exists(fn))
+	{
+		eof_etext[0] = '\0';	//Empty this string
+		(void) eof_lookup_program_folder(eof_etext, sizeof(eof_etext) - 1);
+		eof_log("Configuration file not found, reverting to default", 1);
+		allegro_message("The configuration file (eof.cfg) does not exist, reverting to all default settings.  You can import your settings from another EOF installation by copying its eof.cfg file to this installation's program folder (%s)", eof_etext);
+	}
+
 	/* read configuration */
 	eof_av_delay = get_config_int("config", "av_delay", 300);
 	eof_midi_tone_delay = get_config_int("config", "eof_midi_tone_delay", 0);

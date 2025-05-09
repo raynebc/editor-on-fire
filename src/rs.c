@@ -5245,7 +5245,7 @@ void eof_load_chord_shape_definitions(char *fn)
 						else
 						{	//Memory was allocated
 							memset(eof_chord_shape[num_eof_chord_shapes].name, 0, length + 1);	//Initialize memory block to 0
-							strncpy(eof_chord_shape[num_eof_chord_shapes].name, name, length + 1);
+							strncpy(eof_chord_shape[num_eof_chord_shapes].name, name, length);
 							memcpy(eof_chord_shape[num_eof_chord_shapes].finger, finger, 8);	//Store the finger array
 							memcpy(eof_chord_shape[num_eof_chord_shapes].frets, frets, 8);		//Store the fret array
 							eof_chord_shape[num_eof_chord_shapes].note = note;			//Store the note mask

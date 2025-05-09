@@ -6555,6 +6555,28 @@ static int exe_is_bundle(const char * fn)
 }
 #endif
 
+int eof_lookup_program_folder(char *path, unsigned long pathsize)
+{
+	if(!path || !pathsize)
+		return 0;	//Error
+
+	get_executable_name(path, pathsize);
+	#ifdef ALLEGRO_MACOSX
+		if(exe_is_bundle(path))
+		{
+			(void) strncat(path, "/Contents/Resources/eof/", pathsize - strlen(path) - 1);
+		}
+		else
+		{
+			(void) replace_filename(path, path, "", pathsize);
+		}
+	#else
+		(void) replace_filename(path, path, "", pathsize);
+	#endif
+
+	return 1;	//Success
+}
+
 int eof_validate_temp_folder(void)
 {
 	char correct_wd[1024], cwd[1024];

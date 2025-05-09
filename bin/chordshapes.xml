@@ -1,4 +1,7 @@
 ;Power chords -------------------------------------------------------------------------
+;Barred, drop tuning
+<chordTemplate chordName=""		finger0="1" finger1="1" finger2="-1" finger3="-1" finger4="-1" finger5="-1" fret0="1" fret1="1" fret2="-1" fret3="-1" fret4="-1" fret5="-1" />
+<chordTemplate chordName=""		finger0="1" finger1="1" finger2="1" finger3="-1" finger4="-1" finger5="-1" fret0="1" fret1="1" fret2="1" fret3="-1" fret4="-1" fret5="-1" />
 
 ;Open
 ;Also applies to all other chords that use only one finger (e.g. Em7)

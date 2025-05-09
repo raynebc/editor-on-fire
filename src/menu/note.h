@@ -51,9 +51,32 @@ int eof_menu_note_clear_flag(unsigned char function, unsigned char track_format,
 	//If no notes are manually selected, but Feedback input mode is in effect, any note at the current seek position is instead modified by this function
 	//Functions that do nothing more than clear one or more bits can call this, otherwise they will need to perform their own logic
 
-int eof_transpose_possible(int dir);			//Tests ability of instrument/vocal pitches to transpose (lower) by the given amount
+int eof_transpose_possible(int dir);
+	//Tests ability of all selected instrument/vocal pitches to transpose (lower) by the given amount
+	//dir < 0 is transpose up, dir > 0 is transpose down
+int eof_note_can_pitch_transpose(EOF_SONG *sp, unsigned long track, unsigned long notenum, int dir);
+	//Tests ability of the one specified pro guitar note to transpose up/down one string while maintaining the same played pitches
+	//dir < 0 is transpose up, dir > 0 is transpose down
+	//Returns nonzero if the specified note can be transposed in the specified direction
+int eof_pitched_transpose_possible(int dir, char option);
+	//Tests ability of selected pro guitar notes to transpose up/down one string while maintaining the same played pitches
+	//dir < 0 is transpose up, dir > 0 is transpose down
+	//If option is zero, this function returns nonzero if ALL selected notes are capable of being transposed
+	//If option is nonzero, this function returns nonzero if ANY selected notes are capable of being transposed
+void eof_menu_note_transpose_tech_notes(int dir);
+	//If tech view is not in effect, this function moves the tech notes that apply to all selected pro guitar notes in a transpose operation
+	//dir < 0 is transpose up, dir > 0 is transpose down
 int eof_menu_note_transpose_up(void);
 int eof_menu_note_transpose_down(void);
+int eof_menu_note_pitched_transpose(int dir, char option);
+	//If tech view is not in effect, this function transposes pro guitar notes up/down one string while maintaining the same played pitches
+	//dir < 0 is transpose up, dir > 0 is transpose down
+	//If option is zero, this function only alters selected notes if ALL of them are capable of being transposed
+	//If option is nonzero, this function alters ANY selected notes that are capable of being transposed, and highlights those that cannot be transposed
+int eof_menu_note_pitched_transpose_up(void);
+	//Uses eof_menu_note_pitched_transpose() to transpose selected pro guitar normal notes up, with option 1
+int eof_menu_note_pitched_transpose_down(void);
+	//Uses eof_menu_note_pitched_transpose() to transpose selected pro guitar normal notes down, with option 1
 int eof_menu_note_transpose_down_octave(void);	//Moves selected lyrics down one octave if possible
 int eof_menu_note_transpose_up_octave(void);	//Moves selected lyrics up one octave if possible
 

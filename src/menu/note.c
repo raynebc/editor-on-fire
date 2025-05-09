@@ -8,6 +8,7 @@
 #include "../player.h"
 #include "../utility.h"
 #include "../main.h"
+#include "../midi.h"
 #include "../mix.h"
 #include "../note.h"
 #include "../pathing.h"
@@ -34,6 +35,8 @@ char eof_tremolo_menu_mark_text[32] = "&Mark";
 char eof_slider_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_text[32] = "&TrIll";
 char eof_tremolo_menu_text[32] = "Tre&Molo";
+
+int eof_suppress_pitched_transpose_warning = 0;		//Set to nonzero if user opts to suppress the warning that selected notes could not pitch transpose
 
 MENU eof_menu_solo_copy_menu[EOF_TRACKS_MAX] =
 {
@@ -164,9 +167,9 @@ MENU eof_pro_guitar_slide_menu[] =
 
 MENU eof_pro_guitar_strum_menu[] =
 {
-	{"Toggle strum &Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
+	{"Toggle strum &Up\tShift+U", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
 	{"Toggle strum &Mid\tShift+M", eof_pro_guitar_toggle_strum_mid, NULL, 0, NULL},
-	{"Toggle strum &Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
+	{"Toggle strum &Down\tShift+D", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
 	{"&Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -441,6 +444,8 @@ MENU eof_note_proguitar_menu[] =
 	{"Toggle ghost\t"  CTRL_NAME "+G", eof_menu_note_toggle_ghost, NULL, 0, NULL},
 	{"Remove &Ghost", eof_menu_note_remove_ghost, NULL, 0, NULL},
 	{"Toggle string mute\tShift+X", eof_menu_pro_guitar_toggle_string_mute, NULL, 0, NULL},
+	{"Pitched tranpose &Up\tShift+Up", eof_menu_note_pitched_transpose_up, NULL, 0, NULL},
+	{"Pitched tranpose &Down\tShift+Down", eof_menu_note_pitched_transpose_down, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1234,6 +1239,9 @@ void eof_prepare_note_menu(void)
 						eof_handshape_menu[2].flags = 0;		//Enable Note>Rocksmith>Handshape>Erase All
 					}
 				}
+
+				eof_note_proguitar_menu[20].flags = eof_pitched_transpose_possible(-1, 1) ? 0 : D_DISABLED;	//Note>Pro guitar>Pitched transpose up
+				eof_note_proguitar_menu[21].flags = eof_pitched_transpose_possible(1, 1) ? 0 : D_DISABLED;	//Note>Pro guitar>Pitched transpose down
 			}
 			else
 			{	//A pro guitar track is not active
@@ -1430,10 +1438,51 @@ void eof_prepare_note_menu(void)
 	}//if(eof_song && eof_song_loaded)
 }
 
+void eof_menu_note_transpose_tech_notes(int dir)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long normalnote = 0;	//The normal note that a tech note is found to apply to
+	unsigned long i;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view || eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		return;	//Don't run unless a pro guitar track is active, legacy view is not in effect and tech view is not in effect
+
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+	if(tp->note != tp->technote)
+	{	//If tech view is not in effect, check whether any of the tech notes apply to normal notes about to be transposed
+		unsigned long higheststringmask = 1 << (tp->numstrings - 1);
+		unsigned long max = (1 << tp->numstrings) - 1;	//This represents the combination of all usable lanes, based on the current track options (including open bass strumming)
+
+		for(i = 0; i < tp->technotes; i++)
+		{	//For each tech note in the active track
+			if(tp->technote[i]->type == eof_note_type)
+			{	//If the tech note is in the active difficulty
+				if(eof_pro_guitar_tech_note_overlaps_a_note(tp, i, 0xFF, &normalnote))
+				{	//If this tech note overlaps any normal note on any string
+					if(normalnote < EOF_MAX_NOTES)
+					{	//Bounds check
+						if(eof_selection.multi[normalnote])
+						{	//If the normal note this tech note overlaps is selected
+							if((dir > 0) && !(tp->technote[i]->note & 1))
+							{	//If transposing down, and this tech note has no gems on lane 1, it can transpose down one lane
+								tp->technote[i]->note = (tp->technote[i]->note >> 1) & 63;
+							}
+							else if((dir < 0) && !(tp->technote[i]->note & higheststringmask))
+							{	//If transposing up, and this tech note has no gems on the highest valid lane, it can transpose up one lane
+								tp->technote[i]->note = (tp->technote[i]->note << 1) & max;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 int eof_menu_note_transpose_up(void)
 {
 	unsigned long i, j;
-	unsigned long max = 31;	//This represents the highest valid note bitmask, based on the current track options (including open bass strumming)
+	unsigned long max = 31;	//This represents the combination of all usable lanes, based on the current track options (including open bass strumming)
 	unsigned long flags, note, tracknum;
 	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 
@@ -1465,43 +1514,8 @@ int eof_menu_note_transpose_up(void)
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 
-			//Transpose tech notes if applicable, must be transposed first because after the normal note set is transposed, the applicable tech notes won't be identifiable
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{
-				EOF_PRO_GUITAR_TRACK *tp;
-				unsigned long normalnote = 0;	//The normal note that a tech note is found to apply to
-
-				tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-				if(tp->note != tp->technote)
-				{	//If tech view is not in effect, check whether any of the tech notes apply to normal notes about to be transposed
-					for(i = 0; i < tp->technotes; i++)
-					{	//For each tech note in the active track
-						if(tp->technote[i]->type == eof_note_type)
-						{	//If the tech note is in the active difficulty
-							if(eof_pro_guitar_tech_note_overlaps_a_note(tp, i, 0xFF, &normalnote))
-							{	//If this tech note overlaps any normal note on any string
-								if(normalnote < EOF_MAX_NOTES)
-								{	//Bounds check
-									if(eof_selection.multi[normalnote])
-									{	//If the normal note this tech note overlaps is selected
-										unsigned long higheststringmask = 1 << (tp->numstrings - 1);
-
-										if(!(tp->technote[i]->note & higheststringmask))
-										{	//If this tech note has no gems on the highest valid lane, it can transpose up one lane
-											tp->technote[i]->note = (tp->technote[i]->note << 1) & max;
-											for(j = 0; j < 7; j++)
-											{	//For the 7 supported lower frets
-												tp->technote[i]->frets[j] = tp->technote[i]->frets[j+1];		//Cycle fret values down from upper lane
-											}
-											tp->technote[i]->frets[0] = 0xFF;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+			//Transpose tech notes if applicable (ie. tech view is not already in effect), must be transposed first because after the normal note set is transposed, the applicable tech notes won't be identifiable
+			eof_menu_note_transpose_tech_notes(-1);
 
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
@@ -1586,41 +1600,8 @@ int eof_menu_note_transpose_down(void)
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 
-			//Transpose tech notes if applicable, must be transposed first because after the normal note set is transposed, the applicable tech notes won't be identifiable
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{
-				EOF_PRO_GUITAR_TRACK *tp;
-				unsigned long normalnote = 0;	//The normal note that a tech note is found to apply to
-
-				tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-				if(tp->note != tp->technote)
-				{	//If tech view is not in effect, check whether any of the tech notes apply to normal notes about to be transposed
-					for(i = 0; i < tp->technotes; i++)
-					{	//For each tech note in the active track
-						if(tp->technote[i]->type == eof_note_type)
-						{	//If the tech note is in the active difficulty
-							if(eof_pro_guitar_tech_note_overlaps_a_note(tp, i, 0xFF, &normalnote))
-							{	//If this tech note overlaps any normal note on any string
-								if(normalnote < EOF_MAX_NOTES)
-								{	//Bounds check
-									if(eof_selection.multi[normalnote])
-									{	//If the normal note this tech note overlaps is selected
-										if(!(tp->technote[i]->note & 1))
-										{	//If this tech note has no gems on lane 1, it can transpose down one lane
-											tp->technote[i]->note = (tp->technote[i]->note >> 1) & 63;
-											for(j = 0; j < 7; j++)
-											{	//For the 7 supported lower frets
-												tp->technote[i]->frets[j] = tp->technote[i]->frets[j+1];		//Cycle fret values down from upper lane
-											}
-											tp->technote[i]->frets[7] = 0xFF;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+			//Transpose tech notes if applicable (ie. tech view is not already in effect), must be transposed first because after the normal note set is transposed, the applicable tech notes won't be identifiable
+			eof_menu_note_transpose_tech_notes(1);
 
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
@@ -1667,6 +1648,120 @@ int eof_menu_note_transpose_down(void)
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
+}
+
+int eof_menu_note_pitched_transpose(int dir, char option)
+{
+	unsigned long max;	//This represents the combination of all usable lanes, based on the number of strings in the track
+	unsigned long notectr, stringctr, targetstring, bitmask;
+	EOF_PRO_GUITAR_TRACK *tp;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	unsigned char pitchmask, pitches[6] = {0}, stringpitch, note, ghost;
+	char warned = 0;
+
+	if(dir > 1)
+		dir = 1;	//Bounds check the dir parameter
+	else if(dir < -1)
+		dir = -1;
+	else if(!dir)
+		return 0;	//A direction of 0 effectively means do nothing
+
+	if(!eof_pitched_transpose_possible(dir, option))
+	{
+		if(option)
+			allegro_message("No selected notes can pitch transpose %s", (dir < 0) ? "up" : "down");
+
+		return 0;	//Don't run unless a pro guitar track is active, legacy view is not in effect, tech view is not in effect and the specified criterion of all notes or any notes being able to transpose is met
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
+	max = (1 << tp->numstrings) - 1;
+
+	//Transpose tech notes if applicable, must be transposed first because after the normal note set is transposed, the applicable tech notes won't be identifiable
+	eof_menu_note_transpose_tech_notes(dir);
+
+	for(notectr = 0; notectr < eof_get_track_size(eof_song, eof_selected_track); notectr++)
+	{	//For each note in the active track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[notectr] || (eof_get_note_type(eof_song, eof_selected_track, notectr) != eof_note_type))
+			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
+
+		if(eof_note_can_pitch_transpose(eof_song, eof_selected_track, notectr, dir))
+		{	//If this note can transpose
+			char newfrets[8] = {0};
+
+			note = eof_get_note_note(eof_song, eof_selected_track, notectr);
+			ghost = eof_get_note_ghost(eof_song, eof_selected_track, notectr);
+			pitchmask = eof_get_midi_pitches(eof_song, eof_selected_track, notectr, pitches);
+
+			///Transpose fret values first, because eof_set_note_note() will clear fret values for unused strings
+			for(stringctr = 0, bitmask = 1; stringctr < tp->numstrings; stringctr++, bitmask <<= 1)
+			{	//For each string in this track
+				if(!stringctr && (dir > 0))
+					continue;	//If transposing down and this is the lowest string, skip it
+				targetstring = stringctr - dir;		//Determine the string the pitch is tranposing to
+				if(targetstring >= tp->numstrings)
+					continue;	//If transposing up and this is the highest string, skip it
+
+				if(pitchmask & bitmask)
+				{	//If this string has a pitch to transpose
+					stringpitch =  tp->tuning[targetstring] + eof_lookup_default_string_tuning_absolute(tp, eof_selected_track, targetstring) + tp->capo;	//Determine the pitch of the string the note pitch will transpose to
+					if(stringpitch > pitches[stringctr])
+						return 0;	//Logic error
+					newfrets[targetstring] = pitches[stringctr] - stringpitch;
+					if(newfrets[targetstring] > tp->numfrets)
+						return 0;	//Logic error
+				}
+				else
+				{	//There is no pitch (ie. this string isn't used, or is a ghosted or string muted gem)
+					newfrets[targetstring] = tp->pgnote[notectr]->frets[stringctr];	//Retain the string's existing fret value and transpose it up/down one string
+				}
+			}
+			memcpy(tp->pgnote[notectr]->frets, newfrets, sizeof(newfrets));
+
+			//Transpose the note bitmask
+			if(dir < 0)
+				note = (note << 1) & max;	//Transpose up
+			else
+				note = (note >> 1) & max;	//Transpose down
+			eof_set_note_note(eof_song, eof_selected_track, notectr, note);
+
+			//Transpose the ghost bitmask
+			if(dir < 0)
+				ghost = (ghost << 1) & max;	//Transpose up
+			else
+				ghost = (ghost >> 1) & max;	//Transpose down
+			eof_set_note_ghost(eof_song, eof_selected_track, notectr, ghost);
+		}//If this note can transpose
+		else
+		{
+			if(!eof_suppress_pitched_transpose_warning && !warned)
+			{
+				if(alert("At least one selected note could not pitch transpose", "", "They will be highlighted.", "OK", "Don't warn me", 0, 0) == 2)
+				{	//If user opts opts to suppress this warning
+					eof_suppress_pitched_transpose_warning = 1;
+				}
+				warned = 1;
+			}
+			tp->pgnote[notectr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Apply highlight status
+		}
+	}//For each note in the active track
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_pitched_transpose_up(void)
+{
+	return eof_menu_note_pitched_transpose(-1, 1);
+}
+
+int eof_menu_note_pitched_transpose_down(void)
+{
+	return eof_menu_note_pitched_transpose(1, 1);
 }
 
 int eof_menu_note_transpose_up_octave(void)
@@ -4176,14 +4271,17 @@ int eof_transpose_possible(int dir)
 					if((eof_get_note_note(eof_song, eof_selected_track, i) == 0) || (eof_get_note_note(eof_song, eof_selected_track, i) == EOF_LYRIC_PERCUSSION))
 					{	//Cannot transpose a pitchless lyric or a vocal percussion note
 						retval = 0;
+						break;
 					}
 					else if(eof_get_note_note(eof_song, eof_selected_track, i) - dir < EOF_LYRIC_PITCH_MIN)
 					{
 						retval = 0;
+						break;
 					}
 					else if(eof_get_note_note(eof_song, eof_selected_track, i) - dir > EOF_LYRIC_PITCH_MAX)
 					{
 						retval = 0;
+						break;
 					}
 				}
 			}
@@ -4230,18 +4328,130 @@ int eof_transpose_possible(int dir)
 				if(note == 0)
 				{	//Special case: In legacy view, a note's legacy bitmask is undefined
 					retval = 0;	//Disallow tranposing for this selection of notes
+					break;
 				}
 				else if((note & 1) && (dir > 0))
 				{
 					retval = 0;
+					break;
 				}
 				else if((note & max) && (dir < 0))
 				{
 					retval = 0;
+					break;
 				}
 			}
 		}
 	}
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return retval;
+}
+
+int eof_note_can_pitch_transpose(EOF_SONG *sp, unsigned long track, unsigned long notenum, int dir)
+{
+	unsigned char note, pitchmask, pitches[6] = {0}, stringpitch;
+	unsigned long stringctr, bitmask, targetstring;
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long max;	//This represents the highest note bitmask value that the track can allow, the point at which the note cannot transpose up, based on the number of strings used in this track
+
+	if(dir > 1)
+		dir = 1;	//Bounds check the dir parameter
+	else if(dir < -1)
+		dir = -1;
+	else if(!dir)
+		return 0;	//A direction of 0 effectively means do nothing
+
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view || eof_menu_track_get_tech_view_state(sp, track))
+		return 0;	//Only pro guitar tracks when legacy and tech views are disabled can use pitched transpose
+
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
+	if(tp->numstrings < 4)
+		return 0;	//A string count less than 4 would be unexpected
+	max = 1 << (tp->numstrings - 1);
+	note = eof_get_note_note(eof_song, eof_selected_track, notenum);
+
+	//Check whether the note bitmask can transpose
+	if((note & 1) && (dir > 0))
+		return 0;	//Can't transpose down if this note has a gem on the lowest lane
+	else if((note & max) && (dir < 0))
+		return 0;	//Can't transpose up if this note has a gem on the highest lane
+
+	//Check whether each pitch played in the note can transpose
+	pitchmask = eof_get_midi_pitches(sp, track, notenum, pitches);
+	for(stringctr = 0, bitmask = 1; stringctr < tp->numstrings; stringctr++, bitmask <<= 1)
+	{	//For each string in this track
+		if(pitchmask & bitmask)
+		{	//If this string has a pitch to transpose
+			targetstring = stringctr - dir;		//Determine the string the pitch is tranposing to
+			stringpitch =  tp->tuning[targetstring] + eof_lookup_default_string_tuning_absolute(tp, track, targetstring) + tp->capo;	//Determine the pitch of the string the note pitch will transpose to
+
+			if(pitches[stringctr] < stringpitch)
+				return 0;	//The note's pitch is too low to be played on this string
+
+			if(pitches[stringctr] > stringpitch + tp->numfrets)
+				return 0;	//The note's pitch is too high to be played on this string
+		}
+	}
+
+	return 1;
+}
+
+int eof_pitched_transpose_possible(int dir, char option)
+{
+	unsigned long notectr;
+	int retval = 0;	//The return value cannot become true unless at least one note is able to transpose
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	EOF_PRO_GUITAR_TRACK *tp;
+	char success;	//Tracks the transpose-ability of the individual note being examined
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view || eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		return 0;	//Don't run unless a pro guitar track is active, legacy view is not in effect and tech view is not in effect
+
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
+	if(tp->numstrings < 4)
+		return 0;	//A string count less than 4 would be unexpected
+
+	if(dir > 1)
+		dir = 1;	//Bounds check the dir parameter
+	else if(dir < -1)
+		dir = -1;
+	else if(!dir)
+		return 0;	//A direction of 0 effectively means do nothing
+
+	/* no selected notes, no transpose */
+	if(eof_get_track_size(eof_song, eof_selected_track) == 0)
+	{
+		retval = 0;
+	}
+	else if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		retval = 0;
+	}
+	else
+	{
+		for(notectr = 0; notectr < eof_get_track_size(eof_song, eof_selected_track); notectr++)
+		{	//For each note in the active track
+			if((eof_selection.track != eof_selected_track) || !eof_selection.multi[notectr] || (eof_get_note_type(eof_song, eof_selected_track, notectr) != eof_note_type))
+				continue;	//If the note isn't selected or in the active track difficulty, skip it
+
+			success = eof_note_can_pitch_transpose(eof_song, eof_selected_track, notectr, dir);	//Determine whether this note can be transposed
+
+			if(!option && !success)
+			{	//If the option parameter indicates all selected notes must be able to transpose, and this note cannot
+				retval = 0;	//This function will return false
+				break;
+			}
+			if(option && success)
+			{	//If the option parameter indicates any of the selected notes must be able to transpose, and this note can
+				retval = 1;	//This function will return true
+				break;
+			}
+		}
+	}
+
 	if(note_selection_updated)
 	{	//If the note selection was originally empty and was dynamically updated
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection

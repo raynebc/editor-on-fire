@@ -1784,7 +1784,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* transpose note up (Up, non Feedback input methods, normal seek controls) */
 	/* seek forward (Up, Feedback style seek direction controls) */
 	/* seek forward one grid snap (Up, Feedback input method) */
-	/* toggle pro guitar strum up (SHIFT+Up in a pro guitar track, non Feedback input modes) */
+	/* pitched transpose up (SHIFT+Up in a pro guitar track, non Feedback input modes) */
 	if(key[KEY_UP])
 	{
 		if(KEY_EITHER_SHIFT)
@@ -1834,7 +1834,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{
 						eof_shift_used = 1;	//Track that the SHIFT key was used
-						(void) eof_pro_guitar_toggle_strum_up();
+						(void) eof_menu_note_pitched_transpose_up();
 					}
 				}
 				else if(eof_music_paused && !eof_music_catalog_playback)
@@ -1886,7 +1886,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* transpose note down (Down, non Feedback input methods) */
 	/* seek backward one grid snap (Down, Feedback input method, normal seek controls) */
 	/* seek backward (Down, Feedback style seek direction controls) */
-	/* toggle pro guitar strum down (SHIFT+Down in a pro guitar track, non Feedback input modes) */
+	/* pitched transpose down (SHIFT+Down in a pro guitar track, non Feedback input modes) */
 	if(key[KEY_DOWN])
 	{
 		if(KEY_EITHER_SHIFT)
@@ -1936,7 +1936,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{
 						eof_shift_used = 1;	//Track that the SHIFT key was used
-						(void) eof_pro_guitar_toggle_strum_down();
+						(void) eof_menu_note_pitched_transpose_down();
 					}
 				}
 				else if(eof_music_paused && !eof_music_catalog_playback)
@@ -2935,6 +2935,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* deselect all (CTRL+D) */
 	/* double BPM (CTRL+SHIFT+D) */
 	/* conditional deselect (ALT+D) */
+	/* toggle pro guitar strum down (SHIFT+D in a pro guitar track, non Feedback input modes) */
 		if(eof_key_char == 'd')
 		{
 			if(KEY_EITHER_CTRL)
@@ -2950,6 +2951,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					(void) eof_menu_edit_deselect_all();
 					eof_use_key();
 				}
+			}
+			else if(KEY_EITHER_SHIFT)
+			{	//If SHIFT is held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_pro_guitar_toggle_strum_down();
 			}
 		}
 		if(eof_key_code == KEY_D)
@@ -3009,11 +3015,20 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 
 	/* toggle unpitched slide (CTRL+U in a pro guitar track) */
-		if((eof_key_char == 'u') && KEY_EITHER_CTRL)
+	/* toggle pro guitar strum up (SHIFT+U in a pro guitar track, non Feedback input modes) */
+		if(eof_key_char == 'u')
 		{
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
-				(void) eof_pro_guitar_note_define_unpitched_slide();
+				if(KEY_EITHER_CTRL)
+				{	//CTRL
+					(void) eof_pro_guitar_note_define_unpitched_slide();
+				}
+				else if(KEY_EITHER_SHIFT)
+				{	//SHIFT
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_pro_guitar_toggle_strum_up();
+				}
 			}
 			eof_use_key();
 		}
