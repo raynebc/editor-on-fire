@@ -74,8 +74,12 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff);
 	//If so, the affected fret values will be raised or lowered accordingly
 	//If a note cannot be altered (ie. values of 0 or the track's max fret number would be surpassed), the user is warned and the note is highlighted
 
-int eof_track_pro_guitar_set_fret_hand_position(void);
+int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long timestamp);
 	//Allows the user to define a fret hand position for the active difficulty
+int eof_track_pro_guitar_set_fret_hand_position(void);
+	//Calls eof_track_pro_guitar_set_fret_hand_position_at_timestamp() specifying the seek position as the target timestamp
+int eof_track_pro_guitar_set_fret_hand_position_at_mouse(void);
+	//Calls eof_track_pro_guitar_set_fret_hand_position_at_timestamp() specifying the pen note (mouse) position as the target timestamp
 int eof_track_fret_hand_positions(void);
 	//Displays the fret hand positions defined for the active track difficulty, allowing them to be deleted
 int eof_track_fret_hand_positions_copy_from(void);
@@ -110,8 +114,12 @@ int eof_find_effective_rs_popup_message(unsigned long pos, unsigned long *popupn
 	//The corresponding popup message number for the track is returned through popupnum
 	//Zero is returned if no popup message is in effect or upon error
 
+int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp);
+	//Allows the user to add a tone change at the specified timestamp, for use in Rocksmith
 int eof_track_rs_tone_change_add(void);
-	//Allows the user to add a tone change for use in Rocksmith
+	//Calls eof_track_rs_tone_change_add_at_timestamp() specifying the seek position as the timestamp
+int eof_track_rs_tone_change_add_at_mouse(void);
+	//Calls eof_track_rs_tone_change_add_at_timestamp() specifying the pen note (mouse) position as the timestamp
 int eof_track_rs_tone_changes(void);
 	//Displays the tone changes defined for the current pro guitar/bass track
 char * eof_track_rs_tone_changes_list(int index, int * size);

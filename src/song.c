@@ -3013,12 +3013,14 @@ int eof_menu_section_mark(unsigned long section_type)
 			track = eof_selected_track;	//For all sections marked with this function, catalog entries excluded, the active track is the one the section applies to
 			diff = 0xFF;				//And does not apply to a specific difficulty
 			if((section_type == EOF_HANDSHAPE_SECTION) || (section_type == EOF_ARPEGGIO_SECTION))
-				diff = eof_note_type;	//The exception is arpeggio/handshape phrases, which will be defined for the active track difficulty
+				diff = eof_note_type;	//Arpeggio/handshape phrases are exceptions, which will be defined for the active track difficulty
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+				diff = eof_note_type;	//When dynamic difficulty is in effect, tremolo phrases apply to the active track difficulty
 			flags = 0;					//All non catalog section types are initialized with no flags
 			for(j = 0; j < section_count; j++)
 			{	//For each instance of the section in the active track
 				instanceptr = &sectionptr[j];
-				if(instanceptr && (sel_end >= instanceptr->start_pos) && (sel_start <= instanceptr->end_pos))
+				if(instanceptr && (sel_end >= instanceptr->start_pos) && (sel_start <= instanceptr->end_pos) && (instanceptr->difficulty == diff))
 				{
 					insp = j;
 				}

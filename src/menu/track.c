@@ -1638,7 +1638,7 @@ DIALOG eof_track_pro_guitar_set_fret_hand_position_dialog[] =
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
 };
 
-int eof_track_pro_guitar_set_fret_hand_position(void)
+int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long timestamp)
 {
 	unsigned long position, tracknum;
 	EOF_PHRASE_SECTION *ptr = NULL;	//If the seek position has a fret hand position defined, this will reference it
@@ -1660,7 +1660,7 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 	//Find the pointer to the fret hand position at the current seek position in this difficulty, if there is one
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
-	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos.value - eof_av_delay, &index, NULL, 1);
+	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, timestamp, &index, NULL, 1);
 	if(ptr)
 	{	//If an existing fret hand position is to be edited
 		(void) snprintf(eof_etext, 5, "%lu", ptr->end_pos);	//Populate the input box with it
@@ -1722,7 +1722,7 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 			}
 
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos.value - eof_av_delay, position, 0, NULL);
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, timestamp, position, 0, NULL);
 			eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 		}
 	}//If the user provided a number
@@ -1733,6 +1733,20 @@ int eof_track_pro_guitar_set_fret_hand_position(void)
 		eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 	}
 
+	return 0;
+}
+
+int eof_track_pro_guitar_set_fret_hand_position(void)
+{
+	return eof_track_pro_guitar_set_fret_hand_position_at_timestamp(eof_music_pos.value - eof_av_delay);
+}
+
+int eof_track_pro_guitar_set_fret_hand_position_at_mouse(void)
+{
+	if(eof_pen_note.pos < eof_chart_length)
+	{	//If the pen note is at a valid position
+		return eof_track_pro_guitar_set_fret_hand_position_at_timestamp(eof_pen_note.pos);
+	}
 	return 0;
 }
 
@@ -3560,18 +3574,22 @@ int eof_menu_track_remove_highlighting(void)
 	return 1;
 }
 
+char eof_track_rs_tone_change_add_dialog_string[40] = {0};
 DIALOG eof_track_rs_tone_change_add_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 116, 0,   0,   0,    0,      0,   0,   "Rocksmith tone change", NULL, NULL },
+	{ d_agup_window_proc,    0,   0,   230, 161, 0,   0,   0,    0,      0,   0,   "Rocksmith tone change", NULL, NULL },
 	{ d_agup_text_proc,      12,  30,  60,  12,  0,   0,   0,    0,      0,   0,   "Tone key name:",        NULL, NULL },
 	{ d_agup_edit_proc,      12,  46,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0, eof_etext, NULL, NULL },
-	{ d_agup_button_proc,    12,  76,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
-	{ d_agup_button_proc,    110, 76,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
+	{ d_agup_text_proc,      12,  70,  60,  12,  0,   0,   0,    0,      0,   0,   "Tone changes should not occur",        NULL, NULL },
+	{ d_agup_text_proc,      50,  85,  60,  12,  0,   0,   0,    0,      0,   0,   "on top of a note.",        NULL, NULL },
+	{ d_agup_text_proc,      12,  100,  60,  12,  0,   0,   0,    0,      0,   0,   eof_track_rs_tone_change_add_dialog_string,        NULL, NULL },
+	{ d_agup_button_proc,    12,  121,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
+	{ d_agup_button_proc,    140, 121,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                    NULL, NULL }
 };
 
-int eof_track_rs_tone_change_add(void)
+int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum, ctr;
@@ -3584,10 +3602,29 @@ int eof_track_rs_tone_change_add(void)
 	tp = eof_song->pro_guitar_track[tracknum];
 	eof_render();
 
+	//Check to see if the given timestamp occurs on a note in the active track
+	eof_track_rs_tone_change_add_dialog[3].flags = D_HIDDEN;		//The warning about a tone change occurring on top of a note is hidden unless this condition is found to be happening
+	eof_track_rs_tone_change_add_dialog[4].flags = D_HIDDEN;
+	eof_track_rs_tone_change_add_dialog[5].flags = D_HIDDEN;
+	for(ctr = 0; ctr < tp->pgnotes; ctr++)
+	{	//For each normal note
+		if((timestamp >= tp->pgnote[ctr]->pos) && (timestamp <= tp->pgnote[ctr]->pos + tp->pgnote[ctr]->length))
+		{	//If the specified timestamp overlaps this note
+			eof_track_rs_tone_change_add_dialog[3].flags = 0;	//Show this warning
+			eof_track_rs_tone_change_add_dialog[4].flags = 0;
+			eof_track_rs_tone_change_add_dialog[5].flags = 0;
+			if(tp->pgnote[ctr]->pos > 0)
+			{	//If the overlapped note already begins at 0s, the tone change can't occur any earlier
+				timestamp = tp->pgnote[ctr]->pos - 1;
+				snprintf(eof_track_rs_tone_change_add_dialog_string, sizeof(eof_track_rs_tone_change_add_dialog_string) - 1, "Adjusting tone position to %lums", timestamp);
+			}
+		}
+	}
+
 	//Find the tone change at the current seek position, if any
 	for(ctr = 0; ctr < tp->tonechanges; ctr++)
 	{	//For each tone change in the track
-		if(tp->tonechange[ctr].start_pos != eof_music_pos.value - eof_av_delay)
+		if(tp->tonechange[ctr].start_pos != timestamp)
 			continue;	//If this tone change is not at the current seek position, skip it
 
 		//Otherwise edit it instead of adding a new tone change
@@ -3595,7 +3632,7 @@ int eof_track_rs_tone_change_add(void)
 		centre_dialog(eof_track_rs_tone_change_add_dialog);
 		(void) ustrcpy(eof_etext, tp->tonechange[ctr].name);
 		eof_clear_input();
-		if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
+		if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
 		{	//User clicked OK
 			if(eof_etext[0] != '\0')
 			{	//If a tone key name is specified
@@ -3611,7 +3648,7 @@ int eof_track_rs_tone_change_add(void)
 	centre_dialog(eof_track_rs_tone_change_add_dialog);
 
 	(void) ustrcpy(eof_etext, "");
-	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
+	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
 	{	//User clicked OK
 		if(eof_etext[0] != '\0')
 		{	//If a tone key name is specified
@@ -3620,12 +3657,27 @@ int eof_track_rs_tone_change_add(void)
 			{	//If the tone being changed to is the currently defined default tone
 					defaulttone = 1;
 			}
-			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_TONE_CHANGE, 0, eof_music_pos.value - eof_av_delay, defaulttone, 0, eof_etext);
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_TONE_CHANGE, 0, timestamp, defaulttone, 0, eof_etext);
 		}
 		eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the tone changes
 	}
 
 	return 1;
+}
+
+int eof_track_rs_tone_change_add(void)
+{
+	return eof_track_rs_tone_change_add_at_timestamp(eof_music_pos.value - eof_av_delay);
+}
+
+int eof_track_rs_tone_change_add_at_mouse(void)
+{
+	if(eof_pen_note.pos < eof_chart_length)
+	{	//If the pen note is at a valid position
+		return eof_track_rs_tone_change_add_at_timestamp(eof_pen_note.pos);
+	}
+
+	return 0;
 }
 
 char **eof_track_rs_tone_changes_list_strings = NULL;	//Stores allocated strings for eof_track_rs_tone_changes()

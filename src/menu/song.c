@@ -3999,9 +3999,9 @@ DIALOG eof_phrase_edit_timing_dialog[] =
 	{ d_agup_text_proc,       12,  88,  60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",  NULL, NULL },
 	{ eof_phrase_edit_timing_edit_proc,12,  104, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_text_proc,       12,  136,  60,  12,  0,   0,   0,    0,      0,   0,   "Seek pos defines",                NULL, NULL },
-	{ eof_phrase_edit_timing_radio_proc,  12, 155, 50,  15,  2,   23,  0,  0,  0,   0,   "&Start",           (void *)6,    NULL },	//Use dp2 to store the object number, for use in eof_phrase_edit_timing_radio_proc()
-	{ eof_phrase_edit_timing_radio_proc,  65, 155, 45,  15,  2,   23,  0,  0, 0,   0,   "&End",           (void *)7,    NULL },
-	{ eof_phrase_edit_timing_radio_proc,  115, 155, 65,  15,  2,   23,  0, D_SELECTED,0,   0,   "&Neither", (void *)8,    NULL },
+	{ eof_phrase_edit_timing_radio_proc,  12, 155, 60,  15,  2,   23,  0,  0,  0,   0,   "&Start",           (void *)6,    NULL },	//Use dp2 to store the object number, for use in eof_phrase_edit_timing_radio_proc()
+	{ eof_phrase_edit_timing_radio_proc,  65, 155, 55,  15,  2,   23,  0,  0, 0,   0,   "&End",           (void *)7,    NULL },
+	{ eof_phrase_edit_timing_radio_proc,  115, 155, 75,  15,  2,   23,  0, D_SELECTED,0,   0,   "&Neither", (void *)8,    NULL },
 	{ d_agup_button_proc,    12,  188, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                 NULL, NULL },
 	{ d_agup_button_proc,    110, 188, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",             NULL, NULL },
 	{ d_agup_button_proc,    110, 56, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy",             NULL, NULL },
@@ -5051,7 +5051,7 @@ int eof_menu_song_toggle_ch_sp_durations(void)
 	return 1;
 }
 
-int eof_menu_song_add_floating_text_event(void)
+int eof_menu_song_add_floating_text_event_at_timestamp(unsigned long timestamp)
 {
 	EOF_TEXT_EVENT *ptr = NULL;
 	unsigned long ctr;
@@ -5065,23 +5065,38 @@ int eof_menu_song_add_floating_text_event(void)
 	{	//For each text event
 		if(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS)
 		{	//If this is a floating text event
-			if(eof_song->text_event[ctr]->pos == eof_music_pos.value - eof_av_delay)
-			{	//If this text event is at the seek position
+			if(eof_song->text_event[ctr]->pos == timestamp)
+			{	//If this text event is at the specified position
 				ptr = eof_song->text_event[ctr];
 			}
 		}
 	}
 
-	///Check if the seek position is on a beat marker
+	///Check if the specified position is on a beat marker
 	for(ctr = 0; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the project
-		if(eof_song->beat[ctr]->pos == eof_music_pos.value - eof_av_delay)
-		{	//If the seek position is on a beat marker
+		if(eof_song->beat[ctr]->pos == timestamp)
+		{	//If the specified position is on a beat marker
 			allegro_message("Note:  Placing a floating event at a beat marker position will not assign it to that beat and it will not move with the beat.");
 			break;
 		}
 	}
 
-	eof_add_or_edit_floating_text_event(ptr, EOF_EVENT_FLAG_FLOATING_POS, &undo_made);
+	eof_add_or_edit_floating_text_event_at_timestamp(ptr, timestamp, EOF_EVENT_FLAG_FLOATING_POS, &undo_made);
 	return 1;
+}
+
+int eof_menu_song_add_floating_text_event(void)
+{
+	return eof_menu_song_add_floating_text_event_at_timestamp(eof_music_pos.value - eof_av_delay);
+}
+
+int eof_menu_song_add_floating_text_event_at_mouse(void)
+{
+	if(eof_pen_note.pos < eof_chart_length)
+	{	//If the pen note is at a valid position
+		return eof_menu_song_add_floating_text_event_at_timestamp(eof_pen_note.pos);
+	}
+
+	return 0;
 }

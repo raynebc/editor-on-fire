@@ -4385,6 +4385,8 @@ int eof_note_can_pitch_transpose(EOF_SONG *sp, unsigned long track, unsigned lon
 	{	//For each string in this track
 		if(pitchmask & bitmask)
 		{	//If this string has a pitch to transpose
+			if(!stringctr && (dir > 0))
+				continue;	//Redundant bounds check to satisfy Coverity
 			targetstring = stringctr - dir;		//Determine the string the pitch is tranposing to
 			stringpitch =  tp->tuning[targetstring] + eof_lookup_default_string_tuning_absolute(tp, track, targetstring) + tp->capo;	//Determine the pitch of the string the note pitch will transpose to
 

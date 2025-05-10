@@ -259,7 +259,11 @@ int eof_menu_song_doubly_compare_piano_rolls(void);
 int eof_menu_song_toggle_ch_sp_durations(void);
 	//Toggles the display of durations for defined star power deployments will render in the editor window
 
+int eof_menu_song_add_floating_text_event_at_timestamp(unsigned long timestamp);
+	//Adds a floating text event at the specified timestamp
 int eof_menu_song_add_floating_text_event(void);
-	//Adds a floating text event to the project
+	//Calls eof_menu_song_add_floating_text_event_at_timestamp() specifying the seek position as the timestamp
+int eof_menu_song_add_floating_text_event_at_mouse(void);
+	//Calls eof_menu_song_add_floating_text_event_at_timestamp() specifying the pen note (mouse) position as the timestamp
 
 #endif

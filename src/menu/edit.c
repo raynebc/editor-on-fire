@@ -5059,18 +5059,18 @@ int eof_menu_edit_deselect_off_beat_notes(void)
 	return eof_menu_edit_select_on_or_off_beat_note_logic(0, 0);
 }
 
-int eof_menu_edit_set_start_point(void)
+int eof_menu_edit_set_start_point_at_timestamp(unsigned long timestamp)
 {
 	if(!eof_song)
 		return 0;
 
-	if(eof_song->tags->start_point == eof_music_pos.value - eof_av_delay)
+	if(eof_song->tags->start_point == timestamp)
 	{	//If the start point is already set to the current seek position
 		eof_song->tags->start_point = ULONG_MAX;	//Clear the start point
 	}
 	else
 	{	//Otherwise update it to the current seek position
-		eof_song->tags->start_point = eof_music_pos.value - eof_av_delay;
+		eof_song->tags->start_point = timestamp;
 		if((eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
 		{	//If the start and end points are defined out of order, assume the user wants to start a new selection and clear the end point
 			eof_song->tags->end_point = ULONG_MAX;
@@ -5079,24 +5079,54 @@ int eof_menu_edit_set_start_point(void)
 	return 1;
 }
 
-int eof_menu_edit_set_end_point(void)
+int eof_menu_edit_set_start_point(void)
+{
+	return eof_menu_edit_set_start_point_at_timestamp(eof_music_pos.value - eof_av_delay);
+}
+
+int eof_menu_edit_set_start_point_at_mouse(void)
+{
+	if(eof_pen_note.pos < eof_chart_length)
+	{	//If the pen note is at a valid position
+		return eof_menu_edit_set_start_point_at_timestamp(eof_pen_note.pos);
+	}
+
+	return 0;
+}
+
+int eof_menu_edit_set_end_point_at_timestamp(unsigned long timestamp)
 {
 	if(!eof_song)
 		return 0;
 
-	if(eof_song->tags->end_point == eof_music_pos.value - eof_av_delay)
+	if(eof_song->tags->end_point == timestamp)
 	{	//If the end point is already set to the current seek position
 		eof_song->tags->end_point = ULONG_MAX;	//Clear the start point
 	}
 	else
 	{	//Otherwise update it to the current seek position
-		eof_song->tags->end_point = eof_music_pos.value - eof_av_delay;
+		eof_song->tags->end_point = timestamp;
 		if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->start_point > eof_song->tags->end_point))
 		{	//If the start and end points are defined out of order, assume the user wants to start a new selection and clear the start point
 			eof_song->tags->start_point = ULONG_MAX;
 		}
 	}
 	return 1;
+}
+
+int eof_menu_edit_set_end_point(void)
+{
+	return eof_menu_edit_set_end_point_at_timestamp(eof_music_pos.value - eof_av_delay);
+}
+
+int eof_menu_edit_set_end_point_at_mouse(void)
+{
+	if(eof_pen_note.pos < eof_chart_length)
+	{	//If the pen note is at a valid position
+		return eof_menu_edit_set_end_point_at_timestamp(eof_pen_note.pos);
+	}
+
+	return 0;
 }
 
 static void eof_benchmark_rubberband_callback(void *buffer, int nsamples, int stereo)

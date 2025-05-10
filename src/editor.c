@@ -6978,23 +6978,25 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	}//For each beat
 
 	/* draw floating position text events */
-	if((eof_2d_render_top_option == 6) || (eof_2d_render_top_option == 9))
-	{	//If the user has opted to render section names (Rocksmith phrases) at the top of the 2D window, either by themselves or in combination with RS sections
-		char *string = "%s";	//If the phrase isn't track specific, it will display normally
-		char *string2 = "*%s";	//Otherwise it will be prefixed by an asterisk
-		char *ptr = string;
+	for(i = 0; i < eof_song->text_events; i++)
+	{	//For each text event in the project
+		if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS)
+		{	//If the text event is floating
+			xcoord = lpos + eof_get_text_event_pos(eof_song, i) / eof_zoom;
+			if(xcoord >= window->screen->w)
+			{	//If this hand position would render further right than the right edge of the screen
+				break;	//Skip rendering this and all other hand positions, which would continue to render off screen
+			}
+			line(window->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+			line(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 24 - 3, xcoord, EOF_EDITOR_RENDER_OFFSET + 24 + 3, eof_color_yellow);
+			if(!eof_song->text_event[i]->track || (eof_song->text_event[i]->track == eof_selected_track))
+			{	//If the text event has no associated track or is specific to the active track
+				if((eof_2d_render_top_option == 6) || (eof_2d_render_top_option == 9))
+				{	//If the user has opted to render section names (Rocksmith phrases) at the top of the 2D window, either by themselves or in combination with RS sections
+					char *string = "%s";	//If the phrase isn't track specific, it will display normally
+					char *string2 = "*%s";	//Otherwise it will be prefixed by an asterisk
+					char *ptr = string;
 
-		for(i = 0; i < eof_song->text_events; i++)
-		{	//For each text event in the project
-			if(eof_song->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS)
-			{	//If the text event is floating
-				if(!eof_song->text_event[i]->track || (eof_song->text_event[i]->track == eof_selected_track))
-				{	//If the text event has no associated track or is specific to the active track
-					xcoord = lpos + eof_get_text_event_pos(eof_song, i) / eof_zoom;
-					if(xcoord >= window->screen->w)
-					{	//If this hand position would render further right than the right edge of the screen
-						break;	//Skip rendering this and all other hand positions, which would continue to render off screen
-					}
 					if(eof_song->text_event[i]->track != 0)
 					{	//If this section is track specific
 						ptr = string2;

@@ -2295,7 +2295,7 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 	}//User clicked OK
 }
 
-void eof_add_or_edit_floating_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made)
+void eof_add_or_edit_floating_text_event_at_timestamp(EOF_TEXT_EVENT *ptr, unsigned long timestamp, unsigned long flags, char *undo_made)
 {
 	EOF_TEXT_EVENT temp = {{0}, 0, 0, 0, 0, 0};
 	unsigned long newtrack = 0, newpos = 0;
@@ -2339,7 +2339,7 @@ void eof_add_or_edit_floating_text_event(EOF_TEXT_EVENT *ptr, unsigned long flag
 	}
 	else
 	{
-		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_music_pos.value - eof_av_delay);	//Initialize the event's time field with the seek position
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", timestamp);	//Initialize the event's time field with the specified position
 	}
 	(void) ustrcpy(eof_etext, ptr->text);
 
@@ -2377,6 +2377,11 @@ void eof_add_or_edit_floating_text_event(EOF_TEXT_EVENT *ptr, unsigned long flag
 			eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
 		}
 	}//User clicked OK
+}
+
+void eof_add_or_edit_floating_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made)
+{
+	eof_add_or_edit_floating_text_event_at_timestamp(ptr, eof_music_pos.value - eof_av_delay, flags, undo_made);
 }
 
 unsigned long eof_events_dialog_delete_events_count(void)

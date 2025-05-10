@@ -171,8 +171,18 @@ int eof_menu_edit_select_note_ending_within_threshhold_of_next_note(void);
 int eof_menu_edit_deselect_note_ending_within_threshhold_of_next_note(void);
 	//Uses eof_menu_edit_select_note_within_threshhold_of_next_note_logic() to deselect all notes in the active track difficulty ending within a threshold distance from the note they precede
 
+int eof_menu_edit_set_start_point_at_timestamp(unsigned long timestamp);
+	//Sets/clears the start point at the given timestamp
 int eof_menu_edit_set_start_point(void);
+	//Calls eof_menu_edit_set_start_point_at_timestamp() specifying the seek position as the timestamp
+int eof_menu_edit_set_start_point_at_mouse(void);
+	//Calls eof_menu_edit_set_start_point_at_timestamp() specifying the pen note (mouse) position as the timestamp
+int eof_menu_edit_set_end_point_at_timestamp(unsigned long timestamp);
+	//Sets/clears the end point at the given timestamp
 int eof_menu_edit_set_end_point(void);
+	//Calls eof_menu_edit_set_end_point_at_timestamp() specifying the seek position as the timestamp
+int eof_menu_edit_set_end_point_at_mouse(void);
+	//Calls eof_menu_edit_set_end_point_at_timestamp() specifying the pen note (mouse) position as the timestamp
 
 int eof_menu_edit_snap_quarter(void);
 int eof_menu_edit_snap_eighth(void);
