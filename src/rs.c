@@ -5547,11 +5547,11 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 					}
 				}
 			}
-			if((target & 2) && checktechnotes)
-			{	//If the target game is Rocksmith 2 and tech notes are being taken into account
+			if(checktechnotes && ((target & 2) || (target &4)))
+			{	//If tech notes are to be taken into account
 				if(techbends)
 				{	//If there was at least one bend tech note found affecting the specified string
-					ptr->bend = techbends;
+					ptr->bend = techbends;	//Record the strongest bend strength among all of them
 				}
 				if(techslideto >= 0)
 				{	//If a tech note had a defined slide

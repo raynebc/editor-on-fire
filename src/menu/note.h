@@ -4,8 +4,11 @@
 #include <allegro.h>
 #include "../dialog.h"
 
-extern MENU eof_note_menu[];
 extern MENU eof_filtered_note_menu[EOF_SCRATCH_MENU_SIZE];
+extern MENU eof_lyric_line_menu[];
+extern MENU eof_note_menu[];
+extern MENU eof_solo_menu[];
+extern MENU eof_star_power_menu[];
 
 extern DIALOG eof_lyric_dialog[];
 extern DIALOG eof_split_lyric_dialog[];

@@ -16,7 +16,7 @@ typedef struct
 typedef struct
 {
 	unsigned long length;
-	char bend;						//Nonzero if this note is a bend, in which case it is the bend strength rounded up to the nearest number of half steps (used in RS2 notation)
+	char bend;						//Nonzero if this note is a bend, in which case it is the bend strength rounded up to the nearest number of half steps (used in RS2 notation).
 	unsigned long bendstrength_q;	//The number of quarter steps this note bends (used in RS2 notation)
 	unsigned long bendstrength_h;	//The number of half steps this note bends (used in RS1 notation)
 	long slideto;					//If not negative, is the fret position the slide ends at
@@ -39,6 +39,8 @@ typedef struct
 	char sustain;					//Nonzero if this note has the sustain status applied and RS2 export is being performed
 	unsigned long hastechnique;		//Nonzero if this note has any playable technique defined at all
 } EOF_RS_TECHNIQUES;
+	//A structure of various techniques that is set by eof_get_rs_techniques()
+	//Whether or not a bend will automatically assume a strength or a slide will assume an end position when undefined depends on the target parameter passed to eof_get_rs_techniques()
 
 #define EOF_NUM_RS_PREDEFINED_SECTIONS 31
 extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTIONS];
@@ -302,6 +304,7 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target, char checktechnotes);
 	//Reads the flags of the specified note and sets variables in the specified techniques structure to reflect the cumulative set of techniques used by the normal note and overlapping tech notes on the specified string
+	///This function expects that the normal note set is active
 	//The structure is explicitly block filled with zeroes to ensure that memory comparison functions between two instances of the technique structure will behave as expected
 	//  If checktechnotes is nonzero, the techniques of any tech notes applicable to the specified string of the note are taken into account
 	//  If the specified note extends all the way to the next note (has linkNext status), only the tech notes before the next note's position are checked

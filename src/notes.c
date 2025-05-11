@@ -1679,6 +1679,17 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_RS_EXPORT_ENABLED"))
+	{
+		if(eof_write_rs_files || eof_write_rs2_files)
+		{	//If either the "Save separate Rocksmith 1 files" or "Save separate Rocksmith 2 files" export preferences are enabled
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	count_string = strcasestr_spec(macro, "IF_PG_NOTE_OCCURS_BEFORE_MILLIS_");	//Get a pointer to the text that would be the millisecond count
 	if(count_string)
 	{	//If the macro is this string
@@ -2133,9 +2144,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_notes_macro_bend_missing_strength[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
+			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
+
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
 
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
 			{	//For each normal note in the track
@@ -2143,22 +2158,24 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				{	//For each string used in this track
 					if(tp->pgnote[notectr]->note & bitmask)
 					{	//If this string is used by the note
-						//Determine techniques used by this note (including applicable technotes using this string), do NOT assume a slide end fret if none is defined
+						//Determine techniques used by this note (including applicable technotes using this string)
 						unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 4, 1);
 						if(retflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 						{	//If the note uses bend technique on this string
-							if(tech.bendstrength_q == 0)
+							if(tech.bend == 0)
 							{	//If no bend strength is actually defined
 								char time_string[15] = {0};
 								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
+								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 								return 3;	//True
 							}
 						}
 					}
 				}
 			}
+			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 		}
 
 		return 2;	//False

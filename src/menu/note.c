@@ -10041,9 +10041,6 @@ int eof_pro_guitar_note_bend_strength(char undo)
 				continue;	//If the note isn't selected, skip it
 
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
-				continue;	//If this note isn't a bend, skip it
-
 			if((newstrength == eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength) &&
 			((tp->note != tp->technote) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)))
 				continue;	//If the bend strength isn't different than what it already had, and this isn't a tech note or is a tech note that didn't have a bend strength defined (necessary check to allow a value of 0 to set the RS notation flag), skip it
@@ -10057,6 +10054,7 @@ int eof_pro_guitar_note_bend_strength(char undo)
 			if(newstrength || (tp->note == tp->technote))
 			{	//If the bend strength is nonzero, or it is zero and tech view is in effect, the bend strength is now defined
 				eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Set this flag to indicate that the bend's strength is defined
+				eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//If the note wasn't a bend note before, it is now
 			}
 			else
 			{	//Otherwise it is now undefined

@@ -6,9 +6,6 @@
 
 extern MENU eof_track_selected_menu[];
 extern MENU eof_catalog_menu[];
-extern MENU eof_star_power_menu[];
-extern MENU eof_solo_menu[];
-extern MENU eof_lyric_line_menu[];
 extern MENU eof_song_piano_roll_menu[];
 extern MENU eof_song_seek_menu[];
 extern MENU eof_song_seek_bookmark_menu[];

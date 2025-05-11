@@ -3061,6 +3061,7 @@ int eof_menu_section_mark(unsigned long section_type)
 			else if(section_type == EOF_HANDSHAPE_SECTION)
 			{	//If the section that was added/edited is a handshape
 				instanceptr->flags |= EOF_RS_ARP_HANDSHAPE;	//Set this flag
+				eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic immediately in order to correct the handshape's base chord
 			}
 			else if(section_type == EOF_ARPEGGIO_SECTION)
 			{	//If the section that was added/edited is an arpeggio
@@ -3078,6 +3079,7 @@ int eof_menu_section_mark(unsigned long section_type)
 						eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 					}
 				}
+				eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic immediately in order to correct the arpeggio's base chord
 			}
 		}
 	}
