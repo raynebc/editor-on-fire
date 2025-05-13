@@ -163,9 +163,11 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made);
 	//If report is zero, a dialog message is displayed BEFORE prompting the user to make corrections, since the user didn't manually invoke the function
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
 int eof_correct_chord_fingerings(void);
-	//Calls eof_correct_chord_fingerings_option specifying not to report if there were no corrections needed (to be called during save logic)
+	//Calls eof_correct_chord_fingerings_option specifying not to report if there were no corrections needed (to be called during save logic for exporting XML)
 int eof_correct_chord_fingerings_menu(void);
 	//Calls eof_correct_chord_fingerings_option specifying to report if there were no corrections needed (to be called from menu)
+int eof_menu_note_lookup_fingering(void);
+	//For each selected pro guitar note, if the fingering is deemed invalid, looks up a chord definition and if one is found, it is applied
 
 int eof_menu_note_toggle_slide_up(void);		//Toggles the slide up status of all selected notes
 int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of all selected notes

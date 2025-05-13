@@ -71,7 +71,7 @@ void eof_load_config(char * fn)
 		eof_etext[0] = '\0';	//Empty this string
 		(void) eof_lookup_program_folder(eof_etext, sizeof(eof_etext) - 1);
 		eof_log("Configuration file not found, reverting to default", 1);
-		allegro_message("The configuration file (eof.cfg) does not exist, reverting to all default settings.  You can import your settings from another EOF installation by copying its eof.cfg file to this installation's program folder (%s)", eof_etext);
+		allegro_message("The configuration file (eof.cfg) does not exist, reverting to all default settings.  You can import your settings from another EOF installation by first closing this EOF instance and copying the previous EOF's eof.cfg file to this installation's program folder (%s)", eof_etext);
 	}
 
 	/* read configuration */

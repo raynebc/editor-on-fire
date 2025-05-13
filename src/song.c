@@ -10737,6 +10737,22 @@ int eof_note_is_not_open_note(EOF_SONG *sp, unsigned long track, unsigned long n
 	return 0;
 }
 
+int eof_note_needs_fingering_definition(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//This check is only applicable to pro guitar notes
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(eof_pro_guitar_note_fingering_valid(tp, notenum, 0) != 1)
+	{	//If the fingering is not deemed valid for this note
+		return 1;
+	}
+
+	return 0;
+}
+
 int eof_length_is_shorter_than(long length, long threshold)
 {
 	if(length < threshold)

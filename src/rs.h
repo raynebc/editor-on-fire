@@ -52,10 +52,11 @@ extern char *eof_rs_arrangement_names[5];
 
 typedef struct
 {
-	unsigned char note;			//Stores the note's string statuses
+	unsigned char note;		//Stores the note's string statuses
 	unsigned char frets[8];		//Stores the fret number for each string
-	unsigned char finger[8];	//Stores the finger number used to fret each string
-	char *name;					//Stores the name of the shape (ie. "D")
+	unsigned char finger[8];		//Stores the finger number used to fret each string
+	char *name;				//Stores the name of the shape (ie. "D")
+	unsigned long linenum;		//Stores the line number of chordshapes.xml that defines this entry (for debugging purposes)
 } EOF_CHORD_SHAPE;
 
 #define EOF_MAX_CHORD_SHAPES 300
@@ -354,8 +355,11 @@ int eof_note_exports_without_fingering(EOF_PRO_GUITAR_TRACK *tp, unsigned long n
 
 void eof_conditionally_append_xml_long(char *buffer, size_t buffsize, char *name, long value, long defaultval);
 void eof_conditionally_append_xml_float(char *buffer, size_t buffsize, char *name, double value, double defaultval);
+void eof_conditionally_append_xml_long_padding(char *buffer, size_t buffsize, char *name, long value, long defaultval);
 	//Appends text to buffer in the format of "[name] = [value] " (with a trailing space) depending on whether abridged RS2 export is enabled
 	// If it is, the attribute and value are not appended unless the specified value and default value are different
+	//eof_conditionally_append_xml_long_padding() is functionally similar to eof_conditionally_append_xml_long(), but it will insert a space
+	// character after the equal sign if the value written is not negative, to ensure better alignment and readability for chord shapes
 
 int eof_lookup_rocksmith_effective_section_at_pos(EOF_SONG *sp, unsigned long pos, char *section_name, unsigned long section_name_size);
 	//Examines the text events applicable for the active track and stores the name of the section event immediately at/before thse specified position (if any) into section_name[]

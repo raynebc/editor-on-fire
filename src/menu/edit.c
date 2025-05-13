@@ -167,6 +167,7 @@ MENU eof_edit_selection_select_menu[] =
 	{"Start &Proximity", eof_menu_edit_select_note_starting_within_threshhold_of_next_note, NULL, 0, NULL},
 	{"End pro&Ximity", eof_menu_edit_select_note_ending_within_threshhold_of_next_note, NULL, 0, NULL},
 	{"Gem count", eof_menu_edit_select_gem_count, NULL, 0, NULL},
+	{"Notes needing fingering", eof_menu_edit_select_notes_needing_fingering, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -432,6 +433,16 @@ void eof_prepare_edit_menu(void)
 		{
 			eof_edit_selection_select_menu[2].flags = D_DISABLED;
 			eof_edit_selection_select_menu[3].flags = D_DISABLED;
+		}
+
+		/* selection>select>Notes needing fingering */
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			eof_edit_selection_select_menu[19].flags = 0;
+		}
+		else
+		{
+			eof_edit_selection_select_menu[19].flags = D_DISABLED;
 		}
 
 		/* zoom */
@@ -3439,6 +3450,11 @@ int eof_menu_edit_select_open_notes(void)
 int eof_menu_edit_select_non_open_notes(void)
 {
 	return eof_menu_edit_select_logic(eof_note_is_not_open_note);
+}
+
+int eof_menu_edit_select_notes_needing_fingering(void)
+{
+	return eof_menu_edit_select_logic(eof_note_needs_fingering_definition);
 }
 
 int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long))

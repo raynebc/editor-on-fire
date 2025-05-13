@@ -2225,6 +2225,35 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	count_string = strcasestr_spec(macro, "IF_RS_SECTION_COUNT_REACHES_");	//Get a pointer to the text that would be the RS section count
+	if(count_string)
+	{	//If the macro is this string
+		if(eof_song)
+		{
+			unsigned long target_count = 0, count = 0;
+
+			if(eof_read_macro_number(count_string, &target_count))
+			{	//If the RS section count was successfully parsed
+				for(ctr = 0; ctr < eof_song->beats; ctr++)
+				{	//For each beat in the chart
+					if(eof_song->beat[ctr]->contained_rs_section_event >= 0)
+					{	//If this beat has a Rocksmith section
+						count++;	//Update Rocksmith section instance counter
+					}
+				}
+
+				if(count >= target_count)
+				{	//If there are at least as many RS sections as were being tested for
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -4441,9 +4470,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				}
 			}
 			if(count == 1)
-				snprintf(dest_buffer, dest_buffer_size, "1 section is defined");
+				snprintf(dest_buffer, dest_buffer_size, "1 / 100 sections is defined");
 			else
-				snprintf(dest_buffer, dest_buffer_size, "%lu sections are defined", count);
+				snprintf(dest_buffer, dest_buffer_size, "%lu / 100 sections are defined", count);
 		}
 		return 1;
 	}

@@ -483,6 +483,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"Edit frets/fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
 	{"Edit fingering\t" CTRL_NAME "+F", eof_menu_note_edit_pro_guitar_note_fingers, NULL, 0, NULL},
 	{"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
+	{"&Lookup fingering", eof_menu_note_lookup_fingering, NULL, 0, NULL},
 	{"Define unpitched slide\t" CTRL_NAME "+U", eof_pro_guitar_note_define_unpitched_slide, NULL, 0, NULL},
 	{"Remove &Unpitched slide", eof_menu_note_remove_unpitched_slide, NULL, 0, NULL},
 	{"Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
@@ -1206,21 +1207,23 @@ void eof_prepare_note_menu(void)
 				eof_note_simplify_menu[7].flags = 0;	//Note>Simplify>Ghost
 				if(tp->note == tp->technote)
 				{	//If tech view is in effect
-					eof_note_rocksmith_menu[9].flags = 0;			//Note>Rocksmith>Move tech note to prev note
-					eof_note_rocksmith_menu[10].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
-					eof_note_proguitar_menu[8].flags = 0;			//Note>Pro Guitar>Toggle pre-bend
+					eof_note_rocksmith_menu[6].flags = D_DISABLED;	//Note>Rocksmith>Lookup fingering
+					eof_note_rocksmith_menu[10].flags = 0;			//Note>Rocksmith>Move tech note to prev note
+					eof_note_rocksmith_menu[11].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
+					eof_note_proguitar_menu[8].flags = 0;				//Note>Pro Guitar>Toggle pre-bend
 				}
 				else
 				{
-					eof_note_rocksmith_menu[9].flags = D_DISABLED;
-					eof_note_proguitar_menu[8].flags = D_DISABLED;	//Note>Pro Guitar>Toggle pre-bend
+					eof_note_rocksmith_menu[6].flags = 0;				//Note>Rocksmith>Lookup fingering
+					eof_note_rocksmith_menu[10].flags = D_DISABLED;
+					eof_note_proguitar_menu[8].flags = D_DISABLED;		//Note>Pro Guitar>Toggle pre-bend
 					if(vselected > 1)
 					{	//If multiple notes are selected
-						eof_note_rocksmith_menu[10].flags = 0;		//Note>Rocksmith>Generate FHPs
+						eof_note_rocksmith_menu[11].flags = 0;		//Note>Rocksmith>Generate FHPs
 					}
 					else
 					{	//Only one note is selected
-						eof_note_rocksmith_menu[10].flags = D_DISABLED;
+						eof_note_rocksmith_menu[11].flags = D_DISABLED;
 					}
 				}
 
@@ -6482,6 +6485,51 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 	if(report && !(*undo_made) && (auto_complete != 3))
 	{	//If no alterations were necessary (excluding the highlight only option) and the calling function wanted this reported
 		allegro_message("All fingerings are already defined");
+	}
+	return 1;
+}
+
+int eof_menu_note_lookup_fingering(void)
+{
+	unsigned long shapenum = 0, notenum;
+	int note_selection_updated, result;
+	EOF_PRO_GUITAR_TRACK *tp;
+	char undo_made = 0;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+	if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		return 0;	//Do not allow this function to run when tech view is in effect for the active track
+
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	for(notenum = 0; notenum < eof_get_track_size(eof_song, eof_selected_track); notenum++)
+	{	//For each note in the active track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[notenum])
+			continue;	//If this note isn't selected, skip it
+		if(!eof_note_is_chord(eof_song, eof_selected_track, notenum))
+			continue;	//If this note is not a chord, skip it
+
+		note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+		if(eof_note_needs_fingering_definition(eof_song, eof_selected_track, notenum))
+		{	//If the note does not have valid finger definition
+			result = eof_lookup_chord_shape(tp->note[notenum], &shapenum, eof_fingering_checks_include_mutes);	//Look for a match in the chord shape definitions, taking muted strings into account if user opted to do so
+			if(result)
+			{	//If a suitable chord definition was found
+				if(!undo_made)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_apply_chord_shape_definition(tp->note[notenum], shapenum, eof_fingering_checks_include_mutes);	//Apply the matching chord shape definition's fingering, taking muted strings into account if user opted to do so
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
 }

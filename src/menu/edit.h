@@ -102,6 +102,7 @@ int eof_menu_edit_select_highlighted_notes(void);		//Selects notes that are high
 int eof_menu_edit_select_non_highlighted_notes(void);	//Selects notes that are not highlighted
 int eof_menu_edit_select_open_notes(void);				//Selects notes that are open notes
 int eof_menu_edit_select_non_open_notes(void);			//Selects notes that are not open notes
+int eof_menu_edit_select_notes_needing_fingering(void);	//Selcts notes that don't have fingering properly defined
 
 int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long));
 	//Passes notes in the active track difficulty to the specified function that returns nonzero if it meets the conditions being checked, removing those that do from the current note selection

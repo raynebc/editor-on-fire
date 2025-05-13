@@ -6232,6 +6232,7 @@ void eof_render_editor_window_2(void)
 	long temp_selected;
 	EOF_MUSIC_POS temp_pos;
 	char eof_fingering_view_state = eof_fingering_view;
+	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
 
 	if(eof_display_second_piano_roll)
 	{	//If the secondary piano roll is to be displayed
@@ -6248,10 +6249,6 @@ void eof_render_editor_window_2(void)
 		{	//If the position hasn't been initialized
 			eof_music_pos2 = eof_music_pos.value;
 		}
-		if(eof_fingering_view && (eof_selected_track == eof_selected_track2))
-		{	//If both piano rolls are displaying the same track, ensure fingering view will not apply to the secondary piano roll so the user can see more information
-			eof_fingering_view = 0;
-		}
 
 		temp_type = eof_note_type;					//Remember the active difficulty
 		temp_track = eof_selected_track;				//Remember the active track number
@@ -6265,6 +6262,12 @@ void eof_render_editor_window_2(void)
 		{	//If the secondary piano roll is tracking its own position
 			eof_set_music_pos(&eof_music_pos, eof_music_pos2); //Change to that position
 		}
+		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track2);
+		if(eof_selected_track == eof_selected_track2)
+		{	//If both piano rolls are displaying the same track, ensure fingering and tech view will not apply to the secondary piano roll so the user can see more information
+			eof_fingering_view = 0;
+			eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, 0);	//Disable tech view if applicable
+		}
 		(void) eof_menu_track_selected_track_number(eof_selected_track2, 0);	//Change to the track of the secondary piano roll, update coordinates, color set, etc.
 		eof_process_beat_statistics(eof_song, eof_selected_track);			//Rebuild the beat stats so that the secondary piano roll can display the correct RS phrases and sections
 		eof_note_type = eof_note_type2;								//Set the secondary piano roll's difficulty
@@ -6276,6 +6279,7 @@ void eof_render_editor_window_2(void)
 		eof_selection.current = temp_selected;							//Restore the selected note
 		eof_hover_note = temp_hover;								//Restore the hover note
 		eof_fingering_view = eof_fingering_view_state;					//Restore the fingering view state
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, restore_tech_view);	//Re-enable tech view if applicable
 		eof_process_beat_statistics(eof_song, eof_selected_track);			//Rebuild the beat stats to reflect the primary piano roll so edit operations work as expected
 	}//If the secondary piano roll is to be displayed
 }
