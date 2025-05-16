@@ -1969,7 +1969,7 @@ int eof_menu_song_add_silence(void)
 	unsigned long i, x;
 	char fn[1024] = {0};
 	char mp3fn[1024] = {0};
-	static int creationmethod = 9;	//Stores the user's last selected leading silence creation method (default to oggCat, which is menu item 9 in eof_leading_silence_dialog[])
+	static int creationmethod = 10;	//Stores the user's last selected leading silence creation method (default to re-encode, which is menu item 10 in eof_leading_silence_dialog[])
 	int retval;
 	unsigned long old_eof_music_length = eof_music_length;	//Keep track of the current chart audio's length to compare with after silence was added
 

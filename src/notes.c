@@ -162,6 +162,14 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 							{	//If the printing of this panel was signaled to end
 								return 1;
 							}
+							if(panel->newline)
+							{	//If the newline macro caused the output to be flushed
+								panel->xpos = 2;		//Move output coordinates to beginning of the next line
+								panel->ypos +=12;
+								if(panel->colorprinted)
+									panel->ypos += 3;		//Lower the y coordinate further so that one line of color background doesn't obscure another
+								panel->newline = 0;
+							}
 						}
 						break;	//Exit macro parse while loop
 					}
@@ -2381,6 +2389,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the color was successfully parsed
 			dest_buffer[0] = '\0';
 			panel->color = newcolor;
+			panel->definedcolor = newcolor;	//This will be the permanent text color in effect until it is overridden
 			return 1;
 		}
 	}
@@ -2390,6 +2399,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		dest_buffer[0] = '\0';
 		panel->bgcolor = -1;
+		panel->definedbgcolor = -1;	//This will be the permanent background color in effect until it is overridden
 		return 1;
 	}
 
@@ -2403,6 +2413,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the color was successfully parsed
 			dest_buffer[0] = '\0';
 			panel->bgcolor = newcolor;
+			panel->definedbgcolor = newcolor;	//This will be the permanent background color in effect until it is overridden
 			return 1;
 		}
 	}
@@ -2429,9 +2440,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "NEWLINE"))
 	{
 		dest_buffer[0] = '\0';
+		panel->flush = 1;
+		panel->newline = 1;
 		panel->allowempty = 0;
-		panel->xpos = 2;
-		panel->ypos +=12;
 		return 1;
 	}
 
@@ -2448,6 +2459,36 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		dest_buffer[0] = '\0';
 		panel->timeformat = 1;
+		return 1;
+	}
+
+	//Change text printing to white text on red background until the end of the current notes panel line
+	if(!ustricmp(macro, "DISPLAY_ERROR"))
+	{
+		dest_buffer[0] = '\0';
+		panel->color = eof_color_white;
+		panel->bgcolor = eof_color_red;
+		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		return 1;
+	}
+
+	//Change text printing to black text on yellow background until the end of the current notes panel line
+	if(!ustricmp(macro, "DISPLAY_WARNING"))
+	{
+		dest_buffer[0] = '\0';
+		panel->color = eof_color_black;
+		panel->bgcolor = eof_color_yellow;
+		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		return 1;
+	}
+
+	//Change text printing to black text on green background until the end of the current notes panel line
+	if(!ustricmp(macro, "DISPLAY_SUCCESS"))
+	{
+		dest_buffer[0] = '\0';
+		panel->color = eof_color_black;
+		panel->bgcolor = eof_color_green;
+		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		return 1;
 	}
 
@@ -4437,9 +4478,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_song)
 		{
 			if(eof_song->vocal_track[0]->lines == 1)
-				snprintf(dest_buffer, dest_buffer_size, "1 lyric line is defined");
+				snprintf(dest_buffer, dest_buffer_size, "1 lyric line is defined.");
 			else
-				snprintf(dest_buffer, dest_buffer_size, "%lu lyric lines are defined", eof_song->vocal_track[0]->lines);
+				snprintf(dest_buffer, dest_buffer_size, "%lu lyric lines are defined.", eof_song->vocal_track[0]->lines);
 		}
 		return 1;
 	}
@@ -4450,9 +4491,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{
 			unsigned long count = eof_count_immerrock_sections();
 			if(count == 1)
-				snprintf(dest_buffer, dest_buffer_size, "1 section is defined");
+				snprintf(dest_buffer, dest_buffer_size, "1 section is defined.");
 			else
-				snprintf(dest_buffer, dest_buffer_size, "%lu sections are defined", count);
+				snprintf(dest_buffer, dest_buffer_size, "%lu sections are defined.", count);
 		}
 		return 1;
 	}
@@ -4470,9 +4511,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				}
 			}
 			if(count == 1)
-				snprintf(dest_buffer, dest_buffer_size, "1 / 100 sections is defined");
+				snprintf(dest_buffer, dest_buffer_size, "1 / 100 sections is defined.");
 			else
-				snprintf(dest_buffer, dest_buffer_size, "%lu / 100 sections are defined", count);
+				snprintf(dest_buffer, dest_buffer_size, "%lu / 100 sections are defined.", count);
 		}
 		return 1;
 	}
@@ -4482,9 +4523,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		unsigned long count, total = 0;
 		count = eof_count_immerrock_chords_missing_fingering(&total);
 		if(total == 1)
-			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chord is missing finger placement", count, total);
+			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chord is missing finger placement.", count, total);
 		else
-			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chords are missing finger placement", count, total);
+			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chords are missing finger placement.", count, total);
 		return 1;
 	}
 
@@ -5031,11 +5072,13 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		eof_log("\t\tInitializing panel variables", 3);
 	panel->ypos = 0;
 	panel->xpos = 2;
-	panel->color = eof_color_white;
-	panel->bgcolor = -1;	//Transparent background for text
+	panel->color = panel->definedcolor = eof_color_white;
+	panel->bgcolor = panel->definedbgcolor = -1;	//Transparent background for text
 	panel->allowempty = 0;
 	panel->timeformat = 0;
+	panel->colorprinted = 0;
 	panel->flush = 0;
+	panel->newline = 0;
 	panel->contentprinted = 0;
 	panel->symbol = 0;
 	panel->endline = 0;
@@ -5075,9 +5118,11 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 				if(!panel->logged)
 					eof_log("\t\t\tPrinting line", 3);
 				textout_ex(panel->window->screen, font, buffer2, panel->xpos, panel->ypos, panel->color, panel->bgcolor);	//Print this line to the screen
-				panel->allowempty = 0;	//Reset this condition, it has to be enabled per-line
+				panel->allowempty = 0;		//Reset this condition, it has to be enabled per-line
 				panel->xpos = 2;			//Reset the x coordinate to the beginning of the line
 				panel->ypos +=12;
+				if(panel->colorprinted)
+					panel->ypos += 3;		//Lower the y coordinate further so that one line of color background doesn't obscure another
 				panel->contentprinted = 0;
 				if(!panel->logged)
 					eof_log("\t\t\tLine printed", 3);
@@ -5095,6 +5140,9 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text line #%lu", linectr);
 				eof_log(eof_log_string, 3);
 			}
+			panel->colorprinted = 0;				//Reset this status
+			panel->color = panel->definedcolor;		//Re-apply the last explicit text color (to override error/warning/info display macros)
+			panel->bgcolor = panel->definedbgcolor;	//Ditto for background color
 		}
 		else
 		{

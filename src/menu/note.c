@@ -11361,6 +11361,9 @@ int eof_menu_note_split_lyric_line_after_selected(void)
 
 	if(eof_vocals_selected)
 	{
+		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;	//Simplify
+		EOF_VOCAL_TRACK * tp = eof_song->vocal_track[tracknum];
+
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each lyric in the active track
 			if(eof_selection.multi[i])
@@ -11384,10 +11387,8 @@ int eof_menu_note_split_lyric_line_after_selected(void)
 
 						if(nextline && (nextline == thisline))
 						{	//If the lyric line containing the next lyric was identified and it's in the same line as this lyric
-							unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;	//Simplify
 							unsigned long end = thisline->end_pos;
 							unsigned char diff = thisline->difficulty;
-							EOF_VOCAL_TRACK * tp = eof_song->vocal_track[tracknum];
 
 							//End this lyric line at the end of the selected lyric (do this before creating the new line in case the latter's call to eof_sort_and_merge_overlapping_sections() invalidates the thisline pointer
 							thisline->end_pos = thispos + eof_get_note_length(eof_song, eof_selected_track, i);
@@ -11403,7 +11404,11 @@ int eof_menu_note_split_lyric_line_after_selected(void)
 				}
 			}
 		}
-		eof_reset_lyric_preview_lines();
+		if(undo_made)
+		{	//If any lyric lines were modified
+			eof_sort_and_merge_overlapping_sections(tp->line, &tp->lines);	//Sort and remove overlapping instances
+			eof_reset_lyric_preview_lines();
+		}
 	}
 
 	return 1;	//Success

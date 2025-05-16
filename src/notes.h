@@ -16,13 +16,18 @@ typedef struct
 	//Print controls
 	int xpos, ypos;		//The current output coordinates of text being printed to the Notes panel
 	int color;			//The text color in use
+	int definedcolor;	//The last color manually set by control macros, is re-applied as the active color at the end of the current panel line's rendering
 	int bgcolor;		//The background color used for that text
+	int definedbgcolor;	//The last background color manually set by control macros, is re-applied as the active background color at the end of the current panel line's rendering
 	int allowempty;	//A %EMPTY% macro was parsed, allow an empty output line to print to the Notes panel
 	int timeformat;	//If zero, timestamps that would print from expansion macros print as #ms milliseconds.  If nonzero, they print as mm:ss.ms
+	int colorprinted;	//Is set to nonzero if a color background was used in the current line of printing,
+					// to trigger print output to lower by 3 pixels at the end of each newline and end of panel line for display for improved readability
 
 	//Parsing controls
-	int flush;			//Set to nonzero if a %FLUSH% macro is parsed, signaling eof_expand_notes_window_text() to output the current content of the output buffer
-					// and then resume parsing the current line of text
+	int flush;			//Set to nonzero if a some macros like %FLUSH% are parsed, signaling eof_expand_notes_window_text() to output the current content of the output buffer
+					// and then resume parsing the current line of text.
+	int newline;		//Set to nonzero if a %NEWLINE% macro is parsed, meant to flush the current output and move the output coordinates to the beginning of the next output line
 	int contentprinted;	//Set to nonzero if content was printed for a line, such as by using %FLUSH% even if the output buffer is empty when the end of line is parsed
 	int symbol;		//After a flush, this character will be printed to the Notes panel using the symbol font (ie. to print guitar tab characters)
 	int endline;		//After a flush, a nonzero value for this variable will end processing of the current line
