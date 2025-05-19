@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include <ctype.h>
+#include <float.h>
 #include <math.h>
 #ifdef ALLEGRO_WINDOWS
 	#include <winalleg.h>
@@ -31,6 +32,7 @@ char eof_notes_macro_note_subceeding_fhp[50];
 char eof_notes_macro_note_exceeding_fhp[50];
 char eof_notes_macro_pitched_slide_missing_end_fret[50];
 char eof_notes_macro_bend_missing_strength[50];
+char eof_notes_macro_tempo_subceeding_number[50];
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -2261,6 +2263,32 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	count_string = strcasestr_spec(macro, "IF_ANY_TEMPO_SUBCEEDS_");	//Get a pointer to the text that would be the tempo (integer)
+	if(count_string)
+	{	//If the macro is this string
+		unsigned long tempo;
+		double thistempo;
+
+		eof_notes_macro_tempo_subceeding_number[0] = '\0';	//Erase this string
+		if(eof_read_macro_number(count_string, &tempo))
+		{	//If the tempo was successfully parsed
+			for(ctr = 0; ctr < eof_song->beats; ctr++)
+			{	//For each beat in the project
+				thistempo = 60000000.0 / (double)eof_song->beat[ctr]->ppqn;
+				if((unsigned long)(thistempo + DBL_EPSILON) < tempo)
+				{	//Accounting for floating point precision limitations, if the tempo on this beat is lower than the target
+					char time_string[15] = {0};
+					eof_notes_panel_print_time(eof_song->beat[ctr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+					snprintf(eof_notes_macro_tempo_subceeding_number, sizeof(eof_notes_macro_tempo_subceeding_number) - 1, "Beat #%lu : pos %s : %.2fBPM", ctr, time_string, thistempo);	//Write a string identifying the offending beat
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
 
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
@@ -3649,6 +3677,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "KEY_INPUT_STATUS"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "CTRL:%c ALT:%c SHIFT:%c CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', KEY_EITHER_SHIFT ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);
+///		snprintf(dest_buffer, dest_buffer_size, "CTRL:%c ALT:%c SHIFT:%c,%c (%c) CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', key[KEY_LSHIFT] ? '*' : ' ', key[KEY_RSHIFT] ? '*' : ' ', key_shifts & KB_SHIFT_FLAG ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);	//Debugging
 		return 1;
 	}
 
@@ -4649,6 +4678,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DIFFICULTY_TAB_AREA"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "(%u, %u) - (%u, %u)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "FIRST_BEAT_SUBCEEDING_TEMPO"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_tempo_subceeding_number);
 
 		return 1;
 	}

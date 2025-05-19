@@ -2194,6 +2194,23 @@ void eof_read_keyboard_input(char function)
 	unsigned char numpad_key_array[NUMPAD_KEY_ARRAY_SIZE] = {KEY_PLUS_PAD, KEY_MINUS_PAD, KEY_ENTER_PAD, KEY_0_PAD, KEY_1_PAD, KEY_2_PAD, KEY_3_PAD, KEY_4_PAD, KEY_5_PAD, KEY_6_PAD, KEY_7_PAD, KEY_8_PAD, KEY_9_PAD};
 		//When these keys are pressed, the ASCII value must be ignored because they conflict with other keys on the keyboard
 
+	///There seems to be some sort of bug where if both SHIFT keys are held at the same time and then released, Allegro's key[] array will track one of the SHIFT keys remaining held until that SHIFT key is pressed and released again
+	if(!(key_shifts & KB_SHIFT_FLAG) && KEY_EITHER_SHIFT)
+	{	//If the more accurately tracked key statuses don't reflect SHIFT being held
+		key[KEY_LSHIFT] = key[KEY_RSHIFT] = 0;	//Manually reset these key states
+		eof_shift_released = 2;
+		eof_clear_input();
+		clear_keybuf();
+	}
+
+	//Likewise, after the above workaround is implemented, the next press of one of the two SHIFT key presses becomes dropped, so implement a workaround for this condition
+	if((key_shifts & KB_SHIFT_FLAG) && !KEY_EITHER_SHIFT)
+	{	//If the more accurately tracked key statuses reflect SHIFT being held, but the key[] array does not
+///The bug with Allegro does not allow this condition to be checked, as key_shifts cannot detect the dropped SHIFT keypress
+///		key[KEY_LSHIFT] = 1;	//Manually consider one of the SHIFT keys as being held
+///		eof_shift_released = 0;
+	}
+
 	if(keypressed())
 	{	//If a keypress was detected
 		eof_key_pressed = 1;
@@ -2503,9 +2520,18 @@ void eof_read_global_keys(void)
 	/* show help */
 		if(eof_key_code == KEY_F1)
 		{
-			clear_keybuf();
-			(void) eof_menu_help_keys();
-			eof_use_key();
+			if(KEY_EITHER_ALT)
+			{	//ALT is held
+				clear_keybuf();
+				(void) eof_menu_help_rocksmith_keys();
+				eof_use_key();
+			}
+			else
+			{	//No modifier keys are held
+				clear_keybuf();
+				(void) eof_menu_help_keys();
+				eof_use_key();
+			}
 		}
 
 	/* toggle tech view (F4) */

@@ -22,14 +22,18 @@ MENU eof_help_menu[] =
 	{"Reset audi&O", eof_reset_audio, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Keys\tF1", eof_menu_help_keys, NULL, 0, NULL},
+	{"&Rocksmith keys\tALT+F1", eof_menu_help_rocksmith_keys, NULL, 0, NULL},
 	{"&About", eof_menu_help_about, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+char *eof_help_dialog_help_string = "EOF Help";
+char *eof_help_dialog_rocksmith_string = "Rocksmith authoring shortcuts";
+char eof_help_dialog_string[35] = {0};
 DIALOG eof_help_dialog[] =
 {
 	/* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc,    0,  0,  640, 480, 2,   23,  0,    0,      0,   0,   "EOF Help",               NULL, NULL },
+	{ d_agup_window_proc,    0,  0,  640, 480, 2,   23,  0,    0,      0,   0,   eof_help_dialog_string,               NULL, NULL },
 	{ d_agup_text_proc,   288,  8,  128, 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
 	{ d_agup_textbox_proc,   8,  32,  624, 412 - 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
 	{ d_agup_button_proc, 8,  444, 624,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "Okay",               NULL, NULL },
@@ -38,6 +42,7 @@ DIALOG eof_help_dialog[] =
 
 int eof_menu_help_keys(void)
 {
+	strncpy(eof_help_dialog_string, "EOF Help", sizeof(eof_help_dialog_string) - 1);
 	if(eof_validate_temp_folder())
 	{	//Ensure the correct working directory and presence of the temporary folder
 		eof_log("\tCould not validate working directory and temp folder", 1);
@@ -48,6 +53,39 @@ int eof_menu_help_keys(void)
 	if(eof_help_text == NULL)
 	{	//Could not buffer file
 		allegro_message("Error reading keys.txt");
+		return 1;
+	}
+
+	eof_help_dialog[2].dp = eof_help_text;	//Use the buffered file for the text box
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_help_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_help_dialog);
+	if(eof_popup_dialog(eof_help_dialog, 0) == 1)
+	{
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	free(eof_help_text);
+	eof_help_text = NULL;
+	return 1;
+}
+
+int eof_menu_help_rocksmith_keys(void)
+{
+	strncpy(eof_help_dialog_string, "Rocksmith authoring shortcuts", sizeof(eof_help_dialog_string) - 1);
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		return 1;
+	}
+	eof_help_text = eof_buffer_file("rocksmith_keys.txt", 1);	//Buffer the help file into memory, appending a NULL terminator
+	if(eof_help_text == NULL)
+	{	//Could not buffer file
+		allegro_message("Error reading rocksmith_keys.txt");
 		return 1;
 	}
 

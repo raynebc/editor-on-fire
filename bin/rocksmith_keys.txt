@@ -1,0 +1,79 @@
+Mouse scroll wheel = Adjust sustain length || Adjust duration length (Part_Vocals)
+Left click = Select note || Select lyric (Part_Vocals)
+Right click = Add/remove note || Add/remove lyric (Part_Vocals) (except Rex Mundi input mode)
+Middle click = Open edit pro guitar note box || Edit lyric (Part_Vocals)
+Ctrl + scroll wheel = Increment / decrement fret number
+
+F = Edit frets/fingering
+H = Hammer-on
+N = Edit pro guitar note menu
+P = Pull-off
+T = Crazy status
+
+Ctrl + A = Select all
+Ctrl + Shift + A = Accent
+Ctrl + B = Bend
+Ctrl + C = Copy
+Ctrl + F = Edit fingering
+Shift + F = Set fret hand position (fhp) where playback bar is
+Shift + G = Toggle grid snap display
+Ctrl + Shift + G = Add arpeggio
+Ctrl + H = Natural Harmonic
+Shift + H = Pinch Harmonic
+Ctrl + Shift + H = Add handshape
+Shift + I = Set time signature
+Ctrl + Shift + I = Ignore
+Ctrl + L = Select like (select note or chord on the same string and fret)
+Shift + L = Precise select like (select like but that also include status like HO/PO, slides, etc..)
+Ctrl + M = Palm mute || Regroup lyrics (Part_Vocals)
+Shift + N = Link-next
+Ctrl + Shift + O = Tremolo
+Shift + P = Add phrase
+Ctrl + Shift + P = Pop
+Ctrl + Shift + R = Resnap to grid
+Ctrl + S = Save 
+Shift + S = Add section || Split lyric (Part_Vocals)
+Ctrl + T = Tap
+Shift + T = Midi tones
+Ctrl + Shift + T = Add tone where playback bar is
+Ctrl + U = Unpitched slide
+Ctrl + V = Paste
+Shift + V = Vibrato
+Ctrl + X = String mute (and resets fret to open)
+Shift + X = String mute (and retains defined fret)
+Ctrl + Z = Undo
+
+Ctrl + Up/Down arrow = Pitched Slide
+Shift + Up/Down arrow = Transpose maintaining pitch
+Shift + Enter = Display 2nd piano roll
+Ctrl + Enter = Quick swap between piano rolls
+Page Up/ Down = Move to next/ previous beat
+Shift + Page Up/ Down = Move to next/ previous note
+Ctrl + Shift + Page Up/ Down = Move to next/ previous grid snap line
+
+Shift + F11 = toggle 2D pane display (chord names/tone names/FHPs/Sections & Phrases)
+
+Ctrl + numpad 0-9 = Set bookmark
+Numpad 0-9 = Go to placed bookmark
+Ctrl + ` through 0 = Set fret values 0 through 10
+Ctrl + F1 through F12 = Set fret values 11 through 22
+Ctrl + +/- = Increment / decrement fret number
+
+[ and ] = Adjust sustain length by grid snap line
+, and . = Increase/ decrease grid snap
+; and ' = Increase/ decrease song playback speed
+
+F1 = Help
+F2 = Save
+F3 = Seek to next fret catalog match
+Shift + F3 = Seek to previous fret catalog match
+F4 = Tech note view
+F5 = Toggle waveform graph
+F6 = Import Midi
+F7 = Import Rocksmith (xml file)
+F8 = Fingering view
+Shift + F8 = Import lyrics
+F9 = Song properties
+F10 = EOF settings
+F11 = Properties
+F12 = Import GP

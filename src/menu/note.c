@@ -35,6 +35,7 @@ char eof_tremolo_menu_mark_text[32] = "&Mark";
 char eof_slider_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_text[32] = "&TrIll";
 char eof_tremolo_menu_text[32] = "Tre&Molo";
+int eof_menu_note_edit_pro_guitar_note_prompt_suppress = 0;
 
 int eof_suppress_pitched_transpose_warning = 0;		//Set to nonzero if user opts to suppress the warning that selected notes could not pitch transpose
 
@@ -5356,15 +5357,18 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			}//For each note in the track
 
 	//Prompt whether matching notes need to have their name updated
-			if(eof_note_edit_name[0] != '\0')
-			{	//If the user entered a name
+			if(!eof_menu_note_edit_pro_guitar_note_prompt_suppress && (eof_note_edit_name[0] != '\0'))
+			{	//If the user didn't suppress this prompt and has entered a note name
+				int retval2;
+
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
 					if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) != 0) || !ustrcmp(eof_note_edit_name, eof_get_note_name(eof_song, eof_selected_track, ctr)))
 						continue;	//If this note doesn't match the one that was edited, or if the name is already the same, skip it
 
 					eof_clear_input();
-					if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					retval2 = alert3(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", "No, stop asking", 'y', 'n', 0);
+					if(retval2 == 1)
 					{	//If the user opts to use the updated note name on matching notes in this track
 						for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 						{	//For each note in the active track, starting from the one that just matched the comparison
@@ -5378,6 +5382,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 								(void) ustrcpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name);
 							}
 						}
+					}
+					else if(retval2 ==3)
+					{	//Suppress this prompt
+						eof_menu_note_edit_pro_guitar_note_prompt_suppress = 1;
 					}
 					break;	//Break from loop
 				}//For each note in the active track
