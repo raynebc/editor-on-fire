@@ -1,3 +1,7 @@
+# NOTE #
+
+These steps are deprecated because the original MinGW does not work reliably anymore.  Use the steps in the "Building_EOF_in_Windows_Old_Steps 2024 version" wiki article instead.
+
 # Introduction #
 
 Building EOF on Windows is fairly straightforward. Here we will provide [a quick setup guide](#quick-setup) as well as [detailed descriptions](#details) of all the necessary steps to build EOF from source code.
