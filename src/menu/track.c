@@ -1494,7 +1494,7 @@ int eof_track_set_num_frets_strings(void)
 	newnumfrets = atol(eof_etext2);
 	if(newnumfrets && (newnumfrets != eof_song->pro_guitar_track[tracknum]->numfrets))
 	{	//If the specified number of frets was changed
-		highestfret = eof_get_highest_fret(eof_song, eof_selected_track, 0);	//Get the highest used fret value in this track
+		highestfret = eof_get_highest_fret(eof_song, eof_selected_track);	//Get the highest used fret value in this track
 		if(highestfret > newnumfrets)
 		{	//If any notes in this track use fret values that would exceed the new fret limit
 			char message[120] = {0};
@@ -1703,6 +1703,9 @@ int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long times
 				allegro_message("You cannot specify a fret hand position higher than 21 (it will cause Rocksmith 2 to crash).");
 				return 1;
 			}
+			//Currently none of the supported games can use a FHP higher than 21
+			allegro_message("You cannot specify a fret hand position higher than 21 (none of the supported games allow it).");
+			return 1;
 		}
 		else if(!position)
 		{	//If the user gave a fret position of 0

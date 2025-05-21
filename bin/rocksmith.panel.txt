@@ -6,15 +6,22 @@ Rocksmith Panel (%TEXT_FILE%)
 %TIME_FORMAT_MM_SS_MS%
 %!IF_IS_PRO_GUITAR_TRACK%%!IF_IS_VOCAL_TRACK%%MOVE_DOWN_PIXELS_8%This is not a Rocksmith compatible track.%ENDPANEL%
 
+;Metadata checks
+%!IF_SONG_TITLE_IS_DEFINED%%DISPLAY_ERROR%Song title is undefined.
+%!IF_ARTIST_NAME_IS_DEFINED%%DISPLAY_ERROR%Artist name is undefined.
+
 ;Lyric checks
 %IF_IS_VOCAL_TRACK%%IF_ANY_LYRIC_LINES_ARE_DEFINED%%DISPLAY_SUCCESS%%PRINT_LYRIC_LINE_COUNT_STRING%%ELSE%%DISPLAY_WARNING%No lyric lines are defined%ENDIF%
 %IF_IS_VOCAL_TRACK%%IF_ANY_LYRICS_ARE_OUTSIDE_LINES%%DISPLAY_WARNING%At least one lyric is not within a lyric line
 %IF_IS_VOCAL_TRACK%%ENDPANEL%
 
-;Note position checks
-%IF_PG_NOTE_OCCURS_BEFORE_MILLIS_10000%%DISPLAY_WARNING%At least one note begins < 10 seconds
+;Note checks
+%IF_PG_NOTE_OCCURS_BEFORE_MILLIS_10000%%DISPLAY_WARNING%At least one note begins < 10 seconds:%NEWLINE%%RS_FIRST_NOTE_OCCURRING_BEFORE_MILLIS%
 %IF_RS_NOTES_EXIST_BEFORE_PHRASE_COUNT%%DISPLAY_WARNING%At least one note begins before the COUNT phrase%ELSE%%IF_RS_NOTES_TO_SOON_AFTER_COUNT_PHRASE%%DISPLAY_WARNING%There isn't an empty measure after COUNT phrase.
 %IF_RS_NOTES_AT_OR_AFTER_PHRASE_END%%DISPLAY_WARNING%At least one note ends at/after the END phrase
+%IF_RS1_EXPORT_ENABLED%%IF_RS_ANY_NOTE_EXCEEDS_FRET_22%%DISPLAY_ERROR%At least one note exceeds RS1's limit of fret 22%NEWLINE%%RS_FIRST_NOTE_EXCEEDING_FRET%
+%IF_RS_ANY_NOTE_EXCEEDS_FRET_24%%DISPLAY_ERROR%At least one note exceeds RS2's limit of fret 24%NEWLINE%%RS_FIRST_NOTE_EXCEEDING_FRET%
+%IF_RS_ANY_NOTE_EXCEEDS_DIFF_29%%DISPLAY_ERROR%At least one note exceeds the usable diffs of 0-29%NEWLINE%%RS_FIRST_NOTE_EXCEEDING_DIFF%
 
 ;Phrase and section checks
 %IF_RS_PHRASE_DEFINED_MULTIPLE_TIMES_COUNT%%DISPLAY_ERROR%Count phrase is defined multiple times.
@@ -35,6 +42,8 @@ Rocksmith Panel (%TEXT_FILE%)
 %IF_TRACK_DIFF_HAS_NO_FHPS%%DISPLAY_WARNING%No fret hand positions defined in this difficulty.
 %IF_RS_ANY_NOTE_SUBCEEDS_FHP%%DISPLAY_ERROR%At least 1 note uses a fret below active FHP:%NEWLINE%%RS_FIRST_NOTE_SUBCEEDING_FHP%
 %IF_RS_ANY_NON_TAP_NOTE_EXCEEDS_FHP_BY_8%%DISPLAY_ERROR%At least 1 non tap note exceeds FHP by 8 frets:%NEWLINE%%RS_FIRST_NON_TAP_NOTE_EXCEEDING_FHP%
+%IF_RS1_EXPORT_ENABLED%%IF_ANY_FHP_EXCEEDS_19%%DISPLAY_ERROR%At least 1 FHP exceeds RS1's fret limit of 19:%NEWLINE%%RS_FIRST_FHP_EXCEEDING_NUMBER%
+%IF_ANY_FHP_EXCEEDS_21%%DISPLAY_ERROR%At least 1 FHP exceeds RS2's fret limit of 21:%NEWLINE%%RS_FIRST_FHP_EXCEEDING_NUMBER%
 
 ;Other checks
 %IF_MIN_NOTE_DISTANCE_NOT_BEAT_OR_MEASURE_BASED%%DISPLAY_WARNING%Min. note distance preference not 1/# beat/measure.

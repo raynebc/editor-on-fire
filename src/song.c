@@ -8732,40 +8732,65 @@ int eof_thin_notes_to_match_target_difficulty(EOF_SONG *sp, unsigned long source
 	return 1;
 }
 
-unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track, char scope)
+unsigned long eof_note_get_highest_fret(EOF_PRO_GUITAR_NOTE *np)
 {
-	unsigned long highestfret = 0, currentfret, ctr, ctr2, tracknum, bitmask;
-	int note_selection_updated;
+	unsigned long ctr, bitmask, currentfret, highestfret = 0;
+
+	if(!np)
+		return 0;	//Invalid parameter
+
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+	{	//For each of the 6 usable strings
+		if(np->note & bitmask)
+		{	//If this string is in use
+			currentfret = np->frets[ctr];
+			if((currentfret != 0xFF) && ((currentfret & 0x7F) > highestfret))
+			{	//If this fret value (masking out the MSB, which is used for muting status) is higher than the previous
+				highestfret = currentfret & 0x7F;
+			}
+		}
+		if((np->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && (np->unpitchend > highestfret))
+		{	//If the note has an unpitched slide
+			highestfret = np->unpitchend;	//Track the slide
+		}
+		if((np->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && (np->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (np->slideend > highestfret))
+		{	//If the note has a pitched slide
+			highestfret = np->slideend;
+		}
+	}
+
+	return highestfret;
+}
+
+unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long highestfret = 0, currentfret, ctr, noteset;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	//Track the data for normal and tech note sets
+	EOF_PRO_GUITAR_NOTE **note;
+	unsigned long notes;
 
 	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Only run this on a pro guitar/bass track
 
-	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-	tracknum = sp->track[track]->tracknum;
-	for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
-	{	//For each note in the specified pro guitar track
-		if(!scope || ((eof_selection.track == track) && eof_selection.multi[ctr]))
-		{	//If this note is within the scope of this search (in the track or selected)
-			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
-			{	//For each of the 6 usable strings
-				if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
-				{	//If this string is in use
-					currentfret = sp->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
-					if((currentfret != 0xFF) && ((currentfret & 0x7F) > highestfret))
-					{	//If this fret value (masking out the MSB, which is used for muting status) is higher than the previous
-						highestfret = currentfret & 0x7F;
-					}
-				}
-			}
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
+	for(noteset = 0, note = tp->pgnote, notes = tp->pgnotes; noteset < 2; noteset++)
+	{	//For each the normal and tech note sets
+		for(ctr = 0; ctr < notes; ctr++)
+		{	//For each note in this set
+			currentfret = eof_note_get_highest_fret(note[ctr]);	//Get the highest fret value used by this note (including pitched/unpitched slide notation)
+			if(currentfret > highestfret)
+				highestfret = currentfret;
 		}
+
+		//For the second pass of this loop, parse the tech note set
+		note = tp->technote;
+		notes = tp->technotes;
 	}
 
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
 	return highestfret;
 }
 
@@ -9813,20 +9838,34 @@ void eof_erase_track_difficulty(EOF_SONG *sp, unsigned long track, unsigned char
 
 void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long track, unsigned char fretnum)
 {
-	unsigned long ctr, tracknum;
+	unsigned long ctr, currentfret, noteset;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	//Track the data for normal and tech note sets
+	EOF_PRO_GUITAR_NOTE **note;
+	unsigned long notes;
 
 	if(!sp || !track || (track >= sp->tracks))
 		return;	//Invalid parameters
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return;	//Only run this on a pro guitar/bass track
 
-	tracknum = sp->track[track]->tracknum;
-	for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
-	{	//For each note in the specified pro guitar track
-		if(eof_get_highest_fret_value(sp, track, ctr) > fretnum)
-		{	//If the note uses a fret number higher than the specified fret
-			sp->pro_guitar_track[tracknum]->note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Set the note's highlight flag
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
+	for(noteset = 0, note = tp->pgnote, notes = tp->pgnotes; noteset < 2; noteset++)
+	{	//For each the normal and tech note sets
+		for(ctr = 0; ctr < notes; ctr++)
+		{	//For each note in this set
+			currentfret = eof_note_get_highest_fret(note[ctr]);	//Get the highest fret value used by this note (including pitched/unpitched slide notation)
+
+			if(currentfret > fretnum)
+			{	//If this note exceeds the specified fret value
+				note[ctr]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Set the note's highlight flag
+			}
 		}
+
+		//For the second pass of this loop, parse the tech note set
+		note = tp->technote;
+		notes = tp->technotes;
 	}
 }
 

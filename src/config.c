@@ -117,6 +117,8 @@ void eof_load_config(char * fn)
 	}
 	eof_zoom = get_config_int("preferences", "eof_zoom", 10);
 	eof_selected_track = get_config_int("preferences", "eof_selected_track", EOF_TRACK_GUITAR);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tApplied default track %u from configuration file.", eof_selected_track);
+	eof_log(eof_log_string, 1);
 	eof_note_type = get_config_int("preferences", "eof_note_type", EOF_NOTE_AMAZING);
 	eof_hide_drum_tails = get_config_int("preferences", "hide_drum_tails", 0);
 	eof_hide_note_names = get_config_int("preferences", "eof_hide_note_names", 0);

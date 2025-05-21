@@ -26,6 +26,7 @@
 
 #define TEXT_PANEL_BUFFER_SIZE 2047
 
+char eof_notes_macro_note_occurs_before_millis[50];
 char eof_notes_macro_pitched_slide_missing_linknext[50];
 char eof_notes_macro_note_starting_on_tone_change[100];
 char eof_notes_macro_note_subceeding_fhp[50];
@@ -33,6 +34,9 @@ char eof_notes_macro_note_exceeding_fhp[50];
 char eof_notes_macro_pitched_slide_missing_end_fret[50];
 char eof_notes_macro_bend_missing_strength[50];
 char eof_notes_macro_tempo_subceeding_number[50];
+char eof_notes_macro_fhp_exceeding_number[50];
+char eof_notes_macro_note_exceeding_fret[50];
+char eof_notes_macro_note_exceeding_diff[50];
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -1700,12 +1704,35 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_RS1_EXPORT_ENABLED"))
+	{
+		if(eof_write_rs_files)
+		{	//If the "Save separate Rocksmith 1 files" export preference is enabled
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS2_EXPORT_ENABLED"))
+	{
+		if(eof_write_rs2_files)
+		{	//If "Save separate Rocksmith 2 files" export preference is enabled
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	count_string = strcasestr_spec(macro, "IF_PG_NOTE_OCCURS_BEFORE_MILLIS_");	//Get a pointer to the text that would be the millisecond count
 	if(count_string)
 	{	//If the macro is this string
 		unsigned long mscount;
 		EOF_PRO_GUITAR_TRACK *tp;
 
+		eof_notes_macro_note_occurs_before_millis[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &mscount))
 		{	//If the millisecond count was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -1718,6 +1745,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				{	//If there's at least one normal note in the track
 					if(tp->pgnote[0]->pos < mscount)
 					{	//If the first normal note begins before the specified time
+						char time_string[15] = {0};
+						eof_notes_panel_print_time(tp->pgnote[0]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						snprintf(eof_notes_macro_note_occurs_before_millis, sizeof(eof_notes_macro_note_occurs_before_millis) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[0]->type, time_string);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						return 3;	//True
 					}
@@ -2289,6 +2319,101 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	count_string = strcasestr_spec(macro, "IF_ANY_FHP_EXCEEDS_");	//Get a pointer to the text that would be the FHP value
+	if(count_string)
+	{	//If the macro is this string
+		EOF_PRO_GUITAR_TRACK *tp;
+		unsigned long target_fhp = 0, ctr2;
+
+		eof_notes_macro_fhp_exceeding_number[0] = '\0';	//Erase this string
+		if(eof_read_macro_number(count_string, &target_fhp))
+		{	//If the fhp was successfully parsed
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track in the project
+				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+					continue;	//Skip non pro guitar tracks
+
+				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+				for(ctr2 = 0; ctr2 < tp->handpositions; ctr2++)
+				{	//For each fret hand position in the track
+					if(tp->handposition[ctr2].end_pos + tp->capo > target_fhp)
+					{	//If the target FHP is surpassed
+							char time_string[15] = {0};
+							eof_notes_panel_print_time(tp->handposition[ctr2].start_pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+							snprintf(eof_notes_macro_fhp_exceeding_number, sizeof(eof_notes_macro_fhp_exceeding_number) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->handposition[ctr2].difficulty, time_string);	//Write a string identifying the offending FHP
+							dest_buffer[0] = '\0';
+							return 3;	//True
+						}
+					}
+				}
+			}
+
+		return 2;	//False
+	}
+
+	count_string = strcasestr_spec(macro, "IF_RS_ANY_NOTE_EXCEEDS_FRET_");	//Get a pointer to the text that would be the fret value
+	if(count_string)
+	{	//If the macro is this string
+		unsigned long notectr, target_fret = 0;
+		EOF_PRO_GUITAR_TRACK *tp;
+
+		eof_notes_macro_note_exceeding_fret[0] = '\0';	//Erase this string
+		if(eof_read_macro_number(count_string, &target_fret))
+		{	//If the fret value was successfully parsed
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track in the project
+				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+					continue;	//Skip non pro guitar tracks
+
+				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+				for(notectr = 0;  notectr < tp->pgnotes; notectr++)
+				{	//For each normal note in the track
+					if(eof_get_pro_guitar_note_highest_fret_value(tp->pgnote[notectr]) > target_fret)
+					{	//If this note uses a fret higher than the target
+						char time_string[15] = {0};
+						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						snprintf(eof_notes_macro_note_exceeding_fret, sizeof(eof_notes_macro_note_exceeding_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
+						dest_buffer[0] = '\0';
+						return 3;	//True
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	count_string = strcasestr_spec(macro, "IF_RS_ANY_NOTE_EXCEEDS_DIFF_");	//Get a pointer to the text that would be the difficulty number
+	if(count_string)
+	{	//If the macro is this string
+		unsigned long notectr, target_diff = 0;
+		EOF_PRO_GUITAR_TRACK *tp;
+
+		eof_notes_macro_note_exceeding_diff[0] = '\0';	//Erase this string
+		if(eof_read_macro_number(count_string, &target_diff))
+		{	//If the difficulty number was successfully parsed
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track in the project
+				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+					continue;	//Skip non pro guitar tracks
+
+				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+				for(notectr = 0;  notectr < tp->pgnotes; notectr++)
+				{	//For each normal note in the track
+					if(tp->pgnote[notectr]->type > target_diff)
+					{	//If this note uses a difficulty higher than the target
+						char time_string[15] = {0};
+						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						snprintf(eof_notes_macro_note_exceeding_diff, sizeof(eof_notes_macro_note_exceeding_diff) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
+						dest_buffer[0] = '\0';
+						return 3;	//True
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
 
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
@@ -4593,6 +4718,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "RS_FIRST_NOTE_OCCURRING_BEFORE_MILLIS"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_note_occurs_before_millis);
+
+		return 1;
+	}
+
 	if(!ustricmp(macro, "RS_FIRST_PITCHED_SLIDE_LACKING_LINKNEXT"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_pitched_slide_missing_linknext);
@@ -4689,6 +4821,26 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "RS_FIRST_FHP_EXCEEDING_NUMBER"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_fhp_exceeding_number);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "RS_FIRST_NOTE_EXCEEDING_FRET"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_note_exceeding_fret);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "RS_FIRST_NOTE_EXCEEDING_DIFF"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_note_exceeding_diff);
+
+		return 1;
+	}
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)

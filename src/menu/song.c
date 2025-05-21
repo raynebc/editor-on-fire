@@ -4425,9 +4425,9 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 						eof_2d_render_top_option = 7;			//Display fret hand positions at the top of the piano roll
 						eof_seek_and_render_position(ctr, tp->note[ctr2]->type, tp->note[ctr2]->pos);
 
-						if(eof_write_rs_files)
+						if(eof_write_rs_files || eof_write_rb_files)
 						{	//If Rocksmith 1 files are to be exported
-							ret = alert3("Warning (RS1):  Fret hand positions higher than 19 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
+							ret = alert3("Warning (RS1 and RB3):  Fret hand positions higher than 19 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
 							problem_found = 1;
 							triggered = 1;
 						}
@@ -4439,6 +4439,12 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 								problem_found = 1;
 								triggered = 1;
 							}
+						}
+						else
+						{
+							ret = alert3("Warning:  None of the supported rhythm games support fret hand positions higher than 21 (considering any capo in use) are invalid.", "You should change this to a lower number or delete/regenerate the fret hand positions.", "Continue?", "&Yes", "&No", "&Ignore", 'y', 'n', 'i');
+							problem_found = 1;
+							triggered = 1;
 						}
 						if(triggered)
 						{	//If the prompt was triggered

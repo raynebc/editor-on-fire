@@ -56,12 +56,12 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_BEND			2097152		//This flag will represent a note that is bent after it is picked
 #define EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC		4194304		//This flag will represent a note that is played as a harmonic
 #define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE  8388608		//This flag will represent a note whose slide will be written as reversed (channel 11)
-#define EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO        16777216	//This flag will represent a note that is played with vibrato
-#define EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION    33554432	//This flag will indicate whether a note with a slide or bend flag defines the slide's ending fret or the bend's strength (used in Rocksmith)
-#define EOF_PRO_GUITAR_NOTE_FLAG_POP            67108864	//This flag will represent a note that is played with pop technique (ie. bass)
-#define EOF_PRO_GUITAR_NOTE_FLAG_SLAP           134217728	//This flag will represent a note that is played with slap technique (ie. bass)
-#define EOF_PRO_GUITAR_NOTE_FLAG_HD             268435456	//This flag will represent a note that exports to Rocksmith with high density (ie. a chord repeat line)
-#define EOF_PRO_GUITAR_NOTE_FLAG_SPLIT          536870912	//This flag will represent a chord that exports to Rocksmith as single notes instead of a chord
+#define EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO        16777216			//This flag will represent a note that is played with vibrato
+#define EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION    33554432		//This flag will indicate whether a note with a pitched slide or bend flag defines the slide's ending fret or the bend's strength (used in Rocksmith)
+#define EOF_PRO_GUITAR_NOTE_FLAG_POP            67108864			//This flag will represent a note that is played with pop technique (ie. bass)
+#define EOF_PRO_GUITAR_NOTE_FLAG_SLAP           134217728			//This flag will represent a note that is played with slap technique (ie. bass)
+#define EOF_PRO_GUITAR_NOTE_FLAG_HD             268435456			//This flag will represent a note that exports to Rocksmith with high density (ie. a chord repeat line)
+#define EOF_PRO_GUITAR_NOTE_FLAG_SPLIT          536870912			//This flag will represent a chord that exports to Rocksmith as single notes instead of a chord
 
 //The following flags pertain to drum notes
 #define EOF_DRUM_NOTE_FLAG_Y_CYMBAL         32		//This flag represents a yellow drum note charted as a RB3 Pro style cymbal (lane 3)
@@ -1038,9 +1038,11 @@ int eof_thin_notes_to_match_target_difficulty(EOF_SONG *sp, unsigned long source
 	//Checks all notes in the target track difficulty
 	//For each note, if it isn't within [delta] number of milliseconds of a note in the source track difficulty, it is deleted
 	//Returns zero on error
-unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track, char scope);
-	//Examines notes in the specified track based on the scope value (0 = all notes, nonzero = selected notes)
-	//Returns the highest used fret value of notes in scope, or 0 if all such notes are muted with no fret specified
+unsigned long eof_note_get_highest_fret(EOF_PRO_GUITAR_NOTE *np);
+	//Returns the highest used fret value of the specified note, including any pitched or unpitched slide defined on it, or 0 if the note is only muted/open gems
+unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track);
+	//Examines normal and tech notes notes in the specified track, using eof_note_get_highest_fret()
+	//Returns the highest used fret value of the notes and slides, or 0 if all such notes are muted with no fret specified
 unsigned long eof_get_highest_clipboard_fret(char *clipboardfile);
 	//Parses the notes in the clipboard file, returning the highest used fret among them (or 0 if all such notes are muted with no fret specified)
 unsigned long eof_get_highest_clipboard_lane(char *clipboardfile);
@@ -1090,7 +1092,7 @@ void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track);
 	//Expects the beat statistics and eof_track_diff_populated_status[] array to already reflect the track being processed
 
 void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long track, unsigned char fretnum);
-	//Sets the highlight status on all notes in the specified track that use any fret higher than the specified number
+	//Sets the highlight status on all notes in the specified track that use any fret higher than the specified number, using eof_note_get_highest_fret() to check all normal and tech notes
 void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char function);
 	//Removes the highlight status on all notes (and tech notes if applicable) in the specified track
 	//If function is 0, the permanent highlight flag (EOF_NOTE_FLAG_HIGHLIGHT) is removed from the notes

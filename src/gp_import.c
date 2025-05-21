@@ -13,6 +13,7 @@
 #include "rs.h"
 #include "song.h"
 #include "tuning.h"
+#include "utility.h"
 #include "undo.h"
 #include "foflc/RS_parse.h"	//For shrink_xml_text()
 #include "menu/edit.h"	//For eof_sanitize_note_flags()
@@ -1717,11 +1718,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		//This counter is an offset indicating how many beats of content are being omitted from the imported track, so source beat #N is imported to beat #(N-skipbeatsourcectr) in the project
 	char importnote = 0;	//A boolean variable tracking whether each note is at or after 0ms and will import
 	unsigned slide_in_from_warned = 0;	//Tracks whether the user has been warned that slide in from above/below notes were encountered
+	char hastitle = 0, hasartist = 0, hasalbum = 0;	//Tracks whether the Guitar Pro file has metadata that can be applied to the project
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_load_gp() entered", 1);
 
-	if(!fn)
+	if(!fn ||  !eof_song)
 	{
 		return NULL;
 	}
@@ -2066,10 +2068,37 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 
 //Read past various ignored information
-	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read title string
+	(void) eof_read_gp_string(inf, NULL, buffer3, 1);	//Read title string
+	if(eof_check_string(buffer3) && !eof_check_string(eof_song->tags->title))
+		hastitle = 1;	//Track if the GP file defines the song title and the active project does not
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read subtitle string
-	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read artist string
+	(void) eof_read_gp_string(inf, NULL, buffer4, 1);	//Read artist string
+	if(eof_check_string(buffer4) && !eof_check_string(eof_song->tags->artist))
+		hasartist = 1;	//Track if the GP file defines the artist name and the active project does not
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read album string
+	if(eof_check_string(buffer) && !eof_check_string(eof_song->tags->album))
+		hasalbum = 1;	//Track if the GP file defines the album name and the active project does not
+	if(hastitle || hasartist || hasalbum)
+	{	//If the Guitar Pro file has metadata that isn't defined in the project, offer to use it
+		if(alert(NULL, "Load missing artist/title/album metadata from the Guitar Pro file?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to import the metadata
+			if(hastitle)
+			{
+				eof_log("\tImporting song title metadata", 2);
+				ustrncpy(eof_song->tags->title, buffer3, sizeof(eof_song->tags->title) - 1);
+			}
+			if(hasartist)
+			{
+				eof_log("\tImporting artist name metadata", 2);
+				ustrncpy(eof_song->tags->artist, buffer4, sizeof(eof_song->tags->artist) - 1);
+			}
+			if(hasalbum)
+			{
+				eof_log("\tImporting album title metadata", 2);
+				ustrncpy(eof_song->tags->album, buffer, sizeof(eof_song->tags->album) - 1);
+			}
+		}
+	}
 	if(fileversion >= 500)
 	{	//The words field only exists in version 5.x or higher versions of the format
 		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read words string
@@ -2078,7 +2107,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read copyright string
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read tab string
 	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read instructions string
-	pack_ReadDWORDLE(inf, &dword);						//Read the number of notice entries
+	pack_ReadDWORDLE(inf, &dword);			//Read the number of notice entries
 	if(dword > 1000)
 	{	//Compare the notice entry count against an arbitrarily large number to satisfy Coverity
 		eof_log("\t\t\tToo many notice entries, aborting.", 1);
@@ -3180,7 +3209,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			(void) pack_getc(inf);				//Auto accentuation on the beat
 			(void) pack_fseek(inf, 31);			//Unknown data
 			(void) pack_getc(inf);				//Selected sound bank option
-			(void) pack_fseek(inf, 7);			//Unknown data
+			(void) pack_fseek(inf, 7);				//Unknown data
 			(void) pack_getc(inf);				//Low frequency band lowered
 			(void) pack_getc(inf);				//Mid frequency band lowered
 			(void) pack_getc(inf);				//High frequency band lowered
@@ -4315,7 +4344,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 											if(!unpitchend || (frets[ctr4] < unpitchend))
 											{	//Track the lowest fret value for the slide end position
-												unpitchend = frets[ctr4] - 1;
+												if(frets[ctr4] > 2)
+												{	//If the slide can be 2 frets instead of 1
+													unpitchend = frets[ctr4] - 2;	//Slide that amount, for better appearance in Rocksmith
+												}
+												else
+												{	//Otherwise settle for 1 fret
+													unpitchend = frets[ctr4] - 1;
+												}
 											}
 										}
 									}
@@ -4324,7 +4360,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 										if(!unpitchend || (frets[ctr4] < unpitchend))
 										{	//Track the lowest fret value for the slide end position
-											unpitchend = frets[ctr4] + 1;
+											if(frets[ctr4] < 23)
+											{	//If the note can unpitched slide up 2 frets without exceeding RS2's fret limit
+												unpitchend = frets[ctr4] + 2;	//For better appearance in Rocksmith, slide 2 frets
+											}
+											else
+											{
+												unpitchend = frets[ctr4] + 1;	//Otherwise settle for one fret
+											}
 										}
 									}
 								}
@@ -4337,7 +4380,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 											if(!unpitchend || (frets[ctr4] < unpitchend))
 											{	//Track the lowest fret value for the slide end position
-												unpitchend = frets[ctr4] - 1;
+												if(frets[ctr4] > 2)
+												{	//If the slide can be 2 frets instead of 1
+													unpitchend = frets[ctr4] - 2;	//Slide that amount, for better appearance in Rocksmith
+												}
+												else
+												{	//Otherwise settle for 1 fret
+													unpitchend = frets[ctr4] - 1;
+												}
 											}
 										}
 									}
@@ -4346,7 +4396,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 										if(!unpitchend || (frets[ctr4] < unpitchend))
 										{	//Track the lowest fret value for the slide end position
-											unpitchend = frets[ctr4] + 1;
+											if(frets[ctr4] < 23)
+											{	//If the note can unpitched slide up 2 frets without exceeding RS2's fret limit
+												unpitchend = frets[ctr4] + 2;	//For better appearance in Rocksmith, slide 2 frets
+											}
+											else
+											{
+												unpitchend = frets[ctr4] + 1;	//Otherwise settle for one fret
+											}
 										}
 									}
 									else if(byte & 16)
@@ -4596,7 +4653,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								np[ctr2]->unpitchend = unpitchend;	//Apply the end position that was previously determined
 								if(unpitchend > gp->track[ctr2]->numfrets)
 								{	//If this unpitched slide requires the fret limit to be increased
-									gp->track[ctr2]->numfrets++;		//Make it so
+									gp->track[ctr2]->numfrets = unpitchend;	//Make it so
 								}
 							}
 							np[ctr2]->legacymask = 0;
@@ -4947,7 +5004,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))		//If this note wasn't marked as an unpitched slide during import
 				continue;	//Skip the note
-			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_HIGHLIGHT))		//If this note wasn't highlighted (to tell it apart from unpitched slide out notes)
+			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_HIGHLIGHT))		//If this note wasn't highlighted in order to mark an unpitchd slide in (to tell it apart from unpitched slide out notes)
 				continue;	//Skip the note
 
 			gnp = eof_pro_guitar_track_add_note(gp->track[ctr]);		//Add a new note to the current track

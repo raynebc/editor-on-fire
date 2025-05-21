@@ -37,6 +37,7 @@ typedef struct
 	char logged;		//Is set to 1 after the notes panel processing was logged for one frame, if exhaustive logging is enabled, to reduce the repeated duplicate logging
 } EOF_TEXT_PANEL;
 
+extern char eof_notes_macro_note_occurs_before_millis[50];		//Stores a string identifying the first culprit of the %IF_PG_NOTE_OCCURS_BEFORE_MILLIS_% condition
 extern char eof_notes_macro_pitched_slide_missing_linknext[50];	//Stores a string identifying the first culprit of the %IF_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT% condition
 extern char eof_notes_macro_note_starting_on_tone_change[100];	//Stores a string identifying the first culprit of the %IF_RS_ANY_TONE_CHANGES_ON_NOTE% condition
 extern char eof_notes_macro_note_subceeding_fhp[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_NOTE_SUBCEEDS_FHP% condition
@@ -44,6 +45,9 @@ extern char eof_notes_macro_note_exceeding_fhp[50];			//Stores a string identify
 extern char eof_notes_macro_pitched_slide_missing_end_fret[50];	//Stores a string identifying the first culprit of the %IF_RS_ANY_PITCHED_SLIDES_LACK_END_FRET#% condition
 extern char eof_notes_macro_bend_missing_strength[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_BENDS_LACK_STRENGTH_DEFINITION#% condition
 extern char eof_notes_macro_tempo_subceeding_number[50];		//Stores a string identifying the first culprit of the %IF_ANY_TEMPO_SUBCEEDS_#% condition
+extern char eof_notes_macro_fhp_exceeding_number[50];			//Stores a string identifying the first culprit of the %IF_ANY_FHP_EXCEEDS_#% condition
+extern char eof_notes_macro_note_exceeding_fret[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_NOTE_EXCEEDS_FRET_#% condition
+extern char eof_notes_macro_note_exceeding_diff[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_NOTE_EXCEEDS_DIFF_#% condition
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin);
 	//Creates a text panel and buffers the specified filename into its text variable

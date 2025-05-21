@@ -5467,9 +5467,9 @@ int eof_gp_import_guitar_track(int importvoice)
 		{	//If the imported track's string count doesn't conflict with any notes that were already in the active track
 			eof_song->pro_guitar_track[tracknum]->numstrings = eof_parsed_gp_file->track[selected]->numstrings;
 		}
-		if(eof_get_highest_fret(eof_song, eof_selected_track, 0) > eof_song->pro_guitar_track[tracknum]->numfrets)
+		if(eof_get_highest_fret(eof_song, eof_selected_track) > eof_song->pro_guitar_track[tracknum]->numfrets)
 		{	//If the track being imported uses a fret value that is higher than what the active track's fret limit
-			eof_song->pro_guitar_track[tracknum]->numfrets = eof_get_highest_fret(eof_song, eof_selected_track, 0);	//Update the fret limit
+			eof_song->pro_guitar_track[tracknum]->numfrets = eof_get_highest_fret(eof_song, eof_selected_track);	//Update the fret limit
 		}
 		if(eof_track_is_bass_arrangement(eof_song->pro_guitar_track[tracknum], eof_selected_track))
 		{	//If the track receiving the Guitar Pro import is configured as a bass guitar track

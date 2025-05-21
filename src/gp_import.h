@@ -36,7 +36,7 @@
 #else
 	struct eof_gp_measure
 	{
-		unsigned char num, den;			//The 8 bit numerator and denominator defined in guitar pro time signatures
+		unsigned char num, den;		//The 8 bit numerator and denominator defined in guitar pro time signatures
 		unsigned char start_of_repeat;	//If nonzero, indicates that this measure is the start of a repeat (measure 0 is this by default)
 		unsigned char num_of_repeats;	//If nonzero, indicates the end of a repeat as well as how many repeats
 		unsigned char alt_endings; 		//Alternative endings mask, is 0 if no alternate ending occurs
@@ -52,24 +52,24 @@
 		EOF_PRO_GUITAR_TRACK **track;		//An array of pro guitar track pointers, representing the imported note data of each loaded track
 		EOF_TEXT_EVENT * text_event[EOF_MAX_TEXT_EVENTS];	//An array of pro guitar text event structures, representing the section markers and beat text imported for each loaded track
 		struct eof_gp_measure *measure;		//An array of measure data from the Guitar Pro file
-		unsigned long measures;				//The number of elements in the above array
+		unsigned long measures;			//The number of elements in the above array
 		unsigned long text_events;			//The size of the text_event[] array
 		unsigned int symbols[19];			//The position (measure number) of each musical symbol (ie. Segno)
 		char coda_activated;				//Indicates that an "...al coda" symbol was reached, meaning that when "da coda" is reached, the GP track unwrapping will redirect to that symbol
 		char double_coda_activated;			//Indicates that an "...al double coda" symbol was reached, meaning that when "da double coda" is reached, the GP track unwrapping will redirect to that symbol
-		char fine_activated;				//Indicates that an "...al fine" symbol was reached, meaning that when "fine" is reached, the GP track unwrapping will end
+		char fine_activated;					//Indicates that an "...al fine" symbol was reached, meaning that when "fine" is reached, the GP track unwrapping will end
 	};
 
 	struct eof_gpa_sync_point
 	{
 		unsigned long realtime_pos;		//The realtime position of the sync point in milliseconds
 		char is_negative;				//Tracks whether the imported timestamp is below 0 seconds
-		unsigned long measure;			//The measure at which this sync point exists, numbered starting from 0
+		unsigned long measure;		//The measure at which this sync point exists, numbered starting from 0
 		double pos_in_measure;			//The position (from 0 to 1) in the measure at which the sync point exists
 		double qnote_length;			//The length of each quarter note from this sync point until the next
 		double real_qnote_length;		//Multiple users have encountered instances where Go PlayAlong exported invalid quarter note timings to XML, EOF will recreate them by dividing the time between sync points by the number of beats between them
-		double beat_length;				//The measured length of each beat based on the realtime distance between sync points and the number of beats between them
-		char processed;					//Is set to nonzero after the sync point is incorporated into the project's tempo map
+		double beat_length;			//The measured length of each beat based on the realtime distance between sync points and the number of beats between them
+		char processed;				//Is set to nonzero after the sync point is incorporated into the project's tempo map
 	};
 
 	void eof_gp_debug_log(PACKFILE *inf, char *text);
