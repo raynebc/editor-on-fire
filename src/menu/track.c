@@ -5134,7 +5134,7 @@ int eof_menu_track_clone_track_to_clipboard(void)
 	//Process sections
 	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 	{	//For each type of section that exists
-		unsigned long sectionnum, sectioncount = 0;
+		unsigned long sectionnum, *sectioncount = NULL;
 		EOF_PHRASE_SECTION *phrase = NULL;
 		double tfloat;
 		int skip = 0;
@@ -5151,50 +5151,50 @@ int eof_menu_track_clone_track_to_clipboard(void)
 			break;
 		}
 
-		if(!skip)
-		{	//If this type of section isn't ignored by this function
-			if(!eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &sectioncount, &phrase) || !phrase)
-			{	//If there was an error looking up how many of this section type are present in the active track
-				sectioncount = 0;	//Ensure this is zero
-			}
+		if(skip || !eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &sectioncount, &phrase) || !phrase)
+		{	//If this section type is to be skipped for the cloning, or if the array of this section type couldn't be found
+			(void) pack_iputl(0, fp);	//Write 0 as the number of instances of this section type
 		}
-		(void) pack_iputl(sectioncount, fp);	//Write the number of instances of this section type
-		if(sectioncount)
+		else
 		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing %lu instances of section type %lu", sectioncount, sectiontype);
-			eof_log(eof_log_string, 2);
-		}
-
-		for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
-		{	//For each instance of this type of section in the track
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCloning section instance %lu", sectionnum + 1);
-			eof_log(eof_log_string, 2);
-
-			content_found = 1;
-			(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].start_pos), fp);	//Write the beat number in which this section starts
-			tfloat = eof_get_porpos(phrase[sectionnum].start_pos);
-			(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);				//Write the percentage into the beat at which this section starts
-
-			if(sectiontype == EOF_FRET_HAND_POS_SECTION)
-			{	//Fret hand positions store the fret number as the end position
-				(void) pack_iputl(phrase[sectionnum].end_pos, fp);
-			}
-			else if(sectiontype == EOF_RS_TONE_CHANGE)
-			{	//Tone changes don't use the end position variable
-				(void) pack_iputl(0, fp);	//Write dummy data
-			}
-			else
-			{	//Other sections have an end position variable to adjust
-				(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].end_pos), fp);	//Write the beat number in which this section ends
-				tfloat = eof_get_porpos(phrase[sectionnum].end_pos);
-				(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);				//Write the percentage into the beat at which this section ends
+			(void) pack_iputl(*sectioncount, fp);	//Write the number of instances of this section type
+			if(*sectioncount)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing %lu instances of section type %lu", *sectioncount, sectiontype);
+				eof_log(eof_log_string, 2);
 			}
 
-			(void) pack_putc(phrase[sectionnum].difficulty, fp);			//Write section difficulty
-			(void) eof_save_song_string_pf(phrase[sectionnum].name, fp);	//Write section name
-			(void) pack_putc(phrase[sectionnum].flags, fp);					//Write section flags
+			for(sectionnum = 0; sectionnum < *sectioncount; sectionnum++)
+			{	//For each instance of this type of section in the track
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCloning section instance %lu", sectionnum + 1);
+				eof_log(eof_log_string, 2);
 
-			sections++;		//Track how many sections are cloned to the clipboard
+				content_found = 1;
+				(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].start_pos), fp);	//Write the beat number in which this section starts
+				tfloat = eof_get_porpos(phrase[sectionnum].start_pos);
+				(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);				//Write the percentage into the beat at which this section starts
+
+				if(sectiontype == EOF_FRET_HAND_POS_SECTION)
+				{	//Fret hand positions store the fret number as the end position
+					(void) pack_iputl(phrase[sectionnum].end_pos, fp);
+				}
+				else if(sectiontype == EOF_RS_TONE_CHANGE)
+				{	//Tone changes don't use the end position variable
+					(void) pack_iputl(0, fp);	//Write dummy data
+				}
+				else
+				{	//Other sections have an end position variable to adjust
+					(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].end_pos), fp);	//Write the beat number in which this section ends
+					tfloat = eof_get_porpos(phrase[sectionnum].end_pos);
+					(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);				//Write the percentage into the beat at which this section ends
+				}
+
+				(void) pack_putc(phrase[sectionnum].difficulty, fp);			//Write section difficulty
+				(void) eof_save_song_string_pf(phrase[sectionnum].name, fp);	//Write section name
+				(void) pack_putc(phrase[sectionnum].flags, fp);					//Write section flags
+
+				sections++;		//Track how many sections are cloned to the clipboard
+			}
 		}
 	}//For each type of section that exists
 
@@ -5469,7 +5469,7 @@ int eof_menu_track_clone_track_from_clipboard(void)
 	//Process sections
 	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 	{	//For each type of section that exists
-		unsigned long sectionnum, sectioncount, junk = 0, start, end;
+		unsigned long sectionnum, sectioncount, *junk = NULL, start, end;
 		long endbeat;
 		EOF_PHRASE_SECTION *phrase = NULL;
 		char name[EOF_SECTION_NAME_LENGTH + 1];

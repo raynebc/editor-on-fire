@@ -2543,14 +2543,14 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	return 1;	//Return success
 }
 
-EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long *count, EOF_PHRASE_SECTION **ptr)
+EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long **count, EOF_PHRASE_SECTION **ptr)
 {
 	unsigned long tracknum;
 
 	if(!sp || !track || (track >= sp->tracks) || !count || !ptr)
 		return NULL;	//Invalid parameters
 
-	*count = 0;	//These will be the default values unless applicable information is found for the specified track
+	*count = NULL;	//These will be the default values unless applicable information is found for the specified track
 	*ptr = NULL;
 	if((track == EOF_TRACK_DRUM_PS) && (!sp->tags->unshare_drum_phrasing))
 	{	//If drum phasing is being shared, any query of the phase shift drum track's phrasing is to reflect the normal drum track instead
@@ -2559,7 +2559,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 	tracknum = sp->track[track]->tracknum;
 	if(sectiontype == EOF_FRET_CATALOG_SECTION)
 	{	//Fret catalog entries are not track format specific
-		*count = sp->catalog->entries;
+		*count = &sp->catalog->entries;
 		*ptr = sp->catalog->entry;
 	}
 	else if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
@@ -2569,11 +2569,11 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 		switch(sectiontype)
 		{
 			case EOF_SOLO_SECTION:
-				*count = tp->solos;
+				*count = &tp->solos;
 				*ptr = tp->solo;
 			break;
 			case EOF_SP_SECTION:
-				*count = tp->star_power_paths;
+				*count = &tp->star_power_paths;
 				*ptr = tp->star_power_path;
 			break;
 			case EOF_BOOKMARK_SECTION:	//Not applicable
@@ -2589,7 +2589,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			case EOF_GREEN_CYMBAL_SECTION:	//Unused
 			break;
 			case EOF_TRILL_SECTION:
-				*count = tp->trills;
+				*count = &tp->trills;
 				*ptr = tp->trill;
 			break;
 			case EOF_ARPEGGIO_SECTION:	//Not applicable
@@ -2601,11 +2601,11 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			case EOF_PREVIEW_SECTION:	//Unused
 			break;
 			case EOF_TREMOLO_SECTION:
-				*count = tp->tremolos;
+				*count = &tp->tremolos;
 				*ptr = tp->tremolo;
 			break;
 			case EOF_SLIDER_SECTION:
-				*count = tp->sliders;
+				*count = &tp->sliders;
 				*ptr = tp->slider;
 			break;
 			case EOF_FRET_HAND_POS_SECTION:	//Not applicable
@@ -2634,7 +2634,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			case EOF_FRET_CATALOG_SECTION:	//Not applicable
 			break;
 			case EOF_LYRIC_PHRASE_SECTION:
-				*count = tp->lines;
+				*count = &tp->lines;
 				*ptr = tp->line;
 			break;
 			case EOF_YELLOW_CYMBAL_SECTION:	//Unused
@@ -2675,11 +2675,11 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 		switch(sectiontype)
 		{
 			case EOF_SOLO_SECTION:
-				*count = tp->solos;
+				*count = &tp->solos;
 				*ptr = tp->solo;
 			break;
 			case EOF_SP_SECTION:
-				*count = tp->star_power_paths;
+				*count = &tp->star_power_paths;
 				*ptr = tp->star_power_path;
 			break;
 			case EOF_BOOKMARK_SECTION:	//Not applicable
@@ -2695,12 +2695,12 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			case EOF_GREEN_CYMBAL_SECTION:	//Unused
 			break;
 			case EOF_TRILL_SECTION:
-				*count = tp->trills;
+				*count = &tp->trills;
 				*ptr = tp->trill;
 			break;
 			case EOF_ARPEGGIO_SECTION:
 			case EOF_HANDSHAPE_SECTION:
-				*count = tp->arpeggios;
+				*count = &tp->arpeggios;
 				*ptr = tp->arpeggio;
 			break;
 			case EOF_TRAINER_SECTION:	//Not applicable
@@ -2710,21 +2710,21 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			case EOF_PREVIEW_SECTION:	//Unused
 			break;
 			case EOF_TREMOLO_SECTION:
-				*count = tp->tremolos;
+				*count = &tp->tremolos;
 				*ptr = tp->tremolo;
 			break;
 			case EOF_SLIDER_SECTION:	//Not applicable
 			break;
 			case EOF_FRET_HAND_POS_SECTION:
-				*count = tp->handpositions;
+				*count = &tp->handpositions;
 				*ptr = tp->handposition;
 			break;
 			case EOF_RS_POPUP_MESSAGE:
-				*count = tp->popupmessages;
+				*count = &tp->popupmessages;
 				*ptr = tp->popupmessage;
 			break;
 			case EOF_RS_TONE_CHANGE:
-				*count = tp->tonechanges;
+				*count = &tp->tonechanges;
 				*ptr = tp->tonechange;
 			break;
 
@@ -2733,12 +2733,15 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 		}
 	}//Pro guitar track format
 
+	if(*ptr && (*count == NULL))
+		*ptr = NULL;	//Logic error
+
 	return *ptr;
 }
 
 EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long pos)
 {
-	unsigned long sectioncount = 0, ctr;
+	unsigned long *sectioncount = NULL, ctr;
 	EOF_PHRASE_SECTION *ptr = NULL;
 
 	if(!sp || (track >= sp->tracks))
@@ -2746,7 +2749,7 @@ EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long 
 
 	if(eof_lookup_track_section_type(sp, track, sectiontype, &sectioncount, &ptr) && ptr)
 	{	//If the array of this section type was found
-		for(ctr = 0; ctr < sectioncount; ctr++)
+		for(ctr = 0; ctr < *sectioncount; ctr++)
 		{	//For each instance
 			if((pos >= ptr[ctr].start_pos) && (pos <= ptr[ctr].end_pos))
 			{	//If the specified position is within this instance
@@ -2991,11 +2994,12 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 
 int eof_menu_section_mark(unsigned long section_type)
 {
-	unsigned long j, sel_start = 0, sel_end = 0, section_count = 0, track, flags;
+	unsigned long j, sel_start = 0, sel_end = 0, *section_count = NULL, track, flags;
 	unsigned char diff;
 	long insp = -1;
 	EOF_PHRASE_SECTION *sectionptr = NULL, *instanceptr;
 	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	char check_overlapping = 0;	//Set to nonzero for section types that need to be combined/reduced/re-sorted when they overlap
 
 	if(!eof_get_selected_note_range(&sel_start, &sel_end, 1))	//Find the start and end position of the collection of selected notes in the active difficulty
 	{	//If no notes are selected
@@ -3006,10 +3010,12 @@ int eof_menu_section_mark(unsigned long section_type)
 		sel_start = eof_song->tags->start_point;
 		sel_end = eof_song->tags->end_point;
 	}
+	if((section_type != EOF_BOOKMARK_SECTION) || (section_type != EOF_FRET_HAND_POS_SECTION) || (section_type != EOF_RS_TONE_CHANGE) || (section_type != EOF_FRET_CATALOG_SECTION))
+		check_overlapping = 1;
 	if(eof_lookup_track_section_type(eof_song, eof_selected_track, section_type, &section_count, &sectionptr))
 	{	//If the section array was found
 		if(section_type != EOF_FRET_CATALOG_SECTION)
-		{	//Fret catalog entries are allowed to overlap, other sections generally are not
+		{
 			track = eof_selected_track;	//For all sections marked with this function, catalog entries excluded, the active track is the one the section applies to
 			diff = 0xFF;				//And does not apply to a specific difficulty
 			if((section_type == EOF_HANDSHAPE_SECTION) || (section_type == EOF_ARPEGGIO_SECTION))
@@ -3017,7 +3023,16 @@ int eof_menu_section_mark(unsigned long section_type)
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 				diff = eof_note_type;	//When dynamic difficulty is in effect, tremolo phrases apply to the active track difficulty
 			flags = 0;					//All non catalog section types are initialized with no flags
-			for(j = 0; j < section_count; j++)
+		}
+		else
+		{
+			track = 0;					//Fret catalog entries are expected to be stored in track 0 (global)
+			flags = eof_selected_track;	//And the flags variable stores the track that the catalog entry applies to
+			diff = eof_note_type;		//And applicable to a track difficulty
+		}
+		if(check_overlapping)
+		{	//If this is a section type not allowed to overlap, check if the notes being marked overlap an existing section
+			for(j = 0; j < *section_count; j++)
 			{	//For each instance of the section in the active track
 				instanceptr = &sectionptr[j];
 				if(instanceptr && (sel_end >= instanceptr->start_pos) && (sel_start <= instanceptr->end_pos) && (instanceptr->difficulty == diff))
@@ -3025,12 +3040,6 @@ int eof_menu_section_mark(unsigned long section_type)
 					insp = j;
 				}
 			}
-		}
-		else
-		{
-			track = 0;					//Fret catalog entries are expected to be stored in track 0 (global)
-			flags = eof_selected_track;	//And the flags variable stores the track that the catalog entry applies to
-			diff = eof_note_type;		//And applicable to a track difficulty
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(insp < 0)
@@ -3081,6 +3090,10 @@ int eof_menu_section_mark(unsigned long section_type)
 				}
 				eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic immediately in order to correct the arpeggio's base chord
 			}
+		}
+		if(check_overlapping)
+		{	//For any section type that must not overlap
+			eof_sort_and_merge_overlapping_sections(sectionptr, section_count);
 		}
 	}
 	if(note_selection_updated)
@@ -5631,12 +5644,12 @@ void eof_sanitize_phrase_names(EOF_SONG *sp, unsigned long track)
 	//Process sections
 	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 	{	//For each type of section that exists
-		unsigned long sectionnum, sectioncount = 0, ctr;
+		unsigned long sectionnum, *sectioncount = NULL, ctr;
 		EOF_PHRASE_SECTION *phrase = NULL;
 
 		if(eof_lookup_track_section_type(sp, track, sectiontype, &sectioncount, &phrase) && phrase)
 		{	//If the array for this section type was successfully found
-			for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
+			for(sectionnum = 0; sectionnum < *sectioncount; sectionnum++)
 			{	//For each instance of this type of section in the track
 				phrase[sectionnum].name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
 
@@ -10434,7 +10447,7 @@ void eof_song_enforce_mid_beat_tempo_change_removal(void)
 EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned long end)
 {
 	EOF_SONG *csp = NULL;
-	unsigned long ctr, ctr2, ctr3, loopcount, beatoffset = 0, sectioncount = 0;
+	unsigned long ctr, ctr2, ctr3, loopcount, beatoffset = 0, *sectioncount = NULL;
 	char restore_tech_view = 0, firstbeat = 1;
 	EOF_PHRASE_SECTION *sections = NULL;
 
@@ -10602,7 +10615,7 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 			if(!eof_lookup_track_section_type(sp, ctr, ctr2, &sectioncount, &sections) || !sections)
 				continue;	//If this track doesn't have any of this type of section, skip it
 
-			for(ctr3 = 0; ctr3 < sectioncount; ctr3++)
+			for(ctr3 = 0; ctr3 < *sectioncount; ctr3++)
 			{	//For each of the sections in the source track
 				unsigned char difficulty;
 				unsigned long startpos, endpos, effective_endpos, flags;
@@ -10818,7 +10831,7 @@ int eof_length_is_equal_to(long length, long threshold)
 
 void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char any, char *undo_made)
 {
-	unsigned long sectiontype, sectioncount = 0, ctr, ctr2, notepos;
+	unsigned long sectiontype, *sectioncount = NULL, ctr, ctr2, notepos;
 	EOF_PHRASE_SECTION *sections = NULL;
 	int applicable, missing;
 	char unshare_drum_phrasing;
@@ -10859,7 +10872,7 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 			break;		//Redundant default case to satisfy Oclint
 		}
 
-		for(ctr = 0; ctr < sectioncount; ctr++)
+		for(ctr = 0; ctr < *sectioncount; ctr++)
 		{	//For each instance of this section type in the track
 			applicable = missing = 0;	//Reset these statuses
 			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
@@ -11214,7 +11227,7 @@ void eof_sort_and_merge_overlapping_sections(EOF_PHRASE_SECTION *section_ptr, un
 			if(section1->difficulty == section2->difficulty)
 			{	//If they apply to the same difficulty (or both apply to all difficulties)
 				start = (section1->start_pos < section2->start_pos) ? section1->start_pos : section2->start_pos;	//Find the earlier of the two sections' start times
-				end = (section1->end_pos > section2->end_pos) ? section1->end_pos : section2->end_pos;				//Find the later of the two sections' end times
+				end = (section1->end_pos > section2->end_pos) ? section1->end_pos : section2->end_pos;		//Find the later of the two sections' end times
 				section2->start_pos = start;	//Update the timings on the previous section
 				section2->end_pos = end;
 				section1->start_pos = section1->end_pos = ULONG_MAX;	//Set the timings on this section so it will sort to the end for removal

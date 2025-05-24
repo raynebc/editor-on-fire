@@ -5509,56 +5509,55 @@ unsigned long eof_count_track_num_notes_with_tflag(unsigned long tflags)
 
 unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, unsigned long *minptr, unsigned long *maxptr)
 {
-	unsigned long ctr, notectr, notepos, totalcount = 0, thiscount, tracknotecount, sectioncount, min = 0, max = 0;
+	unsigned long ctr, notectr, notepos, totalcount = 0, thiscount, tracknotecount, *sectioncount = NULL, min = 0, max = 0;
 	EOF_PHRASE_SECTION *phrase = NULL;
 
-	if(!eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &sectioncount, &phrase) || !phrase)
-	{	//If there was an error looking up how many of this section type are present in the active track
-		sectioncount = 0;	//Ensure this is zero
-	}
-	tracknotecount = eof_get_track_size(eof_song, eof_selected_track);
+	if(eof_lookup_track_section_type(eof_song, eof_selected_track, sectiontype, &sectioncount, &phrase))
+	{	//If the array of this section type was found
+		tracknotecount = eof_get_track_size(eof_song, eof_selected_track);
 
-	notectr = 0;	//Start by examining the first note in the track
-	notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
+		notectr = 0;	//Start by examining the first note in the track
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
 
-	for(ctr = 0; ctr < sectioncount; ctr++)
-	{	//For each section of this type in the track
-		EOF_PHRASE_SECTION *ptr = &phrase[ctr];	//Get a pointer to this section instance
+		for(ctr = 0; ctr < *sectioncount; ctr++)
+		{	//For each section of this type in the track
+			EOF_PHRASE_SECTION *ptr = &phrase[ctr];	//Get a pointer to this section instance
 
-		thiscount = 0;	//Reset this counter
-		while(notepos <= ptr->end_pos)
-		{	//For all notes at/before the end of this section instance
-			if(notepos >= ptr->start_pos)
-			{	//If the note is within the scope of this section instance
-				thiscount++;	//Count the number of notes in this section instance
-				totalcount++;	//Count the number of notes in all instances of this section
+			thiscount = 0;	//Reset this counter
+			while(notepos <= ptr->end_pos)
+			{	//For all notes at/before the end of this section instance
+				if(notepos >= ptr->start_pos)
+				{	//If the note is within the scope of this section instance
+					thiscount++;	//Count the number of notes in this section instance
+					totalcount++;	//Count the number of notes in all instances of this section
+				}
+
+				//Iterate to next note
+				notectr++;
+				if(notectr >= tracknotecount)
+				{	//If all notes in the track have been examined
+					break;	//Exit while loop
+				}
+				notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
+			}
+
+			if(!min || (thiscount < min))
+			{	//If this section has the least number of notes among all examined so far
+				min = thiscount;
+			}
+			if(!max || (thiscount > max))
+			{	//If this section has the most notes among all examined so far
+				max = thiscount;
 			}
 
 			//Iterate to next note
 			notectr++;
 			if(notectr >= tracknotecount)
 			{	//If all notes in the track have been examined
-				break;	//Exit while loop
+				break;	//Exit for loop
 			}
 			notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
 		}
-
-		if(!min || (thiscount < min))
-		{	//If this section has the least number of notes among all examined so far
-			min = thiscount;
-		}
-		if(!max || (thiscount > max))
-		{	//If this section has the most notes among all examined so far
-			max = thiscount;
-		}
-
-		//Iterate to next note
-		notectr++;
-		if(notectr >= tracknotecount)
-		{	//If all notes in the track have been examined
-			break;	//Exit for loop
-		}
-		notepos = eof_get_note_pos(eof_song, eof_selected_track, notectr);
 	}
 
 	//Return min and max values by reference if applicable

@@ -739,10 +739,12 @@ int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_po
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the note's length value to (pos - [note]->pos)
 
-EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long *count, EOF_PHRASE_SECTION **ptr);
-	//Stores the count and address of the specified section type of the specified chart into *count and **ptr
+EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long **count, EOF_PHRASE_SECTION **ptr);
+	//Stores the pointer to the specified section's counter and the pointer to the its array into count and ptr
+	//This allows the calling function to manipulate the section array and count freely
 	//Returns the address of the section array (which is also stored into ptr) upon success, or NULL upon error
-	//If the section type is not applicable for the track in question, *count is set to 0 and *ptr is set to NULL
+	//If the section type is not applicable for the track in question, *count is set to NULL and *ptr is set to NULL
+	//count is guaranteed to point to a valid counter variable if this function returns non NULL
 EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long pos);
 	//Returns a pointer to the first instance of the specified section type of the specified track that the specified position is within
 	//Returns NULL if pos is not within any such section or upon error

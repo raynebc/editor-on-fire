@@ -1171,7 +1171,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 
 		for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 		{	//For each type of section that exists
-			unsigned long sectionnum, sectioncount = 0;
+			unsigned long sectionnum, *sectioncount = 0;
 			EOF_PHRASE_SECTION *phrase = NULL;
 			int skip = 0;
 
@@ -1193,7 +1193,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			if(skip || !eof_lookup_track_section_type(eof_song, j, sectiontype, &sectioncount, &phrase) || !phrase)
 				continue;	//If this type of section doesn't get updated by the auto adjust logic or this track doesn't have any instances of this type of section, skip it
 
-			for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
+			for(sectionnum = 0; sectionnum < *sectioncount; sectionnum++)
 			{	//For each instance of this type of section in the track
 				/* which beat */
 				(void) pack_iputl(eof_get_beat(eof_song, phrase[sectionnum].start_pos), fp);
@@ -1415,7 +1415,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 
 		for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 		{	//For each type of section that exists
-			unsigned long sectionnum, sectioncount = 0;
+			unsigned long sectionnum, *sectioncount = NULL;
 			EOF_PHRASE_SECTION *phrase = NULL;
 			int skip = 0;
 
@@ -1437,7 +1437,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			if(skip || !eof_lookup_track_section_type(eof_song, j, sectiontype, &sectioncount, &phrase) || !phrase)
 				continue;	//If this type of section doesn't get updated by the auto adjust logic or there are no instances of this type of section, skip it
 
-			for(sectionnum = 0; sectionnum < sectioncount; sectionnum++)
+			for(sectionnum = 0; sectionnum < *sectioncount; sectionnum++)
 			{	//For each instance of this type of section in the track
 				/* which beat */
 				b = pack_igetl(fp);
