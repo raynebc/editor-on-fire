@@ -18,26 +18,6 @@ Before you export arrangements to play in IMMERROCK, you will want to review the
 The IMMERROCK development team has suggested normalizing your chart's audio so that the volume is consistent with the in-game bundled content.  Recommended settings for doing this include using Audacity's (<a href="https://www.audacityteam.org/">https://www.audacityteam.org/</a>) "Effect>Volume and Compression>Loudness normalization" function to normalize perceived loudness to -14 LUFS<br>
 <a href="https://manual.audacityteam.org/man/loudness_normalization.html">https://manual.audacityteam.org/man/loudness_normalization.html</a><br><br>
 
-<h1><a name="bass_conversion">CONVERTING BASS ARRANGEMENTS</a></h1>
-As of the time of this document’s writing, IMMERROCK supports custom song charts containing one lead guitar arrangement and one rhythm guitar arrangement.  Support for bass and other 4 string arrangements is planned in the near future, but you can configure a bass arrangement to export as a 6 string guitar arrangement so that you can play it in IMMERROCK with the current early access build of the game.  To do this, change the active track to the bass arrangement in question (Use “Song>Track” and click on the track in question, or use the CTRL+TAB based keyboard shortcuts as listed in “Help>Keys”) and change the track’s string count to 6 (Use “Track>Pro Guitar>Set number of Frets/strings”, click the 6 radio button and click OK).  The piano roll should now reflect having 6 strings and the tuning displayed for the track will have changed from EADG (standard tuning for 4 string bass) to BEADGC (standard tuning for 6 string bass):<br>
-<center><IMG SRC="Bass_string_count.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
-
-Since the current early access build won’t allow you to play a bass arrangement, the track will need to be configured as either lead guitar or rhythm guitar by selecting either of those options in the "Track>Rocksmith>Arrangement Type" menu.  For the purpose of this example, I’ll choose to define the bass track as a lead guitar arrangement, so the guitar track can still export as the rhythm guitar arrangement.  Notice that the tuning now reflects 6 string guitar (EADGBE):<br>
-<center><IMG SRC="Bass_arrangement.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
-
-If you are converting a 4 string bass arrangement for use in IMMERROCK, you don't need to make any of the remaining changes described in this section because the default tuning of 4 string bass (EADG) matches the default tuning of 6 string guitar, just one octave lower.  For the purposes of playing in game, this octave difference won't matter because the note names will still be the same.  If you slow the song down and the game plays a MIDI version of the song, the notes will sound one octave higher in pitch than expected, but this is likely to be the only side effect of playing the bass arrangement as a guitar arrangement.<br><br>
-
-If you are converting a 5 or 6 string bass arrangement for use in IMMERROCK, you will want to correct the tuning so that the correct note names are displayed in game, and the left edge of the virtual guitar neck reflects the tuning in use.  To correct the tuning, use “Track>Pro Guitar>Set Tuning” and edit the tuning to accurately reflect the arrangement.  For 6 string standard bass guitar tuning, this will be BEADGC and you can just enter the appropriate negative number for each string's tuning.  If you're setting BEADGC tuning, you can click the "Preset" button, select the "Bass tuning" option at the bottom of the list.  Otherwise define the tuning of each string either by typing a number into each field or clicking into the first field and pressing the down arrow until the string is tuned down appropriately, pressing Tab to change to the next string and repeating the process until all 6 strings have been set appropriately, ie. for standard tuning:<br>
-<center><IMG SRC="Bass_tuning.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
-
-Click OK to apply the changed tuning.  EOF will offer to alter the notes in the track to transpose them, but you do NOT want to do this because the fret values of each note need to remain unchanged.  Decline the offer to transpose the notes:<br>
-<center><IMG SRC="Bass_transpose.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
-
-The result should be that the left edge of the piano roll once again shows BEADGC tuning and the fret values of the notes remain the same as before:<br>
-<center><IMG SRC="Bass_transpose_declined.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
-
-The bass track will now be able to be exported for use in IMMERROCK.  Remember to save your project in EOF.<br><br>
-
 <h1><a name="defining_sections"></a>DEFINING SECTIONS</h1>
 IMMERROCK has a “Phrase Refiner” feature that allows the player to define where to start and end a looped playback of a song.  In-game it looks like this:<br>
 <center><IMG SRC="Phrase_Refiner.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>

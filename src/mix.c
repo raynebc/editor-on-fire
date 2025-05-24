@@ -928,7 +928,7 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 		if((tp->note[note]->note & bitmask) && !(tp->note[note]->frets[ctr] & 0x80))
 		{	//If this string is used (and not muted)
 			//This note is found by adding default tuning for the string, the offset defining the current tuning and the fret number being played
-			eof_midi_play_note_ex(tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo, ctr, tone, 3000);	//Play the MIDI note for 1000ms
+			eof_midi_play_note_ex(tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + tp->note[note]->frets[ctr] + tp->capo, ctr, tone, 1000);	//Play the MIDI note for 1000ms
 		}
 	}
 }

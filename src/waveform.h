@@ -12,9 +12,9 @@ struct waveformslice
 
 struct waveformchanneldata
 {
-	struct waveformslice *slices;	//The waveform data for this channel
+	struct waveformslice *slices;		//The waveform data for this channel
 	unsigned maxamp;				//The highest amplitude of samples in this channel
-	unsigned long maxampoffset;		//The difference between the zero amplitude and the channel's maximum amplitude (cached to optimize rendering)
+	unsigned long maxampoffset;	//The difference between the zero amplitude and the channel's maximum amplitude (cached to optimize rendering)
 	unsigned long yaxis;			//The y coordinate representing the y axis the channel's graph will render to
 	unsigned long height;			//The height of this channel's graph
 	unsigned long halfheight;		//One half of the channel's graph height (cached in eof_render_waveform() to avoid recalculating for each line)
@@ -25,20 +25,20 @@ struct wavestruct
 	char *oggfilename;
 	ALOGG_OGG *oggstruct;
 	unsigned long slicelength;		//The length of one slice of the graph in milliseconds
-	unsigned long slicesize;		//The number of samples in one slice of the graph
+	unsigned long slicesize;			//The number of samples in one slice of the graph
 	unsigned long numslices;		//The number of waveform structures in the arrays below
 	unsigned int zeroamp;			//The amplitude representing a 0 amplitude for this waveform (32768 for 16 bit audio samples, 128 for 8 bit audio samples)
 	char is_stereo;					//This OGG has two audio channels
 
-	struct waveformchanneldata left;	//The amplitude and graph data for the audio's left channel
+	struct waveformchanneldata left;		//The amplitude and graph data for the audio's left channel
 	struct waveformchanneldata right;	//The amplitude and graph data for the audio's right channel (if applicable)
 };
 
 extern struct wavestruct *eof_waveform;		//Stores the waveform data
 extern char eof_display_waveform;			//Specifies whether the waveform display is enabled
-extern char eof_waveform_renderlocation;	//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
+extern char eof_waveform_renderlocation;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
 extern char eof_waveform_renderleftchannel;	//Specifies whether the left channel's graph should render
-extern char eof_waveform_renderrightchannel;//Specifies whether the right channel's graph should render
+extern char eof_waveform_renderrightchannel;	//Specifies whether the right channel's graph should render
 
 void eof_destroy_waveform(struct wavestruct *ptr);
 	//frees memory used by the specified waveform structure

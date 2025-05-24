@@ -3611,8 +3611,8 @@ int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 	eof_track_rs_tone_change_add_dialog[5].flags = D_HIDDEN;
 	for(ctr = 0; ctr < tp->pgnotes; ctr++)
 	{	//For each normal note
-		if((timestamp >= tp->pgnote[ctr]->pos) && (timestamp <= tp->pgnote[ctr]->pos + tp->pgnote[ctr]->length))
-		{	//If the specified timestamp overlaps this note
+		if((timestamp >= tp->pgnote[ctr]->pos) && (timestamp < tp->pgnote[ctr]->pos + tp->pgnote[ctr]->length))
+		{	//If the specified timestamp overlaps this note (except for the last 1ms of the note)
 			eof_track_rs_tone_change_add_dialog[3].flags = 0;	//Show this warning
 			eof_track_rs_tone_change_add_dialog[4].flags = 0;
 			eof_track_rs_tone_change_add_dialog[5].flags = 0;

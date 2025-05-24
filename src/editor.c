@@ -1115,6 +1115,12 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		eof_use_key();
 	}
 
+	/* play last selected pro guitar note's MIDI tone (Enter) */
+	if(eof_key_code == KEY_ENTER)
+	{
+		eof_play_pro_guitar_note_midi(eof_song, eof_selected_track, eof_selection.current);
+	}
+
 	/* zoom in (+ on numpad) */
 	/* increment AV delay (CTRL+SHIFT+(plus) on numpad) */
 	/* lower 3D camera angle (SHIFT+(plus) on numpad) */
