@@ -94,6 +94,8 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	//Returns 0 on error or if the note has no manually assigned or detected name
 	//Returns 1 if the name was manually assigned
 	//Returns 2 if the name was detected
+char eof_build_note_name_ignoring_ghosts(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer);
+	//Similar to eof_build_note_name(), but masks out the ghost gems before the chord lookup, then restores them
 unsigned char eof_pro_guitar_note_lowest_fret_np(EOF_PRO_GUITAR_NOTE *np);
 	//Returns the lowest fret number used in the specified note
 	//If all strings are played open or are string muted with no fret specified, 0 is returned

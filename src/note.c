@@ -892,12 +892,18 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		return 0;	//If not rendering to the fret catalog or to the 2D window with the option to display note names, skip the logic below
 
 	notename[0] = prevnotename[0] = '\0';	//Empty these strings
-	namefound = eof_build_note_name(eof_song, track, notenum, notename);
+	if(eof_write_rs2_files)
+		namefound = eof_build_note_name_ignoring_ghosts(eof_song, track, notenum, notename);	//RS2 export displays chord with names ignoring ghost notes
+	else
+		namefound = eof_build_note_name(eof_song, track, notenum, notename);
 	if(!namefound)
 		return 0;	//If the note does not have a name, skip the logic below
 
 	//Otherwise prepare it for rendering
-	(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
+	if(eof_write_rs2_files)
+		(void) eof_build_note_name_ignoring_ghosts(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name ignoring ghost notes
+	else
+		(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
 	if(!ustrcmp(notename, prevnotename))
 	{	//If this note and the previous one have the same name (case sensitive)
 		if(namefound == 1)
@@ -1685,12 +1691,18 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		return 0;	//If the user opted to hide note names, skip the logic below
 
 	notename[0] = prevnotename[0] = '\0';	//Empty these strings
-	namefound = eof_build_note_name(eof_song, track, notenum, notename);
+	if(eof_write_rs2_files)
+		namefound = eof_build_note_name_ignoring_ghosts(eof_song, track, notenum, notename);	//RS2 export displays chord with names ignoring ghost notes
+	else
+		namefound = eof_build_note_name(eof_song, track, notenum, notename);
 	if(!namefound)
 		return 0;	//If the note has no name, return from function early
 
 	//Otherwise prepare the name for rendering
-	(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
+	if(eof_write_rs2_files)
+		(void) eof_build_note_name_ignoring_ghosts(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name ignoring ghost notes
+	else
+		(void) eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
 	if(!ustrcmp(notename, prevnotename))
 	{	//If this note and the previous one have the same name
 		if(namefound == 1)
@@ -2754,7 +2766,7 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	int scale = 0, chord = 0, isslash = 0, bassnote = 0;
 	unsigned long tracknum;
 
-	if((sp == NULL) || !track || (track >= sp->tracks) || (buffer == NULL))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (buffer == NULL) || (note >= eof_get_track_size(sp, track)))
 		return 0;	//Invalid parameters
 
 	name = eof_get_note_name(sp, track, note);	//Check if the note was manually assigned a name
@@ -2766,7 +2778,6 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 
 	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//If this isn't a pro guitar/bass track, chord detection can't be used
-
 
 	tracknum = sp->track[track]->tracknum;
 	if(eof_lookup_chord(sp->pro_guitar_track[tracknum], track, note, &scale, &chord, &isslash, &bassnote, 0, 0))
@@ -2783,6 +2794,48 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		return 2;
 	}
 
+	return 0;	//Return no name found/detected
+}
+
+char eof_build_note_name_ignoring_ghosts(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer)
+{
+	char *name;
+	int scale = 0, chord = 0, isslash = 0, bassnote = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned char backup;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || (buffer == NULL) || (note >= eof_get_track_size(sp, track)))
+		return 0;	//Invalid parameters
+
+	name = eof_get_note_name(sp, track, note);	//Check if the note was manually assigned a name
+	if(name && (name[0] != '\0'))
+	{	//If it has a name
+		(void) ustrcpy(buffer, name);	//Copy the name
+		return 1;
+	}
+
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//If this isn't a pro guitar/bass track, chord detection can't be used
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplifiy
+	backup = tp->note[note]->note;	//Back up the bitmask of the note being looked up
+	tp->note[note]->note &= ~tp->note[note]->ghost;	//Clear all of the ghosted gems from the note bitmask
+	if(eof_lookup_chord(tp, track, note, &scale, &chord, &isslash, &bassnote, 0, 0))
+	{	//If the chord lookup found a match
+		if(!isslash)
+		{	//If it's a normal chord
+			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s", eof_note_names[scale], eof_chord_names[chord].chordname);
+		}
+		else
+		{	//If it's a slash chord
+			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+		}
+		buffer[EOF_NAME_LENGTH] = '\0';	//Ensure this buffer is truncated
+		tp->note[note]->note = backup;	//Restore the note's original bitmask
+		return 2;
+	}
+
+	tp->note[note]->note = backup;	//Restore the note's original bitmask
 	return 0;	//Return no name found/detected
 }
 
