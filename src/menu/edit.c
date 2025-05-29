@@ -2772,12 +2772,9 @@ int eof_menu_edit_select_like_function(char thorough)
 
 		for(j = 0; j < ntypes; j++)
 		{	//For each unique note number in the ntype array
-			if(eof_note_compare_simple(eof_song, eof_selected_track, ntype[j], i) == 0)
-			{	//If the stored unique note mask is the same as this note mask
-				if(!thorough || (eof_get_note_ghost(eof_song, eof_selected_track, ntype[j]) == eof_get_note_ghost(eof_song, eof_selected_track, i)))
-				{	//If the option to compare ghost flags was not chosen, or the two notes' ghost bitmasks also match
-					break;	//Break loop to reject this notes from the unique note list
-				}
+			if(eof_note_compare(eof_song, eof_selected_track, ntype[j], eof_selected_track, i, thorough) == 0)
+			{	//If the notes are a match, (taking the calling function's specified level of thoroughness, ie. whether to require match of ghost and string mute statuses)
+				break;	//Break loop to reject this notes from the unique note list
 			}
 		}
 		if(j == ntypes)
@@ -2793,14 +2790,11 @@ int eof_menu_edit_select_like_function(char thorough)
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		for(j = 0; j < ntypes; j++)
-		{	//For each note bitmask in the ntype array
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_compare_simple(eof_song, eof_selected_track, ntype[j], i) == 0))
-			{	//If the note is in the active difficulty and matches one of the unique notes that are selected
-				if(!thorough || ((eof_get_note_flags(eof_song, eof_selected_track, ntype[j]) == eof_get_note_flags(eof_song, eof_selected_track, i)) && (eof_get_note_eflags(eof_song, eof_selected_track, ntype[j]) == eof_get_note_eflags(eof_song, eof_selected_track, i)) && (eof_get_note_ghost(eof_song, eof_selected_track, ntype[j]) == eof_get_note_ghost(eof_song, eof_selected_track, i))))
-				{	//If the option to compare note flags was not chosen, or if the extended flags, common flags and ghost bitmasks do match
-					eof_selection.track = eof_selected_track;	//Change the selection's track to the active track
-					eof_selection.multi[i] = 1;					//Mark the note as selected
-				}
+		{	//For each note bitmask in the ntype array (each of the unique notes that are selected)
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_compare(eof_song, eof_selected_track, ntype[j], eof_selected_track, i, thorough) == 0))
+			{	//If the note is in the active difficulty and matches one of the unique notes that are selected (taking the calling function's specified level of thoroughness, ie. whether to require match of ghost and string mute statuses)
+				eof_selection.track = eof_selected_track;	//Change the selection's track to the active track
+				eof_selection.multi[i] = 1;					//Mark the note as selected
 			}
 		}
 	}
@@ -2818,7 +2812,7 @@ int eof_menu_edit_select_like(void)
 
 int eof_menu_edit_precise_select_like(void)
 {
-	return eof_menu_edit_select_like_function(1);	//Perform select like logic, comparing note flags
+	return eof_menu_edit_select_like_function(2);	//Perform select like logic, comparing note flags, ghost status, mute status
 }
 
 int eof_menu_edit_deselect_all(void)

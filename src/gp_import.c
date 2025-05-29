@@ -3309,9 +3309,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 				for(ctr3 = 0; ctr3 < beats; ctr3++)
 				{	//For each "beat" (note)
-					unsigned char ghost = 0;	//Track the ghost status for notes
+					unsigned char ghost = 0;		//Track the ghost status for notes
 					unsigned char mute = 0;		//Track the mute status for notes
-					unsigned char grace = 0;	//Track the note mask for grace notes
+					unsigned char grace = 0;		//Track the note mask for grace notes
 					unsigned char frets[7] = {0};		//Store fret values for each string
 					unsigned char gracefrets[7] = {0};	//Store fret values for each string (for tracking grace notes)
 					unsigned long beat_position;
@@ -4252,7 +4252,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(dur < 3)
 								{	//If the defined duration is valid
 									grace_duration = grace_durations[dur] * (double)curden / (double)curnum;	//Get this grace note's duration in measures (accounting for the time signature)
-									if(!curbeat && measure_position < grace_duration)
+									if(!curbeat && (measure_position < grace_duration) && !graceonbeat)
 									{	//If this grace note is positioned before the beginning of the chart (ie. a before the beat grace note on a note at the beginning of measure 1)
 										grace = 0;	//Ignore this grace note
 									}

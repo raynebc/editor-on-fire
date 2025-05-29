@@ -62,7 +62,7 @@ int eof_menu_edit_bookmark_9(void);
 
 int eof_menu_edit_select_all(void);
 int eof_menu_edit_select_like(void);			//For each unique selected note, selects all matching notes/lyrics in the same track and difficulty
-int eof_menu_edit_precise_select_like(void);	//Similar to eof_menu_edit_select_like(), but also requires notes have identical ghost bitmask, flags and extended flags in order to match
+int eof_menu_edit_precise_select_like(void);	//Similar to eof_menu_edit_select_like(), but also requires notes have identical ghost bitmask, string muting, flags and extended flags in order to match
 int eof_menu_edit_deselect_all(void);
 int eof_menu_edit_select_rest(void);
 int eof_menu_edit_select_previous(void);			//Selects all notes before the last selected note

@@ -887,26 +887,26 @@ int eof_lookup_immerrock_effective_section_at_pos(EOF_SONG *sp, unsigned long po
 	if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
 	{	//If the arrangement designations were determined
 		section_name[0] = '\0';	//Empty this string
-		for(ctr = 0; ctr < eof_song->text_events; ctr++)
+		for(ctr = 0; ctr < sp->text_events; ctr++)
 		{	//For each text event in the project
-			if(eof_get_text_event_pos(eof_song, ctr) > pos)
+			if(eof_get_text_event_pos(sp, ctr) > pos)
 				break;	//If this text event and all others are after the target position, stop checking events
 
-			if(!eof_song->text_event[ctr]->track || (eof_song->text_event[ctr]->track == lead) || (eof_song->text_event[ctr]->track == rhythm) || (eof_song->text_event[ctr]->track == bass))
+			if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == lead) || (sp->text_event[ctr]->track == rhythm) || (sp->text_event[ctr]->track == bass))
 			{	//If the text event has no associated track or is specific to any of the arrangements specified for export
 				ptr = NULL;
-				if(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
+				if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
 				{	//If this text event is flagged as a Rocksmith section
-					ptr = eof_song->text_event[ctr]->text;	//Use the section name verbatim
+					ptr = sp->text_event[ctr]->text;	//Use the section name verbatim
 				}
 				else
 				{	//Otherwise use the presence of "section " as a way to identify the section marker
-					ptr = strcasestr_spec(eof_song->text_event[ctr]->text, "section ");	//Find this substring within the text event, getting the pointer to the character that follows it
+					ptr = strcasestr_spec(sp->text_event[ctr]->text, "section ");	//Find this substring within the text event, getting the pointer to the character that follows it
 				}
 				if(ptr)
 				{	//If the text event is considered a section marker
 					strncpy(section_name, ptr, section_name_size);		//Copy the section name
-					if(!(eof_song->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION))
+					if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION))
 					{	//If the section name isn't a Rocksmith section, modify the string if necessary
 						if(section_name[strlen(section_name) - 1] == ']')
 						{	//If that included a trailing closing bracket
