@@ -12,6 +12,7 @@
 #include "undo.h"
 #include "utility.h"
 #include "tuning.h"
+#include "menu/file.h"	//For drum velocities
 #include "menu/note.h"	//For pitch macros
 #include "menu/track.h"	//For eof_fret_hand_position_list_dialog_undo_made
 #include "foflc/Lyric_storage.h"	//For RBA extraction
@@ -498,6 +499,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	char slideup, slidedown;	//Will track whether a note has an upward/downward slide or unpitched slide
 	char *accentstrings[6] = {"[1]", "[2]", "[3]", "[4]", "[5]", "[6]"};	//Used to export text events for accent notes
 	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
+	unsigned char default_velocities[6] = {100, 100, 100, 100, 100, 100};	//The velocities used for normal non-drum gems
+	unsigned char default_ghost_velocities[6] = {1, 1, 1, 1, 1, 1};				//The velocities used for ghost non-drum gems
+	unsigned char default_accent_velocities[6] = {127, 127, 127, 127, 127, 127};	//The velocities used for accent non-drum gems
+	unsigned char *velocities = default_velocities;				//The velocities used during export
+	unsigned char *ghost_velocities = default_ghost_velocities;
+	unsigned char *accent_velocities = default_accent_velocities;
 
 	memset(notetempname, 0, sizeof(notetempname));	//Init this memory to 0
 	eof_log("eof_export_midi() entered", 1);
@@ -633,6 +640,28 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		eof_log(eof_log_string, 2);
 
 		last_scale = INT_MAX;	//Reset this every track
+		if(featurerestriction == 0)
+		{
+			if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If this is a drum track, use any custom defined velocity values
+				velocities = eof_drum_velocities;
+				ghost_velocities = eof_drum_ghost_velocities;
+				accent_velocities = eof_drum_accent_velocities;
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing normal note velocities:  %u,%u,%u,%u,%u,%u", eof_drum_velocities[0], eof_drum_velocities[1], eof_drum_velocities[2], eof_drum_velocities[3], eof_drum_velocities[4], eof_drum_velocities[5]);
+				eof_log(eof_log_string, 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing ghost note velocities:  %u,%u,%u,%u,%u,%u", eof_drum_ghost_velocities[0], eof_drum_ghost_velocities[1], eof_drum_ghost_velocities[2], eof_drum_ghost_velocities[3], eof_drum_ghost_velocities[4], eof_drum_ghost_velocities[5]);
+				eof_log(eof_log_string, 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUsing accent note velocities:  %u,%u,%u,%u,%u,%u", eof_drum_accent_velocities[0], eof_drum_accent_velocities[1], eof_drum_accent_velocities[2], eof_drum_accent_velocities[3], eof_drum_accent_velocities[4], eof_drum_accent_velocities[5]);
+				eof_log(eof_log_string, 1);
+			}
+		}
+		else
+		{	//Use the standard velocity values
+			velocities = default_velocities;
+			ghost_velocities = default_ghost_velocities;
+			accent_velocities = default_accent_velocities;
+		}
+
 		if(featurerestriction == 1)
 		{	//If writing a RBN2 or C3 compliant MIDI
 			if((j != EOF_TRACK_GUITAR) && (j != EOF_TRACK_BASS) && (j != EOF_TRACK_DRUM) && (j != EOF_TRACK_VOCALS) && (j != EOF_TRACK_KEYS) && (j != EOF_TRACK_PRO_KEYS))
@@ -889,16 +918,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
-						vel = 100;	//Restore the default velocity
+						vel = velocities[0];	//Restore the default velocity
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0))
 						{	//If this is a drum note and a Rock Band compliant MIDI is not being written
 							if(accent & 1)
 							{	//If this gem is accented
-								vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+								vel = accent_velocities[0];	//Use the applicable accent velocity
 							}
 							if(ghost & 1)
 							{	//If this gem is ghosted
-								vel = 1;	//Use the minimum value for velocity
+								vel = ghost_velocities[0];		//Use the applicable ghost velocity
 							}
 						}
 						if(!((noteflags & EOF_DRUM_NOTE_FLAG_DBASS) && sp->tags->double_bass_drum_disabled))
@@ -928,16 +957,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
-						vel = 100;	//Restore the default velocity
+						vel = velocities[1];	//Restore the default velocity
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0))
 						{	//If this is a drum note and a Rock Band compliant MIDI is not being written
 							if(accent & 2)
 							{	//If this gem is accented
-								vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+								vel = accent_velocities[1];	//Use the applicable accent velocity
 							}
 							if(ghost & 2)
 							{	//If this gem is ghosted
-								vel = 1;	//Use the minimum value for velocity
+								vel = ghost_velocities[1];		//Use the applicable ghost velocity
 							}
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 1, vel, 0);
@@ -965,16 +994,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
-						vel = 100;	//Restore the default velocity
+						vel = velocities[2];	//Restore the default velocity
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0))
 						{	//If this is a drum note and a Rock Band compliant MIDI is not being written
 							if(accent & 4)
 							{	//If this gem is accented
-								vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+								vel = accent_velocities[2];	//Use the applicable accent velocity
 							}
 							if(ghost & 4)
 							{	//If this gem is ghosted
-								vel = 1;	//Use the minimum value for velocity
+								vel = ghost_velocities[2];		//Use the applicable ghost velocity
 							}
 						}
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
@@ -1033,16 +1062,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
-						vel = 100;	//Restore the default velocity
+						vel = velocities[3];	//Restore the default velocity
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0))
 						{	//If this is a drum note and a Rock Band compliant MIDI is not being written
 							if(accent & 8)
 							{	//If this gem is accented
-								vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+								vel = accent_velocities[3];	//Use the applicable accent velocity
 							}
 							if(ghost & 8)
 							{	//If this gem is ghosted
-								vel = 1;	//Use the minimum value for velocity
+								vel = ghost_velocities[3];		//Use the applicable ghost velocity
 							}
 						}
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_B_CYMBAL))
@@ -1078,16 +1107,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
-						vel = 100;	//Restore the default velocity
+						vel = velocities[4];	//Restore the default velocity
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0))
 						{	//If this is a drum note and a Rock Band compliant MIDI is not being written
 							if(accent & 16)
 							{	//If this gem is accented
-								vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+								vel = accent_velocities[4];	//Use the applicable accent velocity
 							}
 							if(ghost & 16)
 							{	//If this gem is ghosted
-								vel = 1;	//Use the minimum value for velocity
+								vel = ghost_velocities[4];		//Use the applicable ghost velocity
 							}
 						}
 						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_G_CYMBAL))
@@ -1178,16 +1207,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
-						vel = 100;	//Restore the default velocity
+						vel = velocities[5];	//Restore the default velocity
 						if(featurerestriction == 0)
 						{	//Only write this notation if not writing a Rock Band compliant MIDI
-							if(accent & 1)
+							if(accent & 32)
 							{	//If this gem is accented
-								vel = 127;	//Use the maximum value for velocity, for use in Phase Shift
+								vel = accent_velocities[5];	//Use the applicable accent velocity
 							}
-							if(ghost & 1)
+							if(ghost & 32)
 							{	//If this gem is ghosted
-								vel = 1;	//Use the minimum value for velocity
+								vel = ghost_velocities[5];		//Use the applicable ghost velocity
 							}
 							eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
@@ -3106,7 +3135,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 				{	//If this is a pro guitar/bass track
 					int tone = eof_midi_synth_instrument_guitar;	//By default, assume a guitar arrangement
 
-					if(sp->pro_guitar_track[sp->track[j]->tracknum]->arrangement == 4)
+					if(sp->pro_guitar_track[sp->track[j]->tracknum]->arrangement == EOF_BASS_ARRANGEMENT)
 					{	//If this track's arrangement type is bass
 						tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
 					}

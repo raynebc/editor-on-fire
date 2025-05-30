@@ -37,6 +37,7 @@ char eof_notes_macro_tempo_subceeding_number[50];
 char eof_notes_macro_fhp_exceeding_number[50];
 char eof_notes_macro_note_exceeding_fret[50];
 char eof_notes_macro_note_exceeding_diff[50];
+char eof_notes_macro_slide_exceeding_fret[50];
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -2415,6 +2416,73 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	count_string = strcasestr_spec(macro, "IF_RS_ANY_SLIDES_EXCEED_FRET_");	//Get a pointer to the text that would be the fret number
+	if(count_string)
+	{	//If the macro is this string
+		unsigned long stringnum, notectr, bitmask, target_fret;
+		EOF_PRO_GUITAR_TRACK *tp;
+		EOF_RS_TECHNIQUES tech = {0};
+
+		eof_notes_macro_slide_exceeding_fret[0] = '\0';	//Erase this string
+		if(eof_read_macro_number(count_string, &target_fret))
+		{	//If the fret number was successfully parsed
+			for(ctr = 1; ctr < eof_song->tracks; ctr++)
+			{	//For each track in the project
+				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+					continue;	//Skip non pro guitar tracks
+
+				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+				for(notectr = 0;  notectr < tp->pgnotes; notectr++)
+				{	//For each normal note in the track
+					for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+					{	//For each string used in this track
+						if(tp->pgnote[notectr]->note & bitmask)
+						{	//If this string is used by the note
+							//Determine techniques used by this note (including applicable technotes using this string), do NOT assume a slide end fret if none is defined
+							unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 4, 1);
+							if(retflags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
+							{	//If the note uses slide technique on this string
+								if((tech.slideto > target_fret) || (tech.unpitchedslideto > target_fret))
+								{	//If a pitched or unpitched slide goes above the target fret
+									char time_string[15] = {0};
+									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+									snprintf(eof_notes_macro_slide_exceeding_fret, sizeof(eof_notes_macro_slide_exceeding_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
+									dest_buffer[0] = '\0';
+									return 3;	//True
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_BASS_TRACK_STRING_COUNT_EXCEEDED"))
+	{
+		unsigned long notectr;
+		EOF_PRO_GUITAR_TRACK *tp;
+
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If the active track is a pro guitar track
+			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
+			if(tp->arrangement == EOF_BASS_ARRANGEMENT)
+			{	//If the active track is a bass arrangement
+				for(notectr = 0;  notectr < tp->pgnotes; notectr++)
+				{	//For each normal note in the track
+					if(tp->pgnote[notectr]->note >= 16)
+					{	//If this note uses any more than the first four strings
+						return 3;	//True
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -3802,7 +3870,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "KEY_INPUT_STATUS"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "CTRL:%c ALT:%c SHIFT:%c CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', KEY_EITHER_SHIFT ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);
-///		snprintf(dest_buffer, dest_buffer_size, "CTRL:%c ALT:%c SHIFT:%c,%c (%c) CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', key[KEY_LSHIFT] ? '*' : ' ', key[KEY_RSHIFT] ? '*' : ' ', key_shifts & KB_SHIFT_FLAG ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);	//Debugging
+//		snprintf(dest_buffer, dest_buffer_size, "CTRL:%c ALT:%c SHIFT:%c,%c (%c) CODE:%d ASCII:%d ('%c')", KEY_EITHER_CTRL ? '*' : ' ', KEY_EITHER_ALT ? '*' : ' ', key[KEY_LSHIFT] ? '*' : ' ', key[KEY_RSHIFT] ? '*' : ' ', key_shifts & KB_SHIFT_FLAG ? '*' : ' ', eof_last_key_code, eof_last_key_char, eof_last_key_char);	//Debugging
 		return 1;
 	}
 
@@ -4841,6 +4909,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		return 1;
 	}
+
+	if(!ustricmp(macro, "RS_FIRST_SLIDE_EXCEEDING_FRET"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_slide_exceeding_fret);
+
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)

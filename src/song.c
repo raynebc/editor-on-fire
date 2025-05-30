@@ -1628,7 +1628,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 			if((trackdetails->track_type == EOF_TRACK_PRO_BASS) || (trackdetails->track_type == EOF_TRACK_PRO_BASS_22))
 			{
 				ptr4->numstrings = 4;	//By default, set a pro bass track to 4 strings
-				ptr4->arrangement = 4;	//And the arrangement type is "Bass"
+				ptr4->arrangement = EOF_BASS_ARRANGEMENT;	//And the arrangement type is "Bass"
 			}
 			else
 			{

@@ -8,10 +8,13 @@ void eof_build_gp_drum_mapping_string(char *destination, size_t size, unsigned c
 	//Populates destination with a string representation of the numbers in mapping_list
 	//If the mapping_list array is empty (begins with a value of 0), "0" is written to the destination string
 	//size is the size of the destination array, used to prevent buffer overflow
-unsigned long eof_parse_gp_drum_mappings(unsigned char *destination, char *input, unsigned countlimit);
+unsigned long eof_parse_number_list(unsigned char *destination, char *input, unsigned countlimit);
 	//Reads the input string, parsing ASCII representations of numbers (each comma or space delimited)
 	//and stores the binary conversions into the destination array.
 	//Up to countlimit number of values are added to the destination array
+	//Returns the number of parsed values stored into the destination, or zero on error
+unsigned long eof_parse_gp_drum_mappings(unsigned char *destination, char *input, unsigned countlimit);
+	//Uses eof_parse_number_list() to parse the numbers in the input list and store them in the destination buffer
 	//After all values have been parsed, the last stored value in the destination array is followed by a zero value
 	// to indicate that there are no more entries, as long as countlimit indicates there is room for this padding
 	//Returns the number of parsed values stored into the destination, or zero on error

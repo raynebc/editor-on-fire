@@ -20,7 +20,11 @@ extern DIALOG eof_file_new_windows_dialog[];
 
 extern DIALOG eof_lyric_detections_dialog[];	//The dialog used to prompt the user to select a MIDI track to import from
 extern struct Lyric_Format *lyricdetectionlist;	//Dialog functions cannot be passed local variables, requiring the use of this global variable
-extern char gp_import_undo_made;				//Dialog functions cannot be passed local variables, requiring the use of this global variable
+extern char gp_import_undo_made;			//Dialog functions cannot be passed local variables, requiring the use of this global variable
+
+extern unsigned char eof_drum_velocities[6];		//MIDI velocity values to use for normal, ghost and accent drum notes (for use in Phase Shift)
+extern unsigned char eof_drum_ghost_velocities[6];
+extern unsigned char eof_drum_accent_velocities[6];
 
 extern struct eof_guitar_pro_struct *eof_parsed_gp_file;	//Dialog windows cannot be passed local variables, requiring the use of this global variable
 extern DIALOG eof_gp_import_dialog[];	//The dialog used to display the tracks imported from a Guitar Pro file, allowing one to overwrite the active pro guitar track
@@ -216,5 +220,8 @@ int eof_menu_file_multiple_array_txt_import(void);
 
 int eof_menu_file_gh3_section_import(void);
 	//Prompts the user to browser for a Guitar Hero chart file, to import its section events into the active project
+
+int eof_menu_file_drum_midi_velocities(void);
+	//Prompts the user to define the velocities to be used for generic MIDI export, ie. for Phase Shift
 
 #endif

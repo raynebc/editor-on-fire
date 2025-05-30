@@ -420,16 +420,20 @@ typedef struct
 #define EOF_PRO_GUITAR_TRACKS_MAX	5
 #define EOF_TUNING_LENGTH 6	//For now, the tuning array will only track 6 strings
 #define EOF_NUM_DEFINED_CHORDS 37
+#define EOF_COMBO_ARRANGEMENT 1
+#define EOF_RHYTHM_ARRANGEMENT 2
+#define EOF_LEAD_ARRANGEMENT 3
+#define EOF_BASS_ARRANGEMENT 4
 
 typedef struct
 {
 	unsigned char numfrets;			//The number of frets in this track
-	unsigned char numstrings;		//The number of strings/lanes in this track
-	unsigned char arrangement;		//The arrangement type of this track  (0 = Undefined, 1 = Combo, 2 = Rhythm, 3 = Lead, 4 = Bass)
-	unsigned char ignore_tuning;	//If nonzero, indicates that the chord name detection reflects the DEFAULT tuning for the arrangement, and not the track's actual specified tuning
+	unsigned char numstrings;			//The number of strings/lanes in this track
+	unsigned char arrangement;			//The arrangement type of this track  (0 = Undefined, 1 = Combo, 2 = Rhythm, 3 = Lead, 4 = Bass)
+	unsigned char ignore_tuning;		//If nonzero, indicates that the chord name detection reflects the DEFAULT tuning for the arrangement, and not the track's actual specified tuning
 	unsigned char capo;				//If nonzero, specifies the presence of a capo on the specified fret number, affecting the chord lookup logic
 	char tuning[EOF_TUNING_LENGTH];	//An array with at least (numstrings) elements, each of which defines the string's relative tuning as the +/- number of half steps from standard tuning (tuning[0] refers to lane 1's string, which is low E)
-	EOF_TRACK_ENTRY * parent;		//Allows an easy means to look up the global track using a pro guitar track pointer
+	EOF_TRACK_ENTRY * parent;			//Allows an easy means to look up the global track using a pro guitar track pointer
 
 	/* the active note array */
 	EOF_PRO_GUITAR_NOTE ** note;	//This array pointer and count variable are assigned to point to either the pro guitar notes or the tech notes, depending on which the user is currently authoring

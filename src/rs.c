@@ -1368,7 +1368,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 		if(!anchorcount)
 		{	//If there are no anchors in this track difficulty, automatically generate them
-			if((tp->arrangement != 4) || eof_warn_missing_bass_fhps)
+			if((tp->arrangement != EOF_BASS_ARRANGEMENT) || eof_warn_missing_bass_fhps)
 			{	//Don't warn about missing FHPs in bass arrangements if user disabled that preference
 				if((*user_warned & 1) == 0)
 				{	//If the user wasn't alerted that one or more track difficulties have no fret hand positions defined
@@ -1781,11 +1781,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	{	//If this is a bass arrangement, and its picked bass flag is set
 		is_picked_bass = 1;
 	}
-	if(tp->arrangement == 2)
+	if(tp->arrangement == EOF_RHYTHM_ARRANGEMENT)
 	{	//Rhythm arrangement
 		is_rhythm = 1;
 	}
-	else if(tp->arrangement == 3)
+	else if(tp->arrangement == EOF_LEAD_ARRANGEMENT)
 	{	//Lead arrangement
 		is_lead = 1;
 	}
@@ -2978,7 +2978,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 		if(!anchorcount)
 		{	//If there are no anchors in this track difficulty, automatically generate them
-			if((tp->arrangement != 4) || eof_warn_missing_bass_fhps)
+			if((tp->arrangement != EOF_BASS_ARRANGEMENT) || eof_warn_missing_bass_fhps)
 			{	//Don't warn about missing FHPs in bass arrangements if user disabled that preference
 				if((*user_warned & 1) == 0)
 				{	//If the user wasn't alerted that one or more track difficulties have no fret hand positions defined

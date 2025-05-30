@@ -182,7 +182,7 @@ void eof_prepare_track_menu(void)
 				eof_track_rocksmith_menu[5].flags = 0;
 			}
 
-			if(eof_song->pro_guitar_track[tracknum]->arrangement == 4)
+			if(eof_song->pro_guitar_track[tracknum]->arrangement == EOF_BASS_ARRANGEMENT)
 			{	//If this track's arrangement type is bass
 				if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_PICKED_BASS)
 				{	//If the track is defined as a picked bass track

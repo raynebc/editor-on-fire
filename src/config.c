@@ -4,6 +4,7 @@
 #include "config.h"
 #include "main.h"
 #include "mix.h"
+#include "menu/file.h"	//For drum velocity definitions
 #include "menu/song.h"	//For eof_set_percussion_cue()
 #include "tuning.h"
 
@@ -53,6 +54,7 @@ void set_default_controller_config(void)
 void eof_load_config(char * fn)
 {
 	char gp_drum_mappings[1024] = {0};
+	char velocity_string[50];
 	int num_default_settings, ctr;
 	const char **default_settings = NULL;
 	char string[EOF_INI_LENGTH] = {0};
@@ -534,6 +536,14 @@ void eof_load_config(char * fn)
 	if(eof_midi_synth_instrument_bass > 0)
 		eof_midi_synth_instrument_bass--;
 
+	//Read drum MIDI velocities
+	(void) ustrncpy(velocity_string, get_config_string("other", "eof_drum_velocities", "100,100,100,100,100,100"), sizeof(velocity_string) - 1);
+	eof_parse_number_list(eof_drum_velocities, velocity_string, 6);
+	(void) ustrncpy(velocity_string, get_config_string("other", "eof_drum_ghost_velocities", "1,1,1,1,1,1"), sizeof(velocity_string) - 1);
+	eof_parse_number_list(eof_drum_ghost_velocities, velocity_string, 6);
+	(void) ustrncpy(velocity_string, get_config_string("other", "eof_drum_accent_velocities", "127,127,127,127,127,127"), sizeof(velocity_string) - 1);
+	eof_parse_number_list(eof_drum_accent_velocities, velocity_string, 6);
+
 	//Read default INI settings
 	num_default_settings = list_config_entries("default_ini_settings", &default_settings);
 	for(ctr = 0; ctr < num_default_settings; ctr++)
@@ -547,6 +557,7 @@ void eof_load_config(char * fn)
 void eof_save_config(char * fn)
 {
 	char gp_drum_mappings[1024] = {0};
+	char velocity_string[30];
 	int num_default_settings, ctr;
 	unsigned long ctr2;
 	const char **default_settings = NULL;
@@ -781,6 +792,13 @@ void eof_save_config(char * fn)
 	set_config_int("other", "drums_rock_remap_lane_5_cymbal", drums_rock_remap_lane_5_cymbal);
 	set_config_int("other", "drums_rock_remap_lane_6", drums_rock_remap_lane_6);
 
+	snprintf(velocity_string, sizeof(velocity_string) - 1, "%u,%u,%u,%u,%u,%u", eof_drum_velocities[0], eof_drum_velocities[1], eof_drum_velocities[2], eof_drum_velocities[3], eof_drum_velocities[4], eof_drum_velocities[5]);
+	set_config_string("other", "eof_drum_velocities", velocity_string);
+	snprintf(velocity_string, sizeof(velocity_string) - 1, "%u,%u,%u,%u,%u,%u", eof_drum_ghost_velocities[0], eof_drum_ghost_velocities[1], eof_drum_ghost_velocities[2], eof_drum_ghost_velocities[3], eof_drum_ghost_velocities[4], eof_drum_ghost_velocities[5]);
+	set_config_string("other", "eof_drum_ghost_velocities", velocity_string);
+	snprintf(velocity_string, sizeof(velocity_string) - 1, "%u,%u,%u,%u,%u,%u", eof_drum_accent_velocities[0], eof_drum_accent_velocities[1], eof_drum_accent_velocities[2], eof_drum_accent_velocities[3], eof_drum_accent_velocities[4], eof_drum_accent_velocities[5]);
+	set_config_string("other", "eof_drum_accent_velocities", velocity_string);
+
 	//Delete existing default INI settings from config file
 	eof_log("\tRewriting default INI settings", 3);
 	num_default_settings = list_config_entries("default_ini_settings", &default_settings);
@@ -832,7 +850,7 @@ void eof_build_gp_drum_mapping_string(char *destination, size_t size, unsigned c
 	}
 }
 
-unsigned long eof_parse_gp_drum_mappings(unsigned char *destination, char *input, unsigned countlimit)
+unsigned long eof_parse_number_list(unsigned char *destination, char *input, unsigned countlimit)
 {
 	unsigned long number = 0, digit, index, parsecount = 0;
 	char ch, parsed = 0;
@@ -879,6 +897,18 @@ unsigned long eof_parse_gp_drum_mappings(unsigned char *destination, char *input
 		destination[parsecount] = number;
 		parsecount++;
 	}
+
+	return parsecount;	//Return number of parsed entries
+}
+
+unsigned long eof_parse_gp_drum_mappings(unsigned char *destination, char *input, unsigned countlimit)
+{
+	unsigned long parsecount;
+
+	if(!destination || !input || !countlimit)
+		return 0;	//Invalid parameters
+
+	parsecount = eof_parse_number_list(destination, input, countlimit);
 
 	//If there is space in the destination buffer, append a 0 value to indicate the end of the number list
 	if(parsecount  < countlimit)

@@ -128,7 +128,7 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 		if(tp->notes)
 		{	//If this track is populated
 			eof_determine_phrase_status(sp, ctr);	//Update the trill and tremolo status of each note
-			if(tp->arrangement != 4)
+			if(tp->arrangement != EOF_BASS_ARRANGEMENT)
 			{	//If this isn't a bass track
 				guitartracknum++;	//Keep count of how many of this track type there have been
 				(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangement name=\"Guitar %lu (%s)\">\n", guitartracknum, sp->track[ctr]->name);
@@ -177,7 +177,7 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 				}
 				if(!anchorcount)
 				{	//If there are no anchors in this track difficulty, automatically generate them
-					if((tp->arrangement != 4) || eof_warn_missing_bass_fhps)
+					if((tp->arrangement != EOF_BASS_ARRANGEMENT) || eof_warn_missing_bass_fhps)
 					{	//Don't warn about missing FHPs in bass arrangements if user disabled that preference
 						if((*user_warned & 1) == 0)
 						{	//If the user wasn't alerted that one or more track difficulties have no fret hand positions defined

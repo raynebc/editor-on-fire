@@ -107,6 +107,7 @@ MENU eof_file_preferences_menu[] =
 	{"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
 	{"&Import/Export", eof_menu_file_import_export_preferences, NULL, 0, NULL},
 	{"Pro &Guitar", eof_menu_file_gp_preferences, NULL, 0, NULL},
+	{"Drum MIDI &Velocities", eof_menu_file_drum_midi_velocities, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -5486,7 +5487,7 @@ int eof_gp_import_guitar_track(int importvoice)
 		{	//If the imported GP track is a bass track and the user is importing it into an EOF track that's configured as a guitar arrangement
 			if(alert("You are importing a bass arrangement into a guitar track.", NULL, "Update the recipient track's type to a bass arrangement type?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to alter the arrangement type
-				eof_song->pro_guitar_track[tracknum]->arrangement = 4;	//Set it to bass arrangement
+				eof_song->pro_guitar_track[tracknum]->arrangement = EOF_BASS_ARRANGEMENT;	//Set it to bass arrangement
 			}
 		}
 		for(ctr = 0; ctr < 6; ctr++)
@@ -7446,5 +7447,116 @@ int eof_menu_file_gh3_section_import(void)
 
 	//Cleanup
 	eof_filebuffer_close(fb);	//Close that file buffer
+	return 1;
+}
+
+/* velocity editing arrays */
+char eof_drum_lane_1_velocity[5] = {0};	//Use a fifth byte to guarantee proper truncation
+char eof_drum_lane_2_velocity[5] = {0};
+char eof_drum_lane_3_velocity[5] = {0};
+char eof_drum_lane_4_velocity[5] = {0};
+char eof_drum_lane_5_velocity[5] = {0};
+char eof_drum_lane_6_velocity[5] = {0};
+char *eof_drum_velocity_strings[6] = {eof_drum_lane_1_velocity, eof_drum_lane_2_velocity, eof_drum_lane_3_velocity, eof_drum_lane_4_velocity, eof_drum_lane_5_velocity, eof_drum_lane_6_velocity};
+unsigned char eof_drum_velocities[6] = {100, 100, 100, 100, 100, 100};	//The velocity written for each normal gem, for Phase Shift
+char eof_drum_lane_1_ghost_velocity[5] = {0};	//Use a fifth byte to guarantee proper truncation
+char eof_drum_lane_2_ghost_velocity[5] = {0};
+char eof_drum_lane_3_ghost_velocity[5] = {0};
+char eof_drum_lane_4_ghost_velocity[5] = {0};
+char eof_drum_lane_5_ghost_velocity[5] = {0};
+char eof_drum_lane_6_ghost_velocity[5] = {0};
+char *eof_drum_ghost_velocity_strings[6] = {eof_drum_lane_1_ghost_velocity, eof_drum_lane_2_ghost_velocity, eof_drum_lane_3_ghost_velocity, eof_drum_lane_4_ghost_velocity, eof_drum_lane_5_ghost_velocity, eof_drum_lane_6_ghost_velocity};
+unsigned char eof_drum_ghost_velocities[6] = {1, 1, 1, 1, 1, 1};	//The velocity written for each ghost gem, for Phase Shift
+char eof_drum_lane_1_accent_velocity[5] = {0};	//Use a fifth byte to guarantee proper truncation
+char eof_drum_lane_2_accent_velocity[5] = {0};
+char eof_drum_lane_3_accent_velocity[5] = {0};
+char eof_drum_lane_4_accent_velocity[5] = {0};
+char eof_drum_lane_5_accent_velocity[5] = {0};
+char eof_drum_lane_6_accent_velocity[5] = {0};
+char *eof_drum_accent_velocity_strings[6] = {eof_drum_lane_1_accent_velocity, eof_drum_lane_2_accent_velocity, eof_drum_lane_3_accent_velocity, eof_drum_lane_4_accent_velocity, eof_drum_lane_5_accent_velocity, eof_drum_lane_6_accent_velocity};
+unsigned char eof_drum_accent_velocities[6] = {127, 127, 127, 127, 127, 127};	//The velocity written for each accent gem, for Phase Shift
+
+DIALOG eof_menu_file_drum_midi_velocities_dialog[] =
+{
+	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
+	{d_agup_window_proc,    0,   48,  240, 258,2,   23,  0,    0,      0,         0,   "Edit drum MIDI velocities",NULL, NULL },
+
+	{d_agup_text_proc,      63,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Normal",     NULL,          NULL },
+	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 1", NULL, NULL },
+	{eof_verified_edit_proc,70,  104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_1_velocity, "0123456789",NULL },
+	{d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 2", NULL, NULL },
+	{eof_verified_edit_proc,70,  128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_2_velocity, "0123456789",NULL },
+	{d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 3", NULL, NULL },
+	{eof_verified_edit_proc,70,  152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_3_velocity, "0123456789",NULL },
+	{d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 4", NULL, NULL },
+	{eof_verified_edit_proc,70,  176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_4_velocity, "0123456789",NULL },
+	{d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 5", NULL, NULL },
+	{eof_verified_edit_proc,70,  200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_5_velocity, "0123456789",NULL },
+	{d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 6", NULL, NULL },
+	{eof_verified_edit_proc,70,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_6_velocity, "0123456789",NULL },
+
+	{d_agup_text_proc,      127, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Ghost",     NULL,          NULL },
+	{eof_verified_edit_proc,130, 104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_1_ghost_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,130, 128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_2_ghost_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,130, 152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_3_ghost_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,130, 176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_4_ghost_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,130, 200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_5_ghost_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,130, 224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_6_ghost_velocity, "0123456789",NULL },
+
+	{d_agup_text_proc,      185, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Accent",     NULL,          NULL },
+	{eof_verified_edit_proc,190, 104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_1_accent_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,190, 128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_2_accent_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,190, 152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_3_accent_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,190, 176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_4_accent_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,190, 200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_5_accent_velocity, "0123456789",NULL },
+	{eof_verified_edit_proc,190, 224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_6_accent_velocity, "0123456789",NULL },
+
+	{d_agup_button_proc,    50,   260, 35,  28, 2,   23,  '\r',  D_EXIT, 0,       0,   "OK",         NULL,          NULL },
+	{d_agup_button_proc,    135, 260, 55,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Cancel",     NULL,          NULL },
+	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_file_drum_midi_velocities(void)
+{
+	unsigned long ctr;
+	int value;
+
+	if(eof_song_loaded)
+	{
+		if(!eof_music_paused)
+		{
+			eof_music_play(0);
+		}
+	}
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+
+	//Update dialog
+	for(ctr = 0; ctr < 6; ctr++)
+	{	//For each of the 6 lanes
+		snprintf(eof_drum_velocity_strings[ctr], sizeof(eof_drum_velocity_strings[0]) - 1, "%u", eof_drum_velocities[ctr]);	//Populate this lane's normal velocity
+		snprintf(eof_drum_ghost_velocity_strings[ctr], sizeof(eof_drum_ghost_velocity_strings[0]) - 1, "%u", eof_drum_ghost_velocities[ctr]);	//Populate this lane's ghost velocity
+		snprintf(eof_drum_accent_velocity_strings[ctr], sizeof(eof_drum_accent_velocity_strings[0]) - 1, "%u", eof_drum_accent_velocities[ctr]);	//Populate this lane's accent velocity
+	}
+
+	//Run dialog
+	eof_render();
+	eof_color_dialog(eof_menu_file_drum_midi_velocities_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_file_drum_midi_velocities_dialog);
+	if(eof_popup_dialog(eof_menu_file_drum_midi_velocities_dialog, 0) == 28)
+	{	//User clicked OK
+		for(ctr = 0; ctr < 6; ctr++)
+		{	//For each of the 6 lanes
+			value = atoi(eof_drum_velocity_strings[ctr]);
+			eof_drum_velocities[ctr] = value ? (value > 127 ? 127 : value) : 1;			//Force the velocities to be within the range of 1 through 127
+			value = atoi(eof_drum_ghost_velocity_strings[ctr]);
+			eof_drum_ghost_velocities[ctr] = value ? (value > 127 ? 127 : value) : 1;	//Force the velocities to be within the range of 1 through 127
+			value = atoi(eof_drum_accent_velocity_strings[ctr]);
+			eof_drum_accent_velocities[ctr] = value ? (value > 127 ? 127 : value) : 1;	//Force the velocities to be within the range of 1 through 127
+		}
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
 	return 1;
 }

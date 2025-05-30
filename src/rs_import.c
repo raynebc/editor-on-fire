@@ -908,19 +908,19 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 				//If the arrangement name matches one of the Rocksmith arrangement types
 				if(!ustricmp(tag, "Combo"))
 				{
-					tp->arrangement = 1;
+					tp->arrangement = EOF_COMBO_ARRANGEMENT;
 				}
 				else if(!ustricmp(tag, "Rhythm"))
 				{
-					tp->arrangement = 2;
+					tp->arrangement = EOF_RHYTHM_ARRANGEMENT;
 				}
 				else if(!ustricmp(tag, "Lead"))
 				{
-					tp->arrangement = 3;
+					tp->arrangement = EOF_LEAD_ARRANGEMENT;
 				}
 				else if(!ustricmp(tag, "Bass"))
 				{
-					tp->arrangement = 4;
+					tp->arrangement = EOF_BASS_ARRANGEMENT;
 				}
 			}
 		}
@@ -2193,7 +2193,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 		}
 
 		//Adjust string count
-		if((tp->arrangement == 4) && four_string)
+		if((tp->arrangement == EOF_BASS_ARRANGEMENT) && four_string)
 		{	//If the XML defined the arrangement as a bass arrangement and all chords and notes were limited to the 4 lower strings
 			tp->numstrings = 4;
 		}

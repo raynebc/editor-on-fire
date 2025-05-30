@@ -664,7 +664,7 @@ int eof_track_is_bass_arrangement(EOF_PRO_GUITAR_TRACK *tp, unsigned long track)
 	}
 	if(tp->arrangement)
 	{	//If the track's arrangement type has been defined
-		if(tp->arrangement == 4)
+		if(tp->arrangement == EOF_BASS_ARRANGEMENT)
 		{	//If it's explicitly defined as a bass arrangement
 			is_bass = 1;	//It will override the native track type
 		}

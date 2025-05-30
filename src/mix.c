@@ -945,7 +945,7 @@ int eof_lookup_midi_tone(EOF_SONG *sp, unsigned long track, unsigned long note)
 	tp = sp->pro_guitar_track[tracknum];
 	if(note >= tp->notes)
 		return 0;	//Invalid parameters
-	if(tp->arrangement == 4)
+	if(tp->arrangement == EOF_BASS_ARRANGEMENT)
 	{	//If this track's arrangement type is bass
 		return eof_midi_synth_instrument_bass;
 	}

@@ -16,20 +16,20 @@ typedef struct
 typedef struct
 {
 	unsigned long length;
-	char bend;						//Nonzero if this note is a bend, in which case it is the bend strength rounded up to the nearest number of half steps (used in RS2 notation).
+	char bend;					//Nonzero if this note is a bend, in which case it is the bend strength rounded up to the nearest number of half steps (used in RS2 notation).
 	unsigned long bendstrength_q;	//The number of quarter steps this note bends (used in RS2 notation)
 	unsigned long bendstrength_h;	//The number of half steps this note bends (used in RS1 notation)
 	long slideto;					//If not negative, is the fret position the slide ends at
-	char hammeron;					//Nonzero if this note is a hammer on
+	char hammeron;				//Nonzero if this note is a hammer on
 	char pulloff;					//Nonzero if this note is a pull off
-	char harmonic;					//Nonzero if this note is a harmonic
-	char hopo;						//Nonzero if this note is either a hammer on or a pull off
-	char palmmute;					//Nonzero if this note is a palm mute
+	char harmonic;				//Nonzero if this note is a harmonic
+	char hopo;					//Nonzero if this note is either a hammer on or a pull off
+	char palmmute;				//Nonzero if this note is a palm mute
 	char tremolo;					//Nonzero if this note is a tremolo
-	char pop;						//1 if this note is played with pop technique, else -1
-	char slap;						//1 if this note is played with slap technique, else -1
+	char pop;					//1 if this note is played with pop technique, else -1
+	char slap;					//1 if this note is played with slap technique, else -1
 	char accent;					//Nonzero if this note is played as an accent
-	char pinchharmonic;				//Nonzero if this note is a pinch harmonic
+	char pinchharmonic;			//Nonzero if this note is a pinch harmonic
 	char stringmute;				//Nonzero if this note is a string mute
 	long unpitchedslideto;			//If not negative, is the fret position to which the note performs an unpitched slide
 	char tap;						//Nonzero if this note is tapped
@@ -37,7 +37,7 @@ typedef struct
 	char linknext;					//Nonzero if this note has the linknext option enabled
 	char ignore;					//Nonzero if this note has the ignore status applied and RS2 export is being performed
 	char sustain;					//Nonzero if this note has the sustain status applied and RS2 export is being performed
-	unsigned long hastechnique;		//Nonzero if this note has any playable technique defined at all
+	unsigned long hastechnique;	//Nonzero if this note has any playable technique defined at all
 } EOF_RS_TECHNIQUES;
 	//A structure of various techniques that is set by eof_get_rs_techniques()
 	//Whether or not a bend will automatically assume a strength or a slide will assume an end position when undefined depends on the target parameter passed to eof_get_rs_techniques()
