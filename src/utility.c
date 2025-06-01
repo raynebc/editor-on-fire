@@ -694,3 +694,84 @@ int eof_byte_to_binary_string(unsigned char value, char *buffer)
 	buffer[index] = '\0';	//Terminate the string
 	return 0;	//Return success
 }
+
+void eof_dump_lyric_lines_to_log(EOF_SONG *sp)
+{
+	unsigned long ctr, ctr2;
+	EOF_VOCAL_TRACK *tp;
+	char buffer[1024], buffer2[50] = {0}, error = 0;
+	unsigned long lastend = 0, lastlyricindex, matches;
+
+	if(!sp)
+		return;
+
+	tp = sp->vocal_track[0];
+	for(ctr = 0; ctr < tp->lines; ctr++)
+	{	//For each lyric line
+		if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
+		{
+			error = 1;
+			break;
+		}
+		if(ctr && (tp->line[ctr].start_pos <= lastend))
+		{
+			error = 2;
+			break;
+		}
+		matches = lastlyricindex = 0;	//Reset these
+		for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
+		{	//For each lyric
+			if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
+			{	//If this lyric is within the scope of the lyric line
+				if(matches && (ctr2 > lastlyricindex + 1))
+				{
+					error = 3;
+					break;
+				}
+			}
+		}
+		if(error)
+			break;
+	}
+
+	if(error)
+	{	//If any errors were found
+		eof_log("\tLyric errors found", 1);
+		for(ctr = 0; ctr < tp->lines; ctr++)
+		{	//For each lyric line
+			if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
+			{
+				eof_log("\t\t!Lyric line timings corrupt", 1);
+			}
+			if(ctr && (tp->line[ctr].start_pos <= lastend))
+			{
+				eof_log("\t\t!Lyric line overlaps previous line", 1);
+			}
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
+			eof_log(eof_log_string, 2);
+			buffer[0] = '\0';	//Empty the buffer
+			matches = lastlyricindex = 0;	//Reset these
+			for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
+			{	//For each lyric
+				if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
+				{	//If this lyric is within the scope of the lyric line
+					if(matches && (ctr2 > lastlyricindex + 1))
+					{
+						eof_log("\t\t\t!Lyrics out of order", 1);
+					}
+					snprintf(buffer2, sizeof(buffer2) - 1, "%lu (%s) ", ctr2, tp->lyric[ctr2]->text);
+					strncat(buffer, buffer2, sizeof(buffer) - 1);	//Append data about this lyric to the buffer
+					matches++;	//Keep track of how many lyrics were found to be in this line
+					lastlyricindex = ctr2;	//Keep track of the last lyric index found to be in this line
+				}
+			}
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%s", buffer);
+			eof_log(eof_log_string, 1);
+			lastend = tp->line[ctr].end_pos;
+		}
+
+		allegro_message("Lyric error detected (%u), check EOF log.", error);
+	}
+	else
+		eof_log("\tLyrics OK", 1);
+}

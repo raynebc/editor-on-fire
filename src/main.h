@@ -534,6 +534,8 @@ extern int         eof_mickeys_x;
 extern int         eof_mickeys_y;
 extern int         eof_lclick_released;
 extern int         eof_blclick_released;
+#define EOF_CLICK_AND_DRAG_THRESHOLD 150
+extern clock_t   eof_lclick_time;
 extern int         eof_rclick_released;
 extern int         eof_mclick_released;
 extern int         eof_click_x;

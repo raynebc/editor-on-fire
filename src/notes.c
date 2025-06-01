@@ -33,11 +33,14 @@ char eof_notes_macro_note_subceeding_fhp[50];
 char eof_notes_macro_note_exceeding_fhp[50];
 char eof_notes_macro_pitched_slide_missing_end_fret[50];
 char eof_notes_macro_bend_missing_strength[50];
+char eof_notes_macro_open_note_bend[50];
 char eof_notes_macro_tempo_subceeding_number[50];
 char eof_notes_macro_fhp_exceeding_number[50];
 char eof_notes_macro_note_exceeding_fret[50];
 char eof_notes_macro_note_exceeding_diff[50];
 char eof_notes_macro_slide_exceeding_fret[50];
+char eof_notes_macro_tech_note_missing_target[50];
+char eof_notes_macro_lyric_extending_outside_line[50];
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -2199,15 +2202,64 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				{	//For each string used in this track
 					if(tp->pgnote[notectr]->note & bitmask)
 					{	//If this string is used by the note
-						//Determine techniques used by this note (including applicable technotes using this string)
-						unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 4, 1);
-						if(retflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-						{	//If the note uses bend technique on this string
-							if(tech.bend == 0)
-							{	//If no bend strength is actually defined
+						if(tp->pgnote[notectr]->frets[stringnum])
+						{	//If the string is not an open note
+							//Determine techniques used by this note (including applicable technotes using this string)
+							unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 4, 1);
+							if(retflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+							{	//If the note uses bend technique on this string
+								if(tech.bend == 0)
+								{	//If no bend strength is actually defined
+									char time_string[15] = {0};
+									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+									snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
+									dest_buffer[0] = '\0';
+									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+									return 3;	//True
+								}
+							}
+						}
+					}
+				}
+			}
+			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_ANY_OPEN_NOTES_BEND"))
+	{
+		unsigned long stringnum, notectr, bitmask;
+		EOF_PRO_GUITAR_TRACK *tp;
+		EOF_RS_TECHNIQUES tech = {0};
+
+		eof_notes_macro_open_note_bend[0] = '\0';	//Erase this string
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
+
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//Skip non pro guitar tracks
+
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
+			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
+			{	//For each normal note in the track
+				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+				{	//For each string used in this track
+					if(tp->pgnote[notectr]->note & bitmask)
+					{	//If this string is used by the note
+						if(tp->pgnote[notectr]->frets[stringnum] == 0)
+						{	//If the string is an open note
+							//Determine techniques used by this note (including applicable technotes using this string)
+							unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 4, 1);
+							if(retflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+							{	//If the note uses bend technique on this string
 								char time_string[15] = {0};
 								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
-								snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
+								snprintf(eof_notes_macro_open_note_bend, sizeof(eof_notes_macro_open_note_bend) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 								return 3;	//True
@@ -2442,7 +2494,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 4, 1);
 							if(retflags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
 							{	//If the note uses slide technique on this string
-								if((tech.slideto > target_fret) || (tech.unpitchedslideto > target_fret))
+								if(((tech.slideto > 0) && (tech.slideto > target_fret)) || ((tech.unpitchedslideto > 0) && (tech.unpitchedslideto > target_fret)))
 								{	//If a pitched or unpitched slide goes above the target fret
 									char time_string[15] = {0};
 									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
@@ -2480,6 +2532,59 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			}
 		}
 
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_ANY_TECH_NOTES_LACK_TARGET"))
+	{
+		unsigned long notectr;
+		EOF_PRO_GUITAR_TRACK *tp;
+
+		eof_notes_macro_tech_note_missing_target[0] = '\0';	//Erase this string
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//Skip non pro guitar tracks
+
+			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+			for(notectr = 0;  notectr < tp->technotes; notectr++)
+			{	//For each tech note in the track
+				if(!eof_pro_guitar_tech_note_overlaps_a_note(tp, notectr, tp->technote[notectr]->note, NULL))
+				{	//If this tech note doesn't overlap a note on any string
+					char time_string[15] = {0};
+					eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+					snprintf(eof_notes_macro_tech_note_missing_target, sizeof(eof_notes_macro_tech_note_missing_target) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_ANY_LYRICS_EXTEND_OUTSIDE_LINES"))
+	{
+		eof_notes_macro_lyric_extending_outside_line[0] = '\0';	//Erase this string
+		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
+		{	//For each lyric
+			EOF_LYRIC *lyric = eof_song->vocal_track[0]->lyric[ctr];	//Simplify
+			if(lyric->note != EOF_LYRIC_PERCUSSION)
+			{	//If this is not a vocal percussion note
+				EOF_PHRASE_SECTION *line = eof_find_lyric_line(ctr);
+				if(line)
+				{	//If this lyric begins within a lyric line
+					if(lyric->pos + lyric->length > line->end_pos)
+					{	//If this lyric extends beyond the end of the lyric line it begins in
+						char time_string[15] = {0};
+						eof_notes_panel_print_time(lyric->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						snprintf(eof_notes_macro_lyric_extending_outside_line, sizeof(eof_notes_macro_lyric_extending_outside_line) - 1, "pos %s : \"%s\"", time_string, lyric->text);	//Write a string identifying the offending lyric
+						dest_buffer[0] = '\0';
+						return 3;	//True
+					}
+				}
+			}
+		}
 		return 2;	//False
 	}
 
@@ -4835,6 +4940,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "RS_FIRST_OPEN_NOTE_WITH_BEND"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_open_note_bend);
+
+		return 1;
+	}
+
 	if(!ustricmp(macro, "LEFT_CLICK_X_COORD"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%u", eof_click_x);
@@ -4917,6 +5029,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "FIRST_FIRST_LYRIC_EXTENDING_OUTSIDE_LINE"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_extending_outside_line);
+
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
@@ -4995,6 +5114,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DEBUG_eof_blclick_released"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "eof_blclick_released is %d", eof_blclick_released);
+		return 1;
+	}
+
+	if(!ustricmp(macro, "RS_FIRST_TECH_NOTE_LACKING_TARGET"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_tech_note_missing_target);
+
 		return 1;
 	}
 

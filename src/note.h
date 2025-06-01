@@ -50,7 +50,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window);
 	//-1 Clipped completely to the left of the viewing window
 	//1 Clipped completely to the right of the viewing window
 EOF_PHRASE_SECTION *eof_find_lyric_line(unsigned long lyricnum);
-	//Returns a pointer to whichever line the specified lyric exists in, or NULL if it is not in a line
+	//Returns a pointer to whichever line the specified lyric exists (begins) in, or NULL if it is not in a line
 unsigned long eof_find_lyric_number(EOF_LYRIC * np);
 	//Finds the lyric in the lyric[] array and returns its index, or 0 on error or lyric not found
 	//error checking can be achieved by testing if(!returnval && (lyric[returnval] != np))

@@ -358,8 +358,9 @@ int         eof_mouse_z;
 int         eof_mickey_z;
 int         eof_mickeys_x;
 int         eof_mickeys_y;
-int         eof_lclick_released = 1;	//Is zero if the left mouse buttin is held and the mouse is NOT on a beat marker
+int         eof_lclick_released = 1;	//Is zero if the left mouse button is held and the mouse is NOT on a beat marker
 int         eof_blclick_released = 1;	//Is zero if the left mouse button is held and the mouse is on a beat marker
+clock_t  eof_lclick_time;			//Stores the clock time of the last registered left mouse click, and the button will need to be held at least EOF_CLICK_AND_DRAG_THRESHOLD number of milliseconds for click and drag operations to be performed
 int         eof_rclick_released = 1;	//Tracks the handling of the right mouse button in general
 int         eof_mclick_released = 1;	//Tracks the handling of the middle mouse button in general
 int         eof_click_x;
@@ -5405,6 +5406,9 @@ void eof_init_after_load(char initaftersavestate)
 	eof_delete_blank_events(eof_song);
 	eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+
+	///DEBUG
+	eof_dump_lyric_lines_to_log(eof_song);
 
 	eof_log("\tInitialization after load complete", 1);
 }

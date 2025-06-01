@@ -84,6 +84,8 @@ MENU eof_beat_halve_bpm_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+char *eof_beat_events_menu_place_section_text_non_pg = "Place &Section\tShift+E";
+char *eof_beat_events_menu_place_section_text_pg = "Place &Section";
 MENU eof_beat_events_menu[] =
 {
 	{"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
@@ -476,8 +478,9 @@ void eof_prepare_beat_menu(void)
 		}
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If a pro guitar/bass track is active, and it's not the bonus pro guitar track (as it's not compatible with RB3)
+		{	//If a pro guitar/bass track is active
 			eof_beat_menu[22].flags = 0;	//Beat>Rocksmith>
+			eof_beat_events_menu[3].text = eof_beat_events_menu_place_section_text_pg;	//Show this menu function without the SHIFT+E shortcut, since it's used for placing Rocksmith Events if a pro guitar track is active
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
 				eof_beat_menu[23].flags = D_DISABLED;
@@ -488,7 +491,8 @@ void eof_prepare_beat_menu(void)
 			}
 		}
 		else
-		{	//Otherwise disable and hide these items
+		{
+			eof_beat_events_menu[3].text = eof_beat_events_menu_place_section_text_non_pg;	//In a non pro guitar track, SHIFT+E will invoke the "Place section" function
 			eof_beat_menu[22].flags = D_DISABLED | D_HIDDEN;
 			eof_beat_menu[23].flags = D_DISABLED | D_HIDDEN;
 		}

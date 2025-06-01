@@ -1,6 +1,8 @@
 #ifndef EOF_UTILITY_H
 #define EOF_UTILITY_H
 
+#include "song.h"
+
 int eof_folder_exists(const char * dir);	//Returns nonzero if the specified file path exists and is a directory
 int eof_chdir(const char * dir);		//Changes the current working directory of the program.  Returns nonzero on error
 int eof_mkdir(const char * dir);
@@ -64,5 +66,8 @@ int eof_byte_to_binary_string(unsigned char value, char *buffer);
 	//Places a binary string representation of the given 8 bit value into the given buffer, which must be able to store at least 9 bytes
 	//Leading zeroes are dropped
 	//Returns nonzero on error
+
+void eof_dump_lyric_lines_to_log(EOF_SONG *sp);
+	//A debugging function that logs all lyric line timings and the index number and text of each line's lyrics
 
 #endif
