@@ -12,6 +12,8 @@ void *eof_buffer_file(const char * fn, char appendnull);
 	//Loads the specified file into a memory buffer and returns the buffer, or NULL upon error
 	//If appendnull is nonzero, an extra 0 byte is written at the end of the buffer, potentially necessary if buffering a file that will be read as text, ensuring the buffer is NULL terminated
 int eof_copy_file(const char * src, const char * dest);	//Copies the source file to the destination file.  Returns 0 upon error
+int eof_conditionally_copy_file(const char * src, const char * dest);
+	//Performs eof_copy_file() if the two specified files are of a different size
 int eof_file_compare(char *file1, char *file2);	//Returns zero if the two files are the same
 
 int eof_check_string(char * tp);	//Returns nonzero if the string contains at least one non space ' ' character before it terminates
@@ -67,7 +69,8 @@ int eof_byte_to_binary_string(unsigned char value, char *buffer);
 	//Leading zeroes are dropped
 	//Returns nonzero on error
 
-void eof_dump_lyric_lines_to_log(EOF_SONG *sp);
-	//A debugging function that logs all lyric line timings and the index number and text of each line's lyrics
+void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force);
+	//A debugging function that detects errors with lyric lines and if any are found, or if force is nonzero,
+	// logs all lyric line timings and the index number and text of each line's lyrics
 
 #endif

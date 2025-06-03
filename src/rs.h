@@ -15,7 +15,7 @@ typedef struct
 
 typedef struct
 {
-	unsigned long length;
+	unsigned long length;			//The length the note on the specified string will export with, taking techniques and stop technote status into account
 	char bend;					//Nonzero if this note is a bend, in which case it is the bend strength rounded up to the nearest number of half steps (used in RS2 notation).
 	unsigned long bendstrength_q;	//The number of quarter steps this note bends (used in RS2 notation)
 	unsigned long bendstrength_h;	//The number of half steps this note bends (used in RS1 notation)

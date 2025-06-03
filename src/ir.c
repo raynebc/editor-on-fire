@@ -1086,15 +1086,12 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	//Write Song.ogg
 	put_backslash(eof_temp_filename);
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Song.ogg", (int) sizeof(eof_temp_filename));
-	if(!exists(eof_temp_filename))
-	{	//If the OGG file doesn't already exist at the destination
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
-		eof_log(eof_log_string, 2);
-		if(!eof_copy_file(eof_loaded_ogg_name, eof_temp_filename))
-		{
-			allegro_message("Could not export audio!\n%s", eof_temp_filename);
-			return 0;	//Return failure
-		}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
+	if(!eof_conditionally_copy_file(eof_loaded_ogg_name, eof_temp_filename))
+	{
+		allegro_message("Could not export audio!\n%s", eof_temp_filename);
+		return 0;	//Return failure
 	}
 
 
@@ -1342,7 +1339,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 			(void) replace_filename(eof_temp_filename, eof_temp_filename, get_filename(temp_filename2), (int) sizeof(eof_temp_filename));	//Build path to destination file
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
 			eof_log(eof_log_string, 2);
-			(void) eof_copy_file(album_art_filename, eof_temp_filename);	//Copy the album art to the export folder
+			(void) eof_conditionally_copy_file(album_art_filename, eof_temp_filename);	//Copy the album art to the export folder if a file of the same size doesn't already exist
 		}
 		else
 			eof_log("\tAlbum art not found in project folder.", 2);

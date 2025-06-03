@@ -88,8 +88,8 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
  {"Drop D tuning", "Drop D tuning (-2,0,0,0,0,0): DADGBE", 0, 6, {-2,0,0,0,0,0}},
  {"Open D tuning", "Open D tuning (-2,0,0,-1,-2,-2): DADF#AD", 0, 6, {-2,0,0,-1,-2,-2}},
  {"Open G tuning", "Open G tuning (-2,-2,0,0,0,-2): DGDGBD", 0, 6, {-2,-2,0,0,0,-2}},
- {"Bass tuning", "Bass tuning (-4,-5,-5,-5,-5): BEADG", 0, 5, {-5,-5,-5,-5,-4}},
- {"Bass tuning", "Bass tuning (-4,-4,-5,-5,-5,-5): BEADGC", 0, 6, {-5,-5,-5,-5,-4,-4}}
+ {"Bass tuning", "Bass tuning (-5,-5,-5,-5,-4): BEADG", 0, 5, {-5,-5,-5,-5,-4}},
+ {"Bass tuning", "Bass tuning (-5,-5,-5,-5,-4,-4): BEADGC", 0, 6, {-5,-5,-5,-5,-4,-4}}
 };
 
 EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =

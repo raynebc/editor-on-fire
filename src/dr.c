@@ -548,27 +548,17 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 
 	//Write preview.ogg if it doesn't exist and it has been created for the project
 	(void) replace_filename(temp_filename2, eof_song_path, "preview.ogg", 1024);
-	if(exists(temp_filename2))
-	{	//If the project has preview audio defined
-		(void) replace_filename(eof_temp_filename, eof_temp_filename, "preview.ogg", (int) sizeof(eof_temp_filename));
-		if(!exists(eof_temp_filename))
-		{	//If preview.ogg doesn't exist in the Drums Rock export subfolder
-			(void) eof_copy_file(temp_filename2, eof_temp_filename);	//Copy preview.ogg there
-		}
-	}
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "preview.ogg", (int) sizeof(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
+	(void) eof_conditionally_copy_file(temp_filename2, eof_temp_filename);	//Copy preview.ogg there if a file of the same size doesn't already exist
 
 	//Write album.jpg if it doesn't exist in the destination and it exists in the project folder
 	(void) replace_filename(temp_filename2, eof_song_path, "album.jpg", 1024);
-	if(exists(temp_filename2))
-	{	//If the project folder has album.jpg
-		(void) replace_filename(eof_temp_filename, eof_temp_filename, "album.jpg", (int) sizeof(eof_temp_filename));
-		if(!exists(eof_temp_filename))
-		{	//If album.jpg doesn't exist in the Drums Rock export subfolder
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
-			eof_log(eof_log_string, 2);
-			(void) eof_copy_file(temp_filename2, eof_temp_filename);	//Copy album.jpg there
-		}
-	}
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "album.jpg", (int) sizeof(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
+	(void) eof_conditionally_copy_file(temp_filename2, eof_temp_filename);	//Copy album.jpg there if a file of the same size doesn't already exist
 
 	return 1;	//Return success
 }

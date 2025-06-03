@@ -14,6 +14,8 @@
 
 #ifdef USEMEMWATCH
 #ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
+#include <allegro.h>	//For Unicode logic
+#include "../main.h"
 #include "../memwatch.h"
 #else
 #include "memwatch.h"
@@ -28,6 +30,7 @@ char *ReadTextInfoFrame(FILE *inf)
 	char buffer2[7]={0};	//Used to store frame size, flags and string encoding
 	char *string=NULL;
 	unsigned long framesize=0;
+	int unicode = 0, bomsize = 0;
 
 	if(inf == NULL)
 		return NULL;
@@ -38,18 +41,42 @@ char *ReadTextInfoFrame(FILE *inf)
 		return NULL;
 
 	if(fread(buffer,4,1,inf) != 1)	//Read the frame ID
-		return NULL;				//If there was an I/O error, return error
-	buffer[4] = '\0';				//Guarantee this string is terminated to resolve a false positive in Coverity
+		return NULL;			//If there was an I/O error, return error
+	buffer[4] = '\0';			//Guarantee this string is terminated to resolve a false positive in Coverity
 	if(fread(buffer2,7,1,inf) != 1)	//Read the rest of the frame header and the following byte (string encoding)
-		return NULL;				//If there was an I/O error, return error
+		return NULL;			//If there was an I/O error, return error
 
-	if(!IsTextInfoID3FrameID(buffer) || ((buffer2[5] & 192) != 0) || (buffer2[6] != 0))	//Verify that it is a valid text information frame
-	{
+	if(!IsTextInfoID3FrameID(buffer) || ((buffer2[5] & 192) != 0))	//Verify that it is a valid text information frame
+	{	//buffer2[5] is a flag byte whose MSB is expected to be zero
 		(void) fseek(inf,originalpos,SEEK_SET);	//Return to original file position
 		return NULL;						//Return error
 	}
 
-//Read the frame size as a Big Endian integer (4 bytes)
+	//Allow EOF to try to parse UTF-8 formatted text, FoFLC will not attempt it
+	#ifndef EOF_BUILD
+		if(buffer2[6] != 0)
+		{	//buffer[6] is the text encoding where 0 means ISO-8859-1 (ie. ANSI)
+			(void) fseek(inf,originalpos,SEEK_SET);	//Return to original file position
+			return NULL;						//Return error
+		}
+	#else
+		if(buffer2[6] == 1)
+		{
+			unicode = U_UNICODE;	//UTF-16 with BOM
+			bomsize = 2;
+		}
+		else if(buffer2[6] == 2)
+			unicode = U_UNICODE;	//UTF-16BE without BOM
+		else if(buffer2[6] == 3)
+			unicode = U_UTF8;		//UTF-8
+		else if(buffer2[6] != 0)
+		{	//Unknown text encoding
+			(void) fseek(inf,originalpos,SEEK_SET);	//Return to original file position
+			return NULL;						//Return error
+		}
+	#endif
+
+//Read the frame size as a Big Endian integer (4 bytes), which is the one byte text encoding, followed by any Byte Order Mark, followed by the NON-NULL-TERMINATED text
 	framesize=((unsigned long)buffer2[0]<<24) | ((unsigned long)buffer2[1]<<16) | ((unsigned long)buffer2[2]<<8) | ((unsigned long)buffer2[3]);	//Convert to 4 byte integer
 	assert(framesize <= 10000);		//Needless assert() to resolve a false positive with Coverity (it's probably impossible for this limit to be triggered with any sane ID3 tag)
 
@@ -59,7 +86,7 @@ char *ReadTextInfoFrame(FILE *inf)
 		return NULL;
 	}
 
-	string=malloc((size_t)framesize);	//Allocate enough space to store the data (one byte less than the framesize, yet one more for NULL terminator)
+	string=malloc((size_t)framesize + 1);	//Allocate enough space to store the data (one byte less than the framesize, yet one more for NULL terminator and one more in case it's a UTF-16 NULL terminator)
 	if(!string)			//Memory allocation failure
 	{
 		(void) fseek(inf,originalpos,SEEK_SET);	//Return to original file position
@@ -74,6 +101,24 @@ char *ReadTextInfoFrame(FILE *inf)
 		return NULL;
 	}
 	string[framesize-1]='\0';
+	string[framesize] ='\0';	//In case UTF-16 is in use, the NULL terminator requires two NULL bytes
+
+	#ifdef EOF_BUILD
+		if(unicode)
+		{	//If the text is in Unicode format, have Allegro convert it
+			char *workbuffer = malloc(framesize+1);
+
+			if(workbuffer)
+			{	//If the buffer was allocated
+				memset(workbuffer, 0, framesize + 1);		//Block set the work buffer to 0
+				memcpy(workbuffer, string + bomsize, framesize+1-bomsize);	//Duplicate the Unicode string into the work buffer, EXCLUDING any byte order mark
+				do_uconvert(workbuffer, unicode, string, U_CURRENT, framesize+1);	//Convert from the specified Unicode encoding to EOF's current encoding
+				free(workbuffer);
+			}
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tConverted Unicode ID3 tag metadata \"%s\"", string);
+			eof_log(eof_log_string, 1);
+		}
+	#endif
 
 	return string;
 }

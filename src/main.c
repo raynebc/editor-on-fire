@@ -5408,7 +5408,7 @@ void eof_init_after_load(char initaftersavestate)
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 
 	///DEBUG
-	eof_dump_lyric_lines_to_log(eof_song);
+	eof_check_and_log_lyric_line_errors(eof_song, 0);
 
 	eof_log("\tInitialization after load complete", 1);
 }

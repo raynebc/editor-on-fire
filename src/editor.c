@@ -25,8 +25,6 @@
 #include "undo.h"
 #include "utility.h"	//For eof_check_string()
 #include "waveform.h"
-
-///DEBUG
 #include "gh_import.h"
 
 #ifdef USEMEMWATCH
@@ -4710,8 +4708,8 @@ void eof_editor_logic(void)
 				{	//The mouse button has has been held for at least this frame and the mouse has moved at least one pixel left/right during the hold
 					eof_mouse_drug++;
 				}
-				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1))
-				{	//The mouse button has been held for at least ten frames and a note is selected
+				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+				{	//The mouse button has been held for at least ten frames, a note is selected and neither SHIFT key is held (so SHIFT+click and CTRL+click don't allow note movement)
 					if((clock() - eof_lclick_time) * 1000 / CLOCKS_PER_SEC > EOF_CLICK_AND_DRAG_THRESHOLD)
 					{	//If the left mouse button has been held at least the threshold amount of time
 						if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)
@@ -4813,7 +4811,7 @@ void eof_editor_logic(void)
 							}
 						}//If notes are to be moved
 					}//If the left mouse button has been held at least the threshold amount of time
-				}//The mouse button has been held for at least ten frames and a note is selected
+				}//The mouse button has been held for at least ten frames, a note is selected and neither SHIFT key is held (so SHIFT+click and CTRL+click don't allow note movement)
 			}//If neither full screen 3D view is in use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 			if(!eof_full_screen_3d && ((mouse_b & 2) || eof_key_code == KEY_INSERT) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_chart_length))
 			{	//Full screen 3D view is not in effect, right mouse click or Insert key pressed, and the pen note is valid
@@ -5577,8 +5575,8 @@ void eof_vocal_editor_logic(void)
 				{	//If a note was clicked and drug
 					eof_mouse_drug++;
 				}
-				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1))
-				{	//The mouse button has been held for at least ten frames and a note is selected
+				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+				{	//The mouse button has been held for at least ten frames, a note is selected and neither SHIFT key is held (so SHIFT+click and CTRL+click don't allow note movement)
 					if((clock() - eof_lclick_time) * 1000 / CLOCKS_PER_SEC > EOF_CLICK_AND_DRAG_THRESHOLD)
 					{	//If the left mouse button has been held at least the threshold amount of time
 						if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)
@@ -5666,7 +5664,7 @@ void eof_vocal_editor_logic(void)
 							}
 						}//If notes are to be moved
 					}//If the left mouse button has been held at least the threshold amount of time
-				}//The mouse button has been held for at least ten frames and a note is selected
+				}//The mouse button has been held for at least ten frames, a note is selected and neither SHIFT key is held (so SHIFT+click and CTRL+click don't allow note movement)
 			}//If neither full screen 3D view is is use nor is click and drag disabled, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || (eof_key_code == KEY_INSERT))) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && ((eof_key_char == '1') || (eof_key_char == '2') || (eof_key_char == '3') || (eof_key_char == '4') || (eof_key_char == '5') || (eof_key_char == '6'))) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || (eof_key_char == '0')))
 			{	//If full screen 3D view is not in effect and input to add a note is provided
@@ -6406,8 +6404,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			{
 				draw_sprite(eof_screen, eof_image[EOF_IMAGE_CONTROLS_0 + eof_selected_control], eof_screen_layout.controls_x, 22 + 8);
 			}
-///DEBUG (print FPS instead of seek position)
-///textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%.2f", eof_main_loop_fps);
 			textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02lu:%02lu", ((eof_music_pos.value - eof_av_delay) / 1000) / 60, ((eof_music_pos.value - eof_av_delay) / 1000) % 60);
 		}
 	}

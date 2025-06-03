@@ -41,6 +41,7 @@ char eof_notes_macro_note_exceeding_diff[50];
 char eof_notes_macro_slide_exceeding_fret[50];
 char eof_notes_macro_tech_note_missing_target[50];
 char eof_notes_macro_lyric_extending_outside_line[50];
+char eof_notes_macro_technique_missing_sustain[50];
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -2213,8 +2214,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 									char time_string[15] = {0};
 									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 									snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
-									dest_buffer[0] = '\0';
 									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+									dest_buffer[0] = '\0';
 									return 3;	//True
 								}
 							}
@@ -2260,8 +2261,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								char time_string[15] = {0};
 								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_open_note_bend, sizeof(eof_notes_macro_open_note_bend) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
-								dest_buffer[0] = '\0';
 								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+								dest_buffer[0] = '\0';
 								return 3;	//True
 							}
 						}
@@ -2526,6 +2527,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				{	//For each normal note in the track
 					if(tp->pgnote[notectr]->note >= 16)
 					{	//If this note uses any more than the first four strings
+						dest_buffer[0] = '\0';
 						return 3;	//True
 					}
 				}
@@ -2585,6 +2587,74 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				}
 			}
 		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_CHART_HAS_ANY_NOTES"))
+	{
+		if(eof_get_chart_size(eof_song))
+		{	//If any of the project's tracks have at least one note/lyric
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_TEMPO_MAP_LOCKED"))
+	{
+		if(eof_song->tags->tempo_map_locked)
+		{	//If the tempo map is locked
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RS_ANY_TECHNIQUES_MISSING_SUSTAIN"))
+	{	//If the macro is this string
+		unsigned long stringnum, notectr, bitmask;
+		EOF_PRO_GUITAR_TRACK *tp;
+		EOF_RS_TECHNIQUES tech = {0};
+
+		eof_notes_macro_technique_missing_sustain[0] = '\0';	//Erase this string
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//Skip non pro guitar tracks
+
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
+			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
+			{	//For each normal note in the track
+				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+				{	//For each string used in this track
+					if(tp->pgnote[notectr]->note & bitmask)
+					{	//If this string is used by the note
+						//Determine techniques used by this note (including applicable technotes using this string), do NOT assume a slide end fret if none is defined
+						unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 2, 1);
+
+						if(retflags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
+						{	//If this string uses any techniques that require sustain
+							if(tech.length < 2)
+							{	//If the gem for this string would export without at least 1ms of sustain
+								char time_string[15] = {0};
+								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+								snprintf(eof_notes_macro_technique_missing_sustain, sizeof(eof_notes_macro_technique_missing_sustain) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
+								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+								dest_buffer[0] = '\0';
+								return 3;	//True
+							}
+						}
+					}
+				}
+			}
+			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
+		}
+
 		return 2;	//False
 	}
 
@@ -2814,6 +2884,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		dest_buffer[0] = '\0';
 		panel->color = eof_color_black;
 		panel->bgcolor = eof_color_green;
+		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		return 1;
+	}
+
+	//Change text printing to yellow text on blue background until the end of the current notes panel line
+	if(!ustricmp(macro, "DISPLAY_ALERT"))
+	{
+		dest_buffer[0] = '\0';
+		panel->color = eof_color_yellow;
+		panel->bgcolor = eof_color_blue;
 		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		return 1;
 	}
@@ -5029,9 +5109,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
-	if(!ustricmp(macro, "FIRST_FIRST_LYRIC_EXTENDING_OUTSIDE_LINE"))
+	if(!ustricmp(macro, "FIRST_LYRIC_EXTENDING_OUTSIDE_LINE"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_extending_outside_line);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "RS_FIRST_TECHNIQUE_MISSING_SUSTAIN"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_technique_missing_sustain);
 
 		return 1;
 	}

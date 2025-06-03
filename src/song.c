@@ -3010,7 +3010,7 @@ int eof_menu_section_mark(unsigned long section_type)
 		sel_start = eof_song->tags->start_point;
 		sel_end = eof_song->tags->end_point;
 	}
-	if((section_type != EOF_BOOKMARK_SECTION) || (section_type != EOF_FRET_HAND_POS_SECTION) || (section_type != EOF_RS_TONE_CHANGE) || (section_type != EOF_FRET_CATALOG_SECTION))
+	if((section_type != EOF_BOOKMARK_SECTION) && (section_type != EOF_FRET_HAND_POS_SECTION) && (section_type != EOF_RS_TONE_CHANGE) && (section_type != EOF_FRET_CATALOG_SECTION))
 		check_overlapping = 1;
 	if(eof_lookup_track_section_type(eof_song, eof_selected_track, section_type, &section_count, &sectionptr))
 	{	//If the section array was found
@@ -3018,8 +3018,8 @@ int eof_menu_section_mark(unsigned long section_type)
 		{
 			track = eof_selected_track;	//For all sections marked with this function, catalog entries excluded, the active track is the one the section applies to
 			diff = 0xFF;				//And does not apply to a specific difficulty
-			if((section_type == EOF_HANDSHAPE_SECTION) || (section_type == EOF_ARPEGGIO_SECTION))
-				diff = eof_note_type;	//Arpeggio/handshape phrases are exceptions, which will be defined for the active track difficulty
+			if((section_type == EOF_HANDSHAPE_SECTION) || (section_type == EOF_ARPEGGIO_SECTION) || (section_type ==EOF_LYRIC_PHRASE_SECTION))
+				diff = eof_note_type;	//Arpeggio/handshape/lyric phrases are exceptions, which will be defined for the active track difficulty
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 				diff = eof_note_type;	//When dynamic difficulty is in effect, tremolo phrases apply to the active track difficulty
 			flags = 0;					//All non catalog section types are initialized with no flags
@@ -3045,13 +3045,17 @@ int eof_menu_section_mark(unsigned long section_type)
 		if(insp < 0)
 		{	//If selected notes are not within an existing section, add one
 			(void) eof_track_add_section(eof_song, track, section_type, diff, sel_start, sel_end, flags, "");	//Add a section of the specified type
-			instanceptr = eof_get_section_instance_at_pos(eof_song, track, section_type, sel_start);	//Get the pointer to the new section
+			instanceptr = eof_get_section_instance_at_pos(eof_song, track, section_type, sel_start);		//Get the pointer to the new section
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding section of type %lu", section_type);
+			eof_log(eof_log_string, 1);
 		}
 		else
 		{	//Otherwise edit the existing section
 			instanceptr = &sectionptr[insp];
 			if(instanceptr != NULL)
 			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tModifying section of type %lu:  From %lums-%lums to %lums-%lums", section_type, instanceptr->start_pos, instanceptr->end_pos, sel_start, sel_end);
+				eof_log(eof_log_string, 1);
 				instanceptr->start_pos = sel_start;
 				instanceptr->end_pos = sel_end;
 			}
@@ -11206,7 +11210,7 @@ int eof_get_drum_note_masks(EOF_SONG *sp, unsigned long track, unsigned long not
 
 void eof_sort_and_merge_overlapping_sections(EOF_PHRASE_SECTION *section_ptr, unsigned long *section_count)
 {
-	unsigned long ctr;
+	unsigned long ctr, removed_count = 0;
 	int overlap = 0;
 
 	if(!section_ptr || !section_count || (*section_count < 2))
@@ -11226,12 +11230,16 @@ void eof_sort_and_merge_overlapping_sections(EOF_PHRASE_SECTION *section_ptr, un
 		{	//If this section and the previous one overlap
 			if(section1->difficulty == section2->difficulty)
 			{	//If they apply to the same difficulty (or both apply to all difficulties)
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCombining overlapping sections:  %lums-%lums and %lums-%lums", section1->start_pos, section1->end_pos, section2->start_pos, section2->end_pos);
+				eof_log(eof_log_string, 1);
 				start = (section1->start_pos < section2->start_pos) ? section1->start_pos : section2->start_pos;	//Find the earlier of the two sections' start times
 				end = (section1->end_pos > section2->end_pos) ? section1->end_pos : section2->end_pos;		//Find the later of the two sections' end times
 				section2->start_pos = start;	//Update the timings on the previous section
 				section2->end_pos = end;
 				section1->start_pos = section1->end_pos = ULONG_MAX;	//Set the timings on this section so it will sort to the end for removal
 				overlap = 1;	//Track that a second call to qsort() and a parse for removal of applicable sections is to be performed
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tOne of those was changed to %lums-%lums and the other will be discarded", section2->start_pos, section2->end_pos);
+				eof_log(eof_log_string, 1);
 			}
 		}
 	}
@@ -11245,9 +11253,12 @@ void eof_sort_and_merge_overlapping_sections(EOF_PHRASE_SECTION *section_ptr, un
 			if((section_ptr[ctr - 1].start_pos == ULONG_MAX) && (section_ptr[ctr - 1].end_pos == ULONG_MAX))
 			{	//If this section instance is to be removed
 				*section_count = *section_count - 1;	//Decrement the section count passed by the calling function
+				removed_count++;
 			}
 			else
 			{	//Otherwise this and all previous section instances are to be kept
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%lu sections were removed", removed_count);
+				eof_log(eof_log_string, 1);
 				return;
 			}
 		}

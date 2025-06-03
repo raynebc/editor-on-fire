@@ -205,6 +205,22 @@ int eof_copy_file(const char * src, const char * dest)
 	return 1;
 }
 
+int eof_conditionally_copy_file(const char * src, const char * dest)
+{
+	if(!src || !dest)
+		return 0;	//Invalid parameters
+
+	eof_log("eof_conditionally_copy_file() entered", 1);
+	if(file_size_ex(src) == file_size_ex(src))
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSkipping overwrite of file \"%s\" with source file of same size.", dest);
+		eof_log(eof_log_string, 1);
+		return 2;	//Copy operation skipped
+	}
+
+	return eof_copy_file(src, dest);
+}
+
 int eof_check_string(char * tp)
 {
 	int i;
@@ -695,7 +711,7 @@ int eof_byte_to_binary_string(unsigned char value, char *buffer)
 	return 0;	//Return success
 }
 
-void eof_dump_lyric_lines_to_log(EOF_SONG *sp)
+void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 {
 	unsigned long ctr, ctr2;
 	EOF_VOCAL_TRACK *tp;
@@ -730,12 +746,13 @@ void eof_dump_lyric_lines_to_log(EOF_SONG *sp)
 				}
 			}
 		}
+		lastend = tp->line[ctr].end_pos;
 		if(error)
 			break;
 	}
 
-	if(error)
-	{	//If any errors were found
+	if(error || force)
+	{	//If any errors were found, or the calling function is forcing the lyrics to be written to log
 		eof_log("\tLyric errors found", 1);
 		for(ctr = 0; ctr < tp->lines; ctr++)
 		{	//For each lyric line
@@ -770,7 +787,8 @@ void eof_dump_lyric_lines_to_log(EOF_SONG *sp)
 			lastend = tp->line[ctr].end_pos;
 		}
 
-		allegro_message("Lyric error detected (%u), check EOF log.", error);
+		if(error)
+			allegro_message("Lyric error detected (%u), check EOF log.", error);
 	}
 	else
 		eof_log("\tLyrics OK", 1);
