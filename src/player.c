@@ -180,11 +180,11 @@ void eof_catalog_play(void)
 	if((eof_song->catalog->entries > 0) && !eof_silence_loaded)
 	{	//Only play a catalog entry if there's at least one, and there is chart audio loaded
 		if(!eof_music_paused)
-		{
+		{	//Chart/catalog is playing
 			eof_music_play(0);
 		}
 		else if(eof_music_catalog_playback)
-		{
+		{	//Catalog is playing, pause it
 			eof_music_catalog_playback = 0;
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
@@ -192,9 +192,15 @@ void eof_catalog_play(void)
 			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
 		}
 		else
-		{
-			alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
+		{	//Nothing is playing
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
+			eof_log("\t\tSeeking audio to catalog position", 3);
+			#ifdef ALLEGRO_WINDOWS
+				alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_catalog_pos - ((eof_buffer_size * (eof_smooth_pos ? 2 : 1)) * 1000 / (unsigned long)alogg_get_wave_freq_ogg(eof_music_track)));
+			#else
+				alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_pos.value);
+			#endif
+
 			eof_music_catalog_playback = 1;
 			if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, 1000 + eof_audio_fine_tune, 0) == ALOGG_OK)
 			{

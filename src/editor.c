@@ -4709,7 +4709,7 @@ void eof_editor_logic(void)
 					eof_mouse_drug++;
 				}
 				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-				{	//The mouse button has been held for at least ten frames, a note is selected and neither SHIFT key is held (so SHIFT+click and CTRL+click don't allow note movement)
+				{	//The mouse button has been held for at least ten frames, a note is selected and no SHIFT or CTRL keys are held (so SHIFT+click and CTRL+click don't allow note movement)
 					if((clock() - eof_lclick_time) * 1000 / CLOCKS_PER_SEC > EOF_CLICK_AND_DRAG_THRESHOLD)
 					{	//If the left mouse button has been held at least the threshold amount of time
 						if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)
@@ -5576,7 +5576,7 @@ void eof_vocal_editor_logic(void)
 					eof_mouse_drug++;
 				}
 				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-				{	//The mouse button has been held for at least ten frames, a note is selected and neither SHIFT key is held (so SHIFT+click and CTRL+click don't allow note movement)
+				{	//The mouse button has been held for at least ten frames, a note is selected and no SHIFT or CTRL keys are held (so SHIFT+click and CTRL+click don't allow note movement)
 					if((clock() - eof_lclick_time) * 1000 / CLOCKS_PER_SEC > EOF_CLICK_AND_DRAG_THRESHOLD)
 					{	//If the left mouse button has been held at least the threshold amount of time
 						if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)

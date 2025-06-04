@@ -177,7 +177,7 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 							{	//If the newline macro caused the output to be flushed
 								panel->xpos = 2;		//Move output coordinates to beginning of the next line
 								panel->ypos +=12;
-								if(panel->colorprinted)
+								if(panel->this_notice)
 									panel->ypos += 3;		//Lower the y coordinate further so that one line of color background doesn't obscure another
 								panel->newline = 0;
 							}
@@ -2864,7 +2864,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		dest_buffer[0] = '\0';
 		panel->color = eof_notes_panel_error_fg_color;
 		panel->bgcolor = eof_notes_panel_error_bg_color;
-		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		panel->this_notice = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		if(!panel->last_notice)
+			panel->ypos += 3;	//If the previous line rendered as normal text, lower the y coordinate further so that this notice's color background doesn't obscure the former
 		return 1;
 	}
 
@@ -2874,7 +2876,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		dest_buffer[0] = '\0';
 		panel->color = eof_notes_panel_warning_fg_color;
 		panel->bgcolor = eof_notes_panel_warning_bg_color;
-		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		panel->this_notice = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		if(!panel->last_notice)
+			panel->ypos += 3;	//If the previous line rendered as normal text, lower the y coordinate further so that this notice's color background doesn't obscure the former
 		return 1;
 	}
 
@@ -2884,7 +2888,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		dest_buffer[0] = '\0';
 		panel->color = eof_notes_panel_success_fg_color;
 		panel->bgcolor = eof_notes_panel_success_bg_color;
-		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		panel->this_notice = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		if(!panel->last_notice)
+			panel->ypos += 3;	//If the previous line rendered as normal text, lower the y coordinate further so that this notice's color background doesn't obscure the former
 		return 1;
 	}
 
@@ -2894,7 +2900,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		dest_buffer[0] = '\0';
 		panel->color = eof_notes_panel_alert_fg_color;
 		panel->bgcolor = eof_notes_panel_alert_bg_color;
-		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		panel->this_notice = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
+		if(!panel->last_notice)
+			panel->ypos += 3;	//If the previous line rendered as normal text, lower the y coordinate further so that this notice's color background doesn't obscure the former
 		return 1;
 	}
 
@@ -5553,13 +5561,13 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 	panel->bgcolor = panel->definedbgcolor = eof_notes_panel_info_bg_color;
 	panel->allowempty = 0;
 	panel->timeformat = 0;
-	panel->colorprinted = 0;
 	panel->flush = 0;
 	panel->newline = 0;
 	panel->contentprinted = 0;
 	panel->symbol = 0;
 	panel->endline = 0;
 	panel->endpanel = 0;
+	panel->last_notice = panel->this_notice = 0;
 
 	if((eof_log_level > 2) && !panel->logged)
 	{	//If exhaustive logging is enabled and this panel hasn't been logged since it was loaded
@@ -5598,7 +5606,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 				panel->allowempty = 0;		//Reset this condition, it has to be enabled per-line
 				panel->xpos = 2;			//Reset the x coordinate to the beginning of the line
 				panel->ypos +=12;
-				if(panel->colorprinted)
+				if(panel->this_notice)
 					panel->ypos += 3;		//Lower the y coordinate further so that one line of color background doesn't obscure another
 				panel->contentprinted = 0;
 				if(!panel->logged)
@@ -5617,7 +5625,9 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeginning processing of panel text line #%lu", linectr);
 				eof_log(eof_log_string, 3);
 			}
-			panel->colorprinted = 0;				//Reset this status
+			panel->last_notice = panel->this_notice;	//Remember whether the finished line included a color coded notice
+			if(panel->xpos > 2)
+				panel->this_notice = 0;				//If any content was rendered on the current output line, reset this until a color coded notice is rendered again
 			panel->color = panel->definedcolor;		//Re-apply the last explicit text color (to override error/warning/info display macros)
 			panel->bgcolor = panel->definedbgcolor;	//Ditto for background color
 		}

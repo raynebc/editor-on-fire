@@ -22,6 +22,15 @@
 #endif
 #endif
 
+#ifdef EOF_BUILD	//Coverity build complains because it can't find these
+#define AL_ID(a,b,c,d)     (((a)<<24) | ((b)<<16) | ((c)<<8) | (d))
+#define U_UNICODE       AL_ID('U','N','I','C')
+#define U_UTF8          AL_ID('U','T','F','8')
+#define U_CURRENT       AL_ID('c','u','r','.')
+void eof_log(const char *text, int level);
+char eof_log_string[2048];
+void do_uconvert(const char* s, int type, char* buf, int newtype, int size);
+#endif
 
 char *ReadTextInfoFrame(FILE *inf)
 {

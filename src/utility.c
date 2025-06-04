@@ -749,6 +749,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 					error = 4;
 					break;
 				}
+				matches++;	//Keep track of how many lyrics were found to be in this line
 			}
 		}
 		lastend = tp->line[ctr].end_pos;

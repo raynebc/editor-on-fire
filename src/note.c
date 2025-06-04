@@ -2106,10 +2106,12 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 		{
 			buffer[index++] = 'h';
+			buffer[index++] = 'o';
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
 		{
 			buffer[index++] = 'p';
+			buffer[index++] = 'o';
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 		{

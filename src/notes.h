@@ -21,8 +21,6 @@ typedef struct
 	int definedbgcolor;	//The last background color manually set by control macros, is re-applied as the active background color at the end of the current panel line's rendering
 	int allowempty;	//A %EMPTY% macro was parsed, allow an empty output line to print to the Notes panel
 	int timeformat;	//If zero, timestamps that would print from expansion macros print as #ms milliseconds.  If nonzero, they print as mm:ss.ms
-	int colorprinted;	//Is set to nonzero if a color background was used in the current line of printing,
-					// to trigger print output to lower by 3 pixels at the end of each newline and end of panel line for display for improved readability
 
 	//Parsing controls
 	int flush;			//Set to nonzero if a some macros like %FLUSH% are parsed, signaling eof_expand_notes_window_text() to output the current content of the output buffer
@@ -35,6 +33,9 @@ typedef struct
 
 	//Other
 	char logged;		//Is set to 1 after the notes panel processing was logged for one frame, if exhaustive logging is enabled, to reduce the repeated duplicate logging
+	char last_notice;	//Is set to 1 if the previously rendered line included a color-coded notice (ie. error, warning, success, alert),
+					// to handle automatically lowering text output coordinates so background color rendering doesn't obscure other lines in the panel
+	char this_notice;	//Is set to 1 if the line being rendered includes a color-coded notice (ie. error, warning, success, alert)
 } EOF_TEXT_PANEL;
 
 extern char eof_notes_macro_note_occurs_before_millis[50];		//Stores a string identifying the first culprit of the %IF_PG_NOTE_OCCURS_BEFORE_MILLIS_% condition
