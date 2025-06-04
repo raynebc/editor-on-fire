@@ -147,7 +147,7 @@ char eof_events_dialog_string[15] = {0};	//The title string for the Events dialo
 DIALOG eof_events_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   eof_events_dialog_string,NULL, NULL },
+	{ eof_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   eof_events_dialog_string,NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list,NULL, NULL },
 	{ d_agup_push_proc,  416, 84,  76,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_events_dialog_add },
 	{ d_agup_push_proc,  416, 124, 76,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_events_dialog_edit },
@@ -164,7 +164,7 @@ char eof_all_events_dialog_string[20] = {0};	//The title string for the All Even
 DIALOG eof_all_events_dialog[] =
 {
 	/* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-	{ d_agup_window_proc,         0,   48,  500, 266, 2,   23,  0,    0,      0,   0,   eof_all_events_dialog_string, NULL, NULL },
+	{ eof_window_proc,         0,   48,  500, 266, 2,   23,  0,    0,      0,   0,   eof_all_events_dialog_string, NULL, NULL },
 	{ d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list_all,  NULL, NULL },
 	{ d_agup_button_proc,         12,  275, 70,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",                NULL, NULL },
 	{ d_agup_button_proc,         95,  275, 70,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                 NULL, NULL },
@@ -186,7 +186,7 @@ char eof_events_add_dialog_string2[] = "Edit event";
 DIALOG eof_events_add_dialog[] =
 {
 	/* (proc)                    (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc,        0,  48,  314, 206, 2,   23,  0,    0,      0,   0,   eof_events_add_dialog_string1,  NULL, NULL },
+	{ eof_window_proc,        0,  48,  314, 206, 2,   23,  0,    0,      0,   0,   eof_events_add_dialog_string1,  NULL, NULL },
 	{ d_agup_text_proc,          12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
 	{ d_agup_edit_proc,          48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
 	{ d_agup_check_proc,         12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
@@ -204,7 +204,7 @@ char eof_events_add_floating_dialog_string2[] = "Edit floating event";
 DIALOG eof_floating_events_add_dialog[] =
 {
 	/* (proc)                    (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc,        0,  48,  314, 186, 2,   23,  0,    0,      0,   0,   eof_events_add_floating_dialog_string1,  NULL, NULL },
+	{ eof_window_proc,        0,  48,  314, 186, 2,   23,  0,    0,      0,   0,   eof_events_add_floating_dialog_string1,  NULL, NULL },
 	{ d_agup_text_proc,          12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
 	{ d_agup_edit_proc,          48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
 	{ d_agup_text_proc,          12, 110, 60,  12,  0,   0,   0,    0,      0,   0,   "Position (ms)",NULL, NULL },
@@ -220,7 +220,7 @@ char eof_section_add_dialog_string2[] = "Edit section";
 DIALOG eof_section_add_dialog[] =
 {
 	/* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc,0,  48,  314, 100, 2,   23,  0,    0,      0,   0,   eof_section_add_dialog_string1,  NULL, NULL },
+	{ eof_window_proc,0,  48,  314, 100, 2,   23,  0,    0,      0,   0,   eof_section_add_dialog_string1,  NULL, NULL },
 	{ d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
 	{ d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
 	{ d_agup_button_proc,67, 108, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
@@ -257,7 +257,7 @@ char eof_trainer_string[5] = "";
 DIALOG eof_place_trainer_dialog[] =
 {
 	/* (proc)                (x) (y) (w)  (h)   (fg) (bg) (key) (flags)    (d1) (d2) (dp)                  (dp2) (dp3) */
-	{ d_agup_window_proc,    0,  20, 260, 160,  2,   23,  0,    0,         0,   0,   "Place Trainer Event",NULL, NULL },
+	{ eof_window_proc,    0,  20, 260, 160,  2,   23,  0,    0,         0,   0,   "Place Trainer Event",NULL, NULL },
 	{ d_agup_text_proc,      12, 56, 64,  8,    2,   23,  0,    0,         0,   0,   "Trainer #:",         NULL, NULL },
 	{ eof_edit_trainer_proc, 80, 52, 40,  20,   2,   23,  0,    0,         3,   0,   eof_trainer_string,   "1234567890", NULL },
 	{ d_agup_check_proc,     12, 78, 12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
@@ -276,7 +276,7 @@ char eof_rocksmith_section_dialog_string2[] = "Edit Rocksmith section";
 DIALOG eof_rocksmith_section_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   0,   290, 450, 2,   23,  0,    0,      0,   0,   eof_rocksmith_section_dialog_string1, NULL, NULL },
+	{ eof_window_proc, 0,   0,   290, 450, 2,   23,  0,    0,      0,   0,   eof_rocksmith_section_dialog_string1, NULL, NULL },
 	{ d_agup_list_proc,   12,  35,  260, 320, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_section_add_list, NULL, NULL },
 	{ d_agup_check_proc,  12,  364, 164, 16,  0,   0,   0,    0,      1,   0,   "Also add as RS phrase",  NULL, NULL },
 	{ d_agup_check_proc,  12,  384, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
@@ -288,7 +288,7 @@ DIALOG eof_rocksmith_section_dialog[] =
 DIALOG eof_rocksmith_event_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   0,   286, 235, 2,   23,  0,    0,      0,   0,   "Add Rocksmith event", NULL, NULL },
+	{ eof_window_proc, 0,   0,   286, 235, 2,   23,  0,    0,      0,   0,   "Add Rocksmith event", NULL, NULL },
 	{ d_agup_list_proc,   12,  35,  260, 125, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_event_add_list, NULL, NULL },
 	{ d_agup_check_proc,  12,  167, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
 	{ d_agup_button_proc, 12,  195, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
@@ -664,7 +664,7 @@ int eof_menu_beat_bpm_change(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_bpm_change_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_bpm_change_dialog);
+	eof_conditionally_center_dialog(eof_bpm_change_dialog);
 	oldbpm = 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn;
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%3.2f", oldbpm);
 	if(eof_popup_dialog(eof_bpm_change_dialog, 2) == 5)
@@ -800,7 +800,7 @@ int eof_menu_beat_ts_custom_dialog(unsigned start)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_custom_ts_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_custom_ts_dialog);
+	eof_conditionally_center_dialog(eof_custom_ts_dialog);
 	(void) eof_get_effective_ts(eof_song, &num, &den, eof_selected_beat, 0);
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%u", num);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%u", den);
@@ -1139,7 +1139,7 @@ int eof_menu_beat_anchor(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_anchor_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_anchor_dialog);
+	eof_conditionally_center_dialog(eof_anchor_dialog);
 	oldmm = (eof_song->beat[eof_selected_beat]->pos / 1000) / 60;
 	oldss = (eof_song->beat[eof_selected_beat]->pos / 1000) % 60;
 	oldms = (eof_song->beat[eof_selected_beat]->pos) % 1000;
@@ -1562,7 +1562,7 @@ int eof_menu_beat_all_events(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_all_events_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_all_events_dialog);
+	eof_conditionally_center_dialog(eof_all_events_dialog);
 
 	//Pre-select the last non-filtered event that is at/before the seek position
 	eof_all_events_dialog[1].d1 = 0;
@@ -1675,7 +1675,7 @@ int eof_menu_beat_events(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_events_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_events_dialog);
+	eof_conditionally_center_dialog(eof_events_dialog);
 	if(eof_events_overridden_by_stored_MIDI_track(eof_song))
 	{	//If there is a stored events track
 		eof_events_dialog[5].dp = stored_event_track_notice;	//Add a warning to the dialog
@@ -2027,7 +2027,7 @@ int eof_menu_beat_add_section(void)
 
 	//Process user input
 	eof_color_dialog(eof_section_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_section_add_dialog);
+	eof_conditionally_center_dialog(eof_section_add_dialog);
 	if(eof_popup_dialog(eof_section_add_dialog, 2) != 3)
 		return D_O_K;	//If the user didn't click OK, return immediately
 
@@ -2221,7 +2221,7 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 
 	//Run and process the dialog results
 	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_events_add_dialog);
+	eof_conditionally_center_dialog(eof_events_add_dialog);
 	if(eof_popup_dialog(eof_events_add_dialog, 2) == 8)
 	{	//User clicked OK
 		char *effective_text = eof_etext;	//By default, use the user-input string
@@ -2349,7 +2349,7 @@ void eof_add_or_edit_floating_text_event_at_timestamp(EOF_TEXT_EVENT *ptr, unsig
 
 	//Run and process the dialog results
 	eof_color_dialog(eof_floating_events_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_floating_events_add_dialog);
+	eof_conditionally_center_dialog(eof_floating_events_add_dialog);
 	if(eof_popup_dialog(eof_floating_events_add_dialog, 2) == 6)
 	{	//User clicked OK
 		char *effective_text = eof_etext;	//By default, use the user-input string
@@ -2548,7 +2548,7 @@ int eof_menu_beat_trainer_event(void)
 		return 1;	//The bonus pro guitar track is not compatible with RB3
 
 	eof_color_dialog(eof_place_trainer_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_place_trainer_dialog);
+	eof_conditionally_center_dialog(eof_place_trainer_dialog);
 	eof_place_trainer_dialog[3].flags = D_DISABLED;	//Clear and disable the checkboxes
 	eof_place_trainer_dialog[5].flags = D_DISABLED;
 	eof_place_trainer_dialog[7].flags = D_DISABLED;
@@ -3070,7 +3070,7 @@ int eof_rocksmith_section_dialog_add(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_rocksmith_section_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_rocksmith_section_dialog);
+	eof_conditionally_center_dialog(eof_rocksmith_section_dialog);
 
 	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
 
@@ -3157,7 +3157,7 @@ int eof_rocksmith_event_dialog_add(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_rocksmith_event_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_rocksmith_event_dialog);
+	eof_conditionally_center_dialog(eof_rocksmith_event_dialog);
 
 	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
 
@@ -3770,7 +3770,7 @@ int eof_menu_beat_export_beat_timings(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_export_beat_timings_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_export_beat_timings_dialog);
+	eof_conditionally_center_dialog(eof_export_beat_timings_dialog);
 	eof_etext2[0] = '\0';
 
 	if(eof_popup_dialog(eof_export_beat_timings_dialog, 2) == 5)

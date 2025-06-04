@@ -457,7 +457,7 @@ void eof_prepare_track_menu(void)
 DIALOG eof_track_difficulty_menu[] =
 {
 	/* (proc)                (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2)    (dp3) */
-	{ d_agup_window_proc,    eof_track_difficulty_menu_X,  eof_track_difficulty_menu_Y,  232, 146, 2,   23,  0,    0,      0,   0,   "Set track difficulty", NULL, NULL },
+	{ eof_window_proc,    eof_track_difficulty_menu_X,  eof_track_difficulty_menu_Y,  232, 146, 2,   23,  0,    0,      0,   0,   "Set track difficulty", NULL, NULL },
 	{ d_agup_text_proc,      12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Difficulty (0-6):",    NULL, NULL },
 	{ eof_verified_edit_proc,111,80,  20,  20,  2,   23,  0,    0,      1,   0,   eof_etext,              "0123456", NULL },
 	{ d_agup_button_proc,    8,  152, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
@@ -584,7 +584,7 @@ int eof_track_difficulty_dialog(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_track_difficulty_menu, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_difficulty_menu);
+	eof_conditionally_center_dialog(eof_track_difficulty_menu);
 
 	if(eof_selected_track == EOF_TRACK_DRUM)
 	{	//Insert the pro drum dialog menu items
@@ -607,11 +607,11 @@ int eof_track_difficulty_dialog(void)
 		eof_etext2[0] = '\0';
 	}
 
-	//Manually re-center these elements, because they are not altered by centre_dialog()
-	eof_track_difficulty_menu[5].x += eof_track_difficulty_menu[0].x - eof_track_difficulty_menu_X;	//Add the X amount offset by centre_dialog()
-	eof_track_difficulty_menu[5].y += eof_track_difficulty_menu[0].y - eof_track_difficulty_menu_Y;	//Add the Y amount offset by centre_dialog()
-	eof_track_difficulty_menu[6].x += eof_track_difficulty_menu[0].x - eof_track_difficulty_menu_X;	//Add the X amount offset by centre_dialog()
-	eof_track_difficulty_menu[6].y += eof_track_difficulty_menu[0].y - eof_track_difficulty_menu_Y;	//Add the Y amount offset by centre_dialog()
+	//Manually re-center these elements, because they are not altered by eof_conditionally_center_dialog()
+	eof_track_difficulty_menu[5].x += eof_track_difficulty_menu[0].x - eof_track_difficulty_menu_X;	//Add the X amount offset by eof_conditionally_center_dialog()
+	eof_track_difficulty_menu[5].y += eof_track_difficulty_menu[0].y - eof_track_difficulty_menu_Y;	//Add the Y amount offset by eof_conditionally_center_dialog()
+	eof_track_difficulty_menu[6].x += eof_track_difficulty_menu[0].x - eof_track_difficulty_menu_X;	//Add the X amount offset by eof_conditionally_center_dialog()
+	eof_track_difficulty_menu[6].y += eof_track_difficulty_menu[0].y - eof_track_difficulty_menu_Y;	//Add the Y amount offset by eof_conditionally_center_dialog()
 
 	if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
 	{	//If the track difficulty is defined, write it in text format
@@ -675,7 +675,7 @@ int eof_track_difficulty_dialog(void)
 DIALOG eof_track_rename_dialog[] =
 {
 	/* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc,0,  48,  314, 112, 2,   23,  0,    0,      0,   0,   "Rename track",NULL, NULL },
+	{ eof_window_proc,0,  48,  314, 112, 2,   23,  0,    0,      0,   0,   "Rename track",NULL, NULL },
 	{ d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "New name:",   NULL, NULL },
 	{ d_agup_edit_proc,  90, 80,  212, 20,  2,   23,  0, 0,EOF_NAME_LENGTH,0, eof_etext,     NULL, NULL },
 	{ d_agup_button_proc,67, 120, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
@@ -693,7 +693,7 @@ int eof_track_rename(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_track_rename_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_rename_dialog);
+	eof_conditionally_center_dialog(eof_track_rename_dialog);
 
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
 	{	//If the track already has an alternate name
@@ -1023,7 +1023,7 @@ int eof_tuning_preset(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_tuning_preset_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_tuning_preset_dialog);
+	eof_conditionally_center_dialog(eof_tuning_preset_dialog);
 	if(eof_popup_dialog(eof_tuning_preset_dialog, 0) == 3)
 	{	//User clicked OK
 		EOF_PRO_GUITAR_TRACK *tp;
@@ -1067,35 +1067,35 @@ int eof_tuning_preset(void)
 DIALOG eof_pro_guitar_tuning_dialog[] =
 {
 	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          		(dp2) (dp3) */
-	{d_agup_window_proc,	0,   48,  252, 272,0,   0,   0,    0,      0,         0,	"Edit guitar tuning",NULL, NULL },
-	{d_agup_text_proc,  	16,  80,  44,  8,  0,   0,   0,    0,      0,         0,	"Tuning:",      	NULL, NULL },
-	{d_agup_text_proc,		74,  80,  154, 8,  0,   0,   0,    0,      21,        0,	eof_tuning_name,    NULL, NULL },
+	{ eof_window_proc,	0,   48,  252, 272,0,   0,   0,    0,      0,         0,	"Edit guitar tuning",NULL, NULL },
+	{ d_agup_text_proc,  	16,  80,  44,  8,  0,   0,   0,    0,      0,         0,	"Tuning:",      	NULL, NULL },
+	{ d_agup_text_proc,		74,  80,  154, 8,  0,   0,   0,    0,      21,        0,	eof_tuning_name,    NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
-	{d_agup_text_proc,      16,  108, 64,  12,  0,   0,   0,    0,      0,         0,   "Half steps above/below standard",NULL,NULL },
-	{d_agup_text_proc,      16,  132, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_6_number,  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  128, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_6,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 132, 28,  12,  0,   0,   0,    0,      0,         0,   string_6_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  156, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_5_number,  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  152, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_5,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 156, 28,  12,  0,   0,   0,    0,      0,         0,   string_5_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  180, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_4_number,  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  176, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_4,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 180, 28,  12,  0,   0,   0,    0,      0,         0,   string_4_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  204, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_3_number,  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  200, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_3,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 204, 28,  12,  0,   0,   0,    0,      0,         0,   string_3_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  228, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_2_number,  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  224, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_2,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 228, 28,  12,  0,   0,   0,    0,      0,         0,   string_2_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  252, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_1_number,  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  248, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_1,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 252, 28,  12,  0,   0,   0,    0,      0,         0,   string_1_name,NULL,          NULL },
+	{ d_agup_text_proc,      16,  108, 64,  12,  0,   0,   0,    0,      0,         0,   "Half steps above/below standard",NULL,NULL },
+	{ d_agup_text_proc,      16,  132, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_6_number,  NULL,          NULL },
+	{ eof_edit_tuning_proc,	74,  128, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_6,  "0123456789-",NULL },
+	{ d_agup_text_proc,      110, 132, 28,  12,  0,   0,   0,    0,      0,         0,   string_6_name,NULL,          NULL },
+	{ d_agup_text_proc,      16,  156, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_5_number,  NULL,          NULL },
+	{ eof_edit_tuning_proc,	74,  152, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_5,  "0123456789-",NULL },
+	{ d_agup_text_proc,      110, 156, 28,  12,  0,   0,   0,    0,      0,         0,   string_5_name,NULL,          NULL },
+	{ d_agup_text_proc,      16,  180, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_4_number,  NULL,          NULL },
+	{ eof_edit_tuning_proc,	74,  176, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_4,  "0123456789-",NULL },
+	{ d_agup_text_proc,      110, 180, 28,  12,  0,   0,   0,    0,      0,         0,   string_4_name,NULL,          NULL },
+	{ d_agup_text_proc,      16,  204, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_3_number,  NULL,          NULL },
+	{ eof_edit_tuning_proc,	74,  200, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_3,  "0123456789-",NULL },
+	{ d_agup_text_proc,      110, 204, 28,  12,  0,   0,   0,    0,      0,         0,   string_3_name,NULL,          NULL },
+	{ d_agup_text_proc,      16,  228, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_2_number,  NULL,          NULL },
+	{ eof_edit_tuning_proc,	74,  224, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_2,  "0123456789-",NULL },
+	{ d_agup_text_proc,      110, 228, 28,  12,  0,   0,   0,    0,      0,         0,   string_2_name,NULL,          NULL },
+	{ d_agup_text_proc,      16,  252, 64,  12,  0,   0,   0,    0,      0,         0,   eof_string_lane_1_number,  NULL,          NULL },
+	{ eof_edit_tuning_proc,	74,  248, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string_lane_1,  "0123456789-",NULL },
+	{ d_agup_text_proc,      110, 252, 28,  12,  0,   0,   0,    0,      0,         0,   string_1_name,NULL,          NULL },
 
-	{d_agup_button_proc,    12,  280, 68,  28, 0,   0,   '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    92,  280, 68,  28, 0,   0,   'p',    D_EXIT, 0,         0,   "Preset",     NULL,          NULL },
-	{d_agup_button_proc,    172, 280, 68,  28, 0,   0,   0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
-	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	{ d_agup_button_proc,    12,  280, 68,  28, 0,   0,   '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
+	{ d_agup_button_proc,    92,  280, 68,  28, 0,   0,   'p',    D_EXIT, 0,         0,   "Preset",     NULL,          NULL },
+	{ d_agup_button_proc,    172, 280, 68,  28, 0,   0,   0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_track_tuning(void)
@@ -1121,7 +1121,7 @@ int eof_track_tuning(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_tuning_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_pro_guitar_tuning_dialog);
+	eof_conditionally_center_dialog(eof_pro_guitar_tuning_dialog);
 
 //Update the strings to reflect the currently set tuning
 	stringcount = tp->numstrings;
@@ -1442,7 +1442,7 @@ int eof_track_pro_guitar_toggle_ignore_tuning(void)
 DIALOG eof_note_set_num_frets_strings_dialog[] =
 {
 	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                      (dp2) (dp3) */
-	{ d_agup_window_proc,     32,  68,  170, 136, 0,   0,    0,    0,     0,   0,   "Edit fret/string count", NULL, NULL },
+	{ eof_window_proc,     32,  68,  170, 136, 0,   0,    0,    0,     0,   0,   "Edit fret/string count", NULL, NULL },
 	{ d_agup_text_proc,       44,  100, 110, 8,   2,   23,   0,    0,     0,   0,   "Max fret value:",        NULL, NULL },
 	{ eof_verified_edit_proc, 158, 96,  26,  20,  2,   23,   0,    0,     2,   0,   eof_etext2,       "0123456789", NULL },
 	{ d_agup_text_proc,		  44,  120, 64,	 8,   2,   23,   0,    0,     0,   0,   "Number of strings:",     NULL, NULL },
@@ -1486,7 +1486,7 @@ int eof_track_set_num_frets_strings(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_note_set_num_frets_strings_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_note_set_num_frets_strings_dialog);
+	eof_conditionally_center_dialog(eof_note_set_num_frets_strings_dialog);
 	if(eof_popup_dialog(eof_note_set_num_frets_strings_dialog, 2) != 7)
 		return 1;	//If the user did not click OK, return immediately
 
@@ -1565,7 +1565,7 @@ int eof_track_set_num_frets_strings(void)
 DIALOG eof_track_pro_guitar_set_capo_position_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Set capo position",    NULL, NULL },
+	{ eof_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Set capo position",    NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "At fret #",            NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext, "0123456789", NULL },
 	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
@@ -1585,7 +1585,7 @@ int eof_track_pro_guitar_set_capo_position(void)
 
 	eof_render();
 	eof_color_dialog(eof_track_pro_guitar_set_capo_position_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_pro_guitar_set_capo_position_dialog);
+	eof_conditionally_center_dialog(eof_track_pro_guitar_set_capo_position_dialog);
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
@@ -1630,7 +1630,7 @@ char eof_track_pro_guitar_set_fret_hand_position_dialog_string2[] = "Edit fret h
 DIALOG eof_track_pro_guitar_set_fret_hand_position_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_track_pro_guitar_set_fret_hand_position_dialog_string1,      NULL, NULL },
+	{ eof_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_track_pro_guitar_set_fret_hand_position_dialog_string1,      NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "At fret #",                NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
@@ -1655,7 +1655,7 @@ int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long times
 
 	eof_render();
 	eof_color_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog);
+	eof_conditionally_center_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog);
 
 	//Find the pointer to the fret hand position at the current seek position in this difficulty, if there is one
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2007,8 +2007,8 @@ char eof_fret_hand_position_list_dialog_title_string[30] = "Fret hand positions"
 DIALOG eof_fret_hand_position_list_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
-	{ d_agup_list_proc,  12,  84,  150, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list,NULL, NULL },
+	{ eof_window_proc,        0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
+	{ d_agup_list_proc,        12,  84,  150, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list,NULL, NULL },
 	{ d_agup_push_proc,  170, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_fret_hand_position_delete },
 	{ d_agup_push_proc,  170, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_fret_hand_position_delete_all },
 	{ d_agup_push_proc,  170, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_fret_hand_position_seek },
@@ -2031,7 +2031,7 @@ int eof_track_fret_hand_positions(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_fret_hand_position_list_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_fret_hand_position_list_dialog);
+	eof_conditionally_center_dialog(eof_fret_hand_position_list_dialog);
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos.value - eof_av_delay, NULL, &diffindex, 0);	//Determine if a hand position exists at the current seek position
@@ -2049,7 +2049,7 @@ int eof_track_fret_hand_positions(void)
 DIALOG eof_song_rs_popup_add_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   "Rocksmith popup message",      NULL, NULL },
+	{ eof_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   "Rocksmith popup message",      NULL, NULL },
 	{ d_agup_edit_proc,      12,  30,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
 	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
 	{ eof_verified_edit_proc,12,  72,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
@@ -2070,7 +2070,7 @@ int eof_track_rs_popup_add(void)
 
 	eof_render();
 	eof_color_dialog(eof_song_rs_popup_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_song_rs_popup_add_dialog);
+	eof_conditionally_center_dialog(eof_song_rs_popup_add_dialog);
 
 	//Initialize the start and end positions as appropriate
 	if(eof_seek_selection_start != eof_seek_selection_end)
@@ -2135,7 +2135,7 @@ char eof_rs_popup_messages_dialog_string[25] = {0};	//The title string for the R
 DIALOG eof_rs_popup_messages_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_rs_popup_messages_dialog_string,NULL, NULL },
+	{ eof_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_rs_popup_messages_dialog_string,NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_rs_popup_messages_list,NULL, NULL },
 	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_track_rs_popup_messages_delete },
 	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_track_rs_popup_messages_delete_all },
@@ -2248,7 +2248,7 @@ int eof_track_rs_popup_messages(void)
 	eof_clear_input();
 	eof_rs_popup_messages_dialog_undo_made = 0;	//Reset this condition
 	eof_color_dialog(eof_rs_popup_messages_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_rs_popup_messages_dialog);
+	eof_conditionally_center_dialog(eof_rs_popup_messages_dialog);
 	(void) eof_popup_dialog(eof_rs_popup_messages_dialog, 0);
 
 	//Cleanup
@@ -2357,7 +2357,7 @@ int eof_track_rs_popup_messages_edit(DIALOG * d)
 		return D_O_K;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
 
 	eof_color_dialog(eof_song_rs_popup_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_song_rs_popup_add_dialog);
+	eof_conditionally_center_dialog(eof_song_rs_popup_add_dialog);
 
 	//Initialize the dialog fields
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2809,7 +2809,7 @@ char *eof_rocksmith_dynamic_difficulty_list_array[256] = {0};
 DIALOG eof_rocksmith_dynamic_difficulty_list_dialog[] =
 {
 	/* (proc)                        (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   0,   500, 450, 2,   23,  0,    0,      0,   0,   "Dynamic difficulty list", NULL, NULL },
+	{ eof_window_proc, 0,   0,   500, 450, 2,   23,  0,    0,      0,   0,   "Dynamic difficulty list", NULL, NULL },
 	{ d_agup_list_proc,        12,  35, 470, 360, 2,   23,  0,    0,      0,   0,   (void *)eof_rocksmith_dynamic_difficulty_list_proc, NULL, NULL },
 	{ d_agup_button_proc, 12,  410, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -2861,7 +2861,7 @@ int eof_rocksmith_dynamic_difficulty_list(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_rocksmith_dynamic_difficulty_list_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_rocksmith_dynamic_difficulty_list_dialog);
+	eof_conditionally_center_dialog(eof_rocksmith_dynamic_difficulty_list_dialog);
 
 	//Build a string for each dynamic difficulty in the active track
 	for(ctr = 0; ctr < eof_song->track[eof_selected_track]->numdiffs; ctr++)
@@ -2894,7 +2894,7 @@ int eof_rocksmith_dynamic_difficulty_list(void)
 DIALOG eof_track_fret_hand_positions_copy_from_dialog[] =
 {
 	/* (proc)                       (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,  48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy fret hand positions from diff #", NULL, NULL },
+	{ eof_window_proc,0,  48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy fret hand positions from diff #", NULL, NULL },
 	{ d_agup_list_proc,      12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_rocksmith_dynamic_difficulty_list_proc,NULL, NULL },
 	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
 	{ d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
@@ -2982,7 +2982,7 @@ int eof_track_fret_hand_positions_copy_from(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_track_fret_hand_positions_copy_from_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_fret_hand_positions_copy_from_dialog);
+	eof_conditionally_center_dialog(eof_track_fret_hand_positions_copy_from_dialog);
 	if(eof_popup_dialog(eof_track_fret_hand_positions_copy_from_dialog, 1) == 2)
 	{	//User clicked Copy
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -3062,7 +3062,7 @@ char * eof_manage_rs_phrases_list(int index, int * size)
 DIALOG eof_track_manage_rs_phrases_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_manage_rs_phrases_dialog_string, NULL, NULL },
+	{ eof_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_manage_rs_phrases_dialog_string, NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  300, 144, 2,   23,  0,    0,      0,   0,   (void *)eof_manage_rs_phrases_list,NULL, NULL },
 	{ d_agup_push_proc,  325, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add level",        NULL, (void *)eof_track_manage_rs_phrases_add_level },
 	{ d_agup_push_proc,  325, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Del level",        NULL, (void *)eof_track_manage_rs_phrases_remove_level },
@@ -3157,7 +3157,7 @@ int eof_track_manage_rs_phrases(void)
 
 	//Call the dialog
 	eof_color_dialog(eof_track_manage_rs_phrases_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_manage_rs_phrases_dialog);
+	eof_conditionally_center_dialog(eof_track_manage_rs_phrases_dialog);
 	(void) eof_popup_dialog(eof_track_manage_rs_phrases_dialog, 0);
 
 	//Cleanup
@@ -3351,7 +3351,7 @@ char eof_track_flatten_difficulties_threshold[10] = "2";
 DIALOG eof_track_flatten_difficulties_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Merge notes that are within", NULL, NULL },
+	{ eof_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Merge notes that are within", NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_track_flatten_difficulties_threshold,     "0123456789",  NULL },
 	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
@@ -3369,7 +3369,7 @@ int eof_track_flatten_difficulties(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_track_flatten_difficulties_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_flatten_difficulties_dialog);
+	eof_conditionally_center_dialog(eof_track_flatten_difficulties_dialog);
 
 	if(eof_popup_dialog(eof_track_flatten_difficulties_dialog, 2) == 3)	//User hit OK
 	{
@@ -3618,7 +3618,7 @@ char eof_track_rs_tone_change_add_dialog_string[40] = {0};
 DIALOG eof_track_rs_tone_change_add_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   230, 161, 0,   0,   0,    0,      0,   0,   "Rocksmith tone change", NULL, NULL },
+	{ eof_window_proc,    0,   0,   230, 161, 0,   0,   0,    0,      0,   0,   "Rocksmith tone change", NULL, NULL },
 	{ d_agup_text_proc,      12,  30,  60,  12,  0,   0,   0,    0,      0,   0,   "Tone key name:",        NULL, NULL },
 	{ d_agup_edit_proc,      12,  46,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0, eof_etext, NULL, NULL },
 	{ d_agup_text_proc,      12,  70,  60,  12,  0,   0,   0,    0,      0,   0,   "Tone changes should not occur",        NULL, NULL },
@@ -3669,7 +3669,7 @@ int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 
 		//Otherwise edit it instead of adding a new tone change
 		eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
-		centre_dialog(eof_track_rs_tone_change_add_dialog);
+		eof_conditionally_center_dialog(eof_track_rs_tone_change_add_dialog);
 		(void) ustrcpy(eof_etext, tp->tonechange[ctr].name);
 		eof_clear_input();
 		if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
@@ -3685,7 +3685,7 @@ int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 	}
 
 	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_rs_tone_change_add_dialog);
+	eof_conditionally_center_dialog(eof_track_rs_tone_change_add_dialog);
 
 	(void) ustrcpy(eof_etext, "");
 	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
@@ -3727,7 +3727,7 @@ char eof_track_rs_tone_changes_dialog_string[35] = {0};	//The title string for t
 DIALOG eof_track_rs_tone_changes_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_rs_tone_changes_dialog_string,NULL, NULL },
+	{ eof_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_rs_tone_changes_dialog_string,NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_rs_tone_changes_list,NULL, NULL },
 	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Delete",      NULL, (void *)eof_track_rs_tone_changes_delete },
 	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_track_rs_tone_changes_delete_all },
@@ -3851,7 +3851,7 @@ int eof_track_rs_tone_changes(void)
 	eof_clear_input();
 	eof_track_rs_tone_changes_dialog_undo_made = 0;	//Reset this condition
 	eof_color_dialog(eof_track_rs_tone_changes_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_rs_tone_changes_dialog);
+	eof_conditionally_center_dialog(eof_track_rs_tone_changes_dialog);
 	retval = eof_popup_dialog(eof_track_rs_tone_changes_dialog, 1);
 
 	//Cleanup
@@ -3967,7 +3967,7 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 		return D_O_K;
 
 	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_rs_tone_change_add_dialog);
+	eof_conditionally_center_dialog(eof_track_rs_tone_change_add_dialog);
 
 	//Initialize the dialog fields
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -4092,7 +4092,7 @@ char eof_track_rs_tone_names_dialog_string[35] = {0};		//The title string for th
 DIALOG eof_track_rs_tone_names_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_rs_tone_names_dialog_string,NULL, NULL },
+	{ eof_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   eof_track_rs_tone_names_dialog_string,NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_rs_tone_names_list,NULL, NULL },
 	{ d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Default",     NULL, (void *)eof_track_rs_tone_names_default },
 	{ d_agup_push_proc,  320, 124, 68,  28,  2,   23,  'r',  D_EXIT, 0,   0,   "&Rename",      NULL, (void *)eof_track_rs_tone_names_rename },
@@ -4250,7 +4250,7 @@ int eof_track_rs_tone_names(void)
 	eof_clear_input();
 	eof_track_rs_tone_names_dialog_undo_made = 0;	//Reset this condition
 	eof_color_dialog(eof_track_rs_tone_names_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_rs_tone_names_dialog);
+	eof_conditionally_center_dialog(eof_track_rs_tone_names_dialog);
 	retval = eof_popup_dialog(eof_track_rs_tone_names_dialog, 1);
 
 	//Cleanup
@@ -4338,7 +4338,7 @@ int eof_track_rs_tone_names_rename(DIALOG * d)
 
 	//Prepare the tone change dialog so the user can edit the name
 	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_track_rs_tone_change_add_dialog);
+	eof_conditionally_center_dialog(eof_track_rs_tone_change_add_dialog);
 	strncpy(eof_etext, eof_track_rs_tone_names_list_strings[namenum], EOF_SECTION_NAME_LENGTH);
 	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
 	{	//User clicked OK
@@ -4934,7 +4934,7 @@ void eof_menu_pro_guitar_track_update_note_counter(EOF_PRO_GUITAR_TRACK *tp)
 DIALOG eof_menu_track_repair_grid_snap_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   325, 148, 0,   0,   0,    0,      0,   0,   "Resnap notes to closest of any grid snap within", NULL, NULL },
+	{ eof_window_proc,    0,   0,   325, 148, 0,   0,   0,    0,      0,   0,   "Resnap notes to closest of any grid snap within", NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2, "0123456789",  NULL },
 	{ d_agup_text_proc,      12,  82,  60,  12,  0,   0,   0,    0,      0,   0,   eof_etext   ,NULL, NULL },
@@ -4954,7 +4954,7 @@ int eof_menu_track_repair_grid_snap(void)
 	//Prompt user for a threshold distance
 	eof_etext2[0] = '\0';	//Empty the dialog's input string
 	eof_color_dialog(eof_menu_track_repair_grid_snap_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_track_repair_grid_snap_dialog);
+	eof_conditionally_center_dialog(eof_menu_track_repair_grid_snap_dialog);
 
 	//Find how far out of grid snap the track's notes are
 	(void) eof_menu_edit_deselect_all();		//Clear the selection variables if necessary
@@ -5820,7 +5820,7 @@ int eof_menu_track_rs_picked_bass_arrangement(void)
 DIALOG eof_menu_track_offset_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                      (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   300, 148, 0,   0,   0,    0,      0,   0,   "Move all track content", NULL, NULL },
+	{ eof_window_proc,    0,   0,   300, 148, 0,   0,   0,    0,      0,   0,   "Move all track content", NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",          NULL, NULL },
 	{ eof_verified_edit_proc,12,  74,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,                "-0123456789",  NULL },
 	{ d_agup_button_proc,    12,  108, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                     NULL, NULL },
@@ -5834,7 +5834,7 @@ int eof_menu_track_offset(void)
 
 	eof_etext[0] = '\0';	//Empty the dialog's input string
 	eof_color_dialog(eof_menu_track_offset_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_track_offset_dialog);
+	eof_conditionally_center_dialog(eof_menu_track_offset_dialog);
 
 	if(eof_popup_dialog(eof_menu_track_offset_dialog, 2) != 3)
 		return 1;	//If the user did not click OK, return immediately
@@ -5860,7 +5860,7 @@ int eof_menu_track_offset(void)
 DIALOG eof_menu_track_check_chord_snapping_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)                      (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   170, 135, 2,    23,  0,    0,      0,   0,   "Chord snap gems within", NULL, NULL },
+	{ eof_window_proc,    0,   0,   170, 135, 2,    23,  0,    0,      0,   0,   "Chord snap gems within", NULL, NULL },
 	{ eof_verified_edit_proc,12,  30,  30,  20,  0,    0,   0,    0,      3,   0,   eof_etext2,               "0123456789",  NULL },
 	{ d_agup_radio_proc,     12,  55,  86,  15,  2,    23,  0,    0,      0,   0,   "Delta ticks",            NULL, NULL },
 	{ d_agup_radio_proc,     12,  75,  96,  15,  2,    23,  0,    D_SELECTED,0,0,   "Milliseconds",           NULL, NULL },
@@ -5876,7 +5876,7 @@ int eof_menu_track_check_chord_snapping(void)
 
 	eof_etext2[0] = '\0';	//Empty the dialog's input string
 	eof_color_dialog(eof_menu_track_check_chord_snapping_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_track_check_chord_snapping_dialog);
+	eof_conditionally_center_dialog(eof_menu_track_check_chord_snapping_dialog);
 
 	if(eof_popup_dialog(eof_menu_track_check_chord_snapping_dialog, 1) != 4)
 		return 1;	//If the user did not click OK, return immediately

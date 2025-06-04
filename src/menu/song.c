@@ -228,7 +228,7 @@ unsigned short *eof_ini_dialog_count = NULL;			//Used to point to the counter tr
 DIALOG eof_ini_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  346, 232, 2,   23,  0,    0,      0,   0,   eof_etext2,          NULL, NULL },
+	{ eof_window_proc, 0,   48,  346, 232, 2,   23,  0,    0,      0,   0,   eof_etext2,          NULL, NULL },
 	{ d_agup_list_proc,   12,  84,  240, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_ini_list,NULL, NULL },
 	{ d_agup_push_proc,   264, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",              NULL, (void *)eof_ini_dialog_add },
 	{ d_agup_push_proc,   264, 124, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",           NULL, (void *)eof_ini_dialog_delete },
@@ -239,7 +239,7 @@ DIALOG eof_ini_dialog[] =
 DIALOG eof_ini_add_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Add INI Setting",NULL, NULL },
+	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Add INI Setting",NULL, NULL },
 	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",          NULL, NULL },
 	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,        NULL, NULL },
 	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
@@ -251,7 +251,7 @@ DIALOG eof_ini_add_dialog[] =
 DIALOG eof_song_properties_dialog[] =
 {
 	/* (proc)              (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ d_agup_window_proc,  0,   0,   480, 370, 0,   0,   0,    0,      0,   0,   "Song Properties",      NULL, NULL },
+	{ eof_window_proc,  0,   0,   480, 370, 0,   0,   0,    0,      0,   0,   "Song Properties",      NULL, NULL },
 	{ d_agup_text_proc,    12,  40,  80,  12,  0,   0,   0,    0,      0,   0,   "Song Title",           NULL, NULL },
 	{ d_agup_edit_proc,    12,  56,  184, 20,  0,   0,   0,    0,      255, 0,   eof_etext,              NULL, NULL },
 	{ d_agup_text_proc,    12,  88,  96,  12,  0,   0,   0,    0,      0,   0,   "Artist",               NULL, NULL },
@@ -852,7 +852,7 @@ int eof_menu_song_seek_next_screen(void)
 DIALOG eof_song_seek_note_index_dialog[] =
 {
 	/* (proc)                          (x)  (y)  (w)  (h)  (fg) (bg)  (key)   (flags) (d1) (d2) (dp)       (dp2)             (dp3) */
-	{ d_agup_window_proc,  0,   48,  314, 118, 2,   23,   0,      0,      0,   0,   "Seek to note index", NULL,             NULL },
+	{ eof_window_proc,  0,   48,  314, 118, 2,   23,   0,      0,      0,   0,   "Seek to note index", NULL,             NULL },
 	{ eof_verified_edit_proc, 12,  80,  254, 20,  2,   23,   0,      0,      15,  0,   eof_etext, "0123456789", NULL },
 	{ d_agup_radio_proc,      16,  107, 100, 15,  2,   23,  0,      D_SELECTED,  0,   0,   "Within diff",          NULL, NULL },
 	{ d_agup_radio_proc,      120,  107, 110, 15,  2,   23,  0,    0,          0,   0,   "Within track",        NULL, NULL },
@@ -867,7 +867,7 @@ int eof_menu_song_seek_note_index(void)
 	long value;
 
 	eof_color_dialog(eof_song_seek_note_index_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_song_seek_note_index_dialog);
+	eof_conditionally_center_dialog(eof_song_seek_note_index_dialog);
 	eof_etext[0] = '\0';	//Empty the input field
 
 	if(eof_popup_dialog(eof_song_seek_note_index_dialog, 1) == 4)
@@ -1028,7 +1028,7 @@ int eof_menu_song_ini_settings(void)
 	eof_ini_dialog_count = &eof_song->tags->ini_settings;
 
 	eof_color_dialog(eof_ini_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_ini_dialog);
+	eof_conditionally_center_dialog(eof_ini_dialog);
 	if(eof_popup_dialog(eof_ini_dialog, 0) == 4)
 	{
 	}
@@ -1074,7 +1074,7 @@ int eof_menu_song_properties(void)
 
 	eof_render();
 	eof_color_dialog(eof_song_properties_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_song_properties_dialog);
+	eof_conditionally_center_dialog(eof_song_properties_dialog);
 	(void) ustrcpy(eof_etext, eof_song->tags->title);
 	(void) ustrcpy(eof_etext2, eof_song->tags->artist);
 	(void) ustrcpy(eof_etext3, eof_song->tags->frettist);
@@ -1633,7 +1633,7 @@ int eof_menu_catalog_delete(void)
 DIALOG eof_menu_catalog_reorder_dialog[] =
 {
 	/* (proc)                          (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc,  0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   eof_etext,   NULL, NULL },
+	{ eof_window_proc,  0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   eof_etext,   NULL, NULL },
 	{ d_agup_text_proc,        12,  84,  64,  8,    2,   23,   0,      0,      0,   0,   "#:",         NULL, NULL },
 	{ eof_verified_edit_proc,  48,  80, 254, 20,  2,   23,   0,      0,      3,   0,   eof_etext2,  "0123456789", NULL },
 	{ d_agup_button_proc,    67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",       NULL, NULL },
@@ -1662,7 +1662,7 @@ int eof_menu_catalog_reorder(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_catalog_entry_name_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_catalog_entry_name_dialog);
+	eof_conditionally_center_dialog(eof_catalog_entry_name_dialog);
 	eof_etext2[0] = '\0';		//Empty this string
 	if(eof_popup_dialog(eof_menu_catalog_reorder_dialog, 2) == 3)
 	{	//User hit OK
@@ -1747,7 +1747,7 @@ int eof_ini_dialog_add(DIALOG * d)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_ini_add_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_ini_add_dialog);
+	eof_conditionally_center_dialog(eof_ini_add_dialog);
 	(void) ustrcpy(eof_etext, "");
 
 	if(eof_popup_dialog(eof_ini_add_dialog, 2) == 3)
@@ -1916,7 +1916,7 @@ int eof_menu_song_spectrogram(void)
 DIALOG eof_leading_silence_dialog[] =
 {
 	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)    (d1)  (d2) (dp)                     (dp2) (dp3) */
-	{ d_agup_window_proc,  	  0,   48,  200, 288, 2,   23,  0,    0,          0,   0,   "Leading Silence",       NULL, NULL },
+	{ eof_window_proc,  	  0,   48,  200, 288, 2,   23,  0,    0,          0,   0,   "Leading Silence",       NULL, NULL },
 	{ d_agup_text_proc,       16,  80,  110, 20,  2,   23,  0,    0,          0,   0,   "Add:",                  NULL, NULL },
 	{ d_agup_radio_proc,      16,  100, 110, 15,  2,   23,  0,    0,          0,   0,   "Milliseconds",          NULL, NULL },
 	{ d_agup_radio_proc,      16,  120, 110, 15,  2,   23,  0,    0,          0,   0,   "Beats",                 NULL, NULL },
@@ -1994,7 +1994,7 @@ int eof_menu_song_add_silence(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_leading_silence_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_leading_silence_dialog);
+	eof_conditionally_center_dialog(eof_leading_silence_dialog);
 
 	for(x = 1; x <= 4; x++)
 	{
@@ -2153,7 +2153,7 @@ char eof_percussion_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
 DIALOG eof_audio_cues_dialog[] =
 {
 /*	(proc)					(x)   (y)  (w)	(h) (fg) (bg) (key) (flags) (d1) (d2) (dp)                         (dp2) (dp3) */
-	{ d_agup_window_proc,	0,	  48, 310, 370,   2,  23,    0,      0,   0,   0, "Audio cues",                 NULL, NULL },
+	{ eof_window_proc,	0,	  48, 310, 370,   2,  23,    0,      0,   0,   0, "Audio cues",                 NULL, NULL },
 	{ d_agup_text_proc,		16,	  88,  64,   8,   2,  23,    0,      0,   0,   0, "Chart volume",               NULL, NULL },
 	{ d_agup_slider_proc,	176,  88,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_chart_volume_string },
 	{ d_agup_text_proc,		275,  88,  30,  16,   2,  23,    0,      0, 100,   0, eof_chart_volume_string,      NULL, NULL },
@@ -2223,7 +2223,7 @@ int eof_menu_audio_cues(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_audio_cues_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_audio_cues_dialog);
+	eof_conditionally_center_dialog(eof_audio_cues_dialog);
 	eof_audio_cues_dialog[2].d2 = eof_chart_volume;
 	eof_audio_cues_dialog[5].d2 = eof_clap_volume;
 	eof_audio_cues_dialog[8].d2 = eof_tick_volume;
@@ -2296,7 +2296,7 @@ int eof_display_flats_menu(void)
 DIALOG eof_waveform_settings_dialog[] =
 {
 	/* (proc)                        (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                        (dp2) (dp3) */
-	{ d_agup_window_proc, 0,  48,  200, 220, 2,   23,  0,    0,      0,   0,   "Configure Waveform Graph", NULL, NULL },
+	{ eof_window_proc, 0,  48,  200, 220, 2,   23,  0,    0,      0,   0,   "Configure Waveform Graph", NULL, NULL },
 	{ d_agup_text_proc,      16,  80,  64,  8,	  2,   23,  0,    0,      0,   0,   "Fit into:",                NULL, NULL },
 	{ d_agup_radio_proc,    16,  100, 110, 15,  2,   23,  0,    0,      0,   0,   "Fretboard area",           NULL, NULL },
 	{ d_agup_radio_proc,    16,  120, 110, 15,  2,   23,  0,    0,      0,   0,   "Editor window",            NULL, NULL },
@@ -2316,7 +2316,7 @@ int eof_menu_song_waveform_settings(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_waveform_settings_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_waveform_settings_dialog);
+	eof_conditionally_center_dialog(eof_waveform_settings_dialog);
 
 	eof_waveform_settings_dialog[2].flags = eof_waveform_settings_dialog[3].flags = 0;
 	if(eof_waveform_renderlocation == 0)
@@ -2367,7 +2367,7 @@ int eof_spectrogram_settings_wsize[] = {32,128,512,1024,2048};
 DIALOG eof_spectrogram_settings_dialog[] =
 {
 	/* (proc)				(x)	(y)		(w)	(h)		(fg)(bg)(key)	(flags)	(d1)(d2)(dp)						(dp2)(dp3) */
-	{ d_agup_window_proc,	0,	48,		260,290,	2,	23,	0,		0,		0,	0,	"Configure Spectrogram",	NULL,NULL },
+	{ eof_window_proc,	0,	48,		260,290,	2,	23,	0,		0,		0,	0,	"Configure Spectrogram",	NULL,NULL },
 	{ d_agup_text_proc,		16,	80,		64,	8,		2,	23,	0,		0,		0,	0,	"Fit into:",				NULL,NULL },
 	{ d_agup_radio_proc,	16,	100,	110,15,		2,	23,	0,		0,		0,	0,	"Fretboard area",			NULL,NULL },
 	{ d_agup_radio_proc,	16,	120,	110,15,		2,	23,	0,		0,		0,	0,	"Editor window",			NULL,NULL },
@@ -2409,7 +2409,7 @@ int eof_menu_song_spectrogram_settings(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_spectrogram_settings_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_spectrogram_settings_dialog);
+	eof_conditionally_center_dialog(eof_spectrogram_settings_dialog);
 
 	eof_spectrogram_settings_dialog[2].flags = eof_spectrogram_settings_dialog[3].flags = 0;
 	if(eof_spectrogram_renderlocation == 0)
@@ -2577,7 +2577,7 @@ int eof_menu_song_spectrogram_settings(void)
 DIALOG eof_catalog_entry_name_dialog[] =
 {
 	/* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc,  0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Edit catalog entry name",               NULL, NULL },
+	{ eof_window_proc,  0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Edit catalog entry name",               NULL, NULL },
 	{ d_agup_text_proc,    12,  84,  64,  8,   2,   23,   0,      0,      0,   0,   "Text:",         NULL, NULL },
 	{ d_agup_edit_proc,    48,  80,  254, 20,  2,   23,   0,      0,      EOF_SECTION_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
 	{ d_agup_button_proc,  67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",               NULL, NULL },
@@ -2592,7 +2592,7 @@ int eof_menu_catalog_edit_name(void)
 		eof_cursor_visible = 0;
 		eof_render();
 		eof_color_dialog(eof_catalog_entry_name_dialog, gui_fg_color, gui_bg_color);
-		centre_dialog(eof_catalog_entry_name_dialog);
+		eof_conditionally_center_dialog(eof_catalog_entry_name_dialog);
 		(void) ustrcpy(eof_etext, eof_song->catalog->entry[eof_selected_catalog_entry].name);
 		if(eof_popup_dialog(eof_catalog_entry_name_dialog, 2) == 3)	//User hit OK
 		{
@@ -3048,7 +3048,7 @@ int eof_menu_song_raw_MIDI_tracks(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_raw_midi_tracks_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_raw_midi_tracks_dialog);
+	eof_conditionally_center_dialog(eof_raw_midi_tracks_dialog);
 	eof_MIDI_track_list_to_enumerate = eof_song->midi_data_head;	//This is the list that the dialog should enumerate
 	if(eof_popup_dialog(eof_raw_midi_tracks_dialog, 0) == 5)
 	{	//User clicked done
@@ -3062,7 +3062,7 @@ int eof_menu_song_raw_MIDI_tracks(void)
 DIALOG eof_raw_midi_tracks_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Stored MIDI tracks",    NULL, NULL },
+	{ eof_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Stored MIDI tracks",    NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_raw_midi_tracks_list,NULL, NULL },
 	{ d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_raw_midi_dialog_add },
 //	{ d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Desc",        NULL, eof_raw_midi_dialog_desc },
@@ -3167,7 +3167,7 @@ int eof_raw_midi_dialog_delete(DIALOG * d)
 DIALOG eof_raw_midi_add_track_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc, 0,  48,  500, 232, 2,   23,  0,    0,      0,   0,   "Select MIDI track to import",    NULL, NULL },
+	{ eof_window_proc, 0,  48,  500, 232, 2,   23,  0,    0,      0,   0,   "Select MIDI track to import",    NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_raw_midi_tracks_list,NULL, NULL },
 	{ d_agup_push_proc,  12,  235, 68,  28,  2,   23,  'i',  D_EXIT, 0,   0,   "&Import",      NULL, (void *)eof_raw_midi_track_import },
 	{ d_agup_button_proc,120, 235, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
@@ -3411,7 +3411,7 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 		eof_cursor_visible = 0;
 		eof_render();
 		eof_color_dialog(eof_raw_midi_add_track_dialog, gui_fg_color, gui_bg_color);
-		centre_dialog(eof_raw_midi_add_track_dialog);
+		eof_conditionally_center_dialog(eof_raw_midi_add_track_dialog);
 		(void) eof_popup_dialog(eof_raw_midi_add_track_dialog, 0);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
@@ -3437,7 +3437,7 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 DIALOG eof_seek_beat_measure_dialog[] =
 {
 	/* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
-	{ d_agup_window_proc,  	0,	48,	180,157,2,   23,  0,    0,      0,	0,	"Seek to beat/measure",	NULL, NULL },
+	{ eof_window_proc,  	0,	48,	180,157,2,   23,  0,    0,      0,	0,	"Seek to beat/measure",	NULL, NULL },
 	{ d_agup_text_proc,		16,	80,	64,	8,	2,   23,  0,    0,      0,	0,	"Seek to:",				NULL, NULL },
 	{ d_agup_radio_proc,	16,	100,110,15,	2,   23,  0,    0,      0,	0,	eof_etext,				NULL, NULL },
 	{ d_agup_radio_proc,	16,	120,160,15,	2,   23,  0,    0,      0,	0,	eof_etext2,				NULL, NULL },
@@ -3489,7 +3489,7 @@ int eof_menu_song_seek_beat_measure(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_seek_beat_measure_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_seek_beat_measure_dialog);
+	eof_conditionally_center_dialog(eof_seek_beat_measure_dialog);
 
 	//Create the beat and measure strings
 	eof_seek_beat_measure_dialog[2].flags = 0;	//Clear these so they can be selected/disabled below as applicable
@@ -3623,7 +3623,7 @@ int eof_menu_song_seek_catalog_entry(void)
 DIALOG eof_song_seek_timestamp_dialog[] =
 {
 	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg)  (key)   (flags) (d1) (d2) (dp)       (dp2)             (dp3) */
-	{ d_agup_window_proc,     0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Seek to", NULL,             NULL },
+	{ eof_window_proc,     0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Seek to", NULL,             NULL },
 	{ eof_verified_edit_proc, 12,  80,  254, 20,  2,   23,   0,      0,      15,  0,   eof_etext, "0123456789ms:.", NULL },
 	{ d_agup_button_proc,     67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",      NULL,             NULL },
 	{ d_agup_button_proc,     163, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",  NULL,             NULL },
@@ -3641,7 +3641,7 @@ int eof_menu_song_seek_timestamp(void)
 
 	eof_render();
 	eof_color_dialog(eof_song_seek_timestamp_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_song_seek_timestamp_dialog);
+	eof_conditionally_center_dialog(eof_song_seek_timestamp_dialog);
 	eof_etext[0] = '\0';	//Empty the input field
 
 	if(eof_popup_dialog(eof_song_seek_timestamp_dialog, 1) == 2)
@@ -3993,7 +3993,7 @@ unsigned long eof_phrase_edit_timing_original_end;
 DIALOG eof_phrase_edit_timing_dialog[] =
 {
 	/* (proc)                         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                  (dp2) (dp3) */
-	{ d_agup_window_proc,  0,   0,   200, 228, 0,   0,   0,    0,      0,   0,   eof_etext3,           NULL, NULL },
+	{ eof_window_proc,  0,   0,   200, 228, 0,   0,   0,    0,      0,   0,   eof_etext3,           NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
 	{ eof_phrase_edit_timing_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
 	{ d_agup_text_proc,       12,  88,  60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",  NULL, NULL },
@@ -4096,7 +4096,7 @@ int eof_phrase_edit_timing(unsigned long *start, unsigned long *end, unsigned lo
 	eof_phrase_edit_timing_original_end = *end;
 	eof_render();
 	eof_color_dialog(eof_phrase_edit_timing_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_phrase_edit_timing_dialog);
+	eof_conditionally_center_dialog(eof_phrase_edit_timing_dialog);
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", startval);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", endval);
 
@@ -4661,7 +4661,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 DIALOG eof_menu_song_time_range_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   eof_etext,             NULL, NULL },
+	{ eof_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   eof_etext,             NULL, NULL },
 	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)", NULL, NULL },
 	{ eof_verified_edit_proc,12,  72,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_text_proc,      12,  100, 60,  12,  0,   0,   0,    0,      0,   0,   "Stop position (ms)",  NULL, NULL },
@@ -4683,7 +4683,7 @@ int eof_run_time_range_dialog(unsigned long *start, unsigned long *end)
 
 	eof_render();
 	eof_color_dialog(eof_menu_song_time_range_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_song_time_range_dialog);
+	eof_conditionally_center_dialog(eof_menu_song_time_range_dialog);
 	if(eof_popup_dialog(eof_menu_song_time_range_dialog, 2) == 5)
 	{	//User clicked OK
 		if(!eof_check_string(eof_etext2) || !eof_check_string(eof_etext3))

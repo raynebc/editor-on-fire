@@ -627,7 +627,7 @@ MENU eof_filtered_note_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_
 DIALOG eof_lyric_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Edit Lyric", NULL, NULL },
+	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Edit Lyric", NULL, NULL },
 	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",      NULL, NULL },
 	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,    NULL, NULL },
 	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",         NULL, NULL },
@@ -638,7 +638,7 @@ DIALOG eof_lyric_dialog[] =
 DIALOG eof_split_lyric_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Split Lyric", NULL, NULL },
+	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Split Lyric", NULL, NULL },
 	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
 	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
 	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
@@ -649,7 +649,7 @@ DIALOG eof_split_lyric_dialog[] =
 DIALOG eof_note_name_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1)             (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,               0,   "Edit note name", NULL, NULL },
+	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,               0,   "Edit note name", NULL, NULL },
 	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,               0,   "Text:",          NULL, NULL },
 	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      EOF_NAME_LENGTH, 0,   eof_etext,        NULL, NULL },
 	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,               0,   "OK",             NULL, NULL },
@@ -660,7 +660,7 @@ DIALOG eof_note_name_dialog[] =
 DIALOG eof_drum_roll_count_dialog[] =
 {
 	/* (proc)                         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1)  (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,          0,    0,   "Edit drum roll count", NULL, NULL },
+	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,          0,    0,   "Edit drum roll count", NULL, NULL },
 	{ d_agup_text_proc,       12,  84,  96,  8,   2,   23,  0,    0,            0,    0,   "Number:",          NULL, NULL },
 	{ eof_verified_edit_proc, 80,  80,  222, 20,  2,   23,  0,    0,          3,   0,   eof_etext,        "0123456789", NULL },
 	{ d_agup_button_proc,   67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,    0,   "OK",             NULL, NULL },
@@ -671,7 +671,7 @@ DIALOG eof_drum_roll_count_dialog[] =
 DIALOG eof_name_search_replace_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  314, 162, 2,   23,  0,    0,      0,   0,   "Search and replace", NULL, NULL },
+	{ eof_window_proc, 0,   48,  314, 162, 2,   23,  0,    0,      0,   0,   "Search and replace", NULL, NULL },
 	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Replace:",   NULL, NULL },
 	{ d_agup_edit_proc,   70,  80,  230, 20,  2,   23,  0,    0,      255, 0,   eof_etext,    NULL, NULL },
 	{ d_agup_text_proc,   12,  110, 64,  8,   2,   23,  0,    0,      0,   0,   "With:",      NULL, NULL },
@@ -3655,7 +3655,7 @@ int eof_menu_split_lyric(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_split_lyric_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_split_lyric_dialog);
+	eof_conditionally_center_dialog(eof_split_lyric_dialog);
 	(void) ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
 	if(eof_popup_dialog(eof_split_lyric_dialog, 2) == 3)
 	{
@@ -4480,7 +4480,7 @@ int eof_new_lyric_dialog(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_lyric_dialog);
+	eof_conditionally_center_dialog(eof_lyric_dialog);
 	(void) ustrcpy(eof_etext, "");
 
 	if(eof_pen_lyric.note != EOF_LYRIC_PERCUSSION)		//If not entering a percussion note
@@ -4534,7 +4534,7 @@ int eof_edit_lyric_dialog(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_lyric_dialog);
+	eof_conditionally_center_dialog(eof_lyric_dialog);
 	(void) ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
 	if(eof_popup_dialog(eof_lyric_dialog, 2) == 3)	//User hit OK on "Edit Lyric" dialog instead of canceling
 	{
@@ -4685,94 +4685,94 @@ char eof_note_edit_name[EOF_NAME_LENGTH+1] = {0};
 DIALOG eof_pro_guitar_note_dialog[] =
 {
 	/*	(proc)             (x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
-	{d_agup_window_proc,    0,   48,  230, 492,2,   23,  0,    0,      0,         0,   "Edit pro guitar note",NULL, NULL },
-	{d_agup_text_proc,      16,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Name:",      NULL,          NULL },
-	{eof_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
+	{ eof_window_proc,    0,   48,  230, 492,2,   23,  0,    0,      0,         0,   "Edit pro guitar note",NULL, NULL },
+	{ d_agup_text_proc,      16,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Name:",      NULL,          NULL },
+	{ eof_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
-	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  124, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_6,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  148, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_5,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  172, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_4,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  196, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_3,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  220, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_2,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  244, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  124, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_6,  "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  148, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_5,  "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  172, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_4,  "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  196, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_3,  "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  220, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_2,  "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  244, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
 
-	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
-	{d_agup_text_proc,      176, 127, 64,  8,  2,   23,  0,    0,      0,         0,   "Legacy",     NULL,          NULL },
-	{d_agup_check_proc,		158, 151, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 5",     NULL,          NULL },
-	{d_agup_check_proc,		158, 175, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 4",     NULL,          NULL },
-	{d_agup_check_proc,		158, 199, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 3",     NULL,          NULL },
-	{d_agup_check_proc,		158, 223, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 2",     NULL,          NULL },
-	{d_agup_check_proc,		158, 247, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 1",     NULL,          NULL },
+	{ d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
+	{ d_agup_text_proc,      176, 127, 64,  8,  2,   23,  0,    0,      0,         0,   "Legacy",     NULL,          NULL },
+	{ d_agup_check_proc,		158, 151, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 5",     NULL,          NULL },
+	{ d_agup_check_proc,		158, 175, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 4",     NULL,          NULL },
+	{ d_agup_check_proc,		158, 199, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 3",     NULL,          NULL },
+	{ d_agup_check_proc,		158, 223, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 2",     NULL,          NULL },
+	{ d_agup_check_proc,		158, 247, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 1",     NULL,          NULL },
 
-	{d_agup_text_proc,      102, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Ghost",      NULL,          NULL },
-	{d_agup_check_proc,		104, 127, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		104, 151, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		104, 175, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		104, 199, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		104, 223, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		104, 247, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_text_proc,      102, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Ghost",      NULL,          NULL },
+	{ d_agup_check_proc,		104, 127, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		104, 151, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		104, 175, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		104, 199, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		104, 223, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		104, 247, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
-	{d_agup_text_proc,      140, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
-	{d_agup_check_proc,		140, 127, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		140, 151, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		140, 175, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		140, 199, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		140, 223, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		140, 247, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_text_proc,      140, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
+	{ d_agup_check_proc,		140, 127, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		140, 151, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		140, 175, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		140, 199, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		140, 223, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,		140, 247, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
-	{d_agup_text_proc,      10,  292, 64,  8,  2,   23,  0,    0,      0,         0,   "Slide:",     NULL,          NULL },
-	{d_agup_check_proc,		85,  312, 138, 16, 2,   23,  0,    0,      0,         0,   "Reverse slide (RB3)",NULL,  NULL },
-	{d_agup_text_proc,      10,  332, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute:",      NULL,          NULL },
-	{d_agup_text_proc,      10,  352, 64,  8,  2,   23,  0,    0,      0,         0,   "Strum:",     NULL,          NULL },
-	{d_agup_radio_proc,		6,   272, 38,  16, 2,   23,  0,    0,      1,         0,   "HO",         NULL,          NULL },
-	{d_agup_radio_proc,		58,  272, 38,  16, 2,   23,  0,    0,      1,         0,   "PO",         NULL,          NULL },
-	{d_agup_radio_proc,		102, 272, 45,  16, 2,   23,  0,    0,      1,         0,   "Tap",        NULL,          NULL },
-	{d_agup_radio_proc,		154, 272, 50,  16, 2,   23,  0,    0,      1,         0,   "None",       NULL,          NULL },
-	{d_agup_radio_proc,		58,  292, 38,  16, 2,   23,  0,    0,      2,         0,   "Up",         NULL,          NULL },
-	{d_agup_radio_proc,		102, 292, 54,  16, 2,   23,  0,    0,      2,         0,   "Down",       NULL,          NULL },
-	{d_agup_radio_proc,		154, 292, 64,  16, 2,   23,  0,    0,      2,         0,   "Neither",    NULL,          NULL },
-	{d_agup_radio_proc,		46,  332, 58,  16, 2,   23,  0,    0,      3,         0,   "String",     NULL,          NULL },
-	{d_agup_radio_proc,		102, 332, 52,  16, 2,   23,  0,    0,      3,         0,   "Palm",       NULL,          NULL },
-	{d_agup_radio_proc,		154, 332, 64,  16, 2,   23,  0,    0,      3,         0,   "Neither",    NULL,          NULL },
-	{d_agup_radio_proc,		49,  352, 38,  16, 2,   23,  0,    0,      4,         0,   "Up",         NULL,          NULL },
-	{d_agup_radio_proc,		85,  352, 46,  16, 2,   23,  0,    0,      4,         0,   "Mid",        NULL,          NULL },
-	{d_agup_radio_proc,		128, 352, 54,  16, 2,   23,  0,    0,      4,         0,   "Down",       NULL,          NULL },
-	{d_agup_radio_proc,		180, 352, 46,  16, 2,   23,  0,    0,      4,         0,   "Any",        NULL,          NULL },
+	{ d_agup_text_proc,      10,  292, 64,  8,  2,   23,  0,    0,      0,         0,   "Slide:",     NULL,          NULL },
+	{ d_agup_check_proc,		85,  312, 138, 16, 2,   23,  0,    0,      0,         0,   "Reverse slide (RB3)",NULL,  NULL },
+	{ d_agup_text_proc,      10,  332, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute:",      NULL,          NULL },
+	{ d_agup_text_proc,      10,  352, 64,  8,  2,   23,  0,    0,      0,         0,   "Strum:",     NULL,          NULL },
+	{ d_agup_radio_proc,		6,   272, 38,  16, 2,   23,  0,    0,      1,         0,   "HO",         NULL,          NULL },
+	{ d_agup_radio_proc,		58,  272, 38,  16, 2,   23,  0,    0,      1,         0,   "PO",         NULL,          NULL },
+	{ d_agup_radio_proc,		102, 272, 45,  16, 2,   23,  0,    0,      1,         0,   "Tap",        NULL,          NULL },
+	{ d_agup_radio_proc,		154, 272, 50,  16, 2,   23,  0,    0,      1,         0,   "None",       NULL,          NULL },
+	{ d_agup_radio_proc,		58,  292, 38,  16, 2,   23,  0,    0,      2,         0,   "Up",         NULL,          NULL },
+	{ d_agup_radio_proc,		102, 292, 54,  16, 2,   23,  0,    0,      2,         0,   "Down",       NULL,          NULL },
+	{ d_agup_radio_proc,		154, 292, 64,  16, 2,   23,  0,    0,      2,         0,   "Neither",    NULL,          NULL },
+	{ d_agup_radio_proc,		46,  332, 58,  16, 2,   23,  0,    0,      3,         0,   "String",     NULL,          NULL },
+	{ d_agup_radio_proc,		102, 332, 52,  16, 2,   23,  0,    0,      3,         0,   "Palm",       NULL,          NULL },
+	{ d_agup_radio_proc,		154, 332, 64,  16, 2,   23,  0,    0,      3,         0,   "Neither",    NULL,          NULL },
+	{ d_agup_radio_proc,		49,  352, 38,  16, 2,   23,  0,    0,      4,         0,   "Up",         NULL,          NULL },
+	{ d_agup_radio_proc,		85,  352, 46,  16, 2,   23,  0,    0,      4,         0,   "Mid",        NULL,          NULL },
+	{ d_agup_radio_proc,		128, 352, 54,  16, 2,   23,  0,    0,      4,         0,   "Down",       NULL,          NULL },
+	{ d_agup_radio_proc,		180, 352, 46,  16, 2,   23,  0,    0,      4,         0,   "Any",        NULL,          NULL },
 
-	{d_agup_button_proc,    10,  500, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "<-",         NULL,          NULL },
-	{d_agup_button_proc,    35,  500, 50,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    90,  500, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Apply",      NULL,          NULL },
-	{d_agup_button_proc,    145, 500, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
-	{d_agup_button_proc,    200, 500, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "->",         NULL,          NULL },
+	{ d_agup_button_proc,    10,  500, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "<-",         NULL,          NULL },
+	{ d_agup_button_proc,    35,  500, 50,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
+	{ d_agup_button_proc,    90,  500, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Apply",      NULL,          NULL },
+	{ d_agup_button_proc,    145, 500, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
+	{ d_agup_button_proc,    200, 500, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "->",         NULL,          NULL },
 
-	{d_agup_text_proc,      10,  372, 64,  8,  2,   23,  0,    0,      0,         0,   "Bass:",      NULL,          NULL },
-	{d_agup_radio_proc,		46,  372, 58,  16, 2,   23,  0,    0,      5,         0,   "Pop",        NULL,          NULL },
-	{d_agup_radio_proc,		102, 372, 52,  16, 2,   23,  0,    0,      5,         0,   "Slap",       NULL,          NULL },
-	{d_agup_radio_proc,		154, 372, 64,  16, 2,   23,  0,    0,      5,         0,   "Neither",    NULL,          NULL },
+	{ d_agup_text_proc,      10,  372, 64,  8,  2,   23,  0,    0,      0,         0,   "Bass:",      NULL,          NULL },
+	{ d_agup_radio_proc,		46,  372, 58,  16, 2,   23,  0,    0,      5,         0,   "Pop",        NULL,          NULL },
+	{ d_agup_radio_proc,		102, 372, 52,  16, 2,   23,  0,    0,      5,         0,   "Slap",       NULL,          NULL },
+	{ d_agup_radio_proc,		154, 372, 64,  16, 2,   23,  0,    0,      5,         0,   "Neither",    NULL,          NULL },
 
-	{d_agup_check_proc,		10,  392, 64,  16, 2,   23,  0,    0,      0,         0,   "Accent",     NULL,          NULL },
-	{d_agup_check_proc,		87,  392, 64,  16, 2,   23,  0,    0,      0,         0,   "P.Harm",     NULL,          NULL },
-	{d_agup_check_proc,		154, 392, 64,  16, 2,   23,  0,    0,      0,         0,   "Vibrato",    NULL,          NULL },
-	{d_agup_check_proc,		10,  412, 76,  16, 2,   23,  0,    0,      0,         0,   "Harmonic",   NULL,          NULL },
-	{d_agup_check_proc,		87,  412, 50,  16, 2,   23,  0,    0,      0,         0,   "Bend",       NULL,          NULL },
-	{d_agup_check_proc,		154, 412, 72,  16, 2,   23,  0,    0,      0,         0,   "Linknext",   NULL,          NULL },
-	{d_agup_check_proc,		10,  432, 60,  16, 2,   23,  0,    0,      0,         0,   "Ignore",     NULL,          NULL },
-	{d_agup_check_proc,		87,  432, 65,  16, 2,   23,  0,    0,      0,         0,   "Sustain",    NULL,          NULL },
-	{d_agup_check_proc,		154, 432, 50,  16, 2,   23,  0,    0,      0,         0,   "Stop",       NULL,          NULL },
-	{d_agup_check_proc,		10,  452, 78,  16, 2,   23,  0,    0,      0,         0,   "Ghost HS",   NULL,          NULL },
-	{d_agup_check_proc,		87,  452, 68,  16, 2,   23,  0,    0,      0,         0,   "Hi Dens",    NULL,          NULL },
-	{d_agup_check_proc,		154, 452, 48,  16, 2,   23,  0,    0,      0,         0,   "Split",      NULL,          NULL },
-	{d_agup_check_proc,		10,  312, 78,  16, 2,   23,  0,    0,      0,         0,   "Chordify",   NULL,          NULL },
-	{d_agup_check_proc,		10,  472, 80,  16, 2,   23,  0,    0,      0,         0,   "Fingerless", NULL,          NULL },
-	{d_agup_check_proc,		87,  472, 78,  16, 2,   23,  0,    0,      0,         0,   "Pre-bend",   NULL,          NULL },
-	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	{ d_agup_check_proc,		10,  392, 64,  16, 2,   23,  0,    0,      0,         0,   "Accent",     NULL,          NULL },
+	{ d_agup_check_proc,		87,  392, 64,  16, 2,   23,  0,    0,      0,         0,   "P.Harm",     NULL,          NULL },
+	{ d_agup_check_proc,		154, 392, 64,  16, 2,   23,  0,    0,      0,         0,   "Vibrato",    NULL,          NULL },
+	{ d_agup_check_proc,		10,  412, 76,  16, 2,   23,  0,    0,      0,         0,   "Harmonic",   NULL,          NULL },
+	{ d_agup_check_proc,		87,  412, 50,  16, 2,   23,  0,    0,      0,         0,   "Bend",       NULL,          NULL },
+	{ d_agup_check_proc,		154, 412, 72,  16, 2,   23,  0,    0,      0,         0,   "Linknext",   NULL,          NULL },
+	{ d_agup_check_proc,		10,  432, 60,  16, 2,   23,  0,    0,      0,         0,   "Ignore",     NULL,          NULL },
+	{ d_agup_check_proc,		87,  432, 65,  16, 2,   23,  0,    0,      0,         0,   "Sustain",    NULL,          NULL },
+	{ d_agup_check_proc,		154, 432, 50,  16, 2,   23,  0,    0,      0,         0,   "Stop",       NULL,          NULL },
+	{ d_agup_check_proc,		10,  452, 78,  16, 2,   23,  0,    0,      0,         0,   "Ghost HS",   NULL,          NULL },
+	{ d_agup_check_proc,		87,  452, 68,  16, 2,   23,  0,    0,      0,         0,   "Hi Dens",    NULL,          NULL },
+	{ d_agup_check_proc,		154, 452, 48,  16, 2,   23,  0,    0,      0,         0,   "Split",      NULL,          NULL },
+	{ d_agup_check_proc,		10,  312, 78,  16, 2,   23,  0,    0,      0,         0,   "Chordify",   NULL,          NULL },
+	{ d_agup_check_proc,		10,  472, 80,  16, 2,   23,  0,    0,      0,         0,   "Fingerless", NULL,          NULL },
+	{ d_agup_check_proc,		87,  472, 78,  16, 2,   23,  0,    0,      0,         0,   "Pre-bend",   NULL,          NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_note_edit_pro_guitar_note(void)
@@ -4820,7 +4820,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_note_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_pro_guitar_note_dialog);
+	eof_conditionally_center_dialog(eof_pro_guitar_note_dialog);
 
 	do
 	{	//Prepare the dialog
@@ -5615,47 +5615,47 @@ char eof_pro_guitar_note_frets_dialog_function_1_string[] = "Edit note fingering
 DIALOG eof_pro_guitar_note_frets_dialog[] =
 {
 	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
-	{d_agup_window_proc,    0,   48,  214, 278,2,   23,  0,    0,      0,         0,   eof_pro_guitar_note_frets_dialog_function_0_string,NULL, NULL },
+	{ eof_window_proc,    0,   48,  214, 278,2,   23,  0,    0,      0,         0,   eof_pro_guitar_note_frets_dialog_function_0_string,NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
-	{d_agup_text_proc,      60,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
-	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_6, "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_5, "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_4, "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_3, "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_2, "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
-	{eof_verified_edit_proc,74,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1, "0123456789Xx",NULL },
+	{ d_agup_text_proc,      60,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
+	{ d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_6, "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_5, "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_4, "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_3, "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_2, "0123456789Xx",NULL },
+	{ d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
+	{ eof_verified_edit_proc,74,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_string_lane_1, "0123456789Xx",NULL },
 
-	{d_agup_text_proc,      110, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Finger #",     NULL,          NULL },
-	{eof_verified_edit_proc,130, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "01234XxTt",NULL },
-	{eof_verified_edit_proc,130, 128, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_5, "01234XxTt",NULL },
-	{eof_verified_edit_proc,130, 152, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_4, "01234XxTt",NULL },
-	{eof_verified_edit_proc,130, 176, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_3, "01234XxTt",NULL },
-	{eof_verified_edit_proc,130, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "01234XxTt",NULL },
-	{eof_verified_edit_proc,130, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "01234XxTt",NULL },
+	{ d_agup_text_proc,      110, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Finger #",     NULL,          NULL },
+	{ eof_verified_edit_proc,130, 104, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_6, "01234XxTt",NULL },
+	{ eof_verified_edit_proc,130, 128, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_5, "01234XxTt",NULL },
+	{ eof_verified_edit_proc,130, 152, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_4, "01234XxTt",NULL },
+	{ eof_verified_edit_proc,130, 176, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_3, "01234XxTt",NULL },
+	{ eof_verified_edit_proc,130, 200, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_2, "01234XxTt",NULL },
+	{ eof_verified_edit_proc,130, 224, 22,  20, 2,   23,  0,    0,      1,         0,   eof_finger_string_lane_1, "01234XxTt",NULL },
 
-	{d_agup_text_proc,       170, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
-	{d_agup_check_proc,    170, 109, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,    170, 133, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,    170, 157, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,    170, 181, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,    170, 205, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,    170, 229, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_text_proc,       170, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Mute",       NULL,          NULL },
+	{ d_agup_check_proc,    170, 109, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    170, 133, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    170, 157, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    170, 181, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    170, 205, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{ d_agup_check_proc,    170, 229, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
-	{d_agup_button_proc,    10,   256, 20,  28, 2,   23,  0,    D_EXIT, 0,       0,   "<-",         NULL,          NULL },
-	{d_agup_button_proc,    35,   270, 35,  28, 2,   23,  '\r',  D_EXIT, 0,       0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    75,   270,  50,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Apply",         NULL,          NULL },
-	{d_agup_button_proc,    130,  270, 55,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Cancel",     NULL,          NULL },
-	{d_agup_button_proc,    188,  256, 20,  28, 2,   23,  0,   D_EXIT, 0,       0,   "->",         NULL,          NULL },
-	{d_agup_button_proc,    10,   286, 20,  28, 2,   23,  0,    D_EXIT, 0,       0,   "<<",         NULL,          NULL },
-	{d_agup_button_proc,    188,  286, 20,  28, 2,   23,  0,   D_EXIT, 0,       0,   ">>",         NULL,          NULL },
-	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	{ d_agup_button_proc,    10,   256, 20,  28, 2,   23,  0,    D_EXIT, 0,       0,   "<-",         NULL,          NULL },
+	{ d_agup_button_proc,    35,   270, 35,  28, 2,   23,  '\r',  D_EXIT, 0,       0,   "OK",         NULL,          NULL },
+	{ d_agup_button_proc,    75,   270,  50,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Apply",         NULL,          NULL },
+	{ d_agup_button_proc,    130,  270, 55,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Cancel",     NULL,          NULL },
+	{ d_agup_button_proc,    188,  256, 20,  28, 2,   23,  0,   D_EXIT, 0,       0,   "->",         NULL,          NULL },
+	{ d_agup_button_proc,    10,   286, 20,  28, 2,   23,  0,    D_EXIT, 0,       0,   "<<",         NULL,          NULL },
+	{ d_agup_button_proc,    188,  286, 20,  28, 2,   23,  0,   D_EXIT, 0,       0,   ">>",         NULL,          NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void)
@@ -5867,7 +5867,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_note_frets_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_pro_guitar_note_frets_dialog);
+	eof_conditionally_center_dialog(eof_pro_guitar_note_frets_dialog);
 
 	do
 	{
@@ -6243,7 +6243,7 @@ int eof_menu_note_edit_pro_guitar_note_fingers(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_note_frets_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_pro_guitar_note_frets_dialog);
+	eof_conditionally_center_dialog(eof_pro_guitar_note_frets_dialog);
 
 	do
 	{
@@ -7780,7 +7780,7 @@ int eof_menu_note_edit_name(void)
 		eof_cursor_visible = 0;
 		eof_render();
 		eof_color_dialog(dialog_to_use, gui_fg_color, gui_bg_color);
-		centre_dialog(dialog_to_use);
+		eof_conditionally_center_dialog(dialog_to_use);
 
 		notename = eof_get_note_name(eof_song, eof_selected_track, eof_selection.current);	//Get the last selected note's name
 		if(notename == NULL)
@@ -7889,7 +7889,7 @@ int eof_name_search_replace(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_name_search_replace_dialog);
+	eof_conditionally_center_dialog(eof_name_search_replace_dialog);
 
 	if(eof_popup_dialog(eof_name_search_replace_dialog, focus) == 7)
 	{	//If the user clicked OK
@@ -9719,7 +9719,7 @@ int eof_update_implied_note_selection(void)
 DIALOG eof_pro_guitar_note_slide_end_fret_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit slide end fret",  NULL, NULL },
+	{ eof_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit slide end fret",  NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "End slide at fret #",  NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext,              "0123456789", NULL },
 	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
@@ -9748,7 +9748,7 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_note_slide_end_fret_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_pro_guitar_note_slide_end_fret_dialog);
+	eof_conditionally_center_dialog(eof_pro_guitar_note_slide_end_fret_dialog);
 	if(np->slideend == 0)
 	{	//If the selected note has no ending fret defined
 		eof_etext[0] = '\0';	//Empty this string
@@ -9863,7 +9863,7 @@ int eof_pro_guitar_note_slide_end_fret_no_save(void)
 DIALOG eof_pro_guitar_note_define_unpitched_slide_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                        (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Unpitched slide end fret", NULL, NULL },
+	{ eof_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Unpitched slide end fret", NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "End slide at fret #",      NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext,                  "0123456789", NULL },
 	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                       NULL, NULL },
@@ -9892,7 +9892,7 @@ int eof_pro_guitar_note_define_unpitched_slide(void)
 
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_note_define_unpitched_slide_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_pro_guitar_note_define_unpitched_slide_dialog);
+	eof_conditionally_center_dialog(eof_pro_guitar_note_define_unpitched_slide_dialog);
 	if(np->unpitchend == 0)
 	{	//If the selected note has no unpitched slide ending fret defined
 		eof_etext[0] = '\0';	//Empty this string
@@ -10016,7 +10016,7 @@ int eof_menu_note_remove_unpitched_slide(void)
 DIALOG eof_pro_guitar_note_bend_strength_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit bend strength", NULL, NULL },
+	{ eof_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit bend strength", NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  20,  20,  0,   0,   0,    0,      1,   0,   eof_etext,     "0123456789",NULL },
 	{d_agup_radio_proc,		 40,  40,  82,  16,  2,   23,  0,    0,      1,   0,   "half steps",         NULL, NULL },
 	{d_agup_radio_proc,		 40,  60,  100, 16,  2,   23,  0,    0,      1,   0,   "quarter steps",      NULL, NULL },
@@ -10049,7 +10049,7 @@ int eof_pro_guitar_note_bend_strength(char undo)
 
 	eof_render();
 	eof_color_dialog(eof_pro_guitar_note_bend_strength_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_pro_guitar_note_bend_strength_dialog);
+	eof_conditionally_center_dialog(eof_pro_guitar_note_bend_strength_dialog);
 	eof_pro_guitar_note_bend_strength_dialog[2].flags = 0;	//Clear the half steps radio button
 	eof_pro_guitar_note_bend_strength_dialog[3].flags = 0;	//Clear the quarter steps radio button
 	if((np->bendstrength & 0x7F) == 0)

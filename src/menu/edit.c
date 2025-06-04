@@ -2126,7 +2126,7 @@ int eof_menu_edit_snap_custom(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_custom_snap_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_custom_snap_dialog);
+	eof_conditionally_center_dialog(eof_custom_snap_dialog);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_snap_interval);
 	if(eof_custom_snap_measure == 0)
 	{	//If the custom grid snap is per beats
@@ -2266,7 +2266,7 @@ int eof_menu_edit_zoom_custom(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_custom_zoom_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_custom_zoom_dialog);
+	eof_conditionally_center_dialog(eof_custom_zoom_dialog);
 	(void) ustrcpy(eof_etext2, "");
 	if(eof_popup_dialog(eof_custom_zoom_dialog, 2) == 3)
 	{	//User clicked OK
@@ -2455,7 +2455,7 @@ int eof_menu_edit_playback_custom(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_custom_speed_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_custom_speed_dialog);
+	eof_conditionally_center_dialog(eof_custom_speed_dialog);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_playback_speed/10);		//Load the current playback speed into a string
 	if(eof_popup_dialog(eof_custom_speed_dialog, 2) == 3)		//If user activated "OK" from the custom speed dialog
 	{
@@ -2850,7 +2850,7 @@ int eof_menu_edit_select_rest(void)
 DIALOG eof_menu_edit_select_by_note_length_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   300, 148, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
+	{ eof_window_proc,    0,   0,   300, 148, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
 	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "(specify 0 for one grid snap length)",NULL, NULL },
 	{ eof_verified_edit_proc,12,  74,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789",  NULL },
@@ -2877,7 +2877,7 @@ int eof_menu_edit_select_by_note_length_logic(int (*check)(long, long), int func
 	}
 	eof_etext2[0] = '\0';	//Empty the dialog's input string
 	eof_color_dialog(eof_menu_edit_select_by_note_length_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_select_by_note_length_dialog);
+	eof_conditionally_center_dialog(eof_menu_edit_select_by_note_length_dialog);
 
 	if(eof_popup_dialog(eof_menu_edit_select_by_note_length_dialog, 3) != 4)
 		return 1;	//If the user did not click OK, return immediately
@@ -2980,7 +2980,7 @@ int eof_menu_edit_deselect_all_of_length(void)
 DIALOG eof_menu_edit_select_less_than_threshold_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   0,   480, 148, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
+	{ eof_window_proc,    0,   0,   480, 148, 0,   0,   0,    0,      0,   0,   eof_etext, NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
 	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "(specify 0 for one grid snap length)",NULL, NULL },
 	{ eof_verified_edit_proc,12,  76,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789",  NULL },
@@ -3007,7 +3007,7 @@ int eof_menu_edit_select_note_within_threshhold_of_next_note_logic(int function,
 	}
 	eof_etext2[0] = '\0';	//Empty the dialog's input string
 	eof_color_dialog(eof_menu_edit_select_less_than_threshold_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_select_less_than_threshold_dialog);
+	eof_conditionally_center_dialog(eof_menu_edit_select_less_than_threshold_dialog);
 
 	if(eof_popup_dialog(eof_menu_edit_select_less_than_threshold_dialog, 3) != 4)
 		return 1;	//If the user did not click OK, return immediately
@@ -3116,30 +3116,30 @@ char eof_menu_edit_conditional_selection_dialog_string[25];
 DIALOG eof_menu_edit_conditional_selection_dialog[] =
 {
 	/*	(proc)           (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)     (d1) (d2) (dp)                   (dp2) (dp3) */
-	{d_agup_window_proc, 0,   0,   376, 222,2,   23,  0,    0,          0,   0,   eof_menu_edit_conditional_selection_dialog_string, NULL, NULL },
-	{d_agup_radio_proc,	 16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                   NULL, NULL },
-	{d_agup_radio_proc,	 72,  32,  62,  16, 2,   23,  0,    0,          1,   0,   "Do not",               NULL, NULL },
-	{d_agup_radio_proc,	 16,  52,  116, 16, 2,   23,  0,    D_SELECTED, 2,   0,   "Contain any of",       NULL, NULL },
-	{d_agup_radio_proc,	 134, 52,  108, 16, 2,   23,  0,    0,          2,   0,   "Contain all of",       NULL, NULL },
-	{d_agup_radio_proc,	 244, 52,  116, 16, 2,   23,  0,    0,          2,   0,   "Contain exactly",      NULL, NULL },
-	{d_agup_text_proc,   16,  72,  64,  8,  2,   23,  0,    0,          0,   0,   "These gems:",          NULL, NULL },
-	{d_agup_check_proc,	 16,  92,  64,  16, 2,   23,  0,    0,          0,   0,   "Lane 1",               NULL, NULL },
-	{d_agup_check_proc,	 80,  92,  64,  16, 2,   23,  0,    0,          0,   0,   "Lane 2",               NULL, NULL },
-	{d_agup_check_proc,	 144, 92,  64,  16, 2,   23,  0,    0,          0,   0,   "Lane 3",               NULL, NULL },
-	{d_agup_check_proc,	 16,  112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 4",               NULL, NULL },
-	{d_agup_check_proc,	 80,  112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 5",               NULL, NULL },
-	{d_agup_check_proc,	 144, 112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 6",               NULL, NULL },
-	{d_agup_text_proc,   16,  132, 44,  8,  2,   23,  0,    0,          0,   0,   "These cymbals:",       NULL, NULL },
-	{d_agup_check_proc,	 110, 132, 64,  16, 2,   23,  0,    0,          3,   0,   "Lane 3",               NULL, NULL },
-	{d_agup_check_proc,	 174, 132, 64,  16, 2,   23,  0,    0,          3,   0,   "Lane 4",               NULL, NULL },
-	{d_agup_check_proc,	 238, 132, 64,  16, 2,   23,  0,    0,          3,   0,   "Lane 5",               NULL, NULL },
-	{d_agup_text_proc,   16,  152, 44,  8,  2,   23,  0,    0,          0,   0,   "Of type:",             NULL, NULL },
-	{d_agup_check_proc,	 70,  152, 70,  16, 2,   23,  0,    D_SELECTED, 0,   0,   "Normal",               NULL, NULL },
-	{d_agup_check_proc,	 140, 152, 54,  16, 2,   23,  0,    D_SELECTED, 0,   0,   "Mute",                 NULL, NULL },
-	{d_agup_check_proc,	 200, 152, 58,  16, 2,   23,  0,    D_SELECTED, 0,   0,   "Ghost",                NULL, NULL },
-	{d_agup_button_proc, 12,  182, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
-	{d_agup_button_proc, 296, 182, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
-	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	{ eof_window_proc, 0,   0,   376, 222,2,   23,  0,    0,          0,   0,   eof_menu_edit_conditional_selection_dialog_string, NULL, NULL },
+	{ d_agup_radio_proc,	 16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                   NULL, NULL },
+	{ d_agup_radio_proc,	 72,  32,  62,  16, 2,   23,  0,    0,          1,   0,   "Do not",               NULL, NULL },
+	{ d_agup_radio_proc,	 16,  52,  116, 16, 2,   23,  0,    D_SELECTED, 2,   0,   "Contain any of",       NULL, NULL },
+	{ d_agup_radio_proc,	 134, 52,  108, 16, 2,   23,  0,    0,          2,   0,   "Contain all of",       NULL, NULL },
+	{ d_agup_radio_proc,	 244, 52,  116, 16, 2,   23,  0,    0,          2,   0,   "Contain exactly",      NULL, NULL },
+	{ d_agup_text_proc,          16,  72,  64,  8,  2,   23,  0,    0,          0,   0,   "These gems:",          NULL, NULL },
+	{ d_agup_check_proc,	 16,  92,  64,  16, 2,   23,  0,    0,          0,   0,   "Lane 1",               NULL, NULL },
+	{ d_agup_check_proc,	 80,  92,  64,  16, 2,   23,  0,    0,          0,   0,   "Lane 2",               NULL, NULL },
+	{ d_agup_check_proc,	 144, 92,  64,  16, 2,   23,  0,    0,          0,   0,   "Lane 3",               NULL, NULL },
+	{ d_agup_check_proc,	 16,  112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 4",               NULL, NULL },
+	{ d_agup_check_proc,	 80,  112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 5",               NULL, NULL },
+	{ d_agup_check_proc,	 144, 112, 64,  16, 2,   23,  0,    0,          0,   0,   "Lane 6",               NULL, NULL },
+	{ d_agup_text_proc,           16,  132, 44,  8,  2,   23,  0,    0,          0,   0,   "These cymbals:",       NULL, NULL },
+	{ d_agup_check_proc,	 110, 132, 64,  16, 2,   23,  0,    0,          3,   0,   "Lane 3",               NULL, NULL },
+	{ d_agup_check_proc,	 174, 132, 64,  16, 2,   23,  0,    0,          3,   0,   "Lane 4",               NULL, NULL },
+	{ d_agup_check_proc,	 238, 132, 64,  16, 2,   23,  0,    0,          3,   0,   "Lane 5",               NULL, NULL },
+	{ d_agup_text_proc,          16,  152, 44,  8,  2,   23,  0,    0,          0,   0,   "Of type:",             NULL, NULL },
+	{ d_agup_check_proc,	 70,  152, 70,  16, 2,   23,  0,    D_SELECTED, 0,   0,   "Normal",               NULL, NULL },
+	{ d_agup_check_proc,	 140, 152, 54,  16, 2,   23,  0,    D_SELECTED, 0,   0,   "Mute",                 NULL, NULL },
+	{ d_agup_check_proc,	 200, 152, 58,  16, 2,   23,  0,    D_SELECTED, 0,   0,   "Ghost",                NULL, NULL },
+	{ d_agup_button_proc,       12,  182, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
+	{ d_agup_button_proc,     296, 182, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_bitmask, unsigned long cymbal_match_bitmask)
@@ -3256,7 +3256,7 @@ int eof_menu_edit_conditional_selection_logic(int function)
 		strncpy(eof_menu_edit_conditional_selection_dialog_string, "Select notes that", sizeof(eof_menu_edit_conditional_selection_dialog_string) - 1);
 	}
 	eof_color_dialog(eof_menu_edit_conditional_selection_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_conditional_selection_dialog);
+	eof_conditionally_center_dialog(eof_menu_edit_conditional_selection_dialog);
 
 	//Prepare the dialog
 	stringcount = eof_count_track_lanes(eof_song, eof_selected_track);
@@ -3535,14 +3535,14 @@ char eof_menu_edit_select_gem_count_dialog_string[25];
 DIALOG eof_menu_edit_select_gem_count_dialog[] =
 {
 	/*	(proc)              (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)     (d1) (d2) (dp)                   (dp2) (dp3) */
-	{d_agup_window_proc,    0,   0,   216, 140,2,   23,  0,    0,          0,   0,   eof_menu_edit_select_gem_count_dialog_string, NULL, NULL },
-	{d_agup_radio_proc,	    16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                   NULL, NULL },
-	{d_agup_radio_proc,	    72,  32,  62,  16, 2,   23,  0,    0,          1,   0,   "Do not",               NULL, NULL },
-	{d_agup_text_proc,      16,  52,  44,  8,  2,   23,  0,    0,          0,   0,   "Have exactly this many gems:",       NULL, NULL },
-	{eof_verified_edit_proc,16,  72,  28,  20, 2,   23,  0,    0,          1,   0,   eof_etext, "123456", NULL },
-	{d_agup_button_proc,    12,  100, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
-	{d_agup_button_proc,    130, 100, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
-	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	{ eof_window_proc,    0,   0,   216, 140,2,   23,  0,    0,          0,   0,   eof_menu_edit_select_gem_count_dialog_string, NULL, NULL },
+	{ d_agup_radio_proc,    16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                   NULL, NULL },
+	{ d_agup_radio_proc,    72,  32,  62,  16, 2,   23,  0,    0,          1,   0,   "Do not",               NULL, NULL },
+	{ d_agup_text_proc,      16,  52,  44,  8,  2,   23,  0,    0,          0,   0,   "Have exactly this many gems:",       NULL, NULL },
+	{ eof_verified_edit_proc,16,  72,  28,  20, 2,   23,  0,    0,          1,   0,   eof_etext, "123456", NULL },
+	{ d_agup_button_proc,    12,  100, 68,  28, 2,   23,  '\r', D_EXIT,     0,   0,   "OK",                   NULL, NULL },
+	{ d_agup_button_proc,    130, 100, 68,  28, 2,   23,  0,    D_EXIT,     0,   0,   "Cancel",               NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_edit_select_gem_count_logic(int function)
@@ -3565,7 +3565,7 @@ int eof_menu_edit_select_gem_count_logic(int function)
 	}
 	eof_etext[0] = '\0';
 	eof_color_dialog(eof_menu_edit_select_gem_count_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_select_gem_count_dialog);
+	eof_conditionally_center_dialog(eof_menu_edit_select_gem_count_dialog);
 	if(eof_popup_dialog(eof_menu_edit_select_gem_count_dialog, 4) != 5)
 		return 1;	//If the user did not click OK, return immediately
 	targetcount = atol(eof_etext);
@@ -3678,55 +3678,55 @@ char eof_menu_edit_pgstatus_selection_dialog_string[25];
 DIALOG eof_menu_edit_pgstatus_selection_dialog[] =
 {
 	/*	(proc)                   (x)  (y)  (w)  (h) (fg) (bg) (key) (flags)  (d1) (d2)  (dp)                       (dp2) (dp3) */
-	{d_agup_window_proc, 0,   0,   376, 420,2,   23,  0,    0,          0,   0,   eof_menu_edit_pgstatus_selection_dialog_string, NULL, NULL },
-	{d_agup_radio_proc,    16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                 NULL, NULL },
-	{d_agup_radio_proc,    72,  32,  62,  16, 2,   23,  0,    0,           1,   0,   "Do not",                  NULL, NULL },
-	{d_agup_radio_proc,    16,  52,  116, 16, 2,   23,  0,  D_SELECTED, 2,  0,  "Contain any of", NULL, NULL },
-	{d_agup_radio_proc,  134, 52,  108, 16, 2,   23,  0,    0,           2,   0,   "Contain all of",       NULL, NULL },
-	{d_agup_radio_proc,  244, 52,  116, 16, 2,   23,  0,    0,           2,   0,   "Contain exactly",    NULL, NULL },
-	{d_agup_text_proc,      16,  92,  64,  8,  2,   23,  0,    0,            0,   0,   "These statuses:",     NULL, NULL },
-	{d_agup_check_proc,   16, 112,  85,  16, 2,   23,  0,    0,           0,   0,   "Star power",            NULL, NULL },
-	{d_agup_check_proc,   130, 112,  60,  16, 2,   23,  0,    0,         0,   0,   "Crazy",                    NULL, NULL },
-	{d_agup_check_proc,   16,  132, 55,  16, 2,   23,  0,    0,          0,   0,   "Trill",                       NULL, NULL },
-	{d_agup_check_proc,   130,  132, 68,  16, 2,   23,  0,    0,        0,   0,   "Tremolo",               NULL, NULL },
-	{d_agup_check_proc,     16,  152, 75,  16,  2,  23,  0,    0,         0,   0,   "Chordify",               NULL, NULL },
-	{d_agup_check_proc,   130,  152, 100, 16, 2,   23,  0,    0,        0,   0,   "Reverse slide",        NULL, NULL },
-	{d_agup_text_proc,      26,  172, 64,  8,  2,   23,  0,    0,           0,   0,   "Slide:",                    NULL, NULL },
-	{d_agup_check_proc,   70,  172, 40,  16, 2,   23,  0,    0,          0,   0,   "Up",                        NULL, NULL },
-	{d_agup_check_proc,   130,  172, 55,  16, 2,   23,  0,    0,        0,   0,   "Down",                   NULL, NULL },
-	{d_agup_check_proc,   200,  172, 85,  16, 2,   23,  0,    0,        0,   0,   "Unpitched",            NULL, NULL },
-	{d_agup_text_proc,      26,  192, 64,  8,  2,   23,  0,    0,           0,   0,   "Mute:",                   NULL, NULL },
-	{d_agup_check_proc,   70,  192, 60,  16, 2,   23,  0,    0,          0,   0,   "String",                   NULL, NULL },
-	{d_agup_check_proc,   130,  192, 50,  16, 2,   23,  0,    0,        0,   0,   "Palm",                     NULL, NULL },
-	{d_agup_text_proc,      26,  212, 64,  8,  2,   23,  0,    0,           0,   0,   "Strum:",                   NULL, NULL },
-	{d_agup_check_proc,   70,  212, 40,  16, 2,   23,  0,    0,          0,   0,   "Up",                        NULL, NULL },
-	{d_agup_check_proc,   130,  212, 45,  16, 2,   23,  0,    0,        0,   0,   "Mid",                      NULL, NULL },
-	{d_agup_check_proc,  200, 212, 60,  16, 2,   23,  0,    0,          0,   0,   "Down",                   NULL, NULL },
-	{d_agup_text_proc,      26,  232, 64,  8,  2,   23,  0,    0,           0,   0,   "Bass:",                     NULL, NULL },
-	{d_agup_check_proc,   70,  232, 45,  16, 2,   23,  0,    0,          0,   0,   "Pop",                      NULL, NULL },
-	{d_agup_check_proc,   130,  232, 50,  16, 2,   23,  0,    0,        0,   0,   "Slap",                      NULL, NULL },
-	{d_agup_check_proc,   16,  252, 40,  16, 2,   23,  0,    0,          0,   0,   "HO",                       NULL, NULL },
-	{d_agup_check_proc,   130,  252, 40,  16, 2,   23,  0,    0,        0,   0,   "PO",                        NULL, NULL },
-	{d_agup_check_proc,  250, 252, 45,  16, 2,   23,  0,    0,          0,   0,   "Tap",                       NULL, NULL },
-	{d_agup_check_proc,   16,  272, 64,  16, 2,   23,  0,    0,          0,   0,   "Accent",                  NULL, NULL },
-	{d_agup_check_proc,   130,  272, 64,  16, 2,   23,  0,    0,        0,   0,   "P.Harm",                 NULL, NULL },
-	{d_agup_check_proc,  250, 272, 64,  16, 2,   23,  0,    0,          0,   0,   "Vibrato",                 NULL, NULL },
-	{d_agup_check_proc,   16,  292, 80,  16, 2,   23,  0,    0,          0,   0,   "Harmonic",             NULL, NULL },
-	{d_agup_check_proc,   130,  292, 55,  16, 2,   23,  0,    0,        0,   0,   "Bend",                     NULL, NULL },
-	{d_agup_check_proc,  250, 292, 75,  16, 2,   23,  0,    0,          0,   0,   "Linknext",               NULL, NULL },
-	{d_agup_check_proc,   16,  312, 60,  16, 2,   23,  0,    0,          0,   0,   "Ignore",                  NULL, NULL },
-	{d_agup_check_proc,   130,  312, 66,  16, 2,   23,  0,    0,        0,   0,   "Sustain",                 NULL, NULL },
-	{d_agup_check_proc,  250, 312, 50,  16, 2,   23,  0,    0,          0,   0,   "Stop",                     NULL, NULL },
-	{d_agup_check_proc,   16,  332, 80,  16, 2,   23,  0,    0,          0,   0,   "Ghost HS",              NULL, NULL },
-	{d_agup_check_proc,   130,  332, 68,  16, 2,   23,  0,    0,        0,   0,   "Hi Dens",                NULL, NULL },
-	{d_agup_check_proc,  250, 332, 50,  16, 2,   23,  0,    0,          0,   0,   "Split",                      NULL, NULL },
-	{d_agup_check_proc,   16,  352, 80,  16, 2,   23,  0,    0,          0,   0,   "Fingerless",             NULL, NULL },
-	{d_agup_check_proc,   130,  352, 75,  16, 2,   23,  0,    0,        0,   0,   "Pre-bend",              NULL, NULL },
-	{d_agup_button_proc, 16,  378, 68,  28, 2,   23,  '\r', D_EXIT,  0,   0,   "OK",                        NULL, NULL },
-	{d_agup_button_proc, 108,  378, 68,  28, 2,   23,  '\r', D_EXIT,  0,   0,   "All",                       NULL, NULL },
-	{d_agup_button_proc, 200,  378, 68,  28, 2,   23,  '\r', D_EXIT,  0,   0,  "None",                   NULL, NULL },
-	{d_agup_button_proc, 292, 378, 68,  28, 2,   23,  0,  D_EXIT,   0,   0,   "Cancel",                  NULL, NULL },
-	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	{ eof_window_proc, 0,   0,   376, 420,2,   23,  0,    0,          0,   0,   eof_menu_edit_pgstatus_selection_dialog_string, NULL, NULL },
+	{ d_agup_radio_proc,    16,  32,  38,  16, 2,   23,  0,    D_SELECTED, 1,   0,   "Do",                 NULL, NULL },
+	{ d_agup_radio_proc,    72,  32,  62,  16, 2,   23,  0,    0,           1,   0,   "Do not",                  NULL, NULL },
+	{ d_agup_radio_proc,    16,  52,  116, 16, 2,   23,  0,  D_SELECTED, 2,  0,  "Contain any of", NULL, NULL },
+	{ d_agup_radio_proc,  134, 52,  108, 16, 2,   23,  0,    0,           2,   0,   "Contain all of",       NULL, NULL },
+	{ d_agup_radio_proc,  244, 52,  116, 16, 2,   23,  0,    0,           2,   0,   "Contain exactly",    NULL, NULL },
+	{ d_agup_text_proc,      16,  92,  64,  8,  2,   23,  0,    0,            0,   0,   "These statuses:",     NULL, NULL },
+	{ d_agup_check_proc,   16, 112,  85,  16, 2,   23,  0,    0,           0,   0,   "Star power",            NULL, NULL },
+	{ d_agup_check_proc,   130, 112,  60,  16, 2,   23,  0,    0,         0,   0,   "Crazy",                    NULL, NULL },
+	{ d_agup_check_proc,   16,  132, 55,  16, 2,   23,  0,    0,          0,   0,   "Trill",                       NULL, NULL },
+	{ d_agup_check_proc,   130,  132, 68,  16, 2,   23,  0,    0,        0,   0,   "Tremolo",               NULL, NULL },
+	{ d_agup_check_proc,     16,  152, 75,  16,  2,  23,  0,    0,         0,   0,   "Chordify",               NULL, NULL },
+	{ d_agup_check_proc,   130,  152, 100, 16, 2,   23,  0,    0,        0,   0,   "Reverse slide",        NULL, NULL },
+	{ d_agup_text_proc,      26,  172, 64,  8,  2,   23,  0,    0,           0,   0,   "Slide:",                    NULL, NULL },
+	{ d_agup_check_proc,   70,  172, 40,  16, 2,   23,  0,    0,          0,   0,   "Up",                        NULL, NULL },
+	{ d_agup_check_proc,   130,  172, 55,  16, 2,   23,  0,    0,        0,   0,   "Down",                   NULL, NULL },
+	{ d_agup_check_proc,   200,  172, 85,  16, 2,   23,  0,    0,        0,   0,   "Unpitched",            NULL, NULL },
+	{ d_agup_text_proc,      26,  192, 64,  8,  2,   23,  0,    0,           0,   0,   "Mute:",                   NULL, NULL },
+	{ d_agup_check_proc,   70,  192, 60,  16, 2,   23,  0,    0,          0,   0,   "String",                   NULL, NULL },
+	{ d_agup_check_proc,   130,  192, 50,  16, 2,   23,  0,    0,        0,   0,   "Palm",                     NULL, NULL },
+	{ d_agup_text_proc,      26,  212, 64,  8,  2,   23,  0,    0,           0,   0,   "Strum:",                   NULL, NULL },
+	{ d_agup_check_proc,   70,  212, 40,  16, 2,   23,  0,    0,          0,   0,   "Up",                        NULL, NULL },
+	{ d_agup_check_proc,   130,  212, 45,  16, 2,   23,  0,    0,        0,   0,   "Mid",                      NULL, NULL },
+	{ d_agup_check_proc,  200, 212, 60,  16, 2,   23,  0,    0,          0,   0,   "Down",                   NULL, NULL },
+	{ d_agup_text_proc,      26,  232, 64,  8,  2,   23,  0,    0,           0,   0,   "Bass:",                     NULL, NULL },
+	{ d_agup_check_proc,   70,  232, 45,  16, 2,   23,  0,    0,          0,   0,   "Pop",                      NULL, NULL },
+	{ d_agup_check_proc,   130,  232, 50,  16, 2,   23,  0,    0,        0,   0,   "Slap",                      NULL, NULL },
+	{ d_agup_check_proc,   16,  252, 40,  16, 2,   23,  0,    0,          0,   0,   "HO",                       NULL, NULL },
+	{ d_agup_check_proc,   130,  252, 40,  16, 2,   23,  0,    0,        0,   0,   "PO",                        NULL, NULL },
+	{ d_agup_check_proc,  250, 252, 45,  16, 2,   23,  0,    0,          0,   0,   "Tap",                       NULL, NULL },
+	{ d_agup_check_proc,   16,  272, 64,  16, 2,   23,  0,    0,          0,   0,   "Accent",                  NULL, NULL },
+	{ d_agup_check_proc,   130,  272, 64,  16, 2,   23,  0,    0,        0,   0,   "P.Harm",                 NULL, NULL },
+	{ d_agup_check_proc,  250, 272, 64,  16, 2,   23,  0,    0,          0,   0,   "Vibrato",                 NULL, NULL },
+	{ d_agup_check_proc,   16,  292, 80,  16, 2,   23,  0,    0,          0,   0,   "Harmonic",             NULL, NULL },
+	{ d_agup_check_proc,   130,  292, 55,  16, 2,   23,  0,    0,        0,   0,   "Bend",                     NULL, NULL },
+	{ d_agup_check_proc,  250, 292, 75,  16, 2,   23,  0,    0,          0,   0,   "Linknext",               NULL, NULL },
+	{ d_agup_check_proc,   16,  312, 60,  16, 2,   23,  0,    0,          0,   0,   "Ignore",                  NULL, NULL },
+	{ d_agup_check_proc,   130,  312, 66,  16, 2,   23,  0,    0,        0,   0,   "Sustain",                 NULL, NULL },
+	{ d_agup_check_proc,  250, 312, 50,  16, 2,   23,  0,    0,          0,   0,   "Stop",                     NULL, NULL },
+	{ d_agup_check_proc,   16,  332, 80,  16, 2,   23,  0,    0,          0,   0,   "Ghost HS",              NULL, NULL },
+	{ d_agup_check_proc,   130,  332, 68,  16, 2,   23,  0,    0,        0,   0,   "Hi Dens",                NULL, NULL },
+	{ d_agup_check_proc,  250, 332, 50,  16, 2,   23,  0,    0,          0,   0,   "Split",                      NULL, NULL },
+	{ d_agup_check_proc,   16,  352, 80,  16, 2,   23,  0,    0,          0,   0,   "Fingerless",             NULL, NULL },
+	{ d_agup_check_proc,   130,  352, 75,  16, 2,   23,  0,    0,        0,   0,   "Pre-bend",              NULL, NULL },
+	{ d_agup_button_proc, 16,  378, 68,  28, 2,   23,  '\r', D_EXIT,  0,   0,   "OK",                        NULL, NULL },
+	{ d_agup_button_proc, 108,  378, 68,  28, 2,   23,  '\r', D_EXIT,  0,   0,   "All",                       NULL, NULL },
+	{ d_agup_button_proc, 200,  378, 68,  28, 2,   23,  '\r', D_EXIT,  0,   0,  "None",                   NULL, NULL },
+	{ d_agup_button_proc, 292, 378, 68,  28, 2,   23,  0,  D_EXIT,   0,   0,   "Cancel",                  NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_check_pgnote_status_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_flags, unsigned long match_eflags)
@@ -3805,7 +3805,7 @@ int eof_menu_edit_pgstatus_selection_logic(int function)
 		strncpy(eof_menu_edit_pgstatus_selection_dialog_string, "Select notes that", sizeof(eof_menu_edit_pgstatus_selection_dialog_string) - 1);
 	}
 	eof_color_dialog(eof_menu_edit_pgstatus_selection_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_pgstatus_selection_dialog);
+	eof_conditionally_center_dialog(eof_menu_edit_pgstatus_selection_dialog);
 
 	//Process the dialog
 	do{
@@ -4787,7 +4787,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 DIALOG eof_menu_song_paste_from_difficulty_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy content from diff #", NULL, NULL },
+	{ eof_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy content from diff #", NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_menu_song_paste_from_difficulty_list,NULL, NULL },
 	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
 	{ d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
@@ -4849,7 +4849,7 @@ int eof_menu_song_paste_from_difficulty(void)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_menu_song_paste_from_difficulty_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_song_paste_from_difficulty_dialog);
+	eof_conditionally_center_dialog(eof_menu_song_paste_from_difficulty_dialog);
 	if(eof_popup_dialog(eof_menu_song_paste_from_difficulty_dialog, 1) == 2)
 	{	//User clicked Copy
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -4890,7 +4890,7 @@ int eof_menu_edit_select_note_number_in_sequence_logic(int function)
 		return 1;	//No notes in the active track are selected so none can become deselected
 
 	eof_color_dialog(eof_menu_edit_select_note_number_in_sequence_logic_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_edit_select_note_number_in_sequence_logic_dialog);
+	eof_conditionally_center_dialog(eof_menu_edit_select_note_number_in_sequence_logic_dialog);
 
 	if(!function)
 	{

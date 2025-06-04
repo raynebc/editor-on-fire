@@ -71,6 +71,53 @@ int eof_close_menu = 0;	//A variable that can be set to nonzero to try to force 
 char eof_menu_track_names[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 	//A list of the names of each track, built by eof_prepare_menus()
 
+//Logic for tracking click and drag for the dialog window title bar
+int mouse_down = 0;
+int mouse_offt_x = 0;
+int mouse_offt_y = 0;
+int mouse_last_render_x = 0;
+int mouse_last_render_y = 0;
+
+int eof_window_proc(int msg, DIALOG *d, int c)
+{
+	int ret = D_O_K;
+
+	if(!d)
+		return ret;	//Invalid parameter
+
+	if(msg == MSG_LPRESS)
+	{
+		mouse_down = 1;
+		mouse_offt_x = mouse_x - d->x;
+		mouse_offt_y = mouse_y - d->y;
+	}
+	else if(msg == MSG_LRELEASE)
+	{
+		mouse_down = 0;
+	}
+	else
+	{
+		ret = d_agup_window_proc(msg, d, c);
+	}
+	return ret;
+}
+
+void eof_conditionally_center_dialog(DIALOG *dp)
+{
+	if(!dp)
+		return;	//Invalid parameter
+
+	if((dp[0].flags & D_USER) == 0)
+		centre_dialog(dp);	//If the user has not manually moved this dialog, center it
+	else
+	{
+		if((dp->x < -20) || (dp->y < -20) || (dp->x + dp->w > eof_screen->w + 20) || (dp->y + dp->h > eof_screen->h + 20))
+		{	//If this dialog is rendered outside of the program window by more than 20 pixels on any of the four edges
+			centre_dialog(dp);	//Re-center it
+		}
+	}
+}
+
 void eof_prepare_menus(void)
 {
 	unsigned long i;
@@ -263,6 +310,20 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		if(eof_key_pressed)
 		{
 			eof_use_key();
+		}
+
+		//Dialog click and drag logic
+		if(mouse_down)
+		{	//If the move_proc() dialog procedure is tracking that the left mouse button is being held within the specified coordinates
+			if((mouse_last_render_x != mouse_x) || (mouse_last_render_y != mouse_y))
+			{	//The mouse has moved since the last re-rendering of the dialog
+				position_dialog(dp, mouse_x - mouse_offt_x, mouse_y - mouse_offt_y);	//Move the dialog according to the mouse movement
+				eof_render();	//Redraw the program window so the portion that was obscured by the dialog before the move will be visible
+				dialog_message(dp, MSG_DRAW, 0, NULL);
+				mouse_last_render_x = mouse_x;
+				mouse_last_render_y = mouse_y;
+				dp[0].flags |= D_USER;		//Use this flag to track that the user has re-positioned the dialog
+			}
 		}
 
 		Idle(10);

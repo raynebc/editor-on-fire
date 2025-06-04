@@ -33,7 +33,7 @@ char eof_help_dialog_string[35] = {0};
 DIALOG eof_help_dialog[] =
 {
 	/* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ d_agup_window_proc,    0,  0,  640, 480, 2,   23,  0,    0,      0,   0,   eof_help_dialog_string,               NULL, NULL },
+	{ eof_window_proc,    0,  0,  640, 480, 2,   23,  0,    0,      0,   0,   eof_help_dialog_string,               NULL, NULL },
 	{ d_agup_text_proc,   288,  8,  128, 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
 	{ d_agup_textbox_proc,   8,  32,  624, 412 - 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
 	{ d_agup_button_proc, 8,  444, 624,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "Okay",               NULL, NULL },
@@ -61,7 +61,7 @@ int eof_menu_help_keys(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_help_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_help_dialog);
+	eof_conditionally_center_dialog(eof_help_dialog);
 	if(eof_popup_dialog(eof_help_dialog, 0) == 1)
 	{
 	}
@@ -94,7 +94,7 @@ int eof_menu_help_rocksmith_keys(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_help_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_help_dialog);
+	eof_conditionally_center_dialog(eof_help_dialog);
 	if(eof_popup_dialog(eof_help_dialog, 0) == 1)
 	{
 	}

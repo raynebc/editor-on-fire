@@ -156,7 +156,7 @@ MENU eof_file_menu[] =
 DIALOG eof_settings_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   48,  230, 284, 2,   23,  0,    0,      0,   0,   "Settings",       NULL, NULL },
+	{ eof_window_proc,    0,   48,  230, 284, 2,   23,  0,    0,      0,   0,   "Settings",       NULL, NULL },
 	{ d_agup_text_proc,      16,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "AV Delay (ms):", NULL, NULL },
 	{ eof_verified_edit_proc,158, 80,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,        "0123456789", NULL },
 	{ d_agup_text_proc,      16,  108, 64,  8,   2,   23,  0,    0,      0,   0,   "MIDI Tone Delay (ms):",NULL, NULL },
@@ -178,7 +178,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 476, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+	{ eof_window_proc,0,   48,  482, 476, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
 	{ d_agup_button_proc,12,  484, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
 	{ d_agup_button_proc,86,  484, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
 	{ d_agup_button_proc,160, 484, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
@@ -238,7 +238,7 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  500, 330, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ eof_window_proc,0,   48,  500, 330, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
 	{ d_agup_button_proc,12,  335, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
 	{ d_agup_button_proc,86,  335, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
 	{ d_agup_button_proc,160, 335, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,  "Cancel",              NULL, NULL },
@@ -280,7 +280,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 DIALOG eof_pg_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  482, 226, 2,   23,  0,    0,      0,   0,   "Pro Guitar Preferences", NULL, NULL },
+	{ eof_window_proc,0,   48,  482, 226, 2,   23,  0,    0,      0,   0,   "Pro Guitar Preferences", NULL, NULL },
 	{ d_agup_button_proc,12,  234, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
 	{ d_agup_button_proc,86,  234, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
 	{ d_agup_button_proc,160, 234, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
@@ -298,7 +298,7 @@ DIALOG eof_pg_preferences_dialog[] =
 DIALOG eof_display_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                  (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  200, 212, 2,   23,  0,    0,      0,   0,   "Display Settings",   NULL, NULL },
+	{ eof_window_proc, 0,   48,  200, 212, 2,   23,  0,    0,      0,   0,   "Display Settings",   NULL, NULL },
 	{ d_agup_check_proc,  16,  80,  160, 16,  2,   23,  0,    0,      1,   0,   "Use Software Cursor",NULL, NULL },
 	{ d_agup_check_proc,  16,  100, 128, 16,  2,   23,  0,    0,      1,   0,   "Force 8-Bit Color",  NULL, NULL },
 	{ d_agup_text_proc,   56,  124, 48,  8,   2,   23,  0,    0,      0,   0,   "Window Size",        NULL, NULL },
@@ -310,7 +310,7 @@ DIALOG eof_display_dialog[] =
 DIALOG eof_custom_display_size_dialog[] =
 {
 	/* (proc)                (x) (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   48,  200, 166, 2,   23,  0,   0,       0,   0,   "Custom display size", NULL, NULL },
+	{ eof_window_proc,    0,   48,  200, 166, 2,   23,  0,   0,       0,   0,   "Custom display size", NULL, NULL },
 	{ d_agup_text_proc,      12,  76,  64,  8,   2,   23,  0,   0,       0,   0,   eof_etext,             NULL, NULL },
 	{ d_agup_text_proc,      12,  96,  64,  8,   2,   23,  0,   0,       0,   0,   eof_etext2,             NULL, NULL },
 	{ d_agup_text_proc,      12,  118, 64,  8,   2,   23,  0,   0,       0,   0,   "Width:",              NULL, NULL },
@@ -324,7 +324,7 @@ DIALOG eof_custom_display_size_dialog[] =
 DIALOG eof_guitar_settings_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_window_proc,    4,   200, 336, 284, 2,   23,  0,    0,      0,   0,   "Guitar Settings",NULL, NULL },
+	{ eof_window_proc,    4,   200, 336, 284, 2,   23,  0,    0,      0,   0,   "Guitar Settings",NULL, NULL },
 	{ d_agup_text_proc,      16,  240, 64,  8,   2,   23,  0,    0,      0,   0,   "Delay (ms):",    NULL, NULL },
 	{ eof_verified_edit_proc,104, 236, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,        "0123456789", NULL },
 	{ d_agup_list_proc,      13,  266, 315, 125, 2,   23,  0,    0,      0,   0,   (void *)eof_guitar_list, NULL, NULL },
@@ -336,7 +336,7 @@ DIALOG eof_guitar_settings_dialog[] =
 DIALOG eof_drum_settings_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,    4,   200, 336, 238, 2,   23,  0,    0,      0,   0,   "Drum Settings",NULL, NULL },
+	{ eof_window_proc,    4,   200, 336, 238, 2,   23,  0,    0,      0,   0,   "Drum Settings",NULL, NULL },
 	{ d_agup_text_proc,      16,  240, 64,  8,   2,   23,  0,    0,      0,   0,   "Delay (ms):",  NULL, NULL },
 	{ eof_verified_edit_proc,104, 236, 64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,      "0123456789", NULL },
 	{ d_agup_list_proc,      13,  266, 315, 79,  2,   23,  0,    0,      0,   0,   (void *)eof_drum_list, NULL, NULL },
@@ -348,7 +348,7 @@ DIALOG eof_drum_settings_dialog[] =
 DIALOG eof_controller_settings_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   200, 222, 144, 2,   23,  0,    0,      0,   0,   "Controller Settings", NULL, NULL },
+	{ eof_window_proc, 0,   200, 222, 144, 2,   23,  0,    0,      0,   0,   "Controller Settings", NULL, NULL },
 	{ d_agup_push_proc,   12,  236, 198, 28,  2,   23,  'g',  D_EXIT, 0,   0,   "&Guitar",             NULL, (void *)eof_controller_settings_guitar },
 	{ d_agup_push_proc,   12,  266, 198, 28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Drums",              NULL, (void *)eof_controller_settings_drums },
 	{ d_agup_button_proc, 12,  304, 198, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                NULL, NULL },
@@ -358,7 +358,7 @@ DIALOG eof_controller_settings_dialog[] =
 DIALOG eof_file_new_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  320, 120, 2,   23,  0,    0,      0,   0,   "New Song Information",NULL, NULL },
+	{ eof_window_proc, 0,   48,  320, 120, 2,   23,  0,    0,      0,   0,   "New Song Information",NULL, NULL },
 	{ d_agup_text_proc,   112, 56,  128, 8,   2,   23,  0,    0,      0,   0,   "",                    NULL, NULL },
 	{ d_agup_text_proc,   16,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Artist:",             NULL, NULL },
 	{ d_agup_edit_proc,   80,  80,  224, 20,  2,   23,  0,    0,      255, 0,   eof_etext,             NULL, NULL },
@@ -372,7 +372,7 @@ DIALOG eof_file_new_dialog[] =
 DIALOG eof_file_new_windows_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                        (dp2) (dp3) */
-	{ d_agup_window_proc, 0,   48,  320, 168, 2,   23,  0,    0,      0,   0,   "Location for New Song",    NULL, NULL },
+	{ eof_window_proc, 0,   48,  320, 168, 2,   23,  0,    0,      0,   0,   "Location for New Song",    NULL, NULL },
 	{ d_agup_radio_proc,  16,  84,  256, 16,  2,   23,  0,    0,      0,   0,   "Use Existing Folder",      NULL, NULL },
 	{ d_agup_radio_proc,  16,  108, 256, 16,  2,   23,  0,    0,      0,   0,   "Use Source Audio's Folder",NULL, NULL },
 	{ d_agup_radio_proc,  16,  132, 256, 16,  2,   23,  0,    0,      0,   0,   "Create New Folder",        NULL, NULL },
@@ -397,11 +397,11 @@ DIALOG eof_ogg_settings_dialog[] =
 DIALOG eof_lyric_detections_dialog[]=
 {
 	/*(proc)             (x)  (y)  (w)  (h)  (fg) (bg)  (key) (flags) (d1) (d2) (dp)                      (dp2) (dp3)*/
-	{d_agup_window_proc, 0,   48,  346, 234, 2,   23,   0,    0,      0,   0,   "Select track to import", NULL,NULL},
-	{d_agup_list_proc,   12,  84,  320, 140, 2,   23,   0,    0,      0,   0,   (void *)eof_lyric_detections_list_all,	NULL,NULL},
-	{d_agup_button_proc, 12,  237, 154, 28,  2,   23,   0,    D_EXIT, 0,   0,   "Import",                 NULL,NULL},
-	{d_agup_button_proc, 178, 237, 154, 28,  2,   23,   0,    D_EXIT, 0,   0,   "Cancel",                 NULL,NULL},
-	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL}
+	{ eof_window_proc, 0,   48,  346, 234, 2,   23,   0,    0,      0,   0,   "Select track to import", NULL,NULL},
+	{ d_agup_list_proc,   12,  84,  320, 140, 2,   23,   0,    0,      0,   0,   (void *)eof_lyric_detections_list_all,	NULL,NULL},
+	{ d_agup_button_proc, 12,  237, 154, 28,  2,   23,   0,    D_EXIT, 0,   0,   "Import",                 NULL,NULL},
+	{ d_agup_button_proc, 178, 237, 154, 28,  2,   23,   0,    D_EXIT, 0,   0,   "Cancel",                 NULL,NULL},
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL}
 };
 
 void eof_prepare_file_menu(void)
@@ -1291,7 +1291,7 @@ int eof_menu_file_settings(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_settings_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_settings_dialog);
+	eof_conditionally_center_dialog(eof_settings_dialog);
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", eof_av_delay);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_buffer_size);
 	(void) snprintf(eof_etext3, sizeof(eof_etext2) - 1, "%d", eof_midi_tone_delay);
@@ -1345,7 +1345,7 @@ int eof_menu_file_default_ini_settings(void)
 	eof_ini_dialog_count = &eof_default_ini_settings;
 
 	eof_color_dialog(eof_ini_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_ini_dialog);
+	eof_conditionally_center_dialog(eof_ini_dialog);
 	if(eof_popup_dialog(eof_ini_dialog, 0) == 4)
 	{
 	}
@@ -1374,7 +1374,7 @@ int eof_menu_file_preferences(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_preferences_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_preferences_dialog);
+	eof_conditionally_center_dialog(eof_preferences_dialog);
 	//Use the currently configured settings to populate the dialog selections
 	eof_preferences_dialog[5].flags = eof_preferences_dialog[6].flags = eof_preferences_dialog[7].flags = eof_preferences_dialog[8].flags = eof_preferences_dialog[9].flags = eof_preferences_dialog[10].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
@@ -1667,7 +1667,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_import_export_preferences_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_import_export_preferences_dialog);
+	eof_conditionally_center_dialog(eof_import_export_preferences_dialog);
 	//Use the currently configured settings to populate the dialog selections
 	eof_import_export_preferences_dialog[4].flags = eof_write_rb_files ? D_SELECTED : 0;						//Save separate Rock Band files
 	eof_import_export_preferences_dialog[5].flags = eof_write_music_midi ? D_SELECTED : 0;					//Save separate musical MIDI files
@@ -1805,7 +1805,7 @@ int eof_menu_file_gp_preferences(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_pg_preferences_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_pg_preferences_dialog);
+	eof_conditionally_center_dialog(eof_pg_preferences_dialog);
 
 	//Use the currently configured settings to populate the dialog selections
 	eof_pg_preferences_dialog[4].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
@@ -1868,7 +1868,7 @@ int eof_menu_file_display(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_display_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_display_dialog);
+	eof_conditionally_center_dialog(eof_display_dialog);
 	eof_display_dialog[4].d1 = eof_screen_layout.mode;
 	eof_display_dialog[1].flags = eof_soft_cursor ? D_SELECTED : 0;
 	eof_display_dialog[2].flags = (eof_desktop == 0) ? D_SELECTED : 0;
@@ -1891,7 +1891,7 @@ int eof_menu_file_display(void)
 			eof_etext3[0] = '\0';	//Empty these input fields
 			eof_etext4[0] = '\0';
 			eof_color_dialog(eof_custom_display_size_dialog, gui_fg_color, gui_bg_color);
-			centre_dialog(eof_custom_display_size_dialog);
+			eof_conditionally_center_dialog(eof_custom_display_size_dialog);
 			if(eof_popup_dialog(eof_custom_display_size_dialog, 4) == 7)
 			{	//User clicked OK
 				unsigned long width, height, oldwidth, oldheight;
@@ -2003,7 +2003,7 @@ int eof_ogg_settings(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_ogg_settings_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_ogg_settings_dialog);
+	eof_conditionally_center_dialog(eof_ogg_settings_dialog);
 	eof_ogg_settings_dialog[3].d1 = eof_ogg_setting;
 	if(eof_popup_dialog(eof_ogg_settings_dialog, 0) == 4)
 	{	//User clicked OK
@@ -2025,7 +2025,7 @@ int eof_menu_file_controllers(void)
 	eof_pen_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_controller_settings_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_controller_settings_dialog);
+	eof_conditionally_center_dialog(eof_controller_settings_dialog);
 	if(eof_popup_dialog(eof_controller_settings_dialog, 0) == 3)
 	{
 	}
@@ -2494,7 +2494,7 @@ int eof_controller_settings_guitar(DIALOG * d)
 		return D_O_K;
 	}
 	eof_color_dialog(eof_guitar_settings_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_guitar_settings_dialog);
+	eof_conditionally_center_dialog(eof_guitar_settings_dialog);
 	eof_guitar_settings_dialog[1].d1 = 0;
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_guitar.delay);
 	if(eof_popup_dialog(eof_guitar_settings_dialog, 0) == 5)
@@ -2513,7 +2513,7 @@ int eof_controller_settings_drums(DIALOG * d)
 		return D_O_K;
 	}
 	eof_color_dialog(eof_drum_settings_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_drum_settings_dialog);
+	eof_conditionally_center_dialog(eof_drum_settings_dialog);
 	eof_drum_settings_dialog[1].d1 = 0;
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_drums.delay);
 	if(eof_popup_dialog(eof_drum_settings_dialog, 0) == 5)
@@ -2636,7 +2636,7 @@ void eof_lyric_import_prompt(int *selectedformat, char **selectedtrack)
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_lyric_detections_dialog, gui_fg_color, gui_bg_color);	//Display the lyric detections dialog
-	centre_dialog(eof_lyric_detections_dialog);				//Center it
+	eof_conditionally_center_dialog(eof_lyric_detections_dialog);				//Center it
 	eof_lyric_detections_dialog[1].d1 = 0;				//Init the list procedure's selection variable to 0
 
 	if(eof_popup_dialog(eof_lyric_detections_dialog, 0) == 2)	//If a user selection was made
@@ -3046,7 +3046,7 @@ int eof_new_chart(char * filename)
 	(void) ustrcpy(eof_last_ogg_path, filename);
 
 	eof_color_dialog(eof_file_new_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_file_new_dialog);
+	eof_conditionally_center_dialog(eof_file_new_dialog);
 	(void) ustrcpy(eof_etext, "");		//Used to store the Artist tag
 	(void) ustrcpy(eof_etext2, "");		//Used to store the Title tag
 	(void) ustrcpy(eof_etext3, "");
@@ -3180,7 +3180,7 @@ int eof_new_chart(char * filename)
 
 	/* user selects location for new song */
 	eof_color_dialog(eof_file_new_windows_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_file_new_windows_dialog);
+	eof_conditionally_center_dialog(eof_file_new_windows_dialog);
 	eof_file_new_windows_dialog[1].flags = 0;
 	eof_file_new_windows_dialog[2].flags = 0;
 	eof_file_new_windows_dialog[3].flags = D_SELECTED;
@@ -5046,7 +5046,7 @@ struct eof_guitar_pro_struct *eof_parsed_gp_file;
 DIALOG eof_gp_import_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Import which GP track into the project's active track?",       NULL, NULL },
+	{ eof_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Import which GP track into the project's active track?",       NULL, NULL },
 	{ d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_gp_tracks_list, NULL, NULL },
 	{ d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'i',  D_EXIT, 0,   0,   "&Import",      NULL, (void *)eof_gp_import_track },
 	{ d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Cancel",       NULL, NULL },
@@ -5627,7 +5627,7 @@ int eof_gp_import_common(const char *fn)
 		}
 
 		eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
-		centre_dialog(eof_gp_import_dialog);
+		eof_conditionally_center_dialog(eof_gp_import_dialog);
 		(void) eof_popup_dialog(eof_gp_import_dialog, 0);	//Launch the dialog to allow the user to import a track
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
@@ -5832,7 +5832,7 @@ char * eof_gp_tracks_list(int index, int * size)
 DIALOG eof_set_display_width_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)   (d1) (d2) (dp)                 (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   48,  214, 116, 2,   23,   0,      0,      0,   0,   "Set display width",NULL, NULL },
+	{ eof_window_proc,    0,   48,  214, 116, 2,   23,   0,      0,      0,   0,   "Set display width",NULL, NULL },
 	{ d_agup_text_proc,      12,  76,  64,  8,   2,   23,   0,      0,      0,   0,   eof_etext3,         NULL, NULL },
 	{ d_agup_text_proc,      12,  98,  64,  8,   2,   23,   0,      0,      0,   0,   "Width:",           NULL, NULL },
 	{ eof_verified_edit_proc,60,  94,  100, 20,  2,   23,   0,      0,      4,   0,   eof_etext2,         "0123456789", NULL },
@@ -5851,7 +5851,7 @@ int eof_set_display_width(void)
 	(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "(Currently set to %lu)", eof_screen_width);
 	eof_etext2[0] = '\0';
 	eof_color_dialog(eof_set_display_width_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_set_display_width_dialog);
+	eof_conditionally_center_dialog(eof_set_display_width_dialog);
 	if(eof_popup_dialog(eof_set_display_width_dialog, 3) == 4)	//User hit OK
 	{
 		if(eof_etext2[0] != '\0')
@@ -5890,7 +5890,7 @@ int eof_set_display_width(void)
 DIALOG eof_set_3d_hopo_scale_size_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)   (d1) (d2) (dp)                     (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   48,  224, 124, 2,   23,   0,      0,      0,   0,   "Set 3D HOPO image scale size",NULL, NULL },
+	{ eof_window_proc,    0,   48,  224, 124, 2,   23,   0,      0,      0,   0,   "Set 3D HOPO image scale size",NULL, NULL },
 	{ d_agup_text_proc,      12,  76,  64,  8,   2,   23,   0,      0,      0,   0,   "To this % of normal sized gems:", NULL, NULL },
 	{ d_agup_text_proc,      12,  92,  64,  8,   2,   23,   0,      0,      0,   0,   "(Must be between 10 and 200)", NULL, NULL },
 	{ eof_verified_edit_proc,12,  110, 100, 20,  2,   23,   0,      0,      4,   0,   eof_etext2,         "0123456789", NULL },
@@ -5905,7 +5905,7 @@ int eof_set_3d_hopo_scale_size(void)
 
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_3d_hopo_scale_size);
 	eof_color_dialog(eof_set_3d_hopo_scale_size_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_set_3d_hopo_scale_size_dialog);
+	eof_conditionally_center_dialog(eof_set_3d_hopo_scale_size_dialog);
 	if(eof_popup_dialog(eof_set_3d_hopo_scale_size_dialog, 3) == 4)	//User hit OK
 	{
 		if(eof_etext2[0] != '\0')
@@ -5938,7 +5938,7 @@ int eof_set_3d_hopo_scale_size(void)
 DIALOG eof_set_3d_camera_angle_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)   (d1) (d2) (dp)                                 (dp2) (dp3) */
-	{ d_agup_window_proc,    0,   48,  230, 132, 2,   23,   0,      0,      0,   0,   "Set 3D camera angle",              NULL, NULL },
+	{ eof_window_proc,    0,   48,  230, 132, 2,   23,   0,      0,      0,   0,   "Set 3D camera angle",              NULL, NULL },
 	{ d_agup_text_proc,      12,  76,  64,  8,   2,   23,   0,      0,      0,   0,   "Specify a value from -500 (max)",  NULL, NULL },
 	{ d_agup_text_proc,      12,  92,  64,  8,   2,   23,   0,      0,      0,   0,   "to 260 (min) or 0 for default",    NULL, NULL },
 	{ d_agup_text_proc,      12,  114, 64,  8,   2,   23,   0,      0,      0,   0,   "Angle:",                           NULL, NULL },
@@ -5954,7 +5954,7 @@ int eof_set_3d_camera_angle(void)
 
 	eof_etext2[0] = '\0';
 	eof_color_dialog(eof_set_3d_camera_angle_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_set_3d_camera_angle_dialog);
+	eof_conditionally_center_dialog(eof_set_3d_camera_angle_dialog);
 	if(eof_popup_dialog(eof_set_3d_camera_angle_dialog, 4) == 5)	//User hit OK
 	{
 		if(eof_etext2[0] != '\0')
@@ -7456,41 +7456,41 @@ unsigned char eof_drum_accent_velocities[6] = {127, 127, 127, 127, 127, 127};	//
 DIALOG eof_menu_file_drum_midi_velocities_dialog[] =
 {
 	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
-	{d_agup_window_proc,    0,   48,  240, 258,2,   23,  0,    0,      0,         0,   "Edit drum MIDI velocities",NULL, NULL },
+	{ eof_window_proc,    0,   48,  240, 258,2,   23,  0,    0,      0,         0,   "Edit drum MIDI velocities",NULL, NULL },
 
-	{d_agup_text_proc,      63,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Normal",     NULL,          NULL },
-	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 1", NULL, NULL },
-	{eof_verified_edit_proc,70,  104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_1_velocity, "0123456789",NULL },
-	{d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 2", NULL, NULL },
-	{eof_verified_edit_proc,70,  128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_2_velocity, "0123456789",NULL },
-	{d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 3", NULL, NULL },
-	{eof_verified_edit_proc,70,  152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_3_velocity, "0123456789",NULL },
-	{d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 4", NULL, NULL },
-	{eof_verified_edit_proc,70,  176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_4_velocity, "0123456789",NULL },
-	{d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 5", NULL, NULL },
-	{eof_verified_edit_proc,70,  200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_5_velocity, "0123456789",NULL },
-	{d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 6", NULL, NULL },
-	{eof_verified_edit_proc,70,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_6_velocity, "0123456789",NULL },
+	{ d_agup_text_proc,      63,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Normal",     NULL,          NULL },
+	{ d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 1", NULL, NULL },
+	{ eof_verified_edit_proc,70,  104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_1_velocity, "0123456789",NULL },
+	{ d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 2", NULL, NULL },
+	{ eof_verified_edit_proc,70,  128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_2_velocity, "0123456789",NULL },
+	{ d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 3", NULL, NULL },
+	{ eof_verified_edit_proc,70,  152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_3_velocity, "0123456789",NULL },
+	{ d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 4", NULL, NULL },
+	{ eof_verified_edit_proc,70,  176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_4_velocity, "0123456789",NULL },
+	{ d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 5", NULL, NULL },
+	{ eof_verified_edit_proc,70,  200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_5_velocity, "0123456789",NULL },
+	{ d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   "Lane 6", NULL, NULL },
+	{ eof_verified_edit_proc,70,  224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_6_velocity, "0123456789",NULL },
 
-	{d_agup_text_proc,      127, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Ghost",     NULL,          NULL },
-	{eof_verified_edit_proc,130, 104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_1_ghost_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,130, 128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_2_ghost_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,130, 152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_3_ghost_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,130, 176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_4_ghost_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,130, 200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_5_ghost_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,130, 224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_6_ghost_velocity, "0123456789",NULL },
+	{ d_agup_text_proc,      127, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Ghost",     NULL,          NULL },
+	{ eof_verified_edit_proc,130, 104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_1_ghost_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,130, 128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_2_ghost_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,130, 152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_3_ghost_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,130, 176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_4_ghost_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,130, 200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_5_ghost_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,130, 224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_6_ghost_velocity, "0123456789",NULL },
 
-	{d_agup_text_proc,      185, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Accent",     NULL,          NULL },
-	{eof_verified_edit_proc,190, 104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_1_accent_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,190, 128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_2_accent_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,190, 152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_3_accent_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,190, 176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_4_accent_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,190, 200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_5_accent_velocity, "0123456789",NULL },
-	{eof_verified_edit_proc,190, 224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_6_accent_velocity, "0123456789",NULL },
+	{ d_agup_text_proc,      185, 80,  64,  8,  2,   23,  0,    0,      0,         0,   "Accent",     NULL,          NULL },
+	{ eof_verified_edit_proc,190, 104, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_1_accent_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,190, 128, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_2_accent_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,190, 152, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_3_accent_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,190, 176, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_4_accent_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,190, 200, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_5_accent_velocity, "0123456789",NULL },
+	{ eof_verified_edit_proc,190, 224, 28,  20, 2,   23,  0,    0,      3,         0,   eof_drum_lane_6_accent_velocity, "0123456789",NULL },
 
-	{d_agup_button_proc,    50,   260, 35,  28, 2,   23,  '\r',  D_EXIT, 0,       0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    135, 260, 55,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Cancel",     NULL,          NULL },
-	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+	{ d_agup_button_proc,    50,   260, 35,  28, 2,   23,  '\r',  D_EXIT, 0,       0,   "OK",         NULL,          NULL },
+	{ d_agup_button_proc,    135, 260, 55,  28, 2,   23,  0,   D_EXIT, 0,       0,   "Cancel",     NULL,          NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_file_drum_midi_velocities(void)
@@ -7519,7 +7519,7 @@ int eof_menu_file_drum_midi_velocities(void)
 	//Run dialog
 	eof_render();
 	eof_color_dialog(eof_menu_file_drum_midi_velocities_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_menu_file_drum_midi_velocities_dialog);
+	eof_conditionally_center_dialog(eof_menu_file_drum_midi_velocities_dialog);
 	if(eof_popup_dialog(eof_menu_file_drum_midi_velocities_dialog, 0) == 28)
 	{	//User clicked OK
 		for(ctr = 0; ctr < 6; ctr++)
