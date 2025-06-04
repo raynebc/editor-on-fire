@@ -2862,8 +2862,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DISPLAY_ERROR"))
 	{
 		dest_buffer[0] = '\0';
-		panel->color = eof_color_white;
-		panel->bgcolor = eof_color_red;
+		panel->color = eof_notes_panel_error_fg_color;
+		panel->bgcolor = eof_notes_panel_error_bg_color;
 		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		return 1;
 	}
@@ -2872,8 +2872,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DISPLAY_WARNING"))
 	{
 		dest_buffer[0] = '\0';
-		panel->color = eof_color_black;
-		panel->bgcolor = eof_color_yellow;
+		panel->color = eof_notes_panel_warning_fg_color;
+		panel->bgcolor = eof_notes_panel_warning_bg_color;
 		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		return 1;
 	}
@@ -2882,8 +2882,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DISPLAY_SUCCESS"))
 	{
 		dest_buffer[0] = '\0';
-		panel->color = eof_color_black;
-		panel->bgcolor = eof_color_green;
+		panel->color = eof_notes_panel_success_fg_color;
+		panel->bgcolor = eof_notes_panel_success_bg_color;
 		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		return 1;
 	}
@@ -2892,8 +2892,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DISPLAY_ALERT"))
 	{
 		dest_buffer[0] = '\0';
-		panel->color = eof_color_yellow;
-		panel->bgcolor = eof_color_blue;
+		panel->color = eof_notes_panel_alert_fg_color;
+		panel->bgcolor = eof_notes_panel_alert_bg_color;
 		panel->colorprinted = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		return 1;
 	}
@@ -5549,8 +5549,8 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		eof_log("\t\tInitializing panel variables", 3);
 	panel->ypos = 0;
 	panel->xpos = 2;
-	panel->color = panel->definedcolor = eof_color_white;
-	panel->bgcolor = panel->definedbgcolor = -1;	//Transparent background for text
+	panel->color = panel->definedcolor = eof_notes_panel_info_fg_color;
+	panel->bgcolor = panel->definedbgcolor = eof_notes_panel_info_bg_color;
 	panel->allowempty = 0;
 	panel->timeformat = 0;
 	panel->colorprinted = 0;

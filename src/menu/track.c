@@ -1908,6 +1908,38 @@ int eof_fret_hand_position_seek(DIALOG * d)
 	return D_O_K;
 }
 
+int eof_fret_hand_position_seek_prev(DIALOG * d)
+{
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(eof_fret_hand_position_list_dialog[1].d1 > 0)
+	{	//If there is a previous list entry
+		eof_fret_hand_position_list_dialog[1].d1--;	//Select the previous entry in the FHP list
+		return eof_fret_hand_position_seek(d);		//Call the dialog function to seek to it
+	}
+
+	return D_O_K;
+}
+
+unsigned long eof_fret_hand_position_list_size = 0;
+
+int eof_fret_hand_position_seek_next(DIALOG * d)
+{
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(eof_fret_hand_position_list_dialog[1].d1 + 1 < eof_fret_hand_position_list_size)
+	{	//If there is a next list entry
+		eof_fret_hand_position_list_dialog[1].d1++;	//Select the next entry in the FHP list
+		return eof_fret_hand_position_seek(d);		//Call the dialog function to seek to it
+	}
+
+	return D_O_K;
+}
+
 char eof_fret_hand_position_list_text[EOF_MAX_NOTES][25] = {{0}};
 
 char * eof_fret_hand_position_list(int index, int * size)
@@ -1941,7 +1973,10 @@ char * eof_fret_hand_position_list(int index, int * size)
 			if(size)
 			{
 				if(ecount <= INT_MAX)
+				{
 					*size = ecount;
+					eof_fret_hand_position_list_size = ecount;	//Store this for the seek to next FHP function
+				}
 				else
 					*size = INT_MAX;
 			}
@@ -1978,7 +2013,9 @@ DIALOG eof_fret_hand_position_list_dialog[] =
 	{ d_agup_push_proc,  170, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_fret_hand_position_delete_all },
 	{ d_agup_push_proc,  170, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_fret_hand_position_seek },
 	{ d_agup_push_proc,  170, 204, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Generate",     NULL, (void *)eof_generate_hand_positions_current_track_difficulty },
-	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ d_agup_push_proc,  170, 244, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "<",     NULL, (void *)eof_fret_hand_position_seek_prev },
+	{ d_agup_push_proc,  204, 244, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   ">",     NULL, (void *)eof_fret_hand_position_seek_next },
+	{ d_agup_button_proc,12,  244, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 

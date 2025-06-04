@@ -2210,11 +2210,11 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				{	//For each lyric in this track
 					EOF_LYRIC *ptr = sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr];	//Simplify
 					(void) eof_load_song_string_pf(ptr->text,fp,EOF_MAX_LYRIC_LENGTH);	//Read the lyric text
-					(void) pack_getc(fp);	//Read lyric set number (not supported yet)
+					(void) pack_getc(fp);			//Read lyric set number (not supported yet)
 					ptr->note = pack_getc(fp);		//Read lyric pitch
 					ptr->pos = pack_igetl(fp);		//Read lyric position
-					ptr->length = pack_igetl(fp);	//Read lyric length
-					ptr->flags = pack_igetl(fp);	//Read lyric flags (not supported yet)
+					ptr->length = pack_igetl(fp);		//Read lyric length
+					ptr->flags = pack_igetl(fp);		//Read lyric flags (not supported yet)
 					if(ptr->flags & EOF_NOTE_FLAG_EXTENDED)
 					{	//If this note has an additional flags variable
 						ptr->eflags = pack_igetl(fp);			//Read extended flags
@@ -2288,10 +2288,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			for(section_ctr=0; section_ctr<section_count; section_ctr++)
 			{	//For each instance of the specified section
 				(void) eof_load_song_string_pf(name,fp,EOF_SECTION_NAME_LENGTH + 1);	//Parse past the section name
-				inputc = pack_getc(fp);								//Read the section's associated difficulty
-				section_start = pack_igetl(fp);						//Read the start timestamp of the section
-				section_end = pack_igetl(fp);						//Read the end timestamp of the section
-				inputl = pack_igetl(fp);							//Read the section flags
+				inputc = pack_getc(fp);			//Read the section's associated difficulty
+				section_start = pack_igetl(fp);		//Read the start timestamp of the section
+				section_end = pack_igetl(fp);		//Read the end timestamp of the section
+				inputl = pack_igetl(fp);			//Read the section flags
 
 				//Perform the appropriate logic to load this type of section
 				switch(track_ctr)
@@ -3018,9 +3018,9 @@ int eof_menu_section_mark(unsigned long section_type)
 		{
 			track = eof_selected_track;	//For all sections marked with this function, catalog entries excluded, the active track is the one the section applies to
 			diff = 0xFF;				//And does not apply to a specific difficulty
-			if((section_type == EOF_HANDSHAPE_SECTION) || (section_type == EOF_ARPEGGIO_SECTION) || (section_type ==EOF_LYRIC_PHRASE_SECTION))
-				diff = eof_note_type;	//Arpeggio/handshape/lyric phrases are exceptions, which will be defined for the active track difficulty
-			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+			if((section_type == EOF_HANDSHAPE_SECTION) || (section_type == EOF_ARPEGGIO_SECTION))
+				diff = eof_note_type;	//Arpeggio/handshape phrases are exceptions, which will be defined for the active track difficulty
+			if((section_type == EOF_TREMOLO_SECTION) && (eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
 				diff = eof_note_type;	//When dynamic difficulty is in effect, tremolo phrases apply to the active track difficulty
 			flags = 0;					//All non catalog section types are initialized with no flags
 		}
@@ -3738,7 +3738,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						(void) pack_putc(0, fp);	//Write lyric set number (not supported yet)
 						(void) pack_putc(sp->vocal_track[tracknum]->lyric[ctr]->note, fp);		//Write the lyric pitch
 						(void) pack_iputl(sp->vocal_track[tracknum]->lyric[ctr]->pos, fp);		//Write the lyric position
-						(void) pack_iputl(sp->vocal_track[tracknum]->lyric[ctr]->length, fp);	//Write the lyric length
+						(void) pack_iputl(sp->vocal_track[tracknum]->lyric[ctr]->length, fp);		//Write the lyric length
 						(void) pack_iputl(0, fp);	//Write the lyric flags (not supported yet)
 					}
 					//Write the section type chunk
@@ -3749,12 +3749,12 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					(void) pack_iputw(has_lyric_phrases, fp);	//Write number of section types
 					if(has_lyric_phrases)
 					{	//Write lyric phrases
-						(void) pack_iputw(EOF_LYRIC_PHRASE_SECTION, fp);	//Write lyric phrase section type
+						(void) pack_iputw(EOF_LYRIC_PHRASE_SECTION, fp);		//Write lyric phrase section type
 						(void) pack_iputl(sp->vocal_track[tracknum]->lines, fp);	//Write number of star power sections for this track
 						for(ctr=0; ctr < sp->vocal_track[tracknum]->lines; ctr++)
 						{	//For each lyric phrase in the track
 							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							(void) pack_putc(0, fp);						//Write the associated difficulty (lyric set) (not supported yet)
+							(void) pack_putc(0, fp);						//Write the associated difficulty (lyric set) (not supported yet, stored to file as 0, changed to 0xFF while in use in EOF to reflect being difficulty agnostic)
 							(void) pack_iputl(sp->vocal_track[tracknum]->line[ctr].start_pos, fp);	//Write the lyric phrase's position
 							(void) pack_iputl(sp->vocal_track[tracknum]->line[ctr].end_pos, fp);	//Write the lyric phrase's end position
 							(void) pack_iputl(sp->vocal_track[tracknum]->line[ctr].flags, fp);		//Write section flags

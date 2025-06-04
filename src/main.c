@@ -504,6 +504,13 @@ char eof_waveform_renderrightchannel = 0;		//Specifies whether the right channel
 char eof_waveform_renderscale_enabled = 0;	//Specifies whether waveform graph height scaling is enabled
 unsigned eof_waveform_renderscale = 100;		//Specifies a scale factor for the render height to make the graph taller and more visible
 
+/* notes panel colors */
+int eof_notes_panel_error_bg_color, eof_notes_panel_error_fg_color;
+int eof_notes_panel_warning_bg_color, eof_notes_panel_warning_fg_color;
+int eof_notes_panel_success_bg_color, eof_notes_panel_success_fg_color;
+int eof_notes_panel_alert_bg_color, eof_notes_panel_alert_fg_color;
+int eof_notes_panel_info_bg_color, eof_notes_panel_info_fg_color;
+
 /* highlight color settings */
 int eof_color_highlight1_raw;	//The raw hex formatted RRGGBB colors that need to be converted
 int eof_color_highlight2_raw;
@@ -5396,7 +5403,6 @@ void eof_init_after_load(char initaftersavestate)
 		eof_song->track[EOF_TRACK_DRUM]->flags |= 0xF0000000;	//Set the high nibble of the normal drum track's flags of 0xF
 	}
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
-	eof_reset_lyric_preview_lines();
 	eof_prepare_menus();
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
@@ -5407,8 +5413,33 @@ void eof_init_after_load(char initaftersavestate)
 	eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 
-	///DEBUG
-	eof_check_and_log_lyric_line_errors(eof_song, 0);
+	///Lyric line fixes
+	/* correct lyric line difficulties if necessary */
+	if(eof_song->vocal_track[0]->lines)
+	{	//If there are any lyric lines
+		int multiple_diffs = 0;	//Set to nonzero if any lyrics outside difficulty 0 are encountered
+		unsigned long ctr;
+
+		for(ctr = 0; ctr < eof_get_track_size(eof_song, EOF_TRACK_VOCALS); ctr++)
+		{
+			if(eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr) != 0)
+			{
+				multiple_diffs = 1;
+				break;
+			}
+		}
+		if(!multiple_diffs)
+		{	//If all defined lyrics were in difficulty 0
+			for(ctr = 0; ctr < eof_song->vocal_track[0]->lines; ctr++)
+			{	//For each lyric line
+				eof_song->vocal_track[0]->line[ctr].difficulty = 0xFF;	//Initialize the line's difficulty to 0xFF (all difficulties)
+			}
+		}
+	}
+
+	eof_sort_and_merge_overlapping_sections(eof_song->vocal_track[0]->line, &eof_song->vocal_track[0]->lines);	//Sort and remove overlapping lyric lines
+	eof_check_and_log_lyric_line_errors(eof_song, 1);
+	eof_reset_lyric_preview_lines();
 
 	eof_log("\tInitialization after load complete", 1);
 }

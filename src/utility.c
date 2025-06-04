@@ -734,6 +734,11 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			error = 2;
 			break;
 		}
+		if(tp->line[ctr].difficulty != 255)
+		{
+			error = 3;
+			break;
+		}
 		matches = lastlyricindex = 0;	//Reset these
 		for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
 		{	//For each lyric
@@ -741,7 +746,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			{	//If this lyric is within the scope of the lyric line
 				if(matches && (ctr2 > lastlyricindex + 1))
 				{
-					error = 3;
+					error = 4;
 					break;
 				}
 			}
@@ -753,7 +758,11 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 
 	if(error || force)
 	{	//If any errors were found, or the calling function is forcing the lyrics to be written to log
-		eof_log("\tLyric errors found", 1);
+		if(error)
+			eof_log("\tLyric errors found", 1);
+		else
+			eof_log("\tLyric dump", 1);
+
 		for(ctr = 0; ctr < tp->lines; ctr++)
 		{	//For each lyric line
 			if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
@@ -764,8 +773,12 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			{
 				eof_log("\t\t!Lyric line overlaps previous line", 1);
 			}
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
-			eof_log(eof_log_string, 2);
+			if(tp->line[ctr].difficulty != 255)
+			{
+				eof_log("\t\t!Lyric line is the wrong difficulty", 1);
+			}
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  Diff %u, %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].difficulty, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
+			eof_log(eof_log_string, 1);
 			buffer[0] = '\0';	//Empty the buffer
 			matches = lastlyricindex = 0;	//Reset these
 			for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)

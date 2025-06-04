@@ -731,29 +731,6 @@ int eof_menu_file_load(void)
 			}
 		}
 
-		/* correct lyric line difficulties if necessary */
-		if(eof_song->vocal_track[0]->lines)
-		{	//If there are any lyric lines
-			int multiple_diffs = 0;	//Set to nonzero if any lyrics outside difficulty 0 are encountered
-			unsigned long ctr;
-
-			for(ctr = 0; ctr < eof_get_track_size(eof_song, EOF_TRACK_VOCALS); ctr++)
-			{
-				if(eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr) != 0)
-				{
-					multiple_diffs = 1;
-					break;
-				}
-			}
-			if(!multiple_diffs)
-			{	//If all defined lyrics were in difficulty 0
-				for(ctr = 0; ctr < eof_song->vocal_track[0]->lines; ctr++)
-				{	//For each lyric line
-					eof_song->vocal_track[0]->line[ctr].difficulty = 0xFF;	//Initialize the line's difficulty to 0xFF (all difficulties)
-				}
-			}
-		}
-
 		eof_song_loaded = 1;
 		eof_chart_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 		eof_init_after_load(0);

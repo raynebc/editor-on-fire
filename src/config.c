@@ -340,7 +340,7 @@ void eof_load_config(char * fn)
 	/* read waveform graph colors */
 	eof_color_waveform_trough_raw = get_config_hex("colors", "eof_color_waveform_trough", 0x007C00);	//The RGB equivalent of makecol(0, 124, 0)
 	eof_color_waveform_peak_raw = get_config_hex("colors", "eof_color_waveform_peak", 0x00BE00);		//The RGB equivalent of makecol(0, 190, 0)
-	eof_color_waveform_rms_raw = get_config_hex("colors", "eof_color_waveform_rms", 0xBE0000);			//The RGB equivalent of makecol(190, 0, 0)
+	eof_color_waveform_rms_raw = get_config_hex("colors", "eof_color_waveform_rms", 0xBE0000);		//The RGB equivalent of makecol(190, 0, 0)
 
 	/* read waveform settings */
 	eof_waveform_renderlocation = get_config_int("waveform", "eof_waveform_renderlocation", 0);
@@ -350,6 +350,18 @@ void eof_load_config(char * fn)
 	eof_waveform_renderscale = get_config_int("waveform", "eof_waveform_renderscale", 100);
 	if((eof_waveform_renderscale < 10) || (eof_waveform_renderscale > 999))
 		eof_waveform_renderscale = 100;	//Bounds check
+
+	/* read notes panel colors */
+	eof_notes_panel_error_bg_color = get_config_hex("colors", "eof_notes_panel_error_bg_color", 0xFF0000);			//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_notes_panel_error_fg_color = get_config_hex("colors", "eof_notes_panel_error_fg_color", 0xFFFFFF);			//The RGB equivalent of makecol(255, 255, 255) (white)
+	eof_notes_panel_warning_bg_color = get_config_hex("colors", "eof_notes_panel_warning_bg_color", 0xFFFF00);	//The RGB equivalent of makecol(255, 255, 0) (yellow)
+	eof_notes_panel_warning_fg_color = get_config_hex("colors", "eof_notes_panel_warning_fg_color", 0x000000);	//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_notes_panel_success_bg_color = get_config_hex("colors", "eof_notes_panel_success_bg_color", 0x00FF00);		//The RGB equivalent of makecol(0, 255, 0) (green)
+	eof_notes_panel_success_fg_color = get_config_hex("colors", "eof_notes_panel_success_fg_color", 0x000000);		//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_notes_panel_alert_bg_color = get_config_hex("colors", "eof_notes_panel_alert_bg_color", 0x0000FF);			//The RGB equivalent of makecol(0, 0, 255) (blue)
+	eof_notes_panel_alert_fg_color = get_config_hex("colors", "eof_notes_panel_alert_fg_color", 0xFFFF00);			//The RGB equivalent of makecol(255, 255, 0) (yellow)
+	eof_notes_panel_info_bg_color = -1;																//Used by Allegro to designate transparency
+	eof_notes_panel_info_fg_color = get_config_hex("colors", "eof_notes_panel_info_fg_color", 0xFFFFFF);			//The RGB equivalent of makecol(255, 255, 255) (white)
 
 	/* read highlight colors */
 	eof_color_highlight1_raw = get_config_hex("colors", "eof_color_highlight1", 0xFFFF00UL);	//The RGB equivalent of makecol(255, 255, 0), AKA yellow
@@ -738,6 +750,18 @@ void eof_save_config(char * fn)
 	set_config_int("waveform", "eof_waveform_renderrightchannel", eof_waveform_renderrightchannel);
 	set_config_int("waveform", "eof_waveform_renderscale_enabled", eof_waveform_renderscale_enabled);
 	set_config_int("waveform", "eof_waveform_renderscale", eof_waveform_renderscale);
+
+	/* write notes panel colors */
+	set_config_hex("colors", "eof_notes_panel_error_bg_color", eof_notes_panel_error_bg_color);
+	set_config_hex("colors", "eof_notes_panel_error_fg_color", eof_notes_panel_error_fg_color);
+	set_config_hex("colors", "eof_notes_panel_warning_bg_color", eof_notes_panel_warning_bg_color);
+	set_config_hex("colors", "eof_notes_panel_warning_fg_color", eof_notes_panel_warning_fg_color);
+	set_config_hex("colors", "eof_notes_panel_success_bg_color", eof_notes_panel_success_bg_color);
+	set_config_hex("colors", "eof_notes_panel_success_fg_color", eof_notes_panel_success_fg_color	);
+	set_config_hex("colors", "eof_notes_panel_alert_bg_color", eof_notes_panel_alert_bg_color);
+	set_config_hex("colors", "eof_notes_panel_alert_fg_color", eof_notes_panel_alert_fg_color);
+	set_config_hex("colors", "eof_notes_panel_info_bg_color", eof_notes_panel_info_bg_color);
+	set_config_hex("colors", "eof_notes_panel_info_fg_color", eof_notes_panel_info_fg_color);
 
 	/* write highlight colors (raw format to avoid color corruption on subsequent launches of EOF) */
 	set_config_hex("colors", "eof_color_highlight1", eof_color_highlight1_raw);

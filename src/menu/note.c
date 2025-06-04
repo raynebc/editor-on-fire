@@ -3674,9 +3674,6 @@ int eof_menu_split_lyric(void)
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 
-	///DEBUG
-	eof_check_and_log_lyric_line_errors(eof_song, 0);
-
 	return D_O_K;
 }
 
