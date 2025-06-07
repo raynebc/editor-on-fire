@@ -476,34 +476,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	//The vocal track is not active
-	if(!ustricmp(macro, "IF_IS_NOT_VOCAL_TRACK"))
-	{
-		if(!eof_vocals_selected)
-		{
-			dest_buffer[0] = '\0';
-			return 3;	//True
-		}
-
-		return 2;	//False
-	}
-
 	//The active track is a legacy guitar track
 	if(!ustricmp(macro, "IF_IS_LEGACY_GUITAR_TRACK"))
 	{
 		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
-		{
-			dest_buffer[0] = '\0';
-			return 3;	//True
-		}
-
-		return 2;	//False
-	}
-
-	//The active track is not a legacy guitar track
-	if(!ustricmp(macro, "IF_IS_NOT_LEGACY_GUITAR_TRACK"))
-	{
-		if(!eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 		{
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -524,18 +500,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	//A pro guitar track is not active
-	if(!ustricmp(macro, "IF_IS_NOT_PRO_GUITAR_TRACK"))
-	{
-		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		{
-			dest_buffer[0] = '\0';
-			return 3;	//True
-		}
-
-		return 2;	//False
-	}
-
 	//One of the drum tracks is active
 	if(!ustricmp(macro, "IF_IS_DRUM_TRACK"))
 	{
@@ -548,34 +512,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	//One of the drum tracks is not active
-	if(!ustricmp(macro, "IF_IS_NOT_DRUM_TRACK"))
-	{
-		if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
-		{
-			dest_buffer[0] = '\0';
-			return 3;	//True
-		}
-
-		return 2;	//False
-	}
-
 	//A GHL format track is active
 	if(!ustricmp(macro, "IF_IS_GHL_TRACK"))
 	{
 		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
-		{
-			dest_buffer[0] = '\0';
-			return 3;	//True
-		}
-
-		return 2;	//False
-	}
-
-	//A GHL format track is not active
-	if(!ustricmp(macro, "IF_IS_NOT_GHL_TRACK"))
-	{
-		if(!eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -641,18 +581,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	//A legacy, GHL or pro guitar track is not active
-	if(!ustricmp(macro, "IF_IS_NOT_ANY_GUITAR_TRACK"))
-	{
-		if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-		{	//If the active track is not a guitar track
-			dest_buffer[0] = '\0';
-			return 3;	//True
-		}
-
-		return 2;	//False
-	}
-
 	//The dance track is active
 	if(!ustricmp(macro, "IF_IS_DANCE_TRACK"))
 	{
@@ -665,35 +593,11 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	//The dance track is not active
-	if(!ustricmp(macro, "IF_IS_NOT_DANCE_TRACK"))
-	{
-		if(eof_selected_track != EOF_TRACK_DANCE)
-		{	//If the active track is not the dance track
-			dest_buffer[0] = '\0';
-			return 3;	//True
-		}
-
-		return 2;	//False
-	}
-
 	//The keys track is active
 	if(!ustricmp(macro, "IF_IS_KEYS_TRACK"))
 	{
 		if(eof_selected_track == EOF_TRACK_KEYS)
 		{	//If the active track is the dance track
-			dest_buffer[0] = '\0';
-			return 3;	//True
-		}
-
-		return 2;	//False
-	}
-
-	//The keys track is not active
-	if(!ustricmp(macro, "IF_IS_NOT_KEYS_TRACK"))
-	{
-		if(eof_selected_track != EOF_TRACK_KEYS)
-		{	//If the active track is not the dance track
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -716,23 +620,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 
 		return 2;	//False
-	}
-
-	//Tech view is not in effect, regardless of which track is active
-	if(!ustricmp(macro, "IF_IS_NOT_TECH_VIEW"))
-	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
-
-			if(eof_menu_pro_guitar_track_get_tech_view_state(tp))
-			{	//If tech view is in effect
-				dest_buffer[0] = '\0';
-				return 2;	//False
-			}
-		}
-
-		return 3;	//True
 	}
 
 	//A specific note/lyric is selected via mouse click
@@ -921,12 +808,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//If the active difficulty level is a specific number
-	if(strcasestr_spec(macro, "IF_ACTIVE_DIFFICULTY_IS_NUMBER_"))
-	{
+	count_string = strcasestr_spec(macro, "IF_ACTIVE_DIFFICULTY_IS_NUMBER_");	//Get a pointer to the text that would be the difficulty number
+	if(count_string)
+	{	//If the macro is this string
 		unsigned long diff;
-		char *number_string = strcasestr_spec(macro, "IF_ACTIVE_DIFFICULTY_IS_NUMBER_");	//Get a pointer to the text that is expected to be the difficulty number
 
-		if(eof_read_macro_number(number_string, &diff))
+		if(eof_read_macro_number(count_string, &diff))
 		{	//If the difficulty number was successfully parsed
 			if(eof_note_type == diff)
 			{	//If the number is the active difficulty number
@@ -1723,7 +1610,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_RS2_EXPORT_ENABLED"))
 	{
 		if(eof_write_rs2_files)
-		{	//If "Save separate Rocksmith 2 files" export preference is enabled
+		{	//If the "Save separate Rocksmith 2 files" export preference is enabled
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -2111,7 +1998,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		eof_notes_macro_note_exceeding_fhp[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &fretcount))
-		{	//If the millisecond count was successfully parsed
+		{	//If the fret count was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track in the project
 				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2637,7 +2524,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						//Determine techniques used by this note (including applicable technotes using this string), do NOT assume a slide end fret if none is defined
 						unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 2, 1);
 
-						if(retflags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO))
+						if(retflags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_NOTE_FLAG_IS_TREMOLO))
 						{	//If this string uses any techniques that require sustain
 							if(tech.length < 2)
 							{	//If the gem for this string would export without at least 1ms of sustain
@@ -2908,6 +2795,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 
 	///SYMBOL MACROS
+	//Percent sign
+	if(!ustricmp(macro, "PERCENT"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%%");
+		return 1;
+	}
+
 	//Bend character
 	if(!ustricmp(macro, "BEND"))
 	{
@@ -3009,13 +2903,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 
 	///EXPANSION MACROS
-	//Percent sign
-	if(!ustricmp(macro, "PERCENT"))
-	{
-		snprintf(dest_buffer, dest_buffer_size, "%%");
-		return 1;
-	}
-
 	//Track name
 	if(!ustricmp(macro, "TRACK_NAME"))
 	{
@@ -5049,39 +4936,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
-	if(!ustricmp(macro, "MOUSE_AREA"))
-	{
-		dest_buffer[0] = '\0';
-		if(eof_mouse_area == 1)
-			snprintf(dest_buffer, dest_buffer_size, "Difficulty tabs (%u, %u) - (%u, %u)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
-		else if(eof_mouse_area == 2)
-			snprintf(dest_buffer, dest_buffer_size, "Beat markers (%u, %u) - (%u, %u)", eof_beat_marker_boundary_x1, eof_beat_marker_boundary_y1, eof_beat_marker_boundary_x2, eof_beat_marker_boundary_y2);
-		else if(eof_mouse_area == 3)
-			snprintf(dest_buffer, dest_buffer_size, "Fretboard (%u, %u) - (%u, %u)", eof_fretboard_boundary_x1, eof_fretboard_boundary_y1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y2);
-		else if(eof_mouse_area == 4)
-			snprintf(dest_buffer, dest_buffer_size, "Mini keyboard (%u, %u) - (%u, %u)", eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_y1, eof_mini_keyboard_boundary_x2, eof_mini_keyboard_boundary_y2);
-
-		return 1;
-	}
-
-	if(!ustricmp(macro, "MOUSE_CONSTRAINT"))
-	{
-		dest_buffer[0] = '\0';
-		if(eof_mouse_bound)
-		{	//If the mouse coordinates are constrained
-			snprintf(dest_buffer, dest_buffer_size, "(%u, %u) - (%u, %u)", eof_mouse_boundary_x1, eof_mouse_boundary_y1, eof_mouse_boundary_x2, eof_mouse_boundary_y2);
-		}
-
-		return 1;
-	}
-
-	if(!ustricmp(macro, "DIFFICULTY_TAB_AREA"))
-	{
-		snprintf(dest_buffer, dest_buffer_size, "(%u, %u) - (%u, %u)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
-
-		return 1;
-	}
-
 	if(!ustricmp(macro, "FIRST_BEAT_SUBCEEDING_TEMPO"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_tempo_subceeding_number);
@@ -5215,6 +5069,39 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "RS_FIRST_TECH_NOTE_LACKING_TARGET"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_tech_note_missing_target);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "MOUSE_AREA"))
+	{
+		dest_buffer[0] = '\0';
+		if(eof_mouse_area == 1)
+			snprintf(dest_buffer, dest_buffer_size, "Difficulty tabs (%u, %u) - (%u, %u)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
+		else if(eof_mouse_area == 2)
+			snprintf(dest_buffer, dest_buffer_size, "Beat markers (%u, %u) - (%u, %u)", eof_beat_marker_boundary_x1, eof_beat_marker_boundary_y1, eof_beat_marker_boundary_x2, eof_beat_marker_boundary_y2);
+		else if(eof_mouse_area == 3)
+			snprintf(dest_buffer, dest_buffer_size, "Fretboard (%u, %u) - (%u, %u)", eof_fretboard_boundary_x1, eof_fretboard_boundary_y1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y2);
+		else if(eof_mouse_area == 4)
+			snprintf(dest_buffer, dest_buffer_size, "Mini keyboard (%u, %u) - (%u, %u)", eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_y1, eof_mini_keyboard_boundary_x2, eof_mini_keyboard_boundary_y2);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "MOUSE_CONSTRAINT"))
+	{
+		dest_buffer[0] = '\0';
+		if(eof_mouse_bound)
+		{	//If the mouse coordinates are constrained
+			snprintf(dest_buffer, dest_buffer_size, "(%u, %u) - (%u, %u)", eof_mouse_boundary_x1, eof_mouse_boundary_y1, eof_mouse_boundary_x2, eof_mouse_boundary_y2);
+		}
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "DIFFICULTY_TAB_AREA"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "(%u, %u) - (%u, %u)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
 
 		return 1;
 	}

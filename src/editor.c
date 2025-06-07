@@ -1116,7 +1116,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* play last selected pro guitar note's MIDI tone (Enter) */
 	if(eof_key_code == KEY_ENTER)
 	{
-		eof_play_pro_guitar_note_midi(eof_song, eof_selected_track, eof_selection.current);
+		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+		{	//If no CTRL or SHIFT keys are held
+			eof_play_pro_guitar_note_midi(eof_song, eof_selected_track, eof_selection.current);
+			eof_use_key();
+		}
 	}
 
 	/* zoom in (+ on numpad) */

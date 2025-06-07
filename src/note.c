@@ -2,7 +2,7 @@
 #include <assert.h>
 #include "modules/ocd3d.h"
 #include "main.h"
-#include "bf.h"	//For eof_pro_guitar_note_lookup_string_fingering()
+#include "bf.h"	//For eof_pro_guitar_note_lookup_string_fingering() to display finger-specific gem colors in the Bandfuse color set
 #include "dr.h"
 #include "note.h"
 #include "rs.h"	//For eof_note_has_high_chord_density()

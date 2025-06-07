@@ -363,8 +363,8 @@ int         eof_blclick_released = 1;	//Is zero if the left mouse button is held
 clock_t  eof_lclick_time;			//Stores the clock time of the last registered left mouse click, and the button will need to be held at least EOF_CLICK_AND_DRAG_THRESHOLD number of milliseconds for click and drag operations to be performed
 int         eof_rclick_released = 1;	//Tracks the handling of the right mouse button in general
 int         eof_mclick_released = 1;	//Tracks the handling of the middle mouse button in general
-int         eof_click_x;
-int         eof_click_y;
+int         eof_click_x;				//Tracks the x coordinate of where a left click begins
+int         eof_click_y;				//Tracks the y coordinate of where a left click begins
 int         eof_peg_x;
 int         eof_last_pen_pos = 0;
 int         eof_cursor_visible = 1;
@@ -2850,7 +2850,7 @@ void eof_logic(void)
 	if(eof_music_catalog_playback)
 	{	//If the fret catalog is playing
 		eof_music_catalog_pos += 10;
-		if(eof_music_catalog_pos - eof_av_delay > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
+		if(eof_music_catalog_pos - eof_av_delay > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos + EOF_SONG_CATALOG_PLAYBACK_PADDING)	//End a little later based on the padding
 		{
 			eof_music_catalog_playback = 0;
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
@@ -3868,17 +3868,24 @@ void eof_render_notes_window(void)
 void eof_render(void)
 {
 	char notes_are_selected = 0;
+	static char out_of_focus = 0;
 //	eof_log("eof_render() entered.", 3);
 
 	/* don't draw if window is out of focus */
 	if(!eof_has_focus)
 	{	//If EOF is not in the foreground
-		eof_log("\tEOF is in background, ending render.", 3);
+		if(!out_of_focus)
+			eof_log("\tEOF is in background, ending render.", 3);	//If this is the first frame that EOF has been out of the foreground
+
 		if(eof_music_paused && !eof_music_catalog_playback)
 		{	//If neither the chart nor the catalog are playing (depending on user preference, playback is allowed when EOF is not in the foreground)
 			return;
 		}
+		out_of_focus = 1;	//Don't repeatedly log being out of focus every consecutive frame this is the case
 	}
+	else
+		out_of_focus = 0;
+
 	if(eof_song_loaded)
 	{	//If a project is loaded
 //		eof_log("\tProject is loaded.", 3);

@@ -184,6 +184,12 @@ int eof_popup_dialog(DIALOG * dp, int n)
 	player = init_dialog(dp, n);
 	eof_show_mouse(screen);
 	clear_keybuf();
+
+	//Reset dialog click and drag logic to prevent the dialog from spawning in a movable state without a click
+	mouse_down = 0;
+	mouse_last_render_x = mouse_x;
+	mouse_last_render_y = mouse_y;
+
 	while(1)
 	{
 		if((eof_has_focus == 2) && (dp == eof_main_dialog))

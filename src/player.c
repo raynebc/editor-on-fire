@@ -193,7 +193,7 @@ void eof_catalog_play(void)
 		}
 		else
 		{	//Nothing is playing
-			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
+			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay - EOF_SONG_CATALOG_PLAYBACK_PADDING;	//Start a little earlier based on the padding
 			eof_log("\t\tSeeking audio to catalog position", 3);
 			#ifdef ALLEGRO_WINDOWS
 				alogg_seek_abs_msecs_ogg_ul(eof_music_track, eof_music_catalog_pos - ((eof_buffer_size * (eof_smooth_pos ? 2 : 1)) * 1000 / (unsigned long)alogg_get_wave_freq_ogg(eof_music_track)));

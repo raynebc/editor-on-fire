@@ -112,7 +112,7 @@ MENU eof_lyric_line_menu[] =
 	{"Edit &Timing", eof_menu_note_lyric_line_edit_timing, NULL, 0, NULL},
 	{"Split &After selected", eof_menu_note_split_lyric_line_after_selected, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Toggle Overdrive", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
+	{"Toggle &Overdrive", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

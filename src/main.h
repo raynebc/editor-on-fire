@@ -314,6 +314,7 @@ extern int         eof_music_pos2;
 extern int         eof_sync_piano_rolls;
 extern unsigned long eof_music_actual_pos;
 extern unsigned long eof_music_rewind_pos;
+#define EOF_SONG_CATALOG_PLAYBACK_PADDING 100
 extern int         eof_music_catalog_pos;
 extern unsigned long eof_music_end_pos;
 extern int         eof_music_paused;
