@@ -1690,6 +1690,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	struct guitar_pro_bend bendstruct = {0, 0, {0}, {0}};	//Stores data about the bend being parsed
 	double laststartpos = 0, lastendpos = 0;	//Stores the start and end position of the last normal or tie note to be parsed, so bend point data can be used to create tech notes
 	double lastgracestartpos = 0, lastgraceendpos = 0;	//Stores the start and end position of the last grace note to be parsed
+	double lastgrace_duration = 0;		//Used to process the placement of grace notes and the note it applies to
 	unsigned char graceonbeat = 0;	//Tracks whether the currently-parsed grace note is on the beat instead of before it
 	unsigned char gracetrans = 0;	//Tracks the grace note's transition type
 	char new_note;					//Tracks whether a new note is to be created
@@ -4210,8 +4211,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(byte1 & 2)
 							{	//Hammer on/pull off from current note (next note gets the HO/PO status)
 								hopo[ctr2] = frets[ctr4] & 0x7F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
-								hopobeatnum[ctr2] = ctr3;			//Track which beat (note) number has the HO/PO status
-								hopomeasurenum[ctr2] = ctr;			//Track which measure number has the HO/PO status
+								hopobeatnum[ctr2] = ctr3;		//Track which beat (note) number has the HO/PO status
+								hopomeasurenum[ctr2] = ctr;		//Track which measure number has the HO/PO status
 							}
 							if(byte1 & 4)
 							{	//Slide from current note (GP3 format indicator)
@@ -4252,6 +4253,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(dur < 3)
 								{	//If the defined duration is valid
 									grace_duration = grace_durations[dur] * (double)curden / (double)curnum;	//Get this grace note's duration in measures (accounting for the time signature)
+									lastgrace_duration = grace_duration;	//Remember this for later
 									if(!curbeat && (measure_position < grace_duration) && !graceonbeat)
 									{	//If this grace note is positioned before the beginning of the chart (ie. a before the beat grace note on a note at the beginning of measure 1)
 										grace = 0;	//Ignore this grace note
@@ -4299,6 +4301,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if(byte2 & 8)
 							{	//Slide
+								unsigned char proposed_unpitchend = 0;
+								unsigned char fret_value = frets[ctr4] & 0x7F;	//Store the value of this fret, masking out the mute bit
 								byte = pack_getc(inf);	//Slide type
 								if(fileversion < 500)
 								{	//If the GP file is older than version 5
@@ -4307,22 +4311,22 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//Slide in from above
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 										flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-										if(!unpitchend || (frets[ctr4] < unpitchend))
+										if(!unpitchend || (fret_value < unpitchend))
 										{	//Track the lowest fret value for the slide end position
-											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											unpitchend = fret_value;	//Set the end position of this slide at the authored note
 										}
 										frets[ctr4]++;				//Set the beginning of this slide one fret higher
 										slide_in_from_warned++;		//Track that such a slide in was encountered
 									}
 									else if(byte == -1)
 									{	//Slide in from below
-										if(frets[ctr4] > 1 )
+										if(fret_value > 1 )
 										{	//Don't allow this unless sliding into a fret higher than 1
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 											flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-											if(!unpitchend || (frets[ctr4] < unpitchend))
+											if(!unpitchend || (fret_value < unpitchend))
 											{	//Track the lowest fret value for the slide end position
-												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+												unpitchend = fret_value;	//Set the end position of this slide at the authored note
 											}
 											frets[ctr4]--;				//Set the beginning of this slide one fret lower
 											slide_in_from_warned++;		//Track that such a slide in was encountered
@@ -4339,35 +4343,37 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									else if(byte == 3)
 									{	//Slide out and downward
-										if(frets[ctr4] > 1 )
+										if(fret_value > 1)
 										{	//Don't apply a downward slide unless the note is at fret 2 or higher
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											if(!unpitchend || (frets[ctr4] < unpitchend))
+											if(fret_value > 2)
+											{	//If the slide can be 2 frets instead of 1
+												proposed_unpitchend = fret_value - 2;	//Slide that amount, for better appearance in Rocksmith
+											}
+											else
+											{	//Otherwise settle for 1 fret
+												proposed_unpitchend = fret_value - 1;
+											}
+											if(!unpitchend || (proposed_unpitchend < unpitchend))
 											{	//Track the lowest fret value for the slide end position
-												if(frets[ctr4] > 2)
-												{	//If the slide can be 2 frets instead of 1
-													unpitchend = frets[ctr4] - 2;	//Slide that amount, for better appearance in Rocksmith
-												}
-												else
-												{	//Otherwise settle for 1 fret
-													unpitchend = frets[ctr4] - 1;
-												}
+												unpitchend = proposed_unpitchend;
 											}
 										}
 									}
 									else if(byte == 4)
 									{	//Slide out and upward
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-										if(!unpitchend || (frets[ctr4] < unpitchend))
+										if(fret_value < 23)
+										{	//If the note can unpitched slide up 2 frets without exceeding RS2's fret limit
+											proposed_unpitchend = fret_value + 2;	//For better appearance in Rocksmith, slide 2 frets
+										}
+										else
+										{
+											proposed_unpitchend = fret_value + 1;	//Otherwise settle for one fret
+										}
+										if(!unpitchend || (proposed_unpitchend < unpitchend))
 										{	//Track the lowest fret value for the slide end position
-											if(frets[ctr4] < 23)
-											{	//If the note can unpitched slide up 2 frets without exceeding RS2's fret limit
-												unpitchend = frets[ctr4] + 2;	//For better appearance in Rocksmith, slide 2 frets
-											}
-											else
-											{
-												unpitchend = frets[ctr4] + 1;	//Otherwise settle for one fret
-											}
+											unpitchend = proposed_unpitchend;
 										}
 									}
 								}
@@ -4375,61 +4381,63 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Version 5 or newer GP file
 									if(byte & 4)
 									{	//This note slides out and downwards
-										if(frets[ctr4] > 1 )
+										if(fret_value > 1 )
 										{	//Don't apply a downward slide unless the note is at fret 2 or higher
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											if(!unpitchend || (frets[ctr4] < unpitchend))
+											if(fret_value > 2)
+											{	//If the slide can be 2 frets instead of 1
+												proposed_unpitchend = fret_value - 2;	//Slide that amount, for better appearance in Rocksmith
+											}
+											else
+											{	//Otherwise settle for 1 fret
+												proposed_unpitchend = fret_value - 1;
+											}
+											if(!unpitchend || (proposed_unpitchend < unpitchend))
 											{	//Track the lowest fret value for the slide end position
-												if(frets[ctr4] > 2)
-												{	//If the slide can be 2 frets instead of 1
-													unpitchend = frets[ctr4] - 2;	//Slide that amount, for better appearance in Rocksmith
-												}
-												else
-												{	//Otherwise settle for 1 fret
-													unpitchend = frets[ctr4] - 1;
-												}
+												unpitchend = proposed_unpitchend;
 											}
 										}
 									}
 									else if(byte & 8)
 									{	//This note slides out and upwards
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-										if(!unpitchend || (frets[ctr4] < unpitchend))
+										if(fret_value < 23)
+										{	//If the note can unpitched slide up 2 frets without exceeding RS2's fret limit
+											proposed_unpitchend = fret_value + 2;	//For better appearance in Rocksmith, slide 2 frets
+										}
+										else
+										{
+											proposed_unpitchend = fret_value + 1;	//Otherwise settle for one fret
+										}
+										if(!unpitchend || (proposed_unpitchend < unpitchend))
 										{	//Track the lowest fret value for the slide end position
-											if(frets[ctr4] < 23)
-											{	//If the note can unpitched slide up 2 frets without exceeding RS2's fret limit
-												unpitchend = frets[ctr4] + 2;	//For better appearance in Rocksmith, slide 2 frets
-											}
-											else
-											{
-												unpitchend = frets[ctr4] + 1;	//Otherwise settle for one fret
-											}
+											unpitchend = proposed_unpitchend;
 										}
 									}
 									else if(byte & 16)
 									{	//This note slides in from below
-										if(frets[ctr4] > 1 )
+										if(fret_value > 1 )
 										{	//Don't allow this unless sliding into a fret higher than 1
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 											flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-											if(!unpitchend || (frets[ctr4] < unpitchend))
+											if(!unpitchend || (fret_value < unpitchend))
 											{	//Track the lowest fret value for the slide end position
-												unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+												unpitchend = fret_value;	//Set the end position of this slide at the authored note
 											}
 											frets[ctr4]--;				//Set the beginning of this slide one fret lower
-											slide_in_from_warned++;		//Track that such a slide in was encountered
+											slide_in_from_warned++;	//Track that such a slide in was encountered
 										}
 									}
 									else if(byte & 32)
 									{	//This note slides in from above
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 										flags |= EOF_NOTE_FLAG_HIGHLIGHT;
-										if(!unpitchend || (frets[ctr4] < unpitchend))
+										if(!unpitchend || (fret_value < unpitchend))
 										{	//Track the lowest fret value for the slide end position
-											unpitchend = frets[ctr4];	//Set the end position of this slide at the authored note
+											unpitchend = fret_value;	//Set the end position of this slide at the authored note
 										}
 										frets[ctr4]++;				//Set the beginning of this slide one fret higher
-										slide_in_from_warned++;		//Track that such a slide in was encountered
+										slide_in_from_warned++;	//Track that such a slide in was encountered
 									}
 									else
 									{
@@ -4876,8 +4884,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(graceonbeat)
 							{	//If this grace note displaces the note it is associated with
 								np[ctr2]->pos += gnp->length;			//Delay the note by the length of the grace note
+								measure_position += lastgrace_duration;	//Advance the measure position by the same amount so the next note is the appropriate amount further in
 								if(np[ctr2]->length >= gnp->length)
 									np[ctr2]->length -= gnp->length;	//Shorten the note by the same length if possible
+#ifdef GP_IMPORT_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tGrace note alters parent note:  Start: %lums\tLength: %ldms", np[ctr2]->pos, np[ctr2]->length);
+								eof_log(eof_log_string, 1);
+#endif
 							}
 
 							if((gracetrans != 1) && (gracetrans != 2))
@@ -4893,7 +4906,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							eof_pro_guitar_track_sort_notes(gp->track[ctr2]);	//Sort so that the grace note is earlier than the note it applies to, to allow the tie note logic to work as expected
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tGrace note #%lu (%s beat):  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, (graceonbeat ? "On" : "Before"), gnp->pos, gnp->length);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tGrace note #%lu (%s beat):  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, (graceonbeat ? "On" : "Before"), gnp->pos, gnp->length);
 							assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
 							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
 							{	//For each of this track's natively supported strings
@@ -5004,7 +5017,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))		//If this note wasn't marked as an unpitched slide during import
 				continue;	//Skip the note
-			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_HIGHLIGHT))		//If this note wasn't highlighted in order to mark an unpitchd slide in (to tell it apart from unpitched slide out notes)
+			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_HIGHLIGHT))		//If this note wasn't highlighted in order to mark an unpitched slide in (to tell it apart from unpitched slide out notes)
 				continue;	//Skip the note
 
 			gnp = eof_pro_guitar_track_add_note(gp->track[ctr]);		//Add a new note to the current track
