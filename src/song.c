@@ -11322,14 +11322,14 @@ int eof_check_for_notes_preceding_sections(int function)
 	return 0;
 }
 
-unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, unsigned long targetpos)
+unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned char stringnum, unsigned long targetpos)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long pos, length;
 	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};		//Used to process bend points
 	unsigned long effective_bendstrength = 0;	//The current defined bend strength in quarter steps
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 7))
 		return 0;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -11453,4 +11453,87 @@ unsigned long eof_count_notes_starting_in_time_range(EOF_SONG *sp, unsigned long
 	}
 
 	return count;
+}
+
+int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char stringnum, unsigned char *result)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PRO_GUITAR_NOTE *np;
+	EOF_PRO_GUITAR_NOTE *arpeggio_base = NULL;
+	unsigned long ctr, ctr2;
+	unsigned char fhp;
+
+	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 7) || !result)
+		return 0;	//Invalid parameters
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
+	if(note > tp->pgnotes)
+		return 0;	//Invalid parameters
+
+	np = tp->pgnote[note];
+	*result = 0;	//Set the resulting finger number to zero until a solution is found
+	if(np->note & (1 << stringnum))
+		*result = np->finger[stringnum];	//If the specified note uses the specified string, store any fingering it may have defined into the result
+	else
+		return 0;	//Otherwise the note does not use the specified string and cannot have a fingering
+
+	//Validate the specified gem against any FHP in effect at the note's starting position
+	fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, np->type, np->pos);	//Find if there's a fret hand position in effect
+	if(np->frets[stringnum] < fhp)
+	{	//If the specified gem uses a fret value that is below any active (nonzero-valued) FHP at the gem's position
+		return -2;	//The specified gem defines a fret that contradicts the FHP
+	}
+
+	//Identify the arpeggio/handshape phrase the note is in and its base note, if any
+	for(ctr = 0; ctr < tp->arpeggios; ctr++)
+	{	//For each arpeggio/handshape phrase in the track
+		if((np->pos >= tp->arpeggio[ctr].start_pos) && (np->pos <= tp->arpeggio[ctr].end_pos) && (np->type == tp->arpeggio[ctr].difficulty))
+		{	//If the specified note is within the arpeggio/handshape phrase
+			for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
+			{	//For each note in the track
+				if((tp->pgnote[ctr2]->pos >= tp->arpeggio[ctr].start_pos) && (tp->pgnote[ctr2]->pos <= tp->arpeggio[ctr].end_pos) && (tp->pgnote[ctr2]->type == np->type))
+				{	//If this is the first note found in the same arpeggio/handshape as the target note
+					arpeggio_base = tp->pgnote[ctr2];	//Store a pointer to this note
+					break;
+				}
+			}
+			break;
+		}
+	}
+
+	if(arpeggio_base && (arpeggio_base->frets[stringnum] == 0))
+	{	//If this gem is within an arpeggio/handshape that does not use the specified string
+		return -1;	//The specified gem violates the arpeggio/handshape
+	}
+	if(arpeggio_base && (arpeggio_base->frets[stringnum] != np->frets[stringnum]))
+	{	//If this gem is within an arpeggio/handshape but does not use the same fret as the base chord
+		return -1;	//The specified gem violates the arpeggio/handshape
+	}
+	if(*result)
+	{	//If the string has a fingering defined
+		if(arpeggio_base && (np->pos != arpeggio_base->pos))
+		{	//If the specified note is in the scope of an arpeggio/handshape phrase, and it isn't itself the first note in the phrase (which would define the phrase's collective notes)
+			if(*result != arpeggio_base->finger[stringnum])
+				return -1;	//The specified gem defines a fingering that contradicts the string's fingering defined by the arpeggio/handshape
+		}
+		return 1;	//Defined fret and fingering is valid
+	}
+	else
+	{	//If the string does not have a fingering defined
+		if(arpeggio_base && (np->pos != arpeggio_base->pos))
+		{	//If the specified note is in the scope of an arpeggio/handshape phrase, and it isn't itself the first note in the phrase (which would define the phrase's collective notes)
+			if(arpeggio_base->finger[stringnum])
+			{	//If this arpeggio/handshape defines a fingering for this string
+				*result = arpeggio_base->finger[stringnum];	//Store it into the result
+				return 2;	//The specified gem's fingering was derived from the arpeggio/handshape
+			}
+		}
+		if(fhp && (np->frets[stringnum] >= fhp) && (np->frets[stringnum] < fhp + 4))
+		{	//If the specified gem's fret is within 3 frets of the active FHP
+			*result = np->frets[stringnum] - fhp + 1;	//Treat the FHP as the index finger, one fret higher as middle finger, etc.
+			return 3;	//The specified gem's fingering was derived from the FHP
+		}
+	}
+
+	return 0;	//No fingering could be determined
 }

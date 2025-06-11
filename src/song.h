@@ -1225,12 +1225,24 @@ int eof_check_for_notes_preceding_sections(int function);
 	//If function is nonzero, the user gets alerted and is prompted whether to cancel save
 	// If the user opts to cancel, nonzero is returned, otherwise zero is returned
 
-unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, unsigned long targetpos);
+unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned char stringnum, unsigned long targetpos);
 	//Examines any bend status and bend tech notes on the specified string of the specified note and returns the bend strength (in quarternotes) in effect at the given timestamp
 	//Returns 0 if there is no applicable bend defined, if pos is after the end of the note, or upon error
 
 unsigned long eof_count_notes_starting_in_time_range(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long start, unsigned long stop);
 	//Returns the number of notes in the specified track difficulty that start within the specified time range (inclusive), or 0 upon error
 	//For the purposes of this function, a start or stop timestamp of ULONG_MAX (the value of the start/end point variables when undefined) are considered invalid
+
+int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char stringnum, unsigned char *result);
+	//Looks up the fingering defined for the specified string of the specified normal pro guitar note
+	//If it is not defined, it is derived from the active arpeggio/handshape phrase if applicable, or from the active FHP if applicable
+	//Any defined or derived fingering is stored in *result, otherwise if no fingering can be determined, 0 is stored
+	//Returns a status value reporting the validity of the determined fingering:
+	//Returns 3 if the fingering is not defined but is derived from the active FHP (ie. is within 3 frets of the FHP, which can imply use of index, middle, ring or pinky)
+	//Returns 2 if the fingering is not defined but is derived from the active arpeggio/handshape
+	//Returns 1 if the fingering is explicitly defined and does not conflict with any arpeggio/handshape or FHP in effect at the note's start position
+	//Returns 0 if no fingering can be defined or derived
+	//Returns -1 if the note conflicts with the active arpeggio/handshape (ie. has defined fingering that contradicts the base chord's fingering for the string, or has no defined fingering but has a fret that contradicts the base chord's fret for the string)
+	//Returns -2 if the note conflicts with the active FHP (ie. has defined fingering that contradicts the active FHP by going below the FHP)
 
 #endif

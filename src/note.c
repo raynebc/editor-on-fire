@@ -800,25 +800,37 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					}
 					else
 					{	//Render the finger number instead
-						unsigned fingernum = eof_song->pro_guitar_track[tracknum]->note[notenum]->finger[ctr];	//By default, the string's fingering will display as-is
+						unsigned char fingernum = 0;
+						int retval = eof_pro_guitar_note_derive_string_fingering(eof_song, track, notenum, ctr, &fingernum);	//Determine what the fingering for this note is, deriving it from handshape/arpeggio/FHP if possible
 
-						if(eof_pro_guitar_note_fingering_valid(eof_song->pro_guitar_track[tracknum], notenum, 0) != 1)
-						{	//If the fingering is not deemed valid for this note
+						if(retval == 0)
+						{	//No fingering was determined for this gem
+							snprintf(notation, 2, " ");
 							dcol = eof_color_light_red;
 							if(noteflags & EOF_NOTE_FLAG_CRAZY)
 								tcol = eof_color_blue;	//Change text color to blue to contrast better
 						}
 						else
 						{
-							dcol = eof_color_even_lighter_blue;
-						}
-						if(!fingernum)
-							snprintf(notation, 2, " ");		//Fingering not defined for this string
-						else
-						{
 							if(fingernum == 5)
 								fingernum = 0;	//Convert from EOF's numbering (5 = thumb) to Rocksmith's numbering (0 = thumb)
-							snprintf(notation, 2, "%u", fingernum);
+
+							if(retval == 1)
+							{	//The fingering is explicitly defined for this gem
+								dcol = eof_color_even_lighter_blue;
+								snprintf(notation, 2, "%u", fingernum);
+							}
+							else if(retval < 0)
+							{	//The gem has an invalid defined fingering or fret value
+								dcol = eof_color_yellow;
+								snprintf(notation, 2, "%u", fingernum);
+							}
+							else
+							{	//Values above 1 indicate that the fingering can be derived from a handshape/arpeggio definition or the active FHP
+								dcol = makecol(254, 0, 254);	//Lower the red and blue intensity by one each because pure purple (FF00FF) is treated as a transparency color by Allegro
+								tcol = eof_color_yellow;
+								snprintf(notation, 2, "%u", fingernum);
+							}
 						}
 						fretbmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, font);
 					}
