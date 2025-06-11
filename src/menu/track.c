@@ -4340,7 +4340,7 @@ int eof_track_rs_tone_names_rename(DIALOG * d)
 	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_track_rs_tone_change_add_dialog);
 	strncpy(eof_etext, eof_track_rs_tone_names_list_strings[namenum], EOF_SECTION_NAME_LENGTH);
-	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
+	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
 	{	//User clicked OK
 		if((eof_etext[0] != '\0') && strcmp(eof_track_rs_tone_names_list_strings[namenum], eof_etext))
 		{	//If a tone key name was specified and it is different from the key name it already had

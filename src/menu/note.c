@@ -1550,9 +1550,11 @@ int eof_menu_note_transpose_up(void)
 				{	//If a pro guitar note will tranpose, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 7; j > 0; j--)
 					{	//For the upper 7 frets
-						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];		//Cycle fret values up from lower lane
+						eof_song->pro_guitar_track[tracknum]->note[i]->finger[j] = eof_song->pro_guitar_track[tracknum]->note[i]->finger[j-1];	//Do the same for fingering
 					}
 					eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
+					eof_song->pro_guitar_track[tracknum]->note[i]->finger[0] = 0;		//Re-initialize lane 1 fingering
 				}
 				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is in effect, set the note's legacy bitmask
@@ -1560,7 +1562,7 @@ int eof_menu_note_transpose_up(void)
 				}
 				else
 				{	//Otherwise set the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
+					eof_song->pro_guitar_track[tracknum]->note[i]->note = note;
 				}
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If a pro guitar track is active, update the note's ghost bitmask
@@ -1626,9 +1628,11 @@ int eof_menu_note_transpose_down(void)
 				{	//If a pro guitar note will tranpose, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 0; j < 7; j++)
 					{	//For the 7 supported lower frets
-						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];		//Cycle fret values down from upper lane
+						eof_song->pro_guitar_track[tracknum]->note[i]->finger[j] = eof_song->pro_guitar_track[tracknum]->note[i]->finger[j+1];	//Do the same for fingering
 					}
-					eof_song->pro_guitar_track[tracknum]->note[i]->frets[7] = 0xFF;	//Re-initialize lane 15 to the default of (muted)
+					eof_song->pro_guitar_track[tracknum]->note[i]->frets[7] = 0xFF;	//Re-initialize lane 7 to the default of (muted)
+					eof_song->pro_guitar_track[tracknum]->note[i]->finger[7] = 0;		//Re-initialize lane 7 fingering
 				}
 				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is in effect, set the note's legacy bitmask
@@ -1636,7 +1640,7 @@ int eof_menu_note_transpose_down(void)
 				}
 				else
 				{	//Otherwise set the note's normal bitmask
-					eof_set_note_note(eof_song, eof_selected_track, i, note);
+					eof_song->pro_guitar_track[tracknum]->note[i]->note = note;
 				}
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If a pro guitar track is active, update the note's ghost bitmask

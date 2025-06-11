@@ -710,7 +710,7 @@ unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long
 unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the ghost bitmask of the specified legacy or pro guitar note, or 0 on error
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);
 	//Sets the note value of the specified track's note/lyric
-	//If the specified note is a pro guitar note, any unused strings have their corresponding fret values reset to 0
+	//If the specified note is a pro guitar note, any unused strings have their corresponding fret values reset to 0.  All finger array entries are reset to 0 regardless of the note bitmask
 unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the accent bitmask of the specified note, or 0 on error
 void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified note
 void eof_set_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified legacy or pro guitar note

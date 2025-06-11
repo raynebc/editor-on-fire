@@ -750,6 +750,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 					break;
 				}
 				matches++;	//Keep track of how many lyrics were found to be in this line
+				lastlyricindex = ctr2;	//Keep track of the last lyric index found to be in this line
 			}
 		}
 		lastend = tp->line[ctr].end_pos;

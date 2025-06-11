@@ -87,9 +87,14 @@ int eof_window_proc(int msg, DIALOG *d, int c)
 
 	if(msg == MSG_LPRESS)
 	{
-		mouse_down = 1;
-		mouse_offt_x = mouse_x - d->x;
-		mouse_offt_y = mouse_y - d->y;
+		int x2 = d->x + d->w - 2;			//The coordinates that AGUP uses to fill in a region of the dialog to appear as a dialog title bar
+		int y2 = d->y + 9 + text_height(font);
+		if((mouse_x >= d->x) && (mouse_x <= x2) && (mouse_y >= d->y) && (mouse_y <= y2))
+		{	//If the mouse is within the dialog's title bar region
+			mouse_down = 1;
+			mouse_offt_x = mouse_x - d->x;
+			mouse_offt_y = mouse_y - d->y;
+		}
 	}
 	else if(msg == MSG_LRELEASE)
 	{
@@ -319,6 +324,10 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		}
 
 		//Dialog click and drag logic
+		if(!(mouse_b & 1))
+		{	//If the left mouse button is NOT pressed
+			mouse_down = 0;	//Cancel any click and drag logic
+		}
 		if(mouse_down)
 		{	//If the move_proc() dialog procedure is tracking that the left mouse button is being held within the specified coordinates
 			if((mouse_last_render_x != mouse_x) || (mouse_last_render_y != mouse_y))
