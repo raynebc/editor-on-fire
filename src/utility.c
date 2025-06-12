@@ -211,7 +211,7 @@ int eof_conditionally_copy_file(const char * src, const char * dest)
 		return 0;	//Invalid parameters
 
 	eof_log("eof_conditionally_copy_file() entered", 1);
-	if(file_size_ex(src) == file_size_ex(src))
+	if(file_size_ex(src) == file_size_ex(dest))
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSkipping overwrite of file \"%s\" with source file of same size.", dest);
 		eof_log(eof_log_string, 1);

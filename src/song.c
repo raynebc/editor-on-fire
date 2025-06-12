@@ -6409,8 +6409,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	eof_pro_guitar_track_fixup_hand_positions(sp, track);	//Cleanup fret hand positions
 
 	//Ensure that the note at the beginning of each arpeggio/handshape phrase is authored correctly, converting into a base chord if necessary
-	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files)
-	{	//If the user wants to save Rocksmith or Bandfuse capable files
+	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files || eof_write_immerrock_files)
+	{	//If the user wants to save Rocksmith, Bandfuse or IMMERROCK capable files
 		char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that tech notes don't get added instead of regular notes
 
 		restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
@@ -9346,18 +9346,19 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 	eof_track_sort_notes(sp, srctrack);				//This logic relies on notes being sorted by time and then by difficulty
 	notecount = eof_get_track_size(sp, srctrack);	//Cache this value, since any new notes will be appended to the track
 	eof_determine_phrase_status(sp, srctrack);		//Update the tremolo status of each note
-	ctr = 0;
-	while(ctr < notecount)
-	{	//For each pre-existing note in the source track
+	for(ctr = 0; ctr < notecount; ctr++)
+	{	//For each pre-existing note in the source track, copy the highest difficulty note at/below the target difficulty to the target difficulty
 		if(eof_get_note_type(sp, srctrack, ctr) > srcdiff)
 			continue;	//If this note is above the source difficulty, skip it
 
 		targetnote = ctr;	//Track which note is to be copied to the source difficulty
 		targetpos = eof_get_note_pos(sp, srctrack, ctr);	//Track this note's position
 		targetlength = eof_get_note_length(sp, srctrack, ctr);	//This this note's length
+
+		//Find the highest difficulty note at/below the target difficulty at each unique note timestamp
 		for(; ctr < notecount; ctr++)
 		{	//For each of the remaining pre-existing notes in the track
-			if(eof_get_note_pos(sp, srctrack, ctr) <= targetpos + threshold)
+			if((eof_get_note_pos(sp, srctrack, ctr) <= targetpos + threshold) && (eof_get_note_type(sp, srctrack, ctr) <= srcdiff))
 			{	//If this note is within the threshold of the note to be copied to the source difficulty
 				targetnote = ctr;	//This note is higher in difficulty and is a more suitable note to copy to the destination difficulty
 				targetlength = eof_get_note_length(sp, srctrack, ctr);
@@ -11476,6 +11477,15 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 		*result = np->finger[stringnum];	//If the specified note uses the specified string, store any fingering it may have defined into the result
 	else
 		return 0;	//Otherwise the note does not use the specified string and cannot have a fingering
+
+	//If the string is an open string, the fingering must be not defined in order to be valid
+	if(np->frets[stringnum] == 0)
+	{	//This string is played open
+		if(np->finger[stringnum])
+			return -3;	//If there is a finger defined for this string, this is invalid
+
+		return 1;	//Otherwise having no fingering is correct for an open string
+	}
 
 	//Validate the specified gem against any FHP in effect at the note's starting position
 	fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, np->type, np->pos);	//Find if there's a fret hand position in effect

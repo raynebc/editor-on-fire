@@ -817,7 +817,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 							if(retval == 1)
 							{	//The fingering is explicitly defined for this gem
-								dcol = eof_color_even_lighter_blue;
+								dcol = eof_color_green;
 								snprintf(notation, 2, "%u", fingernum);
 							}
 							else if(retval < 0)
@@ -827,8 +827,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 							}
 							else
 							{	//Values above 1 indicate that the fingering can be derived from a handshape/arpeggio definition or the active FHP
-								dcol = makecol(254, 0, 254);	//Lower the red and blue intensity by one each because pure purple (FF00FF) is treated as a transparency color by Allegro
-								tcol = eof_color_yellow;
+								dcol = eof_color_even_lighter_blue;
 								snprintf(notation, 2, "%u", fingernum);
 							}
 						}

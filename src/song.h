@@ -1080,6 +1080,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 	//The set is built by using the highest difficulty note at each position (notes within the threshold number of milliseconds are considered to be in the same position)
 	//The input track is expected to be authored in the style of Rocksmith, where notes in one difficulty replace or add to the notes in the lower difficulty
 	//The resulting notes are suitable for a flat difficulty system (like that used in Guitar Hero or Rock Band)
+	//The notes are expected to be sorted
 void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long startpos, unsigned long endpos, int function, int prompt, char *undo_made);
 	//Modifies notes in the specified time range of the specified track difficulty according to the specified function
 	//If the specified track is a pro guitar track, arpeggios, hand positions and tremolos in the specified time range are also modified accordingly
@@ -1238,11 +1239,13 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 	//If it is not defined, it is derived from the active arpeggio/handshape phrase if applicable, or from the active FHP if applicable
 	//Any defined or derived fingering is stored in *result, otherwise if no fingering can be determined, 0 is stored
 	//Returns a status value reporting the validity of the determined fingering:
-	//Returns 3 if the fingering is not defined but is derived from the active FHP (ie. is within 3 frets of the FHP, which can imply use of index, middle, ring or pinky)
-	//Returns 2 if the fingering is not defined but is derived from the active arpeggio/handshape
+	//Returns 3 if the fingering is not defined but can be derived from the active FHP (ie. is within 3 frets of the FHP, which can imply use of index, middle, ring or pinky)
+	//Returns 2 if the fingering is not defined but can be derived from the active arpeggio/handshape
 	//Returns 1 if the fingering is explicitly defined and does not conflict with any arpeggio/handshape or FHP in effect at the note's start position
 	//Returns 0 if no fingering can be defined or derived
 	//Returns -1 if the note conflicts with the active arpeggio/handshape (ie. has defined fingering that contradicts the base chord's fingering for the string, or has no defined fingering but has a fret that contradicts the base chord's fret for the string)
 	//Returns -2 if the note conflicts with the active FHP (ie. has defined fingering that contradicts the active FHP by going below the FHP)
+	//Returns -3 if the note is supposed to be played open but has a defined fingering
+	//The order of priority for the positive return values is 1, 2 and lastly 3 (ie. using an arpeggio's defined fingering is preferred over using a fret hand position)
 
 #endif

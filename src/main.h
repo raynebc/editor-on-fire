@@ -12,7 +12,7 @@
 #include "pathing.h"
 #include "music_pos.h"
 
-#define EOF_VERSION_STRING "EOF v1.8RC13"
+#define EOF_VERSION_STRING "EOF v1.8RC13 (6-11-2025b5)"
 #define EOF_COPYRIGHT_STRING "(c)2008-2025 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])

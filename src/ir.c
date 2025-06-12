@@ -265,8 +265,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		}
 		for(stringnum = 0, bitmask = 1; stringnum < 6; stringnum++, bitmask <<= 1)
 		{	//For each of the 6 usable strings
-			if(note & bitmask)
-			{	//If this string is used
+			if((note & bitmask) && !(eof_get_note_ghost(sp, track, i) & bitmask))
+			{	//If this string is used and is not a ghost note
 				channel = stringnum;	//IMMERROCK uses channel 0 for the thickest string
 				eof_add_midi_event(deltapos, 0x90, pitches[stringnum], 79, channel);				//Velocity 79 indicates a note pitch definition
 				eof_add_midi_event(deltapos + deltalength, 0x80, pitches[stringnum], 79, channel);
@@ -326,11 +326,13 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				}
 
 				//Write finger placement markers
-				finger = tp->pgnote[i]->finger[stringnum];
-				if((finger > 0) && (finger < 6))
-				{	//If this string has a defined fingering that is valid
-					eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[stringnum], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in IMMERROCK
-					eof_add_midi_event_indexed(deltapos, 0x80, finger_marker[finger], 0, 15, index++);
+				if(eof_pro_guitar_note_derive_string_fingering(sp, track, i, stringnum, &finger) > 0)
+				{	//If the fingering is manually defined or can be determined based on FHP or arpeggio/handshape definition
+					if((finger > 0) && (finger < 6))
+					{	//If this fingering is valid
+						eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[stringnum], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in IMMERROCK
+						eof_add_midi_event_indexed(deltapos, 0x80, finger_marker[finger], 0, 15, index++);
+					}
 				}
 
 				//Write bend points
