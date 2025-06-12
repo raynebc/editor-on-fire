@@ -16,6 +16,8 @@
 
 #define EOF_DEFAULT_TIME_DIVISION 480 // default time division used to convert midi_pos to msec_pos
 
+int eof_ir_export_allow_fhp_finger_placements = 0;
+
 int qsort_helper_immerrock(const void * e1, const void * e2)
 {
 //	eof_log("qsort_helper_immerrock() entered");
@@ -278,6 +280,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		///eof_add_midi_event_indexed() is used for these to ensure a correct sort order when qsort() is used
 		for(stringnum = 0, bitmask = 1; stringnum < 6; stringnum++, bitmask <<= 1)
 		{	//For each of the 6 usable strings (using velocities 1, 6, 11, 16, 21, 26 respectively)
+			int retval;
 			channel = stringnum;	//IMMERROCK uses channel 0 for the thickest string
 			if(note & bitmask)
 			{	//If this string is used
@@ -326,8 +329,20 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				}
 
 				//Write finger placement markers
-				if(eof_pro_guitar_note_derive_string_fingering(sp, track, i, stringnum, &finger) > 0)
+				retval = eof_pro_guitar_note_derive_string_fingering(sp, track, i, stringnum, &finger);
+				if(retval > 0)
 				{	//If the fingering is manually defined or can be determined based on FHP or arpeggio/handshape definition
+					if(retval == 3)
+					{	//If this string does not have a manually defined fingering but it could be derived from fret hand positions
+						if(!eof_ir_export_allow_fhp_finger_placements)
+						{	//If the user wasn't yet prompted whether to do this
+							eof_ir_export_allow_fhp_finger_placements = alert("One or more notes have undefined fingering, but these", "can be derived from fret hand positions if you trust", "their accuracy.  Allow this?", "Yes", "No", 0, 0);
+						}
+						if(eof_ir_export_allow_fhp_finger_placements != 1)
+						{	//If the user does not opts to export finger placements derived from FHPs
+							finger = 0;	//Remove the derived fingering and write no finger placement marker
+						}
+					}
 					if((finger > 0) && (finger < 6))
 					{	//If this fingering is valid
 						eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[stringnum], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in IMMERROCK
@@ -1489,6 +1504,10 @@ void eof_export_immerrock(char silent)
 	}
 
 	//Export all difficulty levels of the selected arrangements
+	if(silent)
+		eof_ir_export_allow_fhp_finger_placements = 2;	//If prompts are being suppressed, automatically decline an offer to derive missing finger placements from FHPs
+	else
+		eof_ir_export_allow_fhp_finger_placements = 0;	//Otherwise allow the user to be prompted
 	(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
 	if(ddgglead || ddggrhythm || ddggbass)
 	{	//If any of the chosen arrangements will have the flattened dynamic difficulties exported
