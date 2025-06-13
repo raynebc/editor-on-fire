@@ -111,6 +111,7 @@ MENU eof_track_menu[] =
 	{"Erase track", eof_track_erase_track, NULL, 0, NULL},
 	{"Erase track difficulty", eof_track_erase_track_difficulty, NULL, 0, NULL},
 	{"Erase &Highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
+	{"Erase note names", eof_menu_track_erase_note_names, NULL, 0, NULL},
 	{"&Thin diff. to match", NULL, eof_menu_thin_diff_menu, 0, NULL},
 	{"Delete active difficulty", eof_track_delete_difficulty, NULL, 0, NULL},
 	{"Repair grid &Snap", eof_menu_track_repair_grid_snap, NULL, 0, NULL},
@@ -288,28 +289,28 @@ void eof_prepare_track_menu(void)
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 			{	//If GHL mode is enabled for the active track
 				eof_track_phaseshift_menu[0].flags |= D_DISABLED;	//Prevent user from disabling the open strum option
-				eof_track_menu[14].flags = D_SELECTED;				//Track>Enable GHL mode
+				eof_track_menu[15].flags = D_SELECTED;				//Track>Enable GHL mode
 			}
 			else
 			{
-				eof_track_menu[14].flags = 0;
+				eof_track_menu[15].flags = 0;
 			}
 		}
 		else
 		{	//Otherwise disable and hide this item
-			eof_track_menu[14].flags = D_DISABLED | D_HIDDEN;			//Track>Enable GHL mode
+			eof_track_menu[15].flags = D_DISABLED | D_HIDDEN;			//Track>Enable GHL mode
 		}
 
 		/* (Clone Hero pathing functions) */
 		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS) || (eof_selected_track == EOF_TRACK_DRUM))
 		{	//If the active track is a legacy guitar/bass track or the keys track or the normal drum track
-			eof_track_menu[15].flags = 0;					//Track>Find optimal CH star power path
-			eof_track_menu[16].flags = 0;					//Track>Evaluate CH star power path
+			eof_track_menu[16].flags = 0;					//Track>Find optimal CH star power path
+			eof_track_menu[17].flags = 0;					//Track>Evaluate CH star power path
 		}
 		else
 		{	//Otherwise disable and hide these items
-			eof_track_menu[15].flags = D_DISABLED | D_HIDDEN;			//Track>Find optimal CH star power path
-			eof_track_menu[16].flags = D_DISABLED | D_HIDDEN;			//Track>Evaluate CH star power path
+			eof_track_menu[16].flags = D_DISABLED | D_HIDDEN;			//Track>Find optimal CH star power path
+			eof_track_menu[17].flags = D_DISABLED | D_HIDDEN;			//Track>Evaluate CH star power path
 		}
 
 		/* enable five lane drums */
@@ -5901,4 +5902,28 @@ int eof_menu_track_check_chord_snapping(void)
 	}
 
 	return 1;
+}
+
+int eof_menu_track_erase_note_names(void)
+{
+	unsigned long i;
+	char *notename = NULL, undo_made = 0;
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the track
+		notename = eof_get_note_name(eof_song, eof_selected_track, i);	//Get the note's name
+		if(!notename)
+			continue;	//If the note's name couldn't be accessed, skip it
+		if(notename[0] == '\0')
+			continue;	//If the note has no name, skip it
+
+		if(!undo_made)
+		{
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
+		}
+		notename[0] = '\0';	//Empty the note's name string
+	}
+
+	return D_O_K;
 }

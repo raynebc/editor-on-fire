@@ -1399,6 +1399,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_TRACK_NUMBER_IS_DEFINED"))
+	{
+		if(eof_song && eof_check_string(eof_song->tags->tracknumber))
+		{	//If the track number string has anything other than whitespace
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+		return 2;	//False
+	}
+
 	if(!ustricmp(macro, "IF_ANY_LYRIC_LINES_ARE_DEFINED"))
 	{
 		if(eof_song &&  eof_song->vocal_track[0]->lines)

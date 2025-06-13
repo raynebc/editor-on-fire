@@ -291,4 +291,7 @@ int eof_menu_track_check_chord_snapping(void);
 	//Prompts user for a timing unit (deltas or ms) and a threshold amount and checks the active track's notes to determine whether any chords would resnap with those criteria
 	//Such instances are highlighted and the user is prompted whether to resnap those notes int chords
 
+int eof_menu_track_erase_note_names(void);
+	//Erases the name from every note in the track
+
 #endif

@@ -16,6 +16,7 @@ IMMERROCK Panel (%TEXT_FILE%)
 %!IF_ALBUM_NAME_IS_DEFINED%%DISPLAY_WARNING%Album name metadata is undefined.
 %!IF_GENRE_IS_DEFINED%%DISPLAY_WARNING%Genre metadata is undefined.
 %!IF_YEAR_IS_DEFINED%%DISPLAY_WARNING%Year metadata is undefined.
+%!IF_TRACK_NUMBER_IS_DEFINED%%DISPLAY_WARNING%Track number metadata is undefined.
 
 ;Arrangement checks
 %!IF_IR_LEAD_ARRANGEMENT_DEFINED%%!IF_IR_RHYTHM_ARRANGEMENT_DEFINED%%!IF_IR_BASS_ARRANGEMENT_DEFINED%%DISPLAY_ERROR%None of lead, rhythm, bass arrangements defined.

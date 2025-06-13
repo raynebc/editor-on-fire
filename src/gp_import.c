@@ -1690,7 +1690,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	struct guitar_pro_bend bendstruct = {0, 0, {0}, {0}};	//Stores data about the bend being parsed
 	double laststartpos = 0, lastendpos = 0;	//Stores the start and end position of the last normal or tie note to be parsed, so bend point data can be used to create tech notes
 	double lastgracestartpos = 0, lastgraceendpos = 0;	//Stores the start and end position of the last grace note to be parsed
-	double lastgrace_duration = 0;		//Used to process the placement of grace notes and the note it applies to
 	unsigned char graceonbeat = 0;	//Tracks whether the currently-parsed grace note is on the beat instead of before it
 	unsigned char gracetrans = 0;	//Tracks the grace note's transition type
 	char new_note;					//Tracks whether a new note is to be created
@@ -3253,6 +3252,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{	//For each track
 			unsigned voice, maxvoices = 1;
 			char effective_drop_7 = drop_7;	//By default, this will reflect the user's choice regarding 7 string guitar tracks
+			EOF_PRO_GUITAR_TRACK *tp = gp->track[ctr2];	//Simplify
 
 			if(gp->instrument_types[ctr2] == 3)
 			{	//If this track is a drum track
@@ -4009,11 +4009,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
-								for(ctr5 = gp->track[ctr2]->notes; ctr5 > 0; ctr5--)
+								for(ctr5 = tp->notes; ctr5 > 0; ctr5--)
 								{	//For each previous note created for this track
-									if(gp->track[ctr2]->note[ctr5 - 1]->note & (1 << convertednum))
+									if(tp->note[ctr5 - 1]->note & (1 << convertednum))
 									{	//If the note has a gem on this string
-										frets[ctr4] = gp->track[ctr2]->note[ctr5 - 1]->frets[convertednum];	//Copy the fret number for this string
+										frets[ctr4] = tp->note[ctr5 - 1]->frets[convertednum];	//Copy the fret number for this string
 										break;
 									}
 								}
@@ -4140,7 +4140,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										EOF_PRO_GUITAR_NOTE *pgnp;
 										unsigned long length;
 
-										pgnp = eof_pro_guitar_track_add_tech_note(gp->track[ctr2]);	//Add a new tech note to the current track
+										pgnp = eof_pro_guitar_track_add_tech_note(tp);	//Add a new tech note to the current track
 										if(!pgnp)
 										{
 											eof_log("Error allocating memory (16)", 1);
@@ -4253,7 +4253,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(dur < 3)
 								{	//If the defined duration is valid
 									grace_duration = grace_durations[dur] * (double)curden / (double)curnum;	//Get this grace note's duration in measures (accounting for the time signature)
-									lastgrace_duration = grace_duration;	//Remember this for later
 									if(!curbeat && (measure_position < grace_duration) && !graceonbeat)
 									{	//If this grace note is positioned before the beginning of the chart (ie. a before the beat grace note on a note at the beginning of measure 1)
 										grace = 0;	//Ignore this grace note
@@ -4337,7 +4336,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
 									}
 									else if(byte == 2)
-									{	//If this is a legato slide
+									{	//Legato slide
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
 									}
@@ -4570,16 +4569,16 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 
 								//Search backward for correct note to alter
-								eof_pro_guitar_track_sort_notes(gp->track[ctr2]);	//Sort the track to ensure that before-the-beat grace notes are before the notes that they affect
-								for(ctr4 = gp->track[ctr2]->notes; ctr4 > 0; ctr4--)
+								eof_pro_guitar_track_sort_notes(tp);	//Sort the track to ensure that before-the-beat grace notes are before the notes that they affect
+								for(ctr4 = tp->notes; ctr4 > 0; ctr4--)
 								{	//For each imported note in this track, in reverse order
-									if(gp->track[ctr2]->note[ctr4 - 1]->note & convertedtie)
+									if(tp->note[ctr4 - 1]->note & convertedtie)
 									{	//If the note uses any of the same gems as the tie note
-										oldlength = gp->track[ctr2]->note[ctr4 - 1]->length;
-										gp->track[ctr2]->note[ctr4 - 1]->length = lastendpos - gp->track[ctr2]->note[ctr4 - 1]->pos + 0.5;	//Round up to nearest millisecond
+										oldlength = tp->note[ctr4 - 1]->length;
+										tp->note[ctr4 - 1]->length = lastendpos - tp->note[ctr4 - 1]->pos + 0.5;	//Round up to nearest millisecond
 
 #ifdef GP_IMPORT_DEBUG
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", gp->track[ctr2]->note[ctr4 - 1]->pos, oldlength, gp->track[ctr2]->note[ctr4 - 1]->length);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", tp->note[ctr4 - 1]->pos, oldlength, tp->note[ctr4 - 1]->length);
 										eof_log(eof_log_string, 1);
 #endif
 										break;
@@ -4602,7 +4601,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{	//If a new note is to be created
 							char truncate = 0;	//Is set to nonzero if any conditions are met that should cause the note's sustain to be removed
 
-							np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
+							np[ctr2] = eof_pro_guitar_track_add_note(tp);	//Add a new note to the current track
 							if(!np[ctr2])
 							{
 								eof_log("Error allocating memory (17)", 1);
@@ -4659,9 +4658,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 							{	//If the note had an unpitched slide
 								np[ctr2]->unpitchend = unpitchend;	//Apply the end position that was previously determined
-								if(unpitchend > gp->track[ctr2]->numfrets)
+								if(unpitchend > tp->numfrets)
 								{	//If this unpitched slide requires the fret limit to be increased
-									gp->track[ctr2]->numfrets = unpitchend;	//Make it so
+									tp->numfrets = unpitchend;	//Make it so
 								}
 							}
 							np[ctr2]->legacymask = 0;
@@ -4720,7 +4719,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, np[ctr2]->pos, np[ctr2]->length);
+							if((tp->notes > 2) && (tp->note[tp->notes - 1]->pos == tp->note[tp->notes - 2]->pos))
+							{	//If this note is at the same timestamp as the previous imported note, it could be due to weird grace notes, and there are at least two previous notes
+								tp->note[tp->notes - 2]->pos -= (tp->note[tp->notes - 1]->pos - tp->note[tp->notes - 3]->pos) / 2 ;	//Move the previous note half-way between the one before and after it
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tDue to strange note timing, note #%lu was moved to Start: %lums", tp->notes - 2, tp->note[tp->notes - 2]->pos);
+								eof_log(eof_log_string, 1);
+							}
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %ldms\tFrets: ", tp->notes - 1, np[ctr2]->pos, np[ctr2]->length);
 							assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
 							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
 							{	//For each of this track's natively supported strings
@@ -4762,7 +4767,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{	//If a new grace note is to be created
 							EOF_PRO_GUITAR_NOTE *gnp;
 
-							gnp = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
+							gnp = eof_pro_guitar_track_add_note(tp);	//Add a new note to the current track
 							if(!gnp)
 							{
 								eof_log("Error allocating memory (18)", 1);
@@ -4841,11 +4846,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(!(gnp->note & bitmask))
 									continue;	//If this string isn't used by the grace note, skip it
 
+								//Process the grace note transition
 								if(gracetrans == 1)
 								{	//Grace note slides into normal note
 									gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
-									gnp->slideend = np[ctr2]->frets[ctr4];				//The end of slide position is the fret position of the note the grace note affects
-									gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Add linknext status to the grace note so it appears nicely as a slide-in in Rocksmith
+									if(!gnp->slideend || (np[ctr2]->frets[ctr4] < gnp->slideend))
+									{	//Track the lowest fret value for the slide end position
+										gnp->slideend = np[ctr2]->frets[ctr4];						//The end of slide position is the fret position of the note the grace note affects
+									}
+									gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;		//Add linknext status to the grace note so it appears nicely as a slide-in in Rocksmith
 									if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
 									{	//If the grace note's fret value is higher than the normal note's
 										gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The grace note slides down
@@ -4884,7 +4893,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(graceonbeat)
 							{	//If this grace note displaces the note it is associated with
 								np[ctr2]->pos += gnp->length;			//Delay the note by the length of the grace note
-								measure_position += lastgrace_duration;	//Advance the measure position by the same amount so the next note is the appropriate amount further in
 								if(np[ctr2]->length >= gnp->length)
 									np[ctr2]->length -= gnp->length;	//Shorten the note by the same length if possible
 #ifdef GP_IMPORT_DEBUG
@@ -4904,9 +4912,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									gnp->length = 1;
 								}
 							}
-							eof_pro_guitar_track_sort_notes(gp->track[ctr2]);	//Sort so that the grace note is earlier than the note it applies to, to allow the tie note logic to work as expected
+							eof_pro_guitar_track_sort_notes(tp);	//Sort so that the grace note is earlier than the note it applies to, to allow the tie note logic to work as expected
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tGrace note #%lu (%s beat):  Start: %lums\tLength: %ldms\tFrets: ", gp->track[ctr2]->notes - 1, (graceonbeat ? "On" : "Before"), gnp->pos, gnp->length);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tGrace note #%lu (%s beat):  Start: %lums\tLength: %ldms\tFrets: ", tp->notes - 1, (graceonbeat ? "On" : "Before"), gnp->pos, gnp->length);
 							assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
 							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
 							{	//For each of this track's natively supported strings

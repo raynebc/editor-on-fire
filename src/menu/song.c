@@ -1106,7 +1106,7 @@ int eof_menu_song_properties(void)
 		neweof_fret_hand_pos_1_pb = (eof_song_properties_dialog[26].flags & D_SELECTED) ? 1 : 0;
 		newaccurate_ts = (eof_song_properties_dialog[27].flags & D_SELECTED) ? 1 : 0;
 		newfoflc_export_without_pitch_shifts = (eof_song_properties_dialog[28].flags & D_SELECTED) ? 1 : 0;
-		if(ustricmp(eof_song->tags->title, eof_etext) || ustricmp(eof_song->tags->artist, eof_etext2) || ustricmp(eof_song->tags->frettist, eof_etext3) || ustricmp(eof_song->tags->year, eof_etext5) || ustricmp(eof_song->tags->loading_text, eof_etext6) || ustricmp(eof_song->tags->album, eof_etext8) || ustricmp(eof_song->tags->genre, eof_etext9))
+		if(ustricmp(eof_song->tags->title, eof_etext) || ustricmp(eof_song->tags->artist, eof_etext2) || ustricmp(eof_song->tags->frettist, eof_etext3) || ustricmp(eof_song->tags->year, eof_etext5) || ustricmp(eof_song->tags->loading_text, eof_etext6) || ustricmp(eof_song->tags->album, eof_etext8) || ustricmp(eof_song->tags->genre, eof_etext9) || ustricmp(eof_song->tags->tracknumber, eof_etext10))
 		{	//If any of the text fields were changed
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			undo_made = 1;

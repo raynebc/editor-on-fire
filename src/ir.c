@@ -878,8 +878,8 @@ unsigned long eof_count_immerrock_chords_missing_fingering(unsigned long *total)
 		{	//If this note isn't in the target difficulty (static or dynamic as applicable)
 			continue;	//Skip it
 		}
-		if(eof_note_count_rs_lanes(eof_song, eof_selected_track, ctr, 1) > 1)
-		{	//If the note has at least two gems that aren't ghosted or muted
+		if(eof_note_count_rs_lanes(eof_song, eof_selected_track, ctr, 1 | 4) > 1)
+		{	//If the note has at least two gems that aren't string muted (cound ghosted gems)
 			if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
 			{	//If the fingering is not deemed valid for this note
 				count++;
@@ -1210,6 +1210,11 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	{	//If the string has anything other than whitespace
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Author=%s\n", sp->tags->frettist);
 		(void) pack_fputs(temp_string, fp);	//Write chart author
+	}
+	if(eof_check_string(sp->tags->tracknumber))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "TrackNumber=%s\n", sp->tags->tracknumber);
+		(void) pack_fputs(temp_string, fp);	//Write track number
 	}
 	(void) pack_fclose(fp);
 
