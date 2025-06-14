@@ -510,4 +510,9 @@ int eof_menu_note_toggle_disjointed(void);
 int eof_menu_note_split_lyric_line_after_selected(void);
 	//For each selected lyric, splits/ends the lyric line containing the lyric at the lyric's end position
 
+int eof_menu_note_move_note_start(void);
+	//If a single note/lyric is selected, and the seek position is before its end position, changes its start position to the seek position
+int eof_menu_note_move_note_end(void);
+	//If a single note/lyric is selected, and the seek position is after its start position, changes its end position to the seek position
+
 #endif

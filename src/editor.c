@@ -1583,69 +1583,87 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);
 	}
 
-	/* rewind (Left, non Feedback input methods) */
-	/* Decrease grid snap (Left, Feedback input method)*/
+	/* rewind (Left arrow, non Feedback input methods) */
+	/* Decrease grid snap (Left arrow, Feedback input method)*/
+	/* move note start position (ALT+Right arrow) */
 	if(key[KEY_LEFT])
 	{
-		if(eof_input_mode == EOF_INPUT_FEEDBACK)
+		if(KEY_EITHER_ALT)
 		{
-			stop_sample(eof_sound_grid_snap);
-			(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
-			eof_snap_mode--;
-			if(eof_snap_mode < 0)
-			{
-				eof_snap_mode = EOF_SNAP_NINTY_SIXTH;
-			}
-			key[KEY_LEFT] = 0;
+			(void) eof_menu_note_move_note_start();
+			eof_use_key();
 		}
 		else
 		{
-			if(eof_fb_seek_controls)
-			{	//If the "Use dB style seek controls" preference is enabled
-				(void) eof_menu_song_seek_previous_grid_snap();
+			if(eof_input_mode == EOF_INPUT_FEEDBACK)
+			{
+				stop_sample(eof_sound_grid_snap);
+				(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+				eof_snap_mode--;
+				if(eof_snap_mode < 0)
+				{
+					eof_snap_mode = EOF_SNAP_NINTY_SIXTH;
+				}
 				key[KEY_LEFT] = 0;
 			}
 			else
 			{
-				eof_music_rewind();
-				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
-				{	//If user is trying to seek at the slowest speed,
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_LEFT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+				if(eof_fb_seek_controls)
+				{	//If the "Use dB style seek controls" preference is enabled
+					(void) eof_menu_song_seek_previous_grid_snap();
+					key[KEY_LEFT] = 0;
+				}
+				else
+				{
+					eof_music_rewind();
+					if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+					{	//If user is trying to seek at the slowest speed,
+						eof_shift_used = 1;	//Track that the SHIFT key was used
+						key[KEY_LEFT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+					}
 				}
 			}
 		}
 	}
 
-	/* fast forward (Right, non Feedback input methods) */
-	/* Increase grid snap (Right, Feedback input method)*/
+	/* fast forward (Right arrow, non Feedback input methods) */
+	/* Increase grid snap (Right arrow, Feedback input method)*/
+	/* move note end position (ALT+Right arrow) */
 	if(key[KEY_RIGHT])
 	{
-		if(eof_input_mode == EOF_INPUT_FEEDBACK)
+		if(KEY_EITHER_ALT)
 		{
-			stop_sample(eof_sound_grid_snap);
-			(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
-			eof_snap_mode++;
-			if(eof_snap_mode > EOF_SNAP_NINTY_SIXTH)
-			{
-				eof_snap_mode = 0;
-			}
-			key[KEY_RIGHT] = 0;
+			(void) eof_menu_note_move_note_end();
+			eof_use_key();
 		}
 		else
 		{
-			if(eof_fb_seek_controls)
-			{	//If the "Use dB style seek controls" preference is enabled
-				(void) eof_menu_song_seek_next_grid_snap();
+			if(eof_input_mode == EOF_INPUT_FEEDBACK)
+			{
+				stop_sample(eof_sound_grid_snap);
+				(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+				eof_snap_mode++;
+				if(eof_snap_mode > EOF_SNAP_NINTY_SIXTH)
+				{
+					eof_snap_mode = 0;
+				}
 				key[KEY_RIGHT] = 0;
 			}
 			else
 			{
-				eof_music_forward();
-				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
-				{	//If user is trying to seek at the slowest speed,
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					key[KEY_RIGHT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+				if(eof_fb_seek_controls)
+				{	//If the "Use dB style seek controls" preference is enabled
+					(void) eof_menu_song_seek_next_grid_snap();
+					key[KEY_RIGHT] = 0;
+				}
+				else
+				{
+					eof_music_forward();
+					if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+					{	//If user is trying to seek at the slowest speed,
+						eof_shift_used = 1;	//Track that the SHIFT key was used
+						key[KEY_RIGHT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+					}
 				}
 			}
 		}
@@ -2137,6 +2155,13 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_use_key();
 			}
 		}
+	}
+
+	if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (eof_key_code == KEY_TILDE))
+	{	//If SHIFT is held, CTRL is not held and the tilde key is pressed
+		eof_shift_used = 1;	//Track that the SHIFT key was used
+		(void) eof_menu_paste_catalog_entry_name();
+		eof_use_key();
 	}
 
 	/* toggle vocal tones (V) */
@@ -3404,7 +3429,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				else if(eof_key_char == 'x')
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void)eof_menu_pro_guitar_toggle_string_mute();
+					(void) eof_menu_pro_guitar_toggle_string_mute();
 					eof_use_key();
 				}
 			}//If SHIFT is held, but CTRL is not
@@ -3413,7 +3438,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				if(eof_key_char == 'g')
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void)eof_menu_arpeggio_mark();
+					(void) eof_menu_arpeggio_mark();
 					eof_use_key();
 				}
 			}

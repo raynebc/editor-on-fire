@@ -3522,11 +3522,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//If a pro guitar track is active
 				char temp[10];
 				unsigned char pitchmask, pitches[6] = {0}, bitmask;
+				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
 				dest_buffer[0] = '\0';	//Empty this string
 				pitchmask = eof_get_midi_pitches(eof_song, eof_selected_track, eof_selection.current, pitches);	//Determine how many exportable pitches this note/lyric has
-				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-				{	//For each of the six usable strings
+				for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+				{	//For each of the track's usable strings
 					if(pitchmask & bitmask)
 					{	//If this string has a pitch
 						snprintf(temp, sizeof(temp) - 1, "%s%u", ctr ? "," : "", pitches[ctr]);

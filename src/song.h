@@ -1248,4 +1248,7 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 	//Returns -3 if the note is supposed to be played open but has a defined fingering
 	//The order of priority for the positive return values is 1, 2 and lastly 3 (ie. using an arpeggio's defined fingering is preferred over using a fret hand position)
 
+int eof_paste_from_catalog_entry_number(unsigned long entrynum);
+	//Pastes the notes in the specified fret catalog entry at the current seek position
+
 #endif

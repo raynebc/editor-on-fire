@@ -156,6 +156,7 @@ void eof_load_config(char * fn)
 	eof_clap_for_mutes = get_config_int("preferences", "eof_clap_for_mutes", 1);
 	eof_clap_for_ghosts = get_config_int("preferences", "eof_clap_for_ghosts", 1);
 	eof_multi_pitch_metronome = get_config_int("preferences", "eof_multi_pitch_metronome", 1);
+	eof_min_midi_tone_length = get_config_int("preferences", "eof_min_midi_tone_length", 100);
 	eof_set_percussion_cue(eof_selected_percussion_cue);
 	eof_paste_erase_overlap = get_config_int("preferences", "eof_paste_erase_overlap", 0);
 	eof_write_fof_files = get_config_int("preferences", "eof_write_fof_files", 1);
@@ -629,6 +630,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_clap_for_mutes", eof_clap_for_mutes);
 	set_config_int("preferences", "eof_clap_for_ghosts", eof_clap_for_ghosts);
 	set_config_int("preferences", "eof_multi_pitch_metronome", eof_multi_pitch_metronome);
+	set_config_int("preferences", "eof_min_midi_tone_length", eof_min_midi_tone_length);
 	set_config_int("preferences", "eof_paste_erase_overlap", eof_paste_erase_overlap);
 	set_config_int("preferences", "eof_write_fof_files", eof_write_fof_files);
 	set_config_int("preferences", "eof_write_gh_files", eof_write_gh_files);

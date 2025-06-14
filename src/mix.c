@@ -57,6 +57,7 @@ int eof_percussion_volume = 100;	//Stores the volume level for the vocal percuss
 int eof_clap_for_mutes = 1;			//Specifies whether fully string muted notes trigger the clap sound cue
 int eof_clap_for_ghosts = 1;		//Specifies whether ghosted pro guitar or drum notes trigger the clap sound cue
 int eof_multi_pitch_metronome = 1;	//Specifies whether the metronome will use a lower tick for beats that aren't the first in a measure
+int eof_min_midi_tone_length = 100;	//The MIDI tones feature will pad each queued MIDI tone to at least this length
 
 int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
@@ -427,6 +428,8 @@ void eof_mix_find_claps(void)
 					eof_guitar_notes[eof_mix_guitar_notes].note = track->tuning[j] + eof_lookup_default_string_tuning_absolute(track, eof_selected_track, j) + note->frets[j] + track->capo;
 					eof_guitar_notes[eof_mix_guitar_notes].tone = tone;
 					eof_guitar_notes[eof_mix_guitar_notes].length = track->note[i]->length;
+					if(eof_guitar_notes[eof_mix_guitar_notes].length < eof_min_midi_tone_length)
+						eof_guitar_notes[eof_mix_guitar_notes].length = eof_min_midi_tone_length;	//Ensure that queued MIDI tones are at least this long
 					eof_mix_guitar_notes++;
 				}
 			}

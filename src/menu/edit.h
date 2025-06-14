@@ -252,6 +252,10 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	//Also prompts to copy any existing fret hand positions and arpeggios if the track is a pro guitar track
 	//If *undo_made is zero, an undo state is made and the referenced value is set to nonzero
 int eof_menu_edit_paste_from_catalog(void);
+	//Uses eof_paste_from_catalog_entry_number() to paste the active fret catalog entry
+int eof_menu_paste_catalog_entry_name(void);
+	//Prompts the user to enter a fret catalog entry name
+	//Uses eof_paste_from_catalog_entry_number() to paste the first fret catalog entry (if it exists) that has the same name (case insensitive match)
 
 void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, unsigned long desttrack);
 	//Clears flag bits that are invalid for the specified track and resolves status conflicts (ie. a note cannot slide up and down at the same time)

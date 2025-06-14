@@ -43,11 +43,12 @@ int eof_enable_chord_cache = 0;
 
 EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
 {
- //Standard tunings
+ //Standard bass tunings
  {"Standard tuning", "Standard tuning (0,0,0,0): EADG", 1, 4, {0,0,0,0}},
  {"Standard tuning", "Standard tuning (0,0,0,0,0): BEADG", 1, 5, {0,0,0,0,0}},
  {"Standard tuning", "Standard tuning (0,0,0,0,0,0): BEADGC", 1, 6, {0,0,0,0,0,0}},
 
+ //Standard guitar tuning
  {"Standard tuning", "Standard tuning (0,0,0,0,0,0): EADGBE", 0, 6, {0,0,0,0,0,0}},
 
  //Additional 4 string bass tunings
@@ -66,6 +67,9 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
  {"F tuning", "F tuning (-11,-11,-11,-11): FA#D#G#", 1, 4, {-11,-11,-11,-11}},
  {"Drop C tuning", "Drop C tuning (-4,0,0,0): CADG", 1, 4, {-4,0,0,0}},
  {"Drop D tuning", "Drop D tuning (-2,0,0,0): DADG", 1, 4, {-2,0,0,0}},
+
+ //Ukulele-like 4 string guitar tuning
+ {"Ukulele tuning", "Ukulele tuning (3,3,2,2): GCEA", 0, 4, {3,3,2,2}},
 
  //Additional 6 string guitar tunings
  {"Eb tuning", "Eb tuning (-1,-1,-1,-1,-1,-1): D#G#C#F#A#D#", 0, 6, {-1,-1,-1,-1,-1,-1}},
