@@ -43,7 +43,7 @@ int eof_track_rocksmith_insert_difficulty(void);
 int eof_track_delete_difficulty(void);
 	//Deletes the active difficulty's content, decrementing all higher difficulty's content accordingly
 
-char *eof_rocksmith_dynamic_difficulty_list_array[256];
+extern char *eof_rocksmith_dynamic_difficulty_list_array[256];
 	//Stores the pointer to each difficulty level's string that is allocated
 char * eof_rocksmith_dynamic_difficulty_list_proc(int index, int * size);
 	//List procedure for eof_rocksmith_dynamic_difficulty_list()
@@ -293,5 +293,14 @@ int eof_menu_track_check_chord_snapping(void);
 
 int eof_menu_track_erase_note_names(void);
 	//Erases the name from every note in the track
+
+int eof_track_set_chord_hand_mode_change(void);
+	//Uses eof_pro_guitar_track_set_hand_mode_change_at_timestamp() to set chord hand mode at the seek position
+int eof_track_set_string_hand_mode_change(void);
+	//Uses eof_pro_guitar_track_set_hand_mode_change_at_timestamp() to set string hand mode at the seek position
+int eof_track_delete_effective_hand_mode_change(void);
+	//Deletes the hand mode change in effect at the seek position
+void eof_track_pro_guitar_sort_hand_mode_changes(EOF_PRO_GUITAR_TRACK* tp);
+	//Sorts the specified track's hand mode changes by timestamp
 
 #endif

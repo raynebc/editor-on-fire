@@ -7091,6 +7091,20 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 	}
 
+	/* draw the hand mode changes */
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+
+		for(i = 0; i < tp->handmodechanges; i++)
+		{
+			xcoord = lpos + tp->handmodechange[i].start_pos / eof_zoom;
+			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_purple);
+			textprintf_centre_ex(window->screen, eof_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 16, eof_color_purple, -1, "%c", tp->handmodechange[i].end_pos ? 'S' : 'C');
+		}
+	}
+
 	/* draw fret hand positions if applicable */
 	if((eof_2d_render_top_option == 7) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the user opted to render fret hand positions at the top of the 2D panel, and this is a pro guitar track

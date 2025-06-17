@@ -421,7 +421,7 @@ void Export_UStar(FILE *outf)
 char *ConvertTempoToString(double tempo)
 {	//Takes an input double, parses it and returns a string representation in %.2f representation, with the
 	//decimal replaced by a comma.  The value is truncated, the thousanths value is not rounded up.
-	char string[15]={0};	//Max precision will be 3 digits integer part, a decimal, and 6 digits decimal part
+	char string[15]={0};		//Max precision will be 3 digits integer part, a decimal, and 6 digits decimal part
 	char *temp=NULL;		//The final string will be duplicated into an allocated array which will be returned
 	unsigned ctr=0;
 
@@ -436,8 +436,8 @@ char *ConvertTempoToString(double tempo)
 			string[ctr] = ',';
 
 	for(ctr=0;string[ctr]!='\0';ctr++)	//parse string to truncate to hundredths place
-		if((string[ctr] == ',') && (string[ctr+1] != '\0') && (string[ctr+2] != '\0'))	//If there are two digits following the comma
-			string[ctr+3]='\0';	//truncate the string after those two digits
+		if((string[ctr] == ',') && (string[ctr+1] != '\0') && (string[ctr+2] != '\0') && (string[ctr+3] != '\0'))	//If there are two digits following the comma, followed by a third digit
+			string[ctr+3]='\0';	//truncate the string after those first two digits
 
 	temp=DuplicateString(string);
 

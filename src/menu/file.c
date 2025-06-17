@@ -408,7 +408,9 @@ void eof_prepare_file_menu(void)
 {
 	if(eof_song && eof_song_loaded)
 	{	//If a chart is loaded
+		#ifdef ALLEGRO_WINDOWS
 		int has_pg_notes = eof_song_has_pro_guitar_content(eof_song);
+		#endif
 
 		eof_file_menu[2].flags = 0;	//Save
 		eof_file_menu[3].flags = 0;	//Save As

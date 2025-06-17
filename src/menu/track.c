@@ -4,7 +4,7 @@
 #include "../dialog/proc.h"
 #include "../foflc/Lyric_storage.h"
 #include "../dialog.h"
-#include "./edit.h"
+#include "../ir.h"
 #include "../main.h"
 #include "../midi.h"
 #include "../midi_import.h"
@@ -15,9 +15,10 @@
 #include "../song.h"
 #include "../tuning.h"
 #include "../undo.h"
+#include "edit.h"
+#include "main.h"
 #include "song.h"
 #include "track.h"
-#include "main.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -99,10 +100,25 @@ MENU eof_track_drumsrock_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_track_immerrock_hand_mode_menu[] =
+{
+	{"&Chord", eof_track_set_chord_hand_mode_change, NULL, 0, NULL},
+	{"&String", eof_track_set_string_hand_mode_change, NULL, 0, NULL},
+	{"&Delete effective", eof_track_delete_effective_hand_mode_change, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_track_immerrock_menu[] =
+{
+	{"&Hand mode", NULL, eof_track_immerrock_hand_mode_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_menu[] =
 {
 	{"Pro &Guitar", NULL, eof_track_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_track_rocksmith_menu, 0, NULL},
+	{"&IMMERROCK", NULL, eof_track_immerrock_menu, 0, NULL},
 	{"&Phase Shift", NULL, eof_track_phaseshift_menu, 0, NULL},
 	{"&Drums Rock", NULL, eof_track_drumsrock_menu, 0, NULL},
 	{"Set di&Fficulty", NULL, eof_track_menu_set_difficulty, 0, NULL},
@@ -155,6 +171,7 @@ void eof_prepare_track_menu(void)
 		{	//If a pro guitar track is active
 			eof_track_menu[0].flags = 0;			//Track>Pro Guitar> submenu
 			eof_track_menu[1].flags = 0;			//Track>Rocksmith> submenu
+			eof_track_menu[2].flags = 0;			//Track>IMMERROCK> submenu
 
 			if(eof_song->pro_guitar_track[tracknum]->ignore_tuning)
 			{
@@ -230,20 +247,21 @@ void eof_prepare_track_menu(void)
 		{	//Otherwise disable and hide these menu items
 			eof_track_menu[0].flags = D_DISABLED | D_HIDDEN;
 			eof_track_menu[1].flags = D_DISABLED | D_HIDDEN;
+			eof_track_menu[2].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 		{	//If a legacy track is active
-			eof_track_menu[2].flags = 0;	//Track>Phase Shift
+			eof_track_menu[3].flags = 0;	//Track>Phase Shift
 		}
 		else
 		{	//Otherwise hide and disable this menu
-			eof_track_menu[2].flags = D_DISABLED | D_HIDDEN;
+			eof_track_menu[3].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If a drum track is active
-			eof_track_menu[3].flags = 0;	//Track>Drums Rock> submenu
+			eof_track_menu[4].flags = 0;	//Track>Drums Rock> submenu
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
 			{	//If Drums Rock export is enabled for this track
 				eof_track_drumsrock_menu[0].flags = D_SELECTED;
@@ -263,7 +281,7 @@ void eof_prepare_track_menu(void)
 		}
 		else
 		{	//Otherwise disable and hide this menu
-			eof_track_menu[3].flags = D_DISABLED | D_HIDDEN;
+			eof_track_menu[4].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		/* enable open strum */
@@ -289,28 +307,28 @@ void eof_prepare_track_menu(void)
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 			{	//If GHL mode is enabled for the active track
 				eof_track_phaseshift_menu[0].flags |= D_DISABLED;	//Prevent user from disabling the open strum option
-				eof_track_menu[15].flags = D_SELECTED;				//Track>Enable GHL mode
+				eof_track_menu[16].flags = D_SELECTED;				//Track>Enable GHL mode
 			}
 			else
 			{
-				eof_track_menu[15].flags = 0;
+				eof_track_menu[16].flags = 0;
 			}
 		}
 		else
 		{	//Otherwise disable and hide this item
-			eof_track_menu[15].flags = D_DISABLED | D_HIDDEN;			//Track>Enable GHL mode
+			eof_track_menu[16].flags = D_DISABLED | D_HIDDEN;			//Track>Enable GHL mode
 		}
 
 		/* (Clone Hero pathing functions) */
 		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS) || (eof_selected_track == EOF_TRACK_DRUM))
 		{	//If the active track is a legacy guitar/bass track or the keys track or the normal drum track
-			eof_track_menu[16].flags = 0;					//Track>Find optimal CH star power path
-			eof_track_menu[17].flags = 0;					//Track>Evaluate CH star power path
+			eof_track_menu[17].flags = 0;					//Track>Find optimal CH star power path
+			eof_track_menu[18].flags = 0;					//Track>Evaluate CH star power path
 		}
 		else
 		{	//Otherwise disable and hide these items
-			eof_track_menu[16].flags = D_DISABLED | D_HIDDEN;			//Track>Find optimal CH star power path
-			eof_track_menu[17].flags = D_DISABLED | D_HIDDEN;			//Track>Evaluate CH star power path
+			eof_track_menu[17].flags = D_DISABLED | D_HIDDEN;			//Track>Find optimal CH star power path
+			eof_track_menu[18].flags = D_DISABLED | D_HIDDEN;			//Track>Evaluate CH star power path
 		}
 
 		/* enable five lane drums */
@@ -326,11 +344,11 @@ void eof_prepare_track_menu(void)
 		/* Disable expert+ bass drum */
 		if(eof_song->tags->double_bass_drum_disabled)
 		{
-			eof_track_menu[6].flags = D_SELECTED;	//Track>Disable expert+ bass drum
+			eof_track_menu[7].flags = D_SELECTED;	//Track>Disable expert+ bass drum
 		}
 		else
 		{
-			eof_track_menu[6].flags = 0;
+			eof_track_menu[7].flags = 0;
 		}
 
 		/* Unshare drum phrasing */
@@ -5926,4 +5944,44 @@ int eof_menu_track_erase_note_names(void)
 	}
 
 	return D_O_K;
+}
+
+int eof_track_set_chord_hand_mode_change(void)
+{
+	return eof_pro_guitar_track_set_hand_mode_change_at_timestamp(eof_music_pos.value - eof_av_delay, 0);
+}
+
+int eof_track_set_string_hand_mode_change(void)
+{
+	return eof_pro_guitar_track_set_hand_mode_change_at_timestamp(eof_music_pos.value - eof_av_delay, 1);
+}
+
+int eof_track_delete_effective_hand_mode_change(void)
+{
+	unsigned long index = ULONG_MAX;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+	(void) eof_pro_guitar_track_find_effective_hand_mode_change(tp, eof_music_pos.value - eof_av_delay, NULL, &index);
+	if(index <= tp->handmodechanges)
+	{	//If there is a hand mode change in effect at the current seek position in the active track difficulty
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_pro_guitar_track_delete_hand_mode_change(tp, index);	//Delete the hand mode change
+	}
+	return 1;
+}
+
+void eof_track_pro_guitar_sort_hand_mode_changes(EOF_PRO_GUITAR_TRACK* tp)
+{
+ 	eof_log("eof_track_pro_guitar_sort_hand_mode_changes() entered", 1);
+
+	if(tp)
+	{
+		qsort(tp->handmodechange, (size_t)tp->handmodechanges, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);
+	}
 }

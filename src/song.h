@@ -313,11 +313,13 @@ typedef struct
 #define EOF_PREVIEW_SECTION				13	//Unused
 #define EOF_TREMOLO_SECTION				14
 #define EOF_SLIDER_SECTION				15
-#define EOF_FRET_HAND_POS_SECTION       16
+#define EOF_FRET_HAND_POS_SECTION   16
 #define EOF_RS_POPUP_MESSAGE            17
-#define EOF_RS_TONE_CHANGE              18
-#define EOF_HANDSHAPE_SECTION		19	//Almost the same as EOF_ARPEGGIO_SECTION, but with a status flag
-#define EOF_NUM_SECTION_TYPES           19
+#define EOF_RS_TONE_CHANGE                18
+#define EOF_HANDSHAPE_SECTION          19	//Almost the same as EOF_ARPEGGIO_SECTION, but with a status flag
+#define EOF_HAND_MODE_CHANGE         20
+#define EOF_NUM_SECTION_TYPES           20
+extern char *eof_section_type_names[EOF_NUM_SECTION_TYPES + 1];
 
 
 ///Track flags
@@ -479,6 +481,10 @@ typedef struct
 	EOF_PHRASE_SECTION tonechange[EOF_MAX_PHRASES];
 	unsigned long tonechanges;
 	char defaulttone[EOF_SECTION_NAME_LENGTH + 1];
+
+	/* hand mode changes */
+	EOF_PHRASE_SECTION handmodechange[EOF_MAX_PHRASES];
+	unsigned long handmodechanges;
 
 } EOF_PRO_GUITAR_TRACK;
 
@@ -726,7 +732,7 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);
 	//Calls the appropriate sort function for the specified track.  eof_selection.multi[] is preserved before the sort and recreated afterward, since sorting invalidates
 	// the selection array due to note numbering being changed
 	//Functions that depend on notes being sorted should be able to expect that notes are sorted primarily by timestamp (ascending order) and secondarily by difficulty number (ascending order)
-int eof_song_qsort_phrase_sections(const void * e1, const void * e2);	//A generic qsort comparitor that will sort phrase sections into chronological order
+int eof_song_qsort_phrase_sections(const void * e1, const void * e2);	//A generic qsort comparitor that will sort phrase sections into chronological order by start position only
 long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one before the specified note/lyric number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
 long eof_track_fixup_next_note_applicable_to_diff(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char diff);	//Returns the next note after the specified one that is applicable to the specified difficulty, or -1 if there is none

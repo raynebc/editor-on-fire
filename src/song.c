@@ -149,6 +149,9 @@ EOF_TRACK_ENTRY eof_array_txt_tracks[EOF_GHOT_ARRAY_TXT_IMPORT_TRACK_COUNT] =
 };	//These entries map the contents exported by a modified version of Queen Bee where all track data gets saved into a series of folders
 	//"beatlines", "sections" and "timesig" have less data defined because they are not associated with a specific track
 
+char *eof_section_type_names[EOF_NUM_SECTION_TYPES + 1] = {"", "Solo", "SP", "Bookmark", "Song Catalog", "Lyric line", "Yellow cymbal", "Blue cymbal", "Green cymbal", "Trill",
+"Arpeggio", "Trainer", "Custom MIDI note", "Preview", "Tremolo", "Slider", "Fret Hand Position", "RS popup message", "RS Tone Change", "Handshape", "Hand mode change"};
+
 /* sort all notes according to position */
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
 {
@@ -2285,6 +2288,11 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		{	//For each type of section in this track
 			section_type = pack_igetw(fp);		//Read the type of section this is
 			section_count = pack_igetl(fp);		//Read the number of instances of this type of section there is
+			if(section_type <= EOF_NUM_SECTION_TYPES)
+			{	//Bounds check
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSection type:  %s, count : %lu", eof_section_type_names[section_type], section_count);
+				eof_log(eof_log_string, 2);
+			}
 			for(section_ctr=0; section_ctr<section_count; section_ctr++)
 			{	//For each instance of the specified section
 				(void) eof_load_song_string_pf(name,fp,EOF_SECTION_NAME_LENGTH + 1);	//Parse past the section name
@@ -2292,6 +2300,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				section_start = pack_igetl(fp);		//Read the start timestamp of the section
 				section_end = pack_igetl(fp);		//Read the end timestamp of the section
 				inputl = pack_igetl(fp);			//Read the section flags
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tStart:  %lums, End:  %lu", section_start, section_end);
+				eof_log(eof_log_string, 2);
 
 				//Perform the appropriate logic to load this type of section
 				switch(track_ctr)
@@ -2727,6 +2737,10 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 				*count = &tp->tonechanges;
 				*ptr = tp->tonechange;
 			break;
+			case EOF_HAND_MODE_CHANGE:
+				*count = &tp->handmodechanges;
+				*ptr = tp->handmodechange;
+			break;
 
 			default:
 			break;
@@ -2982,6 +2996,25 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					strncpy(sp->pro_guitar_track[tracknum]->defaulttone, sp->pro_guitar_track[tracknum]->tonechange[count].name, EOF_SECTION_NAME_LENGTH);
 				}
 				sp->pro_guitar_track[tracknum]->tonechanges++;
+				eof_track_pro_guitar_sort_tone_changes(sp->pro_guitar_track[tracknum]);
+				return 1;	//Return success
+			}
+		break;
+
+		case EOF_HAND_MODE_CHANGE:	//Popup message
+			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				count = sp->pro_guitar_track[tracknum]->handmodechanges;
+				if(count >= EOF_MAX_PHRASES)
+					return 1;	//If EOF can't store another hand mode change, skip doing so
+
+				sp->pro_guitar_track[tracknum]->handmodechange[count].start_pos = start;
+				sp->pro_guitar_track[tracknum]->handmodechange[count].end_pos = end;
+				sp->pro_guitar_track[tracknum]->handmodechange[count].flags = flags;
+				sp->pro_guitar_track[tracknum]->handmodechange[count].difficulty = 0xFF;	//Applies to all difficulties
+				sp->pro_guitar_track[tracknum]->handmodechange[count].name[0] = '\0';
+				sp->pro_guitar_track[tracknum]->handmodechanges++;
+				eof_track_pro_guitar_sort_hand_mode_changes(sp->pro_guitar_track[tracknum]);
 				return 1;	//Return success
 			}
 		break;
@@ -3192,7 +3225,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_start_end_points;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count,has_sp_deploy,has_ghost;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count,has_sp_deploy,has_ghost,has_handmodechanges;
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
 	int temp_file_error = 0;	//Set to nonzero if the temp files for any custom data blocks couldn't be written due to the temp files used to create the data being empty (ie. disk full)
@@ -3610,7 +3643,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			}
 
 			tracknum = sp->track[track_ctr]->tracknum;
-			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = has_popupmesages = has_tonechanges = 0;
+			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = has_popupmesages = has_tonechanges = has_handmodechanges = 0;
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
@@ -3817,7 +3850,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					{
 						has_tonechanges = 1;
 					}
-					(void) pack_iputw(has_solos + has_star_power + has_arpeggios + has_trills + has_tremolos + has_handpositions + has_popupmesages + has_tonechanges, fp);		//Write the number of section types
+					if(tp->handmodechanges)
+					{
+						has_handmodechanges = 1;
+					}
+					(void) pack_iputw(has_solos + has_star_power + has_arpeggios + has_trills + has_tremolos + has_handpositions + has_popupmesages + has_tonechanges + has_handmodechanges, fp);		//Write the number of section types
 					if(has_solos)
 					{	//Write solo sections
 						(void) pack_iputw(EOF_SOLO_SECTION, fp);			//Write solo section type
@@ -3926,6 +3963,19 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							{
 								(void) pack_iputl(0, fp);	//Write the change's end timestamp to reflect that this change's tone is NOT the default tone
 							}
+							(void) pack_iputl(0, fp);		//Write section flags (not used)
+						}
+					}
+					if(has_handmodechanges)
+					{	//Write hand mode changes
+						(void) pack_iputw(EOF_HAND_MODE_CHANGE, fp);		//Write hand mode change message section type
+						(void) pack_iputl(tp->handmodechanges, fp);			//Write number of tone changes for this track
+						for(ctr=0; ctr < tp->handmodechanges; ctr++)
+						{	//For each hand mode change in the track
+							(void) eof_save_song_string_pf("", fp);
+							(void) pack_putc(0xFF, fp);								//Write an associated difficulty of "all difficulties"
+							(void) pack_iputl(tp->handmodechange[ctr].start_pos, fp);		//Write the change's start timestamp
+							(void) pack_iputl(tp->handmodechange[ctr].end_pos, fp);		//Write the hand mode taking effect (0 = chord mode, 1 = string mode)
 							(void) pack_iputl(0, fp);		//Write section flags (not used)
 						}
 					}
@@ -9775,7 +9825,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 		}
 	}
 
-	//Delete tech notes, popup messages, hand positions and tones
+	//Delete tech notes, popup messages, hand positions, tones, hand mode changes
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar track was specified
 		//Delete tech notes
@@ -9792,7 +9842,8 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 		if(!diffonly)
 		{	//If the entire track is to be erased
 			tp->popupmessages = 0;	//Remove all of the track's popup messages
-			tp->tonechanges = 0;	//Remove all of the track's tone changes
+			tp->tonechanges = 0;		//Remove all of the track's tone changes
+			tp->handmodechanges = 0;	//Remove all hand mode changes
 		}
 		for(i = tp->handpositions; i > 0; i--)
 		{	//For each of the track's fret hand positions, in reverse order

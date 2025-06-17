@@ -2,11 +2,13 @@
 #include "beat.h"
 #include "event.h"
 #include "lc_import.h"
+#include "ir.h"
 #include "main.h"
 #include "midi.h"
 #include "mix.h"
 #include "rs.h"
 #include "silence.h"
+#include "undo.h"
 #include "utility.h"
 #include "menu/track.h"
 
@@ -518,6 +520,16 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		notes_written++;
 	}//For each note in the track
 
+	//Write hand mode changes
+	for(i = 0; i < tp->handmodechanges; i++)
+	{	//For each hand mode change in the track
+		int mode_marker = tp->handmodechange[i].end_pos ? 29 : 30;	//String mode is marked with note 29, chord mode with note 30
+
+		deltapos = eof_ConvertToDeltaTime( tp->handmodechange[i].start_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo);
+		eof_add_midi_event_indexed(deltapos, 0x90, mode_marker, 100, 15, index++);		//Note 29 or 30, channel 15 indicate string hand mode or chord hand mode respectively
+		eof_add_midi_event_indexed(deltapos, 0x80, mode_marker, 0, 15, index++);
+	}
+
 	if(!has_notes)
 	{	//If this track has no notes (in the normal note set)
 		eof_log("\tEmpty track difficulty.  Skipping export", 1);
@@ -939,6 +951,79 @@ int eof_lookup_immerrock_effective_section_at_pos(EOF_SONG *sp, unsigned long po
 		}
 	}
 	return 0;	//No matching section found
+}
+
+unsigned char eof_pro_guitar_track_find_effective_hand_mode_change(EOF_PRO_GUITAR_TRACK *tp, unsigned long position, EOF_PHRASE_SECTION **ptr, unsigned long *index)
+{
+	unsigned long ctr;
+	unsigned char effective = 0;	//The default hand mode in effect is 0 (chord)
+
+	if(!tp)
+		return 0;
+
+	for(ctr = 0; ctr < tp->handmodechanges; ctr++)
+	{	//For each hand mode change in the track
+		if(tp->handmodechange[ctr].start_pos <= position)
+		{	//If the hand mode change is at or before the specified timestamp
+			effective = tp->handmodechange[ctr].end_pos;	//Track the mode that it sets
+			if(ptr)
+				*ptr = &tp->handmodechange[ctr];
+			if(index)
+				*index = ctr;
+		}
+		else
+		{	//This hand mode change is beyond the specified timestamp
+			return effective;	//Return the last hand mode change that was found (if any)
+		}
+	}
+
+	return effective;	//Return the last hand mode change definition that was found (if any)
+}
+
+int eof_pro_guitar_track_set_hand_mode_change_at_timestamp(unsigned long timestamp, unsigned long mode)
+{
+	unsigned long tracknum;
+	EOF_PHRASE_SECTION *ptr = NULL;		//If the seek position has a hand mode change defined, this will reference it
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_song_loaded || !eof_song)
+		return D_O_K;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return D_O_K;	//Do not allow this function to run when a pro guitar format track is not active
+
+	//Find the pointer to the hand mode change at the current seek position, if there is one
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+
+	(void) eof_pro_guitar_track_find_effective_hand_mode_change(tp, timestamp, &ptr, NULL);	//Look up any mode change defined at the specified timestamp
+	if(ptr && (ptr->start_pos == timestamp) && (ptr->end_pos != mode))
+	{	//If an existing hand mode change at the specified timestamp is to be altered
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		ptr->end_pos = mode;
+	}
+	else
+	{	//A new hand mode change is to be added
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_track_add_section(eof_song, eof_selected_track, EOF_HAND_MODE_CHANGE, 0xFF, timestamp, mode, 0, "");
+	}
+
+	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+	return D_O_K;
+}
+
+void eof_pro_guitar_track_delete_hand_mode_change(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
+{
+	unsigned long ctr;
+
+	if(tp && (index < tp->handmodechanges))
+	{
+		tp->handmodechange[index].name[0] = '\0';	//Empty the name string
+		for(ctr = index; ctr < tp->handmodechanges; ctr++)
+		{
+			memcpy(&tp->handmodechange[ctr], &tp->handmodechange[ctr + 1], sizeof(EOF_PHRASE_SECTION));
+		}
+		tp->handmodechanges--;
+	}
 }
 
 int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option)

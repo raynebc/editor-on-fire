@@ -118,7 +118,7 @@ int eof_menu_set_freestyle_off(void);		//Removes freestyle for all selected lyri
 int eof_menu_toggle_freestyle(void);		//Toggles the freestyle status of all selected lyrics
 int eof_menu_lyric_remove_pitch(void);		//Removes the pitch for all selected lyrics
 
-long edit_pg_dialog_previous_note,  edit_pg_dialog_next_note, edit_pg_dialog_previous_undefined_note, edit_pg_dialog_next_undefined_note;
+extern long edit_pg_dialog_previous_note,  edit_pg_dialog_next_note, edit_pg_dialog_previous_undefined_note, edit_pg_dialog_next_undefined_note;
 	//Variables set by eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog() to allow the calling function to seek to notes when <- , << , >> or -> buttons are clicked
 
 int eof_menu_note_edit_pro_guitar_note(void);		//Allows a pro guitar note's properties to be defined

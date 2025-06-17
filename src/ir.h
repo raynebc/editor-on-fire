@@ -50,6 +50,15 @@ int eof_lookup_immerrock_effective_section_at_pos(EOF_SONG *sp, unsigned long po
 	//Examines the text events and stores the name of the section event immediately at/before thse specified position (if any) into section_name[]
 	//Returns 1 if a matching section is found.  If none is found, section_name[] is emptied and 0 is returned.  0 is returned upon error
 
+unsigned char eof_pro_guitar_track_find_effective_hand_mode_change(EOF_PRO_GUITAR_TRACK *tp, unsigned long position, EOF_PHRASE_SECTION **ptr, unsigned long *index);
+	//Returns the hand mode in effect at the specified position (0 = chord mode, 1 = string mode)
+	//If ptr is not NULL, the pointer to the effective hand mode change is returned through it
+	//If index is not NULL, the hand mode change's index number in the array is returned through it
+int eof_pro_guitar_track_set_hand_mode_change_at_timestamp(unsigned long timestamp, unsigned long mode);
+	//Sets the specified hand mode at the specified timestamp, editing any existing hand mode change at that timestamp before creating one
+void eof_pro_guitar_track_delete_hand_mode_change(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);
+	//Deletes the specified hand mode change
+
 int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option);
 	//Exports IMMERROCK files for the specified pro guitar tracks, for the specified difficulty in a folder with multiple files
 	//gglead, ggrhythm and ggbass are the track numbers to export as these arrangements, or 0 if that arrangement is not specified for export

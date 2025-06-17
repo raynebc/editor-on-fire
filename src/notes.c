@@ -5011,6 +5011,17 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "IR_TRACK_EFFECTIVE_HAND_MODE"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+			snprintf(dest_buffer, dest_buffer_size, "%s", eof_pro_guitar_track_find_effective_hand_mode_change(tp, eof_music_pos.value - eof_av_delay, NULL, NULL) ? "String" : "Chord");
+		}
+
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
