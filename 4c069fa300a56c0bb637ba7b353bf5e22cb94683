@@ -1,0 +1,3 @@
+*Adds initial logic to read from and write to the Windows clipboard using shell commands.
+****Another minor change to avoid build warnings in Linux.
+***Added an "Offer to derive finger placements from FHPs" export preference that will allow the prompt asking whether to export to IMMERROCK format so that notes with missing fingering can have fingering derived from fret hand positions if applicable, to further ensure this feature is only used deliberately.
