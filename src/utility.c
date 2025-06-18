@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include "utility.h"
 #include "main.h"	//For logging
+#include "mix.h"
 #include "foflc/RS_parse.h"	//For rs_lyric_substitute_char_extended()
 #include "modules/g-idle.h"	//For Idle()
 
@@ -11,6 +12,8 @@
 #endif
 
 unsigned short * eof_ucode_table = NULL;
+char *eof_os_clipboard = NULL;
+int eof_gas_clipboard = 0;
 
 int eof_chdir(const char * dir)
 {
@@ -100,13 +103,15 @@ int eof_system(const char * command)
 	#endif
 }
 
-void *eof_buffer_file(const char * fn, char appendnull)
+void *eof_buffer_file(const char * fn, char appendnull, char discardbom)
 {
 // 	eof_log("eof_buffer_file() entered");
 
-	void * data = NULL;
+	void * data = NULL, * dest = NULL;
+	unsigned char * cdata = NULL;
 	PACKFILE * fp = NULL;
-	size_t filesize, buffersize;
+	size_t filesize, buffersize, bytes_read = 0;
+	char bom_present = 0;
 
 	if(fn == NULL)
 		return NULL;
@@ -124,7 +129,8 @@ void *eof_buffer_file(const char * fn, char appendnull)
 	{	//If adding an extra NULL byte of padding to the end of the buffer
 		buffersize++;	//Allocate an extra byte for the padding
 	}
-	data = (char *)malloc(buffersize);
+	data = dest = malloc(buffersize);
+	cdata = (unsigned char *)data;
 	if(data == NULL)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCannot allocate %lu bytes of memory.", (unsigned long)buffersize);
@@ -133,7 +139,45 @@ void *eof_buffer_file(const char * fn, char appendnull)
 		return NULL;
 	}
 
-	(void) pack_fread(data, (long)filesize, fp);
+	//Byte order mark detection logic
+	if(discardbom && (filesize > 2))
+	{	//If the byte order mark is being checked for and this file is large enough to have it and at least one byte of data
+		if(pack_fread(data, 2, fp) == 2)
+		{	//If the first two bytes of the file could be read
+			bytes_read = 2;
+			if((cdata[0] == 0xFE) && (cdata[1] == 0xFF))
+			{
+				bom_present = 1;	//UTF-16BE
+			}
+			else if((cdata[0] == 0xFF) && (cdata[1] == 0xFE))
+			{
+				bom_present = 2;	//UTF-16LE
+			}
+			else if((cdata[0] == 0xEF) && (cdata[1] == 0xBB))
+			{	//The first two bytes of the three byte UTF-8 BOM
+				if(pack_fread(data+2, 1, fp) == 1)
+				{	//If the third byte of the file could be read
+					bytes_read++;
+					if(cdata[2] == 0xBF)
+					{
+						bom_present = 1;	//UTF-8
+					}
+				}
+			}
+		}
+		if(bom_present)
+		{	//If the byte order mark was identified, do not include it in the buffered data
+			eof_log("\t\tDiscarding BOM", 1);
+			cdata[0] = cdata[1] = cdata[2] = 0;	//The buffer is at least 3 bytes large if a BOM was detected, overwrite the BOM with zeroes
+			dest = data;	//The rest of the data will be read into the beginning of the data buffer
+		}
+		else
+		{	//There was no BOM, any bytes that were read will be kept in the data buffer
+			dest = data + bytes_read;	//Advance the destination pointer by the number of bytes being kept
+		}
+	}
+
+	(void) pack_fread(dest, (long)filesize, fp);
 	if(appendnull)
 	{	//If adding an extra NULL byte of padding to the end of the buffer
 		((char *)data)[buffersize - 1] = 0;	//Write a 0 byte at the end of the buffer
@@ -807,4 +851,76 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 	}
 	else
 		eof_log("\tLyrics OK", 1);
+}
+
+int eof_get_clipboard(void)
+{
+	eof_log("eof_get_clipboard() entered", 1);
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		return -1;
+	}
+
+	#ifdef ALLEGRO_WINDOWS
+		(void) delete_file("os_clipboard.txt");
+		if(exists("os_clipboard.txt"))
+		{
+			eof_log("!Failed to delete os_clipboard.txt", 1);
+			return -1;
+		}
+///		(void) eof_system("powershell -WindowStyle Minimized -command \"Get-Clipboard\" > os_clipboard.txt");	//The command below is better
+		(void) eof_system("powershell -WindowStyle Minimized -command \"Get-Clipboard | Out-File -Encoding utf8 -NoNewline -FilePath \"os_clipboard.txt\"\"");
+		if(!exists("os_clipboard.txt"))
+		{
+			eof_log("!Failed to create os_clipboard.txt", 1);
+			return -1;
+		}
+		if(eof_os_clipboard)
+			free(eof_os_clipboard);	//Release any previous clipboard buffer
+		eof_os_clipboard = eof_buffer_file("os_clipboard.txt", 1, 1);	//Read the clipboard file to memory, discard the BOM if present and append a NULL terminator
+		if(!eof_os_clipboard)
+		{
+			eof_log("!Failed to buffer os_clipboard.txt to memory", 1);
+			return -1;
+		}
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRead from OS clipboard:  \"%s\"", eof_os_clipboard);
+		eof_log(eof_log_string, 2);
+		if(eof_gas_clipboard)
+			play_sample(eof_sound_gas3, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip upon success, if enabled
+
+		return 0;		//Success
+	#else
+		return -1;	//Other OS clipboards not supported
+	#endif
+}
+
+int eof_set_clipboard(char *text)
+{
+	char syscommand[1024];
+	int retval;
+
+	if(!text)
+		return -1;	//Abort if there is no text
+
+	eof_log("eof_set_clipboard() entered", 1);
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		return -1;
+	}
+
+	#ifdef ALLEGRO_WINDOWS
+		(void) snprintf(syscommand, sizeof(syscommand) - 1, "echo %s|clip", text);
+		retval = eof_system(syscommand);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWrote to OS clipboard:  \"%s\"", text);
+		eof_log(eof_log_string, 2);
+		if(!retval && eof_gas_clipboard)
+			play_sample(eof_sound_gas1, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip upon success, if enabled
+		return retval;
+	#else
+		return -1;	//Other OS clipboards not supported
+	#endif
 }

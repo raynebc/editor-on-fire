@@ -7,6 +7,7 @@
 #include "menu/file.h"	//For drum velocity definitions
 #include "menu/song.h"	//For eof_set_percussion_cue()
 #include "tuning.h"
+#include "utility.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -277,6 +278,8 @@ void eof_load_config(char * fn)
 	eof_prefer_midi_friendly_grid_snapping = get_config_int("preferences", "eof_prefer_midi_friendly_grid_snapping", 1);
 	eof_dont_auto_edit_new_lyrics = get_config_int("preferences", "eof_dont_auto_edit_new_lyrics", 0);
 	eof_dont_redraw_on_exit_prompt = get_config_int("preferences", "eof_dont_redraw_on_exit_prompt", 0);
+	eof_offer_fhp_derived_finger_placements = get_config_int("preferences", "eof_offer_fhp_derived_finger_placements", 0);
+	eof_gas_clipboard = get_config_int("preferences", "eof_gas_clipboard", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -702,6 +705,8 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_prefer_midi_friendly_grid_snapping", eof_prefer_midi_friendly_grid_snapping);
 	set_config_int("preferences", "eof_dont_auto_edit_new_lyrics", eof_dont_auto_edit_new_lyrics);
 	set_config_int("preferences", "eof_dont_redraw_on_exit_prompt", eof_dont_redraw_on_exit_prompt);
+	set_config_int("preferences", "eof_offer_fhp_derived_finger_placements", eof_offer_fhp_derived_finger_placements);
+	set_config_int("preferences", "eof_gas_clipboard", eof_gas_clipboard);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

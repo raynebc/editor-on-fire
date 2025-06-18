@@ -8,9 +8,10 @@ int eof_chdir(const char * dir);		//Changes the current working directory of the
 int eof_mkdir(const char * dir);
 int eof_system(const char * command);	//Runs the specified system command, after reformatting the command string accordingly
 
-void *eof_buffer_file(const char * fn, char appendnull);
+void *eof_buffer_file(const char * fn, char appendnull, char discardbom);
 	//Loads the specified file into a memory buffer and returns the buffer, or NULL upon error
 	//If appendnull is nonzero, an extra 0 byte is written at the end of the buffer, potentially necessary if buffering a file that will be read as text, ensuring the buffer is NULL terminated
+	//If discardbom is nonzero, any EF BB BF, FE FF or FF FE byte order mark sequence at the beginning of the file is discarded and not included in the buffer
 int eof_copy_file(const char * src, const char * dest);	//Copies the source file to the destination file.  Returns 0 upon error
 int eof_conditionally_copy_file(const char * src, const char * dest);
 	//Performs eof_copy_file() if the two specified files are of a different size
@@ -72,5 +73,16 @@ int eof_byte_to_binary_string(unsigned char value, char *buffer);
 void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force);
 	//A debugging function that detects errors with lyric lines and if any are found, or if force is nonzero,
 	// logs all lyric line timings and the index number and text of each line's lyrics
+
+extern char *eof_os_clipboard;	//A memory buffer that is recreated during each call to eof_get_clipboard()
+extern int eof_gas_clipboard;		//For fun
+int eof_get_clipboard(void);
+	//Attempts to read text from the OS clipboard into os_clipboard.txt in EOF's program folder
+	//Returns nonzero on error
+	//For now, this only works with Windows
+int eof_set_clipboard(char *text);
+	//Attempts to write the specified text to the OS clipboard
+	//Returns nonzero on error
+	//For now, this only works with Windows
 
 #endif

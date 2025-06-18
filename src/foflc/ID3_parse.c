@@ -28,7 +28,7 @@
 #define U_UTF8          AL_ID('U','T','F','8')
 #define U_CURRENT       AL_ID('c','u','r','.')
 void eof_log(const char *text, int level);
-char eof_log_string[2048];
+extern char eof_log_string[2048];
 void do_uconvert(const char* s, int type, char* buf, int newtype, int size);
 #endif
 

@@ -1594,8 +1594,8 @@ void eof_export_immerrock(char silent)
 	}
 
 	//Export all difficulty levels of the selected arrangements
-	if(silent)
-		eof_ir_export_allow_fhp_finger_placements = 2;	//If prompts are being suppressed, automatically decline an offer to derive missing finger placements from FHPs
+	if(silent || !eof_offer_fhp_derived_finger_placements)
+		eof_ir_export_allow_fhp_finger_placements = 2;	//If prompts are being suppressed, or the option to prompt for this is not enabled in export preferences, automatically decline an offer to derive missing finger placements from FHPs
 	else
 		eof_ir_export_allow_fhp_finger_placements = 0;	//Otherwise allow the user to be prompted
 	(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path

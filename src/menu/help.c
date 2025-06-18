@@ -49,7 +49,7 @@ int eof_menu_help_keys(void)
 		eof_log_cwd();
 		return 1;
 	}
-	eof_help_text = eof_buffer_file("keys.txt", 1);	//Buffer the help file into memory, appending a NULL terminator
+	eof_help_text = eof_buffer_file("keys.txt", 1, 0);	//Buffer the help file into memory, appending a NULL terminator
 	if(eof_help_text == NULL)
 	{	//Could not buffer file
 		allegro_message("Error reading keys.txt");
@@ -82,7 +82,7 @@ int eof_menu_help_rocksmith_keys(void)
 		eof_log_cwd();
 		return 1;
 	}
-	eof_help_text = eof_buffer_file("rocksmith_keys.txt", 1);	//Buffer the help file into memory, appending a NULL terminator
+	eof_help_text = eof_buffer_file("rocksmith_keys.txt", 1, 0);	//Buffer the help file into memory, appending a NULL terminator
 	if(eof_help_text == NULL)
 	{	//Could not buffer file
 		allegro_message("Error reading rocksmith_keys.txt");

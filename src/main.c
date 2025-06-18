@@ -217,6 +217,7 @@ int         eof_enable_open_strums_by_default = 0;	//If nonzero, legacy tracks i
 int         eof_prefer_midi_friendly_grid_snapping = 1;	//If nonzero, the "Highlight non grid snapped notes" and "Repair grid snap" functions will only recognize grid snaps that quantize well to MIDI using the defined time division
 int         eof_dont_auto_edit_new_lyrics = 0;	//If nonzero, the edit lyric dialog is not automatically launched when a new lyric is placed
 int         eof_dont_redraw_on_exit_prompt = 0;	//If nonzero, EOF won't call eof_reset_display() before prompting to exit
+int         eof_offer_fhp_derived_finger_placements = 0;	//If nonzero, EOF will offer to derived missing finger placements based on FHPs
 double      eof_lyric_gap_multiplier = 0.0;		//If greater than zero, edited lyrics will have a minimum distance applied to them that is equal to this variable multiplied by the current grid snap
 char        eof_lyric_gap_multiplier_string[20] = {0};	//The string representation of the above value, since it is to be stored in string format in the config file
 int         eof_song_folder_prompt = 0;			//In the Mac version, tracks whether the user opted to define the song folder or not
@@ -1980,7 +1981,7 @@ int eof_load_ogg_quick(char * filename)
 		return 0;
 	}
 	eof_destroy_ogg();
-	eof_music_data = (void *)eof_buffer_file(filename, 0);
+	eof_music_data = (void *)eof_buffer_file(filename, 0, 0);
 	eof_music_data_size = file_size_ex(filename);
 
 	if(eof_music_data)
@@ -2028,7 +2029,7 @@ int eof_load_ogg(char * filename, char function)
 		return 0;	//Invalid parameters
 
 	eof_destroy_ogg();
-	eof_music_data = (void *)eof_buffer_file(filename, 0);
+	eof_music_data = (void *)eof_buffer_file(filename, 0, 0);
 	eof_music_data_size = file_size_ex(filename);
 	strncpy(dest_name, get_filename(filename), sizeof(dest_name) - 1);	//By default, the specified file's name will be stored to the OGG profile
 	strncpy(output, filename, sizeof(output) - 1);	//By default, the specified file will be the one loaded
@@ -2045,7 +2046,7 @@ int eof_load_ogg(char * filename, char function)
 			if(!eof_audio_to_ogg(returnedfn, output, dest_name, (function == 2 ? 1 : 0)))
 			{	//If the file copy or conversion to create guitar.ogg (or a suitably named OGG file if function == 2) succeeded
 				(void) replace_filename(output, filename, dest_name, 1024);
-				eof_music_data = (void *)eof_buffer_file(output, 0);
+				eof_music_data = (void *)eof_buffer_file(output, 0, 0);
 				eof_music_data_size = file_size_ex(output);
 			}
 		}
@@ -2058,7 +2059,7 @@ int eof_load_ogg(char * filename, char function)
 				(void) strncat(output, "/Contents/Resources/eof/", sizeof(output) - strlen(output) - 1);
 			#endif
 			(void) replace_filename(output, output, "second_of_silence.ogg", 1024);
-			eof_music_data = (void *)eof_buffer_file(output, 0);
+			eof_music_data = (void *)eof_buffer_file(output, 0, 0);
 			eof_music_data_size = file_size_ex(output);
 		}
 	}
@@ -4879,7 +4880,7 @@ int eof_initialize(int argc, char * argv[])
 			(void) snprintf(eof_recover_path, sizeof(eof_recover_path) - 1, "%seof.recover", eof_temp_path_s);
 			if(exists(eof_recover_path))
 			{	//If the recovery file exists
-				char *buffer = eof_buffer_file(eof_recover_path, 1);	//Read its contents into a NULL terminated string buffer
+				char *buffer = eof_buffer_file(eof_recover_path, 1, 0);	//Read its contents into a NULL terminated string buffer
 				char *ptr = NULL;
 				if(buffer)
 				{	//If the file could buffer
@@ -5263,6 +5264,8 @@ void eof_exit(void)
 		free(eof_filter_note_panel_files);
 	if(eof_filter_array_txt_files)
 		free(eof_filter_array_txt_files);
+	if(eof_os_clipboard)
+		free(eof_os_clipboard);
 
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS

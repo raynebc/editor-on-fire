@@ -1206,7 +1206,7 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 	buffer2=(char *)malloc_err(maxlinelength);	//For now, assume that any string parsed from one of the lines in the chart file will fit in this buffer
 
 	eof_log("\tBuffering Feedback chart file into memory", 1);
-	textbuffer = (char *)eof_buffer_file(filename, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
+	textbuffer = (char *)eof_buffer_file(filename, 1, 0);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
 	if(!buffer2 || !textbuffer)
 	{
 		eof_log("\tCannot allocate memory.", 1);

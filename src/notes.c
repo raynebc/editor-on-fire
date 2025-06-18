@@ -74,7 +74,7 @@ EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 		return NULL;	//Couldn't allocate memory
 
 	(void) ustrncpy(panel->filename, filename, sizeof(panel->filename) - 1);	//Copy the input file name
-	panel->text = eof_buffer_file(filename, 1);	//Buffer the specified file into memory, appending a NULL terminator
+	panel->text = eof_buffer_file(filename, 1, 0);	//Buffer the specified file into memory, appending a NULL terminator
 	if(panel->text == NULL)
 	{	//Could not buffer file
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error loading:  Cannot open input text file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure

@@ -446,6 +446,7 @@ extern int         eof_enable_open_strums_by_default;
 extern int         eof_prefer_midi_friendly_grid_snapping;
 extern int         eof_dont_auto_edit_new_lyrics;
 extern int         eof_dont_redraw_on_exit_prompt;
+extern int         eof_offer_fhp_derived_finger_placements;
 extern double      eof_lyric_gap_multiplier;
 extern char        eof_lyric_gap_multiplier_string[20];
 extern int         eof_song_folder_prompt;

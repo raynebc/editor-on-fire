@@ -176,7 +176,7 @@ filebuffer *eof_filebuffer_load(const char * fn)
 		free(buffer);
 		return NULL;	//Could not get size of file
 	}
-	buffer->buffer = eof_buffer_file(fn, 0);
+	buffer->buffer = eof_buffer_file(fn, 0, 0);
 	if(buffer->buffer == NULL)
 	{
 		free(buffer);
@@ -5356,7 +5356,7 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 	eof_gh_import_sustain_trim = 0;
 
 	///Load file into memory buffer
-	buffer = (char *)eof_buffer_file(filename, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
+	buffer = (char *)eof_buffer_file(filename, 1, 0);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
 	if(!buffer)
 		return 2;	//Failed to buffer file into memory
 

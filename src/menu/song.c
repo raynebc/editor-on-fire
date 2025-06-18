@@ -1938,7 +1938,7 @@ static long get_ogg_length(const char * fn)
 	unsigned long length = 0;
 	void * oggbuffer;
 
-	oggbuffer = eof_buffer_file(fn, 0);	//Decode the OGG from buffer instead of from file because the latter cannot support special characters in the file path due to limitations with fopen()
+	oggbuffer = eof_buffer_file(fn, 0, 0);	//Decode the OGG from buffer instead of from file because the latter cannot support special characters in the file path due to limitations with fopen()
 	if(!oggbuffer)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading OGG:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure

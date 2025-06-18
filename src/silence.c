@@ -318,7 +318,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 
 	/* Decode the OGG file into memory */
 	//Load OGG file into memory
-	oggbuffer = eof_buffer_file(oggfn, 0);	//Decode the OGG from buffer instead of from file because the latter cannot support special characters in the file path due to limitations with fopen()
+	oggbuffer = eof_buffer_file(oggfn, 0, 0);	//Decode the OGG from buffer instead of from file because the latter cannot support special characters in the file path due to limitations with fopen()
 	if(!oggbuffer)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading OGG:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure

@@ -39,6 +39,9 @@ SAMPLE *    eof_sound_clap1 = NULL;
 SAMPLE *    eof_sound_clap2 = NULL;
 SAMPLE *    eof_sound_clap3 = NULL;
 SAMPLE *    eof_sound_clap4 = NULL;
+SAMPLE *    eof_sound_gas1 = NULL;
+SAMPLE *    eof_sound_gas2 = NULL;
+SAMPLE *    eof_sound_gas3 = NULL;
 EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];	//eof_voice[0] is "clap", eof_voice[1] is "metronome", eof_voice[2] is "vocal tone", eof_voice[3] is "vocal percussion"
 char eof_mix_claps_enabled = 0;
 char eof_mix_metronome_enabled = 0;
@@ -537,6 +540,21 @@ void eof_mix_init(void)
 	eof_sound_clap2 = eof_mix_load_ogg_sample("percussion.dat#clap2.ogg");
 	eof_sound_clap3 = eof_mix_load_ogg_sample("percussion.dat#clap3.ogg");
 	eof_sound_clap4 = eof_mix_load_ogg_sample("percussion.dat#clap4.ogg");
+	eof_sound_gas1 = eof_load_wav("gas1.wav");
+	if(!eof_sound_gas1)
+	{
+		allegro_message("Couldn't load gas sound!");
+	}
+	eof_sound_gas2 = eof_load_wav("gas2.wav");
+	if(!eof_sound_gas2)
+	{
+		allegro_message("Couldn't load gas sound!");
+	}
+	eof_sound_gas3 = eof_load_wav("gas3.wav");
+	if(!eof_sound_gas3)
+	{
+		allegro_message("Couldn't load gas sound!");
+	}
 }
 
 SAMPLE *eof_mix_load_ogg_sample(char *fn)
@@ -551,7 +569,7 @@ SAMPLE *eof_mix_load_ogg_sample(char *fn)
 	{
 		return NULL;
 	}
-	buffer = eof_buffer_file(fn, 0);
+	buffer = eof_buffer_file(fn, 0, 0);
 	if(buffer)
 	{
 		temp_ogg = alogg_create_ogg_from_buffer(buffer, file_size_ex(fn));
@@ -622,6 +640,12 @@ void eof_mix_exit(void)
 	eof_sound_clap3=NULL;
 	destroy_sample(eof_sound_clap4);
 	eof_sound_clap4=NULL;
+	destroy_sample(eof_sound_gas1);
+	eof_sound_gas1=NULL;
+	destroy_sample(eof_sound_gas2);
+	eof_sound_gas2=NULL;
+	destroy_sample(eof_sound_gas3);
+	eof_sound_gas3=NULL;
 
 	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
 	{

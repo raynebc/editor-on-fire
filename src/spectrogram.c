@@ -560,7 +560,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 	}
 
 //Load OGG file into memory
-	oggbuffer = eof_buffer_file(oggfilename, 0);
+	oggbuffer = eof_buffer_file(oggfilename, 0, 0);
 	if(!oggbuffer)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Spectrogram: Failed to open input audio file: %s",strerror(errno));

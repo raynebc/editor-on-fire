@@ -62,7 +62,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 	}
 	eof_log("\tBuffering INI file into memory", 1);
 	eof_import_ini_settings = 0;
-	textbuffer = (char *)eof_buffer_file(fn, 1);	//Buffer the INI file into memory, adding a NULL terminator at the end of the buffer
+	textbuffer = (char *)eof_buffer_file(fn, 1, 0);	//Buffer the INI file into memory, adding a NULL terminator at the end of the buffer
 	if(!textbuffer)
 	{
 		eof_log("\tCannot open INI file, skipping", 1);
