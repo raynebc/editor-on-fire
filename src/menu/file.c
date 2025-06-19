@@ -362,9 +362,9 @@ DIALOG eof_file_new_dialog[] =
 	{ eof_window_proc, 0,   48,  320, 120, 2,   23,  0,    0,      0,   0,   "New Song Information",NULL, NULL },
 	{ d_agup_text_proc,   112, 56,  128, 8,   2,   23,  0,    0,      0,   0,   "",                    NULL, NULL },
 	{ d_agup_text_proc,   16,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Artist:",             NULL, NULL },
-	{ d_agup_edit_proc,   80,  80,  224, 20,  2,   23,  0,    0,      255, 0,   eof_etext,             NULL, NULL },
+	{ eof_edit_proc,   80,  80,  224, 20,  2,   23,  0,    0,      255, 0,   eof_etext,             NULL, NULL },
 	{ d_agup_text_proc,   16,  108, 64,  8,   2,   23,  0,    0,      0,   0,   "Title:",              NULL, NULL },
-	{ d_agup_edit_proc,   80,  104, 224, 20,  2,   23,  0,    0,      255, 0,   eof_etext2,            NULL, NULL },
+	{ eof_edit_proc,   80,  104, 224, 20,  2,   23,  0,    0,      255, 0,   eof_etext2,            NULL, NULL },
 	{ d_agup_button_proc, 80,  132, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
 	{ d_agup_button_proc, 160, 132, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -377,7 +377,7 @@ DIALOG eof_file_new_windows_dialog[] =
 	{ d_agup_radio_proc,  16,  84,  256, 16,  2,   23,  0,    0,      0,   0,   "Use Existing Folder",      NULL, NULL },
 	{ d_agup_radio_proc,  16,  108, 256, 16,  2,   23,  0,    0,      0,   0,   "Use Source Audio's Folder",NULL, NULL },
 	{ d_agup_radio_proc,  16,  132, 256, 16,  2,   23,  0,    0,      0,   0,   "Create New Folder",        NULL, NULL },
-	{ d_agup_edit_proc,   34,  150, 252, 20,  2,   23,  0,    0,      255, 0,   eof_etext4,                 NULL, NULL },
+	{ eof_edit_proc,   34,  150, 252, 20,  2,   23,  0,    0,      255, 0,   eof_etext4,                 NULL, NULL },
 	{ d_agup_button_proc, 80,  180, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                       NULL, NULL },
 	{ d_agup_button_proc, 160, 180, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                   NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }

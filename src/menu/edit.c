@@ -4100,7 +4100,7 @@ DIALOG eof_paste_catalog_entry_name_dialog[] =
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1)             (d2) (dp)              (dp2) (dp3) */
 	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,               0,   "Paste song catalog entry", NULL, NULL },
 	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,               0,   "Name:",          NULL, NULL },
-	{ d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      EOF_NAME_LENGTH, 0,   eof_etext,        NULL, NULL },
+	{ eof_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      EOF_NAME_LENGTH, 0,   eof_etext,        NULL, NULL },
 	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,               0,   "OK",             NULL, NULL },
 	{ d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,               0,   "Cancel",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }

@@ -188,7 +188,7 @@ DIALOG eof_events_add_dialog[] =
 	/* (proc)                    (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
 	{ eof_window_proc,        0,  48,  314, 206, 2,   23,  0,    0,      0,   0,   eof_events_add_dialog_string1,  NULL, NULL },
 	{ d_agup_text_proc,          12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
-	{ d_agup_edit_proc,          48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+	{ eof_edit_proc,          48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
 	{ d_agup_check_proc,         12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
 	{ eof_events_add_check_proc, 12, 130, 174, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith phrase marker", NULL, NULL },
 	{ d_agup_check_proc,         12, 150, 166, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith solo phrase", NULL, NULL },
@@ -206,7 +206,7 @@ DIALOG eof_floating_events_add_dialog[] =
 	/* (proc)                    (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
 	{ eof_window_proc,        0,  48,  314, 186, 2,   23,  0,    0,      0,   0,   eof_events_add_floating_dialog_string1,  NULL, NULL },
 	{ d_agup_text_proc,          12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
-	{ d_agup_edit_proc,          48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+	{ eof_edit_proc,          48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
 	{ d_agup_text_proc,          12, 110, 60,  12,  0,   0,   0,    0,      0,   0,   "Position (ms)",NULL, NULL },
 	{ eof_verified_edit_proc,    12, 130, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_check_proc,         12, 160, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
@@ -222,7 +222,7 @@ DIALOG eof_section_add_dialog[] =
 	/* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
 	{ eof_window_proc,0,  48,  314, 100, 2,   23,  0,    0,      0,   0,   eof_section_add_dialog_string1,  NULL, NULL },
 	{ d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
-	{ d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+	{ eof_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
 	{ d_agup_button_proc,67, 108, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
 	{ d_agup_button_proc,163,108, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }

@@ -696,7 +696,7 @@ DIALOG eof_track_rename_dialog[] =
 	/* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
 	{ eof_window_proc,0,  48,  314, 112, 2,   23,  0,    0,      0,   0,   "Rename track",NULL, NULL },
 	{ d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "New name:",   NULL, NULL },
-	{ d_agup_edit_proc,  90, 80,  212, 20,  2,   23,  0, 0,EOF_NAME_LENGTH,0, eof_etext,     NULL, NULL },
+	{ eof_edit_proc,  90, 80,  212, 20,  2,   23,  0, 0,EOF_NAME_LENGTH,0, eof_etext,     NULL, NULL },
 	{ d_agup_button_proc,67, 120, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
 	{ d_agup_button_proc,163,120, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -2069,7 +2069,7 @@ DIALOG eof_song_rs_popup_add_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
 	{ eof_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   "Rocksmith popup message",      NULL, NULL },
-	{ d_agup_edit_proc,      12,  30,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
+	{ eof_edit_proc,      12,  30,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
 	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
 	{ eof_verified_edit_proc,12,  72,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_text_proc,      12,  100, 60,  12,  0,   0,   0,    0,      0,   0,   "Duration (ms)",                NULL, NULL },
@@ -3639,7 +3639,7 @@ DIALOG eof_track_rs_tone_change_add_dialog[] =
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
 	{ eof_window_proc,    0,   0,   230, 161, 0,   0,   0,    0,      0,   0,   "Rocksmith tone change", NULL, NULL },
 	{ d_agup_text_proc,      12,  30,  60,  12,  0,   0,   0,    0,      0,   0,   "Tone key name:",        NULL, NULL },
-	{ d_agup_edit_proc,      12,  46,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0, eof_etext, NULL, NULL },
+	{ eof_edit_proc,      12,  46,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0, eof_etext, NULL, NULL },
 	{ d_agup_text_proc,      12,  70,  60,  12,  0,   0,   0,    0,      0,   0,   "Tone changes should not occur",        NULL, NULL },
 	{ d_agup_text_proc,      50,  85,  60,  12,  0,   0,   0,    0,      0,   0,   "on top of a note.",        NULL, NULL },
 	{ d_agup_text_proc,      12,  100,  60,  12,  0,   0,   0,    0,      0,   0,   eof_track_rs_tone_change_add_dialog_string,        NULL, NULL },
