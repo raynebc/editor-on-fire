@@ -27,6 +27,7 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 	if(msg == MSG_CHAR)
 	{
 		char do_paste = 0;
+		char do_copy = 0;
 
 		string = (char *)(d->dp2);
 
@@ -46,6 +47,11 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 			do_paste = 1;	//CTRL+V was detected
 		if((c2 >> 8 == KEY_INSERT) && (KEY_EITHER_SHIFT))
 			do_paste = 1;	//SHIFT+Insert was detected
+		if((c2 >> 8 == KEY_C) && (KEY_EITHER_CTRL))
+			do_copy = 1;	//CTRL+C was detected
+		if((c2 >> 8 == KEY_INSERT) && (KEY_EITHER_CTRL))
+			do_copy = 1;	//CTRL+Insert was detected
+
 		if(do_paste)
 		{	//If either paste combination was detected
 			if((eof_get_clipboard() == 0) && eof_os_clipboard)
@@ -69,6 +75,13 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 				(void) object_message(d, MSG_DRAW, 0);	//Redraw the text input field
 			}
 			return D_USED_CHAR;	//Drop the keypress that triggered the paste
+		}
+
+		//Copy input
+		if(do_copy)
+		{
+			(void) eof_set_clipboard(d->dp);	//Copy the contents of this input field to the clipboard
+			return D_USED_CHAR;	//Drop the keypress that triggered the copy
 		}
 
 		//Normal character input
@@ -156,10 +169,17 @@ int eof_edit_proc(int msg, DIALOG *d, int c)
 	if(msg == MSG_CHAR)
 	{
 		char do_paste = 0;
+		char do_copy = 0;
+
 		if((c2 >> 8 == KEY_V) && (KEY_EITHER_CTRL))
 			do_paste = 1;	//CTRL+V was detected
 		if((c2 >> 8 == KEY_INSERT) && (KEY_EITHER_SHIFT))
 			do_paste = 1;	//SHIFT+Insert was detected
+		if((c2 >> 8 == KEY_C) && (KEY_EITHER_CTRL))
+			do_copy = 1;	//CTRL+C was detected
+		if((c2 >> 8 == KEY_INSERT) && (KEY_EITHER_CTRL))
+			do_copy = 1;	//CTRL+Insert was detected
+
 		if(do_paste)
 		{	//If either paste combination was detected
 			if((eof_get_clipboard() == 0) && eof_os_clipboard)
@@ -178,6 +198,11 @@ int eof_edit_proc(int msg, DIALOG *d, int c)
 				(void) object_message(d, MSG_DRAW, 0);	//Redraw the text input field
 			}
 			return D_USED_CHAR;	//Drop the keypress that triggered the paste
+		}
+		if(do_copy)
+		{
+			(void) eof_set_clipboard(d->dp);	//Copy the contents of this input field to the clipboard
+			return D_USED_CHAR;	//Drop the keypress that triggered the copy
 		}
 	}
 

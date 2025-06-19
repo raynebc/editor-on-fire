@@ -864,6 +864,7 @@ int eof_get_clipboard(void)
 	}
 
 	#ifdef ALLEGRO_WINDOWS
+	//Since logic to read the Windows clipboard has been added, recreate os_clipboard.txt
 		(void) delete_file("os_clipboard.txt");
 		if(exists("os_clipboard.txt"))
 		{
@@ -877,29 +878,37 @@ int eof_get_clipboard(void)
 			eof_log("!Failed to create os_clipboard.txt", 1);
 			return -1;
 		}
-		if(eof_os_clipboard)
-			free(eof_os_clipboard);	//Release any previous clipboard buffer
-		eof_os_clipboard = eof_buffer_file("os_clipboard.txt", 1, 1);	//Read the clipboard file to memory, discard the BOM if present and append a NULL terminator
-		if(!eof_os_clipboard)
+	#else
+	//Otherwise for other Operating Systems, use os_clipboard.txt as a clipboard that is internal to EOF
+		if(!exists("os_clipboard.txt")
 		{
-			eof_log("!Failed to buffer os_clipboard.txt to memory", 1);
+			eof_log("!Failed to find os_clipboard.txt", 1);
 			return -1;
 		}
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRead from OS clipboard:  \"%s\"", eof_os_clipboard);
-		eof_log(eof_log_string, 2);
-		if(eof_gas_clipboard)
-			play_sample(eof_sound_gas3, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip upon success, if enabled
-
-		return 0;		//Success
-	#else
-		return -1;	//Other OS clipboards not supported
 	#endif
+
+	//Buffer the contents of os_clipboard.txt into eof_os_clipboard[]
+	if(eof_os_clipboard)
+		free(eof_os_clipboard);	//Release any previous clipboard buffer
+	eof_os_clipboard = eof_buffer_file("os_clipboard.txt", 1, 1);	//Read the clipboard file to memory, discard the BOM if present and append a NULL terminator
+	if(!eof_os_clipboard)
+	{
+		eof_log("!Failed to buffer os_clipboard.txt to memory", 1);
+		return -1;
+	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRead from OS clipboard:  \"%s\"", eof_os_clipboard);
+	eof_log(eof_log_string, 2);
+	if(eof_gas_clipboard)
+		play_sample(eof_sound_gas3, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip upon success, if enabled
+
+	return 0;		//Success
 }
 
 int eof_set_clipboard(char *text)
 {
 	char syscommand[1024];
-	int retval;
+	int retval = 0;
+	PACKFILE * fp;
 
 	if(!text)
 		return -1;	//Abort if there is no text
@@ -912,8 +921,28 @@ int eof_set_clipboard(char *text)
 		return -1;
 	}
 
+	(void) delete_file("os_clipboard.txt");
+	if(exists("os_clipboard.txt"))
+	{
+		eof_log("!Failed to delete os_clipboard.txt", 1);
+		return -1;
+	}
+	fp = pack_fopen("os_clipboard.txt", "w");	//Try to open the file for writing
+	if(fp)
+	{
+		(void) pack_fputs(text, fp);	//Write specified text to the file
+		(void) pack_fclose(fp);
+	}
+	if(!exists("os_clipboard.txt"))
+	{
+		eof_log("!Failed to create os_clipboard.txt", 1);
+		return -1;
+	}
+
 	#ifdef ALLEGRO_WINDOWS
-		(void) snprintf(syscommand, sizeof(syscommand) - 1, "echo %s|clip", text);
+	//For Windows, use a native command line utility to populate the clipboard
+///		(void) snprintf(syscommand, sizeof(syscommand) - 1, "echo %s|clip", text);	//This method has problems with special characters because they would need to escaped, feed the text file into clip.exe instead
+		(void) snprintf(syscommand, sizeof(syscommand) - 1, "clip < os_clipboard.txt");
 		retval = eof_system(syscommand);
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWrote to OS clipboard:  \"%s\"", text);
 		eof_log(eof_log_string, 2);
@@ -921,6 +950,7 @@ int eof_set_clipboard(char *text)
 			play_sample(eof_sound_gas1, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip upon success, if enabled
 		return retval;
 	#else
-		return -1;	//Other OS clipboards not supported
+	//Otherwise for other Operating Systems, just use os_clipboard.txt as a clipboard that is internal to EOF
+		return retval;
 	#endif
 }

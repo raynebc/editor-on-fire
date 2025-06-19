@@ -43,3 +43,4 @@ bin/eof.exe
 bin/eof.cfg
 bin/eof_log.txt
 bin/FFTW.wisdom
+/bin/os_clipboard.txt

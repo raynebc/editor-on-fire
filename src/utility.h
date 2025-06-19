@@ -77,13 +77,13 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force);
 extern char *eof_os_clipboard;	//A memory buffer that is recreated during each call to eof_get_clipboard()
 extern int eof_gas_clipboard;		//For fun
 int eof_get_clipboard(void);
-	//Attempts to read text from the OS clipboard into os_clipboard.txt in EOF's program folder
-	//If that succeeds, the contents of os_clipboard.txt is buffered into eof_os_clipboard[], the Byte Order Mark removed if present and the buffer is NULL-terminated
+	//In Windows, attempts to read text from the OS clipboard into os_clipboard.txt in EOF's program folder
+	//For other Operating Systems, attempts to read the content of os_clipboard.txt as created by eof_set_clipboard()
+	//If that succeeds, the contents of os_clipboard.txt are buffered into eof_os_clipboard[], the Byte Order Mark is removed if present and the buffer is NULL-terminated
 	//Returns nonzero on error
-	//For now, this only works with Windows
 int eof_set_clipboard(char *text);
-	//Attempts to write the specified text to the OS clipboard
+	//Deletes and recreates os_clipboard.txt to include the specified text
+	//In Windows, then attempts to write the specified text to the OS clipboard
 	//Returns nonzero on error
-	//For now, this only works with Windows
 
 #endif
