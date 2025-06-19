@@ -486,7 +486,7 @@ int eof_key_char = 0;
 int eof_key_uchar = 0;
 int eof_key_code = 0;
 int eof_close_button_clicked = 0;
-int eof_key_shifts = 0;
+int eof_key_shifts = 0;	//Used to track the value of key_shifts since the last call to eof_read_keyboard_input()
 
 ///DEBUG
 int eof_last_key_char = 0;

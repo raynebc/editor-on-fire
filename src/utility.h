@@ -78,6 +78,7 @@ extern char *eof_os_clipboard;	//A memory buffer that is recreated during each c
 extern int eof_gas_clipboard;		//For fun
 int eof_get_clipboard(void);
 	//Attempts to read text from the OS clipboard into os_clipboard.txt in EOF's program folder
+	//If that succeeds, the contents of os_clipboard.txt is buffered into eof_os_clipboard[], the Byte Order Mark removed if present and the buffer is NULL-terminated
 	//Returns nonzero on error
 	//For now, this only works with Windows
 int eof_set_clipboard(char *text);

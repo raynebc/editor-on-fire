@@ -177,10 +177,10 @@ void *eof_buffer_file(const char * fn, char appendnull, char discardbom)
 		}
 	}
 
-	(void) pack_fread(dest, (long)filesize, fp);
+	(void) pack_fread(dest, (long)filesize - bytes_read, fp);	//Read the remainder of the file, minus however many bytes were discarded for the byte order mark
 	if(appendnull)
 	{	//If adding an extra NULL byte of padding to the end of the buffer
-		((char *)data)[buffersize - 1] = 0;	//Write a 0 byte at the end of the buffer
+		((char *)data)[buffersize - 1 - bytes_read] = 0;	//Write a 0 byte at the end of the buffer, also accounting for how many bytes with discarded for the byte order mark
 	}
 	(void) pack_fclose(fp);
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile buffered to address 0x%08lX", (unsigned long)data);

@@ -6,7 +6,9 @@
 int eof_verified_edit_proc(int msg, DIALOG *d, int c);
 	//Provides an input character validation string via d->dp2.  Any user inputted character not in the string is dropped (arrow keys, delete, backspace and escape are allowed)
 	//Also performs logic involving the eof_click_changes_dialog_focus preference to prevent mouse over from giving the field focus
+int eof_focus_controlled_edit_proc(int msg, DIALOG *d, int c);
+	//Performs logic involving the eof_click_changes_dialog_focus preference to prevent mouse over from giving the field focus, otherwise processes events using d_agup_edit_proc()
 int eof_edit_proc(int msg, DIALOG *d, int c);
-     //Performs logic involving the eof_click_changes_dialog_focus preference to prevent mouse over from giving the field focus, otherwise processes events using d_agup_edit_proc()
+	//Traps CTRL+V and SHIFT+Insert to paste text from the clipboard at the cursor position, otherwise sends all dialog messages to d_agup_text_proc()
 
 #endif

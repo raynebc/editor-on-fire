@@ -1,7 +1,8 @@
 #include <allegro.h>
 #include <stdio.h>
 #include "../agup/agup.h"
-#include "../main.h"	//For declaration of eof_click_changes_dialog_focus
+#include "../main.h"		//For declaration of eof_click_changes_dialog_focus
+#include "../utility.h"	//For clipboard logic
 #include "proc.h"
 
 #ifdef USEMEMWATCH
@@ -15,7 +16,7 @@
 
 int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 {
-	int i;
+	int i, j;
 	char * string = NULL;
 	#define KEY_LIST_SIZE 9
 	unsigned key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER, KEY_TAB};
@@ -25,6 +26,10 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 
 	if(msg == MSG_CHAR)
 	{
+		char do_paste = 0;
+
+		string = (char *)(d->dp2);
+
 		if(c2 >> 8 == KEY_TAB)
 			tabused = 1;
 
@@ -36,8 +41,38 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 			}
 		}
 
+		//Paste input
+		if((c2 >> 8 == KEY_V) && (KEY_EITHER_CTRL))
+			do_paste = 1;	//CTRL+V was detected
+		if((c2 >> 8 == KEY_INSERT) && (KEY_EITHER_SHIFT))
+			do_paste = 1;	//SHIFT+Insert was detected
+		if(do_paste)
+		{	//If either paste combination was detected
+			if((eof_get_clipboard() == 0) && eof_os_clipboard)
+			{	//If the clipboard was read and buffered
+				for(i = 0; eof_os_clipboard[i] != '\0'; i++)
+				{	//For each character read from the clipboard
+					if(ustrlen(d->dp) < d->d1)
+					{	//If the string can add one more character before its limit is reached
+						for(j = 0; string[j] != '\0'; j++)	//Search all characters of the accepted characters list
+						{
+							if(!string || (string[j] == (eof_os_clipboard[i])))
+							{	//If the list of acceptable characters is undefined, or if this character from the clipboard is acceptable
+								uinsert(d->dp, d->d2++, eof_os_clipboard[i]);	//Insert the next character from the clipboard, advance the cursor in the input field by one character
+								break;
+							}
+						}
+					}
+					else
+						break;	//No more characters can be pasted
+				}
+				(void) object_message(d, MSG_DRAW, 0);	//Redraw the text input field
+			}
+			return D_USED_CHAR;	//Drop the keypress that triggered the paste
+		}
+
+		//Normal character input
 		/* see if key is an allowed key */
-		string = (char *)(d->dp2);
 		if(string == NULL)	//If the accepted characters list is NULL for some reason
 			match = 1;	//Implicitly accept the input character instead of allowing a crash
 		else
@@ -82,7 +117,7 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
 }
 
-int eof_edit_proc(int msg, DIALOG *d, int c)
+int eof_focus_controlled_edit_proc(int msg, DIALOG *d, int c)
 {
 	static char tabused = 0;	//Tracks whether the tab key was pressed but not completely processed yet
 
@@ -111,4 +146,40 @@ int eof_edit_proc(int msg, DIALOG *d, int c)
 	}
 
 	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
+}
+
+int eof_edit_proc(int msg, DIALOG *d, int c)
+{
+	unsigned long i;
+	unsigned int c2 = c;	//Cast this to satisfy Splint
+
+	if(msg == MSG_CHAR)
+	{
+		char do_paste = 0;
+		if((c2 >> 8 == KEY_V) && (KEY_EITHER_CTRL))
+			do_paste = 1;	//CTRL+V was detected
+		if((c2 >> 8 == KEY_INSERT) && (KEY_EITHER_SHIFT))
+			do_paste = 1;	//SHIFT+Insert was detected
+		if(do_paste)
+		{	//If either paste combination was detected
+			if((eof_get_clipboard() == 0) && eof_os_clipboard)
+			{	//If the clipboard was read and buffered
+				for(i = 0; eof_os_clipboard[i] != '\0'; i++)
+				{	//For each character read from the clipboard
+///					simulate_ukeypress(eof_os_clipboard[i], 0);	//Add it to the keyboard buffer to be handled by d_agup_edit_proc()	//This doesn't work, characters are processed out of order
+///					d_agup_edit_proc(MSG_CHAR, d, eof_os_clipboard[i]);	//Pass it as a character input message to ensure they are processed in the correct order	//This doesn't work either
+					if(ustrlen(d->dp) < d->d1)
+					{	//If the string can add one more character before its limit is reached
+						uinsert(d->dp, d->d2++, eof_os_clipboard[i]);	//Insert the next character from the clipboard, advance the cursor in the input field by one character
+					}
+					else
+						break;	//No more characters can be pasted
+				}
+				(void) object_message(d, MSG_DRAW, 0);	//Redraw the text input field
+			}
+			return D_USED_CHAR;	//Drop the keypress that triggered the paste
+		}
+	}
+
+	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be processed normally
 }
