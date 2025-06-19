@@ -60,7 +60,7 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 				{	//For each character read from the clipboard
 					if(ustrlen(d->dp) < d->d1)
 					{	//If the string can add one more character before its limit is reached
-						for(j = 0; string[j] != '\0'; j++)	//Search all characters of the accepted characters list
+						for(j = 0; !string || (string[j] != '\0'); j++)	//Search all characters of the accepted characters list, if one is defined
 						{
 							if(!string || (string[j] == (eof_os_clipboard[i])))
 							{	//If the list of acceptable characters is undefined, or if this character from the clipboard is acceptable

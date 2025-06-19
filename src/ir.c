@@ -1004,7 +1004,7 @@ int eof_pro_guitar_track_set_hand_mode_change_at_timestamp(unsigned long timesta
 	else
 	{	//A new hand mode change is to be added
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_track_add_section(eof_song, eof_selected_track, EOF_HAND_MODE_CHANGE, 0xFF, timestamp, mode, 0, "");
+		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_HAND_MODE_CHANGE, 0xFF, timestamp, mode, 0, "");
 	}
 
 	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard

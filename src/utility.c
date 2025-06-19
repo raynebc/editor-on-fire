@@ -880,7 +880,7 @@ int eof_get_clipboard(void)
 		}
 	#else
 	//Otherwise for other Operating Systems, use os_clipboard.txt as a clipboard that is internal to EOF
-		if(!exists("os_clipboard.txt")
+		if(!exists("os_clipboard.txt"))
 		{
 			eof_log("!Failed to find os_clipboard.txt", 1);
 			return -1;
