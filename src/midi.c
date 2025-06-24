@@ -220,7 +220,6 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data, char sysexon)
 			}
 		}
 	}
-	// cppcheck-suppress memleak symbolName=datacopy	//Cppcheck generates a false positive when the allocted memory's pointer is stored into a global array
 }
 
 void eof_add_phase_shift_sysex_phrase(unsigned long deltastart, unsigned long deltastop, unsigned char diff, unsigned char phraseid)

@@ -6626,8 +6626,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 		if(notepos + notelength < start)
 			continue;	//If this note would render before the left edge of the piano roll, skip it
-		if(notepos + notelength < start)
-			continue;	//If this note ends before the left edge of the screen (is not visible), skip it
 		if(eof_note_type != eof_get_note_type(eof_song, eof_selected_track, i))
 		{	//If the note doesn't exist in the active static difficulty
 			if(eof_flat_dd_view && eof_note_applies_to_diff(eof_song, eof_selected_track, i, eof_note_type))
@@ -6723,7 +6721,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					if(usedlanes & bitmask)
 					{	//If this lane is used in the phrase
 						int x1 = lpos + sectionptr->start_pos / eof_zoom;
-						// cppcheck-suppress shadowFunction symbolName=y1
 						int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
 						int x2 = lpos + sectionptr->end_pos / eof_zoom;
 						int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;

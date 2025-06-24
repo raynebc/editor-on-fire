@@ -50,6 +50,8 @@ extern char eof_notes_macro_fhp_exceeding_number[50];			//Stores a string identi
 extern char eof_notes_macro_note_exceeding_fret[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_NOTE_EXCEEDS_FRET_#% condition
 extern char eof_notes_macro_note_exceeding_diff[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_NOTE_EXCEEDS_DIFF_#% condition
 extern char eof_notes_macro_technique_missing_sustain[50];		//Stores a string identifying the first culprit of the %IF_RS_ANY_TECHNIQUES_MISSING_SUSTAIN% condition
+extern char eof_notes_inactive_track_has_rs_warnings;				//If nonzero, indicates that Rocksmith specific warnings were triggered for tracks other than the active track and aren't being displayed
+extern char eof_notes_inactive_track_has_rs_errors;				//If nonzero, indicates that Rocksmith specific errors were triggered for tracks other than the active track and aren't being displayed
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin);
 	//Creates a text panel and buffers the specified filename into its text variable

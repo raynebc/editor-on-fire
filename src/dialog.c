@@ -77,6 +77,10 @@ int mouse_offt_x = 0;
 int mouse_offt_y = 0;
 int mouse_last_render_x = 0;
 int mouse_last_render_y = 0;
+int title_bar_x1 = 0;
+int title_bar_y1 = 0;
+int title_bar_x2 = 0;
+int title_bar_y2 = 0;
 
 int eof_window_proc(int msg, DIALOG *d, int c)
 {
@@ -87,9 +91,17 @@ int eof_window_proc(int msg, DIALOG *d, int c)
 
 	if(msg == MSG_LPRESS)
 	{
-		int x2 = d->x + d->w - 2;			//The coordinates that AGUP uses to fill in a region of the dialog to appear as a dialog title bar
-		int y2 = d->y + 9 + text_height(font);
-		if((mouse_x >= d->x) && (mouse_x <= x2) && (mouse_y >= d->y) && (mouse_y <= y2))
+		title_bar_x1 = d->x;						//The coordinates that AGUP uses to fill in a region of the dialog to appear as a dialog title bar
+		title_bar_y1 = d->y;
+		title_bar_x2 = d->x + d->w - 2;
+		title_bar_y2 = d->y + 9 + text_height(font);
+		if(mouse_down)
+		{	//If click and drag logic is active already
+			mouse_down = 0;	//A left click would be unexpected, so interrupt click and drag
+			mouse_last_render_x = mouse_x;
+			mouse_last_render_y = mouse_y;
+		}
+		else if((mouse_x >= title_bar_x1) && (mouse_x <= title_bar_x2) && (mouse_y >= title_bar_y1) && (mouse_y <= title_bar_y2))
 		{	//If the mouse is within the dialog's title bar region
 			mouse_down = 1;
 			mouse_offt_x = mouse_x - d->x;
@@ -209,6 +221,9 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		eof_read_keyboard_input(0);	//Don't drop ASCII values for number pad key presses
 		if(eof_key_pressed)
 		{
+			mouse_down = 0;	//Any key press should interrupt a click and drag operation
+			mouse_last_render_x = mouse_x;
+			mouse_last_render_y = mouse_y;
 			if(eof_key_code == KEY_ESC)
 			{	//Escape causes the menu to close immediately
 				eof_close_menu = 1;	//Close a nested parent call to eof_popup_dialog, if any
@@ -327,17 +342,32 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		if(!(mouse_b & 1))
 		{	//If the left mouse button is NOT pressed
 			mouse_down = 0;	//Cancel any click and drag logic
+			mouse_last_render_x = mouse_x;
+			mouse_last_render_y = mouse_y;
 		}
 		if(mouse_down)
 		{	//If the move_proc() dialog procedure is tracking that the left mouse button is being held within the specified coordinates
-			if((mouse_last_render_x != mouse_x) || (mouse_last_render_y != mouse_y))
-			{	//The mouse has moved since the last re-rendering of the dialog
-				position_dialog(dp, mouse_x - mouse_offt_x, mouse_y - mouse_offt_y);	//Move the dialog according to the mouse movement
-				eof_render();	//Redraw the program window so the portion that was obscured by the dialog before the move will be visible
-				dialog_message(dp, MSG_DRAW, 0, NULL);
+			if((mouse_x >= title_bar_x1) && (mouse_x <= title_bar_x2) && (mouse_y >= title_bar_y1) && (mouse_y <= title_bar_y2))
+			{	//If the mouse is within the dialog's title bar region
+				if((mouse_last_render_x != mouse_x) || (mouse_last_render_y != mouse_y))
+				{	//The mouse has moved since the last re-rendering of the dialog
+					position_dialog(dp, mouse_x - mouse_offt_x, mouse_y - mouse_offt_y);	//Move the dialog according to the mouse movement
+					eof_render();	//Redraw the program window so the portion that was obscured by the dialog before the move will be visible
+					dialog_message(dp, MSG_DRAW, 0, NULL);
+					title_bar_x1 = dp->x;						//Update the tracked coordinates for the title bar
+					title_bar_y1 = dp->y;
+					title_bar_x2 = dp->x + dp->w - 2;
+					title_bar_y2 = dp->y + 9 + text_height(font);
+					mouse_last_render_x = mouse_x;
+					mouse_last_render_y = mouse_y;
+					dp[0].flags |= D_USER;		//Use this flag to track that the user has re-positioned the dialog
+				}
+			}
+			else
+			{	//The mouse is not within the coordinate boundaries of the dialog's title bar
+				mouse_down = 0;	//Cancel any click and drag logic
 				mouse_last_render_x = mouse_x;
 				mouse_last_render_y = mouse_y;
-				dp[0].flags |= D_USER;		//Use this flag to track that the user has re-positioned the dialog
 			}
 		}
 

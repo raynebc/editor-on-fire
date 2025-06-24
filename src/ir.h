@@ -59,6 +59,12 @@ int eof_pro_guitar_track_set_hand_mode_change_at_timestamp(unsigned long timesta
 void eof_pro_guitar_track_delete_hand_mode_change(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);
 	//Deletes the specified hand mode change
 
+unsigned long eof_ir_get_rs_section_instance_number(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned long event);
+	//Similar to eof_get_rs_section_instance_number(), but since IMMERROCK has one list of sections shared among all 3 exported arrangements,
+	// all three specified track numbers are in scope for the numbering
+	//If a Rocksmith section's associated track is 0, then it is not track specific
+	//Upon error, or if the given event is not a Rocksmith section in the specified track, 0 is returned
+
 int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option);
 	//Exports IMMERROCK files for the specified pro guitar tracks, for the specified difficulty in a folder with multiple files
 	//gglead, ggrhythm and ggbass are the track numbers to export as these arrangements, or 0 if that arrangement is not specified for export

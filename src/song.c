@@ -11456,7 +11456,7 @@ unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, un
 				}
 				if((tp->technote[ctr]->type != tp->pgnote[notenum]->type) || !(bitmask & tp->technote[ctr]->note))
 					continue;	//If the tech note isn't in the same difficulty as the pro guitar single note being exported or if it doesn't use the same string, skip it
-				if((tp->technote[ctr]->pos < pos) || (tp->technote[ctr]->pos > pos + length))
+				if(tp->technote[ctr]->pos < pos)
 					continue;	//If this tech note does not overlap with the specified pro guitar regular note, skip it
 				if(tp->technote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
 					continue;	//If this is a pre-bend tech note, skip it as there's only one valid pre-bend per string and it was written already

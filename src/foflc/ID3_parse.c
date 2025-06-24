@@ -574,10 +574,11 @@ void SYLT_Parse(struct ID3Tag *tag)
 	if(!linebreaks && Lyrics.piececount)
 	{
 		if(Lyrics.verbose)	(void) puts("\nImported ID3 lyrics did not contain line breaks, adding...");
+
+		assert_wrapper((Lyrics.lines != NULL) && (Lyrics.lines->pieces != NULL));	//This shouldn't be possible if Lyrics.piececount is nonzero
+
 		ptr=Lyrics.lines->pieces;
 		lineptr=Lyrics.lines;	//Point to first line of lyrics (should be the only line)
-
-		assert_wrapper((lineptr != NULL) && (ptr != NULL));	//This shouldn't be possible if Lyrics.piececount is nonzero
 
 		if(lineptr->next != NULL)	//If there is another line of lyrics defined
 			return;					//abort the insertion of automatic line breaks

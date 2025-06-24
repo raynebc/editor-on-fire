@@ -223,7 +223,7 @@ void WriteVarLength(FILE *outf, unsigned long value)
 
 	for(ctr=numbytes;ctr>0;ctr--)	//For each byte we need to write
 	{
-		assert_wrapper((ctr > 0) && (ctr<5));	//Prevent indexing outside of buffer[]
+		assert_wrapper(ctr<5);	//Prevent indexing outside of buffer[]
 		fwrite_err(&(buffer[4-ctr]),1,1,outf);
 	}
 }
@@ -2179,7 +2179,7 @@ int SKAR_handler(struct TEPstruct *data)
 	if(data->trackname == NULL)
 		return 0;
 
-	assert_wrapper((data->trackname != NULL) && (Lyrics.inputtrack != NULL));
+	assert_wrapper(Lyrics.inputtrack != NULL);
 	if(strcasecmp(data->trackname,Lyrics.inputtrack) != 0)
 		return 0;
 

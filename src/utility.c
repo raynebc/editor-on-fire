@@ -155,7 +155,7 @@ void *eof_buffer_file(const char * fn, char appendnull, char discardbom)
 			}
 			else if((cdata[0] == 0xEF) && (cdata[1] == 0xBB))
 			{	//The first two bytes of the three byte UTF-8 BOM
-				if(pack_fread(data+2, 1, fp) == 1)
+				if(pack_fread(cdata+2, 1, fp) == 1)
 				{	//If the third byte of the file could be read
 					bytes_read++;
 					if(cdata[2] == 0xBF)
@@ -173,7 +173,7 @@ void *eof_buffer_file(const char * fn, char appendnull, char discardbom)
 		}
 		else
 		{	//There was no BOM, any bytes that were read will be kept in the data buffer
-			dest = data + bytes_read;	//Advance the destination pointer by the number of bytes being kept
+			dest = cdata + bytes_read;	//Advance the destination pointer by the number of bytes being kept
 		}
 	}
 
@@ -906,7 +906,6 @@ int eof_get_clipboard(void)
 
 int eof_set_clipboard(char *text)
 {
-	char syscommand[1024];
 	int retval = 0;
 	PACKFILE * fp;
 
@@ -941,6 +940,8 @@ int eof_set_clipboard(char *text)
 
 	#ifdef ALLEGRO_WINDOWS
 	//For Windows, use a native command line utility to populate the clipboard
+		char syscommand[1024];
+
 ///		(void) snprintf(syscommand, sizeof(syscommand) - 1, "echo %s|clip", text);	//This method has problems with special characters because they would need to escaped, feed the text file into clip.exe instead
 		(void) snprintf(syscommand, sizeof(syscommand) - 1, "clip < os_clipboard.txt");
 		retval = eof_system(syscommand);

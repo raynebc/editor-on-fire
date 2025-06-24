@@ -5336,7 +5336,6 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 
 int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, int *prompt2, int *prompt3)
 {
-// cppcheck-suppress shadowFunction symbolName=line
 	char *buffer, *buffer2, *line;
 	int failed = 0, format = 0, gh3_format = 0, empty = 1;
 	unsigned long ctr = 0, ctr2, linesread = 0, tracknum;

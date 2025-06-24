@@ -2573,7 +2573,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F7)
 		{	//Launch Rocksmith import
 			clear_keybuf();
-			if(!eof_song || (eof_song && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)))
+			if(!eof_song || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If a chart is loaded, only allow this import to run when a pro guitar track is active
 				(void) eof_menu_file_rs_import();
 			}
@@ -5774,6 +5774,8 @@ void eof_log_cwd(void)
 
 		eof_windows_internal_argv = CommandLineToArgvW(cl, &eof_windows_argc);
 		eof_windows_argv = malloc(eof_windows_argc * sizeof(char *));
+		if(!eof_windows_argv)
+			return 0;	//Memory allocation failed, return failure
 		for(i = 0; i < eof_windows_argc; i++)
 		{
 			eof_windows_argv[i] = malloc(1024 * sizeof(char));

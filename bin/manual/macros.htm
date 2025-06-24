@@ -517,12 +517,12 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the minimum note distance defined in File>Preferences>Preferences is not configured as a 1/# beat or measure.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT%</td>
-<td>Evaluates as true if any pro guitar note has a pitched slide but does not linknext to another note, in which case the %RS_FIRST_PITCHED_SLIDE_LACKING_LINKNEXT% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT%</td>
+<td>Evaluates as true if the active pro guitar track has any pitched slides that do not linknext to another note, in which case the %RS_FIRST_PITCHED_SLIDE_LACKING_LINKNEXT% macro will print the location of the first offending note.  If a pitched slide in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_TONE_CHANGES_ON_NOTE%</td>
-<td>Evaluates as true if any pro guitar track has a tone change that occurs at the start time of any note, in which case the %RS_FIRST_TONE_CHANGE_STARTING_ON_A_NOTE% macro will print the location of the first offending tone change.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_TONE_CHANGES_ON_NOTE%</td>
+<td>Evaluates as true if the active pro guitar track has any tone changes that occur at the start time of any note, in which case the %RS_FIRST_TONE_CHANGE_STARTING_ON_A_NOTE% macro will print the location of the first offending tone change.  If a tone change in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
 <tr>
 <td>%IF_RS_NOTES_TO_SOON_AFTER_COUNT_PHRASE%</td>
@@ -541,24 +541,24 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active pro guitar track does not have any fret hand positions defined.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_NOTE_SUBCEEDS_FHP%</td>
-<td>Evaluates as true if any pro guitar note uses a fret lower than the fret hand position in effect, in which case %RS_FIRST_NOTE_SUBCEEDING_FHP% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_NOTE_SUBCEEDS_FHP%</td>
+<td>Evaluates as true if the active pro guitar track has any notes that use a fret lower than the fret hand position in effect, in which case %RS_FIRST_NOTE_SUBCEEDING_FHP% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_NON_TAP_NOTE_EXCEEDS_FHP_BY_[NUMBER]%</td>
-<td>Evaluates as true if any pro guitar notes, excluding tap notes, go >= [NUMBER] frets above the active fret hand position, in which case the %RS_FIRST_NON_TAP_NOTE_EXCEEDING_FHP% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_NON_TAP_NOTE_EXCEEDS_FHP_BY_[NUMBER]%</td>
+<td>Evaluates as true if the active pro guitar track has any notes, excluding tap notes, going >= [NUMBER] frets above the active fret hand position, in which case the %RS_FIRST_NON_TAP_NOTE_EXCEEDING_FHP% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_PITCHED_SLIDES_LACK_END_FRET%</td>
-<td>Evaluates as true if any pro guitar notes have pitched slide technique but don't define an end fret, in which case the %RS_FIRST_PITCHED_SLIDE_LACKING_END_FRET% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_PITCHED_SLIDES_LACK_END_FRET%</td>
+<td>Evaluates as true if the active pro guitar track has any notes with pitched slide technique that don't define an end fret, in which case the %RS_FIRST_PITCHED_SLIDE_LACKING_END_FRET% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_BENDS_LACK_STRENGTH_DEFINITION%</td>
-<td>Evaluates as true if any pro guitar notes have bend technique but don't define a bend strength, in which case the %RS_FIRST_BEND_LACKING_STRENGTH_DEFINITION% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_BENDS_LACK_STRENGTH_DEFINITION%</td>
+<td>Evaluates as true if the active pro guitar track has any notes with bend technique that don't define a bend strength, in which case the %RS_FIRST_BEND_LACKING_STRENGTH_DEFINITION% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_OPEN_NOTES_BEND%</td>
-<td>Evaluates as true if any pro guitar notes have an open note that bends, in which case the %RS_FIRST_OPEN_NOTE_WITH_BEND% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_OPEN_NOTES_BEND%</td>
+<td>Evaluates as true if the active pro guitar track has any open note that bend, in which case the %RS_FIRST_OPEN_NOTE_WITH_BEND% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
 </tr>
 <tr>
 <td>%IF_LEFT_MOUSE_BUTTON_HELD%</td>
@@ -585,8 +585,8 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if any beat in the project has a tempo lower than the specified [NUMBER] of beats per minute, in which case the %FIRST_BEAT_SUBCEEDING_TEMPO% macro will print the location of the first offending beat.</td>
 </tr>
 <tr>
-<td>%IF_ANY_FHP_EXCEEDS_[NUMBER]%</td>
-<td>Evaluates as true if any pro guitar track in the project has a fret hand position higher than the specified fret [NUMBER], in which case the %RS_FIRST_FHP_EXCEEDING_NUMBER% macro will print the location of the first offending fret hand position.</td>
+<td>%IF_ACTIVE_TRACK_ANY_FHP_EXCEEDS_[NUMBER]%</td>
+<td>Evaluates as true if the active pro guitar track has any fret hand positions higher than the specified fret [NUMBER], in which case the %RS_FIRST_FHP_EXCEEDING_NUMBER% macro will print the location of the first offending fret hand position.  If a fret hand position in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
 <tr>
 <td>%IF_RS_ANY_NOTE_EXCEEDS_FRET_[NUMBER]%</td>
@@ -597,16 +597,16 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if any pro guitar note in the project has a difficulty level higher than the specified difficulty [NUMBER], in which case the %RS_FIRST_NOTE_EXCEEDING_DIFF% macro will print the location of the first offending note.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_SLIDES_EXCEED_FRET_[NUMBER]%</td>
-<td>Evaluates as true if any pro guitar note in the project is a pitched or unpitched slide that slides above the specified fret [NUMBER], in which case the %RS_FIRST_SLIDE_EXCEEDING_FRET% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_SLIDES_EXCEED_FRET_[NUMBER]%</td>
+<td>Evaluates as true if the active pro guitar track has any pitched or unpitched slides that slide above the specified fret [NUMBER], in which case the %RS_FIRST_SLIDE_EXCEEDING_FRET% macro will print the location of the first offending note.  If a slide in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
 <tr>
 <td>%IF_RS_BASS_TRACK_STRING_COUNT_EXCEEDED%</td>
 <td>Evaluates as true if any pro guitar track in the project is configured as a bass arrangement and uses more than the first four strings, as Rocksmith doesn't directly support this.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_TECH_NOTES_LACK_TARGET%</td>
-<td>Evaluates as true if any pro guitar track in the project has a tech note that doesn't overlap a pro guitar note, in which case the %RS_FIRST_TECH_NOTE_LACKING_TARGET% macro will print the location of the first offending tech note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_TECH_NOTES_LACK_TARGET%</td>
+<td>Evaluates as true if the active pro guitar track has any tech notes that don't overlap a pro guitar note, in which case the %RS_FIRST_TECH_NOTE_LACKING_TARGET% macro will print the location of the first offending tech note.  If a tech note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
 </tr>
 <tr>
 <td>%IF_ANY_LYRICS_EXTEND_OUTSIDE_LINES%</td>
@@ -621,8 +621,16 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the project's tempo map is locked.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_TECHNIQUES_MISSING_SUSTAIN%</td>
-<td>Evaluates as true if any pro guitar notes have no sustain but do have a technique that requires sustain (bend, slide, vibrato or tremolo), in which case the %RS_FIRST_TECHNIQUE_MISSING_SUSTAIN% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_TECHNIQUES_MISSING_SUSTAIN%</td>
+<td>Evaluates as true if the active pro guitar track has any pro guitar notes that have no sustain but do have a technique that requires sustain (bend, slide, vibrato or tremolo), in which case the %RS_FIRST_TECHNIQUE_MISSING_SUSTAIN% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
+</tr>
+<tr>
+<td>%IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS%</td>
+<td>Evaluates as true if any of several above-mentioned Rocksmith-specific conditional macros run prior to this invocation in the current render frame would evaluate as true for a track other than the active track, so that they can all be summarized in one line and citations relevant to the active track are displayed instead.  Since this macro can only reflect the results of conditional macros that were invoked already, it should be placed below all relevant Rocksmith conditional macros in the panel.</td>
+</tr>
+<tr>
+<td>%IF_INACTIVE_TRACKS_HAVE_RS_ERRORS%</td>
+<td>Similar to %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS%, but applies to error messages instead of warning messages.</td>
 </tr>
 </tbody>
 </table><br>

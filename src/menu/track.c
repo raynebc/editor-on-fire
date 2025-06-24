@@ -3997,7 +3997,7 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 	(void) ustrcpy(eof_etext, ptr->name);
 
 	eof_clear_input();
-	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 3)
+	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
 	{	//User clicked OK
 		if(eof_etext[0] != '\0')
 		{	//If a tone key name is specified

@@ -42,6 +42,8 @@ char eof_notes_macro_slide_exceeding_fret[50];
 char eof_notes_macro_tech_note_missing_target[50];
 char eof_notes_macro_lyric_extending_outside_line[50];
 char eof_notes_macro_technique_missing_sustain[50];
+char eof_notes_inactive_track_has_rs_warnings = 0;
+char eof_notes_inactive_track_has_rs_errors = 0;
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -1804,17 +1806,20 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	if(!ustricmp(macro, "IF_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT"))
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT"))
 	{
 		unsigned long stringnum, notectr, bitmask;
 		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_pitched_slide_missing_linknext[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
+			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
+				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
@@ -1827,29 +1832,38 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						if((tech.slideto > 0) && !tech.linknext)
 						{	//If this string of the note slides to a fret, but does not have linknext status
 							char time_string[15] = {0};
+							if(ctr != eof_selected_track)
+							{	//If this isn't the active track
+								eof_notes_inactive_track_has_rs_warnings = 1;	//Track that an inactive track has a Rocksmith warning
+								notectr = tp->pgnotes;	//Set a condition to break from the note loop
+								break;	//Break from string loop
+							}
 							eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 							snprintf(eof_notes_macro_pitched_slide_missing_linknext, sizeof(eof_notes_macro_pitched_slide_missing_linknext) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
-							return 3;	//True
+							retval = 3;	//True
 						}
 					}
 				}
 			}
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
-	if(!ustricmp(macro, "IF_RS_ANY_TONE_CHANGES_ON_NOTE"))
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TONE_CHANGES_ON_NOTE"))
 	{
 		unsigned long tonectr, notectr;
 		EOF_PRO_GUITAR_TRACK *tp;
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_starting_on_tone_change[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
+			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
+				continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 			for(tonectr = 0; tonectr < tp->tonechanges; tonectr++)
@@ -1862,16 +1876,22 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					if(tp->pgnote[notectr]->pos == tp->tonechange[tonectr].start_pos)
 					{	//If this note starts exactly at this tone change's timestamp
 						char time_string[15] = {0};
+						if(ctr != eof_selected_track)
+						{	//If this isn't the active track
+							eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
+							tonectr = tp->tonechanges;		//Trigger a condition to break out of tone loop
+							break;	//Break out of note loop
+						}
 						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 						snprintf(eof_notes_macro_note_starting_on_tone_change, sizeof(eof_notes_macro_note_starting_on_tone_change) - 1, "%s -diff %u: pos %s (%s)", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string, tp->tonechange[tonectr].name);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
-						return 3;	//True
+						retval = 3;	//True
 					}
 				}
 			}
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
 	if(!ustricmp(macro, "IF_RS_NOTES_TO_SOON_AFTER_COUNT_PHRASE"))
@@ -1968,17 +1988,20 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 3;	//True
 	}
 
-	if(!ustricmp(macro, "IF_RS_ANY_NOTE_SUBCEEDS_FHP"))
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_NOTE_SUBCEEDS_FHP"))
 	{
 		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned char lowestfret, fhp;
 		unsigned long ctr2;
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_subceeding_fhp[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
+			if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
+				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 			for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
@@ -1988,23 +2011,29 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				if(lowestfret && fhp && (lowestfret < fhp))
 				{	//If there is a fretted string for this note, and it is below the defined FHP (if any)
 					char time_string[15] = {0};
+					if(ctr != eof_selected_track)
+					{	//If this isn't the active track
+						eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
+						break;	//Stop processing the rest of this track
+					}
 					eof_notes_panel_print_time(tp->pgnote[ctr2]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 					snprintf(eof_notes_macro_note_subceeding_fhp, sizeof(eof_notes_macro_note_subceeding_fhp) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, time_string);	//Write a string identifying the offending note
 					dest_buffer[0] = '\0';
-					return 3;	//True
+					retval = 3;	//True
 				}
 			}
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
-	count_string = strcasestr_spec(macro, "IF_RS_ANY_NON_TAP_NOTE_EXCEEDS_FHP_BY_");	//Get a pointer to the text that would be the fret count
+	count_string = strcasestr_spec(macro, "IF_ACTIVE_TRACK_RS_ANY_NON_TAP_NOTE_EXCEEDS_FHP_BY_");	//Get a pointer to the text that would be the fret count
 	if(count_string)
 	{	//If the macro is this string
 		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned char highestfret, fhp;
 		unsigned long ctr2, fretcount;
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_exceeding_fhp[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &fretcount))
@@ -2013,6 +2042,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//For each track in the project
 				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 					continue;	//Skip non pro guitar tracks
+				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
+					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 				for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
@@ -2024,30 +2055,38 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						if(highestfret && fhp && (highestfret > fhp + fretcount))
 						{	//If there is a fretted string for this note, and it is exceeds the given the defined FHP (if any) by the given amount
 							char time_string[15] = {0};
+							if(ctr != eof_selected_track)
+							{	//If this isn't the active track
+								eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
+								break;	//Stop processing the rest of this track
+							}
 							eof_notes_panel_print_time(tp->pgnote[ctr2]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 							snprintf(eof_notes_macro_note_exceeding_fhp, sizeof(eof_notes_macro_note_exceeding_fhp) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
-							return 3;	//True
+							retval = 3;	//True
 						}
 					}
 				}
 			}
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
-	if(!ustricmp(macro, "IF_RS_ANY_PITCHED_SLIDES_LACK_END_FRET"))
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_PITCHED_SLIDES_LACK_END_FRET"))
 	{
 		unsigned long stringnum, notectr, bitmask;
 		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_pitched_slide_missing_end_fret[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
+			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
+				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
@@ -2063,10 +2102,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							if(tech.slideto < 0)
 							{	//If no end of slide position is actually defined
 								char time_string[15] = {0};
+								if(ctr != eof_selected_track)
+								{	//If this isn't the active track
+									eof_notes_inactive_track_has_rs_warnings = 1;	//Track that an inactive track has a Rocksmith warning
+									notectr = tp->pgnotes;	//Set a condition to break from the note loop
+									break;	//Break from string loop
+								}
 								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_pitched_slide_missing_end_fret, sizeof(eof_notes_macro_pitched_slide_missing_end_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
-								return 3;	//True
+								retval = 3;	//True
 							}
 						}
 					}
@@ -2074,14 +2119,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			}
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
-	if(!ustricmp(macro, "IF_RS_ANY_BENDS_LACK_STRENGTH_DEFINITION"))
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_BENDS_LACK_STRENGTH_DEFINITION"))
 	{
 		unsigned long stringnum, notectr, bitmask;
 		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_bend_missing_strength[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -2090,6 +2136,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
+			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
+				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
 			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
@@ -2109,11 +2157,17 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								if(tech.bend == 0)
 								{	//If no bend strength is actually defined
 									char time_string[15] = {0};
+									if(ctr != eof_selected_track)
+									{	//If this isn't the active track
+										eof_notes_inactive_track_has_rs_warnings = 1;	//Track that an inactive track has a Rocksmith warning
+										notectr = tp->pgnotes;	//Set a condition to break from note loop
+										break;	//Break from string loop
+									}
 									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 									snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 									dest_buffer[0] = '\0';
-									return 3;	//True
+									retval = 3;	//True
 								}
 							}
 						}
@@ -2123,14 +2177,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
-	if(!ustricmp(macro, "IF_RS_ANY_OPEN_NOTES_BEND"))
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_OPEN_NOTES_BEND"))
 	{
 		unsigned long stringnum, notectr, bitmask;
 		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_open_note_bend[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -2139,6 +2194,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
+			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
+				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
 			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
@@ -2156,11 +2213,17 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							if(retflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 							{	//If the note uses bend technique on this string
 								char time_string[15] = {0};
+								if(ctr != eof_selected_track)
+								{	//If this isn't the active track
+									eof_notes_inactive_track_has_rs_warnings = 1;	//Track that an inactive track has a Rocksmith warning
+									notectr = tp->pgnotes;	//Set a condition to break from note loop
+									break;	//Break from string loop
+								}
 								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_open_note_bend, sizeof(eof_notes_macro_open_note_bend) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 								dest_buffer[0] = '\0';
-								return 3;	//True
+								retval = 3;	//True
 							}
 						}
 					}
@@ -2169,7 +2232,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
 	if(!ustricmp(macro, "IF_LEFT_MOUSE_BUTTON_HELD"))
@@ -2270,11 +2333,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	count_string = strcasestr_spec(macro, "IF_ANY_FHP_EXCEEDS_");	//Get a pointer to the text that would be the FHP value
+	count_string = strcasestr_spec(macro, "IF_ACTIVE_TRACK_ANY_FHP_EXCEEDS_");	//Get a pointer to the text that would be the FHP value
 	if(count_string)
 	{	//If the macro is this string
 		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned long target_fhp = 0, ctr2;
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_fhp_exceeding_number[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &target_fhp))
@@ -2283,6 +2347,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//For each track in the project
 				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 					continue;	//Skip non pro guitar tracks
+				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
+					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 				for(ctr2 = 0; ctr2 < tp->handpositions; ctr2++)
@@ -2290,16 +2356,21 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					if(tp->handposition[ctr2].end_pos + tp->capo > target_fhp)
 					{	//If the target FHP is surpassed
 							char time_string[15] = {0};
+							if(ctr != eof_selected_track)
+							{	//If this isn't the active track
+								eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
+								break;	//Stop processing the rest of this track
+							}
 							eof_notes_panel_print_time(tp->handposition[ctr2].start_pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 							snprintf(eof_notes_macro_fhp_exceeding_number, sizeof(eof_notes_macro_fhp_exceeding_number) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->handposition[ctr2].difficulty, time_string);	//Write a string identifying the offending FHP
 							dest_buffer[0] = '\0';
-							return 3;	//True
+							retval = 3;	//True
 						}
 					}
 				}
 			}
 
-		return 2;	//False
+		return retval;
 	}
 
 	count_string = strcasestr_spec(macro, "IF_RS_ANY_NOTE_EXCEEDS_FRET_");	//Get a pointer to the text that would be the fret value
@@ -2366,12 +2437,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	count_string = strcasestr_spec(macro, "IF_RS_ANY_SLIDES_EXCEED_FRET_");	//Get a pointer to the text that would be the fret number
+	count_string = strcasestr_spec(macro, "IF_ACTIVE_TRACK_RS_ANY_SLIDES_EXCEED_FRET_");	//Get a pointer to the text that would be the fret number
 	if(count_string)
 	{	//If the macro is this string
 		unsigned long stringnum, notectr, bitmask, target_fret;
 		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_slide_exceeding_fret[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &target_fret))
@@ -2380,6 +2452,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//For each track in the project
 				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 					continue;	//Skip non pro guitar tracks
+				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
+					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 				for(notectr = 0;  notectr < tp->pgnotes; notectr++)
@@ -2395,10 +2469,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								if(((tech.slideto > 0) && (tech.slideto > target_fret)) || ((tech.unpitchedslideto > 0) && (tech.unpitchedslideto > target_fret)))
 								{	//If a pitched or unpitched slide goes above the target fret
 									char time_string[15] = {0};
+									if(ctr != eof_selected_track)
+									{	//If this isn't the active track
+										eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
+										break;	//Stop processing the rest of this track
+									}
 									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 									snprintf(eof_notes_macro_slide_exceeding_fret, sizeof(eof_notes_macro_slide_exceeding_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 									dest_buffer[0] = '\0';
-									return 3;	//True
+									retval = 3;	//True
 								}
 							}
 						}
@@ -2407,7 +2486,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			}
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
 	if(!ustricmp(macro, "IF_RS_BASS_TRACK_STRING_COUNT_EXCEEDED"))
@@ -2434,16 +2513,41 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	if(!ustricmp(macro, "IF_RS_ANY_TECH_NOTES_LACK_TARGET"))
+	if(!ustricmp(macro, "IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS"))
+	{
+		if(eof_notes_inactive_track_has_rs_warnings)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_INACTIVE_TRACKS_HAVE_RS_ERRORS"))
+	{
+		if(eof_notes_inactive_track_has_rs_errors)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TECH_NOTES_LACK_TARGET"))
 	{
 		unsigned long notectr;
 		EOF_PRO_GUITAR_TRACK *tp;
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_tech_note_missing_target[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
+			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
+				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 			for(notectr = 0;  notectr < tp->technotes; notectr++)
@@ -2451,15 +2555,21 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				if(!eof_pro_guitar_tech_note_overlaps_a_note(tp, notectr, tp->technote[notectr]->note, NULL))
 				{	//If this tech note doesn't overlap a note on any string
 					char time_string[15] = {0};
-					eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
-					snprintf(eof_notes_macro_tech_note_missing_target, sizeof(eof_notes_macro_tech_note_missing_target) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
+					if(ctr != eof_selected_track)
+					{	//If this isn't the active track
+						eof_notes_inactive_track_has_rs_warnings = 1;	//Track that an inactive track has a Rocksmith warning
+						break;	//Stop processing the rest of this track
+					}
+					eof_notes_panel_print_time(tp->technote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+					snprintf(eof_notes_macro_tech_note_missing_target, sizeof(eof_notes_macro_tech_note_missing_target) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->technote[notectr]->type, time_string);	//Write a string identifying the offending note
 					dest_buffer[0] = '\0';
-					return 3;	//True
+					retval = 3;	//True
+					break;	//Stop processing the rest of this track so inactive tracks can be checked for warnings
 				}
 			}
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
 	if(!ustricmp(macro, "IF_ANY_LYRICS_EXTEND_OUTSIDE_LINES"))
@@ -2509,11 +2619,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	if(!ustricmp(macro, "IF_RS_ANY_TECHNIQUES_MISSING_SUSTAIN"))
+	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TECHNIQUES_MISSING_SUSTAIN"))
 	{	//If the macro is this string
 		unsigned long stringnum, notectr, bitmask;
 		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
+		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_technique_missing_sustain[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -2521,6 +2632,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
+			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
+				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
 			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
@@ -2539,11 +2652,17 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							if(tech.length < 2)
 							{	//If the gem for this string would export without at least 1ms of sustain
 								char time_string[15] = {0};
+								if(ctr != eof_selected_track)
+								{	//If this isn't the active track
+									eof_notes_inactive_track_has_rs_warnings = 1;	//Track that an inactive track has a Rocksmith warning
+									notectr = tp->pgnotes;	//Trigger a condition to break out of the note loop to end processing the rest of this track
+									break;	//Break from string loop
+								}
 								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_technique_missing_sustain, sizeof(eof_notes_macro_technique_missing_sustain) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 								dest_buffer[0] = '\0';
-								return 3;	//True
+								retval = 3;	//True
 							}
 						}
 					}
@@ -2552,7 +2671,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 		}
 
-		return 2;	//False
+		return retval;
 	}
 
 	//A pro guitar track is active and fingering view is in effect
@@ -5501,6 +5620,7 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 
 	//Parse the contents of the buffered file one line at a time and print each to the screen
 	src_index = dst_index = 0;	//Reset these indexes
+	eof_notes_inactive_track_has_rs_warnings = eof_notes_inactive_track_has_rs_errors = 0;	//Reset these conditions
 	while(panel->text[src_index] != '\0')
 	{	//Until the end of the text file is reached
 		char thischar = panel->text[src_index++];	//Read one character from the source buffer

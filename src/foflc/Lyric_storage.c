@@ -1063,7 +1063,7 @@ void PostProcessLyrics(void)
 					break;			//No more lyrics to group
 
 				temp=pieceptr->next;
-				assert_wrapper((pieceptr->lyric!=NULL) && (temp!=NULL) && (temp->lyric!=NULL));
+				assert_wrapper((pieceptr->lyric!=NULL) && (temp->lyric!=NULL));
 
 				if(pieceptr->groupswithnext)
 				{	//If this piece groups with next, Combine the two lyric pieces

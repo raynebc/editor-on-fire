@@ -5566,7 +5566,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			}
 			if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && tp->note[notenum]->unpitchend)
 			{	//If this note has an unpitched slide and the user has defined the ending fret of the slide
-				if(tp->note[notenum]->unpitchend && (lowestfret != tp->note[notenum]->unpitchend))
+				if(lowestfret != tp->note[notenum]->unpitchend)
 				{	//Don't allow the unpitched slide if its end fret isn't properly defined or if it slides to the same fret this note/chord is already at
 					unpitchedslidediff = tp->note[notenum]->unpitchend - lowestfret;	//Determine how many frets this slide travels
 					ptr->unpitchedslideto = fret + unpitchedslidediff + tp->capo;	//Get the correct ending fret for this string's slide, applying the capo position

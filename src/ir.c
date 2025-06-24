@@ -417,7 +417,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 							}
 							if((tp->technote[ctr]->type != tp->pgnote[i]->type) || !(bitmask & tp->technote[ctr]->note))
 								continue;	//If the tech note isn't in the same difficulty as the pro guitar single note being exported or if it doesn't use the same string, skip it
-							if((tp->technote[ctr]->pos < pos) || (tp->technote[ctr]->pos > pos + length))
+							if(tp->technote[ctr]->pos < pos)
 								continue;	//If this tech note does not overlap with the specified pro guitar regular note, skip it
 							if(tp->technote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
 								continue;	//If this is a pre-bend tech note, skip it as there's only one valid pre-bend per string and it was written already
@@ -447,7 +447,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				//Write vibrato
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
 				{
-					unsigned long x, time;
+					unsigned long x = deltalength, time;	//Init x with a value that will prevent writing a vibrato pitch bend at the end of the note unless earlier pitch bends were written for the note
 					long height;
 					double y;
 					double wave_period = 120;	//This is how many delta ticks it will take for the wave pattern to repeat (240 = every half beat)
@@ -1026,6 +1026,38 @@ void eof_pro_guitar_track_delete_hand_mode_change(EOF_PRO_GUITAR_TRACK *tp, unsi
 	}
 }
 
+
+unsigned long eof_ir_get_rs_section_instance_number(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned long event)
+{
+	unsigned long ctr, count = 1;
+	unsigned long last_match = ULONG_MAX;	//The position at which the last match occurs
+
+	if(!sp || (event >= sp->text_events) || !(sp->text_event[event]->flags & EOF_EVENT_FLAG_RS_SECTION))
+		return 0;	//If the parameters are invalid, or the specified text event is not a Rocksmith section
+	if(sp->text_event[event]->track && (sp->text_event[event]->track != gglead) && (sp->text_event[event]->track != ggrhythm) && (sp->text_event[event]->track != ggbass))
+		return 0;	//If the specified event is assigned to a track other than any of the specified ones
+
+	for(ctr = 0; ctr < event; ctr++)
+	{	//For each text event in the chart that is before the specified event
+		if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
+		{	//If the text event is marked as a Rocksmith section
+			if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == gglead) || (sp->text_event[ctr]->track == ggrhythm) || (sp->text_event[ctr]->track == ggbass))
+			{	//If the text event is not track specific or is assigned to any of the three specified tracks
+				if(sp->text_event[ctr]->pos != last_match)
+				{	//If this text event isn't at the same position as the last matching text event
+					if(!ustrcmp(sp->text_event[ctr]->text, sp->text_event[event]->text))
+					{	//If the text event's text matches
+						count++;	//Increment the instance counter
+						last_match = sp->text_event[ctr]->pos;	//Track this match's position so multiple matches at the same position don't increment the count multiple times
+					}
+				}
+			}
+		}
+	}
+
+	return count;
+}
+
 int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option)
 {
 	PACKFILE *fp;
@@ -1320,7 +1352,16 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 			}
 			if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
 			{	//If this text event is flagged as a Rocksmith section
-				ptr = sp->text_event[ctr]->text;	//Use the section name verbatim
+				unsigned long count = eof_ir_get_rs_section_instance_number(sp, gglead, ggrhythm, ggbass, ctr);	//Determine the instance number of this section within the scope of the arrangements being exported
+				if(count)
+				{	//If the instance number was determined
+					(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s %lu", eof_song->text_event[ctr]->text, count);	//Build a string to display it with its number
+					ptr = temp_string;
+				}
+				else
+				{
+					ptr = sp->text_event[ctr]->text;	//Use the section name verbatim
+				}
 			}
 			else
 			{	//Otherwise use the presence of "section " as a way to identify the section marker
