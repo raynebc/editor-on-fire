@@ -489,8 +489,8 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the "Save separate Rocksmith 2 files" export preference is enabled.</td>
 </tr>
 <tr>
-<td>%IF_PG_NOTE_OCCURS_BEFORE_MILLIS_[NUMBER]%</td>
-<td>Evaluates as true if any pro guitar notes start before the specified timestamp of [NUMBER] milliseconds, in which case the %RS_FIRST_NOTE_OCCURRING_BEFORE_MILLIS% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_PG_NOTE_OCCURS_BEFORE_MILLIS_[NUMBER]%</td>
+<td>Evaluates as true if the active pro guitar track has any notes starting before the specified timestamp of [NUMBER] milliseconds, in which case the %RS_FIRST_NOTE_OCCURRING_BEFORE_MILLIS% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
 <tr>
 <td>%IF_RS_PHRASE_DEFINED_MULTIPLE_TIMES_[NAME]%</td>
@@ -589,12 +589,12 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active pro guitar track has any fret hand positions higher than the specified fret [NUMBER], in which case the %RS_FIRST_FHP_EXCEEDING_NUMBER% macro will print the location of the first offending fret hand position.  If a fret hand position in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_NOTE_EXCEEDS_FRET_[NUMBER]%</td>
-<td>Evaluates as true if any pro guitar note in the project has a fret value higher than the specified fret [NUMBER], in which case the %RS_FIRST_NOTE_EXCEEDING_FRET% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_NOTE_EXCEEDS_FRET_[NUMBER]%</td>
+<td>Evaluates as true if the active pro guitar track has any notes with a fret value higher than the specified fret [NUMBER], in which case the %RS_FIRST_NOTE_EXCEEDING_FRET% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
 <tr>
-<td>%IF_RS_ANY_NOTE_EXCEEDS_DIFF_[NUMBER]%</td>
-<td>Evaluates as true if any pro guitar note in the project has a difficulty level higher than the specified difficulty [NUMBER], in which case the %RS_FIRST_NOTE_EXCEEDING_DIFF% macro will print the location of the first offending note.</td>
+<td>%IF_ACTIVE_TRACK_RS_ANY_NOTE_EXCEEDS_DIFF_[NUMBER]%</td>
+<td>Evaluates as true if the active pro guitar track has any notes with a difficulty level higher than the specified difficulty [NUMBER], in which case the %RS_FIRST_NOTE_EXCEEDING_DIFF% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
 <tr>
 <td>%IF_ACTIVE_TRACK_RS_ANY_SLIDES_EXCEED_FRET_[NUMBER]%</td>

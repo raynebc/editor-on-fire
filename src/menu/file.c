@@ -3606,7 +3606,7 @@ int eof_save_helper_checks(void)
 			//Build and count the size of the list of unique tone names used, and empty the default tone string if it is not valid
 			eof_track_rebuild_rs_tone_names_list_strings(ctr, 1);
 			if(eof_track_rs_tone_names_list_strings_num == 1)
-			{	//If only one tone name is used
+			{	//If only one tone name is used in tone changes (changing from an unspecified tone to another one)
 				eof_clear_input();
 				if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith 2014.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 				{
