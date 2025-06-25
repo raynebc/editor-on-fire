@@ -111,6 +111,7 @@ MENU eof_lyric_line_menu[] =
 	{"&Erase All", eof_menu_lyric_line_erase_all, NULL, 0, NULL},
 	{"Edit &Timing", eof_menu_note_lyric_line_edit_timing, NULL, 0, NULL},
 	{"Split &After selected", eof_menu_note_split_lyric_line_after_selected, NULL, 0, NULL},
+	{"Repair &Lengths", eof_menu_note_lyric_line_repair_lengths, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Toggle &Overdrive", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -931,7 +932,7 @@ void eof_prepare_note_menu(void)
 			eof_lyric_line_menu[1].flags = 0;	//Note>Lyrics>Lyric Lines>Remove
 			eof_lyric_line_menu[3].flags = 0;	//Note>Lyrics>Lyric Lines>Edit timing
 			eof_lyric_line_menu[4].flags = 0;	//Note>Lyrics>Lyric Lines>Split after selected
-			eof_lyric_line_menu[6].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
+			eof_lyric_line_menu[7].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
 			(void) ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+M/X");
 		}
 		else
@@ -939,7 +940,7 @@ void eof_prepare_note_menu(void)
 			eof_lyric_line_menu[1].flags = D_DISABLED;
 			eof_lyric_line_menu[3].flags = D_DISABLED;
 			eof_lyric_line_menu[4].flags = D_DISABLED;
-			eof_lyric_line_menu[6].flags = D_DISABLED;
+			eof_lyric_line_menu[7].flags = D_DISABLED;
 			(void) ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\t" CTRL_NAME "+M/X");
 		}
 
@@ -11495,4 +11496,43 @@ int eof_menu_note_move_note_end(void)
 	}
 
 	return D_O_K;
+}
+
+int eof_menu_note_lyric_line_repair_lengths(void)
+{
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long linectr, lyricctr;
+	EOF_VOCAL_TRACK *tp;
+	char undo_made = 0;
+
+	if(!eof_vocals_selected || (eof_selection.track != EOF_TRACK_VOCALS))
+		return 1;	//The vocal track is not active or no notes in the vocal track are selected
+
+	tp = eof_song->vocal_track[tracknum];	//Simplify
+	eof_track_sort_notes(eof_song, eof_selected_track);	//Ensure lyrics are sorted
+	for(linectr = 0; linectr < tp->lines; linectr++)
+	{	//For each lyric line
+		for(lyricctr = 0; lyricctr < tp->lyrics; lyricctr++)
+		{	//For each lyric
+			if(eof_selection.multi[lyricctr])
+			{	//If this lyric is selected
+				if((tp->lyric[lyricctr]->pos >= tp->line[linectr].start_pos) && (tp->lyric[lyricctr]->pos <= tp->line[linectr].end_pos))
+				{	//If this lyric is in the lyric line, the line is to have its end position corrected if necessary
+					for(;(lyricctr + 1 < tp->lyrics) && (tp->lyric[lyricctr + 1]->pos <= tp->line[linectr].end_pos);lyricctr++);	//Advance lyricctr to reference the last lyric beginning in this line
+
+					if(tp->lyric[lyricctr]->pos + tp->lyric[lyricctr]->length > tp->line[linectr].end_pos)
+					{	//If this lyric extends beyond the end of the lyric line
+						if(!undo_made)
+						{
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						}
+						tp->line[linectr].end_pos = tp->lyric[lyricctr]->pos + tp->lyric[lyricctr]->length;	//Update the line's end position
+					}
+					break;	//Break from the lyric loop and check the next lyric line
+				}
+			}
+		}
+	}
+
+	return 1;
 }

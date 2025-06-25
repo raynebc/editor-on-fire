@@ -222,7 +222,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 319, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
 	{ d_agup_text_proc,  16,  186, 200, 12,  0,   0,   0,    0,      0,   0,   "Chord density threshold (ms):",NULL,NULL },
 	{ eof_verified_edit_proc,204,186,40,20,  0,   0,   0,    0,      5,   0,   eof_etext3,     "0123456789", NULL },
-	{ d_agup_check_proc, 16,  239, 340, 16,  2,   23,  0,    0,      1,   0,   "Prefer MIDI friendly grid snaps",NULL, NULL },
+	{ d_agup_check_proc, 16,  239, 215, 16,  2,   23,  0,    0,      1,   0,   "Prefer MIDI friendly grid snaps",NULL, NULL },
 	{ d_agup_check_proc, 248, 239, 230, 16,  2,   23,  0,    0,      1,   0,   "GHL conversion swaps B/W gems",NULL, NULL },
 	{ d_agup_check_proc, 248, 351, 224, 16,  2,   23,  0,    0,      1,   0,   "Enable open strum by default",NULL, NULL },
 	{ d_agup_check_proc, 248, 367, 206, 16,  2,   23,  0,    0,      1,   0,   "Disable automatic backups",NULL, NULL },
@@ -1362,7 +1362,6 @@ int eof_menu_file_preferences(void)
 {
 	int retval, original_input_mode, original_eof_disable_info_panel = eof_disable_info_panel, original_eof_prefer_midi_friendly_grid_snapping = eof_prefer_midi_friendly_grid_snapping;
 	unsigned original_eof_min_note_distance = eof_min_note_distance, original_eof_chord_density_threshold = eof_chord_density_threshold;
-	unsigned long ctr;
 
 	eof_log("Preferences logic starting", 2);
 
@@ -1642,11 +1641,7 @@ int eof_menu_file_preferences(void)
 	}
 	if((original_eof_prefer_midi_friendly_grid_snapping != eof_prefer_midi_friendly_grid_snapping) && eof_song->tags->highlight_unsnapped_notes)
 	{	//If the "Prefer MIDI friendly grid snaps" preference changed, and unsnapped notes are to be highlighted
-		for(ctr = 1; ctr < eof_song->tracks; ctr++)
-		{	//For each track
-			eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
-			eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
-		}
+		eof_song_reapply_all_dynamic_highlighting();
 	}
 	(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient
 	eof_rebuild_notes_window();					//Recreate the notes panel window to fill all available space in the bottom half of the program window

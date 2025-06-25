@@ -5681,6 +5681,7 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 			eof_song_highlight_non_grid_snapped_notes(sp, track);	//Re-create the non grid snapped highlighting as appropriate
 		if(sp->tags->highlight_arpeggios)
 			eof_song_highlight_arpeggios(sp, track);	//Re-create the arpeggio highlighting as appropriate
+		(void) eof_detect_difficulties(sp, track);	//Update arrays for note set population and highlighting to reflect the specified track
 	}
 
 	eof_sanitize_phrase_names(sp, track);	//Empty any invalid names in the track's phrase items (ie. star power phrases)
@@ -11889,4 +11890,22 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 		}
 	}
 	return D_O_K;
+}
+
+void eof_song_reapply_all_dynamic_highlighting(void)
+{
+	unsigned long ctr;
+
+	if(!eof_song)
+		return;	//Invalid parameters
+
+	for(ctr = 1; ctr < eof_song->tracks; ctr++)
+	{	//For each track
+		eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
+		if(eof_song->tags->highlight_unsnapped_notes)
+			eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
+		if(eof_song->tags->highlight_arpeggios)
+			eof_song_highlight_arpeggios(eof_song, ctr);		//Re-create the arpeggio highlighting as appropriate
+	}
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
 }

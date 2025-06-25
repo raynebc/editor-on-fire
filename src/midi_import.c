@@ -4030,7 +4030,7 @@ unsigned long eof_repair_midi_import_grid_snap(void)
 int eof_song_check_unsnapped_chords(EOF_SONG *sp, unsigned long track, int function, int timing, unsigned threshold)
 {
 	int unsnapped = 0, altered = 1, nonzero = 0;
-	unsigned long ctr, ctr2, this_pos, next_pos, flags, start_track, end_track;
+	unsigned long ctr, ctr2, this_pos, next_pos, flags, start_track, end_track, notecount = 0;
 	long next;
 
 	if(!sp || (track >= sp->tracks))
@@ -4057,6 +4057,7 @@ int eof_song_check_unsnapped_chords(EOF_SONG *sp, unsigned long track, int funct
 
 		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 		{	//For each note in the track
+			notecount++;
 			if(!timing)
 			{	//Compare MIDI positions
 				if(eof_get_note_midi_pos(sp, ctr, ctr2))
@@ -4075,7 +4076,11 @@ int eof_song_check_unsnapped_chords(EOF_SONG *sp, unsigned long track, int funct
 			}
 		}
 	}
-	if(!nonzero)
+	if(!notecount)
+	{
+		allegro_message("The MIDI contained no importable notes.");
+	}
+	else if(!nonzero)
 	{	//If all notes were zero positioned
 		if(!timing)
 		{	//Compare MIDI positions

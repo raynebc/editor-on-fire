@@ -625,7 +625,10 @@ int eof_find_grid_snap(unsigned long pos, int dir, unsigned long *result)
 		*result = eof_tail_snap.next_snap;					//The result is the next grid snap position
 	}
 
-	return 1;	//Success
+	if((*result == pos + 1) || (*result + 1 == pos))
+		return 1;	//The proposed grid snap is within 1 ms of the input timestamp
+
+	return 2;	//Success
 }
 
 int eof_is_grid_snap_position(unsigned long pos)
@@ -724,28 +727,6 @@ int eof_is_any_grid_snap_position(unsigned long pos, long *beat, char *gridsnapv
 		*closestgridpos = closestpos;
 	eof_snap_mode = temp_mode;	//Restore the grid snap value that was in effect
 	return retval;
-}
-
-///This function is deprecated
-int eof_find_grid_snap_position(unsigned long beat, char gridsnapvalue, unsigned char gridsnapnum, unsigned long *gridpos)
-{
-	EOF_SNAP_DATA temp = {0, 0.0, 0, 0.0, 0, 0, 0, 0.0, {0.0}, {0.0}, 0, 0, 0, 0};
-	char temp_mode = eof_snap_mode;	//Store the grid snap setting in use
-
-	if(!eof_song || (beat >= eof_song->beats) || !gridpos)
-		return 0;	//Invalid parameters
-
-	if(!gridsnapvalue)
-		return 0;	//The parameters do not define a valid grid snap position
-
-	eof_snap_mode = gridsnapvalue;	//Put this grid snap setting into effect
-	eof_snap_logic(&temp, eof_song->beat[beat]->pos);	//Calculate grid snaps for the specified beat
-	eof_snap_mode = temp_mode;	//Restore the grid snap setting that was in use
-	if(gridsnapnum >= temp.intervals)
-		return 0;	//The gridsnapnum is not valid
-
-	*gridpos = temp.grid_pos[gridsnapnum] + 0.5;	//Store the grid snap's real time position, rounded up to the nearest millisecond
-	return 1;	//Return success
 }
 
 unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int intervals, int per_measure)
@@ -2812,6 +2793,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
 					eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the temporary highlighting as appropriate
+					(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
 				}
 			}
 			eof_use_key();
@@ -2869,6 +2851,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
 					eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the highlighting as appropriate
+					(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
 				}
 			}
 			eof_use_key();

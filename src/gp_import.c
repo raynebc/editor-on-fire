@@ -4138,7 +4138,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									for(ctr5 = 0; ctr5 < bendstruct.bendpoints; ctr5++)
 									{	//For each bend point that was parsed
 										EOF_PRO_GUITAR_NOTE *pgnp;
-										unsigned long length;
+										unsigned long length, snappos = 0;
 
 										pgnp = eof_pro_guitar_track_add_tech_note(tp);	//Add a new tech note to the current track
 										if(!pgnp)
@@ -4203,6 +4203,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											length = lastendpos - laststartpos;
 										}
 										pgnp->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0) + 0.5;	//Determine the position of the bend point, rounded to nearest ms
+										if(!eof_is_any_beat_interval_position(pgnp->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
+										{	//If this tech note is not beat interval snapped
+											if((snappos + 1 == pgnp->pos) || (pgnp->pos + 1 == snappos))
+												pgnp->pos = snappos;	//If the nearest grid snap position for this tech note is found to be within 1ms, snap to the grid
+										}
 										pgnp->length = 1;
 										pgnp->type = voice;		//Store lead voice notes in difficulty 0, bass voice notes in difficulty 1
 									}//For each bend point that was parsed
@@ -4892,11 +4897,20 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 							if(graceonbeat)
 							{	//If this grace note displaces the note it is associated with
+								unsigned long snappos = 0;
+
 								np[ctr2]->pos += gnp->length;			//Delay the note by the length of the grace note
 								if(np[ctr2]->length >= gnp->length)
-									np[ctr2]->length -= gnp->length;	//Shorten the note by the same length if possible
+									np[ctr2]->length -= gnp->length;		//Shorten the note by the same length if possible
+
+								if(!eof_is_any_beat_interval_position(np[ctr2]->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
+								{	//If this displaced note is not beat interval snapped
+									if((snappos + 1 == np[ctr2]->pos) || (np[ctr2]->pos + 1 == snappos))
+										np[ctr2]->pos = snappos;	//If the nearest grid snap position for this displaced note is found to be within 1ms, snap to the grid
+								}
+
 #ifdef GP_IMPORT_DEBUG
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tGrace note alters parent note:  Start: %lums\tLength: %ldms", np[ctr2]->pos, np[ctr2]->length);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tGrace note displaces parent note:  Start: %lums\tLength: %ldms", np[ctr2]->pos, np[ctr2]->length);
 								eof_log(eof_log_string, 1);
 #endif
 							}
@@ -5016,7 +5030,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}//For each note in the track
 	}//For each imported track
 
-//Convert slide in from above/below notation to pitched slides that each link to a note 1/16 beat after them
+//Convert slide in from above/below notation to pitched slides that each link to a note 1/4 beat after them
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
 		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
@@ -5035,13 +5049,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				unsigned long beatnum = eof_get_beat(eof_song, gp->track[ctr]->note[ctr2]->pos);
 				unsigned long beatlength = eof_get_beat_length(eof_song, beatnum);
 
-				//Find the direction of the slide and apply it to the note, place the newly added note 1/16 beat after the slide beginning and link it
+				//Find the direction of the slide and apply it to the note, place the newly added note 1/4 beat after the slide beginning and link it
 				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
 					if(ctr3 < gp->track[ctr]->numstrings)
 					{	//If this is a string used in the track
 						if(gp->track[ctr]->note[ctr2]->note & bitmask)
 						{	//If this is a string used in the note
+							unsigned long snappos = 0;	//Used to grid snap the new note
 							if(!dir)
 							{	//If the direction was not found yet
 								gp->track[ctr]->note[ctr2]->length = 1;
@@ -5059,7 +5074,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 								}
 							}
-							gnp->pos = gp->track[ctr]->note[ctr2]->pos + ((double)beatlength / 16.0) + 0.5;	//Place the newly added note 1/16 beat forward
+							gnp->pos = gp->track[ctr]->note[ctr2]->pos + ((double)beatlength / 4.0) + 0.5;	//Place the newly added note 1/4 beat forward
+							if(!eof_is_any_beat_interval_position(gnp->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
+							{	//If this note is not beat interval snapped
+								if((snappos + 1 == gnp->pos) || (gnp->pos + 1 == snappos))
+									gnp->pos = snappos;	//If the nearest grid snap position for this new note is found to be within 1ms, snap to the grid
+							}
 							gnp->note |= bitmask;	//Copy the gem to the newly added note
 							gnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Increase/decrease the fret number to reflect the slide direction
 							gp->track[ctr]->note[ctr2]->slideend = gnp->frets[ctr3];		//And set that as the end of the pitched slide

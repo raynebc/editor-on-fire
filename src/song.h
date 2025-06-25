@@ -1257,4 +1257,8 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 int eof_paste_from_catalog_entry_number(unsigned long entrynum);
 	//Pastes the notes in the specified fret catalog entry at the current seek position
 
+void eof_song_reapply_all_dynamic_highlighting(void);
+	//Removes and re-applies any enabled dynamic highlighting (notes in arpeggios, notes that are not grid snapped) to all tracks
+	// and calls eof_detect_difficulties() for the active track to update the highlighting indicator for each track
+
 #endif

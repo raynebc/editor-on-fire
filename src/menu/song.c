@@ -2134,6 +2134,7 @@ int eof_menu_song_add_silence(void)
 			}
 			eof_fixup_notes(eof_song);
 			eof_calculate_beats(eof_song);
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
 			eof_fix_window_title();
 			eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
 		}
@@ -4706,21 +4707,11 @@ int eof_run_time_range_dialog(unsigned long *start, unsigned long *end)
 
 int eof_menu_song_highlight_non_grid_snapped_notes(void)
 {
-	unsigned long ctr;
-
-	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+	if(!eof_song)
 		return 1;	//Invalid parameters
 
 	eof_song->tags->highlight_unsnapped_notes ^= 1;	//Toggle this setting
-	for(ctr = 1; ctr < eof_song->tracks; ctr++)
-	{	//For each track
-		eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
-		if(eof_song->tags->highlight_unsnapped_notes)
-			eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
-		if(eof_song->tags->highlight_arpeggios)
-			eof_song_highlight_arpeggios(eof_song, ctr);		//Re-create the arpeggio highlighting as appropriate
-	}
-	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
+	eof_song_reapply_all_dynamic_highlighting();
 	return 1;
 }
 
@@ -4765,20 +4756,11 @@ void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track
 
 int eof_menu_song_highlight_arpeggios(void)
 {
-	unsigned long ctr;
-
-	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+	if(!eof_song)
 		return 1;	//Invalid parameters
 
 	eof_song->tags->highlight_arpeggios ^= 1;	//Toggle this setting
-	for(ctr = 1; ctr < eof_song->tracks; ctr++)
-	{	//For each track
-		eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
-		if(eof_song->tags->highlight_unsnapped_notes)
-			eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
-		if(eof_song->tags->highlight_arpeggios)
-			eof_song_highlight_arpeggios(eof_song, ctr);		//Re-create the arpeggio highlighting as appropriate
-	}
+	eof_song_reapply_all_dynamic_highlighting();
 	return 1;
 }
 

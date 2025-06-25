@@ -515,4 +515,8 @@ int eof_menu_note_move_note_start(void);
 int eof_menu_note_move_note_end(void);
 	//If a single note/lyric is selected, and the seek position is after its start position, changes its end position to the seek position
 
+int eof_menu_note_lyric_line_repair_lengths(void);
+	//For each lyric line for which at least one of its lyrics are selected, examines the end position of the last lyric beginning inside the line
+	//If that lyric extends to outside the line, the line's end position is extended accordingly
+
 #endif
