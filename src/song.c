@@ -10074,7 +10074,7 @@ char eof_pro_guitar_note_bitmask_has_tech_note(EOF_PRO_GUITAR_TRACK *tp, unsigne
 		}
 		if((tp->technote[ctr]->type == tp->pgnote[note]->type) && (mask & tp->technote[ctr]->note))
 		{	//If the tech note is in the same difficulty as the pro guitar regular note and uses any of the specified strings
-			if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
+			if(tp->technote[ctr]->pos >= notepos)
 			{	//If this tech note overlaps with the specified pro guitar regular note
 				if(technote_num)
 				{	//If the calling function passed a non NULL address
@@ -10117,7 +10117,7 @@ unsigned long eof_pro_guitar_note_bitmask_has_bend_tech_note(EOF_PRO_GUITAR_TRAC
 		}
 		if((tp->technote[ctr]->type == tp->pgnote[note]->type) && (mask & tp->technote[ctr]->note))
 		{	//If the tech note is in the same difficulty as the pro guitar regular note and uses any of the specified strings
-			if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
+			if(tp->technote[ctr]->pos >= notepos)
 			{	//If this tech note overlaps with the specified pro guitar regular note
 				flags = tp->technote[ctr]->flags;
 				eflags = tp->technote[ctr]->eflags;
@@ -10165,7 +10165,7 @@ long eof_pro_guitar_note_bitmask_has_pre_bend_tech_note(EOF_PRO_GUITAR_TRACK *tp
 		}
 		if((tp->technote[ctr]->type == tp->pgnote[pgnote]->type) && (mask & tp->technote[ctr]->note))
 		{	//If the tech note is in the same difficulty as the pro guitar regular note and uses any of the specified strings
-			if((tp->technote[ctr]->pos >= notepos) && (tp->technote[ctr]->pos <= notepos + notelen))
+			if(tp->technote[ctr]->pos >= notepos)
 			{	//If this tech note overlaps with the specified pro guitar regular note
 				if(tp->technote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
 				{	//If the tech note has pre-bend status
@@ -10588,10 +10588,6 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 		{	//If this text event is in the time range being cloned, clone it
 			if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS))
 			{	//If this text event is assigned to a beat marker
-				if((sp->text_event[ctr]->pos >= sp->beats) || (sp->text_event[ctr]->pos < beatoffset))
-				{	//If the assigned beat number is invalid or there was a logic error
-					continue;	//Skip this text event
-				}
 				offsetpos = beat - beatoffset;
 			}
 			else

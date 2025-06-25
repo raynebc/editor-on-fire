@@ -5271,8 +5271,8 @@ void eof_load_chord_shape_definitions(char *fn)
 								}
 								else
 								{	//Memory was allocated
-									memset(eof_chord_shape[num_eof_chord_shapes].name, 0, length + 1);	//Initialize memory block to 0
-									strncpy(eof_chord_shape[num_eof_chord_shapes].name, name, length);
+									memcpy(eof_chord_shape[num_eof_chord_shapes].name, name, length);	//Copy the chord shape name
+									eof_chord_shape[num_eof_chord_shapes].name[length] = '\0';			//Ensure the string is terminated
 									memcpy(eof_chord_shape[num_eof_chord_shapes].finger, finger, 8);		//Store the finger array
 									memcpy(eof_chord_shape[num_eof_chord_shapes].frets, frets, 8);		//Store the fret array
 									eof_chord_shape[num_eof_chord_shapes].note = note;					//Store the note mask
@@ -5408,7 +5408,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			}
 			if((tp->technote[ctr]->type != tp->pgnote[notenum]->type) || !(bitmask & tp->technote[ctr]->note))
 				continue;	//If the tech note isn't in the same difficulty as the specified note or it doesn't use the same string, skip it
-			if((tp->technote[ctr]->pos < notepos) || (tp->technote[ctr]->pos > notepos + tp->note[notenum]->length))
+			if(tp->technote[ctr]->pos < notepos)
 				continue;	//If this tech note does not overlap with the specified note, skip it
 
 			thistechflags = tp->technote[ctr]->flags;
@@ -5947,7 +5947,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 				}
 				if((tp->technote[ctr]->type != tp->pgnote[notenum]->type) || !(bitmask & tp->technote[ctr]->note))
 					continue;	//If the tech note isn't in the same difficulty as the pro guitar single note being exported or if it doesn't use the same string, skip it
-				if((tp->technote[ctr]->pos < notepos) || (tp->technote[ctr]->pos > notepos + notelen))
+				if(tp->technote[ctr]->pos < notepos)
 					continue;	//If this tech note does not overlap with the specified pro guitar regular note, skip it
 				if(tp->technote[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND)
 					continue;	//If this is a pre-bend tech note, skip it as there's only one valid pre-bend per string and it was written already

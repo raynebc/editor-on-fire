@@ -255,7 +255,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				eof_log(eof_log_string, 2);
 				deltalength = pad;
 			}
-			else if(deltapos + pad >= nextdeltapos)
+			else
 			{	//The next note isn't the full pad length away to avoid overlapping
 				if(nextdeltapos > deltapos + 1)
 				{	//If the note can be extended at least 1 ms without overlapping the next note

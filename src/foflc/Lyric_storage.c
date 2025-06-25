@@ -713,7 +713,7 @@ unsigned long ParseUnicodeString(FILE *inf)
 			exit_wrapper(2);
 		}
 
-		if((input[0]==0) && (input[1]==0))	//We read the unicode null terminator
+		if(input[0]==0)	//We read the unicode null terminator
 			return ctr;	//return length of string, not counting NULL terminator
 
 		ctr++;	//one more character has been parsed

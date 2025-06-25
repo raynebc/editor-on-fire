@@ -4904,7 +4904,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The active zoom level
 	if(!ustricmp(macro, "ZOOM_LEVEL"))
 	{
-		snprintf(dest_buffer, dest_buffer_size, "1/%u", eof_zoom);
+		snprintf(dest_buffer, dest_buffer_size, "1/%d", eof_zoom);
 		return 1;
 	}
 
@@ -5093,14 +5093,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "LEFT_CLICK_X_COORD"))
 	{
-		snprintf(dest_buffer, dest_buffer_size, "%u", eof_click_x);
+		snprintf(dest_buffer, dest_buffer_size, "%d", eof_click_x);
 
 		return 1;
 	}
 
 	if(!ustricmp(macro, "LEFT_CLICK_Y_COORD"))
 	{
-		snprintf(dest_buffer, dest_buffer_size, "%u", eof_click_y);
+		snprintf(dest_buffer, dest_buffer_size, "%d", eof_click_y);
 
 		return 1;
 	}
@@ -5257,13 +5257,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		dest_buffer[0] = '\0';
 		if(eof_mouse_area == 1)
-			snprintf(dest_buffer, dest_buffer_size, "Difficulty tabs (%u, %u) - (%u, %u)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
+			snprintf(dest_buffer, dest_buffer_size, "Difficulty tabs (%d, %d) - (%d, %d)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
 		else if(eof_mouse_area == 2)
-			snprintf(dest_buffer, dest_buffer_size, "Beat markers (%u, %u) - (%u, %u)", eof_beat_marker_boundary_x1, eof_beat_marker_boundary_y1, eof_beat_marker_boundary_x2, eof_beat_marker_boundary_y2);
+			snprintf(dest_buffer, dest_buffer_size, "Beat markers (%d, %d) - (%d, %d)", eof_beat_marker_boundary_x1, eof_beat_marker_boundary_y1, eof_beat_marker_boundary_x2, eof_beat_marker_boundary_y2);
 		else if(eof_mouse_area == 3)
-			snprintf(dest_buffer, dest_buffer_size, "Fretboard (%u, %u) - (%u, %u)", eof_fretboard_boundary_x1, eof_fretboard_boundary_y1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y2);
+			snprintf(dest_buffer, dest_buffer_size, "Fretboard (%d, %d) - (%d, %d)", eof_fretboard_boundary_x1, eof_fretboard_boundary_y1, eof_fretboard_boundary_x2, eof_fretboard_boundary_y2);
 		else if(eof_mouse_area == 4)
-			snprintf(dest_buffer, dest_buffer_size, "Mini keyboard (%u, %u) - (%u, %u)", eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_y1, eof_mini_keyboard_boundary_x2, eof_mini_keyboard_boundary_y2);
+			snprintf(dest_buffer, dest_buffer_size, "Mini keyboard (%d, %d) - (%d, %d)", eof_mini_keyboard_boundary_x1, eof_mini_keyboard_boundary_y1, eof_mini_keyboard_boundary_x2, eof_mini_keyboard_boundary_y2);
 
 		return 1;
 	}
@@ -5273,7 +5273,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		dest_buffer[0] = '\0';
 		if(eof_mouse_bound)
 		{	//If the mouse coordinates are constrained
-			snprintf(dest_buffer, dest_buffer_size, "(%u, %u) - (%u, %u)", eof_mouse_boundary_x1, eof_mouse_boundary_y1, eof_mouse_boundary_x2, eof_mouse_boundary_y2);
+			snprintf(dest_buffer, dest_buffer_size, "(%d, %d) - (%d, %d)", eof_mouse_boundary_x1, eof_mouse_boundary_y1, eof_mouse_boundary_x2, eof_mouse_boundary_y2);
 		}
 
 		return 1;
@@ -5281,7 +5281,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "DIFFICULTY_TAB_AREA"))
 	{
-		snprintf(dest_buffer, dest_buffer_size, "(%u, %u) - (%u, %u)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
+		snprintf(dest_buffer, dest_buffer_size, "(%d, %d) - (%d, %d)", eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_y1, eof_difficulty_tab_boundary_x2, eof_difficulty_tab_boundary_y2);
 
 		return 1;
 	}
