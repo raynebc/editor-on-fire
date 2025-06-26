@@ -50,6 +50,8 @@ extern char eof_notes_macro_fhp_exceeding_number[50];			//Stores a string identi
 extern char eof_notes_macro_note_exceeding_fret[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_NOTE_EXCEEDS_FRET_#% condition
 extern char eof_notes_macro_note_exceeding_diff[50];			//Stores a string identifying the first culprit of the %IF_RS_ANY_NOTE_EXCEEDS_DIFF_#% condition
 extern char eof_notes_macro_technique_missing_sustain[50];		//Stores a string identifying the first culprit of the %IF_RS_ANY_TECHNIQUES_MISSING_SUSTAIN% condition
+extern char eof_notes_macro_lyric_with_non_ascii[50];				//Stores a string identifying the first culprit of the %IF_ANY_LYRICS_ARE_NON_ASCII% condition
+extern char eof_notes_macro_lyric_outside_line[50];				//Stores a string identifying the first culprit of the %IF_ANY_LYRICS_ARE_OUTSIDE_LINES% condition
 extern char eof_notes_inactive_track_has_rs_warnings;				//If nonzero, indicates that Rocksmith specific warnings were triggered for tracks other than the active track and aren't being displayed
 extern char eof_notes_inactive_track_has_rs_errors;				//If nonzero, indicates that Rocksmith specific errors were triggered for tracks other than the active track and aren't being displayed
 

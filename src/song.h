@@ -755,6 +755,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 	//Returns the address of the section array (which is also stored into ptr) upon success, or NULL upon error
 	//If the section type is not applicable for the track in question, *count is set to NULL and *ptr is set to NULL
 	//count is guaranteed to point to a valid counter variable if this function returns non NULL
+	//Arpeggio and handshape phrases both share the same array of phrases, so the calling function must take that into account
 EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long pos);
 	//Returns a pointer to the first instance of the specified section type of the specified track that the specified position is within
 	//Returns NULL if pos is not within any such section or upon error

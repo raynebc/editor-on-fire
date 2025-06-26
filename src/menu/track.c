@@ -17,6 +17,7 @@
 #include "../undo.h"
 #include "edit.h"
 #include "main.h"
+#include "note.h"
 #include "song.h"
 #include "track.h"
 
@@ -114,6 +115,23 @@ MENU eof_track_immerrock_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+char eof_note_name_find_next_menu_name[20] = {0};
+MENU eof_track_search_menu[] =
+{
+	{eof_note_name_find_next_menu_name, eof_note_name_find_next, NULL, 0, NULL},
+	{"&Search and replace", eof_name_search_replace, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_track_erase_menu[] =
+{
+	{"Erase &Track", eof_track_erase_track, NULL, 0, NULL},
+	{"Erase track &Difficulty", eof_track_erase_track_difficulty, NULL, 0, NULL},
+	{"Erase &Highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
+	{"Erase note &Names", eof_menu_track_erase_note_names, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_menu[] =
 {
 	{"Pro &Guitar", NULL, eof_track_proguitar_menu, 0, NULL},
@@ -124,19 +142,17 @@ MENU eof_track_menu[] =
 	{"Set di&Fficulty", NULL, eof_track_menu_set_difficulty, 0, NULL},
 	{"Re&name", eof_track_rename, NULL, 0, NULL},
 	{"Disable expert+ bass drum", eof_menu_track_disable_double_bass_drums, NULL, 0, NULL},
-	{"Erase track", eof_track_erase_track, NULL, 0, NULL},
-	{"Erase track difficulty", eof_track_erase_track_difficulty, NULL, 0, NULL},
-	{"Erase &Highlighting", eof_menu_track_remove_highlighting, NULL, 0, NULL},
-	{"Erase note names", eof_menu_track_erase_note_names, NULL, 0, NULL},
+	{"&Erase", NULL, eof_track_erase_menu, 0, NULL},
 	{"&Thin diff. to match", NULL, eof_menu_thin_diff_menu, 0, NULL},
 	{"Delete active difficulty", eof_track_delete_difficulty, NULL, 0, NULL},
-	{"Repair grid &Snap", eof_menu_track_repair_grid_snap, NULL, 0, NULL},
+	{"Repair grid snap", eof_menu_track_repair_grid_snap, NULL, 0, NULL},
 	{"&Clone", NULL, eof_track_clone_menu, 0, NULL},
-	{"&Enable GHL mode", eof_track_menu_enable_ghl_mode, NULL, 0, NULL},
+	{"Enable GHL mode", eof_track_menu_enable_ghl_mode, NULL, 0, NULL},
 	{"Find optimal CH star power path", eof_menu_track_find_ch_sp_path, NULL, 0, NULL},
 	{"Evaluate CH star power path", eof_menu_track_evaluate_user_ch_sp_path, NULL, 0, NULL},
 	{"&Offset", eof_menu_track_offset, NULL, 0, NULL},
 	{"Chord snap", eof_menu_track_check_chord_snapping, NULL, 0, NULL},
+	{"&Search", NULL, eof_track_search_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -307,28 +323,28 @@ void eof_prepare_track_menu(void)
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 			{	//If GHL mode is enabled for the active track
 				eof_track_phaseshift_menu[0].flags |= D_DISABLED;	//Prevent user from disabling the open strum option
-				eof_track_menu[16].flags = D_SELECTED;				//Track>Enable GHL mode
+				eof_track_menu[13].flags = D_SELECTED;				//Track>Enable GHL mode
 			}
 			else
 			{
-				eof_track_menu[16].flags = 0;
+				eof_track_menu[13].flags = 0;
 			}
 		}
 		else
 		{	//Otherwise disable and hide this item
-			eof_track_menu[16].flags = D_DISABLED | D_HIDDEN;			//Track>Enable GHL mode
+			eof_track_menu[13].flags = D_DISABLED | D_HIDDEN;			//Track>Enable GHL mode
 		}
 
 		/* (Clone Hero pathing functions) */
 		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS) || (eof_selected_track == EOF_TRACK_DRUM))
 		{	//If the active track is a legacy guitar/bass track or the keys track or the normal drum track
-			eof_track_menu[17].flags = 0;					//Track>Find optimal CH star power path
-			eof_track_menu[18].flags = 0;					//Track>Evaluate CH star power path
+			eof_track_menu[14].flags = 0;					//Track>Find optimal CH star power path
+			eof_track_menu[15].flags = 0;					//Track>Evaluate CH star power path
 		}
 		else
 		{	//Otherwise disable and hide these items
-			eof_track_menu[17].flags = D_DISABLED | D_HIDDEN;			//Track>Find optimal CH star power path
-			eof_track_menu[18].flags = D_DISABLED | D_HIDDEN;			//Track>Evaluate CH star power path
+			eof_track_menu[14].flags = D_DISABLED | D_HIDDEN;			//Track>Find optimal CH star power path
+			eof_track_menu[15].flags = D_DISABLED | D_HIDDEN;			//Track>Evaluate CH star power path
 		}
 
 		/* enable five lane drums */
@@ -467,6 +483,18 @@ void eof_prepare_track_menu(void)
 		else
 		{	//Otherwise use the unabridged Track menu
 			eof_main_menu[3].child = eof_track_menu;
+		}
+
+		/* Track>Search>Note name */
+		if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		{	//If a vocal track is active
+			snprintf(eof_note_name_find_next_menu_name, sizeof(eof_note_name_find_next_menu_name) - 1, "&Lyric text");
+			snprintf(eof_note_name_search_dialog_title, sizeof(eof_note_name_search_dialog_title) - 1, "Find next lyric containing this text");
+		}
+		else
+		{
+			snprintf(eof_note_name_find_next_menu_name, sizeof(eof_note_name_find_next_menu_name) - 1, "&Note name");
+			snprintf(eof_note_name_search_dialog_title, sizeof(eof_note_name_search_dialog_title) - 1, "Find next note containing this name");
 		}
 	}//If a chart is loaded
 }
@@ -5984,4 +6012,140 @@ void eof_track_pro_guitar_sort_hand_mode_changes(EOF_PRO_GUITAR_TRACK* tp)
 	{
 		qsort(tp->handmodechange, (size_t)tp->handmodechanges, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);
 	}
+}
+
+char eof_note_name_search_string[256] = {0};
+char eof_note_name_search_dialog_title[50] = {0};
+DIALOG eof_note_name_search_dialog[] =
+{
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2) (dp3) */
+	{ eof_window_proc, 0,   48,  280, 106, 2,   23,  0,    0,      0,   0,   eof_note_name_search_dialog_title, NULL, NULL },
+	{ eof_edit_proc,   12,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_note_name_search_string,    NULL, NULL },
+	{ d_agup_button_proc, 40,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",         NULL, NULL },
+	{ d_agup_button_proc, 155, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",     NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_note_name_find_next(void)
+{
+	unsigned long ctr;
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_track_sort_notes(eof_song, eof_selected_track);
+	eof_color_dialog(eof_note_name_search_dialog, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_note_name_search_dialog);
+	if(eof_popup_dialog(eof_note_name_search_dialog, 1) == 2)	//User hit OK on "Find next lyric/note with this text/name" dialog instead of canceling
+	{
+		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+		{	//For each note in this track
+			if(eof_get_note_pos(eof_song, eof_selected_track, ctr) <= eof_music_pos.value - eof_av_delay)
+				continue;	//If this note isn't after the current seek position, skip it
+
+			if(strcasestr_spec(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_name_search_string))
+			{	//If the specified text is included in the note name (case insensitive)
+				eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, ctr) + eof_av_delay);	//Seek to the match position
+				break;
+			}
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+
+	return D_O_K;
+}
+
+DIALOG eof_name_search_replace_dialog[] =
+{
+	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2) (dp3) */
+	{ eof_window_proc, 0,   48,  314, 162, 2,   23,  0,    0,      0,   0,   "Search and replace", NULL, NULL },
+	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Replace:",   NULL, NULL },
+	{ eof_edit_proc,   70,  80,  230, 20,  2,   23,  0,    0,      255, 0,   eof_etext,    NULL, NULL },
+	{ d_agup_text_proc,   12,  110, 64,  8,   2,   23,  0,    0,      0,   0,   "With:",      NULL, NULL },
+	{ eof_edit_proc,   70,  106, 230, 20,  2,   23,  0,    0,      255, 0,   eof_etext2,   NULL, NULL },
+	{ d_agup_check_proc,  12,  130, 90,  16,  2,   23,  0,    0,      0,   0,   "Match case", NULL, NULL },
+	{ d_agup_check_proc,  12,  146, 220, 16,  2,   23,  0,    D_SELECTED,0,0,   "Retain first letter capitalization", NULL, NULL },
+	{ d_agup_button_proc, 67,  168, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",         NULL, NULL },
+	{ d_agup_button_proc, 163, 168, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",     NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_name_search_replace(void)
+{
+	unsigned long ctr, count = 0;
+	int note_selection_updated, focus;
+	char undo_made = 0, *ptr;
+	int result;
+
+	//Initialize the dialog
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+	{	//If a specific note/lyric is selected (ie. via click)
+		strncpy(eof_etext, eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), sizeof(eof_etext) - 1);	//Populate the "Replace" field with the note's/lyric's text
+		focus = 4;	//And set initial focus to the "With" field
+	}
+	else
+	{	//Otherwise empty the "Replace" field and set initial focus to it
+		eof_etext[0] = '\0';
+		focus = 2;
+	}
+	eof_etext2[0] = '\0';	//Empty the "With" field
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_name_search_replace_dialog);
+
+	if(eof_popup_dialog(eof_name_search_replace_dialog, focus) == 7)
+	{	//If the user clicked OK
+		if((eof_etext[0] != '\0') && (eof_etext2[0] != '\0') && strcmp(eof_etext, eof_etext2))
+		{	//If the "Replace" and "With" fields are both populated and aren't the same
+			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+			{	//For each note in the active track
+				if(eof_name_search_replace_dialog[5].flags == D_SELECTED)
+				{	//The user specified a case-sensitive search and replace
+					result = strcmp(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_etext);
+				}
+				else
+				{
+					result = ustricmp(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_etext);
+				}
+				if(!result)
+				{	//If the lyric matches the specified text (with the specified case sensitivity)
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					if(eof_name_search_replace_dialog[6].flags == D_SELECTED)
+					{	//The user specified to apply the replaced word's first letter capitalization
+						if(isalpha(eof_etext[0]) && isalpha(eof_etext2[0]))
+						{	//If the first letters of the search and replace terms are both alphabetical
+							ptr = eof_get_note_name(eof_song, eof_selected_track, ctr);
+							if(isupper(ptr[0]))
+							{	//If the first letter of the lyric instance being replaced is upper case
+								eof_etext2[0] = toupper(eof_etext2[0]);	//Force the first letter of the replace string to upper case
+							}
+							else
+							{	//Otherwise force the first letter of the replace string to lower case
+								eof_etext2[0] = tolower(eof_etext2[0]);
+							}
+						}
+					}
+					eof_set_note_name(eof_song, eof_selected_track, ctr, eof_etext2);	//Apply the "With" text to the lyric
+					count++;
+				}
+			}
+
+			allegro_message("%lu %s made.", count, ((count == 1) ? "replacement" : "replacements"));
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return D_O_K;
 }

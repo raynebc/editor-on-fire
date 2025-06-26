@@ -159,7 +159,7 @@ MENU eof_pro_guitar_slide_menu[] =
 {
 	{"Toggle slide up\t" CTRL_NAME "+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
 	{"Toggle slide &Down\t" CTRL_NAME "+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
-	{"Remove &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
+	{"Remove pitched &Slide", eof_menu_note_remove_pitched_slide, NULL, 0, NULL},
 	{"&Reverse slide", eof_menu_note_reverse_slide, NULL, 0, NULL},
 	{"Set &End fret\t" CTRL_NAME "+Shift+L", eof_pro_guitar_note_slide_end_fret_save, NULL, 0, NULL},
 	{"Convert to &Unpitched", eof_menu_note_convert_slide_to_unpitched, NULL, 0, NULL},
@@ -488,6 +488,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"&Lookup fingering", eof_menu_note_lookup_fingering, NULL, 0, NULL},
 	{"Define unpitched slide\t" CTRL_NAME "+U", eof_pro_guitar_note_define_unpitched_slide, NULL, 0, NULL},
 	{"Remove &Unpitched slide", eof_menu_note_remove_unpitched_slide, NULL, 0, NULL},
+	{"Remove all &Slide", eof_menu_note_remove_all_slide, NULL, 0, NULL},
 	{"Mute->Single note P.M.", eof_rocksmith_convert_mute_to_palm_mute_single_note, NULL, 0, NULL},
 	{"&Move t.n. to prev note", eof_menu_note_move_tech_note_to_previous_note_pos, NULL, 0, NULL},
 	{"&Generate FHPs", eof_generate_efficient_hand_positions_for_selected_notes, NULL, 0, NULL},
@@ -502,7 +503,6 @@ MENU eof_note_lyrics_menu[] =
 	{"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
 	{"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
 	{"&Remove pitch", eof_menu_lyric_remove_pitch, NULL, 0, NULL},
-	{"&Search and replace", eof_name_search_replace, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -517,7 +517,6 @@ MENU eof_note_reflect_menu[] =
 MENU eof_note_name_menu[] =
 {
 	{"&Edit", eof_menu_note_edit_name, NULL, 0, NULL},
-	{"&Search and replace", eof_name_search_replace, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -674,21 +673,6 @@ DIALOG eof_drum_roll_count_dialog[] =
 	{ eof_verified_edit_proc, 80,  80,  222, 20,  2,   23,  0,    0,          3,   0,   eof_etext,        "0123456789", NULL },
 	{ d_agup_button_proc,   67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,    0,   "OK",             NULL, NULL },
 	{ d_agup_button_proc,  163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
-	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
-};
-
-DIALOG eof_name_search_replace_dialog[] =
-{
-	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2) (dp3) */
-	{ eof_window_proc, 0,   48,  314, 162, 2,   23,  0,    0,      0,   0,   "Search and replace", NULL, NULL },
-	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Replace:",   NULL, NULL },
-	{ eof_edit_proc,   70,  80,  230, 20,  2,   23,  0,    0,      255, 0,   eof_etext,    NULL, NULL },
-	{ d_agup_text_proc,   12,  110, 64,  8,   2,   23,  0,    0,      0,   0,   "With:",      NULL, NULL },
-	{ eof_edit_proc,   70,  106, 230, 20,  2,   23,  0,    0,      255, 0,   eof_etext2,   NULL, NULL },
-	{ d_agup_check_proc,  12,  130, 90,  16,  2,   23,  0,    0,      0,   0,   "Match case", NULL, NULL },
-	{ d_agup_check_proc,  12,  146, 220, 16,  2,   23,  0,    D_SELECTED,0,0,   "Retain first letter capitalization", NULL, NULL },
-	{ d_agup_button_proc, 67,  168, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",         NULL, NULL },
-	{ d_agup_button_proc, 163, 168, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",     NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1218,22 +1202,22 @@ void eof_prepare_note_menu(void)
 				if(tp->note == tp->technote)
 				{	//If tech view is in effect
 					eof_note_rocksmith_menu[6].flags = D_DISABLED;	//Note>Rocksmith>Lookup fingering
-					eof_note_rocksmith_menu[10].flags = 0;			//Note>Rocksmith>Move tech note to prev note
-					eof_note_rocksmith_menu[11].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
+					eof_note_rocksmith_menu[11].flags = 0;			//Note>Rocksmith>Move tech note to prev note
+					eof_note_rocksmith_menu[12].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
 					eof_note_proguitar_menu[8].flags = 0;				//Note>Pro Guitar>Toggle pre-bend
 				}
 				else
 				{
 					eof_note_rocksmith_menu[6].flags = 0;				//Note>Rocksmith>Lookup fingering
-					eof_note_rocksmith_menu[10].flags = D_DISABLED;
+					eof_note_rocksmith_menu[11].flags = D_DISABLED;
 					eof_note_proguitar_menu[8].flags = D_DISABLED;		//Note>Pro Guitar>Toggle pre-bend
 					if(vselected > 1)
 					{	//If multiple notes are selected
-						eof_note_rocksmith_menu[11].flags = 0;		//Note>Rocksmith>Generate FHPs
+						eof_note_rocksmith_menu[12].flags = 0;		//Note>Rocksmith>Generate FHPs
 					}
 					else
 					{	//Only one note is selected
-						eof_note_rocksmith_menu[11].flags = D_DISABLED;
+						eof_note_rocksmith_menu[12].flags = D_DISABLED;
 					}
 				}
 
@@ -6911,7 +6895,7 @@ int eof_menu_note_toggle_slide_down(void)
 	return 1;
 }
 
-int eof_menu_note_remove_slide(void)
+int eof_menu_note_remove_pitched_slide(void)
 {
 	unsigned long i;
 	long u = 0;
@@ -6932,6 +6916,47 @@ int eof_menu_note_remove_slide(void)
 		oldflags = flags;							//Save an extra copy of the original flags
 		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide up flag
 		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+		if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
+		{	//If this is NOT also a bend note with a defined bend strength
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Clear this flag
+		}
+		if(!u && (oldflags != flags))
+		{	//Make a back up before changing the first note
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			u = 1;
+		}
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
+	}
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_all_slide(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, oldflags, tracknum;
+	int note_selection_updated;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+			continue;	//If this note isn't selected, skip it
+
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		oldflags = flags;							//Save an extra copy of the original flags
+		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);			//Clear the slide up flag
+		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);		//Clear the slide down flag
+		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);	//Clear the unpitched slide flag
 		if(!((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength))
 		{	//If this is NOT also a bend note with a defined bend strength
 			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Clear this flag
@@ -7876,85 +7901,6 @@ int eof_menu_note_edit_name(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
-	return D_O_K;
-}
-
-int eof_name_search_replace(void)
-{
-	unsigned long ctr, count = 0;
-	int note_selection_updated, focus;
-	char undo_made = 0, *ptr;
-	int result;
-
-	//Initialize the dialog
-	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
-	if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
-	{	//If a specific note/lyric is selected (ie. via click)
-		strncpy(eof_etext, eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), sizeof(eof_etext) - 1);	//Populate the "Replace" field with the note's/lyric's text
-		focus = 4;	//And set initial focus to the "With" field
-	}
-	else
-	{	//Otherwise empty the "Replace" field and set initial focus to it
-		eof_etext[0] = '\0';
-		focus = 2;
-	}
-	eof_etext2[0] = '\0';	//Empty the "With" field
-	eof_cursor_visible = 0;
-	eof_render();
-	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
-	eof_conditionally_center_dialog(eof_name_search_replace_dialog);
-
-	if(eof_popup_dialog(eof_name_search_replace_dialog, focus) == 7)
-	{	//If the user clicked OK
-		if((eof_etext[0] != '\0') && (eof_etext2[0] != '\0') && strcmp(eof_etext, eof_etext2))
-		{	//If the "Replace" and "With" fields are both populated and aren't the same
-			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-			{	//For each note in the active track
-				if(eof_name_search_replace_dialog[5].flags == D_SELECTED)
-				{	//The user specified a case-sensitive search and replace
-					result = strcmp(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_etext);
-				}
-				else
-				{
-					result = ustricmp(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_etext);
-				}
-				if(!result)
-				{	//If the lyric matches the specified text (with the specified case sensitivity)
-					if(!undo_made)
-					{	//If an undo state hasn't been made yet
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						undo_made = 1;
-					}
-					if(eof_name_search_replace_dialog[6].flags == D_SELECTED)
-					{	//The user specified to apply the replaced word's first letter capitalization
-						if(isalpha(eof_etext[0]) && isalpha(eof_etext2[0]))
-						{	//If the first letters of the search and replace terms are both alphabetical
-							ptr = eof_get_note_name(eof_song, eof_selected_track, ctr);
-							if(isupper(ptr[0]))
-							{	//If the first letter of the lyric instance being replaced is upper case
-								eof_etext2[0] = toupper(eof_etext2[0]);	//Force the first letter of the replace string to upper case
-							}
-							else
-							{	//Otherwise force the first letter of the replace string to lower case
-								eof_etext2[0] = tolower(eof_etext2[0]);
-							}
-						}
-					}
-					eof_set_note_name(eof_song, eof_selected_track, ctr, eof_etext2);	//Apply the "With" text to the lyric
-					count++;
-				}
-			}
-
-			allegro_message("%lu %s made.", count, ((count == 1) ? "replacement" : "replacements"));
-		}
-	}
-	eof_cursor_visible = 1;
-	eof_pen_visible = 1;
-	eof_show_mouse(screen);
-	if(note_selection_updated)
-	{	//If the note selection was originally empty and was dynamically updated
-		(void) eof_menu_edit_deselect_all();	//Clear the note selection
-	}
 	return D_O_K;
 }
 

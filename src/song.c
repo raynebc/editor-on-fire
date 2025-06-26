@@ -10903,9 +10903,6 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 
 	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
 	{	//For each type of section that exists
-		if(!eof_lookup_track_section_type(sp, track, sectiontype, &sectioncount, &sections) || !sections)
-			continue;	//If this track doesn't have any of this type of section, skip it
-
 		//Skip the section types that are unused or otherwise not altered by this function
 		switch(sectiontype)
 		{
@@ -10925,9 +10922,14 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 			break;		//Redundant default case to satisfy Oclint
 		}
 
+		if(!eof_lookup_track_section_type(sp, track, sectiontype, &sectioncount, &sections) || !sections)
+			continue;	//If this track doesn't have any of this type of section, skip it
+
 		for(ctr = 0; ctr < *sectioncount; ctr++)
 		{	//For each instance of this section type in the track
 			applicable = missing = 0;	//Reset these statuses
+			if((sectiontype == EOF_HANDSHAPE_SECTION) && (sections[ctr].flags & EOF_RS_ARP_HANDSHAPE))
+				continue;	//If handshapes are being processed, but this is an arpeggio instead, skip it otherwise it will be moved twice
 			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
 			{	//For each note in the track
 				notepos = eof_get_note_pos(sp, track, ctr2);

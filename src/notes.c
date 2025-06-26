@@ -42,6 +42,8 @@ char eof_notes_macro_slide_exceeding_fret[50];
 char eof_notes_macro_tech_note_missing_target[50];
 char eof_notes_macro_lyric_extending_outside_line[50];
 char eof_notes_macro_technique_missing_sustain[50];
+char eof_notes_macro_lyric_with_non_ascii[50];
+char eof_notes_macro_lyric_outside_line[50];
 char eof_notes_inactive_track_has_rs_warnings = 0;
 char eof_notes_inactive_track_has_rs_errors = 0;
 
@@ -1330,11 +1332,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ANY_LYRICS_ARE_OUTSIDE_LINES"))
 	{
+		eof_notes_macro_lyric_outside_line[0] = '\0';	//Erase this string
 		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
 		{	//For each lyric
+			char time_string[15] = {0};
+
 			if((eof_song->vocal_track[0]->lyric[ctr]->note == EOF_LYRIC_PERCUSSION) || (eof_find_lyric_line(ctr) != NULL))
 				continue;	//If this lyric is vocal percussion or is within a line, skip it
 
+			eof_notes_panel_print_time(eof_song->vocal_track[0]->lyric[ctr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+			snprintf(eof_notes_macro_lyric_outside_line, sizeof(eof_notes_macro_lyric_outside_line) - 1, "%s - pos %s", eof_song->track[EOF_TRACK_VOCALS]->name, time_string);	//Write a string identifying the offending note
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -1423,10 +1430,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ANY_LYRICS_ARE_NON_ASCII"))
 	{
+		eof_notes_macro_lyric_with_non_ascii[0] = '\0';	//Erase this string
 		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lyrics); ctr++)
 		{	//For each lyric
 			if((eof_song->vocal_track[0]->lyric[ctr]->text[0] != '\0') && (eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text)))
 			{	//If any of the lyrics that contain text have non ASCII characters
+				char time_string[15] = {0};
+				eof_notes_panel_print_time(eof_song->vocal_track[0]->lyric[ctr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+				snprintf(eof_notes_macro_lyric_with_non_ascii, sizeof(eof_notes_macro_lyric_with_non_ascii) - 1, "%s - pos %s", eof_song->track[EOF_TRACK_VOCALS]->name, time_string);	//Write a string identifying the offending note
 				dest_buffer[0] = '\0';
 				return 3;	//True
 			}
@@ -5150,6 +5161,20 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "RS_FIRST_TECHNIQUE_MISSING_SUSTAIN"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_technique_missing_sustain);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "FIRST_LYRIC_WITH_NON_ASCII"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_with_non_ascii);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "FIRST_LYRIC_OUTSIDE_LINE"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_outside_line);
 
 		return 1;
 	}

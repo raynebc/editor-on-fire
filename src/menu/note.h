@@ -171,8 +171,9 @@ int eof_menu_note_lookup_fingering(void);
 
 int eof_menu_note_toggle_slide_up(void);		//Toggles the slide up status of all selected notes
 int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of all selected notes
-int eof_menu_note_remove_slide(void);			//Removes the slide status of all selected notes
-int eof_menu_note_reverse_slide(void);			//Reverses the slide direction of all selected notes that already slide (also removes the reverse slide status if it is applied)
+int eof_menu_note_remove_pitched_slide(void);		//Removes the pitched slide status of all selected notes
+int eof_menu_note_remove_all_slide(void);			//Removes the pitched and unpitched slide status of all selected notes
+int eof_menu_note_reverse_slide(void);				//Reverses the slide direction of all selected notes that already slide (also removes the reverse slide status if it is applied)
 int eof_menu_note_convert_slide_to_unpitched(void);	//Converts selected slide notes to unpitched slide notes
 int eof_menu_note_convert_slide_to_pitched(void);	//Converts selected unpitched slide notes to pitched slide notes
 int eof_menu_note_toggle_palm_muting(void);		//Toggles the palm muting status of all selected notes
@@ -282,25 +283,25 @@ void eof_menu_note_cycle_selection_back(unsigned long notenum);
 int eof_menu_note_toggle_green(void);	//Toggles the gem on lane 1 (originally colored green)
 int eof_menu_note_toggle_red(void);		//Toggles the gem on lane 2 (originally colored red)
 int eof_menu_note_toggle_yellow(void);	//Toggles the gem on lane 3 (originally colored yellow)
-int eof_menu_note_toggle_blue(void);	//Toggles the gem on lane 4 (originally colored blue)
+int eof_menu_note_toggle_blue(void);		//Toggles the gem on lane 4 (originally colored blue)
 int eof_menu_note_toggle_purple(void);	//Toggles the gem on lane 5 (originally colored purple)
 int eof_menu_note_toggle_orange(void);	//Toggles the gem on lane 6 (originally colored orange)
 
-int eof_menu_note_clear_green(void);	//Clears the gem on lane 1 (originally colored green)
+int eof_menu_note_clear_green(void);		//Clears the gem on lane 1 (originally colored green)
 int eof_menu_note_clear_red(void);		//Clears the gem on lane 2 (originally colored red)
-int eof_menu_note_clear_yellow(void);	//Clears the gem on lane 3 (originally colored yellow)
+int eof_menu_note_clear_yellow(void);		//Clears the gem on lane 3 (originally colored yellow)
 int eof_menu_note_clear_blue(void);		//Clears the gem on lane 4 (originally colored blue)
-int eof_menu_note_clear_purple(void);	//Clears the gem on lane 5 (originally colored purple)
-int eof_menu_note_clear_orange(void);	//Clears the gem on lane 6 (originally colored orange)
+int eof_menu_note_clear_purple(void);		//Clears the gem on lane 5 (originally colored purple)
+int eof_menu_note_clear_orange(void);		//Clears the gem on lane 6 (originally colored orange)
 
 int eof_menu_note_toggle_accent_green(void);	//Toggles the accent bit on lane 1 (originally colored green)
-int eof_menu_note_toggle_accent_red(void);		//Toggles the accent bit on lane 2 (originally colored red)
+int eof_menu_note_toggle_accent_red(void);	//Toggles the accent bit on lane 2 (originally colored red)
 int eof_menu_note_toggle_accent_yellow(void);	//Toggles the accent bit on lane 3 (originally colored yellow)
-int eof_menu_note_toggle_accent_blue(void);		//Toggles the accent bit on lane 4 (originally colored blue)
+int eof_menu_note_toggle_accent_blue(void);	//Toggles the accent bit on lane 4 (originally colored blue)
 int eof_menu_note_toggle_accent_purple(void);	//Toggles the accent bit on lane 5 (originally colored purple)
 int eof_menu_note_toggle_accent_orange(void);	//Toggles the accent bit on lane 6 (originally colored orange)
 
-int eof_menu_note_clear_accent_green(void);		//Clears the accent bit on lane 1 (originally colored green)
+int eof_menu_note_clear_accent_green(void);	//Clears the accent bit on lane 1 (originally colored green)
 int eof_menu_note_clear_accent_red(void);		//Clears the accent bit on lane 2 (originally colored red)
 int eof_menu_note_clear_accent_yellow(void);	//Clears the accent bit on lane 3 (originally colored yellow)
 int eof_menu_note_clear_accent_blue(void);		//Clears the accent bit on lane 4 (originally colored blue)
@@ -308,24 +309,23 @@ int eof_menu_note_clear_accent_purple(void);	//Clears the accent bit on lane 5 (
 int eof_menu_note_clear_accent_orange(void);	//Clears the accent bit on lane 6 (originally colored orange)
 int eof_menu_note_clear_accent_all(void);		//Clears the accent bit on all lanes
 
-int eof_menu_note_toggle_ghost_green(void);		//Toggles the ghost bit on lane 1 (originally colored green)
+int eof_menu_note_toggle_ghost_green(void);	//Toggles the ghost bit on lane 1 (originally colored green)
 int eof_menu_note_toggle_ghost_red(void);		//Toggles the ghost bit on lane 2 (originally colored red)
 int eof_menu_note_toggle_ghost_yellow(void);	//Toggles the ghost bit on lane 3 (originally colored yellow)
-int eof_menu_note_toggle_ghost_blue(void);		//Toggles the ghost bit on lane 4 (originally colored blue)
+int eof_menu_note_toggle_ghost_blue(void);	//Toggles the ghost bit on lane 4 (originally colored blue)
 int eof_menu_note_toggle_ghost_purple(void);	//Toggles the ghost bit on lane 5 (originally colored purple)
 int eof_menu_note_toggle_ghost_orange(void);	//Toggles the ghost bit on lane 6 (originally colored orange)
 
 int eof_menu_note_clear_ghost_green(void);		//Clears the ghost bit on lane 1 (originally colored green)
 int eof_menu_note_clear_ghost_red(void);		//Clears the ghost bit on lane 2 (originally colored red)
-int eof_menu_note_clear_ghost_yellow(void);		//Clears the ghost bit on lane 3 (originally colored yellow)
+int eof_menu_note_clear_ghost_yellow(void);	//Clears the ghost bit on lane 3 (originally colored yellow)
 int eof_menu_note_clear_ghost_blue(void);		//Clears the ghost bit on lane 4 (originally colored blue)
-int eof_menu_note_clear_ghost_purple(void);		//Clears the ghost bit on lane 5 (originally colored purple)
-int eof_menu_note_clear_ghost_orange(void);		//Clears the ghost bit on lane 6 (originally colored orange)
+int eof_menu_note_clear_ghost_purple(void);	//Clears the ghost bit on lane 5 (originally colored purple)
+int eof_menu_note_clear_ghost_orange(void);	//Clears the ghost bit on lane 6 (originally colored orange)
 int eof_menu_note_clear_ghost_all(void);		//Clears the ghost bit on all lanes
 
 int eof_menu_split_lyric(void);
 int eof_menu_note_edit_name(void);		//Enables the name for selected notes to be altered
-int eof_name_search_replace(void);		//Performs search and replace for lyric text or note names
 
 int eof_menu_copy_solos_track_1(void);
 int eof_menu_copy_solos_track_2(void);

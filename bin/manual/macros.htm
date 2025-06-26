@@ -394,7 +394,7 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_ANY_LYRICS_ARE_OUTSIDE_LINES%</td>
-<td>Evaluates as true if any lyrics begins outside of all existing lyric lines.</td>
+<td>Evaluates as true if any lyrics begins outside of all existing lyric lines, in which case the %FIRST_LYRIC_OUTSIDE_LINE% macro will print the location of the first offending lyric.</td>
 </tr>
 <tr>
 <td>%IF_SONG_TITLE_IS_DEFINED%</td>
@@ -426,7 +426,7 @@ See the detailed explanation earlier in this document for instructions on how to
 </tr>
 <tr>
 <td>%IF_ANY_LYRICS_ARE_NON_ASCII%</td>
-<td>Evaluates as true if any of the defined lyrics are detected as having non ASCII text.</td>
+<td>Evaluates as true if any of the defined lyrics are detected as having non ASCII text, in which case the %FIRST_LYRIC_WITH_NON_ASCII% macro will print the location of the first offending lyric.</td>
 </tr>
 <tr>
 <td>%IF_IR_LEAD_ARRANGEMENT_DEFINED%</td>

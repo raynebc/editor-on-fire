@@ -20,6 +20,12 @@ extern char eof_fret_hand_position_list_dialog_title_string[30];	//This will be 
 extern char **eof_track_rs_tone_names_list_strings;				//A list of unique tone names that is build with eof_track_rebuild_rs_tone_names_list_strings()
 extern unsigned long eof_track_rs_tone_names_list_strings_num;	//Indicates the number of entries in the above array
 
+extern char eof_note_name_search_string[256];
+extern char eof_note_name_search_dialog_title[50];
+extern DIALOG eof_note_name_search_dialog[];
+extern char eof_note_name_find_next_menu_name[20];
+extern DIALOG eof_name_search_replace_dialog[];
+
 int eof_menu_track_set_difficulty_0(void);
 int eof_menu_track_set_difficulty_1(void);
 int eof_menu_track_set_difficulty_2(void);
@@ -302,5 +308,8 @@ int eof_track_delete_effective_hand_mode_change(void);
 	//Deletes the hand mode change in effect at the seek position
 void eof_track_pro_guitar_sort_hand_mode_changes(EOF_PRO_GUITAR_TRACK* tp);
 	//Sorts the specified track's hand mode changes by timestamp
+
+int eof_note_name_find_next(void);		//Seeks to the next note with the specified name (note or lyric)
+int eof_name_search_replace(void);		//Performs search and replace for lyric text or note names
 
 #endif
