@@ -759,7 +759,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 {
 	unsigned long ctr, ctr2;
 	EOF_VOCAL_TRACK *tp;
-	char buffer[1024], buffer2[50] = {0}, error = 0;
+	char buffer[1024], buffer2[50] = {0}, error = 0, unsorted = 0;
 	unsigned long lastend = 0, lastlyricindex, matches;
 
 	if(!sp)
@@ -813,15 +813,25 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 		{	//For each lyric line
 			if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
 			{
-				eof_log("\t\t!Lyric line timings corrupt", 1);
+				eof_log("\t\t!Lyric line timings corrupt.  Repairing", 1);
+				if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
+					tp->line[ctr].end_pos++;		//If the start and end positions are the same, make the line 1ms longer to resolve the problem
+				else
+				{	//The line's start position is after the end position, swap those timings
+					unsigned long temp = tp->line[ctr].end_pos;
+					tp->line[ctr].end_pos = tp->line[ctr].start_pos;
+					tp->line[ctr].start_pos = temp;
+				}
 			}
 			if(ctr && (tp->line[ctr].start_pos <= lastend))
 			{
-				eof_log("\t\t!Lyric line overlaps previous line", 1);
+				eof_log("\t\t!Lyric line overlaps previous line.  Repairing", 1);
+				tp->line[ctr].start_pos = lastend + 1;	//Make the lyric line begin 1ms after the end of the previous line
 			}
 			if(tp->line[ctr].difficulty != 255)
 			{
-				eof_log("\t\t!Lyric line is the wrong difficulty", 1);
+				eof_log("\t\t!Lyric line is the wrong difficulty.  Reparing", 1);
+				tp->line[ctr].difficulty = 255;
 			}
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  Diff %u, %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].difficulty, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
 			eof_log(eof_log_string, 1);
@@ -833,7 +843,8 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 				{	//If this lyric is within the scope of the lyric line
 					if(matches && (ctr2 > lastlyricindex + 1))
 					{
-						eof_log("\t\t\t!Lyrics out of order", 1);
+						eof_log("\t\t\t!Lyrics out of order.", 1);
+						unsorted = 1;
 					}
 					snprintf(buffer2, sizeof(buffer2) - 1, "%lu (%s) ", ctr2, tp->lyric[ctr2]->text);
 					strncat(buffer, buffer2, sizeof(buffer) - 1);	//Append data about this lyric to the buffer
@@ -843,11 +854,18 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			}
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%s", buffer);
 			eof_log(eof_log_string, 1);
+
 			lastend = tp->line[ctr].end_pos;
 		}
 
+		if(unsorted)
+		{	//If the lyrics were out of chronological order
+			eof_log("\t\t\tRepairing.", 1);
+			eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
+		}
+
 		if(error)
-			allegro_message("Lyric error detected (%u), check EOF log.", error);
+			allegro_message("Lyric error detected (%u) and repaired, check EOF log.", error);
 	}
 	else
 		eof_log("\tLyrics OK", 1);

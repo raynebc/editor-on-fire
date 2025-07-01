@@ -2724,6 +2724,21 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//A pro guitar track is active and dynamic difficulty is in effect
+	if(!ustricmp(macro, "IF_RS_TRACK_HAS_DYNAMIC_DIFFICULTY"))
+	{
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{

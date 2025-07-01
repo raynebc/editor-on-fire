@@ -490,18 +490,18 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	}
 	if(noteflags & EOF_NOTE_FLAG_F_HOPO)				//If this note is forced as HOPO on
 	{
-		radius=eof_screen_layout.hopo_note_size;		//Draw the note in the defined HOPO on size
-		dotsize=eof_screen_layout.hopo_note_dot_size;
+		radius = eof_screen_layout.hopo_note_size;		//Draw the note in the defined HOPO on size
+		dotsize = eof_screen_layout.hopo_note_dot_size;
 	}
 	else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)			//Or if this note is forced as HOPO off
 	{
-		radius=eof_screen_layout.anti_hopo_note_size;	//Draw the note in the defined HOPO off size
-		dotsize=eof_screen_layout.anti_hopo_note_dot_size;
+		radius = eof_screen_layout.anti_hopo_note_size;	//Draw the note in the defined HOPO off size
+		dotsize = eof_screen_layout.anti_hopo_note_dot_size;
 	}
 	else
 	{
-		radius=eof_screen_layout.note_size;				//Otherwise, draw the note at its standard size
-		dotsize=eof_screen_layout.note_dot_size;
+		radius = eof_screen_layout.note_size;				//Otherwise, draw the note at its standard size
+		dotsize = eof_screen_layout.note_dot_size;
 	}
 
 	if(track && eof_render_grid_lines && (eof_snap_mode != EOF_SNAP_OFF) && !eof_is_grid_snap_position(notepos))

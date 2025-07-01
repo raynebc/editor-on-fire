@@ -20,7 +20,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms);
 	//Backs up the specified OGG file and inserts the specified amount of silence at the beginning of the OGG file by processing in PCM WAV format and then re-encoding to OGG format
 	//Returns nonzero on error
 int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms);
-	//Similar to eof_add_silence_recode(), but decodes the originally converted MP3 file instead of the OGG file, preserving as much of the original audio quality as possible
+	//Similar to eof_add_silence_recode(), but decodes the originally converted MP3 file (original.mp3) instead of the OGG file, preserving as much of the original audio quality as possible
 	//Returns nonzero on error
 int save_wav_with_silence_appended(const char * fn, SAMPLE * sp, unsigned long ms);
 	//Accepts an input audio sample and writes it to the specified WAV file, appending the specified amount of silence in ms

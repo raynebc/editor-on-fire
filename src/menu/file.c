@@ -2925,7 +2925,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 
 		if(eof_ogg_settings())
 		{
-			put_backslash(directory);												//Ensure that the directory string ends in a folder separator
+			put_backslash(directory);									//Ensure that the directory string ends in a folder separator
 			(void) snprintf(cfn, sizeof(cfn) - 1, "%soriginal.mp3", directory);		//Get the destination path of the original.mp3 to be created
 			#ifdef ALLEGRO_WINDOWS
 				(void) eof_copy_file(file, "eoftemp.mp3");
@@ -2950,13 +2950,15 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 
 		if(eof_ogg_settings())
 		{
-			put_backslash(directory);												//Ensure that the directory string ends in a folder separator
+			put_backslash(directory);									//Ensure that the directory string ends in a folder separator
+			(void) snprintf(cfn, sizeof(cfn) - 1, "%soriginal.wav", directory);		//Get the destination path of the original.wav to be created
 			#ifdef ALLEGRO_WINDOWS
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "wavtoogg \"%s\" %s \"%s%s\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory, dest_name);
 			#else
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s%s\"", eof_ogg_quality[(int)eof_ogg_setting], file, directory, dest_name);
 			#endif
 			(void) eof_system(syscommand);
+			(void) eof_copy_file(file, cfn);	//Copy the selected MP3 file to a file named original.wav in the chart folder
 		}
 		else
 		{
@@ -3008,7 +3010,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		{
 			pack_fclose(fp);
 			eof_log("Test file was able to be created manually, but the conversion utility could not do so", 1);
-			(void) delete_file(cfn);
+			(void) delete_file(cfn);	//Delete permission test file
 		}
 		return 4;	//Error
 	}
@@ -3244,7 +3246,7 @@ int eof_new_chart(char * filename)
 	if(ret != 0)	//If a suitably named OGG was not created successfully
 		return ret;	//Return failure
 
-	/* destroy old song */
+	/* destroy old chart in memory */
 	if(eof_song)
 	{
 		eof_destroy_song(eof_song);
@@ -3253,7 +3255,7 @@ int eof_new_chart(char * filename)
 	}
 	(void) eof_destroy_ogg();
 
-	/* create new song */
+	/* create new chart in memory */
 	eof_song = eof_create_song_populated();
 	if(!eof_song)
 	{
@@ -3510,7 +3512,7 @@ int eof_save_helper_checks(void)
 				continue;	//If this note and the next note are at the same position and have disjointed status, skip it
 
 			eof_clear_input();
-			if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
+			if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance (ie. Min note distance preference is too large).", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opted to seek to the first offending note (only prompt once per call)
 				eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), thisnotepos);
 				return 1;	//Return cancellation
@@ -4806,7 +4808,15 @@ void eof_restore_oggs_helper(void)
 				{
 					eof_log("restoring from .lastsaved\n", 1);
 					(void) eof_copy_file(oggfn, coggfn);
-					(void) delete_file(oggfn);
+					if(exists(coggfn))
+					{	//If the restore succeeded
+						(void) delete_file(oggfn);
+					}
+					else
+					{
+						eof_log("\trestore failed", 1);
+						allegro_message("Failed to restore %s", oggfn);
+					}
 				}
 				else
 				{

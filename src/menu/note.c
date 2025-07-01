@@ -111,7 +111,7 @@ MENU eof_lyric_line_menu[] =
 	{"&Erase All", eof_menu_lyric_line_erase_all, NULL, 0, NULL},
 	{"Edit &Timing", eof_menu_note_lyric_line_edit_timing, NULL, 0, NULL},
 	{"Split &After selected", eof_menu_note_split_lyric_line_after_selected, NULL, 0, NULL},
-	{"Repair &Lengths", eof_menu_note_lyric_line_repair_lengths, NULL, 0, NULL},
+	{"Re&Pair timing", eof_menu_note_lyric_line_repair_timing, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Toggle &Overdrive", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -11444,15 +11444,17 @@ int eof_menu_note_move_note_end(void)
 	return D_O_K;
 }
 
-int eof_menu_note_lyric_line_repair_lengths(void)
+int eof_menu_note_lyric_line_repair_timing(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long linectr, lyricctr;
+	unsigned long linectr, lyricctr, lyric_endpos = 0;
 	EOF_VOCAL_TRACK *tp;
 	char undo_made = 0;
 
 	if(!eof_vocals_selected || (eof_selection.track != EOF_TRACK_VOCALS))
 		return 1;	//The vocal track is not active or no notes in the vocal track are selected
+
+ 	eof_log("eof_menu_note_lyric_line_repair_timing() entered", 1);
 
 	tp = eof_song->vocal_track[tracknum];	//Simplify
 	eof_track_sort_notes(eof_song, eof_selected_track);	//Ensure lyrics are sorted
@@ -11462,19 +11464,76 @@ int eof_menu_note_lyric_line_repair_lengths(void)
 		{	//For each lyric
 			if(eof_selection.multi[lyricctr])
 			{	//If this lyric is selected
-				if((tp->lyric[lyricctr]->pos >= tp->line[linectr].start_pos) && (tp->lyric[lyricctr]->pos <= tp->line[linectr].end_pos))
-				{	//If this lyric is in the lyric line, the line is to have its end position corrected if necessary
-					for(;(lyricctr + 1 < tp->lyrics) && (tp->lyric[lyricctr + 1]->pos <= tp->line[linectr].end_pos);lyricctr++);	//Advance lyricctr to reference the last lyric beginning in this line
+				char process = 0;	//By default, do not check/alter the lyric line any further unless selected lyrics put this line in the scope of the function
 
-					if(tp->lyric[lyricctr]->pos + tp->lyric[lyricctr]->length > tp->line[linectr].end_pos)
-					{	//If this lyric extends beyond the end of the lyric line
-						if(!undo_made)
-						{
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				lyric_endpos = tp->lyric[lyricctr]->pos + tp->lyric[lyricctr]->length;
+				if(!eof_find_lyric_line(lyricctr) && (lyric_endpos >= tp->line[linectr].start_pos) && (lyric_endpos <= tp->line[linectr].end_pos))
+				{	//If this lyric does not begin in any line, but it ends in the lyric line being examined
+					process = 1;	//This lyric line is to be processed
+				}
+				else if((tp->lyric[lyricctr]->pos >= tp->line[linectr].start_pos) && (tp->lyric[lyricctr]->pos <= tp->line[linectr].end_pos))
+				{	//If this lyric begins in the lyric line being examined
+					process = 1;	//This lyric line is to be processed
+				}
+
+				if(process)
+				{	//If the lyric selection indicates this line should be updated if necesary, parse lyrics again from the start
+					//Update lyric line start position
+					for(lyricctr = 0; lyricctr < tp->lyrics; lyricctr++)
+					{	//For each lyric
+						lyric_endpos = tp->lyric[lyricctr]->pos + tp->lyric[lyricctr]->length;
+						if(!eof_find_lyric_line(lyricctr) && (lyric_endpos >= tp->line[linectr].start_pos) && (lyric_endpos <= tp->line[linectr].end_pos))
+						{	//If this lyric does not begin in any line, but it ends in the lyric line being examined
+							if(!undo_made)
+							{
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAltering lyric line #%lu that had started at pos %lums to %lums", lyricctr, tp->line[linectr].start_pos, tp->lyric[lyricctr]->pos);
+							eof_log(eof_log_string, 1);
+							tp->line[linectr].start_pos = tp->lyric[lyricctr]->pos;	//Update the line's start position
+							break;	//Break from the inner lyric loop
 						}
-						tp->line[linectr].end_pos = tp->lyric[lyricctr]->pos + tp->lyric[lyricctr]->length;	//Update the line's end position
+						else if((tp->lyric[lyricctr]->pos >= tp->line[linectr].start_pos) && (tp->lyric[lyricctr]->pos <= tp->line[linectr].end_pos))
+						{	//If this is the first lyric found to begin in the lyric line being examined
+							if(tp->lyric[lyricctr]->pos != tp->line[linectr].start_pos)
+							{	//If this lyric begins at a timestamp other than the start of the lyric line
+								if(!undo_made)
+								{
+									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+									undo_made = 1;
+								}
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAltering lyric line #%lu that had started at pos %lums to %lums", lyricctr, tp->line[linectr].start_pos, tp->lyric[lyricctr]->pos);
+								eof_log(eof_log_string, 1);
+								tp->line[linectr].start_pos = tp->lyric[lyricctr]->pos;	//Update the line's start position
+								break;	//Break from the inner lyric loop
+							}
+						}
 					}
-					break;	//Break from the lyric loop and check the next lyric line
+
+					//Update lyric line end position
+					for(lyricctr = 0; lyricctr < tp->lyrics; lyricctr++)
+					{	//For each lyric
+						if((tp->lyric[lyricctr]->pos >= tp->line[linectr].start_pos) && (tp->lyric[lyricctr]->pos <= tp->line[linectr].end_pos))
+						{	//If this lyric begins in the lyric line being examined
+							for(;(lyricctr + 1 < tp->lyrics) && (tp->lyric[lyricctr + 1]->pos <= tp->line[linectr].end_pos);lyricctr++);	//Advance lyricctr to reference the last lyric beginning in this line
+							lyric_endpos = tp->lyric[lyricctr]->pos + tp->lyric[lyricctr]->length;
+
+							if(lyric_endpos != tp->line[linectr].end_pos)
+							{	//If this lyric ends at a timestamp other than the end of the lyric line
+								if(!undo_made)
+								{
+									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+									undo_made = 1;
+								}
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAltering lyric line #%lu that had ended at pos %lums to %lums", lyricctr, tp->line[linectr].end_pos, lyric_endpos);
+								eof_log(eof_log_string, 1);
+								tp->line[linectr].end_pos = lyric_endpos;	//Update the line's end position
+								break;	//Break from the inner lyric loop
+							}
+						}
+					}
+					break;	//Break from the outer lyric loop and check the next lyric line
 				}
 			}
 		}

@@ -196,13 +196,19 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	{
 		(void) eof_copy_file(oggfn, backupfn);
 	}
-	(void) delete_file(oggfn);
+	if(!exists(backupfn))
+	{
+		eof_log("\tOGG file unable to be backed up.  Aborting", 1);
+		allegro_message("Warning:  The existing chart audio could not be backed up.  Aborting");
+		return 2;	//Return error:  Couldn't back up audio
+	}
+	(void) delete_file(oggfn);	//Delete the project's active OGG audio file
 
 	silence_sample = create_silence_sample(ms);
 	if(!silence_sample)
 	{
 		eof_fix_window_title();
-		return 2;	//Return error:  Couldn't create silent audio
+		return 3;	//Return error:  Couldn't create silent audio
 	}
 	(void) replace_filename(wavfn, eof_song_path, "silence.wav", 1024);
 	(void) save_wav(wavfn, silence_sample);
@@ -216,14 +222,14 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	if(eof_system(sys_command))
 	{
 		eof_fix_window_title();
-		return 3;	//Return error:  Could not encode silent audio
+		return 4;	//Return error:  Could not encode silent audio
 	}
 
 	/* stitch the original file to the silence file */
 	if(!getcwd(old_wd, 1024))
 	{	//If the current working directory could not be obtained
 		eof_fix_window_title();
-		return 4;	//Return error:  Could not obtain current working directory
+		return 5;	//Return error:  Could not obtain current working directory
 	}
 
 	(void) eof_chdir(eof_song_path);	//Change directory to the project's folder, since oggCat does not support paths that have any Unicode/extended ASCII, relative paths will be given
@@ -252,7 +258,7 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	if(eof_chdir(old_wd))
 	{
 		allegro_message("Could not change directory to EOF's program folder!\n%s", backupfn);
-		return 5;	//Return error:  Could not set working directory
+		return 6;	//Return error:  Could not set working directory
 	}
 
 	if(retval)
@@ -261,11 +267,11 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 		eof_log(eof_log_string, 1);
 		(void) eof_copy_file(backupfn, oggfn);	//Restore the original OGG file
 		eof_fix_window_title();
-		return 6;	//Return error:  oggCat failed
+		return 7;	//Return error:  oggCat failed
 	}
 
 	/* clean up */
-	(void) delete_file(wavfn);	//Delete silence.wav
+	(void) delete_file(wavfn);		//Delete silence.wav
 	(void) delete_file(soggfn);	//Delete silence.ogg
 	if(eof_load_ogg(oggfn, 0))
 	{	//If the combined audio was loaded
@@ -279,9 +285,9 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 
 	//If this part of the function is reached, the OGG failed to load
 	if(exists(oggfn))
-		return 7;	//Return error:  Could not load new audio, but audio file exists
+		return 8;	//Return error:  Could not load new audio, but audio file exists
 
-	return 8;	//Return error:  Could not load new audio, file does not exist
+	return 9;	//Return error:  Could not load new audio, file does not exist
 }
 
 int eof_add_silence_recode(char * oggfn, unsigned long ms)
@@ -315,6 +321,12 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	{
 		(void) eof_copy_file(oggfn, backupfn);
 	}
+	if(!exists(backupfn))
+	{
+		eof_log("\tOGG file unable to be backed up.  Aborting", 1);
+		allegro_message("Warning:  The existing chart audio could not be backed up.  Aborting");
+		return 42;	//Return error:  Couldn't back up audio
+	}
 
 	/* Decode the OGG file into memory */
 	//Load OGG file into memory
@@ -323,14 +335,14 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError reading OGG:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
-		return 42;	//Return failure:  Could not buffer chart audio into memory
+		return 43;	//Return failure:  Could not buffer chart audio into memory
 	}
 	oggfile=alogg_create_ogg_from_buffer(oggbuffer, (int)file_size_ex(oggfn));
 	if(oggfile == NULL)
 	{
 		eof_log("ALOGG failed to open input audio file", 1);
 		free(oggbuffer);
-		return 43;	//Return failure:  Could not process buffered chart audio
+		return 44;	//Return failure:  Could not process buffered chart audio
 	}
 
 	//Decode OGG into memory
@@ -340,7 +352,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 		eof_log("Leading silence re-encode: ALOGG failed to decode input audio file", 1);
 		alogg_destroy_ogg(oggfile);
 		free(oggbuffer);
-		return 44;	//Return failure:  Could not decode chart audio to memory
+		return 45;	//Return failure:  Could not decode chart audio to memory
 	}
 
 	/* Create a SAMPLE array large enough for the leading silence and the decoded OGG */
@@ -370,7 +382,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 		}
 		free(oggbuffer);
 		destroy_sample(decoded);
-		return 45;	//Return failure:  Could not create a sample array for the combined audio
+		return 46;	//Return failure:  Could not create a sample array for the combined audio
 	}
 
 	/* Add the PCM data for the silence */
@@ -454,7 +466,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 			if(eof_validate_temp_folder())
 			{	//Ensure the correct working directory and presence of the temporary folder
 				eof_log("\tCould not validate working directory and temp folder", 1);
-				return 46;	//Return failure:  Could not validate cwd and temp folder
+				return 47;	//Return failure:  Could not validate cwd and temp folder
 			}
 
 			(void) snprintf(tempfname, sizeof(tempfname) - 1, "%soggenc.log", eof_temp_path_s);
@@ -465,7 +477,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOggenc failed.  Please see %s for any errors it gave.", tempfname);
 				eof_log(eof_log_string, 1);
 				eof_fix_window_title();
-				return 47;	//Return failure:  Could not encode combined audio
+				return 48;	//Return failure:  Could not encode combined audio
 			}
 		}
 	}
@@ -486,7 +498,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	}
 	eof_fix_window_title();
 
-	return 48;	//Return error:  Could not load new audio
+	return 49;	//Return error:  Could not load new audio
 }
 
 int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
@@ -520,6 +532,12 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	{
 		(void) eof_copy_file(oggfn, backupfn);
 	}
+	if(!exists(backupfn))
+	{
+		eof_log("\tMP3 file unable to be backed up.  Aborting", 1);
+		allegro_message("Warning:  The existing chart audio could not be backed up.  Aborting");
+		return 22;	//Return error:  Couldn't back up audio
+	}
 
 	/* decode MP3 */
 	(void) replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
@@ -532,7 +550,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	if(!decoded)
 	{
 		allegro_message("Error opening file.\nMake sure there are no Unicode or extended ASCII characters in this chart's file path.");
-		return 22;	//Return failure:  Could not load decoded MP3 file
+		return 23;	//Return failure:  Could not load decoded MP3 file
 	}
 	bits = decoded->bits;
 	stereo = decoded->stereo;
@@ -557,7 +575,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 			eof_log("\t\tmalloc() of that amount of memory also failed.", 1);
 		}
 		destroy_sample(decoded);
-		return 23;	//Return failure:  Could not create a sample array for the combined audio
+		return 24;	//Return failure:  Could not create a sample array for the combined audio
 	}
 	/* Add the PCM data for the silence */
 	if(bits == 8)
@@ -596,7 +614,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	{
 		destroy_sample(decoded);	//This is no longer needed
 		destroy_sample(combined);	//This is no longer needed
-		return 24;	//Return failure:  Could not create the combined audio WAV file
+		return 25;	//Return failure:  Could not create the combined audio WAV file
 	}
 
 	/* destroy samples */
@@ -646,7 +664,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 			if(eof_validate_temp_folder())
 			{	//Ensure the correct working directory and presence of the temporary folder
 				eof_log("\tCould not validate working directory and temp folder", 1);
-				return 25;	//Return failure:  Could not validate cwd and temp folder
+				return 26;	//Return failure:  Could not validate cwd and temp folder
 			}
 
 			(void) snprintf(tempfname, sizeof(tempfname) - 1, "%soggenc.log", eof_temp_path_s);
@@ -657,7 +675,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOggenc failed.  Please see %s for any errors it gave.", tempfname);
 				eof_log(eof_log_string, 1);
 				eof_fix_window_title();
-				return 26;	//Return failure:  Could not encode combined audio
+				return 27;	//Return failure:  Could not encode combined audio
 			}
 		}
 	}
@@ -681,7 +699,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	}
 	eof_fix_window_title();
 
-	return 27;	//Return error:  Could not load new audio
+	return 28;	//Return error:  Could not load new audio
 }
 
 int save_wav_with_silence_appended(const char * fn, SAMPLE * sp, unsigned long ms)

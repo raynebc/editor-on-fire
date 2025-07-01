@@ -1848,6 +1848,7 @@ int eof_fret_hand_position_delete(DIALOG * d)
 			{	//If the last list item was deleted and others remain
 				eof_fret_hand_position_list_dialog[1].d1--;	//Select the one before the one that was deleted, or the last event, whichever one remains
 			}
+			eof_render();	//Redraw the screen
 			(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 			(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 			return D_REDRAW;
@@ -1891,6 +1892,7 @@ int eof_fret_hand_position_delete_all(DIALOG * d)
 
 	eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
 	eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
+	eof_render();	//Redraw the screen
 	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
 	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;

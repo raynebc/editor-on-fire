@@ -4724,7 +4724,7 @@ void eof_editor_logic(void)
 				{	//The mouse button has been held for at least ten frames, a note is selected and no SHIFT or CTRL keys are held (so SHIFT+click and CTRL+click don't allow note movement)
 					if((clock() - eof_lclick_time) * 1000 / CLOCKS_PER_SEC > EOF_CLICK_AND_DRAG_THRESHOLD)
 					{	//If the left mouse button has been held at least the threshold amount of time
-						if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)
+						if(eof_snap_mode != EOF_SNAP_OFF)
 						{	//Move notes by grid snap
 							if(eof_pen_note.pos < eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current))
 							{	//Left mouse movement
@@ -5591,7 +5591,7 @@ void eof_vocal_editor_logic(void)
 				{	//The mouse button has been held for at least ten frames, a note is selected and no SHIFT or CTRL keys are held (so SHIFT+click and CTRL+click don't allow note movement)
 					if((clock() - eof_lclick_time) * 1000 / CLOCKS_PER_SEC > EOF_CLICK_AND_DRAG_THRESHOLD)
 					{	//If the left mouse button has been held at least the threshold amount of time
-						if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)
+						if(eof_snap_mode != EOF_SNAP_OFF)
 						{	//Move notes by grid snap
 							eof_snap_logic(&drag_snap, lpos - eof_peg_x);
 							if(drag_snap.pos < eof_song->vocal_track[tracknum]->lyric[eof_pegged_note]->pos)

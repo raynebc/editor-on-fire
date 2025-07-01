@@ -60,6 +60,7 @@ Rocksmith Panel (%TEXT_FILE%)
 %IF_RS1_EXPORT_ENABLED%%IF_ACTIVE_TRACK_RS_ANY_SLIDES_EXCEED_FRET_22%%DISPLAY_ERROR%At least one slide exceeds RS1's limit of fret 22%NEWLINE%%RS_FIRST_SLIDE_EXCEEDING_FRET%
 %IF_ACTIVE_TRACK_RS_ANY_SLIDES_EXCEED_FRET_24%%DISPLAY_ERROR%At least one slide exceeds RS2's limit of fret 22%NEWLINE%%RS_FIRST_SLIDE_EXCEEDING_FRET%
 %IF_RS_BASS_TRACK_STRING_COUNT_EXCEEDED%%DISPLAY_WARNING%Rocksmith doesn't support bass with > 4 strings.%NEWLINE%Configure this track as another arrangement type%NEWLINE%and lower its tuning in DLC Builder.
+%!IF_RS_TRACK_HAS_DYNAMIC_DIFFICULTY%%DISPLAY_WARNING%The active track doesn't have dynamic difficulty.%NEWLINE%This may cause issues with DLCB's DD generation.
 
 ;Finger definition checks
 %!IF_IR_TRACK_HAS_CHORDS_MISSING_FINGERING%%DISPLAY_SUCCESS%No chords missing finger definition%ELSE%%DISPLAY_WARNING%%PRINT_RS_MISSING_FINGERING_COUNT_STRING%
