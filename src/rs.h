@@ -241,7 +241,7 @@ unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long tra
 void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t num);
 	//Builds the path to the WAV file (used for Rocksmith) that is written to specified parent folder path during save
 	//num defines the buffer's maximum size
-	//This is (song name).wav if the song title song property is defined, otherwise guitar.wav
+	//This is (song name)_rocksmith.wav if the song title song property is defined, otherwise guitar_rocksmith.wav
 	//If the song name contains characters that are not legal in Windows file names, those characters are replaced with underscores
 
 void eof_delete_rocksmith_wav(void);

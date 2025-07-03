@@ -147,6 +147,8 @@ int save_wav(const char * fn, SAMPLE * sp)
 		return 0;
 	}
 	/* open file */
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOpening file for writing:  \"%s\"", fn);
+	eof_log(eof_log_string, 1);
 	file = pack_fopen(fn, "w");
 	if(file == NULL)
 	{
@@ -202,6 +204,8 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 		allegro_message("Warning:  The existing chart audio could not be backed up.  Aborting");
 		return 2;	//Return error:  Couldn't back up audio
 	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCleaning up.  Deleting:\n\t\t%s", oggfn);
+	eof_log(eof_log_string, 1);
 	(void) delete_file(oggfn);	//Delete the project's active OGG audio file
 
 	silence_sample = create_silence_sample(ms);
@@ -271,6 +275,8 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	}
 
 	/* clean up */
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCleaning up.  Deleting:\n\t\t%s\n\t\t%s", wavfn, soggfn);
+	eof_log(eof_log_string, 1);
 	(void) delete_file(wavfn);		//Delete silence.wav
 	(void) delete_file(soggfn);	//Delete silence.ogg
 	if(eof_load_ogg(oggfn, 0))
@@ -356,6 +362,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	}
 
 	/* Create a SAMPLE array large enough for the leading silence and the decoded OGG */
+	eof_log("\tBuilding combined audio", 1);
 	bits = alogg_get_wave_bits_ogg(oggfile);
 	stereo = alogg_get_wave_is_stereo_ogg(oggfile);
 	freq = alogg_get_wave_freq_ogg(oggfile);
@@ -486,8 +493,10 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	(void) eof_copy_file(soggfn, oggfn);	//Copy encode.ogg to the filename of the original OGG
 
 	/* clean up */
-	(void) delete_file(soggfn);	//Delete encode.ogg
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCleaning up.  Deleting:\n\t\t%s\n\t\t%s", wavfn, soggfn);
+	eof_log(eof_log_string, 1);
 	(void) delete_file(wavfn);		//Delete encode.wav
+	(void) delete_file(soggfn);	//Delete encode.ogg
 	if(eof_load_ogg(oggfn, 0))
 	{	//If the combined audio was loaded
 		eof_fix_waveform_graph();
@@ -685,9 +694,17 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 
 	/* clean up */
 	(void) replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCleaning up.  Deleting:\n\t\t%s", wavfn);
+	eof_log(eof_log_string, 1);
 	(void) delete_file(wavfn);		//Delete decode.wav
+
 	(void) replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%s", wavfn);
+	eof_log(eof_log_string, 1);
 	(void) delete_file(wavfn);		//Delete encode.wav
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%s", soggfn);
+	eof_log(eof_log_string, 1);
 	(void) delete_file(soggfn);	//Delete encode.ogg
 	if(eof_load_ogg(oggfn, 0))
 	{	//If the combined audio was loaded

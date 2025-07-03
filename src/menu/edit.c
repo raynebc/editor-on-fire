@@ -1842,7 +1842,7 @@ int eof_menu_edit_paste_logic(int function)
 
 			eflags = eof_get_note_eflags(eof_song, eof_selected_track, match);
 			eflags |= temp_note.eflags;
-			eof_set_note_eflags(eof_song, eof_selected_track, match, eflags);	//Marge the extended flags
+			eof_set_note_eflags(eof_song, eof_selected_track, match, eflags);	//Merge the extended flags
 
 			eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);		//Merge the note bitmask
 			eof_set_note_accent(eof_song, eof_selected_track, match, eof_get_note_accent(eof_song, eof_selected_track, match) | temp_note.accent);	//Merge the accent bitmask

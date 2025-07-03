@@ -1652,7 +1652,7 @@ int eof_menu_file_preferences(void)
 
 int eof_menu_file_import_export_preferences(void)
 {
-	int retval, original_rs1_export_setting;
+	int retval, original_rs1_export_setting, original_rs2_export_setting;
 
 	if(eof_song_loaded)
 	{
@@ -1672,6 +1672,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[6].flags = eof_write_rs_files ? D_SELECTED : 0;						//Save separate Rocksmith 1 files
 	original_rs1_export_setting = eof_write_rs_files;	//Back up this setting to track whether it is changed in the dialog
 	eof_import_export_preferences_dialog[7].flags = eof_write_rs2_files ? D_SELECTED : 0;					//Save separate Rocksmith 2 files
+	original_rs2_export_setting = eof_write_rs2_files;
 	eof_import_export_preferences_dialog[8].flags = eof_write_bf_files ? D_SELECTED : 0;						//Save separate Bandfuse files
 	eof_import_export_preferences_dialog[9].flags = eof_write_fof_files ? D_SELECTED : 0;					//Save FoF/CH/Phase Shift files
 	eof_import_export_preferences_dialog[10].flags = eof_write_gh_files ? D_SELECTED : 0;					//Save separate Guitar Hero files
@@ -1782,8 +1783,8 @@ int eof_menu_file_import_export_preferences(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_set_color_set();
-	if(original_rs1_export_setting != eof_write_rs_files)
-	{	//If the preference for exporting RS1 file was changed
+	if((original_rs1_export_setting != eof_write_rs_files) || (original_rs2_export_setting != eof_write_rs2_files))
+	{	//If the preferences for exporting RS1 or RS2 files were changed
 		eof_delete_rocksmith_wav();	//Delete the Rocksmith WAV file since the amount of silence appended to it will differ
 	}
 	return 1;

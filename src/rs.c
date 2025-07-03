@@ -4384,7 +4384,7 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	{	//Otherwise default to "guitar"
 		(void) ustrncat(buffer, "guitar", (int)num - 1);
 	}
-	(void) ustrncat(buffer, ".wav", (int)num - 1);
+	(void) ustrncat(buffer, "_rocksmith.wav", (int)num - 1);
 	buffer[num - 1] = '\0';	//Ensure the finalized string is terminated
 }
 
@@ -4395,6 +4395,14 @@ void eof_delete_rocksmith_wav(void)
 	if(!eof_song_loaded)
 		return;	//Don't perform this action unless a chart is loaded
 
+	eof_log("eof_delete_rocksmith_wav() entered", 1);
+
+	if(eof_disable_rs_wav)
+	{
+		eof_log("\tCreation of Rocksmith WAV file is disabled in export preferences.  Aborting.", 1);
+		return;
+	}
+
 	eof_get_rocksmith_wav_path(checkfn, eof_song_path, sizeof(checkfn));	//Build the path to the WAV file written for Rocksmith during save
 	if(!exists(checkfn))
 	{	//If the path based on the song title does not exist, delete guitar.wav because this is the name it will use if the song title has characters invalid for a filename
@@ -4402,6 +4410,8 @@ void eof_delete_rocksmith_wav(void)
 	}
 	if(exists(checkfn))
 	{	//If the target file exists
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDeleting file:  %s", checkfn);
+		eof_log(eof_log_string, 1);
 		(void) delete_file(checkfn);
 		if(exists(checkfn))
 		{	//If the file still exists after the attempted deletion

@@ -547,7 +547,7 @@ char *ogg_profile_name = NULL;	//This pointer is used by eof_load_ogg to set the
 
 void eof_show_mouse(BITMAP * bp)
 {
-	eof_log("eof_show_mouse() entered", 3);
+//	eof_log("eof_show_mouse() entered", 3);
 
 	if(bp && eof_soft_cursor)
 	{
@@ -598,7 +598,7 @@ long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double o
 	double fporpos = porpos + offset;
 	unsigned long cbeat = beat;
 
-	eof_log("eof_put_porpos_sp() entered", 3);
+//	eof_log("eof_put_porpos_sp() entered", 3);
 
 	if(!sp)
 		return -1;	//Invalid parameters
@@ -5462,7 +5462,7 @@ void eof_scale_fretboard(unsigned long numlanes)
 		}
 	}
 
-	lanewidth = (double)eof_screen_layout.string_space * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
+	lanewidth = (double)eof_screen_layout.string_space * (4.0 / (numlanes-1));
 	if(numlanes > 5)
 	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
 		eof_screen_layout.string_space = (double)eof_screen_layout.string_space * 5.0 / (double)numlanes;

@@ -21,7 +21,7 @@ int eof_menu_edit_undo(void);
 int eof_menu_edit_redo(void);
 int eof_menu_edit_copy(void);
 int eof_menu_edit_cut(unsigned long anchor, int option);
-	//Stores "Auto adjust" data to "eof.autoadjust" from the first anchor before the specified beat number up to a one of two positions specified by the option variable
+	//Stores "Auto adjust" data to "eof.autoadjust" from the first anchor before the specified beat number up to one of two positions specified by the option variable
 	//If option is 1, the function stores data for all notes up until 1ms before the last beat marker (tempo change/increment/decrement applied to beat marker),
 	// otherwise data for notes up until the next anchor are stored (auto-adjust when dragging anchors)
 	//Option 0 is deprecated because the use of eof_calculate_beats() can recalculate timings for beats not directly in the scope of a beat marker drag operation,

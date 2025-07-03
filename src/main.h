@@ -205,19 +205,19 @@ typedef struct
 	/* rendering offsets */
 	int scrollbar_y;
 	int string_space, string_space_unscaled;	//Defines the amount of vertical space between each lane in the piano roll when 5 lanes are in effect
-												//string_space_unscaled is set by the display size, string_space is set by eof_scale_fretboard() to account for 6 lane modes
+										//string_space_unscaled is set by the display size, string_space is set by eof_scale_fretboard() to account for 6 lane modes
 	int note_y[EOF_MAX_FRETS];	//Y coordinates for lanes that are calculated by eof_scale_fretboard()
 	int lyric_y;				//A constant y coordinate offset (EOF_EDITOR_RENDER_OFFSET + 15 + lyric_y is the y position at which lyric text is drawn in the editor window)
 	int vocal_y;				//A constant y coordinate offset (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y is the bottom of the bottom-most key in the mini piano)
-	int vocal_tail_size;		//The height of a lyric note rectangle
-	int vocal_view_size;		//A constant representing the number of piano keys to display in the left edge of the piano roll when the vocal track is active
-	int lyric_view_key_width;	//How far apart each black line is rendered to separate the white piano keys in the vocal track 3D preview (1/29 the 3D preview window)
+	int vocal_tail_size;			//The height of a lyric note rectangle
+	int vocal_view_size;			//A constant representing the number of piano keys to display in the left edge of the piano roll when the vocal track is active
+	int lyric_view_key_width;		//How far apart each black line is rendered to separate the white piano keys in the vocal track 3D preview (1/29 the 3D preview window)
 	int lyric_view_key_height;	//The height of the white keys are in the vocal track 3D preview (4 * lyric_view_key_width)
 	int lyric_view_bkey_width;	//The width of the black keys in the vocal track 3D preview
 	int lyric_view_bkey_height;	//The height of the black keys in the vocal track 3D preview (3 * lyric_view_bkey_width)
 	int note_size;				//The radius of circular gems rendered in the editor window
 	int hopo_note_size;			//The radius of forced HOPO circular gems rendered in the editor window
-	int anti_hopo_note_size;	//The radius of forced HOPO off circular gems rendered in the editor window
+	int anti_hopo_note_size;		//The radius of forced HOPO off circular gems rendered in the editor window
 	int note_dot_size;			//The radius of the circle rendered inside of circular gems in the editor window
 	int hopo_note_dot_size;		//The radius of the circle rendered inside of HOPO circular gems in the editor window
 	int anti_hopo_note_dot_size;	//The radius of the circle rendered inside of HOPO off circular gems in the editor window
@@ -824,7 +824,6 @@ void eof_cleanup_beat_flags(EOF_SONG *sp);	//Repairs the text event and anchor s
 void eof_scale_fretboard(unsigned long numlanes);
 	//Prepares 2D screen layout offsets, etc. based on EOF's window display size and a given number of lanes (depending on the passed numlanes parameter)
 	//If numlanes is 0, the number of lanes of the active track is used, otherwise the parameter itself is used
-	//If the number of lanes is less than 5, the original 5 lane spacing will be used
 void eof_set_3D_lane_positions(unsigned long track);
 	//Sets the 3D coordinate values in the global xchart[] array based on the needs of the specified track
 	//If the array doesn't need to be changed, the function returns without recalculating the array's values

@@ -1151,6 +1151,7 @@ int eof_menu_song_properties(void)
 		}
 		if(!invalid)
 		{
+			(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
 			eof_song->tags->ogg[0].midi_offset = atol(eof_etext4);
 			if(eof_song->tags->ogg[0].midi_offset < 0)
 			{
@@ -1162,7 +1163,7 @@ int eof_menu_song_properties(void)
 			allegro_message("Invalid MIDI offset.");
 		}
 		if(eof_song->beat[0]->pos != eof_song->tags->ogg[0].midi_offset)
-		{	//If the first beat's position changed
+		{	//If the first beat's position was moved at least 1ms
 			for(i = 0; i < eof_song->beats; i++)
 			{
 				eof_song->beat[i]->fpos += (double)(eof_song->tags->ogg[0].midi_offset - old_offset);
@@ -1175,9 +1176,11 @@ int eof_menu_song_properties(void)
 			if(alert(NULL, "Adjust notes to new offset?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{
 				(void) eof_adjust_notes(ULONG_MAX, eof_song->tags->ogg[0].midi_offset - old_offset);
+				(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
 			}
 			eof_clear_input();
 		}
+		eof_song_reapply_all_dynamic_highlighting();
 		if(eof_etext7[0] != '\0')
 		{	//If the band difficulty field is populated
 			difficulty = eof_etext7[0] - '0';	//Convert the ASCII character to its numerical value
@@ -2008,6 +2011,7 @@ int eof_menu_song_add_silence(void)
 
 	if(eof_popup_dialog(eof_leading_silence_dialog, 7) == 11)
 	{	//User clicked OK
+		(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
 		eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
 
 		(void) snprintf(fn, sizeof(fn) - 1, "%s.backup", eof_loaded_ogg_name);
@@ -2123,7 +2127,7 @@ int eof_menu_song_add_silence(void)
 				}
 				eof_song->tags->ogg[0].midi_offset += adjust;
 				if(eof_song->beat[0]->pos != eof_song->tags->ogg[0].midi_offset)
-				{
+				{	//If the first beat's position was moved at least 1ms
 					for(i = 0; i < eof_song->beats; i++)
 					{
 						eof_song->beat[i]->fpos += (double)adjust;
@@ -2134,9 +2138,11 @@ int eof_menu_song_add_silence(void)
 			}
 			eof_fixup_notes(eof_song);
 			eof_calculate_beats(eof_song);
+			(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
 			eof_fix_window_title();
 			eof_truncate_chart(eof_song);	//Update number of beats and the chart length as appropriate
+			eof_song_reapply_all_dynamic_highlighting();
 		}
 	}//User clicked OK
 	eof_show_mouse(NULL);
