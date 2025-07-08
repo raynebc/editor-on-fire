@@ -3492,6 +3492,11 @@ int eof_save_helper_checks(void)
 	/* check note distances */
 	for(ctr = 1; !note_distance_warned && (ctr < eof_song->tracks); ctr++)
 	{	//For each track (and only if the user didn't already decline to cancel when an offending note was found)
+		char restore_tech_view = 0;
+
+		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);	//Track which note set is in use
+		eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Activate the normal note set
+
 		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
 		{	//For each note in the track
 			long next;
@@ -3516,11 +3521,13 @@ int eof_save_helper_checks(void)
 			if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance (ie. Min note distance preference is too large).", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opted to seek to the first offending note (only prompt once per call)
 				eof_seek_and_render_position(ctr, eof_get_note_type(eof_song, ctr, ctr2), thisnotepos);
+				eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Activate whichever note set was active for the track
 				return 1;	//Return cancellation
 			}
 			note_distance_warned = 1;
 			break;	//Stop checking after the first offending note is found
 		}
+		eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Activate whichever note set was active for the track
 	}
 
 

@@ -6264,43 +6264,46 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				}//If this note and the next are at the same position, merge them
 				else
 				{	//Otherwise ensure one doesn't overlap the other improperly
-					if(!eof_menu_track_get_tech_view_state(sp, track))
-					{	//Only perform length validation when tech view isn't in effect, since tech notes cannot retain a specific length
-						has_link_next = 0;	//Reset this condition
-						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-						{	//For each of the 6 supported strings
-							if(tp->note[i-1]->note & bitmask)
-							{	//If this string is used
-								(void) eof_get_rs_techniques(sp, track, i - 1, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
-								if(ptr.linknext)
-								{	//If this string used linkNext status
-									has_link_next = 1;
-									break;	//The other strings don't need to be checked
-								}
-							}
-						}
-						if(has_link_next)
-						{	//If the note has linkNext status, force the maximum length (up until the next note on that string occurs)
-							if((tp->note[next]->note & tp->note[i-1]->note) == 0)
-							{	//If this note and the next note have no strings in common
-								tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//This note will overlap at least one note, apply crazy status
-							}
-							maxlength = eof_get_note_max_length(sp, track, i - 1, 0);	//Determine the maximum length for this note, taking its crazy status into account and disregarding the minimum distance between notes
-							if(tp->note[i - 1]->length + maxlength > sp->beat[sp->beats - 1]->pos)
-							{	//If there was no note using any of the same lanes and would truncate the note
-								maxlength = sp->beat[sp->beats - 1]->pos - tp->note[i - 1]->pos;	//Cap it at the last beat's position
-							}
-							eof_set_note_length(sp, track, i - 1, maxlength);	//Extend it to the next note that has a gem on a matching string
-						}
-						else
-						{	//Otherwise enforce the minimum distance between the two notes
-							maxlength = eof_get_note_max_length(sp, track, i - 1, 1);	//Determine the maximum length for this note, taking its crazy status into account
-							if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
-							{	//If the note is longer than its maximum length
-								eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
+					char restore_tech_view = 0;
+
+					restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);	//Track which note set is in use
+					eof_menu_track_set_tech_view_state(sp, track, 0);	//Activate the normal note set, since tech notes cannot retain a specific length
+
+					has_link_next = 0;	//Reset this condition
+					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+					{	//For each of the 6 supported strings
+						if(tp->note[i-1]->note & bitmask)
+						{	//If this string is used
+							(void) eof_get_rs_techniques(sp, track, i - 1, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
+							if(ptr.linknext)
+							{	//If this string used linkNext status
+								has_link_next = 1;
+								break;	//The other strings don't need to be checked
 							}
 						}
 					}
+					if(has_link_next)
+					{	//If the note has linkNext status, force the maximum length (up until the next note on that string occurs)
+						if((tp->note[next]->note & tp->note[i-1]->note) == 0)
+						{	//If this note and the next note have no strings in common
+							tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//This note will overlap at least one note, apply crazy status
+						}
+						maxlength = eof_get_note_max_length(sp, track, i - 1, 0);	//Determine the maximum length for this note, taking its crazy status into account and disregarding the minimum distance between notes
+						if(tp->note[i - 1]->length + maxlength > sp->beat[sp->beats - 1]->pos)
+						{	//If there was no note using any of the same lanes and would truncate the note
+							maxlength = sp->beat[sp->beats - 1]->pos - tp->note[i - 1]->pos;	//Cap it at the last beat's position
+						}
+						eof_set_note_length(sp, track, i - 1, maxlength);	//Extend it to the next note that has a gem on a matching string
+					}
+					else
+					{	//Otherwise enforce the minimum distance between the two notes
+						maxlength = eof_get_note_max_length(sp, track, i - 1, 1);	//Determine the maximum length for this note, taking its crazy status into account
+						if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
+						{	//If the note is longer than its maximum length
+							eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
+						}
+					}
+					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Activate whichever note set was active for the track
 				}
 			}//If there is another note in this track
 
