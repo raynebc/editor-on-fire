@@ -625,13 +625,25 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active pro guitar track has any pro guitar notes that have no sustain but do have a technique that requires sustain (bend, slide, vibrato or tremolo), in which case the %RS_FIRST_TECHNIQUE_MISSING_SUSTAIN% macro will print the location of the first offending note.  If a note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
 </tr>
 <tr>
+<td>%IF_IS_FINGERING_VIEW%</td>
+<td>Evaluates as true if the active track is a pro guitar track and fingering view is enabled.</td>
+</tr>
+</tr>
+<tr>
+<td>%IF_RS_TRACK_HAS_DYNAMIC_DIFFICULTY%</td>
+<td>Evaluates as true if the active track is a pro guitar track and has dynamic difficulty (the difficulty limit is removed).</td>
+</tr>
+<tr>
+<td>%IF_TRACK_HAS_UNSNAPPED_NOTES%</td>
+<td>Evaluates as true if the active track has one or more notes that are not grid snapped (based on the current setting of the "Prefer MIDI friendly grid snaps" preference, to match the notes that would highlight when using the "Highlight non grid snapped notes" option in the Song menu), in which case the %TRACK_UNSNAPPED_NOTE_COUNT% macro will print the number of notes that are not grid snapped.  In the case of pro guitar tracks, tech notes are not counted, only normal notes.</td>
+</tr>
+<tr>
 <td>%IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS%</td>
 <td>Evaluates as true if any of several above-mentioned Rocksmith-specific conditional macros run prior to this invocation in the current render frame would evaluate as true for a track other than the active track, so that they can all be summarized in one line and citations relevant to the active track are displayed instead.  Since this macro can only reflect the results of conditional macros that were invoked already, it should be placed below all relevant Rocksmith conditional macros in the panel.</td>
 </tr>
 <tr>
 <td>%IF_INACTIVE_TRACKS_HAVE_RS_ERRORS%</td>
 <td>Similar to %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS%, but applies to error messages instead of warning messages.</td>
-</tr>
 </tbody>
 </table><br>
 
@@ -1426,6 +1438,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%SEEK_HANDSHAPE_STATUS_CONDITIONAL%</td>
 <td>Similar to %SEEK_HANDSHAPE_STATUS% but prints nothing if the seek position is not within a handshape phrase.
+</tr>
+<tr>
+<td>%PRINT_TRACK_UNSNAPPED_NOTE_COUNT%</td>
+<td>Prints a string representing the number of unsnapped notes counted during the last processing of the %IF_TRACK_HAS_UNSNAPPED_NOTES% macro.</td>
 </tr>
 
 </tbody>

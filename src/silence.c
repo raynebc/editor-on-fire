@@ -17,6 +17,8 @@ static unsigned long msec_to_samples(unsigned long msec)
 	unsigned long freq = alogg_get_wave_freq_ogg(eof_music_track);
 
 	eof_log("msec_to_samples() entered", 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuilding %f seconds of audio", second);
+	eof_log(eof_log_string, 1);
 
 	sample = (unsigned long)(second * (double)freq);
 	return sample;
@@ -490,6 +492,8 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	}
 
 	/* replace the current OGG file with the new file */
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOverwriting \"%s\" with \"%s\"", soggfn, oggfn);
+	eof_log(eof_log_string, 1);
 	(void) eof_copy_file(soggfn, oggfn);	//Copy encode.ogg to the filename of the original OGG
 
 	/* clean up */

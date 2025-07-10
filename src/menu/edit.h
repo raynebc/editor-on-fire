@@ -189,7 +189,7 @@ int eof_menu_edit_snap_quarter(void);
 int eof_menu_edit_snap_eighth(void);
 int eof_menu_edit_snap_sixteenth(void);
 int eof_menu_edit_snap_thirty_second(void);
-int eof_menu_edit_snap_off(void);
+int eof_menu_edit_snap_off(void);		//Toggle the grid snap feature on/off
 int eof_menu_edit_snap_twelfth(void);
 int eof_menu_edit_snap_twenty_fourth(void);
 int eof_menu_edit_snap_forty_eighth(void);

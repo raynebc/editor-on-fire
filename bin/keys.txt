@@ -136,6 +136,10 @@ Note and Beat Editing:
         If the mouse is hovering over a lyric, the Edit Lyric
         dialog is opened for that lyric.
 
+    Middle-Click (beats):
+
+        Toggle the clicked beat's anchor status.
+
     Left-Click+Drag (notes):
 
         Move selected note(s)

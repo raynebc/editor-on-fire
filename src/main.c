@@ -2093,6 +2093,8 @@ int eof_load_ogg(char * filename, char function)
 		{
 			loaded = 1;
 			eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoaded OGG file \"%s\" (%lums)", filename, eof_music_length);
+			eof_log(eof_log_string, 1);
 			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 			(void) ustrcpy(eof_loaded_ogg_name, output);	//Store the loaded OGG filename
 			eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
@@ -5438,7 +5440,7 @@ void eof_init_after_load(char initaftersavestate)
 	}
 
 	eof_sort_and_merge_overlapping_sections(eof_song->vocal_track[0]->line, &eof_song->vocal_track[0]->lines);	//Sort and remove overlapping lyric lines
-	eof_check_and_log_lyric_line_errors(eof_song, 1);
+	eof_check_and_log_lyric_line_errors(eof_song, 0);
 	eof_reset_lyric_preview_lines();
 
 	eof_log("\tInitialization after load complete", 1);

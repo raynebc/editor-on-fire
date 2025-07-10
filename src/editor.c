@@ -3203,7 +3203,6 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
 	/* set pro guitar finger values (CTRL+~, CTRL+#, when fingering view is enabled) */
 	/* toggle ghost status (CTRL+G in a pro guitar track) */
-	/* Mark/Remark arpeggio (CTRL+SHIFT+G in a pro guitar track) */
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
 				//CTRL+# or CTRL+Fn # in a pro guitar track sets the fret values of selected notes
@@ -3416,16 +3415,18 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					eof_use_key();
 				}
 			}//If SHIFT is held, but CTRL is not
-			else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-			{	//If both CTRL and SHIFT are held
-				if(eof_key_char == 'g')
-				{
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_menu_arpeggio_mark();
-					eof_use_key();
-				}
-			}
 		}//If the active track is a pro guitar track
+
+	/* Toggle grid snap (CTRL+SHIFT+G) */
+		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{	//If both CTRL and SHIFT are held
+			if(eof_key_char == 'g')
+			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_edit_snap_off();
+				eof_use_key();
+			}
+		}
 
 	/* halve BPM (CTRL+SHIFT+X) */
 		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_key_char == 'x'))
@@ -7776,6 +7777,19 @@ void eof_editor_logic_common(void)
 				if(!(mouse_b & 2) && !(eof_key_code == KEY_INSERT))
 				{
 					eof_rclick_released = 1;
+				}
+
+				/* handle initial middle click (only if full screen 3D view is not in effect) */
+				if(!eof_full_screen_3d && (mouse_b & 4) && eof_mclick_released)
+				{	//If the middle click hasn't been processed yet
+					while(mouse_b & 4);	//Wait until the middle mouse button is released before proceeding (this depends on automatic mouse polling, so EOF cannot call poll_mouse() manually or this becomes an infinite loop)
+					if(eof_hover_beat < eof_song->beats)
+					{	//If a beat is being hovered over, toggle anchor
+						unsigned long temp = eof_selected_beat;	//Back up this beat number
+						eof_selected_beat = eof_hover_beat;		//Set the hovered over beat as the selected beat
+						(void) eof_menu_beat_toggle_anchor();		//Toggle that beat's anchor status
+						eof_selected_beat = temp;				//Restore the previously selected beat
+					}
 				}
 			}//If the mouse is within the horizontal boundaries of the editor window
 		}//Mouse is in beat marker area

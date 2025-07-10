@@ -934,13 +934,13 @@ void eof_prepare_note_menu(void)
 		{
 			eof_arpeggio_menu[1].flags = 0;				//Note>Pro Guitar>Arpeggio>Remove
 			eof_arpeggio_menu[3].flags = 0;				//Note>Pro Guitar>Arpeggio>Edit timing
-			(void) ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+Shift+G");
+			(void) ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark");
 		}
 		else
 		{
 			eof_arpeggio_menu[1].flags = D_DISABLED;
 			eof_arpeggio_menu[3].flags = D_DISABLED;
-			(void) ustrcpy(eof_arpeggio_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+G");
+			(void) ustrcpy(eof_arpeggio_menu_mark_text, "&Mark");
 		}
 
 		/* handshape mark/remark */

@@ -66,7 +66,7 @@ MENU eof_edit_snap_menu[] =
 	{"", NULL, NULL, 0, NULL},
 	{"&Custom", eof_menu_edit_snap_custom, NULL, D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Off", eof_menu_edit_snap_off, NULL, D_SELECTED | D_USER, NULL},
+	{"&Off\t" CTRL_NAME "+Shift+G", eof_menu_edit_snap_off, NULL, D_SELECTED | D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Display grid lines\tShift+G", eof_menu_edit_toggle_grid_lines, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}

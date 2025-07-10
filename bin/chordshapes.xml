@@ -91,6 +91,7 @@
 <chordTemplate chordName="Dsus4"	finger0="-1" finger1="-1" finger2="-1" finger3= "1" finger4= "3" finger5= "4" fret0="-1" fret1="-1" fret2= "0" fret3= "2" fret4= "3" fret5= "3"/>
 <chordTemplate chordName="D7sus4"	finger0="-1" finger1="-1" finger2="-1" finger3= "2" finger4= "1" finger5= "3" fret0="-1" fret1="-1" fret2= "0" fret3= "2" fret4= "1" fret5= "3"/>
 <chordTemplate chordName="E"		finger0="-1" finger1= "2" finger2= "3" finger3= "1" finger4="-1" finger5="-1" fret0= "0" fret1= "2" fret2= "2" fret3= "1" fret4= "0" fret5= "0"/>
+<chordTemplate chordName="Em7"		finger0="-1" finger1= "2" finger2= "3" finger3="-1" finger4= "4" finger5="-1" fret0= "0" fret1= "2" fret2= "2" fret3= "0" fret4= "3" fret5= "0"/>
 <chordTemplate chordName="Em7"		finger0="-1" finger1= "1" finger2= "2" finger3="-1" finger4= "3" finger5= "4" fret0= "0" fret1= "2" fret2= "2" fret3= "0" fret4= "3" fret5= "3"/>
 <chordTemplate chordName="G"		finger0= "2" finger1= "1" finger2="-1" finger3="-1" finger4="-1" finger5= "3" fret0= "3" fret1= "2" fret2= "0" fret3= "0" fret4= "0" fret5= "3"/>
 <chordTemplate chordName="G"		finger0= "2" finger1= "1" finger2="-1" finger3="-1" finger4= "3" finger5= "4" fret0= "3" fret1= "2" fret2= "0" fret3= "0" fret4= "3" fret5= "3"/>

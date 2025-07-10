@@ -4753,11 +4753,46 @@ void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track
 				tflags |= EOF_NOTE_TFLAG_HIGHLIGHT;	//Highlight the note with the temporary flag
 				eof_set_note_tflags(sp, track, ctr, tflags);
 			}
-			lastpos = thispos;						//Track the timestamp of the last examined note
+			lastpos = thispos;					//Track the timestamp of the last examined note
 			lastisgridsnapped = thisisgridsnapped;	//And whether it was grid snapped
 		}
 		eof_menu_track_toggle_tech_view_state(sp, track);	//Toggle to the other note set as applicable
 	}
+}
+
+unsigned long eof_song_count_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long ctr, thispos, lastpos = 0, notecount = 0;
+	int thisisgridsnapped, lastisgridsnapped = 0;
+	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
+
+	if(!sp || (track >= sp->tracks) || !track)
+		return 0;	//Invalid parameters
+
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
+
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the specified track
+		thispos = eof_get_note_pos(sp, track, ctr);
+		if(ctr && (thispos == lastpos))
+		{	//If this isn't the first note, but it is at the same timestamp as the last examined note
+			thisisgridsnapped = lastisgridsnapped;	//Skip the number crunching and automatically assume the same highlighting status
+		}
+		else
+		{	//Otherwise do it the hard way
+			thisisgridsnapped = eof_is_any_beat_interval_position(thispos, NULL, NULL, NULL, NULL, eof_prefer_midi_friendly_grid_snapping);
+		}
+		if(!thisisgridsnapped)
+		{	//If this note position does not match that of any grid snap
+			notecount++;
+		}
+		lastpos = thispos;					//Track the timestamp of the last examined note
+		lastisgridsnapped = thisisgridsnapped;	//And whether it was grid snapped
+	}
+
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+	return notecount;
 }
 
 int eof_menu_song_highlight_arpeggios(void)

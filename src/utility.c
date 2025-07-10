@@ -204,7 +204,7 @@ int eof_copy_file(const char * src, const char * dest)
 		return 0;				//Return success without copying any files
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCopying file \"%s\" to \"%s\"", src, dest);
-	eof_log(eof_log_string, 2);
+	eof_log(eof_log_string, 1);
 
 	src_size = (unsigned long)file_size_ex(src);
 	if(src_size > LONG_MAX)

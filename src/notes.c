@@ -18,6 +18,7 @@
 #include "tuning.h"
 #include "utility.h"	//For eof_char_is_hex() and eof_string_is_hexadecimal()
 #include "foflc/Lyric_storage.h"
+#include "menu/song.h"	//For eof_song_count_non_grid_snapped_notes()
 #include "menu/track.h"	//For eof_menu_pro_guitar_track_get_tech_view_state()
 
 #ifdef USEMEMWATCH
@@ -46,6 +47,8 @@ char eof_notes_macro_lyric_with_non_ascii[50];
 char eof_notes_macro_lyric_outside_line[50];
 char eof_notes_inactive_track_has_rs_warnings = 0;
 char eof_notes_inactive_track_has_rs_errors = 0;
+
+unsigned long eof_notes_macro_number_non_grid_snapped_notes = 0;	//Stores the number of non-grid snapped notes as determined during the last processing of the %IF_TRACK_HAS_UNSNAPPED_NOTES% macro
 
 EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 {
@@ -2739,6 +2742,19 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//The active track has at least one note out of grid snap
+	if(!ustricmp(macro, "IF_TRACK_HAS_UNSNAPPED_NOTES"))
+	{
+		eof_notes_macro_number_non_grid_snapped_notes = eof_song_count_non_grid_snapped_notes(eof_song, eof_selected_track);
+		if(eof_notes_macro_number_non_grid_snapped_notes)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{
@@ -5201,6 +5217,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 			snprintf(dest_buffer, dest_buffer_size, "%s", eof_pro_guitar_track_find_effective_hand_mode_change(tp, eof_music_pos.value - eof_av_delay, NULL, NULL) ? "String" : "Chord");
 		}
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "PRINT_TRACK_UNSNAPPED_NOTE_COUNT"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "This track has %lu non grid snapped note%s", eof_notes_macro_number_non_grid_snapped_notes, eof_notes_macro_number_non_grid_snapped_notes > 1 ? "s" : "");
 
 		return 1;
 	}
