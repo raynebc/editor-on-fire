@@ -1647,8 +1647,6 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 			ptr4->parent = ptr3;
 			ptr4->note = ptr4->pgnote;		//Put the regular pro guitar note array into effect
 			ptr4->ignore_tuning = 1;		//By default, chord lookups will ignore the tuning and capo and assume standard tuning
-			if(eof_write_rs_files || eof_write_rs2_files)
-				ptr3->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//If either Rocksmith export is enabled, make pro guitar tracks use dynamic difficulty by default
 			sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
 			sp->pro_guitar_tracks++;
 		}
@@ -1671,6 +1669,11 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 	ptr3->difficulty = trackdetails->difficulty;
 	ptr3->numdiffs = 5;	//By default, all tracks are limited to the original 5 difficulties
 	ptr3->flags = trackdetails->flags;
+	if(trackdetails->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		if(eof_write_rs_files || eof_write_rs2_files)
+			ptr3->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//If either Rocksmith export is enabled, make this track use dynamic difficulty by default
+	}
 	if(sp->tracks == 0)
 	{	//If this is the first track being added, ensure that sp->track[0] is inserted
 		sp->track[0] = NULL;

@@ -227,7 +227,7 @@ void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track
 	//If a custom grid snap is in effect, its position is also compared
 unsigned long eof_song_count_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track);
 	//Counts the number of  notes (normal notes only, tech notes are skipped) in the specified track that are considered non grid snapped and would be highlighted by eof_song_highlight_non_grid_snapped_notes
-	//Returns that count, or 0 upon error
+	//Returns that count, 0 upon error or 0 if beats are actively being clicked and drug (because there will be false positives until the beat is released and applicable auto-adjust logic is performed
 int eof_menu_song_highlight_arpeggios(void);	//Enables highlighting for all notes in the active track that are within arpeggio phrases
 void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track);
 	//Performs highlighting for all notes in the specified track that are within arpeggio phrases

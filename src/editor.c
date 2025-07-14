@@ -6295,8 +6295,8 @@ void eof_render_editor_window_2(void)
 			eof_set_music_pos(&eof_music_pos, eof_music_pos2); //Change to that position
 		}
 		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track2);
-		if(eof_selected_track == eof_selected_track2)
-		{	//If both piano rolls are displaying the same track, ensure fingering and tech view will not apply to the secondary piano roll so the user can see more information
+		if((eof_selected_track == eof_selected_track2) && (eof_note_type == eof_note_type2))
+		{	//If both piano rolls are displaying the same track difficulty, ensure fingering and tech view will not apply to the secondary piano roll so the user can see more information
 			eof_fingering_view = 0;
 			eof_menu_track_set_tech_view_state(eof_song, eof_selected_track2, 0);	//Disable tech view if applicable
 		}
@@ -7647,13 +7647,24 @@ void eof_editor_logic_common(void)
 								{
 									if(!KEY_EITHER_CTRL)
 									{
-										(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+										char auto_adjust = 0;
+										if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
+										{	//If note auto-adjust is to be performed with this beat drag operation
+											if(KEY_EITHER_SHIFT)
+											{
+												eof_shift_used = 1;	//Track that the SHIFT key was used
+											}
+											auto_adjust = 1;
+										}
+										if(auto_adjust)
+											(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
 										for(i = 0; i < eof_song->beats; i++)
 										{
 											eof_song->beat[i]->fpos += rdiff;
 											eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up to nearest ms
 										}
-										(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+										if(auto_adjust)
+											(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
 									}
 									else
 									{	//CTRL+click and dragging the first beat marker resizes the first beat without moving the other beats
@@ -7666,7 +7677,6 @@ void eof_editor_logic_common(void)
 								}
 								eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
 								eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
-								eof_song_reapply_all_dynamic_highlighting();
 							}//If moving the first beat marker
 							else if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_beat_num_valid(eof_song, eof_selected_beat)) && (eof_mickeys_x != 0) && ((eof_beat_is_anchor(eof_song, eof_hover_beat) || eof_anchor_all_beats || (eof_moving_anchor && (eof_hover_beat == eof_selected_beat)))))
 							{	//If moving a beat marker other than the first
@@ -7715,7 +7725,6 @@ void eof_editor_logic_common(void)
 									}
 									eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 									eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
-									eof_song_reapply_all_dynamic_highlighting();
 								}//If the tempo map is not locked
 							}//If moving a beat marker other than the first
 						}//If the left mouse button has been held at least the threshold amount of time
@@ -7733,16 +7742,9 @@ void eof_editor_logic_common(void)
 							{	//If the left mouse button has been held at least the threshold amount of time
 								if(eof_mouse_drug && (eof_song->tags->ogg[0].midi_offset != eof_last_midi_offset))
 								{	//If the first beat marker's position has changed
-									if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
-									{	//Move all notes by the same amount that the first beat moved
-										if(KEY_EITHER_SHIFT)
-										{
-											eof_shift_used = 1;	//Track that the SHIFT key was used
-										}
-										(void) eof_adjust_notes(ULONG_MAX, eof_song->tags->ogg[0].midi_offset - eof_last_midi_offset);
-									}
-									eof_fixup_notes(eof_song);										//Update note highlighting
-									(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
+									eof_fixup_notes(eof_song);								//Update note highlighting
+									(void) eof_detect_difficulties(eof_song, eof_selected_track);		//Update tab highlighting
+									eof_song_reapply_all_dynamic_highlighting();
 								}
 							}
 						}
@@ -7758,8 +7760,9 @@ void eof_editor_logic_common(void)
 							(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
 							eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 						}
-						eof_fixup_notes(eof_song);										//Update note highlighting
+						eof_fixup_notes(eof_song);							//Update note highlighting
 						(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
+						eof_song_reapply_all_dynamic_highlighting();
 					}
 					eof_moving_anchor = 0;
 					eof_mouse_drug = 0;

@@ -4768,6 +4768,8 @@ unsigned long eof_song_count_non_grid_snapped_notes(EOF_SONG *sp, unsigned long 
 
 	if(!sp || (track >= sp->tracks) || !track)
 		return 0;	//Invalid parameters
+	if(!eof_blclick_released)
+		return 0;	//Suppress this count if beats are actively being clicked and drug
 
 	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
 	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable

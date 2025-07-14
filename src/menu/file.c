@@ -3615,7 +3615,7 @@ int eof_save_helper_checks(void)
 			if(eof_track_rs_tone_names_list_strings_num == 1)
 			{	//If only one tone name is used in tone changes (changing from an unspecified tone to another one)
 				eof_clear_input();
-				if(!warning3 && alert("Warning:  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith 2014.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+				if(!warning3 && alert("Warning (RS2):  At least one track uses only one tone name.  You must use at least", "two different tone names and set one as default for them to work in Rocksmith 2014.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 				{
 					eof_track_destroy_rs_tone_names_list_strings();
 					(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
@@ -3630,7 +3630,7 @@ int eof_save_helper_checks(void)
 				if((tp->defaulttone[0] == '\0') && !warning1)
 				{	//If the default tone is not set, and the user wasn't warned about this yet
 					eof_clear_input();
-					if(alert("Warning:  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+					if(alert("Warning (RS2):  At least one track with tone changes has no default tone set.", NULL, "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_track_destroy_rs_tone_names_list_strings();
 						(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
@@ -3642,7 +3642,7 @@ int eof_save_helper_checks(void)
 				}
 				if((eof_track_rs_tone_names_list_strings_num > 4) && !warning2)
 				{	//If there are more than 4 unique tone names used, and the user wasn't warned about this yet
-					if(alert("Warning:  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
+					if(alert("Warning (RS2):  At least one arrangement uses more than 4 different tones.", "Rocksmith doesn't support more than 4 so EOF will only export changes for 4 tone names.", "Cancel save and update tone definitions?", "&Yes", "&No", 'y', 'n') == 1)
 					{
 						eof_track_destroy_rs_tone_names_list_strings();
 						(void) eof_menu_track_selected_track_number(ctr, 1);	//Set the active instrument track
@@ -3659,46 +3659,49 @@ int eof_save_helper_checks(void)
 
 
 	/* check if any arpeggio phrases only have one note in them (handshapes do not trigger this warning) */
-	for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
-	{	//For each track, or until the user is warned about an offending arpeggio
-		unsigned long notectr;
-		char restore_tech_view = 0;
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
+		{	//For each track, or until the user is warned about an offending arpeggio
+			unsigned long notectr;
+			char restore_tech_view = 0;
 
-		if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-			continue;	//If this is not a pro guitar/bass track, skip it
+			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				continue;	//If this is not a pro guitar/bass track, skip it
 
-		tracknum = eof_song->track[ctr]->tracknum;
-		tp = eof_song->pro_guitar_track[tracknum];
-		restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
-		eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
+			tracknum = eof_song->track[ctr]->tracknum;
+			tp = eof_song->pro_guitar_track[tracknum];
+			restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Activate the normal note set
 
-		for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
-		{	//For each arpeggio/handshape phrase in the track
-			if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
-				continue;	//If this is a handshape phrase instead of a normal arpeggio phrase, skip it
+			for(ctr2 = 0; ctr2 < tp->arpeggios; ctr2++)
+			{	//For each arpeggio/handshape phrase in the track
+				if(tp->arpeggio[ctr2].flags & EOF_RS_ARP_HANDSHAPE)
+					continue;	//If this is a handshape phrase instead of a normal arpeggio phrase, skip it
 
-			notectr = 0;
-			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
-			{	//For each note in the track
-				if((tp->note[ctr3]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr2].difficulty))
-				{	//If the note is within the arpeggio phrase
-					notectr++;	//Increment counter
+				notectr = 0;
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((tp->note[ctr3]->pos >= tp->arpeggio[ctr2].start_pos) && (tp->note[ctr3]->pos <= tp->arpeggio[ctr2].end_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr2].difficulty))
+					{	//If the note is within the arpeggio phrase
+						notectr++;	//Increment counter
+					}
 				}
-			}
-			if(notectr < 2)
-			{
-				eof_clear_input();
-				eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
-				if(alert("Warning:  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to cancel
-					return 1;	//Return cancellation
+				if(notectr < 2)
+				{
+					eof_clear_input();
+					eof_seek_and_render_position(ctr, tp->arpeggio[ctr2].difficulty, tp->arpeggio[ctr2].start_pos);
+					if(alert("Warning (RS):  At least one arpeggio phrase doesn't contain at least two notes.", "You should remove the arpeggio phrase or add additional notes into it.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+					{	//If the user opts to cancel
+						return 1;	//Return cancellation
+					}
+					arpeggio_warned = 1;	//Set a condition to exit outer for loop
+					break;	//Break from inner for loop
 				}
-				arpeggio_warned = 1;	//Set a condition to exit outer for loop
-				break;	//Break from inner for loop
-			}
-		}//For each arpeggio phrase in the track
-		eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
-	}//For each track, or until the user is warned about an offending arpeggio
+			}//For each arpeggio phrase in the track
+			eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
+		}//For each track, or until the user is warned about an offending arpeggio
+	}
 
 
 	/* check if any slide notes don't validly define their end position or bend notes don't define their bend strength */
