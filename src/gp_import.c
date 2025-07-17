@@ -2500,52 +2500,56 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 					if((buffer[0] != '\0') && (gp->text_events < EOF_MAX_TEXT_EVENTS))
 					{	//If the section marker has any text in its name and the maximum number of text events hasn't already been defined
-						gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-						if(!gp->text_event[gp->text_events])
-						{
-							eof_log("Error allocating memory (10)", 1);
-							(void) pack_fclose(inf);
-							free(gp->names);
-							free(gp->instrument_types);
-							for(ctr = 0; ctr < tracks; ctr++)
-							{	//Free all previously allocated track structures
-								if(gp->track[ctr])
-								{	//Redundant NULL check to satisfy Splint
-									free(gp->track[ctr]);
+						if(eof_gp_import_text)
+						{	//If phrases/sections are to be imported
+							gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+							if(!gp->text_event[gp->text_events])
+							{
+								eof_log("Error allocating memory (10)", 1);
+								(void) pack_fclose(inf);
+								free(gp->names);
+								free(gp->instrument_types);
+								for(ctr = 0; ctr < tracks; ctr++)
+								{	//Free all previously allocated track structures
+									if(gp->track[ctr])
+									{	//Redundant NULL check to satisfy Splint
+										free(gp->track[ctr]);
+									}
 								}
+								for(ctr = 0; ctr < gp->text_events; ctr++)
+								{	//Free all allocated text events
+									free(gp->text_event[ctr]);
+								}
+								free(gp->track);
+								free(np);
+								free(hopo);
+								free(hopobeatnum);
+								free(hopomeasurenum);
+								free(durations);
+								free(note_durations);
+								free(gp);
+								free(tsarray);
+								if(sync_points)
+									free(sync_points);
+								return NULL;
 							}
-							for(ctr = 0; ctr < gp->text_events; ctr++)
-							{	//Free all allocated text events
-								free(gp->text_event[ctr]);
+							gp->text_event[gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
+							gp->text_event[gp->text_events]->track = 0;
+							rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
+							if(eof_gp_import_preference_1 || !rssectionname)
+							{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
+								(void) ustrcpy(gp->text_event[gp->text_events]->text, buffer);
+								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
 							}
-							free(gp->track);
-							free(np);
-							free(hopo);
-							free(hopobeatnum);
-							free(hopomeasurenum);
-							free(durations);
-							free(note_durations);
-							free(gp);
-							free(tsarray);
-							if(sync_points)
-								free(sync_points);
-							return NULL;
+							else
+							{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
+								(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
+								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
+								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
+							}
+							gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
+							gp->text_events++;
 						}
-						gp->text_event[gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
-						gp->text_event[gp->text_events]->track = 0;
-						rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
-						if(eof_gp_import_preference_1 || !rssectionname)
-						{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
-							(void) ustrcpy(gp->text_event[gp->text_events]->text, buffer);
-							gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
-						}
-						else
-						{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
-							(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
-							gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-						}
-						gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
-						gp->text_events++;
 					}
 					(void) pack_getc(inf);								//Read section string color (Red intensity)
 					(void) pack_getc(inf);								//Read section string color (Green intensity)
@@ -2569,50 +2573,54 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 					if((buffer[0] != '\0') && (gp->text_events < EOF_MAX_TEXT_EVENTS))
 					{	//If the section marker has any text in its name and the maximum number of text events hasn't already been defined
-						gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-						if(!gp->text_event[gp->text_events])
-						{
-							eof_log("Error allocating memory (11)", 1);
-							(void) pack_fclose(inf);
-							free(gp->names);
-							free(gp->instrument_types);
-							for(ctr = 0; ctr < tracks; ctr++)
-							{	//Free all previously allocated track structures
-								free(gp->track[ctr]);
+						if(eof_gp_import_text)
+						{	//If phrases/sections are to be imported
+							gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+							if(!gp->text_event[gp->text_events])
+							{
+								eof_log("Error allocating memory (11)", 1);
+								(void) pack_fclose(inf);
+								free(gp->names);
+								free(gp->instrument_types);
+								for(ctr = 0; ctr < tracks; ctr++)
+								{	//Free all previously allocated track structures
+									free(gp->track[ctr]);
+								}
+								for(ctr = 0; ctr < gp->text_events; ctr++)
+								{	//Free all allocated text events
+									free(gp->text_event[ctr]);
+								}
+								free(gp->track);
+								free(np);
+								free(hopo);
+								free(hopobeatnum);
+								free(hopomeasurenum);
+								free(durations);
+								free(note_durations);
+								free(gp);
+								free(tsarray);
+								if(sync_points)
+									free(sync_points);
+								return NULL;
 							}
-							for(ctr = 0; ctr < gp->text_events; ctr++)
-							{	//Free all allocated text events
-								free(gp->text_event[ctr]);
+							memset(gp->text_event[gp->text_events], 0, sizeof(EOF_TEXT_EVENT));	//Fill with 0s to satisfy Splint
+							gp->text_event[gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
+							gp->text_event[gp->text_events]->track = 0;
+							rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
+							if(eof_gp_import_preference_1 || !rssectionname)
+							{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
+								(void) ustrcpy(gp->text_event[gp->text_events]->text, buffer);
+								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
 							}
-							free(gp->track);
-							free(np);
-							free(hopo);
-							free(hopobeatnum);
-							free(hopomeasurenum);
-							free(durations);
-							free(note_durations);
-							free(gp);
-							free(tsarray);
-							if(sync_points)
-								free(sync_points);
-							return NULL;
+							else
+							{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
+								(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
+								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
+								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
+							}
+							gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
+							gp->text_events++;
 						}
-						memset(gp->text_event[gp->text_events], 0, sizeof(EOF_TEXT_EVENT));	//Fill with 0s to satisfy Splint
-						gp->text_event[gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
-						gp->text_event[gp->text_events]->track = 0;
-						rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
-						if(eof_gp_import_preference_1 || !rssectionname)
-						{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
-							(void) ustrcpy(gp->text_event[gp->text_events]->text, buffer);
-							gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
-						}
-						else
-						{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
-							(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
-							gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-						}
-						gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
-						gp->text_events++;
 					}
 					(void) pack_getc(inf);								//Read section string color (Red intensity)
 					(void) pack_getc(inf);								//Read section string color (Green intensity)
@@ -3576,63 +3584,67 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 							if(curbeat >= skipbeatsourcectr)
 							{	//If this beat's content is being imported
-								gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-								if(!gp->text_event[gp->text_events])
-								{
-									eof_log("Error allocating memory (14)", 1);
-									(void) pack_fclose(inf);
-									for(ctr = 0; ctr < tracks; ctr++)
-									{	//Free the previous track name strings
-										free(gp->names[ctr]);
-									}
-									free(gp->names);
-									free(gp->instrument_types);
-									for(ctr = 0; ctr < tracks; ctr++)
-									{	//Free all previously allocated track structures
-										for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-										{	//Free all notes in this track
-											free(gp->track[ctr]->note[ctr2]);
+								if(eof_gp_import_text)
+								{	//If phrases/sections are to be imported
+									gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+									if(!gp->text_event[gp->text_events])
+									{
+										eof_log("Error allocating memory (14)", 1);
+										(void) pack_fclose(inf);
+										for(ctr = 0; ctr < tracks; ctr++)
+										{	//Free the previous track name strings
+											free(gp->names[ctr]);
 										}
-										for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-										{	//Free all tech notes in this track
-											free(gp->track[ctr]->technote[ctr2]);
+										free(gp->names);
+										free(gp->instrument_types);
+										for(ctr = 0; ctr < tracks; ctr++)
+										{	//Free all previously allocated track structures
+											for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+											{	//Free all notes in this track
+												free(gp->track[ctr]->note[ctr2]);
+											}
+											for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
+											{	//Free all tech notes in this track
+												free(gp->track[ctr]->technote[ctr2]);
+											}
+											free(gp->track[ctr]);
 										}
-										free(gp->track[ctr]);
+										for(ctr = 0; ctr < gp->text_events; ctr++)
+										{	//Free all allocated text events
+											free(gp->text_event[ctr]);
+										}
+										free(gp->track);
+										free(np);
+										free(hopo);
+										free(hopobeatnum);
+										free(hopomeasurenum);
+										free(durations);
+										free(note_durations);
+										free(gp);
+										free(tsarray);
+										free(strings);
+										return NULL;
 									}
-									for(ctr = 0; ctr < gp->text_events; ctr++)
-									{	//Free all allocated text events
-										free(gp->text_event[ctr]);
+									gp->text_event[gp->text_events]->pos = curbeat - skipbeatsourcectr;
+									gp->text_event[gp->text_events]->track = 0;
+									gp->text_event[gp->text_events]->is_temporary = 1;	//Track that the event's beat number has already been determined
+									if(rssectionname)
+									{	//If this beat text matches a valid Rocksmith section name, import it with the section's native name
+										(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
+										gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
+										gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
+										gp->text_events++;
 									}
-									free(gp->track);
-									free(np);
-									free(hopo);
-									free(hopobeatnum);
-									free(hopomeasurenum);
-									free(durations);
-									free(note_durations);
-									free(gp);
-									free(tsarray);
-									free(strings);
-									return NULL;
-								}
-								gp->text_event[gp->text_events]->pos = curbeat - skipbeatsourcectr;
-								gp->text_event[gp->text_events]->track = 0;
-								gp->text_event[gp->text_events]->is_temporary = 1;	//Track that the event's beat number has already been determined
-								if(rssectionname)
-								{	//If this beat text matches a valid Rocksmith section name, import it with the section's native name
-									(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
-									gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-									gp->text_events++;
-								}
-								else if(!eof_gp_import_preference_1)
-								{	//If the user preference to discard beat text that doesn't match a RS section isn't enabled, import it as a RS phrase
-									(void) ustrcpy(gp->text_event[gp->text_events]->text, buffer);	//Copy the beat text as-is
-									gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
-									gp->text_events++;
-								}
-								else
-								{	//Otherwise discard this beat text
-									free(gp->text_event[gp->text_events]);	//Free the memory allocated to store this text event
+									else if(!eof_gp_import_preference_1)
+									{	//If the user preference to discard beat text that doesn't match a RS section isn't enabled, import it as a RS phrase
+										(void) ustrcpy(gp->text_event[gp->text_events]->text, buffer);	//Copy the beat text as-is
+										gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
+										gp->text_events++;
+									}
+									else
+									{	//Otherwise discard this beat text
+										free(gp->text_event[gp->text_events]);	//Free the memory allocated to store this text event
+									}
 								}
 							}
 						}

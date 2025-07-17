@@ -1332,19 +1332,29 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* convert GHL open (CTRL+G in a legacy guitar track) */
 	/* display grid lines (SHIFT+G) */
 	/* toggle green cymbal+tom (CTRL+ALT+G in the PS drum track) */
+	/* custom grid snap (CTRL+SHIFT+G) */
 	if(eof_key_char == 'g')
 	{
 		if(KEY_EITHER_CTRL)
 		{	//CTRL is held
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If a drum track is active
-				(void) eof_menu_note_toggle_rb3_cymbal_green();
+			if(KEY_EITHER_SHIFT)
+			{	//SHIFT is also held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_edit_snap_custom();
 				eof_use_key();
 			}
-			else if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
-			{	//If a legacy guitar track is active
-				(void) eof_menu_note_convert_to_ghl_open();
-				eof_use_key();
+			else
+			{	//Only CTRL is held
+				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If a drum track is active
+					(void) eof_menu_note_toggle_rb3_cymbal_green();
+					eof_use_key();
+				}
+				else if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+				{	//If a legacy guitar track is active
+					(void) eof_menu_note_convert_to_ghl_open();
+					eof_use_key();
+				}
 			}
 		}
 		else
@@ -3416,17 +3426,6 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 			}//If SHIFT is held, but CTRL is not
 		}//If the active track is a pro guitar track
-
-	/* Toggle grid snap (CTRL+SHIFT+G) */
-		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-		{	//If both CTRL and SHIFT are held
-			if(eof_key_char == 'g')
-			{
-				eof_shift_used = 1;	//Track that the SHIFT key was used
-				(void) eof_menu_edit_snap_off();
-				eof_use_key();
-			}
-		}
 
 	/* halve BPM (CTRL+SHIFT+X) */
 		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_key_char == 'x'))

@@ -216,6 +216,7 @@ void eof_load_config(char * fn)
 		eof_note_type_name = eof_note_type_name_fof;
 	}
 	eof_new_note_forced_strum = get_config_int("preferences", "eof_new_note_forced_strum", 0);
+	eof_gp_import_text = get_config_int("preferences", "eof_gp_import_text", 0);
 	eof_gp_import_preference_1 = get_config_int("preferences", "eof_gp_import_preference_1", 0);
 	eof_gp_import_truncate_short_notes = get_config_int("preferences", "eof_gp_import_truncate_short_notes", 1);
 	eof_gp_import_truncate_short_chords = get_config_int("preferences", "eof_gp_import_truncate_short_chords", 1);
@@ -224,13 +225,13 @@ void eof_load_config(char * fn)
 	eof_render_3d_rs_chords = get_config_int("preferences", "eof_render_3d_rs_chords", 0);
 	eof_render_2d_rs_piano_roll = get_config_int("preferences", "eof_render_2d_rs_piano_roll", 0);
 	eof_disable_backups = get_config_int("preferences", "eof_disable_backups", 0);
-	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
+	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 32);
 	eof_enable_open_strums_by_default = get_config_int("preferences", "eof_enable_open_strums_by_default", 0);
 	if(eof_min_note_distance > 999)
 	{	//If the minimum note distance is invalid (more than 3 digits)
 		eof_min_note_distance = 3;	//Reset it to default
 	}
-	eof_min_note_distance_intervals = get_config_int("preferences", "eof_min_note_distance_intervals", 0);
+	eof_min_note_distance_intervals = get_config_int("preferences", "eof_min_note_distance_intervals", 1);
 	if(eof_min_note_distance_intervals > 2)
 	{	//If the minimum note distance setting isn't ms, 1/# measure or 1/# beat
 		eof_min_note_distance_intervals = 0;	//Reset it to ms
@@ -280,6 +281,7 @@ void eof_load_config(char * fn)
 	eof_dont_redraw_on_exit_prompt = get_config_int("preferences", "eof_dont_redraw_on_exit_prompt", 0);
 	eof_offer_fhp_derived_finger_placements = get_config_int("preferences", "eof_offer_fhp_derived_finger_placements", 0);
 	eof_gas_clipboard = get_config_int("preferences", "eof_gas_clipboard", 0);
+	eof_dont_restrict_tone_change_timing = get_config_int("preferences", "eof_dont_restrict_tone_change_timing", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -661,6 +663,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_new_note_length_1ms", eof_new_note_length_1ms);
 	set_config_int("preferences", "eof_new_note_forced_strum", eof_new_note_forced_strum);
 	set_config_int("preferences", "eof_use_fof_difficulty_naming", eof_use_fof_difficulty_naming);
+	set_config_int("preferences", "eof_gp_import_text", eof_gp_import_text);
 	set_config_int("preferences", "eof_gp_import_preference_1", eof_gp_import_preference_1);
 	set_config_int("preferences", "eof_gp_import_truncate_short_notes", eof_gp_import_truncate_short_notes);
 	set_config_int("preferences", "eof_gp_import_truncate_short_chords", eof_gp_import_truncate_short_chords);
@@ -707,6 +710,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_dont_redraw_on_exit_prompt", eof_dont_redraw_on_exit_prompt);
 	set_config_int("preferences", "eof_offer_fhp_derived_finger_placements", eof_offer_fhp_derived_finger_placements);
 	set_config_int("preferences", "eof_gas_clipboard", eof_gas_clipboard);
+	set_config_int("preferences", "eof_dont_restrict_tone_change_timing", eof_dont_restrict_tone_change_timing);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

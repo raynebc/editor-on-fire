@@ -238,10 +238,10 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ eof_window_proc,0,   48,  500, 345, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  350, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  350, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 350, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,  "Cancel",              NULL, NULL },
+	{ eof_window_proc,0,   48,  500, 360, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  365, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  365, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 365, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,  "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,    75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248,  75,  224, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI files",NULL, NULL },
 	{ d_agup_check_proc, 16,    90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -266,15 +266,16 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 225, 220, 16,  2,   23,  0,    0,      1,   0,   "Allow RS2 extended ASCII lyrics",NULL, NULL },
 	{ d_agup_check_proc, 16,   240, 224, 16,  2,   23,  0,    0,      1,   0,   "Don't warn about INI differences",NULL, NULL },
 	{ d_agup_check_proc, 248, 240, 202, 16,  2,   23,  0,    0,      1,   0,   "Render mid beat tempos blue",NULL, NULL },
-	{ d_agup_check_proc, 16,   255, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
-	{ d_agup_check_proc, 16,   270, 310, 16,  2,   23,  0,    0,      1,   0,   "RS2 export version 8 (DLC Builder) style XML",NULL, NULL },
-	{ d_agup_check_proc, 16,   285, 218, 16,  2,   23,  0,    0,      1,   0,   "RS import loads all handshapes",NULL, NULL },
-	{ d_agup_check_proc, 248, 285, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
-	{ d_agup_check_proc, 16,   300, 315, 16,  2,   23,  0,    0,      1,   0,   "MIDI export CH/YARG open note/chord markers",NULL, NULL },
-	{ d_agup_check_proc, 16,   315, 300, 16,  2,   23,  0,    0,      1,   0,   "GP import remove accent from staccato notes",NULL, NULL },
-	{ d_agup_check_proc, 16,   330, 300, 16,  2,   23,  0,    0,      1,   0,   "Offer to derive finger placements from FHPs",NULL, NULL },
-	{ d_agup_check_proc, 248, 345, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
-	{ d_agup_check_proc, 248, 360, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ d_agup_check_proc, 16,   255, 210, 16,  2,   23,  0,    0,      1,   0,   "GP import RS sections/phrases",NULL, NULL },
+	{ d_agup_check_proc, 16,   270, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
+	{ d_agup_check_proc, 16,   285, 310, 16,  2,   23,  0,    0,      1,   0,   "RS2 export version 8 (DLC Builder) style XML",NULL, NULL },
+	{ d_agup_check_proc, 16,   300, 218, 16,  2,   23,  0,    0,      1,   0,   "RS import loads all handshapes",NULL, NULL },
+	{ d_agup_check_proc, 248, 300, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
+	{ d_agup_check_proc, 16,   315, 315, 16,  2,   23,  0,    0,      1,   0,   "MIDI export CH/YARG open note/chord markers",NULL, NULL },
+	{ d_agup_check_proc, 16,   330, 300, 16,  2,   23,  0,    0,      1,   0,   "GP import remove accent from staccato notes",NULL, NULL },
+	{ d_agup_check_proc, 16,   345, 300, 16,  2,   23,  0,    0,      1,   0,   "Offer to derive finger placements from FHPs",NULL, NULL },
+	{ d_agup_check_proc, 248, 360, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
+	{ d_agup_check_proc, 248, 375, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -293,6 +294,7 @@ DIALOG eof_pg_preferences_dialog[] =
 	{ d_agup_check_proc, 16, 123, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
 	{ d_agup_check_proc, 248, 123, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
 	{ d_agup_check_proc, 16, 139, 168, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
+	{ d_agup_check_proc, 248, 139, 230, 16,  2,   23,  0,    0,      1,   0,   "Don't restrict tone change timing",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -386,7 +388,7 @@ DIALOG eof_file_new_windows_dialog[] =
 DIALOG eof_ogg_settings_dialog[] =
 {
 	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_shadow_box_proc, 4,   200, 192, 206, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
+	{ eof_shadow_box_proc, 4,   200, 192, 206, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
 	{ d_agup_text_proc,       58,  208, 128, 8,   2,   23,  0,    0,      0,   0,   "OGG Settings",   NULL, NULL },
 	{ d_agup_text_proc,       49,  228, 48,  8,   2,   23,  0,    0,      0,   0,   "Encoder Quality",NULL, NULL },
 	{ d_agup_list_proc,       43,  244, 110, 112, 2,   23,  0,    0,      0,   0,   (void *)eof_ogg_list, NULL, NULL },
@@ -1693,15 +1695,16 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[25].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;		//Allow RS2 extended ASCII lyrics
 	eof_import_export_preferences_dialog[26].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;		//Don't warn about INI differences
 	eof_import_export_preferences_dialog[27].flags = eof_render_mid_beat_tempos_blue ? D_SELECTED : 0;		//Render mid beat tempos blue
-	eof_import_export_preferences_dialog[28].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
-	eof_import_export_preferences_dialog[29].flags = eof_rs2_export_version_8 ? D_SELECTED : 0;				//RS2 export version 8 (DLC Builder) style XML
-	eof_import_export_preferences_dialog[30].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
-	eof_import_export_preferences_dialog[31].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
-	eof_import_export_preferences_dialog[32].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;//MIDI export CH/YARG open note/chord markers
-	eof_import_export_preferences_dialog[33].flags = eof_gp_import_remove_accent_from_staccato ? D_SELECTED : 0;//GP import remove accent from staccato notes
-	eof_import_export_preferences_dialog[34].flags = eof_offer_fhp_derived_finger_placements ? D_SELECTED : 0;//Offer to derive finger placements from FHPs
-	eof_import_export_preferences_dialog[35].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
-	eof_import_export_preferences_dialog[36].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_import_export_preferences_dialog[28].flags = eof_gp_import_text ? D_SELECTED : 0;					//GP import RS sections/phrases
+	eof_import_export_preferences_dialog[29].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
+	eof_import_export_preferences_dialog[30].flags = eof_rs2_export_version_8 ? D_SELECTED : 0;				//RS2 export version 8 (DLC Builder) style XML
+	eof_import_export_preferences_dialog[31].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
+	eof_import_export_preferences_dialog[32].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
+	eof_import_export_preferences_dialog[33].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;//MIDI export CH/YARG open note/chord markers
+	eof_import_export_preferences_dialog[34].flags = eof_gp_import_remove_accent_from_staccato ? D_SELECTED : 0;//GP import remove accent from staccato notes
+	eof_import_export_preferences_dialog[35].flags = eof_offer_fhp_derived_finger_placements ? D_SELECTED : 0;//Offer to derive finger placements from FHPs
+	eof_import_export_preferences_dialog[36].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
+	eof_import_export_preferences_dialog[37].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 
 	do
 	{	//Run the dialog
@@ -1732,15 +1735,16 @@ int eof_menu_file_import_export_preferences(void)
 			eof_rs2_export_extended_ascii_lyrics = (eof_import_export_preferences_dialog[25].flags == D_SELECTED ? 1 : 0);
 			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[26].flags == D_SELECTED ? 1 : 0);
 			eof_render_mid_beat_tempos_blue = (eof_import_export_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
-			eof_rs2_export_version_8 = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
-			eof_rs_import_all_handshapes = (eof_import_export_preferences_dialog[30].flags == D_SELECTED ? 1 : 0);
-			eof_disable_ini_export = (eof_import_export_preferences_dialog[31].flags == D_SELECTED ? 1 : 0);
-			eof_midi_export_enhanced_open_marker = (eof_import_export_preferences_dialog[32].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_remove_accent_from_staccato = (eof_import_export_preferences_dialog[33].flags == D_SELECTED ? 1 : 0);
-			eof_offer_fhp_derived_finger_placements = (eof_import_export_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
-			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
-			eof_disable_rs_wav = (eof_import_export_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_text = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
+			eof_rs2_export_version_8 = (eof_import_export_preferences_dialog[30].flags == D_SELECTED ? 1 : 0);
+			eof_rs_import_all_handshapes = (eof_import_export_preferences_dialog[31].flags == D_SELECTED ? 1 : 0);
+			eof_disable_ini_export = (eof_import_export_preferences_dialog[32].flags == D_SELECTED ? 1 : 0);
+			eof_midi_export_enhanced_open_marker = (eof_import_export_preferences_dialog[33].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_remove_accent_from_staccato = (eof_import_export_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
+			eof_offer_fhp_derived_finger_placements = (eof_import_export_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
+			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
+			eof_disable_rs_wav = (eof_import_export_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1768,15 +1772,16 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[25].flags = D_SELECTED;		//Allow RS2 extended ASCII lyrics
 			eof_import_export_preferences_dialog[26].flags = 0;				//Don't warn about INI differences
 			eof_import_export_preferences_dialog[27].flags = D_SELECTED;		//Render mid beat tempos blue
-			eof_import_export_preferences_dialog[28].flags = 0;				//GP import beat text as sections, markers as phrases
-			eof_import_export_preferences_dialog[29].flags = 0;				//RS2 export version 8 (DLC Builder) style XML
-			eof_import_export_preferences_dialog[30].flags = 0;				//RS import loads all handshapes
-			eof_import_export_preferences_dialog[31].flags = 0;				//Don't write INI file
-			eof_import_export_preferences_dialog[32].flags = 0;				//MIDI export CH/YARG open note/chord markers
-			eof_import_export_preferences_dialog[33].flags = 0;				//GP import remove accent from staccato notes
-			eof_import_export_preferences_dialog[34].flags = 0;				//Offer to derive finger placements from FHPs
-			eof_import_export_preferences_dialog[35].flags = 0;				//GH import sustain threshold prompt
-			eof_import_export_preferences_dialog[36].flags = 0;				//Don't write Rocksmith WAV file
+			eof_import_export_preferences_dialog[28].flags = 0;				//GP import RS sections/phrases
+			eof_import_export_preferences_dialog[29].flags = 0;				//GP import beat text as sections, markers as phrases
+			eof_import_export_preferences_dialog[30].flags = 0;				//RS2 export version 8 (DLC Builder) style XML
+			eof_import_export_preferences_dialog[31].flags = 0;				//RS import loads all handshapes
+			eof_import_export_preferences_dialog[32].flags = 0;				//Don't write INI file
+			eof_import_export_preferences_dialog[33].flags = 0;				//MIDI export CH/YARG open note/chord markers
+			eof_import_export_preferences_dialog[34].flags = 0;				//GP import remove accent from staccato notes
+			eof_import_export_preferences_dialog[35].flags = 0;				//Offer to derive finger placements from FHPs
+			eof_import_export_preferences_dialog[36].flags = 0;				//GH import sustain threshold prompt
+			eof_import_export_preferences_dialog[37].flags = 0;				//Don't write Rocksmith WAV file
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -1810,14 +1815,15 @@ int eof_menu_file_gp_preferences(void)
 	eof_conditionally_center_dialog(eof_pg_preferences_dialog);
 
 	//Use the currently configured settings to populate the dialog selections
-	eof_pg_preferences_dialog[4].flags = eof_enforce_chord_density ? D_SELECTED : 0;			//Apply crazy to repeated chords separated by a rest
-	eof_pg_preferences_dialog[5].flags = eof_inverted_chords_slash ? D_SELECTED : 0;			//Treat inverted chords as slash
-	eof_pg_preferences_dialog[6].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;			//3D render RS style chords
-	eof_pg_preferences_dialog[7].flags = eof_auto_complete_fingering ? D_SELECTED : 0;		//Offer to auto complete fingering
-	eof_pg_preferences_dialog[8].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;	//Don't auto-name double stops
-	eof_pg_preferences_dialog[9].flags = eof_technote_auto_adjust ? D_SELECTED : 0;			//Auto-Adjust tech notes
-	eof_pg_preferences_dialog[10].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;	//Fingering checks include mutes
+	eof_pg_preferences_dialog[4].flags = eof_enforce_chord_density ? D_SELECTED : 0;				//Apply crazy to repeated chords separated by a rest
+	eof_pg_preferences_dialog[5].flags = eof_inverted_chords_slash ? D_SELECTED : 0;				//Treat inverted chords as slash
+	eof_pg_preferences_dialog[6].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;				//3D render RS style chords
+	eof_pg_preferences_dialog[7].flags = eof_auto_complete_fingering ? D_SELECTED : 0;			//Offer to auto complete fingering
+	eof_pg_preferences_dialog[8].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;		//Don't auto-name double stops
+	eof_pg_preferences_dialog[9].flags = eof_technote_auto_adjust ? D_SELECTED : 0;				//Auto-Adjust tech notes
+	eof_pg_preferences_dialog[10].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;		//Fingering checks include mutes
 	eof_pg_preferences_dialog[11].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;			//2D render RS piano roll
+	eof_pg_preferences_dialog[12].flags = eof_dont_restrict_tone_change_timing ? D_SELECTED : 0;	//Don't restrict tone change timing
 
 	eof_log("\tLaunching Guitar Pro Preferences dialog", 2);
 
@@ -1836,6 +1842,7 @@ int eof_menu_file_gp_preferences(void)
 			eof_technote_auto_adjust = (eof_pg_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
 			eof_fingering_checks_include_mutes = (eof_pg_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
 			eof_render_2d_rs_piano_roll = (eof_pg_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
+			eof_dont_restrict_tone_change_timing = (eof_pg_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1849,6 +1856,7 @@ int eof_menu_file_gp_preferences(void)
 			eof_pg_preferences_dialog[9].flags = D_SELECTED;		//Auto-Adjust tech notes
 			eof_pg_preferences_dialog[10].flags = 0;				//Fingering checks include mutes
 			eof_pg_preferences_dialog[11].flags = 0;				//2D render RS piano roll
+			eof_pg_preferences_dialog[12].flags = 0;				//Don't restrict tone change timing
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 

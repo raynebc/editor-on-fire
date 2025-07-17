@@ -119,6 +119,43 @@ int eof_window_proc(int msg, DIALOG *d, int c)
 	return ret;
 }
 
+int eof_shadow_box_proc(int msg, DIALOG *d, int c)
+{
+	int ret = D_O_K;
+
+	if(!d)
+		return ret;	//Invalid parameter
+
+	if(msg == MSG_LPRESS)
+	{
+		title_bar_x1 = d->x;						//Re-use the coordinates that AGUP would use as the title bar area of d_agup_window_proc()
+		title_bar_y1 = d->y;
+		title_bar_x2 = d->x + d->w - 2;
+		title_bar_y2 = d->y + 9 + text_height(font);
+		if(mouse_down)
+		{	//If click and drag logic is active already
+			mouse_down = 0;	//A left click would be unexpected, so interrupt click and drag
+			mouse_last_render_x = mouse_x;
+			mouse_last_render_y = mouse_y;
+		}
+		else if((mouse_x >= title_bar_x1) && (mouse_x <= title_bar_x2) && (mouse_y >= title_bar_y1) && (mouse_y <= title_bar_y2))
+		{	//If the mouse is within the dialog's title bar region
+			mouse_down = 1;
+			mouse_offt_x = mouse_x - d->x;
+			mouse_offt_y = mouse_y - d->y;
+		}
+	}
+	else if(msg == MSG_LRELEASE)
+	{
+		mouse_down = 0;
+	}
+	else
+	{
+		ret = d_agup_shadow_box_proc(msg, d, c);
+	}
+	return ret;
+}
+
 void eof_conditionally_center_dialog(DIALOG *dp)
 {
 	if(!dp)

@@ -1051,7 +1051,7 @@ int eof_tuning_definition_is_applicable(char track_is_bass, unsigned char numstr
 DIALOG eof_tuning_preset_dialog[] =
 {
 	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ d_agup_shadow_box_proc, 4,   200, 340, 350, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
+	{ eof_shadow_box_proc, 4,   200, 340, 350, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
 	{ d_agup_text_proc,       123, 208, 128, 8,   2,   23,  0,    0,      0,   0,   "Select tuning",   NULL, NULL },
 	{ d_agup_list_proc,       16,  228, 306, 276, 2,   23,  0,    0,      0,   0,   (void *)eof_tunings_list, NULL, NULL },
 	{ d_agup_button_proc,     16,  510, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
@@ -3691,23 +3691,32 @@ int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 	tp = eof_song->pro_guitar_track[tracknum];
 	eof_render();
 
-	//Check to see if the given timestamp occurs on a note in the active track
-	eof_track_rs_tone_change_add_dialog[3].flags = D_HIDDEN;		//The warning about a tone change occurring on top of a note is hidden unless this condition is found to be happening
-	eof_track_rs_tone_change_add_dialog[4].flags = D_HIDDEN;
-	eof_track_rs_tone_change_add_dialog[5].flags = D_HIDDEN;
-	for(ctr = 0; ctr < tp->pgnotes; ctr++)
-	{	//For each normal note
-		if((timestamp >= tp->pgnote[ctr]->pos) && (timestamp < tp->pgnote[ctr]->pos + tp->pgnote[ctr]->length))
-		{	//If the specified timestamp overlaps this note (except for the last 1ms of the note)
-			eof_track_rs_tone_change_add_dialog[3].flags = 0;	//Show this warning
-			eof_track_rs_tone_change_add_dialog[4].flags = 0;
-			eof_track_rs_tone_change_add_dialog[5].flags = 0;
-			if(tp->pgnote[ctr]->pos > 0)
-			{	//If the overlapped note already begins at 0s, the tone change can't occur any earlier
-				timestamp = tp->pgnote[ctr]->pos - 1;
-				snprintf(eof_track_rs_tone_change_add_dialog_string, sizeof(eof_track_rs_tone_change_add_dialog_string) - 1, "Adjusting tone position to %lums", timestamp);
+	//Check to see if the given timestamp occurs on a note in the active track, but only if this logic isn't suppressed
+	if(!eof_dont_restrict_tone_change_timing)
+	{	//If the user did not enable the "Don't restrict tone change timing" pro guitar preference
+		eof_track_rs_tone_change_add_dialog[3].flags = D_HIDDEN;		//The warning about a tone change occurring on top of a note is hidden unless this condition is found to be happening
+		eof_track_rs_tone_change_add_dialog[4].flags = D_HIDDEN;
+		eof_track_rs_tone_change_add_dialog[5].flags = D_HIDDEN;
+		for(ctr = 0; ctr < tp->pgnotes; ctr++)
+		{	//For each normal note
+			if((timestamp >= tp->pgnote[ctr]->pos) && (timestamp < tp->pgnote[ctr]->pos + tp->pgnote[ctr]->length))
+			{	//If the specified timestamp overlaps this note (except for the last 1ms of the note)
+				eof_track_rs_tone_change_add_dialog[3].flags = 0;	//Show this warning
+				eof_track_rs_tone_change_add_dialog[4].flags = 0;
+				eof_track_rs_tone_change_add_dialog[5].flags = 0;
+				if(tp->pgnote[ctr]->pos > 0)
+				{	//If the overlapped note already begins at 0s, the tone change can't occur any earlier
+					timestamp = tp->pgnote[ctr]->pos - 1;
+					snprintf(eof_track_rs_tone_change_add_dialog_string, sizeof(eof_track_rs_tone_change_add_dialog_string) - 1, "Adjusting tone position to %lums", timestamp);
+				}
 			}
 		}
+	}
+	else
+	{	//Suppress the message related to altering the tone change timestamp
+		eof_track_rs_tone_change_add_dialog[3].flags = D_HIDDEN;
+		eof_track_rs_tone_change_add_dialog[4].flags = D_HIDDEN;
+		eof_track_rs_tone_change_add_dialog[5].flags = D_HIDDEN;
 	}
 
 	//Find the tone change at the current seek position, if any

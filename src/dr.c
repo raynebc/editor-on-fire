@@ -245,6 +245,8 @@ void eof_build_sanitized_drums_rock_string(char *input, char *output)
 	{	//For each character in the input string
 		if(input[ctr] == ',')
 			continue;	//If the input character is a comma, skip it
+		if(input[ctr] == '+')
+			continue;	//If the input character is a plus sign, skip it
 
 		uinsert(output, index++, input[ctr]);	//Append it to the output string
 		if(input[ctr] == '"')

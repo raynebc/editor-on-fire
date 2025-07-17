@@ -11506,8 +11506,8 @@ int eof_menu_note_lyric_line_repair_timing(void)
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAltering lyric line #%lu that had started at pos %lums to %lums", lyricctr, tp->line[linectr].start_pos, tp->lyric[lyricctr]->pos);
 								eof_log(eof_log_string, 1);
 								tp->line[linectr].start_pos = tp->lyric[lyricctr]->pos;	//Update the line's start position
-								break;	//Break from the inner lyric loop
 							}
+							break;	//Break from the inner lyric loop
 						}
 					}
 

@@ -40,6 +40,7 @@ int eof_new_lyric_dialog(void);		//Launches the input box to accept the text for
 int eof_edit_lyric_dialog(void);	//Performs the Edit Lyric action presented in the note menu
 
 int eof_window_proc(int msg, DIALOG *d, int c);		//Dialog procedure to be used in place of d_agup_window_proc(), capturing relevant mouse events to track clicking and dragging, otherwise passing events to d_agup_window_proc()
+int eof_shadow_box_proc(int msg, DIALOG *d, int c);	//Dialog procedure to be used in place of d_agup_shadow_box_proc(), capturing relevant mouse events to track clicking and dragging, otherwise passing events to d_agup_shadow_box_proc()
 void eof_conditionally_center_dialog(DIALOG *dp);	//Checks to see if (dp[0].flags & D_USER) is set, which would indicate the user manually moved this dialog via click and drag.  If not, or if the dialog is more than 20 pixels outside the program window in any direction, the dialog is centered
 void eof_prepare_menus(void);	//Configures menus based on conditions within EOF, such as to enable/disable menu items
 int eof_popup_dialog(DIALOG * dp, int n);

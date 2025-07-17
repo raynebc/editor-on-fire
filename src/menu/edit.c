@@ -64,9 +64,9 @@ MENU eof_edit_snap_menu[] =
 	{"1/48", eof_menu_edit_snap_forty_eighth, NULL, D_USER, NULL},
 	{"1/96", eof_menu_edit_snap_ninty_sixth, NULL, D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Custom", eof_menu_edit_snap_custom, NULL, D_USER, NULL},
+	{"&Custom\t" CTRL_NAME "+Shift+G", eof_menu_edit_snap_custom, NULL, D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"&Off\t" CTRL_NAME "+Shift+G", eof_menu_edit_snap_off, NULL, D_SELECTED | D_USER, NULL},
+	{"&Off", eof_menu_edit_snap_off, NULL, D_SELECTED | D_USER, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Display grid lines\tShift+G", eof_menu_edit_toggle_grid_lines, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -254,7 +254,7 @@ MENU eof_edit_menu[] =
 DIALOG eof_custom_snap_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)         (dp2) (dp3) */
-	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
+	{ eof_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
 	{ d_agup_text_proc,		 56,  84,  64,  8,   2,    23,  0,    0,      0,   0,   "Intervals:",NULL, NULL },
 	{ eof_custom_grid_snap_edit_proc,112, 80, 66, 20,  2,   23,   0,      0,   2,   0,    eof_etext2,  "0123456789", NULL },
 	{ d_agup_radio_proc,     42,  105, 60,  15,  2,    23,  0,    0,      0,   0,   "&Beat",      NULL, NULL },
@@ -267,7 +267,7 @@ DIALOG eof_custom_snap_dialog[] =
 DIALOG eof_custom_speed_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg)  (bg) (key) (flags) (d1) (d2) (dp)         (dp2)         (dp3) */
-	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,       0,   0,   NULL,       NULL,         NULL },
+	{ eof_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,       0,   0,   NULL,       NULL,         NULL },
 	{ d_agup_text_proc,      56,  84,  64,  8,   2,    23,  0,    0,       0,   0,   "Percent:", NULL,         NULL },
 	{ eof_verified_edit_proc,112, 80,  66,  20,  2,    23,  0,    0,       3,   0,   eof_etext2, "0123456789", NULL },
 	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT,  0,   0,   "OK",       NULL,         NULL },
@@ -278,7 +278,7 @@ DIALOG eof_custom_speed_dialog[] =
 DIALOG eof_custom_zoom_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg)  (bg) (key) (flags) (d1) (d2) (dp)         (dp2)         (dp3) */
-	{ d_agup_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,       0,   0,   NULL,		 NULL,         NULL },
+	{ eof_shadow_box_proc,32,  68,  170, 95,  2,    23,  0,    0,       0,   0,   NULL,		 NULL,         NULL },
 	{ d_agup_text_proc,      56,  84,  64,  8,   2,    23,  0,    0,       0,   0,   "1 / ",	 NULL,         NULL },
 	{ eof_verified_edit_proc,112, 80,  66,  20,  2,    23,  0,    0,       2,   0,   eof_etext2, "0123456789", NULL },
 	{ d_agup_button_proc,    42,  125, 68,  28,  2,    23,  '\r', D_EXIT,  0,   0,   "OK",       NULL,         NULL },
@@ -4626,7 +4626,7 @@ int eof_menu_song_paste_from_difficulty(void)
 DIALOG eof_menu_edit_select_note_number_in_sequence_logic_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg)  (bg) (key) (flags) (d1) (d2) (dp)         (dp2)         (dp3) */
-	{ d_agup_shadow_box_proc,32,  68,  188, 130, 2,    23,  0,    0,       0,   0,   NULL,       NULL,         NULL },
+	{ eof_shadow_box_proc,32,  68,  188, 130, 2,    23,  0,    0,       0,   0,   NULL,       NULL,         NULL },
 	{ d_agup_text_proc,      56,  84,  64,  8,   2,    23,  0,    0,       0,   0,   eof_etext, NULL,         NULL },
 	{ eof_verified_edit_proc,160, 80,  28,  20,  2,    23,  0,    0,       3,   0,   eof_etext2, "0123456789", NULL },
 	{ d_agup_text_proc,      56,  108, 64,  8,   2,    23,  0,    0,       0,   0,   "Out of every:", NULL,         NULL },

@@ -28,7 +28,7 @@ int eof_import_drums_rock_track_diff(char * fn);
 	//Returns 1 on error, or 2 on user cancellation
 
 void eof_build_sanitized_drums_rock_string(char *input, char *output);
-	//Writes a copy of the input string to the output string, removing all commas, which are not supported by Drums Rock in the song or artist name fields in info.csv
+	//Writes a copy of the input string to the output string, removing all commas and plus characters, which are not supported by Drums Rock in the song or artist name fields in info.csv
 	//Any double quotation marks (") are written as "" as is appropriate for CSV files
 	//input and output must be different, non-overlapping pointers
 

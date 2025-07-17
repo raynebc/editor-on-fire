@@ -231,7 +231,7 @@ DIALOG eof_section_add_dialog[] =
 DIALOG eof_bpm_change_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)             (dp2) (dp3) */
-	{ d_agup_shadow_box_proc,32,  68,  170, 124, 2,   23,  0,    0,      0,   0,   NULL,            NULL, NULL },
+	{ eof_shadow_box_proc,32,  68,  170, 124, 2,   23,  0,    0,      0,   0,   NULL,            NULL, NULL },
 	{ d_agup_text_proc,      56,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "BPM:",          NULL, NULL },
 	{ eof_verified_edit_proc,112, 80,  66,  20,  2,   23,  0,    0,      25,  0,   eof_etext,       "1234567890.", NULL },
 	{ d_agup_check_proc,     56,  108, 128, 16,  2,   23,  0,    0,      1,   0,   "This Beat Only",NULL, NULL },
@@ -244,7 +244,7 @@ DIALOG eof_bpm_change_dialog[] =
 DIALOG eof_anchor_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)         (dp2) (dp3) */
-	{ d_agup_shadow_box_proc,32,  68,  170, 100,  2,   23,  0,    0,      0,   0,   NULL,        NULL, NULL },
+	{ eof_shadow_box_proc,32,  68,  170, 100,  2,   23,  0,    0,      0,   0,   NULL,        NULL, NULL },
 	{ d_agup_text_proc,      56,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Position:", NULL, NULL },
 	{ eof_verified_edit_proc,112, 80,  66,  20,  2,   23,  0,    0,      9,   0,   eof_etext2,  "0123456789:", NULL },
 	{ d_agup_check_proc,     56,  108, 128, 16,  2,   23,  0,    0,      1,   0,   "Adjust Notes", NULL, NULL },
@@ -300,7 +300,7 @@ int eof_export_beat_timings_edit_proc(int msg, DIALOG *d, int c);
 DIALOG eof_export_beat_timings_dialog[]=
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)  (d1) (d2) (dp)         (dp2) (dp3) */
-	{ d_agup_shadow_box_proc,32,  68,  174, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
+	{ eof_shadow_box_proc,32,  68,  174, 95,  2,    23,  0,    0,      0,   0,   NULL,        NULL, NULL },
 	{ d_agup_text_proc,		 56,  84,  64,  8,   2,    23,  0,    0,      0,   0,   "Intervals:",NULL, NULL },
 	{ eof_export_beat_timings_edit_proc,112, 80,  66,  20,  2,   23,   0,      0,   2,   0,    eof_etext2,  "0123456789", NULL },
 	{ d_agup_radio_proc,     42,  105, 68,  15,  2,    23,  0,    0,      0,   0,   "&Millis",      NULL, NULL },
@@ -781,7 +781,7 @@ int eof_menu_beat_ts_6_4(void)
 DIALOG eof_custom_ts_dialog[] =
 {
 	/* (proc)				  (x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
-	{ d_agup_shadow_box_proc, 32,  68,  175, 95, 2,   23,  0,    0,      0,   0,   NULL,                NULL, NULL },
+	{ eof_shadow_box_proc, 32,  68,  175, 95, 2,   23,  0,    0,      0,   0,   NULL,                NULL, NULL },
 	{ d_agup_text_proc,		  42,  84,  35,  8,  2,   23,  0,    0,      0,   0,   "Beats per measure:",NULL, NULL },
 	{ eof_verified_edit_proc, 160, 80,  35,  20, 2,   23,  0,    0,      3,   0,   eof_etext,           "0123456789", NULL },
 	{ d_agup_text_proc,		  42,  105, 35,  8,  2,   23,  0,    0,      0,   0,   "Beat unit:",        NULL, NULL },
