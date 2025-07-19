@@ -2803,6 +2803,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
 					eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the temporary highlighting as appropriate
+					if(eof_song->tags->highlight_arpeggios)
+						eof_song_highlight_arpeggios(eof_song, eof_selected_track);	//Re-create the arpeggio highlighting as appropriate
 					(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
 				}
 			}
@@ -2861,6 +2863,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
 					eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the highlighting as appropriate
+					if(eof_song->tags->highlight_arpeggios)
+						eof_song_highlight_arpeggios(eof_song, eof_selected_track);	//Re-create the arpeggio highlighting as appropriate
 					(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
 				}
 			}

@@ -2545,7 +2545,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
 								(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
 								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
+								gp->text_event[gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
 							}
 							gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
 							gp->text_events++;
@@ -2616,7 +2616,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
 								(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
 								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
+								gp->text_event[gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
 							}
 							gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
 							gp->text_events++;
@@ -3632,7 +3632,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//If this beat text matches a valid Rocksmith section name, import it with the section's native name
 										(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
 										gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-										gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
+										gp->text_event[gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
 										gp->text_events++;
 									}
 									else if(!eof_gp_import_preference_1)

@@ -31,6 +31,7 @@ struct dbNote
 		//This is 0-4 for a note definition, 5 for inverted HOPO notation, 6 is for slider notation,
 		// 7 is for open strum, 'S' for a start of solo section, 'E' for an end of solo section
 		// '0' for a Player 1 section, '1' for a Player 2 section or '2' for a Star Power section
+		// 69 for a drum fill, 70 for a drum roll, 71 for a special drum roll
 	char is_gem;	//Set to nonzero if the note is a gem instead of a status marker (is valued from 0-4, 7 or 8)
 	unsigned long duration;
 	struct dbNote *next;
@@ -57,13 +58,13 @@ struct FeedbackChart
 	char *name;
 	char *artist;
 	char *charter;
-	double offset;		//The chart's offset in SECONDS
+	double offset;				//The chart's offset in SECONDS
 	unsigned long resolution;	//Is expected to be 192.  If it's missing in the .chart file, 192 could probably be assumed
 	char *audiofile;			//The MP3/OGG file specified in the chart file as the audio track
 	unsigned long linesprocessed;	//The number of lines in the file that were processed
 	unsigned long tracksloaded;	//The number of instrument tracks that were loaded
 
-	char guitartypes;	//Tracks the presence of 6 lane guitar (0 = no guitar parts, 1 = 5 lane guitar parts only, 2 = 6 lane guitar parts only, 3 = 5 and 6 lane guitar parts)
+	char guitartypes;		//Tracks the presence of 6 lane guitar (0 = no guitar parts, 1 = 5 lane guitar parts only, 2 = 6 lane guitar parts only, 3 = 5 and 6 lane guitar parts)
 	char basstypes;		//Tracks the presence of 6 lane bass (0 = no bass parts, 1 = 5 lane bass parts only, 2 = 6 lane bass parts only, 3 = 5 and 6 lane bass parts)
 
 	struct dbAnchor *anchors;	//Linked list of anchors
@@ -113,5 +114,15 @@ EOF_SONG * eof_import_chart(const char * fn);
 void sort_chart(struct FeedbackChart *chart);
 	//Performs a bubble sort of the specified chart's linked lists, to ensure markers are correctly processed
 	//Bubble sort isn't very efficient, but all notes are supposed to be defined in order anyway so it shouldn't matter for properly made charts
+
+void eof_merge_flags_at_pos(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned long flags);
+	//Enables the specified flags for all notes in the specified track at the specified position
+	//Used to apply techniques given that note flags may be defined in unpredictable order in the .chart file
+void eof_merge_accent_mask_at_pos(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned char accent);
+	//Enables the specified accent bitmask flags for all notes with applicable gems in the specified track at the specified position
+	//Used to apply accent status given that accent markers may be defined in an unpredictable order in the .chart file
+void eof_merge_ghost_mask_at_pos(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned char ghost);
+	//Enables the specified ghost bitmask flags for all notes with applicable gems in the specified track at the specified position
+	//Used to apply ghost status given that ghost markers may be defined in an unpredictable order in the .chart file
 
 #endif

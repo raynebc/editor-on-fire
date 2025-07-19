@@ -164,8 +164,8 @@
 typedef struct
 {
 	char name[EOF_NAME_LENGTH + 1];
-	unsigned char type;			//Stores the note's difficulty
-	unsigned char note;			//Stores the note's fret values
+	unsigned char type;		//Stores the note's difficulty
+	unsigned char note;		//Stores the note's fret values
 	unsigned char accent;		//Stores the note's accent bitmask (for drums)
 	unsigned char ghost;		//Stores the note's ghost bitmask (for drums)
 	unsigned long midi_pos;
@@ -1179,6 +1179,9 @@ int eof_note_needs_fingering_definition(EOF_SONG *sp, unsigned long track, unsig
 int eof_length_is_shorter_than(long length, long threshold);	//Returns nonzero if the length parameter is shorter than the threshold parameter
 int eof_length_is_longer_than(long length, long threshold);		//Returns nonzero if the length parameter is longer than the threshold parameter
 int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if both parameters are equal
+int eof_note_has_accent(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified legacy or pro guitar note has any accented gems
+int eof_note_has_ghost(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified legacy or pro guitar note has any ghosted gems
+int eof_note_is_linked_to_by_pitched_slide(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified pro guitar note is linked to by a note with a pitched slide on any strings both notes have in common
 
 void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char any, char *undo_made);
 	//Examines all sections in the specified track, and for those which have notes that are all selected, their positions are moved

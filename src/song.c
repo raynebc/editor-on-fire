@@ -3073,7 +3073,7 @@ int eof_menu_section_mark(unsigned long section_type)
 			for(j = 0; j < *section_count; j++)
 			{	//For each instance of the section in the active track
 				instanceptr = &sectionptr[j];
-				if(instanceptr && (sel_end >= instanceptr->start_pos) && (sel_start <= instanceptr->end_pos) && (instanceptr->difficulty == diff))
+				if((sel_end >= instanceptr->start_pos) && (sel_start <= instanceptr->end_pos) && (instanceptr->difficulty == diff))
 				{
 					insp = j;
 				}
@@ -3090,13 +3090,10 @@ int eof_menu_section_mark(unsigned long section_type)
 		else
 		{	//Otherwise edit the existing section
 			instanceptr = &sectionptr[insp];
-			if(instanceptr != NULL)
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tModifying section of type %lu:  From %lums-%lums to %lums-%lums", section_type, instanceptr->start_pos, instanceptr->end_pos, sel_start, sel_end);
-				eof_log(eof_log_string, 1);
-				instanceptr->start_pos = sel_start;
-				instanceptr->end_pos = sel_end;
-			}
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tModifying section of type %lu:  From %lums-%lums to %lums-%lums", section_type, instanceptr->start_pos, instanceptr->end_pos, sel_start, sel_end);
+			eof_log(eof_log_string, 1);
+			instanceptr->start_pos = sel_start;
+			instanceptr->end_pos = sel_end;
 		}
 
 		//Section specific logic
@@ -10887,6 +10884,63 @@ int eof_length_is_equal_to(long length, long threshold)
 	if(length == threshold)
 		return 1;
 
+	return 0;
+}
+
+int eof_note_has_accent(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(sp && track && (track < sp->tracks))
+	{	//Validate parameters
+		if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//Pro guitar tracks use a status for accent
+			if(eof_get_note_flags(sp, track, notenum) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT)
+				return 1;	//This note has the pro guitar accent status
+		}
+		else if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		{	//Legacy tracks use an accent bitmask
+			if(eof_get_note_accent(sp, track, notenum) & eof_get_note_note(sp, track, notenum))
+				return 1;	//This note has at least one accented gem
+		}
+	}
+	return 0;
+}
+
+int eof_note_has_ghost(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(sp && track && (track < sp->tracks))
+	{	//Validate parameters
+		if(eof_get_note_ghost(sp, track, notenum) & eof_get_note_note(sp, track, notenum))
+			return 1;	//This note has at least one ghosted gem
+	}
+	return 0;
+}
+
+int eof_note_is_linked_to_by_pitched_slide(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	if(sp && track && (track < sp->tracks))
+	{	//Validate parameters
+		if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			long prev = eof_track_fixup_previous_note(sp, track, notenum);
+			if(prev >= 0)
+			{	//If there is a previous note
+				EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+				unsigned long stringnum, bitmask;
+
+				for(stringnum = 0, bitmask = 1; stringnum < 6; stringnum++, bitmask <<= 1)
+				{	//For each of the 6 usable strings
+					if(eof_get_note_note(sp, track, notenum) & eof_get_note_note(sp, track, prev) & bitmask)
+					{	//If the specified note and the previous note both have a gem on this string
+						(void) eof_get_rs_techniques(sp, track, prev, stringnum, &tech, 2, 1);	//Determine techniques used by the previous note on this string
+						if((tech.slideto > 0) && tech.linknext)
+						{	//If the previous note has a pitched slide on this string and has linknext status
+							return 1;
+						}
+					}
+				}
+			}
+		}
+	}
 	return 0;
 }
 

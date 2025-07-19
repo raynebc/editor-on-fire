@@ -102,7 +102,10 @@ int eof_menu_edit_select_highlighted_notes(void);		//Selects notes that are high
 int eof_menu_edit_select_non_highlighted_notes(void);	//Selects notes that are not highlighted
 int eof_menu_edit_select_open_notes(void);				//Selects notes that are open notes
 int eof_menu_edit_select_non_open_notes(void);			//Selects notes that are not open notes
-int eof_menu_edit_select_notes_needing_fingering(void);	//Selcts notes that don't have fingering properly defined
+int eof_menu_edit_select_notes_needing_fingering(void);	//Selects notes that don't have fingering properly defined
+int eof_menu_edit_select_accent_notes(void);	//Selects notes that have accented gems (legacy notes) or accent status (pro guitar notes)
+int eof_menu_edit_select_ghost_notes(void);		//Selects notes that have any ghosted gems
+int eof_menu_edit_select_notes_linked_to_by_pitched_slide(void);	//Selects notes that are linked to by a note with a pitched slide on any strings both notes have in common
 
 int eof_menu_edit_deselect_logic(int (*check)(EOF_SONG *, unsigned long, unsigned long));
 	//Passes notes in the active track difficulty to the specified function that returns nonzero if it meets the conditions being checked, removing those that do from the current note selection
@@ -117,6 +120,9 @@ int eof_menu_edit_deselect_highlighted_notes(void);		//Deselects notes that are 
 int eof_menu_edit_deselect_non_highlighted_notes(void);	//Deselects notes that are not highlighted
 int eof_menu_edit_deselect_open_notes(void);			//Deselects notes that are open notes
 int eof_menu_edit_deselect_non_open_notes(void);		//Deselects notes that are not open notes
+int eof_menu_edit_deselect_accent_notes(void);		//Deselects notes that have accented gems (legacy notes) or accent status (pro guitar notes)
+int eof_menu_edit_deselect_ghost_notes(void);		//Deselects notes that have any ghosted gems
+int eof_menu_edit_deselect_notes_linked_to_by_pitched_slide(void);	//Deselects notes that are linked to by a note with a pitched slide on any strings both notes have in common
 
 int eof_menu_edit_select_gem_count_logic(int function);
 	//If function is zero, notes in the active track are deselected based on whether notes do or don't have a specified number of gems

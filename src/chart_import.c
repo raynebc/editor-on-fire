@@ -288,6 +288,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 	clock_t start_time, cur_time;
 	int event_realignment_warning = 0;
 
+	unsigned long accentpos, ghostpos, cymbalpos;	//Track the last timestamps at which accent, ghost and cymbal markers were seen
+	unsigned char accentmask, ghostmask;		//Tracks the accent and ghost bitmasks to apply to notes at the accent and ghost marker timestamp, resets to 0 whenever a marker at a new timestamp is reached
+	unsigned long cymbalmask;					//Tracks the cymbal flags to apply to notes at the cymbal marker timestamp, resets to 0 whenver a marker at a new timestamp is reached
+
 	eof_log("\tImporting Feedback chart", 1);
 	eof_log("eof_import_chart() entered", 1);
 	start_time = clock();
@@ -529,6 +533,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 	{	//For each track
 		EOF_LEGACY_TRACK *tp;
 
+		accentpos = ghostpos = cymbalpos = accentmask = ghostmask = cymbalmask = 0;	//Reset these
+
 		if(current_track->isguitar && importguitartypes)
 		{	//If this is a guitar track and the user was prompted whether to import just the normal or the GHL guitar track
 			if(current_track->isguitar != importguitartypes)
@@ -725,6 +731,85 @@ EOF_SONG * eof_import_chart(const char * fn)
 				{
 				}
 
+				/* accented drum markers */
+				else if(current_track->isdrums && (current_note->gemcolor >= 34) && (current_note->gemcolor <= 38))
+				{
+					if(accentpos != notepos)
+					{
+						accentmask = 0;		//An accent marker at a different timestamp was encountered, reset this mask
+						accentpos = notepos;	//Track this as the active accent marker position
+					}
+
+					if(current_note->gemcolor == 34)
+						accentmask |= 2;	//Lane 1 accent
+					else if(current_note->gemcolor == 35)
+						accentmask |= 4;	//Lane 2 accent
+					else if(current_note->gemcolor == 36)
+						accentmask |= 8;	//Lane 3 accent
+					else if(current_note->gemcolor == 37)
+						accentmask |= 16;	//Lane 4 accent
+					else if(current_note->gemcolor == 38)
+						accentmask |= 32;	//Lane 5 accent
+
+					eof_merge_accent_mask_at_pos(sp, track, notepos, accentmask);	//Update the accent status of any existing notes at this position
+				}
+
+				/* ghost drum markers */
+				else if(current_track->isdrums && (current_note->gemcolor >= 40) && (current_note->gemcolor <= 44))
+				{
+					if(ghostpos != notepos)
+					{
+						ghostmask = 0;		//A ghost marker at a different timestamp was encountered, reset this mask
+						ghostpos = notepos;	//Track this as the active ghost marker position
+					}
+
+					if(current_note->gemcolor == 40)
+						ghostmask |= 2;	//Lane 1 ghost
+					else if(current_note->gemcolor == 41)
+						ghostmask |= 4;	//Lane 2 ghost
+					else if(current_note->gemcolor == 42)
+						ghostmask |= 8;	//Lane 3 ghost
+					else if(current_note->gemcolor == 43)
+						ghostmask |= 16;	//Lane 4 ghost
+					else if(current_note->gemcolor == 44)
+						ghostmask |= 32;	//Lane 5 ghost
+
+					eof_merge_ghost_mask_at_pos(sp, track, notepos, accentmask);	//Update the ghost status of any existing notes at this position
+				}
+
+				/* cymbal drum markers */
+				else if(current_track->isdrums && (current_note->gemcolor >= 66) && (current_note->gemcolor <= 68))
+				{
+					if(cymbalpos != notepos)
+					{
+						cymbalmask = 0;		//A cymbal marker at a different timestamp was encountered, reset this mask
+						cymbalpos = notepos;	//Track this as the active cymbal marker position
+					}
+
+					if(current_note->gemcolor == 66)
+						cymbalmask |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;	//Lane 2 cymbal
+					else if(current_note->gemcolor == 67)
+						cymbalmask |= EOF_DRUM_NOTE_FLAG_B_CYMBAL;	//Lane 3 cymbal
+					else if(current_note->gemcolor == 68)
+						cymbalmask |= EOF_DRUM_NOTE_FLAG_G_CYMBAL;	//Lane 4 cymbal
+
+					eof_merge_flags_at_pos(sp, track, notepos, cymbalmask);	//Update the cymbal status of any existing notes at this position
+				}
+
+				/* drum roll */
+				else if(current_track->isdrums && (current_note->gemcolor == 70))
+				{
+					unsigned long endpos = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL);
+					(void) eof_track_add_tremolo(sp, track, notepos, endpos, 0xFF);
+				}
+
+				/* special drum roll */
+				else if(current_track->isdrums && (current_note->gemcolor == 71))
+				{
+					unsigned long endpos = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL);
+					(void) eof_track_add_trill(sp, track, notepos, endpos);
+				}
+
 				/* import regular note */
 				else
 				{
@@ -770,6 +855,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 							note = 1 << current_note->gemcolor;
 						}
 					}
+					else if(current_note->gemcolor == 69)
+					{	//A drum fill is authored as a 5 note chord in the BRE difficulty
+						if(difficulty == EOF_NOTE_AMAZING)
+							note = 31;	//Only import these for expert difficulty tracks
+						else
+							note = 0;		//Otherwise create a blank note that will get deleted
+					}
 					else
 					{	//Otherwise it's a simple bit shift
 						note = 1 << current_note->gemcolor;
@@ -795,7 +887,28 @@ EOF_SONG * eof_import_chart(const char * fn)
 								new_note->tflags |= EOF_NOTE_TFLAG_GHL_W3;	//Track that this lane 6 note will be treated as a gem on that lane instead of as a toggle HOPO marker
 							}
 							new_note->note = note;			//Set the translated note bitmask
-							new_note->type = difficulty;
+							if(current_note->gemcolor == 'F')
+							{	//If this is a drum fill
+								new_note->type = EOF_NOTE_SPECIAL;	//It must go in the big rock ending difficulty
+							}
+							else
+							{
+								new_note->type = difficulty;
+							}
+							if(accentpos == notepos)
+							{	//If an accent marker is in effect at this timestamp
+								new_note->accent |= accentmask;			//Add the defined accent status
+								new_note->accent &= new_note->note;	//Restrict it to the gems this note contains
+							}
+							if(ghostpos == notepos)
+							{	//If a ghost marker is in effect at this timestamp
+								new_note->ghost |= ghostmask;			//Add the defined ghost status
+								new_note->ghost &= new_note->note;	//Restrict it to the gems this note contains
+							}
+							if(cymbalpos == notepos)
+							{	//If a cymbal marker is in effect at this timestamp
+								new_note->flags |= cymbalmask;		//Add the defined cymbal status
+							}
 							if(prev_note)
 							{	//If a previous gem was imported
 								if(current_note->chartpos == lastchartpos)
@@ -1955,18 +2068,29 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 				curnote->gemcolor=B;	//The second number read is the gem color
 			else						//This was a player section marker
 			{
-				if(B > 4)							//Only values of 0, 1 or 2 are valid for player section markers, 3 and 4 are unknown but will be kept and ignored for now during transfer to EOF
+				if(B > 4)	//Only values of 0, 1 or 2 are valid for player section markers, 3 and 4 are unknown but will be kept and ignored for now during transfer to EOF
 				{
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Feedback import failed on line #%lu:  Invalid section marker #%lu", chart->linesprocessed, B);
-					eof_log(eof_log_string, 1);
-					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-					if(error)
-						*error=29;
-					free(textbuffer);
-					free(buffer2);
-					return NULL;					//Invalid player section marker, return error
+					if(B == 64)
+					{	//Drum fill
+						curnote->gemcolor = 69;
+					}
+					else if(B == 65)
+					{	//Drum roll
+						curnote->gemcolor = 70;
+					}
+					else if(B == 66)
+					{	//Special drum roll
+						curnote->gemcolor = 71;
+					}
+					else
+					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Ignoring unrecognized section marker #%lu on line #%lu.", B, chart->linesprocessed);
+						eof_log(eof_log_string, 1);
+						continue;
+					}
 				}
-				curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2', ...
+				else
+					curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2', ...
 			}
 			if((curnote->gemcolor <= 8) && (curnote->gemcolor != 5) && (curnote->gemcolor != 6))
 			{	//If this gem is value 0-4, 7 or 8
@@ -2550,5 +2674,52 @@ void sort_chart(struct FeedbackChart *chart)
 				prev_note_ptr = note_ptr;
 			}
 		}while(!sorted);
+	}
+}
+
+void eof_merge_flags_at_pos(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned long flags)
+{
+	unsigned long i, tempflags;
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the track
+		if(eof_get_note_pos(sp, track, i) == pos)
+		{	//If this note is at the target position
+			tempflags = eof_get_note_flags(sp, track, i);
+			tempflags |= flags;
+			eof_set_note_flags(sp, track, i, tempflags);
+		}
+	}
+}
+
+void eof_merge_accent_mask_at_pos(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned char accent)
+{
+	unsigned long i, tempaccent;
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the track
+		if(eof_get_note_pos(sp, track, i) == pos)
+		{	//If this note is at the target position
+			tempaccent = eof_get_note_accent(sp, track, i);
+			tempaccent |= accent;
+			tempaccent &= eof_get_note_note(sp, track, i);	//Only retain accent status for gems that this note contains
+			eof_set_note_accent(sp, track, i, tempaccent);
+		}
+	}
+}
+
+void eof_merge_ghost_mask_at_pos(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned char ghost)
+{
+	unsigned long i, tempghost;
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the track
+		if(eof_get_note_pos(sp, track, i) == pos)
+		{	//If this note is at the target position
+			tempghost = eof_get_note_ghost(sp, track, i);
+			tempghost |= ghost;
+			tempghost &= eof_get_note_note(sp, track, i);	//Only retain ghost status for gems that this note contains
+			eof_set_note_ghost(sp, track, i, tempghost);
+		}
 	}
 }
