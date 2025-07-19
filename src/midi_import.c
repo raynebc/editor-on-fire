@@ -852,9 +852,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 											sp->legacy_track[sp->track[(unsigned)eof_midi_tracks[j].track_type]->tracknum]->numlanes = 6;
 										}
 									}
+									break;	//By this point, the track type should have been identified, don't need to check against other possible track names
 								}
 								if(eof_import_events[i]->type != 0)
-									continue;	//If the track name matched any of the supported Rock Band or GHL track names, skip additional processing
+									continue;	//If the track name matched any of the supported Rock Band or GHL track names, skip additional processing for this track name event
 
 								for(j = 1; j < EOF_POWER_GIG_TRACKS_MAX; j++)
 								{	//Compare the track name against the tracks in eof_power_gig_tracks[]
@@ -2317,7 +2318,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							{	//If the note off event was associated with the ending of an enhanced open chord marker
 								char enhanced_open_gems_found = 0;	//Track whether gems were found within the marker
 
-								sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+								sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 								tracknum = sp->track[picked_track]->tracknum;
 								sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
 								for(k = note_count[picked_track]; k > first_note; k--)
@@ -2622,7 +2623,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 																}
 																notenote |= 32;	//Toggle on lane 6 for this note
 																eof_set_note_note(sp, picked_track, k, notenote);
-																sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+																sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 																tracknum = sp->track[picked_track]->tracknum;
 																sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
 															}
@@ -3961,6 +3962,9 @@ eof_log("\tThird pass complete", 1);
 	}
 
 //Check for imported Sysex open strum notes and correct their note masks, run this at the end of the import to ensure the MIDI timing stays intact for the eof_song_check_unsnapped_chords() usage above
+	event_realtime = eof_determine_chart_length(sp);	//Find the timestamp of the last chart content
+	if(event_realtime > eof_chart_length)
+		eof_chart_length = event_realtime;	//Ensure eof_chart_length is updated before calling the fixup logic, otherwise notes could be deleted
 	eof_sort_notes(sp);	//This check requires that notes at the same timestamp have been combined
 	eof_fixup_notes(sp);
 	for(i = 0; i < tracks; i++)
