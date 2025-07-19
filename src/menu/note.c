@@ -1555,7 +1555,7 @@ int eof_menu_note_transpose_up(void)
 				}
 				else
 				{	//Otherwise set the note's normal bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->note = note;
+					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If a pro guitar track is active, update the note's ghost bitmask
@@ -1633,7 +1633,7 @@ int eof_menu_note_transpose_down(void)
 				}
 				else
 				{	//Otherwise set the note's normal bitmask
-					eof_song->pro_guitar_track[tracknum]->note[i]->note = note;
+					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If a pro guitar track is active, update the note's ghost bitmask
