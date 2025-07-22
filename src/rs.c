@@ -5450,7 +5450,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 				{
 					if(thistechflags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 					{	//If this tech note slides up or down
-						ptr->slideto = -1;	//Explicitly store an undefined result in the technique structure
+						techslideto = -1;	//Explicitly store an undefined result in the technique structure
 					}
 				}
 			}

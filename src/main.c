@@ -3,6 +3,9 @@
 #include <allegro.h>
 #ifdef ALLEGRO_WINDOWS
 	#include <winalleg.h>
+#else
+	#include <sys/types.h>
+	#include <pwd.h>
 #endif
 #ifdef ALLEGRO_LEGACY
 	#include <a5alleg.h>
@@ -12,6 +15,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <sys/stat.h>
+#include <stdlib.h>		//For getenv()
 #include <time.h>
 #include "alogg/include/alogg.h"
 #include "agup/agup.h"
@@ -5618,6 +5622,23 @@ void eof_start_logging(void)
 		else
 		{	//Normal EOF process
 			(void) replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
+
+			#ifndef ALLEGRO_WINDOWS
+			//For non Windows builds, try to set the log's parent folder to ~/Library/Logs
+			char *homepath = getenv("HOME");
+			if(homepath)
+			{	//If the HOME environment variable was read
+				(void) snprintf(log_filename, sizeof(log_filename) - 1, "%s/Library/Logs/eof_log.txt", homepath);
+			}
+			else
+			{	//Otherwise try one other method to identify the user's home folder
+				struct passwd *pwd = getpwuid(getuid());
+				if(pwd)
+				{
+					(void) snprintf(log_filename, sizeof(log_filename) - 1, "%s/Library/Logs/eof_log.txt", ptr->pw_dir);
+				}
+			}
+			#endif
 		}
 		eof_log_fp = fopen(log_filename, "w");
 

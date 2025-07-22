@@ -399,6 +399,17 @@ void eof_prepare_track_menu(void)
 			}
 		}
 
+		/* fret hand positions copy from */
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
+		{	//For each track supported by EOF
+			eof_track_proguitar_fret_hand_copy_menu[i].flags = 0;
+
+			if(!eof_get_num_fret_hand_positions(eof_song, i + 1) || (i + 1 == eof_selected_track))
+			{	//If the track has nofret hand positions or is the active track
+				eof_track_proguitar_fret_hand_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+			}
+		}
+
 		/* Thin difficulty to match */
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
@@ -1662,6 +1673,25 @@ int eof_track_pro_guitar_set_capo_position(void)
 	return 0;
 }
 
+MENU eof_track_proguitar_fret_hand_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[0], eof_unused_menu_function, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_track_copy_fret_hand_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_track_copy_fret_hand_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_track_copy_fret_hand_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_track_copy_fret_hand_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_track_copy_fret_hand_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_proguitar_fret_hand_menu[] =
 {
 	{"&Set\tShift+F", eof_track_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
@@ -1669,6 +1699,7 @@ MENU eof_track_proguitar_fret_hand_menu[] =
 	{"&Copy", eof_track_fret_hand_positions_copy_from, NULL, 0, NULL},
 	{"Generate all diffs", eof_track_fret_hand_positions_generate_all, NULL, 0, NULL},
 	{"Delete effective\tShift+Del", eof_track_delete_effective_fret_hand_position, NULL, 0, NULL},
+	{"Copy &From", NULL, eof_track_proguitar_fret_hand_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2546,12 +2577,12 @@ MENU eof_menu_track_rocksmith_tone_change_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_track_names[4], eof_unused_menu_function, NULL, 0, NULL},
 	{eof_menu_track_names[5], eof_unused_menu_function, NULL, 0, NULL},
 	{eof_menu_track_names[6], eof_unused_menu_function, NULL, 0, NULL},
-	{eof_menu_track_names[7], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_track_copy_tone_changes_track_8, NULL, 0, NULL},
 	{eof_menu_track_names[8], eof_menu_track_copy_tone_changes_track_9, NULL, 0, NULL},
 	{eof_menu_track_names[9], eof_unused_menu_function, NULL, 0, NULL},
 	{eof_menu_track_names[10], eof_menu_track_copy_tone_changes_track_11, NULL, 0, NULL},
 	{eof_menu_track_names[11], eof_menu_track_copy_tone_changes_track_12, NULL, 0, NULL},
-	{eof_menu_track_names[12], eof_menu_track_copy_tone_changes_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_unused_menu_function, NULL, 0, NULL},
 	{eof_menu_track_names[13], eof_menu_track_copy_tone_changes_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -2574,12 +2605,12 @@ MENU eof_menu_track_rocksmith_popup_copy_menu[EOF_TRACKS_MAX] =
 	{eof_menu_track_names[4], eof_unused_menu_function, NULL, 0, NULL},
 	{eof_menu_track_names[5], eof_unused_menu_function, NULL, 0, NULL},
 	{eof_menu_track_names[6], eof_unused_menu_function, NULL, 0, NULL},
-	{eof_menu_track_names[7], eof_unused_menu_function, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_track_copy_popups_track_8, NULL, 0, NULL},
 	{eof_menu_track_names[8], eof_menu_track_copy_popups_track_9, NULL, 0, NULL},
 	{eof_menu_track_names[9], eof_unused_menu_function, NULL, 0, NULL},
 	{eof_menu_track_names[10], eof_menu_track_copy_popups_track_11, NULL, 0, NULL},
 	{eof_menu_track_names[11], eof_menu_track_copy_popups_track_12, NULL, 0, NULL},
-	{eof_menu_track_names[12], eof_menu_track_copy_popups_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_unused_menu_function, NULL, 0, NULL},
 	{eof_menu_track_names[13], eof_menu_track_copy_popups_track_14, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -4431,6 +4462,11 @@ int eof_track_rs_tone_names_rename(DIALOG * d)
 	return D_REDRAW;	//Have Allegro redraw the dialog
 }
 
+int eof_menu_track_copy_tone_changes_track_8(void)
+{
+	return eof_menu_track_copy_tone_changes_track_number(eof_song, 8, eof_selected_track);
+}
+
 int eof_menu_track_copy_tone_changes_track_9(void)
 {
 	return eof_menu_track_copy_tone_changes_track_number(eof_song, 9, eof_selected_track);
@@ -4444,11 +4480,6 @@ int eof_menu_track_copy_tone_changes_track_11(void)
 int eof_menu_track_copy_tone_changes_track_12(void)
 {
 	return eof_menu_track_copy_tone_changes_track_number(eof_song, 12, eof_selected_track);
-}
-
-int eof_menu_track_copy_tone_changes_track_13(void)
-{
-	return eof_menu_track_copy_tone_changes_track_number(eof_song, 13, eof_selected_track);
 }
 
 int eof_menu_track_copy_tone_changes_track_14(void)
@@ -4484,6 +4515,11 @@ int eof_menu_track_copy_tone_changes_track_number(EOF_SONG *sp, unsigned long so
 	return 1;	//Return completion
 }
 
+int eof_menu_track_copy_popups_track_8(void)
+{
+	return eof_menu_track_copy_popups_track_number(eof_song, 8, eof_selected_track);
+}
+
 int eof_menu_track_copy_popups_track_9(void)
 {
 	return eof_menu_track_copy_popups_track_number(eof_song, 9, eof_selected_track);
@@ -4497,11 +4533,6 @@ int eof_menu_track_copy_popups_track_11(void)
 int eof_menu_track_copy_popups_track_12(void)
 {
 	return eof_menu_track_copy_popups_track_number(eof_song, 12, eof_selected_track);
-}
-
-int eof_menu_track_copy_popups_track_13(void)
-{
-	return eof_menu_track_copy_popups_track_number(eof_song, 13, eof_selected_track);
 }
 
 int eof_menu_track_copy_popups_track_14(void)
@@ -4538,6 +4569,58 @@ int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, unsigned long sourcetr
 		ptr = &stp->popupmessage[ctr];	//Simplify
 		(void) eof_track_add_section(sp, desttrack, EOF_RS_POPUP_MESSAGE, 0, ptr->start_pos, ptr->end_pos, 0, ptr->name);	//Duplicate the message
 	}
+
+	return 1;	//Return completion
+}
+
+int eof_menu_track_copy_fret_hand_track_8(void)
+{
+	return eof_menu_track_copy_fret_hand_track_number(eof_song, 8, eof_selected_track);
+}
+
+int eof_menu_track_copy_fret_hand_track_9(void)
+{
+	return eof_menu_track_copy_fret_hand_track_number(eof_song, 9, eof_selected_track);
+}
+
+int eof_menu_track_copy_fret_hand_track_11(void)
+{
+	return eof_menu_track_copy_fret_hand_track_number(eof_song, 11, eof_selected_track);
+}
+
+int eof_menu_track_copy_fret_hand_track_12(void)
+{
+	return eof_menu_track_copy_fret_hand_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_track_copy_fret_hand_track_14(void)
+{
+	return eof_menu_track_copy_fret_hand_track_number(eof_song, 14, eof_selected_track);
+}
+
+int eof_menu_track_copy_fret_hand_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
+{
+	EOF_PRO_GUITAR_TRACK *stp, *dtp;
+
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
+		return 0;	//Invalid parameters
+	if((sp->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (sp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Invalid parameters
+
+	stp = sp->pro_guitar_track[sp->track[sourcetrack]->tracknum];
+	dtp = sp->pro_guitar_track[sp->track[desttrack]->tracknum];
+	if(dtp->handpositions)
+	{	//If there are already fret hand positions in the destination track
+		eof_clear_input();
+		if(alert(NULL, "Warning:  Existing fret hand positions in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to continue
+			return 0;
+		}
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	dtp->handpositions = stp->handpositions;
+	memcpy(dtp->handposition, stp->handposition, sizeof(stp->handposition));
 
 	return 1;	//Return completion
 }

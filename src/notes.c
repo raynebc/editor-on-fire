@@ -1838,11 +1838,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_notes_macro_pitched_slide_missing_linknext[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
+			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
+
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
 
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
 			{	//For each normal note in the track
@@ -1868,6 +1872,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					}
 				}
 			}
+			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 		}
 
 		return retval;
@@ -2105,11 +2110,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_notes_macro_pitched_slide_missing_end_fret[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
+			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
+
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
 
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+			eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 			for(notectr = 0;  notectr < tp->pgnotes; notectr++)
 			{	//For each normal note in the track
@@ -2139,6 +2148,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					}
 				}
 			}
+			eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 		}
 
 		return retval;
@@ -2488,11 +2498,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the fret number was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track in the project
+				char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
+
 				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 					continue;	//Skip non pro guitar tracks
 				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
 
+				restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
+				eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Disable tech view if applicable
 				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 				for(notectr = 0;  notectr < tp->pgnotes; notectr++)
 				{	//For each normal note in the track
@@ -2521,6 +2535,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						}
 					}
 				}
+				eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 			}
 		}
 

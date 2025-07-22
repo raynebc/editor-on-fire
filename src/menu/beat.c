@@ -3327,7 +3327,7 @@ int eof_menu_beat_paste_events(void)
 			track = pack_igetl(fp);	//Read the track number
 			flags = pack_igetl(fp);	//Read the flags
 			if(track)
-			{	//If the event is track specific, it will be apply to the active track
+			{	//If the event is track specific, it will be applied to the active track
 				if((flags & EOF_EVENT_FLAG_RS_PHRASE) || (flags & EOF_EVENT_FLAG_RS_SECTION) || (flags & EOF_EVENT_FLAG_RS_EVENT))
 				{	//If the event is Rocksmith-specific
 					if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && !rs_warn)

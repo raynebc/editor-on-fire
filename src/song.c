@@ -7924,6 +7924,22 @@ unsigned long eof_get_num_tone_changes(EOF_SONG *sp, unsigned long track)
 	return 0;	//Return error
 }
 
+unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		return sp->pro_guitar_track[tracknum]->handpositions;
+	}
+
+	return 0;	//Return error
+}
+
 int eof_create_image_sequence(char benchmark_only)
 {
 	unsigned long framectr = 0, refreshctr = 0, lastpollctr = 0;

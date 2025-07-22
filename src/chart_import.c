@@ -774,7 +774,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					else if(current_note->gemcolor == 44)
 						ghostmask |= 32;	//Lane 5 ghost
 
-					eof_merge_ghost_mask_at_pos(sp, track, notepos, accentmask);	//Update the ghost status of any existing notes at this position
+					eof_merge_ghost_mask_at_pos(sp, track, notepos, ghostmask);	//Update the ghost status of any existing notes at this position
 				}
 
 				/* cymbal drum markers */
@@ -850,7 +850,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 						{
 							note = 4;	//B3 is mapped to lane 3
 						}
-						else
+						else if(current_note->gemcolor < 7)
 						{	//Other values are for various notations
 							note = 1 << current_note->gemcolor;
 						}
