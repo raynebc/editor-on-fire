@@ -391,10 +391,11 @@ int eof_mouse_boundary_x1 = 0, eof_mouse_boundary_x2 = 0, eof_mouse_boundary_y1 
 char eof_mouse_bound = 0;																							//Tracks whether the mouse is bound bound within the above set of coordinates
 
 /* grid snap data */
-char          eof_snap_mode = EOF_SNAP_OFF;
-char          eof_last_snap_mode = EOF_SNAP_OFF;
-int           eof_snap_interval = 1;
-char          eof_custom_snap_measure = 0;	//Boolean: The user set a custom grid snap interval defined in measures instead of beats
+char eof_snap_mode = EOF_SNAP_OFF;
+char eof_last_snap_mode = EOF_SNAP_OFF;
+int eof_snap_interval = 1;
+char eof_custom_snap_measure = 0;	//Boolean: The user set a custom grid snap interval defined in measures instead of beats
+char eof_notes_panel_wants_grid_snap_data = 0;	//Set to true if any macros in the active notes panel require eof_song_highlight_non_grid_snapped_notes() to be used to maintain the EOF_NOTE_TFLAG_HIGHLIGHT flags for notes
 
 char          eof_hopo_view = EOF_HOPO_RF;
 
@@ -2436,8 +2437,8 @@ void eof_read_global_keys(void)
 					updated = 1;
 				}
 			}
-			if(updated && eof_song->tags->highlight_unsnapped_notes)
-			{	//If one of the valid shortcuts for this command (ie. not CTRL+-) was intercepted, and unsnapped notes are to be highlighted
+			if(updated && (eof_song->tags->highlight_unsnapped_notes || eof_notes_panel_wants_grid_snap_data))
+			{	//If one of the valid shortcuts for this command (ie. not CTRL+-) was intercepted, and unsnapped notes are to be highlighted or tracked for the notes panel
 				eof_song_reapply_all_dynamic_highlighting();
 			}
 		}
@@ -2474,8 +2475,8 @@ void eof_read_global_keys(void)
 					updated = 1;
 				}
 			}
-			if(updated && eof_song->tags->highlight_unsnapped_notes)
-			{	//If one of the valid shortcuts for this command (ie. not CTRL++) was intercepted, and unsnapped notes are to be highlighted
+			if(updated && (eof_song->tags->highlight_unsnapped_notes || eof_notes_panel_wants_grid_snap_data))
+			{	//If one of the valid shortcuts for this command (ie. not CTRL++) was intercepted, and unsnapped notes are to be highlighted or tracked for the notes panel
 				eof_song_reapply_all_dynamic_highlighting();
 			}
 		}

@@ -1641,8 +1641,8 @@ int eof_menu_file_preferences(void)
 		eof_disable_info_panel = 1 - eof_disable_info_panel;	//Toggle this because the function call below will toggle it again
 		eof_display_info_panel();	//Create/destroy the information panel instance accordingly
 	}
-	if((original_eof_prefer_midi_friendly_grid_snapping != eof_prefer_midi_friendly_grid_snapping) && eof_song->tags->highlight_unsnapped_notes)
-	{	//If the "Prefer MIDI friendly grid snaps" preference changed, and unsnapped notes are to be highlighted
+	if(((original_eof_prefer_midi_friendly_grid_snapping != eof_prefer_midi_friendly_grid_snapping) && eof_song->tags->highlight_unsnapped_notes) || eof_notes_panel_wants_grid_snap_data)
+	{	//If the "Prefer MIDI friendly grid snaps" preference changed, and unsnapped notes are to be highlighted, or the notes panel wants to use the grid snap statuses
 		eof_song_reapply_all_dynamic_highlighting();
 	}
 	(void) eof_increase_display_width_to_panel_count(1);	//Prompt to resize the program window if necessary, disable notes panel if resulting width is insufficient

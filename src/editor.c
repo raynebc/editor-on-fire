@@ -2799,8 +2799,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//Otherwise move by one grid snap
 					(void) eof_menu_note_move_by_grid_snap(-1, &undo_made);
 				}
-				if(eof_song->tags->highlight_unsnapped_notes)
-				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
+				if(eof_song->tags->highlight_unsnapped_notes || eof_notes_panel_wants_grid_snap_data)
+				{	//If the user has enabled the dynamic highlighting of non grid snapped notes or the notes panel wants this information
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
 					eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the temporary highlighting as appropriate
 					if(eof_song->tags->highlight_arpeggios)
@@ -2859,8 +2859,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//Otherwise move by one grid snap
 					(void) eof_menu_note_move_by_grid_snap(1, &undo_made);
 				}
-				if(eof_song->tags->highlight_unsnapped_notes)
-				{	//If the user has enabled the dynamic highlighting of non grid snapped notes
+				if(eof_song->tags->highlight_unsnapped_notes || eof_notes_panel_wants_grid_snap_data)
+				{	//If the user has enabled the dynamic highlighting of non grid snapped notes or the notes panel wants this information
 					eof_track_remove_highlighting(eof_song, eof_selected_track, 1);	//Remove existing temporary highlighting from the track
 					eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-create the highlighting as appropriate
 					if(eof_song->tags->highlight_arpeggios)
@@ -4425,13 +4425,19 @@ void eof_editor_logic(void)
 				{	//If a pro guitar track is active
 					if(eof_count_selected_and_unselected_notes(NULL))
 					{	//If any notes in the active track difficulty are selected
-						(void) eof_menu_note_edit_pro_guitar_note();
+						if(eof_fingering_view)
+							(void) eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
+						else
+							(void) eof_menu_note_edit_pro_guitar_note();
 					}
 					else if(eof_hover_note >= 0)
 					{	//if a note is being hovered over
 						eof_selection.current = eof_hover_note;		//Temporarily mark the hover note as the selected note
 						eof_selection.multi[eof_hover_note] = 1;
-						(void) eof_menu_note_edit_pro_guitar_note();
+						if(eof_fingering_view)
+							(void) eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
+						else
+							(void) eof_menu_note_edit_pro_guitar_note();
 						eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note statuses
 						eof_selection.multi[eof_hover_note] = 0;
 					}

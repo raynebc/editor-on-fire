@@ -91,6 +91,7 @@ EOF_TEXT_PANEL *eof_create_text_panel(char *filename, int builtin)
 	}
 
 	panel->logged = 0;	//Enable exhaustive logging of this panel's processing for the next frame
+	eof_notes_panel_wants_grid_snap_data = 0;
 	return panel;
 }
 
@@ -2760,7 +2761,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The active track has at least one note out of grid snap
 	if(!ustricmp(macro, "IF_TRACK_HAS_UNSNAPPED_NOTES"))
 	{
-		eof_notes_macro_number_non_grid_snapped_notes = eof_song_count_non_grid_snapped_notes(eof_song, eof_selected_track);
+		if(!eof_notes_panel_wants_grid_snap_data && !eof_song->tags->highlight_unsnapped_notes)
+		{	//If grid snap status for notes was not being maintained yet
+			eof_song_highlight_non_grid_snapped_notes(eof_song, eof_selected_track);	//Re-apply the EOF_NOTE_TFLAG_HIGHLIGHT flag to notes as applicable
+		}
+		eof_notes_panel_wants_grid_snap_data = 1;
+		eof_notes_macro_number_non_grid_snapped_notes = eof_count_track_num_notes_with_tflag(EOF_NOTE_TFLAG_HIGHLIGHT);
 		if(eof_notes_macro_number_non_grid_snapped_notes)
 		{
 			dest_buffer[0] = '\0';

@@ -3669,7 +3669,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			eof_clear_input();
 			if(alert(NULL, warning, "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user does not opt to remove the existing hand positions
-				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+				eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 				return;
 			}
 		}
@@ -3699,14 +3699,14 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 
 	if(!count)
 	{	//If this track difficulty has no notes
-		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return;	//Exit function
 	}
 
 	eof_build_fret_range_tolerances(tp, difficulty, dynamic);	//Allocate and build eof_fret_range_tolerances[], using the calling function's chosen option regarding tolerances
 	if(!eof_fret_range_tolerances)
 	{	//eof_fret_range_tolerances[] wasn't built
-		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		return;
 	}
 
@@ -4013,7 +4013,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	eof_fret_range_tolerances = NULL;	//Clear this array so that the next call to eof_build_fret_range_tolerances() rebuilds it accordingly
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
 	eof_pro_guitar_track_fixup_hand_positions(sp, track);	//Cleanup fret hand positions to remove any instances of multiple FHPs at the same timestamp
-	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view for the second piano roll's track if applicable
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 	eof_render();
 }
 
@@ -4071,9 +4071,21 @@ int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsig
 {
 	unsigned char effective_lowest = 0, effective_highest = 0;	//Stores the cumulative highest and lowest fret values with the input range and the next note for tolerance testing
 	long next;
+	unsigned long retflags, stringnum;
+	EOF_RS_TECHNIQUES tech = {0};
 
 	if(!tp || !current_low || !current_high || (note >= tp->notes) || (*current_low > *current_high) || (*current_high > tp->numfrets) || !eof_fret_range_tolerances)
 		return 0;	//Invalid parameters
+
+	//Determine techniques used by this note (including applicable technotes using this string)
+	for(stringnum = 0; stringnum < 6; stringnum++)
+	{	//For each of the 6 usable strings
+		retflags = eof_get_rs_techniques(eof_song, tp->parent->track_type, note, stringnum, &tech, 4, 1);
+		if(retflags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+		{	//If the specified note has tap status applied to this string directly or via tech notes
+			return 1;	//Consider the note playable without an additional hand position
+		}
+	}
 
 	while(1)
 	{

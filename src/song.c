@@ -1289,7 +1289,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	for(i = 0; i < tp->technotes; i++)
 	{
 		eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
-		if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || (tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT))
+		if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || ((tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT) && eof_song->tags->highlight_unsnapped_notes))
 		{	//If the tech note has highlighting
 			eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
 		}
@@ -5676,10 +5676,10 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		break;
 	}
 
-	if(sp->tags->highlight_unsnapped_notes || sp->tags->highlight_arpeggios)
-	{	//If the user has enabled the dynamic highlighting of non grid snapped notes or notes in arpeggios
+	if(sp->tags->highlight_unsnapped_notes || sp->tags->highlight_arpeggios || eof_notes_panel_wants_grid_snap_data)
+	{	//If the user has enabled the dynamic highlighting of non grid snapped notes or notes in arpeggios, or the notes panel wants such information maintained
 		eof_track_remove_highlighting(sp, track, 1);	//Remove existing temporary highlighting from the track
-		if(sp->tags->highlight_unsnapped_notes)
+		if(sp->tags->highlight_unsnapped_notes || eof_notes_panel_wants_grid_snap_data)
 			eof_song_highlight_non_grid_snapped_notes(sp, track);	//Re-create the non grid snapped highlighting as appropriate
 		if(sp->tags->highlight_arpeggios)
 			eof_song_highlight_arpeggios(sp, track);	//Re-create the arpeggio highlighting as appropriate
@@ -10815,8 +10815,8 @@ int eof_note_is_not_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned lon
 
 int eof_note_is_highlighted(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {
-	if((eof_get_note_flags(sp, track, notenum) & EOF_NOTE_FLAG_HIGHLIGHT) || (eof_get_note_tflags(sp, track, notenum) & EOF_NOTE_TFLAG_HIGHLIGHT))
-	{	//If either the static or dynamic highlight flag of this note is set
+	if((eof_get_note_flags(sp, track, notenum) & EOF_NOTE_FLAG_HIGHLIGHT) || ((eof_get_note_tflags(sp, track, notenum) & EOF_NOTE_TFLAG_HIGHLIGHT) && eof_song->tags->highlight_unsnapped_notes))
+	{	//If either the static or dynamic highlight flag of this note is set (the dynamic highlighting may be set by the notes panel, only reflect it's highlighted if the option to show this is enabled)
 		return 1;
 	}
 
@@ -11978,7 +11978,7 @@ void eof_song_reapply_all_dynamic_highlighting(void)
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
 	{	//For each track
 		eof_track_remove_highlighting(eof_song, ctr, 1);	//Remove existing temporary highlighting from the track
-		if(eof_song->tags->highlight_unsnapped_notes)
+		if(eof_song->tags->highlight_unsnapped_notes || eof_notes_panel_wants_grid_snap_data)
 			eof_song_highlight_non_grid_snapped_notes(eof_song, ctr);	//Re-create the non grid snapped highlighting as appropriate
 		if(eof_song->tags->highlight_arpeggios)
 			eof_song_highlight_arpeggios(eof_song, ctr);		//Re-create the arpeggio highlighting as appropriate

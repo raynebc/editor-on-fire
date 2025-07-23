@@ -560,10 +560,11 @@ extern int eof_difficulty_tab_boundary_x1, eof_difficulty_tab_boundary_x2, eof_d
 extern int eof_mouse_boundary_x1, eof_mouse_boundary_x2, eof_mouse_boundary_y1, eof_mouse_boundary_y2;
 extern char eof_mouse_bound;
 
-extern char          eof_snap_mode;
-extern char          eof_last_snap_mode;
-extern int           eof_snap_interval;
-extern char        eof_custom_snap_measure;
+extern char eof_snap_mode;
+extern char eof_last_snap_mode;
+extern int eof_snap_interval;
+extern char eof_custom_snap_measure;
+extern char eof_notes_panel_wants_grid_snap_data;
 
 extern char          eof_hopo_view;
 
