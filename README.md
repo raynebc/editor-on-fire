@@ -1,4 +1,4 @@
-EOF is a song editor for Frets On Fire, Phase Shift, Rock Band, Rocksmith and Clone Hero. The aim of EOF is to provide a simple process with which to create songs. Just provide an OGG file and spend a little time designing note charts and EOF will save files in the appropriate format for immediate use with Frets on Fire, Phase Shift, Clone Hero, Performous and similar games.  Combined with other game-specific tools, you can author charts for games such as Rock Band and Rocksmith.
+EOF is a song editor for Rocksmith, IMMERROCK, Drums Rock, YARG, Clone Hero, Rock Band, Phase Shift, Frets On Fire and similar rhythm games. The aim of EOF is to provide a simple process with which to create songs. Just provide an OGG file and spend a little time designing note charts and EOF will save files in the appropriate format for immediate use with Frets on Fire, Phase Shift, Clone Hero, Performous and similar games.  Combined with other game-specific tools, you can author charts for games such as Rock Band and Rocksmith.
 
 
 # Getting EOF #
