@@ -733,6 +733,14 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 		return 1;	//Return match
 	}
 
+	//Test whether filenamebase.jpeg exists
+	(void) replace_extension(filepath, filepath, "jpeg", sizeof(filename) - 1);
+	if(exists(filepath))
+	{
+		strncpy(match, filepath, match_arraysize);
+		return 1;	//Return match
+	}
+
 	//Test whether filenamebase.png exists
 	(void) replace_extension(filepath, filepath, "png", sizeof(filename) - 1);
 	if(exists(filepath))

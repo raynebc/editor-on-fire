@@ -22,7 +22,7 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 	//Accepts a path to a folder (which must end in a folder separator),
 	// uses replace_filename() to append the file name base, then uses
 	// replace_extension() to append and test for the existence of the file
-	// with .jpg, .png or .tiff extensions.
+	// with .jpg, .jpeg, .png or .tiff extensions.
 	//If any of these filenames exist, the first one found is stored in match
 	// and nonzero is returned.  If no matches are found, 0 is returned
 	//match_arraysize is the number of bytes the match array can store, to avoid
