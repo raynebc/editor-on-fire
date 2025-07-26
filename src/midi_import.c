@@ -2057,8 +2057,9 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								flampos = event_realtime;
 							}
 						}
-						else
+						else if(!isghl)
 						{	/* store forced HOPO and enhanced open chord markers, when the note off for this marker occurs, search for note with same position and apply it to that note */
+							//These notations are not compatible with GHL tracks
 							//Enhanced open chords are marked as lane 1 - 1
 							if(midinote == 60 - 1)
 							{
@@ -2292,8 +2293,9 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
 						}
-						else
+						else if(!isghl)
 						{	/* detect forced HOPO and enhanced open markers */
+							//These notations are not compatible with GHL tracks
 							unsigned long *hopo_pos = NULL;	//Will be set to point to hopo_on_pos[] or hopo_off_pos[] if appropriate
 							unsigned char enhanced_open_diff = 0xFF;		//Will be set to a valid difficulty number if the marker is for an enhanced open chord
 
