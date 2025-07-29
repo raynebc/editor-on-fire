@@ -761,6 +761,7 @@ EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long 
 	//Returns NULL if pos is not within any such section or upon error
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name);
 	//Adds the specified section to the specified track if it's valid for the track, track 0 is used to reference certain items that are project-wide in scope
+	//!Many of the section types that are added are automatically sorted afterward, so the calling function can't assume that the last section in an array was the newly added section
 	//For bookmark sections, the end variable represents which bookmark number is being set
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to, otherwise it's only used for lyric sections
 	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to

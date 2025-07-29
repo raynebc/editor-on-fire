@@ -3578,7 +3578,7 @@ int eof_save_helper_checks(void)
 		(void) eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
 		if(eof_check_fret_hand_positions())
 		{	//If any fret hand position errors were found
-			if(alert("One or more problems with defined fret hand positions were found.", NULL, "Cancel save and review them now?", "&Yes", "&No", 'y', 'n') == 1)
+			if(alert("Warning (RS):  One or more problems with defined fret hand positions were found.", NULL, "Cancel save and review them now?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to see the problems
 				(void) eof_check_fret_hand_positions_menu();
 				return 1;	//Return cancellation

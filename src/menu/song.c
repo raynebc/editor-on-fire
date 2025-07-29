@@ -2170,7 +2170,7 @@ DIALOG eof_audio_cues_dialog[] =
 	{ d_agup_text_proc,		16,  128,  64,   8,   2,  23,    0,      0,   0,   0, "Metronome volume",           NULL, NULL },
 	{ d_agup_slider_proc,	176, 128,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_metronome_volume_string },
 	{ d_agup_text_proc,		275, 128,  30,  16,   2,  23,    0,      0, 100,   0, eof_metronome_volume_string,  NULL, NULL },
-	{ d_agup_text_proc,		16,  148,  64,   8,   2,  23,    0,      0,   0,   0, "Tone volume",                NULL, NULL },
+	{ d_agup_text_proc,		16,  148,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Tone volume",                NULL, NULL },
 	{ d_agup_slider_proc,	176, 148,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_tone_volume_string },
 	{ d_agup_text_proc,		275, 148,  30,  16,   2,  23,    0,      0, 100,   0, eof_tone_volume_string,       NULL, NULL },
 	{ d_agup_text_proc,		16,  168,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Percussion volume",    NULL, NULL },

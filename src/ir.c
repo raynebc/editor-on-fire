@@ -19,6 +19,7 @@
 #define EOF_DEFAULT_TIME_DIVISION 480 // default time division used to convert midi_pos to msec_pos
 
 int eof_ir_export_allow_fhp_finger_placements = 0;
+int eof_ir_export_midi_wrote_finger_placements = 0;
 
 int qsort_helper_immerrock(const void * e1, const void * e2)
 {
@@ -159,6 +160,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 
 	eof_log("eof_export_immerrock_midi() entered", 1);
 
+	eof_ir_export_midi_wrote_finger_placements = 0;	//Reset this status
 	if(!sp || !fn || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
@@ -338,7 +340,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					{	//If this string does not have a manually defined fingering but it could be derived from fret hand positions
 						if(!eof_ir_export_allow_fhp_finger_placements)
 						{	//If the user wasn't yet prompted whether to do this
-							eof_ir_export_allow_fhp_finger_placements = alert("One or more notes have undefined fingering, but these", "can be derived from fret hand positions if you trust", "their accuracy.  Allow this?", "Yes", "No", 0, 0);
+							eof_ir_export_allow_fhp_finger_placements = alert("IMMERROCK:  One or more notes have undefined fingering, but these", "can be derived from fret hand positions if you trust", "their accuracy.  Allow this?", "Yes", "No", 0, 0);
 						}
 						if(eof_ir_export_allow_fhp_finger_placements != 1)
 						{	//If the user does not opts to export finger placements derived from FHPs
@@ -349,6 +351,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					{	//If this fingering is valid
 						eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[stringnum], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in IMMERROCK
 						eof_add_midi_event_indexed(deltapos, 0x80, finger_marker[finger], 0, 15, index++);
+						eof_ir_export_midi_wrote_finger_placements = 1;	//Track that at least one finger placement marker was written for this MIDI
 					}
 				}
 
@@ -1076,6 +1079,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	unsigned long arrctr, ctr;
 	unsigned long arr[3] = {gglead, ggrhythm, ggbass};
 	int arr_populated[3] = {0, 0, 0};
+	int arr_finger_placements[3] = {0, 0, 0};	//Tracks whether finger placement markers were written for each arrangement
 	char *diff_strings[3] = {"Lead_Difficulty", "Rhythm_Difficulty", "Bass_Difficulty"};
 	char *tuning_strings[3] = {"Lead_Tuning=", "Rhythm_Tuning=", "Bass_Tuning="};
 	char *midi_names[3] = {"GGLead.mid", "GGRhythm.mid", "GGBass.mid"};
@@ -1235,113 +1239,6 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 		allegro_message("Could not export audio!\n%s", eof_temp_filename);
 		return 0;	//Return failure
 	}
-
-
-	//Write Info.txt
-	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Info.txt", (int) sizeof(eof_temp_filename));
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
-	eof_log(eof_log_string, 2);
-	fp = pack_fopen(eof_temp_filename, "w");
-	if(!fp)
-	{
-		eof_log("\tError saving:  Cannot open Info.txt for writing", 1);
-		return 0;	//Return failure
-	}
-	if(eof_check_string(sp->tags->artist))
-	{	//If the string has anything other than whitespace
-		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Artist=%s\n", sp->tags->artist);
-		(void) pack_fputs(temp_string, fp);	//Write artist name
-	}
-	if(eof_check_string(sp->tags->title))
-	{	//If the string has anything other than whitespace
-		if(diff_name[0] != '\0')
-		{	//If a specific difficulty other than the flattened maximum dynamic difficulty is being exported
-			(void) snprintf(temp_string, sizeof(temp_string) - 1, "Title=%s (%s)\n", sp->tags->title, diff_name);
-		}
-		else
-		{
-			(void) snprintf(temp_string, sizeof(temp_string) - 1, "Title=%s\n", sp->tags->title);
-		}
-		(void) pack_fputs(temp_string, fp);	//Write song title
-	}
-	if(eof_check_string(sp->tags->album))
-	{	//If the string has anything other than whitespace
-		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Album=%s\n", sp->tags->album);
-		(void) pack_fputs(temp_string, fp);	//Write album name
-	}
-	if(eof_check_string(sp->tags->year))
-	{	//If the string has anything other than whitespace
-		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Year=%s\n", sp->tags->year);
-		(void) pack_fputs(temp_string, fp);	//Write release year
-	}
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Min:Sec=%lu:%02lu\n", eof_music_length / 60000, (eof_music_length / 1000) % 60);
-	(void) pack_fputs(temp_string, fp);		//Write song length
-	avg_tempo = 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats);
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "BPM=%lu\n", (unsigned long)(avg_tempo + 0.5));
-	(void) pack_fputs(temp_string, fp);		//Write average tempo
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Lead_Fingering=%d\n", eof_pro_guitar_track_diff_has_fingering(sp, gglead, diff));
-	(void) pack_fputs(temp_string, fp);		//Write lead arrangement fingering present status
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Rhythm_Fingering=%d\n", eof_pro_guitar_track_diff_has_fingering(sp, ggrhythm, diff));
-	(void) pack_fputs(temp_string, fp);		//Write lead arrangement fingering present status
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Bass_Fingering=%d\n", eof_pro_guitar_track_diff_has_fingering(sp, ggbass, diff));
-	(void) pack_fputs(temp_string, fp);		//Write lead arrangement fingering present status
-
-	//Write difficulty levels
-	for(arrctr = 0; arrctr < 3; arrctr++)
-	{	//For each of the 3 arrangements that can be exported
-		if(arr[arrctr])
-		{	//If this arrangement is being exported
-			if(sp->track[arr[arrctr]]->difficulty != 0xFF)
-			{	//If this tracks's difficulty is defined
-				unsigned char difflevel = sp->track[arr[arrctr]]->difficulty;
-				if(difflevel < 1)	//Bounds check
-					difflevel = 1;
-				if(difflevel > 5)
-					difflevel = 5;
-				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s=%u\n", diff_strings[arrctr], difflevel);
-				(void) pack_fputs(temp_string, fp);	//Write song length
-			}
-		}
-	}
-
-	//Write tuning strings
-	for(arrctr = 0; arrctr < 3; arrctr++)
-	{	//For each of the 3 arrangements that can be exported
-		if(!arr_populated[arrctr])	//If this arrangement doesn't have notes to export
-			continue;		//Skit ip
-
-		(void) pack_fputs(tuning_strings[arrctr], fp);
-		for(ctr = 0; ctr < sp->pro_guitar_track[sp->track[arr[arrctr]]->tracknum]->numstrings; ctr++)
-		{	//For each string used in the track
-			if(ctr != 0)
-			{	//If this isn't the first string, append a comma and a space after the last tuning that was written
-				(void) pack_putc(',', fp);
-				(void) pack_putc(' ', fp);
-			}
-			(void) snprintf(temp_string, sizeof(temp_string) - 1, "%d", sp->pro_guitar_track[sp->track[arr[arrctr]]->tracknum]->tuning[ctr] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
-			(void) pack_fputs(temp_string, fp);	//Append the string's tuning value
-		}
-		(void) pack_putc('\n', fp);
-	}
-
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "ChartDelay=%ld\n", sp->tags->ogg[0].midi_offset);
-	(void) pack_fputs(temp_string, fp);	//Write chart offset
-	if(eof_check_string(sp->tags->genre))
-	{	//If the string has anything other than whitespace
-		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Genre=%s\n", sp->tags->genre);
-		(void) pack_fputs(temp_string, fp);	//Write genre
-	}
-	if(eof_check_string(sp->tags->frettist))
-	{	//If the string has anything other than whitespace
-		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Author=%s\n", sp->tags->frettist);
-		(void) pack_fputs(temp_string, fp);	//Write chart author
-	}
-	if(eof_check_string(sp->tags->tracknumber))
-	{	//If the string has anything other than whitespace
-		(void) snprintf(temp_string, sizeof(temp_string) - 1, "TrackNumber=%s\n", sp->tags->tracknumber);
-		(void) pack_fputs(temp_string, fp);	//Write track number
-	}
-	(void) pack_fclose(fp);
 
 
 	//Write Sections.txt
@@ -1506,7 +1403,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 
 	//Write arrangement MIDIs
 	for(arrctr = 0; arrctr < 3; arrctr++)
-	{	//For each of the 3 arrangements that can be exported
+	{	//For each of the 3 arrangements that can be exported, in the order of lead, rhythm and bass
 		if(arr_populated[arrctr])
 		{	//If this arrangement was previously found to have notes in the specified difficulty
 			(void) replace_filename(eof_temp_filename, eof_temp_filename, midi_names[arrctr], (int) sizeof(eof_temp_filename));
@@ -1517,8 +1414,118 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 				eof_log("\tFailed to export IMMERROCK MIDI", 1);
 				return 0;	//Return failure
 			}
+			arr_finger_placements[arrctr] = eof_ir_export_midi_wrote_finger_placements;	//Keep track of whether any finger placements were written for this arrangement, to be reflected in Info.txt
 		}
 	}
+
+
+	//Write Info.txt
+	//Write this after the MIDIs, so finger placement statuses can reflect if any derived fingerings were exported
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Info.txt", (int) sizeof(eof_temp_filename));
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
+	fp = pack_fopen(eof_temp_filename, "w");
+	if(!fp)
+	{
+		eof_log("\tError saving:  Cannot open Info.txt for writing", 1);
+		return 0;	//Return failure
+	}
+	if(eof_check_string(sp->tags->artist))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Artist=%s\n", sp->tags->artist);
+		(void) pack_fputs(temp_string, fp);	//Write artist name
+	}
+	if(eof_check_string(sp->tags->title))
+	{	//If the string has anything other than whitespace
+		if(diff_name[0] != '\0')
+		{	//If a specific difficulty other than the flattened maximum dynamic difficulty is being exported
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "Title=%s (%s)\n", sp->tags->title, diff_name);
+		}
+		else
+		{
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "Title=%s\n", sp->tags->title);
+		}
+		(void) pack_fputs(temp_string, fp);	//Write song title
+	}
+	if(eof_check_string(sp->tags->album))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Album=%s\n", sp->tags->album);
+		(void) pack_fputs(temp_string, fp);	//Write album name
+	}
+	if(eof_check_string(sp->tags->year))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Year=%s\n", sp->tags->year);
+		(void) pack_fputs(temp_string, fp);	//Write release year
+	}
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Min:Sec=%lu:%02lu\n", eof_music_length / 60000, (eof_music_length / 1000) % 60);
+	(void) pack_fputs(temp_string, fp);		//Write song length
+	avg_tempo = 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats);
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "BPM=%lu\n", (unsigned long)(avg_tempo + 0.5));
+	(void) pack_fputs(temp_string, fp);		//Write average tempo
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Lead_Fingering=%d\n", arr_finger_placements[0]);
+	(void) pack_fputs(temp_string, fp);		//Write lead arrangement fingering present status
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Rhythm_Fingering=%d\n", arr_finger_placements[1]);
+	(void) pack_fputs(temp_string, fp);		//Write lead arrangement fingering present status
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Bass_Fingering=%d\n", arr_finger_placements[2]);
+	(void) pack_fputs(temp_string, fp);		//Write lead arrangement fingering present status
+
+	//Write difficulty levels
+	for(arrctr = 0; arrctr < 3; arrctr++)
+	{	//For each of the 3 arrangements that can be exported, in the order of lead, rhythm and bass
+		if(arr[arrctr])
+		{	//If this arrangement is being exported
+			if(sp->track[arr[arrctr]]->difficulty != 0xFF)
+			{	//If this tracks's difficulty is defined
+				unsigned char difflevel = sp->track[arr[arrctr]]->difficulty;
+				if(difflevel < 1)	//Bounds check
+					difflevel = 1;
+				if(difflevel > 5)
+					difflevel = 5;
+				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s=%u\n", diff_strings[arrctr], difflevel);
+				(void) pack_fputs(temp_string, fp);	//Write song length
+			}
+		}
+	}
+
+	//Write tuning strings
+	for(arrctr = 0; arrctr < 3; arrctr++)
+	{	//For each of the 3 arrangements that can be exported, in the order of lead, rhythm and bass
+		if(!arr_populated[arrctr])	//If this arrangement doesn't have notes to export
+			continue;		//Skit ip
+
+		(void) pack_fputs(tuning_strings[arrctr], fp);
+		for(ctr = 0; ctr < sp->pro_guitar_track[sp->track[arr[arrctr]]->tracknum]->numstrings; ctr++)
+		{	//For each string used in the track
+			if(ctr != 0)
+			{	//If this isn't the first string, append a comma and a space after the last tuning that was written
+				(void) pack_putc(',', fp);
+				(void) pack_putc(' ', fp);
+			}
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "%d", sp->pro_guitar_track[sp->track[arr[arrctr]]->tracknum]->tuning[ctr] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
+			(void) pack_fputs(temp_string, fp);	//Append the string's tuning value
+		}
+		(void) pack_putc('\n', fp);
+	}
+
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "ChartDelay=%ld\n", sp->tags->ogg[0].midi_offset);
+	(void) pack_fputs(temp_string, fp);	//Write chart offset
+	if(eof_check_string(sp->tags->genre))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Genre=%s\n", sp->tags->genre);
+		(void) pack_fputs(temp_string, fp);	//Write genre
+	}
+	if(eof_check_string(sp->tags->frettist))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Author=%s\n", sp->tags->frettist);
+		(void) pack_fputs(temp_string, fp);	//Write chart author
+	}
+	if(eof_check_string(sp->tags->tracknumber))
+	{	//If the string has anything other than whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "TrackNumber=%s\n", sp->tags->tracknumber);
+		(void) pack_fputs(temp_string, fp);	//Write track number
+	}
+	(void) pack_fclose(fp);
+
 
 	return 1;	//Return success
 }

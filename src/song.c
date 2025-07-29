@@ -1671,8 +1671,8 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 	ptr3->flags = trackdetails->flags;
 	if(trackdetails->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If this is a pro guitar track
-		if(eof_write_rs_files || eof_write_rs2_files)
-			ptr3->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//If either Rocksmith export is enabled, make this track use dynamic difficulty by default
+		if(eof_write_rs_files || eof_write_rs2_files || eof_write_immerrock_files)
+			ptr3->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//If Rocksmith or IMMERROCK exports are enabled, make this track use dynamic difficulty by default
 	}
 	if(sp->tracks == 0)
 	{	//If this is the first track being added, ensure that sp->track[0] is inserted
@@ -3082,10 +3082,10 @@ int eof_menu_section_mark(unsigned long section_type)
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(insp < 0)
 		{	//If selected notes are not within an existing section, add one
-			(void) eof_track_add_section(eof_song, track, section_type, diff, sel_start, sel_end, flags, "");	//Add a section of the specified type
-			instanceptr = eof_get_section_instance_at_pos(eof_song, track, section_type, sel_start);		//Get the pointer to the new section
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding section of type %lu", section_type);
 			eof_log(eof_log_string, 1);
+			(void) eof_track_add_section(eof_song, track, section_type, diff, sel_start, sel_end, flags, "");	//Add a section of the specified type
+			instanceptr = eof_get_section_instance_at_pos(eof_song, track, section_type, sel_start);		//Get the pointer to the new section
 		}
 		else
 		{	//Otherwise edit the existing section
@@ -7843,7 +7843,7 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
 		memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
 		memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);		//Copy the six usable finger values from the source note to the newly created note
-		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
+		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Copy the legacy bitmask
 		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
 		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
 		dsp->pro_guitar_track[desttracknum]->note[newnotenum]->unpitchend = ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->unpitchend;		//Copy the unpitched slide end position
@@ -9416,7 +9416,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 
 	//Flatten notes
 	eof_track_sort_notes(sp, srctrack);				//This logic relies on notes being sorted by time and then by difficulty
-	notecount = eof_get_track_size(sp, srctrack);	//Cache this value, since any new notes will be appended to the track
+	notecount = eof_get_track_size(sp, srctrack);		//Cache this value, since any new notes will be appended to the track
 	eof_determine_phrase_status(sp, srctrack);		//Update the tremolo status of each note
 	for(ctr = 0; ctr < notecount; ctr++)
 	{	//For each pre-existing note in the source track, copy the highest difficulty note at/below the target difficulty to the target difficulty
@@ -9428,17 +9428,19 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 		targetlength = eof_get_note_length(sp, srctrack, ctr);	//This this note's length
 
 		//Find the highest difficulty note at/below the target difficulty at each unique note timestamp
-		for(; ctr < notecount; ctr++)
+		for(ctr2 = ctr + 1; ctr2 < notecount; ctr2++)
 		{	//For each of the remaining pre-existing notes in the track
-			if((eof_get_note_pos(sp, srctrack, ctr) <= targetpos + threshold) && (eof_get_note_type(sp, srctrack, ctr) <= srcdiff))
-			{	//If this note is within the threshold of the note to be copied to the source difficulty
-				targetnote = ctr;	//This note is higher in difficulty and is a more suitable note to copy to the destination difficulty
-				targetlength = eof_get_note_length(sp, srctrack, ctr);
-			}
-			else
-			{	//This note is too far away, consider it a different note
-				break;
-			}
+			if(eof_get_note_type(sp, srctrack, ctr2) > srcdiff)
+				break;	//This note is higher than the destination difficulty
+			if(eof_get_note_pos(sp, srctrack, ctr2) > targetpos + threshold)
+				break;	//This note is after the threshold distance of the target note, consider it a different note
+			if(eof_get_note_pos(sp, srctrack, ctr2) + threshold < targetpos)
+				break;	//This not is before the threshold distance of the target note, consider it a different note
+
+			//This note is within the threshold of the note to be copied to the source difficulty
+			targetnote = ctr2;	//This note is higher in difficulty and is a more suitable note to copy to the destination difficulty
+			targetlength = eof_get_note_length(sp, srctrack, ctr2);
+			ctr = ctr2;		//Allow the outer for loop to skip reprocessing this note since it is considered a match for flattening
 		}
 		if((eof_get_note_type(sp, srctrack, targetnote) != destdiff) || (srctrack != desttrack))
 		{	//If the candidate note to be copied to the destination difficulty isn't already the note in the destination difficulty
@@ -9546,8 +9548,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 			}
 			else
 			{	//Otherwise add the arpeggio to the destination track difficulty by copying it from the source track
-				(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, destdiff, tp->arpeggio[ctr].start_pos, tp->arpeggio[ctr].end_pos, 0, NULL);
-				tp->arpeggio[tp->arpeggios - 1].flags = tp->arpeggio[ctr].flags;	//Copy the arpeggio flags in case it was a handshape that was copied
+				(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, destdiff, tp->arpeggio[ctr].start_pos, tp->arpeggio[ctr].end_pos, tp->arpeggio[ctr].flags, NULL);	//Use the source arpeggio's flags in case it is a handshape
 			}
 		}//For each pre-existing arpeggio in the source track
 		eof_track_fixup_notes(sp, desttrack, 1);	//Run cleanup logic to create base chords for arpeggio/handshape phrases if applicable
@@ -9675,10 +9676,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 				}
 				else
 				{	//The add level function is being performed, this arpeggio will be duplicated into the next higher difficulty instead of just having its difficulty incremented
-					EOF_PHRASE_SECTION *newptr;
-					(void) eof_track_add_section(sp, track, EOF_ARPEGGIO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
-					newptr = &tp->arpeggio[tp->arpeggios - 1];	//Pointer to the new arpeggio phrase
-					newptr->flags = ptr->flags;	//Copy the arpeggio flags in case it was a handshape that was copied
+					(void) eof_track_add_section(sp, track, EOF_ARPEGGIO_SECTION, diff + 1, ptr->start_pos, ptr->end_pos, ptr->flags, NULL);	//Copy it to the target difficulty, use the source arpeggio's flags in case it is a handshape
 				}
 			}
 			else

@@ -4094,10 +4094,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 			{	//If this phrase could be found
 				if(ptr->difficulty == source_difficulty)
 				{	//If this is an arpeggio section defined in the source difficulty
-					EOF_PHRASE_SECTION *ptr2;
-					(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active difficulty
-					ptr2 = eof_get_arpeggio(eof_song, eof_selected_track, eof_get_num_arpeggios(eof_song, eof_selected_track) - 1);	//Get a pointer to the newly created arpeggio
-					ptr2->flags = ptr->flags;	//Copy the arpeggio flags in case it was a handshape that was copied
+					(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, ptr->flags, NULL);	//Copy it to the active difficulty, use the source arpeggio's flags in case it is a handshape
 				}
 			}
 		}

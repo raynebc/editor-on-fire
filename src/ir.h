@@ -1,7 +1,8 @@
 #ifndef EOF_IR_H
 #define EOF_IR_H
 
-extern int eof_ir_export_allow_fhp_finger_placements;	//Tracks whether the user opts to use finger placements derived from FHPs during export
+extern int eof_ir_export_allow_fhp_finger_placements;		//Tracks whether the user opts to use finger placements derived from FHPs during export
+extern int eof_ir_export_midi_wrote_finger_placements;	//Tracks whether any finger placements were written during the last call to eof_export_immerrock_midi()
 
 int qsort_helper_immerrock(const void * e1, const void * e2);
 	//A sort algorithm used when quick sorting the eof_midi_event[] array for use with IMMERROCK, which has some unique requirements
