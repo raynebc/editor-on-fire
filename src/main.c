@@ -5636,7 +5636,7 @@ void eof_start_logging(void)
 				struct passwd *pwd = getpwuid(getuid());
 				if(pwd)
 				{
-					(void) snprintf(log_filename, sizeof(log_filename) - 1, "%s/Library/Logs/eof_log.txt", ptr->pw_dir);
+					(void) snprintf(log_filename, sizeof(log_filename) - 1, "%s/Library/Logs/eof_log.txt", pwd->pw_dir);
 				}
 			}
 			#endif
