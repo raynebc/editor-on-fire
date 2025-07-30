@@ -1669,11 +1669,6 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 	ptr3->difficulty = trackdetails->difficulty;
 	ptr3->numdiffs = 5;	//By default, all tracks are limited to the original 5 difficulties
 	ptr3->flags = trackdetails->flags;
-	if(trackdetails->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//If this is a pro guitar track
-		if(eof_write_rs_files || eof_write_rs2_files || eof_write_immerrock_files)
-			ptr3->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//If Rocksmith or IMMERROCK exports are enabled, make this track use dynamic difficulty by default
-	}
 	if(sp->tracks == 0)
 	{	//If this is the first track being added, ensure that sp->track[0] is inserted
 		sp->track[0] = NULL;
@@ -4220,6 +4215,11 @@ EOF_SONG * eof_create_song_populated(void)
 			{
 				eof_destroy_song(sp);	//Destroy the song and return on error
 				return NULL;
+			}
+			if(sp->tracks && (sp->track[sp->tracks - 1]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If this is a pro guitar track
+				if(eof_write_rs_files || eof_write_rs2_files || eof_write_immerrock_files)
+					sp->track[sp->tracks - 1]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//If Rocksmith or IMMERROCK exports are enabled, make this track use dynamic difficulty by default
 			}
 		}
 ///		sp->track[EOF_TRACK_PRO_GUITAR_B]->flags |= EOF_TRACK_FLAG_RS_BONUS_ARR;	//By default, the bonus pro guitar track has the Rocksmith bonus arrangement flag

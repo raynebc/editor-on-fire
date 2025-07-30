@@ -2776,6 +2776,28 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//The active track has at least one note out of grid snap
+	if(!ustricmp(macro, "IF_TRACK_HAS_NOTES_IN_MULTIPLE_DIFFS"))
+	{
+		unsigned char diff;
+		char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
+
+		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);	//Examine the normal note set only
+		diff = eof_get_note_type(eof_song, eof_selected_track, 0);	//The difficulty of the first note in the active track
+		for(ctr = 1; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+		{	//For each note in the active track
+			if(eof_get_note_type(eof_song, eof_selected_track, ctr) != diff)
+			{	//If this note has a different difficulty than the first note
+				eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
+		}
+		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{

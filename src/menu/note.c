@@ -486,6 +486,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"Edit fingering\t" CTRL_NAME "+F", eof_menu_note_edit_pro_guitar_note_fingers, NULL, 0, NULL},
 	{"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
 	{"&Lookup fingering", eof_menu_note_lookup_fingering, NULL, 0, NULL},
+	{"Apply &Derived fingering", eof_menu_pro_guitar_apply_derived_fingering, NULL, 0, NULL},
 	{"Define unpitched slide\t" CTRL_NAME "+U", eof_pro_guitar_note_define_unpitched_slide, NULL, 0, NULL},
 	{"Remove &Unpitched slide", eof_menu_note_remove_unpitched_slide, NULL, 0, NULL},
 	{"Remove all &Slide", eof_menu_note_remove_all_slide, NULL, 0, NULL},
@@ -1202,22 +1203,22 @@ void eof_prepare_note_menu(void)
 				if(tp->note == tp->technote)
 				{	//If tech view is in effect
 					eof_note_rocksmith_menu[6].flags = D_DISABLED;	//Note>Rocksmith>Lookup fingering
-					eof_note_rocksmith_menu[11].flags = 0;			//Note>Rocksmith>Move tech note to prev note
-					eof_note_rocksmith_menu[12].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
+					eof_note_rocksmith_menu[12].flags = 0;			//Note>Rocksmith>Move tech note to prev note
+					eof_note_rocksmith_menu[13].flags = D_DISABLED;	//Note>Rocksmith>Generate FHPs
 					eof_note_proguitar_menu[8].flags = 0;				//Note>Pro Guitar>Toggle pre-bend
 				}
 				else
 				{
 					eof_note_rocksmith_menu[6].flags = 0;				//Note>Rocksmith>Lookup fingering
-					eof_note_rocksmith_menu[11].flags = D_DISABLED;
+					eof_note_rocksmith_menu[12].flags = D_DISABLED;
 					eof_note_proguitar_menu[8].flags = D_DISABLED;		//Note>Pro Guitar>Toggle pre-bend
 					if(vselected > 1)
 					{	//If multiple notes are selected
-						eof_note_rocksmith_menu[12].flags = 0;		//Note>Rocksmith>Generate FHPs
+						eof_note_rocksmith_menu[13].flags = 0;		//Note>Rocksmith>Generate FHPs
 					}
 					else
 					{	//Only one note is selected
-						eof_note_rocksmith_menu[12].flags = D_DISABLED;
+						eof_note_rocksmith_menu[13].flags = D_DISABLED;
 					}
 				}
 
@@ -10141,6 +10142,48 @@ int eof_menu_pro_guitar_remove_fingering(void)
 					u = 1;
 				}
 				memset(tp->note[i]->finger, 0, 8);	//Initialize all fingers to undefined
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_pro_guitar_apply_derived_fingering(void)
+{
+	unsigned long notenum, stringnum;
+	long u = 0;
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+	int note_selection_updated;
+	unsigned char fingernum = 0;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	for(notenum = 0; notenum < tp->notes; notenum++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[notenum])
+		{	//If this note is in the currently active track and is selected
+			for(stringnum = 0; stringnum < 6; stringnum++)
+			{	//For each of the 6 usable strings
+				int retval = eof_pro_guitar_note_derive_string_fingering(eof_song, eof_selected_track, notenum, stringnum, &fingernum);	//Determine what the fingering for this note is, deriving it from handshape/arpeggio/FHP if possible
+
+				if(retval > 1)
+				{	//If the fingering for this gem is not defined but can be derived
+					if(!u)
+					{	//Make a back up before changing the first note
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						u = 1;
+					}
+					tp->note[notenum]->finger[stringnum] = fingernum;	//Apply the derived fingering
+				}
 			}
 		}
 	}

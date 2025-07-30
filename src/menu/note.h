@@ -271,6 +271,7 @@ int eof_pro_guitar_note_bend_strength_no_save(void);
 	//Calls eof_pro_guitar_note_bend_strength() specifying not to make an undo before making changes
 	//(for when using the keyboard shortcut to toggle bends, since an undo would already have been created)
 int eof_menu_pro_guitar_remove_fingering(void);	//Clears the finger array for all selected notes
+int eof_menu_pro_guitar_apply_derived_fingering(void);	//For gems of selected notes that don't have defined fingering, applies derived fingering where possible
 int eof_menu_remove_statuses(void);		//Clears all flags for selected notes, except notes that only have string mute status (since pro guitar fixup will re-apply it automatically)
 int eof_rocksmith_convert_mute_to_palm_mute_single_note(void);
 	//Removes string mute status from all selected notes and marks affected notes with palm mute status

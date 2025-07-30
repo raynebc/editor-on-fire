@@ -24,9 +24,9 @@ IMMERROCK Panel (%TEXT_FILE%)
 %IF_IR_LEAD_ARRANGEMENT_DEFINED%%DISPLAY_SUCCESS%Lead arrangement is defined.
 %IF_IR_RHYTHM_ARRANGEMENT_DEFINED%%DISPLAY_SUCCESS%Rhythm arrangement is defined.
 %IF_IR_BASS_ARRANGEMENT_DEFINED%%DISPLAY_SUCCESS%Bass arrangement is defined.
-%IF_ACTIVE_TRACK_IS_IR_LEAD_ARRANGEMENT%Active track is the lead arrangement
-%IF_ACTIVE_TRACK_IS_IR_RHYTHM_ARRANGEMENT%Active track is the rhythm arrangement
-%IF_ACTIVE_TRACK_IS_IR_BASS_ARRANGEMENT%Active track is the bass arrangement
+%IF_ACTIVE_TRACK_IS_IR_LEAD_ARRANGEMENT%Active track is the lead arrangement.%IF_TRACK_HAS_NOTES_IN_MULTIPLE_DIFFS%%NEWLINE%%DISPLAY_WARNING%%IF_TRACK_HAS_DD%Only the highest difficulty level will export%ELSE%Each difficulty will export to a separate folder
+%IF_ACTIVE_TRACK_IS_IR_RHYTHM_ARRANGEMENT%Active track is the rhythm arrangement.%IF_TRACK_HAS_NOTES_IN_MULTIPLE_DIFFS%%NEWLINE%%DISPLAY_WARNING%%IF_TRACK_HAS_DD%Only the highest difficulty level will export%ELSE%Each difficulty will export to a separate folder
+%IF_ACTIVE_TRACK_IS_IR_BASS_ARRANGEMENT%Active track is the bass arrangement.%IF_TRACK_HAS_NOTES_IN_MULTIPLE_DIFFS%%NEWLINE%%DISPLAY_WARNING%%IF_TRACK_HAS_DD%Only the highest difficulty level will export%ELSE%Each difficulty will export to a separate folder
 
 ;Album art, lyric checks
 %IF_PROJECT_HAS_IR_ALBUM_ART%%DISPLAY_SUCCESS%Album art found:  %IR_ALBUM_ART_FILENAME%%ELSE%%DISPLAY_WARNING%Album art not found.
