@@ -2048,7 +2048,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log("Error:  Couldn't allocate memory for raw MIDI text event", 1);
 							while(eventhead)
 							{	//Release all raw MIDI events
-								eventtail = eventhead->next;	//Save the address of the next link
+								eventtail = eventhead->next;		//Save the address of the next link
+								free(eventhead->stringtime);		//Free the timestamp string
+								free(eventhead->data);			//Free event data
 								free(eventhead);				//Free the head link
 								eventhead = eventtail;			//Point to the next link
 							}
@@ -2067,6 +2069,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							while(eventhead)
 							{	//Release all raw MIDI events
 								eventtail = eventhead->next;	//Save the address of the next link
+								free(eventhead->stringtime);		//Free the timestamp string
+								free(eventhead->data);			//Free event data
 								free(eventhead);				//Free the head link
 								eventhead = eventtail;			//Point to the next link
 							}
@@ -2091,6 +2095,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							while(eventhead)
 							{	//Release all raw MIDI events
 								eventtail = eventhead->next;	//Save the address of the next link
+								free(eventhead->stringtime);		//Free the timestamp string
+								free(eventhead->data);			//Free event data
 								free(eventhead);				//Free the head link
 								eventhead = eventtail;			//Point to the next link
 							}

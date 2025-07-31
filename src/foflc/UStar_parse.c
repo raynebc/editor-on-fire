@@ -1,7 +1,8 @@
 #include <assert.h>
+#include <ctype.h>
+#include <float.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include "Lyric_storage.h"
 #include "Midi_parse.h"
 #include "UStar_parse.h"
@@ -175,6 +176,8 @@ void Export_UStar(FILE *outf)
 		{
 			if(Lyrics.verbose>=2)	printf("\tEstimated tempo's mean time skew is %fms\n",CalculateTimeDiff(tempo));
 			tempo=BruteForceTempo(200.0,400.0);
+			if(tempo < DBL_EPSILON)
+				tempo = DBL_EPSILON;		//Bounds check result to be a positive, nonzero double float value
 			stepping=60000.0/(tempo*4);	//Recalculate stepping, since the tempo has changed
 			if(Lyrics.verbose>=2)
 			{
@@ -657,6 +660,8 @@ void UStar_Load(FILE *inf)
 				if((Lyrics.Title == NULL) || (Lyrics.Artist == NULL) || (BPM < 1.0) || (!Lyrics.offsetoverride && (Lyrics.Offset == NULL)))	//Ignore the unprocessed offset tag if it is being overridden via command line
 					(void) puts("\aWarning: One of the required tags (Title, Artist, BPM, GAP) is missing");
 
+				if(BPM < 1.0)
+					BPM = 1.0;	//Bounds check to set a minimum tempo if it is not defined
 				stepping=60000.0/(BPM*4);	//The stepping is the realtime length of one quarter beat
 				tagsprocessed=1;	//Tags were verified
 			}

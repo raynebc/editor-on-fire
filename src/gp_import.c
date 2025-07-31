@@ -2303,6 +2303,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		eof_log("\t\t\tToo many tracks, aborting.", 1);
 		(void) pack_fclose(inf);
 		free(gp);
+		free(tsarray);
 		if(sync_points)
 			free(sync_points);
 		return NULL;

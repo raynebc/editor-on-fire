@@ -10,6 +10,7 @@
 #include "agup/agup.h"
 #include "modules/g-idle.h"
 #include "dialog/proc.h"
+#include <float.h>
 #include <math.h>
 
 #ifndef ALLEGRO_WINDOWS
@@ -178,6 +179,7 @@ double eof_get_measure_position(unsigned long pos)
 	EOF_BEAT_MARKER *bp;
 	double measurepos;
 	double beatpos;
+	double beat_length;
 
 	if(!eof_song)
 		return 0.0;	//Invalid parameters
@@ -190,9 +192,13 @@ double eof_get_measure_position(unsigned long pos)
 		return 0.0;	//Error
 
 	bp = eof_song->beat[beat];
-	beatpos = ((double) pos - eof_song->beat[beat]->pos) / eof_get_beat_length(eof_song, beat);		//This is the percentage into its beat the specified position is (only compare the note against the beat's integer position, since the note position will have been rounded in either direction)
-	measurepos = ((double) bp->beat_within_measure + beatpos) / bp->num_beats_in_measure;			//This is the percentage into its measure the specified position is
-	measurepos += bp->measurenum - 1;																//Add the number of complete measures that are before this position (measurenum is numbered beginning with 1)
+	beat_length = eof_get_beat_length(eof_song, beat);
+	if(beat_length < DBL_EPSILON)
+		return 0.0;	//An invalid result was returned by eof_get_beat_length();
+
+	beatpos = ((double) pos - eof_song->beat[beat]->pos) / beat_length;						//This is the percentage into its beat the specified position is (only compare the note against the beat's integer position, since the note position will have been rounded in either direction)
+	measurepos = ((double) bp->beat_within_measure + beatpos) / bp->num_beats_in_measure;		//This is the percentage into its measure the specified position is
+	measurepos += bp->measurenum - 1;													//Add the number of complete measures that are before this position (measurenum is numbered beginning with 1)
 
 	return measurepos;
 }
@@ -1331,7 +1337,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	}
 	testing = malloc(sizeof(EOF_SP_PATH_SOLUTION));
 
-	if(!note_measure_positions || !note_beat_lengths || (bestptr && !best) || (bestptr && !bresulting_sp_meter) || !testing)
+	if(!note_measure_positions || !note_beat_lengths || !tresulting_sp_meter || (bestptr && !best) || (bestptr && !bresulting_sp_meter) || !testing)
 	{	//If any of those failed to allocate
 		if(note_measure_positions)
 			free(note_measure_positions);
@@ -1389,6 +1395,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 			{	//Bounds check
 				free(note_measure_positions);
 				free(note_beat_lengths);
+				free(tresulting_sp_meter);
 				if(bestptr)
 				{	//If the calling function wanted to initialize two solution structures
 					free(bresulting_sp_meter);
@@ -1508,6 +1515,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 			free(deploy_cache);
 		if(deployment_endings)
 			free(deployment_endings);
+		free(tresulting_sp_meter);
 
 		eof_log("\tFailed to allocate memory", 1);
 		return 1;	//Return error

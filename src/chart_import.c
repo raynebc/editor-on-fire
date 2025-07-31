@@ -1540,11 +1540,23 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 			if(Read_db_string(buffer,&string1,&string2))
 			{	//If a valid definition of (string) = (string) or (string) = "(string)" was found
 				if(strcasecmp(string1,"Name") == 0)
+				{
+					if(chart->name)
+						free(chart->name);	//If a song name was already imported, free that string
 					chart->name=string2;	//Save the song name tag
+				}
 				else if(strcasecmp(string1,"Artist") == 0)
+				{
+					if(chart->artist)
+						free(chart->artist);	//If a song artist was already imported, free that string
 					chart->artist=string2;	//Save the song artist tag
+				}
 				else if(strcasecmp(string1,"Charter") == 0)
+				{
+					if(chart->charter)
+						free(chart->charter);	//If a chart editor was already imported, free that string
 					chart->charter=string2;	//Save the chart editor tag
+				}
 				else if(strcasecmp(string1,"Offset") == 0)
 				{
 					chart->offset=atof(string2);
@@ -1572,7 +1584,11 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					string2 = NULL;
 				}
 				else if(strcasecmp(string1,"MusicStream") == 0)
+				{
+					if(chart->audiofile)
+						free(chart->audiofile);	//If the audio file name was already imported, free that string
 					chart->audiofile=string2;	//Save the name of the audio file for the chart
+				}
 				else
 				{	//No recognized tag was found
 					free(string2);

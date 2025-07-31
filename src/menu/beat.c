@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <float.h>
 #include "../agup/agup.h"
 #include "../main.h"
 #include "../dialog.h"
@@ -3529,6 +3530,8 @@ int eof_menu_beat_estimate_bpm(void)
 
 	//Apply the detected tempo to the applicable beat and all subsequent beats until the next anchor is found
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	if(result < DBL_EPSILON)
+		result = DBL_EPSILON;	//Bounds check result to be a positive, nonzero double float value
 	ppqn = 60000000.0 / result;
 	eof_song->beat[startbeat]->ppqn = ppqn;	//Apply the tempo to the first beat in the applicable range of beats
 	for(ctr = startbeat + 1; ctr < eof_song->beats; ctr++)
