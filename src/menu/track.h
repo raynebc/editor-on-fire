@@ -203,6 +203,9 @@ int eof_menu_track_unshare_drum_phrasing(void);
 	//By default, the drum and PS drum tracks use the same star power, solo, drum roll and special drum roll phrases
 	//This function toggles that setting on/off
 
+int eof_menu_track_beatable_enable_beatable_export(void);
+	//Toggle the setting to export a non legacy drum track to BEATABLE format
+
 int eof_track_erase_track(void);			//Allows the user to erase the active track's contents
 int eof_track_erase_track_difficulty(void);	//Allows the user to erase the active track difficulty's contents
 

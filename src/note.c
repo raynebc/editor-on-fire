@@ -790,6 +790,21 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					circle(window->screen, x, y, radius, pcol);
 				}
 
+				//Render snap status indicators for the pen note in BEATABLE tracks
+				if(!track && eof_track_is_beatable_mode(eof_song, eof_selected_track) && (mask == 16))
+				{	//If the pen note is being rendered while a BEATABLE track is active, and it is a snap note
+					if(eof_pen_note.flags & EOF_BEATABLE_NOTE_FLAG_LSNAP)
+					{
+						vline(window->screen, x - (radius / 3), y - radius, y + radius, eof_color_white);			//Render a line for left snap
+						vline(window->screen, x - (radius / 3), y - (radius / 2), y + (radius / 2), eof_color_black);	//Render a line for left snap
+					}
+					if(eof_pen_note.flags & EOF_BEATABLE_NOTE_FLAG_RSNAP)
+					{
+						vline(window->screen, x + (radius / 3), y - radius, y + radius, eof_color_white);			//Render a line for right snap
+						vline(window->screen, x + (radius / 3), y - (radius / 2), y + (radius / 2), eof_color_black);	//Render a line for right snap
+					}
+				}
+
 				if(!eof_legacy_view && (track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If legacy view is disabled, this is a pro guitar note and a pro guitar track is active, perform pro guitar specific rendering
 					BITMAP *fretbmp;
@@ -2356,7 +2371,8 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		else if(!eof_track_is_ghl_mode(eof_song, track) && (eof_get_note_note(eof_song, track, note) & 32))
 		{	//An open note/chord in a non GHL track
-			buffer[index++] = 'O';
+			if(!eof_track_is_beatable_mode(eof_song, track))	//And not a BEATABLE track
+				buffer[index++] = 'O';
 		}
 		if(flags & EOF_NOTE_FLAG_F_HOPO)
 		{	//If the note is a forced HOPO
@@ -2370,56 +2386,88 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 	}
 
-	if((eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (eflags & EOF_NOTE_EFLAG_DISJOINTED))
-	{	//If the note is a legacy note and has disjointed status
-		buffer[index++] = 'D';
-	}
-
-	if(flags & EOF_NOTE_FLAG_IS_TRILL)
-	{
-		if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-		{	//If this is a drum track, white the notation for special drum roll
-			//Special case:  A note marked as a drum roll with a name of "0" will have drum roll status suppressed during Drums Rock export
-			if(eof_track_is_drums_rock_mode(eof_song, track))
-			{	//If Drums Rock mode is enabled for this track
-				ret = eof_get_note_name_as_number(eof_song, track, note, &number);
-				if(ret && !number)
-				{	//If the name for this note is defined as the number 0
-					buffer[index++] = '!';
-				}
+	if(eof_track_is_beatable_mode(eof_song, track))
+	{	//If this is a BEATABLE track
+		if(eof_get_note_note(eof_song, track, note) & 16)
+		{	//If this note has a gem on lane 5 (snap note)
+			unsigned snapcount = 0;
+			if(flags & EOF_BEATABLE_NOTE_FLAG_LSNAP)
+			{	//If the note is marked as a left snap
+				buffer[index++] = 'S';
+				buffer[index++] = 'L';
+				snapcount++;
 			}
-
-			buffer[index++] = 'S';
-			buffer[index++] = 'D';
-			buffer[index++] = 'R';
-		}
-		else
-		{	//Otherwise assume a guitar track, write the notation for a trill
-			buffer[index++] = 'T';
-			buffer[index++] = 'R';
+			if(flags & EOF_BEATABLE_NOTE_FLAG_RSNAP)
+			{	//If the note is marked as a right snap
+				if(snapcount)
+					buffer[index++] = '+';
+				else
+					buffer[index++] = 'S';
+				buffer[index++] = 'R';
+				snapcount++;
+			}
+			if(!snapcount)
+			{	//The note is not marked as either, it's implicitly a left snap
+				buffer[index++] = '(';
+				buffer[index++] = 'S';
+				buffer[index++] = 'L';
+				buffer[index++] = ')';
+			}
 		}
 	}
-
-	if(flags & EOF_NOTE_FLAG_IS_TREMOLO)
+	else
 	{
-		if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-		{	//If this is a drum track, white the notation for drum roll
-			//Special case:  A note marked as a drum roll with a name of "0" will have drum roll status suppressed during Drums Rock export
-			if(eof_track_is_drums_rock_mode(eof_song, track))
-			{	//If Drums Rock mode is enabled for this track
-				ret = eof_get_note_name_as_number(eof_song, track, note, &number);
-				if(ret && !number)
-				{	//If the name for this note is defined as the number 0
-					buffer[index++] = '!';
-				}
-			}
-
+		if((eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (eflags & EOF_NOTE_EFLAG_DISJOINTED))
+		{	//If the note is a legacy note and has disjointed status
 			buffer[index++] = 'D';
-			buffer[index++] = 'R';
 		}
-		else
-		{	//Otherwise assume a guitar track, write the notation for a tremolo
-			buffer[index++] = 'e';	//In the symbols font, e is the tremolo character
+
+		if(flags & EOF_NOTE_FLAG_IS_TRILL)
+		{
+			if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If this is a drum track, white the notation for special drum roll
+				//Special case:  A note marked as a drum roll with a name of "0" will have drum roll status suppressed during Drums Rock export
+				if(eof_track_is_drums_rock_mode(eof_song, track))
+				{	//If Drums Rock mode is enabled for this track
+					ret = eof_get_note_name_as_number(eof_song, track, note, &number);
+					if(ret && !number)
+					{	//If the name for this note is defined as the number 0
+						buffer[index++] = '!';
+					}
+				}
+
+				buffer[index++] = 'S';
+				buffer[index++] = 'D';
+				buffer[index++] = 'R';
+			}
+			else
+			{	//Otherwise assume a guitar track, write the notation for a trill
+				buffer[index++] = 'T';
+				buffer[index++] = 'R';
+			}
+		}
+
+		if(flags & EOF_NOTE_FLAG_IS_TREMOLO)
+		{
+			if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If this is a drum track, white the notation for drum roll
+				//Special case:  A note marked as a drum roll with a name of "0" will have drum roll status suppressed during Drums Rock export
+				if(eof_track_is_drums_rock_mode(eof_song, track))
+				{	//If Drums Rock mode is enabled for this track
+					ret = eof_get_note_name_as_number(eof_song, track, note, &number);
+					if(ret && !number)
+					{	//If the name for this note is defined as the number 0
+						buffer[index++] = '!';
+					}
+				}
+
+				buffer[index++] = 'D';
+				buffer[index++] = 'R';
+			}
+			else
+			{	//Otherwise assume a guitar track, write the notation for a tremolo
+				buffer[index++] = 'e';	//In the symbols font, e is the tremolo character
+			}
 		}
 	}
 

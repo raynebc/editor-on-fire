@@ -654,11 +654,12 @@ extern FONT *      eof_allegro_font;
 extern FONT *      eof_font;
 extern FONT *      eof_mono_font;
 extern FONT *      eof_symbol_font;	//A font where the 0, 1, 2, 3 and 4 glyphs have been replaced with guitar tab notation characters
-extern char        eof_note_type_name_fof[5][10];
-extern char        eof_note_type_name_rb[5][10];
+extern char        eof_note_type_name_fof[EOF_MAX_DIFFICULTIES][10];
+extern char        eof_note_type_name_rb[EOF_MAX_DIFFICULTIES][10];
 extern char        (*eof_note_type_name)[10];	//Will point to either eof_note_type_name_fof or eof_note_type_name_rb based on user preference
-extern char        eof_vocal_tab_name[5][32];
-extern char        eof_dance_tab_name[5][32];
+extern char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][10];
+extern char        eof_dance_tab_name[EOF_MAX_DIFFICULTIES][15];
+extern char        eof_beatable_tab_name[EOF_MAX_DIFFICULTIES][15];
 extern char        eof_track_diff_populated_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if populated
 extern char        eof_track_diff_populated_tech_note_status[256];	//Same as eof_track_diff_populated_status[], but for tech notes
 extern char        eof_track_diff_highlighted_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if any of its notes are highlighted

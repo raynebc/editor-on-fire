@@ -707,8 +707,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				else
 				{	//Otherwise ensure on doesn't overlap the other improperly
 					long maxlength = eof_get_note_max_length(sp, track, i - 1, 1);	//Determine the maximum length for this note, taking its crazy status into account
-					if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
-					{	//If the note is longer than its maximum length
+					if((maxlength > 0) && (eof_get_note_length(sp, track, i - 1) > maxlength))
+					{	//If the note is longer than its maximum length (provided that maxlength was calculated with a valid value)
 						eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
 					}
 				}
@@ -1234,6 +1234,11 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	eof_dance_tab_name[2][0] = ' ';
 	eof_dance_tab_name[3][0] = ' ';
 	eof_dance_tab_name[4][0] = ' ';
+	eof_beatable_tab_name[0][0] = ' ';
+	eof_beatable_tab_name[1][0] = ' ';
+	eof_beatable_tab_name[2][0] = ' ';
+	eof_beatable_tab_name[3][0] = ' ';
+	eof_beatable_tab_name[4][0] = ' ';
 
 	tracksize = eof_get_track_size(sp, track);
 
@@ -1263,7 +1268,10 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 				}
 				else
 				{	//Otherwise update the legacy track tabs
-					eof_note_type_name[note_type][0] = '*';
+					if(eof_track_is_beatable_mode(sp, track))
+						eof_beatable_tab_name[note_type][0] = '*';
+					else
+						eof_note_type_name[note_type][0] = '*';
 				}
 			}
 		}
@@ -6845,6 +6853,44 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 	}
 }
 
+void eof_or_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags)
+{
+// 	eof_log("eof_set_note_flags() entered");
+
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->flags ^= flags;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				sp->vocal_track[tracknum]->lyric[note]->flags ^= flags;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				sp->pro_guitar_track[tracknum]->note[note]->flags ^= flags;
+			}
+		break;
+
+		default:
+		break;
+	}
+}
+
 void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long tflags)
 {
 // 	eof_log("eof_set_note_flags() entered");
@@ -8671,6 +8717,23 @@ int eof_track_is_drums_rock_mode(EOF_SONG *sp, unsigned long track)
 		return 0;
 	if(eof_song->track[track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
 	{	//If this is a drum track with the Drums Rock flag enabled
+		return 1;
+	}
+
+	return 0;
+}
+
+int eof_track_is_beatable_mode(EOF_SONG *sp, unsigned long track)
+{
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+	if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		return 0;
+	if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		return 0;
+
+	if(eof_song->track[track]->flags & EOF_TRACK_FLAG_BEATABLE)
+	{	//If this is a  non drum legacy track with the BEATABLE flag enabled
 		return 1;
 	}
 

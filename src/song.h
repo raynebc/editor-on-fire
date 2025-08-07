@@ -92,6 +92,9 @@
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill (or special drum roll) section
 #define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo (or drum roll) section
 
+//The following flags pertain to BEATABLE notes
+#define EOF_BEATABLE_NOTE_FLAG_LSNAP     32		//This flag represents a note that exports as a left snap
+#define EOF_BEATABLE_NOTE_FLAG_RSNAP     64	//This flag represents a note that exports as a right snap
 
 ///Temporary note flags
 //The following temporary flags are maintained internally and do not save to file (even during project save, clipboard, auto-adjust, etc.)
@@ -344,6 +347,8 @@ extern char *eof_section_type_names[EOF_NUM_SECTION_TYPES + 1];
 #define EOF_TRACK_FLAG_DRUMS_ROCK_REMAP 512
 	//Specifies that if Drums Rock export is enabled, the tom and cymbal notes will be remapped automatically such as to suit a conversion from Rock Band to Drums Rock style charting
 	//These remappings are defined in the drums_rock_remap_lane_* variables
+#define EOF_TRACK_FLAG_BEATABLE 1024
+	//Specifies that a non drum legacy track will export in BEATABLE format
 #define EOF_TRACK_FLAG_EXTENDED 2147483648UL	//The MSB will be set if an additional extended flag variable is present for the track in the project file
 											//This flag will only be used during project save/load to determine whether another flags variable is written/read
 
@@ -707,7 +712,8 @@ void eof_move_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, un
 long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note);			//Returns the length of the specified track's note/lyric, or 0 on error
 void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, long length);	//Sets the length of the specified track's note/lyric
 unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the flags of the specified track's note/lyric, or 0 on error
-void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets the flags of the specified track's note/lyric
+void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Redefines the flags of the specified track's note/lyric
+void eof_or_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets (logical OR) the specified flags of the specified track's note/lyric
 unsigned long eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the temporary flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long tflags);	//Sets the temporary flags of the specified track's note/lyric
 unsigned long eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the extended flags of the specified pro guitar note, or 0 on error
@@ -726,6 +732,7 @@ char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);	
 void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *name);	//Copies the string into the note's statically allocated name array, or a lyric's text array
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char note, unsigned long pos, long length, char type, char *text);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
+	///The notes are not automatically sorted, the calling function can assume that the last note in the array is the newly-added note
 	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)
 	//text is used to initialize the note name or lyric text, and may be NULL
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);
@@ -738,6 +745,7 @@ long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long 
 long eof_track_fixup_next_note_applicable_to_diff(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char diff);	//Returns the next note after the specified one that is applicable to the specified difficulty, or -1 if there is none
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
 	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically
+	///Assumes notes are sorted
 	//Dynamic highlighting for the track's active note set is also updated
 void eof_sanitize_phrase_names(EOF_SONG *sp, unsigned long track);	//Empties the name string of any EOF_PHRASE_SECTION items in the track that have non-printable characters (ie. uninitialized data)
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option);
@@ -819,6 +827,7 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 	//minus the configured minimum distance between notes (if enforcegap is nonzero).  If the specified note is a crazy note, the threshold
 	//is based on the position of the next note in the same track difficulty that uses any gems on the same lane, otherwise it's based on
 	//that of the next note in the track difficulty.
+	///Assumes that notes are sorted
 	//enforcegap should be given as nonzero unless the note has linknext status, which forces a mandatory distance between notes to be ignored
 	//0 is returned on error, LONG_MAX is returned if there is no note that follows (indicating the note's length is only limited by its variable capacity)
 unsigned long eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned long track, unsigned long notenum);
@@ -919,7 +928,7 @@ void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the notes in all tracks
 								//WARNING:  Any notes occurring after eof_chart_length will be deleted
 unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
-	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
+	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[], eof_dance_tab_name[] and eof_beatable_tab_name[]) with an asterisk
 	//eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero
 	//eof_track_diff_populated_tech_note_status[] is also updated if the specified track is a pro guitar track, so that each difficulty with at least one tech note results in the corresponding element number being nonzero
 	//eof_track_diff_highlighted_status[] and eof_track_diff_highlighted_tech_note_status[] are also updated
@@ -1032,6 +1041,8 @@ int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track has GHL mode enabled
 int eof_track_is_drums_rock_mode(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track has Drums Rock mode enabled
+int eof_track_is_beatable_mode(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified track has BEATABLE mode enabled
 int eof_pro_guitar_track_diff_has_fingering(EOF_SONG *sp, unsigned long track, unsigned char diff);
 	//Returns nonzero if ANY of the normal notes in the specified pro guitar track have any finger values defined
 

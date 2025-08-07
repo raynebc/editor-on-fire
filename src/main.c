@@ -71,8 +71,9 @@
 
 char        eof_note_type_name_fof[EOF_MAX_DIFFICULTIES][10] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_note_type_name_rb[EOF_MAX_DIFFICULTIES][10] = {" Easy", " Medium", " Hard", " Expert", " BRE"};
-char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][32] = {" Lyrics", " ", " ", " ", " "};
-char        eof_dance_tab_name[EOF_MAX_DIFFICULTIES][32] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
+char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][10] = {" Lyrics", " ", " ", " ", " "};
+char        eof_dance_tab_name[EOF_MAX_DIFFICULTIES][15] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
+char        eof_beatable_tab_name[EOF_MAX_DIFFICULTIES][15] = {" Easy", " Medium", " Hard", " Unbeatable", " "};
 char        (*eof_note_type_name)[10] = eof_note_type_name_rb;	//By default, use Rock Band difficulty names
 char        eof_track_diff_populated_status[256] = {0};
 char        eof_track_diff_populated_tech_note_status[256] = {0};
@@ -270,7 +271,7 @@ char        eof_changes = 0;		//Tracks whether the chart has been modified since
 ALOGG_OGG * eof_music_track = NULL;
 void      * eof_music_data = NULL;	//A memory buffer of the current chart audio's OGG file
 int         eof_silence_loaded = 0;
-int         eof_music_data_size = 0;
+int         eof_music_data_size = 0;	//The size of the eof_music_data buffer in bytes
 unsigned long eof_chart_length = 0;		//Stores the position of the last note/lyric/text event/bookmark or the end of the chart audio, whichever is longer
 unsigned long eof_music_length = 0;
 int         eof_logic_rate = 100;
@@ -1230,8 +1231,11 @@ void eof_cat_track_difficulty_string(char *str)
 		}
 		else
 		{
-			ptr = eof_note_type_name[eof_note_type];
-			(void) ustrcat(str, ptr);					//Append the active instrument difficulty name
+			if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+				ptr = eof_beatable_tab_name[eof_note_type];
+			else
+				ptr = eof_note_type_name[eof_note_type];
+			(void) ustrcat(str, ptr);					//Append the active track difficulty name
 		}
 	}
 
@@ -1294,6 +1298,10 @@ void eof_fix_window_title(void)
 			{
 				(void) ustrcat(eof_window_title, "(Drums Rock)");
 			}
+		}
+		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+		{
+			(void) ustrcat(eof_window_title, "(BEATABLE)");
 		}
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the tempo map is locked
@@ -3120,8 +3128,11 @@ void eof_render_fret_catalog_window(void)
 					difficulty_name = eof_dance_tab_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].difficulty];
 				}
 				else
-				{	//All other tracks use the same difficulty names
-					difficulty_name = eof_note_type_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].difficulty];
+				{
+					if(eof_track_is_beatable_mode(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].flags))	//If this is a BEATABLE track
+						difficulty_name = eof_beatable_tab_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].difficulty];
+					else	//All other tracks use the same difficulty names
+						difficulty_name = eof_note_type_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].difficulty];
 				}
 			}
 			textprintf_ex(eof_window_info->screen, font, 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 10, eof_color_white, -1, "%s , %s , %lums - %lums", eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->name, difficulty_name + 1, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);

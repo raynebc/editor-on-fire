@@ -4227,7 +4227,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Erase the pro string mute flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;		//Erase the pro palm mute flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Erase the pro strum up flag
-			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;		//Erase the pro strum down flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;	//Erase the pro strum down flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;		//Erase the pro strum mid flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Erase the pro bend flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;		//Erase the pro harmonic flag
@@ -4299,7 +4299,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 	if(eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)
 	{	//If the note is pasting into a non 5 lane guitar track, erase legacy HOPO flags
 		*flags &= ~EOF_NOTE_FLAG_HOPO;		//Erase the temporary HOPO flag
-		*flags &= ~EOF_NOTE_FLAG_F_HOPO;	//Erase the forced HOPO ON flag
+		*flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Erase the forced HOPO ON flag
 		*flags &= ~EOF_NOTE_FLAG_NO_HOPO;	//Erase the forced HOPO OFF flag
 	}
 
@@ -4331,7 +4331,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 
 	if((eof_song->track[sourcetrack]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (desttrack != EOF_TRACK_DRUM_PS))
 	{	//If notes are being copied from a drum track and not being pasted into the PS drum track, erase flags exclusive to that track
-		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Erase the open hi hat flag
+		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;		//Erase the open hi hat flag
 		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Erase the pedal controlled hi hat flag
 		*flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;		//Erase the rim shot flag
 		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;			//Erase the sizzle hi hat flag
@@ -4343,6 +4343,12 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 	if(eof_song->track[desttrack]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
 	{	//If pasting into a keys behavior track,
 		*flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag
+	}
+
+	if(eof_track_is_beatable_mode(eof_song, sourcetrack) != eof_track_is_beatable_mode(eof_song, desttrack))
+	{	//If either the source or destination track is a BEATABLE track but the other track is not
+		*flags &= ~EOF_BEATABLE_NOTE_FLAG_LSNAP;	//Erase the left snap flag
+		*flags &= ~EOF_BEATABLE_NOTE_FLAG_RSNAP;	//Erase the right snap flag
 	}
 }
 

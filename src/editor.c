@@ -918,6 +918,9 @@ if(eof_key_code == KEY_PAUSE)
 
 	if(eof_song_loaded)
 	{
+		#include "beatable.h"
+		(void) append_filename(eof_temp_filename, eof_song_path, "song.beats", (int) sizeof(eof_temp_filename));
+		eof_export_beatable(eof_song, eof_selected_track, eof_temp_filename);
 	}
 }
 ///ALT handling testing
@@ -1099,8 +1102,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 		{	//If no CTRL or SHIFT keys are held
-			eof_play_pro_guitar_note_midi(eof_song, eof_selected_track, eof_selection.current);
-			eof_use_key();
+			if((eof_input_mode != EOF_INPUT_CLASSIC) && (eof_input_mode != EOF_INPUT_HOLD) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If not using classic or hold input modes (which use Enter as a secondary method to place notes) and a pro guitar track is active
+				eof_play_pro_guitar_note_midi(eof_song, eof_selected_track, eof_selection.current);
+				eof_use_key();
+			}
 		}
 	}
 
@@ -2270,10 +2276,13 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			if(key[KEY_5] && (numlanes >= 5))
 			{
 				eof_pen_note.note |= 16;	//Set the bit for lane 5
+				if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+					eof_pen_note.flags |= EOF_BEATABLE_NOTE_FLAG_LSNAP;	//In a BEATABLE track, also set the left snap flag
 			}
 			else
 			{
 				eof_pen_note.note &= (~16);	//Clear the bit for lane 5
+				eof_pen_note.flags &= ~EOF_BEATABLE_NOTE_FLAG_LSNAP;	//Clear the left snap flag
 			}
 			if(key[KEY_6] && (numlanes >= 6))
 			{	//Only allow use of the 6 key if lane 6 is available
@@ -2282,6 +2291,17 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			else
 			{
 				eof_pen_note.note &= (~32);	//Clear the bit for lane 6
+			}
+			if(key[KEY_7] && eof_track_is_beatable_mode(eof_song, eof_selected_track))
+			{	//In a BEATABLE track, allow a simulated lane 7 specifically for toggling right snap notes
+				eof_pen_note.note |= 16;	//Set the bit for lane 5
+				eof_pen_note.flags |= EOF_BEATABLE_NOTE_FLAG_RSNAP;	//Set the right snap flag
+			}
+			else
+			{
+				if(!key[KEY_5])
+					eof_pen_note.note &= ~16;	//If the 5 key isn't held either, clear the bit for lane 5
+				eof_pen_note.flags &= ~EOF_BEATABLE_NOTE_FLAG_RSNAP;	//Clear the right snap flag
 			}
 		}//If the input method is hold
 		else if(eof_input_mode == EOF_INPUT_CLASSIC)
@@ -2308,13 +2328,43 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 			if((eof_key_char == '5') && (numlanes >= 5))
 			{
-				eof_pen_note.note ^= 16;
+				if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+				{	//If the active track is a BEATABLE track
+					if(eof_pen_note.flags & EOF_BEATABLE_NOTE_FLAG_LSNAP)
+					{	//If the pen note was already set to place left snap notes
+						if(!(eof_pen_note.flags & EOF_BEATABLE_NOTE_FLAG_RSNAP))
+						{	//If the pen note is not also set to place right snap notes
+							eof_pen_note.note &= ~16;	//Clear the bit for lane 5, the left snap status will be toggled off below
+						}
+					}
+					else
+						eof_pen_note.note |= 16;	//Set the bit for lane 5
+
+					eof_pen_note.flags ^= EOF_BEATABLE_NOTE_FLAG_LSNAP;	//Toggle the left snap status
+				}
+				else
+					eof_pen_note.note ^= 16;
+
 				eof_use_key();
 			}
 			if((eof_key_char == '6') && (numlanes >= 6))
 			{	//Only allow use of the 6 key if lane 6 is available
 				eof_pen_note.note ^= 32;
 				eof_use_key();
+			}
+			if((eof_key_char == '7') && eof_track_is_beatable_mode(eof_song, eof_selected_track))
+			{	//In a BEATABLE track, allow a simulated lane 7 specifically for toggling right snap notes
+				if(eof_pen_note.flags & EOF_BEATABLE_NOTE_FLAG_RSNAP)
+				{	//If the pen note already was set to place right snap notes
+					if(!(eof_pen_note.flags & EOF_BEATABLE_NOTE_FLAG_LSNAP))
+					{	//If the pen note is not also set to place left snap notes
+						eof_pen_note.note &= ~16;	//Clear the bit for lane 5, the right snap status will be toggled off below
+					}
+				}
+				else
+					eof_pen_note.note |=16;		//Set the bit for lane 5
+
+				eof_pen_note.flags ^= EOF_BEATABLE_NOTE_FLAG_RSNAP;		//Toggle the right snap flag
 			}
 		}//If the input method is classic
 	}//If neither SHIFT nor CTRL are held and a non vocal track is active
@@ -2333,32 +2383,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos.value - eof_av_delay, notelen, eof_note_type, NULL);
-				if(new_note)
-				{
-					unsigned long newnotenum = eof_get_track_size(eof_song, eof_selected_track) - 1;
-					if(eof_mark_drums_as_cymbal)
-					{	//If the user opted to make all new drum notes cymbals automatically
-						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,newnotenum);
-					}
-					if(eof_mark_drums_as_double_bass)
-					{	//If the user opted to make all new expert bass drum notes as double bass automatically
-						eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,newnotenum);
-					}
-					if(eof_mark_drums_as_hi_hat)
-					{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-						eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,newnotenum);
-					}
-					if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
-					{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
-						eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
-					}
-					(void) eof_detect_difficulties(eof_song, eof_selected_track);
-					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-				}
 				eof_use_key();
 			}
 
-			/* otherwise allow length to be determined by key holding */
+			/* otherwise allow length to be determined by key holding during chart playback */
 			else
 			{
 				if(!eof_entering_note_note)
@@ -2366,28 +2394,52 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos.value - eof_av_delay, eof_snap.length, eof_note_type, NULL);
 					if(new_note)
 					{
-						if(eof_mark_drums_as_cymbal)
-						{	//If the user opted to make all new drum notes cymbals automatically
-							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
-						}
-						if(eof_mark_drums_as_double_bass)
-						{	//If the user opted to make all new expert bass drum notes as double bass automatically
-							eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
-						}
-						if(eof_mark_drums_as_hi_hat)
-						{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-							eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
-						}
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
-						(void) eof_detect_difficulties(eof_song, eof_selected_track);
-						eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 					}
 				}
 				else
 				{
 					eof_entering_note_note->length = (eof_music_pos.value - eof_av_delay) - eof_entering_note_note->pos - 10;
 				}
+			}
+			if(new_note)
+			{	//If a new note was created
+				unsigned long newnotenum = eof_get_track_size(eof_song, eof_selected_track) - 1;
+				if(eof_mark_drums_as_cymbal)
+				{	//If the user opted to make all new drum notes cymbals automatically
+					eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,newnotenum);
+				}
+				if(eof_mark_drums_as_double_bass)
+				{	//If the user opted to make all new expert bass drum notes as double bass automatically
+					eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,newnotenum);
+				}
+				if(eof_mark_drums_as_hi_hat)
+				{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
+					eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,newnotenum);
+				}
+				if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+				{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
+					eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
+				}
+				if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+				{	//If the track is a beatable track
+					eof_or_note_flags(eof_song, eof_selected_track, newnotenum, eof_pen_note.flags);	//Set any snap statuses the pen note had
+				}
+
+				eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, newnotenum);
+				eof_selection.range_pos_1 = eof_selection.current_pos;
+				eof_selection.range_pos_2 = eof_selection.current_pos;
+				eof_selection.track = eof_selected_track;
+				if(!eof_add_new_notes_to_selection)
+				{	//If the user didn't opt to prevent clearing the note selection when adding gems
+					memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+				}
+				eof_track_sort_notes(eof_song, eof_selected_track);
+				eof_selection.notemask = eof_pen_note.note;
+				eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
+				eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
+				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 			}
 		}
 	}//If the input method is classic or hold
@@ -2543,19 +2595,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{
 					new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
 					if(new_note)
-					{
-						if(eof_mark_drums_as_cymbal)
-						{	//If the user opted to make all new drum notes cymbals automatically
-							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
-						}
-						if(eof_mark_drums_as_double_bass)
-						{	//If the user opted to make all new expert bass drum notes as double bass automatically
-							eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
-						}
-						if(eof_mark_drums_as_hi_hat)
-						{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-							eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
-						}
+					{	///Don't bother processing auto drum statuses such as eof_mark_drums_as_cymbal, since this logic is explicitly not for drum tracks
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
 					}
@@ -2661,21 +2701,9 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 						eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_snote, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
 						if(new_note)
-						{
+						{	///Don't bother processing auto drum statuses such as eof_mark_drums_as_cymbal, since this logic is explicitly not for drum tracks
 							unsigned long notenum = eof_get_track_size(eof_song, eof_selected_track) - 1;	//The index of the new note
 
-							if(eof_mark_drums_as_cymbal)
-							{	//If the user opted to make all new drum notes cymbals automatically
-								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,notenum);
-							}
-							if(eof_mark_drums_as_double_bass)
-							{	//If the user opted to make all new expert bass drum notes as double bass automatically
-								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,notenum);
-							}
-							if(eof_mark_drums_as_hi_hat)
-							{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-								eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,notenum);
-							}
 							if(is_open)
 							{	//If the user open strummed while GHL mode is open, set the EOF_GUITAR_NOTE_FLAG_GHL_OPEN flag
 								eof_set_note_flags(eof_song, eof_selected_track, notenum, eof_get_note_flags(eof_song, eof_selected_track, notenum) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN);
@@ -3728,6 +3756,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		if(!KEY_EITHER_CTRL && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
 		{	//If CTRL is not held down and the input method is rex mundi or Feedback
 			int ghl_open = 0;	//Set to nonzero if the 7 key is used to place an open note in a GHL track
+			unsigned long beatable_statuses = 0;
 
 			eof_hover_piece = -1;
 			if((eof_scaled_mouse_x >= eof_fretboard_boundary_x1) && (eof_scaled_mouse_x <= eof_fretboard_boundary_x2) && (eof_scaled_mouse_y >= eof_fretboard_boundary_y1) && (eof_scaled_mouse_y <= eof_fretboard_boundary_y2))
@@ -3763,6 +3792,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					}
 					else if((eof_key_char == '5') && (numlanes >= 5) && !KEY_EITHER_SHIFT)
 					{
+						if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+						{	//If the track is a beatable track
+							beatable_statuses = EOF_BEATABLE_NOTE_FLAG_LSNAP;	//Toggling left snap
+						}
 						bitmask = 16;
 						eof_use_key();
 					}
@@ -3771,11 +3804,20 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 						bitmask = 32;
 						eof_use_key();
 					}
-					else if((eof_key_char == '7') && eof_track_is_ghl_mode(eof_song, eof_selected_track))
+					else if(eof_key_char == '7')
 					{
-						bitmask = 32;	//Open notes will be written on lane 6
-						eof_use_key();
-						ghl_open = 1;
+						if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+						{	//If the track is a beatable track
+							beatable_statuses = EOF_BEATABLE_NOTE_FLAG_RSNAP;	//Toggling right snap
+							bitmask = 16;
+							eof_use_key();
+						}
+						else if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+						{	//If the track is a GHL track
+							bitmask = 32;	//Open notes will be written on lane 6
+							eof_use_key();
+							ghl_open = 1;
+						}
 					}
 
 					if(bitmask)
@@ -3809,8 +3851,14 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 								{	//If a lane 6 note (black 3 in a GHL track, open strum in a non GHL track) is being toggled on/off
 									if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, effective_hover_note))
 									{	//Otherwise 6 will convert an open strum GHL note to a lane 6 note
-										eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag, the note will be toggled off
-										eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace the old note
+										if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
+										{	//In a GHL mode track, 6 will convert an open strum GHL note to a lane 6 note
+											eof_song->legacy_track[tracknum]->note[effective_hover_note]->flags &= ~EOF_GUITAR_NOTE_FLAG_GHL_OPEN;	//Clear the GHL open note flag, the note will be toggled off
+											eof_song->legacy_track[tracknum]->note[effective_hover_note]->note = 0;	//Clear all lanes, the open note will replace the old note
+										}
+										else
+										{	//Otherwise it will just cause the note to be toggled off below
+										}
 									}
 								}
 								else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, effective_hover_note))
@@ -3829,7 +3877,19 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 							else
 							{	//Otherwise alter the note's normal bitmask
 								note = eof_get_note_note(eof_song, eof_selected_track, effective_hover_note);
-								note ^= bitmask;
+								if(eof_track_is_beatable_mode(eof_song, eof_selected_track) && ((note & 16) && (bitmask & 16)))
+								{	//If the track is a beatable track and a snap note is being toggled on/off
+									unsigned long flags = eof_get_note_flags(eof_song, eof_selected_track, effective_hover_note);
+
+									flags ^= beatable_statuses;	//Toggle the applicable snap status
+									if(!(flags & (EOF_BEATABLE_NOTE_FLAG_LSNAP | EOF_BEATABLE_NOTE_FLAG_RSNAP)))
+									{	//If the existing note no longer has left or right snap status
+										note ^= 16;	//Toggle the snap gem off
+									}
+								}
+								else	//Otherwise toggle the gem normally
+									note ^= bitmask;
+
 								if(note == 0)
 								{	//If the note will have all lanes cleared, delete applicable tech notes
 									eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, effective_hover_note);
@@ -3847,6 +3907,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 							if(eof_mark_drums_as_hi_hat)
 							{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
 								eof_mark_edited_note_as_special_hi_hat(eof_song,eof_selected_track,effective_hover_note,bitmask);	//Only apply this status to a new drum gem that was added
+							}
+							if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+							{	//If the track is a beatable track
+								eof_or_note_flags(eof_song, eof_selected_track, effective_hover_note, beatable_statuses);
 							}
 							eof_selection.current = effective_hover_note;
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -3924,6 +3988,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 								if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 								{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
 									eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
+								}
+								if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+								{	//If the track is a beatable track
+									eof_or_note_flags(eof_song, eof_selected_track, newnotenum, beatable_statuses);	//Set any snap statuses the pen note had
 								}
 								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, newnotenum);	//Get the position of the last note that was added
 								eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -4382,10 +4450,15 @@ void eof_editor_logic(void)
 					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 					{	//If legacy view is in effect, set the pen note to the legacy mask
 						eof_pen_note.note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
+						eof_pen_note.flags = 0;
 					}
 					else
 					{	//Otherwise set it to the note's normal bitmask
 						eof_pen_note.note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
+						if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+							eof_pen_note.flags = eof_get_note_flags(eof_song, eof_selected_track, eof_hover_note);	//For BEATABLE tracks, allow the pen note to inherit the hover note's snap statuses
+						else
+							eof_pen_note.flags = 0;
 					}
 					eof_pen_note.length = eof_get_note_length(eof_song, eof_selected_track, eof_hover_note);
 					if(!eof_mouse_drug)
@@ -4399,6 +4472,7 @@ void eof_editor_logic(void)
 					if((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK))
 					{
 						eof_pen_note.note = 0;
+						eof_pen_note.flags = 0;	//Clear flags in case a BEATABLE track is being authored
 					}
 					/* calculate piece for piano roll mode */
 					else if(eof_input_mode == EOF_INPUT_PIANO_ROLL)
@@ -4886,7 +4960,21 @@ void eof_editor_logic(void)
 								}
 
 								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);	//Examine the hover note
-								note ^= bitmask;	//as it would look by toggling the pen note's gem
+								if(eof_track_is_beatable_mode(eof_song, eof_selected_track) && ((note & 16) && (bitmask & 16)))
+								{	//If the track is a beatable track and a snap note is being toggled on/off
+									unsigned long flags = eof_get_note_flags(eof_song, eof_selected_track, eof_hover_note);
+
+									flags ^= eof_pen_note.flags;	//Toggle the applicable snap status
+									eof_set_note_flags(eof_song, eof_selected_track, eof_hover_note, flags);
+									if(!(flags & (EOF_BEATABLE_NOTE_FLAG_LSNAP | EOF_BEATABLE_NOTE_FLAG_RSNAP)))
+									{	//If the existing note no longer has left or right snap status
+										note ^= 16;	//Toggle the snap gem off
+									}
+									bitmask = 0;	//Trigger the logic below to update the note bitmask, which won't remove the gem unless it has neither left nor right snap status
+								}
+								else	//Otherwise toggle the gem normally
+									note ^= bitmask;
+
 								if(note == 0)
 								{	//If the note just had all lanes cleared, delete the note
 									eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, eof_hover_note);
@@ -4922,6 +5010,10 @@ void eof_editor_logic(void)
 										if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 										{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
 											eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
+										}
+										if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+										{	//If the track is a beatable track
+											eof_or_note_flags(eof_song, eof_selected_track, newnotenum, eof_pen_note.flags);	//Set any snap statuses the pen note had
 										}
 										eof_track_sort_notes(eof_song, eof_selected_track);
 									}
@@ -4973,6 +5065,10 @@ void eof_editor_logic(void)
 							if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 							{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
 								eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
+							}
+							if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+							{	//If the track is a beatable track
+								eof_or_note_flags(eof_song, eof_selected_track, newnotenum, eof_pen_note.flags);	//Set any snap statuses the pen note had
 							}
 							eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
 							eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -7279,7 +7375,10 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 				}
 				else
 				{
-					tab_name = eof_note_type_name[i];
+					if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+						tab_name = eof_beatable_tab_name[i];
+					else
+						tab_name = eof_note_type_name[i];
 				}
 				(void) snprintf(tab_text, sizeof(tab_text) - 1, "%s", tab_name);	//Copy the difficulty name to the string
 				diffnum = i;	//The difficulty number is the same as the tab number
