@@ -520,4 +520,11 @@ int eof_menu_note_lyric_line_repair_timing(void);
 	//For each lyric line for which at least one of its lyrics (whether it starts outside of all lyric lines but ends inside one, or begins inside one) are selected,
 	// alters the line's start and end positions to match the start and end positions of its lyrics
 
+int eof_menu_pro_guitar_toggle_beatable_snap_status(unsigned long toggleflags);
+	//Toggles the specified status flags for selected notes
+	//For those that end up with neither EOF_BEATABLE_NOTE_FLAG_LSNAP nor EOF_BEATABLE_NOTE_FLAG_RSNAP, they are deleted
+	//For those that end up with either EOF_BEATABLE_NOTE_FLAG_LSNAP nor EOF_BEATABLE_NOTE_FLAG_RSNAP, lane 5 is ensured to have a gem
+int eof_menu_pro_guitar_toggle_beatable_lsnap(void);		//Calls eof_menu_pro_guitar_toggle_beatable_snap_status() with left snap status
+int eof_menu_pro_guitar_toggle_beatable_rsnap(void);	//Calls eof_menu_pro_guitar_toggle_beatable_snap_status() with right snap status
+
 #endif

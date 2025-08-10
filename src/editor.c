@@ -1027,7 +1027,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	}
 
 	/* rewind (R) */
-	/* resnap to this grid (CTRL+SHIFT+R) */
+	/* resnap to this grid (SHIFT+R) */
 	/* resnap auto (ALT+R) */
 	if(eof_key_char == 'r')
 	{
@@ -1036,8 +1036,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			(void) eof_menu_song_seek_rewind();
 			eof_use_key();
 		}
-		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-		{	//If both CTRL and SHIFT are held
+		else if(!KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{	//If CTRL is not held but SHIFT is held
 			(void) eof_menu_note_resnap();
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_use_key();
@@ -2940,6 +2940,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* precise select like (SHIFT+L) */
 	/* edit lyric (L in PART VOCALS) */
 	/* set slide end fret (CTRL+SHIFT+L in a pro guitar track) */
+	/* toggle beatable left snap (CTRL+SHIFT+L in a beatable track) */
 		if(eof_key_char == 'l')
 		{
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
@@ -2967,6 +2968,15 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//Both SHIFT and CTRL are held
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					(void) eof_pro_guitar_note_slide_end_fret_save();
+					eof_use_key();
+				}
+			}
+			else if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+			{	//If the active track is a BEATABLE track
+				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+				{	//Both SHIFT and CTRL are held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_menu_pro_guitar_toggle_beatable_lsnap();
 					eof_use_key();
 				}
 			}
@@ -3139,12 +3149,25 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* toggle rim shot (SHIFT+R) */
-		if((eof_key_char == 'r') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+	/* toggle rim shot (CTRL+SHIFT+R in the Phase Shift drum track) */
+	/* toggle beatable right snap (CTRL+SHIFT+R in a BEATABLE track) */
+		if((eof_key_char == 'r') && KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			(void) eof_menu_note_toggle_rimshot();
-			eof_use_key();
+			if(eof_selected_track == EOF_TRACK_DRUM_PS)
+			{	//If the Phase Shift drum track is active
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_note_toggle_rimshot();
+				eof_use_key();
+			}
+			else if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+			{	//If the active track is a BEATABLE track
+				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+				{	//Both SHIFT and CTRL are held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_menu_pro_guitar_toggle_beatable_rsnap();
+					eof_use_key();
+				}
+			}
 		}
 
 	/* mark/remark slider (SHIFT+S, in a five lane guitar/bass track) */
@@ -3883,7 +3906,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 									flags ^= beatable_statuses;	//Toggle the applicable snap status
 									if(!(flags & (EOF_BEATABLE_NOTE_FLAG_LSNAP | EOF_BEATABLE_NOTE_FLAG_RSNAP)))
-									{	//If the existing note no longer has left or right snap status
+									{	//If the existing note will no longer has left or right snap status
 										note ^= 16;	//Toggle the snap gem off
 									}
 								}
@@ -3910,7 +3933,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 							}
 							if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
 							{	//If the track is a beatable track
-								eof_or_note_flags(eof_song, eof_selected_track, effective_hover_note, beatable_statuses);
+								eof_xor_note_flags(eof_song, eof_selected_track, effective_hover_note, beatable_statuses);		//Toggle the pen note's snap statuses
 							}
 							eof_selection.current = effective_hover_note;
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))

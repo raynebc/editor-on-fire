@@ -714,6 +714,7 @@ void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, 
 unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Redefines the flags of the specified track's note/lyric
 void eof_or_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets (logical OR) the specified flags of the specified track's note/lyric
+void eof_xor_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Toggles (exclusive OR) the specified flags of the specified track's note/lyric
 unsigned long eof_get_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the temporary flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_tflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long tflags);	//Sets the temporary flags of the specified track's note/lyric
 unsigned long eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the extended flags of the specified pro guitar note, or 0 on error

@@ -410,7 +410,7 @@ MENU eof_note_drum_menu[] =
 	{"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
 	{"Remove &Hi hat status", eof_menu_note_remove_hi_hat_status, NULL, 0, NULL},
 	{"&Mark new Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
-	{"Toggle R note as rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
+	{"Toggle R note as rim shot\t" CTRL_NAME "+Shift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
 	{"Remove &Rim shot status", eof_menu_note_remove_rimshot, NULL, 0, NULL},
 	{"Toggle &Y cymbal+tom\t" CTRL_NAME "+ALT+Y", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
 	{"Toggle &B cymbal+tom\t" CTRL_NAME "+ALT+B", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
@@ -497,6 +497,13 @@ MENU eof_note_rocksmith_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_beatable_menu[] =
+{
+	{"Toggle &Left snap\t" CTRL_NAME "+Shift+L", eof_menu_pro_guitar_toggle_beatable_lsnap, NULL, 0, NULL},
+	{"Toggle &Right snap\t" CTRL_NAME "+Shift+R", eof_menu_pro_guitar_toggle_beatable_rsnap, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_lyrics_menu[] =
 {
 	{"&Edit Lyric\tL", eof_edit_lyric_dialog, NULL, 0, NULL},
@@ -551,7 +558,7 @@ MENU eof_note_move_grid_snap_menu[] =
 
 MENU eof_note_grid_snap_menu[] =
 {
-	{"&Resnap to this grid\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
+	{"&Resnap to this grid\tShift+R", eof_menu_note_resnap, NULL, 0, NULL},
 	{"Resnap &Auto\tALT+R", eof_menu_note_resnap_auto, NULL, 0, NULL},
 	{"&Move grid snap", NULL, eof_note_move_grid_snap_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -623,6 +630,7 @@ MENU eof_note_menu[] =
 	{"&Drum", NULL, eof_note_drum_menu, 0, NULL},
 	{"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_note_rocksmith_menu, 0, NULL},
+	{"&BEATABLE", NULL, eof_note_beatable_menu, 0, NULL},
 	{"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
 	{"Re&Flect", NULL, eof_note_reflect_menu, 0, NULL},
 	{"&Clone Hero", NULL, eof_note_clone_hero_menu, 0, NULL},
@@ -1057,10 +1065,10 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[16].flags = D_DISABLED | D_HIDDEN;	//Note>Drum> submenu
 			eof_note_menu[17].flags = D_DISABLED | D_HIDDEN;	//Note>Pro Guitar> submenu
 			eof_note_menu[18].flags = D_DISABLED | D_HIDDEN;	//Note>Rocksmith> submenu
-			eof_note_menu[20].flags = D_DISABLED | D_HIDDEN;	//Note>Reflect> submenu
-			eof_note_menu[22].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify> submenu
+			eof_note_menu[21].flags = D_DISABLED | D_HIDDEN;	//Note>Reflect> submenu
+			eof_note_menu[23].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify> submenu
 
-			eof_note_menu[19].flags = 0;	//Note>Lyrics> submenu
+			eof_note_menu[20].flags = 0;	//Note>Lyrics> submenu
 			if((eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (vselected == 1))
 			{	//Only enable edit and split lyric if only one lyric is selected
 				eof_note_lyrics_menu[0].flags = 0;	//Note>Lyrics>Edit Lyric
@@ -1108,10 +1116,10 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[9].flags = 0;		//Note>Edit Name
 			eof_note_menu[12].flags = 0;		//Note>Trill> submenu
 			eof_note_menu[13].flags = 0;		//Note>Tremolo> submenu
-			eof_note_menu[20].flags = 0;		//Note>Reflect> submenu
-			eof_note_menu[22].flags = 0;		//Note>Simplify> submenu
+			eof_note_menu[21].flags = 0;		//Note>Reflect> submenu
+			eof_note_menu[23].flags = 0;		//Note>Simplify> submenu
 
-			eof_note_menu[19].flags = D_DISABLED | D_HIDDEN;	//Note>Lyrics> submenu
+			eof_note_menu[20].flags = D_DISABLED | D_HIDDEN;	//Note>Lyrics> submenu
 
 			/* toggle crazy */
 			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
@@ -1362,6 +1370,11 @@ void eof_prepare_note_menu(void)
 			}
 		}//PART VOCALS NOT SELECTED
 
+		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+			eof_note_menu[19].flags = 0;		//Note>BEATABLE> submenu
+		else
+			eof_note_menu[19].flags = D_DISABLED | D_HIDDEN;
+
 		/* transpose up */
 		if(eof_transpose_possible(-1))
 		{
@@ -1389,7 +1402,7 @@ void eof_prepare_note_menu(void)
 		/* Note>Clone Hero */
 		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS))
 		{	//If a legacy guitar or the keys track is active
-			eof_note_menu[21].flags = 0;	//Note>Clone Hero>
+			eof_note_menu[22].flags = 0;	//Note>Clone Hero>
 
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 			{	//If GHL mode is enabled
@@ -1404,7 +1417,7 @@ void eof_prepare_note_menu(void)
 		}
 		else
 		{	//Otherwise disable and hide this menu
-			eof_note_menu[21].flags = D_DISABLED | D_HIDDEN;	//Note>Clone Hero>
+			eof_note_menu[22].flags = D_DISABLED | D_HIDDEN;	//Note>Clone Hero>
 		}
 
 		if(eof_create_filtered_menu(eof_note_menu, eof_filtered_note_menu, EOF_SCRATCH_MENU_SIZE))
@@ -1427,11 +1440,11 @@ void eof_prepare_note_menu(void)
 		}
 		if(eof_create_filtered_menu(eof_note_simplify_menu, eof_filtered_note_simplify_menu, EOF_SCRATCH_MENU_SIZE))
 		{	//If the Note>Simplify menu was recreated to filter out hidden items
-			eof_note_menu[22].child = eof_filtered_note_simplify_menu;	//Use this in the Note menu
+			eof_note_menu[23].child = eof_filtered_note_simplify_menu;	//Use this in the Note menu
 		}
 		else
 		{	//Otherwise use the unabridged Note>Simplify menu
-			eof_note_menu[22].child = eof_note_simplify_menu;
+			eof_note_menu[23].child = eof_note_simplify_menu;
 		}
 	}//if(eof_song && eof_song_loaded)
 }
@@ -11583,4 +11596,59 @@ int eof_menu_note_lyric_line_repair_timing(void)
 	}
 
 	return 1;
+}
+
+int eof_menu_pro_guitar_toggle_beatable_snap_status(unsigned long toggleflags)
+{
+	unsigned long i;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	unsigned long flags, note;
+	int note_selection_updated;
+
+	if(!eof_track_is_beatable_mode(eof_song, eof_selected_track))
+		return 1;	//Do not allow this function to run unless a BEATABLE track is active
+
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	if((eof_count_selected_and_unselected_notes(NULL) > 0))
+	{
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+				continue;	//If the note isn't selected, skip it
+
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			eof_xor_note_flags(eof_song, eof_selected_track, i, toggleflags);	//Toggle the provided flag
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			note = eof_get_note_note(eof_song, eof_selected_track, i);
+			if((note & 16) && !(flags & (EOF_BEATABLE_NOTE_FLAG_LSNAP | EOF_BEATABLE_NOTE_FLAG_RSNAP)))
+			{	//If this note has a gem on lane 5 note and it no longer has either left or right snap status
+				note &= ~16;		//Clear the bit for lane 5
+				eof_set_note_note(eof_song, eof_selected_track, i, note);
+			}
+			else
+			{	//Otherwise at least one snap status is present, ensure a gem is present on lane 5
+				eof_set_note_note(eof_song, eof_selected_track, i, note | 16);
+			}
+		}
+	}
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to ensure notes with all lanes clear are deleted
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_pro_guitar_toggle_beatable_lsnap(void)
+{
+	return eof_menu_pro_guitar_toggle_beatable_snap_status(EOF_BEATABLE_NOTE_FLAG_LSNAP);
+}
+
+int eof_menu_pro_guitar_toggle_beatable_rsnap(void)
+{
+	return eof_menu_pro_guitar_toggle_beatable_snap_status(EOF_BEATABLE_NOTE_FLAG_RSNAP);
 }

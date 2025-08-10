@@ -6855,8 +6855,42 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 
 void eof_or_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags)
 {
-// 	eof_log("eof_set_note_flags() entered");
+	unsigned long tracknum;
 
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->flags |= flags;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				sp->vocal_track[tracknum]->lyric[note]->flags |= flags;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				sp->pro_guitar_track[tracknum]->note[note]->flags |= flags;
+			}
+		break;
+
+		default:
+		break;
+	}
+}
+
+void eof_xor_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags)
+{
 	unsigned long tracknum;
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
