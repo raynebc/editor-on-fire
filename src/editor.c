@@ -919,8 +919,7 @@ if(eof_key_code == KEY_PAUSE)
 	if(eof_song_loaded)
 	{
 		#include "beatable.h"
-		(void) append_filename(eof_temp_filename, eof_song_path, "song.beats", (int) sizeof(eof_temp_filename));
-		eof_export_beatable(eof_song, eof_selected_track, eof_temp_filename);
+		(void) eof_validate_beatable_file(NULL);
 	}
 }
 ///ALT handling testing

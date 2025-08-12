@@ -61,6 +61,7 @@ int eof_menu_file_export_guitar_pro(void);		//Calls the third party RocksmithToT
 int eof_menu_file_export_song_preview(void);
 	//Allows the user to define a portion of the chart audio to export to preview.wav and preview.ogg in the project folder
 int eof_menu_file_export_immerrock_track_diff(void);	//Exports the active pro guitar track difficulty to IMMERROCK format using eof_export_immerrock_diff()
+int eof_menu_file_export_beatable_track(void);	//Exports the active BEATABLE track using eof_export_beatable()
 int eof_menu_file_midi_import(void);
 int eof_menu_file_drums_rock_import(void);
 int eof_menu_file_settings(void);

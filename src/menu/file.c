@@ -2,13 +2,13 @@
 #include <ctype.h>
 #include <time.h>
 #include "../agup/agup.h"
-#include "../main.h"
 #include "../foflc/Lyric_storage.h"
 #include "../foflc/ID3_parse.h"
 #include "../foflc/RS_parse.h"	//For XML parsing functions
 #include "../gh_import.h"
 #include "../gp_import.h"
 #include "../dialog/proc.h"
+#include "../beatable.h"
 #include "../bf.h"
 #include "../bf_import.h"
 #include "../chart_import.h"
@@ -119,6 +119,7 @@ MENU eof_file_export_menu[] =
 	{"Image &Sequence", eof_write_image_sequence, NULL, 0, NULL},
 	{"&Preview audio", eof_menu_file_export_song_preview, NULL, 0, NULL},
 	{"&IMMERROCK", eof_menu_file_export_immerrock_track_diff, NULL, 0, NULL},
+	{"&BEATABLE", eof_menu_file_export_beatable_track, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -466,6 +467,11 @@ void eof_prepare_file_menu(void)
 			eof_file_export_menu[5].flags = D_DISABLED;
 		}
 		eof_file_display_menu[5].flags = 0;	//Benchmark image sequence
+
+		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+			eof_file_export_menu[6].flags = 0;	//File>Export>BEATABLE
+		else
+			eof_file_export_menu[6].flags = D_DISABLED;
 	}
 	else
 	{
@@ -6943,6 +6949,44 @@ int eof_menu_file_export_immerrock_track_diff(void)
 	}
 	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
 	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, eof_note_type, eof_temp_filename, 1);
+
+	return 1;
+}
+
+int eof_menu_file_export_beatable_track(void)
+{
+	char temp_string[1024], temp_filename2[1024];
+
+	eof_log("eof_menu_file_export_beatable_track() entered", 1);
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || !eof_track_is_beatable_mode(eof_song, eof_selected_track))
+		return 0;
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tExporting track:  %s", eof_song->track[eof_selected_track]->name);
+	eof_log(eof_log_string, 1);
+
+	//Build the export file name
+	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+	temp_string[0] = '\0';	//Empty this string
+	if(eof_check_string(eof_song->tags->artist))
+	{	//If the artist of the song is defined
+		(void) ustrcat(temp_string, eof_song->tags->artist);
+	}
+	if(temp_string[0] != '\0')
+		(void) ustrcat(temp_string, " - ");
+	if(eof_check_string(eof_song->tags->title))
+	{	//If the title of the song is defined
+		(void) ustrcat(temp_string, eof_song->tags->title);
+	}
+	else
+	{
+		(void) ustrcat(temp_string, "song");
+	}
+	(void) ustrcat(temp_string, ".beats");
+	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
+	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
+
+	eof_export_beatable(eof_song, eof_selected_track, eof_temp_filename);
 
 	return 1;
 }

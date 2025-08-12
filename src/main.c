@@ -99,6 +99,7 @@ NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_bf_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_note_panel_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_array_txt_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_beatable_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -4724,6 +4725,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_array_txt_files, "txt", "Queen Bee array text (*.txt)", 1);
 
+	eof_filter_beatable_files = ncdfs_filter_list_create();
+	if(!eof_filter_beatable_files)
+	{
+		allegro_message("Could not create file list filter (*.beats)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_beatable_files, "beats", "BEATABLE (*.beats)", 1);
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -5274,6 +5283,8 @@ void eof_exit(void)
 		free(eof_filter_note_panel_files);
 	if(eof_filter_array_txt_files)
 		free(eof_filter_array_txt_files);
+	if(eof_filter_beatable_files)
+		free(eof_filter_beatable_files);
 	if(eof_os_clipboard)
 		free(eof_os_clipboard);
 

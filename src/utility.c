@@ -973,3 +973,32 @@ int eof_set_clipboard(char *text)
 		return retval;
 	#endif
 }
+
+unsigned long eof_pack_read_vlv(PACKFILE *fp, unsigned long *byte_counter)
+{
+	unsigned long value = 0;
+	int byte;
+
+	if(!fp)
+		return ULONG_MAX;
+
+	byte = pack_getc(fp);
+	if(byte_counter)
+		*byte_counter = *byte_counter + 1;
+	if(byte == EOF)
+		return ULONG_MAX;
+	value = byte & 0x7F;
+
+	while(byte & 0x80)
+	{
+		value <<= 7;
+		byte = pack_getc(fp);
+		if(byte_counter)
+			*byte_counter = *byte_counter + 1;
+		if(byte == EOF)
+			return ULONG_MAX;
+		value += (byte & 0x7F);
+	}
+
+	return value;
+}

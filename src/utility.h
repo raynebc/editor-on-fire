@@ -86,4 +86,8 @@ int eof_set_clipboard(char *text);
 	//In Windows, then attempts to write the specified text to the OS clipboard
 	//Returns nonzero on error
 
+unsigned long eof_pack_read_vlv(PACKFILE *fp, unsigned long *byte_counter);
+	//Reads and returns a variable length value from the specified PACKFILE handle, returns ULONG_MAX on error
+	//If byte_counter is not NULL, it is incremented for each byte that is read from the PACKFILE
+
 #endif
