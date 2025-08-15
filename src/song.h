@@ -100,6 +100,7 @@
 //The following temporary flags are maintained internally and do not save to file (even during project save, clipboard, auto-adjust, etc.)
 #define EOF_NOTE_TFLAG_TEMP             1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
 #define EOF_NOTE_TFLAG_IGNORE           2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
+#define EOF_NOTE_TFLAG_CHAINLINK      2	//	The flag is used to mark a note that is identified as a link in a hold note chain, to avoid notes being exported multiple times during BEATABLE export
 #define EOF_NOTE_TFLAG_ARP              4	//This flag will represent a note that is within an arpeggio, for RS export of arpeggio/handshape phrases as handshape tags
 #define EOF_NOTE_TFLAG_HAND             8	//This flag will represent a note that is within a handshape phrase, which is treated as a variation of an arpeggio, affecting export to RS2 XML
 #define EOF_NOTE_TFLAG_ARP_FIRST       16	//This flag will represent a note that is the first note within its arpeggio phrase

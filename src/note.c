@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "modules/ocd3d.h"
 #include "main.h"
+#include "beatable.h"
 #include "bf.h"	//For eof_pro_guitar_note_lookup_string_fingering() to display finger-specific gem colors in the Bandfuse color set
 #include "dr.h"
 #include "note.h"
@@ -2413,6 +2414,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 				buffer[index++] = 'L';
 				buffer[index++] = ')';
 			}
+		}
+		else if(eof_fixup_next_beatable_link(eof_song, track, note) < ULONG_MAX)
+		{	//If the note is a hold note that links to the next note on that lane
+			buffer[index++] = 'g';	//In the symbols font, g is the linknext indicator
 		}
 	}
 	else

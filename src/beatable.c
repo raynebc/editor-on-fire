@@ -38,7 +38,7 @@ void eof_write_beatable_song_section(PACKFILE *fp, unsigned char tsnum, unsigned
 
 int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 {
-	unsigned long ctr, notecount, ulong, diff;
+	unsigned long ctr, ctr2, notecount, ulong, diff, holdnotedatacollection, chaincount, chainend, linkcount, start, end, note;
 	unsigned char bitmask;
 	PACKFILE *fp;
 	float fval;
@@ -182,7 +182,7 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 		(void) pack_iputl(notecount, fp);		//Write the number of tap notes for this difficulty
 		for(ctr = notecount = 0; ctr < eof_get_track_size(sp, track); ctr++)
 		{	//For each note in the track
-			unsigned long note = eof_get_note_note(sp, track, ctr);
+			note = eof_get_note_note(sp, track, ctr);
 			if((eof_get_note_type(sp, track, ctr) == diff) && (eof_get_note_length(sp, track, ctr) == 1) && (note & 15))
 			{	//If this note is in the target difficulty, has no sustain and has any gems on lanes 1 through 4
 				(void) pack_putc(0, fp);	//Write the deprecated IsOffBeat value
@@ -203,8 +203,106 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 			}
 		}
 
-		///Write empty hold note data for now
-		(void) pack_iputl(0, fp);	//Write the number of hold notes for this difficulty
+		//Write hold note data collections
+		(void) pack_iputl(4, fp);		//There is always a hold note collection written for each lane if any at all
+		for(holdnotedatacollection = 0; holdnotedatacollection < 4; holdnotedatacollection++)
+		{	//For each of the four hold note data collections, each of which is the collection of all hold/slide notes begin on that particular lane (L2, L1, R1, R2)
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tWriting hold note data collection %lu", holdnotedatacollection);
+			eof_log(eof_log_string, 1);
+			//Count hold note chains for this collection
+			for(ctr = chaincount = 0; ctr < eof_get_track_size(sp, track); ctr++)
+			{	//For each note in the track
+				if(eof_get_note_note(sp, track, ctr) & (1 << holdnotedatacollection))
+				{	//If the note has a gem on this hold note data collection's lane
+					if(!(eof_get_note_tflags(sp, track, ctr) & EOF_NOTE_TFLAG_CHAINLINK) && (eof_get_note_type(sp, track, ctr) == diff) && (eof_get_note_length(sp, track, ctr) > 1))
+					{	//If this note wasn't already counted as a link in a hold note chain, is in the target difficulty and has sustain
+						chaincount++;	//This represents the start of a hold note chain
+						for(ctr2 = eof_fixup_next_beatable_link(sp, track, ctr); ctr2 < eof_get_track_size(sp, track); ctr2 =  eof_fixup_next_beatable_link(sp, track, ctr2))
+						{	//For all remaining hold notes in this hold note chain
+							eof_set_note_tflags(sp, track, ctr2, eof_get_note_tflags(sp, track, ctr2) | EOF_NOTE_TFLAG_CHAINLINK);	//Mark the note as being a link in a hold note chain
+						}
+					}
+				}
+			}
+
+			//Write hold note chains for this collection
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tWriting %lu hold note chains", chaincount);
+			eof_log(eof_log_string, 1);
+			(void) pack_iputl(chaincount, fp);		//Write the number of hold note chainsfor this difficulty
+			for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+			{	//For each note in the track
+				if(eof_get_note_note(sp, track, ctr) & (1 << holdnotedatacollection))
+				{	//If the note has a gem on this hold note data collection's lane
+					if(!(eof_get_note_tflags(sp, track, ctr) & EOF_NOTE_TFLAG_CHAINLINK) && (eof_get_note_type(sp, track, ctr) == diff) && (eof_get_note_length(sp, track, ctr) > 1))
+					{	//If this note wasn't already counted as a link in a hold note chain, is in the target difficulty and has sustain
+						chainend = ctr;	//Track the last note in this hold note chain
+						start = eof_get_note_pos(sp, track, ctr);
+						(void) pack_iputl(start * 1000, fp);	//This note is the start of a hold note chain, write its timestamp
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tStart:  %lu microseconds (%.3f seconds)", start, (double)start / 1000000.0);
+						eof_log(eof_log_string, 1);
+
+						//Count the number of remaining links in this hold note chain
+						for(ctr2 = eof_fixup_next_beatable_link(sp, track, ctr), linkcount = 0; ctr2 < eof_get_track_size(sp, track); ctr2 =  eof_fixup_next_beatable_link(sp, track, ctr2))
+						{	//For all remaining hold notes in this hold note chain
+							linkcount++;
+						}
+						linkcount++;	//Count one more to define the end position of the hold note chain, since in EOF there is no gem placed at the end position
+
+						//Write the timestamps for the remaining linked hold notes in this chain
+						(void) pack_iputl(linkcount, fp);		//Write the number of timestamps
+						for(ctr2 = eof_fixup_next_beatable_link(sp, track, ctr); ctr2 < eof_get_track_size(sp, track); ctr2 =  eof_fixup_next_beatable_link(sp, track, ctr2))
+						{	//For all remaining hold notes in this hold note chain
+							chainend = ctr2;	//Track the last note in this hold note chain
+							start = eof_get_note_pos(sp, track, ctr2);
+							(void) pack_iputl(start * 1000, fp);	//This note is the start of a hold note chain, write its timestamp
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Pos:  %lu microseconds (%.3f seconds)", ctr2, start, (double)start / 1000000.0);
+							eof_log(eof_log_string, 1);
+						}
+						//Append a timestamp to reflect the end position of the last note in this chain
+						end = eof_get_note_pos(sp, track, chainend) + eof_get_note_length(sp, track, chainend);
+						(void) pack_iputl(end * 1000, fp);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Pos:  %lu microseconds (%.3f seconds)", ctr2, end, (double)end / 1000000.0);
+						eof_log(eof_log_string, 1);
+
+						//Write the lane bitmasks for the remaining linked hold notes in this chain
+						(void) pack_iputl(linkcount, fp);		//Write the number of lane bitmasks
+						for(ctr2 = eof_fixup_next_beatable_link(sp, track, ctr); ctr2 < eof_get_track_size(sp, track); ctr2 =  eof_fixup_next_beatable_link(sp, track, ctr2))
+						{	//For all remaining hold notes in this hold note chain
+							//Remap the EOF note bitmask to BEATABLE's system
+							bitmask = 0;
+							note = eof_get_note_note(sp, track, ctr2);
+							if(note & 1)
+								bitmask |= 8;	//EOF lane 1 to BEATABLE L2 note
+							if(note & 2)
+								bitmask |= 4;	//EOF lane 2 to BEATABLE L1 note
+							if(note & 4)
+								bitmask |= 2;	//EOF lane 3 to BEATABLE R1 note
+							if(note & 8)
+								bitmask |= 1;	//EOF lane 4 to BEATABLE R2 note
+
+							(void) pack_putc(bitmask, fp);	//Write the lane bitmask
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Bitmask:  %u", ctr2, bitmask);
+							eof_log(eof_log_string, 1);
+						}
+						//Append a lane bitmask to reflect the end of the last note in this chain
+						bitmask = 0;
+						note = eof_get_note_note(sp, track, chainend);
+						if(note & 1)
+							bitmask |= 8;	//EOF lane 1 to BEATABLE L2 note
+						if(note & 2)
+							bitmask |= 4;	//EOF lane 2 to BEATABLE L1 note
+						if(note & 4)
+							bitmask |= 2;	//EOF lane 3 to BEATABLE R1 note
+						if(note & 8)
+							bitmask |= 1;	//EOF lane 4 to BEATABLE R2 note
+
+						(void) pack_putc(bitmask, fp);	//Write the lane bitmask
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Bitmask:  %u", ctr2, bitmask);
+						eof_log(eof_log_string, 1);
+					}
+				}
+			}//For each note in the track
+		}//For each of the four hold note data collections
 
 		//Count left snap notes
 		for(ctr = notecount = 0; ctr < eof_get_track_size(sp, track); ctr++)
@@ -268,6 +366,11 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 	}//For each of the usable difficulty levels
 
 	//Cleanup
+	//Clear EOF_NOTE_TFLAG_CHAINLINK flag set during hold note processing
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{
+		eof_set_note_tflags(sp, track, ctr, eof_get_note_tflags(sp, track, ctr) & ~EOF_NOTE_TFLAG_CHAINLINK);	//Clear just this temporary flag
+	}
 	eof_log("\tBEATABLE export completed", 1);
 	(void) pack_fclose(fp);
 	if(!eof_validate_beatable_file(fn))
@@ -702,4 +805,41 @@ int eof_validate_beatable_file(char *fn)
 	(void) pack_fclose(fp);
 	eof_log("\tValidation successful.", 1);
 	return 1;	//Success
+}
+
+unsigned long eof_fixup_next_beatable_link(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	unsigned long ctr, length, targetpos, thispos;
+	unsigned char diff, note;
+
+	if(!sp || !track || (track >= sp->tracks))
+		return ULONG_MAX;	//Invalid parameters
+	if(!eof_track_is_beatable_mode(sp, track))
+		return ULONG_MAX;	//Only BEATABLE tracks are allowed by this function
+	length = eof_get_note_length(sp, track, notenum);
+	if(length < 2)
+		return ULONG_MAX;	//Only hold (sustained) notes can link to another hold note
+
+	diff = eof_get_note_type(sp, track, notenum);
+	note = eof_get_note_note(sp, track, notenum);
+	targetpos = eof_get_note_pos(sp, track, notenum);
+	for(ctr = notenum + 1; notenum < eof_get_track_size(sp, track); notenum++)
+	{	//For the remaining notes in the track
+		thispos = eof_get_note_pos(sp, track, ctr);
+		if(thispos < targetpos + length)
+			continue;	//If this note doesn't start at/after the target note, skip it
+		if(thispos > targetpos + length + EOF_BEATABLE_LINK_THRESHOLD)
+			return ULONG_MAX;	//If this note starts too far after the target note to link to it, all remaining ones will as well, stop checking notes
+		if(eof_get_note_length(sp, track, ctr) < 2)
+			continue;	//If this note is not a hold note (has no sustain), skip it
+		if(eof_get_note_type(sp, track, ctr) != diff)
+			continue;	//If this note isn't in the target note's difficulty, skip it
+		if(!(eof_get_note_note(sp, track, ctr) & note))
+			continue;	//If this note doesn't have any lanes in common with the target note, skip it
+
+		//If all the above checks passed, this hold note links to the target hold note
+		return ctr;	//Return match
+	}
+
+	return ULONG_MAX;	//Return no match
 }

@@ -4340,8 +4340,8 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 		*flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;			//Erase the green tom/cymbal combo flag
 	}
 
-	if(eof_song->track[desttrack]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-	{	//If pasting into a keys behavior track,
+	if((eof_song->track[desttrack]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || eof_track_is_beatable_mode(eof_song, sourcetrack))
+	{	//If pasting into a keys behavior track or a BEATABLE track
 		*flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag
 	}
 

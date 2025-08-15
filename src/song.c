@@ -623,6 +623,28 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		eof_track_sort_notes(sp, track);	//Sort the notes
 	}
 
+	//Check for matching disjointed gems at the same timestamp, which should negate each other (such as when trying to toggle a gem off in a track where disjointed status is applied by force, such as a BEATABLE track)
+	for(i = 0; i < tp->notes; i++)
+	{	//For each note
+		if(tp->note[i]->eflags & EOF_NOTE_EFLAG_DISJOINTED)
+		{	//If this note has disjointed status
+			for(ctr = i + 1; ctr < tp->notes; ctr++)
+			{	//For the remaining notes in the track
+				if(tp->note[ctr]->pos > tp->note[i]->pos)
+					break;		//Once there are no more notes at the same timestamp as the outer loop's note, stop checking for matches
+				if(!(tp->note[ctr]->eflags & EOF_NOTE_EFLAG_DISJOINTED))
+					continue;	//If the note doesn't have disjointed status, skip it
+				if(tp->note[ctr]->type != tp->note[i]->type)
+					continue;	//If the note isn't in the same difficulty as the outer loop's note, skip it
+				if(tp->note[ctr]->note == tp->note[i]->note)
+				{	//If both notes have the same note bitmask, they cancel each other out.  Clearing the note bitmasks will cause the loop below to delete them
+					tp->note[ctr]->note = 0;
+					tp->note[i]->note = 0;
+				}
+			}
+		}
+	}
+
 	//Clear invalid gems, enforce status flag requirements, minimum note length, minimum note distance, merge notes that start at the same time if appropriate
 	for(i = tp->notes; i > 0; i--)
 	{	//For each note (in reverse order)
@@ -656,6 +678,11 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		if(tp->parent->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
 		{	//If this is a keys track
 			tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Force its notes to have crazy status in case the status wasn't applied (such as in a track clone operation)
+		}
+		if(eof_track_is_beatable_mode(sp, track))
+		{	//If this is a BEATABLE track
+			tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;			//Force its notes to have crazy status in case the status wasn't applied (such as in a track clone operation)
+			tp->note[i-1]->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Do the same for disjointed status
 		}
 
 		if(eof_min_note_length && (tp->parent->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR))
@@ -5207,6 +5234,11 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 			{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
 				ptr->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
 			}
+			if(eof_track_is_beatable_mode(sp, track))
+			{	//If this is a BEATABLE track
+				ptr->flags |= EOF_NOTE_FLAG_CRAZY;			//Add the crazy status to allow note overlapping
+				ptr->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Add the disjointed status to allow gems at the same timestamp to stay separate
+			}
 		return ptr;
 
 		case EOF_VOCAL_TRACK_FORMAT:
@@ -9331,6 +9363,10 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 	if((sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (thisflags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
 	{	//If this is a pro guitar note and it has linknext status
 		effective_min_note_distance = 0;	//The note is allowed to extend all the way up to the next note
+	}
+	if(eof_track_is_beatable_mode(sp, track))
+	{	//In this is a BEATABLE track
+		effective_min_note_distance = 0;	//The note is allowed to extend all the way up to the next note as this is how hold/slide notes connect
 	}
 	while(1)
 	{

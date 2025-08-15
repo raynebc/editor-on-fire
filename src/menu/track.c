@@ -3648,6 +3648,7 @@ int eof_menu_track_beatable_enable_beatable_export(void)
 	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is active
 
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->track[eof_selected_track]->flags ^= EOF_TRACK_FLAG_BEATABLE;	//Toggle this flag
 	if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
 	{	//If it was just turned on
@@ -3657,6 +3658,7 @@ int eof_menu_track_beatable_enable_beatable_export(void)
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 		eof_set_3D_lane_positions(0);		//Update xchart[] by force
 		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Ensure necessary statuses such as crazy and disjointed are applied immediately
 	}
 
 	eof_fix_window_title();
