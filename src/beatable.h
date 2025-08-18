@@ -16,6 +16,7 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn);
 
 int eof_validate_beatable_file(char *fn);
 	//Parses a BEATABLE file for validity and logs its details
+	//Returns nonzero if the file's structure is valid and was parsed
 	//If the input filename is NULL, EOF will present a file browse dialog to select a file
 
 unsigned long eof_fixup_next_beatable_link(EOF_SONG *sp, unsigned long track, unsigned long notenum);

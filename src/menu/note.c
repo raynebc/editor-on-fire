@@ -499,8 +499,13 @@ MENU eof_note_rocksmith_menu[] =
 
 MENU eof_note_beatable_menu[] =
 {
-	{"Toggle &Left snap\t" CTRL_NAME "+Shift+L", eof_menu_pro_guitar_toggle_beatable_lsnap, NULL, 0, NULL},
-	{"Toggle &Right snap\t" CTRL_NAME "+Shift+R", eof_menu_pro_guitar_toggle_beatable_rsnap, NULL, 0, NULL},
+	{"Toggle &Left snap\t" CTRL_NAME "+Shift+L", eof_menu_beatable_toggle_beatable_lsnap, NULL, 0, NULL},
+	{"Toggle &Right snap\t" CTRL_NAME "+Shift+R", eof_menu_beatable_toggle_beatable_rsnap, NULL, 0, NULL},
+	{"&Remove slide\t" CTRL_NAME "+~", eof_menu_set_beatable_slide_lane_none, NULL, 0, NULL},
+	{"Slide to L2\t" CTRL_NAME "+1", eof_menu_set_beatable_slide_lane_1, NULL, 0, NULL},
+	{"Slide to L1\t" CTRL_NAME "+2", eof_menu_set_beatable_slide_lane_2, NULL, 0, NULL},
+	{"Slide to R1\t" CTRL_NAME "+3", eof_menu_set_beatable_slide_lane_3, NULL, 0, NULL},
+	{"Slide to R2\t" CTRL_NAME "+4", eof_menu_set_beatable_slide_lane_4, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -11598,7 +11603,7 @@ int eof_menu_note_lyric_line_repair_timing(void)
 	return 1;
 }
 
-int eof_menu_pro_guitar_toggle_beatable_snap_status(unsigned long toggleflags)
+int eof_menu_toggle_beatable_snap_status(unsigned long toggleflags)
 {
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
@@ -11643,12 +11648,88 @@ int eof_menu_pro_guitar_toggle_beatable_snap_status(unsigned long toggleflags)
 	return 1;
 }
 
-int eof_menu_pro_guitar_toggle_beatable_lsnap(void)
+int eof_menu_beatable_toggle_beatable_lsnap(void)
 {
-	return eof_menu_pro_guitar_toggle_beatable_snap_status(EOF_BEATABLE_NOTE_FLAG_LSNAP);
+	return eof_menu_toggle_beatable_snap_status(EOF_BEATABLE_NOTE_FLAG_LSNAP);
 }
 
-int eof_menu_pro_guitar_toggle_beatable_rsnap(void)
+int eof_menu_beatable_toggle_beatable_rsnap(void)
 {
-	return eof_menu_pro_guitar_toggle_beatable_snap_status(EOF_BEATABLE_NOTE_FLAG_RSNAP);
+	return eof_menu_toggle_beatable_snap_status(EOF_BEATABLE_NOTE_FLAG_RSNAP);
+}
+
+int eof_menu_set_beatable_slide(unsigned char lane)
+{
+	unsigned long i;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	unsigned long flags;
+	unsigned long slideflags[5] = {0, EOF_BEATABLE_FLAG_SLIDE_TO_L2, EOF_BEATABLE_FLAG_SLIDE_TO_L1, EOF_BEATABLE_FLAG_SLIDE_TO_R1, EOF_BEATABLE_FLAG_SLIDE_TO_R2};
+	int note_selection_updated;
+
+	if(lane > 4)
+		return 1;	//Invalid slide to lane
+	if(!eof_track_is_beatable_mode(eof_song, eof_selected_track))
+		return 1;	//Do not allow this function to run unless a BEATABLE track is active
+
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	if((eof_count_selected_and_unselected_notes(NULL) > 0))
+	{
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
+				continue;	//If the note isn't selected, skip it
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & (1 << (lane - 1)))
+				continue;	//If this note already has a gem on the specified slide to lane, skip it
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(lane)
+			{	//If setting a slide to status
+				if(flags & slideflags[lane])
+					continue;	//If this note already slides to the specified lane, skip it
+			}
+			else
+			{	//If removing all slide to statuses
+				if(!(flags & EOF_BEATABLE_FLAG_SLIDE_TO_ANY))
+					continue;	//If this note does not slide to any lane, skip it
+			}
+
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			flags &= ~EOF_BEATABLE_FLAG_SLIDE_TO_ANY;	//Clear all slide to flags
+			flags |= slideflags[lane];	//Set the slide to flag for the specified lane (or no lane in the event of lane being 0)
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_set_beatable_slide_lane_none(void)
+{
+	return eof_menu_set_beatable_slide(0);
+}
+
+int eof_menu_set_beatable_slide_lane_1(void)
+{
+	return eof_menu_set_beatable_slide(1);
+}
+
+int eof_menu_set_beatable_slide_lane_2(void)
+{
+	return eof_menu_set_beatable_slide(2);
+}
+
+int eof_menu_set_beatable_slide_lane_3(void)
+{
+	return eof_menu_set_beatable_slide(3);
+}
+
+int eof_menu_set_beatable_slide_lane_4(void)
+{
+	return eof_menu_set_beatable_slide(4);
 }

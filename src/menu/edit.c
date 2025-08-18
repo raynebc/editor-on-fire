@@ -4349,6 +4349,10 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 	{	//If either the source or destination track is a BEATABLE track but the other track is not
 		*flags &= ~EOF_BEATABLE_NOTE_FLAG_LSNAP;	//Erase the left snap flag
 		*flags &= ~EOF_BEATABLE_NOTE_FLAG_RSNAP;	//Erase the right snap flag
+		*flags &= ~EOF_BEATABLE_FLAG_SLIDE_TO_L2;	//Erase the slide to lane 1 flag
+		*flags &= ~EOF_BEATABLE_FLAG_SLIDE_TO_L1;	//Erase the slide to lane 2 flag
+		*flags &= ~EOF_BEATABLE_FLAG_SLIDE_TO_R1;	//Erase the slide to lane 3 flag
+		*flags &= ~EOF_BEATABLE_FLAG_SLIDE_TO_R2;	//Erase the slide to lane 4 flag
 	}
 }
 

@@ -2975,7 +2975,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
 				{	//Both SHIFT and CTRL are held
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_menu_pro_guitar_toggle_beatable_lsnap();
+					(void) eof_menu_beatable_toggle_beatable_lsnap();
 					eof_use_key();
 				}
 			}
@@ -3163,7 +3163,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
 				{	//Both SHIFT and CTRL are held
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_menu_pro_guitar_toggle_beatable_rsnap();
+					(void) eof_menu_beatable_toggle_beatable_rsnap();
 					eof_use_key();
 				}
 			}
@@ -3480,6 +3480,39 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 			}//If SHIFT is held, but CTRL is not
 		}//If the active track is a pro guitar track
+
+	/* set BEATABLE slide to lane (CTRL+~, CTRL+# in a BEATABLE track) */
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+		{	//If CTRL is held but SHIFT is not
+			if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+			{
+				if(eof_key_code == KEY_TILDE)
+				{
+					(void) eof_menu_set_beatable_slide_lane_none();
+					eof_use_key();
+				}
+				if(eof_key_char == '1')
+				{
+					(void) eof_menu_set_beatable_slide_lane_1();
+					eof_use_key();
+				}
+				else if(eof_key_char == '2')
+				{
+					(void) eof_menu_set_beatable_slide_lane_2();
+					eof_use_key();
+				}
+				else if(eof_key_char == '3')
+				{
+					(void) eof_menu_set_beatable_slide_lane_3();
+					eof_use_key();
+				}
+				else if(eof_key_char == '4')
+				{
+					(void) eof_menu_set_beatable_slide_lane_4();
+					eof_use_key();
+				}
+			}
+		}
 
 	/* halve BPM (CTRL+SHIFT+X) */
 		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_key_char == 'x'))

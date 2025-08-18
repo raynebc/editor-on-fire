@@ -1771,7 +1771,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	long npos;
 	int point[8];
 	int rz, ez;
-	unsigned long numlanes, ctr, mask, tracknum;
+	unsigned long numlanes, ctr, mask, tracknum, render_slider = 0;
 	int offset_y_3d = 0;	//If full height 3D preview is in effect, y coordinates will be shifted down by one panel height, otherwise will shift by 0
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
@@ -1846,8 +1846,8 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//For each of the lanes in this track
 		unsigned long nextnotenum;
 		long npos2, rz2;
-		unsigned long notepos2, nextnotenote, ctr2, mask2;		//Used for slide note rendering
-		unsigned lanenum, lanenum2;
+		unsigned long slideendpos, nextnotenote, ctr2, mask2, slideendlanenum;		//Used for slide note rendering
+		unsigned lanenum;
 
 		assert(ctr < EOF_MAX_FRETS);	//Put an assertion here to resolve a false positive with Coverity
 		if(!(notenote & mask))
@@ -1935,8 +1935,8 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				}
 			}
 
-			notepos2 = notepos + notelength;	//Find the position of the end of the note
-			npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos.value) / eof_zoom_3d  - 6;
+			slideendpos = notepos + notelength;	//Find the position of the end of the note
+			npos2 = (long)(slideendpos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d  - 6;
 			rz2 = npos2 < eof_3d_min_depth ? eof_3d_min_depth : npos2 + 10;
 
 			//Define the slide rectangle coordinates in clockwise order
@@ -1966,43 +1966,65 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			polygon(eof_window_3d->screen, 4, point, slidecolor);	//Render the 4 point polygon in the appropriate color
 		}//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
 
+///The BEATABLE slider logic needs to be re-checked after the 3D render is changed to 4 lane style like drums
 		//Render slider note slide if applicable
-		if(((eof_song->track[track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track != EOF_TRACK_KEYS)) || !(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
-			continue;	//If the note isn't in a guitar/keys track or isn't in a slider, skip the remaining logic that renders slider phrases
-		if(eof_track_fixup_next_note(eof_song, track, notenum) < 0)
-			continue;	//If there isn't another note in this difficulty, don't render a slider phrase for a single note
+		if(eof_track_is_beatable_mode(eof_song, eof_selected_track) && (noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_ANY))
+		{	//If the note is in a BEATABLE track and has slide to notation
+			render_slider = 1;
+			if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_L2)
+				slideendlanenum = 1;
+			else if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_L1)
+				slideendlanenum = 2;
+			else if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_R1)
+				slideendlanenum = 3;
+			else if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_R2)
+				slideendlanenum = 4;
 
-		nextnotenum = eof_track_fixup_next_note(eof_song, track, notenum);
-		if(!(eof_get_note_flags(eof_song, track, nextnotenum) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
-			continue;	//If that next note is not also a slider note, skip the logic to render the slider phrase
+			slideendpos = notepos + notelength;	//Find the position of the end of the note
+		}
+		else if(((eof_song->track[track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (track != EOF_TRACK_KEYS)) && (noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
+		{	//If the note is in a guitar/keys track and has slider notation
+			nextnotenum = eof_track_fixup_next_note(eof_song, track, notenum);
+			if(nextnotenum > 0)
+			{	//If there is another note in this difficulty (don't render a slider phrase for a single note)
+				if(eof_get_note_flags(eof_song, track, nextnotenum) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+				{	//If that next note also has slider status
+					render_slider = 1;
 
-		//Otherwise draw a dark purple line between this note and the next
-		nextnotenote = eof_get_note_note(eof_song, track, nextnotenum);
-		for(ctr2=0,mask2=1; ctr2 < eof_count_track_lanes(eof_song, track); ctr2++,mask2=mask2<<1)
-		{
-			if(nextnotenote & mask2)
-			{	//If this lane is populated for the next note
-				break;
+					//Determine the lane number the slide will render to
+					nextnotenote = eof_get_note_note(eof_song, track, nextnotenum);
+					for(ctr2=0,mask2=1; ctr2 < eof_count_track_lanes(eof_song, track); ctr2++,mask2=mask2<<1)
+					{
+						if(nextnotenote & mask2)
+						{	//If this lane is populated for the next note
+							break;
+						}
+					}
+					if(eof_track_is_ghl_mode(eof_song, track))
+					{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
+						slideendlanenum = ctr2 % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6
+					}
+					else
+					{
+						slideendlanenum = ctr2;		//Otherwise each gem uses its own lane
+					}
+
+					slideendpos = eof_get_note_pos(eof_song, track, nextnotenum);	//The end timestamp of the slide will be the position of the next note
+				}
 			}
 		}
 
-		notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
-		npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos.value) / eof_zoom_3d  - 6;
-		rz2 = npos2 < eof_3d_min_depth ? eof_3d_min_depth : npos2 + 10;
+		if(!render_slider)
+			continue;	//If the note won't render with slide graphics, skip the remaining logic related to rendering lines to visually connect notes
 
-		if(eof_track_is_ghl_mode(eof_song, track))
-		{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
-			lanenum2 = ctr2 % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6
-		}
-		else
-		{
-			lanenum2 = ctr2;		//Otherwise each gem uses its own lane
-		}
+		//Otherwise draw a dark purple line between this note and the next
+		npos2 = (long)(slideendpos + eof_av_delay - eof_music_pos.value) / eof_zoom_3d  - 6;
+		rz2 = npos2 < eof_3d_min_depth ? eof_3d_min_depth : npos2 + 10;
 
 		//Define the slide rectangle coordinates in clockwise order
 		point[0] = ocd3d_project_x(xchart[lanenum], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
 		point[1] = ocd3d_project_y(200 + offset_y_3d, rz);				//Y1 (Y coordinate of the front end of the slide): The Y position of this note
-		point[2] = ocd3d_project_x(xchart[lanenum2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
+		point[2] = ocd3d_project_x(xchart[slideendlanenum], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
 		point[3] = ocd3d_project_y(200 + offset_y_3d, rz2);				//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
 
 		point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
@@ -2360,7 +2382,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			buffer[index++] = 'G';
 		}
 	}
-	else if(eof_track_is_legacy_guitar(eof_song, track))
+	else if(eof_track_is_legacy_guitar(eof_song, track) && !eof_track_is_beatable_mode(eof_song, track))
 	{	//Check legacy guitar statuses
 		if(flags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
 		{	//A guitar/bass note inside a slider phrase
@@ -2415,9 +2437,37 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 				buffer[index++] = ')';
 			}
 		}
-		else if(eof_fixup_next_beatable_link(eof_song, track, note) < ULONG_MAX)
-		{	//If the note is a hold note that links to the next note on that lane
-			buffer[index++] = 'g';	//In the symbols font, g is the linknext indicator
+		else
+		{
+			if(flags & EOF_BEATABLE_FLAG_SLIDE_TO_L2)
+			{
+				buffer[index++] = '/';
+				buffer[index++] = 'L';
+				buffer[index++] = '2';
+			}
+			else if(flags & EOF_BEATABLE_FLAG_SLIDE_TO_L1)
+			{
+				buffer[index++] = '/';
+				buffer[index++] = 'L';
+				buffer[index++] = '1';
+			}
+			else if(flags & EOF_BEATABLE_FLAG_SLIDE_TO_R1)
+			{
+				buffer[index++] = '/';
+				buffer[index++] = 'R';
+				buffer[index++] = '1';
+			}
+			else if(flags & EOF_BEATABLE_FLAG_SLIDE_TO_R2)
+			{
+				buffer[index++] = '/';
+				buffer[index++] = 'R';
+				buffer[index++] = '2';
+			}
+
+			if(eof_fixup_next_beatable_link(eof_song, track, note) < ULONG_MAX)
+			{	//If the note is a hold note that links to the next note on that lane
+				buffer[index++] = 'g';	//In the symbols font, g is the linknext indicator
+			}
 		}
 	}
 	else

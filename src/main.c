@@ -1603,7 +1603,10 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			tflags &= (~EOF_NOTE_TFLAG_SOLO_NOTE);
 			if(((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (track == EOF_TRACK_KEYS))
 			{	//Only clear the is slider flag if this is a legacy guitar or keys track
-				flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
+				if(!eof_track_is_beatable_mode(sp, track))
+				{	//And this isn't a BEATABLE track
+					flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
+				}
 			}
 
 			/* mark HOPO */

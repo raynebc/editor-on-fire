@@ -520,11 +520,20 @@ int eof_menu_note_lyric_line_repair_timing(void);
 	//For each lyric line for which at least one of its lyrics (whether it starts outside of all lyric lines but ends inside one, or begins inside one) are selected,
 	// alters the line's start and end positions to match the start and end positions of its lyrics
 
-int eof_menu_pro_guitar_toggle_beatable_snap_status(unsigned long toggleflags);
+int eof_menu_toggle_beatable_snap_status(unsigned long toggleflags);
 	//Toggles the specified status flags for selected notes
 	//For those that end up with neither EOF_BEATABLE_NOTE_FLAG_LSNAP nor EOF_BEATABLE_NOTE_FLAG_RSNAP, they are deleted
 	//For those that end up with either EOF_BEATABLE_NOTE_FLAG_LSNAP nor EOF_BEATABLE_NOTE_FLAG_RSNAP, lane 5 is ensured to have a gem
-int eof_menu_pro_guitar_toggle_beatable_lsnap(void);		//Calls eof_menu_pro_guitar_toggle_beatable_snap_status() with left snap status
-int eof_menu_pro_guitar_toggle_beatable_rsnap(void);	//Calls eof_menu_pro_guitar_toggle_beatable_snap_status() with right snap status
+int eof_menu_beatable_toggle_beatable_lsnap(void);		//Calls eof_menu_toggle_beatable_snap_status() with left snap status
+int eof_menu_beatable_toggle_beatable_rsnap(void);		//Calls eof_menu_toggle_beatable_snap_status() with right snap status
+
+int eof_menu_set_beatable_slide(unsigned char lane);
+	//For all selected notes, if they don't already have a gem on the specified lane, sets the BEATABLE slide status accordingly
+	//If lane is 0, all slide to statuses are removed from selected notes
+int eof_menu_set_beatable_slide_lane_none(void);	//Calls eof_menu_set_beatable_slide() with a value of 0
+int eof_menu_set_beatable_slide_lane_1(void);		//Calls eof_menu_set_beatable_slide() to set a slide to lane 1
+int eof_menu_set_beatable_slide_lane_2(void);		//Calls eof_menu_set_beatable_slide() to set a slide to lane 2
+int eof_menu_set_beatable_slide_lane_3(void);		//Calls eof_menu_set_beatable_slide() to set a slide to lane 3
+int eof_menu_set_beatable_slide_lane_4(void);		//Calls eof_menu_set_beatable_slide() to set a slide to lane 4
 
 #endif

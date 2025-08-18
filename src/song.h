@@ -95,6 +95,11 @@
 //The following flags pertain to BEATABLE notes
 #define EOF_BEATABLE_NOTE_FLAG_LSNAP     32		//This flag represents a note that exports as a left snap
 #define EOF_BEATABLE_NOTE_FLAG_RSNAP     64	//This flag represents a note that exports as a right snap
+#define EOF_BEATABLE_FLAG_SLIDE_TO_L2     128	//This flag represents a hold note that slides to lane 1
+#define EOF_BEATABLE_FLAG_SLIDE_TO_L1     256	//This flag represents a hold note that slides to lane 2
+#define EOF_BEATABLE_FLAG_SLIDE_TO_R1     512	//This flag represents a hold note that slides to lane 3
+#define EOF_BEATABLE_FLAG_SLIDE_TO_R2    1024	//This flag represents a hold note that slides to lane 4
+#define EOF_BEATABLE_FLAG_SLIDE_TO_ANY (EOF_BEATABLE_FLAG_SLIDE_TO_L2 | EOF_BEATABLE_FLAG_SLIDE_TO_L1 | EOF_BEATABLE_FLAG_SLIDE_TO_R1 | EOF_BEATABLE_FLAG_SLIDE_TO_R2)
 
 ///Temporary note flags
 //The following temporary flags are maintained internally and do not save to file (even during project save, clipboard, auto-adjust, etc.)
