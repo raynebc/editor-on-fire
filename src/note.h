@@ -59,6 +59,10 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 	//Used to create a bordered rectangle bitmap with the specified string number, for use in the editor or 3D window, returns NULL on error
 	//The specified font is used, allowing the mono-spaced symbol and regular fonts to be used interchangeably
 	//If note is NULL, a bitmap containing the string in the text pointer is used instead
+BITMAP *eof_create_text_bitmap(char *text, unsigned long padding, int textcol, int fillcol, FONT *font, double scale);
+	//Used to create a bordered rectangle bitmap with the specified text in the specified font, allowing the mono-spaced symbol and regular fonts to be used interchangeably
+	//Scale is a multiplier for the bitmap's height and width
+	//Returns the created bitmap, or NULL upon error
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck);
 	//Used to store notations (ie. "PM" for palm mute) for the specified note into the buffer, which should be able to hold at least 65 characters just to guarantee an overflow isn't possible
 	//If sanitycheck is nonzero and the specified note is a pro guitar note, the validity of any pitched/unpitched slide technique it has is checked

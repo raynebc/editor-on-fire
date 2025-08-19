@@ -5515,8 +5515,8 @@ void eof_set_3D_lane_positions(unsigned long track)
 //	eof_log("eof_set_3D_lane_positions() entered");
 
 	static unsigned long numlanes = 0;		//This remembers the number of lanes handled by the previous call
-	unsigned long newnumlanes;				//This is the number of lanes in the specified track
-	unsigned long numlaneswidth = 5 - 1;	//By default, the lane width will be based on a 5 lane track
+	unsigned long newnumlanes;			//This is the number of lanes in the specified track
+	unsigned long numlaneswidth = 5 - 1;		//By default, the lane width will be based on a 5 lane track
 	unsigned long ctr;
 	double lanewidth = 0.0;
 

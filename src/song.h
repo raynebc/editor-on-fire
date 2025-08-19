@@ -1203,6 +1203,7 @@ int eof_length_is_equal_to(long length, long threshold);		//Returns nonzero if b
 int eof_note_has_accent(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified legacy or pro guitar note has any accented gems
 int eof_note_has_ghost(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified legacy or pro guitar note has any ghosted gems
 int eof_note_is_linked_to_by_pitched_slide(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified pro guitar note is linked to by a note with a pitched slide on any strings both notes have in common
+int eof_note_is_left_snap(EOF_SONG *sp, unsigned long track, unsigned long notenum);	//Returns nonzero if the specified note is a BEATABLE note that is explicitly a left snap (has EOF_BEATABLE_NOTE_FLAG_LSNAP status) or is implicitly a left snap (has no over snap statuses)
 
 void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char any, char *undo_made);
 	//Examines all sections in the specified track, and for those which have notes that are all selected, their positions are moved

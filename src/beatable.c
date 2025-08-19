@@ -807,10 +807,75 @@ int eof_validate_beatable_file(char *fn)
 	return 1;	//Success
 }
 
+unsigned char eof_get_beatable_note_end(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	unsigned long flags;
+	unsigned char note_end;
+
+	if(!sp || !track || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+	if(!eof_track_is_beatable_mode(sp, track))
+		return 0;	//Only BEATABLE tracks are allowed by this function
+
+	note_end = eof_get_note_type(sp, track, notenum);	//By default, assume the note will end on the same lane it begins with
+
+	if(eof_get_note_length(sp, track, notenum) > 1)
+	{	//Hold notes (any note longer than 1ms) can slide to another lane
+		flags = eof_get_note_flags(sp, track, notenum);
+		if(flags & EOF_BEATABLE_FLAG_SLIDE_TO_L2)
+			note_end = 1;	//A note sliding to L2 ends on lane 1
+		else if(flags & EOF_BEATABLE_FLAG_SLIDE_TO_L1)
+			note_end = 2;	//A note sliding to L1 ends on lane 2
+		else if(flags & EOF_BEATABLE_FLAG_SLIDE_TO_R1)
+			note_end = 4;	//A note sliding to R1 ends on lane 3
+		else if(flags & EOF_BEATABLE_FLAG_SLIDE_TO_R2)
+			note_end = 8;	//A note sliding to R2 ends on lane 4
+	}
+
+	return note_end;
+}
+
+unsigned long eof_fixup_prev_beatable_link(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	unsigned long ctr, targetpos, thispos, thislength;
+	unsigned char diff, note;
+
+	if(!sp || !track || (track >= sp->tracks))
+		return ULONG_MAX;	//Invalid parameters
+	if(!eof_track_is_beatable_mode(sp, track))
+		return ULONG_MAX;	//Only BEATABLE tracks are allowed by this function
+	if(eof_get_note_length(sp, track, notenum) < 2)
+		return ULONG_MAX;	//Only hold (sustained) notes can link to another hold note
+
+	diff = eof_get_note_type(sp, track, notenum);
+	note = eof_get_note_note(sp, track, notenum);
+	targetpos = eof_get_note_pos(sp, track, notenum);
+	for(ctr = notenum; notenum > 0; notenum--)
+	{	//For the previous notes in the track, in reverse order
+		thispos = eof_get_note_pos(sp, track, ctr - 1);
+		thislength = eof_get_note_length(sp, track, ctr - 1);
+		if(thispos + thislength > targetpos)
+			continue;	//If this note doesn't end at/before the target note, skip it
+		if(thispos + thislength + EOF_BEATABLE_LINK_THRESHOLD < targetpos)
+			return ULONG_MAX;	//If this note ends too far before the target note to link to it, all previous ones will as well, stop checking notes
+		if(thislength < 2)
+			continue;	//If this note is not a hold note (has no sustain), skip it
+		if(eof_get_note_type(sp, track, ctr - 1) != diff)
+			continue;	//If this note isn't in the target note's difficulty, skip it
+		if(!(eof_get_beatable_note_end(sp, track, ctr - 1) & note))
+			continue;	//If this note's ending lane doesn't match the starting lane of the target note, skip it
+
+		//If all the above checks passed, this hold note links to the target hold note
+		return ctr - 1;	//Return match
+	}
+
+	return ULONG_MAX;	//Return no match
+}
+
 unsigned long eof_fixup_next_beatable_link(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {
-	unsigned long ctr, length, targetpos, thispos;
-	unsigned char diff, note;
+	unsigned long ctr, length, targetpos, thispos, lane_end;
+	unsigned char diff;
 
 	if(!sp || !track || (track >= sp->tracks))
 		return ULONG_MAX;	//Invalid parameters
@@ -821,8 +886,8 @@ unsigned long eof_fixup_next_beatable_link(EOF_SONG *sp, unsigned long track, un
 		return ULONG_MAX;	//Only hold (sustained) notes can link to another hold note
 
 	diff = eof_get_note_type(sp, track, notenum);
-	note = eof_get_note_note(sp, track, notenum);
 	targetpos = eof_get_note_pos(sp, track, notenum);
+	lane_end = eof_get_beatable_note_end(sp, track, notenum);	//Determine which lane the target note ends on, accounting for any applicable slide status
 	for(ctr = notenum + 1; notenum < eof_get_track_size(sp, track); notenum++)
 	{	//For the remaining notes in the track
 		thispos = eof_get_note_pos(sp, track, ctr);
@@ -834,8 +899,8 @@ unsigned long eof_fixup_next_beatable_link(EOF_SONG *sp, unsigned long track, un
 			continue;	//If this note is not a hold note (has no sustain), skip it
 		if(eof_get_note_type(sp, track, ctr) != diff)
 			continue;	//If this note isn't in the target note's difficulty, skip it
-		if(!(eof_get_note_note(sp, track, ctr) & note))
-			continue;	//If this note doesn't have any lanes in common with the target note, skip it
+		if(!(eof_get_note_note(sp, track, ctr) & lane_end))
+			continue;	//If this note doesn't begin on the same lane on which the target note ends, skip it
 
 		//If all the above checks passed, this hold note links to the target hold note
 		return ctr;	//Return match

@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include <assert.h>
+#include <float.h>
 #include "modules/ocd3d.h"
 #include "main.h"
 #include "beatable.h"
@@ -1220,7 +1221,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	int bx = 48;
 	int point[8];
 	long rz, ez;
-	unsigned long ctr;
+	unsigned long ctr, ctr2;
 	unsigned long mask;	//Used to mask out colors in the for loop
 	unsigned long numlanes, tracknum;
 	long xoffset = 0;	//This will be used to draw bitmaps half a lane further left when the bass drum isn't rendering in a lane and drum gems render centered over fret lines instead of between them
@@ -1244,6 +1245,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned imagenum = 0;	//Used to store the appropriate image index to use for rendering the specified note
 
 	int render_bass_drum_in_lane = 0;	//Tracks whether this is a drum track and bass drums are to be rendered as a gem in a lane instead of a line
+	BITMAP *bmp1 = NULL, *bmp2 = NULL, *bmp = NULL;	//Used to render text boxes for BEATABLE snap status or a pro guitar note fret number
+	long bmpxpos1, bmpxpos2, bmpxpos, bmpypos, bmpzpos = 0;
 
 	//Validate parameters
 	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_get_track_size(eof_song, track)))
@@ -1255,6 +1258,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	notelength = eof_get_note_length(eof_song, track, notenum);
 	noteflags = eof_get_note_flags(eof_song, track, notenum);
 	notenote = eof_get_note_note(eof_song, track, notenum);
+
+	if(eof_fixup_prev_beatable_link(eof_song, track, notenum) < ULONG_MAX)
+		return 1;		//If this is a note that links to a previous note in a BEATABLE track, do not draw a new note head
 
 	if(eof_full_height_3d_preview)
 	{
@@ -1287,13 +1293,21 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//Special case:  Legacy guitar tracks can use a sixth lane but their 3D representation still only draws 5 lanes
 		numlanes = 5;
 	}
+	else if(eof_track_is_beatable_mode(eof_song, track))
+	{	//Special case:  BEATABLE tracks use 6 lanes but their 3D representation only draws 5 lanes, with gems drawn between the lanes like the drum track
+		numlanes = 5;
+	}
 
 	if(((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && eof_render_bass_drum_in_lane) || eof_track_is_drums_rock_mode(eof_song, track))
 		render_bass_drum_in_lane = 1;
 
 	if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !render_bass_drum_in_lane)
-	{	//If this is a drum track and the bass drum isn't being rendered in its own lane
-		xoffset = (56.0 * (4.0 / (numlanes-1))) / 2;	//This value is half of the 3D lane's width
+	{	//If this is a drum track and the bass drum isn't being rendered in its own lane, or if it is a BEATABLE track
+		xoffset = (56.0 * (4.0 / (numlanes-1))) / 2;	//This value is half of the 3D lane's width, allowing for a 4 lane style of rendering where gems are drawn between the lanes
+	}
+	if(eof_track_is_beatable_mode(eof_song, track))
+	{	//In a BEATABLE track, gems are likewise shifted half a lane, but in the other direction so that lane 1 is rendered as a gem instead of a horizontal line
+		xoffset = -(56.0 * (4.0 / (numlanes-1))) / 2;	//This value is half of the 3D lane's width, allowing for a 4 lane style of rendering where gems are drawn between the lanes
 	}
 
 	if(eof_track_is_drums_rock_mode(eof_song, track))
@@ -1635,66 +1649,57 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}//If rendering a normal note
 
 		//Render the note
-		if(eof_full_height_3d_preview)
-		{	//If full height 3D preview is in effect, stretch the gems to double height to make them look less squished
-			BITMAP **dest_bitmap;	//This will refer to either stretch_bitmap or hopo_stretch_bitmap accordingly
+		if(!(eof_track_is_beatable_mode(eof_song, track) && (mask == 16)))
+		{	//If this is not a BEATABLE snap note
+			if(eof_full_height_3d_preview)
+			{	//If full height 3D preview is in effect, stretch the gems to double height to make them look less squished
+				BITMAP **dest_bitmap;	//This will refer to either stretch_bitmap or hopo_stretch_bitmap accordingly
 
-			//Re-use either the normal or HOPO size bitmaps from a previous call to eof_note_draw_3d() where possible to reduce overhead
-			if(noteflags & EOF_NOTE_FLAG_HOPO)
-			{	//If the note being rendered is a HOPO note
-				dest_bitmap = &eof_hopo_stretch_bitmap;
+				//Re-use either the normal or HOPO size bitmaps from a previous call to eof_note_draw_3d() where possible to reduce overhead
+				if(noteflags & EOF_NOTE_FLAG_HOPO)
+				{	//If the note being rendered is a HOPO note
+					dest_bitmap = &eof_hopo_stretch_bitmap;
+				}
+				else
+				{
+					dest_bitmap = &eof_stretch_bitmap;
+				}
+				height_scale = (double)eof_window_3d->screen->h / eof_window_3d->screen->w;
+				image_height = ((double)eof_image[imagenum]->h * height_scale) + 0.5;	//Scale the image height based on the 3D window dimensions to try to retain a correct aspect ratio
+
+				if(eof_full_screen_3d)
+				{	//The full screen 3D feature makes the notes look even more squished
+					image_height *= 2;	//Make the notes even taller
+				}
+				half_image_width = eof_image[imagenum]->w / 2;
+				if(((*dest_bitmap) == NULL) || ((*dest_bitmap)->w != eof_image[imagenum]->w) || ((*dest_bitmap)->h != image_height))
+				{	//If the temporary bitmap must be recreated to store the image
+					if(*dest_bitmap != NULL)
+						destroy_bitmap(*dest_bitmap);
+					*dest_bitmap = create_bitmap(eof_image[imagenum]->w, image_height);
+					eof_log("\t\tRebuilding 3D stretched image cache", 3);
+				}
+
+				if(*dest_bitmap)
+				{	//If the bitmap was created or can be reused
+					stretch_blit(eof_image[imagenum], *dest_bitmap, 0, 0, eof_image[imagenum]->w, eof_image[imagenum]->h, 0, 0, (*dest_bitmap)->w, (*dest_bitmap)->h);
+					ocd3d_draw_bitmap(eof_window_3d->screen, *dest_bitmap, xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
+				}
 			}
 			else
-			{
-				dest_bitmap = &eof_stretch_bitmap;
+			{	//Normal logic
+				image_height = eof_image[imagenum]->h;
+				half_image_width = eof_image[imagenum]->w / 2;
+				ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
 			}
-			height_scale = (double)eof_window_3d->screen->h / eof_window_3d->screen->w;
-			image_height = ((double)eof_image[imagenum]->h * height_scale) + 0.5;	//Scale the image height based on the 3D window dimensions to try to retain a correct aspect ratio
-
-			if(eof_full_screen_3d)
-			{	//The full screen 3D feature makes the notes look even more squished
-				image_height *= 2;	//Make the notes even taller
-			}
-			half_image_width = eof_image[imagenum]->w / 2;
-			if(((*dest_bitmap) == NULL) || ((*dest_bitmap)->w != eof_image[imagenum]->w) || ((*dest_bitmap)->h != image_height))
-			{	//If the temporary bitmap must be recreated to store the image
-				if(*dest_bitmap != NULL)
-					destroy_bitmap(*dest_bitmap);
-				*dest_bitmap = create_bitmap(eof_image[imagenum]->w, image_height);
-				eof_log("\t\tRebuilding 3D stretched image cache", 3);
-			}
-
-			if(*dest_bitmap)
-			{	//If the bitmap was created or can be reused
-				stretch_blit(eof_image[imagenum], *dest_bitmap, 0, 0, eof_image[imagenum]->w, eof_image[imagenum]->h, 0, 0, (*dest_bitmap)->w, (*dest_bitmap)->h);
-				ocd3d_draw_bitmap(eof_window_3d->screen, *dest_bitmap, xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
-			}
-		}
-		else
-		{	//Normal logic
-			image_height = eof_image[imagenum]->h;
-			half_image_width = eof_image[imagenum]->w / 2;
-			ocd3d_draw_bitmap(eof_window_3d->screen, eof_image[imagenum], xchart[lanenum] - half_image_width - xoffset, 200 - image_height + offset_y_3d, npos);
 		}
 
 		if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
-			BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Allow one extra character's width for padding
-			if(fretbmp != NULL)
-			{	//Render the bitmap on top of the 3D note and then destroy the bitmap
-				if(eof_full_height_3d_preview)
-				{	//If the fret number bitmap should be scaled also
-					BITMAP *scaledbmp = create_bitmap(fretbmp->w, (double)fretbmp->h * height_scale);
-					if(scaledbmp)
-					{	//If the scaled bitmap was created
-						stretch_blit(fretbmp, scaledbmp, 0, 0, fretbmp->w, fretbmp->h, 0, 0, scaledbmp->w, scaledbmp->h);
-						destroy_bitmap(fretbmp);
-						fretbmp = scaledbmp;
-					}
-				}
-				ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[lanenum] - 8, 200 - (image_height / 2) + offset_y_3d, npos);
-				destroy_bitmap(fretbmp);
-			}
+			bmp1 = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Create a bitmap showing the gem's fret value
+			bmpxpos1 = xchart[lanenum] - 8;
+			bmpypos = 200 - (image_height / 2) + offset_y_3d;
+			bmpzpos = npos;
 		}
 		else if(track == EOF_TRACK_DRUM_PS)
 		{	//If this was a note in the Phase Shift drum track
@@ -1710,6 +1715,47 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				{	//If none of the coordinate projections failed
 					circlefill(eof_window_3d->screen, x, y, (x2 - x) / 6, eof_color_black);	//Draw a large dot in the center of the cymbal's 3D image
 				}
+			}
+		}
+		else if(eof_track_is_beatable_mode(eof_song, track) && (mask == 16))
+		{	//If this is a snap note in a BEATABLE track
+			if(eof_note_is_left_snap(eof_song, track, notenum))
+				bmp1 = eof_create_text_bitmap("LS", 8, eof_color_white, eof_color_black, font, 2);	//Create a text box for left snap if applicable
+			if(noteflags & EOF_BEATABLE_NOTE_FLAG_RSNAP)
+				bmp2 = eof_create_text_bitmap("RS", 8, eof_color_white, eof_color_black, font, 2);	//Create a text box for right snap if applicable
+			bmpypos = 200 + offset_y_3d;
+			if(bmp1)
+			{
+				bmpxpos1 = xchart[1] - (bmp1->w / 2);
+				bmpypos = 200 + offset_y_3d - bmp1->h - 1;
+			}
+			if(bmp2)
+			{
+				bmpxpos2 = xchart[3] - (bmp2->w / 2);
+				bmpypos = 200 + offset_y_3d - bmp2->h - 1;
+			}
+			bmpzpos = npos;	//Test with this uncommented
+		}
+
+		//If one or more text boxes are to be rendered
+		for(ctr2 = 0; ctr2 < 2; ctr2++)
+		{	//For up to two bitmaps
+			bmp = !ctr2 ? bmp1 : bmp2;	//On first iteration, render bmp1, then bmp2
+			bmpxpos = !ctr2 ? bmpxpos1 : bmpxpos2;	//Apply the appropriate x coordinate
+			if(bmp != NULL)
+			{	//Render the bitmap in the 3D note's location and then destroy the bitmap
+				if(eof_full_height_3d_preview)
+				{	//If the fret number bitmap should be scaled also
+					BITMAP *scaledbmp = create_bitmap(bmp->w, (double)bmp->h * height_scale);
+					if(scaledbmp)
+					{	//If the scaled bitmap was created
+						stretch_blit(bmp, scaledbmp, 0, 0, bmp->w, bmp->h, 0, 0, scaledbmp->w, scaledbmp->h);
+						destroy_bitmap(bmp);
+						bmp = scaledbmp;
+					}
+				}
+				ocd3d_draw_bitmap(eof_window_3d->screen, bmp, bmpxpos, bmpypos, bmpzpos);
+				destroy_bitmap(bmp);
 			}
 		}
 	}//For each lane used in this note
@@ -1773,6 +1819,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	int rz, ez;
 	unsigned long numlanes, ctr, mask, tracknum, render_slider = 0;
 	int offset_y_3d = 0;	//If full height 3D preview is in effect, y coordinates will be shifted down by one panel height, otherwise will shift by 0
+	long xoffset = 0;	//This will be used to render BEATABLE hold and sustain tails, which are shifted right by half a lane
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -1836,6 +1883,11 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
 		numlanes = 3;
 	}
+	else if(eof_track_is_beatable_mode(eof_song, track))
+	{	//Special case:  BEATABLE tracks use 6 lanes but their 3D representation only draws 5 lanes, with gems drawn between the lanes like the drum track
+		numlanes = 5;
+		xoffset = -(56.0 * (4.0 / (numlanes-1))) / 2;	//This value is half of the 3D lane's width, allowing for a 4 lane style of rendering where gems are drawn between the lanes
+	}
 	else if(eof_open_strum_enabled(track))
 	{	//Special case:  5 lane guitar/bass tracks can use a sixth lane but its 3D representation still only draws 5 lanes
 		numlanes = 5;
@@ -1848,14 +1900,25 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		long npos2, rz2;
 		unsigned long slideendpos, nextnotenote, ctr2, mask2, slideendlanenum;		//Used for slide note rendering
 		unsigned lanenum;
+		int skiptail = 0;	//Under certain conditions, the tails for BEATABLE notes won't be drawn
 
 		assert(ctr < EOF_MAX_FRETS);	//Put an assertion here to resolve a false positive with Coverity
 		if(!(notenote & mask))
 			continue;	//If this lane does not have a gem to render, skip it
 
+		if(eof_track_is_beatable_mode(eof_song, track))
+		{	//If rendering for a BEATABLE track
+			if(mask >8)
+				skiptail = 1;	//Do not draw tails for any lanes other than the first 4
+			if(notelength < 2)
+				skiptail = 1;	//Do not draw tails for tap notes (must be >1ms long to be a hold note)
+			if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_ANY)
+				skiptail = 1;	//Do not draw tails for slide notes (slide lines will be drawn instead)
+		}
+
 		lanenum = ctr;	//By default, each gem gets its own lane number
-		if(!eof_track_is_ghl_mode(eof_song, track) && (ctr == 5) && eof_track_is_legacy_guitar(eof_song, track))
-		{	//If this is NOT a GHL style track and if drawing the tail of a gem on lane 6 of a legacy guitar track
+		if(!eof_track_is_ghl_mode(eof_song, track) && !eof_track_is_beatable_mode(eof_song, eof_selected_track) && (ctr == 5) && eof_track_is_legacy_guitar(eof_song, track))
+		{	//If this is NOT a GHL style track, not a BEATABLE track and if drawing the tail of a gem on lane 6 of a legacy guitar track
 			if(eof_open_strum_enabled(track))
 			{	//And open strum notes are enabled, render open strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
 				point[0] = ocd3d_project_x(xchart[1] - 10, rz);
@@ -1871,45 +1934,48 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}
 		else
 		{	//Logic to render lanes 1 through 6
-			unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
+			if(!skiptail)
+			{	//If the rendering of this note tail isn't being skipped (ie. conditions in BEATABLE tracks)
+				unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
 
-			if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
-			{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
-				unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(eof_song->pro_guitar_track[tracknum], notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
+				if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+				{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
+					unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(eof_song->pro_guitar_track[tracknum], notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
 
-				if(fingering < 6)
-				{	//If the finger was determined
-					color = fingering;	//Use the fingering's appropriate color
-				}
-				else
-				{	//Otherwise use the default silvering coloring
-					noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
-				}
-			}
-
-			if(eof_track_is_ghl_mode(eof_song, track))
-			{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
-				if(ctr < 3)
-				{	//If drawing a gem for one of the first three lanes
-					unsigned long barremask = mask | (mask << 3);	//This represents the note mask of the gem and a gem 3 lanes higher
-
-					if((notenote & barremask) == barremask)
-					{	//If this is to be rendered as a barre note
-						notenote &= ~barremask;		//Skip drawing a tail for the matching black GHL note, since the barre represents both the relevant black and white gems
+					if(fingering < 6)
+					{	//If the finger was determined
+						color = fingering;	//Use the fingering's appropriate color
+					}
+					else
+					{	//Otherwise use the default silvering coloring
+						noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
 					}
 				}
 
-				lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6
+				if(eof_track_is_ghl_mode(eof_song, track))
+				{	//Special case:  Guitar Hero Live style tracks display with 3 lanes
+					if(ctr < 3)
+					{	//If drawing a gem for one of the first three lanes
+						unsigned long barremask = mask | (mask << 3);	//This represents the note mask of the gem and a gem 3 lanes higher
+
+						if((notenote & barremask) == barremask)
+						{	//If this is to be rendered as a barre note
+							notenote &= ~barremask;		//Skip drawing a tail for the matching black GHL note, since the barre represents both the relevant black and white gems
+						}
+					}
+
+					lanenum = ctr % 3;	//Gems 1 through 3 use the same lanes as gems 4 through 6
+				}
+				point[0] = ocd3d_project_x(xchart[lanenum] - 10 - xoffset, rz);
+				point[1] = ocd3d_project_y(200 + offset_y_3d, rz);
+				point[2] = ocd3d_project_x(xchart[lanenum] - 10 - xoffset, ez);
+				point[3] = ocd3d_project_y(200 + offset_y_3d, ez);
+				point[4] = ocd3d_project_x(xchart[lanenum] + 10 - xoffset, ez);
+				point[5] = point[3];
+				point[6] = ocd3d_project_x(xchart[lanenum] + 10 - xoffset, rz);
+				point[7] = point[1];
+				polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[color].hit : eof_colors[color].color));
 			}
-			point[0] = ocd3d_project_x(xchart[lanenum] - 10, rz);
-			point[1] = ocd3d_project_y(200 + offset_y_3d, rz);
-			point[2] = ocd3d_project_x(xchart[lanenum] - 10, ez);
-			point[3] = ocd3d_project_y(200 + offset_y_3d, ez);
-			point[4] = ocd3d_project_x(xchart[lanenum] + 10, ez);
-			point[5] = point[3];
-			point[6] = ocd3d_project_x(xchart[lanenum] + 10, rz);
-			point[7] = point[1];
-			polygon(eof_window_3d->screen, 4, point, (noteflags & EOF_NOTE_FLAG_SP) ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[color].hit : eof_colors[color].color));
 		}
 
 		//Render pro guitar note slide if applicable
@@ -1968,17 +2034,17 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 ///The BEATABLE slider logic needs to be re-checked after the 3D render is changed to 4 lane style like drums
 		//Render slider note slide if applicable
-		if(eof_track_is_beatable_mode(eof_song, eof_selected_track) && (noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_ANY))
-		{	//If the note is in a BEATABLE track and has slide to notation
+		if(eof_track_is_beatable_mode(eof_song, eof_selected_track) && (noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_ANY) && (notelength > 1))
+		{	//If the note is in a BEATABLE track, has slide to notation and sustain
 			render_slider = 1;
 			if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_L2)
-				slideendlanenum = 1;
+				slideendlanenum = 0;
 			else if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_L1)
-				slideendlanenum = 2;
+				slideendlanenum = 1;
 			else if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_R1)
-				slideendlanenum = 3;
+				slideendlanenum = 2;
 			else if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_R2)
-				slideendlanenum = 4;
+				slideendlanenum = 3;
 
 			slideendpos = notepos + notelength;	//Find the position of the end of the note
 		}
@@ -2022,9 +2088,9 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		rz2 = npos2 < eof_3d_min_depth ? eof_3d_min_depth : npos2 + 10;
 
 		//Define the slide rectangle coordinates in clockwise order
-		point[0] = ocd3d_project_x(xchart[lanenum], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
+		point[0] = ocd3d_project_x(xchart[lanenum] - xoffset, rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
 		point[1] = ocd3d_project_y(200 + offset_y_3d, rz);				//Y1 (Y coordinate of the front end of the slide): The Y position of this note
-		point[2] = ocd3d_project_x(xchart[slideendlanenum], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
+		point[2] = ocd3d_project_x(xchart[slideendlanenum] - xoffset, rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
 		point[3] = ocd3d_project_y(200 + offset_y_3d, rz2);				//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
 
 		point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
@@ -2122,6 +2188,38 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 	}
 
 	return fretbmp;
+}
+
+BITMAP *eof_create_text_bitmap(char *text, unsigned long padding, int textcol, int fillcol, FONT *font, double scale)
+{
+	BITMAP *bmp = NULL;
+	int height, width;
+
+	if(!text || !font)
+		return NULL;	//Invalid parameters
+
+	width = text_length(font, text) + padding + 1;	//The font in use doesn't look centered, so pad the left by one pixel
+	height = text_height(font);
+	bmp = create_bitmap(width, height);
+	if(bmp != NULL)
+	{	//Render the fret number on top of the 3D note
+		clear_to_color(bmp, fillcol);
+		rect(bmp, 0, 0, width - 1, height - 1, textcol);	//Draw a border along the edge of this bitmap
+		textprintf_ex(bmp, font, (padding / 2.0) + 1, 0, textcol, -1, "%s", text);	//Center the text between the padding (including one extra pixel for left padding), rounding to the right if the padding is an odd value
+
+		if((scale < 1.0 - DBL_EPSILON) || (scale > 1.0 + DBL_EPSILON))
+		{	//If the given scale factor is not close enough to 1.0 to be considered equivalent to 1.0
+			BITMAP *scaledbmp = create_bitmap(bmp->w * scale, (double)bmp->h * scale);
+			if(scaledbmp)
+			{	//If the scaled bitmap was created
+				stretch_blit(bmp, scaledbmp, 0, 0, bmp->w, bmp->h, 0, 0, scaledbmp->w, scaledbmp->h);
+				destroy_bitmap(bmp);
+				bmp = scaledbmp;
+			}
+		}
+	}
+
+	return bmp;
 }
 
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck)
@@ -2439,6 +2537,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		else
 		{
+			if((flags & EOF_BEATABLE_FLAG_SLIDE_TO_ANY) && (eof_get_note_length(eof_song, track, note) < 2))
+			{	//If the note has a slide status but no sustain
+				buffer[index++] = '(';
+			}
 			if(flags & EOF_BEATABLE_FLAG_SLIDE_TO_L2)
 			{
 				buffer[index++] = '/';
@@ -2462,6 +2564,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 				buffer[index++] = '/';
 				buffer[index++] = 'R';
 				buffer[index++] = '2';
+			}
+			if((flags & EOF_BEATABLE_FLAG_SLIDE_TO_ANY) && (eof_get_note_length(eof_song, track, note) < 2))
+			{	//If the note has a slide status but no sustain
+				buffer[index++] = ')';
 			}
 
 			if(eof_fixup_next_beatable_link(eof_song, track, note) < ULONG_MAX)

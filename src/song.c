@@ -11097,6 +11097,25 @@ int eof_note_is_linked_to_by_pitched_slide(EOF_SONG *sp, unsigned long track, un
 	return 0;
 }
 
+int eof_note_is_left_snap(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	unsigned long flags = eof_get_note_flags(sp, track, notenum);
+
+	if(eof_track_is_beatable_mode(sp, track))
+	{	//If the specified note is in a BEATABLE track
+		if(eof_get_note_note(sp, track, notenum) & 16)
+		{	//If the specified note has a gem on lane 5
+			flags = eof_get_note_flags(sp, track, notenum);
+			if(flags & EOF_BEATABLE_NOTE_FLAG_LSNAP)
+				return 1;		//The note is explicitly a left snap note
+			else if(!(flags & EOF_BEATABLE_NOTE_FLAG_RSNAP))
+				return 1;		//The note is not explicitly a left or right snap note, so it is implicitly a left snap note
+		}
+	}
+
+	return 0;	//The note is not a left snap note
+}
+
 void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long offset, char dir, char any, char *undo_made)
 {
 	unsigned long sectiontype, *sectioncount = NULL, ctr, ctr2, notepos;

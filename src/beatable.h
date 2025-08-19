@@ -19,8 +19,15 @@ int eof_validate_beatable_file(char *fn);
 	//Returns nonzero if the file's structure is valid and was parsed
 	//If the input filename is NULL, EOF will present a file browse dialog to select a file
 
+unsigned char eof_get_beatable_note_end(EOF_SONG *sp, unsigned long track, unsigned long notenum);
+	//Examines the specified note and returns the note bitmask reflecting the lane on which the note ends
+	//If the note has sustain, this reflects any slide statuses
+	//0 is returned upon error
+unsigned long eof_fixup_prev_beatable_link(EOF_SONG *sp, unsigned long track, unsigned long notenum);
+	//Returns the note index of the hold note that is linked by the specified note, if any
+	//Returns ULONG_MAX if there is no such note or upon error
 unsigned long eof_fixup_next_beatable_link(EOF_SONG *sp, unsigned long track, unsigned long notenum);
-	//Returns the note index of hold note that links to the specified note, if any
+	//Returns the note index of the hold note that links to the specified note, if any
 	//Returns ULONG_MAX if there is no such note or upon error
 
 #endif
