@@ -2973,7 +2973,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s%s\"", eof_ogg_quality[(int)eof_ogg_setting], file, directory, dest_name);
 			#endif
 			(void) eof_system(syscommand);
-			(void) eof_copy_file(file, cfn);	//Copy the selected MP3 file to a file named original.wav in the chart folder
+			(void) eof_copy_file(file, cfn);	//Copy the selected WAV file to a file named original.wav in the chart folder
 		}
 		else
 		{
@@ -3259,7 +3259,10 @@ int eof_new_chart(char * filename)
 	/* if music file is MP3/WAV, convert it */
 	ret = eof_audio_to_ogg(oggfilename, eof_etext3, dest_name, 1);
 	if(ret != 0)	//If a suitably named OGG was not created successfully
+	{
+		allegro_message("Could not convert selected audio file, it may be corrupt or an unsupported format");
 		return ret;	//Return failure
+	}
 
 	/* destroy old chart in memory */
 	if(eof_song)

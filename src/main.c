@@ -64,6 +64,7 @@
 #include "song.h"
 #include "utility.h"	//For eof_ucode_table[] declaration
 #include "pathing.h"
+#include "beatable.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -1312,8 +1313,8 @@ void eof_fix_window_title(void)
 		{	//If click and drag is disabled
 			(void) ustrcat(eof_window_title, "(Click+drag disabled)");
 		}
-		if(eof_song->tags->double_bass_drum_disabled)
-		{	//If expert+ bass drum is disabled
+		if(eof_song->tags->double_bass_drum_disabled && (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+		{	//If expert+ bass drum is disabled and a drum track is active
 			(void) ustrcat(eof_window_title, "(Expert+ drums off)");
 		}
 		if(eof_silence_loaded)
@@ -5117,6 +5118,13 @@ int eof_initialize(int argc, char * argv[])
 
 				eof_new_chart(argv[i]);
 				eof_disable_info_panel = old_eof_disable_info_panel;	//Restore the info panel status that was defined in the configuration file
+			}
+			else if(!ustricmp(get_extension(argv[i]), "beats"))
+			{	//Validate a BEATABLE project file
+				if(!eof_validate_beatable_file(argv[i]))
+					allegro_message("BEATS project validation failed for \"%s\".  See log", argv[i]);
+				else
+					allegro_message("BEATS project validation succeeded for \"%s\".", argv[i]);
 			}
 		}//If the argument is not one of EOF's native command line parameters and no file is loaded yet
 	}//For each command line argument

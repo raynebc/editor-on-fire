@@ -918,8 +918,6 @@ if(eof_key_code == KEY_PAUSE)
 
 	if(eof_song_loaded)
 	{
-		#include "beatable.h"
-		(void) eof_validate_beatable_file(NULL);
 	}
 }
 ///ALT handling testing

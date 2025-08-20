@@ -2776,7 +2776,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
-	//The active track has at least one note out of grid snap
+	//The active track has notes in at least two difficulties
 	if(!ustricmp(macro, "IF_TRACK_HAS_NOTES_IN_MULTIPLE_DIFFS"))
 	{
 		unsigned char diff;

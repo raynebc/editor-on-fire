@@ -121,7 +121,8 @@ Note and Beat Editing:
         Open the selected pro guitar notes in the edit pro guitar
         note dialog.  If no notes are selected, the note under
         the mouse when the middle click is performed is opened in
-        the dialog.
+        the dialog.  If fingering view is active, the "Edit note
+        frets/fingering" dialog is opened instead.
 
         GHL track:
 
@@ -388,8 +389,13 @@ Miscellaneous Controls:
 
     SHIFT + left click (beats)
 
-        set the start and end points to reflect the portion of the chart from the
+        Set the start and end points to reflect the portion of the chart from the
         previously-selected beat to the start position of the newly-selected beat.
+
+    Enter:
+
+        If a pro guitar track is active, and neither Classic nor Hold input modes are in use,
+        play the selected note's pitches through the Operating System's MIDI output device.
 
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.

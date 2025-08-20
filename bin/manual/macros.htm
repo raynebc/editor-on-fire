@@ -421,6 +421,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the year in Song Properties is defined.</td>
 </tr>
 <tr>
+<td>%IF_TRACK_NUMBER_IS_DEFINED%</td>
+<td>Evaluates as true if the track number in Song Properties is defined.</td>
+</tr>
+<tr>
 <td>%IF_ANY_LYRIC_LINES_ARE_DEFINED%</td>
 <td>Evaluates as true if the project has at least one lyric line.</td>
 </tr>
@@ -605,6 +609,14 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if any pro guitar track in the project is configured as a bass arrangement and uses more than the first four strings, as Rocksmith doesn't directly support this.</td>
 </tr>
 <tr>
+<td>%IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS%</td>
+<td>Evaluates as true if any of several above-mentioned Rocksmith-specific conditional macros run prior to this invocation in the current render frame would evaluate as true for a track other than the active track, so that they can all be summarized in one line and citations relevant to the active track are displayed instead.  Since this macro can only reflect the results of conditional macros that were invoked already, it should be placed below all relevant Rocksmith conditional macros in the panel.</td>
+</tr>
+<tr>
+<td>%IF_INACTIVE_TRACKS_HAVE_RS_ERRORS%</td>
+<td>Similar to %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS%, but applies to error messages instead of warning messages.</td>
+</tr>
+<tr>
 <td>%IF_ACTIVE_TRACK_RS_ANY_TECH_NOTES_LACK_TARGET%</td>
 <td>Evaluates as true if the active pro guitar track has any tech notes that don't overlap a pro guitar note, in which case the %RS_FIRST_TECH_NOTE_LACKING_TARGET% macro will print the location of the first offending tech note.  If a tech note in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS% will evaluate as true.</td>
 </tr>
@@ -638,12 +650,9 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active track has one or more notes that are not grid snapped (based on the current setting of the "Prefer MIDI friendly grid snaps" preference, to match the notes that would highlight when using the "Highlight non grid snapped notes" option in the Song menu), in which case the %TRACK_UNSNAPPED_NOTE_COUNT% macro will print the number of notes that are not grid snapped.  In the case of pro guitar tracks, tech notes are not counted, only normal notes.</td>
 </tr>
 <tr>
-<td>%IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS%</td>
-<td>Evaluates as true if any of several above-mentioned Rocksmith-specific conditional macros run prior to this invocation in the current render frame would evaluate as true for a track other than the active track, so that they can all be summarized in one line and citations relevant to the active track are displayed instead.  Since this macro can only reflect the results of conditional macros that were invoked already, it should be placed below all relevant Rocksmith conditional macros in the panel.</td>
+<td>%IF_TRACK_HAS_NOTES_IN_MULTIPLE_DIFFS%</td>
+<td>Evaluates as true if the active track has notes in at least two difficulties.</td>
 </tr>
-<tr>
-<td>%IF_INACTIVE_TRACKS_HAVE_RS_ERRORS%</td>
-<td>Similar to %IF_INACTIVE_TRACKS_HAVE_RS_WARNINGS%, but applies to error messages instead of warning messages.</td>
 </tbody>
 </table><br>
 
@@ -1113,7 +1122,7 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 <tr>
 <td>%%</td>
-<td>Prints </td>
+<td>Prints the percent sign.</td>
 </tr>
 
 
@@ -1442,6 +1451,18 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%PRINT_TRACK_UNSNAPPED_NOTE_COUNT%</td>
 <td>Prints a string representing the number of unsnapped notes counted during the last processing of the %IF_TRACK_HAS_UNSNAPPED_NOTES% macro.</td>
+</tr>
+<tr>
+<td>%FIRST_LYRIC_WITH_NON_ASCII%</td>
+<td>Prints the location of the first culprit of the %IF_ANY_LYRICS_ARE_NON_ASCII% conditional macro (the first lyric containing non ASCII text).</td>
+</tr>
+<tr>
+<td>%FIRST_LYRIC_OUTSIDE_LINE%</td>
+<td>Prints the location of the first culprit of the %IF_ANY_LYRICS_ARE_OUTSIDE_LINES% conditional macro (the first lyric beginning outside of a lyric line).</td>
+</tr>
+<tr>
+<td>%IR_TRACK_EFFECTIVE_HAND_MODE%</td>
+<td>Prints the current IMMERROCK hand mode in effect at the seek position.</td>
 </tr>
 
 </tbody>
