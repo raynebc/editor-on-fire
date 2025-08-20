@@ -38,10 +38,12 @@ void eof_write_beatable_song_section(PACKFILE *fp, unsigned char tsnum, unsigned
 
 int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 {
-	unsigned long ctr, ctr2, notecount, ulong, diff, holdnotedatacollection, chaincount, chainend, linkcount, start, end, note;
+	unsigned long ctr, ctr2, ctr3, notecount, ulong, diff, holdnotedatacollection, chaincount, chainend, linkcount, start, end, note;
 	unsigned char bitmask;
 	PACKFILE *fp;
 	float fval;
+	char *lane_strings[4] = {"L2", "L1", "R1", "R2"};
+	unsigned lane;	//For logging purposes, the lane number starting with 0
 
 	#define EOF_BEATABLE_SYNC_POINT_LIMIT 400
 	unsigned long sync_point[EOF_BEATABLE_SYNC_POINT_LIMIT];
@@ -207,7 +209,7 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 		(void) pack_iputl(4, fp);		//There is always a hold note collection written for each lane if any at all
 		for(holdnotedatacollection = 0; holdnotedatacollection < 4; holdnotedatacollection++)
 		{	//For each of the four hold note data collections, each of which is the collection of all hold/slide notes begin on that particular lane (L2, L1, R1, R2)
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tWriting hold note data collection %lu", holdnotedatacollection);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tWriting hold note data collection %lu (%s)", holdnotedatacollection, lane_strings[holdnotedatacollection]);
 			eof_log(eof_log_string, 1);
 			//Count hold note chains for this collection
 			for(ctr = chaincount = 0; ctr < eof_get_track_size(sp, track); ctr++)
@@ -218,7 +220,7 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 					{	//If this note wasn't already counted as a link in a hold note chain, is in the target difficulty and has sustain
 						chaincount++;	//This represents the start of a hold note chain
 						for(ctr2 = eof_fixup_next_beatable_link(sp, track, ctr); ctr2 < eof_get_track_size(sp, track); ctr2 =  eof_fixup_next_beatable_link(sp, track, ctr2))
-						{	//For all remaining hold notes in this hold note chain
+						{	//For all remaining hold/slide notes in this hold note chain
 							eof_set_note_tflags(sp, track, ctr2, eof_get_note_tflags(sp, track, ctr2) | EOF_NOTE_TFLAG_CHAINLINK);	//Mark the note as being a link in a hold note chain
 						}
 					}
@@ -238,7 +240,7 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 						chainend = ctr;	//Track the last note in this hold note chain
 						start = eof_get_note_pos(sp, track, ctr);
 						(void) pack_iputl(start * 1000, fp);	//This note is the start of a hold note chain, write its timestamp
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tStart:  %lu microseconds (%.3f seconds)", start, (double)start / 1000000.0);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tStart:  %lu microseconds (%.3f seconds)", start * 1000, (double)start / 1000.0);
 						eof_log(eof_log_string, 1);
 
 						//Count the number of remaining links in this hold note chain
@@ -250,54 +252,72 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 
 						//Write the timestamps for the remaining linked hold notes in this chain
 						(void) pack_iputl(linkcount, fp);		//Write the number of timestamps
-						for(ctr2 = eof_fixup_next_beatable_link(sp, track, ctr); ctr2 < eof_get_track_size(sp, track); ctr2 =  eof_fixup_next_beatable_link(sp, track, ctr2))
+						for(ctr2 = eof_fixup_next_beatable_link(sp, track, ctr), ctr3 = 1; ctr2 < eof_get_track_size(sp, track); ctr2 =  eof_fixup_next_beatable_link(sp, track, ctr2), ctr3++)
 						{	//For all remaining hold notes in this hold note chain
 							chainend = ctr2;	//Track the last note in this hold note chain
 							start = eof_get_note_pos(sp, track, ctr2);
 							(void) pack_iputl(start * 1000, fp);	//This note is the start of a hold note chain, write its timestamp
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Pos:  %lu microseconds (%.3f seconds)", ctr2, start, (double)start / 1000000.0);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Pos:  %lu microseconds (%.3f seconds)", ctr3, start * 1000, (double)start / 1000.0);
 							eof_log(eof_log_string, 1);
 						}
 						//Append a timestamp to reflect the end position of the last note in this chain
 						end = eof_get_note_pos(sp, track, chainend) + eof_get_note_length(sp, track, chainend);
 						(void) pack_iputl(end * 1000, fp);
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Pos:  %lu microseconds (%.3f seconds)", ctr2, end, (double)end / 1000000.0);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Pos:  %lu microseconds (%.3f seconds)", ctr3, end * 1000, (double)end / 1000.0);
 						eof_log(eof_log_string, 1);
 
 						//Write the lane bitmasks for the remaining linked hold notes in this chain
 						(void) pack_iputl(linkcount, fp);		//Write the number of lane bitmasks
-						for(ctr2 = eof_fixup_next_beatable_link(sp, track, ctr); ctr2 < eof_get_track_size(sp, track); ctr2 =  eof_fixup_next_beatable_link(sp, track, ctr2))
+						for(ctr2 = eof_fixup_next_beatable_link(sp, track, ctr), ctr3 = 1; ctr2 < eof_get_track_size(sp, track); ctr2 =  eof_fixup_next_beatable_link(sp, track, ctr2), ctr3++)
 						{	//For all remaining hold notes in this hold note chain
 							//Remap the EOF note bitmask to BEATABLE's system
-							bitmask = 0;
-							note = eof_get_note_note(sp, track, ctr2);
+							bitmask = lane = 0;
+							note = eof_get_beatable_note_end(sp, track, ctr2);	//Identify the lane that this hold note ENDS in
 							if(note & 1)
 								bitmask |= 8;	//EOF lane 1 to BEATABLE L2 note
 							if(note & 2)
+							{
+								lane = 1;
 								bitmask |= 4;	//EOF lane 2 to BEATABLE L1 note
+							}
 							if(note & 4)
+							{
+								lane = 2;
 								bitmask |= 2;	//EOF lane 3 to BEATABLE R1 note
+							}
 							if(note & 8)
+							{
+								lane = 3;
 								bitmask |= 1;	//EOF lane 4 to BEATABLE R2 note
+							}
 
 							(void) pack_putc(bitmask, fp);	//Write the lane bitmask
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Bitmask:  %u", ctr2, bitmask);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Bitmask:  %u (%s)", ctr3, bitmask, lane_strings[lane]);
 							eof_log(eof_log_string, 1);
 						}
 						//Append a lane bitmask to reflect the end of the last note in this chain
-						bitmask = 0;
-						note = eof_get_note_note(sp, track, chainend);
+						bitmask = lane = 0;
+						note = eof_get_beatable_note_end(sp, track, chainend);	//Identify the lane that this hold note ENDS in
 						if(note & 1)
 							bitmask |= 8;	//EOF lane 1 to BEATABLE L2 note
 						if(note & 2)
+						{
+							lane = 1;
 							bitmask |= 4;	//EOF lane 2 to BEATABLE L1 note
+						}
 						if(note & 4)
+						{
+							lane = 2;
 							bitmask |= 2;	//EOF lane 3 to BEATABLE R1 note
+						}
 						if(note & 8)
+						{
+							lane = 3;
 							bitmask |= 1;	//EOF lane 4 to BEATABLE R2 note
+						}
 
 						(void) pack_putc(bitmask, fp);	//Write the lane bitmask
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Bitmask:  %u", ctr2, bitmask);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tLink %lu:  Bitmask:  %u (%s)", ctr3, bitmask, lane_strings[lane]);
 						eof_log(eof_log_string, 1);
 					}
 				}
@@ -307,7 +327,7 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 		//Count left snap notes
 		for(ctr = notecount = 0; ctr < eof_get_track_size(sp, track); ctr++)
 		{	//For each note in the track
-			if((eof_get_note_type(sp, track, ctr) == diff) && (eof_get_note_note(sp, track, ctr) & 16) && (eof_get_note_flags(sp, track, ctr) & EOF_BEATABLE_NOTE_FLAG_LSNAP))
+			if((eof_get_note_type(sp, track, ctr) == diff) && eof_note_is_left_snap(sp, track, ctr))
 			{	//If this note is in the target difficulty and is a left snap note
 				notecount++;
 			}
@@ -318,7 +338,7 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 		(void) pack_iputl(notecount, fp);		//Write the number of left snap notes for this difficulty
 		for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 		{	//For each note in the track
-			if((eof_get_note_type(sp, track, ctr) == diff) && (eof_get_note_note(sp, track, ctr) & 16) && (eof_get_note_flags(sp, track, ctr) & EOF_BEATABLE_NOTE_FLAG_LSNAP))
+			if((eof_get_note_type(sp, track, ctr) == diff) && eof_note_is_left_snap(sp, track, ctr))
 			{	//If this note is in the target difficulty and is a left snap note
 				(void) pack_iputl(eof_get_note_pos(sp, track, ctr) * 1000, fp);	//Write the note's timestamp in microseconds
 			}
@@ -817,7 +837,7 @@ unsigned char eof_get_beatable_note_end(EOF_SONG *sp, unsigned long track, unsig
 	if(!eof_track_is_beatable_mode(sp, track))
 		return 0;	//Only BEATABLE tracks are allowed by this function
 
-	note_end = eof_get_note_type(sp, track, notenum);	//By default, assume the note will end on the same lane it begins with
+	note_end = eof_get_note_note(sp, track, notenum);	//By default, assume the note will end on the same lane it begins with
 
 	if(eof_get_note_length(sp, track, notenum) > 1)
 	{	//Hold notes (any note longer than 1ms) can slide to another lane
