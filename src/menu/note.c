@@ -7264,7 +7264,7 @@ int eof_menu_handshape_mark(void)
 
 int eof_menu_arpeggio_unmark_logic(int handshape)
 {
-	unsigned long i, j;
+	unsigned long i, j, ghostnote;
 	unsigned long tracknum;
 	int note_selection_updated;
 	EOF_PRO_GUITAR_TRACK *tp;
@@ -7295,6 +7295,16 @@ int eof_menu_arpeggio_unmark_logic(int handshape)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				undo_made = 1;
 			}
+
+			//Delete the ghost gems that were placed at the start of the arpeggio/hanshape
+			ghostnote = eof_find_note_at_pos(eof_song, eof_selected_track, eof_note_type, tp->arpeggio[j].start_pos);
+			if(ghostnote < eof_get_track_size(eof_song, eof_selected_track))
+			{	//If a note was found at the start of this arpeggio/handshape
+				unsigned long note = eof_get_note_note(eof_song, eof_selected_track, ghostnote);
+				note &= ~eof_get_note_ghost(eof_song, eof_selected_track, ghostnote);	//Clear all gems that are ghosted
+				eof_set_note_note(eof_song, eof_selected_track, ghostnote, note);		//Update the note at the start of the arpeggio/handshape
+			}
+
 			eof_pro_guitar_track_delete_arpeggio(tp, j);	//Delete the arpeggio section
 			break;
 		}
@@ -7303,6 +7313,7 @@ int eof_menu_arpeggio_unmark_logic(int handshape)
 	{	//If the note selection was originally empty and was dynamically updated
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Delete any notes that no longer have any gems (ie. they were arpeggio/handshape ghost chords with no non-ghost gems)
 	return 1;
 }
 
@@ -11678,8 +11689,8 @@ int eof_menu_set_beatable_slide(unsigned char lane)
 		{	//For each note in the active track
 			if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i])
 				continue;	//If the note isn't selected, skip it
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & (1 << (lane - 1)))
-				continue;	//If this note already has a gem on the specified slide to lane, skip it
+			if(lane && (eof_get_note_note(eof_song, eof_selected_track, i) & (1 << (lane - 1))))
+				continue;	//If setting a slide instead of removing slides, and this note already has a gem on the specified slide to lane, skip it
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			if(lane)
 			{	//If setting a slide to status

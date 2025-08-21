@@ -493,6 +493,14 @@ void eof_prepare_track_menu(void)
 			}
 		}
 
+		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+		{	//If a BEATABLE track is active, several menu items are not applicable
+			eof_track_menu[3].flags = D_DISABLED | D_HIDDEN;	//Track>Phase Shift
+			eof_track_menu[14].flags = D_DISABLED | D_HIDDEN;	//Track>Enable GHL mode
+			eof_track_menu[15].flags = D_DISABLED | D_HIDDEN;	//Track>Find optimal CH star power path
+			eof_track_menu[16].flags = D_DISABLED | D_HIDDEN;	//Track>Evaluate CH star power path
+		}
+
 		if(eof_create_filtered_menu(eof_track_menu, eof_filtered_track_menu, EOF_SCRATCH_MENU_SIZE))
 		{	//If the Track menu was recreated to filter out hidden items
 			eof_main_menu[3].child = eof_filtered_track_menu;	//Use this in the main menu

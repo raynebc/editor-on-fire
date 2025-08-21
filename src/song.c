@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include <ctype.h>
 #include <errno.h>
+#include <float.h>
 #include <time.h>
 #include "main.h"
 #include "editor.h"
@@ -9126,21 +9127,18 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	return highestlane;
 }
 
-unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned long eof_get_pro_guitar_note_lowest_fret_value(EOF_PRO_GUITAR_NOTE *np)
 {
-	unsigned long lowestfret = 0, currentfret, ctr, tracknum, bitmask;
+	unsigned long lowestfret = 0, currentfret, ctr, bitmask;
 
-	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		return 0;	//Return error
-	tracknum = sp->track[track]->tracknum;
-	if(note >= sp->pro_guitar_track[tracknum]->notes)
+	if(!np)
 		return 0;	//Return error
 
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 	{	//For each of the 6 usable strings
-		if(sp->pro_guitar_track[tracknum]->note[note]->note & bitmask)
+		if(np->note & bitmask)
 		{	//If this string is in use
-			currentfret = sp->pro_guitar_track[tracknum]->note[note]->frets[ctr];
+			currentfret = np->frets[ctr];
 			if((currentfret != 0xFF) && (((currentfret & 0x7F) < lowestfret) || !lowestfret))
 			{	//If this fret value (masking out the MSB, which is used for muting status) is lower than the previous lowest value, or no fret value has been stored
 				lowestfret = currentfret & 0x7F;
@@ -9149,6 +9147,19 @@ unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsig
 	}
 
 	return lowestfret;
+}
+
+unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+	if(note >= sp->pro_guitar_track[tracknum]->notes)
+		return 0;	//Return error
+
+	return eof_get_pro_guitar_note_lowest_fret_value(sp->pro_guitar_track[tracknum]->note[note]);
 }
 
 unsigned long eof_get_pro_guitar_note_highest_fret_value(EOF_PRO_GUITAR_NOTE *np)
@@ -9441,6 +9452,8 @@ void eof_enforce_lyric_gap_multiplier(EOF_SONG *sp, unsigned long track, unsigne
 		return;	//Invalid parameter
 	if(track != EOF_TRACK_VOCALS)
 		return;	//Only run on the vocal track
+	if(eof_lyric_gap_multiplier < DBL_EPSILON)
+		return;	//If this user-defined gap is equivalent to or less than zero, don't run this logic
 
 	if(notenum == ULONG_MAX)
 	{	//If all selected notes are to be processed
@@ -12140,4 +12153,17 @@ void eof_song_reapply_all_dynamic_highlighting(void)
 			eof_song_highlight_arpeggios(eof_song, ctr);		//Re-create the arpeggio highlighting as appropriate
 	}
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
+}
+
+unsigned long eof_find_note_at_pos(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long pos)
+{
+	unsigned long ctr;
+
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the specified track
+		if(eof_get_note_pos(sp, track, ctr) == pos)
+			return ctr;
+	}
+
+	return ULONG_MAX;	//No match
 }

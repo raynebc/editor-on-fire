@@ -1304,6 +1304,8 @@ void eof_fix_window_title(void)
 		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
 		{
 			(void) ustrcat(eof_window_title, "(BEATABLE)");
+			if(eof_note_type == 4)
+				(void) ustrcat(eof_window_title, " ! This difficulty won't export !");
 		}
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the tempo map is locked

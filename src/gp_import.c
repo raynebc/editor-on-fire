@@ -4026,7 +4026,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//For each previous note created for this track
 									if(tp->note[ctr5 - 1]->note & (1 << convertednum))
 									{	//If the note has a gem on this string
-										frets[ctr4] = tp->note[ctr5 - 1]->frets[convertednum];	//Copy the fret number for this string
+										if(tp->note[ctr5 - 1]->unpitchend)
+										{	//If the note being extended is an unpitched slide (this would have caused the note's original fret value to be altered)
+											//Account for the possibility of this being a chord with an unpitched slide, and find the correct fret value for the target string
+											unsigned char lowest_fret = eof_get_pro_guitar_note_lowest_fret_value(tp->note[ctr5 - 1]);	//Find the lowest fret value used for that previous note
+											unsigned char fret_diff = tp->note[ctr5 - 1]->frets[convertednum] - lowest_fret;	//The number of frets higher this string is compared to the unpitchend fret value
+											frets[ctr4] = tp->note[ctr5 - 1]->unpitchend + fret_diff;	//Recreate this string's fret value from before the slide being added
+										}
+										else
+											frets[ctr4] = tp->note[ctr5 - 1]->frets[convertednum];	//Otherwise copy the fret number for this string
 										break;
 									}
 								}
@@ -5053,6 +5061,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))		//If this note wasn't marked as an unpitched slide during import
 				continue;	//Skip the note
 			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_HIGHLIGHT))		//If this note wasn't highlighted in order to mark an unpitched slide in (to tell it apart from unpitched slide out notes)
+				continue;	//Skip the note
+			if(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)	//If this note was already linked to a tie note that follows it
 				continue;	//Skip the note
 
 			gnp = eof_pro_guitar_track_add_note(gp->track[ctr]);		//Add a new note to the current track

@@ -520,6 +520,18 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	//The Phase Shift drum tracks is active
+	if(!ustricmp(macro, "IF_IS_PS_DRUM_TRACK"))
+	{
+		if(eof_selected_track == EOF_TRACK_DRUM_PS)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//A GHL format track is active
 	if(!ustricmp(macro, "IF_IS_GHL_TRACK"))
 	{

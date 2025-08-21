@@ -14,9 +14,10 @@ Use up/down arrow keys to transpose notes.
 %IF_IS_DRUM_TRACK%Drum controls:
 %IF_IS_DRUM_TRACK%   Mark drum roll: CTRL+SHIFT+O
 %IF_IS_DRUM_TRACK%   Toggle Y/B/G cymbal: CTRL+Y/B/G
+%IF_IS_DRUM_TRACK%   Toggle all cymbal lanes:  CTRL+ALT+C
 %IF_IS_DRUM_TRACK%   Toggle Expert+ bass: CTRL+E
-%IF_IS_DRUM_TRACK%   Toggle Y Open/Pedal/Sizzle hi hat: SHIFT+O/P/S
-%IF_IS_DRUM_TRACK%   Toggle R rim shot: SHIFT+R
+%IF_IS_PS_DRUM_TRACK%   Toggle Y Open/Pedal/Sizzle hi hat: SHIFT+O/P/S
+%IF_IS_PS_DRUM_TRACK%   Toggle R rim shot: SHIFT+R
 
 ;Vocal track specific controls
 %IF_IS_VOCAL_TRACK%Lyric controls:

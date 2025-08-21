@@ -104,8 +104,8 @@
 ///Temporary note flags
 //The following temporary flags are maintained internally and do not save to file (even during project save, clipboard, auto-adjust, etc.)
 #define EOF_NOTE_TFLAG_TEMP             1	//This flag will represent a temporary status, such as a note that was generated for temporary use that will be removed
-#define EOF_NOTE_TFLAG_IGNORE           2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
-#define EOF_NOTE_TFLAG_CHAINLINK      2	//	The flag is used to mark a note that is identified as a link in a hold note chain, to avoid notes being exported multiple times during BEATABLE export
+#define EOF_NOTE_TFLAG_IGNORE          2	//This flag will represent a note that is not exported to XML (such as a chord within an arpeggio that is converted into single notes)
+#define EOF_NOTE_TFLAG_CHAINLINK    2	//This flag is used to mark a note that is identified as a link in a hold note chain, to avoid notes being exported multiple times during BEATABLE export
 #define EOF_NOTE_TFLAG_ARP              4	//This flag will represent a note that is within an arpeggio, for RS export of arpeggio/handshape phrases as handshape tags
 #define EOF_NOTE_TFLAG_HAND             8	//This flag will represent a note that is within a handshape phrase, which is treated as a variation of an arpeggio, affecting export to RS2 XML
 #define EOF_NOTE_TFLAG_ARP_FIRST       16	//This flag will represent a note that is the first note within its arpeggio phrase
@@ -1081,9 +1081,11 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile);
 	//Parses the notes in the clipboard file, returning the highest used fret among them (or 0 if all such notes are muted with no fret specified)
 unsigned long eof_get_highest_clipboard_lane(char *clipboardfile);
 	//Parses the notes in the clipboard file, returning the highest used lane among them (or 0 if all such notes have no gems, ie. corrupted clipboard)
-unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
+unsigned long eof_get_pro_guitar_note_lowest_fret_value(EOF_PRO_GUITAR_NOTE *np);
 	//Returns the lowest used fret in the specified pro guitar note
 	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
+unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Calls eof_get_pro_guitar_note_lowest_fret_value() on the specified note
 unsigned long eof_get_pro_guitar_note_highest_fret_value(EOF_PRO_GUITAR_NOTE *np);
 	//Returns the highest used fret in the specified pro guitar note
 	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
@@ -1286,5 +1288,9 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum);
 void eof_song_reapply_all_dynamic_highlighting(void);
 	//Removes and re-applies any enabled dynamic highlighting (notes in arpeggios, notes that are not grid snapped) to all tracks
 	// and calls eof_detect_difficulties() for the active track to update the highlighting indicator for each track
+
+unsigned long eof_find_note_at_pos(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long pos);
+	//Checks each note in the specified track and returns the index of the first one that is at the specified timestamp
+	//ULONG_MAX is returned if there is no matching note or upon error
 
 #endif
