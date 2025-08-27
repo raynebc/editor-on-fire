@@ -229,12 +229,12 @@ void eof_load_config(char * fn)
 	eof_enable_open_strums_by_default = get_config_int("preferences", "eof_enable_open_strums_by_default", 0);
 	if(eof_min_note_distance > 999)
 	{	//If the minimum note distance is invalid (more than 3 digits)
-		eof_min_note_distance = 3;	//Reset it to default
+		eof_min_note_distance = 32;	//Reset it to default
 	}
 	eof_min_note_distance_intervals = get_config_int("preferences", "eof_min_note_distance_intervals", 1);
 	if(eof_min_note_distance_intervals > 2)
 	{	//If the minimum note distance setting isn't ms, 1/# measure or 1/# beat
-		eof_min_note_distance_intervals = 0;	//Reset it to ms
+		eof_min_note_distance_intervals = 1;	//Reset it to 1/# measure
 	}
 	eof_enforce_chord_density = get_config_int("preferences", "eof_enforce_chord_density", 0);
 	eof_imports_recall_last_path = get_config_int("preferences", "eof_imports_recall_last_path", 0);

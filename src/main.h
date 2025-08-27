@@ -752,9 +752,9 @@ unsigned long eof_count_selected_and_unselected_notes(unsigned long *total);
 unsigned long eof_count_selected_notes_a(unsigned long track, unsigned char diff);
 	//Returns the number of notes in the specified track difficulty that are selected, or 0 upon error
 unsigned long eof_get_selected_note_range(unsigned long *sel_start, unsigned long *sel_end, char function);
-	//Returns the number of notes in the active track difficulty that are explicitly selected, allowing an easy way to check if some number of  them are selected
+	//Returns the number of notes in the active track difficulty that are explicitly selected, allowing an easy way to check if some number of them are selected
 	//If sel_start and sel_end are not NULL, information about the first and last selected note are returned through them
-	//If function is zero, the information returned is the index number of the notes, otherwise it is their timestamps
+	//If function is zero, the information returned via the pointers is the index number of the notes, otherwise it is their timestamps
 	//The notes are expected to be sorted.  Zero is returned on error.
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_fix_spectrogram(void);	//Rebuild the spectrogram data if it exists

@@ -92,7 +92,8 @@ int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, un
 	//If closestintervalpos is not NULL, it is set to the beat interval position that is closest to the specified timestamp
 	//Upon error, zero is returned and if closestintervalpos is not NULL, its referenced variable is set to ULONG_MAX
 	//If midi_friendly is nonzero, grid positions that the time division isn't divisible by are ignored, to be used by the "Highlight non grid snapped notes" and "Repair grid snap"
-	// to resolve scenarios where otherwise grid-snapped notes are using a grid snap that will not quantize properly to MIDI
+	//	to resolve scenarios where otherwise grid-snapped notes are using a grid snap that will not quantize properly to MIDI
+	///	It's probably a good idea to make all calls to this function pass eof_prefer_midi_friendly_grid_snapping as this parameter for the best consistency
 int eof_find_beat_interval_position(unsigned long beat, unsigned char intervalvalue, unsigned char intervalnum, unsigned long *intervalpos);
 	//Determines the real time position of the specified beat interval
 	//If it exists, it is returned through intervalpos and nonzero is returned

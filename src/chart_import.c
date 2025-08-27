@@ -61,6 +61,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	double beat_count;
 	double convert;
 	struct dbAnchor * current_anchor;
+	unsigned long intervalnum = 0, interval = 1;
 
 	unsigned long anchorctr = 0;
 
@@ -74,7 +75,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	{
 		unsigned long beat_chart_pos;						//The chart position of the beat in which the specified chart position is
 		unsigned long beatlength_ticks = chart->resolution;	//The resolution defined in the .chart file is the number of ticks in one beat
-		unsigned long ctr, interval, snaplength;
+		unsigned long snaplength;
 
 		*gridsnap = 0;	//Unless found otherwise, assume this delta time is NOT a grid snap position
 		beat_chart_pos = chartpos - (chartpos % beatlength_ticks);
@@ -85,14 +86,14 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 				continue;	//If the beat's tick length isn't divisible by this interval, skip it
 
 			snaplength = beatlength_ticks / interval;	//Determine the number of ticks in one such grid snap interval
-			for(ctr = 0; ctr < interval; ctr++)
+			for(intervalnum = 0; intervalnum < interval; intervalnum++)
 			{	//For each instance of that grid snap
-				if(beat_chart_pos + (ctr * snaplength) == chartpos)
+				if(beat_chart_pos + (intervalnum * snaplength) == chartpos)
 				{	//If the target chart position matches this grid snap's chart position
 					*gridsnap = 1;	//Signal this to the calling function
 					if(eof_log_level > 1)
 					{
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected grid snap of chartpos %lu is %lu / %lu", chartpos, ctr, interval);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDetected grid snap of chartpos %lu is %lu / %lu", chartpos, intervalnum, interval);
 						eof_log(eof_log_string, 3);
 					}
 					break;			//Stop checking instances of this grid snap
@@ -108,7 +109,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	curpos = offset;
 	convert = beat_length / (double)chart->resolution; // current conversion rate of chartpos to milliseconds
 	while(current_anchor)
-	{
+	{	//For each anchor in the chart
 		/* find current BPM */
 		if(current_anchor->BPM > 0)
 		{
@@ -121,14 +122,21 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 				beat_length = (((double)current_anchor->next->usec / 1000.0 + offset) - curpos) / beat_count;
 			}
 
-			convert = beat_length / (double)chart->resolution;
+			convert = beat_length / (double)chart->resolution;	//The length of one tick in milliseconds
 		}
 
 		/* if the specified chartpos is past the next anchor, add the total time between
 		 * the anchors */
 		if(current_anchor->next && (chartpos >= current_anchor->next->chartpos))
 		{
-			curpos += (double)(current_anchor->next->chartpos - current_anchor->chartpos) * convert;
+			if(current_anchor->next->usec > 0)
+			{	//If the next anchor has a defined timestamp, use that timestamp for improved accuracy over floating point math
+				curpos = offset + (current_anchor->next->usec / 1000.0);
+			}
+			else
+			{	//Otherwise calculate the timestamp
+				curpos += (double)(current_anchor->next->chartpos - current_anchor->chartpos) * convert;
+			}
 			lastchartpos = current_anchor->next->chartpos;
 		}
 
@@ -153,7 +161,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 			eof_log(eof_log_string, 3);
 		}
 		current_anchor = current_anchor->next;
-	}
+	}//For each anchor in the chart
 	if(eof_log_level > 1)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFinal converted realtime is %fms", curpos);
@@ -664,8 +672,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 				originalnotepos = notepos;	//Keep a copy of this value
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Chartpos = %lu  Pos = %lums  Gem value = %d", notes_imported++, current_note->chartpos, notepos, current_note->gemcolor);
 				eof_log(eof_log_string, 1);
-				if(gridsnap && !eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos, 0))
-				{	//If this chart position should be a beat interval, but the timing conversion did not result in this
+				if(gridsnap && !eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping))
+				{	//If this chart position should be a beat interval, but the timing conversion did not result in this, re-snap the note honoring the user preference whether to use MIDI friendly grid snaps
 					if(closestpos != ULONG_MAX)
 					{	//If the nearest beat interval position was determined
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tCorrecting position from %lums to %lums", notepos, closestpos);
@@ -1022,8 +1030,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		//Determine the realtime position associated with the event, for solos, lyric lines and lyrics
 		pos = chartpos_to_msec(chart, current_event->chartpos, &gridsnap) + 0.5;	//Store the real timestamp associated with the event, rounded up to nearest millisecond
-		if(gridsnap && !eof_is_any_beat_interval_position(pos, NULL, NULL, NULL, &closestpos, 0))
-		{	//If this chart position should be a beat interval, but the timing conversion did not result in this
+		if(gridsnap && !eof_is_any_beat_interval_position(pos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping))
+		{	//If this chart position should be a beat interval, but the timing conversion did not result in this, re-snap the event honoring the user preference whether to use MIDI friendly grid snaps
 			if(closestpos != ULONG_MAX)
 			{	//If the nearest beat interval position was determined
 				pos = closestpos;	//Change it to be the closest beat interval position to the converted timestamp

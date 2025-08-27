@@ -693,7 +693,8 @@ void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, 
 	// if operation is < 0, notes at the same timestamp as the specified note in lower difficulties are also deleted
 	// if operation is 0, only the specified note is deleted
 	// if operation is > 0, notes at the same timestamp as the specified note in ANY difficulty is deleted
-	//The specified track's notes are pre-sorted in order to ensure this function operates properly
+	//Any fret hand positions defined at the timestamp of any affected notes are also deleted
+	//The specified track's notes must already be sorted in order to ensure this function operates properly
 void eof_track_delete_overlapping_tech_notes(EOF_SONG *sp, unsigned long track, unsigned long targetnormalnote);
 	//Deletes all tech notes that overlap the specified normal pro guitar note, only if tech view is not in effect, or does nothing if the specified track isn't a pro guitar track
 void eof_song_empty_track(EOF_SONG * sp, unsigned long track);								//Deletes all notes from the track

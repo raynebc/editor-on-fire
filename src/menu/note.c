@@ -100,6 +100,7 @@ MENU eof_star_power_menu[] =
 MENU eof_menu_delete[] =
 {
 	{"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
+	{"Delete w/ FHP\tShift+Del", eof_menu_note_delete_with_fhp, NULL, 0, NULL},
 	{"Delete w/ lower diffs\t" CTRL_NAME "+Shift+Del", eof_menu_note_delete_with_lower_difficulties, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -1209,6 +1210,7 @@ void eof_prepare_note_menu(void)
 			{	//If the active track is a pro guitar track
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
+				eof_menu_delete[1].flags = 0;			//Note>Delete>Delete w/ FHP
 				eof_note_menu[17].flags = 0;			//Note>Pro Guitar> submenu
 				eof_note_menu[18].flags = 0;			//Note>Rocksmith> submenu
 				eof_note_simplify_menu[6].flags = 0;	//Note>Simplify>String mutes
@@ -1256,6 +1258,7 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{	//A pro guitar track is not active
+				eof_menu_delete[1].flags = D_DISABLED;
 				eof_note_menu[17].flags = D_DISABLED | D_HIDDEN;
 				eof_note_menu[18].flags = D_DISABLED | D_HIDDEN;
 				eof_note_simplify_menu[6].flags = D_DISABLED | D_HIDDEN;
@@ -1961,7 +1964,7 @@ int eof_menu_note_resnap_auto(void)
 	return eof_menu_note_resnap_logic(1);
 }
 
-int eof_menu_note_delete(void)
+int eof_menu_note_delete_logic(int delete_fhps)
 {
 	unsigned long i, d = 0;
 
@@ -1981,9 +1984,13 @@ int eof_menu_note_delete(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note (in reverse order)
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
-		{
+		if(eof_selection.multi[i - 1] && (eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type))
+		{	//If the note is in the active track difficulty and is selected
 			eof_track_delete_overlapping_tech_notes(eof_song, eof_selected_track, i - 1);	//Delete any tech notes applying to this note
+			if(delete_fhps)
+			{	//If the calling function specified to delete any FHPs at the same timestamps of deleted notes
+				eof_track_delete_fret_hand_position_at_pos(eof_selected_track, eof_note_type, eof_get_note_pos(eof_song, eof_selected_track, i - 1));
+			}
 			eof_track_delete_note(eof_song, eof_selected_track, i - 1);
 			eof_selection.multi[i - 1] = 0;
 		}
@@ -1995,6 +2002,16 @@ int eof_menu_note_delete(void)
 	eof_determine_phrase_status(eof_song, eof_selected_track);
 
 	return 1;
+}
+
+int eof_menu_note_delete(void)
+{
+	return eof_menu_note_delete_logic(0);
+}
+
+int eof_menu_note_delete_with_fhp(void)
+{
+	return eof_menu_note_delete_logic(1);
 }
 
 int eof_menu_note_delete_with_lower_difficulties(void)

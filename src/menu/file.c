@@ -1603,7 +1603,8 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[22].flags = 0;					//Make note tails clickable
 			eof_preferences_dialog[23].flags = D_SELECTED;			//Drum modifiers affect all diff's
 			eof_etext2[0] = '3';									//Min. note distance
-			eof_etext2[1] = '\0';
+			eof_etext2[1] = '2';
+			eof_etext2[2] = '\0';
 			eof_etext[0] = '\0';									//Min. note length
 			eof_preferences_dialog[28].flags = 0;					//3D render bass drum in a lane
 			eof_preferences_dialog[29].flags = 0;					//dB style seek controls
@@ -1623,8 +1624,8 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[46].flags = 0;					//Enable open strum by default
 			eof_preferences_dialog[47].flags = 0;					//Disable automatic backups
 			eof_preferences_dialog[48].flags = D_SELECTED;			//Auto-Adjust sections/FHPs
-			eof_preferences_dialog[49].flags = D_SELECTED;			//min. note distance is in ms
-			eof_preferences_dialog[50].flags = 0;					//min. note distance is 1/# measure
+			eof_preferences_dialog[49].flags = 0;					//min. note distance is in ms
+			eof_preferences_dialog[50].flags = D_SELECTED;			//min. note distance is 1/# measure
 			eof_preferences_dialog[51].flags = 0;					//min. note distance is 1/# beat
 			eof_preferences_dialog[52].flags = 0;					//New notes are force strum
 			eof_preferences_dialog[53].flags = 0;					//Use FoF difficulty naming
@@ -4015,7 +4016,7 @@ int eof_save_helper_checks(void)
 			char *warning2 = "Warning: At least one note is out of sync with a grid snapped note.";
 			char *warning = warning1;
 
-			note1snapped = eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, NULL, 0);	//Check if the outer loop's note is beat interval snapped
+			note1snapped = eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, NULL, eof_prefer_midi_friendly_grid_snapping);	//Check if the outer loop's note is beat interval snapped
 			note2snapped = note1snapped;
 			for(ctr3 = 0; ctr3 < eof_get_track_size(eof_song, ctr); ctr3++)
 			{	//For each note in the track
@@ -4035,7 +4036,7 @@ int eof_save_helper_checks(void)
 				else
 					unmatch = 1;	//Otherwise it was a note within 3ms, track this
 
-				note2snapped = eof_is_any_beat_interval_position(notepos2, NULL, NULL, NULL, NULL, 0);	//Check if the inner loop's note is beat interval snapped
+				note2snapped = eof_is_any_beat_interval_position(notepos2, NULL, NULL, NULL, NULL, eof_prefer_midi_friendly_grid_snapping);	//Check if the inner loop's note is beat interval snapped
 				if(note1snapped != note2snapped)
 					break;	//If one note is snapped and the other isn't, the snapped note is considered correct
 			}

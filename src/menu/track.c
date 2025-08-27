@@ -1706,17 +1706,6 @@ MENU eof_track_proguitar_fret_hand_copy_menu[EOF_TRACKS_MAX] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_track_proguitar_fret_hand_menu[] =
-{
-	{"&Set\tShift+F", eof_track_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
-	{"&List\t" CTRL_NAME "+Shift+F", eof_track_fret_hand_positions, NULL, 0, NULL},
-	{"&Copy", eof_track_fret_hand_positions_copy_from, NULL, 0, NULL},
-	{"Generate all diffs", eof_track_fret_hand_positions_generate_all, NULL, 0, NULL},
-	{"Delete effective\tShift+Del", eof_track_delete_effective_fret_hand_position, NULL, 0, NULL},
-	{"Copy &From", NULL, eof_track_proguitar_fret_hand_copy_menu, 0, NULL},
-	{NULL, NULL, NULL, 0, NULL}
-};
-
 char eof_track_pro_guitar_set_fret_hand_position_dialog_string1[] = "Set fret hand position";
 char eof_track_pro_guitar_set_fret_hand_position_dialog_string2[] = "Edit fret hand position";
 DIALOG eof_track_pro_guitar_set_fret_hand_position_dialog[] =
@@ -1956,6 +1945,26 @@ int eof_track_delete_effective_fret_hand_position(void)
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 	if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos.value - eof_av_delay, &index, NULL, 0))
 	{	//If there is a fret hand position in effect at the current seek position in the active track difficulty
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_pro_guitar_track_delete_hand_position(tp, index);	//Delete the hand position
+		eof_pro_guitar_track_sort_fret_hand_positions(tp);		//Re-sort the remaining hand positions
+	}
+	return 1;
+}
+
+int eof_track_delete_fret_hand_position_at_pos(unsigned long track, unsigned char diff, unsigned long pos)
+{
+	unsigned long index = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
+	if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, diff, pos, &index, NULL, 1))
+	{	//If there is a fret hand position defined at exactly the specified position of the specified track difficulty
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_pro_guitar_track_delete_hand_position(tp, index);	//Delete the hand position
 		eof_pro_guitar_track_sort_fret_hand_positions(tp);		//Re-sort the remaining hand positions
@@ -2637,10 +2646,21 @@ MENU eof_track_rocksmith_popup_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_track_rocksmith_fret_hand_menu[] =
+{
+	{"&Set\tShift+F", eof_track_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
+	{"&List\t" CTRL_NAME "+Shift+F", eof_track_fret_hand_positions, NULL, 0, NULL},
+	{"&Copy", eof_track_fret_hand_positions_copy_from, NULL, 0, NULL},
+	{"Generate all diffs", eof_track_fret_hand_positions_generate_all, NULL, 0, NULL},
+	{"Delete effective\tShift+Del", eof_track_delete_effective_fret_hand_position, NULL, 0, NULL},
+	{"Copy &From", NULL, eof_track_proguitar_fret_hand_copy_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_rocksmith_menu[] =
 {
 	{"Enable tech &View\tF4", eof_menu_track_toggle_tech_view, NULL, 0, NULL},
-	{"Fret &Hand positions", NULL, eof_track_proguitar_fret_hand_menu, 0, NULL},
+	{"Fret &Hand positions", NULL, eof_track_rocksmith_fret_hand_menu, 0, NULL},
 	{"&Popup messages", NULL, eof_track_rocksmith_popup_menu, 0, NULL},
 	{"&Arrangement type", NULL, eof_track_rocksmith_arrangement_menu, 0, NULL},
 	{"&Tone change", NULL, eof_track_rocksmith_tone_change_menu, 0, NULL},

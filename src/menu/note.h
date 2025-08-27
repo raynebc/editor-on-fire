@@ -110,7 +110,8 @@ int eof_menu_note_default_open_hi_hat(void);		//Specifies whether newly-placed y
 int eof_menu_note_default_pedal_hi_hat(void);		//Specifies whether newly-placed yellow drum notes are marked as pedal hi hat automatically
 int eof_menu_note_default_sizzle_hi_hat(void);		//Specifies whether newly-placed yellow drum notes are marked as sizzle hi hat automatically
 int eof_menu_note_default_no_hi_hat(void);			//Specifies that newly-placed yellow drum notes are NOT marked as one of the hi hat statuses automatically
-int eof_menu_note_delete(void);
+int eof_menu_note_delete(void);			//Deletes all selected notes
+int eof_menu_note_delete_with_fhp(void);	//Deletes all selected notes AND fret hand positions that occur at those notes' timestamps
 int eof_menu_note_delete_with_lower_difficulties(void);	//Deletes selected notes as well as notes in any of lower difficulties' notes in the same positions as the deleted ones
 int eof_menu_set_freestyle(char status);	//Applies the specified freestyle status to all selected lyrics
 int eof_menu_set_freestyle_on(void);		//Applies freestyle for all selected lyrics

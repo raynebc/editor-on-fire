@@ -4608,6 +4608,10 @@ void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, 
 		{	//For each note in the track AFTER the specified one, in reverse order
 			if((notepos == eof_get_note_pos(sp, track, ctr - 1)) && (eof_get_note_type(sp, track, ctr - 1) > eof_note_type))
 			{	//If this note is at the same position and in a higher difficulty
+				if(sp == eof_song)
+				{	//If this function is being performed against the active project, also delete any FHP defined at this note's position
+					eof_track_delete_fret_hand_position_at_pos(track, eof_get_note_type(sp, track, ctr - 1), eof_get_note_pos(eof_song, track, ctr - 1));
+				}
 				eof_track_delete_overlapping_tech_notes(sp, track, ctr - 1);	//Delete any tech notes applying to this note
 				eof_track_delete_note(sp, track, ctr - 1);
 			}
@@ -4615,6 +4619,10 @@ void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, 
 	}
 
 	//Delete the note in the active difficulty
+	if(sp == eof_song)
+	{	//If this function is being performed against the active project, also delete any FHP defined at this note's position
+		eof_track_delete_fret_hand_position_at_pos(track, eof_get_note_type(sp, track, ctr - 1), eof_get_note_pos(eof_song, track, ctr - 1));
+	}
 	eof_track_delete_overlapping_tech_notes(sp, track, notenum);	//Delete any tech notes applying to this note
 	eof_track_delete_note(sp, track, notenum);
 	eof_selection.multi[notenum] = 0;
@@ -4626,6 +4634,10 @@ void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, 
 		{	//For each note in the track BEFORE the specified one, in reverse order
 			if((notepos == eof_get_note_pos(sp, track, ctr - 1)) && (eof_get_note_type(sp, track, ctr - 1) < eof_note_type))
 			{	//If this note is at the same position and in a lower difficulty
+				if(sp == eof_song)
+				{	//If this function is being performed against the active project, also delete any FHP defined at this note's position
+					eof_track_delete_fret_hand_position_at_pos(track, eof_get_note_type(sp, track, ctr - 1), notepos);
+				}
 				eof_track_delete_overlapping_tech_notes(sp, track, ctr - 1);	//Delete any tech notes applying to this note
 				eof_track_delete_note(sp, track, ctr - 1);
 			}
@@ -6311,46 +6323,43 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				}//If this note and the next are at the same position, merge them
 				else
 				{	//Otherwise ensure one doesn't overlap the other improperly
-					char restore_tech_view = 0;
-
-					restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);	//Track which note set is in use
-					eof_menu_track_set_tech_view_state(sp, track, 0);	//Activate the normal note set, since tech notes cannot retain a specific length
-
-					has_link_next = 0;	//Reset this condition
-					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-					{	//For each of the 6 supported strings
-						if(tp->note[i-1]->note & bitmask)
-						{	//If this string is used
-							(void) eof_get_rs_techniques(sp, track, i - 1, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
-							if(ptr.linknext)
-							{	//If this string used linkNext status
-								has_link_next = 1;
-								break;	//The other strings don't need to be checked
+					if(!eof_menu_track_get_tech_view_state(sp, track))
+					{	//But only if tech view is not enabled, since tech notes cannot retain a specific length
+						has_link_next = 0;	//Reset this condition
+						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+						{	//For each of the 6 supported strings
+							if(tp->note[i-1]->note & bitmask)
+							{	//If this string is used
+								(void) eof_get_rs_techniques(sp, track, i - 1, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
+								if(ptr.linknext)
+								{	//If this string used linkNext status
+									has_link_next = 1;
+									break;	//The other strings don't need to be checked
+								}
+							}
+						}
+						if(has_link_next)
+						{	//If the note has linkNext status, force the maximum length (up until the next note on that string occurs)
+							if((tp->note[next]->note & tp->note[i-1]->note) == 0)
+							{	//If this note and the next note have no strings in common
+								tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//This note will overlap at least one note, apply crazy status
+							}
+							maxlength = eof_get_note_max_length(sp, track, i - 1, 0);	//Determine the maximum length for this note, taking its crazy status into account and disregarding the minimum distance between notes
+							if(tp->note[i - 1]->length + maxlength > sp->beat[sp->beats - 1]->pos)
+							{	//If there was no note using any of the same lanes and would truncate the note
+								maxlength = sp->beat[sp->beats - 1]->pos - tp->note[i - 1]->pos;	//Cap it at the last beat's position
+							}
+							eof_set_note_length(sp, track, i - 1, maxlength);	//Extend it to the next note that has a gem on a matching string
+						}
+						else
+						{	//Otherwise enforce the minimum distance between the two notes
+							maxlength = eof_get_note_max_length(sp, track, i - 1, 1);	//Determine the maximum length for this note, taking its crazy status into account
+							if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
+							{	//If the note is longer than its maximum length
+								eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
 							}
 						}
 					}
-					if(has_link_next)
-					{	//If the note has linkNext status, force the maximum length (up until the next note on that string occurs)
-						if((tp->note[next]->note & tp->note[i-1]->note) == 0)
-						{	//If this note and the next note have no strings in common
-							tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//This note will overlap at least one note, apply crazy status
-						}
-						maxlength = eof_get_note_max_length(sp, track, i - 1, 0);	//Determine the maximum length for this note, taking its crazy status into account and disregarding the minimum distance between notes
-						if(tp->note[i - 1]->length + maxlength > sp->beat[sp->beats - 1]->pos)
-						{	//If there was no note using any of the same lanes and would truncate the note
-							maxlength = sp->beat[sp->beats - 1]->pos - tp->note[i - 1]->pos;	//Cap it at the last beat's position
-						}
-						eof_set_note_length(sp, track, i - 1, maxlength);	//Extend it to the next note that has a gem on a matching string
-					}
-					else
-					{	//Otherwise enforce the minimum distance between the two notes
-						maxlength = eof_get_note_max_length(sp, track, i - 1, 1);	//Determine the maximum length for this note, taking its crazy status into account
-						if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
-						{	//If the note is longer than its maximum length
-							eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
-						}
-					}
-					eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Activate whichever note set was active for the track
 				}
 			}//If there is another note in this track
 
@@ -11264,12 +11273,12 @@ void eof_auto_adjust_sections(EOF_SONG *sp, unsigned long track, unsigned long o
 				}
 				else
 				{	//If using the closest grid snap setting of ANY grid size
-					(void) eof_is_any_beat_interval_position(sections[ctr].start_pos, NULL, NULL, NULL, &newstart, 0);
+					(void) eof_is_any_beat_interval_position(sections[ctr].start_pos, NULL, NULL, NULL, &newstart, eof_prefer_midi_friendly_grid_snapping);
 					if(newstart == ULONG_MAX)	//If the nearest beat interval position for the section beginning was not found
 						continue;	//Skip it
 					if(sectiontype != EOF_FRET_HAND_POS_SECTION)
 					{	//Fret hand positions don't define an end position
-						(void) eof_is_any_beat_interval_position(sections[ctr].end_pos, NULL, NULL, NULL, &newend, 0);
+						(void) eof_is_any_beat_interval_position(sections[ctr].end_pos, NULL, NULL, NULL, &newend, eof_prefer_midi_friendly_grid_snapping);
 						if(newend == ULONG_MAX)	//If the nearest beat interval position for the section ending was not found
 							continue;	//Skip it
 					}
@@ -11374,7 +11383,7 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 			}
 			else
 			{	//If using the closest beat interval of ANY grid size
-				(void) eof_is_any_beat_interval_position(tp->technote[ctr]->pos, NULL, NULL, NULL, &newstart, 0);
+				(void) eof_is_any_beat_interval_position(tp->technote[ctr]->pos, NULL, NULL, NULL, &newstart, eof_prefer_midi_friendly_grid_snapping);
 				if(newstart == ULONG_MAX)	//If the nearest grid snap position was not found
 					continue;	//Skip it
 			}

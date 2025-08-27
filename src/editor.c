@@ -4079,7 +4079,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 	/* delete note (Del) */
 	/* delete beat (CTRL+Del) */
-	/* delete effective fret hand position (SHIFT+Del in a pro guitar track) */
+	/* delete effective fret hand position (SHIFT+Del in a pro guitar track when no notes are selected) */
+	/* delete notes and any fret hand positions at their timestamps (SHIFT+Del in a pro guitar track when any notes are selected) */
 	/* delete note with lower difficulties (CTRL+SHIFT+Del) */
 		if(eof_key_code == KEY_DEL)
 		{
@@ -4092,7 +4093,20 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				else
 				{	//SHIFT is held but CTRL is not
-					(void) eof_track_delete_effective_fret_hand_position();
+					int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+					if(eof_get_selected_note_range(NULL, NULL, 1))
+					{	//If one or more notes/lyrics are selected
+						(void) eof_menu_note_delete_with_fhp();
+					}
+					else
+					{	//No notes are selected
+						(void) eof_track_delete_effective_fret_hand_position();
+					}
+					if(note_selection_updated)
+					{	//If the note selection was originally empty and was dynamically updated
+						(void) eof_menu_edit_deselect_all();	//Clear the note selection
+					}
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 				}
 			}

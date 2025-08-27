@@ -932,7 +932,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 			{	//If the source lyric was beat interval snapped
 				unsigned long closestpos = new_pos;
 
-				(void) eof_is_any_beat_interval_position(new_pos, NULL, NULL, NULL, &closestpos, 0);	//Get the beat interval position nearest the destination position
+				(void) eof_is_any_beat_interval_position(new_pos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping);	//Get the beat interval position nearest the destination position
 				if(closestpos != new_pos)
 				{	//If they aren't the same position
 					if(closestpos != ULONG_MAX)
@@ -1826,7 +1826,7 @@ int eof_menu_edit_paste_logic(int function)
 			{	//If the source note was beat interval snapped
 				unsigned long closestpos = newnotepos;
 
-				(void) eof_is_any_beat_interval_position(newnotepos, NULL, NULL, NULL, &closestpos, 0);	//Get the beat interval position nearest the destination position
+				(void) eof_is_any_beat_interval_position(newnotepos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping);	//Get the beat interval position nearest the destination position
 				if(closestpos != newnotepos)
 				{	//If they aren't the same position
 					if(closestpos != ULONG_MAX)
@@ -4523,7 +4523,7 @@ void eof_write_clipboard_position_snap_data(PACKFILE *fp, unsigned long pos)
 	if(!fp)
 		return;	//Invalid parameters
 
-	(void) eof_is_any_beat_interval_position(pos, &intervalbeat, &intervalvalue, &intervalnum, NULL, 0);	//Determine beat interval position, if any, of the specified position
+	(void) eof_is_any_beat_interval_position(pos, &intervalbeat, &intervalvalue, &intervalnum, NULL, eof_prefer_midi_friendly_grid_snapping);	//Determine beat interval position, if any, of the specified position
 	(void) pack_iputl(intervalbeat, fp);	//Write the beat number
 	(void) pack_putc(intervalvalue, fp);	//Write the beat interval count
 	(void) pack_putc(intervalnum, fp);		//Write the beat interval number

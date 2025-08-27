@@ -94,6 +94,8 @@ char * eof_track_fret_hand_positions_copy_from_list(int index, int * size);
 	//The list dialog function for eof_track_fret_hand_positions_copy_from()
 int eof_track_delete_effective_fret_hand_position(void);
 	//Deletes the fret hand position in effect at the current seek position in the active track difficulty, if any
+int eof_track_delete_fret_hand_position_at_pos(unsigned long track, unsigned char diff, unsigned long pos);
+	//Deletes the fret hand defined at the specified timestamp of the specified track difficulty, if any
 int eof_track_fret_hand_positions_generate_all(void);
 	//Generates fret hand positions for all populated difficulties in the track, replacing any that already exist
 
