@@ -3746,7 +3746,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 		if(!force_change && !(tp->note[ctr]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS))
 		{	//If a fret hand change wasn't already determined necessary and this note isn't designated as having no fingering
 			np = tp->note[ctr];	//Unless the chord's fingering is incomplete, the note's current fingering will be used to determine whether the index finger triggers a position change
-			if((eof_note_count_colors(eof_song, track, ctr) > 1) && !eof_is_string_muted(eof_song, track, ctr))
+			if((eof_note_count_colors(sp, track, ctr) > 1) && !eof_is_string_muted(sp, track, ctr))
 			{	//If this note is a chord that isn't completely string muted
 				if(eof_pro_guitar_note_fingering_valid(tp, ctr, 0) != 1)
 				{	//If the fingering for the note is not fully defined
@@ -4004,7 +4004,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			}//If the first phrase marker has been encountered, this beat marks the end of a phrase
 
 			started = 1;	//Track that a phrase has been encountered
-			startpos = eof_song->beat[beatctr]->pos;	//Track the starting position of the phrase
+			startpos = sp->beat[beatctr]->pos;	//Track the starting position of the phrase
 		}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
 	}//For each beat in the project
 
@@ -6129,7 +6129,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		assert(sectionlist != NULL);	//Unneeded check to resolve a false positive in Splint
 		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
 		{	//For each beat
-			if((sp->beat[ctr2]->contained_section_event < 0) && ((ctr2 + 1 < eof_song->beats) || !started))
+			if((sp->beat[ctr2]->contained_section_event < 0) && ((ctr2 + 1 < sp->beats) || !started))
 				continue;	//If this beat does not contain a section event (RS phrase) or a phrase is not in progress or this isn't the last beat, skip it
 
 			//Otherwise it marks the end of any current phrase and the potential start of another
@@ -6148,7 +6148,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 			}
 			started = 1;
 			startpos = sp->beat[ctr2]->pos;	//Track the starting position
-			currentphrase = sp->text_event[eof_song->beat[ctr2]->contained_section_event]->text;	//Track which phrase is being examined
+			currentphrase = sp->text_event[sp->beat[ctr2]->contained_section_event]->text;	//Track which phrase is being examined
 		}
 
 		//Determine if this phrase name is associated with solo phrasing (EOF will have set the RS solo phrase flag for all matching phrase instances)

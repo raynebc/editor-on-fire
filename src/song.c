@@ -1325,7 +1325,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	for(i = 0; i < tp->technotes; i++)
 	{
 		eof_track_diff_populated_tech_note_status[tp->technote[i]->type] = 1;
-		if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || ((tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT) && eof_song->tags->highlight_unsnapped_notes))
+		if((tp->technote[i]->flags & EOF_NOTE_FLAG_HIGHLIGHT) || ((tp->technote[i]->tflags & EOF_NOTE_TFLAG_HIGHLIGHT) && sp->tags->highlight_unsnapped_notes))
 		{	//If the tech note has highlighting
 			eof_track_diff_highlighted_tech_note_status[tp->technote[i]->type] = 1;
 		}
@@ -4657,7 +4657,7 @@ void eof_track_delete_overlapping_tech_notes(EOF_SONG *sp, unsigned long track, 
 		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned long normalnote = 0;	//The normal note that a tech note is found to apply to
 
-		tp = eof_song->pro_guitar_track[sp->track[track]->tracknum];
+		tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 		if(tp->note != tp->technote)
 		{	//If tech view is not in effect for the target track, check whether any of the tech notes apply to the specified normal note
 			for(i = tp->technotes; i > 0; i--)
@@ -8789,9 +8789,9 @@ int eof_track_is_drums_rock_mode(EOF_SONG *sp, unsigned long track)
 {
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;
-	if(eof_song->track[track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+	if(sp->track[track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		return 0;
-	if(eof_song->track[track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
+	if(sp->track[track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
 	{	//If this is a drum track with the Drums Rock flag enabled
 		return 1;
 	}
@@ -8803,12 +8803,12 @@ int eof_track_is_beatable_mode(EOF_SONG *sp, unsigned long track)
 {
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;
-	if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+	if(sp->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
 		return 0;
-	if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		return 0;
 
-	if(eof_song->track[track]->flags & EOF_TRACK_FLAG_BEATABLE)
+	if(sp->track[track]->flags & EOF_TRACK_FLAG_BEATABLE)
 	{	//If this is a  non drum legacy track with the BEATABLE flag enabled
 		return 1;
 	}
@@ -8823,7 +8823,7 @@ int eof_pro_guitar_track_diff_has_fingering(EOF_SONG *sp, unsigned long track, u
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;
-	if(eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
@@ -9619,7 +9619,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 		}
 	}
 	eof_track_sort_notes(sp, desttrack);
-	(void) eof_detect_difficulties(eof_song, desttrack);
+	(void) eof_detect_difficulties(sp, desttrack);
 
 	//Flatten fret hand positions
 	if(sp->track[srctrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -9727,9 +9727,9 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 	if(!sp || !undo_made || !track || (track >= sp->tracks) || (startpos >= endpos))
 		return;	//Invalid parameters
 
-	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If the track being altered is a pro guitar track
-		tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
+		tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 		notearrayctr = 2;	//A second note array (the tech notes) will need to be processed
 		restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
 		eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
@@ -9960,7 +9960,7 @@ void eof_unflatten_difficulties(EOF_SONG *sp, unsigned long track)
 
 		started = 1;	//Track that a phrase has been encountered
 		prompt = 0;		//The next call to eof_track_add_or_remove_track_difficulty_content_range() will check note alignment for the beginning of this phrase
-		startpos = eof_song->beat[beatctr]->pos;	//Track the starting position of the phrase
+		startpos = sp->beat[beatctr]->pos;	//Track the starting position of the phrase
 	}//For each beat in the project
 
 	sp->track[track]->numdiffs = eof_detect_difficulties(sp, track);	//Rebuild the eof_track_diff_populated_status[] array, and update the track's difficulty count
@@ -10010,7 +10010,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar track was specified
 		//Delete tech notes
-		tp = eof_song->pro_guitar_track[tracknum];
+		tp = sp->pro_guitar_track[tracknum];
 		eof_menu_pro_guitar_track_enable_tech_view(tp);
 		for(i = eof_get_track_size(sp, track); i > 0; i--)
 		{	//For each tech note in the track, in reverse order
@@ -10974,7 +10974,7 @@ int eof_note_is_not_grid_snapped(EOF_SONG *sp, unsigned long track, unsigned lon
 
 int eof_note_is_highlighted(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {
-	if((eof_get_note_flags(sp, track, notenum) & EOF_NOTE_FLAG_HIGHLIGHT) || ((eof_get_note_tflags(sp, track, notenum) & EOF_NOTE_TFLAG_HIGHLIGHT) && eof_song->tags->highlight_unsnapped_notes))
+	if((eof_get_note_flags(sp, track, notenum) & EOF_NOTE_FLAG_HIGHLIGHT) || ((eof_get_note_tflags(sp, track, notenum) & EOF_NOTE_TFLAG_HIGHLIGHT) && sp->tags->highlight_unsnapped_notes))
 	{	//If either the static or dynamic highlight flag of this note is set (the dynamic highlighting may be set by the notes panel, only reflect it's highlighted if the option to show this is enabled)
 		return 1;
 	}
@@ -10997,14 +10997,14 @@ int eof_note_is_open_note(EOF_SONG *sp, unsigned long track, unsigned long noten
 	if(!sp || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(sp->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If a pro guitar track is active
-		if(eof_pro_guitar_note_highest_fret(eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum], notenum) == 0)
+		if(eof_pro_guitar_note_highest_fret(sp->pro_guitar_track[sp->track[eof_selected_track]->tracknum], notenum) == 0)
 		{	//If no gems in this note had a fret value defined (open note)
 			return 1;
 		}
 	}
-	else if(eof_legacy_guitar_note_is_open(eof_song, eof_selected_track, notenum))
+	else if(eof_legacy_guitar_note_is_open(sp, eof_selected_track, notenum))
 	{	//If this is an open note in a legacy track
 		return 1;
 	}

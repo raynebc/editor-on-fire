@@ -237,8 +237,8 @@ double eof_calculate_beat_pos_by_prev_beat_tempo(EOF_SONG *sp, unsigned long bea
 		return sp->tags->ogg[0].midi_offset;	//Return the current OGG profile's MIDI delay (first beat position)
 	}
 
-	length = (double)eof_song->beat[beat - 1]->ppqn / 1000.0;	//Calculate the length of the previous beat from its tempo (this is the formula "beat_length = 60000 / BPM", where BPM = 60000000 / ppqn)
-	(void) eof_get_effective_ts(eof_song, &num, &den, beat - 1, 0);	//Get the time signature in effect at the previous beat
+	length = (double)sp->beat[beat - 1]->ppqn / 1000.0;	//Calculate the length of the previous beat from its tempo (this is the formula "beat_length = 60000 / BPM", where BPM = 60000000 / ppqn)
+	(void) eof_get_effective_ts(sp, &num, &den, beat - 1, 0);	//Get the time signature in effect at the previous beat
 	if(sp->tags->accurate_ts && (den != 4))
 	{	//If the user enabled the accurate time signatures song property, and the time signature necessitates adjustment (isn't #/4)
 		length *= 4.0 / (double)den;	//Adjust for the time signature

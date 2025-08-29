@@ -1170,15 +1170,15 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
 	put_backslash(eof_temp_filename);
 	temp_string[0] = '\0';	//Empty this string
-	if(eof_check_string(eof_song->tags->artist))
+	if(eof_check_string(sp->tags->artist))
 	{	//If the artist of the song is defined
-		(void) ustrcat(temp_string, eof_song->tags->artist);
+		(void) ustrcat(temp_string, sp->tags->artist);
 	}
-	if(eof_check_string(eof_song->tags->title))
+	if(eof_check_string(sp->tags->title))
 	{	//If the title of the song is defined
 		if(temp_string[0] != '\0')
 			(void) ustrcat(temp_string, " - ");
-		(void) ustrcat(temp_string, eof_song->tags->title);
+		(void) ustrcat(temp_string, sp->tags->title);
 	}
 	if(option == 1)
 	{	//If a single arrangement is being exported, include its name in the export folder name
@@ -1260,7 +1260,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 				unsigned long count = eof_ir_get_rs_section_instance_number(sp, gglead, ggrhythm, ggbass, ctr);	//Determine the instance number of this section within the scope of the arrangements being exported
 				if(count)
 				{	//If the instance number was determined
-					(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s %lu", eof_song->text_event[ctr]->text, count);	//Build a string to display it with its number
+					(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s %lu", sp->text_event[ctr]->text, count);	//Build a string to display it with its number
 					ptr = temp_string;
 				}
 				else

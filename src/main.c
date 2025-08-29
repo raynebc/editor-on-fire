@@ -1662,7 +1662,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 				sectionptr = eof_get_tremolo(sp, track, j);
 				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 				{	//If the note is in this tremolo section
-					if(eof_song->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+					if(sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 					{	//If the track's difficulty limit has been removed
 						if(sectionptr->difficulty == notetype)	//And the tremolo section applies to this note's track difficulty
 							flags |= EOF_NOTE_FLAG_IS_TREMOLO;

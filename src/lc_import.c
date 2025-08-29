@@ -326,7 +326,7 @@ int EOF_EXPORT_TO_LC(EOF_SONG *sp, char *outputfilename, char *string2, int form
 	InitLyrics();	//Initialize all variables in the Lyrics structure
 	InitMIDI();		//Initialize all variables in the MIDI structure
 
-	tp = eof_song->vocal_track[0];
+	tp = sp->vocal_track[0];
 	if(tp->lyrics == 0)
 		return -1;	//Return failure
 
@@ -465,14 +465,14 @@ eof_log(eof_log_string, 2);
 	}
 
 //Load chart tags
-	if(eof_song->tags->artist[0] != '\0')
-		Lyrics.Artist = DuplicateString(eof_song->tags->artist);
-	if(eof_song->tags->title[0] != '\0')
-		Lyrics.Title = DuplicateString(eof_song->tags->title);
-	if(eof_song->tags->frettist[0] != '\0')
-		Lyrics.Editor = DuplicateString(eof_song->tags->frettist);
-	if(eof_song->tags->album[0] != '\0')
-		Lyrics.Album = DuplicateString(eof_song->tags->album);
+	if(sp->tags->artist[0] != '\0')
+		Lyrics.Artist = DuplicateString(sp->tags->artist);
+	if(sp->tags->title[0] != '\0')
+		Lyrics.Title = DuplicateString(sp->tags->title);
+	if(sp->tags->frettist[0] != '\0')
+		Lyrics.Editor = DuplicateString(sp->tags->frettist);
+	if(sp->tags->album[0] != '\0')
+		Lyrics.Album = DuplicateString(sp->tags->album);
 
 	PostProcessLyrics();	//Perform hyphen and grouping validation/handling
 

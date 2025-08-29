@@ -4865,7 +4865,7 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 		}
 	}
 
-	eof_sort_events(eof_song);
+	eof_sort_events(sp);
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
 	eof_set_color_set();

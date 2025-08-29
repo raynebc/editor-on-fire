@@ -4408,11 +4408,11 @@ int eof_note_can_pitch_transpose(EOF_SONG *sp, unsigned long track, unsigned lon
 	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view || eof_menu_track_get_tech_view_state(sp, track))
 		return 0;	//Only pro guitar tracks when legacy and tech views are disabled can use pitched transpose
 
-	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
+	tp = sp->pro_guitar_track[sp->track[eof_selected_track]->tracknum];	//Simplify
 	if(tp->numstrings < 4)
 		return 0;	//A string count less than 4 would be unexpected
 	max = 1 << (tp->numstrings - 1);
-	note = eof_get_note_note(eof_song, eof_selected_track, notenum);
+	note = eof_get_note_note(sp, eof_selected_track, notenum);
 
 	//Check whether the note bitmask can transpose
 	if((note & 1) && (dir > 0))
@@ -8211,7 +8211,7 @@ int eof_menu_copy_solos_track_number(EOF_SONG *sp, unsigned long sourcetrack, un
 			(void) eof_track_add_solo(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
+	eof_determine_phrase_status(sp, eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -8317,7 +8317,7 @@ int eof_menu_copy_sp_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsig
 			(void) eof_track_add_star_power_path(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
+	eof_determine_phrase_status(sp, eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -8423,7 +8423,7 @@ int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, unsigned long sourcetrack,
 			(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
+	eof_determine_phrase_status(sp, eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -8529,7 +8529,7 @@ int eof_menu_copy_trill_track_number(EOF_SONG *sp, unsigned long sourcetrack, un
 			(void) eof_track_add_trill(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
+	eof_determine_phrase_status(sp, eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -8635,7 +8635,7 @@ int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, unsigned long sourcetrack, 
 			(void) eof_track_add_tremolo(sp, desttrack, ptr->start_pos, ptr->end_pos, ptr->difficulty);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
+	eof_determine_phrase_status(sp, eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -8741,7 +8741,7 @@ int eof_menu_copy_sliders_track_number(EOF_SONG *sp, unsigned long sourcetrack, 
 			(void) eof_track_add_slider(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status(eof_song, eof_selected_track);
+	eof_determine_phrase_status(sp, eof_selected_track);
 	return 1;	//Return completion
 }
 
