@@ -27,13 +27,15 @@ extern DIALOG eof_rocksmith_event_dialog[];
 void eof_prepare_beat_menu(void);			//Enable/disable Beat menu items prior to drawing the menu
 int eof_menu_beat_add(void);
 int eof_menu_beat_bpm_change(void);
-int eof_menu_beat_ts_4_4(void);
-int eof_menu_beat_ts_2_4(void);
-int eof_menu_beat_ts_3_4(void);
-int eof_menu_beat_ts_5_4(void);
-int eof_menu_beat_ts_6_4(void);
+int eof_menu_beat_apply_ts(unsigned num, unsigned den);	//Applies the specified time signature to the selected beat, re-calculating beat timings based on the "Use accurate time signatures" chart property and performing auto-adjust logic if enabled in preferences
+int eof_menu_beat_ts_2_4(void);	//Calls eof_menu_beat_apply_ts() to apply 2/4 time signature
+int eof_menu_beat_ts_3_4(void);	//Calls eof_menu_beat_apply_ts() to apply 3/4 time signature
+int eof_menu_beat_ts_4_4(void);	//Calls eof_menu_beat_apply_ts() to apply 4/4 time signature
+int eof_menu_beat_ts_5_4(void);	//Calls eof_menu_beat_apply_ts() to apply 5/4 time signature
+int eof_menu_beat_ts_6_4(void);	//Calls eof_menu_beat_apply_ts() to apply 6/4 time signature
 int eof_menu_beat_ts_custom_dialog(unsigned start);
 	//Calls the custom TS dialog and places the chosen TS on the selected beat, making an undo state, allowing the calling function to handle remaining steps
+	//Uses eof_menu_beat_apply_ts() to apply the time signature and any relevant beat map recalculation, note auto-adjust, etc.
 	//If start is nonzero, the numerator field is given initial focus on dialog launch, otherwise the denominator is
 	//Returns nonzero if a valid time signature was chosen and applied to the selected beat
 int eof_menu_beat_ts_custom(void);	//Applies user-selected time signature and recalculates beat lengths depending on the accurate TS chart option
@@ -180,5 +182,10 @@ int eof_events_dialog_move_up(DIALOG * d);	//If the selected event in Beat>Event
 int eof_events_dialog_move_down(DIALOG * d);	//If the selected event in Beat>Events is not the last event listed, swaps its position tob e one lower (later) in the list
 
 int eof_menu_beat_estimate_bpm(void);	//Uses the MiniBPM source package to estimate the tempo of the current chart audio
+
+int eof_menu_beat_summarize_tempo_changes_at_measures(void);
+	//Deletes tempo changes on beats other than the first beat of each measure, optionally keeping the first beat of each measure an anchor regardless of whether
+	// its tempo is different from that of the beat before it
+	//Does not affect beats that are not within the scope of a time signature
 
 #endif

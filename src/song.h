@@ -161,6 +161,7 @@
 #define EOF_BEAT_FLAG_KEY_SIG    128
 #define EOF_BEAT_FLAG_MIDBEAT    256	//If this is nonzero, indicates that a beat was inserted to accommodate a mid-beat tempo change (during Feedback/MIDI import)
 #define EOF_BEAT_FLAG_START_2_4  512
+#define EOF_BEAT_FLAG_VARIOUS   1024	//A temporary flag used for general purposes
 #define EOF_BEAT_FLAG_EXTENDED 32768	//Reserve the highest unused bit to allow for another beat flag to be conditionally present
 
 

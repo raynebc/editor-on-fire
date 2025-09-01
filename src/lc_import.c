@@ -82,6 +82,8 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 			if(!returnedfn)
 				return 0;	//Return error or user canceled
 		}
+		if(format > NUMBEROFLYRICFORMATS)
+			return 0;	//Invalid import format
 	}
 
 	Lyrics.infilename=DuplicateString(inputfilename);	//Make a duplicate, so it's de-allocation won't affect calling function
@@ -97,6 +99,8 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	}
 
 //Import lyrics
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tImporting format:  %s", LYRICFORMATNAMES[format]);
+	eof_log(eof_log_string, 1);
 	switch(Lyrics.in_format)
 	{
 		case SCRIPT_FORMAT:	//Load script.txt format file as input

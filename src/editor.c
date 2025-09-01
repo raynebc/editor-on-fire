@@ -7463,8 +7463,8 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 			{	//If this difficulty has highlighting
 				if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 				{	//If the difficulty limit is removed
-					if(i != numtabs - 1)
-					{	//If this tab isn't being displayed as ">>"
+					if((i != 0) && (i != numtabs - 1))
+					{	//If this tab being displayed isn't the first ("<<") or last (">>")
 						bgcol = eof_color_yellow;	//Render a yellow background behind the difficulty name
 					}
 					else

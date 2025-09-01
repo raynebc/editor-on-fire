@@ -107,6 +107,7 @@ MENU eof_beat_bpm_menu[] =
 	{"&Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
 	{"&Double BPM", NULL, eof_beat_double_bpm_menu, 0, NULL},
 	{"&Halve BPM", NULL, eof_beat_halve_bpm_menu, 0, NULL},
+	{"Summarize at each measure", eof_menu_beat_summarize_tempo_changes_at_measures, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -734,49 +735,61 @@ int eof_menu_beat_bpm_change(void)
 	return 1;
 }
 
-int eof_menu_beat_ts_4_4(void)
+int eof_menu_beat_apply_ts(unsigned num, unsigned den)
 {
-	(void) eof_apply_ts(4, 4, eof_selected_beat,eof_song, 1);
-	eof_calculate_beats(eof_song);
+	if(!eof_song)
+		return 0;	//No project is loaded
+	if((num == 0) || (num > 256) || ((den != 1) && (den != 2) && (den != 4) && (den != 8) && (den != 16) && (den != 32) && (den != 64) && (den != 128) && (den != 256)))
+		return 0;	//If a valid time signature wasn't specified, return error
+
+	if(eof_song->tags->accurate_ts)
+	{	//If the chart's "Use accurate time signatures" property is enabled
+		if(eof_note_auto_adjust)
+		{	//If the note auto-adjust preference is enabled
+			(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+		}
+	}
+
+	(void) eof_apply_ts(num, den, eof_selected_beat, eof_song, 1);
+
+	if(eof_song->tags->accurate_ts)
+	{	//If the chart's "Use accurate time signatures" property is enabled
+		eof_calculate_beats(eof_song);	//Recalculate the beat timings to reflect time signatures
+		if(eof_note_auto_adjust)
+		{	//If the note auto-adjust preference is enabled
+			(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+		}
+	}
+
 	eof_truncate_chart(eof_song);
 	eof_select_beat(eof_selected_beat);
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
 	return 1;
 }
 
 int eof_menu_beat_ts_2_4(void)
 {
-	(void) eof_apply_ts(2, 4, eof_selected_beat,eof_song, 1);
-	eof_calculate_beats(eof_song);
-	eof_truncate_chart(eof_song);
-	eof_select_beat(eof_selected_beat);
-	return 1;
+	return eof_menu_beat_apply_ts(2, 4);
 }
 
 int eof_menu_beat_ts_3_4(void)
 {
-	(void) eof_apply_ts(3, 4, eof_selected_beat,eof_song, 1);
-	eof_calculate_beats(eof_song);
-	eof_truncate_chart(eof_song);
-	eof_select_beat(eof_selected_beat);
-	return 1;
+	return eof_menu_beat_apply_ts(3, 4);
+}
+
+int eof_menu_beat_ts_4_4(void)
+{
+	return eof_menu_beat_apply_ts(4, 4);
 }
 
 int eof_menu_beat_ts_5_4(void)
 {
-	(void) eof_apply_ts(5, 4, eof_selected_beat,eof_song, 1);
-	eof_calculate_beats(eof_song);
-	eof_truncate_chart(eof_song);
-	eof_select_beat(eof_selected_beat);
-	return 1;
+	return eof_menu_beat_apply_ts(5, 4);
 }
 
 int eof_menu_beat_ts_6_4(void)
 {
-	(void) eof_apply_ts(6, 4, eof_selected_beat,eof_song, 1);
-	eof_calculate_beats(eof_song);
-	eof_truncate_chart(eof_song);
-	eof_select_beat(eof_selected_beat);
-	return 1;
+	return eof_menu_beat_apply_ts(6, 4);
 }
 
 DIALOG eof_custom_ts_dialog[] =
@@ -832,8 +845,7 @@ int eof_menu_beat_ts_custom_dialog(unsigned start)
 			}
 			else
 			{	//User provided a valid time signature
-				(void) eof_apply_ts(num,den,eof_selected_beat,eof_song,1);
-				retval = 1;
+				retval = eof_menu_beat_apply_ts(num, den);
 			}
 		}
 	}
@@ -3811,5 +3823,78 @@ int eof_menu_beat_export_beat_timings(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_menu_beat_summarize_tempo_changes_at_measures(void)
+{
+	unsigned long ctr, eof_selected_beat_backup;
+	int prompt = 0;
+	char undo_made = 0;
+
+	if(!eof_song || (eof_song->beats < 3))
+		return 1;
+
+	//Make sure the first beat of each measure is an anchor
+	for(ctr = 1; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart after the first
+		if(!(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR))
+		{	//If the beat isn't already an anchor
+			if(!eof_song->beat[ctr]->beat_within_measure && eof_song->beat[ctr]->has_ts)
+			{	//If this beat has a time signature in effect and is the first beat of its measure
+				if(!prompt)
+				{	//If the user wasn't prompted about this yet
+					prompt = alert(NULL, "Leave the first beat of each measure as an anchor?", NULL, "&Yes", "&No", 'y', 'n');
+				}
+
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR | EOF_BEAT_FLAG_VARIOUS;	//Anchor this beat and remember that it wasn't originally anchored
+			}
+		}
+	}
+
+	//Use "Beat>Delete anchor" on every beat that is in the scope of a time signature but isn't the first bat of a measure
+	eof_selected_beat_backup = eof_selected_beat;	//Back up the currently selected beat
+	if(eof_note_auto_adjust)
+	{	//If the note auto-adjust preference is enabled
+		(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+	}
+	for(ctr = 1; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart after the first
+		if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR || (eof_song->beat[ctr]->ppqn != eof_song->beat[ctr - 1]->ppqn))
+		{	//If the beat is an anchor or otherwise has a different tempo than the previous beat
+			if(eof_song->beat[ctr]->beat_within_measure && eof_song->beat[ctr]->has_ts)
+			{	//If this beat has a time signature in effect and is not the first beat of its measure
+				eof_selected_beat = ctr;	//Select this beat
+				(void) eof_menu_beat_delete_anchor_logic(&undo_made);	//Remove the anchoring from the beat, recalculate other beats, create an undo state if needed
+			}
+		}
+	}
+	eof_selected_beat = eof_selected_beat_backup;	//Restore the selected beat
+	if(eof_note_auto_adjust)
+	{	//If the note auto-adjust preference is enabled
+		(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+	}
+
+	//If user opted to not keep extra anchor statuses, remove them now
+	for(ctr = 1; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart after the first
+		if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_VARIOUS)
+		{	//If this function made this beat into an anchor simply for being the first beat in its measure
+			eof_song->beat[ctr]->flags &= ~EOF_BEAT_FLAG_VARIOUS;	//Remove this flag
+			if(prompt != 1)
+			{	//If the user didn't answer yes to that prompt
+				if(eof_song->beat[ctr]->ppqn == eof_song->beat[ctr - 1]->ppqn)
+				{	//If this beat does NOT have a different tempo than the previous beat
+					eof_song->beat[ctr]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Remove this anchor flag
+				}
+			}
+		}
+	}
+
 	return 1;
 }
