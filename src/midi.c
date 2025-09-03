@@ -1824,7 +1824,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			(void) pack_fclose(fp);
 		}//If this is a vocal track
 
-		else if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		else if(eof_track_is_pro_guitar_track(sp, j))
 		{	//If this is a pro guitar track
 			/* prepare fret hand positions */
 			unsigned long count;
@@ -2789,7 +2789,7 @@ unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned l
 			pitchmask |= 1;	//Set the LSB of the return bitmask
 		}
 	}
-	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	else if(eof_track_is_pro_guitar_track(sp, track))
 	{	//This is a pro guitar track
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 
@@ -2910,7 +2910,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 			if(eof_get_track_size_normal(sp, j) == 0)	//If this track has no notes (in the normal note set)
 				continue;	//Skip the track
 
-			if((sp->track[j]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT))	//If this isn't a vocal or pro guitar track
+			if((!eof_track_is_pro_guitar_track(sp, j)) && (sp->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT))	//If this isn't a vocal or pro guitar track
 				continue;	//Skip the track
 
 			if(passnum && (sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT))
@@ -2995,7 +2995,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 				}
 				if(!passnum)
 				{	//Writing a Synthesia style MIDI
-					if((sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_get_note_flags(sp, j, i) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT))
+					if((eof_track_is_pro_guitar_track(sp, j)) && (eof_get_note_flags(sp, j, i) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT))
 					{	//If this is a pro guitar note played as an accent
 						vel = 127;	//Use the maximum velocity possible
 					}
@@ -3130,7 +3130,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 				(void) pack_fwrite(arrangement_name, ustrsize(arrangement_name), fp);
 
 				/* set the guitar/bass MIDI instrument as appropriate */
-				if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(sp, j))
 				{	//If this is a pro guitar/bass track
 					int tone = eof_midi_synth_instrument_guitar;	//By default, assume a guitar arrangement
 

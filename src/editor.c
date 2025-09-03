@@ -1099,7 +1099,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 		{	//If no CTRL or SHIFT keys are held
-			if((eof_input_mode != EOF_INPUT_CLASSIC) && (eof_input_mode != EOF_INPUT_HOLD) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			if((eof_input_mode != EOF_INPUT_CLASSIC) && (eof_input_mode != EOF_INPUT_HOLD) && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 			{	//If not using classic or hold input modes (which use Enter as a secondary method to place notes) and a pro guitar track is active
 				eof_play_pro_guitar_note_midi(eof_song, eof_selected_track, eof_selection.current);
 				eof_use_key();
@@ -1318,7 +1318,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If a pro guitar track is active, SHIFT+E will place a Rocksmith event
 					(void) eof_rocksmith_event_dialog_add();
 				}
@@ -1440,7 +1440,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					(void) eof_menu_note_toggle_rb3_cymbal_blue();
 					eof_use_key();
 				}
-				else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{
 					(void) eof_menu_note_toggle_bend();
 					eof_use_key();
@@ -1856,7 +1856,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
 				{	//Only SHIFT is held, a non feedback input mode is in use
-					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 					{
 						eof_shift_used = 1;	//Track that the SHIFT key was used
 						(void) eof_menu_note_pitched_transpose_up();
@@ -1876,7 +1876,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	/* tranpose up octave */
 					(void) eof_menu_note_transpose_up_octave();	//Move up 12 pitches at once, performing a single undo beforehand
 				}
-				else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	/* toggle slide up */
 					(void) eof_menu_note_toggle_slide_up();
 				}
@@ -1958,7 +1958,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				else if(eof_input_mode != EOF_INPUT_FEEDBACK)
 				{	//Only SHIFT is held, a non feedback input mode is in use
-					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 					{
 						eof_shift_used = 1;	//Track that the SHIFT key was used
 						(void) eof_menu_note_pitched_transpose_down();
@@ -1979,7 +1979,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	/* transpose down octave */
 					(void) eof_menu_note_transpose_down_octave();	//Move down 12 pitches at once, performing a single undo beforehand
 				}
-				else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	/* toggle slide down */
 					(void) eof_menu_note_toggle_slide_down();
 				}
@@ -2903,7 +2903,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		{
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If a pro guitar track is active
 					(void) eof_menu_note_toggle_tapping();
 					eof_use_key();
@@ -2916,7 +2916,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 			else if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
 			{	//If both SHIFT and CTRL are held
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If a pro guitar track is active
 					(void) eof_track_rs_tone_change_add();
 					eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -2959,7 +2959,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					eof_use_key();
 				}
 			}
-			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
 				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
 				{	//Both SHIFT and CTRL are held
@@ -3056,7 +3056,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				else
 				{	//Only CTRL is held
-					if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 					{	//Toggle harmonic
 						(void) eof_menu_note_toggle_harmonic();
 					}
@@ -3075,7 +3075,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					{	//Cycle HO/PO
 						(void) eof_menu_hopo_cycle();
 					}
-					else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 					{	//Toggle HO
 						(void) eof_menu_pro_guitar_toggle_hammer_on();
 					}
@@ -3088,7 +3088,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* toggle pro guitar strum up (SHIFT+U in a pro guitar track, non Feedback input modes) */
 		if(eof_key_char == 'u')
 		{
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{
 				if(KEY_EITHER_CTRL)
 				{	//CTRL
@@ -3106,7 +3106,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* toggle pull off status (P in a pro guitar track) */
 	/* place Rocksmith phrase (SHIFT+P in a pro guitar track) */
 	/* toggle pop status (CTRL+SHIFT+P in a pro guitar track) */
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			if(eof_key_char == 'p')
 			{
@@ -3179,7 +3179,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				(void) eof_menu_slider_mark();
 				eof_use_key();
 			}
-			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If this is a pro guitar track
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_rocksmith_section_dialog_add();
@@ -3199,7 +3199,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
 	/* edit pro guitar note (N in a pro guitar track) */
 	/* toggle linknext status (SHIFT+N in a pro guitar track) */
@@ -3923,7 +3923,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 									}
 								}
 							}
-							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+							if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 							{	//If legacy view is in effect, alter the note's legacy bitmask
 								eof_song->pro_guitar_track[tracknum]->note[effective_hover_note]->legacymask ^= bitmask;
 							}
@@ -3966,7 +3966,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 								eof_xor_note_flags(eof_song, eof_selected_track, effective_hover_note, beatable_statuses);		//Toggle the pen note's snap statuses
 							}
 							eof_selection.current = effective_hover_note;
-							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+							if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 							{	//If legacy view is in effect, check the note's legacy bitmask
 								note = eof_song->pro_guitar_track[tracknum]->note[effective_hover_note]->legacymask;
 							}
@@ -4514,7 +4514,7 @@ void eof_editor_logic(void)
 			{	//If piano roll, rex mundi or feedback input modes are in use
 				if(eof_hover_note >= 0)
 				{	//If a note is being moused over
-					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 					{	//If legacy view is in effect, set the pen note to the legacy mask
 						eof_pen_note.note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
 						eof_pen_note.flags = 0;
@@ -4562,7 +4562,7 @@ void eof_editor_logic(void)
 			if(!eof_full_screen_3d && (mouse_b & 4) && eof_mclick_released)
 			{	//If the middle click hasn't been processed yet
 				while(mouse_b & 4);	//Wait until the middle mouse button is released before proceeding (this depends on automatic mouse polling, so EOF cannot call poll_mouse() manually or this becomes an infinite loop)
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If a pro guitar track is active
 					if(eof_count_selected_and_unselected_notes(NULL))
 					{	//If any notes in the active track difficulty are selected
@@ -5006,7 +5006,7 @@ void eof_editor_logic(void)
 							{	//If the user didn't opt to prevent clearing the note selection when adding gems
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
-							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+							if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 							{	//If legacy view is in effect, alter the note's legacy bitmask
 								note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
 								note ^= bitmask;
@@ -6294,7 +6294,7 @@ void eof_render_editor_window(EOF_WINDOW *window)
 		eof_render_vocal_editor_window(window);
 		return;
 	}
-	else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If the track being rendered is a pro guitar track
 		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 		if(tp->note == tp->technote)
@@ -6629,7 +6629,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 		}
 
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar/bass track is active
 			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
@@ -7085,7 +7085,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				{	//If this beat has a section (RS phrase) event
 					int bg_color = eof_color_gray;	//By default, section names will render with a gray background
 
-					if((eof_write_rs_files || eof_write_rs2_files) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					if((eof_write_rs_files || eof_write_rs2_files) && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 					{	//If the user wants to save Rocksmith capable files, and a pro guitar/bass track is active, determine if the section (Rocksmith phrase) is identical in both this and the previous difficulty or if the phrase is fully leveled in the active difficulty
 						unsigned long i2, startpos, endpos;
 						char retval;
@@ -7245,7 +7245,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	}
 
 	/* draw the hand mode changes */
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If this is a pro guitar track
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
@@ -7259,7 +7259,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	}
 
 	/* draw fret hand positions if applicable */
-	if((eof_2d_render_top_option == 7) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((eof_2d_render_top_option == 7) && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 	{	//If the user opted to render fret hand positions at the top of the 2D panel, and this is a pro guitar track
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
@@ -7282,7 +7282,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	}
 
 	/* draw tone changes if applicable */
-	if((eof_2d_render_top_option == 10) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((eof_2d_render_top_option == 10) && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 	{	//If the user opted to render tone changes at the top of the 2D panel, and this is a pro guitar track
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
@@ -7450,7 +7450,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 				(void) snprintf(tab_text, sizeof(tab_text) - 1, "%s", tab_name);	//Copy the difficulty name to the string
 				diffnum = i;	//The difficulty number is the same as the tab number
 			}
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is being rendered
 				tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 				if((tp->note != tp->technote) && isdiff && eof_track_diff_populated_tech_note_status[diffnum])
@@ -7692,7 +7692,7 @@ unsigned char eof_find_pen_note_mask(void)
 		return 0;			//Return 0
 
 	/* see if we are inverting the lanes */
-	if(eof_inverted_notes || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(eof_inverted_notes || (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 	{	//If the user opted to invert the notes in the piano roll, or if the current track is a pro guitar/bass track, return the appropriate inverted pen mask
 		eof_hover_piece = lanecount - 1 - eof_hover_piece;	//Invert the hover piece number accordingly
 	}

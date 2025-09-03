@@ -123,7 +123,7 @@ void eof_prepare_context_menu(void)
 			eof_right_click_menu_normal[12].flags = D_DISABLED;
 			eof_right_click_menu_note[13].flags = D_DISABLED;
 		}
-		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is not active, disable the fret hand position and tone change context menu items
 			eof_right_click_menu_normal[11].flags = D_DISABLED;
 			eof_right_click_menu_note[12].flags = D_DISABLED;

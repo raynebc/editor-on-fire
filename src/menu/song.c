@@ -577,7 +577,7 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[8].flags = D_DISABLED | D_HIDDEN;
 
 		/* enable pro guitar and rocksmith submenus */
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
 			eof_song_menu[16].flags = 0;			//Song>Rocksmith> submenu
@@ -2624,7 +2624,7 @@ int eof_menu_catalog_edit_name(void)
 
 int eof_menu_song_legacy_view(void)
 {
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	if(eof_legacy_view)
@@ -4381,7 +4381,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
 	{	//For each track in the project
-		if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 			continue;	//If this is not a pro guitar/bass track, skip it
 
 		tracknum = eof_song->track[ctr]->tracknum;
@@ -4735,7 +4735,7 @@ void eof_song_highlight_non_grid_snapped_notes(EOF_SONG *sp, unsigned long track
 	if(!sp || (track >= sp->tracks) || !track)
 		return;	//Invalid parameters
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If this is a pro guitar track
 		loopcount = 2;	//The main loop will run a second time to process the inactive note set
 	}
@@ -4820,7 +4820,7 @@ void eof_song_highlight_arpeggios(EOF_SONG *sp, unsigned long track)
 
 	if(!sp || (track >= sp->tracks) || !track)
 		return;	//Invalid parameters
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 		return;	//Do not allow this function to run on a non pro guitar track
 
 	tracknum = sp->track[track]->tracknum;
@@ -4887,7 +4887,7 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 			timematch = 1;	//Note that there was a note at the same timestamp in both track difficulties
 			if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 3) == 0)
 			{	//If the notes match a thorough comparison
-				if(eof_song->track[track1]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, track1))
 				{	//If pro guitar tracks are being compared
 					EOF_PRO_GUITAR_NOTE *np1 = eof_song->pro_guitar_track[eof_song->track[track1]->tracknum]->note[ctr];
 					EOF_PRO_GUITAR_NOTE *np2 = eof_song->pro_guitar_track[eof_song->track[track2]->tracknum]->note[ctr2];
@@ -4914,7 +4914,7 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 	}
 
 	//Compare tech notes if applicable
-	if(eof_song->track[track1]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, track1))
 	{	//If pro guitar tracks are being compared
 		EOF_PRO_GUITAR_TRACK *tp1, *tp2;
 		unsigned long technotepos, notepos, techflags, techeflags, ctr3;

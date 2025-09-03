@@ -499,7 +499,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//A pro guitar track is active
 	if(!ustricmp(macro, "IF_IS_PRO_GUITAR_TRACK"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -549,7 +549,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		{	//If the active track is a guitar track
-			if(!eof_track_is_ghl_mode(eof_song, eof_selected_track) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+			if(!eof_track_is_ghl_mode(eof_song, eof_selected_track) && (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 			{	//If it's not a GHL track or a pro guitar track
 				dest_buffer[0] = '\0';
 				return 3;	//True
@@ -564,7 +564,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		{	//If the active track is a guitar track
-			if(eof_track_is_ghl_mode(eof_song, eof_selected_track) || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			if(eof_track_is_ghl_mode(eof_song, eof_selected_track) || (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 			{
 				dest_buffer[0] = '\0';
 				return 3;	//True
@@ -579,7 +579,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_selected_track == EOF_TRACK_KEYS))
 		{	//If the active track is a guitar track, or the keys track
-			if(!eof_track_is_ghl_mode(eof_song, eof_selected_track) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+			if(!eof_track_is_ghl_mode(eof_song, eof_selected_track) && (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 			{	//If it's not a GHL track or a pro guitar track
 				dest_buffer[0] = '\0';
 				return 3;	//True
@@ -628,7 +628,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//A pro guitar track is active and tech view is in effect
 	if(!ustricmp(macro, "IF_IS_TECH_VIEW"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
@@ -712,7 +712,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_selection.current < tracksize)
 		{	//If a note is selected
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
@@ -730,7 +730,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//If this track's tuning is not being reflected in chord name lookups
 	if(!ustricmp(macro, "IF_TUNING_IGNORED"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 			if(tp->ignore_tuning)
@@ -1669,7 +1669,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the millisecond count was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track in the project
-				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//Skip non pro guitar tracks
 				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -1778,7 +1778,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 				for(ctr = 1; ctr < eof_song->tracks; ctr++)
 				{	//For each track in the project
-					if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+					if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 						continue;	//Skip non pro guitar tracks
 
 					tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
@@ -1806,7 +1806,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//For each track in the project
 				unsigned long ctr2, match;
 
-				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//Skip non pro guitar tracks
 
 				match = eof_song_lookup_first_event(eof_song, name_buffer, ctr, EOF_EVENT_FLAG_RS_PHRASE, 2);
@@ -1854,7 +1854,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//For each track in the project
 			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
 
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -1902,7 +1902,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_notes_macro_note_starting_on_tone_change[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -1954,7 +1954,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 					for(ctr = 1; ctr < eof_song->tracks; ctr++)
 					{	//For each track in the project
-						if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+						if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 							continue;	//Skip non pro guitar tracks
 
 						tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
@@ -1976,7 +1976,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_RS_ONLY_ONE_TONE_CHANGE"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
 			eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
 			if(eof_track_rs_tone_names_list_strings_num == 1)
@@ -1993,7 +1993,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_RS_NO_DEFAULT_TONE_DEFINED"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
 			eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
@@ -2014,7 +2014,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_TRACK_DIFF_HAS_NO_FHPS"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
 
@@ -2041,7 +2041,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_notes_macro_note_subceeding_fhp[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2084,7 +2084,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the fret count was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track in the project
-				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//Skip non pro guitar tracks
 				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2130,7 +2130,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//For each track in the project
 			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
 
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2185,7 +2185,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//For each track in the project
 			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
 
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2244,7 +2244,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//For each track in the project
 			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
 
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2398,7 +2398,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the fhp was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track in the project
-				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//Skip non pro guitar tracks
 				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2439,7 +2439,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the fret value was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track in the project
-				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//Skip non pro guitar tracks
 				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2480,7 +2480,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the difficulty number was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track in the project
-				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//Skip non pro guitar tracks
 				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2524,7 +2524,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//For each track in the project
 				char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
 
-				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//Skip non pro guitar tracks
 				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 					continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2572,7 +2572,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		unsigned long notectr;
 		EOF_PRO_GUITAR_TRACK *tp;
 
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
 			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
 			if(tp->arrangement == EOF_BASS_ARRANGEMENT)
@@ -2622,7 +2622,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_notes_macro_tech_note_missing_target[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2708,7 +2708,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
 			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith warnings have already been found for inactive tracks, and this isn't the active track, skip processing it
@@ -2756,7 +2756,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//A pro guitar track is active and fingering view is in effect
 	if(!ustricmp(macro, "IF_IS_FINGERING_VIEW"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{
 			if(eof_fingering_view)
 			{	//If fingering view is in effect
@@ -2771,7 +2771,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//A pro guitar track is active and dynamic difficulty is in effect
 	if(!ustricmp(macro, "IF_RS_TRACK_HAS_DYNAMIC_DIFFICULTY"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{
@@ -3650,7 +3650,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_selection.current < tracksize)
 		{	//If a note is selected
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 				char fret_string[30];
@@ -3676,7 +3676,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_selection.current < tracksize)
 		{	//If a note is selected
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 				unsigned long matchcount;
@@ -3715,7 +3715,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_selection.current < tracksize)
 		{	//If a note is selected
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 				char finger_string[30] = {0};
@@ -3745,7 +3745,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_selection.current < tracksize)
 		{	//If a note is selected
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 				char tone_string[30] = {0};
@@ -3771,7 +3771,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_selection.current < tracksize)
 		{	//If a note is selected
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
 				char temp[10];
 				unsigned char pitchmask, pitches[6] = {0}, bitmask;
@@ -3823,7 +3823,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The fret hand position in effect at the pro guitar track's current seek position
 	if(!ustricmp(macro, "PRO_GUITAR_TRACK_EFFECTIVE_FHP"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 			unsigned char position;
@@ -3842,7 +3842,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The tone in effect at the pro guitar track's current seek position
 	if(!ustricmp(macro, "PRO_GUITAR_TRACK_EFFECTIVE_TONE"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 			unsigned long tone;
@@ -4378,7 +4378,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of open chords (and the corresponding percentage that is of all notes) in the active pro guitar track difficulty
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_OPEN_CHORDS"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			unsigned long count = 0, totalnotecount = 0;
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
@@ -4412,7 +4412,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of barre chords (and the corresponding percentage that is of all notes) in the active pro guitar track difficulty
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_BARRE_CHORDS"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			unsigned long count = 0, totalnotecount = 0;
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
@@ -4446,7 +4446,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of fully string muted notes/chords (and the corresponding percentage that is of all notes) in the active pro guitar track difficulty
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_STRING_MUTES"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			unsigned long count = 0, totalnotecount = 0;
 
@@ -5280,7 +5280,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IR_TRACK_EFFECTIVE_HAND_MODE"))
 	{
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 			snprintf(dest_buffer, dest_buffer_size, "%s", eof_pro_guitar_track_find_effective_hand_mode_change(tp, eof_music_pos.value - eof_av_delay, NULL, NULL) ? "String" : "Chord");
@@ -5938,7 +5938,7 @@ unsigned long eof_count_num_notes_with_gem_designation(unsigned char gems, unsig
 		if(eof_get_note_type(eof_song, eof_selected_track, ctr) != eof_note_type)	//If this note isn't in the active difficulty
 			continue;	//Skip it
 
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			if(eof_pro_guitar_note_highest_fret(eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum], ctr) == 0)
 			{	//If no gems in this note had a fret value defined (open note)

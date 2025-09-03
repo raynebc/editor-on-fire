@@ -752,7 +752,7 @@ void eof_prepare_note_menu(void)
 						ssp = j;
 					}
 				}
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If a pro guitar track is active
 					for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
 					{	//For each arpeggio phrase in the active track
@@ -978,7 +978,7 @@ void eof_prepare_note_menu(void)
 		{	//For each track supported by EOF
 			eof_menu_arpeggio_copy_menu[i].flags = 0;
 
-			if((i + 1 < EOF_TRACKS_MAX) && (!eof_get_num_arpeggios(eof_song, i + 1) || (i + 1 == eof_selected_track) || (eof_song->track[i + 1]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)))
+			if((i + 1 < EOF_TRACKS_MAX) && (!eof_get_num_arpeggios(eof_song, i + 1) || (i + 1 == eof_selected_track) || (!eof_track_is_pro_guitar_track(eof_song, i + 1))))
 			{	//If the track has no arpeggios, is the active track or is not a pro guitar/bass track
 				eof_menu_arpeggio_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
@@ -1206,7 +1206,7 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* Pro Guitar mode notation> */
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If the active track is a pro guitar track
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
@@ -1463,7 +1463,7 @@ void eof_menu_note_transpose_tech_notes(int dir)
 	unsigned long normalnote = 0;	//The normal note that a tech note is found to apply to
 	unsigned long i;
 
-	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view || eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) || eof_legacy_view || eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		return;	//Don't run unless a pro guitar track is active, legacy view is not in effect and tech view is not in effect
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
@@ -1526,7 +1526,7 @@ int eof_menu_note_transpose_up(void)
 			{	//If lane 6 is enabled for use in the active track
 				max = 63;
 			}
-			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 			{	//Special case:  Legacy view is in effect, display pro guitar notes as 5 lane notes
 				max = 31;
 			}
@@ -1541,7 +1541,7 @@ int eof_menu_note_transpose_up(void)
 				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
 					continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 				{	//If legacy view is in effect, get the note's legacy bitmask
 					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
 				}
@@ -1561,7 +1561,7 @@ int eof_menu_note_transpose_up(void)
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				}
 				///Update fret values first, because eof_set_note_note() will clear fret values for unused strings
-				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				if(!eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 				{	//If a pro guitar note will tranpose, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 7; j > 0; j--)
 					{	//For the upper 7 frets
@@ -1571,7 +1571,7 @@ int eof_menu_note_transpose_up(void)
 					eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
 					eof_song->pro_guitar_track[tracknum]->note[i]->finger[0] = 0;		//Re-initialize lane 1 fingering
 				}
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 				{	//If legacy view is in effect, set the note's legacy bitmask
 					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
 				}
@@ -1579,7 +1579,7 @@ int eof_menu_note_transpose_up(void)
 				{	//Otherwise set the note's normal bitmask
 					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If a pro guitar track is active, update the note's ghost bitmask
 					note = eof_get_note_ghost(eof_song, eof_selected_track, i);
 					note = (note << 1) & max;
@@ -1629,7 +1629,7 @@ int eof_menu_note_transpose_down(void)
 				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
 					continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 				{	//If legacy view is in effect, get the note's legacy bitmask
 					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
 				}
@@ -1639,7 +1639,7 @@ int eof_menu_note_transpose_down(void)
 				}
 				note = (note >> 1) & 63;
 				///Update fret values first, because eof_set_note_note() will clear fret values for unused strings
-				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				if(!eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 				{	//If a pro guitar note will tranpose, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 0; j < 7; j++)
 					{	//For the 7 supported lower frets
@@ -1649,7 +1649,7 @@ int eof_menu_note_transpose_down(void)
 					eof_song->pro_guitar_track[tracknum]->note[i]->frets[7] = 0xFF;	//Re-initialize lane 7 to the default of (muted)
 					eof_song->pro_guitar_track[tracknum]->note[i]->finger[7] = 0;		//Re-initialize lane 7 fingering
 				}
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 				{	//If legacy view is in effect, set the note's legacy bitmask
 					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
 				}
@@ -1657,7 +1657,7 @@ int eof_menu_note_transpose_down(void)
 				{	//Otherwise set the note's normal bitmask
 					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If a pro guitar track is active, update the note's ghost bitmask
 					note = eof_get_note_ghost(eof_song, eof_selected_track, i);
 					note = (note >> 1) & 63;
@@ -2059,7 +2059,7 @@ int eof_menu_note_toggle_green(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 1;
 			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
@@ -2116,7 +2116,7 @@ int eof_menu_note_toggle_red(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 2;
 			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
@@ -2164,7 +2164,7 @@ int eof_menu_note_toggle_yellow(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 4;
 			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
@@ -2222,7 +2222,7 @@ int eof_menu_note_toggle_blue(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 8;
 			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
@@ -2280,7 +2280,7 @@ int eof_menu_note_toggle_purple(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 16;
 			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
@@ -2341,7 +2341,7 @@ int eof_menu_note_toggle_orange(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask ^= 32;
 			if(!eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask)
@@ -2399,7 +2399,7 @@ int eof_menu_note_clear_green(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, check the note's legacy bitmask
 			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 		}
@@ -2416,7 +2416,7 @@ int eof_menu_note_clear_green(void)
 			u = 1;
 		}
 		note &= ~1;	//Clear the 1st lane gem
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 		}
@@ -2459,7 +2459,7 @@ int eof_menu_note_clear_red(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, check the note's legacy bitmask
 			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 		}
@@ -2476,7 +2476,7 @@ int eof_menu_note_clear_red(void)
 			u = 1;
 		}
 		note &= ~2;	//Clear the 2nd lane gem
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 		}
@@ -2519,7 +2519,7 @@ int eof_menu_note_clear_yellow(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, check the note's legacy bitmask
 			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 		}
@@ -2536,7 +2536,7 @@ int eof_menu_note_clear_yellow(void)
 			u = 1;
 		}
 		note &= ~4;	//Clear the 3rd lane gem
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 		}
@@ -2579,7 +2579,7 @@ int eof_menu_note_clear_blue(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, check the note's legacy bitmask
 			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 		}
@@ -2596,7 +2596,7 @@ int eof_menu_note_clear_blue(void)
 			u = 1;
 		}
 		note &= ~8;	//Clear the 4th lane gem
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 		}
@@ -2639,7 +2639,7 @@ int eof_menu_note_clear_purple(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, check the note's legacy bitmask
 			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 		}
@@ -2656,7 +2656,7 @@ int eof_menu_note_clear_purple(void)
 			u = 1;
 		}
 		note &= ~16;	//Clear the 5th lane gem
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 		}
@@ -2705,7 +2705,7 @@ int eof_menu_note_clear_orange(void)
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i - 1] || (eof_get_note_type(eof_song, eof_selected_track, i - 1) != eof_note_type))
 			continue;	//If the note isn't selected or isn't in the active track difficulty, skip it
 
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, check the note's legacy bitmask
 			note = eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask;
 		}
@@ -2722,7 +2722,7 @@ int eof_menu_note_clear_orange(void)
 			u = 1;
 		}
 		note &= ~32;	//Clear the 6th lane gem
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If legacy view is in effect, alter the note's legacy bitmask
 			eof_song->pro_guitar_track[tracknum]->note[i - 1]->legacymask = note;
 		}
@@ -4024,7 +4024,7 @@ int eof_menu_hopo_auto(void)
 		oldflags = flags;					//Save another copy of the original flags
 		flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
 		flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If this is a pro guitar note, ensure that various statuses are cleared (they would be invalid if this note was a HO/PO)
 			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
 			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
@@ -4074,7 +4074,7 @@ int eof_menu_hopo_cycle(void)
 			{	//If the note was a forced on HOPO, make it a forced off HOPO
 				flags &= ~EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
 				flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
@@ -4085,7 +4085,7 @@ int eof_menu_hopo_cycle(void)
 			{	//If the note was a forced off HOPO, make it an auto HOPO
 				flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear the forced on hopo flag
 				flags &= ~EOF_NOTE_FLAG_NO_HOPO;	//Clear the forced off hopo flag
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
@@ -4095,7 +4095,7 @@ int eof_menu_hopo_cycle(void)
 			else
 			{	//If the note was an auto HOPO, make it a forced on HOPO
 				flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If this is a pro guitar note
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag (default HOPO type)
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
@@ -4135,7 +4135,7 @@ int eof_menu_hopo_force_on(void)
 		oldflags = flags;					//Save another copy of the original flags
 		flags |= EOF_NOTE_FLAG_F_HOPO;		//Set the HOPO on flag
 		flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If this is a pro guitar note
 			flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag (default HOPO type)
 			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
@@ -4176,7 +4176,7 @@ int eof_menu_hopo_force_off(void)
 		oldflags = flags;					//Save another copy of the original flags
 		flags |= EOF_NOTE_FLAG_NO_HOPO;		//Set the HOPO off flag
 		flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If this is a pro guitar note, ensure that Hammer on, Pull off, Tap and bend statuses are cleared
 			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
 			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
@@ -4334,7 +4334,7 @@ int eof_transpose_possible(int dir)
 		{	//If lane 6 is enabled for use in the active track
 			max = 32;
 		}
-		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//Special case:  Legacy view is in effect, revert to lane 4 being the highest that can transpose up
 			max = 16;
 		}
@@ -4358,7 +4358,7 @@ int eof_transpose_possible(int dir)
 				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
 					continue;	//If the note isn't selected or in the active track difficulty, skip it
 
-				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				if(eof_legacy_view && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 				{	//If legacy view is in effect, get the note's legacy bitmask
 					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
 				}
@@ -4405,14 +4405,14 @@ int eof_note_can_pitch_transpose(EOF_SONG *sp, unsigned long track, unsigned lon
 	else if(!dir)
 		return 0;	//A direction of 0 effectively means do nothing
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view || eof_menu_track_get_tech_view_state(sp, track))
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)) || eof_legacy_view || eof_menu_track_get_tech_view_state(sp, track))
 		return 0;	//Only pro guitar tracks when legacy and tech views are disabled can use pitched transpose
 
-	tp = sp->pro_guitar_track[sp->track[eof_selected_track]->tracknum];	//Simplify
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
 	if(tp->numstrings < 4)
 		return 0;	//A string count less than 4 would be unexpected
 	max = 1 << (tp->numstrings - 1);
-	note = eof_get_note_note(sp, eof_selected_track, notenum);
+	note = eof_get_note_note(sp, track, notenum);
 
 	//Check whether the note bitmask can transpose
 	if((note & 1) && (dir > 0))
@@ -4450,7 +4450,7 @@ int eof_pitched_transpose_possible(int dir, char option)
 	EOF_PRO_GUITAR_TRACK *tp;
 	char success;	//Tracks the transpose-ability of the individual note being examined
 
-	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view || eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) || eof_legacy_view || eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		return 0;	//Don't run unless a pro guitar track is active, legacy view is not in effect and tech view is not in effect
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
@@ -4834,7 +4834,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_PRO_GUITAR_NOTE *np;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -5710,7 +5710,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_PRO_GUITAR_NOTE *np;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
 	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
 		return 0;	//Do not allow this function to run if a valid note is not selected
@@ -5883,7 +5883,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	char retry, fingeringdefined, offerupdatefingering;
 	char rerun;	//Tracks whether the dialog will re-initialize and run again, such as if any buttons other than OK or cancel were used
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
 	if(!undo_made)
 		return 0;
@@ -6128,7 +6128,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					{	//If the fingering is defined, and the user didn't disable this auto-completion feature, and the selected note isn't designated as having no fingering
 						for(trackctr = 1; trackctr < eof_song->tracks; trackctr++)
 						{	//For each track in the project
-							if(eof_song->track[trackctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If this isn't a pro guitar track
+							if(!eof_track_is_pro_guitar_track(eof_song, trackctr))	//If this isn't a pro guitar track
 								continue;	//Skip it
 
 							tp2 = eof_song->pro_guitar_track[eof_song->track[trackctr]->tracknum];
@@ -6152,7 +6152,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 						{	//If the user opts to update the fingering array of all matching notes (or if the calling function wanted all instances to be updated automatically)
 							for(trackctr = 1; trackctr < eof_song->tracks; trackctr++)
 							{	//For each track in the project
-								if(eof_song->track[trackctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)	//If this isn't a pro guitar track
+								if(!eof_track_is_pro_guitar_track(eof_song, trackctr))	//If this isn't a pro guitar track
 									continue;	//Skip it
 
 								tp2 = eof_song->pro_guitar_track[eof_song->track[trackctr]->tracknum];
@@ -6257,7 +6257,7 @@ int eof_menu_note_edit_pro_guitar_note_fingers(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	char rerun;	//Tracks whether the dialog will re-initialize and run again, such as if any buttons other than OK or cancel were used
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
 	if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		return 0;	//If tech view is in effect, don't run the dialog
@@ -6458,7 +6458,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 	memset(&eof_selection, 0, sizeof(EOF_SELECTION_DATA));	//Clear the note selection
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
 	{	//For each track (skipping the global track, 0)
-		if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 			continue;	//If this isn't a pro guitar track, skip it
 
 		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);
@@ -6541,7 +6541,7 @@ int eof_menu_note_lookup_fingering(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	char undo_made = 0;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 	if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		return 0;	//Do not allow this function to run when tech view is in effect for the active track
@@ -6586,7 +6586,7 @@ int eof_menu_note_toggle_tapping(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -6629,7 +6629,7 @@ int eof_menu_note_remove_tapping(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -6666,7 +6666,7 @@ int eof_menu_note_toggle_bend_logic(int function)
 	char bends_created = 0;		//Will be set to nonzero if any selected un-bent notes become bend notes
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 	if(function && !eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to toggle pre-bend status when tech view is not active
@@ -6768,7 +6768,7 @@ int eof_menu_note_remove_bend(void)
 	unsigned long flags, eflags, tracknum;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -6824,7 +6824,7 @@ int eof_menu_note_toggle_slide_up(void)
 	char slide_change;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -6882,7 +6882,7 @@ int eof_menu_note_toggle_slide_down(void)
 	char slide_change;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -6938,7 +6938,7 @@ int eof_menu_note_remove_pitched_slide(void)
 	unsigned long flags, oldflags, tracknum;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -6978,7 +6978,7 @@ int eof_menu_note_remove_all_slide(void)
 	unsigned long flags, oldflags, tracknum;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -7019,7 +7019,7 @@ int eof_menu_note_reverse_slide(void)
 	unsigned long flags, oldflags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -7065,7 +7065,7 @@ int eof_menu_note_convert_slide_to_unpitched(void)
 	int note_selection_updated;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
@@ -7147,7 +7147,7 @@ int eof_menu_note_convert_slide_to_pitched(void)
 	int note_selection_updated;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
@@ -7203,7 +7203,7 @@ int eof_menu_note_toggle_palm_muting(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -7236,7 +7236,7 @@ int eof_menu_note_remove_palm_muting(void)
 	unsigned long flags, oldflags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -7287,7 +7287,7 @@ int eof_menu_arpeggio_unmark_logic(int handshape)
 	EOF_PRO_GUITAR_TRACK *tp;
 	char undo_made = 0;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Don't allow this function to run unless a pro guitar track is active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -7364,7 +7364,7 @@ int eof_menu_arpeggio_erase_all(void)
 	unsigned long ctr, tracknum;
 	EOF_PRO_GUITAR_TRACK * tp;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	eof_clear_input();
@@ -7390,7 +7390,7 @@ int eof_menu_handshape_erase_all(void)
 	unsigned long ctr, tracknum;
 	EOF_PRO_GUITAR_TRACK * tp;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	eof_clear_input();
@@ -7822,7 +7822,7 @@ int eof_menu_note_clear_legacy_values(void)
 	unsigned long tracknum;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -7892,7 +7892,7 @@ int eof_menu_note_edit_name(void)
 					return D_O_K;
 				}
 			}
-			else if((eof_etext[0] == '\0') && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			else if((eof_etext[0] == '\0') && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 			{	//If the user kept the name field empty and this is a pro guitar track, offer to apply auto-detected names
 				eof_clear_input();
 				if(alert(NULL, "Apply automatically-detected chord names?", NULL, "&Yes", "&No", 'y', 'n') == 1)
@@ -7958,7 +7958,7 @@ int eof_pro_guitar_toggle_strum_up(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -7999,7 +7999,7 @@ int eof_pro_guitar_toggle_strum_down(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -8040,7 +8040,7 @@ int eof_pro_guitar_toggle_strum_mid(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -8081,7 +8081,7 @@ int eof_menu_note_remove_strum_direction(void)
 	unsigned long flags, oldflags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9092,7 +9092,7 @@ int eof_menu_pro_guitar_toggle_hammer_on(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9139,7 +9139,7 @@ int eof_menu_pro_guitar_remove_hammer_on(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9176,7 +9176,7 @@ int eof_menu_pro_guitar_toggle_pull_off(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9223,7 +9223,7 @@ int eof_menu_pro_guitar_remove_pull_off(void)
 	unsigned long flags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9261,7 +9261,7 @@ int eof_menu_note_toggle_ghost(void)
 
  	eof_log("eof_menu_note_toggle_ghost() entered", 1);
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar/bass track is active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9299,7 +9299,7 @@ int eof_menu_note_remove_ghost(void)
 
  	eof_log("eof_menu_note_remove_ghost() entered", 1);
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar/bass track is active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9337,7 +9337,7 @@ int eof_menu_note_remove_vibrato(void)
 	int note_selection_updated;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -9374,7 +9374,7 @@ int eof_menu_note_toggle_vibrato(void)
 	unsigned long flags, tracknum;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9407,7 +9407,7 @@ int eof_menu_note_remove_pop(void)
 	unsigned long flags, tracknum;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9443,7 +9443,7 @@ int eof_menu_note_toggle_pop(void)
 	unsigned long flags, tracknum;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9480,7 +9480,7 @@ int eof_menu_note_remove_slap(void)
 	unsigned long flags, tracknum;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9516,7 +9516,7 @@ int eof_menu_note_toggle_slap(void)
 	unsigned long flags, tracknum;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9743,7 +9743,7 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9887,7 +9887,7 @@ int eof_pro_guitar_note_define_unpitched_slide(void)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -9992,7 +9992,7 @@ int eof_menu_note_remove_unpitched_slide(void)
 	unsigned long flags, oldflags;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -10043,7 +10043,7 @@ int eof_pro_guitar_note_bend_strength(char undo)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -10170,7 +10170,7 @@ int eof_menu_pro_guitar_remove_fingering(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -10207,7 +10207,7 @@ int eof_menu_pro_guitar_apply_derived_fingering(void)
 	int note_selection_updated;
 	unsigned char fingernum = 0;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -10393,7 +10393,7 @@ int eof_menu_remove_statuses(void)
 		eflags = eof_get_note_eflags(eof_song, eof_selected_track, i);
 		if(flags || eflags)
 		{	//If this note has any statuses
-			if(!((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (flags == EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)))
+			if(!((eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) && (flags == EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)))
 			{	//Don't bother clearing the note status if the only status it has is string mute, since the fixup routine will just re-apply it automatically
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
@@ -10422,7 +10422,7 @@ int eof_rocksmith_convert_mute_to_palm_mute_single_note(void)
 	char first_string;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -10786,7 +10786,7 @@ int eof_menu_note_simplify_string_mute(void)
 	int note_selection_updated;
 	EOF_PRO_GUITAR_NOTE *np;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -10835,7 +10835,7 @@ int eof_menu_note_simplify_ghost(void)
 
  	eof_log("eof_menu_note_toggle_ghost() entered", 1);
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar/bass track is active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
@@ -10878,7 +10878,7 @@ int eof_menu_pro_guitar_toggle_string_mute(void)
 	int note_selection_updated;
 	EOF_PRO_GUITAR_NOTE *np;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -11007,7 +11007,7 @@ int eof_menu_note_reflect(char function)
 					}
 				}
 
-				if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 					continue;	//If the track is not a pro guitar track, skip the rest of this loop's logic
 
 				np = eof_song->pro_guitar_track[tracknum]->note[i];
@@ -11044,7 +11044,7 @@ int eof_menu_note_reflect(char function)
 			eof_set_note_note(eof_song, eof_selected_track, i, newnote);		//Update the note bitmask
 			eof_set_note_ghost(eof_song, eof_selected_track, i, newghost);		//Update the ghost bitmask
 			eof_set_note_accent(eof_song, eof_selected_track, i, newaccent);	//Update the accent bitmask
-			if(np && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(np && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 			{	//If the track is a pro guitar track
 				np->legacymask = newlegacy;	//Update the legacy bitmask
 				(void) memcpy(np->frets, newfrets, sizeof(newfrets));		//Update the fret array
@@ -11121,7 +11121,7 @@ int eof_menu_note_move_tech_note_to_previous_note_pos(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_PRO_GUITAR_NOTE *np, *tnp;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account

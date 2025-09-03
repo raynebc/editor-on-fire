@@ -755,7 +755,7 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 	if(!eof_song || !eof_song_loaded)
 		return NULL;	//For now, don't do anything unless a project is active
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return NULL;	//Don't do anything unless the active track is a pro guitar/bass track
 
 	eof_log("\tImporting Rocksmith file", 1);

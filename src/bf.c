@@ -116,7 +116,7 @@ int eof_export_bandfuse(EOF_SONG * sp, char * fn, unsigned short *user_warned)
 	{	//For each track
 		if(ctr >= EOF_TRACKS_MAX)
 			break;		//Redundant bounds check to satisfy a false positive with Coverity
-		if(sp->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(sp, ctr))
 			continue;	//If this isn't a pro guitar/bass track, skip it
 		if(ctr == EOF_TRACK_PRO_GUITAR_B)
 			continue;	//If this is the bonus Rocksmith arrangement, skip it

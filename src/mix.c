@@ -342,7 +342,7 @@ void eof_mix_find_claps(void)
 	eof_mix_claps = 0;
 	eof_mix_current_clap = 0;
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If a pro guitar/bass track is active
 		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 	}
@@ -403,7 +403,7 @@ void eof_mix_find_claps(void)
 	//Queue MIDI tones for pro guitar notes
 	eof_mix_guitar_notes = 0;
 	eof_mix_current_guitar_note = 0;
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If a pro guitar/bass track is active
 		int tone;
 		EOF_PRO_GUITAR_TRACK *track = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
@@ -939,7 +939,7 @@ void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned l
 	unsigned long tracknum, ctr, bitmask;
 	int tone;
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return;	//Invalid parameters
 
 	tracknum = sp->track[track]->tracknum;
@@ -965,7 +965,7 @@ int eof_lookup_midi_tone(EOF_SONG *sp, unsigned long track, unsigned long note)
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum;
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return 0;	//Invalid parameters
 
 	tracknum = sp->track[track]->tracknum;

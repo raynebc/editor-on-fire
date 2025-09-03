@@ -454,7 +454,7 @@ void eof_prepare_file_menu(void)
 			eof_file_import_menu[12].flags = D_DISABLED;
 
 		eof_file_import_menu[13].flags = 0;	//Import>GP style lyric text
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
 			eof_file_import_menu[6].flags = 0; // Import>Rocksmith
@@ -3605,7 +3605,7 @@ int eof_save_helper_checks(void)
 	{	//If there are any pro guitar/bass notes and the user wants to save Rocksmith or Bandfuse capable files
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
-			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, ctr))
 			{	//If this is a pro guitar/bass track
 				if(eof_check_rs_sections_have_phrases(eof_song, ctr))
 				{	//If the user canceled adding missing phrases
@@ -3623,7 +3623,7 @@ int eof_save_helper_checks(void)
 
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
 			tracknum = eof_song->track[ctr]->tracknum;
@@ -3684,7 +3684,7 @@ int eof_save_helper_checks(void)
 			unsigned long notectr;
 			char restore_tech_view = 0;
 
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
 			tracknum = eof_song->track[ctr]->tracknum;
@@ -3730,7 +3730,7 @@ int eof_save_helper_checks(void)
 			unsigned long flags, noteset;
 			char restore_tech_view = 0;
 
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
 			tracknum = eof_song->track[ctr]->tracknum;
@@ -3829,7 +3829,7 @@ int eof_save_helper_checks(void)
 		{	//For each track (until the user is warned about any offending chord names)
 			char restore_tech_view = 0;
 
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
 			tracknum = eof_song->track[ctr]->tracknum;
@@ -3871,7 +3871,7 @@ int eof_save_helper_checks(void)
 
 		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
 		{	//For each track (until the user is warned about any offending handshape phrases)
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
 			tracknum = eof_song->track[ctr]->tracknum;
@@ -3907,7 +3907,7 @@ int eof_save_helper_checks(void)
 
 			for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
 			{	//For each track (until the user is warned about any offending handshape phrases)
-				if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//If this is not a pro guitar/bass track, skip it
 
 				eof_process_beat_statistics(eof_song, ctr);	//Rebuild beat stats from this track's perspective
@@ -3959,7 +3959,7 @@ int eof_save_helper_checks(void)
 
 		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
 		{	//For each track (until the user is warned about any offending handshape phrases)
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
 			tracknum = eof_song->track[ctr]->tracknum;
@@ -4136,7 +4136,7 @@ int eof_save_helper_checks(void)
 		{	//For each track (until the user is warned about any offending bend notes)
 			char restore_tech_view = 0;
 
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
 			tracknum = eof_song->track[ctr]->tracknum;
@@ -4187,7 +4187,7 @@ int eof_save_helper_checks(void)
 			unsigned long start, stop;
 			int sectionchange = 0, phrasechange = 0;
 
-			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
 			eof_process_beat_statistics(eof_song, ctr);	//Rebuild beat statistics from the perspective of this track
@@ -5357,7 +5357,7 @@ int eof_gp_import_guitar_track(int importvoice)
 	char still_populated = 0;	//Will be set to nonzero if the track still contains notes after the track/difficulty is cleared before importing the GP track
 	EOF_PHRASE_SECTION *ptr, *ptr2;
 
-	if(eof_song && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_song && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 	{	//Only continue if a pro guitar/bass track is active
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
@@ -5631,7 +5631,7 @@ int eof_gp_import_common(const char *fn)
 {
 	unsigned long ctr, ctr2;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Return failure
 	if(!fn)
 		return 1;	//If no file name is specified, return failure
@@ -5750,7 +5750,7 @@ int eof_menu_file_gp_import(void)
 	}
 	else
 	{
-		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			return 1;	//Don't do anything unless the active track is a pro guitar/bass track
 	}
 
@@ -6106,7 +6106,7 @@ int eof_menu_file_rs_import(void)
 	}
 	else
 	{
-		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			return 1;	//Don't do anything unless the active track is a pro guitar/bass track
 
 		eof_clear_input();
@@ -6933,7 +6933,7 @@ int eof_menu_file_export_immerrock_track_diff(void)
 	eof_log("eof_menu_file_export_immerrock_track_diff() entered", 1);
 	eof_log("\tExporting active track difficulty", 1);
 
-	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 0;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;

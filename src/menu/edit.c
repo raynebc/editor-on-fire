@@ -447,7 +447,7 @@ void eof_prepare_edit_menu(void)
 		/* selection>select>Notes needing fingering */
 		/* selection>select>Status select */
 		/* selection>select>Status deselect */
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			eof_edit_selection_select_menu[19].flags = 0;
 		}
@@ -1084,7 +1084,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		EOF_PRO_GUITAR_TRACK *tp = NULL;
 		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the notes have been stored
 
-		if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, j))
 		{	//If the track being stored is a pro guitar track
 			tp = eof_song->pro_guitar_track[eof_song->track[j]->tracknum];
 			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, j);
@@ -1301,7 +1301,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		EOF_PRO_GUITAR_TRACK *tp = NULL;
 		char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the notes have been stored
 
-		if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, j))
 		{	//If the track being written is a pro guitar track
 			tp = eof_song->pro_guitar_track[eof_song->track[j]->tracknum];
 			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, j);
@@ -1347,7 +1347,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 					eof_set_note_accent(eof_song, j, notenum, temp_note.accent);	//Set the last created note's accent bitmask
 					eof_set_note_ghost(eof_song, j, notenum, temp_note.ghost);		//Set the last created note's ghost bitmask
 
-					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					if(eof_track_is_pro_guitar_track(eof_song, j))
 					{	//If this is a pro guitar track
 						EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[eof_song->track[j]->tracknum]->note[notenum];	//Simplify
 
@@ -1408,7 +1408,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 				notenum = eof_get_track_size(eof_song, j) - 1;	//Get the index of the note that was just created
 				eof_set_note_flags(eof_song, j, notenum, temp_note.flags);	//Set the last created note's flags
 
-				if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(eof_track_is_pro_guitar_track(eof_song, j))
 				{	//If this is a pro guitar track
 					EOF_PRO_GUITAR_NOTE *np = eof_song->pro_guitar_track[eof_song->track[j]->tracknum]->note[notenum];	//Simplify
 
@@ -1681,7 +1681,7 @@ int eof_menu_edit_paste_logic(int function)
 		ret = 1;
 		goto cleanup;
 	}
-	if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((eof_track_is_pro_guitar_track(eof_song, sourcetrack)) && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 	{	//If the source and destination track are both pro guitar format, pre-check to ensure that the pasted notes won't go above the current track's fret limit
 		highestfret = eof_get_highest_clipboard_fret(clipboard_path);
 		if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)
@@ -1802,7 +1802,7 @@ int eof_menu_edit_paste_logic(int function)
 			}
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
-		if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (temp_note.legacymask != 0))
+		if((!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) && (temp_note.legacymask != 0))
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
 			temp_note.note = temp_note.legacymask;
 		}
@@ -1860,7 +1860,7 @@ int eof_menu_edit_paste_logic(int function)
 			eof_set_note_accent(eof_song, eof_selected_track, match, eof_get_note_accent(eof_song, eof_selected_track, match) | temp_note.accent);	//Merge the accent bitmask
 			eof_set_note_ghost(eof_song, eof_selected_track, match, eof_get_note_ghost(eof_song, eof_selected_track, match) | temp_note.ghost);		//Merge the ghost bitmask
 			//Erase ghost and legacy flags
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{
 				eof_song->pro_guitar_track[tracknum]->note[match]->legacymask = 0;	//Clear the legacy bit mask
 				eof_song->pro_guitar_track[tracknum]->note[match]->ghost = 0;	//Clear the ghost bit mask
@@ -1892,7 +1892,7 @@ int eof_menu_edit_paste_logic(int function)
 		}
 
 		/* process pro guitar data */
-		if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			continue;	//If the track being pasted into isn't a pro guitar track, skip the remainder of the logic below
 
 		np = eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1];	//Simplify
@@ -1907,7 +1907,7 @@ int eof_menu_edit_paste_logic(int function)
 			temp_note.eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_STOP;		//Clear these tech note only statuses
 			temp_note.eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
 		}
-		if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, sourcetrack))
 		{	//If a non pro guitar note is being pasted into a pro guitar track
 			unsigned char legacymask = temp_note.note & 31;	//Determine the appropriate legacy mask to apply (drop lane 6)
 			if(!legacymask)
@@ -1917,7 +1917,7 @@ int eof_menu_edit_paste_logic(int function)
 			np->legacymask = legacymask;
 		}
 
-		if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, sourcetrack))
 			continue;	//If the source track isn't a pro guitar track, skip the logic below
 
 		//Otherwise paste arpeggio/handshape phrasing
@@ -1990,7 +1990,7 @@ int eof_menu_edit_paste_logic(int function)
 	}//For each note in the clipboard file
 	if(source_id == eof_log_id)
 	{	//If the copy/paste is being performed within the same EOF instance
-		if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if((eof_track_is_pro_guitar_track(eof_song, sourcetrack)) && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If copying from a pro guitar track and pasting into a pro guitar track
 			if(lastarpeggnum != 0xFFFFFFFF)
 			{	//If an arpeggio phrase was in progress when the last of the notes were pasted, add the phrase now
@@ -3170,7 +3170,7 @@ int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsi
 	{	//If a drum track is active
 		(void) eof_get_drum_note_masks(sp, track, notenum, &note, &cymbal);	//Get a bitmask each to define which cymbal gems and non-cymbal gems the note contains
 	}
-	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	else if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If the specified track is a pro guitar track
 		EOF_PRO_GUITAR_NOTE *np = sp->pro_guitar_track[sp->track[track]->tracknum]->note[notenum];
 
@@ -3294,7 +3294,7 @@ int eof_menu_edit_conditional_selection_logic(int function)
 		eof_menu_edit_conditional_selection_dialog[13].flags = eof_menu_edit_conditional_selection_dialog[14].flags =
 		eof_menu_edit_conditional_selection_dialog[15].flags = eof_menu_edit_conditional_selection_dialog[16].flags = D_HIDDEN;	//Hide the cymbal checkboxes
 	}
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If a pro guitar track is active
 		eof_menu_edit_conditional_selection_dialog[17].flags = 0;
 		eof_menu_edit_conditional_selection_dialog[18].flags = last_selected_pg_normal;
@@ -3311,7 +3311,7 @@ int eof_menu_edit_conditional_selection_logic(int function)
 	if(eof_popup_dialog(eof_menu_edit_conditional_selection_dialog, 0) != 21)
 		return 1;	//If the user did not click OK, return immediately
 
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{
 		last_selected_pg_normal = eof_menu_edit_conditional_selection_dialog[18].flags;
 		last_selected_pg_mute = eof_menu_edit_conditional_selection_dialog[19].flags;
@@ -3836,7 +3836,7 @@ int eof_menu_edit_pgstatus_selection_logic(int function)
 		return 0;	//Return error
 	if(!function && (eof_selection.track != eof_selected_track))
 		return 1;	//No notes in the active track are selected so none can become deselected
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this dialog to run when a pro guitar format track is not active
 
 	if(!function)
@@ -3977,7 +3977,7 @@ int eof_menu_edit_pgstatus_selection_logic(int function)
 
 int eof_menu_edit_deselect_status(void)
 {
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return eof_menu_edit_pgstatus_selection_logic(0);
 
 	return D_O_K;
@@ -3985,7 +3985,7 @@ int eof_menu_edit_deselect_status(void)
 
 int eof_menu_edit_select_status(void)
 {
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return eof_menu_edit_pgstatus_selection_logic(1);
 
 	return D_O_K;
@@ -4032,7 +4032,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	if(!undo_made || (eof_note_type == source_difficulty))
 		return 1;	//Invalid parameters
 
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If a pro guitar track is active
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		tp = eof_song->pro_guitar_track[tracknum];
@@ -4069,7 +4069,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 		}
 	}
 
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If this is a pro guitar track
 		//Copy tech notes from the source difficulty
 		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 1);	//Enable tech view
@@ -4205,7 +4205,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 	if((flags == NULL) || (desttrack >= eof_song->tracks) || (sourcetrack >= eof_song->tracks))
 		return;
 
-	if((eof_song->track[sourcetrack]->track_format == EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((eof_track_is_pro_guitar_track(eof_song, sourcetrack)) && (eof_track_is_pro_guitar_track(eof_song, desttrack)))
 	{	//If the note is copying from a legacy track to a pro guitar track
 		if(*flags & EOF_NOTE_FLAG_F_HOPO)
 		{	//If the forced HOPO flag is set
@@ -4213,9 +4213,9 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 			*flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the pro guitar hammer on flag
 		}
 	}
-	if(eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, sourcetrack))
 	{	//If the note is copying from a pro guitar track
-		if(eof_song->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, desttrack))
 		{	//If it is pasting into a non pro guitar track, erase all pro guitar flags as they are invalid
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;			//Erase the pro guitar accent flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;		//Erase the pro guitar pinch harmonic flag
@@ -4373,7 +4373,7 @@ void eof_menu_edit_paste_clear_range(unsigned long track, int note_type, unsigne
 	}
 
 	//Perform the same logic, but for tech notes
-	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, track))
 	{	//If the specified track is a pro guitar track
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
 
@@ -4462,7 +4462,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	(void) pack_putc(eof_get_note_sp_deploy(sp, track, note), fp);	//Write the SP deploy flags
 
 	/* Write pro guitar specific data to disk */
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If this is a pro guitar note
 		unsigned long arpeggnum = 0xFFFFFFFF;
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];

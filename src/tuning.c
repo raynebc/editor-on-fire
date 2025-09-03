@@ -144,7 +144,7 @@ char *eof_lookup_tuning_name(EOF_SONG *sp, unsigned long track, char *tuning)
 	char matchfailed;
 	char is_bass = 0;	//Is set to nonzero if the specified track is to be considered a bass guitar track
 
-	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !tuning)
+	if((sp == NULL) || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)) || !tuning)
 		return eof_tuning_unknown;	//Invalid parameters
 	tracknum = sp->track[track]->tracknum;
 	if(sp->pro_guitar_track[tracknum]->numstrings > EOF_TUNING_LENGTH)
@@ -712,7 +712,7 @@ int eof_rs_check_chord_name(EOF_SONG *sp, unsigned long track, unsigned long not
 		return 0;	//Invalid parameters
 	if(!eof_write_rs_files && !eof_write_rs2_files)
 		return 0;	//Rocksmith export is not enabled
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 		return 0;	//Only run for pro guitar tracks
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	if(note >= tp->notes)

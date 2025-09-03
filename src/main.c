@@ -1265,7 +1265,7 @@ void eof_fix_window_title(void)
 	{
 		eof_cat_track_difficulty_string(eof_window_title);	//Append the track difficulty's title to the window title
 
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If this is a pro guitar track being displayed
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 			if(tp->note == tp->technote)
@@ -1678,7 +1678,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			}
 
 			/* check arpeggios */
-			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(sp, track))
 			{	//If this is a pro guitar track
 				for(j = 0; j < sp->pro_guitar_track[tracknum]->arpeggios; j++)
 				{	//For each arpeggio section in the active track
@@ -1757,7 +1757,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 	}
 
 	/* delete arpeggios with no notes */
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If this is a pro guitar track
 		for(j = sp->pro_guitar_track[tracknum]->arpeggios; j > 0; j--)
 		{	//For each arpeggio section in the active track (in reverse order)
@@ -2587,7 +2587,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F7)
 		{	//Launch Rocksmith import
 			clear_keybuf();
-			if(!eof_song || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			if(!eof_song || (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 			{	//If a chart is loaded, only allow this import to run when a pro guitar track is active
 				(void) eof_menu_file_rs_import();
 			}
@@ -2598,7 +2598,7 @@ void eof_read_global_keys(void)
 		else if(eof_key_code == KEY_F8)
 		{
 			clear_keybuf();
-			if(eof_song  && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_song  && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 			{	//If a pro guitar track is active
 				(void) eof_menu_song_rocksmith_fingering_view();
 			}
@@ -3075,7 +3075,7 @@ void eof_render_fret_catalog_window(void)
 		{
 			textprintf_ex(eof_window_info->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		}
-		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		if((eof_track_is_pro_guitar_track(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].flags)) && (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
 			(void) snprintf(temp, sizeof(temp) - 1, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->name);
 			textout_ex(eof_window_info->screen, font, temp, 2, 53, eof_color_white, -1);
@@ -3501,7 +3501,7 @@ void eof_render_3d_window(void)
 		eof_render_lyric_window();
 		return;
 	}
-	else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If the track being rendered is a pro guitar track
 		tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 		if(tp->note == tp->technote)
@@ -3605,7 +3605,7 @@ void eof_render_3d_window(void)
 
 	/* render arpeggio sections */
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
@@ -3835,7 +3835,7 @@ void eof_render_3d_window(void)
 
 	eof_render_lyric_preview(eof_window_3d->screen);
 
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If a pro guitar/bass track is active
 		unsigned long popupmessage;
 		if(eof_find_effective_rs_popup_message(eof_music_pos.value - eof_av_delay, &popupmessage))
@@ -5618,7 +5618,7 @@ void eof_set_2D_lane_positions(unsigned long track)
 	{	//If track is 0, force a rebuild of the current track
 		track = eof_selected_track;
 	}
-	if(eof_inverted_notes || (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(eof_inverted_notes || (eof_track_is_pro_guitar_track(eof_song, track)))
 	{	//If the user selected the inverted notes option OR a pro guitar track is active (force inverted notes display)
 		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
 		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
@@ -6367,7 +6367,7 @@ void eof_set_color_set(void)
 			eof_colors[4] = eof_color_green_struct;
 			eof_colors[5] = eof_color_purple_struct;
 		}
-		else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar/bass track is active
 			if(eof_color_set == EOF_COLORS_RB)
 			{	//If the user is using the Rock Band color set

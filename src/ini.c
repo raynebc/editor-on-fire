@@ -273,7 +273,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 	/* check for use of pro guitar slides and write a tag if necessary */
 	for(i = 1; i < sp->tracks; i++)
 	{	//For each track in the chart (skipping track 0)
-		if(sp->track[i]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(sp, i))
 			continue;	//If this isn't a pro guitar/bass track
 
 		tracknum = sp->track[i]->tracknum;

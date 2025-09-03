@@ -479,7 +479,7 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[17].flags = D_DISABLED;
 		}
 
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar/bass track is active
 			eof_beat_menu[22].flags = 0;	//Beat>Rocksmith>
 			eof_beat_events_menu[3].text = eof_beat_events_menu_place_section_text_pg;	//Show this menu function without the SHIFT+E shortcut, since it's used for placing Rocksmith Events if a pro guitar track is active
@@ -2271,7 +2271,7 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 		}
 		if(eof_events_add_dialog[3].flags & D_SELECTED)
 		{	//User opted to make this a track specific event
-			if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (newflags & EOF_EVENT_FLAG_RS_PHRASE))
+			if((!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) && (newflags & EOF_EVENT_FLAG_RS_PHRASE))
 			{	//If the user is tried to add a track specific RS phrase marker in a non pro guitar/bass track
 				allegro_message("You cannot add a track-specific Rocksmith phrase marker in a non pro guitar/bass track");
 				return;
@@ -3343,7 +3343,7 @@ int eof_menu_beat_paste_events(void)
 			{	//If the event is track specific, it will be applied to the active track
 				if((flags & EOF_EVENT_FLAG_RS_PHRASE) || (flags & EOF_EVENT_FLAG_RS_SECTION) || (flags & EOF_EVENT_FLAG_RS_EVENT))
 				{	//If the event is Rocksmith-specific
-					if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && !rs_warn)
+					if((!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) && !rs_warn)
 					{	//If the destination track is not a pro guitar track, and the user hasn't been warned of this yet
 						allegro_message("Warning:  You cannot paste a track-specific Rocksmith event into a non pro guitar/bass track.");
 						rs_warn = 1;

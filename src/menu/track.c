@@ -190,7 +190,7 @@ void eof_prepare_track_menu(void)
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 		/* enable pro guitar and rocksmith submenus */
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			eof_track_menu[0].flags = 0;			//Track>Pro Guitar> submenu
 			eof_track_menu[1].flags = 0;			//Track>Rocksmith> submenu
@@ -818,7 +818,7 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 	int tuning, halfsteps;
 	char error;
 
-	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !tuningarray)
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) || !tuningarray)
 		return;	//Invalid parameters
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 
@@ -984,7 +984,7 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 		return D_USED_CHAR;	//Drop the character
 
 	retval = d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
-	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return retval;	//Return without redrawing string tunings if there is an error
 
 	eof_redraw_tuning_dialog();
@@ -997,7 +997,7 @@ char * eof_tunings_list(int index, int * size)
 	EOF_PRO_GUITAR_TRACK *tp;
 	int bass_active_track = 0;	//Tracks whether the active track is determined to be a bass arrangement
 
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 	{
 		if(index < 0)
 			*size = 0;	//Indicate no list entries
@@ -1086,7 +1086,7 @@ DIALOG eof_tuning_preset_dialog[] =
 
 int eof_tuning_preset(void)
 {
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 	{	//Don't run this dialog unless a pro guitar track is active
 		return 1;	//Return cancellation
 	}
@@ -1179,7 +1179,7 @@ int eof_track_tuning(void)
 	int retval, cancelled = 0;
 	long value;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
@@ -1492,7 +1492,7 @@ int eof_track_pro_guitar_toggle_ignore_tuning(void)
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
 		return 1;	//Invalid parameters
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -1534,7 +1534,7 @@ int eof_track_set_num_frets_strings(void)
 	char undo_made = 0, cancel = 0;
 	int retval;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
 
 	//Update dialog fields
@@ -1652,7 +1652,7 @@ int eof_track_pro_guitar_set_capo_position(void)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	eof_render();
@@ -1729,7 +1729,7 @@ int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long times
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 	if(eof_write_rs_files || eof_write_rb_files)
 		limit = 19;	//Rocksmith 1 and Rock Band only support fret hand positions as high as fret 19
@@ -1843,7 +1843,7 @@ int eof_fret_hand_position_delete(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 	if(eof_fret_hand_position_list_dialog[1].d1 < 0)
 		return D_O_K;
@@ -1903,7 +1903,7 @@ int eof_fret_hand_position_delete_all(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -1939,7 +1939,7 @@ int eof_track_delete_effective_fret_hand_position(void)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
@@ -1959,7 +1959,7 @@ int eof_track_delete_fret_hand_position_at_pos(unsigned long track, unsigned cha
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
@@ -1981,7 +1981,7 @@ int eof_fret_hand_position_seek(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 	if(eof_fret_hand_position_list_dialog[1].d1 < 0)
 		return D_O_K;
@@ -2050,7 +2050,7 @@ char * eof_fret_hand_position_list(int index, int * size)
 	unsigned long i, tracknum, ecount = 0;
 	int ism, iss, isms;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return NULL;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2128,7 +2128,7 @@ int eof_track_fret_hand_positions(void)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	eof_cursor_visible = 0;
@@ -2252,7 +2252,7 @@ char * eof_track_rs_popup_messages_list(int index, int * size)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return NULL;	//Incorrect track active
 
 	switch(index)
@@ -2278,7 +2278,7 @@ void eof_rebuild_rs_popup_messages_list_strings(void)
 	unsigned long tracknum, ctr;
 	size_t stringlen;
 
-	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song_loaded || !eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2310,7 +2310,7 @@ int eof_find_effective_rs_popup_message(unsigned long pos, unsigned long *popupn
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum, ctr;
 
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !popupnum)
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) || !popupnum)
 		return 0;	//Return false if a pro guitar track isn't active or parameters are invalid
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2333,7 +2333,7 @@ int eof_track_rs_popup_messages(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum, ctr, popupmessage = 0;
 
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2400,7 +2400,7 @@ int eof_track_rs_popup_messages_delete(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
 	if(eof_rs_popup_messages_dialog[1].d1 < 0)
 		return D_O_K;
@@ -2456,7 +2456,7 @@ int eof_track_rs_popup_messages_edit(DIALOG * d)
 		return D_O_K;
 	}
 
-	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song_loaded || !eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return D_O_K;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
 
 	eof_color_dialog(eof_song_rs_popup_add_dialog, gui_fg_color, gui_bg_color);
@@ -2533,7 +2533,7 @@ int eof_track_rs_popup_messages_delete_all(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2566,7 +2566,7 @@ int eof_track_rs_popup_messages_seek(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2678,7 +2678,7 @@ int eof_track_rocksmith_arrangement_set(unsigned char num)
 {
 	unsigned long tracknum;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	if(num > 4)
@@ -2726,7 +2726,7 @@ int eof_track_rocksmith_toggle_difficulty_limit(void)
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
 		return 1;	//Invalid parameters
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Determine which difficulties are populated for the active track
@@ -2775,7 +2775,7 @@ int eof_track_rocksmith_insert_difficulty(void)
 	char undo_made = 0;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the note difficulties are updated
 
-	if(!eof_song || eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	if(eof_song->track[eof_selected_track]->numdiffs == 255)
@@ -2958,7 +2958,7 @@ int eof_rocksmith_dynamic_difficulty_list(void)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	if(!eof_track_has_dynamic_difficulty(eof_song, eof_selected_track))
@@ -3023,7 +3023,7 @@ char * eof_track_fret_hand_positions_copy_from_list(int index, int * size)
 	unsigned long tracknum;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return NULL;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -3067,7 +3067,7 @@ int eof_track_fret_hand_positions_copy_from(void)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -3262,7 +3262,7 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 int eof_track_manage_rs_phrases(void)
 {
 	unsigned long ctr;
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
 
 	//Allocate and build the strings for the phrases
@@ -3294,7 +3294,7 @@ int eof_track_manage_rs_phrases_seek(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 	if(eof_track_manage_rs_phrases_dialog[1].d1 < 0)
 		return D_O_K;
@@ -3345,7 +3345,7 @@ int eof_track_manage_rs_phrases_add_or_remove_level(int function)
 	char started = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 	if(eof_track_manage_rs_phrases_dialog[1].d1 < 0)
 		return D_O_K;
@@ -3785,7 +3785,7 @@ int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 	unsigned long tracknum, ctr;
 	char defaulttone = 0;
 
-	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song_loaded || !eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -3924,7 +3924,7 @@ void eof_track_rebuild_rs_tone_changes_list_strings(void)
 	size_t stringlen;
 	char *suffix, blank[] = "", def[] = " (D)", defaultfound = 0;
 
-	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song_loaded || !eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -3968,7 +3968,7 @@ int eof_track_find_effective_rs_tone_change(unsigned long pos, unsigned long *ch
 	unsigned long tracknum, ctr;
 	int found = 0;
 
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !changenum)
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) || !changenum)
 		return 0;	//Return false if a pro guitar track isn't active or parameters are invalid
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -3992,7 +3992,7 @@ int eof_track_rs_tone_changes(void)
 	unsigned long tracknum, ctr, tonechange = 0;
 	int retval;
 
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -4065,7 +4065,7 @@ int eof_track_rs_tone_changes_delete(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
 	if(eof_track_rs_tone_changes_dialog[1].d1 < 0)
 		return D_O_K;
@@ -4120,7 +4120,7 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 		return D_O_K;
 	}
 
-	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song_loaded || !eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return D_O_K;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
 	if(eof_track_rs_tone_changes_dialog[1].d1 < 0)
 		return D_O_K;
@@ -4179,7 +4179,7 @@ int eof_track_rs_tone_changes_delete_all(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -4225,7 +4225,7 @@ int eof_track_rs_tone_changes_seek(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 	if(eof_track_rs_tone_changes_dialog[1].d1 < 0)
 		return D_O_K;
@@ -4313,7 +4313,7 @@ void eof_track_rebuild_rs_tone_names_list_strings(unsigned long track, char allo
 	char unique, *suffix, blank[] = "", def[] = " (D)", defaultfound = 0;
 	int junk;
 
-	if(!eof_song_loaded || !eof_song || !track || (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song_loaded || !eof_song || !track || (!eof_track_is_pro_guitar_track(eof_song, track)))
 		return;	//Do not allow this function to run if a chart is not loaded or a pro guitar/bass track is not active
 
 	tracknum = eof_song->track[track]->tracknum;
@@ -4395,7 +4395,7 @@ int eof_track_rs_tone_names(void)
 	unsigned long tracknum;
 	int retval;
 
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -4433,7 +4433,7 @@ int eof_track_rs_tone_names_default(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -4482,7 +4482,7 @@ int eof_track_rs_tone_names_rename(DIALOG * d)
 	{	//Satisfy Splint by checking value of d
 		return D_O_K;
 	}
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -4563,7 +4563,7 @@ int eof_menu_track_copy_tone_changes_track_number(EOF_SONG *sp, unsigned long so
 
 	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
 		return 0;	//Invalid parameters
-	if((sp->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (sp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((!eof_track_is_pro_guitar_track(sp, sourcetrack)) || (!eof_track_is_pro_guitar_track(sp, desttrack)))
 		return 0;	//Invalid parameters
 
 	stp = sp->pro_guitar_track[sp->track[sourcetrack]->tracknum];
@@ -4618,7 +4618,7 @@ int eof_menu_track_copy_popups_track_number(EOF_SONG *sp, unsigned long sourcetr
 
 	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
 		return 0;	//Invalid parameters
-	if((sp->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (sp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((!eof_track_is_pro_guitar_track(sp, sourcetrack)) || (!eof_track_is_pro_guitar_track(sp, desttrack)))
 		return 0;	//Invalid parameters
 
 	stp = sp->pro_guitar_track[sp->track[sourcetrack]->tracknum];
@@ -4674,7 +4674,7 @@ int eof_menu_track_copy_fret_hand_track_number(EOF_SONG *sp, unsigned long sourc
 
 	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
 		return 0;	//Invalid parameters
-	if((sp->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (sp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((!eof_track_is_pro_guitar_track(sp, sourcetrack)) || (!eof_track_is_pro_guitar_track(sp, desttrack)))
 		return 0;	//Invalid parameters
 
 	stp = sp->pro_guitar_track[sp->track[sourcetrack]->tracknum];
@@ -4951,7 +4951,7 @@ int eof_track_fret_hand_positions_generate_all(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the populated difficulties are determined
 
-	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 1;	//Error
 
 	eof_fret_hand_position_list_dialog_undo_made = 0;	//Reset this condition
@@ -5001,7 +5001,7 @@ int eof_menu_track_toggle_tech_view(void)
 	if(!eof_song_loaded)
 		return 1;	//Return error
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
@@ -5079,7 +5079,7 @@ char eof_menu_track_get_tech_view_state(EOF_SONG *sp, unsigned long track)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return 0;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -5095,7 +5095,7 @@ void eof_menu_track_set_tech_view_state(EOF_SONG *sp, unsigned long track, char 
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -5113,7 +5113,7 @@ void eof_menu_track_toggle_tech_view_state(EOF_SONG *sp, unsigned long track)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -5278,7 +5278,7 @@ int eof_menu_track_repair_grid_snap(void)
 		{	//If one or more notes were lost (ie. merged) since the changes
 			allegro_message("Warning:  %lu notes were lost (ie. merged with other notes) during the repair.  Please undo if this is unwanted.", oldnotecount - newnotecount);
 		}
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			if(eof_technote_auto_adjust)
 			{	//If the "Auto-adjust tech notes" preference is enabled
@@ -5313,7 +5313,7 @@ int eof_menu_track_clone_track_to_clipboard(void)
 	if(!eof_song)
 		return 1;	//No chart open
 
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{
 		notesetcount = 2;
 		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
@@ -5341,7 +5341,7 @@ int eof_menu_track_clone_track_to_clipboard(void)
 	(void) pack_putc(eof_song->track[eof_selected_track]->numdiffs, fp);	//Write the difficulty count
 	(void) pack_iputl(eof_song->track[eof_selected_track]->flags, fp);		//Write the track flags
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//Write pro guitar track specific data
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 		(void) pack_putc(tp->numstrings, fp);			//Write the string count
@@ -5961,7 +5961,7 @@ int eof_menu_track_rs_bonus_arrangement(void)
 {
 	if(!eof_song)
 		return 1;
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Only allow this function to run for pro guitar/bass tracks
 
 	if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR))
@@ -5978,7 +5978,7 @@ int eof_menu_track_rs_alternate_arrangement(void)
 {
 	if(!eof_song)
 		return 1;
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Only allow this function to run for pro guitar/bass tracks
 
 	if(!(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_ALT_ARR))
@@ -5995,7 +5995,7 @@ int eof_menu_track_rs_normal_arrangement(void)
 {
 	if(!eof_song)
 		return 1;
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Only allow this function to run for pro guitar/bass tracks
 
 	if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR) || (eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_RS_ALT_ARR))
@@ -6012,7 +6012,7 @@ int eof_menu_track_rs_picked_bass_arrangement(void)
 {
 	if(!eof_song)
 		return 1;
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Only allow this function to run for pro guitar/bass tracks
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -6155,7 +6155,7 @@ int eof_track_delete_effective_hand_mode_change(void)
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];

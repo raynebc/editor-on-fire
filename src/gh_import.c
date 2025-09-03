@@ -3292,7 +3292,7 @@ int eof_ghl_import_common(const char *fn)
 
 	if(!eof_song)
 		return 1;	//Return failure
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{
 		allegro_message("Cannot import a GHL file into a pro guitar track.");
 		eof_log("Cannot import a GHL file into a pro guitar track.  Aborting", 1);

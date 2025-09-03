@@ -3227,7 +3227,7 @@ void eof_set_note_ch_sp_deploy_status(EOF_SONG *sp, unsigned long track, unsigne
 	if(sp->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)
 		return;	//For now, only legacy notes track SP deployment because it's the only track format Clone Hero supports
 
-	tracknum = sp->track[eof_selected_track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 	sp_deploy = sp->legacy_track[tracknum]->note[note]->sp_deploy;
 	if(function < 0)
 	{	//If Clone Hero SP deploy status is being toggled for the specified note
@@ -3258,7 +3258,7 @@ void eof_set_note_ch_sp_deploy_status(EOF_SONG *sp, unsigned long track, unsigne
 	}
 
 	sp->legacy_track[tracknum]->note[note]->sp_deploy = sp_deploy;	//Update the deploy status for the specified note
-	eflags = eof_get_note_eflags(sp, eof_selected_track, note);
+	eflags = eof_get_note_eflags(sp, track, note);
 	if(sp_deploy)
 	{	//If the note has SP deploy status
 		eflags |= EOF_NOTE_EFLAG_SP_DEPLOY;	//Ensure the extended status flag for this is set
@@ -3267,7 +3267,7 @@ void eof_set_note_ch_sp_deploy_status(EOF_SONG *sp, unsigned long track, unsigne
 	{	//The note has no SP deploy status
 		eflags &= ~EOF_NOTE_EFLAG_SP_DEPLOY;	//Ensure the extended status flag for this is cleared
 	}
-	eof_set_note_eflags(sp, eof_selected_track, note, eflags);
+	eof_set_note_eflags(sp, track, note, eflags);
 }
 
 void eof_destroy_sp_solution(EOF_SP_PATH_SOLUTION *ptr)

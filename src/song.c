@@ -1309,7 +1309,7 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 		}
 	}
 
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 		return numdiffs;	//If this isn't a pro guitar track, skip the logic below pertaining to tech notes
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -2389,7 +2389,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							return 0;
 						}
 						custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
-						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						if(eof_track_is_pro_guitar_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a pro guitar track
 							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
@@ -2422,7 +2422,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						if(eof_track_is_pro_guitar_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a pro guitar track
 							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 							tp->arrangement = pack_getc(fp);	//Read the track arrangement type
@@ -2443,7 +2443,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						if(eof_track_is_pro_guitar_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a pro guitar track
 							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 							tp->ignore_tuning = pack_getc(fp);	//Read the option of whether the chord detection does not honor the track's defined tuning
@@ -2462,7 +2462,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						if(eof_track_is_pro_guitar_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a pro guitar track
 							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 							tp->capo = pack_getc(fp);	//Read the capo position
@@ -2478,7 +2478,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						if(eof_track_is_pro_guitar_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a pro guitar track
 							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 							tp->technotes = pack_igetl(fp);	//Read the number of tech notes
@@ -2530,7 +2530,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+						if(eof_track_is_pro_guitar_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a pro guitar track
 							tp = sp->pro_guitar_track[sp->pro_guitar_tracks-1];	//Redundant assignment of tp to resolve a false positive with Coverity
 							tp->parent->numdiffs = pack_getc(fp);	//Read the difficulty count
@@ -2720,7 +2720,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			break;
 		}
 	}//Vocal track format
-	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	else if(eof_track_is_pro_guitar_track(sp, track))
 	{	//Pro guitar track format
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
 
@@ -2902,7 +2902,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 
 		case EOF_ARPEGGIO_SECTION:	//Arpeggio section
 		case EOF_HANDSHAPE_SECTION:	//Handshape section (an arpeggio section with an additional status flag)
-			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(sp, track))
 			{
 				count = sp->pro_guitar_track[tracknum]->arpeggios;
 				if(count >= EOF_MAX_PHRASES)
@@ -2965,7 +2965,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			}
 		break;
 		case EOF_FRET_HAND_POS_SECTION:	//Fret hand position
-			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(sp, track))
 			{
 				count = sp->pro_guitar_track[tracknum]->handpositions;
 				if(count < EOF_MAX_NOTES)
@@ -2991,7 +2991,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			}
 		return 0;	//Return error
 		case EOF_RS_POPUP_MESSAGE:	//Popup message
-			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(sp, track))
 			{
 				count = sp->pro_guitar_track[tracknum]->popupmessages;
 				if(count >= EOF_MAX_PHRASES)
@@ -3015,7 +3015,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			}
 		break;
 		case EOF_RS_TONE_CHANGE:	//Tone change
-			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(sp, track))
 			{
 				count = sp->pro_guitar_track[tracknum]->tonechanges;
 				if(count >= EOF_MAX_PHRASES)
@@ -3044,7 +3044,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		break;
 
 		case EOF_HAND_MODE_CHANGE:	//Popup message
-			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			if(eof_track_is_pro_guitar_track(sp, track))
 			{
 				count = sp->pro_guitar_track[tracknum]->handmodechanges;
 				if(count >= EOF_MAX_PHRASES)
@@ -4033,7 +4033,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 		//Write custom track data blocks
 		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = has_sp_deploy = has_ghost = 0;
-		if(track_ctr && tp && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(track_ctr && tp && (eof_track_is_pro_guitar_track(sp, track_ctr)))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
 			for(ctr = 0; ctr < tp->notes; ctr++)
@@ -4099,7 +4099,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		if(track_custom_block_count)
 		{	//If writing data in a custom data block
 			(void) pack_iputl(track_custom_block_count, fp);		//Write the number of custom data blocks
-			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			if(track_ctr && (eof_track_is_pro_guitar_track(sp, track_ctr)))
 			{	//If this is a pro guitar track
 				if(has_fingerdefinitions)
 				{	//Write finger definitions
@@ -4258,7 +4258,7 @@ EOF_SONG * eof_create_song_populated(void)
 				eof_destroy_song(sp);	//Destroy the song and return on error
 				return NULL;
 			}
-			if(sp->tracks && (sp->track[sp->tracks - 1]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			if(sp->tracks && (eof_track_is_pro_guitar_track(sp, sp->tracks - 1)))
 			{	//If this is a pro guitar track
 				if(eof_write_rs_files || eof_write_rs2_files || eof_write_immerrock_files)
 					sp->track[sp->tracks - 1]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//If Rocksmith or IMMERROCK exports are enabled, make this track use dynamic difficulty by default
@@ -4285,7 +4285,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 			return sp->legacy_track[sp->track[track]->tracknum]->numlanes;
 		}
 	}
-	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	else if(eof_track_is_pro_guitar_track(sp, track))
 	{
 		if(eof_legacy_view)
 		{	//If the legacy view is in effect, force pro guitar tracks to render as 5 lane tracks
@@ -4319,7 +4319,7 @@ int eof_lane_six_enabled(unsigned long track)
 	if(!eof_song || !track || (track >= eof_song->tracks))
 		return 0;
 
-	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, track))
 	{	//If this is a pro guitar track
 		return (eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->numstrings == 6);
 	}
@@ -4409,7 +4409,7 @@ unsigned long eof_get_track_size_all(EOF_SONG *sp, unsigned long track)
 		return 0;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If this is a pro guitar track
 		return sp->pro_guitar_track[tracknum]->pgnotes + sp->pro_guitar_track[tracknum]->technotes;	//Return the sum of both note sets
 	}
@@ -4425,7 +4425,7 @@ unsigned long eof_get_track_size_normal(EOF_SONG *sp, unsigned long track)
 		return 0;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If this is a pro guitar track
 		return sp->pro_guitar_track[tracknum]->pgnotes;	//Return the normal note set count only
 	}
@@ -4441,7 +4441,7 @@ unsigned long eof_get_track_diff_size_normal(EOF_SONG *sp, unsigned long track, 
 		return 0;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If this is a pro guitar track
 		for(ctr = 0, count = 0; ctr < sp->pro_guitar_track[tracknum]->pgnotes; ctr++)
 		{	//For each normal note in the specified track
@@ -4477,7 +4477,7 @@ int eof_track_has_dynamic_difficulty(EOF_SONG *sp, unsigned long track)
 	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
 		return 0;	//Invalid parameters
 
-	if((sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
+	if((eof_track_is_pro_guitar_track(sp, track)) && (sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
 		return 1;	//If the specified track is a pro guitar track with difficulty limit removed, it is considered to have dynamic difficulty
 
 	return 0;	//Not dynamic difficulty
@@ -4652,7 +4652,7 @@ void eof_track_delete_overlapping_tech_notes(EOF_SONG *sp, unsigned long track, 
 	if(!sp || (track >= sp->tracks))
 		return;	//Invalid parameters
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{
 		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned long normalnote = 0;	//The normal note that a tech note is found to apply to
@@ -4684,7 +4684,7 @@ void eof_song_empty_track(EOF_SONG * sp, unsigned long track)
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If the track being destroyed is a pro guitar track, erase the technote array first
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 
@@ -6109,7 +6109,7 @@ void eof_pro_guitar_track_fixup_hand_positions(EOF_SONG *sp, unsigned long track
 	unsigned ctr, ctr2;
 	EOF_PRO_GUITAR_TRACK * tp;
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->beats)
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)) || !sp->beats)
 	{
 		return;	//Invalid parameters
 	}
@@ -6155,7 +6155,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	EOF_PHRASE_SECTION *pp, *ppp;
 	EOF_PRO_GUITAR_NOTE *np;
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->beats)
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)) || !sp->beats)
 	{
 		return;	//Invalid parameters
 	}
@@ -7797,7 +7797,7 @@ void eof_set_pro_guitar_fret_or_finger_number(char function, unsigned long value
 
  	eof_log("eof_set_pro_guitar_fret_or_finger_number() entered", 1);
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return;	//Do not allow this function to run unless a pro guitar/bass track is active
 	if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		return;	//Don't allow this function to run if tech view is in effect, since tech notes completely disregard their fret values
@@ -7950,7 +7950,7 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	}
 
 	//If copying from a non vocal track
-	if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((eof_track_is_pro_guitar_track(ssp, sourcetrack)) && (!eof_track_is_pro_guitar_track(dsp, desttrack)))
 	{	//If copying from a pro guitar track to a non pro guitar track
 		if(ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask != 0)
 		{	//If the user defined how this pro guitar note would transcribe to a legacy track
@@ -7967,7 +7967,7 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	eof_set_note_eflags(dsp, desttrack, newnotenum, eflags);	//Copy the source note's extended flags to the newly created note
 	eof_set_note_accent(dsp, desttrack, newnotenum, accent);	//Copy the source note's accent bitmask to the newly created note
 	eof_set_note_ghost(dsp, desttrack, newnotenum, ghost);		//Copy the source note's ghost bitmask to the newly created note
-	if((ssp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (dsp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((eof_track_is_pro_guitar_track(ssp, sourcetrack)) && (eof_track_is_pro_guitar_track(dsp, desttrack)))
 	{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
 		memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
 		memcpy(dsp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, ssp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);		//Copy the six usable finger values from the source note to the newly created note
@@ -7993,7 +7993,7 @@ unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{
 		return sp->pro_guitar_track[tracknum]->arpeggios;
 	}
@@ -8009,7 +8009,7 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{
 		if(index < EOF_MAX_PHRASES)
 		{
@@ -8028,7 +8028,7 @@ unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{
 		return sp->pro_guitar_track[tracknum]->popupmessages;
 	}
@@ -8044,7 +8044,7 @@ unsigned long eof_get_num_tone_changes(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{
 		return sp->pro_guitar_track[tracknum]->tonechanges;
 	}
@@ -8060,7 +8060,7 @@ unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{
 		return sp->pro_guitar_track[tracknum]->handpositions;
 	}
@@ -8254,7 +8254,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If a pro guitar track is being altered
 		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 		if(tp->note == tp->technote)
@@ -8399,7 +8399,7 @@ void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long numb
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{
 		sp->pro_guitar_track[tracknum]->arpeggios = number;
 	}
@@ -8416,7 +8416,7 @@ void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long 
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{
 		if(index < sp->pro_guitar_track[tracknum]->arpeggios)
 		{
@@ -8641,7 +8641,7 @@ int eof_get_pro_guitar_fret_shortcuts_string(char *shortcut_string)
 	if(!shortcut_string)
 		return 0;	//Invalid parameter
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{
 		(void) snprintf(shortcut_string, 55, "Fret value shortcuts not applicable in this track");
 	}
@@ -8803,13 +8803,26 @@ int eof_track_is_beatable_mode(EOF_SONG *sp, unsigned long track)
 {
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;
-	if(sp->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+	if(sp->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)
 		return 0;
 	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		return 0;
 
 	if(sp->track[track]->flags & EOF_TRACK_FLAG_BEATABLE)
 	{	//If this is a  non drum legacy track with the BEATABLE flag enabled
+		return 1;
+	}
+
+	return 0;
+}
+
+int eof_track_is_pro_guitar_track(EOF_SONG *sp, unsigned long track)
+{
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
 		return 1;
 	}
 
@@ -8823,7 +8836,7 @@ int eof_pro_guitar_track_diff_has_fingering(EOF_SONG *sp, unsigned long track, u
 
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 		return 0;
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
@@ -9007,7 +9020,7 @@ unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track)
 
 	if(!sp || !track || (track >= sp->tracks))
 		return 0;	//Invalid parameters
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 		return 0;	//Only run this on a pro guitar/bass track
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
@@ -9060,7 +9073,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	{	//If there are 0 notes on the clipboard
 		return 0;
 	}
-	if(eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, sourcetrack))
 	{	//If the clipboard notes are from a pro guitar/bass track
 		for(i = 0; i < copy_notes; i++)
 		{	//For each note in the clipboard file
@@ -9162,7 +9175,7 @@ unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsig
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 	if(note >= sp->pro_guitar_track[tracknum]->notes)
@@ -9197,7 +9210,7 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((sp == NULL) || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 	if(note >= sp->pro_guitar_track[tracknum]->notes)
@@ -9218,7 +9231,7 @@ unsigned long eof_determine_chart_length(EOF_SONG *sp)
 	//Check notes
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track in the project
-		if(sp->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(sp, ctr))
 		{	//If this is a pro guitar track
 			tp = sp->pro_guitar_track[sp->track[ctr]->tracknum];
 			for(ctr2 = 0; ctr2 < tp->pgnotes; ctr2++)
@@ -9380,7 +9393,7 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 
 	thisflags = eof_get_note_flags(sp, track, note);	//Get the note's flags so it can be checked for "crazy" status
 	thisnote = eof_get_note_note(sp, track, note);		//Also get its note bitflag
-	if((sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (thisflags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
+	if((eof_track_is_pro_guitar_track(sp, track)) && (thisflags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
 	{	//If this is a pro guitar note and it has linknext status
 		effective_min_note_distance = 0;	//The note is allowed to extend all the way up to the next note
 	}
@@ -9466,7 +9479,7 @@ void eof_enforce_lyric_gap_multiplier(EOF_SONG *sp, unsigned long track, unsigne
 
 	if(notenum == ULONG_MAX)
 	{	//If all selected notes are to be processed
-		if(eof_selection.track != eof_selected_track)	//If any note selection is outside of the active track
+		if(eof_selection.track != track)	//If any note selection is outside of the specified track
 			return;	//This function has nothing to manipulate
 
 		ctr = 0;	//Otherwise start with the first note
@@ -9622,7 +9635,7 @@ void eof_flatten_difficulties(EOF_SONG *sp, unsigned long srctrack, unsigned cha
 	(void) eof_detect_difficulties(sp, desttrack);
 
 	//Flatten fret hand positions
-	if(sp->track[srctrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, srctrack))
 	{	//If this is a pro guitar/bass track
 		EOF_PRO_GUITAR_TRACK *tp, *dtp;
 		EOF_PHRASE_SECTION *ptr;
@@ -9727,7 +9740,7 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 	if(!sp || !undo_made || !track || (track >= sp->tracks) || (startpos >= endpos))
 		return;	//Invalid parameters
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If the track being altered is a pro guitar track
 		tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 		notearrayctr = 2;	//A second note array (the tech notes) will need to be processed
@@ -9749,11 +9762,11 @@ void eof_track_add_or_remove_track_difficulty_content_range(EOF_SONG *sp, unsign
 			unsigned char notetype = eof_get_note_type(sp, track, ctr - 1);
 
 			//Prompt to fix notes that are aligned slightly outside of a phrase
-			if((prompt != 3) && (notepos < startpos) && (notepos + 10 >= startpos))
-			{	//If this note is 1 to 10 milliseconds before the beginning of the affected time range
+			if((prompt != 3) && (notepos < startpos) && (notepos + 10 >= startpos) && (sp == eof_song))
+			{	//If this note is 1 to 10 milliseconds before the beginning of the affected time range, and the function is being run against the active project
 				if(!prompt)
 				{	//If the user wasn't prompted about how to handle this condition yet, seek to the note in question and prompt the user whether to take action
-					eof_seek_and_render_position(eof_selected_track, eof_note_type, notepos);
+					eof_seek_and_render_position(track, notetype, notepos);
 					eof_clear_input();
 					if(alert("At least one note is between 1 and 10 ms before the phrase.", NULL, "Move such notes to the start of the phrase?", "&Yes", "&No", 'y', 'n') == 1)
 					{	//If the user opts to correct the note positions
@@ -10007,7 +10020,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 	}
 
 	//Delete tech notes, popup messages, hand positions, tones, hand mode changes
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If a pro guitar track was specified
 		//Delete tech notes
 		tp = sp->pro_guitar_track[tracknum];
@@ -10097,7 +10110,7 @@ void eof_hightlight_all_notes_above_fret_number(EOF_SONG *sp, unsigned long trac
 
 	if(!sp || !track || (track >= sp->tracks))
 		return;	//Invalid parameters
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 		return;	//Only run this on a pro guitar/bass track
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
@@ -10126,7 +10139,7 @@ void eof_track_remove_highlighting(EOF_SONG *sp, unsigned long track, char funct
 	if(!sp || !track || (track >= sp->tracks))
 		return;	//Invalid parameters
 
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If this is a pro guitar track
 		loopcount = 2;	//The main loop will run a second time to process the inactive note set
 	}
@@ -10493,7 +10506,7 @@ void eof_pro_guitar_track_enforce_chord_density(EOF_SONG *sp, unsigned long trac
 
 	if(!sp || !track || (track >= sp->tracks))
 		return;	//Invalid parameters
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 		return;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -10502,7 +10515,7 @@ void eof_pro_guitar_track_enforce_chord_density(EOF_SONG *sp, unsigned long trac
 
 	for(ctr = 0; ctr < tp->notes - 1; ctr++)
 	{	//For each note in the track from the first to the penultimate
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (tp->note[ctr]->type == eof_note_type))
+		if((eof_selection.track == track) && eof_selection.multi[ctr] && (tp->note[ctr]->type == eof_note_type))
 			continue;	//Skip this note if it is selected, as the user may wish to edit it before this function alters the next note
 
 		effective_note_distance = eof_get_effective_minimum_note_distance(sp, track, ctr);
@@ -10792,7 +10805,7 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 		csp->track[ctr]->numdiffs = sp->track[ctr]->numdiffs;
 		csp->track[ctr]->flags = sp->track[ctr]->flags;
 
-		if(sp->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(sp, ctr))
 		{	//If this is a pro guitar track
 			EOF_PRO_GUITAR_TRACK *tp, *ctp;
 
@@ -10909,7 +10922,7 @@ int eof_note_is_tom(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {
 	if(sp && (track < sp->tracks))
 	{	//If the input is valid
-		if(sp->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If a drum track is active
 			unsigned long note = eof_get_note_note(sp, track, notenum);
 			unsigned long flags = eof_get_note_flags(sp, track, notenum);
@@ -10929,7 +10942,7 @@ int eof_note_is_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {
 	if(sp && (track < sp->tracks))
 	{	//If the input is valid
-		if(sp->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If a drum track is active
 			unsigned long note = eof_get_note_note(sp, track, notenum);
 			unsigned long flags = eof_get_note_flags(sp, track, notenum);
@@ -10997,14 +11010,14 @@ int eof_note_is_open_note(EOF_SONG *sp, unsigned long track, unsigned long noten
 	if(!sp || (track >= sp->tracks))
 		return 0;	//Invalid parameters
 
-	if(sp->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(sp, track))
 	{	//If a pro guitar track is active
-		if(eof_pro_guitar_note_highest_fret(sp->pro_guitar_track[sp->track[eof_selected_track]->tracknum], notenum) == 0)
+		if(eof_pro_guitar_note_highest_fret(sp->pro_guitar_track[sp->track[track]->tracknum], notenum) == 0)
 		{	//If no gems in this note had a fret value defined (open note)
 			return 1;
 		}
 	}
-	else if(eof_legacy_guitar_note_is_open(sp, eof_selected_track, notenum))
+	else if(eof_legacy_guitar_note_is_open(sp, track, notenum))
 	{	//If this is an open note in a legacy track
 		return 1;
 	}
@@ -11026,7 +11039,7 @@ int eof_note_needs_fingering_definition(EOF_SONG *sp, unsigned long track, unsig
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return 0;	//This check is only applicable to pro guitar notes
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -11066,7 +11079,7 @@ int eof_note_has_accent(EOF_SONG *sp, unsigned long track, unsigned long notenum
 {
 	if(sp && track && (track < sp->tracks))
 	{	//Validate parameters
-		if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(sp, track))
 		{	//Pro guitar tracks use a status for accent
 			if(eof_get_note_flags(sp, track, notenum) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT)
 				return 1;	//This note has the pro guitar accent status
@@ -11094,7 +11107,7 @@ int eof_note_is_linked_to_by_pitched_slide(EOF_SONG *sp, unsigned long track, un
 {
 	if(sp && track && (track < sp->tracks))
 	{	//Validate parameters
-		if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(sp, track))
 		{	//If a pro guitar track is active
 			long prev = eof_track_fixup_previous_note(sp, track, notenum);
 			if(prev >= 0)
@@ -11308,7 +11321,7 @@ unsigned long eof_auto_adjust_tech_notes(EOF_SONG *sp, unsigned long track, unsi
 
 	if(!eof_technote_auto_adjust)
 		return 0;	//User has not enabled this feature
-	if(!sp || (track >= sp->tracks) || !sp->beats || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || (track >= sp->tracks) || !sp->beats || (!eof_track_is_pro_guitar_track(sp, track)))
 		return 0;	//Invalid parameters
 	if(eof_selection.track != track)
 		return 0;	//No notes in the specified track are selected
@@ -11636,7 +11649,7 @@ unsigned long eof_get_bend_strength_at_pos(EOF_SONG *sp, unsigned long track, un
 	EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};		//Used to process bend points
 	unsigned long effective_bendstrength = 0;	//The current defined bend strength in quarter steps
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 7))
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)) || (stringnum > 7))
 		return 0;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -11770,7 +11783,7 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 	unsigned long ctr, ctr2;
 	unsigned char fhp;
 
-	if(!sp || !track || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || (stringnum > 7) || !result)
+	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)) || (stringnum > 7) || !result)
 		return 0;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
@@ -11984,7 +11997,7 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 	{
 		return D_O_K;
 	}
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If the current track is pro guitar format, warn if pasted notes go above the current track's fret limit
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)

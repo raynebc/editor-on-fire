@@ -161,7 +161,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	eof_log("eof_export_immerrock_midi() entered", 1);
 
 	eof_ir_export_midi_wrote_finger_placements = 0;	//Reset this status
-	if(!sp || !fn || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+	if(!sp || !fn || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
@@ -817,7 +817,7 @@ int eof_detect_immerrock_arrangements(unsigned long *lead, unsigned long *rhythm
 	//Select the tracks to export
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
 	{	//For each track
-		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, ctr))
 		{	//If it is a pro guitar track
 			if(eof_get_track_size_normal(eof_song, ctr))
 			{	//If the track has any normal notes
@@ -886,7 +886,7 @@ unsigned long eof_count_immerrock_chords_missing_fingering(unsigned long *total)
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char diff = eof_note_type;	//By default, only check notes in the active track difficulty
 
-	if(!eof_song || eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 		return 0;		//Only run when a pro guitar track is active
 
 	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
@@ -999,7 +999,7 @@ int eof_pro_guitar_track_set_hand_mode_change_at_timestamp(unsigned long timesta
 
 	if(!eof_song_loaded || !eof_song)
 		return D_O_K;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;	//Do not allow this function to run when a pro guitar format track is not active
 
 	//Find the pointer to the hand mode change at the current seek position, if there is one
@@ -1094,11 +1094,11 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 		return 0;	//Invalid parameters
 	if((gglead >= sp->tracks) || (ggrhythm >= sp->tracks) || (ggbass >= sp->tracks))
 		return 0;	//Invalid tracks
-	if(gglead && sp->track[gglead]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(gglead && (!eof_track_is_pro_guitar_track(sp, gglead)))
 		return 0;	//Not a valid lead track
-	if(ggrhythm && sp->track[ggrhythm]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(ggrhythm && (!eof_track_is_pro_guitar_track(sp, ggrhythm)))
 		return 0;	//Not a valid lead track
-	if(ggbass && sp->track[ggbass]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(ggbass && (!eof_track_is_pro_guitar_track(sp, ggbass)))
 		return 0;	//Not a valid lead track
 
 	eof_log("eof_export_immerrock_track_diff() entered", 2);
@@ -1557,7 +1557,7 @@ void eof_export_immerrock(char silent)
 	//Select the tracks to export
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
 	{	//For each track
-		if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, ctr))
 		{	//If it is a pro guitar track
 			if(eof_get_track_size_normal(eof_song, ctr))
 			{	//If the track has any normal notes

@@ -77,7 +77,7 @@ unsigned long eof_note_count_rs_lanes(EOF_SONG *sp, unsigned long track, unsigne
 		return 0;	//Invalid parameters
 
 	notenote = eof_get_note_note(sp, track, note);
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 	{	//If the specified track is not a pro guitar track
 		return eof_note_count_colors_bitmask(notenote);
 	}
@@ -160,7 +160,7 @@ int eof_adjust_notes(unsigned long track, int offset)
 			eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
 		}
 		//Offset the tech notes
-		if(eof_song->track[i]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, i))
 		{	//If this is a pro guitar track
 			eof_menu_track_set_tech_view_state(eof_song, i, 1);	//Enable tech view if applicable
 			for(j = 0; j < eof_get_track_size(eof_song, i); j++)
@@ -276,7 +276,7 @@ int eof_adjust_notes(unsigned long track, int offset)
 			phraseptr->end_pos += offset;
 		}
 
-		if(eof_song->track[i]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(!eof_track_is_pro_guitar_track(eof_song, i))
 			continue;	//If this isn't a pro guitar track, skip the logic below to adjust pro guitar specific items
 
 		tracknum = eof_song->track[i]->tracknum;
@@ -386,6 +386,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	unsigned char ghost = 0;
 	long length;
 	int half_string_space = eof_screen_layout.string_space / 2;
+	unsigned long effective_track = track;	//The track that is being rendered, taking into account whether the pen note is specified for rendering
 
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 
@@ -402,7 +403,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			return 1;	//Invalid note number, signal to stop rendering
 
 		tracknum = eof_song->track[track]->tracknum;
-		if((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		if((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (!eof_track_is_pro_guitar_track(eof_song, track)))
 			return 1;	//Invalid track format, signal to stop rendering
 		notepos = eof_get_note_pos(eof_song, track, notenum);
 		notelength = eof_get_note_length(eof_song, track, notenum);
@@ -411,7 +412,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		notetype = eof_get_note_type(eof_song, track, notenum);
 		ghost = eof_get_note_ghost(eof_song, track, notenum);
 
-		if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
+		if((eof_track_is_pro_guitar_track(eof_song, track)) && ((!eof_track_is_pro_guitar_track(eof_song, track)) || eof_legacy_view))
 		{	//If the catalog entry is a pro guitar note and the active track is not, or the user specified to display pro guitar notes as legacy notes
 			if(eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask != 0)
 			{	//If the user defined how this pro guitar note would transcribe to a legacy track
@@ -429,6 +430,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	}
 	else
 	{	//Render the pen note
+		effective_track = eof_selected_track;
 		notepos = eof_pen_note.pos;
 		notelength = eof_pen_note.length;
 		noteflags = eof_pen_note.flags;
@@ -480,7 +482,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	if(track != 0)
 	{	//If rendering an existing note
 		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
-		numlanes2 = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
+		numlanes2 = eof_count_track_lanes(eof_song, effective_track);	//Count the number of lanes in the specified note's track
 		if(numlanes > numlanes2)
 		{	//Special case (ie. viewing an open bass guitar catalog entry when any other legacy track is active)
 			numlanes = numlanes2;	//Use the number of lanes in the active track
@@ -519,7 +521,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	//Render tab notation
 	if(track != 0)
 	{	//If rendering an existing note instead of the pen note
-		if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_track_is_pro_guitar_track(eof_song, effective_track))
 		{	//If a pro guitar track is being rendered
 			tp = eof_song->pro_guitar_track[eof_song->track[track]->tracknum];
 			if(tp->note == tp->technote)
@@ -650,7 +652,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 						}
 					}
 				}
-				else if(!track && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+				else if(!track && (eof_track_is_pro_guitar_track(eof_song, effective_track)) && (eof_color_set == EOF_COLORS_BF))
 				{	//If the pen note is being drawn, the active track is a pro guitar track and the Bandfuse color set is in use
 					ncol = eof_color_silver;		//Force the pen note to draw in silver (undefined fingering)
 					noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
@@ -676,7 +678,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				}
 			}
 
-			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			if(eof_song->track[effective_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//Drum track specific dot color logic
 				if((notetype == EOF_NOTE_AMAZING) && (noteflags & EOF_DRUM_NOTE_FLAG_DBASS) && (mask == 1))
 				{	//If this is an Expert+ bass drum note
@@ -707,8 +709,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			}
 
 			//Render note tail
-			if((notetype == EOF_NOTE_SPECIAL) || !((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && eof_hide_drum_tails))
-			{	//If this is a BRE note or it is otherwise not a drum note that will have its tail hidden due to the "Hide drum note tails" user option,
+			if((notetype == EOF_NOTE_SPECIAL) || !((eof_song->track[effective_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && eof_hide_drum_tails))
+			{	//If this is a BRE note or it is otherwise not a drum note that will have its tail hidden due to the "Hide drum note tails" user option
 				rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, ncol);	//Draw the note tail
 				if(p)
 				{	//If this note is moused over
@@ -717,7 +719,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			}
 
 			//Render pro guitar note slide if applicable
-			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
+			if((track != 0) && (eof_track_is_pro_guitar_track(eof_song, effective_track)) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
 			{	//If rendering an existing pro guitar note that slides up or down or is an unpitched slide
 				long x2;			//Used for slide note rendering
 				unsigned long notepos2;		//Used for slide note rendering
@@ -793,7 +795,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				}
 
 				//Render snap status indicators for the pen note in BEATABLE tracks
-				if(!track && eof_track_is_beatable_mode(eof_song, eof_selected_track) && (mask == 16))
+				if(!track && eof_track_is_beatable_mode(eof_song, effective_track) && (mask == 16))
 				{	//If the pen note is being rendered while a BEATABLE track is active, and it is a snap note
 					if(eof_pen_note.flags & EOF_BEATABLE_NOTE_FLAG_LSNAP)
 					{
@@ -807,7 +809,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					}
 				}
 
-				if(!eof_legacy_view && (track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				if(!eof_legacy_view && (track > 0) && (notenote & mask) && (eof_track_is_pro_guitar_track(eof_song, effective_track)) && (eof_track_is_pro_guitar_track(eof_song, track)))
 				{	//If legacy view is disabled, this is a pro guitar note and a pro guitar track is active, perform pro guitar specific rendering
 					BITMAP *fretbmp;
 
@@ -1249,7 +1251,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	long bmpxpos1, bmpxpos2, bmpxpos, bmpypos, bmpzpos = 0;
 
 	//Validate parameters
-	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_get_track_size(eof_song, track)))
+	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (!eof_track_is_pro_guitar_track(eof_song, track))) || (notenum >= eof_get_track_size(eof_song, track)))
 	{	//If an invalid track or note number was passed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
@@ -1266,7 +1268,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{
 		offset_y_3d = eof_screen_height / 2;	//Y coordinates will be lowered by one panel height so that the bottom of the 3D fret board is at the bottom of the program window
 	}
-	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
+	if((eof_track_is_pro_guitar_track(eof_song, track)) && ((!eof_track_is_pro_guitar_track(eof_song, track)) || eof_legacy_view))
 	{	//If the catalog entry is a pro guitar note and the active track is not, or the user specified to display pro guitar notes as legacy notes
 		if(eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask != 0)
 		{	//If the user defined how this pro guitar note would transcribe to a legacy track
@@ -1333,7 +1335,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		else										//Otherwise render it in the standard lane one color for the current color set
 			linecol = p ? eof_colors[0].hit : eof_colors[0].color;
 	}
-	else if(eof_render_3d_rs_chords && (eof_note_count_rs_lanes(eof_song, track, notenum, 2) >= 2) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) &&
+	else if(eof_render_3d_rs_chords && (eof_note_count_rs_lanes(eof_song, track, notenum, 2) >= 2) && (eof_track_is_pro_guitar_track(eof_song, track)) &&
 			((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HD) || (eof_note_has_high_chord_density(eof_song, track, notenum, 2))))
 	{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar chord that either has high density due to being explicitly defined as such or automatically due to other means
 		long prevnote = eof_track_fixup_previous_note(eof_song, track, notenum);
@@ -1587,7 +1589,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
 
 			imagenum = 0;
-			if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+			if((eof_track_is_pro_guitar_track(eof_song, track)) && (eof_color_set == EOF_COLORS_BF))
 			{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
@@ -1694,7 +1696,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			}
 		}
 
-		if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(!eof_legacy_view && (notenote & mask) && (eof_track_is_pro_guitar_track(eof_song, track)))
 		{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
 			bmp1 = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Create a bitmap showing the gem's fret value
 			bmpxpos1 = xchart[lanenum] - 8;
@@ -1828,7 +1830,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned long notenote = 0;
 
 //Validate parameters
-	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_get_track_size(eof_song, track)))
+	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (!eof_track_is_pro_guitar_track(eof_song, track))) || (notenum >= eof_get_track_size(eof_song, track)))
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
@@ -1846,7 +1848,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{
 		offset_y_3d = eof_screen_height / 2;	//Y coordinates will be lowered by one panel height so that the bottom of the 3D fret board is at the bottom of the program window
 	}
-	if(eof_render_3d_rs_chords && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_note_count_colors(eof_song, track, notenum) > 1))
+	if(eof_render_3d_rs_chords && (eof_track_is_pro_guitar_track(eof_song, track)) && (eof_note_count_colors(eof_song, track, notenum) > 1))
 	{	//If the user has opted to 3D render Rocksmith style chords, and this is a pro guitar/bass chord
 		if(!eof_get_rs_techniques(eof_song, track, notenum, 0, NULL, 2, 1))
 		{	//If the chord does not contain any techniques that would require chordNotes to be written (to display with a sustain in RS2)
@@ -1855,7 +1857,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}
 
 	tracknum = eof_song->track[track]->tracknum;
-	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
+	if((eof_track_is_pro_guitar_track(eof_song, track)) && ((!eof_track_is_pro_guitar_track(eof_song, track)) || eof_legacy_view))
 	{	//If the catalog entry is a pro guitar note and the active track is not, or the user specified to display pro guitar notes as legacy notes
 		if(eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask != 0)
 		{	//If the user defined how this pro guitar note would transcribe to a legacy track
@@ -1917,7 +1919,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}
 
 		lanenum = ctr;	//By default, each gem gets its own lane number
-		if(!eof_track_is_ghl_mode(eof_song, track) && !eof_track_is_beatable_mode(eof_song, eof_selected_track) && (ctr == 5) && eof_track_is_legacy_guitar(eof_song, track))
+		if(!eof_track_is_ghl_mode(eof_song, track) && !eof_track_is_beatable_mode(eof_song, track) && (ctr == 5) && eof_track_is_legacy_guitar(eof_song, track))
 		{	//If this is NOT a GHL style track, not a BEATABLE track and if drawing the tail of a gem on lane 6 of a legacy guitar track
 			if(eof_open_strum_enabled(track))
 			{	//And open strum notes are enabled, render open strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
@@ -1938,7 +1940,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			{	//If the rendering of this note tail isn't being skipped (ie. conditions in BEATABLE tracks)
 				unsigned long color = ctr;	//By default, the color will be determined by the gem's lane number
 
-				if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_color_set == EOF_COLORS_BF))
+				if((eof_track_is_pro_guitar_track(eof_song, track)) && (eof_color_set == EOF_COLORS_BF))
 				{	//If a pro guitar track is active and the Bandfuse color set is in use, override the color based on the gem's fingering
 					unsigned fingering = eof_pro_guitar_note_lookup_string_fingering(eof_song->pro_guitar_track[tracknum], notenum, ctr, 6);	//Look up this gem's fingering (or return 6 if cannot be determined)
 
@@ -1979,7 +1981,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}
 
 		//Render pro guitar note slide if applicable
-		if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
+		if((track != 0) && (eof_track_is_pro_guitar_track(eof_song, track)) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)))
 		{	//If rendering an existing pro guitar track that slides up or down or is an unpitched slide
 			unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
 			int slidecolor = eof_color_dark_purple;	//By default, pro guitar slides are drawn in purple
@@ -2034,7 +2036,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 ///The BEATABLE slider logic needs to be re-checked after the 3D render is changed to 4 lane style like drums
 		//Render slider note slide if applicable
-		if(eof_track_is_beatable_mode(eof_song, eof_selected_track) && (noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_ANY) && (notelength > 1))
+		if(eof_track_is_beatable_mode(eof_song, track) && (noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_ANY) && (notelength > 1))
 		{	//If the note is in a BEATABLE track, has slide to notation and sustain
 			render_slider = 1;
 			if(noteflags & EOF_BEATABLE_FLAG_SLIDE_TO_L2)
@@ -2228,7 +2230,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	char buffer2[5] = {0};
 	int ret;
 
-	if(!track || (track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
+	if(!track || (track >= eof_song->tracks) || (buffer == NULL) || ((!eof_track_is_pro_guitar_track(eof_song, track)) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
 	{
 		return;	//If this is an invalid track number, the buffer is NULL or the specified track isn't a pro guitar or legacy track, return
 	}
@@ -2243,7 +2245,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	{	//If the note has SP deploy status
 		buffer[index++] = 'm';	//In the symbols font, m is the star character
 	}
-	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_track_is_pro_guitar_track(eof_song, track))
 	{	//Check pro guitar statuses
 		unsigned long tracknum = eof_song->track[track]->tracknum, index2;
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
@@ -2998,7 +3000,7 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		return 1;
 	}
 
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 		return 0;	//If this isn't a pro guitar/bass track, chord detection can't be used
 
 	tracknum = sp->track[track]->tracknum;
@@ -3036,7 +3038,7 @@ char eof_build_note_name_ignoring_ghosts(EOF_SONG *sp, unsigned long track, unsi
 		return 1;
 	}
 
-	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(!eof_track_is_pro_guitar_track(sp, track))
 		return 0;	//If this isn't a pro guitar/bass track, chord detection can't be used
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplifiy
