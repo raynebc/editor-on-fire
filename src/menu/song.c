@@ -566,9 +566,15 @@ void eof_prepare_song_menu(void)
 		}
 
 		eof_song_menu[7].flags = eof_song->tags->highlight_unsnapped_notes ? D_SELECTED : 0;	//Update "Song>Highlight non grid snapped notes" check status
-		eof_song_menu[8].flags = eof_show_ch_sp_durations ? D_SELECTED : 0;	//Update "Song>Show CH SP durations" check status
 		eof_song_menu[13].flags = eof_silence_loaded ? D_DISABLED : 0;	//Update "Song>Leading silence" enable status
 		eof_song_menu[14].flags = eof_song->tags->click_drag_disabled ? D_SELECTED : 0;	//Update "Song>Disable click and drag" check status
+
+		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If the active track is a legacy guitar or drum track
+			eof_song_menu[8].flags = eof_show_ch_sp_durations ? D_SELECTED : 0;	//Update "Song>Show CH SP durations" check status
+		}
+		else
+			eof_song_menu[8].flags = D_DISABLED | D_HIDDEN;
 
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)

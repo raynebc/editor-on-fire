@@ -1689,6 +1689,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						snprintf(eof_notes_macro_note_occurs_before_millis, sizeof(eof_notes_macro_note_occurs_before_millis) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[0]->type, time_string);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						retval = 3;	//True
+						break;	//Stop processing the rest of this track
 					}
 				}
 			}
@@ -1881,6 +1882,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							snprintf(eof_notes_macro_pitched_slide_missing_linknext, sizeof(eof_notes_macro_pitched_slide_missing_linknext) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
 							retval = 3;	//True
+							break;	//Stop processing the rest of this track
 						}
 					}
 				}
@@ -1902,7 +1904,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//For each track in the project
 			if(eof_song->track[ctr]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 				continue;	//Skip non pro guitar tracks
-			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
+			if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
 				continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
 
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
@@ -1926,6 +1928,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						snprintf(eof_notes_macro_note_starting_on_tone_change, sizeof(eof_notes_macro_note_starting_on_tone_change) - 1, "%s -diff %u: pos %s (%s)", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string, tp->tonechange[tonectr].name);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						retval = 3;	//True
+						break;	//Stop processing the rest of this track
 					}
 				}
 			}
@@ -2060,6 +2063,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					snprintf(eof_notes_macro_note_subceeding_fhp, sizeof(eof_notes_macro_note_subceeding_fhp) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, time_string);	//Write a string identifying the offending note
 					dest_buffer[0] = '\0';
 					retval = 3;	//True
+					break;	//Stop processing the rest of this track
 				}
 			}
 		}
@@ -2104,6 +2108,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							snprintf(eof_notes_macro_note_exceeding_fhp, sizeof(eof_notes_macro_note_exceeding_fhp) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
 							retval = 3;	//True
+							break;	//Stop processing the rest of this track
 						}
 					}
 				}
@@ -2156,6 +2161,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								snprintf(eof_notes_macro_pitched_slide_missing_end_fret, sizeof(eof_notes_macro_pitched_slide_missing_end_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
+								break;	//Stop processing the rest of this track
 							}
 						}
 					}
@@ -2213,6 +2219,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 									dest_buffer[0] = '\0';
 									retval = 3;	//True
+									break;	//Stop processing the rest of this track
 								}
 							}
 						}
@@ -2269,6 +2276,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
+								break;	//Stop processing the rest of this track
 							}
 						}
 					}
@@ -2410,6 +2418,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							snprintf(eof_notes_macro_fhp_exceeding_number, sizeof(eof_notes_macro_fhp_exceeding_number) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->handposition[ctr2].difficulty, time_string);	//Write a string identifying the offending FHP
 							dest_buffer[0] = '\0';
 							retval = 3;	//True
+							break;	//Stop processing the rest of this track
 						}
 					}
 				}
@@ -2450,6 +2459,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						snprintf(eof_notes_macro_note_exceeding_fret, sizeof(eof_notes_macro_note_exceeding_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						retval = 3;	//True
+						break;	//Stop processing the rest of this track
 					}
 				}
 			}
@@ -2490,6 +2500,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						snprintf(eof_notes_macro_note_exceeding_diff, sizeof(eof_notes_macro_note_exceeding_diff) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						retval = 3;	//True
+						break;	//Stop processing the rest of this track
 					}
 				}
 			}
@@ -2543,6 +2554,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 									snprintf(eof_notes_macro_slide_exceeding_fret, sizeof(eof_notes_macro_slide_exceeding_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 									dest_buffer[0] = '\0';
 									retval = 3;	//True
+									break;	//Stop processing the rest of this track
 								}
 							}
 						}
@@ -2729,6 +2741,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
+								break;	//Stop processing the rest of this track
 							}
 						}
 					}
