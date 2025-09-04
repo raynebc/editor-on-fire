@@ -3459,7 +3459,7 @@ int eof_save_helper_checks(void)
 				}
 				if(ret == 3)
 				{	//User wanted to hightlight lyrics outside of lyric lines
-					eof_set_note_flags(eof_song, EOF_TRACK_VOCALS, ctr, eof_get_note_flags(eof_song, EOF_TRACK_VOCALS, ctr) | EOF_NOTE_FLAG_HIGHLIGHT);	//Add highlighting
+					eof_or_note_flags(eof_song, EOF_TRACK_VOCALS, ctr, EOF_NOTE_FLAG_HIGHLIGHT);	//Add highlighting
 				}
 			}
 			if(ret == 3)

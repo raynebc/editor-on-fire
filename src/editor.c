@@ -2417,7 +2417,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 				{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
-					eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
+					eof_or_note_flags(eof_song, eof_selected_track, newnotenum, EOF_NOTE_FLAG_NO_HOPO);
 				}
 				if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
 				{	//If the track is a beatable track
@@ -2703,7 +2703,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 							if(is_open)
 							{	//If the user open strummed while GHL mode is open, set the EOF_GUITAR_NOTE_FLAG_GHL_OPEN flag
-								eof_set_note_flags(eof_song, eof_selected_track, notenum, eof_get_note_flags(eof_song, eof_selected_track, notenum) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN);
+								eof_or_note_flags(eof_song, eof_selected_track, notenum, EOF_GUITAR_NOTE_FLAG_GHL_OPEN);
 							}
 							eof_entering_note_note = new_note;
 							eof_entering_note = 1;
@@ -4040,7 +4040,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 								}
 								if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 								{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
-									eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
+									eof_or_note_flags(eof_song, eof_selected_track, newnotenum, EOF_NOTE_FLAG_NO_HOPO);
 								}
 								if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
 								{	//If the track is a beatable track
@@ -5076,7 +5076,7 @@ void eof_editor_logic(void)
 										}
 										if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 										{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
-											eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
+											eof_or_note_flags(eof_song, eof_selected_track, newnotenum, EOF_NOTE_FLAG_NO_HOPO);
 										}
 										if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
 										{	//If the track is a beatable track
@@ -5131,7 +5131,7 @@ void eof_editor_logic(void)
 							}
 							if(eof_new_note_forced_strum && eof_track_is_legacy_guitar(eof_song, eof_selected_track))
 							{	//If the user opted to make all new notes forced strum notes, and this is an applicable guitar track
-								eof_set_note_flags(eof_song, eof_selected_track, newnotenum, eof_get_note_flags(eof_song, eof_selected_track, newnotenum) | EOF_NOTE_FLAG_NO_HOPO);
+								eof_or_note_flags(eof_song, eof_selected_track, newnotenum, EOF_NOTE_FLAG_NO_HOPO);
 							}
 							if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
 							{	//If the track is a beatable track

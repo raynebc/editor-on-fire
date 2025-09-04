@@ -247,7 +247,7 @@ void eof_chart_import_process_note_markers(EOF_SONG *sp, unsigned long track, un
 			if((pos2 >= pos) && (eof_get_note_type(sp, track, ctr3) == type) && (ctr3 != ctr2 - 1))
 			{	//If this note is within the span of the slider notation, is in the same difficulty and isn't the slider marker gem itself
 				unsigned long mpos = eof_get_note_midi_pos(sp, track, ctr3);
-				eof_set_note_flags(sp, track, ctr3, (eof_get_note_flags(sp, track, ctr3) | EOF_GUITAR_NOTE_FLAG_IS_SLIDER));	//Set the slider flag for this note
+				eof_or_note_flags(sp, track, ctr3, EOF_GUITAR_NOTE_FLAG_IS_SLIDER);	//Set the slider flag for this note
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Diff = %d  Chartpos = %lu  Pos = %lums:  Enabling slider status", ctr3, type, mpos, pos2);
 				eof_log(eof_log_string, 2);
 			}
@@ -1231,7 +1231,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				eof_set_note_note(sp, ctr, ctr2, 32);
 				if(eof_track_is_ghl_mode(sp, ctr))
 				{	//If this is a GHL track, open notes also require a status flag
-					eof_set_note_flags(sp, ctr, ctr2, eof_get_note_flags(sp, ctr, ctr2) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN);	//Set that flag
+					eof_or_note_flags(sp, ctr, ctr2, EOF_GUITAR_NOTE_FLAG_GHL_OPEN);	//Set that flag
 				}
 			}
 		}
@@ -1246,7 +1246,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			{	//For each note in the track
 				if(!(eof_get_note_flags(sp, ctr, ctr2) & EOF_NOTE_FLAG_F_HOPO))
 				{	//If this note is not a forced HOPO note
-					eof_set_note_flags(sp, ctr, ctr2, (eof_get_note_flags(sp, ctr, ctr2) | EOF_NOTE_FLAG_NO_HOPO));	//Toggle the forced strum (non HOPO) flag for this note
+					eof_or_note_flags(sp, ctr, ctr2, EOF_NOTE_FLAG_NO_HOPO);	//Toggle the forced strum (non HOPO) flag for this note
 				}
 			}
 		}

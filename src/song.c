@@ -6850,7 +6850,7 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option)
 				if(!option || (pos1 != pos2))
 				{	//If the calling function doesn't care if different notes starting at the same timestamp are given crazy status,
 					//or if the notes don't start at the same timestamp
-					eof_set_note_flags(sp, track, i, eof_get_note_flags(sp, track, i) | EOF_NOTE_FLAG_CRAZY);
+					eof_or_note_flags(sp, track, i, EOF_NOTE_FLAG_CRAZY);
 				}
 			}
 		}

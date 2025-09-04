@@ -11308,7 +11308,7 @@ int eof_menu_note_convert_to_ghl_open(void)
 					undo_made = 1;
 				}
 				eof_set_note_note(eof_song, eof_selected_track, i, 32);	//Change to a lane 6 gem
-				eof_set_note_flags(eof_song, eof_selected_track, i, eof_get_note_flags(eof_song, eof_selected_track, i) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN);	//Set the GHL open note flag
+				eof_or_note_flags(eof_song, eof_selected_track, i, EOF_GUITAR_NOTE_FLAG_GHL_OPEN);	//Set the GHL open note flag
 			}
 		}
 	}
