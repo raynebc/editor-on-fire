@@ -1669,14 +1669,12 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 			eof_big_number_add_big_number(&solution_count, invalidcount);
 			if(solution_count.overflow_count + solution_count.value > 1)
 			{	//If this reporting is for the best detected solution instead of for a single user defined solution, highlight the solution's deployments
-				flags = eof_get_note_flags(eof_song, eof_selected_track, notenum);
 				if(undo_made && (*undo_made == 0))
 				{	//If the calling function passed undo tracking to this function, and an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					*undo_made = 1;
 				}
-				flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Enable highlighting for this note
-				eof_set_note_flags(eof_song, eof_selected_track, notenum, flags);
+				eof_or_note_flags(eof_song, eof_selected_track, notenum, EOF_NOTE_FLAG_HIGHLIGHT);
 				(void) snprintf(deployment_notes_string, sizeof(deployment_notes_string) - 1, "A maximum of %lu notes (%.2f%%) can be played during any SP deployment combination.", deployment_notes, (double)deployment_notes * 100.0 / solution->note_count);
 			}
 			else

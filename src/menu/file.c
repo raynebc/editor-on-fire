@@ -4078,8 +4078,7 @@ int eof_save_helper_checks(void)
 			}
 			if(note_skew_warned == 3)
 			{	//User opted to highlight all offending notes
-				unsigned long flags = eof_get_note_flags(eof_song, ctr, offender);
-				eof_set_note_flags(eof_song, ctr, offender, flags | EOF_NOTE_FLAG_HIGHLIGHT);
+				eof_or_note_flags(eof_song, ctr, offender, EOF_NOTE_FLAG_HIGHLIGHT);
 			}
 		}
 	}

@@ -3159,9 +3159,7 @@ int eof_menu_section_mark(unsigned long section_type)
 				{	//For each note in the active track
 					if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && ((eof_get_note_pos(eof_song, eof_selected_track, i) >= sel_start) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sel_end)))
 					{	//If the note is in the active track difficulty and is within the created/edited phrase
-						flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-						flags |= EOF_NOTE_FLAG_CRAZY;	//Set the note's crazy flag
-						eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+						eof_or_note_flags(eof_song, eof_selected_track, i, EOF_NOTE_FLAG_CRAZY);	//Set the note's crazy flag
 					}
 				}
 				eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run the fixup logic immediately in order to correct the arpeggio's base chord

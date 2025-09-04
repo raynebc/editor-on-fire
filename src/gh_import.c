@@ -6268,13 +6268,12 @@ int eof_gh_import_sustained_bass_drum_check(EOF_SONG *sp, unsigned long track, i
 		{	//For each drum note in that track
 			if((eof_get_note_length(sp, track, ctr) > 1) && (eof_get_note_note(sp, track, ctr) & 1))
 			{	//If this note has a bass drum gem and its length is greater than 1
-				unsigned long flags = eof_get_note_flags(sp, track, ctr);
 				if(!user_alerted && !suppress)
 				{	//If the user wasn't told about this yet, and the message isn't being suppressed
 					allegro_message("Notice:  At least one sustained bass drum note was imported.  It will be highlighted and may need to be manually altered in order to work as desired in Clone Hero/Strikeline.");
 					user_alerted = 1;
 				}
-				eof_set_note_flags(sp, track, ctr, flags | EOF_NOTE_FLAG_HIGHLIGHT);	//Highlight the note
+				eof_or_note_flags(sp, track, ctr, EOF_NOTE_FLAG_HIGHLIGHT);	//Highlight the note
 			}
 		}
 	}

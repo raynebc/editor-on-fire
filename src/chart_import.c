@@ -2703,15 +2703,13 @@ void sort_chart(struct FeedbackChart *chart)
 
 void eof_merge_flags_at_pos(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned long flags)
 {
-	unsigned long i, tempflags;
+	unsigned long i;
 
 	for(i = 0; i < eof_get_track_size(sp, track); i++)
 	{	//For each note in the track
 		if(eof_get_note_pos(sp, track, i) == pos)
 		{	//If this note is at the target position
-			tempflags = eof_get_note_flags(sp, track, i);
-			tempflags |= flags;
-			eof_set_note_flags(sp, track, i, tempflags);
+			eof_or_note_flags(sp, track, i, flags);
 		}
 	}
 }

@@ -4135,7 +4135,7 @@ int eof_song_check_unsnapped_chords(EOF_SONG *sp, unsigned long track, int funct
 					{	//If the next note was at a different delta position, but less than the specified threshold of ticks or ms away
 						if(!function)
 						{	//If the calling function wanted to have the notes highlighted
-							eof_set_note_flags(sp, ctr, ctr2, EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the first note
+							eof_or_note_flags(sp, ctr, ctr2, EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the first note
 							eof_or_note_flags(sp, ctr, next, EOF_NOTE_FLAG_HIGHLIGHT);	//Set the highlight flag on the second note
 						}
 						else

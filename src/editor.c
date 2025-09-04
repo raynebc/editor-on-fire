@@ -4615,11 +4615,8 @@ void eof_editor_logic(void)
 					}
 					else
 					{	//Otherwise convert the note to a GHL note
-						unsigned long flags;
-
 						eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, 32);	//Change to a lane 6 gem
-						flags = eof_get_note_flags(eof_song, eof_selected_track, eof_hover_note) | EOF_GUITAR_NOTE_FLAG_GHL_OPEN;
-						eof_set_note_flags(eof_song, eof_selected_track, eof_hover_note, flags);	//Set the GHL open note flag
+						eof_or_note_flags(eof_song, eof_selected_track, eof_hover_note, EOF_GUITAR_NOTE_FLAG_GHL_OPEN);	//Set the GHL open note flag
 					}
 					eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 				}

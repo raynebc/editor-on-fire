@@ -3216,7 +3216,6 @@ int eof_menu_note_toggle_double_bass(void)
 {
 	unsigned long i;
 	long u = 0;
-	unsigned long flags;
 	int note_selection_updated;
 
 	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
@@ -3232,9 +3231,7 @@ int eof_menu_note_toggle_double_bass(void)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				u = 1;
 			}
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			flags ^= EOF_DRUM_NOTE_FLAG_DBASS;
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			eof_xor_note_flags(eof_song, eof_selected_track, i, EOF_DRUM_NOTE_FLAG_DBASS);
 		}
 	}
 	if(note_selection_updated)
@@ -4218,9 +4215,7 @@ int eof_menu_note_toggle_flag(unsigned char function, unsigned char track_format
 		}
 		if(!function)
 		{	//Alter the note's normal flags
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			flags ^= bitmask;	//Toggle the specified bits
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			eof_xor_note_flags(eof_song, eof_selected_track, i, bitmask);
 		}
 		else
 		{	//Alter the note's extended flags
@@ -8939,7 +8934,7 @@ int eof_menu_note_remove_hi_hat_status(void)
 
 int eof_menu_note_toggle_rimshot(void)
 {
-	unsigned long i, flags, tracknum;
+	unsigned long i, tracknum;
 	long u = 0;
 	int note_selection_updated;
 
@@ -8966,9 +8961,7 @@ int eof_menu_note_toggle_rimshot(void)
 		}
 		else
 		{
-			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			flags ^= EOF_DRUM_NOTE_FLAG_R_RIMSHOT;	//Toggle the rim shot status
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
+			eof_xor_note_flags(eof_song, eof_selected_track, i, EOF_DRUM_NOTE_FLAG_R_RIMSHOT);	//Apply the flag changes
 		}
 	}
 	if(note_selection_updated)
