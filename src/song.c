@@ -4619,7 +4619,7 @@ void eof_track_delete_note_with_difficulties(EOF_SONG *sp, unsigned long track, 
 	//Delete the note in the active difficulty
 	if(sp == eof_song)
 	{	//If this function is being performed against the active project, also delete any FHP defined at this note's position
-		eof_track_delete_fret_hand_position_at_pos(track, eof_get_note_type(sp, track, ctr - 1), eof_get_note_pos(eof_song, track, ctr - 1));
+		eof_track_delete_fret_hand_position_at_pos(track, eof_get_note_type(sp, track, notenum), eof_get_note_pos(eof_song, track, notenum));
 	}
 	eof_track_delete_overlapping_tech_notes(sp, track, notenum);	//Delete any tech notes applying to this note
 	eof_track_delete_note(sp, track, notenum);
@@ -6200,6 +6200,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			}
 		}
 	}
+
 	for(i = tp->notes; i > 0; i--)
 	{	//For each note in the track, in reverse order
 		/* ensure notes within an arpeggio phrase (but not a handshape phrase) are marked as "crazy" */
@@ -6213,16 +6214,6 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					break;
 				}
 			}
-		}
-
-		/* fix selections */
-		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.current_pos))
-		{
-			eof_selection.current = i-1;
-		}
-		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.last_pos))
-		{
-			eof_selection.last = i-1;
 		}
 
 		for(ctr=0, bitmask=1; ctr < 8; ctr++, bitmask <<= 1)
@@ -6612,6 +6603,19 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	if(eof_enforce_chord_density)
 	{	//If the user opted to automatically apply crazy status for repeated chords that are separated from their preceding chords by a rest
 		eof_pro_guitar_track_enforce_chord_density(sp, track);
+	}
+
+	/* fix selections */
+	for(i = 0; i < tp->notes; i++)
+	{	//For each note in the active set
+		if((tp->note[i]->type == eof_note_type) && (tp->note[i]->pos == eof_selection.current_pos))
+		{
+			eof_selection.current = i;
+		}
+		if((tp->note[i]->type == eof_note_type) && (tp->note[i]->pos == eof_selection.last_pos))
+		{
+			eof_selection.last = i;
+		}
 	}
 
 	if(!sel)

@@ -2330,7 +2330,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										unsigned long notenote = eof_get_note_note(sp, picked_track, k - 1);
 
 										notenote |= 32;	//Toggle on lane 6 for this note
-										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) into enhanced open chord (Mask = %u)", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1) | 32);
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) into enhanced open chord (Mask = %u)", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1), (unsigned) eof_get_note_note(sp, picked_track, k - 1) | 32);
 										eof_log(eof_log_string, 3);
 										eof_set_note_note(sp, picked_track, k - 1, notenote);
 										enhanced_open_gems_found = 1;

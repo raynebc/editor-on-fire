@@ -45,6 +45,7 @@ char eof_notes_macro_lyric_extending_outside_line[50];
 char eof_notes_macro_technique_missing_sustain[50];
 char eof_notes_macro_lyric_with_non_ascii[50];
 char eof_notes_macro_lyric_outside_line[50];
+char eof_notes_macro_lyric_line_beginning_with_lowercase[50];
 char eof_notes_inactive_track_has_rs_warnings = 0;
 char eof_notes_inactive_track_has_rs_errors = 0;
 
@@ -424,7 +425,7 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 
 int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel)
 {
-	unsigned long tracknum, tracksize, ctr;
+	unsigned long tracknum, tracksize, ctr, ctr2;
 	EOF_PHRASE_SECTION *phraseptr;
 	char album_art_filename[1024];
 	char *count_string, *name_string, name_buffer[101];
@@ -1804,7 +1805,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the phrase name was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track in the project
-				unsigned long ctr2, match;
+				unsigned long match;
 
 				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//Skip non pro guitar tracks
@@ -2035,7 +2036,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned char lowestfret, fhp;
-		unsigned long ctr2;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_subceeding_fhp[0] = '\0';	//Erase this string
@@ -2076,7 +2076,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{	//If the macro is this string
 		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned char highestfret, fhp;
-		unsigned long ctr2, fretcount;
+		unsigned long fretcount;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_exceeding_fhp[0] = '\0';	//Erase this string
@@ -2390,7 +2390,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(count_string)
 	{	//If the macro is this string
 		EOF_PRO_GUITAR_TRACK *tp;
-		unsigned long target_fhp = 0, ctr2;
+		unsigned long target_fhp = 0;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_fhp_exceeding_number[0] = '\0';	//Erase this string
@@ -2738,7 +2738,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								}
 								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_technique_missing_sustain, sizeof(eof_notes_macro_technique_missing_sustain) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
-								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
 								break;	//Stop processing the rest of this track
@@ -2820,6 +2819,32 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 		eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, restore_tech_view);	//Re-enable tech view if applicable
 
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_ANY_LYRIC_LINES_BEGIN_WITH_LOWERCASE"))
+	{
+		eof_notes_macro_lyric_line_beginning_with_lowercase[0] = '\0';	//Erase this string
+		for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lines); ctr++)
+		{	//For each lyric line
+			EOF_PHRASE_SECTION *lineptr = &eof_song->vocal_track[0]->line[ctr];
+			for(ctr2 = 0; ctr2 < eof_song->vocal_track[0]->lyrics; ctr2++)
+			{	//For each lyric
+				EOF_LYRIC *lyricptr = eof_song->vocal_track[0]->lyric[ctr2];
+				if((lyricptr->pos >= lineptr->start_pos) && (lyricptr->pos <= lineptr->end_pos))
+				{	//If this is the first lyric found to be in the lyric line
+					if(islower(lyricptr->text[0]))
+					{	//If the first character in the lyric's text is a lowercase letter
+						char time_string[15] = {0};
+						eof_notes_panel_print_time(lyricptr->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						snprintf(eof_notes_macro_lyric_line_beginning_with_lowercase, sizeof(eof_notes_macro_lyric_line_beginning_with_lowercase) - 1, "pos %s : \"%s\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric
+						dest_buffer[0] = '\0';
+						return 3;	//True
+					}
+					break;	//Stop looking for lyrics in this line
+				}
+			}
+		}
 		return 2;	//False
 	}
 
@@ -5292,6 +5317,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "PRINT_TRACK_UNSNAPPED_NOTE_COUNT"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "This track has %lu non grid snapped note%s", eof_notes_macro_number_non_grid_snapped_notes, eof_notes_macro_number_non_grid_snapped_notes > 1 ? "s" : "");
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "FIRST_LYRIC_LINE_BEGINNING_WITH_LOWERCASE"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_line_beginning_with_lowercase);
 
 		return 1;
 	}
