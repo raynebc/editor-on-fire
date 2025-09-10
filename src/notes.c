@@ -46,6 +46,7 @@ char eof_notes_macro_technique_missing_sustain[50];
 char eof_notes_macro_lyric_with_non_ascii[50];
 char eof_notes_macro_lyric_outside_line[50];
 char eof_notes_macro_lyric_line_beginning_with_lowercase[50];
+char eof_notes_macro_lyric_line_exceeding_length[50];
 char eof_notes_inactive_track_has_rs_warnings = 0;
 char eof_notes_inactive_track_has_rs_errors = 0;
 
@@ -956,7 +957,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If this is a drum track
-			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			for(i = 0; i < tracksize; i++)
 			{	//For each note in the track
 				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 				{	//If the note is in the active difficulty
@@ -1113,7 +1114,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If this is a drum track
-			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			for(i = 0; i < tracksize; i++)
 			{	//For each note in the track
 				if((eof_get_note_type(eof_song, eof_selected_track, i) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
 				{	//If the note is in the expert difficulty and has a gem on lane 1 (bass drum)
@@ -2216,7 +2217,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 									}
 									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 									snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
-									eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 									dest_buffer[0] = '\0';
 									retval = 3;	//True
 									break;	//Stop processing the rest of this track
@@ -2273,7 +2273,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								}
 								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_open_note_bend, sizeof(eof_notes_macro_open_note_bend) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
-								eof_menu_track_set_tech_view_state(eof_song, ctr, restore_tech_view);	//Re-enable tech view if applicable
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
 								break;	//Stop processing the rest of this track
@@ -2808,7 +2807,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);	//Examine the normal note set only
 		diff = eof_get_note_type(eof_song, eof_selected_track, 0);	//The difficulty of the first note in the active track
-		for(ctr = 1; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+		for(ctr = 1; ctr < tracksize; ctr++)
 		{	//For each note in the active track
 			if(eof_get_note_type(eof_song, eof_selected_track, ctr) != diff)
 			{	//If this note has a different difficulty than the first note
@@ -2843,6 +2842,57 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					}
 					break;	//Stop looking for lyrics in this line
 				}
+			}
+		}
+		return 2;	//False
+	}
+
+	count_string = strcasestr_spec(macro, "IF_ANY_LYRIC_LINE_EXCEEDS_LENGTH_");	//Get a pointer to the text that would be the line length
+	if(count_string)
+	{	//If the macro is this string
+		unsigned long threshold_length, length;
+
+		eof_notes_macro_lyric_line_exceeding_length[0] = '\0';	//Erase this string
+		if(eof_read_macro_number(count_string, &threshold_length))
+		{	//If the length was successfully parsed
+			for(ctr = 0; eof_song && (ctr < eof_song->vocal_track[0]->lines); ctr++)
+			{	//For each lyric line
+				length = 0;
+				EOF_PHRASE_SECTION *lineptr = &eof_song->vocal_track[0]->line[ctr];
+				for(ctr2 = 0; ctr2 < eof_song->vocal_track[0]->lyrics; ctr2++)
+				{	//For each lyric
+					EOF_LYRIC *lyricptr = eof_song->vocal_track[0]->lyric[ctr2];
+					if((lyricptr->pos >= lineptr->start_pos) && (lyricptr->pos <= lineptr->end_pos))
+					{	//If this lyric is in the line
+						length += ustrlen(lyricptr->text);
+						if(!ustrchr(lyricptr->text, '-') && !ustrchr(lyricptr->text, '='))
+						{	//If this lyric contains neither a hyphen nor an equal sign
+							length++;	//The next lyric will automatically be separated from this one by a space
+						}
+						if(length > threshold_length)
+						{
+							char time_string[15] = {0};
+							eof_notes_panel_print_time(lyricptr->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+							snprintf(eof_notes_macro_lyric_line_exceeding_length, sizeof(eof_notes_macro_lyric_line_exceeding_length) - 1, "pos %s : \"%s\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric
+							dest_buffer[0] = '\0';
+							return 3;	//True
+						}
+					}
+				}
+			}
+		}
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_SELECTED_LYRIC_HAS_PITCH"))
+	{
+		if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && (eof_selection.current < tracksize))
+		{
+			unsigned long note = eof_get_note_note(eof_song, eof_selected_track, eof_selection.current);
+			if((note >= 36) && (note <= 84))
+			{	//If the lyric has a defined pitch
+				dest_buffer[0] = '\0';
+				return 3;	//True
 			}
 		}
 		return 2;	//False
@@ -3680,7 +3730,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 				char fret_string[30];
 
-				if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, fret_string))
+				if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, fret_string, 1))
 				{	//If the note's frets can be represented in string format
 					snprintf(dest_buffer, dest_buffer_size, "%s", fret_string);
 					return 1;
@@ -5324,6 +5374,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "FIRST_LYRIC_LINE_BEGINNING_WITH_LOWERCASE"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_line_beginning_with_lowercase);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "FIRST_LYRIC_LINE_EXCEEDING_LENGTH"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_line_exceeding_length);
 
 		return 1;
 	}

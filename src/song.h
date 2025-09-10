@@ -1015,9 +1015,10 @@ int eof_write_image_sequence(void);
 int eof_benchmark_image_sequence(void);
 	//Calls eof_create_image_sequence() with the option to benchmark only
 
-int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *fret_string);
+int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *fret_string, int option);
 	//Writes a string representation of the specified pro guitar/bass note from lowest to highest gauge string into fret_string[], which must be at least
 	//3 * # of strings number of bytes long in order to store the maximum length string
+	//If option is nonzero, fret hand muted notes are written as "(#)X" and the output string will need to allow for 5 * # of strings bytes in size
 	//Returns 0 on error or 1 on success
 int eof_get_pro_guitar_note_finger_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *finger_string);
 	//Writes a string representation of the specified pro guitar/bass note's fingering into finger_string[], which must be at least

@@ -3015,6 +3015,7 @@ void eof_render_info_window(void)
 	}
 
 	eof_info_panel->window = eof_window_info;
+	set_clip_rect(eof_window_info->screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_window_info->screen->h);	//Set the clipping boundary to not draw into the notes panel or 3D preview
 	eof_render_text_panel(eof_info_panel, opacity);
 }
 

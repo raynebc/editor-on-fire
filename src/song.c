@@ -8502,7 +8502,7 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 	return 0;	//Return no conflict
 }
 
-int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *fret_string)
+int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *fret_string, int option)
 {
 	unsigned long i, bitmask, index, fretvalue;
 
@@ -8522,6 +8522,15 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 			fretvalue = tp->note[note]->frets[i];
 			if(fretvalue & 0x80)
 			{	//If this string is muted (MSB set)
+				if(option && (fretvalue != 0xFF))
+				{	//If the calling function signalled to include the fret value and there is a fret number defined for this string
+					fretvalue &= 0x7F;		//Mask out the muting bit for the logic below
+					fret_string[index++] = '(';
+					if(fretvalue > 9)
+						fret_string[index++] = '0' + (fretvalue / 10);	//Write the tens digit
+					fret_string[index++] = '0' + (fretvalue % 10);	//Write the ones digit
+					fret_string[index++] = ')';
+				}
 				fret_string[index++] = 'X';	//Write a capital x to indicate muted string
 			}
 			else

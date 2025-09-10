@@ -5448,7 +5448,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					if(previously_refused)
 						continue;	//If this name is one the user already refused, skip it
 
-					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string))
+					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string, 0))
 					{	//If the note's frets can be represented in string format, specify it in the prompt
 						(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the name of selected notes (%s) to \"%s\"?",pro_guitar_string, newname);
 					}
@@ -5548,7 +5548,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						}
 						autobitmask[index] = '\0';	//Ensure the string is terminated
 					}
-					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string))
+					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string, 0))
 					{	//If the note's frets can be represented in string format, specify it in the prompt
 						(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the legacy bitmask of selected notes (%s) to \"%s\"?",pro_guitar_string, autobitmask);
 					}
