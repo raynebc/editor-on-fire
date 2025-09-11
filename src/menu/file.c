@@ -6049,6 +6049,7 @@ int eof_rs_import_common(char *fn)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(fn && (tracknum < EOF_PRO_GUITAR_TRACKS_MAX))
 	{	//If the file name and active track are valid
+		eof_song->track[eof_selected_track]->flags &= ~(EOF_TRACK_FLAG_RS_BONUS_ARR | EOF_TRACK_FLAG_RS_ALT_ARR | EOF_TRACK_FLAG_RS_PICKED_BASS);	//Clear these flags as they'll be set by RS import if appropriate
 		tp = eof_load_rs(fn);
 
 		if(tp)

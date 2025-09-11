@@ -69,7 +69,7 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 
 	//Write header
 	(void) pack_putc('b', fp);	//Write magic value
-	(void) pack_iputl(4, fp);	//Write format version
+	(void) pack_iputl(5, fp);	//Write format version
 
 	//Write audio blob
 	(void) pack_iputl(eof_music_data_size, fp);	//Write size of audio blob
@@ -104,6 +104,13 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 	fval = eof_chart_length / 1000.0;
 	(void) pack_fwrite(&fval, 4, fp);	//Write a 4 byte floating point representation of the chart length in seconds
 	(void) pack_iputl(0, fp);			//Write an audio delay of 0 microseconds
+	if(eof_check_string(sp->tags->frettist))
+	{	//If the chart author is defined
+		WriteVarLen(ustrlen(sp->tags->frettist), fp);	//Write length of chart author name
+		(void) pack_fwrite(sp->tags->frettist, ustrlen(sp->tags->frettist), fp);	//Write chart author name
+	}
+	else
+		(void) pack_putc(0, fp);	//Otherwise write no chart author name
 
 	//Write song structure
 	eof_log("\t\tWriting sync points", 1);
@@ -406,10 +413,10 @@ int eof_export_beatable(EOF_SONG *sp, unsigned long track, char *fn)
 int eof_validate_beatable_file(char *fn)
 {
 	PACKFILE *fp;
-	unsigned long ctr, ctr2, ctr3, diff, tapnotes, leftsnapnotes, rightsnapnotes, clapnotes, holdnotecollections, holdnotechains, songsections, scorerankconfigs;
+	unsigned long ctr, ctr2, ctr3, diff, tapnotes, leftsnapnotes, rightsnapnotes, clapnotes, holdnotecollections, holdnotechains, songsections, scorerankconfigs, version;
 	unsigned long fp_pos = 0;	//Used to keep track of the number of bytes read in the file
 	int word, error = 0;
-	long dword;
+	unsigned long dword;
 	char byte;
 	unsigned long blobsize, length;
 	float fval;
@@ -446,14 +453,16 @@ int eof_validate_beatable_file(char *fn)
 		return 0;	//Return failure
 	}
 	fp_pos++;
-	dword = pack_igetl(fp);	//Read the version size
-	if(dword != 4)
+	version = pack_igetl(fp);	//Read the file format version number
+	if((version != 4) && (version != 5))
 	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError validating:  Invalid format version, was %ld and should be 4", dword);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError validating:  Invalid format version, was %lu and should be 4 or 5", version);
 		eof_log(eof_log_string, 1);
 		(void) pack_fclose(fp);
 		return 0;	//Return failure
 	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t0x%lX : Format version:  %lu", fp_pos, version);
+	eof_log(eof_log_string, 1);
 	fp_pos += 4;
 
 	//Parse audio blob
@@ -636,6 +645,42 @@ int eof_validate_beatable_file(char *fn)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t0x%lX : Audio start offset:  %lu microseconds", fp_pos, dword);
 	eof_log(eof_log_string, 1);
 	fp_pos += 4;
+	if(version > 4)
+	{	//Version 5 and higher have a string defining the person who created the chart
+		dword = fp_pos;	//Back up this value before reading the VLV
+		length = eof_pack_read_vlv(fp, &fp_pos);	//Read song title string length
+		str = NULL;
+		if(length != ULONG_MAX)
+		{
+			str = (char *) malloc(length + 1);
+			if(!str)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError allocating %lu bytes for mapper name string", length);
+				eof_log(eof_log_string, 1);
+				error = 1;
+			}
+			else if(pack_fread(str, length, fp) < length)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError reading mapper name:  %s", strerror(errno));
+				eof_log(eof_log_string, 1);
+				error = 1;
+			}
+			else
+			{
+				str[length] = '\0';	//NULL terminate the string
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t0x%lX : mapper:  %s", dword, str);
+				eof_log(eof_log_string, 1);
+			}
+			if(str)
+				free(str);
+			if(error)
+			{
+				(void) pack_fclose(fp);
+				return 0;	//Return failure
+			}
+		}
+		fp_pos += length;
+	}
 
 	//Parse song structure
 	songsections = pack_igetl(fp);

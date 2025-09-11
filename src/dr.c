@@ -697,7 +697,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 		{	//If the note is in the active track difficulty
 			if(!undo_made)
 			{	//If the user wasn't prompted about this yet
-				if(alert("This track already has notes", "Importing this Rocksmith track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+				if(alert("This track already has notes", "Importing this Drums Rock track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the active track difficulty is already populated and the user doesn't opt to overwrite it
 					eof_log("\t\tUser cancellation", 1);
 					return 2;	//Return user cancellation

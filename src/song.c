@@ -9462,7 +9462,9 @@ unsigned long eof_get_effective_minimum_note_distance(EOF_SONG *sp, unsigned lon
 		return eof_min_note_distance;	//If the min. note distance is configured as ms, this is the applicable length limit for this note
 
 	nextnotepos = eof_get_note_pos(sp, track, next);
-	cutoff = eof_get_position_minus_one_grid_snap_length(nextnotepos, eof_min_note_distance, (eof_min_note_distance_intervals == 1) ? 1 : 0);	//Determine where the note is required to end in order to meet the min. note distance setting requirement
+
+	//Since the next note may occur on a time signature change, the note gap must be calculated based on the time signature in effect BEFORE the next note
+	cutoff = eof_get_position_minus_one_grid_snap_length(nextnotepos - 1, eof_min_note_distance, (eof_min_note_distance_intervals == 1) ? 1 : 0);	//Determine where the note is required to end in order to meet the min. note distance setting requirement
 
 	if((cutoff == ULONG_MAX)  || (cutoff >= nextnotepos))
 		return ULONG_MAX;	//Could not determine the appropriate cutoff position for the specified note
@@ -12139,6 +12141,24 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 
 			startpos = eof_put_porpos(current_beat, nporpos, newpasteoffset);
 			endpos = eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, newpasteoffset);
+
+			//Repair grid snap if necessary
+			if(eof_is_any_beat_interval_position(pos, NULL, NULL, NULL, NULL, eof_prefer_midi_friendly_grid_snapping))
+			{	//If the source note was grid snapped
+				unsigned long closestpos = 0;
+
+				(void) eof_is_any_beat_interval_position(startpos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping);	//Get the beat interval position nearest the new note's position
+				if(closestpos != startpos)
+				{	//If they aren't the same position
+					if(closestpos != ULONG_MAX)
+					{	//If the nearest beat interval position was determined
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting note paste position from %lums to %lums", startpos, closestpos);
+						eof_log(eof_log_string, 1);
+						startpos = closestpos;	//Update the destination timestamp for the note;
+					}
+				}
+			}
+
 			new_note = eof_copy_note_simple(eof_song, sourcetrack, i, eof_selected_track, startpos, endpos - startpos, eof_note_type);
 			if(new_note)
 			{	//If the note was successfully created
@@ -12167,6 +12187,8 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 			}
 		}
 	}
+	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+
 	return D_O_K;
 }
 

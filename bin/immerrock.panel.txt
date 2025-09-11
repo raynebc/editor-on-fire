@@ -5,7 +5,7 @@ IMMERROCK Panel (%TEXT_FILE%)
 ;Export preference check
 %!IF_IR_EXPORT_ENABLED%%DISPLAY_WARNING%IMMERROCK export is not enabled in File>%NEWLINE%Preferences>Import/Export.  You can still use File>%NEWLINE%Export>IMMERROCK to export a track difficulty.%FLUSH%%MOVE_DOWN_PIXELS_8%
 %TIME_FORMAT_MM_SS_MS%
-%!IF_IS_PRO_GUITAR_TRACK%%!IF_IS_VOCAL_TRACK%%MOVE_DOWN_PIXELS_8%This is not a Rocksmith compatible track.%ENDPANEL%
+%!IF_IS_PRO_GUITAR_TRACK%%!IF_IS_VOCAL_TRACK%%MOVE_DOWN_PIXELS_8%This is not an IMMERROCK compatible track.%ENDPANEL%
 
 ;Tempo check
 %IF_ANY_TEMPO_SUBCEEDS_30%%DISPLAY_ERROR%At least one tempo change is less than 30BPM:%NEWLINE%%FIRST_BEAT_SUBCEEDING_TEMPO%

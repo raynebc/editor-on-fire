@@ -975,6 +975,24 @@ EOF_PRO_GUITAR_TRACK *eof_load_rs(char * fn)
 			shrink_xml_text(tag, sizeof(tag), buffer2);	//Convert any escape sequences in the tag content to normal text
 			strncpy(eof_song->tags->year, tag, sizeof(eof_song->tags->year) - 1);
 		}
+		else if(strcasestr_spec(buffer, "<arrangementProperties"))
+		{	//If this is the arrangement properties tag
+			if(parse_xml_attribute_number("represent", buffer, &output) && !output)
+			{	//If the represent attribute is explicitly defined as zero
+				if(parse_xml_attribute_number("bonusArr", buffer, &output) && output)
+				{	//If the bonus arrangement attribute is explicitly defined as nonzero
+					tp->parent->flags |= EOF_TRACK_FLAG_RS_BONUS_ARR;
+				}
+				else
+				{	//Otherwise this is an alternate arrangement
+					tp->parent->flags |= EOF_TRACK_FLAG_RS_ALT_ARR;
+				}
+			}
+			if(parse_xml_attribute_number("bassPick", buffer, &output) && output)
+			{	//If the picked bass attribute is explicitly defined as nonzero
+				tp->parent->flags |= EOF_TRACK_FLAG_RS_PICKED_BASS;
+			}
+		}
 		else if(strcasestr_spec(buffer, "<phrases") && !strstr(buffer, "/>"))
 		{	//If this is the phrases tag and it isn't empty
 			#ifdef RS_IMPORT_DEBUG
