@@ -1960,8 +1960,8 @@ int eof_menu_edit_paste_logic(int function)
 		}
 
 		//Recreate tech notes from the source notes
-		if(source_id == eof_log_id)
-		{	//If the copy/paste is being performed within the same EOF instance
+		if((source_id == eof_log_id) && !eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		{	//If the copy/paste is being performed within the same EOF instance, and tech view is not active for the destination track
 			unsigned long techctr;
 			EOF_PRO_GUITAR_TRACK *stp = eof_song->pro_guitar_track[srctracknum];	//Simplify
 			EOF_PRO_GUITAR_TRACK *dtp = eof_song->pro_guitar_track[tracknum];		//Simplify

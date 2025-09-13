@@ -47,6 +47,7 @@ char eof_notes_macro_lyric_with_non_ascii[50];
 char eof_notes_macro_lyric_outside_line[50];
 char eof_notes_macro_lyric_line_beginning_with_lowercase[50];
 char eof_notes_macro_lyric_line_exceeding_length[50];
+char eof_notes_macro_lyric_line_contains_unwanted_punct[50];
 char eof_notes_inactive_track_has_rs_warnings = 0;
 char eof_notes_inactive_track_has_rs_errors = 0;
 
@@ -426,7 +427,7 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 
 int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel)
 {
-	unsigned long tracknum, tracksize, ctr, ctr2;
+	unsigned long tracknum, tracksize, ctr, ctr2, ctr3;
 	EOF_PHRASE_SECTION *phraseptr;
 	char album_art_filename[1024];
 	char *count_string, *name_string, name_buffer[101];
@@ -2893,6 +2894,55 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//If the lyric has a defined pitch
 				dest_buffer[0] = '\0';
 				return 3;	//True
+			}
+		}
+		return 2;	//False
+	}
+
+	name_string = strcasestr_spec(macro, "IF_ANY_LYRICS_CONTAIN_PUNCTUATION_EXCEPT_");	//Get a pointer to the text that would be the character list
+	if(name_string)
+	{	//If the macro is this string
+		char approved, disqualified = 0;
+
+		eof_notes_macro_lyric_line_contains_unwanted_punct[0] = '\0';	//Erase this string
+		if(eof_read_macro_string(name_string, name_buffer))
+		{	//If the character list was successfully parsed
+			for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
+			{	//For each lyric
+				EOF_LYRIC *lyricptr = eof_song->vocal_track[0]->lyric[ctr];
+
+				for(ctr2 = 0; lyricptr->text[ctr2] != '\0'; ctr2++)
+				{	//For each character in the lyric
+					approved = 0;
+					if(ispunct(lyricptr->text[ctr2]))
+					{	//If this character is punctuation
+						for(ctr3 = 0; name_buffer[ctr3] != '\0'; ctr3++)
+						{	//For each character in the exemption string
+							if(lyricptr->text[ctr2] == name_buffer[ctr3])
+							{	//If the character in the lyric is in the exemption string
+								approved = 1;
+								break;	//Stop checking the exemption string
+							}
+						}
+					}
+					else
+						approved = 1;
+
+					if(!approved)
+					{
+						disqualified = 1;
+						break;	//Stop checking the lyric
+					}
+				}
+
+				if(disqualified)
+				{
+					char time_string[15] = {0};
+					eof_notes_panel_print_time(lyricptr->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+					snprintf(eof_notes_macro_lyric_line_contains_unwanted_punct, sizeof(eof_notes_macro_lyric_line_contains_unwanted_punct) - 1, "pos %s : \"%s\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
 			}
 		}
 		return 2;	//False
@@ -5381,6 +5431,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "FIRST_LYRIC_LINE_EXCEEDING_LENGTH"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_line_exceeding_length);
+
+		return 1;
+	}
+
+	if(!ustricmp(macro, "FIRST_LYRIC_CONTAINING_UNWANTED_PUNCTUATION"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_line_contains_unwanted_punct);
 
 		return 1;
 	}
