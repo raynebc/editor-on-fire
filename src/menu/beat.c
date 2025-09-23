@@ -66,6 +66,7 @@ MENU eof_beat_rocksmith_menu[] =
 	{"Place RS &Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
 	{"Place RS &Section\tShift+S", eof_rocksmith_section_dialog_add, NULL, 0, NULL},
 	{"Place RS &Event\tShift+E", eof_rocksmith_event_dialog_add, NULL, 0, NULL},
+	{"Place RS &moveR phrase", eof_rocksmith_mover_phrase_dialog_add, NULL, 0, NULL},
 	{"&Copy phrase/section", eof_menu_beat_copy_rs_events, NULL, 0, NULL},
 	{"Clear non RS events", eof_menu_beat_clear_non_rs_events, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -131,7 +132,7 @@ MENU eof_beat_menu[] =
 	{"&Validate tempo map", eof_menu_beat_validate_tempo_map, NULL, 0, NULL},
 	{"Lock tempo map", eof_menu_beat_lock_tempo_map, NULL, 0, NULL},
 	{"Remove mid-beat status", eof_menu_beat_remove_mid_beat_status, NULL, 0, NULL},
-	{"&Move to seek pos", eof_menu_beat_move_to_seek_pos, NULL, 0, NULL},
+	{"Move to seek pos", eof_menu_beat_move_to_seek_pos, NULL, 0, NULL},
 	{"Export beat timings", eof_menu_beat_export_beat_timings, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
@@ -198,6 +199,18 @@ DIALOG eof_events_add_dialog[] =
 	{ d_agup_check_proc,         12, 190, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith event marker", NULL, NULL },
 	{ d_agup_button_proc,        67, 214, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
 	{ d_agup_button_proc,        163,214, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_mover_add_dialog[] =
+{
+	/* (proc)                    (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+	{ eof_window_proc,        0,  48,  314, 126, 2,   23,  0,    0,      0,   0,   "Add moveR phrase",  NULL, NULL },
+	{ d_agup_text_proc,          12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "moveR:",       NULL, NULL },
+	{ eof_verified_edit_proc,   60, 80,  240, 20,  2,   23,  0,    0,      2, 0,   eof_etext,     "0123456789", NULL },
+	{ d_agup_check_proc,         12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
+	{ d_agup_button_proc,        67, 134, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+	{ d_agup_button_proc,        163,134, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1992,6 +2005,21 @@ int eof_rocksmith_phrase_dialog_add(void)
 	return eof_events_dialog_add_function(EOF_EVENT_FLAG_RS_PHRASE);
 }
 
+int eof_rocksmith_mover_phrase_dialog_add(void)
+{
+	char undo_made = 0;
+	EOF_TEXT_EVENT *ptr = NULL;
+
+	if(eof_beat_contains_mover_rs_phrase(eof_song, eof_selected_beat, eof_selected_track, &ptr))
+	{	//If the selected beat already has a moveR phrase defined
+		eof_add_or_edit_text_event(ptr, 0, &undo_made);	//Run logic to edit an existing event
+		return D_O_K;
+	}
+
+	//Launch the add text event dialog to add a new event, automatically checking the RS phrase marker option
+	return eof_rocksmith_mover_dialog_add();
+}
+
 int eof_menu_beat_add_section(void)
 {
 	unsigned long ctr;
@@ -3182,6 +3210,48 @@ int eof_rocksmith_event_dialog_add(void)
 			track = eof_selected_track;
 		}
 		(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_rs_predefined_events[eof_rocksmith_event_dialog[1].d1].string, track, EOF_EVENT_FLAG_RS_EVENT, 0);
+		eof_sort_events(eof_song);
+	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	eof_render();
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+
+	return D_O_K;
+}
+
+int eof_rocksmith_mover_dialog_add(void)
+{
+	unsigned char track = 0;	//By default, new events won't be track specific
+	unsigned number;
+	char str[10];
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_mover_add_dialog, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_mover_add_dialog);
+
+	eof_etext[0] = '\0';
+	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
+
+	if(eof_popup_dialog(eof_mover_add_dialog, 2) == 4)
+	{	//User clicked OK
+		number = atoi(eof_etext);
+		if(!number)
+		{
+			allegro_message("A number larger than 0 must be specified.");
+			return D_O_K;
+		}
+
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+		if(eof_mover_add_dialog[2].flags == D_SELECTED)
+		{	//If the user also opted to make it specific to the active track
+			track = eof_selected_track;
+		}
+		(void) snprintf(str, sizeof(str) - 1, "moveR%u", number);
+		(void) eof_song_add_text_event(eof_song, eof_selected_beat, str, track, EOF_EVENT_FLAG_RS_PHRASE, 0);
 		eof_sort_events(eof_song);
 	}
 

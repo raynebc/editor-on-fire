@@ -147,6 +147,12 @@ int eof_events_dialog_edit(DIALOG * d);	//Performs the Text event edit action pr
 int eof_events_dialog_delete(DIALOG * d);	//Performs the Text event delete action presented in the Events dialog
 int eof_rocksmith_phrase_dialog_add(void);
 	//Calls eof_events_dialog_add_function with a function value of EOF_EVENT_FLAG_RS_PHRASE
+	//If a Rocksmith phrase already exists on the selected beat, it is edited instead of a new one being added
+int eof_rocksmith_mover_phrase_dialog_add(void);
+	//If the selected beat already has a Rocksmith moveR phrase, calls eof_add_or_edit_text_event() to edit it
+	//Otherwise calls eof_rocksmith_mover_dialog_add() to add a new one
+int eof_rocksmith_mover_dialog_add(void);
+	//Launches a dialog to add a Rocksmith moveR phrase to the selected beat
 int eof_rocksmith_section_dialog_add(void);
 	//Launches a dialog to allow the user to add a Rocksmith section to the selected beat from a pre-defined list of valid section names
 int eof_rocksmith_event_dialog_add(void);

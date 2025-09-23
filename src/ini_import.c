@@ -547,7 +547,7 @@ int eof_compare_set_ini_string_field(char *dest, char *src, int *function, char 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Song property \"%s\" doesn't match song.ini file's contents", tag);
 		eof_log(eof_log_string, 1);
 		eof_clear_input();
-		if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project?", "&Yes", "&No", 'y', 'n') != 1)
+		if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project (answer No if not using MIDI chart files)?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
 			return 1;	//Return user cancellation
 		}
@@ -582,7 +582,7 @@ int eof_compare_set_ini_boolean(char *status, char original, char *string, int *
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Song boolean \"%s\" doesn't match song.ini file's contents", tag);
 		eof_log(eof_log_string, 1);
 		eof_clear_input();
-		if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project?", "&Yes", "&No", 'y', 'n') != 1)
+		if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project (answer No if not using MIDI chart files)?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
 			return 1;	//Return user cancellation
 		}
@@ -631,7 +631,7 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 	if(*function)
 	{	//If the calling function wanted to prompt the user before changing/adding an INI setting
 		eof_clear_input();
-		if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project?", "&Yes", "&No", 'y', 'n') != 1)
+		if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project  (answer No if not using MIDI chart files)?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
 			return 1;	//Return user cancellation
 		}
@@ -695,7 +695,7 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Pro guitar/bass tuning tag doesn't match song.ini file's contents");
 			eof_log(eof_log_string, 1);
 			eof_clear_input();
-			if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project?", "&Yes", "&No", 'y', 'n') != 1)
+			if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project (answer No if not using MIDI chart files)?", "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
 				return 1;	//Return user cancellation
 			}
@@ -723,7 +723,7 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Song property \"%s\" doesn't match song.ini file's contents", tag);
 		eof_log(eof_log_string, 1);
 		eof_clear_input();
-		if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project?", "&Yes", "&No", 'y', 'n') != 1)
+		if(alert(eof_log_string, "song.ini was altered externally or MIDI exports were disabled and project edits were made.", "Merge song.ini changes with the active project (answer No if not using MIDI chart files)?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
 			return 1;	//Return user cancellation
 		}

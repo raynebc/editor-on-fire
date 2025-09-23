@@ -4232,8 +4232,14 @@ int eof_save_helper_checks(void)
 				{	//For each beat after the start beat up to and including the stop beat
 					if(eof_song->beat[ctr3]->contained_rs_section_event >= 0)
 						sectionchange = 1;	//This beat indicates a section change
+
 					if(eof_song->beat[ctr3]->contained_section_event >= 0)
-						phrasechange = 1;	//This beat indicates a phrase change
+					{	//If the beat has a phrase change
+						if(!eof_beat_contains_mover_rs_phrase(eof_song, ctr3, eof_selected_track, NULL))
+						{	//If the phrase(s) on this beat are NOT being manipulated by the "moveR" mechanism
+							phrasechange = 1;	//This beat indicates a phrase change
+						}
+					}
 				}
 				if(sectionchange || phrasechange)
 				{	//If the section or phrase changes during the course of the note

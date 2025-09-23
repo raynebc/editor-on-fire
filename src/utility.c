@@ -798,6 +798,10 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			}
 		}
 		lastend = tp->line[ctr].end_pos;
+		if(!matches)
+		{	//No lyrics were in this line
+			error = 5;
+		}
 		if(error)
 			break;
 	}
@@ -830,7 +834,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			}
 			if(tp->line[ctr].difficulty != 255)
 			{
-				eof_log("\t\t!Lyric line is the wrong difficulty.  Reparing", 1);
+				eof_log("\t\t!Lyric line is the wrong difficulty.  Repairing", 1);
 				tp->line[ctr].difficulty = 255;
 			}
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  Diff %u, %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].difficulty, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
@@ -856,6 +860,12 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			eof_log(eof_log_string, 1);
 
 			lastend = tp->line[ctr].end_pos;
+			if(!matches)
+			{	//No lyrics were in this line
+				eof_log("\t\t!Lyric line is empty.  Repairing", 1);
+				eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
+				ctr--;	//Decrement the line counter so the next loop iterations increments and processes the line after the one that was just deleted
+			}
 		}
 
 		if(unsorted)

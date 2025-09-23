@@ -73,6 +73,11 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track);
 	//The beat's measure number (or 0 if no TS is in effect), beat within measure, total number of beats in current measure are stored,
 	//The section text event assigned to the beat is stored (from the perspective of the specified track, or -1 if no section event),
 	//a boolean status for whether the beat contains an "[end]" event and boolean statuses for whether the beat contains tempo or TS changes
+unsigned long eof_beat_contains_mover_rs_phrase(EOF_SONG *sp, unsigned long beat, unsigned long track, EOF_TEXT_EVENT **ptr);
+	//If the specified beat contains a "moveR" RS phrase from the perspective of the specified track, the associated number parameter of the phrase is returned
+	//Returns zero upon error or if there is no applicable "moveR" phrase
+	//If ptr is not NULL, the pointer to the text event in question is returned through *ptr
+	//"moveR" is a Rocksmith custom charting mechanism for manipulating the placement of other phrases/sections on that beat by moving them the specified number of notes to the right
 double eof_get_distance_in_beats(EOF_SONG *sp, unsigned long pos1, unsigned long pos2);
 	//Uses eof_get_beat() and eof_get_porpos_sp() to calculate the number of beats between the two specified positions, which could be in either order
 	//Returns 0.0 on error

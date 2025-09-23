@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <math.h>
+#include <ctype.h>
 #include "beat.h"
 #include "main.h"
 #include "midi.h"
@@ -931,7 +932,11 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 		{	//If this text event is assigned to a beat marker
 			if(eof_is_section_marker(sp->text_event[ctr], track))
 			{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
-				sp->beat[sp->text_event[ctr]->pos]->contained_section_event = ctr;
+				char *str = strcasestr_spec(sp->text_event[ctr]->text, "mover");
+				if(!str || !isdigit(str[0]))
+				{	//As long as this isn't a "mover" phrase
+					sp->beat[sp->text_event[ctr]->pos]->contained_section_event = ctr;
+				}
 			}
 			else if(!ustrcmp(sp->text_event[ctr]->text, "[end]"))
 			{	//If this is the [end] event
@@ -948,6 +953,39 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 	}
 
 	eof_beat_stats_cached = 1;
+}
+
+unsigned long eof_beat_contains_mover_rs_phrase(EOF_SONG *sp, unsigned long beat, unsigned long track, EOF_TEXT_EVENT **ptr)
+{
+	unsigned long ctr, num = 0;
+	char *str;
+
+	if(!sp || (beat >= sp->beats) || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event
+		if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS) && (sp->text_event[ctr]->pos == beat))
+		{	//If this text event is assigned to the specified beat marker
+			if(eof_is_section_marker(sp->text_event[ctr], track))
+			{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
+				str = strcasestr_spec(sp->text_event[ctr]->text, "mover");
+				if(str && isdigit(str[0]))
+				{	//The phrase "mover" was encountered followed by a digit
+					if(eof_read_macro_number(str, &num))
+					{	//If the phrase text after "mover" was parsed as a valid number
+						if(ptr)
+						{	//If the calling function wanted to receive the pointer to this text event
+							*ptr = sp->text_event[ctr];	//Store it by reference in the pointer
+						}
+						return num;	//Return that number
+					}
+				}
+			}
+		}
+	}
+
+	return 0;	//No mover phrase found on the specified beat
 }
 
 double eof_get_distance_in_beats(EOF_SONG *sp, unsigned long pos1, unsigned long pos2)
