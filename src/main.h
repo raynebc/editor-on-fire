@@ -936,4 +936,11 @@ int eof_increase_display_width_to_panel_count(int prompt);
 	//If the user declines that prompt, or if the window resize fails, the non-default panels are disabled
 	//Returns zero on error
 
+void eof_draw_dashed_pixel(BITMAP *bmp, int x, int y, int d);
+	//A specified number of consecutive calls to this function will render the pixel, and a specified number of consecutive calls will skip the render, then the pattern resets
+	//This allows for drawing a dashed line when used as the pixel render function with do_line()
+	//To configure the drawing parameters, call this function with bmp having a value of NULL, x being the number of consecutive pixels to render and y being the consecutive number of pixels to skip
+void eof_draw_dashed_line(BITMAP *bmp, int x1, int y1, int x2, int y2, int color, unsigned drawpixels, unsigned skippixels);
+	//Uses eof_draw_dashed_pixel() and do_line() to render the specified line as a dashed line, where each rendered segment is drawpixels long and each non-rendered segment is skippixels long
+
 #endif

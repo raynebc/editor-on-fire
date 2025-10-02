@@ -57,11 +57,6 @@ MENU eof_song_seek_bookmark_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char eof_seek_menu_prev_anchor_text1[] = "Previous Anchor\t" CTRL_NAME "+Shift+PGUP";
-char eof_seek_menu_next_anchor_text1[] = "Next Anchor\t" CTRL_NAME "+Shift+PGDN";
-char eof_seek_menu_prev_anchor_text2[] = "Previous Anchor";
-char eof_seek_menu_next_anchor_text2[] = "Next Anchor";
-
 MENU eof_song_seek_note_menu[] =
 {
 	{"&First\t" CTRL_NAME "+Home", eof_menu_song_seek_first_note, NULL, 0, NULL},
@@ -93,10 +88,10 @@ MENU eof_song_seek_menu[] =
 	{"First Beat\t"  CTRL_NAME "+Shift+Home", eof_menu_song_seek_first_beat, NULL, 0, NULL},
 	{"Previous Beat\tPGUP", eof_menu_song_seek_previous_beat, NULL, 0, NULL},
 	{"Next Beat\tPGDN", eof_menu_song_seek_next_beat, NULL, 0, NULL},
-	{eof_seek_menu_prev_anchor_text1, eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
-	{eof_seek_menu_next_anchor_text1, eof_menu_song_seek_next_anchor, NULL, 0, NULL},
-	{"Previous TS change\tALT+PGUP", eof_menu_song_seek_previous_ts_change, NULL, 0, NULL},
-	{"Next TS change\tALT+PGDN", eof_menu_song_seek_next_ts_change, NULL, 0, NULL},
+	{"Previous Anchor\tALT+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
+	{"Next Anchor\tALT+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
+	{"Previous TS change", eof_menu_song_seek_previous_ts_change, NULL, 0, NULL},
+	{"Next TS change", eof_menu_song_seek_next_ts_change, NULL, 0, NULL},
 	{"Beat/&Measure\t" CTRL_NAME "+Shift+B", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Next CH &SP deployable note", eof_menu_song_seek_next_ch_sp_deployable_note, NULL, 0, NULL},
@@ -427,15 +422,11 @@ void eof_prepare_song_menu(void)
 		{	//If grid snap is disabled
 			eof_song_seek_menu[11].flags = D_DISABLED;	//Previous grid snap
 			eof_song_seek_menu[12].flags = D_DISABLED;	//Next grid snap
-			eof_song_seek_menu[17].text = eof_seek_menu_prev_anchor_text1;	//Display the previous anchor menu item with the shortcut
-			eof_song_seek_menu[18].text = eof_seek_menu_next_anchor_text1;	//Display the next anchor menu item with the shortcut
 		}
 		else
 		{
 			eof_song_seek_menu[11].flags = 0;			//Previous grid snap
 			eof_song_seek_menu[12].flags = 0;			//Next grid snap
-			eof_song_seek_menu[17].text = eof_seek_menu_prev_anchor_text2;	//Display the previous anchor menu item with no shortcut
-			eof_song_seek_menu[18].text = eof_seek_menu_next_anchor_text2;	//Display the next anchor menu item with no shortcut
 		}
 
 		/* seek bookmark # */

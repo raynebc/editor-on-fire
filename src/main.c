@@ -6937,4 +6937,36 @@ int eof_increase_display_width_to_panel_count(int prompt)
 	return 1;
 }
 
+void eof_draw_dashed_pixel(BITMAP *bmp, int x, int y, int d)
+{
+	static int drawpixels = 0;	//The number of consecutive pixels to draw
+	static int skippixels = 0;		//The number of consecutive pixels to skip
+	static int pixelnum = 1;		//The current pixel number in the sequence of drawpixels+skippixels
+
+	if(!bmp)
+	{	//Re-init static variables
+		drawpixels = x;
+		skippixels = y;
+		pixelnum = 1;
+		return;
+	}
+
+	if(pixelnum <= drawpixels)
+	{	//This is one of the pixels to be rendered
+		putpixel(bmp, x, y, d);
+	}
+
+	pixelnum++;
+	if(pixelnum > drawpixels + skippixels)
+	{	//A series of drawn and skipped pixels were processed, reset count
+		pixelnum = 1;
+	}
+}
+
+void eof_draw_dashed_line(BITMAP *bmp, int x1, int y1, int x2, int y2, int color, unsigned drawpixels, unsigned skippixels)
+{
+	eof_draw_dashed_pixel(NULL, drawpixels, skippixels, 0);	//Initialize this function
+	do_line(bmp, x1, y1, x2, y2, color, eof_draw_dashed_pixel);
+}
+
 END_OF_MAIN()

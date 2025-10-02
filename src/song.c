@@ -12222,3 +12222,42 @@ unsigned long eof_find_note_at_pos(EOF_SONG *sp, unsigned long track, unsigned c
 
 	return ULONG_MAX;	//No match
 }
+
+unsigned long eof_get_pos_num_notes_after_timestamp(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned long numnotes)
+{
+	unsigned long tracknum, ctr, ctr2, foundpos = 0;
+	EOF_PRO_GUITAR_TRACK * tp;
+	char restore_tech_view;
+	unsigned char targetdiff = eof_note_type;	//In the event that the track does NOT have dynamic difficulty, this function will only consider the active difficulty's notes
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || !eof_track_is_pro_guitar_track(sp, track))
+		return 0;	//Return error
+
+	if(eof_track_has_dynamic_difficulty(sp, track))
+		targetdiff = 0xFF;
+
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];
+	for(ctr = ctr2 = 0; ctr < tp->pgnotes; ctr++)
+	{	//For each normal note in the specified pro guitar track
+		if(tp->pgnote[ctr]->pos <= pos)
+			continue;	//If this note is not after the target, skip it
+
+		if(eof_note_applies_to_diff(sp, track, ctr, targetdiff))
+		{	//If this is the highest difficulty note at this position in the track
+			ctr2++;	//Track how many such notes have been reached
+
+			if(ctr2 == numnotes)
+			{	//If this is the target note
+				foundpos = tp->pgnote[ctr]->pos;
+				break;
+			}
+		}
+	}
+
+	eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+
+	return foundpos;	//Return the position that was found, if any
+}

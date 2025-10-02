@@ -1885,7 +1885,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							snprintf(eof_notes_macro_pitched_slide_missing_linknext, sizeof(eof_notes_macro_pitched_slide_missing_linknext) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
 							retval = 3;	//True
-							break;	//Stop processing the rest of this track
+							notectr = tp->pgnotes;	//Set a condition to break from the note loop
+							break;	//Break from string loop
 						}
 					}
 				}
@@ -2163,7 +2164,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								snprintf(eof_notes_macro_pitched_slide_missing_end_fret, sizeof(eof_notes_macro_pitched_slide_missing_end_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
-								break;	//Stop processing the rest of this track
+								notectr = tp->pgnotes;	//Set a condition to break from the note loop
+								break;	//Break from string loop
 							}
 						}
 					}
@@ -2220,7 +2222,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 									snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 									dest_buffer[0] = '\0';
 									retval = 3;	//True
-									break;	//Stop processing the rest of this track
+									notectr = tp->pgnotes;	//Set a condition to break from note loop
+									break;	//Break from string loop
 								}
 							}
 						}
@@ -2276,7 +2279,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								snprintf(eof_notes_macro_open_note_bend, sizeof(eof_notes_macro_open_note_bend) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
-								break;	//Stop processing the rest of this track
+								notectr = tp->pgnotes;	//Set a condition to break from note loop
+								break;	//Break from string loop
 							}
 						}
 					}
@@ -2548,13 +2552,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 									if(ctr != eof_selected_track)
 									{	//If this isn't the active track
 										eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
-										break;	//Stop processing the rest of this track
+										notectr = tp->pgnotes;	//Set a condition to break from note loop
+										break;	//Break from string loop
 									}
 									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 									snprintf(eof_notes_macro_slide_exceeding_fret, sizeof(eof_notes_macro_slide_exceeding_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 									dest_buffer[0] = '\0';
 									retval = 3;	//True
-									break;	//Stop processing the rest of this track
+									notectr = tp->pgnotes;	//Set a condition to break from note loop
+									break;	//Break from string loop
 								}
 							}
 						}
@@ -2733,14 +2739,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								if(ctr != eof_selected_track)
 								{	//If this isn't the active track
 									eof_notes_inactive_track_has_rs_warnings = 1;	//Track that an inactive track has a Rocksmith warning
-									notectr = tp->pgnotes;	//Trigger a condition to break out of the note loop to end processing the rest of this track
+									notectr = tp->pgnotes;	//Set a condition to break from note loop
 									break;	//Break from string loop
 								}
 								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_technique_missing_sustain, sizeof(eof_notes_macro_technique_missing_sustain) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
-								break;	//Stop processing the rest of this track
+								notectr = tp->pgnotes;	//Trigger a condition to break out of the note loop to end processing the rest of this track
+								break;	//Break from string loop
 							}
 						}
 					}

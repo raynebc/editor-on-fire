@@ -1687,7 +1687,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* seek back one note (SHIFT+Pg Up, non Feedback input modes) */
 	/* seek back one measure (Pg Up, Feedback input mode) */
 	/* seek back one beat (Pg Up, non Feedback input modes) */
-	/* seek to previous time signature change (ALT+Pg Up) */
+	/* seek to previous anchor (ALT+Pg Up) */
 	if(do_pg_up)
 	{
 		if(!eof_music_catalog_playback)
@@ -1725,7 +1725,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 			else if(KEY_EITHER_ALT)
 			{	//If ALT is being held
-				(void) eof_menu_song_seek_previous_ts_change();
+				(void) eof_menu_song_seek_previous_anchor();
 			}
 			else
 			{	//If no modifier keys are being held
@@ -1747,7 +1747,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* seek forward one note (SHIFT+Pg Dn, non Feedback input modes) */
 	/* seek forward one measure (Pg Up, Feedback input mode) */
 	/* seek forward one beat (Pg Dn, non Feedback input modes) */
-	/* seek to next time signature change (ALT+Pg Dn) */
+	/* seek to next anchor (ALT+Pg Dn) */
 	if(do_pg_dn)
 	{
 		if(!eof_music_catalog_playback)
@@ -1785,7 +1785,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 			else if(KEY_EITHER_ALT)
 			{	//If ALT is being held
-				(void) eof_menu_song_seek_next_ts_change();
+				(void) eof_menu_song_seek_next_anchor();
 			}
 			else
 			{	//If no modifier keys are being held
@@ -7072,7 +7072,22 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		//Render section names and event markers
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//If this beat has any text events
+			unsigned long xcoord_event = xcoord;		//By default, the event will be rendered at this beat's X coordinate
+			unsigned long xcoord_mover = 0;			//If the beat's phrase/section events are displaced by a "moveR" phrase, this variable will track the new X coordinate position for rendering them
+
 			line(window->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+
+			xcoord_mover = eof_beat_contains_mover_rs_phrase(eof_song, i, eof_selected_track, NULL);	//Determine if this beat has a "moveR" phrase
+			if(xcoord_mover)
+			{	//If this beat has a "moveR" phrase to displace the phrases/sections on the beat
+				xcoord_mover = eof_get_pos_num_notes_after_timestamp(eof_song, eof_selected_track, eof_song->beat[i]->pos, xcoord_mover);	//Determine the position the phrases/sections are being moved to
+				if(xcoord_mover)
+				{	//If that position was determined
+					xcoord_event = lpos + xcoord_mover / eof_zoom;	//Get the x coordinate at which to render the displaced events
+					xcoord_mover = xcoord;	//The render position of the "moveR" phrase position
+				}
+			}
+
 			if((eof_2d_render_top_option == 6) || (eof_2d_render_top_option == 9))
 			{	//If the user has opted to render section names (Rocksmith phrases) at the top of the 2D window, either by themselves or in combination with RS sections
 				char *string = "%s";	//If the phrase isn't track specific, it will display normally
@@ -7119,16 +7134,26 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					}
 					if(eof_2d_render_top_option == 6)
 					{	//If the RS phrases are being rendered by themselves, place them at the top of the piano roll
-						textprintf_ex(window->screen, eof_font, xcoord - 6, 30, eof_color_yellow, bg_color, ptr, eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
+						if(xcoord_mover && (xcoord_mover + 2 < xcoord_event))
+						{	//If the event is displaced enough by a "moveR" phrase, draw a line from the original position to the displaced position
+							eof_draw_dashed_line(window->screen, xcoord_mover, 30 + 7, xcoord_event - 1, 30 + 7, eof_color_yellow, 2, 1);
+							eof_draw_dashed_line(window->screen, xcoord_event - 1, 30 + 7, xcoord_event - 1, 30 + 7 + 20, eof_color_yellow, 2, 1);
+						}
+						textprintf_ex(window->screen, eof_font, xcoord_event - 6, 30, eof_color_yellow, bg_color, ptr, eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
 					}
 					else
 					{	//Otherwise draw them them one line below the absolute top
-						textprintf_ex(window->screen, eof_font, xcoord - 6, 30 + 12, eof_color_yellow, bg_color, ptr, eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
+						if(xcoord_mover && (xcoord_mover + 2 < xcoord_event))
+						{	//If the event is displaced enough by a "moveR" phrase, draw a line from the original position to the displaced position
+							eof_draw_dashed_line(window->screen, xcoord_mover, 30 + 12 + 7, xcoord_event - 1, 30 + 12 + 7, eof_color_yellow, 2, 1);
+							eof_draw_dashed_line(window->screen, xcoord_event - 1, 30 + 12 + 7, xcoord_event - 1, 30 + 12 + 7 + 20, eof_color_yellow, 2, 1);
+						}
+						textprintf_ex(window->screen, eof_font, xcoord_event - 6, 30 + 12, eof_color_yellow, bg_color, ptr, eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
 					}
 				}
 				else if(eof_song->beat[i]->contains_end_event)
 				{	//Or if this beat contains an end event
-					textprintf_ex(window->screen, eof_font, xcoord - 6, 25 + 5, eof_color_red, eof_color_black, "[end]");	//Display it
+					textprintf_ex(window->screen, eof_font, xcoord_event - 6, 25 + 5, eof_color_red, eof_color_black, "[end]");	//Display it
 				}
 			}
 			if((eof_2d_render_top_option == 8) || (eof_2d_render_top_option == 9))
@@ -7142,7 +7167,12 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					{	//If this RS section is track specific
 						ptr = string2;
 					}
-					textprintf_ex(window->screen, eof_font, xcoord - 6, 25 + 5, eof_color_white, -1, ptr, eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
+					if(xcoord_mover && (xcoord_mover + 2 < xcoord_event))
+					{	//If the event is displaced enough by a "moveR" phrase, draw a line from the original position to the displaced position
+						eof_draw_dashed_line(window->screen, xcoord_mover, 25 + 5 + 7, xcoord_event - 1, 25 + 5 + 7, eof_color_yellow, 2, 1);
+						eof_draw_dashed_line(window->screen, xcoord_event - 1, 25 + 5 + 7, xcoord_event - 1, 25 + 5 + 7 + 20, eof_color_yellow, 2, 1);
+					}
+					textprintf_ex(window->screen, eof_font, xcoord_event - 6, 25 + 5, eof_color_white, -1, ptr, eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
 				}
 			}
 		}//If this beat has any text events
