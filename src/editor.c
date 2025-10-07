@@ -7088,6 +7088,25 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				}
 			}
 
+			if((eof_2d_render_top_option == 8) || (eof_2d_render_top_option == 9))
+			{	//If the user has opted to render Rocksmith sections at the top of the 2D window, either by themselves or in combination with RS phrases
+				char *string = "%s %d";		//If the RS section isn't track specific, it will display normally
+				char *string2 = "*%s %d";	//Otherwise it will be prefixed by an asterisk
+				char *ptr = string;
+				if(eof_song->beat[i]->contained_rs_section_event >= 0)
+				{	//If this beat has a Rocksmith section, display the section name and instance number
+					if(eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->track != 0)
+					{	//If this RS section is track specific
+						ptr = string2;
+					}
+					if(xcoord_mover && (xcoord_mover + 2 < xcoord_event))
+					{	//If the event is displaced enough by a "moveR" phrase, draw a line from the original position to the displaced position
+						eof_draw_dashed_line(window->screen, xcoord_mover, 25 + 5 + 7, xcoord_event - 6, 25 + 5 + 7, eof_color_yellow, 2, 1);
+						eof_draw_dashed_line(window->screen, xcoord_event, 25 + 5 + 7, xcoord_event, 25 + 5 + 7 + 20, eof_color_yellow, 2, 1);
+					}
+					textprintf_ex(window->screen, eof_font, xcoord_event - 6, 25 + 5, eof_color_white, -1, ptr, eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
+				}
+			}
 			if((eof_2d_render_top_option == 6) || (eof_2d_render_top_option == 9))
 			{	//If the user has opted to render section names (Rocksmith phrases) at the top of the 2D window, either by themselves or in combination with RS sections
 				char *string = "%s";	//If the phrase isn't track specific, it will display normally
@@ -7136,8 +7155,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					{	//If the RS phrases are being rendered by themselves, place them at the top of the piano roll
 						if(xcoord_mover && (xcoord_mover + 2 < xcoord_event))
 						{	//If the event is displaced enough by a "moveR" phrase, draw a line from the original position to the displaced position
-							eof_draw_dashed_line(window->screen, xcoord_mover, 30 + 7, xcoord_event - 1, 30 + 7, eof_color_yellow, 2, 1);
-							eof_draw_dashed_line(window->screen, xcoord_event - 1, 30 + 7, xcoord_event - 1, 30 + 7 + 20, eof_color_yellow, 2, 1);
+							eof_draw_dashed_line(window->screen, xcoord_mover, 30 + 7, xcoord_event - 6, 30 + 7, eof_color_yellow, 2, 1);
+							eof_draw_dashed_line(window->screen, xcoord_event, 30 + 7, xcoord_event, 30 + 7 + 20, eof_color_yellow, 2, 1);
 						}
 						textprintf_ex(window->screen, eof_font, xcoord_event - 6, 30, eof_color_yellow, bg_color, ptr, eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
 					}
@@ -7145,8 +7164,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					{	//Otherwise draw them them one line below the absolute top
 						if(xcoord_mover && (xcoord_mover + 2 < xcoord_event))
 						{	//If the event is displaced enough by a "moveR" phrase, draw a line from the original position to the displaced position
-							eof_draw_dashed_line(window->screen, xcoord_mover, 30 + 12 + 7, xcoord_event - 1, 30 + 12 + 7, eof_color_yellow, 2, 1);
-							eof_draw_dashed_line(window->screen, xcoord_event - 1, 30 + 12 + 7, xcoord_event - 1, 30 + 12 + 7 + 20, eof_color_yellow, 2, 1);
+							eof_draw_dashed_line(window->screen, xcoord_mover, 30 + 12 + 7, xcoord_event - 6, 30 + 12 + 7, eof_color_yellow, 2, 1);
+							eof_draw_dashed_line(window->screen, xcoord_event, 30 + 12 + 7, xcoord_event, 30 + 12 + 7 + 20, eof_color_yellow, 2, 1);
 						}
 						textprintf_ex(window->screen, eof_font, xcoord_event - 6, 30 + 12, eof_color_yellow, bg_color, ptr, eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
 					}
@@ -7154,25 +7173,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				else if(eof_song->beat[i]->contains_end_event)
 				{	//Or if this beat contains an end event
 					textprintf_ex(window->screen, eof_font, xcoord_event - 6, 25 + 5, eof_color_red, eof_color_black, "[end]");	//Display it
-				}
-			}
-			if((eof_2d_render_top_option == 8) || (eof_2d_render_top_option == 9))
-			{	//If the user has opted to render Rocksmith sections at the top of the 2D window, either by themselves or in combination with RS phrases
-				char *string = "%s %d";		//If the RS section isn't track specific, it will display normally
-				char *string2 = "*%s %d";	//Otherwise it will be prefixed by an asterisk
-				char *ptr = string;
-				if(eof_song->beat[i]->contained_rs_section_event >= 0)
-				{	//If this beat has a Rocksmith section, display the section name and instance number
-					if(eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->track != 0)
-					{	//If this RS section is track specific
-						ptr = string2;
-					}
-					if(xcoord_mover && (xcoord_mover + 2 < xcoord_event))
-					{	//If the event is displaced enough by a "moveR" phrase, draw a line from the original position to the displaced position
-						eof_draw_dashed_line(window->screen, xcoord_mover, 25 + 5 + 7, xcoord_event - 1, 25 + 5 + 7, eof_color_yellow, 2, 1);
-						eof_draw_dashed_line(window->screen, xcoord_event - 1, 25 + 5 + 7, xcoord_event - 1, 25 + 5 + 7 + 20, eof_color_yellow, 2, 1);
-					}
-					textprintf_ex(window->screen, eof_font, xcoord_event - 6, 25 + 5, eof_color_white, -1, ptr, eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
 				}
 			}
 		}//If this beat has any text events

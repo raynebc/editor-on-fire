@@ -120,6 +120,7 @@ MENU eof_file_export_menu[] =
 	{"&Preview audio", eof_menu_file_export_song_preview, NULL, 0, NULL},
 	{"&IMMERROCK", eof_menu_file_export_immerrock_track_diff, NULL, 0, NULL},
 	{"&BEATABLE", eof_menu_file_export_beatable_track, NULL, 0, NULL},
+	{"&LLPLUS", eof_menu_file_export_llplus_track, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -4582,19 +4583,29 @@ int eof_save_helper(char *destfilename, char silent)
 
 		if(eof_write_rs_files)
 		{	//If the user wants to save Rocksmith 1 files
-			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
-			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
-			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
-			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
-			(void) eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_B, &user_warned);
+			if(eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned) == 2)
+				return 1;	//Return cancellation
+			if(eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned) == 2)
+				return 1;	//Return cancellation
+			if(eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned) == 2)
+				return 1;	//Return cancellation
+			if(eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned) == 2)
+				return 1;	//Return cancellation
+			if(eof_export_rocksmith_1_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_B, &user_warned) == 2)
+				return 1;	//Return cancellation
 		}
 		if(eof_write_rs2_files)
 		{	//If the user wants to save Rocksmith 2 files
-			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
-			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
-			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
-			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
-			(void) eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_B, &user_warned);
+			if(eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned) == 2)
+				return 1;	//Return cancellation
+			if(eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned) == 2)
+				return 1;	//Return cancellation
+			if(eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned) == 2)
+				return 1;	//Return cancellation
+			if(eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned) == 2)
+				return 1;	//Return cancellation
+			if(eof_export_rocksmith_2_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_B, &user_warned) == 2)
+				return 1;	//Return cancellation
 		}
 		if(eof_song->vocal_track[0]->lyrics)
 		{	//If there are lyrics, export them in Rocksmith format as well
@@ -6997,6 +7008,44 @@ int eof_menu_file_export_beatable_track(void)
 	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
 
 	eof_export_beatable(eof_song, eof_selected_track, eof_temp_filename);
+
+	return 1;
+}
+
+int eof_menu_file_export_llplus_track(void)
+{
+	char temp_string[1024], temp_filename2[1024];
+
+	eof_log("eof_menu_file_export_llplus_track() entered", 1);
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tExporting track:  %s", eof_song->track[eof_selected_track]->name);
+	eof_log(eof_log_string, 1);
+
+	//Build the export file name
+	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+	temp_string[0] = '\0';	//Empty this string
+	if(eof_check_string(eof_song->tags->artist))
+	{	//If the artist of the song is defined
+		(void) ustrcat(temp_string, eof_song->tags->artist);
+	}
+	if(temp_string[0] != '\0')
+		(void) ustrcat(temp_string, " - ");
+	if(eof_check_string(eof_song->tags->title))
+	{	//If the title of the song is defined
+		(void) ustrcat(temp_string, eof_song->tags->title);
+	}
+	else
+	{
+		(void) ustrcat(temp_string, "song");
+	}
+	(void) ustrcat(temp_string, ".llplus.mid");
+	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
+	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
+
+	eof_export_llplus_midi(eof_temp_filename);
 
 	return 1;
 }

@@ -580,8 +580,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 					break;	//No other applicable notes to apply the statuses to
 				}
 				tp->note[next]->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//The next note is at the same timestamp, so ensure it has disjointed status
-				tp->note[next]->flags |= EOF_NOTE_FLAG_CRAZY;			//As well as crazy status
-				next = eof_fixup_next_legacy_note(tp, next);			//See if there's a next note in this track difficulty
+				tp->note[next]->flags |= EOF_NOTE_FLAG_CRAZY;		//As well as crazy status
+				next = eof_fixup_next_legacy_note(tp, next);				//See if there's a next note in this track difficulty
 			}
 
 			//Break up disjointed chords into multiple single gem notes

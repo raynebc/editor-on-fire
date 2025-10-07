@@ -34,7 +34,7 @@ typedef struct
 	EOF_IMPORT_MIDI_EVENT * event[EOF_IMPORT_MAX_EVENTS];
 	unsigned long events;
 	int type;
-	int game;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, 1 to indicate a Power Gig MIDI is being imported or 2 to indicate a Guitar Hero animation track is being imported
+	int game;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, 1 to indicate a Power Gig MIDI is being imported, 2 to indicate a Guitar Hero animation track is being imported or 3 to indicate an LLPLUS MIDI is being imported
 	unsigned char diff;	//Some tracks (such as the pro keys and Power Gig tracks) have all of their contents applicable to a single difficulty level
 	unsigned long tracknum;
 } EOF_IMPORT_MIDI_EVENT_LIST;
@@ -1968,6 +1968,28 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								break;
 							}
 						}
+
+						else if((midinote >= 35) && (midinote <= 39))
+						{	//The range of notes used by the game Lightners Live Plus (LLPLUS)
+							eof_import_events[i]->game = 3;	//LLPLUS format detected
+							diff = 0;	//LLPLUS charts only have one instrument and one difficulty
+							switch(midinote)
+							{
+								case 35:	//Right hold note
+									lane = 1;
+								break;
+								case 36:	//Right tap note
+									lane = 1;
+								break;
+								case 38:	//Left tap note
+									lane = 0;
+								break;
+								case 39:	//Left hold note
+									lane = 0;
+								break;
+							}
+						}
+
 						else
 						{	//Otherwise use the MIDI values used in Rock Band
 							if((midinote >= 60) && (midinote < 60 + 6))
@@ -2506,6 +2528,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //										allegro_message("break %d, %d, %d", k - 1, sp->legacy_track[picked_track]->note[k - 1]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 									unsigned long pos, length1, length2, lengthdiff, eflags;	//Variables used to compare the lengths between notes for application of disjointed status
+									unsigned char note, type;
 
 									if(ghlopen && !(eof_get_note_flags(sp, picked_track, k - 1) & EOF_GUITAR_NOTE_FLAG_GHL_OPEN))
 										continue;	//If this isn't the open note that needs to be altered, skip it
@@ -2522,23 +2545,28 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 									//Look for presence of other notes in this track difficulty that start at the same timestamp but have a different length, and apply disjointed status when those criteria are met
 									pos = eof_get_note_pos(sp, picked_track, k - 1);
 									length1 = eof_get_note_length(sp, picked_track, k - 1);
+									note = eof_get_note_note(sp, picked_track, k-1);
+									type = eof_get_note_type(sp, picked_track, k-1);
 									for(ctr = 0; ctr < eof_get_track_size(sp, picked_track); ctr++)
 									{	//For each imported note
-										if((eof_get_note_type(sp, picked_track, ctr) == eof_get_note_type(sp, picked_track, k - 1)) && (eof_get_note_pos(sp, picked_track, ctr) == pos))
+										if((eof_get_note_type(sp, picked_track, ctr) == type) && (eof_get_note_pos(sp, picked_track, ctr) == pos))
 										{	//If the note is in the same difficulty and starts at the same time as the note that was just imported
 											length2 = eof_get_note_length(sp, picked_track, ctr);
 											lengthdiff = (length1 > length2) ? (length1 - length2) : (length2 - length1);	//Determine the difference between the note lengths
 
-											if((length2 != 0) && (lengthdiff > 1))
-											{	//If the note has had its length determined and it's more than 1ms different from the note that was just imported
-												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tApplying disjointed status to note #%lu and #%lu at %lums in difficulty %d", ctr, k - 1, pos, eof_get_note_type(sp, picked_track, ctr));
-												eof_log(eof_log_string, 3);
+											if(eof_get_note_note(sp, picked_track, ctr) != note)
+											{	//If the note is not identical to the note that was just imported
+												if((length2 != 0) && (lengthdiff > 1))
+												{	//If the note has had its length determined and it's more than 1ms different from the note that was just imported
+													(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tApplying disjointed status to note #%lu and #%lu at %lums in difficulty %d", ctr, k - 1, pos, eof_get_note_type(sp, picked_track, ctr));
+													eof_log(eof_log_string, 3);
 
-												eflags = eof_get_note_eflags(sp, picked_track, ctr) | EOF_NOTE_EFLAG_DISJOINTED;
-												eof_set_note_eflags(sp, picked_track, ctr, eflags);	//Add the disjointed status to the pre-existing note
-												eflags = eof_get_note_eflags(sp, picked_track, k - 1) | EOF_NOTE_EFLAG_DISJOINTED;
-												eof_set_note_eflags(sp, picked_track, k - 1, eflags);	//Add the disjointed status to the note that was just imported
-												break;
+													eflags = eof_get_note_eflags(sp, picked_track, ctr) | EOF_NOTE_EFLAG_DISJOINTED;
+													eof_set_note_eflags(sp, picked_track, ctr, eflags);	//Add the disjointed status to the pre-existing note
+													eflags = eof_get_note_eflags(sp, picked_track, k - 1) | EOF_NOTE_EFLAG_DISJOINTED;
+													eof_set_note_eflags(sp, picked_track, k - 1, eflags);	//Add the disjointed status to the note that was just imported
+													break;
+												}
 											}
 										}
 									}
@@ -3813,6 +3841,43 @@ eof_log("\tThird pass complete", 1);
 					if(sp->pro_guitar_track[i]->note[j]->note & bitmask)
 					{	//If the string is used in this note
 						sp->pro_guitar_track[i]->note[j]->frets[k] |= 0x80;	//Set this string to be muted
+					}
+				}
+			}
+		}
+	}
+
+//Perform cleanup for notes imported from an LLPLUS MIDI
+	eof_sort_notes(sp);
+	for(i = 0; i < tracks; i++)
+	{	//For each imported track
+		if(eof_import_events[i]->game == 3)
+		{	//If the track is in LLPLUS format
+			unsigned long tracksize = eof_get_track_size(sp, i);
+			for(j = 0; j < tracksize; j++)
+			{	//For each note in the track
+				unsigned long thispos, nextpos, thislength, nextlength;
+				unsigned char thisnote, nextnote;
+
+				thispos = eof_get_note_pos(sp, i, j);
+				thisnote = eof_get_note_note(sp, i, j);
+				thislength = eof_get_note_length(sp, i, j);
+				if(j + 1 < tracksize)
+				{	//If there's another note
+					nextpos = eof_get_note_pos(sp, i, j + 1);
+					nextnote = eof_get_note_note(sp, i, j + 1);
+					nextlength = eof_get_note_length(sp, i, j + 1);
+
+					if((nextpos == thispos) && (nextnote == thisnote))
+					{	//If this note and the next are at the same timstamp and define the same lane (hold note definition), keep the longer note
+						if(nextlength > thislength)
+						{	//If the next note is longer
+							eof_set_note_note(sp, i, j, 0);	//Erase all gems from this note
+						}
+						else
+						{	//This note is longer
+							eof_set_note_note(sp, i, j + 1, 0);	//Erase all gems from the next note
+						}
 					}
 				}
 			}

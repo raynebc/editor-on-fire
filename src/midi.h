@@ -99,6 +99,8 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format);
 	//If format is nonzero, a format suitable for Fretlight M-Player is written, where low E uses channel 15 and high E uses channel 10 (16 - lane number),
 	//  all velocities are written as 127 and track names are prefixed with "FMP - " as required by the Fretlight M-Player program.
 	//  In this format, each pro guitar/bass track is written twice (once each in Synthesia and Fretlight formats) to allow synth playback of arrangements in Fretlight M-Player
+int eof_export_llplus_midi(char *fn);
+	//Writes the active track difficulty to the format used by Lightners Live Plus (LLPLUS)
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp);
 	//Parses the chart, returning a linked list of anchors (tempo changes), or NULL on error
