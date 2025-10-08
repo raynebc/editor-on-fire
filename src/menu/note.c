@@ -5704,6 +5704,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_PRO_GUITAR_NOTE *np;
+	int first_fret_field = 0;	//Remember the dialog item representing the first populated fret field
+	int first_finger_field = 0;	//Remember the dialog item representing the first populated finger field
+	int start_focus = 0;		//Used to return to the calling function the dialog field that should have focus by default, ie. the first finger number field missing a value or otherwise the first populated fret field
 
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
@@ -5776,6 +5779,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 			eof_pro_guitar_note_frets_dialog[27 - ctr].flags = 0;			//Ensure this mute check box is enabled
 			if(np->note & bitmask)
 			{	//If this string is already defined as being in use, copy its fret value to the string
+				if(!first_fret_field)
+					first_fret_field = 13 - (2 * ctr);	//If first_fret_field hasn't been set yet, set it to the first populated fret input field
+
 				if(np->frets[ctr] == 0xFF)
 				{	//If this string is muted with no fret value specified
 					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
@@ -5792,6 +5798,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 					}
 					if(np->finger[ctr] != 0)
 					{	//If the finger used to fret this string is defined
+						if(!first_finger_field)
+							first_finger_field = 20 - ctr;	//If first_finger_field hasn't been set yet, set it to the first populated finger input field
+
 						(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%u", np->finger[ctr]);	//Create the finger string
 						if(eof_finger_strings[ctr][0] == '5')
 						{	//If this is the value for the thumb
@@ -5800,6 +5809,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 					}
 					else
 					{
+						if(!start_focus)
+							start_focus = 20 - ctr;	//If this is the first undefined finger number, track the corresponding dialog field
+
 						eof_finger_strings[ctr][0] = '\0';	//Otherwise empty the string
 					}
 				}
@@ -5860,7 +5872,22 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 		eof_pro_guitar_note_frets_dialog[0].dp = eof_pro_guitar_note_frets_dialog_function_0_string;	//Correct the dialog's title bar
 	}
 
-	return 1;
+	if(!start_focus)
+	{	//If no missing finger definition was found
+		if(!dialog)
+			start_focus = first_fret_field;	//Set the starting focus to the first populated fret number field if the "Edit note frets/fingering" dialog is being prepared
+		else
+			start_focus = first_finger_field;	//Otherwise set it to the first populated finger number field
+	}
+	if(!start_focus)
+	{	//If no suitable initial focus was found, do not return 0 upon success
+		if(!dialog)
+			start_focus = 13;	//In the case of the "Edit note frets/fingering" dialog, init to the last fret input field
+		else
+			start_focus = 20;	//Otherwise init to the last finger input field
+	}
+
+	return start_focus;
 }
 
 int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_made)
@@ -5877,6 +5904,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	EOF_PRO_GUITAR_NOTE *np;
 	char retry, fingeringdefined, offerupdatefingering;
 	char rerun;	//Tracks whether the dialog will re-initialize and run again, such as if any buttons other than OK or cancel were used
+	int init_focus;
 
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
@@ -5902,14 +5930,14 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 		if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
 			return 0;	//Do not allow this function to run if a valid note isn't selected
 
-		eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(0, function);	//Prepare the dialog
+		init_focus = eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(0, function);	//Prepare the dialog
 
 		//Run and process the dialog
 		rerun = 0;
 		retval = 0;
 		bitmask = 0;
 		retry = fingeringdefined = offerupdatefingering = 0;
-		retval = eof_popup_dialog(eof_pro_guitar_note_frets_dialog, 0);
+		retval = eof_popup_dialog(eof_pro_guitar_note_frets_dialog, init_focus);
 		if((retval == 29) || (retval == 30))
 		{	//If user clicked OK or Apply
 			//Validate the finger strings
@@ -6251,6 +6279,7 @@ int eof_menu_note_edit_pro_guitar_note_fingers(void)
 	static char dont_ask = 0;	//Is set to nonzero if the user opts to suppress the prompt regarding modifying multiple selected notes
 	EOF_PRO_GUITAR_TRACK *tp;
 	char rerun;	//Tracks whether the dialog will re-initialize and run again, such as if any buttons other than OK or cancel were used
+	int init_focus;
 
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 0;	//Do not allow this function to run unless the pro guitar track is active
@@ -6275,12 +6304,12 @@ int eof_menu_note_edit_pro_guitar_note_fingers(void)
 
 	do
 	{
-		eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(1, 0);	//Prepare the dialog
+		init_focus = eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(1, 0);	//Prepare the dialog
 
 		//Run and process the dialog
 		rerun = 0;
 		bitmask = 0;
-		retval = eof_popup_dialog(eof_pro_guitar_note_frets_dialog, 0);
+		retval = eof_popup_dialog(eof_pro_guitar_note_frets_dialog, init_focus);
 		if((retval == 29) || (retval == 30))
 		{	//If user clicked OK or Apply
 			//Apply changes

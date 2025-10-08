@@ -133,7 +133,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 	//If dialog is 1, the dialog is prepared for the "Edit note fingering" function,
 	//	in which case the fret value input fields and disabled for editing, the mute checkboxes are hidden
 	//The dialog title bar is updated to reflect which function is being performed
-	//Returns nonzero on success
+	//Returns nonzero on success, which will be the suggested initial focus object of eof_pro_guitar_note_frets_dialog[]
 int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_made);
 	//Allows a pro guitar note's fret and fingering values to be defined.
 	//Rocksmith uses finger 0 to define use of the thumb, but EOF uses a value of 0 for undefined, so a user-specified value of 0, 't' or 'T' will be translated and stored as 5.

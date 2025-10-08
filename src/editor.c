@@ -4564,23 +4564,28 @@ void eof_editor_logic(void)
 				while(mouse_b & 4);	//Wait until the middle mouse button is released before proceeding (this depends on automatic mouse polling, so EOF cannot call poll_mouse() manually or this becomes an infinite loop)
 				if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 				{	//If a pro guitar track is active
-					if(eof_count_selected_and_unselected_notes(NULL))
-					{	//If any notes in the active track difficulty are selected
-						if(eof_fingering_view)
-							(void) eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
-						else
-							(void) eof_menu_note_edit_pro_guitar_note();
-					}
-					else if(eof_hover_note >= 0)
+					if(eof_hover_note >= 0)
 					{	//if a note is being hovered over
+						char note_selection_backup[EOF_MAX_NOTES];
+						unsigned long selected_note_backup;
+
+						//Back up the note selection
+						memcpy(note_selection_backup, eof_selection.multi, sizeof(eof_selection.multi));
+						selected_note_backup = eof_selection.current;
+
+						//Set the note selection to just the hover note
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 						eof_selection.current = eof_hover_note;		//Temporarily mark the hover note as the selected note
 						eof_selection.multi[eof_hover_note] = 1;
+
 						if(eof_fingering_view)
 							(void) eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
 						else
 							(void) eof_menu_note_edit_pro_guitar_note();
-						eof_selection.current = EOF_MAX_NOTES - 1;	//Clear the selected note statuses
-						eof_selection.multi[eof_hover_note] = 0;
+
+						//Restore the note selection
+						eof_selection.current = selected_note_backup;
+						memcpy(eof_selection.multi, note_selection_backup, sizeof(eof_selection.multi));
 					}
 					eof_mclick_released = 0;
 				}
