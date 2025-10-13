@@ -1294,9 +1294,45 @@ void eof_song_reapply_all_dynamic_highlighting(void);
 	//Removes and re-applies any enabled dynamic highlighting (notes in arpeggios, notes that are not grid snapped) to all tracks
 	// and calls eof_detect_difficulties() for the active track to update the highlighting indicator for each track
 
-unsigned long eof_find_note_at_pos(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long pos);
-	//Checks each note in the specified track and returns the index of the first one that is at the specified timestamp
-	//ULONG_MAX is returned if there is no matching note or upon error
+
+typedef struct {
+	//! track number to search within
+	unsigned int track;			/* can't use global because of catalog */
+	//! tolerance, initialize this and #nlen with 0 for simple lookups
+	int x_tolerance;
+	int pos;				 ///< position to search notes around within #x_tolerance
+	//! alternative position according to snaplogic, or set to -1 to ignore
+	int snap_pos;
+	int type;					///< note type to search for, used by predicates
+	/*! @brief note length
+	 *
+	 * Commonly set as a side effect by a predicate function. Initialize
+	 * to 0 if you don't use predicate or if predicate function does not set it.
+	 */
+	long nlen;
+	//! lane to search around within #x_tolerance when using #is_maybe_tail_or_lane_match predicate
+	int hoverlane;
+	long npos;					///< note position, set & used internally
+} EOF_NOTE_SEARCH_INFO;
+
+/*!
+ * @brief Predicate function type for use with #eof_find_note_at_pos.
+ * 
+ * \see #is_same_note_type and #is_maybe_tail_or_lane_match
+ */
+typedef bool (*note_search_p)(const int note, EOF_NOTE_SEARCH_INFO *const si);
+
+/*!
+ * @brief Find a note at the specified position.
+ *
+ * This function leverages the fact  that notes are sorted by position
+ * to perform a binary search for notes satisfying a predicate.
+ *
+ * @param si Search related parameters.
+ * @param predicate Predicate to use or NULL for simple search for exact position.
+ * @return The note number if found, -1 if not found.
+ */
+int eof_find_note_at_pos(EOF_NOTE_SEARCH_INFO *const si, note_search_p predicate);
 
 unsigned long eof_get_pos_num_notes_after_timestamp(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned long numnotes);
 	//Starting at the specified timestamp in the specified pro guitar track, returns the timestamp of the normal pro guitar note numnotes # of notes further into the track

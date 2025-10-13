@@ -12210,17 +12210,54 @@ void eof_song_reapply_all_dynamic_highlighting(void)
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting to reflect the active track
 }
 
-unsigned long eof_find_note_at_pos(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long pos)
+int eof_find_note_at_pos(EOF_NOTE_SEARCH_INFO *const si, note_search_p predicate)
 {
-	unsigned long ctr;
+	long start = 0;
+	long end = eof_get_track_size(eof_song, si->track);
+	enum stage { START, LEFT, RIGHT } stage = START;
+	long mid_mid; /* original candidate midpoint */
+	long end_end; /* original end before heading left */
+	const int left = si->pos - si->x_tolerance;
+	const int right = si->pos + si->x_tolerance;
+	const int sleft = si->snap_pos - si->x_tolerance;
+	const int sright = si->snap_pos + si->x_tolerance;
+	bool acceptable = true;
 
-	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
-	{	//For each note in the specified track
-		if(eof_get_note_pos(sp, track, ctr) == pos)
-			return ctr;
+	while (start <= end && stage != RIGHT)
+	{
+		long mid = (start + end) / 2;
+		si->npos = eof_get_note_pos(eof_song, si->track, mid);
+		if (predicate) /* mouse hover */
+			acceptable = predicate(mid, si);
+		if (si->npos <= right && left <= si->npos + si->nlen ||
+			si->snap_pos >= 0 && si->npos <= sright && sleft < si->npos + si->nlen) {
+			if (acceptable)
+				return mid; /* not necessarily the leftmost */
+			else if (stage == START) {
+				end_end = end;
+				mid_mid = end = mid;
+				stage = LEFT;
+			}
+			else if (stage == LEFT) {
+				if (start != mid)
+					end = mid - 1;
+				else {
+					/* there is nothing to the left of original midpoint */
+					stage = RIGHT;
+					start = mid_mid;
+					end = end_end;
+				}
+			}
+			else /* if (stage == RIGHT) */
+				start = mid + 1;
+		}
+		else if (si->npos < si->pos)
+			start = mid + 1;
+		else /* if (examined_pos < pos) */
+			end = mid - 1;
 	}
 
-	return ULONG_MAX;	//No match
+	return -1;
 }
 
 unsigned long eof_get_pos_num_notes_after_timestamp(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned long numnotes)

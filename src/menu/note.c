@@ -7338,7 +7338,14 @@ int eof_menu_arpeggio_unmark_logic(int handshape)
 			}
 
 			//Delete the ghost gems that were placed at the start of the arpeggio/hanshape
-			ghostnote = eof_find_note_at_pos(eof_song, eof_selected_track, eof_note_type, tp->arpeggio[j].start_pos);
+			EOF_NOTE_SEARCH_INFO si = {
+				.track = eof_selected_track,
+				.snap_pos = -1,
+				.pos = tp->arpeggio[j].start_pos,
+				.x_tolerance = 0,
+				.nlen = 0
+			};
+			ghostnote = eof_find_note_at_pos(&si, NULL);
 			if(ghostnote < eof_get_track_size(eof_song, eof_selected_track))
 			{	//If a note was found at the start of this arpeggio/handshape
 				unsigned long note = eof_get_note_note(eof_song, eof_selected_track, ghostnote);

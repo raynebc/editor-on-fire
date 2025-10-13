@@ -7732,6 +7732,14 @@ unsigned char eof_find_pen_note_mask(void)
 	return (1 << (unsigned)eof_hover_piece);	//Return the normal pen mask, where mousing over the top most lane activates lane 1 for the pen mask
 }
 
+//! Same note type predicate used during the playback to determine hover notes
+static bool is_same_note_type(const int note, EOF_NOTE_SEARCH_INFO *const si) {
+	si->nlen = eof_get_note_length(eof_song, si->track, note);
+	if (si->nlen < 100)
+		si->nlen = 100;
+	return eof_get_note_type(eof_song, si->track, note) == si->type;
+}
+
 void eof_editor_logic_common(void)
 {
 //	eof_log("eof_editor_logic_common() entered");
@@ -8058,7 +8066,6 @@ void eof_editor_logic_common(void)
 		int examined_music_pos = eof_music_pos.value;		//By default, assume the chart position is to be used to find hover notes/etc.
 		int examined_track = eof_selected_track;	//By default, assume the active track is to be used to find hover notes/etc.
 		int examined_type = eof_note_type;			//By default, assume the active difficulty is to be used to find hover notes/etc.
-		int examined_pos, zoom;
 
 		if(eof_music_catalog_playback)
 		{	//If the fret catalog is playing
@@ -8068,37 +8075,17 @@ void eof_editor_logic_common(void)
 		}
 
 		//Find the hover note
-		examined_pos = examined_music_pos / eof_zoom;
-		zoom = eof_av_delay / eof_zoom;	//Cache this value
-		for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
-		{
-			if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
-			{
-				npos = eof_get_note_pos(eof_song, examined_track, i) / eof_zoom;
-				if((examined_pos - zoom > npos) && (examined_pos - zoom < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100) / eof_zoom))
-				{
-					eof_hover_note = i;	//Set the hover note to be the note at the playback position
-					if(eof_vocals_selected)
-					{	//If the lyric track is active, set the lyric pen note
-						eof_pen_lyric.note = eof_get_note_note(eof_song, examined_track, i);
-					}
-					break;
-				}
-			}
-		}
-
-		//Find the hover 2 note
-		for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
-		{
-			if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
-			{
-				npos = eof_get_note_pos(eof_song, examined_track, i) + eof_av_delay;
-				if((examined_music_pos > npos) && (examined_music_pos < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100)))
-				{
-					eof_hover_note_2 = i;
-					break;
-				}
-			}
+		EOF_NOTE_SEARCH_INFO si = {
+			.track = examined_track,
+			.x_tolerance = 0,
+			.type = examined_type,
+			.pos = examined_music_pos - eof_av_delay,
+			.snap_pos = -1
+		};
+		eof_hover_note = eof_hover_note_2 = eof_find_note_at_pos(&si, &is_same_note_type);
+		if (eof_hover_note >=0 && eof_vocals_selected)
+		{	//If the lyric track is active, set the lyric pen note
+			eof_pen_lyric.note = eof_get_note_note(eof_song, examined_track, i);
 		}
 
 		//Find the hover lyric, if there is one
@@ -8182,16 +8169,18 @@ void eof_seek_to_nearest_grid_snap(void)
 	eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the nearest grid snap
 }
 
+static bool is_maybe_tail_or_lane_match(const int note, EOF_NOTE_SEARCH_INFO *const si);
+
 long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 {
-	unsigned long i, npos, leftboundary, hoverlane = 0;
-	long nlen;
-	int candidate;
-
-	if(targetpos < 0)
-	{
-		targetpos = 0;
-	}
+	EOF_NOTE_SEARCH_INFO si = {
+		.track = eof_selected_track,
+		.x_tolerance = x_tolerance,
+		.type = eof_note_type,
+		.pos = targetpos,
+		.snap_pos = snaplogic ? eof_snap.pos : -1,
+		.hoverlane = 0
+	};
 	if(snaplogic)
 	{
 		eof_snap_logic(&eof_snap, targetpos);
@@ -8202,74 +8191,57 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 	(void) eof_find_pen_note_mask();	//Set eof_hover_piece to reflect whichever lane the mouse is over
 	if(eof_note_tails_clickable)
 	{	//If the user enabled the preference to include note tails in the clickable area for notes
-		hoverlane = 1 << (unsigned)eof_hover_piece;	//Get the bitmask reflecting the lane the mouse is currently hovering over
+		si.hoverlane = 1 << (unsigned)eof_hover_piece;	//Get the bitmask reflecting the lane the mouse is currently hovering over
 	}
-	for(i = 0; (i < eof_get_track_size(eof_song, eof_selected_track)); i++)
-	{	//For each note in the active track, until a hover note is found
-		if(eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type)
-			continue;	//If the note is not in the active difficulty, skip it
+	return eof_find_note_at_pos(&si, &is_maybe_tail_or_lane_match);
+}
 
-		candidate = 0;	//Reset this status
-		npos = eof_get_note_pos(eof_song, eof_selected_track, i);
-		if(npos < x_tolerance)
-		{	//Avoid an underflow here
-			leftboundary = 0;
+/** @brief Predicate function for #eof_find_note_at_pos.
+ *
+ * This function is used with mouse hovering logic to determine whether mouse pointer is over a note
+ * or its tail, if tails are clickable, or is in a specific lane for disjointed legacy notes,
+ * i.e. those not subjected to merging by fixup logic.
+*/
+static bool is_maybe_tail_or_lane_match(const int note, EOF_NOTE_SEARCH_INFO *const si) {
+	if (eof_note_tails_clickable && (eof_vocals_selected || (si->hoverlane & eof_get_note_note(eof_song, si->track, note))))
+	{	//If the user enabled the preference to include note tails in the clickable area for notes, and the vocal track is active or the mouse is hovering over a lane this note uses
+		const long next = eof_track_fixup_next_note(eof_song, si->track, note);	//Find the next note in the track difficulty
+
+		si->nlen = eof_get_note_length(eof_song, si->track, note);
+		if (si->nlen < 0)
+		{	//If the note length was not retrievable
+			si->nlen = 0;
 		}
-		else
-		{
-			leftboundary = npos - x_tolerance;
-		}
-		if(eof_note_tails_clickable && (eof_vocals_selected || (hoverlane & eof_get_note_note(eof_song, eof_selected_track, i))))
-		{	//If the user enabled the preference to include note tails in the clickable area for notes, and the vocal track is active or the mouse is hovering over a lane this note uses
-			long next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);	//Find the next note in the track difficulty
+		else if (next > 0)
+		{	//If there was a next note, ensure that the clickable area of the note is shortened to allow clickable space for that next note
+			unsigned long nextpos = eof_get_note_pos(eof_song, si->track, next);
 
-			nlen = eof_get_note_length(eof_song, eof_selected_track, i);
-			if(nlen < 0)
-			{	//If the note length was not retrievable
-				nlen = 0;
-			}
-			else if(next > 0)
-			{	//If there was a next note, ensure that the clickable area of the note is shortened to allow clickable space for that next note
-				unsigned long nextpos = eof_get_note_pos(eof_song, eof_selected_track, next);
-
-				if(npos + nlen + x_tolerance >= nextpos - x_tolerance)
-				{	//If the note's tail extends into the clickable area of the next note
-					if(nlen >= x_tolerance)
-					{	//If the note length's clickable area can be reduced by the tolerance
-						nlen -= x_tolerance;
-					}
-					else
-					{	//Otherwise don't allow the note's tail to be clickable because it's too close to the next note
-						nlen = 0;
-					}
+			if (si->npos + si->nlen + si->x_tolerance >= nextpos - si->x_tolerance)
+			{	//If the note's tail extends into the clickable area of the next note
+				if (si->nlen >= si->x_tolerance)
+				{	//If the note length's clickable area can be reduced by the tolerance
+					si->nlen -= si->x_tolerance;
+				}
+				else
+				{	//Otherwise don't allow the note's tail to be clickable because it's too close to the next note
+					si->nlen = 0;
 				}
 			}
 		}
-		else
-		{	//Otherwise only include the note head as the clickable area, including the specified tolerance
-			nlen = 0;
-		}
-		if((targetpos >= leftboundary) && (targetpos <= npos + nlen + x_tolerance))
-		{
-			candidate = 1;	//This is a likely hover note
-		}
-		else if(snaplogic && ((eof_pen_note.pos >= npos - x_tolerance) && (eof_pen_note.pos <= npos + nlen + x_tolerance)))
-		{	//If the position wasn't close enough to a note, but snaplogic is enabled, check the position's closest grid snap
-			candidate = 1;	//This is a likely hover note
-		}
-		if(candidate)
-		{	//If the above logic identified the mouse's X coordinate is within the range suitable for this note
-			if(eof_get_note_eflags(eof_song, eof_selected_track, i) & EOF_NOTE_EFLAG_DISJOINTED)
-			{	//If the candidate note has disjointed status
-				if(!(eof_get_note_note(eof_song, eof_selected_track, i) & (1 << (unsigned)eof_hover_piece)))
-				{	//If the mouse's Y coordinate isn't also hovering over the candidate note's gem
-					continue;	//This hover note candidate is rejected
-				}
-			}
-			return i;
+	}
+	else
+	{	//Otherwise only include the note head as the clickable area, including the specified tolerance
+		si->nlen = 0;
+	}
+
+	if (eof_get_note_eflags(eof_song, si->track, note) & EOF_NOTE_EFLAG_DISJOINTED)
+	{	//If the candidate note has disjointed status
+		if (!(eof_get_note_note(eof_song, si->track, note) & (1 << (unsigned)eof_hover_piece)))
+		{	//If the mouse's Y coordinate isn't also hovering over the candidate note's gem
+			return false;	//This hover note candidate is rejected
 		}
 	}
-	return -1;	//No appropriate hover note found
+	return true;
 }
 
 void eof_update_seek_selection(unsigned long start, unsigned long stop, char deselect)
