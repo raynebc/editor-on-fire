@@ -955,10 +955,9 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 	eof_beat_stats_cached = 1;
 }
 
-unsigned long eof_beat_contains_mover_rs_phrase(EOF_SONG *sp, unsigned long beat, unsigned long track, EOF_TEXT_EVENT **ptr)
+unsigned long eof_beat_contains_mover_rs_phrase_index(EOF_SONG *sp, unsigned long beat, unsigned long track, unsigned long *index)
 {
 	unsigned long ctr, num = 0;
-	char *str;
 
 	if(!sp || (beat >= sp->beats) || (track >= sp->tracks))
 		return 0;	//Invalid parameters
@@ -967,25 +966,33 @@ unsigned long eof_beat_contains_mover_rs_phrase(EOF_SONG *sp, unsigned long beat
 	{	//For each text event
 		if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS) && (sp->text_event[ctr]->pos == beat))
 		{	//If this text event is assigned to the specified beat marker
-			if(eof_is_section_marker(sp->text_event[ctr], track))
-			{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
-				str = strcasestr_spec(sp->text_event[ctr]->text, "mover");
-				if(str && isdigit(str[0]))
-				{	//The phrase "mover" was encountered followed by a digit
-					if(eof_read_macro_number(str, &num))
-					{	//If the phrase text after "mover" was parsed as a valid number
-						if(ptr)
-						{	//If the calling function wanted to receive the pointer to this text event
-							*ptr = sp->text_event[ctr];	//Store it by reference in the pointer
-						}
-						return num;	//Return that number
-					}
+			num = eof_is_mover_phrase(sp, track, sp->text_event[ctr]);	//Determine whether this event is a moveR phrase and if so, get the numeric value from it
+			if(num)
+			{	//If it was found to be a valid moveR phrase
+				if(index)
+				{	//If the calling function wanted the index of the event
+					*index = ctr;
 				}
+				return num;
 			}
 		}
 	}
 
 	return 0;	//No mover phrase found on the specified beat
+}
+
+unsigned long eof_beat_contains_mover_rs_phrase(EOF_SONG *sp, unsigned long beat, unsigned long track, EOF_TEXT_EVENT **ptr)
+{
+	unsigned long num, index = 0;
+
+	num = eof_beat_contains_mover_rs_phrase_index(sp, beat, track, &index);
+
+	if(num && ptr)
+	{	//If a moveR phrase was found on that beat, and the calling function wanted to receive a pointer to it
+		*ptr = sp->text_event[index];	//Store it by reference in the pointer
+	}
+
+	return num;	//Return the operand value of the moveR phrase if one was found
 }
 
 double eof_get_distance_in_beats(EOF_SONG *sp, unsigned long pos1, unsigned long pos2)

@@ -46,6 +46,8 @@ int eof_text_is_section_marker(const char *text);
 int eof_is_section_marker(EOF_TEXT_EVENT *ep, unsigned long track);
 	//Returns nonzero if the specified text event is recognized as a section marker event based on either its text (as per eof_text_is_section_marker) or its flags
 	//If track is nonzero, and the event's associated track is nonzero, the event's track must match the specified track for the function to return nonzero
+unsigned long eof_is_mover_phrase(EOF_SONG *sp, unsigned long track, EOF_TEXT_EVENT *ep);
+	//Returns the numeric operand of the specified moveR event, or 0 upon error or if the specified event is not a moveR event from the perspective of the specified track
 unsigned long eof_events_set_rs_solo_phrase_status(char *name, unsigned long track, int status, char *undo_made);
 	//For all RS phrase events with the specified name that are defined for the specified track (or 0 to indicate all tracks)
 	//  set the RS solo phrase flag if status is nonzero, otherwise clear the flag

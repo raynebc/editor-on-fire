@@ -1,8 +1,10 @@
 #include <allegro.h>
+#include <ctype.h>
 #include "main.h"
 #include "beat.h"
 #include "event.h"
 #include "undo.h"
+#include "foflc/Lyric_storage.h"	//For strcasestr_spec()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -317,6 +319,29 @@ int eof_is_section_marker(EOF_TEXT_EVENT *ep, unsigned long track)
 		}
 	}
 	return 0;
+}
+
+unsigned long eof_is_mover_phrase(EOF_SONG *sp, unsigned long track, EOF_TEXT_EVENT *ep)
+{
+	unsigned long num = 0;
+	char *str;
+
+	if(!sp || !ep || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+
+	if(eof_is_section_marker(ep, track))
+	{	//If the specified text event's string or flags indicate a section marker (from the perspective of the specified track)
+		str = strcasestr_spec(ep->text, "mover");
+		if(str && isdigit(str[0]))
+		{	//The phrase "mover" was encountered followed by a digit
+			if(eof_read_macro_number(str, &num))
+			{	//If the phrase text after "mover" was parsed as a valid number
+				return num;	//Return that number
+			}
+		}
+	}
+
+	return 0;	//Not a valid moveR phrase
 }
 
 unsigned long eof_events_set_rs_solo_phrase_status(char *name, unsigned long track, int status, char *undo_made)

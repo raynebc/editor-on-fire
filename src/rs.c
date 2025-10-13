@@ -323,18 +323,46 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 	eof_process_beat_statistics(sp, track);	//Rebuild beat stats from the perspective of the track being examined
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event in the chart
-		match = 0;
-		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
-		{	//For each beat in the chart
-			if((sp->beat[ctr2]->contained_section_event >= 0) && ((unsigned long)sp->beat[ctr2]->contained_section_event == ctr))
-			{	//If the beat's statistics indicate this section is used
-				match = 1;	//Note that this section is to be kept
-				break;
+		if(!eof_is_mover_phrase(sp, track, sp->text_event[ctr]))
+		{	//If this event is NOT a moveR phrase
+			match = 0;
+			for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
+			{	//For each beat in the chart
+				if((sp->beat[ctr2]->contained_section_event >= 0) && ((unsigned long)sp->beat[ctr2]->contained_section_event == ctr))
+				{	//If the beat's statistics indicate this section is used
+					match = 1;	//Note that this section is to be kept
+					break;
+				}
+			}
+			if(!match)
+			{	//If none of the beat stats used this section
+				eventlist[ctr] = NULL;	//Eliminate this section from the list since only 1 section per beat will be exported
 			}
 		}
-		if(!match)
-		{	//If none of the beat stats used this section
-			eventlist[ctr] = NULL;	//Eliminate this section from the list since only 1 section per beat will be exported
+	}
+
+	//Check each moveR phrase and only keep those that take effect (are the first moveR phrase defined on any beat)
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event in the chart
+		if(eof_is_mover_phrase(sp, track, sp->text_event[ctr]))
+		{	//If this event is a moveR phrase
+			match = 0;
+			for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
+			{	//For each beat in the chart
+				unsigned long index = 0;
+				if(eof_beat_contains_mover_rs_phrase_index(sp, ctr2, track, &index))
+				{	//If this beat contains a moveR phrase
+					if(index == ctr)
+					{	//If the contained moveR phrase is the one being evaluated in the outer for loop
+						match = 1;	//Note that this moveR phrase is to be kept
+						break;
+					}
+				}
+			}
+			if(!match)
+			{	//If none of the beats used this moveR phrase as its authoritative moveR phrase
+				eventlist[ctr] = NULL;	//Eliminate this moveR phrase from the list since only 1 moveR phrase per beat will be exported
+			}
 		}
 	}
 
@@ -366,7 +394,7 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 		}
 		else
 		{	//This event is not a section marker
-			eventlist[ctr] = NULL;	//Eliminate this note from the list since it's not a chord
+			eventlist[ctr] = NULL;	//Eliminate this event from the list
 		}
 	}
 
@@ -6005,7 +6033,7 @@ void eof_rs2_export_note_string_to_xml(EOF_SONG * sp, unsigned long track, unsig
 int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsigned short *user_warned, int target)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
-	unsigned long *sectionlist = NULL, sectionlistsize, ctr, ctr2, numsections, phraseid = 0;
+	unsigned long *sectionlist = NULL, sectionlistsize, ctr, ctr2, numsections;
 	char end_phrase_found = 0;	//Will track if there was a manually defined END phrase
 	char buffer[200] = {0}, buffer2[50] = {0};
 	unsigned long endbeat;		//This will indicate the first beat after the exported track's last note
@@ -6113,6 +6141,10 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		{	//If this beat has a section event (RS phrase)
 			numsections++;	//Update section marker instance counter
 		}
+		if(eof_beat_contains_mover_rs_phrase(sp, ctr, track, NULL))
+		{	//If this beat has a moveR phrase
+			numsections++;	//Update section marker instance counter
+		}
 	}
 	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers (Rocksmith phrases) in the chart (from the perspective of the track being exported)
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique phrases
@@ -6171,27 +6203,56 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	(void) pack_fputs(buffer, fp);
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the chart
-		if(sp->beat[ctr]->contained_section_event < 0)
-			continue;	//If this beat does not have a section event, skip it
+		unsigned long mover = 0, movernum, phraseid = ULONG_MAX, moverid = ULONG_MAX;
 
-		for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
-		{	//For each of the entries in the unique section list
-			assert(sectionlist != NULL);	//Unneeded check to resolve a false positive in Splint
-			if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
-			{	//If this event matches a section marker entry
-				phraseid = ctr2;
-				break;
+		movernum = eof_beat_contains_mover_rs_phrase_index(sp, ctr, track, &mover);	//Track whether this beat has a moveR phrase
+		if((sp->beat[ctr]->contained_section_event < 0) && !mover)
+			continue;	//If this beat does not have a section event and does not haev a moveR phrase, skip it
+
+		if(sp->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event, identify it in the section list
+			for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
+			{	//For each of the entries in the unique section list
+				assert(sectionlist != NULL);	//Unneeded check to resolve a false positive in Splint
+				if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
+				{	//If this event matches a section marker entry
+					phraseid = ctr2;
+					break;
+				}
 			}
+
+			if(phraseid == ULONG_MAX)
+			{	//If the section couldn't be found
+				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
+				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
+				free(sectionlist);
+				return 0;	//Return error
+			}
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
+			(void) pack_fputs(buffer, fp);
 		}
-		if(ctr2 >= sectionlistsize)
-		{	//If the section couldn't be found
-			allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
-			eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
-			free(sectionlist);
-			return 0;	//Return error
+
+		if(mover)
+		{	//This beat has a moveR phrase, identify it in the section list
+			for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
+			{	//For each of the entries in the unique section list
+				if(movernum == eof_is_mover_phrase(sp, track, sp->text_event[sectionlist[ctr2]]))
+				{	//If this section list entry is the same moveR amount as the moveR event in question
+					moverid = ctr2;
+					break;
+				}
+			}
+
+			if(moverid == ULONG_MAX)
+			{	//If the moveR phrase couldn't be found
+				allegro_message("Error:  Couldn't find moveR phrase in unique section list.  Aborting Rocksmith export.");
+				eof_log("Error:  Couldn't find moveR phrase in unique section list.  Aborting Rocksmith export.", 1);
+				free(sectionlist);
+				return 0;	//Return error
+			}
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, moverid);
+			(void) pack_fputs(buffer, fp);
 		}
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
-		(void) pack_fputs(buffer, fp);
 	}
 	(void) pack_fputs("  </phraseIterations>\n", fp);
 	if(sectionlistsize)
