@@ -7078,14 +7078,14 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//If this beat has any text events
 			unsigned long xcoord_event = xcoord;		//By default, the event will be rendered at this beat's X coordinate
-			unsigned long xcoord_mover = 0;			//If the beat's phrase/section events are displaced by a "moveR" phrase, this variable will track the new X coordinate position for rendering them
+			unsigned long xcoord_mover = 0;			//If the beat's events are displaced by a "moveR" phrase, this variable will track the new X coordinate position for rendering them
 
 			line(window->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
 
 			xcoord_mover = eof_beat_contains_mover_rs_phrase(eof_song, i, eof_selected_track, NULL);	//Determine if this beat has a "moveR" phrase
 			if(xcoord_mover)
-			{	//If this beat has a "moveR" phrase to displace the phrases/sections on the beat
-				xcoord_mover = eof_get_pos_num_notes_after_timestamp(eof_song, eof_selected_track, eof_song->beat[i]->pos, xcoord_mover);	//Determine the position the phrases/sections are being moved to
+			{	//If this beat has a "moveR" phrase to displace itself and any sections on that beat
+				xcoord_mover = eof_get_pos_num_notes_after_timestamp(eof_song, eof_selected_track, eof_song->beat[i]->pos, xcoord_mover);	//Determine the position the phrase/section are being moved to
 				if(xcoord_mover)
 				{	//If that position was determined
 					xcoord_event = lpos + xcoord_mover / eof_zoom;	//Get the x coordinate at which to render the displaced events
@@ -8087,16 +8087,19 @@ void eof_editor_logic_common(void)
 			}
 		}
 
-		//Find the hover 2 note
-		for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
-		{
-			if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
+		//Find the hover 2 note, only if a fret catalog entry is going to be rendered
+		if(eof_display_catalog && eof_song->catalog->entries)
+		{	//If show catalog is selected and there's at least one entry
+			for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
 			{
-				npos = eof_get_note_pos(eof_song, examined_track, i) + eof_av_delay;
-				if((examined_music_pos > npos) && (examined_music_pos < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100)))
+				if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
 				{
-					eof_hover_note_2 = i;
-					break;
+					npos = eof_get_note_pos(eof_song, examined_track, i) + eof_av_delay;
+					if((examined_music_pos > npos) && (examined_music_pos < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100)))
+					{
+						eof_hover_note_2 = i;
+						break;
+					}
 				}
 			}
 		}

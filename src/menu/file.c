@@ -4224,24 +4224,32 @@ int eof_save_helper_checks(void)
 				stopbeat = eof_get_beat(eof_song, stop);	//And the beat in which it ends
 				if(eof_beat_num_valid(eof_song, stopbeat) && (stop == eof_song->beat[stopbeat]->pos) && (stopbeat > startbeat))
 				{	//If the note extends up to and ends on the beat
-					stopbeat--;	//Interpret it as ending at the previous beat instead of surpassing it
+					stopbeat--;	//Interpret it as ending in the previous beat instead of surpassing it
 				}
 				if(!eof_beat_num_valid(eof_song, startbeat) || !eof_beat_num_valid(eof_song, stopbeat) || (startbeat == stopbeat))
 					continue;	//If either of those beats weren't successfully identified or they are the same beat, skip the logic below
 
 				for(ctr3 = startbeat + 1; (ctr3 <= stopbeat) && (ctr3 < eof_song->beats); ctr3++)
 				{	//For each beat after the start beat up to and including the stop beat
-					if(eof_song->beat[ctr3]->contained_rs_section_event >= 0)
-						sectionchange = 1;	//This beat indicates a section change
+					unsigned long event_pos = eof_song->beat[ctr3]->pos;	//The effective position of the examined phrase/section, depending on the presence of a moveR phrase
+					unsigned long mover_pos = eof_beat_contains_mover_rs_phrase(eof_song, ctr3, ctr, NULL);	//Determine if this beat has a "moveR" phrase
 
-					if(eof_song->beat[ctr3]->contained_section_event >= 0)
-					{	//If the beat has a phrase change
-						if(!eof_beat_contains_mover_rs_phrase(eof_song, ctr3, eof_selected_track, NULL))
-						{	//If the phrase(s) on this beat are NOT being manipulated by the "moveR" mechanism
-							phrasechange = 1;	//This beat indicates a phrase change
+					if(mover_pos)
+					{	//If this beat has a "moveR" phrase to displace itself and any sections on that beat
+						mover_pos = eof_get_pos_num_notes_after_timestamp(eof_song, ctr, eof_song->beat[ctr3]->pos, mover_pos);	//Determine the position the phrase/section are being moved to
+						if(mover_pos)
+						{	//If that position was determined
+							event_pos = mover_pos;		//That is the timestamp a note must cross to trigger this warning
 						}
 					}
+
+					if((eof_song->beat[ctr3]->contained_rs_section_event >= 0) && (stop >= event_pos))
+						sectionchange = 1;	//This beat indicates a section change
+
+					if((eof_song->beat[ctr3]->contained_section_event >= 0) && (stop >= event_pos))
+						phrasechange = 1;	//This beat indicates a phrase change
 				}
+
 				if(sectionchange || phrasechange)
 				{	//If the section or phrase changes during the course of the note
 					eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll

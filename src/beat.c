@@ -932,11 +932,7 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 		{	//If this text event is assigned to a beat marker
 			if(eof_is_section_marker(sp->text_event[ctr], track))
 			{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
-				char *str = strcasestr_spec(sp->text_event[ctr]->text, "mover");
-				if(!str || !isdigit(str[0]))
-				{	//As long as this isn't a "mover" phrase
-					sp->beat[sp->text_event[ctr]->pos]->contained_section_event = ctr;
-				}
+				sp->beat[sp->text_event[ctr]->pos]->contained_section_event = ctr;
 			}
 			else if(!ustrcmp(sp->text_event[ctr]->text, "[end]"))
 			{	//If this is the [end] event

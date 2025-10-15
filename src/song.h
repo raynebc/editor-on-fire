@@ -1300,9 +1300,10 @@ unsigned long eof_find_note_at_pos(EOF_SONG *sp, unsigned long track, unsigned c
 
 unsigned long eof_get_pos_num_notes_after_timestamp(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned long numnotes);
 	//Starting at the specified timestamp in the specified pro guitar track, returns the timestamp of the normal pro guitar note numnotes # of notes further into the track
+	//By design of the moveR mechanism, if a note is at the same timestamp as the moveR phrase, that note is the first note in the scope of the mechanism
 	//If the track has dynamic difficulty enabled, only the highest difficulty level note at each timestamp is considered in this process
 	//If the track has static difficulties, only the active difficulty's notes are considered
-	//This is to find the target position of an event displaced by the "moveR" mechanism, which repositions a phrase/section a specified number of notes after a beat position
+	//This is to find the target position of a "moveR" phrase, which repositions itself and any section at the same timestamp a specified number of notes after the phrase's position
 	//Returns 0 on error or if there is no such position that can be calculated
 
 #endif

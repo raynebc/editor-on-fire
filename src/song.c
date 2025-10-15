@@ -12242,8 +12242,8 @@ unsigned long eof_get_pos_num_notes_after_timestamp(EOF_SONG *sp, unsigned long 
 	tp = sp->pro_guitar_track[tracknum];
 	for(ctr = ctr2 = 0; ctr < tp->pgnotes; ctr++)
 	{	//For each normal note in the specified pro guitar track
-		if(tp->pgnote[ctr]->pos <= pos)
-			continue;	//If this note is not after the target, skip it
+		if(tp->pgnote[ctr]->pos < pos)
+			continue;	//If this note is not at or after the target, skip it
 
 		if(eof_note_applies_to_diff(sp, track, ctr, targetdiff))
 		{	//If this is the highest difficulty note at this position in the track
