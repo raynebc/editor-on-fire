@@ -8252,13 +8252,23 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 		{	//Otherwise only include the note head as the clickable area, including the specified tolerance
 			nlen = 0;
 		}
-		if((targetpos >= leftboundary) && (targetpos <= npos + nlen + x_tolerance))
+		if(targetpos >= leftboundary)
 		{
-			candidate = 1;	//This is a likely hover note
+			if(targetpos <= npos + nlen + x_tolerance)
+				candidate = 1;	//This is a likely hover note
 		}
-		else if(snaplogic && ((eof_pen_note.pos >= npos - x_tolerance) && (eof_pen_note.pos <= npos + nlen + x_tolerance)))
-		{	//If the position wasn't close enough to a note, but snaplogic is enabled, check the position's closest grid snap
-			candidate = 1;	//This is a likely hover note
+		else if(!snaplogic)	//If the nearest snap position isn't being considered
+			return -1;	//This and all remaining notes are after the target position, there can be no hover note
+
+		if(!candidate && snaplogic)
+		{	//If the position wasn't close enough to a note to be a match, but snaplogic is enabled, check the position's closes grid snap
+			if(eof_pen_note.pos >= npos - x_tolerance)
+			{
+				if(eof_pen_note.pos <= npos + nlen + x_tolerance)
+					candidate = 1;	//This is a likely hover note
+			}
+			else
+				return -1;	//This and all remaining notes are after the target position, there can be no hover note
 		}
 		if(candidate)
 		{	//If the above logic identified the mouse's X coordinate is within the range suitable for this note
