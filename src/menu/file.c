@@ -6904,7 +6904,22 @@ int eof_menu_file_export_song_preview(void)
 		//Determine the name to save the WAV file to
 		if(eof_song->tags->title[0] != '\0')
 		{	//If the chart has a defined song title
-			(void) snprintf(wavname, sizeof(wavname), "%s_preview.wav", eof_song->tags->title);
+			if(eof_write_rs_files || eof_write_rs2_files)
+			{	//If either Rocksmith export is enabled
+				unsigned long ctr;
+				(void) snprintf(wavname, sizeof(wavname), "%s_rocksmith_preview.wav", eof_song->tags->title);	//Have the preview audio filename more closely match the Rocksmith audio filename to help DLCB automatically identify it
+				for(ctr = 0; wavname[ctr] != '\0'; ctr++)
+				{	//For each character in that string
+					if(eof_is_illegal_filename_character(wavname[ctr]))
+					{	//If the character isn't valid for use in a filename
+						wavname[ctr] = '_';	//Substitute it with an underscore
+					}
+				}
+			}
+			else
+			{
+				(void) snprintf(wavname, sizeof(wavname), "%s_preview.wav", eof_song->tags->title);
+			}
 		}
 		else
 		{	//Otherwise default to "guitar"
