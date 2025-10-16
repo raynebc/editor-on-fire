@@ -1971,7 +1971,11 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 
 						else if((midinote >= 35) && (midinote <= 39))
 						{	//The range of notes used by the game Lightners Live Plus (LLPLUS)
-							eof_import_events[i]->game = 3;	//LLPLUS format detected
+							if(eof_import_events[i]->game != 3)
+							{	//If this track wasn't detected as LLPLUS yet
+								eof_log("\t\t!LLPLUS track detected", 1);
+								eof_import_events[i]->game = 3;	//LLPLUS format detected
+							}
 							diff = 0;	//LLPLUS charts only have one instrument and one difficulty
 							switch(midinote)
 							{

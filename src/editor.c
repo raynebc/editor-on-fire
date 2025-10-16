@@ -8056,9 +8056,8 @@ void eof_editor_logic_common(void)
 	if(eof_music_catalog_playback || !eof_music_paused)
 	{	//If the chart or fret catalog is playing
 		int examined_music_pos = eof_music_pos.value;		//By default, assume the chart position is to be used to find hover notes/etc.
-		int examined_track = eof_selected_track;	//By default, assume the active track is to be used to find hover notes/etc.
+		int examined_track = eof_selected_track;		//By default, assume the active track is to be used to find hover notes/etc.
 		int examined_type = eof_note_type;			//By default, assume the active difficulty is to be used to find hover notes/etc.
-		int examined_pos, zoom;
 
 		if(eof_music_catalog_playback)
 		{	//If the fret catalog is playing
@@ -8068,38 +8067,30 @@ void eof_editor_logic_common(void)
 		}
 
 		//Find the hover note
-		examined_pos = examined_music_pos / eof_zoom;
-		zoom = eof_av_delay / eof_zoom;	//Cache this value
 		for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
 		{
 			if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
 			{
-				npos = eof_get_note_pos(eof_song, examined_track, i) / eof_zoom;
-				if((examined_pos - zoom > npos) && (examined_pos - zoom < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100) / eof_zoom))
+				npos = eof_get_note_pos(eof_song, examined_track, i) + eof_av_delay;
+				if((examined_music_pos > npos) && (examined_music_pos < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100)))
 				{
-					eof_hover_note = i;	//Set the hover note to be the note at the playback position
+					if(eof_music_catalog_playback)
+					{	//If the fret catalog is playing
+						eof_hover_note_2 = i;	//Set the catalog hover note to be the note at the playback position
+						if(examined_track == eof_selected_track)
+							eof_hover_note = i;	//If the catalog entry is in the active track, the hover note is the same
+					}
+					else
+					{
+						eof_hover_note = i;		//Set the hover note to be the note at the playback position
+						if(eof_display_catalog && (eof_selected_catalog_entry < eof_song->catalog->entries) && (eof_song->catalog->entry[eof_selected_catalog_entry].flags == eof_selected_track))
+							eof_hover_note_2 = i;	//If the catalog is being displayed and the active entry is in the active track, the catalog hover note is the same
+					}
 					if(eof_vocals_selected)
 					{	//If the lyric track is active, set the lyric pen note
 						eof_pen_lyric.note = eof_get_note_note(eof_song, examined_track, i);
 					}
 					break;
-				}
-			}
-		}
-
-		//Find the hover 2 note, only if a fret catalog entry is going to be rendered
-		if(eof_display_catalog && eof_song->catalog->entries)
-		{	//If show catalog is selected and there's at least one entry
-			for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
-			{
-				if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
-				{
-					npos = eof_get_note_pos(eof_song, examined_track, i) + eof_av_delay;
-					if((examined_music_pos > npos) && (examined_music_pos < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100)))
-					{
-						eof_hover_note_2 = i;
-						break;
-					}
 				}
 			}
 		}
