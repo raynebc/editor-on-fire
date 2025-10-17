@@ -12240,7 +12240,7 @@ int eof_find_note_at_pos(EOF_NOTE_SEARCH_INFO *const si, note_search_p predicate
 			}
 			else if (stage == LEFT) {
 				if (start != mid)
-					end = mid - 1;
+					end -= 2; /* effectively decrease mid by 1 */
 				else {
 					/* there is nothing to the left of original midpoint */
 					stage = RIGHT;
@@ -12249,7 +12249,7 @@ int eof_find_note_at_pos(EOF_NOTE_SEARCH_INFO *const si, note_search_p predicate
 				}
 			}
 			else /* if (stage == RIGHT) */
-				start = mid + 1;
+				start += 2; /* effectively increase mid by 1 */
 		}
 		else if (si->npos < si->pos)
 			start = mid + 1;
