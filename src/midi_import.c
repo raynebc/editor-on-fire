@@ -34,7 +34,8 @@ typedef struct
 	EOF_IMPORT_MIDI_EVENT * event[EOF_IMPORT_MAX_EVENTS];
 	unsigned long events;
 	int type;
-	int game;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, 1 to indicate a Power Gig MIDI is being imported, 2 to indicate a Guitar Hero animation track is being imported or 3 to indicate an LLPLUS MIDI is being imported
+	int game	;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, 1 to indicate a Power Gig MIDI is being imported, 2 to indicate a Guitar Hero animation track is being imported or 3 to indicate an LLPLUS MIDI is being imported
+	int game2;	//Used to track a potential game format detection, since the presence of LLPLUS notes may be ambiguous unless no other mandatory criteria (such as Rock Band style track names) are encountered
 	unsigned char diff;	//Some tracks (such as the pro keys and Power Gig tracks) have all of their contents applicable to a single difficulty level
 	unsigned long tracknum;
 } EOF_IMPORT_MIDI_EVENT_LIST;
@@ -69,6 +70,7 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 	lp->events = 0;
 	lp->type = -1;
 	lp->game = 0;
+	lp->game2 = 0;
 	lp->diff = 0;
 	lp->tracknum = 0;
 	return lp;
@@ -612,6 +614,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 					else
 					{
 						eof_midi_import_add_event(eof_import_events[i], absolute_pos, current_event, d1, d2, i);
+					}
+					if((d1 >= 35) && (d1 <= 39))
+					{	//The range of notes used by the game Lightners Live Plus (LLPLUS)
+						eof_import_events[i]->game2 = 3;	//Suspected LLPLUS MIDI track
 					}
 					break;
 				}
@@ -1365,20 +1371,25 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		int last_106 = 0;
 		unsigned long overdrive_pos = 0;
 		char rb_pro_yellow = 0;					//Tracks the status of forced yellow pro drum notation
-		unsigned long rb_pro_yellow_pos = 0;	//Tracks the last start time of a forced yellow pro drum phrase
+		unsigned long rb_pro_yellow_pos = 0;		//Tracks the last start time of a forced yellow pro drum phrase
 		char rb_pro_blue = 0;					//Tracks the status of forced yellow pro drum notation
 		unsigned long rb_pro_blue_pos = 0;		//Tracks the last start time of a forced blue pro drum phrase
 		char rb_pro_green = 0;					//Tracks the status of forced yellow pro drum notation
 		unsigned long rb_pro_green_pos = 0;		//Tracks the last start time of a forced green pro drum phrase
 		unsigned long notenum = 0;
 		char fretwarning = 0;					//Tracks whether the user was warned about the track violating its standard fret limit, if applicable
-		unsigned long linestart = 0;			//Tracks the start of a line of lyrics for Power Gig MIDIs, which don't formally mark line placements with a note
+		unsigned long linestart = 0;				//Tracks the start of a line of lyrics for Power Gig MIDIs, which don't formally mark line placements with a note
 		char linetrack = 0;						//Is set to nonzero when linestart is tracking the position of the current line of lyrics
-		char filter = 0;						//Is set to nonzero if the track's note limit is reached and upon prompting, the user opts to import only the expert difficulty
+		char filter = 0;							//Is set to nonzero if the track's note limit is reached and upon prompting, the user opts to import only the expert difficulty
 
 		if(eof_import_events[i]->type < 0)
-		{	//If this track is to be skipped (ie. unidentified track)
-			continue;
+		{	//If the format of this track hasn't been identified yet
+			if(eof_import_events[i]->game2 == 3)
+			{	//If this track was found to have notes applicable to LLPLUS
+				eof_import_events[i]->type = 0;	//If will be imported as a guitar track
+			}
+			else
+				continue;	//This track is to be skipped
 		}
 		if(eof_import_events[i]->events == 0)
 		{	//If this track has no imported events
