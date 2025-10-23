@@ -918,6 +918,13 @@ if(eof_key_code == KEY_PAUSE)
 
 	if(eof_song_loaded)
 	{
+		char * returnedfn = ncd_file_select(0, eof_last_eof_path, "Select Music File", eof_filter_music_files);
+		char data[21];
+		EOF_AUDIO_METADATA test = {"INAME", data, sizeof(data)};
+		if(returnedfn)
+		{
+			eof_find_wav_metadata(returnedfn, &test, 1);
+		}
 	}
 }
 ///ALT handling testing

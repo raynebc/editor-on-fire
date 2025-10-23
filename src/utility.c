@@ -1012,3 +1012,184 @@ unsigned long eof_pack_read_vlv(PACKFILE *fp, unsigned long *byte_counter)
 
 	return value;
 }
+
+int eof_packfile_search_phrase(PACKFILE *inf, const char *phrase, unsigned long phraselen, unsigned long *bytes_read)
+{
+	unsigned char c = 0;
+	int ret;
+	unsigned long ctr = 0;		//Used to index into the phrase[] array, beginning with the first character
+	unsigned char success = 0;
+	unsigned long read_count = 0;
+
+//Validate input
+	if(!inf || !phrase)	//These input parameters are not allowed to be NULL
+		return -1;
+
+	if(!phraselen)
+		return 0;	//There will be no matches to an empty search array
+
+//Initialize for search
+	errno=0;
+	ret = pack_getc(inf);		//Read the first character of the file
+	read_count++;
+	if(ret == EOF)
+		return -1;
+	c = ret;
+
+//Perform search
+	while(!pack_feof(inf))	//While end of file hasn't been reached
+	{
+	//Check if the next character in the search phrase has been matched
+		if(c == phrase[ctr])
+		{	//The next character was matched
+			ctr++;	//Advance to the next character in search array
+			if(ctr == phraselen)
+			{	//If all characters have been matched
+				success=1;
+				break;
+			}
+		}
+		else	//Character did not match
+			ctr=0;			//Ensure that the first character in the search array is looked for
+
+		ret = pack_getc(inf);	//Read the next character of the file
+		read_count++;
+		if(ret == EOF)
+			return -1;
+		c = ret;
+	}
+
+	if(pack_ferror(inf))		//If there was an I/O error
+		return -1;
+
+	if(bytes_read)
+		*bytes_read = read_count;	//If the calling function wanted to know how many bytes were read, return that information by reference
+
+//Return match/non match
+	if(success)
+	{
+		return 1;	//Return match
+	}
+
+	return 0;	//Return no match
+}
+
+unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata, unsigned long metadata_count)
+{
+	PACKFILE *fp = NULL;
+	unsigned long found = 0;
+
+	if(!filename || !metadata || !metadata_count)
+		return 0;	//Invalid parameters
+
+	eof_log("eof_find_wav_metadata() entered", 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsing for metadata from \"%s\"", filename);
+	eof_log(eof_log_string, 1);
+	fp = pack_fopen(filename, "r");
+	if(!fp)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input .wav file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return 0;
+	}
+
+	while(eof_packfile_search_phrase(fp, "LIST", 4, NULL) > 0)
+	{	//For each LIST chunk that is found in the file
+		unsigned long listchunksize = pack_igetl(fp);	//Read the LIST chunk size
+		unsigned long listchunkpos = 0;				//Used to keep track of the file position within the LIST chunk
+
+		if(pack_ferror(fp))
+			return 0;		//If the LIST chunk size was not read, return error
+
+		while(listchunkpos < listchunksize)
+		{	//Until all content in this LIST chunk has been parsed
+			unsigned long bytes_read = 0;
+
+			if((eof_packfile_search_phrase(fp, "INFO", 4, &bytes_read) > 0) && (listchunkpos + bytes_read < listchunksize))
+			{	//If an INFO sub chunk header was read, and it is within the scope of the current LIST chunk
+				listchunkpos += bytes_read;	//Update this position
+
+				while(listchunkpos < listchunksize)
+				{	//Until all content in this LIST chunk has been parsed
+					char text_id[5] = {0};
+					unsigned long text_size, ctr;
+					char *text;
+
+					//Skip any variable amount of padding that occurs before the next piece of metadata
+					do{
+						text_id[0] = pack_getc(fp);
+						listchunkpos++;	//Update this position
+						if(text_id[0] == EOF)
+						{	//If the byte was not read
+							listchunkpos = ULONG_MAX;		//Set a condition to end file parsing
+							break;
+						}
+					}while(text_id[0] == 0);
+
+					//Read metadata ID
+					if(pack_fread(&text_id[1], 3, fp) != 3)
+					{	//If the rest of the text identifier was not read
+						listchunkpos = ULONG_MAX;		//Set a condition to end file parsing
+						break;
+					}
+					listchunkpos += 3;	//Update this position
+					if(listchunkpos >= listchunksize)
+					{	//If the end of the LIST chunk has been reached
+						break;
+					}
+					text_size = pack_igetl(fp);	//Read the number of bytes this metadata item contains, including NULL terminator
+					if(text_size < 2)
+						return 0;	//The string must be long enough for at least one character and a NULL terminator, otherwise it's invalid
+					listchunkpos += 4;	//Update this position
+
+					//Read metadata value
+					if(text_size > 1000)
+					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSkipping large metadata field:  %s (%lu bytes)", text_id, text_size);
+						eof_log(eof_log_string, 1);
+						pack_fseek(fp, text_size);
+						listchunkpos += text_size;	//Update this position
+						if(pack_ferror(fp))
+							return 0;			//Return error if there was an I/O error
+					}
+					else
+					{
+						text = malloc(text_size);
+						if(!text)
+							return 0;	//If memory couldn't be allocated, return error
+						if(pack_fread(text, text_size, fp) != text_size)
+						{	//If the text was not read
+							listchunkpos = ULONG_MAX;		//Set a condition to end file parsing
+							break;
+						}
+						listchunkpos += text_size;	//Update this position
+						text[text_size - 1] = '\0';	//Guarantee this string is terminated
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFound metadata:  %s = \"%s\"", text_id, text);
+						eof_log(eof_log_string, 1);
+
+						//Store metadata value if it's wanted by the calling function
+						for(ctr = 0; ctr < metadata_count; ctr++)
+						{	//For each piece of metadata sought by the calling function
+							if(!stricmp(metadata[ctr].ID, text_id))
+							{	//If the one that was just read is sought
+								if(metadata[ctr].value_array_size < 2)
+								{	//The buffer isn't large enough to store any valid data
+									free(text);
+									return 0;	//Return error
+								}
+								strncpy(metadata[ctr].value, text, metadata[ctr].value_array_size - 1);	//Copy the metadata text, truncate if necessary
+								metadata[ctr].value[metadata[ctr].value_array_size - 1] = '\0';	//Guarantee this string is terminated
+								found++;		//Count how many sought pieces of metadata were found
+								break;
+							}
+						}
+						free(text);	//Release the metadata text buffer
+					}
+				}//Until all content in this LIST chunk has been parsed
+			}//If an INFO sub chunk header was read, and it is within the scope of the current LIST chunk
+		}//Until all content in this LIST chunk has been parsed
+	}//For each LIST chunk that is found in the file
+
+	(void) pack_fclose(fp);
+	return found;
+}

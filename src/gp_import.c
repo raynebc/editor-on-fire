@@ -4345,7 +4345,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									else if(byte == -1)
 									{	//Slide in from below
-										if(fret_value > 1 )
+										if(fret_value > 1)
 										{	//Don't allow this unless sliding into a fret higher than 1
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 											flags |= EOF_NOTE_FLAG_HIGHLIGHT;
@@ -5105,7 +5105,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							gnp->note |= bitmask;	//Copy the gem to the newly added note
 							gnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Increase/decrease the fret number to reflect the slide direction
-							gp->track[ctr]->note[ctr2]->slideend = gnp->frets[ctr3];		//And set that as the end of the pitched slide
+							if(!gp->track[ctr]->note[ctr2]->slideend || (gnp->frets[ctr3] < gp->track[ctr]->note[ctr2]->slideend))
+							{	//Track the lowest fret value for the slide end position
+								gp->track[ctr]->note[ctr2]->slideend = gnp->frets[ctr3];		//And set that as the end of the pitched slide
+							}
 							gp->track[ctr]->note[ctr2]->unpitchend = 0;
 						}
 					}

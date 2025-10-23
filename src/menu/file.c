@@ -1176,6 +1176,7 @@ int eof_menu_file_midi_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
+			eof_changes = 1;
 			if(!eof_repair_midi_import_grid_snap())
 			{
 				eof_log("\tGrid snap correction failed.", 1);
@@ -1206,6 +1207,7 @@ int eof_menu_file_midi_import(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	eof_fix_window_title();
 
 	eof_log("\tMIDI loaded", 1);
 
@@ -2784,6 +2786,7 @@ int eof_menu_file_feedback_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
+			eof_changes = 1;
 			(void) replace_filename(eof_last_db_path, returnedfn_path, "", 1024);	//Set the last loaded Feedback file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
@@ -2799,6 +2802,8 @@ int eof_menu_file_feedback_import(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	eof_fix_window_title();
+
 	return 1;
 }
 
@@ -3091,6 +3096,18 @@ int eof_new_chart(char * filename)
 				strncpy(year, eof_etext3, sizeof(year) - 1);	//Truncate the string to fit
 			}
 		}
+	}
+	else if(!ustricmp("wav", get_extension(oggfilename)))
+	{
+		EOF_AUDIO_METADATA wanted_metadata[6] = {
+			{"IART", eof_etext, sizeof(eof_etext)},
+			{"INAM", eof_etext2, sizeof(eof_etext2)},
+			{"IPRD", album, sizeof(album)},
+			{"ICRD", eof_etext3, sizeof(eof_etext3)},
+			{"IGNR", genre, sizeof(genre)},
+			{"ITRK", tracknumber, sizeof(tracknumber)}};
+
+		eof_find_wav_metadata(oggfilename, wanted_metadata, 6);	//Search for this metadata
 	}
 	else if(!ustricmp("mp3", get_extension(oggfilename)))
 	{
@@ -4968,6 +4985,7 @@ int eof_menu_file_gh_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
+			eof_changes = 1;
 			(void) replace_filename(eof_last_gh_path, returnedfn_path, "", 1024);	//Set the last loaded GH file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
@@ -4988,6 +5006,8 @@ int eof_menu_file_gh_import(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	eof_fix_window_title();
+
 	return 1;
 }
 
@@ -5804,7 +5824,10 @@ int eof_menu_file_gp_import(void)
 		{	//If a project wasn't already opened when the import was started
 			if(!eof_command_line_gp_import(returnedfn))
 			{	//If the file was imported
+				char eof_changes_backup = eof_changes;	//Guitar Pro import will have set this if content was imported, remember this because eof_init_after_load() will clobber it
+
 				eof_init_after_load(0);
+				eof_changes = eof_changes_backup;		//Restore this value
 				(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
 			}
 			else
@@ -5821,6 +5844,7 @@ int eof_menu_file_gp_import(void)
 		}
 		(void) replace_filename(eof_last_gp_path, returnedfn_path, "", 1024);	//Set the last loaded GP file path
 	}
+	eof_fix_window_title();
 	eof_render();
 
 	return 1;
@@ -6164,6 +6188,7 @@ int eof_menu_file_rs_import(void)
 			if(!eof_command_line_rs_import(returnedfn))
 			{	//If the file was imported
 				eof_init_after_load(0);
+				eof_changes = 1;
 			}
 			else
 			{	//Import failed
@@ -6179,6 +6204,7 @@ int eof_menu_file_rs_import(void)
 		}
 		(void) replace_filename(eof_last_rs_path, returnedfn_path, "", 1024);	//Set the last loaded Rocksmith file path
 	}
+	eof_fix_window_title();
 	eof_render();
 
 	return D_O_K;

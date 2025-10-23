@@ -3,6 +3,13 @@
 
 #include "song.h"
 
+typedef struct
+{
+	char *ID;		//The metadata field, ie. IART for artist name
+	char *value;	//The corresponding data for this field
+	unsigned long value_array_size;	//The length of the value buffer, to avoid data overflow
+} EOF_AUDIO_METADATA;
+
 int eof_folder_exists(const char * dir);	//Returns nonzero if the specified file path exists and is a directory
 int eof_chdir(const char * dir);		//Changes the current working directory of the program.  Returns nonzero on error
 int eof_mkdir(const char * dir);
@@ -89,5 +96,18 @@ int eof_set_clipboard(char *text);
 unsigned long eof_pack_read_vlv(PACKFILE *fp, unsigned long *byte_counter);
 	//Reads and returns a variable length value from the specified PACKFILE handle, returns ULONG_MAX on error
 	//If byte_counter is not NULL, it is incremented for each byte that is read from the PACKFILE
+
+int eof_packfile_search_phrase(PACKFILE *inf, const char *phrase, unsigned long phraselen, unsigned long *bytes_read);
+	//Searches from the current file position of inf for the first match of the specified array of characters
+	//phrase is an array of characters to find, and phraselen is the number of characters defined in the array
+	//If a match is found, the file position is left at the first byte after that first match and 1 is returned
+	//If inf or phrase are NULL or if an I/O error occurs, -1 is returned
+	//If the file is parsed but no match is found, 0 is returned
+	//If bytes_read is not NULL, it will store the number of bytes that were read in the PACKFILE stream by this function if the function does not return in error
+
+unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata, unsigned long metadata_count);
+	//Search for the specified list of RIFF format metadata in the specified WAV file
+	//metadata_count is the size of the metadata array and the number of individual pieces of metadata to search for
+	//Returns the number of specified metadata items that were found, or 0 on error
 
 #endif
