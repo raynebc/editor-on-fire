@@ -604,10 +604,22 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 	unsigned long framesize=0;		//Used to validate frame size
 	char buffer[31]={0};			//Used to read an ID3v1 tag in the absence of an ID3v2 tag
 	static struct ID3Frame emptyID3Frame;	//Auto-initialize all members to 0/NULL
+	int jumpcode = 0;
 
 //Validate input parameter
 	if((ptr == NULL) || (ptr->fp == NULL))
 		return 0;	//Return failure
+
+	jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+	{	//If the import failed
+		(void) puts("Assert() handled successfully!");
+		eof_show_mouse(NULL);
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		eof_log("\t\tError:  Could not read ID3 tag.  Undetermined error.", 1);
+		return 1;
+	}
 
 //Find and parse the ID3 header
 //ID3v1

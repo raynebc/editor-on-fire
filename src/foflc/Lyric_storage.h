@@ -4,6 +4,7 @@
 //To test the conditional compiling, pass the following preprocessor definition to the compiler to cause the exit and assert wrapper functions to use setjmp() to return to EOF
 //#define EOF_BUILD
 
+//When EOF calls FoFLC routines that can lead to exit_wrapper() or assert_wrapper() being invoked, setjmp() must be used in advance so that the failure can be caught or EOF can hang
 
 /*		LYRIC STRUCTURE OVERVIEW:
 Import functions are expected to:

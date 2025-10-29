@@ -3130,14 +3130,14 @@ int eof_new_chart(char * filename)
 			{
 				(void) GrabID3TextFrame(&tag,"TPE1",eof_etext,(unsigned long)(sizeof(eof_etext)/sizeof(char)));		//Store the Artist info in eof_etext[]
 				eof_convert_from_extended_ascii(eof_etext, 1024);
-				(void) GrabID3TextFrame(&tag,"TIT2",eof_etext2,(unsigned long)(sizeof(eof_etext2)/sizeof(char)));	//Store the Title info in eof_etext2[]
+				(void) GrabID3TextFrame(&tag,"TIT2",eof_etext2,(unsigned long)(sizeof(eof_etext2)/sizeof(char)));		//Store the Title info in eof_etext2[]
 				eof_convert_from_extended_ascii(eof_etext2, 1024);
 				(void) GrabID3TextFrame(&tag,"TYER",year,(unsigned long)(sizeof(year)/sizeof(char)));				//Store the Year info in year[]
 				eof_sanitize_string(year);			//Filter out unprintable and extended ASCII
 				eof_convert_from_extended_ascii(eof_etext2, 1024);
-				(void) GrabID3TextFrame(&tag,"TALB",album,(unsigned long)(sizeof(album)/sizeof(char)));				//Store the Album info in album[]
+				(void) GrabID3TextFrame(&tag,"TALB",album,(unsigned long)(sizeof(album)/sizeof(char)));			//Store the Album info in album[]
 				eof_convert_from_extended_ascii(album, 256);
-				(void) GrabID3TextFrame(&tag,"TCON",genre,(unsigned long)(sizeof(genre)/sizeof(char)));				//Store the Genre info in genre[]
+				(void) GrabID3TextFrame(&tag,"TCON",genre,(unsigned long)(sizeof(genre)/sizeof(char)));			//Store the Genre info in genre[]
 				eof_sanitize_string(album);			//Filter out unprintable and extended ASCII
 				if((genre[0] != '\0') && (genre[1] == '\0'))
 				{	//If the genre string is a single byte long, it is a genre number instead of a string
