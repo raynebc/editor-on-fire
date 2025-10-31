@@ -752,6 +752,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 	{	//For each note
 		if(!(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY))
 			continue;	//If this note is not marked as crazy, skip it
+		if(eof_track_is_beatable_mode(sp, track) && (eof_get_note_flags(sp, track, i) & EOF_BEATABLE_FLAG_SLIDE_TO_ANY))
+			continue;	//If this is a BEATABLE note that slides to another lane, skip it (it's allowed to overlap a note that is on the originating lane)
 
 		//Otherwise find the next gem that occupies any of the same lanes
 		next = i;
@@ -8275,7 +8277,11 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(sp, eof_selected_track, i) != eof_note_type))
 			continue;	//If the note is not selected, skip it
 
-		next_note = eof_track_fixup_next_note(sp, track, i);	//Get the index of the next note in the active instrument difficulty
+		next_note = eof_track_fixup_next_note(sp, track, i);	//Get the index of the next note in the active instrument difficulty, to limit the length the specified note can be
+		if(eof_track_is_beatable_mode(sp, track) && (eof_get_note_flags(sp, track, i) & EOF_BEATABLE_FLAG_SLIDE_TO_ANY))
+		{	//If this is a BEATABLE note that slides to another lane
+			next_note = -1;	//This note is allowed to overlap a note on any lane, even its own originating lane, so the next note will not limit this note's length
+		}
 		if(amount)
 		{	//If adjusted the note length by the specified number of ms
 			if(dir < 0)
@@ -9418,6 +9424,10 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 		if(next < 0)
 		{	//If there was no next note
 			return LONG_MAX;	//This note has no length limit
+		}
+		if(eof_track_is_beatable_mode(sp, track) && (eof_get_note_flags(sp, track, note) & EOF_BEATABLE_FLAG_SLIDE_TO_ANY))
+		{	//If this is a BEATABLE note that slides to another lane
+			return LONG_MAX;	//This note can overlap a note on any lane
 		}
 
 		nextnote = eof_get_note_note(sp, track, next);	//Get the next note's note bitflag
