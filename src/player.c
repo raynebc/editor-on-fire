@@ -75,6 +75,7 @@ void eof_music_play(char resumelastspeed)
 	{	//Otherwise if the seek position is before the end of the audio, begin playback
 		unsigned long x;
 		int held;	//Tracks whether the user is holding down one of the defined controller buttons
+		int pan = (((double)eof_chart_pan * 255.0) / 100.0) + 0.5;	//Scale this to a value between 0 and 255
 
 		if(!resumelastspeed)
 		{	//If the previous playback speed isn't being re-used, set the speed based on the current playback rate or any keyboard modifiers used
@@ -129,7 +130,7 @@ void eof_music_play(char resumelastspeed)
 		if(speed == 1000)
 		{	//100% speed playback
 			eof_log("\tStarting playback", 1);
-			ret = alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0);
+			ret = alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, pan, speed + eof_audio_fine_tune, 0);
 		}
 		else
 		{
@@ -137,13 +138,13 @@ void eof_music_play(char resumelastspeed)
 			{	//Time stretched playback at any speed other than 100%
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting %d%% speed time stretch playback", speed / 10);
 				eof_log(eof_log_string, 1);
-				ret = alogg_play_ogg_ts(eof_music_track, eof_buffer_size, 255, 128, speed);
+				ret = alogg_play_ogg_ts(eof_music_track, eof_buffer_size, 255, pan, speed);
 			}
 			else
 			{	//Non time stretched playback at any speed other than 100%
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting %d%% speed playback", speed / 10);
 				eof_log(eof_log_string, 1);
-				ret = alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0);
+				ret = alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, pan, speed + eof_audio_fine_tune, 0);
 			}
 		}
 
@@ -179,6 +180,8 @@ void eof_catalog_play(void)
 
 	if((eof_song->catalog->entries > 0) && !eof_silence_loaded)
 	{	//Only play a catalog entry if there's at least one, and there is chart audio loaded
+		int pan = (((double)eof_chart_pan * 255.0) / 100.0) + 0.5;	//Scale this to a value between 0 and 255
+
 		if(!eof_music_paused)
 		{	//Chart/catalog is playing
 			eof_music_play(0);
@@ -202,7 +205,7 @@ void eof_catalog_play(void)
 			#endif
 
 			eof_music_catalog_playback = 1;
-			if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, 1000 + eof_audio_fine_tune, 0) == ALOGG_OK)
+			if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, pan, 1000 + eof_audio_fine_tune, 0) == ALOGG_OK)
 			{
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 				eof_mix_find_claps();

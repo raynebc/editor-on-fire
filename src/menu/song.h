@@ -113,6 +113,10 @@ int eof_set_cue_volume(void *dp3, int d2);
 	//Callback function used by the volume slider GUI control in eof_audio_cues_dialog[].  dp3 is a pointer to the appropriate cue's volume variable
 	//d2 is the value that was set by the slider
 	//returns nonzero on error
+int eof_set_cue_pan(void *dp3, int d2);
+	//Callback function used by the volume slider GUI control in eof_audio_cues_dialog[].  dp3 is a pointer to the appropriate cue's volume variable
+	//d2 is the value that was set by the slider
+	//returns nonzero on error
 int eof_display_flats_menu(void);	//Display the menu item to allow the user to toggle between displaying flat notes and sharp notes
 
 int eof_menu_track_selected_1(void);

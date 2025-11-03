@@ -84,6 +84,21 @@ void eof_load_config(char * fn)
 	eof_midi_synth_instrument_guitar_muted = get_config_int("config", "eof_midi_synth_instrument_guitar_muted", 29);
 	eof_midi_synth_instrument_guitar_harm = get_config_int("config", "eof_midi_synth_instrument_guitar_harm", 32);
 	eof_midi_synth_instrument_bass = get_config_int("config", "eof_midi_synth_instrument_bass", 34);
+	eof_midi_pan = get_config_int("config", "eof_midi_pan", 50);
+	if((eof_midi_pan < 0) || (eof_midi_pan > 100))
+	{
+		eof_midi_pan = 50;
+	}
+	eof_midi_tone_volume = get_config_int("config", "eof_midi_tone_volume", 100);
+	if((eof_midi_tone_volume < 0) || (eof_midi_tone_volume > 100))
+	{
+		eof_midi_tone_volume = 100;
+	}
+	eof_chart_pan = get_config_int("config", "eof_chart_pan", 50);
+	if((eof_chart_pan < 0) || (eof_chart_pan > 100))
+	{
+		eof_chart_pan = 50;
+	}
 	eof_scroll_seek_percent = get_config_int("config", "eof_scroll_seek_percent", 5);
 	if((eof_scroll_seek_percent < 1) || (eof_scroll_seek_percent > 500))
 	{
@@ -570,6 +585,12 @@ void eof_load_config(char * fn)
 		(void) eof_default_ini_add(string, 0);	//Add the rebuilt string to the default INI entries
 	}
 	free_config_entries(&default_settings);
+
+	//Set MIDI parameters if applicable
+	if(eof_midi_pan != 50)
+		eof_midi_set_pan(eof_midi_pan);				//If the pan setting isn't fully centered, set it now
+	if(eof_midi_tone_volume != 100)
+		eof_midi_set_volume(eof_midi_tone_volume);	//If the volume setting isn't maximum, set it now
 }
 
 void eof_save_config(char * fn)
@@ -602,6 +623,9 @@ void eof_save_config(char * fn)
 	set_config_int("config", "eof_midi_synth_instrument_guitar_muted", eof_midi_synth_instrument_guitar_muted + 1);
 	set_config_int("config", "eof_midi_synth_instrument_guitar_harm", eof_midi_synth_instrument_guitar_harm + 1);
 	set_config_int("config", "eof_midi_synth_instrument_bass", eof_midi_synth_instrument_bass + 1);
+	set_config_int("config", "eof_midi_pan", eof_midi_pan);
+	set_config_int("config", "eof_chart_pan", eof_chart_pan);
+	set_config_int("config", "eof_midi_tone_volume", eof_midi_tone_volume);
 	set_config_int("config", "eof_scroll_seek_percent", eof_scroll_seek_percent);
 	set_config_int("config", "buffer_size", eof_buffer_size);
 	set_config_int("config", "smooth_playback", eof_smooth_pos);

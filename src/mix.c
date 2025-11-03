@@ -57,6 +57,7 @@ int eof_clap_volume = 100;	//Stores the volume level for the clap cue, specified
 int eof_tick_volume = 100;	//Stores the volume level for the tick cue, specified as a percentage
 int eof_tone_volume = 100;	//Stores the volume level for the vocal tone cue, specified as a percentage
 int eof_percussion_volume = 100;	//Stores the volume level for the vocal percussion cue, specified as a percentage
+int eof_midi_tone_volume = 100;	//Stores the volume level for the MIDI tones, specified as a percentage
 int eof_clap_for_mutes = 1;			//Specifies whether fully string muted notes trigger the clap sound cue
 int eof_clap_for_ghosts = 1;		//Specifies whether ghosted pro guitar or drum notes trigger the clap sound cue
 int eof_multi_pitch_metronome = 1;	//Specifies whether the metronome will use a lower tick for beats that aren't the first in a measure
@@ -903,6 +904,44 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch,
 			eof_log(debug, 3);
 		}
 	}
+}
+
+void eof_midi_set_pan(unsigned value)
+{
+	unsigned char PAN_DATA[18] = {0xB0, 0xA, 0, 0xB0 | 1, 0xA, 0, 0xB0 | 2, 0xA, 0, 0xB0 | 3, 0xA, 0, 0xB0 | 4, 0xA, 0, 0xB0 | 5, 0xA, 0};	//Commands to set the pan value for channels 0 through 5
+
+	if(midi_driver == NULL)
+	{	//Ensure Allegro's MIDI driver is loaded
+		return;
+	}
+
+	if(value > 100)
+		value = 100;
+	value = (((double)value * 127.0) / 100.0) + 0.5;
+	PAN_DATA[2] = PAN_DATA[5] = PAN_DATA[8] = PAN_DATA[11] = PAN_DATA[14] = PAN_DATA[17] = value;
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSending MIDI pan settings: %X, %X, %u,  %X, %X, %u,  %X, %X, %u,  %X, %X, %u,  %X, %X, %u,  %X, %X, %u", PAN_DATA[0], PAN_DATA[1], PAN_DATA[2], PAN_DATA[3], PAN_DATA[4], PAN_DATA[5], PAN_DATA[6], PAN_DATA[7], PAN_DATA[8], PAN_DATA[9], PAN_DATA[10], PAN_DATA[11], PAN_DATA[12], PAN_DATA[13], PAN_DATA[14], PAN_DATA[15], PAN_DATA[16], PAN_DATA[17]);
+	eof_log(eof_log_string, 1);
+	midi_out(PAN_DATA, 18);	//Send the eighteen bytes of commands
+}
+
+void eof_midi_set_volume(unsigned value)
+{
+	unsigned char VOL_DATA[18] = {0xB0, 0x7, 0, 0xB0 | 1, 0x7, 0, 0xB0 | 2, 0x7, 0, 0xB0 | 3, 0x7, 0, 0xB0 | 4, 0x7, 0, 0xB0 | 5, 0x7, 0};	//Commands to set the volume for channels 0 through 5
+
+	if(midi_driver == NULL)
+	{	//Ensure Allegro's MIDI driver is loaded
+		return;
+	}
+
+	if(value > 100)
+		value = 100;
+	value = (((double)value * 127.0) / 100.0) + 0.5;
+	VOL_DATA[2] = VOL_DATA[5] = VOL_DATA[8] = VOL_DATA[11] = VOL_DATA[14] = VOL_DATA[17] = value;
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSending MIDI volume settings: %X, %X, %u,  %X, %X, %u,  %X, %X, %u,  %X, %X, %u,  %X, %X, %u,  %X, %X, %u", VOL_DATA[0], VOL_DATA[1], VOL_DATA[2], VOL_DATA[3], VOL_DATA[4], VOL_DATA[5], VOL_DATA[6], VOL_DATA[7], VOL_DATA[8], VOL_DATA[9], VOL_DATA[10], VOL_DATA[11], VOL_DATA[12], VOL_DATA[13], VOL_DATA[14], VOL_DATA[15], VOL_DATA[16], VOL_DATA[17]);
+	eof_log(eof_log_string, 1);
+	midi_out(VOL_DATA, 18);	//Send the eighteen bytes of commands
 }
 
 void eof_update_midi_timers(void)

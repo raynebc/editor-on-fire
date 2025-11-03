@@ -2153,55 +2153,67 @@ int eof_menu_song_add_silence(void)
 
 #define EOF_CUE_VOLUME_STRING_LEN 10
 char eof_chart_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
+char eof_chart_pan_string[EOF_CUE_VOLUME_STRING_LEN] = "C";
 char eof_clap_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
 char eof_metronome_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
 char eof_tone_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
 char eof_percussion_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
+char eof_midi_tone_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
+char eof_midi_tone_pan_string[EOF_CUE_VOLUME_STRING_LEN] = "C";
 DIALOG eof_audio_cues_dialog[] =
 {
-/*	(proc)					(x)   (y)  (w)	(h) (fg) (bg) (key) (flags) (d1) (d2) (dp)                         (dp2) (dp3) */
-	{ eof_window_proc,	0,	  48, 310, 370,   2,  23,    0,      0,   0,   0, "Audio cues",                 NULL, NULL },
+/*	(proc)				(x)   (y)  (w)	(h) (fg) (bg) (key) (flags) (d1) (d2) (dp)                         (dp2) (dp3) */
+	{ eof_window_proc,	        0,	 48, 310, 430,   2,  23,    0,      0,   0,   0, "Audio cues",                 NULL, NULL },
 	{ d_agup_text_proc,		16,	  88,  64,   8,   2,  23,    0,      0,   0,   0, "Chart volume",               NULL, NULL },
 	{ d_agup_slider_proc,	176,  88,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_chart_volume_string },
 	{ d_agup_text_proc,		275,  88,  30,  16,   2,  23,    0,      0, 100,   0, eof_chart_volume_string,      NULL, NULL },
-	{ d_agup_text_proc,		16,	 108,  64,   8,   2,  23,    0,      0,   0,   0, "Clap volume",                NULL, NULL },
-	{ d_agup_slider_proc,	176, 108,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_clap_volume_string },
-	{ d_agup_text_proc,		275, 108,  30,  16,   2,  23,    0,      0, 100,   0, eof_clap_volume_string,       NULL, NULL },
-	{ d_agup_text_proc,		16,  128,  64,   8,   2,  23,    0,      0,   0,   0, "Metronome volume",           NULL, NULL },
-	{ d_agup_slider_proc,	176, 128,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_metronome_volume_string },
-	{ d_agup_text_proc,		275, 128,  30,  16,   2,  23,    0,      0, 100,   0, eof_metronome_volume_string,  NULL, NULL },
-	{ d_agup_text_proc,		16,  148,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Tone volume",                NULL, NULL },
-	{ d_agup_slider_proc,	176, 148,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_tone_volume_string },
-	{ d_agup_text_proc,		275, 148,  30,  16,   2,  23,    0,      0, 100,   0, eof_tone_volume_string,       NULL, NULL },
-	{ d_agup_text_proc,		16,  168,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Percussion volume",    NULL, NULL },
-	{ d_agup_slider_proc,	176, 168,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_percussion_volume_string },
-	{ d_agup_text_proc,		275, 168,  30,  16,   2,  23,    0,      0, 100,   0, eof_percussion_volume_string, NULL, NULL },
-	{ d_agup_text_proc,		16,  188,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Percussion sound:",    NULL, NULL },
-	{ d_agup_radio_proc,	16,  208,  68,  15,   2,  23,    0,      0,   0,   0, "Cowbell",                    NULL, NULL },
-	{ d_agup_radio_proc,	124, 208,  84,  15,   2,  23,    0,      0,   0,   0, "Triangle 1",                 NULL, NULL },
-	{ d_agup_radio_proc,	210, 208,  30,  15,   2,  23,    0,      0,   0,   0, "2",                          NULL, NULL },
-	{ d_agup_radio_proc,	16,  228, 102,  15,   2,  23,    0,      0,   0,   0, "Tambourine 1",               NULL, NULL },
-	{ d_agup_radio_proc,	124, 228,  30,  15,   2,  23,    0,      0,   0,   0, "2",                          NULL, NULL },
-	{ d_agup_radio_proc,	160, 228,  30,  15,   2,  23,    0,      0,   0,   0, "3",                          NULL, NULL },
-	{ d_agup_radio_proc,	16,  248, 110,  15,   2,  23,    0,      0,   0,   0, "Wood Block 1",               NULL, NULL },
-	{ d_agup_radio_proc,	124, 248,  30,  15,   2,  23,    0,      0,   0,   0, "2",                          NULL, NULL },
-	{ d_agup_radio_proc,	160, 248,  30,  15,   2,  23,    0,      0,   0,   0, "3",                          NULL, NULL },
-	{ d_agup_radio_proc,	196, 248,  30,  15,   2,  23,    0,      0,   0,   0, "4",                          NULL, NULL },
-	{ d_agup_radio_proc,	16,  268,  30,  15,   2,  23,    0,      0,   0,   0, "5",                          NULL, NULL },
-	{ d_agup_radio_proc,	52,  268,  30,  15,   2,  23,    0,      0,   0,   0, "6",                          NULL, NULL },
-	{ d_agup_radio_proc,	88,  268,  30,  15,   2,  23,    0,      0,   0,   0, "7",                          NULL, NULL },
-	{ d_agup_radio_proc,	124, 268,  30,  15,   2,  23,    0,      0,   0,   0, "8",                          NULL, NULL },
-	{ d_agup_radio_proc,	160, 268,  30,  15,   2,  23,    0,      0,   0,   0, "9",                          NULL, NULL },
-	{ d_agup_radio_proc,	196, 268,  40,  15,   2,  23,    0,      0,   0,   0, "10",                         NULL, NULL },
-	{ d_agup_radio_proc,	16,  288,  68,  15,   2,  23,    0,      0,   0,   0, "Clap 1",                     NULL, NULL },
-	{ d_agup_radio_proc,	88,  288,  30,  15,   2,  23,    0,      0,   0,   0, "2",                          NULL, NULL },
-	{ d_agup_radio_proc,	124, 288,  30,  15,   2,  23,    0,      0,   0,   0, "3",                          NULL, NULL },
-	{ d_agup_radio_proc,	160, 288,  30,  15,   2,  23,    0,      0,   0,   0, "4",                          NULL, NULL },
-	{ d_agup_check_proc,	16,  308, 178,  16,   2,  23,    0,      0,   1,   0, "String mutes trigger clap",  NULL, NULL },
-	{ d_agup_check_proc,	16,  328, 178,  16,   2,  23,    0,      0,   2,   0, "Ghost notes trigger clap",   NULL, NULL },
-	{ d_agup_check_proc,	16,  348, 182,  16,   2,  23,    0,      0,   3,   0, "Use multi-pitch metronome",  NULL, NULL },
-	{ d_agup_button_proc,	44,  374,  68,  28,   2,  23, '\r', D_EXIT,   0,   0, "OK",                         NULL, NULL },
-	{ d_agup_button_proc,	172, 374,  68,  28,   2,  23,    0, D_EXIT,   0,   0, "Cancel",                     NULL, NULL },
+	{ d_agup_text_proc,		16,  108,  64,   8,   2,  23,    0,      0,   0,   0, "Chart pan",    NULL, NULL },
+	{ d_agup_slider_proc,	176, 108,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_pan, eof_chart_pan_string },
+	{ d_agup_text_proc,		275, 108,  30,  16,   2,  23,    0,      0, 100,   0, eof_chart_pan_string, NULL, NULL },
+	{ d_agup_text_proc,		16,	 128,  64,   8,   2,  23,    0,      0,   0,   0, "Clap volume",                NULL, NULL },
+	{ d_agup_slider_proc,	176, 128,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_clap_volume_string },
+	{ d_agup_text_proc,		275, 128,  30,  16,   2,  23,    0,      0, 100,   0, eof_clap_volume_string,       NULL, NULL },
+	{ d_agup_text_proc,		16,  148,  64,   8,   2,  23,    0,      0,   0,   0, "Metronome volume",           NULL, NULL },
+	{ d_agup_slider_proc,	176, 148,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_metronome_volume_string },
+	{ d_agup_text_proc,		275, 148,  30,  16,   2,  23,    0,      0, 100,   0, eof_metronome_volume_string,  NULL, NULL },
+	{ d_agup_text_proc,		16,  168,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Tone volume",                NULL, NULL },
+	{ d_agup_slider_proc,	176, 168,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_tone_volume_string },
+	{ d_agup_text_proc,		275, 168,  30,  16,   2,  23,    0,      0, 100,   0, eof_tone_volume_string,       NULL, NULL },
+	{ d_agup_text_proc,		16,  188,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Percussion volume",    NULL, NULL },
+	{ d_agup_slider_proc,	176, 188,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_percussion_volume_string },
+	{ d_agup_text_proc,		275, 188,  30,  16,   2,  23,    0,      0, 100,   0, eof_percussion_volume_string, NULL, NULL },
+	{ d_agup_text_proc,		16,  208,  64,   8,   2,  23,    0,      0,   0,   0, "MIDI Tone volume",    NULL, NULL },
+	{ d_agup_slider_proc,	176, 208,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_volume,	eof_midi_tone_volume_string },
+	{ d_agup_text_proc,		275, 208,  30,  16,   2,  23,    0,      0, 100,   0, eof_midi_tone_volume_string, NULL, NULL },
+	{ d_agup_text_proc,		16,  228,  64,   8,   2,  23,    0,      0,   0,   0, "MIDI Tone pan",    NULL, NULL },
+	{ d_agup_slider_proc,	176, 228,  96,  16,   2,  23,    0,      0, 100,   0, NULL,                         (void *)eof_set_cue_pan, eof_midi_tone_pan_string },
+	{ d_agup_text_proc,		275, 228,  30,  16,   2,  23,    0,      0, 100,   0, eof_midi_tone_pan_string, NULL, NULL },
+	{ d_agup_text_proc,		16,  248,  64,   8,   2,  23,    0,      0,   0,   0, "Vocal Percussion sound:",    NULL, NULL },
+	{ d_agup_radio_proc,	16,  268,  68,  15,   2,  23,    0,      0,   0,   0, "Cowbell",                    NULL, NULL },
+	{ d_agup_radio_proc,	124, 268,  84,  15,   2,  23,    0,      0,   0,   0, "Triangle 1",                 NULL, NULL },
+	{ d_agup_radio_proc,	210, 268,  30,  15,   2,  23,    0,      0,   0,   0, "2",                          NULL, NULL },
+	{ d_agup_radio_proc,	16,  288, 102,  15,   2,  23,    0,      0,   0,   0, "Tambourine 1",               NULL, NULL },
+	{ d_agup_radio_proc,	124, 288,  30,  15,   2,  23,    0,      0,   0,   0, "2",                          NULL, NULL },
+	{ d_agup_radio_proc,	160, 288,  30,  15,   2,  23,    0,      0,   0,   0, "3",                          NULL, NULL },
+	{ d_agup_radio_proc,	16,  308, 110,  15,   2,  23,    0,      0,   0,   0, "Wood Block 1",               NULL, NULL },
+	{ d_agup_radio_proc,	124, 308,  30,  15,   2,  23,    0,      0,   0,   0, "2",                          NULL, NULL },
+	{ d_agup_radio_proc,	160, 308,  30,  15,   2,  23,    0,      0,   0,   0, "3",                          NULL, NULL },
+	{ d_agup_radio_proc,	196, 308,  30,  15,   2,  23,    0,      0,   0,   0, "4",                          NULL, NULL },
+	{ d_agup_radio_proc,	16,  328,  30,  15,   2,  23,    0,      0,   0,   0, "5",                          NULL, NULL },
+	{ d_agup_radio_proc,	52,  328,  30,  15,   2,  23,    0,      0,   0,   0, "6",                          NULL, NULL },
+	{ d_agup_radio_proc,	88,  328,  30,  15,   2,  23,    0,      0,   0,   0, "7",                          NULL, NULL },
+	{ d_agup_radio_proc,	124, 328,  30,  15,   2,  23,    0,      0,   0,   0, "8",                          NULL, NULL },
+	{ d_agup_radio_proc,	160, 328,  30,  15,   2,  23,    0,      0,   0,   0, "9",                          NULL, NULL },
+	{ d_agup_radio_proc,	196, 328,  40,  15,   2,  23,    0,      0,   0,   0, "10",                         NULL, NULL },
+	{ d_agup_radio_proc,	16,  348,  68,  15,   2,  23,    0,      0,   0,   0, "Clap 1",                     NULL, NULL },
+	{ d_agup_radio_proc,	88,  348,  30,  15,   2,  23,    0,      0,   0,   0, "2",                          NULL, NULL },
+	{ d_agup_radio_proc,	124, 348,  30,  15,   2,  23,    0,      0,   0,   0, "3",                          NULL, NULL },
+	{ d_agup_radio_proc,	160, 348,  30,  15,   2,  23,    0,      0,   0,   0, "4",                          NULL, NULL },
+	{ d_agup_check_proc,	16,  368, 178,  16,   2,  23,    0,      0,   1,   0, "String mutes trigger clap",  NULL, NULL },
+	{ d_agup_check_proc,	16,  388, 178,  16,   2,  23,    0,      0,   2,   0, "Ghost notes trigger clap",   NULL, NULL },
+	{ d_agup_check_proc,	16,  408, 182,  16,   2,  23,    0,      0,   3,   0, "Use multi-pitch metronome",  NULL, NULL },
+	{ d_agup_button_proc,	44,  434,  68,  28,   2,  23, '\r', D_EXIT,   0,   0, "OK",                         NULL, NULL },
+	{ d_agup_button_proc,	172, 434,  68,  28,   2,  23,    0, D_EXIT,   0,   0, "Cancel",                     NULL, NULL },
 	{ NULL,                   0,   0,   0,   0,   0,   0,    0,      0,   0,   0, NULL,                         NULL, NULL }
 };
 
@@ -2215,10 +2227,37 @@ int eof_set_cue_volume(void *dp3, int d2)
 
 	(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "%3d%%", d2);	//Rewrite the specified volume slider string
 	(void) object_message(&eof_audio_cues_dialog[3], MSG_DRAW, 0);			//Have Allegro redraw the volume slider strings
-	(void) object_message(&eof_audio_cues_dialog[6], MSG_DRAW, 0);
 	(void) object_message(&eof_audio_cues_dialog[9], MSG_DRAW, 0);
 	(void) object_message(&eof_audio_cues_dialog[12], MSG_DRAW, 0);
 	(void) object_message(&eof_audio_cues_dialog[15], MSG_DRAW, 0);
+	(void) object_message(&eof_audio_cues_dialog[18], MSG_DRAW, 0);
+	(void) object_message(&eof_audio_cues_dialog[21], MSG_DRAW, 0);
+	return 0;
+}
+
+int eof_set_cue_pan(void *dp3, int d2)
+{
+	//Validate input
+	if(dp3 == NULL)
+		return 1;
+	if((d2 < 0) || (d2 > 100))
+		return 1;
+
+	//Rewrite the specified pan slider string
+	if(d2 < 50)
+	{	//Panning to left of center
+		(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "L+%2u", 50 - d2);
+	}
+	else if(d2 == 50)
+	{	//Center
+		(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "C    ");
+	}
+	else
+	{	//Panning to right of center
+		(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "R+%2u", d2 - 50);
+	}
+	(void) object_message(&eof_audio_cues_dialog[6], MSG_DRAW, 0);	//Have Allegro redraw the pan slider strings
+	(void) object_message(&eof_audio_cues_dialog[24], MSG_DRAW, 0);
 	return 0;
 }
 
@@ -2232,41 +2271,50 @@ int eof_menu_audio_cues(void)
 	eof_color_dialog(eof_audio_cues_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_audio_cues_dialog);
 	eof_audio_cues_dialog[2].d2 = eof_chart_volume;
-	eof_audio_cues_dialog[5].d2 = eof_clap_volume;
-	eof_audio_cues_dialog[8].d2 = eof_tick_volume;
-	eof_audio_cues_dialog[11].d2 = eof_tone_volume;
-	eof_audio_cues_dialog[14].d2 = eof_percussion_volume;
+	eof_audio_cues_dialog[5].d2 = eof_chart_pan;
+	eof_audio_cues_dialog[8].d2 = eof_clap_volume;
+	eof_audio_cues_dialog[11].d2 = eof_tick_volume;
+	eof_audio_cues_dialog[14].d2 = eof_tone_volume;
+	eof_audio_cues_dialog[17].d2 = eof_percussion_volume;
+	eof_audio_cues_dialog[20].d2 = eof_midi_tone_volume;
+	eof_audio_cues_dialog[23].d2 = eof_midi_pan;
 
-	for(x = 17; x <= 36; x++)
+	for(x = 26; x <= 45; x++)
 	{	//Deselect all vocal percussion radio buttons
 		eof_audio_cues_dialog[x].flags = 0;
 	}
 	eof_audio_cues_dialog[eof_selected_percussion_cue].flags = D_SELECTED;	//Activate the radio button for the current vocal percussion cue
 
-	eof_audio_cues_dialog[37].flags = eof_clap_for_mutes ? D_SELECTED : 0;	//Update the "String mutes trigger clap" option
-	eof_audio_cues_dialog[38].flags = eof_clap_for_ghosts ? D_SELECTED : 0;	//Update the "Ghost notes trigger clap" option
-	eof_audio_cues_dialog[39].flags = eof_multi_pitch_metronome ? D_SELECTED : 0;	//Update the "Use multi-pitch metronome" option
+	eof_audio_cues_dialog[46].flags = eof_clap_for_mutes ? D_SELECTED : 0;	//Update the "String mutes trigger clap" option
+	eof_audio_cues_dialog[47].flags = eof_clap_for_ghosts ? D_SELECTED : 0;	//Update the "Ghost notes trigger clap" option
+	eof_audio_cues_dialog[48].flags = eof_multi_pitch_metronome ? D_SELECTED : 0;	//Update the "Use multi-pitch metronome" option
 
-	//Rebuild the volume slider strings, as they are not guaranteed to be all 100% on launch of EOF since EOF stores the user's last-configured volumes in the config file
+	//Rebuild the volume/pan slider strings, as they are not guaranteed to be all 100% on launch of EOF since EOF stores the user's last-configured volumes in the config file
 	(void) eof_set_cue_volume(eof_chart_volume_string, eof_chart_volume);
+	(void) eof_set_cue_pan(eof_chart_pan_string, eof_chart_pan);
 	(void) eof_set_cue_volume(eof_clap_volume_string, eof_clap_volume);
 	(void) eof_set_cue_volume(eof_metronome_volume_string, eof_tick_volume);
 	(void) eof_set_cue_volume(eof_tone_volume_string, eof_tone_volume);
 	(void) eof_set_cue_volume(eof_percussion_volume_string, eof_percussion_volume);
+	(void) eof_set_cue_volume(eof_midi_tone_volume_string, eof_midi_tone_volume);
+	(void) eof_set_cue_pan(eof_midi_tone_pan_string, eof_midi_pan);
 
-	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 40)			//User clicked OK
+	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 49)			//User clicked OK
 	{
 		eof_chart_volume = eof_audio_cues_dialog[2].d2;				//Store the volume set by the chart volume slider
 		eof_chart_volume_multiplier = sqrt(eof_chart_volume/100.0);	//Store this math so it only needs to be performed once
-		eof_clap_volume = eof_audio_cues_dialog[5].d2;				//Store the volume set by the clap cue volume slider
-		eof_tick_volume = eof_audio_cues_dialog[8].d2;				//Store the volume set by the tick cue volume slider
-		eof_tone_volume = eof_audio_cues_dialog[11].d2;				//Store the volume set by the tone cue volume slider
-		eof_percussion_volume = eof_audio_cues_dialog[14].d2;		//Store the volume set by the vocal percussion cue volume slider
-		eof_clap_for_mutes = eof_audio_cues_dialog[37].flags == D_SELECTED ? 1 : 0;	//Store the "String mutes trigger clap" option
-		eof_clap_for_ghosts = eof_audio_cues_dialog[38].flags == D_SELECTED ? 1 : 0;	//Store the "Ghost notes trigger clap" option
-		eof_multi_pitch_metronome = eof_audio_cues_dialog[39].flags == D_SELECTED ? 1 : 0;	//Store the "Use multi-pitch metronome" option
+		eof_chart_pan = eof_audio_cues_dialog[5].d2;				//Store the pan value set by the chart pan slider
+		eof_clap_volume = eof_audio_cues_dialog[8].d2;				//Store the volume set by the clap cue volume slider
+		eof_tick_volume = eof_audio_cues_dialog[11].d2;				//Store the volume set by the tick cue volume slider
+		eof_tone_volume = eof_audio_cues_dialog[14].d2;			//Store the volume set by the tone cue volume slider
+		eof_percussion_volume = eof_audio_cues_dialog[17].d2;		//Store the volume set by the vocal percussion cue volume slider
+		eof_midi_tone_volume = eof_audio_cues_dialog[20].d2;		//Store the volume set by the MIDI tone volume slider
+		eof_midi_pan = eof_audio_cues_dialog[23].d2;				//Store the pan value set by the MIDI tone pan slider
+		eof_clap_for_mutes = eof_audio_cues_dialog[46].flags == D_SELECTED ? 1 : 0;	//Store the "String mutes trigger clap" option
+		eof_clap_for_ghosts = eof_audio_cues_dialog[47].flags == D_SELECTED ? 1 : 0;	//Store the "Ghost notes trigger clap" option
+		eof_multi_pitch_metronome = eof_audio_cues_dialog[48].flags == D_SELECTED ? 1 : 0;	//Store the "Use multi-pitch metronome" option
 
-		for(x = 17; x <= 36; x++)
+		for(x = 26; x <= 45; x++)
 		{	//Search for the selected vocal percussion cue
 			if(eof_audio_cues_dialog[x].flags == D_SELECTED)
 			{
@@ -2274,6 +2322,8 @@ int eof_menu_audio_cues(void)
 				break;
 			}
 		}
+		eof_midi_set_volume(eof_midi_tone_volume);	//Set the MIDI tone volume
+		eof_midi_set_pan(eof_midi_pan);				//Set the MIDI pan value
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

@@ -139,6 +139,8 @@ int         eof_midi_synth_instrument_guitar = 28;	//Electric Guitar (clean) MID
 int         eof_midi_synth_instrument_guitar_muted = 29;	//An alternate MIDI instrument to play for palm muted guitar notes
 int         eof_midi_synth_instrument_guitar_harm = 32;		//An alternate MIDI instrument to play for harmonic guitar notes
 int         eof_midi_synth_instrument_bass = 34;	//Electric bass (fingered) MIDI instrument
+int         eof_midi_pan = 50;					//The pan value of the MIDI tones (0 = full left, 50 = center, 100 = full right)
+int         eof_chart_pan = 50;					//The pan value of the chart audio playback (0 = full left, 50 = center, 100 = full right)
 int         eof_scroll_seek_percent = 5;	//The amount of one screen that ALT+scroll will seek
 int         eof_buffer_size = 4096;
 int         eof_audio_fine_tune = 0;

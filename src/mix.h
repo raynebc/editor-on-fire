@@ -30,6 +30,7 @@ extern int eof_clap_volume;					//Stores the volume level for the clap, specifie
 extern int eof_tick_volume;					//Stores the volume level for the tick cue, specified as a percentage
 extern int eof_tone_volume;					//Stores the volume level for the tone cue, specified as a percentage
 extern int eof_percussion_volume;			//Stores the volume level for the vocal percussion cue, specified as a percentage
+extern int eof_midi_tone_volume;				//Stores the volume level for the MIDI tones, specified as a percentage
 extern int eof_clap_for_mutes;				//Specifies whether fully string muted notes trigger the clap sound cue
 extern int eof_clap_for_ghosts;				//Specifies whether ghosted pro guitar notes trigger the clap sound cue
 extern int eof_multi_pitch_metronome;			//Specifies whether the metronome will use a lower tick for beats that aren't the first in a measure
@@ -95,6 +96,12 @@ void eof_midi_play_note_ex(int note, unsigned char channel, unsigned char patch,
 	//Tracks the status of notes played on MIDI channels 0 through 5 using eof_midi_channel_status[] and starts/stops notes accordingly
 	//If eof_midi_reset_instrument is nonzero, the specified instrument patch number is set for all 6 MIDI channels
 	//The specified duration in milliseconds is written as a clock time at which eof_update_midi_timers() should turn the note off if it is still playing
+void eof_midi_set_pan(unsigned value);
+	//Sends MIDI controller events to channels 0 through 5 to set the pan to the specified value (0 = full left, 50 = center, 100 = full right)
+	//As this is defined in MIDI as a value between 0 and 127, this function scales it accordingly
+void eof_midi_set_volume(unsigned value);
+	//Sends MIDI controller events to channels 0 through 5 to set the volume to the specified percentage
+	//As this is defined in MIDI as a value between 0 and 127, this function scales it accordingly
 void eof_update_midi_timers(void);
 	//Checks and updates the playback status of each channel in per eof_midi_channel_status[] and if any note is due to be stopped, a MIDI command is sent to do so
 void eof_play_pro_guitar_note_midi(EOF_SONG *sp, unsigned long track, unsigned long note);
