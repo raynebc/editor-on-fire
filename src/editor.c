@@ -7247,6 +7247,13 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	{	//If the rendering of grid lines is enabled
 		unsigned long gridpos = start;	//Begin with the timestamp of the visible left edge of the piano roll
 
+		if(eof_grid_line_opacity != 100)
+		{	//If grid lines are to be drawn with any transparency
+			unsigned opacity = ((double)eof_grid_line_opacity * 255.0 / 100.0) + 0.5;	//Scale the transparency from 0-255
+			drawing_mode(DRAW_MODE_TRANS, 0, 0, 0);	//Set drawing mode to allow transparency
+			set_trans_blender(0, 0, 0, opacity);				//Set the defined amount of opacity
+		}
+
 		if(gridpos < eof_song->beat[0]->pos)
 		{	//If the left edge of the piano roll is before the first beat marker's position
 			gridpos = eof_song->beat[0]->pos;	//Start from there
@@ -7256,13 +7263,23 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		{	//If a grid snap position was identified and it renders before the right edge of the screen
 			unsigned long lastgridpos = gridpos;
 			xcoord = lpos + gridpos / eof_zoom;
-			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, eof_color_yellow);
+			if(eof_grid_line_solid && eof_grid_line_gap)
+			{	//Draw dotted lines
+				eof_draw_dashed_line(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, xcoord, bottomlane_y, eof_color_grid_lines, eof_grid_line_solid, eof_grid_line_gap);
+			}
+			else
+			{	//Draw normal lines
+				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, eof_color_grid_lines);
+			}
 			gridpos = eof_next_grid_snap(gridpos);	//Find the next grid snap
 			if(gridpos == lastgridpos)
 			{	//If the grid snap logic couldn't find another grid snap position
 				break;
 			}
 		}
+
+		if(eof_grid_line_opacity != 100)
+			drawing_mode(DRAW_MODE_SOLID, 0, 0, 0);	//Restore normal drawing mode if applicable
 	}
 
 	/* draw the bookmark position */

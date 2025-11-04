@@ -555,6 +555,11 @@ unsigned char drums_rock_remap_lane_5 = 6;			//Lane 6 is low tom
 unsigned char drums_rock_remap_lane_5_cymbal = 2;		//Lane 2 is crash cymbal
 unsigned char drums_rock_remap_lane_6 = 2;			//Lane 6 is not standard in Rock Band, remap same as crash cymbal
 
+/* Grid line settings */
+int eof_color_grid_lines;
+unsigned eof_grid_line_opacity;
+unsigned eof_grid_line_solid, eof_grid_line_gap;			//Used to configure the grid lines to be drawn as dotted lines
+
 char *ogg_profile_name = NULL;	//This pointer is used by eof_load_ogg to set the file name in the current OGG profile, if it isn't NULL
 
 void eof_show_mouse(BITMAP * bp)

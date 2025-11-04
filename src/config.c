@@ -407,6 +407,14 @@ void eof_load_config(char * fn)
 	eof_5_fret_range = get_config_int("other", "eof_5_fret_range", 0);
 	eof_6_fret_range = get_config_int("other", "eof_6_fret_range", 0);
 
+	/* grid lines */
+	eof_color_grid_lines = get_config_hex("colors", "eof_color_grid_lines", 0xFFFF00);		//The RGB equivalent of makecol(255, 255, 0);
+	eof_grid_line_opacity = get_config_int("other", "eof_grid_line_opacity", 100);
+	if((eof_grid_line_opacity < 1) || (eof_grid_line_opacity > 100))
+		eof_grid_line_opacity = 100;
+	eof_grid_line_solid = get_config_int("other", "eof_grid_line_solid", 0);
+	eof_grid_line_gap = get_config_int("other", "eof_grid_line_gap", 0);
+
 	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_1", "35,36"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_1, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
@@ -811,6 +819,12 @@ void eof_save_config(char * fn)
 	set_config_int("other", "eof_4_fret_range", eof_4_fret_range);
 	set_config_int("other", "eof_5_fret_range", eof_5_fret_range);
 	set_config_int("other", "eof_6_fret_range", eof_6_fret_range);
+
+	/* Write grid line settings */
+	set_config_hex("colors", "eof_color_grid_lines", eof_color_grid_lines);
+	set_config_int("other", "eof_grid_line_opacity", eof_grid_line_opacity);
+	set_config_int("other", "eof_grid_line_solid", eof_grid_line_solid);
+	set_config_int("other", "eof_grid_line_gap", eof_grid_line_gap);
 
 	eof_log("\tWriting GP drum import mappings", 3);
 	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_1);

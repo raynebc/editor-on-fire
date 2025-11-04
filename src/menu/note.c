@@ -7401,10 +7401,16 @@ int eof_menu_arpeggio_erase_all(void)
 		{	//For each arpeggio section in this track, in reverse order
 			if(!(tp->arpeggio[ctr - 1].flags & EOF_RS_ARP_HANDSHAPE))
 			{	//If this is an arpeggio phrase and not a handshape phrase
-				eof_pro_guitar_track_delete_arpeggio(tp, ctr - 1);	//Remove it
+				unsigned long ghostnote = eof_find_note_at_pos(eof_song, eof_selected_track, tp->arpeggio[ctr - 1].difficulty, tp->arpeggio[ctr - 1].start_pos);
+				if(ghostnote < eof_get_track_size(eof_song, eof_selected_track))
+				{	//If a note was found at the start of this arpeggio
+					unsigned long note = eof_get_note_note(eof_song, eof_selected_track, ghostnote);
+					note &= ~eof_get_note_ghost(eof_song, eof_selected_track, ghostnote);	//Clear all gems that are ghosted
+					eof_set_note_note(eof_song, eof_selected_track, ghostnote, note);		//Update the note at the start of the arpeggio
+				}
+				eof_pro_guitar_track_delete_arpeggio(tp, ctr - 1);	//Remove the arpeggio
 			}
 		}
-		eof_song->pro_guitar_track[tracknum]->arpeggios = 0;
 	}
 	return 1;
 }
@@ -7427,10 +7433,17 @@ int eof_menu_handshape_erase_all(void)
 		{	//For each arpeggio section in this track, in reverse order
 			if(tp->arpeggio[ctr - 1].flags & EOF_RS_ARP_HANDSHAPE)
 			{	//If this is a handshape phrase instead of an arpeggio phrase
-				eof_pro_guitar_track_delete_arpeggio(tp, ctr - 1);	//Remove it
+				//Delete the ghost gems that were placed at the start of the arpeggio/hanshape
+				unsigned long ghostnote = eof_find_note_at_pos(eof_song, eof_selected_track, tp->arpeggio[ctr - 1].difficulty, tp->arpeggio[ctr - 1].start_pos);
+				if(ghostnote < eof_get_track_size(eof_song, eof_selected_track))
+				{	//If a note was found at the start of this handshape
+					unsigned long note = eof_get_note_note(eof_song, eof_selected_track, ghostnote);
+					note &= ~eof_get_note_ghost(eof_song, eof_selected_track, ghostnote);	//Clear all gems that are ghosted
+					eof_set_note_note(eof_song, eof_selected_track, ghostnote, note);		//Update the note at the start of the handshape
+				}
+				eof_pro_guitar_track_delete_arpeggio(tp, ctr - 1);	//Remove the handshape
 			}
 		}
-		eof_song->pro_guitar_track[tracknum]->arpeggios = 0;
 	}
 	return 1;
 }

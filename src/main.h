@@ -721,7 +721,6 @@ extern unsigned char gp_drum_import_lane_5[EOF_GP_DRUM_MAPPING_COUNT];
 extern unsigned char gp_drum_import_lane_5_cymbal[EOF_GP_DRUM_MAPPING_COUNT];
 extern unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT];
 
-/* Drums Rock note mappings */
 extern unsigned char drums_rock_remap_lane_1;
 extern unsigned char drums_rock_remap_lane_2;
 extern unsigned char drums_rock_remap_lane_3;
@@ -731,6 +730,10 @@ extern unsigned char drums_rock_remap_lane_4_cymbal;
 extern unsigned char drums_rock_remap_lane_5;
 extern unsigned char drums_rock_remap_lane_5_cymbal;
 extern unsigned char drums_rock_remap_lane_6;
+
+extern int eof_color_grid_lines;
+extern unsigned eof_grid_line_opacity;
+extern unsigned eof_grid_line_solid, eof_grid_line_gap;
 
 extern DIALOG eof_import_to_track_dialog[];
 

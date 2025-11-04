@@ -1076,11 +1076,11 @@ int eof_tuning_definition_is_applicable(char track_is_bass, unsigned char numstr
 DIALOG eof_tuning_preset_dialog[] =
 {
 	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ eof_shadow_box_proc, 4,   200, 340, 350, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
+	{ eof_shadow_box_proc, 4,   200, 340, 380, 2,   23,  0,    0,      0,   0,   NULL,             NULL, NULL },
 	{ d_agup_text_proc,       123, 208, 128, 8,   2,   23,  0,    0,      0,   0,   "Select tuning",   NULL, NULL },
-	{ d_agup_list_proc,       16,  228, 306, 276, 2,   23,  0,    0,      0,   0,   (void *)eof_tunings_list, NULL, NULL },
-	{ d_agup_button_proc,     16,  510, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
-	{ d_agup_button_proc,     164, 510, 138, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
+	{ d_agup_list_proc,       16,  228, 306, 306, 2,   23,  0,    0,      0,   0,   (void *)eof_tunings_list, NULL, NULL },
+	{ d_agup_button_proc,     16,  540, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+	{ d_agup_button_proc,     164, 540, 138, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 

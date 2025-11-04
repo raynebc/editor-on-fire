@@ -23,13 +23,17 @@
 #endif
 
 #ifdef EOF_BUILD	//Coverity build complains because it can't find these
+#include <allegro.h>
 #define AL_ID(a,b,c,d)     (((a)<<24) | ((b)<<16) | ((c)<<8) | (d))
 #define U_UNICODE       AL_ID('U','N','I','C')
 #define U_UTF8          AL_ID('U','T','F','8')
 #define U_CURRENT       AL_ID('c','u','r','.')
 void eof_log(const char *text, int level);
 extern char eof_log_string[2048];
+extern int         eof_cursor_visible;
+extern int         eof_pen_visible;
 void do_uconvert(const char* s, int type, char* buf, int newtype, int size);
+void eof_show_mouse(BITMAP * bp);
 #endif
 
 char *ReadTextInfoFrame(FILE *inf)
@@ -610,6 +614,7 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 	if((ptr == NULL) || (ptr->fp == NULL))
 		return 0;	//Return failure
 
+#ifdef EOF_BUILD	//EOF calls this function directly, so ensure the assertion is caught
 	jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 	{	//If the import failed
@@ -620,6 +625,7 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 		eof_log("\t\tError:  Could not read ID3 tag.  Undetermined error.", 1);
 		return 1;
 	}
+#endif
 
 //Find and parse the ID3 header
 //ID3v1

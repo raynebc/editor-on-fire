@@ -813,7 +813,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 		else
 			eof_log("\tLyric dump", 1);
 
-		for(ctr = 0; ctr < tp->lines; ctr++)
+		for(ctr = 0; ctr < tp->lines;)
 		{	//For each lyric line
 			if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
 			{
@@ -861,11 +861,12 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 
 			lastend = tp->line[ctr].end_pos;
 			if(!matches)
-			{	//No lyrics were in this line
+			{	//No lyrics were in this line, do not increment ctr and instead process the next line which will now become line #ctr
 				eof_log("\t\t!Lyric line is empty.  Repairing", 1);
 				eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
-				ctr--;	//Decrement the line counter so the next loop iterations increments and processes the line after the one that was just deleted
 			}
+			else
+				ctr++;	//Process the next lyric line on the next loop
 		}
 
 		if(unsorted)
@@ -1125,6 +1126,8 @@ unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata
 							break;
 						}
 					}while(text_id[0] == 0);
+					if(listchunkpos == ULONG_MAX)
+						break;
 
 					//Read metadata ID
 					if(pack_fread(&text_id[1], 3, fp) != 3)
