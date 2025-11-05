@@ -753,9 +753,9 @@ int eof_menu_song_seek_previous_note(void)
 	unsigned long i;
 
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
-	{	//For each note in the active track
+	{	//For each note in the active track, in reverse order
 		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos.value >= eof_av_delay) ? eof_music_pos.value - eof_av_delay : 0)))
-		{
+		{	//If this is the first note before the current seek position
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i - 1) + eof_av_delay);
 			break;
 		}
@@ -788,7 +788,7 @@ int eof_menu_song_seek_next_note(void)
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos.value >= eof_av_delay) ? eof_music_pos.value - eof_av_delay : 0)))
-		{
+		{	//If this is the first note after the current seek position
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
 			break;
 		}

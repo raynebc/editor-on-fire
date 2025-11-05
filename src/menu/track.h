@@ -80,12 +80,18 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff);
 	//If so, the affected fret values will be raised or lowered accordingly
 	//If a note cannot be altered (ie. values of 0 or the track's max fret number would be surpassed), the user is warned and the note is highlighted
 
+unsigned long eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp;
+	//Stores the working timestamp used by the eof_track_pro_guitar_set_fret_hand_position_dialog() function, so the <- and -> functions can alter the target timestamp
 int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long timestamp);
 	//Allows the user to define a fret hand position for the active difficulty
 int eof_track_pro_guitar_set_fret_hand_position(void);
 	//Calls eof_track_pro_guitar_set_fret_hand_position_at_timestamp() specifying the seek position as the target timestamp
 int eof_track_pro_guitar_set_fret_hand_position_at_mouse(void);
 	//Calls eof_track_pro_guitar_set_fret_hand_position_at_timestamp() specifying the pen note (mouse) position as the target timestamp
+int eof_track_pro_guitar_move_fret_hand_position_prev_note(DIALOG * d);
+	//Alters the fret hand position set/edit dialog's target timestamp to the previous note in the active track difficulty, if applicable
+int eof_track_pro_guitar_move_fret_hand_position_next_note(DIALOG * d);
+	//Alters the fret hand position set/edit dialog's target timestamp to the next note in the active track difficulty, if applicable
 int eof_track_fret_hand_positions(void);
 	//Displays the fret hand positions defined for the active track difficulty, allowing them to be deleted
 int eof_track_fret_hand_positions_copy_from(void);

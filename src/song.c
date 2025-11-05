@@ -12226,7 +12226,33 @@ unsigned long eof_find_note_at_pos(EOF_SONG *sp, unsigned long track, unsigned c
 
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the specified track
-		if(eof_get_note_pos(sp, track, ctr) == pos)
+		if((eof_get_note_type(sp, track, ctr) == diff) && (eof_get_note_pos(sp, track, ctr) == pos))
+			return ctr;
+	}
+
+	return ULONG_MAX;	//No match
+}
+
+unsigned long eof_find_note_before_pos(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long pos)
+{
+	unsigned long ctr;
+
+	for(ctr = eof_get_track_size(sp, track); ctr > 0; ctr--)
+	{	//For each note in the specified track, in reverse order
+		if((eof_get_note_type(sp, track, ctr - 1) == diff) && (eof_get_note_pos(sp, track, ctr - 1) < pos))	//If this is the first note before the specified timestamp
+			return ctr - 1;
+	}
+
+	return ULONG_MAX;	//No match
+}
+
+unsigned long eof_find_note_after_pos(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long pos)
+{
+	unsigned long ctr;
+
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the specified track
+		if((eof_get_note_type(sp, track, ctr) == diff) && (eof_get_note_pos(sp, track, ctr) > pos))	//If this is the first note after the specified timestamp
 			return ctr;
 	}
 

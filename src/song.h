@@ -1295,7 +1295,13 @@ void eof_song_reapply_all_dynamic_highlighting(void);
 	// and calls eof_detect_difficulties() for the active track to update the highlighting indicator for each track
 
 unsigned long eof_find_note_at_pos(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long pos);
-	//Checks each note in the specified track and returns the index of the first one that is at the specified timestamp
+	//Checks each note in the specified track difficulty and returns the index of the first one that is at the specified timestamp
+	//ULONG_MAX is returned if there is no matching note or upon error
+unsigned long eof_find_note_before_pos(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long pos);
+	//Checks each note in the specified track difficulty and returns the index of the last note immdiately before the specified timestamp
+	//ULONG_MAX is returned if there is no matching note or upon error
+unsigned long eof_find_note_after_pos(EOF_SONG *sp, unsigned long track, unsigned char diff, unsigned long pos);
+	//Checks each note in the specified track difficulty and returns the index of the first note immediately after the specified timestamp
 	//ULONG_MAX is returned if there is no matching note or upon error
 
 unsigned long eof_get_pos_num_notes_after_timestamp(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned long numnotes);

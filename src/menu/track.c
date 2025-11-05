@@ -1708,14 +1708,17 @@ MENU eof_track_proguitar_fret_hand_copy_menu[EOF_TRACKS_MAX] =
 
 char eof_track_pro_guitar_set_fret_hand_position_dialog_string1[] = "Set fret hand position";
 char eof_track_pro_guitar_set_fret_hand_position_dialog_string2[] = "Edit fret hand position";
+unsigned long eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp;
 DIALOG eof_track_pro_guitar_set_fret_hand_position_dialog[] =
 {
-	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-	{ eof_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_track_pro_guitar_set_fret_hand_position_dialog_string1,      NULL, NULL },
+	/* (proc)                        (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+	{ eof_window_proc,       0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   eof_track_pro_guitar_set_fret_hand_position_dialog_string1,      NULL, NULL },
 	{ d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "At fret #",                NULL, NULL },
 	{ eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext,     "0123456789", NULL },
-	{ d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
-	{ d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ d_agup_push_proc,  110,  56,  28,  28,  2,   23,  0, D_EXIT, 0,   0,   "<-",               NULL, (void *)eof_track_pro_guitar_move_fret_hand_position_prev_note },
+	{ d_agup_push_proc,  160,  56,  28,  28,  2,   23,  0, D_EXIT, 0,   0,   "->",               NULL, (void *)eof_track_pro_guitar_move_fret_hand_position_next_note },
+	{ d_agup_button_proc,  12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,     "OK",               NULL, NULL },
+	{ d_agup_button_proc,  110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
 	{ NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
 };
 
@@ -1738,7 +1741,7 @@ int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long times
 	eof_color_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog);
 
-	//Find the pointer to the fret hand position at the current seek position in this difficulty, if there is one
+	//Find the pointer to the fret hand position at the specified position in the active difficulty, if there is one
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
 	ptr = eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, timestamp, &index, NULL, 1);
@@ -1752,7 +1755,8 @@ int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long times
 		eof_track_pro_guitar_set_fret_hand_position_dialog[0].dp = eof_track_pro_guitar_set_fret_hand_position_dialog_string1;	//Update the dialog window title to reflect that a new hand position is being added
 		eof_etext[0] = '\0';	//Empty this string
 	}
-	if(eof_popup_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog, 2) != 3)
+	eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp = timestamp;	//Set the working copy of the timestamp so it can be edited with the dialog function's <- and -> buttons
+	if(eof_popup_dialog(eof_track_pro_guitar_set_fret_hand_position_dialog, 2) != 5)
 		return 0;	//If the user did not click OK, return immediately
 
 	if(eof_etext[0] != '\0')
@@ -1795,12 +1799,21 @@ int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long times
 		}
 		else
 		{	//If the user gave a valid position
+			timestamp = eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp;	//Update the effective timestamp in case the user changed it
 			if(ptr)
 			{	//If an existing fret hand position was being edited
-				if(ptr->end_pos != position)
-				{	//And it defines a different fret hand position than the user just gave
+				if((ptr->end_pos != position) || (timestamp != ptr->start_pos))
+				{	//And it defines a different fret hand position or timestamp than the FHP already had
+					EOF_PHRASE_SECTION *ptr2 = eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, timestamp, &index, NULL, 1);
+
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					ptr->end_pos = position;	//Update the existing fret hand position entry
+					ptr->end_pos = position;	//Update the edited FHP
+					ptr->start_pos = timestamp;
+					if(ptr2)
+					{	//If there was another FHP already at the position where the edited FHP was moved (perform this after altering the edited timestamp, because deleting an FHP will alter the FHP array and can invalidate ptr)
+						eof_pro_guitar_track_delete_hand_position(tp, index);	//Delete it
+					}
+					eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 				}
 				return 0;
 			}
@@ -1832,6 +1845,50 @@ int eof_track_pro_guitar_set_fret_hand_position_at_mouse(void)
 		return eof_track_pro_guitar_set_fret_hand_position_at_timestamp(eof_pen_note.pos);
 	}
 	return 0;
+}
+
+int eof_track_pro_guitar_move_fret_hand_position_prev_note(DIALOG * d)
+{
+	unsigned long target;
+	int junk = 0;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+
+	target = eof_find_note_before_pos(eof_song, eof_selected_track, eof_note_type, eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp);
+	if(target < eof_get_track_size(eof_song, eof_selected_track))
+	{	//If a note before the current seek position was found
+		eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp = eof_get_note_pos(eof_song, eof_selected_track, target);	//Update to its timestamp
+		eof_set_seek_position(eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp + eof_av_delay);	//Seek to that timestamp
+		eof_render();	//Redraw screen
+		(void) dialog_message(eof_track_pro_guitar_set_fret_hand_position_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+	}
+
+	return D_O_K;
+}
+
+int eof_track_pro_guitar_move_fret_hand_position_next_note(DIALOG * d)
+{
+	unsigned long target;
+	int junk = 0;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+
+	target = eof_find_note_after_pos(eof_song, eof_selected_track, eof_note_type, eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp);
+	if(target < eof_get_track_size(eof_song, eof_selected_track))
+	{	//If a note before the current seek position was found
+		eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp = eof_get_note_pos(eof_song, eof_selected_track, target);	//Update to its timestamp
+		eof_set_seek_position(eof_track_pro_guitar_set_fret_hand_position_dialog_timestamp + eof_av_delay);	//Seek to that timestamp
+		eof_render();	//Redraw screen
+		(void) dialog_message(eof_track_pro_guitar_set_fret_hand_position_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+	}
+
+	return D_O_K;
 }
 
 int eof_fret_hand_position_delete(DIALOG * d)
@@ -2011,6 +2068,48 @@ int eof_fret_hand_position_seek(DIALOG * d)
 	return D_O_K;
 }
 
+int eof_fret_hand_position_edit(DIALOG * d)
+{
+	unsigned long tracknum, ecount = 0, i;
+	int junk;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+		return D_O_K;
+	if(eof_fret_hand_position_list_dialog[1].d1 < 0)
+		return D_O_K;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_song->pro_guitar_track[tracknum]->handpositions == 0)
+	{
+		return D_O_K;
+	}
+	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
+	{	//For each fret hand position
+		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
+		{	//If the fret hand position is in the active difficulty
+			/* if we've reached the item that is selected, seek to it and edit it*/
+			if((unsigned long)eof_fret_hand_position_list_dialog[1].d1 == ecount)
+			{
+				unsigned long timestamp = eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos;
+				eof_set_seek_position(timestamp + eof_av_delay);	//Seek to the hand position's timestamp
+				eof_render();	//Redraw screen
+				(void) eof_track_pro_guitar_set_fret_hand_position_at_timestamp(timestamp);
+				eof_render();	//Redraw the program window to erase the edit dialog
+				(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw fret hand position list dialog
+				return D_O_K;
+			}
+
+			/* go to next event */
+			ecount++;
+		}
+	}
+	return D_O_K;
+}
+
 int eof_fret_hand_position_seek_prev(DIALOG * d)
 {
 	if(!d)
@@ -2087,11 +2186,15 @@ char * eof_fret_hand_position_list(int index, int * size)
 			{	//If there is at least one fret hand position in the active difficulty
 				eof_fret_hand_position_list_dialog[2].flags = 0;	//Enable the Delete button
 				eof_fret_hand_position_list_dialog[3].flags = 0;	//Enable the Delete all button
+				eof_fret_hand_position_list_dialog[4].flags = 0;	//Enable the Seek to button
+				eof_fret_hand_position_list_dialog[5].flags = 0;	//Enable the Edit button
 			}
 			else
 			{
 				eof_fret_hand_position_list_dialog[2].flags = D_DISABLED;
 				eof_fret_hand_position_list_dialog[3].flags = D_DISABLED;
+				eof_fret_hand_position_list_dialog[4].flags = D_DISABLED;
+				eof_fret_hand_position_list_dialog[5].flags = D_DISABLED;
 			}
 			(void) snprintf(eof_fret_hand_position_list_dialog_title_string, sizeof(eof_fret_hand_position_list_dialog_title_string) - 1, "Fret hand positions (%lu)", ecount);	//Redraw the dialog's title bar to reflect the number of hand positions
 			break;
@@ -2110,15 +2213,16 @@ char eof_fret_hand_position_list_dialog_title_string[30] = "Fret hand positions"
 DIALOG eof_fret_hand_position_list_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ eof_window_proc,        0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
-	{ d_agup_list_proc,        12,  84,  150, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list,NULL, NULL },
-	{ d_agup_push_proc,  170, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_fret_hand_position_delete },
-	{ d_agup_push_proc,  170, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_fret_hand_position_delete_all },
-	{ d_agup_push_proc,  170, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_fret_hand_position_seek },
-	{ d_agup_push_proc,  170, 204, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Generate",     NULL, (void *)eof_generate_hand_positions_current_track_difficulty },
-	{ d_agup_push_proc,  170, 244, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "<",     NULL, (void *)eof_fret_hand_position_seek_prev },
-	{ d_agup_push_proc,  204, 244, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   ">",     NULL, (void *)eof_fret_hand_position_seek_next },
-	{ d_agup_button_proc,12,  244, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+	{ eof_window_proc,        0,   48,  250, 277, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
+	{ d_agup_list_proc,        12,  84,  150, 188, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list,NULL, NULL },
+	{ d_agup_push_proc,  170, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",     NULL, (void *)eof_fret_hand_position_delete },
+	{ d_agup_push_proc,  170, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all", NULL, (void *)eof_fret_hand_position_delete_all },
+	{ d_agup_push_proc,  170, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",  NULL, (void *)eof_fret_hand_position_seek },
+	{ d_agup_push_proc,  170, 204, 68,  28,  2,   23,  'e',    D_EXIT, 0,   0, "&Edit",       NULL, (void *)eof_fret_hand_position_edit },
+	{ d_agup_push_proc,  170, 244, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Generate", NULL, (void *)eof_generate_hand_positions_current_track_difficulty },
+	{ d_agup_push_proc,  170, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "<",     NULL, (void *)eof_fret_hand_position_seek_prev },
+	{ d_agup_push_proc,  204, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   ">",     NULL, (void *)eof_fret_hand_position_seek_next },
+	{ d_agup_button_proc,12,  284, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
