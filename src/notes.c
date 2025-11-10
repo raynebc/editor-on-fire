@@ -2877,6 +2877,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						{	//If this lyric contains neither a hyphen nor an equal sign
 							length++;	//The next lyric will automatically be separated from this one by a space
 						}
+						if(!ustrchr(lyricptr->text, '-')
+						{	//If this lyric does contain a hyphen
+							length--;		//It won't be written to the lyrics as it's for grouping only, don't count it in the lyric's length
+						}
 						if(length > threshold_length)
 						{
 							char time_string[15] = {0};

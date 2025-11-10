@@ -103,7 +103,7 @@ Please see "<a href="functions.htm#settings">File->Settings</a>" and "<a href="f
 
 <h2>Import/Export Preferences</h2>
 <a name="separaterbfiles">"<u>Save separate Rock Band files</u>"</a> causes EOF to save additional files during save.  This feature makes it more convenient to chart custom Rock Band Network and custom pro guitar charts, as you will not have to manually remove features for whatever custom content you are authoring.  If enabled, a "notes_rbn.mid" file will be written to contain all valid Rock Band Network 2 notation, omitting custom notations that are exclusive to FoF or Phase Shift (expert+ bass drum notes will be written as normal bass drum notes, non Rock Band notations such as rimshot, open/pedal controlled/sizzle hi hat, sliders and Sysex based phrases are omitted, non Rock Band Network tracks such as PART DANCE and PART REAL GUITAR are omitted, open strum bass notes are omitted, fifth lane drum notes are omitted) while ensuring necessary components such as drum mix events and the BEAT track are included automatically.  If enabled, a "notes_pro.mid" file will be written to contain the tempo map (track 0) and all pro guitar and pro bass tracks if any such tracks are populated.  If a "notes_pro.mid" file is created, an additional MIDI (notes_c3.mid) is created, which combines all of the RBN compatible content of notes_rbn.mid with the pro guitar and pro bass tracks.  Unlike the official Harmonix release of the Magma utility, the C3 release is able to build CON files out of MIDIs containing pro guitar/bass tracks.  In addition, enabling this preference causes EOF to write an upgrades.dta file (used for creating custom pro guitar upgrades for Rock Band 3) for you if it doesn't already exist at the destination folder.  Although you need to manually edit that file to contain the correct song ID, the song name and tuning tags are pre-written in the appropriate format.  Appropriate difficulty tier values are written to the DTA file if the difficulty levels for the pro guitar/bass tracks are defined in the project.  Otherwise you will need to edit the file to contain the appropriate values.<br><br>
-"<u>Save separate musical MIDI files</u>" causes EOF to write additional MIDI files during save.  The "notes_music.mid" file contains all populated vocal and pro guitar/bass tracks, and unlike the other MIDI files EOF writes, all MIDI notes included are the real pitches used in each lyric or guitar/bass note.  Notes that are ghosted or string muted are not exported.  This file can be used in other music programs that use normal MIDI files, like Songs2See, Synthesia or even just your favorite MIDI player.  Each pro guitar/bass track is written to use the corresponding MIDI instrument number used by the MIDI tones sound cue, which is configured in eof.cfg.  The "notes_fretlight.mid" file is similar to notes_music.mid, but has some slight differences to allow it to work better in the Fretlight M-Player program.<br><br>
+"<u>Save separate musical MIDI files</u>" causes EOF to write additional MIDI files during save.  The "notes_music.mid" file contains all populated vocal and pro guitar/bass tracks, and unlike the other MIDI files EOF writes, all MIDI notes included are the real pitches used in each lyric or guitar/bass note.  Notes that are ghosted or string muted are not exported.  This file can be used in other music programs that use normal MIDI files, like Songs2See, Synthesia or even just your favorite MIDI player.  Each pro guitar/bass track is written to use the corresponding MIDI instrument number used by the MIDI tones sound cue, which is configured in eof.cfg.  The "notes_fretlight.mid" file is similar to notes_music.mid, but has some slight differences to allow it to work better in the Fretlight M-Player program.  The eof_midi_synth_instrument_guitar and eof_midi_synth_instrument_bass instrument numbers defined in eof.cfg are used in the exported MIDI for guitar and bass notes respectively.<br><br>
 <a name="separatersfiles">"<u>Save separate Rocksmith 1 files</u>"</a> causes the populated pro guitar/bass tracks and the vocal track to each be written in Rocksmith's XML format during save, for use in creating Rocksmith custom charts.  The lyrics do not need to have line phrases defined because Rocksmith doesn't define the start and stop position of lyric lines.  The lyric XML file export will not work if the EOF's program folder path contains Unicode of extended (ie. accented) ASCII characters.  This preference also causes EOF to automatically prompt for a bend note's strength or a slide note's end position when these statuses are toggled on, as they are required for Rocksmith.  It also prompts you to update the finger values for chords if any are undefined during save.  It also prompts to automatically add fret hand positions for if any populated pro guitar/bass track difficulty has none defined during save.  It also causes the chart's audio (with 8 seconds of silent audio appended) to be written to [SONGNAME].wav (or guitar.wav if the chart has no defined song title, or the title has characters that are not usable in file names, such as forward or backward slashes) in the project's folder during save, if a file by that name doesn't already exist, unless the "Don't write Rocksmith WAV file" preference is also enabled.  This WAV file is used for the creation of Rocksmith custom charts.  If "Load OGG" or "Leading Silence" are used to change the chart audio, or the song title is changed in "<a href="functions.htm#properties">Song>Properties</a>", the WAV file is deleted and will be rewritten during the next save operation.  This preference will also prompt the user whether to use the "Reset offset to zero" function if there is a nonzero MIDI delay during save, since this condition can prevent the song from starting at the beginning in Rocksmith.<br><br>
 <a name="separaters2files">"<u>Save separate Rocksmith 2 files</u>"</a> causes the populated pro guitar/bass tracks and the vocal track to each be written in Rocksmith 2014's XML format during save, for use in creating Rocksmith 2014 custom charts.  Unlike Rocksmith 1, the lyrics in Rocksmith 2 do use line breaks, so it's important to define the lyric lines to ensure they display nicely in-game.  Rocksmith 2 charts generally support everything in Rocksmith 1, as well as a lot more.  A single chart can be authored to work with both Rocksmith games and each track will be exported to a different XML file containing the techniques compatible with the target game.  The Rocksmith 2 XML files will include "_RS2" in the file name, as a means to tell them apart from the Rocksmith 1 XML files.  Similarly to Rocksmith 1, the chart audio is saved as a WAV file, however Rocksmith 2 doesn't seem to require the added silence that is used for Rocksmith 1 compatibility.  Unless the preference to save Rocksmith 1 files is also enabled, the WAV file will be created so that it DOES NOT contain the 8 extra seconds of silence at the end of the chart audio.<br><br>
 "<u>Save separate Bandfuse files</u>" causes the populated pro guitar/bass tracks to each be written in an XML format during save, for use in creating Bandfuse custom charts.  The ability to make or use custom Bandfuse charts is pending some reverse engineering that is still incomplete.  Any and all people with relevant expertise with modding or hacking Xbox 360 games are encouraged to help.<br><br>
@@ -151,6 +151,68 @@ Please see "<a href="functions.htm#settings">File->Settings</a>" and "<a href="f
 
 <h2>Drum MIDI Velocities</h2>
 Define the velocity values used during MIDI export for normal, accent and ghost drum notes on a per-lane basis as any of the valid values from 1 through 127.  This will allow for finer control of the display of drum notes in Phase Shift.<br><br>
+
+<h2>Manual configuration settings</h2>
+There are some more niche settings that don't have a graphical dialog to configure them with, so altering them would require closing EOF and editing eof.cfg (in the same folder as eof.exe) in a text editor by changing the value after the equal sign.  Colors are defined in hexadecimal digits as RRGGBB.  These variables are pre-defined in their appropriate categories (ie. "[colors]") so only edit the existing definitions in eof.cfg (such as by performing a search to find the entry) instead of adding new ones or they will not be honored.  In order to revert any of these to the default setting, you can simply delete the entire the variable and value and save eof.cfg and EOF will recreate the variable with its default value when it is launched and exited again.<br><br>
+eof_midi_synth_instrument_guitar_muted<br>
+eof_midi_synth_instrument_guitar_harm<br>
+eof_midi_synth_instrument_guitar<br>
+eof_midi_synth_instrument_bass :  The MIDI instrument numbers used for normal, muted or harmonic guitar notes and bass notes when the MIDI tones feature is in use.  The eof_midi_synth_instrument_guitar and eof_midi_synth_instrument_bass instrument numbers are also used to write musical MIDI content for pro guitar and pro bass tracks if that export preference is enabled.  The numbering used for this begins with 1, as in instrument number 1 indicates "Acoustic Grand Piano".<br><br>
+
+eof_color_waveform_trough<br>
+eof_color_waveform_peak<br>
+eof_color_waveform_rms :  The colors used to draw the waveform graph.<br><br>
+
+eof_color_grid_lines :  The color used to draw the grid lines.<br>
+eof_grid_line_opacity :  The opacity with which the grid lines are drawn, valid values ranging from 1 (barely visible) to 100 (opaque).<br>
+eof_grid_line_solid :  If grid lines are to be drawn as dashed lines instead of solid lines, define this value as the number of contiguous pixels in the line to draw as the visible part of the line.<br>
+eof_grid_line_gap :  If grid lines are to be drawn as dashed lines instead of solid lines, define this value as the number of contiguous pixels in the line to skip as the invisible part of the line.<br><br>
+
+eof_min_midi_tone_length :  The shortest length (in milliseconds) that MIDI notes will play when the MIDI tones feature is in use.<br><br>
+
+eof_notes_panel_error_bg_color<br>
+eof_notes_panel_error_fg_color<br>
+eof_notes_panel_warning_bg_color<br>
+eof_notes_panel_warning_fg_color<br>
+eof_notes_panel_success_bg_color<br>
+eof_notes_panel_success_fg_color<br>
+eof_notes_panel_alert_bg_color<br>
+eof_notes_panel_alert_fg_color<br>
+eof_notes_panel_info_bg_color<br>
+eof_notes_panel_info_fg_color :  The foreground and background colors used to print text within the %DISPLAY_ERROR%, %DISPLAY_WARNING%, %DISPLAY_SUCCESS% and %DISPLAY_ALERT% tags.  eof_notes_panel_info_bg_color and eof_notes_panel_info_fg_color are the colors for normal text.  A value of -1 indicates transparency, otherwise an RRGGBB hexadecimal number defines an opaque color.<br><br>
+
+drums_rock_remap_lane_1<br>
+drums_rock_remap_lane_2<br>
+drums_rock_remap_lane_3<br>
+drums_rock_remap_lane_3_cymbal<br>
+drums_rock_remap_lane_4<br>
+drums_rock_remap_lane_4_cymbal<br>
+drums_rock_remap_lane_5<br>
+drums_rock_remap_lane_5_cymbal<br>
+drums_rock_remap_lane_6 :  Define the way that drum notes are remapped when the "Track>Drums Rock>Drums Rock remap notes" function is invoked, such as to convert between typical Rock Band authoring to typical Drums Rock authoring (since each game uses different lanes for bass drum, snare drum, etc).<br><br>
+
+eof_scroll_seek_percent :  The amount of one screen width that ALT+scroll wheel seek moves.<br><br>
+
+gp_drum_import_lane_1
+gp_drum_import_lane_2
+gp_drum_import_lane_2_rimshot
+gp_drum_import_lane_3
+gp_drum_import_lane_3_cymbal
+gp_drum_import_lane_3_hi_hat_pedal
+gp_drum_import_lane_3_hi_hat_open
+gp_drum_import_lane_4
+gp_drum_import_lane_4_cymbal
+gp_drum_import_lane_5
+gp_drum_import_lane_5_cymbal
+gp_drum_import_lane_6 :  Define to which lane and note type (tom or cymbal) each of the Guitar Pro drum note values (ranging from 27 "High Q" through 87 "Open Surdo") are added during Guitar Pro import of a percussion track.  For example, you can change a drum note 55 (splash cymbal) to import as a lane 4 cymbal instead of a lane 5 cymbal as is default.  You can also define which notes, if any, will import into lane 6 and automatically activate the "Enable five lane drums" option for the destination drum track.<br><br>
+
+eof_color_highlight1 :  The color for static highlighting that is manually applied with "Note>Highlight>On" or during various prompts.<br>
+eof_color_highlight2 :  The color for dynamic highlighting that updates automatically, such as "Song>Highlight non grid snapped notes.<br><br>
+
+eof_4_fret_range :  The fret number starting at which the player's fret hand is able to stretch enough to cover four frets without changing position.  This should be left as fret 1.<br>
+eof_5_fret_range :  The fret number starting at which the player's fret hand is able to stretch enough to cover five frets without changing position.<br>
+eof_6_fret_range :  The fret number starting at which the player's fret hand is able to stretch enough to cover six frets without changing position.<br>
+These variables influence the automatic fret hand position generation, allowing it to be customized to the author's preference.<br><br>
 
 For any preferences dialog, the "Default" button will change the options in the menu to reflect EOF's default settings, which will then be applied if you click the OK button.
 </BODY>
