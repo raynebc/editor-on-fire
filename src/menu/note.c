@@ -1048,7 +1048,7 @@ void eof_prepare_note_menu(void)
 		/* resnap */
 		if(eof_snap_mode == EOF_SNAP_OFF)
 		{
-			eof_note_menu[5].text = "&Move by millisecond";
+			eof_note_menu[5].text = "Mo&Ve by millisecond";
 			eof_note_menu[5].child = eof_note_move_by_millisecond_menu;
 		}
 		else

@@ -1206,7 +1206,7 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index)
 	tp->lines--;
 }
 
-/* make sure notes don't overlap */
+/* perform various cleanup */
 void eof_fixup_notes(EOF_SONG *sp)
 {
 	unsigned long j;

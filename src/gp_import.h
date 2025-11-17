@@ -58,6 +58,7 @@
 		char coda_activated;				//Indicates that an "...al coda" symbol was reached, meaning that when "da coda" is reached, the GP track unwrapping will redirect to that symbol
 		char double_coda_activated;			//Indicates that an "...al double coda" symbol was reached, meaning that when "da double coda" is reached, the GP track unwrapping will redirect to that symbol
 		char fine_activated;					//Indicates that an "...al fine" symbol was reached, meaning that when "fine" is reached, the GP track unwrapping will end
+		char channel_instrument[64];			//Stores the instrument number defined for each channel (24-31 represent guitars, 32-39 represent bass guitars, etc)
 	};
 
 	struct eof_gpa_sync_point

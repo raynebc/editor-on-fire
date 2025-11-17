@@ -8198,6 +8198,7 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 	unsigned long i, npos, leftboundary, hoverlane = 0;
 	long nlen;
 	int candidate;
+	int effective_clickable_preference;
 
 	if(targetpos < 0)
 	{
@@ -8211,7 +8212,8 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 		eof_pen_visible = 1;
 	}
 	(void) eof_find_pen_note_mask();	//Set eof_hover_piece to reflect whichever lane the mouse is over
-	if(eof_note_tails_clickable)
+	effective_clickable_preference = (eof_vocals_selected ? eof_lyric_tails_clickable : eof_note_tails_clickable);	//Take the appropriate note or lyric tail clickable preference into account
+	if(effective_clickable_preference)
 	{	//If the user enabled the preference to include note tails in the clickable area for notes
 		hoverlane = 1 << (unsigned)eof_hover_piece;	//Get the bitmask reflecting the lane the mouse is currently hovering over
 	}
@@ -8230,7 +8232,7 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 		{
 			leftboundary = npos - x_tolerance;
 		}
-		if(eof_note_tails_clickable && (eof_vocals_selected || (hoverlane & eof_get_note_note(eof_song, eof_selected_track, i))))
+		if(effective_clickable_preference && (eof_vocals_selected || (hoverlane & eof_get_note_note(eof_song, eof_selected_track, i))))
 		{	//If the user enabled the preference to include note tails in the clickable area for notes, and the vocal track is active or the mouse is hovering over a lane this note uses
 			long next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);	//Find the next note in the track difficulty
 
@@ -8270,8 +8272,8 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 
 		if(!candidate && snaplogic)
 		{	//If the position wasn't close enough to a note to be a match, but snaplogic is enabled, check the position's closes grid snap
-			if(eof_pen_note.pos >= npos - x_tolerance)
-			{
+			if(eof_pen_note.pos >= leftboundary)
+			{	//If the pen note is at/after this note's left-most clickable position (avoiding underflow)
 				if(eof_pen_note.pos <= npos + nlen + x_tolerance)
 					candidate = 1;	//This is a likely hover note
 			}

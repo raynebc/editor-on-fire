@@ -219,7 +219,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 287, 224, 16,  2,   23,  0,    0,      1,   0,   "Rewind when playback is at end",NULL, NULL },
 	{ d_agup_check_proc, 248, 303, 196, 16,  2,   23,  0,    0,      1,   0,   "Display seek pos. in seconds",NULL, NULL },
 	{ d_agup_check_proc, 16,  271, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
-	{ d_agup_check_proc, 16,  287, 210, 16,  2,   23,  0,    0,      1,   0,   "Don't auto edit new lyrics",NULL, NULL },
+	{ d_agup_check_proc, 16,  287, 184, 16,  2,   23,  0,    0,      1,   0,   "Don't auto edit new lyrics",NULL, NULL },
 	{ d_agup_check_proc, 16,  255, 200, 16,  2,   23,  0,    0,      1,   0,   "Click to change dialog focus",NULL, NULL },
 	{ d_agup_check_proc, 248, 319, 230, 16,  2,   23,  0,    0,      1,   0,   "EOF leaving focus stops playback",NULL, NULL },
 	{ d_agup_text_proc,  16,  186, 200, 12,  0,   0,   0,    0,      0,   0,   "Chord density threshold (ms):",NULL,NULL },
@@ -234,6 +234,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_radio_proc, 322, 144, 68,  16,  2,   23,  0,    0,      2,   0,   "1/# beat",    NULL, NULL },
 	{ d_agup_check_proc, 248, 175, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
 	{ d_agup_check_proc, 248, 159, 206, 16,  2,   23,  0,    0,      1,   0,   "Use FoF difficulty naming",NULL, NULL },
+	{ d_agup_check_proc, 16,  319, 175, 16,  2,   23,  0,    0,      1,   0,   "Make lyric tails clickable",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -269,6 +270,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   240, 224, 16,  2,   23,  0,    0,      1,   0,   "Don't warn about INI differences",NULL, NULL },
 	{ d_agup_check_proc, 248, 240, 202, 16,  2,   23,  0,    0,      1,   0,   "Render mid beat tempos blue",NULL, NULL },
 	{ d_agup_check_proc, 16,   255, 210, 16,  2,   23,  0,    0,      1,   0,   "GP import RS sections/phrases",NULL, NULL },
+	{ d_agup_check_proc, 248, 255, 230, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as techniques",NULL, NULL },
 	{ d_agup_check_proc, 16,   270, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
 	{ d_agup_check_proc, 16,   285, 310, 16,  2,   23,  0,    0,      1,   0,   "RS2 export version 8 (DLC Builder) style XML",NULL, NULL },
 	{ d_agup_check_proc, 16,   300, 218, 16,  2,   23,  0,    0,      1,   0,   "RS import loads all handshapes",NULL, NULL },
@@ -1454,6 +1456,7 @@ int eof_menu_file_preferences(void)
 	}
 	eof_preferences_dialog[52].flags = eof_new_note_forced_strum ? D_SELECTED : 0;			//New notes are force strum
 	eof_preferences_dialog[53].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;			//Use FoF difficulty naming
+	eof_preferences_dialog[54].flags = eof_lyric_tails_clickable ? D_SELECTED : 0;				//Make lyric tails clickable
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1575,6 +1578,7 @@ int eof_menu_file_preferences(void)
 			}
 			eof_new_note_forced_strum = (eof_preferences_dialog[52].flags == D_SELECTED ? 1 : 0);
 			eof_use_fof_difficulty_naming = (eof_preferences_dialog[53].flags == D_SELECTED ? 1 : 0);
+			eof_lyric_tails_clickable = (eof_preferences_dialog[54].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;
@@ -1632,6 +1636,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[51].flags = 0;					//min. note distance is 1/# beat
 			eof_preferences_dialog[52].flags = 0;					//New notes are force strum
 			eof_preferences_dialog[53].flags = 0;					//Use FoF difficulty naming
+			eof_preferences_dialog[54].flags = D_SELECTED;			//Make lyric tails clickable
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 
@@ -1706,15 +1711,16 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[26].flags = eof_disable_ini_difference_warnings ? D_SELECTED : 0;		//Don't warn about INI differences
 	eof_import_export_preferences_dialog[27].flags = eof_render_mid_beat_tempos_blue ? D_SELECTED : 0;		//Render mid beat tempos blue
 	eof_import_export_preferences_dialog[28].flags = eof_gp_import_text ? D_SELECTED : 0;					//GP import RS sections/phrases
-	eof_import_export_preferences_dialog[29].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
-	eof_import_export_preferences_dialog[30].flags = eof_rs2_export_version_8 ? D_SELECTED : 0;				//RS2 export version 8 (DLC Builder) style XML
-	eof_import_export_preferences_dialog[31].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
-	eof_import_export_preferences_dialog[32].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
-	eof_import_export_preferences_dialog[33].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;//MIDI export CH/YARG open note/chord markers
-	eof_import_export_preferences_dialog[34].flags = eof_gp_import_remove_accent_from_staccato ? D_SELECTED : 0;//GP import remove accent from staccato notes
-	eof_import_export_preferences_dialog[35].flags = eof_offer_fhp_derived_finger_placements ? D_SELECTED : 0;//Offer to derive finger placements from FHPs
-	eof_import_export_preferences_dialog[36].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
-	eof_import_export_preferences_dialog[37].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_import_export_preferences_dialog[29].flags = eof_gp_import_text_techniques ? D_SELECTED : 0;			//GP import beat text as techniques
+	eof_import_export_preferences_dialog[30].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;			//GP import beat text as sections, markers as phrases
+	eof_import_export_preferences_dialog[31].flags = eof_rs2_export_version_8 ? D_SELECTED : 0;				//RS2 export version 8 (DLC Builder) style XML
+	eof_import_export_preferences_dialog[32].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
+	eof_import_export_preferences_dialog[33].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
+	eof_import_export_preferences_dialog[34].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;//MIDI export CH/YARG open note/chord markers
+	eof_import_export_preferences_dialog[35].flags = eof_gp_import_remove_accent_from_staccato ? D_SELECTED : 0;//GP import remove accent from staccato notes
+	eof_import_export_preferences_dialog[36].flags = eof_offer_fhp_derived_finger_placements ? D_SELECTED : 0;//Offer to derive finger placements from FHPs
+	eof_import_export_preferences_dialog[37].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
+	eof_import_export_preferences_dialog[38].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
 
 	do
 	{	//Run the dialog
@@ -1746,15 +1752,16 @@ int eof_menu_file_import_export_preferences(void)
 			eof_disable_ini_difference_warnings = (eof_import_export_preferences_dialog[26].flags == D_SELECTED ? 1 : 0);
 			eof_render_mid_beat_tempos_blue = (eof_import_export_preferences_dialog[27].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_text = (eof_import_export_preferences_dialog[28].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
-			eof_rs2_export_version_8 = (eof_import_export_preferences_dialog[30].flags == D_SELECTED ? 1 : 0);
-			eof_rs_import_all_handshapes = (eof_import_export_preferences_dialog[31].flags == D_SELECTED ? 1 : 0);
-			eof_disable_ini_export = (eof_import_export_preferences_dialog[32].flags == D_SELECTED ? 1 : 0);
-			eof_midi_export_enhanced_open_marker = (eof_import_export_preferences_dialog[33].flags == D_SELECTED ? 1 : 0);
-			eof_gp_import_remove_accent_from_staccato = (eof_import_export_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
-			eof_offer_fhp_derived_finger_placements = (eof_import_export_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
-			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
-			eof_disable_rs_wav = (eof_import_export_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_text_techniques = (eof_import_export_preferences_dialog[29].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_preference_1 = (eof_import_export_preferences_dialog[30].flags == D_SELECTED ? 1 : 0);
+			eof_rs2_export_version_8 = (eof_import_export_preferences_dialog[31].flags == D_SELECTED ? 1 : 0);
+			eof_rs_import_all_handshapes = (eof_import_export_preferences_dialog[32].flags == D_SELECTED ? 1 : 0);
+			eof_disable_ini_export = (eof_import_export_preferences_dialog[33].flags == D_SELECTED ? 1 : 0);
+			eof_midi_export_enhanced_open_marker = (eof_import_export_preferences_dialog[34].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_remove_accent_from_staccato = (eof_import_export_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
+			eof_offer_fhp_derived_finger_placements = (eof_import_export_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
+			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
+			eof_disable_rs_wav = (eof_import_export_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1783,15 +1790,16 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[26].flags = 0;				//Don't warn about INI differences
 			eof_import_export_preferences_dialog[27].flags = D_SELECTED;		//Render mid beat tempos blue
 			eof_import_export_preferences_dialog[28].flags = 0;				//GP import RS sections/phrases
-			eof_import_export_preferences_dialog[29].flags = 0;				//GP import beat text as sections, markers as phrases
-			eof_import_export_preferences_dialog[30].flags = 0;				//RS2 export version 8 (DLC Builder) style XML
-			eof_import_export_preferences_dialog[31].flags = 0;				//RS import loads all handshapes
-			eof_import_export_preferences_dialog[32].flags = 0;				//Don't write INI file
-			eof_import_export_preferences_dialog[33].flags = 0;				//MIDI export CH/YARG open note/chord markers
-			eof_import_export_preferences_dialog[34].flags = 0;				//GP import remove accent from staccato notes
-			eof_import_export_preferences_dialog[35].flags = 0;				//Offer to derive finger placements from FHPs
-			eof_import_export_preferences_dialog[36].flags = 0;				//GH import sustain threshold prompt
-			eof_import_export_preferences_dialog[37].flags = 0;				//Don't write Rocksmith WAV file
+			eof_import_export_preferences_dialog[29].flags = D_SELECTED;		//GP import beat text as techniques
+			eof_import_export_preferences_dialog[30].flags = 0;				//GP import beat text as sections, markers as phrases
+			eof_import_export_preferences_dialog[31].flags = 0;				//RS2 export version 8 (DLC Builder) style XML
+			eof_import_export_preferences_dialog[32].flags = 0;				//RS import loads all handshapes
+			eof_import_export_preferences_dialog[33].flags = 0;				//Don't write INI file
+			eof_import_export_preferences_dialog[34].flags = 0;				//MIDI export CH/YARG open note/chord markers
+			eof_import_export_preferences_dialog[35].flags = 0;				//GP import remove accent from staccato notes
+			eof_import_export_preferences_dialog[36].flags = 0;				//Offer to derive finger placements from FHPs
+			eof_import_export_preferences_dialog[37].flags = 0;				//GH import sustain threshold prompt
+			eof_import_export_preferences_dialog[38].flags = 0;				//Don't write Rocksmith WAV file
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -5400,6 +5408,7 @@ int eof_gp_import_guitar_track(int importvoice)
 	char overlaps, tuning_prompted = 0, is_bass = 0;
 	char still_populated = 0;	//Will be set to nonzero if the track still contains notes after the track/difficulty is cleared before importing the GP track
 	EOF_PHRASE_SECTION *ptr, *ptr2;
+	int ret;
 
 	if(eof_song && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
 	{	//Only continue if a pro guitar/bass track is active
@@ -5429,6 +5438,49 @@ int eof_gp_import_guitar_track(int importvoice)
 				return 0;
 			}
 		}
+
+		//Prompt about adding bass content to a guitar track or vice-versa
+		if(eof_track_is_bass_arrangement(eof_song->pro_guitar_track[tracknum], eof_selected_track))
+		{	//If the track receiving the Guitar Pro import is configured as a bass guitar track
+			is_bass = 1;
+		}
+		if(is_bass && (eof_parsed_gp_file->instrument_types[selected] == 1))
+		{	//If the imported GP track is a guitar track and the user is importing it into an EOF track that's configured as a bass arrangement
+			ret = alert3("You are importing a guitar arrangement into a bass track.", NULL, "Update the recipient track's type to a non-bass arrangement type?", "&Yes", "&No", "Cancel", 'y', 'n', 0);
+			if(ret == 1)
+			{	//If the user opts to alter the arrangement type
+				if(!gp_import_undo_made)
+				{	//If an undo state wasn't already made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one now
+					gp_import_undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->arrangement = 0;	//Set it to undefined guitar arrangement
+			}
+			else if(ret == 3)
+			{
+				eof_log("\t\tImport canceled", 1);
+				return 0;
+			}
+		}
+		else if(!is_bass && (eof_parsed_gp_file->instrument_types[selected] == 2))
+		{	//If the imported GP track is a bass track and the user is importing it into an EOF track that's configured as a guitar arrangement
+			ret = alert3("You are importing a bass arrangement into a guitar track.", NULL, "Update the recipient track's type to a bass arrangement type?", "&Yes", "&No", "Cancel", 'y', 'n', 0);
+			if(ret == 1)
+			{	//If the user opts to alter the arrangement type
+				if(!gp_import_undo_made)
+				{	//If an undo state wasn't already made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one now
+					gp_import_undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->arrangement = EOF_BASS_ARRANGEMENT;	//Set it to bass arrangement
+			}
+			else if(ret == 3)
+			{
+				eof_log("\t\tImport canceled", 1);
+				return 0;
+			}
+		}
+
 		if(!gp_import_undo_made)
 		{	//If an undo state wasn't already made
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one now
@@ -5534,24 +5586,6 @@ int eof_gp_import_guitar_track(int importvoice)
 		if(eof_get_highest_fret(eof_song, eof_selected_track) > eof_song->pro_guitar_track[tracknum]->numfrets)
 		{	//If the track being imported uses a fret value that is higher than what the active track's fret limit
 			eof_song->pro_guitar_track[tracknum]->numfrets = eof_get_highest_fret(eof_song, eof_selected_track);	//Update the fret limit
-		}
-		if(eof_track_is_bass_arrangement(eof_song->pro_guitar_track[tracknum], eof_selected_track))
-		{	//If the track receiving the Guitar Pro import is configured as a bass guitar track
-			is_bass = 1;
-		}
-		if(is_bass && (eof_parsed_gp_file->instrument_types[selected] == 1))
-		{	//If the imported GP track is a guitar track and the user is importing it into an EOF track that's configured as a bass arrangement
-			if(alert("You are importing a guitar arrangement into a bass track.", NULL, "Update the recipient track's type to a non-bass arrangement type?", "&Yes", "&No", 'y', 'n') == 1)
-			{	//If the user opts to alter the arrangement type
-				eof_song->pro_guitar_track[tracknum]->arrangement = 0;	//Set it to undefined guitar arrangement
-			}
-		}
-		else if(!is_bass && (eof_parsed_gp_file->instrument_types[selected] == 2))
-		{	//If the imported GP track is a bass track and the user is importing it into an EOF track that's configured as a guitar arrangement
-			if(alert("You are importing a bass arrangement into a guitar track.", NULL, "Update the recipient track's type to a bass arrangement type?", "&Yes", "&No", 'y', 'n') == 1)
-			{	//If the user opts to alter the arrangement type
-				eof_song->pro_guitar_track[tracknum]->arrangement = EOF_BASS_ARRANGEMENT;	//Set it to bass arrangement
-			}
 		}
 		for(ctr = 0; ctr < 6; ctr++)
 		{	//For each of the 6 supported strings

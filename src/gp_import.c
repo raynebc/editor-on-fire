@@ -2204,15 +2204,16 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		pack_ReadDWORDLE(inf, &dword);	//Read the key
 	}
 	for(ctr = 0; ctr < 64; ctr++)
-	{
+	{	//Read data for each of the 64 usable channels
 		pack_ReadDWORDLE(inf, &dword);	//Read the instrument patch number
-		patches[ctr] = dword;			//Store the instrument patch for later reference
-		(void) pack_getc(inf);			//Read the volume
-		(void) pack_getc(inf);			//Read the pan value
-		(void) pack_getc(inf);			//Read the chorus value
-		(void) pack_getc(inf);			//Read the reverb value
-		(void) pack_getc(inf);			//Read the phaser value
-		(void) pack_getc(inf);			//Read the tremolo value
+		gp->channel_instrument[ctr] = dword & 0xFF;	//Store the instrument patch number
+		patches[ctr] = dword;				//Store the instrument patch for later reference
+		(void) pack_getc(inf);				//Read the volume
+		(void) pack_getc(inf);				//Read the pan value
+		(void) pack_getc(inf);				//Read the chorus value
+		(void) pack_getc(inf);				//Read the reverb value
+		(void) pack_getc(inf);				//Read the phaser value
+		(void) pack_getc(inf);				//Read the tremolo value
 		pack_ReadWORDLE(inf, NULL);		//Read two bytes of unknown data/padding
 	}
 	if(fileversion >= 500)
@@ -3031,6 +3032,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		if(bytemask & 1)
 		{	//Is a drum track
 			gp->instrument_types[ctr] = 3;	//Note that this is a drum track
+#ifdef GP_IMPORT_DEBUG
+			eof_log("\t\t\tThis track is defined as a drum track", 1);
+#endif
 		}
 		if(bytemask & 2)
 		{	//Is a 12 string guitar track
@@ -3184,11 +3188,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			{	//These are the defined guitar instrument numbers in Guitar Pro
 				assert(gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
 				gp->instrument_types[ctr] = 1;
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tThis track is defined as a guitar track (instrument %u)", patchnum);
+				eof_log(eof_log_string, 1);
+#endif
 			}
 			else if((patchnum >= 32) && (patchnum <= 39))
 			{	//These are the defined bass guitar instrument numbers in Guitar Pro
 				assert(gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
 				gp->instrument_types[ctr] = 2;
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tThis track is defined as a bass guitar track (instrument %u)", patchnum);
+				eof_log(eof_log_string, 1);
+#endif
 			}
 		}
 		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI channel used for this track's effects
@@ -3645,6 +3657,34 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									else
 									{	//Otherwise discard this beat text
 										free(gp->text_event[gp->text_events]);	//Free the memory allocated to store this text event
+									}
+								}
+								if(eof_gp_import_text_techniques)
+								{	//If techniques are to be imported from beat text
+									if(!stricmp(buffer, "T"))
+									{	//Thumb (slap) notation in bass tracks, tap notation in guitar tracks
+										if(gp->instrument_types[ctr2] == 2)
+										{	//If this is a bass track
+											allflags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+										}
+										else if(gp->instrument_types[ctr2] == 1)
+										{	//If this is a guitar tarck
+											allflags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+										}
+									}
+									else if(!stricmp(buffer, "P"))
+									{	//Pop notation in bass tracks
+										if(gp->instrument_types[ctr2] == 2)
+										{	//If this is a bass track
+											allflags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+										}
+									}
+									if(!stricmp(buffer, "S"))
+									{	//Slap notation in bass tracks
+										if(gp->instrument_types[ctr2] == 2)
+										{	//If this is a bass track
+											allflags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+										}
 									}
 								}
 							}

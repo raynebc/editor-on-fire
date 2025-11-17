@@ -1809,7 +1809,7 @@ int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long times
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					ptr->end_pos = position;	//Update the edited FHP
 					ptr->start_pos = timestamp;
-					if(ptr2)
+					if(ptr2 && (ptr2 != ptr))
 					{	//If there was another FHP already at the position where the edited FHP was moved (perform this after altering the edited timestamp, because deleting an FHP will alter the FHP array and can invalidate ptr)
 						eof_pro_guitar_track_delete_hand_position(tp, index);	//Delete it
 					}
@@ -5120,6 +5120,7 @@ int eof_menu_track_toggle_tech_view(void)
 		eof_menu_pro_guitar_track_enable_tech_view(tp);
 	}
 	(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Re-count the number of notes in the currently active array
 	eof_fix_window_title();
 	return 1;
