@@ -1943,31 +1943,34 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_RS_NOTES_TO_SOON_AFTER_COUNT_PHRASE"))
 	{
-		unsigned long match = eof_song_lookup_first_event(eof_song, "COUNT", eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
-		if(match < eof_song->text_events)
-		{	//If there was an instance of the COUNT phrase applicable to the active track (specifically or project-wide)
-			unsigned num = 0, den = 0;
-			EOF_PRO_GUITAR_TRACK *tp;
-			unsigned long matchbeat = eof_get_text_event_beat(eof_song, match);	//Get the beat containing the event
+		if(eof_blclick_released != 0)
+		{	//If a beat marker click and drag operation is NOT in progress
+			unsigned long match = eof_song_lookup_first_event(eof_song, "COUNT", eof_selected_track, EOF_EVENT_FLAG_RS_PHRASE, 2);
+			if(match < eof_song->text_events)
+			{	//If there was an instance of the COUNT phrase applicable to the active track (specifically or project-wide)
+				unsigned num = 0, den = 0;
+				EOF_PRO_GUITAR_TRACK *tp;
+				unsigned long matchbeat = eof_get_text_event_beat(eof_song, match);	//Get the beat containing the event
 
-			if(eof_get_effective_ts(eof_song, &num, &den, matchbeat, 0))
-			{	//If the time signature of the beat containing the event could be determined
-				if(matchbeat + num < eof_song->beats)
-				{	//If the beat that would be one measure further into the chart exists
-					unsigned long targetpos = eof_song->beat[matchbeat + num]->pos;	//The position of that beat
+				if(eof_get_effective_ts(eof_song, &num, &den, matchbeat, 0))
+				{	//If the time signature of the beat containing the event could be determined
+					if(matchbeat + num < eof_song->beats)
+					{	//If the beat that would be one measure further into the chart exists
+						unsigned long targetpos = eof_song->beat[matchbeat + num]->pos;	//The position of that beat
 
-					for(ctr = 1; ctr < eof_song->tracks; ctr++)
-					{	//For each track in the project
-						if(!eof_track_is_pro_guitar_track(eof_song, ctr))
-							continue;	//Skip non pro guitar tracks
+						for(ctr = 1; ctr < eof_song->tracks; ctr++)
+						{	//For each track in the project
+							if(!eof_track_is_pro_guitar_track(eof_song, ctr))
+								continue;	//Skip non pro guitar tracks
 
-						tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
-						if(tp->pgnotes)
-						{	//If there's at least one normal note in the track
-							if(tp->pgnote[0]->pos < targetpos)
-							{	//If the first note begins before the specified time
-								dest_buffer[0] = '\0';
-								return 3;	//True
+							tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+							if(tp->pgnotes)
+							{	//If there's at least one normal note in the track
+								if(tp->pgnote[0]->pos < targetpos)
+								{	//If the first note begins before the specified time
+									dest_buffer[0] = '\0';
+									return 3;	//True
+								}
 							}
 						}
 					}

@@ -1,5 +1,6 @@
 #include <allegro.h>
 #include "../agup/agup.h"
+#include "../config.h"
 #include "../main.h"
 #include "../dialog.h"
 #include "../utility.h"
@@ -20,6 +21,7 @@ MENU eof_help_menu[] =
 	{"", NULL, NULL, 0, NULL},
 	{"Reset &Display\tShift+F5", eof_reset_display, NULL, 0, NULL},
 	{"Reset audi&O", eof_reset_audio, NULL, 0, NULL},
+	{"Reload &Config", eof_reload_config, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Keys\tF1", eof_menu_help_keys, NULL, 0, NULL},
 	{"&Rocksmith keys\tALT+F1", eof_menu_help_rocksmith_keys, NULL, 0, NULL},
@@ -268,6 +270,15 @@ int eof_reset_audio(void)
 		install_timer();	//Needed to use midi_out()
 		eof_midi_initialized = 1;
 	}
+
+	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+	return D_O_K;
+}
+
+int eof_reload_config(void)
+{
+	eof_default_ini_settings = 0;	//Erase any loaded default INI settings, they will be reloaded
+	eof_load_config("eof.cfg");
 
 	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 	return D_O_K;

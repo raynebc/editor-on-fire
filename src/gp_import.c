@@ -4786,7 +4786,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 #ifdef GP_IMPORT_DEBUG
 							if((tp->notes > 2) && (tp->note[tp->notes - 1]->pos == tp->note[tp->notes - 2]->pos))
-							{	//If this note is at the same timestamp as the previous imported note, it could be due to weird grace notes, and there are at least two previous notes
+							{	//If this note is at the same timestamp as the previous imported note, and there are at least two previous notes, it could be due to weird grace notes
 								tp->note[tp->notes - 2]->pos -= (tp->note[tp->notes - 1]->pos - tp->note[tp->notes - 3]->pos) / 2 ;	//Move the previous note half-way between the one before and after it
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tDue to strange note timing, note #%lu was moved to Start: %lums", tp->notes - 2, tp->note[tp->notes - 2]->pos);
 								eof_log(eof_log_string, 1);
@@ -5091,7 +5091,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}//For each note in the track
 	}//For each imported track
 
-//Convert slide in from above/below notation to pitched slides that each link to a note 1/4 beat after them
+//Convert slide in from above/below notation to pitched slides that each link to a note 1/# beat after them
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
 		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
@@ -5112,7 +5112,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				unsigned long beatnum = eof_get_beat(eof_song, gp->track[ctr]->note[ctr2]->pos);
 				unsigned long beatlength = eof_get_beat_length(eof_song, beatnum);
 
-				//Find the direction of the slide and apply it to the note, place the newly added note 1/4 beat after the slide beginning and link it
+				//Find the direction of the slide and apply it to the note, place the newly added note 1/# beat after the slide beginning and link it
 				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
 					if(ctr3 < gp->track[ctr]->numstrings)
@@ -5137,7 +5137,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 								}
 							}
-							gnp->pos = gp->track[ctr]->note[ctr2]->pos + ((double)beatlength / 4.0) + 0.5;	//Place the newly added note 1/4 beat forward
+							gnp->pos = gp->track[ctr]->note[ctr2]->pos + ((double)beatlength / (double)eof_gp_import_slide_in_beat_interval) + 0.5;	//Place the newly added note 1/# beat forward, based on the eof_gp_import_slide_in_beat_interval eof.cfg setting
 							if(!eof_is_any_beat_interval_position(gnp->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
 							{	//If this note is not beat interval snapped
 								if((snappos + 1 == gnp->pos) || (gnp->pos + 1 == snappos))

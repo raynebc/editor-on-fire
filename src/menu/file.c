@@ -274,7 +274,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   270, 340, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text as sections, markers as phrases",NULL, NULL },
 	{ d_agup_check_proc, 16,   285, 310, 16,  2,   23,  0,    0,      1,   0,   "RS2 export version 8 (DLC Builder) style XML",NULL, NULL },
 	{ d_agup_check_proc, 16,   300, 218, 16,  2,   23,  0,    0,      1,   0,   "RS import loads all handshapes",NULL, NULL },
-	{ d_agup_check_proc, 248, 300, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write INI file",NULL, NULL },
+	{ d_agup_check_proc, 248, 300, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write song INI file",NULL, NULL },
 	{ d_agup_check_proc, 16,   315, 315, 16,  2,   23,  0,    0,      1,   0,   "MIDI export CH/YARG open note/chord markers",NULL, NULL },
 	{ d_agup_check_proc, 16,   330, 300, 16,  2,   23,  0,    0,      1,   0,   "GP import remove accent from staccato notes",NULL, NULL },
 	{ d_agup_check_proc, 16,   345, 300, 16,  2,   23,  0,    0,      1,   0,   "Offer to derive finger placements from FHPs",NULL, NULL },

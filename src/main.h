@@ -403,6 +403,7 @@ extern int         eof_new_note_forced_strum;
 extern int         eof_use_fof_difficulty_naming;
 extern int         eof_gp_import_text;
 extern int         eof_gp_import_text_techniques;
+extern unsigned eof_gp_import_slide_in_beat_interval;
 extern int         eof_gp_import_preference_1;
 extern int         eof_gp_import_truncate_short_notes;
 extern int         eof_gp_import_truncate_short_chords;

@@ -180,6 +180,7 @@ int         eof_new_note_forced_strum = 0;		//If nonzero, newly created notes ar
 int         eof_use_fof_difficulty_naming = 0;	//If nonzero, the difficulties are labeled Supaeasy, Easy, Medium and Amazing instead of the Rock Band naming (Easy, Medium, Hard, Expert)
 int         eof_gp_import_text = 0;			//If nonzero during GP import, section markers import as an RS phrase (as well as an RS section if validly named), beat text imports as an RS phrase (as well as a RS section if validly named)
 int         eof_gp_import_text_techniques = 1;	//If nonzero during GP import, text strings such as "T", "S" and "P" text on guitar/bass note positions are interpreted as techniques such as tap, slap and pop
+unsigned eof_gp_import_slide_in_beat_interval = 4;	//When inserting a note to recreate slide in from above/below status during GP import, the inserted note will be 1/# beat away from the original position of the note with this status
 int         eof_gp_import_preference_1 = 0;		//If nonzero during GP import, beat texts with qualifying strings are imported as RS phrases (as well as RS sections if validly named), section markers as RS phrases.
 int         eof_gp_import_truncate_short_notes = 1;	//If nonzero during GP import, single notes shorter than one quarter note are set to the minimum length of 1ms
 int         eof_gp_import_truncate_short_chords = 1;	//If nonzero during GP import, chords shorter than one quarter note are set to the minimum length of 1ms

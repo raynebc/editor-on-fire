@@ -16,5 +16,6 @@ int eof_menu_help_about(void);
 
 int eof_reset_display(void);				//Rebuilds the program window with the current window size
 int eof_reset_audio(void);				//Re-initializes the sound handling
+int eof_reload_config(void);				//Reloads eof.cfg
 
 #endif

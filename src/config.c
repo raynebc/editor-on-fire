@@ -233,6 +233,11 @@ void eof_load_config(char * fn)
 	eof_new_note_forced_strum = get_config_int("preferences", "eof_new_note_forced_strum", 0);
 	eof_gp_import_text = get_config_int("preferences", "eof_gp_import_text", 0);
 	eof_gp_import_text_techniques = get_config_int("preferences", "eof_gp_import_text_techniques", 1);
+	eof_gp_import_slide_in_beat_interval = get_config_int("preferences", "eof_gp_import_slide_in_beat_interval", 4);
+	if((eof_gp_import_slide_in_beat_interval < 1) || (eof_gp_import_slide_in_beat_interval > 100))
+	{	//If this isn't a sensible value
+		eof_gp_import_slide_in_beat_interval = 4;
+	}
 	eof_gp_import_preference_1 = get_config_int("preferences", "eof_gp_import_preference_1", 0);
 	eof_gp_import_truncate_short_notes = get_config_int("preferences", "eof_gp_import_truncate_short_notes", 1);
 	eof_gp_import_truncate_short_chords = get_config_int("preferences", "eof_gp_import_truncate_short_chords", 1);
@@ -699,6 +704,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_use_fof_difficulty_naming", eof_use_fof_difficulty_naming);
 	set_config_int("preferences", "eof_gp_import_text", eof_gp_import_text);
 	set_config_int("preferences", "eof_gp_import_text_techniques", eof_gp_import_text_techniques);
+	set_config_int("preferences", "eof_gp_import_slide_in_beat_interval", eof_gp_import_slide_in_beat_interval);
 	set_config_int("preferences", "eof_gp_import_preference_1", eof_gp_import_preference_1);
 	set_config_int("preferences", "eof_gp_import_truncate_short_notes", eof_gp_import_truncate_short_notes);
 	set_config_int("preferences", "eof_gp_import_truncate_short_chords", eof_gp_import_truncate_short_chords);
