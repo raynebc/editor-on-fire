@@ -2736,8 +2736,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 						if(retflags & (EOF_PRO_GUITAR_NOTE_FLAG_BEND | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_NOTE_FLAG_IS_TREMOLO))
 						{	//If this string uses any techniques that require sustain
-							if(tech.length < 2)
-							{	//If the gem for this string would export without at least 1ms of sustain
+							if(tech.length < 5)
+							{	//If the gem for this string would export without at least 5ms of sustain (any amount of sustain less than 5ms was considered as likely to be mis-read by the game's pitch detection)
 								char time_string[15] = {0};
 								if(ctr != eof_selected_track)
 								{	//If this isn't the active track

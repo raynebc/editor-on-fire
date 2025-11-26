@@ -5385,6 +5385,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	unsigned char lowestfret;
 	long fret, slidediff = 0, unpitchedslidediff = 0;
 	char techbends = 0, thistechbends, has_stop = 0;
+	char keeplength = 0;	//Set to nonzero if the note's techniques require the sustain to be kept
 
 	if((sp == NULL) || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return 0;	//Invalid parameters
@@ -5406,6 +5407,11 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		fret = 0;
 	}
 	lowestfret = eof_pro_guitar_note_lowest_fret(tp, notenum);	//Determine the lowest used fret in this note
+
+	if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) || (flags & EOF_NOTE_FLAG_IS_TREMOLO))
+	{	//If this note has bend, vibrato, slide (bend and slide notes are required to have a length > 0 or Rocksmith will crash), unpitched slide, sustain or tremolo status
+		keeplength = 1;
+	}
 
 	//If applicable, track the techniques for any tech notes that affect the specified string of the note
 	if(checktechnotes && eof_pro_guitar_note_bitmask_has_tech_note(tp, notenum, bitmask, &technote_num))
@@ -5511,8 +5517,6 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 
 	if(ptr)
 	{	//If the calling function passed a techniques structure
-		char keeplength = 0;	//Set to nonzero if the note's techniques require the sustain to be kept
-
 		memset(ptr, 0, sizeof(EOF_RS_TECHNIQUES));	//Force this structure to fill with zeroes to avoid scenarios where two identical structures fail memory comparison because of differences in the values of padding between variables
 		ptr->length = eof_get_note_length(sp, track, notenum);
 
@@ -5525,10 +5529,6 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 			{	//Validate that the stop tech note's recorded position is at/after the beginning of the affected note and earlier than the end of that note
 				ptr->length = stop_tech_note_position - notepos;
 			}
-		}
-		if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) || (flags & EOF_NOTE_FLAG_IS_TREMOLO))
-		{	//If this note has bend, vibrato, slide (bend and slide notes are required to have a length > 0 or Rocksmith will crash), unpitched slide, sustain or tremolo status
-			keeplength = 1;
 		}
 		if(fret)
 		{	//If this string is fretted (open notes don't have slide or bend attributes written)
@@ -5706,6 +5706,11 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 										EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC | EOF_NOTE_FLAG_IS_TREMOLO | EOF_PRO_GUITAR_NOTE_FLAG_POP | EOF_PRO_GUITAR_NOTE_FLAG_SLAP | EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC |
 										EOF_PRO_GUITAR_NOTE_FLAG_TAP | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE | EOF_PRO_GUITAR_NOTE_FLAG_ACCENT |
 										EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);
+
+		if((ptr->length > 1) && (ptr->length < 5))
+		{	//If the note has sustain, but not at least 5ms
+			ptr->length = 0;	//This causes note detection problems in Rocksmith, drop the sustain
+		}
 	}//If the calling function passed a techniques structure
 
 	//Make a bitmask reflecting only the techniques this note (or any applicable tech notes) has that require a chordNote subtag to be written

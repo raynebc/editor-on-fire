@@ -3246,7 +3246,7 @@ int eof_rocksmith_mover_dialog_add(void)
 		}
 
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
-		if(eof_mover_add_dialog[2].flags == D_SELECTED)
+		if(eof_mover_add_dialog[3].flags == D_SELECTED)
 		{	//If the user also opted to make it specific to the active track
 			track = eof_selected_track;
 		}
