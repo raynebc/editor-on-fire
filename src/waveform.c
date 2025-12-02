@@ -67,7 +67,7 @@ int eof_waveform_slice_mean(struct waveformslice *left, struct waveformslice *ri
 		{	//If at least two slices' data was added, calculate the mean, round up
 			results->min = ((double)results->min / ctr2 + 0.5);
 			results->peak = ((double)results->peak / ctr2 + 0.5);
-			results->rms = ((double)results->rms / ctr2 );
+			results->rms = ((double)results->rms / ctr2);
 		}
 	}
 

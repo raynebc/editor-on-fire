@@ -270,7 +270,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 								reldelta = 0;	//Reset the number of delta ticks since the last tempo change
 							}
 						}
-						else if( ((eventtype & 0xF) == 0) || ((eventtype & 0xF) == 0x7) )
+						else if(((eventtype & 0xF) == 0) || ((eventtype & 0xF) == 0x7))
 						{	//If it's a Sysex event
 							bytes_used = 0;
 							length = eof_parse_var_len(midiptr->track[curtrack].data, track_pos, &bytes_used);	//Read the Sysex event length

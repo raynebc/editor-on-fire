@@ -5711,6 +5711,8 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
+	EOF_PRO_GUITAR_TRACK *tp;
+
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "eof_track_fixup_notes() entered for track %lu", track);
 	eof_log(eof_log_string, 3);
 
@@ -5728,7 +5730,12 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			eof_pro_guitar_track_fixup_notes(sp, track, sel);
+			eof_pro_guitar_track_fixup_notes(sp, track, sel);	//Fixup the active note set for this track
+
+			tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+			eof_pro_guitar_track_toggle_tech_view(tp);
+			eof_pro_guitar_track_fixup_notes(sp, track, sel);	//Also fixup the tech note set
+			eof_pro_guitar_track_toggle_tech_view(tp);
 		break;
 
 		default:
@@ -5799,6 +5806,21 @@ void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp)
 	if(tp)
 	{
 		qsort(tp->technote, (size_t)tp->technotes, sizeof(EOF_PRO_GUITAR_NOTE *), eof_song_qsort_pro_guitar_notes);
+	}
+}
+
+void eof_pro_guitar_track_toggle_tech_view(EOF_PRO_GUITAR_TRACK * tp)
+{
+	if(tp)
+	{
+		if(tp->note == tp->technote)
+		{	//If tech view is already in effect for the specified track
+			eof_menu_pro_guitar_track_disable_tech_view(tp);
+		}
+		else
+		{
+			eof_menu_pro_guitar_track_enable_tech_view(tp);
+		}
 	}
 }
 
@@ -9311,6 +9333,15 @@ unsigned long eof_determine_chart_length(EOF_SONG *sp)
 		}
 	}
 
+	//Check anchors
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the project
+		if((sp->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR) && (sp->beat[ctr]->pos > lastitempos))
+		{	//If this beat is an anchor and it is later than the last chart content tracked so far
+			lastitempos = sp->beat[ctr]->pos;	//Track its position
+		}
+	}
+
 	return lastitempos;
 }
 
@@ -9588,6 +9619,13 @@ int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp)
 
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track in the chart
+		if(sp->track[ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		{	//If this is a legacy track
+			if(!eof_write_rb_files && !eof_write_fof_files && !eof_write_gh_files)
+			{	//If none of the relevant game format exports are enabled
+				continue;	//Don't examine this track
+			}
+		}
 		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
 		{	//For each note in the chart
 			if(eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2) > eof_music_length)

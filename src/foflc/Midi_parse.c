@@ -868,7 +868,7 @@ int Lyricless_handler(struct TEPstruct *data)
 		printf("Error: Lyric note off detected without note on (Delta time for the event is at file position %lX)\nAborting\n",data->startindex);
 		exit_wrapper(1);
 	}
-	if(data->parameters[0] != lyric_note_num )	//If this Note Off doesn't correspond to the note number we're expecting
+	if(data->parameters[0] != lyric_note_num)	//If this Note Off doesn't correspond to the note number we're expecting
 		return 0;								//ignore it
 //Add the lyric piece
 	time=ConvertToRealTime(MIDIstruct.absdelta,0.0);	//Get the realtime by parsing the entire tempo list, in case this track's TS changes are causing problems

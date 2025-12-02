@@ -2353,7 +2353,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	memset(gp->instrument_types, 0, sizeof(char) * tracks);				//Set the instrument type for all tracks to undefined
 	gp->track = malloc(sizeof(EOF_PRO_GUITAR_TRACK *) * tracks);		//Allocate memory for pro guitar track pointers
 	gp->text_events = 0;
-	if(!gp->track )
+	if(!gp->track)
 	{
 		eof_log("Error allocating memory (7)", 1);
 		(void) pack_fclose(inf);
@@ -4380,7 +4380,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										{	//Track the lowest fret value for the slide end position
 											unpitchend = fret_value;	//Set the end position of this slide at the authored note
 										}
-										frets[ctr4]++;				//Set the beginning of this slide one fret higher
+										frets[ctr4] += eof_gp_import_slide_in_fret_count;	//Set the beginning of the slide the number of frets the config file specifies for slide in notes
 										slide_in_from_warned++;		//Track that such a slide in was encountered
 									}
 									else if(byte == -1)
@@ -4393,7 +4393,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											{	//Track the lowest fret value for the slide end position
 												unpitchend = fret_value;	//Set the end position of this slide at the authored note
 											}
-											frets[ctr4]--;				//Set the beginning of this slide one fret lower
+											if(frets[ctr4] > eof_gp_import_slide_in_fret_count)
+											{	//If the slide in note can be the config file specified number of frets below this note
+												frets[ctr4] -= eof_gp_import_slide_in_fret_count;	//Set the beginning of the slide that number of frets
+											}
+											else
+											{
+												frets[ctr4] = 1;	//Otherwise start it at the lowest usable fret for a slide
+											}
 											slide_in_from_warned++;		//Track that such a slide in was encountered
 										}
 									}
@@ -4411,9 +4418,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										if(fret_value > 1)
 										{	//Don't apply a downward slide unless the note is at fret 2 or higher
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											if(fret_value > 2)
-											{	//If the slide can be 2 frets instead of 1
-												proposed_unpitchend = fret_value - 2;	//Slide that amount, for better appearance in Rocksmith
+											if(fret_value > eof_gp_import_slide_out_fret_count)
+											{	//If the slide can be as many frets as specified in the config file
+												proposed_unpitchend = fret_value - eof_gp_import_slide_out_fret_count;	//Slide that amount
 											}
 											else
 											{	//Otherwise settle for 1 fret
@@ -4428,9 +4435,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									else if(byte == 4)
 									{	//Slide out and upward
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-										if(fret_value < 23)
-										{	//If the note can unpitched slide up 2 frets without exceeding RS2's fret limit
-											proposed_unpitchend = fret_value + 2;	//For better appearance in Rocksmith, slide 2 frets
+										if(fret_value + eof_gp_import_slide_out_fret_count < 24)
+										{	//If the note can unpitched slide up as many frets as specified in the config file without exceeding RS2's fret limit
+											proposed_unpitchend = fret_value + eof_gp_import_slide_out_fret_count;	//Slide that amount
 										}
 										else
 										{
@@ -4446,12 +4453,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Version 5 or newer GP file
 									if(byte & 4)
 									{	//This note slides out and downwards
-										if(fret_value > 1 )
+										if(fret_value > 1)
 										{	//Don't apply a downward slide unless the note is at fret 2 or higher
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-											if(fret_value > 2)
-											{	//If the slide can be 2 frets instead of 1
-												proposed_unpitchend = fret_value - 2;	//Slide that amount, for better appearance in Rocksmith
+											if(fret_value > eof_gp_import_slide_out_fret_count)
+											{	//If the slide can be as many frets as specified in the config file
+												proposed_unpitchend = fret_value - eof_gp_import_slide_out_fret_count;	//Slide that amount
 											}
 											else
 											{	//Otherwise settle for 1 fret
@@ -4466,9 +4473,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									else if(byte & 8)
 									{	//This note slides out and upwards
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-										if(fret_value < 23)
-										{	//If the note can unpitched slide up 2 frets without exceeding RS2's fret limit
-											proposed_unpitchend = fret_value + 2;	//For better appearance in Rocksmith, slide 2 frets
+										if(fret_value + eof_gp_import_slide_out_fret_count < 24)
+										{	//If the note can unpitched slide up as many frets as specified in the config file without exceeding RS2's fret limit
+											proposed_unpitchend = fret_value + eof_gp_import_slide_out_fret_count;	//Slide that amount
 										}
 										else
 										{
@@ -4481,7 +4488,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									else if(byte & 16)
 									{	//This note slides in from below
-										if(fret_value > 1 )
+										if(fret_value > 1)
 										{	//Don't allow this unless sliding into a fret higher than 1
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
 											flags |= EOF_NOTE_FLAG_HIGHLIGHT;
@@ -4489,7 +4496,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											{	//Track the lowest fret value for the slide end position
 												unpitchend = fret_value;	//Set the end position of this slide at the authored note
 											}
-											frets[ctr4]--;				//Set the beginning of this slide one fret lower
+											if(frets[ctr4] > eof_gp_import_slide_in_fret_count)
+											{	//If the slide in note can be the config file specified number of frets below this note
+												frets[ctr4] -= eof_gp_import_slide_in_fret_count;	//Set the beginning of the slide that number of frets
+											}
+											else
+											{
+												frets[ctr4] = 1;	//Otherwise start it at the lowest usable fret for a slide
+											}
 											slide_in_from_warned++;	//Track that such a slide in was encountered
 										}
 									}
@@ -4501,7 +4515,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										{	//Track the lowest fret value for the slide end position
 											unpitchend = fret_value;	//Set the end position of this slide at the authored note
 										}
-										frets[ctr4]++;				//Set the beginning of this slide one fret higher
+										frets[ctr4] += eof_gp_import_slide_in_fret_count;	//Set the beginning of the slide the number of frets the config file specifies for slide in notes
 										slide_in_from_warned++;	//Track that such a slide in was encountered
 									}
 									else
@@ -5128,14 +5142,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;			//Link it to the newly added note
 								if(gp->track[ctr]->note[ctr2]->frets[ctr3] > gp->track[ctr]->note[ctr2]->unpitchend)
 								{	//Downward slide
-									dir = -1;
 									gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 								}
 								else
 								{	//Upward slide
-									dir = 1;
 									gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 								}
+								dir = gp->track[ctr]->note[ctr2]->unpitchend - gp->track[ctr]->note[ctr2]->frets[ctr3];
 							}
 							gnp->pos = gp->track[ctr]->note[ctr2]->pos + ((double)beatlength / (double)eof_gp_import_slide_in_beat_interval) + 0.5;	//Place the newly added note 1/# beat forward, based on the eof_gp_import_slide_in_beat_interval eof.cfg setting
 							if(!eof_is_any_beat_interval_position(gnp->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
@@ -5144,7 +5157,21 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									gnp->pos = snappos;	//If the nearest grid snap position for this new note is found to be within 1ms, snap to the grid
 							}
 							gnp->note |= bitmask;	//Copy the gem to the newly added note
-							gnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Increase/decrease the fret number to reflect the slide direction
+							if(dir < 0)
+							{	//Downward slide
+								if(gp->track[ctr]->note[ctr2]->frets[ctr3] > dir * -1)
+								{	//If the note can slide down enough
+									gnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Decrease the fret number to reflect the slide
+								}
+								else
+								{
+									gnp->frets[ctr3] = 1;
+								}
+							}
+							else
+							{	//Upward slide
+								gnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Increase the fret number to reflect the slide
+							}
 							if(!gp->track[ctr]->note[ctr2]->slideend || (gnp->frets[ctr3] < gp->track[ctr]->note[ctr2]->slideend))
 							{	//Track the lowest fret value for the slide end position
 								gp->track[ctr]->note[ctr2]->slideend = gnp->frets[ctr3];		//And set that as the end of the pitched slide

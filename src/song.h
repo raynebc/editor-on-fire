@@ -894,6 +894,7 @@ EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_tech_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the technote array.  Returns the newly allocated structure or NULL upon error
 void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the active note set, first by timestamp, second by difficulty, third by note mask
 void eof_pro_guitar_track_sort_tech_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the specified track's tech notes, first by timestamp, second by difficulty, third by note mask
+void eof_pro_guitar_track_toggle_tech_view(EOF_PRO_GUITAR_TRACK * tp);	//Toggles tech view for the specified track
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the pro guitar notes array
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 void eof_pro_guitar_track_delete_tech_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long technote);	//Removes and frees the specified tech note from the tech notes array.  All notes after the deleted note are moved back in the array one position
@@ -935,7 +936,7 @@ void eof_pro_guitar_track_sort_arpeggios(EOF_PRO_GUITAR_TRACK* tp);	//Sorts the 
 
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the notes in all tracks
-								//WARNING:  Any notes occurring after eof_chart_length will be deleted
+								///WARNING:  Any notes occurring after eof_chart_length will be deleted
 unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[], eof_dance_tab_name[] and eof_beatable_tab_name[]) with an asterisk
 	//eof_track_diff_populated_status[] is updated so that each populated difficulty results in the corresponding element number being nonzero
@@ -1098,7 +1099,7 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 	//Calls eof_get_pro_guitar_note_highest_fret_value() on the specified note
 
 unsigned long eof_determine_chart_length(EOF_SONG *sp);
-	//Parses the project and returns the ending position of the last note/tech note/lyric/text event/bookmark
+	//Parses the project and returns the ending position of the last note/tech note/lyric/text event/bookmark/anchor
 void eof_truncate_chart(EOF_SONG *sp);
 	//Uses eof_determine_chart_length() to set eof_chart_length to the larger of the last chart content and the loaded chart audio
 	//Any beats that are more than two beats after this position are deleted from the project

@@ -33,7 +33,7 @@ typedef struct
 {
 	EOF_IMPORT_MIDI_EVENT * event[EOF_IMPORT_MAX_EVENTS];
 	unsigned long events;
-	int type;
+	int type;		//The destination track to import to
 	int game	;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, 1 to indicate a Power Gig MIDI is being imported, 2 to indicate a Guitar Hero animation track is being imported or 3 to indicate an LLPLUS MIDI is being imported
 	int game2;	//Used to track a potential game format detection, since the presence of LLPLUS notes may be ambiguous unless no other mandatory criteria (such as Rock Band style track names) are encountered
 	unsigned char diff;	//Some tracks (such as the pro keys and Power Gig tracks) have all of their contents applicable to a single difficulty level
@@ -433,6 +433,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int event_realignment_warning = 0;
 	int nonstandard_open_strum_marker_prompt = 0;	//In the event of a Sysex open strum marker that spans over multiple notes, tracks the user's choice on how to interpret them
 	char forcestrum = 0;	//Used to track whether the user opted to mark non HOPO notes as forced strum during Power Gig MIDI import (0 = not asked yet, 1 = accepted, 2 = declined)
+	unsigned long llplusnotes = 0, nonllplusnotes = 0;	//Track how many notes were determined to be LLPLUS related versus how many aren't
 
 	eof_log("eof_import_midi() entered", 1);
 
@@ -556,6 +557,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 		}
 		track_pos = 0;
 		absolute_pos = 0;
+		llplusnotes = nonllplusnotes = 0;
 		while(track_pos < eof_work_midi->track[track[i]].len)
 		{	//While the byte index of this MIDI track hasn't reached the end of the track data
 			/* read delta */
@@ -618,6 +620,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 					if((d1 >= 35) && (d1 <= 39))
 					{	//The range of notes used by the game Lightners Live Plus (LLPLUS)
 						eof_import_events[i]->game2 = 3;	//Suspected LLPLUS MIDI track
+						llplusnotes++;		//Track LLPLUS notes imported
+					}
+					else
+					{	//Keep track of how many notes outside the range of LLPLUS are encountered
+						nonllplusnotes++;	//Track non LLPLUS notes imported
 					}
 					break;
 				}
@@ -756,7 +763,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 								}
 
 								/* detect what kind of track this is */
-								eof_import_events[i]->type = 0;
 								for(j = 1; j < EOF_MIDI_TRACK_DEFINITIONS; j++)
 								{	//Compare the track name against the tracks in eof_midi_tracks[], including the GHL variants
 									if(ustricmp(text, eof_midi_tracks[j].name))
@@ -860,7 +866,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 									}
 									break;	//By this point, the track type should have been identified, don't need to check against other possible track names
 								}
-								if(eof_import_events[i]->type != 0)
+								if(eof_import_events[i]->type > 0)
 									continue;	//If the track name matched any of the supported Rock Band or GHL track names, skip additional processing for this track name event
 
 								for(j = 1; j < EOF_POWER_GIG_TRACKS_MAX; j++)
@@ -897,7 +903,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 										}
 									}
 								}
-								if(eof_import_events[i]->type != 0)
+								if(eof_import_events[i]->type > 0)
 									break;	//If the track name was matched by now, skip the below logic
 
 								//If the track name didn't match any of the standard Power Gig track names either
@@ -922,7 +928,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 										}
 									}
 								}
-								if(eof_import_events[i]->type != 0)
+								if(eof_import_events[i]->type > 0)
 									break;	//If the track name has been matched, skip the below processing
 
 								if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
@@ -1072,6 +1078,15 @@ EOF_SONG * eof_import_midi(const char * fn)
 				}
 			}//switch(current_event_hi)
 		}//While the byte index of this MIDI track hasn't reached the end of the track data
+
+		if(eof_import_events[i]->game2 == 3)
+		{	//If this track was determined to potentially be related to LLPLUS
+			if(llplusnotes < nonllplusnotes)
+			{	//But most of the notes encountered were not in the range of LLPLUS
+				eof_import_events[i]->game2 = 0;	//Do not consider this an LLPLUS track
+				eof_log("\t\t!Track determined to not be LLPLUS", 1);
+			}
+		}
 	}//For each imported track
 
 
@@ -1386,7 +1401,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		{	//If the format of this track hasn't been identified yet
 			if(eof_import_events[i]->game2 == 3)
 			{	//If this track was found to have notes applicable to LLPLUS
-				eof_import_events[i]->type = 0;	//If will be imported as a guitar track
+				eof_import_events[i]->type = 0;	//It will be imported as a guitar track
 			}
 			else
 				continue;	//This track is to be skipped
@@ -2043,7 +2058,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								diff = -1;	//No defined difficulty
 							}
 						}
-					}
+					}//Any other type of legacy track
 				}//Note on or note off
 
 				if(filter && (diff >= 0) && (diff != EOF_NOTE_AMAZING))

@@ -181,6 +181,8 @@ int         eof_use_fof_difficulty_naming = 0;	//If nonzero, the difficulties ar
 int         eof_gp_import_text = 0;			//If nonzero during GP import, section markers import as an RS phrase (as well as an RS section if validly named), beat text imports as an RS phrase (as well as a RS section if validly named)
 int         eof_gp_import_text_techniques = 1;	//If nonzero during GP import, text strings such as "T", "S" and "P" text on guitar/bass note positions are interpreted as techniques such as tap, slap and pop
 unsigned eof_gp_import_slide_in_beat_interval = 4;	//When inserting a note to recreate slide in from above/below status during GP import, the inserted note will be 1/# beat away from the original position of the note with this status
+unsigned eof_gp_import_slide_in_fret_count = 1;		//How many frets above/below the target note a slide in technique will be interpreted as
+unsigned eof_gp_import_slide_out_fret_count = 2;		//How many frets above/below the target note a slide out technique will be interpreted as
 int         eof_gp_import_preference_1 = 0;		//If nonzero during GP import, beat texts with qualifying strings are imported as RS phrases (as well as RS sections if validly named), section markers as RS phrases.
 int         eof_gp_import_truncate_short_notes = 1;	//If nonzero during GP import, single notes shorter than one quarter note are set to the minimum length of 1ms
 int         eof_gp_import_truncate_short_chords = 1;	//If nonzero during GP import, chords shorter than one quarter note are set to the minimum length of 1ms
@@ -279,7 +281,7 @@ ALOGG_OGG * eof_music_track = NULL;
 void      * eof_music_data = NULL;	//A memory buffer of the current chart audio's OGG file
 int         eof_silence_loaded = 0;
 int         eof_music_data_size = 0;	//The size of the eof_music_data buffer in bytes
-unsigned long eof_chart_length = 0;		//Stores the position of the last note/lyric/text event/bookmark or the end of the chart audio, whichever is longer
+unsigned long eof_chart_length = 0;		//Stores the position of the last note/lyric/text event/bookmark or the end of the chart audio, whichever is longer.  The fixup logic will truncate beats that extend beyond this timestamp
 unsigned long eof_music_length = 0;
 int         eof_logic_rate = 100;
 EOF_MUSIC_POS eof_music_pos;
