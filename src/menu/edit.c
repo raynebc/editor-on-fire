@@ -1492,7 +1492,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 int eof_menu_edit_copy(void)
 {
 	unsigned long i;
-	unsigned long first_pos = 0, note_pos;
+	unsigned long first_pos = 0, note_pos, end_pos = 0;
 	char first_pos_read = 0;
 	unsigned long first_beat = 0;
 	char first_beat_read = 0;
@@ -1525,6 +1525,7 @@ int eof_menu_edit_copy(void)
 				first_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));
 				first_beat_read = 1;
 			}
+			end_pos = note_pos + eof_get_note_length(eof_song, eof_selected_track, i);	//Track the position of the last note in the selection
 		}
 	}
 	if(copy_notes == 0)
@@ -1550,6 +1551,7 @@ int eof_menu_edit_copy(void)
 	(void) pack_iputl(eof_selected_track, fp);	//Store the source track number
 	(void) pack_putc(eof_note_type, fp);		//Store the source difficulty
 	(void) pack_iputl(first_pos, fp);			//Store the first copied note's original timestamp
+	(void) pack_iputl(end_pos, fp);			//Store the last copied note's end timestamp
 	(void) pack_putc(eof_track_is_ghl_mode(eof_song, eof_selected_track), fp);	//Store the GHL mode status
 	(void) pack_iputl(copy_notes, fp);			//Store the number of notes that will be stored to clipboard
 	(void) pack_iputl(first_beat, fp);			//Store the beat number of the first note that will be stored to clipboard
@@ -1607,6 +1609,7 @@ int eof_menu_edit_paste_logic(int function)
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
 	unsigned sourcediff = 0;		//Will store the difficulty that this clipboard data was from
 	unsigned long firstnotepos = 0;	//Will store the original timestamp of the first note in the clipboard data
+	unsigned long lastnoteend = 0;	//Will store the original end timestamp of the last note in the clipboard data
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long srctracknum;
 	unsigned long highestfret, highestlane;
@@ -1621,6 +1624,9 @@ int eof_menu_edit_paste_logic(int function)
 	unsigned long source_id = 0;
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
 	unsigned long targetpos = eof_music_pos.value - eof_av_delay;	//By default, assume the paste will occur at the seek position
+	EOF_PRO_GUITAR_TRACK *stp = NULL;	//eof_song->pro_guitar_track[srctracknum];	//Simplify
+	EOF_PRO_GUITAR_TRACK *dtp = NULL;	//eof_song->pro_guitar_track[tracknum];		//Simplify
+	unsigned long firstpastepos = 0;	//Will store the timestamp of the first pasted note
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
@@ -1673,6 +1679,7 @@ int eof_menu_edit_paste_logic(int function)
 	srctracknum = eof_song->track[sourcetrack]->tracknum;
 	sourcediff = pack_getc(fp);		//Read the source difficulty of the clipboard data
 	firstnotepos = pack_igetl(fp);		//Read the original timestamp of the first note on the clipboard
+	lastnoteend = pack_igetl(fp);		//Read the end timestamp of the last note on the clipboard
 	isghl = pack_getc(fp);			//Read the GHL mode status
 	copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
 	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
@@ -1681,7 +1688,13 @@ int eof_menu_edit_paste_logic(int function)
 		ret = 1;
 		goto cleanup;
 	}
-	if((eof_track_is_pro_guitar_track(eof_song, sourcetrack)) && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
+
+	if(eof_track_is_pro_guitar_track(eof_song, sourcetrack))
+		stp = eof_song->pro_guitar_track[srctracknum];	//Simplify
+	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+		dtp = eof_song->pro_guitar_track[tracknum];	//Simplify
+
+	if(stp && dtp)
 	{	//If the source and destination track are both pro guitar format, pre-check to ensure that the pasted notes won't go above the current track's fret limit
 		highestfret = eof_get_highest_clipboard_fret(clipboard_path);
 		if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)
@@ -1759,6 +1772,7 @@ int eof_menu_edit_paste_logic(int function)
 		srctracknum = eof_song->track[sourcetrack]->tracknum;
 		sourcediff = pack_getc(fp);		//Read the source difficulty of the clipboard data
 		firstnotepos = pack_igetl(fp);		//Read the original timestamp of the first note on the clipboard
+		(void) pack_igetl(fp);			//Read the end timestamp of the last note on the clipboard
 		isghl = pack_getc(fp);			//Read the GHL mode status
 		copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
 		first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
@@ -1802,7 +1816,7 @@ int eof_menu_edit_paste_logic(int function)
 			}
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
-		if((!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)) && (temp_note.legacymask != 0))
+		if(!dtp && (temp_note.legacymask != 0))
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
 			temp_note.note = temp_note.legacymask;
 		}
@@ -1844,6 +1858,8 @@ int eof_menu_edit_paste_logic(int function)
 			newnotepos = targetpos + temp_note.pos;
 			newnotelength = temp_note.length;
 		}
+		if(!i)
+			firstpastepos = newnotepos;	//Store the position of the first pasted note
 		if(!eof_paste_erase_overlap && eof_search_for_note_near(eof_song, eof_selected_track, newnotepos, 2, eof_note_type, &match))
 		{	//If using the default paste behavior (a note merges with a note that it overlaps), and this pasted note would overlap another
 			//Erase any lane specific flags in the matching note that correspond with used lanes in the note being pasted
@@ -1860,10 +1876,10 @@ int eof_menu_edit_paste_logic(int function)
 			eof_set_note_accent(eof_song, eof_selected_track, match, eof_get_note_accent(eof_song, eof_selected_track, match) | temp_note.accent);	//Merge the accent bitmask
 			eof_set_note_ghost(eof_song, eof_selected_track, match, eof_get_note_ghost(eof_song, eof_selected_track, match) | temp_note.ghost);		//Merge the ghost bitmask
 			//Erase ghost and legacy flags
-			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+			if(dtp)
 			{
-				eof_song->pro_guitar_track[tracknum]->note[match]->legacymask = 0;	//Clear the legacy bit mask
-				eof_song->pro_guitar_track[tracknum]->note[match]->ghost = 0;	//Clear the ghost bit mask
+				dtp->note[match]->legacymask = 0;	//Clear the legacy bit mask
+				dtp->note[match]->ghost = 0;	//Clear the ghost bit mask
 			}
 		}
 		else
@@ -1892,13 +1908,13 @@ int eof_menu_edit_paste_logic(int function)
 		}
 
 		/* process pro guitar data */
-		if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+		if(!dtp)
 			continue;	//If the track being pasted into isn't a pro guitar track, skip the remainder of the logic below
 
-		np = eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1];	//Simplify
+		np = dtp->note[dtp->notes - 1];	//Simplify
 		np->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
-		memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
-		memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
+		memcpy(np->frets, temp_note.frets, sizeof(temp_note.frets));			//Copy the fret array to the last created pro guitar note
+		memcpy(np->finger, temp_note.finger, sizeof(temp_note.finger));		//Copy the finger array to the last created pro guitar note
 		np->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
 		np->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 		np->unpitchend = temp_note.unpitchend;							//Copy the slide end position to the last created pro guitar note
@@ -1907,7 +1923,7 @@ int eof_menu_edit_paste_logic(int function)
 			temp_note.eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_STOP;		//Clear these tech note only statuses
 			temp_note.eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
 		}
-		if(!eof_track_is_pro_guitar_track(eof_song, sourcetrack))
+		if(!stp)
 		{	//If a non pro guitar note is being pasted into a pro guitar track
 			unsigned char legacymask = temp_note.note & 31;	//Determine the appropriate legacy mask to apply (drop lane 6)
 			if(!legacymask)
@@ -1917,19 +1933,20 @@ int eof_menu_edit_paste_logic(int function)
 			np->legacymask = legacymask;
 		}
 
-		if(!eof_track_is_pro_guitar_track(eof_song, sourcetrack))
+		if(!stp)
 			continue;	//If the source track isn't a pro guitar track, skip the logic below
 
-		//Otherwise paste arpeggio/handshape phrasing
+		//If the copy/paste is being performed within the same EOF instance
 		if(source_id == eof_log_id)
-		{	//If the copy/paste is being performed within the same EOF instance
+		{
+			//Paste arpeggio/handshape phrasing
 			if(temp_note.phrasenum != lastarpeggnum)
 			{	//If this pasted note's source arpeggio is different from that of the previous pasted note
 				if(lastarpeggnum != 0xFFFFFFFF)
 				{	//If the previous pasted note's source note was in an arpeggio/handshape
-					if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
+					if(lastarpeggnum < stp->arpeggios)
 					{	//Bounds check
-						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].flags, NULL);
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, stp->arpeggio[lastarpeggnum].flags, NULL);
 					}
 				}
 				arpeggstart = np->pos;	//Track start of new arpeggio
@@ -1937,19 +1954,20 @@ int eof_menu_edit_paste_logic(int function)
 			if(temp_note.phrasenum != 0xFFFFFFFF)
 			{	//If this pasted note's source note is in an arpeggio/handshape
 				arpeggend = np->pos + np->length;	//Track end position of arpeggio
-				if(temp_note.phrasenum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
+				if(temp_note.phrasenum < stp->arpeggios)
 				{	//Bounds check
 					unsigned long srcstartbeat, srcendbeat, dststartbeat;
-					double srcendpos, dststartpos, dstendpos, beatlength;
+					double srcstartpos, srcendpos, dststartpos, dstendpos, beatlength;
 
-					srcstartbeat = eof_get_beat(eof_song, eof_song->pro_guitar_track[srctracknum]->arpeggio[temp_note.phrasenum].start_pos);
-					srcendbeat = eof_get_beat(eof_song, eof_song->pro_guitar_track[srctracknum]->arpeggio[temp_note.phrasenum].end_pos);
+					srcstartbeat = eof_get_beat(eof_song, stp->arpeggio[temp_note.phrasenum].start_pos);
+					srcendbeat = eof_get_beat(eof_song, stp->arpeggio[temp_note.phrasenum].end_pos);
 					if(srcendbeat >= srcstartbeat)
 					{	//Validate
-						srcendpos = eof_get_porpos(eof_song->pro_guitar_track[srctracknum]->arpeggio[temp_note.phrasenum].end_pos);	//How far into the destination beat the created phrase should end
-						dststartpos = eof_get_porpos(arpeggstart);						//How far into the beat the created phrase should start
-						beatlength = ((srcendbeat - srcstartbeat) * 100.0) + srcendpos - dststartpos;			//The floating point length in percent of beats that the created phrase should be
-						dststartbeat = eof_get_beat(eof_song, arpeggstart);				//Which beat the created phrase should start in
+						srcstartpos = eof_get_porpos(stp->arpeggio[temp_note.phrasenum].start_pos);	//How far into the source beat the copied phrase begins
+						srcendpos = eof_get_porpos(stp->arpeggio[temp_note.phrasenum].end_pos);	//How far into the source beat the copied phrase ends
+						dststartpos = eof_get_porpos(arpeggstart);								//How far into the beat the created phrase should start
+						beatlength = ((srcendbeat - srcstartbeat) * 100.0) + srcendpos - srcstartpos;	//The floating point length in percent of beats for how long the copied phrase is
+						dststartbeat = eof_get_beat(eof_song, arpeggstart);						//Which beat the created phrase should start in
 						dstendpos = eof_put_porpos(dststartbeat, beatlength + dststartpos, 0.0);		//The timestamp at which the created phrase should end
 
 						arpeggend = dstendpos;	//If the bounds check and validation passed, this accurate timing will replace the end position of the last pasted note in the phrase
@@ -1957,48 +1975,71 @@ int eof_menu_edit_paste_logic(int function)
 				}
 			}
 			lastarpeggnum = temp_note.phrasenum;
-		}
 
-		//Recreate tech notes from the source notes
-		if((source_id == eof_log_id) && !eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
-		{	//If the copy/paste is being performed within the same EOF instance, and tech view is not active for the destination track
-			unsigned long techctr;
-			EOF_PRO_GUITAR_TRACK *stp = eof_song->pro_guitar_track[srctracknum];	//Simplify
-			EOF_PRO_GUITAR_TRACK *dtp = eof_song->pro_guitar_track[tracknum];		//Simplify
-			unsigned long originalnotepos = temp_note.pos + firstnotepos;			//The original position of the copied note
-			unsigned long originalnoteend = originalnotepos + temp_note.length;		//The original end position of the copied note
-			double relpos;	//How far into the copied note (between 0 and 1) the tech note exists
+			//Recreate tech notes from the source notes
+			if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+			{	//If tech view is not active for the destination track
+				unsigned long techctr;
+				unsigned long originalnotepos = temp_note.pos + firstnotepos;			//The original position of the copied note
+				unsigned long originalnoteend = originalnotepos + temp_note.length;		//The original end position of the copied note
+				double relpos;	//How far into the copied note (between 0 and 1) the tech note exists
 
-			for(techctr = 0; techctr < stp->technotes; techctr++)
-			{	//For each tech note in the source track
-				if((stp->technote[techctr]->type == sourcediff) && (stp->technote[techctr]->pos >= originalnotepos) && (stp->technote[techctr]->pos <= originalnoteend))
-				{	//If the tech note overlaps the original copied note (same difficulty, within the start and stop timestamps)
-					EOF_PRO_GUITAR_NOTE *tnp;
-					relpos = ((double)stp->technote[techctr]->pos - originalnotepos) / (double)temp_note.length;	//Get the tech note's relative position within the copied note
+				for(techctr = 0; techctr < stp->technotes; techctr++)
+				{	//For each tech note in the source track
+					if((stp->technote[techctr]->type == sourcediff) && (stp->technote[techctr]->pos >= originalnotepos) && (stp->technote[techctr]->pos <= originalnoteend))
+					{	//If the tech note overlaps the original copied note (same difficulty, within the start and stop timestamps)
+						EOF_PRO_GUITAR_NOTE *tnp;
+						relpos = ((double)stp->technote[techctr]->pos - originalnotepos) / (double)temp_note.length;	//Get the tech note's relative position within the copied note
 
-					tnp = eof_pro_guitar_track_add_tech_note(dtp);	//Allocate a new tech note
-					if(tnp)
-					{	//If the tech note was created
-						memcpy(tnp, stp->technote[techctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the tech note from the clipboard source
-						tnp->type = eof_note_type;	//Update the difficulty level of the new tech note
-						tnp->pos = (double)newnotepos + ((double)newnotelength * relpos) + 0.5;	//Set the timestamp of the new tech note, placing it at the same relative position in the note as per the original tech note, rounding to nearest millisecond
-						technotesadded = 1;
+						tnp = eof_pro_guitar_track_add_tech_note(dtp);	//Allocate a new tech note
+						if(tnp)
+						{	//If the tech note was created
+							memcpy(tnp, stp->technote[techctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the tech note from the clipboard source
+							tnp->type = eof_note_type;	//Update the difficulty level of the new tech note
+							tnp->pos = (double)newnotepos + ((double)newnotelength * relpos) + 0.5;	//Set the timestamp of the new tech note, placing it at the same relative position in the note as per the original tech note, rounding to nearest millisecond
+							technotesadded = 1;
+						}
 					}
 				}
 			}
-		}
+		}//If the copy/paste is being performed within the same EOF instance
 	}//For each note in the clipboard file
-	if(source_id == eof_log_id)
-	{	//If the copy/paste is being performed within the same EOF instance
-		if((eof_track_is_pro_guitar_track(eof_song, sourcetrack)) && (eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
-		{	//If copying from a pro guitar track and pasting into a pro guitar track
-			if(lastarpeggnum != 0xFFFFFFFF)
-			{	//If an arpeggio phrase was in progress when the last of the notes were pasted, add the phrase now
-				if(lastarpeggnum < eof_song->pro_guitar_track[srctracknum]->arpeggios)
-				{	//Bounds check
-					(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, eof_song->pro_guitar_track[srctracknum]->arpeggio[lastarpeggnum].flags, NULL);
+
+	//If the copy/paste is being performed within the same EOF instance between pro guitar tracks
+	if((source_id == eof_log_id) && stp && dtp)
+	{
+		double firstcopiednotebeatpos = eof_get_porpos_sp_abs(eof_song, firstnotepos);	//The number of beats (as a percentage) from the first beat where the first copied note exists
+		double firstpastednotebeatpos = eof_get_porpos_sp_abs(eof_song, firstpastepos);	//The number of beats (as a percentage) from the first beat where the first note was pasted
+		double thisfhpbeatpos;	//The number of beats (as a percentage) from the first beat where the currently examined FHP exists
+		unsigned long fhpctr;
+
+		//Finish pasting arpeggio/handshape phrasing
+		if(lastarpeggnum != 0xFFFFFFFF)
+		{	//If an arpeggio phrase was in progress when the last of the notes were pasted, add the phrase now
+			if(lastarpeggnum < stp->arpeggios)
+			{	//Bounds check
+				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, stp->arpeggio[lastarpeggnum].flags, NULL);
+			}
+		}
+
+		//Recreate fret hand positions from the source notes
+		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+		{	//If tech view is not active for the destination track
+			for(fhpctr = 0; fhpctr < stp->handpositions; fhpctr++)
+			{	//For each fret hand position in the source track
+				unsigned long thisfhppos = stp->handposition[fhpctr].start_pos;
+
+				if((thisfhppos >= firstnotepos) && (thisfhppos <= lastnoteend) && (stp->handposition[fhpctr].difficulty == sourcediff))
+				{	//If this fret hand position exists anywhere within the scope of the copied notes and is in the copied notes' track difficulty
+					thisfhpbeatpos = eof_get_porpos_sp_abs(eof_song, thisfhppos);	//Determine the FHP's position so it can be compared with that of the first copied note
+					if(thisfhpbeatpos >= firstcopiednotebeatpos)
+					{	//If the FHP's position was correctly determined to be at/after the first copied note
+						long thisnewfhppos = eof_put_porpos_sp(eof_song, 0, firstpastednotebeatpos + thisfhpbeatpos - firstcopiednotebeatpos, 0.0);	//Calculate the timestamp for the pasted FHP, which will be relative to the first pasted note
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, thisnewfhppos, stp->handposition[fhpctr].end_pos, 0, NULL);	//Add the FHP
+					}
 				}
 			}
+			eof_pro_guitar_track_sort_fret_hand_positions(dtp);	//Sort the fret hand positions in the event any were added
 		}
 	}
 	(void) pack_fclose(fp);
@@ -2006,7 +2047,7 @@ int eof_menu_edit_paste_logic(int function)
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	if(technotesadded)
 	{	//If tech notes were recreated when pasting normal notes
-		eof_pro_guitar_track_sort_tech_notes(eof_song->pro_guitar_track[tracknum]);	//Sort them
+		eof_pro_guitar_track_sort_tech_notes(dtp);	//Sort them
 	}
 	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -4458,7 +4499,7 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	tfloat = eof_get_porpos(eof_get_note_pos(sp, track, note) + note_len);
 	(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);	//Write the percent representing the note's end position within a beat
 	(void) pack_iputl(eof_get_note_flags(sp, track, note), fp);		//Write the note's flags
-	(void) pack_iputl(eof_get_note_eflags(sp, track, note), fp);	//Write the extended flags
+	(void) pack_iputl(eof_get_note_eflags(sp, track, note), fp);		//Write the extended flags
 	(void) pack_putc(eof_get_note_sp_deploy(sp, track, note), fp);	//Write the SP deploy flags
 
 	/* Write pro guitar specific data to disk */

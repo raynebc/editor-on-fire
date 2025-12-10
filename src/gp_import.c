@@ -4423,8 +4423,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 												proposed_unpitchend = fret_value - eof_gp_import_slide_out_fret_count;	//Slide that amount
 											}
 											else
-											{	//Otherwise settle for 1 fret
-												proposed_unpitchend = fret_value - 1;
+											{	//Otherwise slide down to fret 1
+												proposed_unpitchend = 1;
 											}
 											if(!unpitchend || (proposed_unpitchend < unpitchend))
 											{	//Track the lowest fret value for the slide end position
@@ -4440,8 +4440,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											proposed_unpitchend = fret_value + eof_gp_import_slide_out_fret_count;	//Slide that amount
 										}
 										else
-										{
-											proposed_unpitchend = fret_value + 1;	//Otherwise settle for one fret
+										{	//Otherwise slide up to fret 23
+											proposed_unpitchend = 23;
 										}
 										if(!unpitchend || (proposed_unpitchend < unpitchend))
 										{	//Track the lowest fret value for the slide end position
@@ -4461,8 +4461,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 												proposed_unpitchend = fret_value - eof_gp_import_slide_out_fret_count;	//Slide that amount
 											}
 											else
-											{	//Otherwise settle for 1 fret
-												proposed_unpitchend = fret_value - 1;
+											{	//Otherwise slide down to fret 1
+												proposed_unpitchend = 1;
 											}
 											if(!unpitchend || (proposed_unpitchend < unpitchend))
 											{	//Track the lowest fret value for the slide end position
@@ -4478,8 +4478,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											proposed_unpitchend = fret_value + eof_gp_import_slide_out_fret_count;	//Slide that amount
 										}
 										else
-										{
-											proposed_unpitchend = fret_value + 1;	//Otherwise settle for one fret
+										{	//Otherwise slide up to fret 23
+											proposed_unpitchend = 23;
 										}
 										if(!unpitchend || (proposed_unpitchend < unpitchend))
 										{	//Track the lowest fret value for the slide end position

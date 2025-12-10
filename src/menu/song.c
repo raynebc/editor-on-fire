@@ -4229,7 +4229,7 @@ int eof_menu_song_catalog_edit_timing(void)
 int eof_menu_song_catalog_copy(void)
 {
 	unsigned long i;
-	unsigned long first_pos = 0, note_pos;
+	unsigned long first_pos = 0, note_pos, end_pos = 0;
 	char first_pos_read = 0;
 	unsigned long first_beat = 0;
 	char first_beat_read = 0;
@@ -4265,6 +4265,7 @@ int eof_menu_song_catalog_copy(void)
 					first_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, track, i));
 					first_beat_read = 1;
 				}
+				end_pos = note_pos + eof_get_note_length(eof_song, track, i);	//Track the position of the last note in the selection
 			}
 		}
 	}
@@ -4291,6 +4292,7 @@ int eof_menu_song_catalog_copy(void)
 	(void) pack_iputl(track, fp);				//Store the source track number
 	(void) pack_putc(eof_note_type, fp);		//Store the source difficulty
 	(void) pack_iputl(first_pos, fp);			//Store the first copied note's original timestamp
+	(void) pack_iputl(end_pos, fp);			//Store the last copied note's end timestamp
 	(void) pack_putc(eof_track_is_ghl_mode(eof_song, track), fp);	//Store the GHL mode status
 	(void) pack_iputl(copy_notes, fp);			//Store the number of notes that will be stored to clipboard
 	(void) pack_iputl(first_beat, fp);			//Store the beat number of the first note that will be stored to clipboard

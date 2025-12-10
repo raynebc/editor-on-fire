@@ -610,6 +610,28 @@ double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos)
 	return porpos;
 }
 
+double eof_get_porpos_sp_abs(EOF_SONG *sp, unsigned long pos)
+{
+	double abspos = 0.0;
+	unsigned long beat;
+
+	if(!sp || (sp->beats < 2))
+		return 0.0;	//Invalid parameters
+
+	beat = eof_get_beat(sp, pos);
+	if(!eof_beat_num_valid(sp, beat))
+	{	//If eof_get_beat() returned error
+		beat = sp->beats - 1;	//Assume the note position is relative to the last beat marker
+	}
+
+	abspos = eof_get_porpos_sp(sp, pos);	//abspos is the percentage into a beat the specified timestamp is
+	if(abspos == 0.0)
+		return 0.0;	//Failure
+
+	abspos += ((double)beat * 100.0);		//abspos is the number of beats (as a percentage) that the specified timestamp is relative to the project's first beat
+	return abspos;
+}
+
 long eof_put_porpos(unsigned long beat, double porpos, double offset)
 {
 	return eof_put_porpos_sp(eof_song, beat, porpos, offset);

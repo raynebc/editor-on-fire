@@ -1289,7 +1289,7 @@ int eof_menu_beat_move_to_seek_pos(void)
 
 int eof_menu_beat_delete_anchor_logic(char *undo_made)
 {
-	unsigned long cppqn, i;
+	unsigned long i;
 
 	if(!eof_song)
 		return 1;	//Invalid parameter
@@ -1298,7 +1298,6 @@ int eof_menu_beat_delete_anchor_logic(char *undo_made)
 	if(!undo_made)
 		return 0;	//Invalid parameter
 
-	cppqn = eof_song->beat[eof_selected_beat]->ppqn;
 	if((eof_selected_beat > 0) && eof_beat_is_anchor(eof_song, eof_selected_beat))
 	{
 		if(*undo_made == 0)
@@ -1307,15 +1306,11 @@ int eof_menu_beat_delete_anchor_logic(char *undo_made)
 			*undo_made = 1;
 		}
 		for(i = eof_selected_beat; i < eof_song->beats; i++)
-		{
-			if(eof_song->beat[i]->ppqn == cppqn)
-			{
-				eof_song->beat[i]->ppqn = eof_song->beat[eof_selected_beat - 1]->ppqn;
-			}
-			else
-			{
-				break;
-			}
+		{	//For each beat starting with the selected one
+			if(eof_beat_is_anchor(eof_song, i) && (i != eof_selected_beat))
+				break;	//If another anchor was reached, stop modifying beats
+
+			eof_song->beat[i]->ppqn = eof_song->beat[eof_selected_beat - 1]->ppqn;
 		}
 		eof_song->beat[eof_selected_beat]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag, retain all other flags
 		if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))

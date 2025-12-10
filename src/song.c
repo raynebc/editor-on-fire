@@ -9105,6 +9105,7 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	sourcetrack = pack_igetl(fp);	//Read the source track of the clipboard data
 	(void) pack_getc(fp);		//Read the source difficulty of the clipboard data
 	(void) pack_igetl(fp);		//Read the original timestamp of the first note on the clipboard
+	(void) pack_igetl(fp);		//Read the end timestamp of the last note on the clipboard
 	(void) pack_getc(fp);		//Read the GHL mode status
 	copy_notes = pack_igetl(fp);	//Read the number of notes on the clipboard
 	(void) pack_igetl(fp);		//Read the original beat number of the first note that was copied
@@ -9161,6 +9162,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	(void) pack_igetl(fp);		//Read the source track of the clipboard data
 	(void) pack_getc(fp);		//Read the source difficulty of the clipboard data
 	(void) pack_igetl(fp);		//Read the original timestamp of the first note on the clipboard
+	(void) pack_igetl(fp);		//Read the end timestamp of the last note on the clipboard
 	(void) pack_getc(fp);		//Read the GHL mode status
 	copy_notes = pack_igetl(fp);	//Read the number of notes on the clipboard
 	(void) pack_igetl(fp);		//Read the original beat number of the first note that was copied

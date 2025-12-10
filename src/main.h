@@ -747,9 +747,13 @@ extern char *ogg_profile_name;
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
 double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos);	//Returns the timestamp's position within a beat (percentage)
 double eof_get_porpos(unsigned long pos);	//Calls eof_get_porpos_sp() against eof_song
+double eof_get_porpos_sp_abs(EOF_SONG *sp, unsigned long pos);
+	//Returns the number of beats (as a percentage) that the specified timestamp is relative to the project's first beat, as a way to track a timing measured in beats
+	//To be used with eof_put_porpos_sp()
+	//Returns 0.0 on error
 long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double offset);
-	//Returns the timestamp of the specified position within a beat, or -1 on error
-	//porpos can be a positive or negative value larger in magnitude than 100.0
+	//Returns the timestamp of the specified position (defined as a percentage) within a specified beat, or -1 on error
+	//porpos can be a positive or negative value larger in magnitude than 100.0 to indicate the position is more than one beat length from the specified beat
 long eof_put_porpos(unsigned long beat, double porpos, double offset);	//Calls eof_put_porpos_sp() against eof_song
 void eof_reset_lyric_preview_lines(void);	//Resets the preview line variables to 0
 void eof_find_lyric_preview_lines(void);	//Sets the first and second preview line variables

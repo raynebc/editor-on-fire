@@ -5809,8 +5809,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 					}
 					else
 					{
-						if(!start_focus)
-							start_focus = 20 - ctr;	//If this is the first undefined finger number, track the corresponding dialog field
+						start_focus = 20 - ctr;	//Set the focus to the last (lowest numbered string) finger input field that is empty
 
 						eof_finger_strings[ctr][0] = '\0';	//Otherwise empty the string
 					}
@@ -5997,7 +5996,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					eof_clear_input();
 					if(!dont_ask)
 					{	//If the user didn't suppress this prompt
-						retval2 = alert3(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", "OK, don't ask again", 'y', 'n', 0);
+						retval2 = alert3(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", "OK, don't ask again", 'o', 'c', 0);
 						if(retval2 == 2)
 						{	//If user opts to cancel the operation
 							retval = 31;	//Track this as a user cancellation
@@ -6318,7 +6317,7 @@ int eof_menu_note_edit_pro_guitar_note_fingers(void)
 				eof_clear_input();
 				if(!dont_ask)
 				{	//If the user didn't suppress this prompt
-					retval2 = alert3(NULL, "Warning:  This information will be applied to the existing gems of all selected notes.", NULL, "&OK", "&Cancel", "OK, don't ask again", 'y', 'n', 0);
+					retval2 = alert3(NULL, "Warning:  This information will be applied to the existing gems of all selected notes.", NULL, "&OK", "&Cancel", "OK, don't ask again", 'o', 'c', 0);
 					if(retval2 == 2)
 					{	//If user opts to cancel the operation
 						retval = 17;	//Track this as a user cancellation

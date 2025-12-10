@@ -3113,7 +3113,7 @@ DIALOG eof_track_fret_hand_positions_copy_from_dialog[] =
 {
 	/* (proc)                       (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
 	{ eof_window_proc,0,  48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy fret hand positions from diff #", NULL, NULL },
-	{ d_agup_list_proc,      12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_rocksmith_dynamic_difficulty_list_proc,NULL, NULL },
+	{ d_agup_list_proc,      12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_track_fret_hand_positions_copy_from_list,NULL, NULL },
 	{ d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
 	{ d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -3177,7 +3177,7 @@ int eof_track_fret_hand_positions_copy_from(void)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
 	if(tp->handpositions)
-	{	//If the active difficulty has at least one fret hand position
+	{	//If the active track has at least one fret hand position
 		for(ctr2 = 0; ctr2 < 256; ctr2++)
 		{	//For each possible difficulty
 			for(ctr3 = 0; ctr3 < tp->handpositions; ctr3++)
