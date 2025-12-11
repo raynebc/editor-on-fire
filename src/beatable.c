@@ -815,11 +815,11 @@ int eof_validate_beatable_file(char *fn)
 					byte = pack_getc(fp);	//Read the lane bitmask of this link
 					if(eof_note_count_colors_bitmask(byte) > 1)
 					{
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\t\t\t0x%lX : Invalid lane bitmask defines use of more than 1 lane: %u", fp_pos, byte);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\t\t\t0x%lX : Invalid lane bitmask defines use of more than 1 lane: %d", fp_pos, byte);
 						eof_log(eof_log_string, 1);
 						return 0;	//Return failure
 					}
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\t\t\t0x%lX : Link %lu : Lane bitmask: %u (%s%s%s%s)", fp_pos, ctr3, byte, (byte & 8 ? "L2 " : ""), (byte & 4 ? "L1 " : ""), (byte & 2 ? "R1 " : ""), (byte & 1 ? "R2 " : ""));
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\t\t\t0x%lX : Link %lu : Lane bitmask: %d (%s%s%s%s)", fp_pos, ctr3, byte, (byte & 8 ? "L2 " : ""), (byte & 4 ? "L1 " : ""), (byte & 2 ? "R1 " : ""), (byte & 1 ? "R2 " : ""));
 					eof_log(eof_log_string, 1);
 					fp_pos++;
 				}

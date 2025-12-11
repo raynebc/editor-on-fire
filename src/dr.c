@@ -540,12 +540,20 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	(void) pack_fclose(fp);
 
 	//Write song.ogg if it doesn't exist
-	(void) replace_filename(eof_temp_filename, eof_temp_filename, "song.ogg", (int) sizeof(eof_temp_filename));
-	if(!exists(eof_temp_filename))
+	if(eof_silence_loaded)
 	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
-		eof_log(eof_log_string, 2);
-		(void) eof_save_ogg(eof_temp_filename);
+		allegro_message("Drums Rock:  No chart audio is loaded so the export folder will be missing audio.");
+		eof_log("No chart audio is loaded so the export folder will be missing audio.", 2);
+	}
+	else
+	{
+		(void) replace_filename(eof_temp_filename, eof_temp_filename, "song.ogg", (int) sizeof(eof_temp_filename));
+		if(!exists(eof_temp_filename))
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+			eof_log(eof_log_string, 2);
+			(void) eof_save_ogg(eof_temp_filename);
+		}
 	}
 
 	//Write preview.ogg if it doesn't exist and it has been created for the project

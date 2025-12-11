@@ -4708,7 +4708,7 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 		while(1)
 		{
 			old_text_events = sp->text_events;				//Remember how many text events there were before launching dialog
-			(void) eof_rocksmith_phrase_dialog_add();			//Launch dialog for user to add a Rocksmith phrase
+			(void) eof_rocksmith_phrase_dialog_add();		//Launch dialog for user to add a Rocksmith phrase
 			if(old_text_events == sp->text_events)
 			{	//If the number of text events defined in the chart didn't change, the user canceled
 				return 2;	//Return user cancellation
@@ -6181,28 +6181,26 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		if(sp->beat[ctr]->contained_section_event < 0)
 			continue;	//If this beat does not have a section event, skip it
 
-		if(sp->beat[ctr]->contained_section_event >= 0)
-		{	//If this beat has a section event, identify it in the section list
-			for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
-			{	//For each of the entries in the unique section list
-				assert(sectionlist != NULL);	//Unneeded check to resolve a false positive in Splint
-				if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
-				{	//If this event matches a section marker entry
-					phraseid = ctr2;
-					break;
-				}
+		//This beat has a section event, identify it in the section list
+		for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
+		{	//For each of the entries in the unique section list
+			assert(sectionlist != NULL);	//Unneeded check to resolve a false positive in Splint
+			if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
+			{	//If this event matches a section marker entry
+				phraseid = ctr2;
+				break;
 			}
-
-			if(phraseid == ULONG_MAX)
-			{	//If the section couldn't be found
-				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
-				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
-				free(sectionlist);
-				return 0;	//Return error
-			}
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
-			(void) pack_fputs(buffer, fp);
 		}
+
+		if(phraseid == ULONG_MAX)
+		{	//If the section couldn't be found
+			allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
+			eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
+			free(sectionlist);
+			return 0;	//Return error
+		}
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
+		(void) pack_fputs(buffer, fp);
 	}
 	(void) pack_fputs("  </phraseIterations>\n", fp);
 	if(sectionlistsize)

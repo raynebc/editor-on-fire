@@ -2246,7 +2246,7 @@ int eof_set_cue_pan(void *dp3, int d2)
 	//Rewrite the specified pan slider string
 	if(d2 < 50)
 	{	//Panning to left of center
-		(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "L+%2u", 50 - d2);
+		(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "L+%2d", 50 - d2);
 	}
 	else if(d2 == 50)
 	{	//Center
@@ -2254,7 +2254,7 @@ int eof_set_cue_pan(void *dp3, int d2)
 	}
 	else
 	{	//Panning to right of center
-		(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "R+%2u", d2 - 50);
+		(void) snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "R+%2d", d2 - 50);
 	}
 	(void) object_message(&eof_audio_cues_dialog[6], MSG_DRAW, 0);	//Have Allegro redraw the pan slider strings
 	(void) object_message(&eof_audio_cues_dialog[24], MSG_DRAW, 0);

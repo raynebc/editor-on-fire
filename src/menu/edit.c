@@ -1931,10 +1931,9 @@ int eof_menu_edit_paste_logic(int function)
 				legacymask = 31;	//Make it chord on all 5 lanes
 			}
 			np->legacymask = legacymask;
-		}
 
-		if(!stp)
-			continue;	//If the source track isn't a pro guitar track, skip the logic below
+			continue;	//Skip the remaining logic below as it only applies to pro guitar
+		}
 
 		//If the copy/paste is being performed within the same EOF instance
 		if(source_id == eof_log_id)

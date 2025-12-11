@@ -668,6 +668,26 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>%IF_TRACK_HAS_NOTES_IN_MULTIPLE_DIFFS%</td>
 <td>Evaluates as true if the active track has notes in at least two difficulties.</td>
 </tr>
+<tr>
+<td>%IF_ANY_LYRIC_LINES_BEGIN_WITH_LOWERCASE%</td>
+<td>Evaluates as true if the first character in any lyric line is a lowercase letter, in which case the %FIRST_LYRIC_LINE_BEGINNING_WITH_LOWERCASE% macro will print the position and text of the first offending lyric.</td>
+</tr>
+<tr>
+<td>%IF_ANY_LYRIC_LINE_EXCEEDS_LENGTH_[NUMBER]%</td>
+<td>Evaluates as true if any lyric line will take more than the specified number of characters to display in-game (taking into account whether syllables are grouped or separated by a space), in which case the %FIRST_LYRIC_LINE_EXCEEDING_LENGTH% macro will print the position and text of the first lyric that caused its lyric line to exceed the specified threshold.</td>
+</tr>
+<tr>
+<td>%IF_SELECTED_LYRIC_HAS_PITCH%</td>
+<td>Evaluates as true if the last selected note is a lyric and has a pitch (ie. isn't pitchless/freestyle and isn't a vocal percussion note).</td>
+</tr>
+<tr>
+<td>%IF_ANY_LYRICS_CONTAIN_PUNCTUATION_EXCEPT_[LIST]%</td>
+<td>Evaluates as true if any lyric contains a punctuation character that is not in the specified list of characters (whitespace characters are not able to be defined in this list), in which case the %FIRST_LYRIC_CONTAINING_UNWANTED_PUNCTUATION% macro will print the position and text of the first offending lyric.</td>
+</tr>
+<tr>
+<td>%IF_AUDIO_IS_LOADED%</td>
+<td>Evaluates as true if chart audio is loaded.</td>
+</tr>
 </tbody>
 </table><br>
 
@@ -1478,6 +1498,19 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%IR_TRACK_EFFECTIVE_HAND_MODE%</td>
 <td>Prints the current IMMERROCK hand mode in effect at the seek position.</td>
+</tr>
+<tr>
+<td>%FIRST_LYRIC_LINE_BEGINNING_WITH_LOWERCASE%</td>
+<td>Prints the position and text of the first culprit of the %IF_ANY_LYRIC_LINES_BEGIN_WITH_LOWERCASE% conditional macro.</td>
+</tr>
+<tr>
+<td>%FIRST_LYRIC_LINE_EXCEEDING_LENGTH%</td>
+<td>Prints the position and text of the first culprit of the %IF_ANY_LYRIC_LINE_EXCEEDS_LENGTH_[NUMBER]% conditional macro.</td>
+<td>
+</tr>
+<tr>
+<td>%FIRST_LYRIC_CONTAINING_UNWANTED_PUNCTUATION%</td>
+<td>Prints the position and text of the first culprit of the %IF_ANY_LYRICS_CONTAIN_PUNCTUATION_EXCEPT_[LIST]% conditional macro.</td>
 </tr>
 
 </tbody>

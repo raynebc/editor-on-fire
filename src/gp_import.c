@@ -3189,7 +3189,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				assert(gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
 				gp->instrument_types[ctr] = 1;
 #ifdef GP_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tThis track is defined as a guitar track (instrument %u)", patchnum);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tThis track is defined as a guitar track (instrument %d)", patchnum);
 				eof_log(eof_log_string, 1);
 #endif
 			}
@@ -3198,7 +3198,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				assert(gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
 				gp->instrument_types[ctr] = 2;
 #ifdef GP_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tThis track is defined as a bass guitar track (instrument %u)", patchnum);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tThis track is defined as a bass guitar track (instrument %d)", patchnum);
 				eof_log(eof_log_string, 1);
 #endif
 			}

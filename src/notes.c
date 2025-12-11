@@ -2962,6 +2962,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_AUDIO_IS_LOADED"))
+	{
+		if(!eof_silence_loaded)	//If an OGG file is loaded
+				return 3;		//True
+
+		return 2;	//False
+	}
+
 	//Resumes normal macro parsing after a failed conditional macro test
 	if(!ustricmp(macro, "ENDIF"))
 	{

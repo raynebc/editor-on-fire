@@ -1069,7 +1069,7 @@ unsigned long eof_ir_get_rs_section_instance_number(EOF_SONG *sp, unsigned long 
 	return count;
 }
 
-int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option)
+int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option, char silent)
 {
 	PACKFILE *fp;
 	int err = 0;
@@ -1227,17 +1227,29 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 			return 0;	//Return failure:  Could not create export folder
 		}
 	}
+	put_backslash(eof_temp_filename);
 
 
 	//Write Song.ogg
-	put_backslash(eof_temp_filename);
-	(void) replace_filename(eof_temp_filename, eof_temp_filename, "Song.ogg", (int) sizeof(eof_temp_filename));
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
-	eof_log(eof_log_string, 2);
-	if(!eof_conditionally_copy_file(eof_loaded_ogg_name, eof_temp_filename))
+	if(eof_silence_loaded)
 	{
-		allegro_message("Could not export audio!\n%s", eof_temp_filename);
-		return 0;	//Return failure
+		if(!silent)
+			allegro_message("IMMERROCK:  No chart audio is loaded so the export folder will be missing audio.");
+
+		eof_log("No chart audio is loaded so the export folder will be missing audio.", 2);
+	}
+	else
+	{
+		(void) replace_filename(eof_temp_filename, eof_temp_filename, "Song.ogg", (int) sizeof(eof_temp_filename));
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+		eof_log(eof_log_string, 2);
+		if(!eof_conditionally_copy_file(eof_loaded_ogg_name, eof_temp_filename))
+		{
+			if(!silent)
+				allegro_message("Could not export audio!\n%s", eof_temp_filename);
+
+			return 0;	//Return failure
+		}
 	}
 
 
@@ -1348,7 +1360,8 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 		{	//Lyric export failed
 			(void) puts("Assert() handled successfully!");
-			allegro_message("IMMERROCK lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
+			if(!silent)
+				allegro_message("IMMERROCK lyric export failed.\nMake sure there are no Unicode or extended ASCII characters in EOF's folder path,\nbecause EOF's lyric export doesn't support them.");
 		}
 		else
 		{
@@ -1657,13 +1670,13 @@ void eof_export_immerrock(char silent)
 	(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
 	if(ddgglead || ddggrhythm || ddggbass)
 	{	//If any of the chosen arrangements will have the flattened dynamic difficulties exported
-		eof_export_immerrock_diff(eof_song, ddgglead, ddggrhythm, ddggbass, 0xFF, newfolderpath, 0);	//Export the full flattened dynamic difficulty of each
+		eof_export_immerrock_diff(eof_song, ddgglead, ddggrhythm, ddggbass, 0xFF, newfolderpath, 0, silent);	//Export the full flattened dynamic difficulty of each
 	}
 	//Then export the first four difficulties of any of the chosen arrangements that don't have dynamic difficulties
-	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 0, newfolderpath, 0);	//Export easy
-	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 1, newfolderpath, 0);	//Export medium
-	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 2, newfolderpath, 0);	//Export hard
-	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 3, newfolderpath, 0);	//Export expert
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 0, newfolderpath, 0, silent);	//Export easy
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 1, newfolderpath, 0, silent);	//Export medium
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 2, newfolderpath, 0, silent);	//Export hard
+	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, 3, newfolderpath, 0, silent);	//Export expert
 
 	if(!silent && warn_any)
 	{	//If there are any warnings to display, and warnings aren't suppressed (ie. not performing quick save)
