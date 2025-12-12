@@ -36,6 +36,7 @@ char eof_slider_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_text[32] = "&TrIll";
 char eof_tremolo_menu_text[32] = "Tre&Molo";
 int eof_menu_note_edit_pro_guitar_note_prompt_suppress = 0;
+int eof_menu_note_edit_pro_guitar_note_prompt_2_suppress = 0;
 
 int eof_suppress_pitched_transpose_warning = 0;		//Set to nonzero if user opts to suppress the warning that selected notes could not pitch transpose
 
@@ -5388,101 +5389,111 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				}
 			}//For each note in the track
 
-	//Prompt whether matching notes need to have their name updated
-			if(!eof_menu_note_edit_pro_guitar_note_prompt_suppress && (eof_note_edit_name[0] != '\0'))
-			{	//If the user didn't suppress this prompt and has entered a note name
-				int retval2;
+	//If the edited note is a chord, prompt whether matching notes need to have their name updated
+			if(eof_note_count_colors(eof_song, eof_selected_track, eof_selection.current) > 1)
+			{	//If the note that was edited is a chord
+				if(!eof_menu_note_edit_pro_guitar_note_prompt_suppress && (eof_note_edit_name[0] != '\0'))
+				{	//If the user didn't suppress this prompt and has entered a note name
+					int retval2;
 
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-				{	//For each note in the active track
-					if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) != 0) || !ustrcmp(eof_note_edit_name, eof_get_note_name(eof_song, eof_selected_track, ctr)))
-						continue;	//If this note doesn't match the one that was edited, or if the name is already the same, skip it
+					for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+					{	//For each note in the active track
+						if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) != 0) || !ustrcmp(eof_note_edit_name, eof_get_note_name(eof_song, eof_selected_track, ctr)))
+							continue;	//If this note doesn't match the one that was edited, or if the name is already the same, skip it
 
-					eof_clear_input();
-					retval2 = alert3(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", "No, stop asking", 'y', 'n', 0);
-					if(retval2 == 1)
-					{	//If the user opts to use the updated note name on matching notes in this track
-						for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-						{	//For each note in the active track, starting from the one that just matched the comparison
-							if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0) && (eof_selection.current != ctr))
-							{	//If this note matches the note that was edited, and we're not comparing the note to itself, copy the edited note's name to this note
-								if(!undo_made)
-								{	//If an undo state hasn't been made yet
-									eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-									undo_made = 1;
-								}
-								(void) ustrcpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name);
-							}
-						}
-					}
-					else if(retval2 ==3)
-					{	//Suppress this prompt
-						eof_menu_note_edit_pro_guitar_note_prompt_suppress = 1;
-					}
-					break;	//Break from loop
-				}//For each note in the active track
-			}//If the user entered a name
-
-	//Or prompt whether the selected notes' name should be updated from the other existing notes
-			else
-			{	//The user did not enter a name
-				memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-				{	//For each note in the active track
-					if((ctr == eof_selection.current) || (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) != 0))
-						continue;	//If this note is the one that was just edited, or if it doesn't match the latter, skip it
-					newname = eof_get_note_name(eof_song, eof_selected_track, ctr);
-					if(!newname || (newname[0] == '\0'))
-						continue;	//If this note doesn't have a name, skip it
-
-					previously_refused = 0;
-					for(ctr2 = 0; ctr2 < ctr; ctr2++)
-					{	//For each previous note that was checked
-						if(declined_list[ctr2] && !ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr2)))
-						{	//If this note name matches one the user previously rejected to assign to the edited note
-							declined_list[ctr] = 1;	//Automatically decline this instance of the same name
-							previously_refused = 1;
-							break;
-						}
-					}
-					if(previously_refused)
-						continue;	//If this name is one the user already refused, skip it
-
-					if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string, 0))
-					{	//If the note's frets can be represented in string format, specify it in the prompt
-						(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the name of selected notes (%s) to \"%s\"?",pro_guitar_string, newname);
-					}
-					else
-					{	//Otherwise use a generic prompt
-						(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' name to \"%s\"?",newname);
-					}
-					eof_clear_input();
-					if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If the user opts to assign this note's name to the selected notes
-						for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
-						{	//For each note in the track
-							if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr2] && (eof_get_note_type(eof_song, eof_selected_track, ctr2) == eof_note_type))
-							{	//If the note is in the active instrument difficulty and is selected
-								tempptr = eof_get_note_name(eof_song, eof_selected_track, ctr2);	//Get the name of the note
-								if(tempptr && ustricmp(tempptr, newname))
-								{	//If the note's name doesn't match the one the user selected from the prompt
+						eof_clear_input();
+						retval2 = alert3(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", "No, stop asking", 'y', 'n', 0);
+						if(retval2 == 1)
+						{	//If the user opts to use the updated note name on matching notes in this track
+							for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+							{	//For each note in the active track, starting from the one that just matched the comparison
+								if((eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) == 0) && (eof_selection.current != ctr))
+								{	//If this note matches the note that was edited, and we're not comparing the note to itself, copy the edited note's name to this note
 									if(!undo_made)
-									{
+									{	//If an undo state hasn't been made yet
 										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 										undo_made = 1;
 									}
-									(void) ustrcpy(tempptr, newname);	//Update the note's name to the user selection
+									(void) ustrcpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name);
 								}
 							}
 						}
-						break;	//Break from "For each note in the active track" loop
-					}
-					else
-					{	//Otherwise mark this note's name as refused
-						declined_list[ctr] = 1;	//Mark this note's name as having been declined
-					}
-				}//For each note in the active track
-			}//The user did not enter a name
+						else if(retval2 ==3)
+						{	//Suppress this prompt
+							eof_menu_note_edit_pro_guitar_note_prompt_suppress = 1;
+						}
+						break;	//Break from loop
+					}//For each note in the active track
+				}//If the user entered a name
+
+		//Or prompt whether the selected notes' name should be updated from the other existing notes
+				else if(!eof_menu_note_edit_pro_guitar_note_prompt_2_suppress)
+				{	//The user did not enter a name and did not suppress this prompt
+					int retval2;
+
+					memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
+					for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+					{	//For each note in the active track
+						if((ctr == eof_selection.current) || (eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr) != 0))
+							continue;	//If this note is the one that was just edited, or if it doesn't match the latter, skip it
+						newname = eof_get_note_name(eof_song, eof_selected_track, ctr);
+						if(!newname || (newname[0] == '\0'))
+							continue;	//If this note doesn't have a name, skip it
+
+						previously_refused = 0;
+						for(ctr2 = 0; ctr2 < ctr; ctr2++)
+						{	//For each previous note that was checked
+							if(declined_list[ctr2] && !ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr2)))
+							{	//If this note name matches one the user previously rejected to assign to the edited note
+								declined_list[ctr] = 1;	//Automatically decline this instance of the same name
+								previously_refused = 1;
+								break;
+							}
+						}
+						if(previously_refused)
+							continue;	//If this name is one the user already refused, skip it
+
+						if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, pro_guitar_string, 0))
+						{	//If the note's frets can be represented in string format, specify it in the prompt
+							(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the name of selected notes (%s) to \"%s\"?",pro_guitar_string, newname);
+						}
+						else
+						{	//Otherwise use a generic prompt
+							(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' name to \"%s\"?",newname);
+						}
+						eof_clear_input();
+						retval2 = alert3(NULL, autoprompt, NULL, "&Yes", "&No", "No, stop asking", 'y', 'n', 0);
+						if(retval2 == 1)
+						{	//If the user opts to assign this note's name to the selected notes
+							for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
+							{	//For each note in the track
+								if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr2] && (eof_get_note_type(eof_song, eof_selected_track, ctr2) == eof_note_type))
+								{	//If the note is in the active instrument difficulty and is selected
+									tempptr = eof_get_note_name(eof_song, eof_selected_track, ctr2);	//Get the name of the note
+									if(tempptr && ustricmp(tempptr, newname))
+									{	//If the note's name doesn't match the one the user selected from the prompt
+										if(!undo_made)
+										{
+											eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+											undo_made = 1;
+										}
+										(void) ustrcpy(tempptr, newname);	//Update the note's name to the user selection
+									}
+								}
+							}
+							break;	//Break from "For each note in the active track" loop
+						}
+						else if(retval2 ==3)
+						{	//Suppress this prompt
+							eof_menu_note_edit_pro_guitar_note_prompt_2_suppress = 1;
+						}
+						else
+						{	//Otherwise mark this note's name as refused
+							declined_list[ctr] = 1;	//Mark this note's name as having been declined
+						}
+					}//For each note in the active track
+				}//The user did not enter a name
+			}//If the note that was edited is a chord
 
 	//Prompt whether matching notes need to have their legacy bitmask updated
 			if(legacymask)
