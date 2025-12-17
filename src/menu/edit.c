@@ -1993,9 +1993,27 @@ int eof_menu_edit_paste_logic(int function)
 						tnp = eof_pro_guitar_track_add_tech_note(dtp);	//Allocate a new tech note
 						if(tnp)
 						{	//If the tech note was created
+							unsigned long closestpos, tnpos;
+
 							memcpy(tnp, stp->technote[techctr], sizeof(EOF_PRO_GUITAR_NOTE));	//Clone the tech note from the clipboard source
 							tnp->type = eof_note_type;	//Update the difficulty level of the new tech note
-							tnp->pos = (double)newnotepos + ((double)newnotelength * relpos) + 0.5;	//Set the timestamp of the new tech note, placing it at the same relative position in the note as per the original tech note, rounding to nearest millisecond
+							closestpos = tnpos = (double)newnotepos + ((double)newnotelength * relpos) + 0.5;	//Set the timestamp of the new tech note, placing it at the same relative position in the note as per the original tech note, rounding to nearest millisecond
+
+							if(eof_is_any_beat_interval_position(stp->technote[techctr]->pos, NULL, NULL, NULL, NULL, eof_prefer_midi_friendly_grid_snapping))
+							{	//If the source tech note is grid snapped
+								(void) eof_is_any_beat_interval_position(tnpos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping);	//Get the beat interval position nearest the destination tech note's position
+								if(closestpos != tnpos)
+								{	//If that beat interval position isn't the position at which the tech note was going to be placed
+									if(closestpos != ULONG_MAX)
+									{	//If the nearest beat interval position was determined
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting tech note paste position from %lums to %lums", tnpos, closestpos);
+										eof_log(eof_log_string, 1);
+										tnpos = closestpos;	//Update the destination timestamp for the fhp
+									}
+								}
+							}
+							tnp->pos = tnpos;
+
 							technotesadded = 1;
 						}
 					}
@@ -2034,6 +2052,22 @@ int eof_menu_edit_paste_logic(int function)
 					if(thisfhpbeatpos >= firstcopiednotebeatpos)
 					{	//If the FHP's position was correctly determined to be at/after the first copied note
 						long thisnewfhppos = eof_put_porpos_sp(eof_song, 0, firstpastednotebeatpos + thisfhpbeatpos - firstcopiednotebeatpos, 0.0);	//Calculate the timestamp for the pasted FHP, which will be relative to the first pasted note
+
+						if(eof_is_any_beat_interval_position(thisfhppos, NULL, NULL, NULL, NULL, eof_prefer_midi_friendly_grid_snapping))
+						{	//If the source FHP is grid snapped
+							unsigned long closestpos = thisnewfhppos;
+							(void) eof_is_any_beat_interval_position(thisnewfhppos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping);	//Get the beat interval position nearest the destination FHP's position
+							if(closestpos != thisnewfhppos)
+							{	//If that beat interval position isn't the position at which the FHP was going to be placed
+								if(closestpos != ULONG_MAX)
+								{	//If the nearest beat interval position was determined
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting FHP paste position from %lums to %lums", thisnewfhppos, closestpos);
+									eof_log(eof_log_string, 1);
+									thisnewfhppos = closestpos;	//Update the destination timestamp for the fhp
+								}
+							}
+						}
+
 						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, thisnewfhppos, stp->handposition[fhpctr].end_pos, 0, NULL);	//Add the FHP
 					}
 				}
