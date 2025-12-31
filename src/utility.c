@@ -1196,3 +1196,37 @@ unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata
 	(void) pack_fclose(fp);
 	return found;
 }
+
+int eof_string_is_zero(char *string)
+{
+	unsigned long ctr;
+	char decimalparsed = 0;
+
+	if(!string)
+		return 0;
+
+	for(ctr = 0; string[ctr] != '\0'; ctr++)
+	{
+		if((string[ctr] != '0') && (string[ctr] != '.'))
+			return 0;	//If there are any characters other than 0 or a decimal point, this is not a valid representation of the number 0
+		if(string[ctr] == '.')
+		{
+			if(decimalparsed)
+				return 0;	//A decimal point occurring twice is not valid
+			else
+				if(ctr == 0)
+					return 0;	//A digit must occur before a decimal point
+				else
+					decimalparsed = 1;
+		}
+		else
+			if(decimalparsed == 1)
+				decimalparsed = 2;	//Track whether digits were read after a decimal point
+	}
+	if(ctr == 0)
+		return 0;	//No digits were read
+	if(decimalparsed == 1)
+		return 0;	//A decimal point followed by no digits is not valid
+
+	return 1;	//At least one zero and optionally a decimal point and one or more zeros were read
+}

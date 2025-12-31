@@ -294,7 +294,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				eof_main_menu_activated = 1;
 				player->mouse_obj = 0;
 			}
-			else if(!eof_keyboard_shortcut && ((eof_key_code == KEY_M) || (eof_key_code == KEY_V) || (eof_key_code == KEY_C) || (eof_key_code == KEY_D) || (eof_key_code == KEY_PLUS_PAD) || (eof_key_code == KEY_MINUS_PAD) || (eof_key_code == KEY_R) || (eof_key_code == KEY_Y) || (eof_key_code == KEY_G) || (eof_key_code == KEY_P) || (eof_key_code == KEY_I) || (eof_key_code == KEY_PGDN) || (eof_key_code == KEY_PGUP) || (eof_key_code == KEY_HOME) || (eof_key_code == KEY_END) || (eof_key_code == KEY_F1) || (eof_key_code == KEY_LEFT) || (eof_key_code == KEY_RIGHT)))
+			else if(!eof_keyboard_shortcut && ((eof_key_code == KEY_M) || (eof_key_code == KEY_V) || (eof_key_code == KEY_C) || (eof_key_code == KEY_D) || (eof_key_code == KEY_PLUS_PAD) || (eof_key_code == KEY_MINUS_PAD) || (eof_key_code == KEY_R) || (eof_key_code == KEY_Y) || (eof_key_code == KEY_G) || (eof_key_code == KEY_P) || (eof_key_code == KEY_I) || (eof_key_code == KEY_PGDN) || (eof_key_code == KEY_PGUP) || (eof_key_code == KEY_HOME) || (eof_key_code == KEY_END) || (eof_key_code == KEY_F1) || (eof_key_code == KEY_LEFT) || (eof_key_code == KEY_RIGHT) || (eof_key_code == KEY_COMMA) || (eof_key_code == KEY_STOP)))
 			{	///Experimental:  User pressed a different ALT+key combination, seems like eof_key_code must be tested instead of eof_key_char,
 				/// possibly because only the characters associated with the main menu accelerators (ie. &F for the File menu) are sent to this
 				/// dialog for processing, but scan codes for other keys are still sent

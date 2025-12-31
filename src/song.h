@@ -855,7 +855,7 @@ void eof_erase_track_content(EOF_SONG *sp, unsigned long track, unsigned char di
 	//If diffonly is nonzero, only the content from the specified track difficulty is deleted
 	//If events is nonzero, the text events are deleted as well
 void eof_erase_track(EOF_SONG *sp, unsigned long track, char events);
-	//Calls eof_erase_track_content() with the option to erase the entire track, along with text events if the events parameter is nonzero
+	//Calls eof_erase_track_content() with the option to erase the entire track, along with track-specific text events if the events parameter is nonzero
 void eof_erase_track_difficulty(EOF_SONG *sp, unsigned long track, unsigned char diff);
 	//Calls eof_erase_track_content() with the option to erase the specified track difficulty only, preserving text events
 

@@ -110,4 +110,8 @@ unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata
 	//metadata_count is the size of the metadata array and the number of individual pieces of metadata to search for
 	//Returns the number of specified metadata items that were found, or 0 on error
 
+int eof_string_is_zero(char *string);
+	//Returns nonzero if string is a proper representation of the number zero
+	//To be used to verify whether the return value of atof() being zero is meant to be an error or a conversion of the number 0
+
 #endif

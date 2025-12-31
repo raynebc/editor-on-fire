@@ -323,6 +323,14 @@ Miscellaneous Controls:
 
         Zoom in/out.
 
+    ALT+.
+
+        Zoom in.
+
+    ALT+,
+
+        Zoom out.
+
     CTRL + +/-:
 
         Increments/decrements the fret value for selected notes (pro guitar/bass tracks only).

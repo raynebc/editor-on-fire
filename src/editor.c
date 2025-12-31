@@ -920,6 +920,7 @@ if(eof_key_code == KEY_PAUSE)
 	{
 	}
 }
+
 ///ALT handling testing
 /*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
 {
@@ -2007,6 +2008,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	}
 
 	/* decrease grid snap (,) */
+	/* zoom out (ALT+,) */
 	if(eof_key_char == ',')
 	{
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
@@ -2023,8 +2025,14 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
 		eof_use_key();
 	}
+	if((eof_key_code == KEY_COMMA) && KEY_EITHER_ALT)
+	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
+		(void) eof_menu_edit_zoom_helper_out();
+		eof_use_key();
+	}
 
 	/* increase grid snap (.) */
+	/* zoom in (ALT+.) */
 	if(eof_key_char == '.')
 	{
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
@@ -2039,6 +2047,12 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 		eof_fixup_notes(eof_song);	//Run the fixup logic for all tracks, so that if the "Highlight non grid snapped notes" feature is in use, the highlighting can discontinue taking the custom grid snap into account
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
+		eof_use_key();
+	}
+	if((eof_key_code == KEY_STOP) && (KEY_EITHER_ALT))
+	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
+		//KEY_STOP is the scan code for the period key
+		(void) eof_menu_edit_zoom_helper_in();
 		eof_use_key();
 	}
 
