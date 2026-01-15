@@ -71,7 +71,7 @@
 #define EOF_COLORS_BF          4
 #define EOF_COLORS_IR          5
 
-#define EOF_MAX_IMAGES 114
+#define EOF_MAX_IMAGES 116
 
 #define EOF_IMAGE_WAVE                        0	//This macro is currently unused
 #define EOF_IMAGE_TAB0                        1
@@ -187,6 +187,8 @@
 #define EOF_IMAGE_NOTE_GHL_WHITE_SP_SLIDER  111
 #define EOF_IMAGE_NOTE_GHL_BLACK_SP_SLIDER  112
 #define EOF_IMAGE_NOTE_GHL_BARRE_SP_SLIDER  113
+#define EOF_IMAGE_NOTE_MINE 114
+#define EOF_IMAGE_NOTE_MINE_HIT 115
 
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1

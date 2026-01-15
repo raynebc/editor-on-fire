@@ -74,6 +74,11 @@ struct FeedbackChart
 	unsigned long chart_length;	//The highest chart position used in the imported chart (including note lengths)
 };
 
+double eof_chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos, unsigned int *gridsnap);
+	//Parses the anchor linked list in the specified chart and returns the specified chart position's timing in milliseconds
+	//If gridsnap is not NULL, the variable it references is set to 1 if the chart position is determined to be a MIDI friendly grid snap interval, otherwise set to 0
+	//Returns 0 on error
+
 int Read_db_string(char *source, char **str1, char **str2);
 	//Scans the source string for a valid dB tag: text = text	or	text = "text"
 	//The text to the left of the equal sign is returned through str1 as a new string, with whitespace truncated

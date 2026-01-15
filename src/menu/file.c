@@ -3962,7 +3962,7 @@ int eof_save_helper_checks(void)
 						}
 						eof_seek_and_render_position(ctr, eof_note_type, tp->arpeggio[ctr2].start_pos);	//Render the track so the user can see where the correction needs to be made
 						eof_clear_input();
-						if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+						if(!user_prompted && alert("At least one arpeggio/handshape crosses over into another RS phrase.", "This can behave strangely in Rocksmith if the chart has dynamic difficulty.", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user hasn't already answered this prompt, and opts to correct the issue
 							eof_2d_render_top_option = original_eof_2d_render_top_option;	//Restore the user's preference
 							return 1;	//Return cancellation

@@ -4514,7 +4514,7 @@ unsigned long eof_get_chart_size(EOF_SONG *sp)
 
 	for(trackctr = 1; trackctr < sp->tracks; trackctr++)
 	{
-		notectr += eof_get_track_size(sp, trackctr);	//Add the number of notes in this track to the counter
+		notectr += eof_get_track_size_all(sp, trackctr);	//Add the number of normal/tech notes in this track to the counter
 	}
 
 	return notectr;
@@ -5166,6 +5166,14 @@ unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned lon
 	return 0;	//Return error or not applicable
 }
 
+unsigned char eof_get_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	if(track != EOF_TRACK_DANCE)
+		return 0;		//Only the dance track has a mine status, other tracks store an accent bitmask status in this variable
+
+	return eof_get_note_ghost(sp, track, note);
+}
+
 unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
@@ -5183,6 +5191,14 @@ unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned lo
 	}
 
 	return 0;	//Return error
+}
+
+unsigned char eof_get_note_mine(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	if(track != EOF_TRACK_DANCE)
+		return 0;		//Only the dance track has a mine status, other tracks store an accent bitmask status in this variable
+
+	return eof_get_note_accent(sp, track, note);
 }
 
 unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
@@ -5582,6 +5598,12 @@ void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	}
 }
 
+void eof_set_note_mine(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+	if(track == EOF_TRACK_DANCE)
+		eof_set_note_accent(sp, track, note, value);		//Only the dance track has a mine status, other tracks store an accent bitmask status in this variable
+}
+
 void eof_set_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
 {
 	unsigned long tracknum;
@@ -5609,6 +5631,12 @@ void eof_set_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note, u
 		default:
 		break;
 	}
+}
+
+void eof_set_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+	if(track == EOF_TRACK_DANCE)
+		eof_set_note_ghost(sp, track, note, value);		//Only the dance track has roll status, other tracks store a ghost bitmask status in this variable
 }
 
 unsigned char eof_get_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note)
@@ -6883,6 +6911,40 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option)
 	}
 }
 
+void eof_track_find_disjointed_notes(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long i;
+	long next;
+
+ 	eof_log("eof_track_find_disjointed_notes() entered", 2);
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+
+	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		return;	//Vocal tracks don't have the capability to have disjointed notes
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the track
+		next = eof_track_fixup_next_note(sp, track, i);
+		if(next < 0)
+			continue;	//If there is no next note in this track difficulty, skip this note
+
+		if(eof_get_note_pos(sp, track, i) == eof_get_note_pos(sp, track, next))
+		{	//If this note and the next start at the same timestamp
+			if(eof_get_note_length(sp, track, i) != eof_get_note_length(sp, track, next))
+			{	//If the two notes have different lengths, apply disjointed status to both
+				unsigned long flags;
+
+				flags = eof_get_note_eflags(sp, track, i) | EOF_NOTE_EFLAG_DISJOINTED;
+				eof_set_note_eflags(sp, track, i, flags);
+				flags = eof_get_note_eflags(sp, track, next) | EOF_NOTE_EFLAG_DISJOINTED;
+				eof_set_note_eflags(sp, track, next, flags);
+			}
+		}
+	}
+}
+
 void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags)
 {
 // 	eof_log("eof_set_note_flags() entered");
@@ -7950,7 +8012,7 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	char *text;
 	void *result = NULL;
 
- 	eof_log("eof_copy_note() entered", 2);
+ 	eof_log("eof_copy_note() entered", 3);
 
 	//Validate parameters
 	if((ssp == NULL) || (sourcetrack >= ssp->tracks) || (sourcenote >= eof_get_track_size(ssp, sourcetrack)) || (dsp == NULL) || (desttrack >= dsp->tracks))

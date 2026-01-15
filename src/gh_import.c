@@ -3368,7 +3368,7 @@ int eof_ghl_import_common(const char *fn)
 	if(import_tempo_map && (eof_get_chart_size(eof_song) > 0))
 	{	//If the user opted to import the tempo map and there is at least one note/lyric in the project, prompt to adjust the notes/lyrics
 		eof_clear_input();
-		if(alert(NULL, "Adjust notes to imported tempo map?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		if(alert(NULL, "Adjust existing notes to imported tempo map?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{
 			adjust = 1;
 		}
@@ -3378,6 +3378,7 @@ int eof_ghl_import_common(const char *fn)
 	if(import_tempo_map)
 	{	//If the user opted to import the file's tempo map
 		set_window_title("Importing XMK - Resetting tempo map");
+		eof_log("\tImporting XMK - Resetting tempo map", 1);
 		if(adjust)
 		{	//If auto-adjust is to be performed
 			(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
@@ -4038,23 +4039,9 @@ int eof_ghl_import_common(const char *fn)
 //Apply disjointed and crazy status where appropriate
 	if(note_imported && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 	{	//If instrument notes were imported
-		EOF_NOTE *n1, *n2;
-
-		eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status below where appropriate)
 		eof_track_sort_notes(eof_song, eof_selected_track);
-		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
-		{	//For each note in the track
-			n1 = eof_song->legacy_track[tracknum]->note[ctr];	//Simplify
-			for(ctr2 = ctr + 1; ctr2 < eof_get_track_size(eof_song, eof_selected_track); ctr2++)
-			{	//For each note after the one from the outer loop
-				n2 = eof_song->legacy_track[tracknum]->note[ctr2];	//Simplify
-				if((n1->type == n2->type) && (n1->pos == n2->pos) && (n1->length != n2->length))
-				{	//If the two notes are in the same difficulty, start at the same position but have different lengths
-					n1->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to both notes
-					n2->eflags |= EOF_NOTE_EFLAG_DISJOINTED;
-				}
-			}
-		}
+		eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status below where appropriate)
+		eof_track_find_disjointed_notes(eof_song, eof_selected_track);	//Mark notes that begin at the same timestamp and have different lengths as disjointed
 	}
 
 //Cleanup

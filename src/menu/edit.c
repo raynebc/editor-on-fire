@@ -2061,7 +2061,7 @@ int eof_menu_edit_paste_logic(int function)
 							{	//If that beat interval position isn't the position at which the FHP was going to be placed
 								if(closestpos != ULONG_MAX)
 								{	//If the nearest beat interval position was determined
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting FHP paste position from %lums to %lums", thisnewfhppos, closestpos);
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting FHP paste position from %ldms to %lums", thisnewfhppos, closestpos);
 									eof_log(eof_log_string, 1);
 									thisnewfhppos = closestpos;	//Update the destination timestamp for the fhp
 								}
@@ -4362,14 +4362,6 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 		*flags &= ~EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
 	}
 
-	if((eof_song->track[sourcetrack]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR) && (eof_song->track[desttrack]->track_behavior != EOF_DANCE_TRACK_BEHAVIOR))
-	{	//If the note is copying from a dance track to a non dance track, erase conflicting flags
-		*flags &= ~EOF_DANCE_FLAG_LANE_1_MINE;	//Erase the lane 1 mine flag
-		*flags &= ~EOF_DANCE_FLAG_LANE_2_MINE;	//Erase the lane 2 mine flag
-		*flags &= ~EOF_DANCE_FLAG_LANE_3_MINE;	//Erase the lane 3 mine flag
-		*flags &= ~EOF_DANCE_FLAG_LANE_4_MINE;	//Erase the lane 4 mine flag
-	}
-
 	if(eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)
 	{	//If the note is pasting into a non 5 lane guitar track, erase legacy HOPO flags
 		*flags &= ~EOF_NOTE_FLAG_HOPO;		//Erase the temporary HOPO flag
@@ -4611,20 +4603,12 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 		{	//Erase drum specific flags
 			flags &= ~EOF_DRUM_NOTE_FLAG_DBASS;
 		}
-		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
-		{
-			flags &= ~EOF_DANCE_FLAG_LANE_1_MINE;
-		}
 	}
 	if(notemask & 2)
 	{	//If the note being pasted uses lane 2, erase lane 2 flags from the overlapped note
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
 			flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
-		}
-		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
-		{
-			flags &= ~EOF_DANCE_FLAG_LANE_2_MINE;
 		}
 	}
 	if(notemask & 4)
@@ -4637,10 +4621,6 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_COMBO;
 		}
-		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
-		{
-			flags &= ~EOF_DANCE_FLAG_LANE_3_MINE;
-		}
 	}
 	if(notemask & 8)
 	{	//If the note being pasted uses lane 4, erase lane 4 flags from the overlapped note
@@ -4648,10 +4628,6 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 		{	//Erase drum specific flags
 			flags &= ~EOF_DRUM_NOTE_FLAG_B_CYMBAL;
 			flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;
-		}
-		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
-		{
-			flags &= ~EOF_DANCE_FLAG_LANE_4_MINE;
 		}
 	}
 	if(notemask & 16)

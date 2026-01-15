@@ -382,7 +382,7 @@ MENU eof_note_drum_ghost_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_note_drum_disjointed_menu[] =
+MENU eof_note_disjointed_menu[] =
 {
 	{"&Toggle", eof_menu_note_toggle_disjointed, NULL, 0, NULL},
 	{"&Remove", eof_menu_note_remove_disjointed, NULL, 0, NULL},
@@ -418,9 +418,69 @@ MENU eof_note_drum_menu[] =
 	{"Toggle &B cymbal+tom\t" CTRL_NAME "+ALT+B", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
 	{"Toggle G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
 	{"&Accent", NULL, eof_note_drum_accent_menu, 0, NULL},
-	{"&Disjointed", NULL, eof_note_drum_disjointed_menu, 0, NULL},
+	{"&Disjointed", NULL, eof_note_disjointed_menu, 0, NULL},
 	{"&Ghost", NULL, eof_note_drum_ghost_menu, 0, NULL},
 	{"&Flam", NULL, eof_note_drum_flam_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_toggle_mine_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_accent_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_accent_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_accent_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_accent_blue, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_mine_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_accent_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_accent_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_accent_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_accent_blue, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_accent_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_dance_mine_menu[] =
+{
+	{"&Toggle", NULL, eof_note_toggle_mine_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_mine_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_toggle_roll_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_ghost_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_ghost_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_ghost_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_ghost_blue, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_roll_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_ghost_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_ghost_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_ghost_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_ghost_blue, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_accent_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_dance_roll_menu[] =
+{
+	{"&Toggle", NULL, eof_note_toggle_roll_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_roll_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_dance_menu[] =
+{
+	{"&Mine", NULL, eof_note_dance_mine_menu, 0, NULL},
+	{"&Roll", NULL, eof_note_dance_roll_menu, 0, NULL},
+	{"&Disjointed", NULL, eof_note_disjointed_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -587,7 +647,7 @@ MENU eof_note_clone_hero_sp_deploy_menu[] =
 
 MENU eof_note_clone_hero_menu[] =
 {
-	{"&Disjointed", NULL, eof_note_drum_disjointed_menu, 0, NULL},
+	{"&Disjointed", NULL, eof_note_disjointed_menu, 0, NULL},
 	{"S&P deploy", NULL, eof_note_clone_hero_sp_deploy_menu, 0, NULL},
 	{"Convert GHL &Open\t" CTRL_NAME "+G", eof_menu_note_convert_to_ghl_open, NULL, 0, NULL},
 	{"&Swap GHL B/W gems", eof_menu_note_swap_ghl_black_white_gems, NULL, 0, NULL},
@@ -635,6 +695,7 @@ MENU eof_note_menu[] =
 	{"Slid&Er", NULL, eof_slider_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Drum", NULL, eof_note_drum_menu, 0, NULL},
+	{"&Dance", NULL, eof_note_dance_menu, 0, NULL},
 	{"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_note_rocksmith_menu, 0, NULL},
 	{"&BEATABLE", NULL, eof_note_beatable_menu, 0, NULL},
@@ -770,8 +831,8 @@ void eof_prepare_note_menu(void)
 						}
 					}
 				}
-				if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
-				{	//If a legacy/pro guitar/bass/keys or drum track is active
+				if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR) || (eof_selected_track == EOF_TRACK_DANCE))
+				{	//If a legacy/pro guitar/bass/keys/drum or the dance track is active
 					for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
 					{	//For each trill phrase in the active track
 						sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
@@ -806,7 +867,7 @@ void eof_prepare_note_menu(void)
 							inslider = 1;
 						}
 					}
-				}//If a legacy/pro guitar/bass/keys or drum track is active
+				}//If a legacy/pro guitar/bass/keys/drum or the dance track is active
 			}//PART VOCALS NOT SELECTED
 		}//If one or more notes/lyrics are selected
 		eof_note_reflect_menu[0].flags = 0;		//Note>Reflect>Vertical
@@ -1070,12 +1131,12 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[12].flags = D_DISABLED | D_HIDDEN;	//Note>Trill> submenu
 			eof_note_menu[13].flags = D_DISABLED | D_HIDDEN;	//Note>Tremolo> submenu
 			eof_note_menu[16].flags = D_DISABLED | D_HIDDEN;	//Note>Drum> submenu
-			eof_note_menu[17].flags = D_DISABLED | D_HIDDEN;	//Note>Pro Guitar> submenu
-			eof_note_menu[18].flags = D_DISABLED | D_HIDDEN;	//Note>Rocksmith> submenu
-			eof_note_menu[21].flags = D_DISABLED | D_HIDDEN;	//Note>Reflect> submenu
-			eof_note_menu[23].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify> submenu
+			eof_note_menu[18].flags = D_DISABLED | D_HIDDEN;	//Note>Pro Guitar> submenu
+			eof_note_menu[19].flags = D_DISABLED | D_HIDDEN;	//Note>Rocksmith> submenu
+			eof_note_menu[22].flags = D_DISABLED | D_HIDDEN;	//Note>Reflect> submenu
+			eof_note_menu[24].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify> submenu
 
-			eof_note_menu[20].flags = 0;	//Note>Lyrics> submenu
+			eof_note_menu[21].flags = 0;	//Note>Lyrics> submenu
 			if((eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (vselected == 1))
 			{	//Only enable edit and split lyric if only one lyric is selected
 				eof_note_lyrics_menu[0].flags = 0;	//Note>Lyrics>Edit Lyric
@@ -1123,10 +1184,10 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[9].flags = 0;		//Note>Edit Name
 			eof_note_menu[12].flags = 0;		//Note>Trill> submenu
 			eof_note_menu[13].flags = 0;		//Note>Tremolo> submenu
-			eof_note_menu[21].flags = 0;		//Note>Reflect> submenu
-			eof_note_menu[23].flags = 0;		//Note>Simplify> submenu
+			eof_note_menu[22].flags = 0;		//Note>Reflect> submenu
+			eof_note_menu[24].flags = 0;		//Note>Simplify> submenu
 
-			eof_note_menu[20].flags = D_DISABLED | D_HIDDEN;	//Note>Lyrics> submenu
+			eof_note_menu[21].flags = D_DISABLED | D_HIDDEN;	//Note>Lyrics> submenu
 
 			/* toggle crazy */
 			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
@@ -1212,8 +1273,8 @@ void eof_prepare_note_menu(void)
 				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
 				eof_menu_delete[1].flags = 0;			//Note>Delete>Delete w/ FHP
-				eof_note_menu[17].flags = 0;			//Note>Pro Guitar> submenu
-				eof_note_menu[18].flags = 0;			//Note>Rocksmith> submenu
+				eof_note_menu[18].flags = 0;			//Note>Pro Guitar> submenu
+				eof_note_menu[19].flags = 0;			//Note>Rocksmith> submenu
 				eof_note_simplify_menu[6].flags = 0;	//Note>Simplify>String mutes
 				eof_note_simplify_menu[7].flags = 0;	//Note>Simplify>Ghost
 				if(tp->note == tp->technote)
@@ -1260,8 +1321,8 @@ void eof_prepare_note_menu(void)
 			else
 			{	//A pro guitar track is not active
 				eof_menu_delete[1].flags = D_DISABLED;
-				eof_note_menu[17].flags = D_DISABLED | D_HIDDEN;
 				eof_note_menu[18].flags = D_DISABLED | D_HIDDEN;
+				eof_note_menu[19].flags = D_DISABLED | D_HIDDEN;
 				eof_note_simplify_menu[6].flags = D_DISABLED | D_HIDDEN;
 				eof_note_simplify_menu[7].flags = D_DISABLED | D_HIDDEN;
 			}
@@ -1380,9 +1441,9 @@ void eof_prepare_note_menu(void)
 		}//PART VOCALS NOT SELECTED
 
 		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
-			eof_note_menu[19].flags = 0;		//Note>BEATABLE> submenu
+			eof_note_menu[20].flags = 0;		//Note>BEATABLE> submenu
 		else
-			eof_note_menu[19].flags = D_DISABLED | D_HIDDEN;
+			eof_note_menu[20].flags = D_DISABLED | D_HIDDEN;
 
 		/* transpose up */
 		if(eof_transpose_possible(-1))
@@ -1411,7 +1472,7 @@ void eof_prepare_note_menu(void)
 		/* Note>Clone Hero */
 		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS))
 		{	//If a legacy guitar or the keys track is active
-			eof_note_menu[22].flags = 0;	//Note>Clone Hero>
+			eof_note_menu[23].flags = 0;	//Note>Clone Hero>
 
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 			{	//If GHL mode is enabled
@@ -1426,7 +1487,17 @@ void eof_prepare_note_menu(void)
 		}
 		else
 		{	//Otherwise disable and hide this menu
-			eof_note_menu[22].flags = D_DISABLED | D_HIDDEN;	//Note>Clone Hero>
+			eof_note_menu[23].flags = D_DISABLED | D_HIDDEN;	//Note>Clone Hero>
+		}
+
+		/* Note>Dance */
+		if(eof_selected_track == EOF_TRACK_DANCE)
+		{	//If the dance track is active
+			eof_note_menu[17].flags = 0;			//Note>Dance> submenu
+		}
+		else
+		{
+			eof_note_menu[17].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		if(eof_create_filtered_menu(eof_note_menu, eof_filtered_note_menu, EOF_SCRATCH_MENU_SIZE))
@@ -1449,11 +1520,11 @@ void eof_prepare_note_menu(void)
 		}
 		if(eof_create_filtered_menu(eof_note_simplify_menu, eof_filtered_note_simplify_menu, EOF_SCRATCH_MENU_SIZE))
 		{	//If the Note>Simplify menu was recreated to filter out hidden items
-			eof_note_menu[23].child = eof_filtered_note_simplify_menu;	//Use this in the Note menu
+			eof_note_menu[24].child = eof_filtered_note_simplify_menu;	//Use this in the Note menu
 		}
 		else
 		{	//Otherwise use the unabridged Note>Simplify menu
-			eof_note_menu[23].child = eof_note_simplify_menu;
+			eof_note_menu[24].child = eof_note_simplify_menu;
 		}
 	}//if(eof_song && eof_song_loaded)
 }

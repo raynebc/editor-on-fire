@@ -20,6 +20,7 @@
 #include "player.h"
 #include "rs.h"
 #include "song.h"
+#include "sm.h"
 #include "spectrogram.h"
 #include "tuning.h"
 #include "undo.h"
@@ -918,6 +919,14 @@ if(eof_key_code == KEY_PAUSE)
 
 	if(eof_song_loaded)
 	{
+
+char *returnedfn = ncd_file_select(0, eof_last_eof_path, "Import StepMania", eof_filter_gh_files);
+eof_clear_input();
+if(returnedfn)
+{
+eof_import_stepmania(returnedfn);
+}
+
 	}
 }
 

@@ -77,18 +77,12 @@
 #define EOF_DRUM_NOTE_FLAG_G_COMBO         32768	//This flag means the green drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
 #define EOF_DRUM_NOTE_FLAG_FLAM           262144	//This flag means the drum note is a flam
 
-//The following flags pertain to dance notes
-#define EOF_DANCE_FLAG_LANE_1_MINE		512		//This flag will represent a mine note for lane 1
-#define EOF_DANCE_FLAG_LANE_2_MINE		1024	//This flag will represent a mine note for lane 2
-#define EOF_DANCE_FLAG_LANE_3_MINE		2048	//This flag will represent a mine note for lane 3
-#define EOF_DANCE_FLAG_LANE_4_MINE		4096	//This flag will represent a mine note for lane 4
-
 //The following flags pertain to legacy guitar notes
 #define EOF_GUITAR_NOTE_FLAG_IS_SLIDER	512		//This flag will be set by eof_determine_phrase_status() if the note is in a slider section
 #define EOF_GUITAR_NOTE_FLAG_GHL_OPEN   1024	//This flag will represent an open note in a Guitar Hero Live style track
 //32, 64, 128, 256, 2048, 4096, 8192, 16384, 32768, 262144, etc. are currently unused for legacy guitar notes
 
-//The following flags pertain to legacy and pro guitar notes
+//The following flags pertain to legacy notes and pro guitar notes
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill (or special drum roll) section
 #define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo (or drum roll) section
 
@@ -176,7 +170,7 @@ typedef struct
 	char name[EOF_NAME_LENGTH + 1];
 	unsigned char type;		//Stores the note's difficulty
 	unsigned char note;		//Stores the note's fret values
-	unsigned char accent;		//Stores the note's accent bitmask (for drums)
+	unsigned char accent;		//Stores the note's accent bitmask (for drums) or mine bitmask (for dance)
 	unsigned char ghost;		//Stores the note's ghost bitmask (for drums)
 	unsigned long midi_pos;
 	unsigned long midi_length;
@@ -729,12 +723,16 @@ unsigned long eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned lo
 void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long eflags);	//Sets the extended flags of the specified pro guitar or legacy note
 unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the ghost bitmask of the specified legacy or pro guitar note, or 0 on error
+unsigned char eof_get_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the roll status (stored in the ghost bitmask variable) of the specified dance note, or 0 on error or if the track isn't a dance track
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);
 	//Sets the note value of the specified track's note/lyric
 	//If the specified note is a pro guitar note, any unused strings have their corresponding fret values reset to 0.  All finger array entries are reset to 0 regardless of the note bitmask
-unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the accent bitmask of the specified note, or 0 on error
+unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the accent bitmask of the specified note, or 0 on error
+unsigned char eof_get_note_mine(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the mine status (stored in the accent bitmask variable) of the specified dance note, or 0 on error or if the track isn't a dance track
 void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified note
-void eof_set_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified legacy or pro guitar note
+void eof_set_note_mine(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the mine status (stored in the accent bitmask variable) of the specified dance note (or does nothing for other tracks)
+void eof_set_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the ghost bitmask value of the specified legacy or pro guitar note
+void eof_set_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the roll status (stored in the ghost bitmask variable) of the specified dance note (or does nothing for other tracks)
 unsigned char eof_get_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the SP deploy bitmask of the specified note, or 0 on error
 void eof_set_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the SP deploy bitmask of the specified note
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error
@@ -759,7 +757,11 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);
 void eof_sanitize_phrase_names(EOF_SONG *sp, unsigned long track);	//Empties the name string of any EOF_PHRASE_SECTION items in the track that have non-printable characters (ie. uninitialized data)
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track, int option);
 	//Used during MIDI and GP imports to mark a note as "crazy" if it overlaps with the next note in the same difficulty
+	//Requires that the target track's notes are already sorted
 	//If option is nonzero, two notes that begin at the same timestamp are not given crazy status (ie. to improve GP import of multi-voice files, or ability for GP and dB imports to support disjointed chords)
+void eof_track_find_disjointed_notes(EOF_SONG *sp, unsigned long track);
+	//Used during Feedback and Stepmania imports to mark notes as disjointed if they begin at the same timestamp but have different lengths
+	//Requires that the target track's notes are already sorted
 int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success

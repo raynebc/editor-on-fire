@@ -36,6 +36,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	//1 Clipped completely to the right of the viewing window
 int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p);
 	//Renders the note to the 3D preview area
+	//p being nonzero indicates that the highlight version of the note is to be rendered (ie. "hit" during playback or selected in the piano roll)
 	//If the note is 100% clipped, nonzero is returned
 	//-1 Clipped completely before the viewing window
 	//1 Clipped completely after the viewing window

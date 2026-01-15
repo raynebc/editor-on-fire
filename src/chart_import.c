@@ -50,9 +50,9 @@ char *eof_chart_import_return_code_list[] = {
 };
 
 /* convert Feedback chart time to milliseconds for use with EOF */
-static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos, unsigned int *gridsnap)
+double eof_chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos, unsigned int *gridsnap)
 {
-//	eof_log("chartpos_to_msec() entered");
+//	eof_log("eof_chartpos_to_msec() entered");
 
 	double offset;
 	double curpos;
@@ -668,7 +668,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			{	//For each note in the track
 				unsigned long originalnotepos;	//In case a position is resnapped, this will store the original converted timing, for correctly retaining gem length
 
-				notepos = chartpos_to_msec(chart, current_note->chartpos, &gridsnap) + 0.5;	//Round up
+				notepos = eof_chartpos_to_msec(chart, current_note->chartpos, &gridsnap) + 0.5;	//Round up
 				originalnotepos = notepos;	//Keep a copy of this value
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Chartpos = %lu  Pos = %lums  Gem value = %d", notes_imported++, current_note->chartpos, notepos, current_note->gemcolor);
 				eof_log(eof_log_string, 1);
@@ -705,7 +705,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 							}
 						}
 					}
-					(void) eof_legacy_track_add_star_power(tp, notepos, chartpos_to_msec(chart, endpos, NULL));
+					(void) eof_legacy_track_add_star_power(tp, notepos, eof_chartpos_to_msec(chart, endpos, NULL));
 				}
 
 				/* import Clone Hero solo */
@@ -723,7 +723,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{	//This event is only respected when defined in a track's expert difficulty
 						if(ch_solo_on)
 						{	//If the start of solo was defined earlier
-							(void) eof_legacy_track_add_solo(tp, ch_solo_pos, chartpos_to_msec(chart, current_note->chartpos, NULL));
+							(void) eof_legacy_track_add_solo(tp, ch_solo_pos, eof_chartpos_to_msec(chart, current_note->chartpos, NULL));
 							ch_solo_on = 0;
 						}
 					}
@@ -807,14 +807,14 @@ EOF_SONG * eof_import_chart(const char * fn)
 				/* drum roll */
 				else if(current_track->isdrums && (current_note->gemcolor == 70))
 				{
-					unsigned long endpos = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL);
+					unsigned long endpos = eof_chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL);
 					(void) eof_track_add_tremolo(sp, track, notepos, endpos, 0xFF);
 				}
 
 				/* special drum roll */
 				else if(current_track->isdrums && (current_note->gemcolor == 71))
 				{
-					unsigned long endpos = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL);
+					unsigned long endpos = eof_chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL);
 					(void) eof_track_add_trill(sp, track, notepos, endpos);
 				}
 
@@ -883,7 +883,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 						{
 							new_note->midi_pos = current_note->chartpos;	//Track the note's original chart position to more reliably apply HOPO status
 							new_note->pos = notepos;	//Assign the position (which may have been resnapped)
-							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL) - (double)originalnotepos + 0.5;	//Determine the length (using the non resnapped position), round up
+							new_note->length = eof_chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL) - (double)originalnotepos + 0.5;	//Determine the length (using the non resnapped position), round up
 							if(!new_note->length)
 								new_note->length = 1;	//Pad the note to 1ms length if it has no length (to ensure that each slider that is added always ends after the start position of its final note)
 							if((current_note->chartpos == lastpos) && (current_note->duration != lastduration) && lastnotewasgem)
@@ -1029,7 +1029,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 
 		//Determine the realtime position associated with the event, for solos, lyric lines and lyrics
-		pos = chartpos_to_msec(chart, current_event->chartpos, &gridsnap) + 0.5;	//Store the real timestamp associated with the event, rounded up to nearest millisecond
+		pos = eof_chartpos_to_msec(chart, current_event->chartpos, &gridsnap) + 0.5;	//Store the real timestamp associated with the event, rounded up to nearest millisecond
 		if(gridsnap && !eof_is_any_beat_interval_position(pos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping))
 		{	//If this chart position should be a beat interval, but the timing conversion did not result in this, re-snap the event honoring the user preference whether to use MIDI friendly grid snaps
 			if(closestpos != ULONG_MAX)
@@ -1045,7 +1045,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 		else if(!ustricmp(current_event->text, "[solo_off]") && solo_status)
 		{	//If this is a solo off event (and a solo_off event is expected), add it to the guitar and lead guitar tracks (FoF's original behavior for these events)
-			solo_off = chartpos_to_msec(chart, current_event->chartpos, NULL);	//Store the real timestamp associated with the end of the phrase
+			solo_off = eof_chartpos_to_msec(chart, current_event->chartpos, NULL);	//Store the real timestamp associated with the end of the phrase
 			solo_status = 0;
 			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR, solo_on, solo_off + 0.5);	//Add the solo to the guitar track
 			(void) eof_track_add_solo(sp, EOF_TRACK_GUITAR_COOP, solo_on, solo_off + 0.5);	//Add the solo to the lead guitar track
@@ -1093,14 +1093,14 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 			else
 			{	//Otherwise consider this an ending to the previous line in progress and the beginning of a new line
-				lyric_off = chartpos_to_msec(chart, current_event->chartpos, NULL) - 1.0;	//End the previous line 1ms before the beginning of this line
+				lyric_off = eof_chartpos_to_msec(chart, current_event->chartpos, NULL) - 1.0;	//End the previous line 1ms before the beginning of this line
 				(void) eof_vocal_track_add_line(sp->vocal_track[0], lyric_on, lyric_off, 0xFF);
 				lyric_on = pos;
 			}
 		}
 		else if(!ustricmp(current_event->text, "phrase_end") && lyric_status)
 		{	//If this is a Clone Hero end of lyric line marker (and such a marker is expected), add the lyric line definition to the vocal track
-			lyric_off = chartpos_to_msec(chart, current_event->chartpos, NULL);	//Store the real timestamp associated with the end of the lyric line
+			lyric_off = eof_chartpos_to_msec(chart, current_event->chartpos, NULL);	//Store the real timestamp associated with the end of the lyric line
 			lyric_status = 0;
 			(void) eof_vocal_track_add_line(sp->vocal_track[0], lyric_on, lyric_off + 0.5, 0xFF);
 		}
@@ -2154,14 +2154,6 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 
 int Read_db_string(char *source, char **str1, char **str2)
 {
-	//Scans the source string for a valid dB tag: text = text	or	text = "text"
-	//The text to the left of the equal sign is returned through str1 as a new string, with whitespace truncated
-	//The text to the right of the equal sign is returned through str2 as a new string, with whitespace truncated
-	//If the first non whitespace character encountered after the equal sign is a quotation mark, all characters after
-	//that quotation mark up to the next are returned through str2
-	//Nonzero is returned upon success, or zero is returned if source did not contain two sets of non whitespace characters
-	//separated by an equal sign character, or if the closing quotation mark is missing.
-
 //	eof_log("Read_db_string() entered");
 
 	unsigned long srcindex;	//Index into source string
@@ -2373,13 +2365,6 @@ int eof_validate_db_track_diff_string(char *diffstring, struct dbTrack *track)
 
 struct dbTrack *Validate_db_instrument(char *buffer)
 {
-	//Validates that buffer contains a valid dB instrument track name enclosed in brackets []
-	//buffer is expected to point to the opening bracket
-	//If it is valid, a dbTrack structure is allocated and initialized:
-	//(track name is allocated, tracktype and difftype are set and the linked lists are set to NULL)
-	//The track structure is returned, otherwise NULL is returned if the string did not contain a valid
-	//track name.  buffer[] is modified to remove any whitespace after the closing bracket
-
 	unsigned long index=0;	//Used to index into buffer
 	char *endbracket=NULL;	//The pointer to the end bracket
 	char *diffstring=NULL;	//Used to find the difficulty substring

@@ -1590,7 +1590,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	char restore_tech_view = 0;
 
-	eof_log("eof_determine_phrase_status() entered", 3);
+///	eof_log("eof_determine_phrase_status() entered", 3);
 
 	if(!sp || (track >= sp->tracks) || !track)
 		return;	//Invalid parameters
@@ -4313,6 +4313,8 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_GHL_WHITE_SP_SLIDER] = eof_load_pcx("note_ghl_white_sp_slider.pcx");
 	eof_image[EOF_IMAGE_NOTE_GHL_BLACK_SP_SLIDER] = eof_load_pcx("note_ghl_black_sp_slider.pcx");
 	eof_image[EOF_IMAGE_NOTE_GHL_BARRE_SP_SLIDER] = eof_load_pcx("note_ghl_barre_sp_slider.pcx");
+	eof_image[EOF_IMAGE_NOTE_MINE] = eof_load_pcx("note_mine.pcx");
+	eof_image[EOF_IMAGE_NOTE_MINE_HIT] = eof_load_pcx("note_mine_hit.pcx");
 	eof_background = eof_load_pcx("background.pcx");
 
 	//Load and scale the non-GHL HOPO images, using the scale size in user preferences

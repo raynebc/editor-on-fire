@@ -631,6 +631,17 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					continue;	//Skip rendering this note
 				}
 			}
+			if(p)
+			{	//For mouse over/highlight lyrics, render note with its defined contrasting border color
+				if(!(noteflags & EOF_NOTE_FLAG_SP))
+				{	//If the note is not star power
+					pcol = eof_colors[ctr].border;	//Use the note's normal border color
+				}
+				else
+				{
+					pcol = eof_color_red;	//Draw the border in red, which contrasts with silver much better
+				}
+			}
 			if(!(noteflags & EOF_NOTE_FLAG_SP))
 			{	//If the note is not star power
 				if(tp && (eof_color_set == EOF_COLORS_BF))
@@ -658,23 +669,13 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					noteflags |= EOF_NOTE_FLAG_SP;	//And trigger the selection of the appropriate corresponding border color
 				}
 				else if(track && (mask & eof_get_note_accent(eof_song, track, notenum)))
-				{	//If the note is accented
+				{	//If the note is accented (or in the case of the dance track, a mine)
 					ncol = makecol(51, 51, 51);	//Draw the note in black
+					pcol = eof_color_red;		//Draw the border in red, which contrasts with red much better
 				}
 				else
 				{
 					ncol = eof_colors[ctr].color;	//Assign the appropriate fret color
-				}
-			}
-			if(p)
-			{	//For mouse over/highlight lyrics, render note with its defined contrasting border color
-				if(!(noteflags & EOF_NOTE_FLAG_SP))
-				{	//If the note is not star power
-					pcol = eof_colors[ctr].border;	//Use the note's normal border color
-				}
-				else
-				{
-					pcol = eof_color_red;	//Draw the border in red, which contrasts with silver much better
 				}
 			}
 
@@ -1583,6 +1584,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		else if(track == EOF_TRACK_DANCE)
 		{	//If rendering a dance note
 			imagenum = p ? eof_colors[ctr].arrowhit3d : eof_colors[ctr].arrow3d;
+			if(mask & eof_get_note_mine(eof_song, track, notenum))
+				imagenum = p ? EOF_IMAGE_NOTE_MINE_HIT : EOF_IMAGE_NOTE_MINE;	//If this is a mine note, draw the mine graphic instead
 		}
 		else
 		{	//If rendering a normal note
@@ -1766,8 +1769,10 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		return 0;	//If the user opted to hide note names, skip the logic below
 
 	notename[0] = prevnotename[0] = '\0';	//Empty these strings
-	if(eof_write_rs2_files)
+	if(eof_write_rs2_files && eof_track_is_pro_guitar_track(eof_song, track))
 		namefound = eof_build_note_name_ignoring_ghosts(eof_song, track, notenum, notename);	//RS2 export displays chord with names ignoring ghost notes
+	else if(eof_get_note_roll(eof_song, track, notenum))
+		namefound = 1;
 	else
 		namefound = eof_build_note_name(eof_song, track, notenum, notename);
 	if(!namefound)
@@ -1804,6 +1809,10 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	if(eof_track_is_drums_rock_mode(eof_song, track))
 	{	//Special case:  Drums Rock mode is enabled
 		nameptr = notename;	//Display the note name as-is since it instead defines the drum roll count
+	}
+	else if(eof_get_note_roll(eof_song, track, notenum))
+	{	//This is a dance note with roll status
+		nameptr = "R";
 	}
 	z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
 	z3d = z3d < eof_3d_min_depth ? eof_3d_min_depth : z3d;
@@ -2508,6 +2517,17 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			buffer[index++] = ')';
 		}
 	}
+	else if(track == EOF_TRACK_DANCE)
+	{	//Check dance statuses
+		if(eof_get_note_mine(eof_song, track, note))
+		{	//If any of the lanes on this note are mines
+			buffer[index++] = 'M';
+		}
+		if(eof_get_note_ghost(eof_song, track, note))
+		{	//If any of the lanes on this note are ghosted (in the dance track, this bitmask is used for roll notation)
+			buffer[index++] = 'R';
+		}
+	}
 
 	if(eof_track_is_beatable_mode(eof_song, track))
 	{	//If this is a BEATABLE track
@@ -2625,6 +2645,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 				}
 
 				buffer[index++] = 'D';
+				buffer[index++] = 'R';
+			}
+			else if(track == EOF_TRACK_DANCE)
+			{
 				buffer[index++] = 'R';
 			}
 			else
