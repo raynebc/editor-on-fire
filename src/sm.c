@@ -10,6 +10,10 @@
 #include "foflc/Lyric_storage.h"
 #include "menu/edit.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 #define EOF_MAX_SM_NOTES 1000
 
 typedef struct
@@ -64,23 +68,25 @@ int eof_import_stepmania(char * fn)
 	if(eof_get_track_size(eof_song, EOF_TRACK_DANCE))
 	{
 		eof_clear_input();
-		if(alert(NULL, "The dance track contains notes and will be erased in order to import the StepMania file.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		if(alert("The dance track contains notes and will be", "erased in order to import the StepMania file.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to erase the track
 			eof_log("\tUser cancellation.  Aborting", 1);
-			return 1;
+			return 2;
 		}
 	}
 
+///Only perform an undo if the track has content to erase
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_erase_track(eof_song, EOF_TRACK_DANCE, 1);	//Erase the dance track in case it has any content
 
 	//Prompt whether to continue if the tempo map is locked
 	if(eof_song->tags->tempo_map_locked)
 	{	//If the user has locked the tempo map
-		if(alert(NULL, "The tempo map is locked and will prevent the import of the StepMania file's tempo changes.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		eof_clear_input();
+		if(alert("The tempo map is locked and will prevent the", "import of the StepMania file's tempo changes.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to continue
 			eof_log("\tUser cancellation.  Aborting", 1);
-			return 1;
+			return 2;
 		}
 	}
 	else
@@ -460,7 +466,7 @@ int eof_import_stepmania(char * fn)
 						{	//If this tempo change was determined by the previous loop iteration to occur mid beat
 							thisbeat++;	//The tempo change will apply one beat later in to store it
 						}
-						while(eof_song->beats < thisbeat)
+						while(eof_song->beats <= thisbeat)
 						{	//Until enough beats exist in the chart to contain this tempo change
 							if(!eof_song_add_beat(eof_song))
 							{	//If a beat could not be added
@@ -523,15 +529,8 @@ int eof_import_stepmania(char * fn)
 				///Read the next note definition
 					///Expected to be 4 digits
 						///Until 4 digits were read, read the next one
-							///Read the next character from the line buffer
 							///If an opening curly brace is parsed, skip until the closing curly brace as it defines unsupported attack effect
 							///If an opening bracket is parsed, skip until the closing bracket as it defines unsupported sound effect
-							///If it is an unsupported note gem ('K'), skip
-							///If it is a supported note gem (0 through 4, 'M', 'L' or 'F')
-								///Add to ongoing note/mine bitmask, add any relevant status flags
-							///If it is an unrecognized note, throw error
-				///?Use eof_chartpos_to_msec() to calculate the timestamp of the new note
-				///Test note import when tempo map is locked to ensure the results are as expected
 			if(!measure_in_progress)
 			{	//If this will be the first note read for the current measure
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tParsing measure #%lu on line #%lu", measurectr + 1, linectr);
@@ -559,13 +558,25 @@ int eof_import_stepmania(char * fn)
 					//Calculate timing
 					note_chartpos = measure_chartpos + (interval * ctr) + 0.5;	//The chart position of this note definition
 					notepos = eof_chartpos_to_msec(chart, note_chartpos, NULL) + 0.5;	//Convert this chart position to milliseconds
+					while((eof_song->beats < 2) || (notepos > eof_song->beat[eof_song->beats - 1]->pos))
+					{	//Until the project has enough beats to encompass this note
+						if(eof_song_append_beats(eof_song, 1))
+						{	//If a beat was successfully added
+							unsigned long newbeatpos = eof_song->beat[eof_song->beats - 1]->pos;
+							if(newbeatpos > eof_chart_length)
+								eof_chart_length = newbeatpos;	//Update eof_chart_length if appropriate, so that the grid snap logic will work
+						}
+					}
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tNote entry #%lu, pos = %lums", ctr, notepos);
 					eof_log(eof_log_string, 2);
 					if(!eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
 					{	//If that millisecond position isn't grid snapped
-						notepos = snappos;	//Resnap it
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tResnapped to %lums", notepos);
-						eof_log(eof_log_string, 2);
+						if(snappos != ULONG_MAX)
+						{	//If a valid snap position was determined
+							notepos = snappos;	//Resnap it
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tResnapped to %lums", notepos);
+							eof_log(eof_log_string, 2);
+						}
 					}
 
 					//Add note gems
@@ -676,6 +687,7 @@ int eof_import_stepmania(char * fn)
 	eof_track_sort_notes(eof_song, EOF_TRACK_DANCE);
 	eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);		//Mark overlapping notes with crazy status
 	eof_track_find_disjointed_notes(eof_song, eof_selected_track);	//Mark notes that begin at the same timestamp and have different lengths as disjointed
+	eof_truncate_chart(eof_song);								//Ensure a suitable number of beats are in the project and set eof_chart_length so the fixup logic doesn't delete notes improperly
 	eof_track_fixup_notes(eof_song, EOF_TRACK_DANCE, 1);		//Merge gems into chords as appropriate, perform other cleanup
 
 	///After file was parsed, if samplestart_parsed != ULONG_MAX and the project doesn't already have preview timings

@@ -28,6 +28,7 @@
 #include "../rs_import.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
 #include "../song.h"
+#include "../sm.h"
 #include "../tuning.h"
 #include "../undo.h"
 #include "../utility.h"
@@ -85,7 +86,7 @@ MENU eof_file_display_menu[] =
 
 MENU eof_file_import_menu[] =
 {
-	{"&Sonic visualiser", eof_menu_file_sonic_visualiser_import, NULL, 0, NULL},
+	{"Sonic visualiser", eof_menu_file_sonic_visualiser_import, NULL, 0, NULL},
 	{"&MIDI\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
 	{"&Feedback (.chart)", eof_menu_file_feedback_import, NULL, 0, NULL},
 	{"Guitar &Hero", eof_menu_file_gh_import, NULL, 0, NULL},
@@ -98,6 +99,7 @@ MENU eof_file_import_menu[] =
 	{"Guitar Hero sections", eof_menu_file_gh3_section_import, NULL, 0, NULL},
 	{"Guitar Hero Live", eof_menu_file_ghl_import, NULL, 0, NULL},
 	{"&Drums Rock", eof_menu_file_drums_rock_import, NULL, 0, NULL},
+	{"&Stepmania", eof_menu_file_stepmania_import, NULL, 0, NULL},
 	{"GP style lyric text", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -456,7 +458,7 @@ void eof_prepare_file_menu(void)
 		else
 			eof_file_import_menu[12].flags = D_DISABLED;
 
-		eof_file_import_menu[13].flags = 0;	//Import>GP style lyric text
+		eof_file_import_menu[14].flags = 0;	//Import>GP style lyric text
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
@@ -477,7 +479,7 @@ void eof_prepare_file_menu(void)
 			eof_file_export_menu[6].flags = D_DISABLED;
 	}
 	else
-	{
+	{	//No chart is loaded
 		eof_file_menu[2].flags = D_DISABLED;	//Save
 		eof_file_menu[3].flags = D_DISABLED;	//Save As
 		eof_file_menu[4].flags = D_DISABLED;	//Quick save
@@ -490,7 +492,7 @@ void eof_prepare_file_menu(void)
 		eof_file_import_menu[10].flags = D_DISABLED;	//Import>Guitar Hero sections
 		eof_file_import_menu[11].flags = D_DISABLED;	//Import>Guitar Hero Live
 		eof_file_import_menu[12].flags = D_DISABLED;	//Import>Drums Rock
-		eof_file_import_menu[13].flags = D_DISABLED;	//Import>GP style lyric text
+		eof_file_import_menu[14].flags = D_DISABLED;	//Import>GP style lyric text
 		eof_file_display_menu[5].flags = D_DISABLED;	//Benchmark image sequence
 	}
 
@@ -1292,6 +1294,129 @@ int eof_menu_file_drums_rock_import(void)
 	}
 
 	return 1;
+}
+
+int eof_menu_file_stepmania_import(void)
+{
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
+	char *initial;
+	int retval = 1;
+	char newchart = 0;	//Is set to nonzero if a new chart is created to store the imported Stepmania chart
+
+	eof_log("eof_menu_file_stepmania_import() entered", 1);
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+
+	if(!eof_song || !eof_song_loaded)
+		newchart = 1;
+
+	if((eof_last_sm_path[uoffset(eof_last_sm_path, ustrlen(eof_last_sm_path) - 1)] == '\\') || (eof_last_sm_path[uoffset(eof_last_sm_path, ustrlen(eof_last_sm_path) - 1)] == '/'))
+	{	//If the path ends in a separator
+		eof_last_sm_path[uoffset(eof_last_sm_path, ustrlen(eof_last_sm_path) - 1)] = '\0';	//Remove it
+	}
+	if(eof_imports_recall_last_path && eof_folder_exists(eof_last_sm_path))
+	{	//If the user chose for the Stepmania import dialog to start at the path of the last imported Stepmania file and that path is valid
+		initial = eof_last_sm_path;	//Use it
+	}
+	else
+	{	//Otherwise start at the project's path
+		initial = eof_last_eof_path;
+	}
+	returnedfn = ncd_file_select(0, initial, "Import Stepmania", eof_filter_sm_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		eof_log("\tImporting Stepmania", 1);
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
+
+		if(newchart)
+		{	//If a project wasn't already opened when the import was started
+			retval = eof_command_line_stepmania_import(returnedfn);
+			if(!retval)
+			{	//If the file was imported
+				eof_init_after_load(0);
+				eof_changes = 1;
+				retval = 0;
+			}
+			else
+			{	//Import failed
+				eof_destroy_song(eof_song);
+				eof_song = NULL;
+				eof_song_loaded = 0;
+				eof_changes = 0;
+				retval = 1;
+			}
+		}
+		else
+		{
+			retval = eof_import_stepmania(returnedfn);
+		}
+		if(!retval)
+		{	//Import successful
+			eof_song_loaded = 1;
+			eof_init_after_load(0);
+			eof_changes = 1;
+			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
+			(void) replace_filename(eof_last_sm_path, returnedfn_path, "", 1024);	//Set the last loaded DR file path
+			eof_log("\tStepmania file loaded", 1);
+		}
+		if((retval == 1) || (retval > 2))
+		{	//If the import did not succeed, not by reason of user cancellation
+			allegro_message("Could not import Stepmania file!");
+		}
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_menu_track_selected_track_number(EOF_TRACK_DANCE, 1);
+
+	return 1;
+}
+
+int eof_command_line_stepmania_import(char *fn)
+{
+	char nfn[1024] = {0};
+	int retval = 0;
+
+	eof_log("eof_command_line_stepmania_import() entered", 1);
+
+	if(!fn)
+		return 1;	//Return error
+
+	//Create a new project and import the Stepmania file
+	eof_song = eof_create_song_populated();
+	if(!eof_song)
+		return 3;	//New project couldn't be created
+	eof_song_loaded = 1;
+
+//Update path variables
+	(void) ustrcpy(eof_filename, fn);
+	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+
+	retval = eof_import_stepmania(fn);
+	if(retval == 2)
+		return 2;	//User cancellation
+	if(retval)
+	{	//if there was an error importing the file
+		return 4;	//Return error
+	}
+
+//Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
+	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
+	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
+	{	//If that also fails
+		eof_destroy_song(eof_song);
+		eof_song = NULL;
+		eof_song_loaded = 0;
+		return 5;	//Return error
+	}
+
+	return 0;	//Return success
 }
 
 int eof_menu_file_settings(void)
@@ -5160,12 +5285,12 @@ int eof_gp_import_drum_track(int importvoice, int function)
 	if(function & 1)
 	{	//Import into normal drum track
 		populated = eof_get_track_size(eof_song, EOF_TRACK_DRUM);
-		eof_selected_track = EOF_TRACK_DRUM;
+		eof_menu_track_selected_track_number(EOF_TRACK_DRUM, 1);
 	}
 	if(function & 2)
 	{	//Import into Phase Shift drum track
 		populated2 = eof_get_track_size(eof_song, EOF_TRACK_DRUM_PS);
-		eof_selected_track = EOF_TRACK_DRUM_PS;
+		eof_menu_track_selected_track_number(EOF_TRACK_DRUM_PS, 1);
 	}
 
 	//Prompt about overwriting the active track or track difficulty as appropriate

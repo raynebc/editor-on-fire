@@ -3521,8 +3521,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			(void) pack_fclose(tfp);
 			(void) delete_file(rawmididatafn);	//Delete the temp file
 		}//If there is raw MIDI data being stored, write it as a custom data block
-		if(EOF_USE_FP_BEAT_TIMINGS)
-		{	//If floating point beat timings are to be written
+		if(EOF_USE_FP_BEAT_TIMINGS && sp->beats)
+		{	//If floating point beat timings are to be written, and the project has at least one beat
 			char buffer[100] = {0};	//Will be used to store an ASCII representation of the beat timestamps
 			PACKFILE *tfp;	//Used to create a temp file containing the beat timings, so its size can easily be determined before dumping into the output project file
 			unsigned long filesize;
@@ -3547,7 +3547,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		//Write the custom data block
 			filesize = (unsigned long)file_size_ex(beattimesfn);
 			if(!filesize)
-				temp_file_error = 1;
+				temp_file_error = 1;		//If there is at least one beat that should have had timings written, but none were written
 			(void) pack_iputl(filesize, fp);	//Write the size of this data block
 			(void) pack_iputl(2, fp);			//Write the data block ID (2 = Floating point beat timings)
 			tfp = pack_fopen(beattimesfn, "r");

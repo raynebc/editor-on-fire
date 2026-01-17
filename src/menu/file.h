@@ -65,6 +65,10 @@ int eof_menu_file_export_beatable_track(void);	//Exports the active BEATABLE tra
 int eof_menu_file_export_llplus_track(void);		//Exports the active track difficulty using eof_export_llplus_midi()
 int eof_menu_file_midi_import(void);
 int eof_menu_file_drums_rock_import(void);
+int eof_menu_file_stepmania_import(void);
+int eof_command_line_stepmania_import(char *fn);
+	//Creates a new project and imports the specified Stepmania chart into the dance track
+	//Returns 1 on error, 2 on user cancellation
 int eof_menu_file_settings(void);
 int eof_menu_file_default_ini_settings(void);
 int eof_menu_file_preferences(void);

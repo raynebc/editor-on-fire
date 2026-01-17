@@ -20,7 +20,6 @@
 #include "player.h"
 #include "rs.h"
 #include "song.h"
-#include "sm.h"
 #include "spectrogram.h"
 #include "tuning.h"
 #include "undo.h"
@@ -777,7 +776,7 @@ int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, un
 	if(!eof_beat_num_valid(eof_song, beatnum))	//If the beat's position is outside the chart
 		return 0;
 
-	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
+	if(pos > eof_song->beat[eof_song->beats - 1]->pos)	//If the specified position is after the last beat marker
 		return 0;
 
 	beat_length = eof_get_beat_length(eof_song, beatnum);
@@ -919,14 +918,6 @@ if(eof_key_code == KEY_PAUSE)
 
 	if(eof_song_loaded)
 	{
-
-char *returnedfn = ncd_file_select(0, eof_last_eof_path, "Import StepMania", eof_filter_gh_files);
-eof_clear_input();
-if(returnedfn)
-{
-eof_import_stepmania(returnedfn);
-}
-
 	}
 }
 

@@ -13,6 +13,8 @@ unsigned long eof_get_nearest_beat(EOF_SONG * sp, unsigned long pos);
 	//If pos is exactly half-way between two beats, the earlier beat is returned
 double eof_get_beat_length(EOF_SONG * sp, unsigned long beat);
 	//Returns the difference in position between the specified beat marker and the next, or the difference between the last two beat markers if the beat marker specified is invalid
+	//Returns 0 on error
+	//Expects that at least two beats exist in the chart
 unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns the beat number of the last anchor that occurs before the specified beat
 unsigned long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat);

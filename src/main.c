@@ -87,6 +87,7 @@ NCDFS_FILTER_LIST * eof_filter_music_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_ogg_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_midi_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_dr_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_sm_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_eof_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_exe_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_lyrics_files = NULL;
@@ -306,6 +307,7 @@ char        eof_last_ogg_path[1024] = {0};			//The path to the folder containing
 char        eof_last_eof_path[1024] = {0};				//The path to the folder containing the last loaded project
 char        eof_last_midi_path[1024] = {0};			//The path to the folder containing the last imported MIDI
 char        eof_last_dr_path[1024] = {0};				//The path to the folder containing the last imported Drums Rock chart
+char        eof_last_sm_path[1024] = {0};				//The path to the folder containing the last imported Stepmania chart
 char        eof_last_db_path[1024] = {0};				//The path to the folder containing the last imported Feedback chart file
 char        eof_last_gh_path[1024] = {0};				//The path to the folder containing the last imported Guitar Hero chart file
 char        eof_last_ghl_path[1024] = {0};				//The path to the folder containing the last imported Guitar Hero Live chart file
@@ -4688,6 +4690,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_dr_files, "csv", "Drums Rock files (*.csv)", 1);
 
+	eof_filter_sm_files = ncdfs_filter_list_create();
+	if(!eof_filter_sm_files)
+	{
+		allegro_message("Could not create file list filter (*.sm)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_sm_files, "sm", "Stepmania files (*.sm)", 1);
+
 	eof_filter_dB_files = ncdfs_filter_list_create();
 	if(!eof_filter_dB_files)
 	{
@@ -5007,7 +5017,11 @@ int eof_initialize(int argc, char * argv[])
 
 				/* load the specified project */
 				eof_song = eof_load_song(argv[i]);
-				if(!eof_song)
+				if(eof_song)
+				{
+					eof_log("\tCommand line EOF project load complete", 1);
+				}
+				else
 				{
 					allegro_message("Unable to load project. File could be corrupt!");
 					return 0;
@@ -5030,7 +5044,11 @@ int eof_initialize(int argc, char * argv[])
 			else if(!ustricmp(get_extension(argv[i]), "mid"))
 			{
 				eof_song = eof_import_midi(argv[i]);
-				if(!eof_song)
+				if(eof_song)
+				{
+					eof_log("\tCommand line MIDI import complete", 1);
+				}
+				else
 				{
 					allegro_message("Could not import MIDI!");
 					return 0;
@@ -5057,7 +5075,11 @@ int eof_initialize(int argc, char * argv[])
 					eof_song = eof_import_midi(temp_filename);
 					(void) delete_file(temp_filename);	//Delete temporary file
 				}
-				if(!eof_song)
+				if(eof_song)
+				{
+					eof_log("\tCommand line RBA import complete", 1);
+				}
+				else
 				{
 					allegro_message("Could not import RBA!");
 					return 0;
@@ -5079,7 +5101,11 @@ int eof_initialize(int argc, char * argv[])
 			else if(!ustricmp(get_extension(argv[i]), "chart"))
 			{	//Import a Feedback chart via command line
 				eof_song = eof_import_chart(argv[i]);
-				if(!eof_song)
+				if(eof_song)
+				{
+					eof_log("\tCommand line Feedback import complete", 1);
+				}
+				else
 				{
 					allegro_message("Could not import Feedback chart!");
 					return 0;
@@ -5090,7 +5116,11 @@ int eof_initialize(int argc, char * argv[])
 			else if(strcasestr_spec(argv[i], ".pak."))
 			{	//Import a Guitar Hero file via command line
 				eof_song = eof_import_gh(argv[i]);
-				if(!eof_song)
+				if(eof_song)
+				{
+					eof_log("\tCommand line Guitar Hero import complete", 1);
+				}
+				else
 				{
 					allegro_message("Could not import Guitar Hero .pak!");
 					return 0;
@@ -5101,7 +5131,11 @@ int eof_initialize(int argc, char * argv[])
 			else if(!ustricmp(get_extension(argv[i]), "rif"))
 			{	//Import a Bandfuse chart via command line
 				eof_song = eof_load_bf(argv[i]);
-				if(!eof_song)
+				if(eof_song)
+				{
+					eof_log("\tCommand line Bandfuse import complete", 1);
+				}
+				else
 				{
 					allegro_message("Could not import Bandfuse chart!");
 					return 0;
@@ -5118,7 +5152,7 @@ int eof_initialize(int argc, char * argv[])
 				{	//Import Rocksmith file
 					if(!eof_command_line_rs_import(argv[i]))
 					{	//If a new project was created and the RS file was imported successfully
-						eof_log("\tImport complete", 1);
+						eof_log("\tCommand line Rocksmith import complete", 1);
 					}
 					else
 					{
@@ -5130,7 +5164,7 @@ int eof_initialize(int argc, char * argv[])
 				{	//Go PlayAlong file
 					if(!eof_command_line_gp_import(argv[i]))
 					{	//If a new project was created and the Guitar Pro file was imported successfully
-						eof_log("\tImport complete", 1);
+						eof_log("\tCommand line Go PlayAlong import complete", 1);
 					}
 					else
 					{
@@ -5143,7 +5177,7 @@ int eof_initialize(int argc, char * argv[])
 			{	//Import a Guitar Pro file via command line
 				if(!eof_command_line_gp_import(argv[i]))
 				{	//If a new project was created and the Guitar Pro file was imported successfully
-					eof_log("\tImport complete", 1);
+					eof_log("\tCommand line Guitar Pro import complete", 1);
 				}
 				else
 				{
@@ -5164,6 +5198,18 @@ int eof_initialize(int argc, char * argv[])
 					allegro_message("BEATS project validation failed for \"%s\".  See log", argv[i]);
 				else
 					allegro_message("BEATS project validation succeeded for \"%s\".", argv[i]);
+			}
+			else if(!ustricmp(get_extension(argv[i]), "sm"))
+			{	//Import a Stepmania file via command line
+				if(!eof_command_line_stepmania_import(argv[i]))
+				{	//If a new project was created and the Stepmania file was imported successfully
+					eof_log("\tCommand line Stepmania import complete", 1);
+				}
+				else
+				{
+					allegro_message("Could not import Guitar Pro file!");
+					return 0;
+				}
 			}
 		}//If the argument is not one of EOF's native command line parameters and no file is loaded yet
 	}//For each command line argument
@@ -5307,6 +5353,8 @@ void eof_exit(void)
 		free(eof_filter_midi_files);
 	if(eof_filter_dr_files)
 		free(eof_filter_dr_files);
+	if(eof_filter_sm_files)
+		free(eof_filter_sm_files);
 	if(eof_filter_eof_files)
 		free(eof_filter_eof_files);
 	if(eof_filter_exe_files)

@@ -4266,8 +4266,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										pgnp->pos = laststartpos + ((length * (double)bendstruct.bendpos[ctr5]) / 60.0) + 0.5;	//Determine the position of the bend point, rounded to nearest ms
 										if(!eof_is_any_beat_interval_position(pgnp->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
 										{	//If this tech note is not beat interval snapped
-											if((snappos + 1 == pgnp->pos) || (pgnp->pos + 1 == snappos))
-												pgnp->pos = snappos;	//If the nearest grid snap position for this tech note is found to be within 1ms, snap to the grid
+											if(snappos != ULONG_MAX)
+											{	//If the nearest snap position was determined
+												if((snappos + 1 == pgnp->pos) || (pgnp->pos + 1 == snappos))
+													pgnp->pos = snappos;	//If the nearest grid snap position for this tech note is found to be within 1ms, snap to the grid
+											}
 										}
 										pgnp->length = 1;
 										pgnp->type = voice;		//Store lead voice notes in difficulty 0, bass voice notes in difficulty 1
@@ -4980,8 +4983,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 								if(!eof_is_any_beat_interval_position(np[ctr2]->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
 								{	//If this displaced note is not beat interval snapped
-									if((snappos + 1 == np[ctr2]->pos) || (np[ctr2]->pos + 1 == snappos))
-										np[ctr2]->pos = snappos;	//If the nearest grid snap position for this displaced note is found to be within 1ms, snap to the grid
+									if(snappos != ULONG_MAX)
+									{	//If the nearest snap position was determined
+										if((snappos + 1 == np[ctr2]->pos) || (np[ctr2]->pos + 1 == snappos))
+											np[ctr2]->pos = snappos;	//If the nearest grid snap position for this displaced note is found to be within 1ms, snap to the grid
+									}
 								}
 
 #ifdef GP_IMPORT_DEBUG
@@ -5153,8 +5159,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							gnp->pos = gp->track[ctr]->note[ctr2]->pos + ((double)beatlength / (double)eof_gp_import_slide_in_beat_interval) + 0.5;	//Place the newly added note 1/# beat forward, based on the eof_gp_import_slide_in_beat_interval eof.cfg setting
 							if(!eof_is_any_beat_interval_position(gnp->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
 							{	//If this note is not beat interval snapped
-								if((snappos + 1 == gnp->pos) || (gnp->pos + 1 == snappos))
-									gnp->pos = snappos;	//If the nearest grid snap position for this new note is found to be within 1ms, snap to the grid
+								if(snappos != ULONG_MAX)
+								{	//If the nearest snap position was determined
+									if((snappos + 1 == gnp->pos) || (gnp->pos + 1 == snappos))
+										gnp->pos = snappos;	//If the nearest grid snap position for this new note is found to be within 1ms, snap to the grid
+								}
 							}
 							gnp->note |= bitmask;	//Copy the gem to the newly added note
 							if(dir < 0)

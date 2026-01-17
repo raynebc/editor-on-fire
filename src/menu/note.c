@@ -313,6 +313,7 @@ MENU eof_note_toggle_accent_menu[] =
 	{eof_note_clear_menu_string_4, eof_menu_note_toggle_accent_blue, NULL, 0, NULL},
 	{eof_note_clear_menu_string_5, eof_menu_note_toggle_accent_purple, NULL, 0, NULL},
 	{eof_note_clear_menu_string_6, eof_menu_note_toggle_accent_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_accent_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -336,6 +337,7 @@ MENU eof_note_toggle_ghost_menu[] =
 	{eof_note_clear_menu_string_4, eof_menu_note_toggle_ghost_blue, NULL, 0, NULL},
 	{eof_note_clear_menu_string_5, eof_menu_note_toggle_ghost_purple, NULL, 0, NULL},
 	{eof_note_clear_menu_string_6, eof_menu_note_toggle_ghost_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_ghost_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -430,6 +432,7 @@ MENU eof_note_toggle_mine_menu[] =
 	{eof_note_clear_menu_string_2, eof_menu_note_toggle_accent_red, NULL, 0, NULL},
 	{eof_note_clear_menu_string_3, eof_menu_note_toggle_accent_yellow, NULL, 0, NULL},
 	{eof_note_clear_menu_string_4, eof_menu_note_toggle_accent_blue, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_accent_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -456,6 +459,7 @@ MENU eof_note_toggle_roll_menu[] =
 	{eof_note_clear_menu_string_2, eof_menu_note_toggle_ghost_red, NULL, 0, NULL},
 	{eof_note_clear_menu_string_3, eof_menu_note_toggle_ghost_yellow, NULL, 0, NULL},
 	{eof_note_clear_menu_string_4, eof_menu_note_toggle_ghost_blue, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_ghost_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2822,16 +2826,12 @@ int eof_menu_note_clear_orange(void)
 	return 1;
 }
 
-int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
+int eof_menu_note_toggle_accent_mask(unsigned char mask)
 {
 	unsigned long i;
-	unsigned char mask, undo_made = 0, accent;
+	unsigned char undo_made = 0, accent, notemask;
 	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 
-	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
-	{
-		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
-	}
 	if(eof_count_selected_and_unselected_notes(NULL) == 0)
 	{
 		return 1;
@@ -2841,8 +2841,8 @@ int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is in the active instrument difficulty and is selected
-			mask = 1 << (lanenum - 1);
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & mask)
+			notemask = eof_get_note_note(eof_song, eof_selected_track, i);
+			if(notemask & mask)
 			{	//If the note has a gem on the specified lane
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
@@ -2851,6 +2851,7 @@ int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 				}
 				accent = eof_get_note_accent(eof_song, eof_selected_track, i);
 				accent ^= mask;
+				accent &= notemask;	//Restrict the accent bitmask to only the lanes currently in use for this note
 				eof_set_note_accent(eof_song, eof_selected_track, i, accent);
 			}
 		}
@@ -2861,6 +2862,11 @@ int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
+}
+
+int eof_menu_note_toggle_accent_lane(unsigned int lanenum)
+{
+	return eof_menu_note_toggle_accent_mask(1 << (lanenum - 1));
 }
 
 int eof_menu_note_toggle_accent_green(void)
@@ -2891,6 +2897,11 @@ int eof_menu_note_toggle_accent_purple(void)
 int eof_menu_note_toggle_accent_orange(void)
 {
 	return eof_menu_note_toggle_accent_lane(6);
+}
+
+int eof_menu_note_toggle_accent_all(void)
+{
+	return eof_menu_note_toggle_accent_mask(0xFF);
 }
 
 int eof_menu_note_clear_accent_lane(unsigned int lanenum)
@@ -2998,16 +3009,12 @@ int eof_menu_note_clear_accent_all(void)
 	return 1;
 }
 
-int eof_menu_note_toggle_ghost_lane(unsigned int lanenum)
+int eof_menu_note_toggle_ghost_mask(unsigned char mask)
 {
 	unsigned long i;
-	unsigned char mask, undo_made = 0, ghost;
+	unsigned char undo_made = 0, ghost, notemask;
 	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 
-	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
-	{
-		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
-	}
 	if(eof_count_selected_and_unselected_notes(NULL) == 0)
 	{
 		return 1;
@@ -3017,9 +3024,9 @@ int eof_menu_note_toggle_ghost_lane(unsigned int lanenum)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is in the active instrument difficulty and is selected
-			mask = 1 << (lanenum - 1);
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & mask)
-			{	//If the note has a gem on the specified lane
+			notemask = eof_get_note_note(eof_song, eof_selected_track, i);
+			if(notemask & mask)
+			{	//If the note has a gem applicable to the specified mask
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -3027,6 +3034,7 @@ int eof_menu_note_toggle_ghost_lane(unsigned int lanenum)
 				}
 				ghost = eof_get_note_ghost(eof_song, eof_selected_track, i);
 				ghost ^= mask;
+				ghost &= notemask;	//Restrict the ghost bitmask to only the lanes currently in use for this note
 				eof_set_note_ghost(eof_song, eof_selected_track, i, ghost);
 			}
 		}
@@ -3037,6 +3045,11 @@ int eof_menu_note_toggle_ghost_lane(unsigned int lanenum)
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
+}
+
+int eof_menu_note_toggle_ghost_lane(unsigned int lanenum)
+{
+	return eof_menu_note_toggle_ghost_mask(1 << (lanenum - 1));
 }
 
 int eof_menu_note_toggle_ghost_green(void)
@@ -3067,6 +3080,11 @@ int eof_menu_note_toggle_ghost_purple(void)
 int eof_menu_note_toggle_ghost_orange(void)
 {
 	return eof_menu_note_toggle_ghost_lane(6);
+}
+
+int eof_menu_note_toggle_ghost_all(void)
+{
+	return eof_menu_note_toggle_ghost_mask(0xFF);
 }
 
 int eof_menu_note_clear_ghost_lane(unsigned int lanenum)

@@ -80,8 +80,8 @@ double eof_get_beat_length(EOF_SONG * sp, unsigned long beat)
 {
 //	eof_log("eof_get_beat_length() entered", 3);
 
-	if(!sp || (beat >= sp->beats))
-	{
+	if(!sp || (beat >= sp->beats) || (sp->beats < 2))
+	{	//Invalid paramters
 		return 0;
 	}
 	if(beat < sp->beats - 1)
