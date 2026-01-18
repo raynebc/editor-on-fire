@@ -9486,7 +9486,7 @@ void eof_truncate_chart(EOF_SONG *sp)
 		}
 	}
 
- 	eof_log("eof_truncate_chart() exiting", 1);
+// 	eof_log("eof_truncate_chart() exiting", 1);
 }
 
 long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note, char enforcegap)

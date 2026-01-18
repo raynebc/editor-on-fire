@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include <ctype.h>
 #include "chart_import.h"
+#include "ini_import.h"
 #include "main.h"
 #include "midi.h"
 #include "sm.h"
@@ -21,14 +22,45 @@ typedef struct
 	char gem[4];
 } EOF_STEPMANIA_NOTE;
 
+int eof_stepmania_cleanup_input(char *buffer)
+{
+	unsigned long ctr;
+	int semicolon = 0;
+
+	if(!buffer)
+		return 0;
+
+	for(ctr = 0; buffer[ctr] != '\0'; ctr++)
+	{
+		if((buffer[ctr] == '/') && (buffer[ctr + 1] == '/'))
+		{
+			buffer[ctr] = '\0';	//Truncate comment from the line
+			break;
+		}
+		if(buffer[ctr] == ';')
+		{
+			buffer[ctr] = '\0';	//Truncate end of tag symbol
+			semicolon = 1;	//Track that the semicolon was read
+			break;
+		}
+	}
+	while(ctr && isspace(buffer[ctr]))
+	{	//While the last character in the buffer is whitespace
+		buffer[ctr--] = '\0';	//Truncate it from the buffer
+	}
+
+	return semicolon;
+}
+
 int eof_import_stepmania(char * fn)
 {
 	size_t maxlinelength;
 	char *buffer = NULL, *ptr;
-	int error = 0, tag_in_progress = 0, title_parsed = 0, titletranslit_parsed = 0, artist_parsed = 0, artisttranslit_parsed = 0, genre_parsed = 0, note_diff_parsed[5] = {0}, semicolon = 0, bpms_parsed = 0, adjust = 0, offset_parsed = 0, measure_in_progress;
+	char is_ssc = 0, pad_defined = 0, type_defined = 0, diff_defined = 0;	//Used for parsing SSC files, which have some differences from SM files
+	int error = 0, tag_in_progress = 0, title_parsed = 0, titletranslit_parsed = 0, artist_parsed = 0, artisttranslit_parsed = 0, genre_parsed = 0, credit_parsed = 0, note_diff_parsed[5] = {0}, semicolon = 0, bpms_parsed = 0, adjust = 0, offset_parsed = 0, measure_in_progress;
 	PACKFILE *inf = NULL;
 	unsigned long linectr = 0, ctr, ctr2, samplestart_parsed = ULONG_MAX, samplelength_parsed = ULONG_MAX, note_diff_in_progress = 0, tempos_parsed = 0, measurectr, notectr;
-	char title[101] = {0}, artist[101] = {0}, charter[101] = {0}, genre[31] = {0};
+	char title[101] = {0}, artist[101] = {0}, charter[101] = {0}, genre[31] = {0}, credit[101] = {0};
 	char *note_diff_names[5] = {"Beginner", "Easy", "Medium", "Hard", "Challenge"};
 	struct FeedbackChart *chart = NULL;	//Used to store the Stepmania file's tempo changes separately from the project's tempo map, since the former might not be imported
 	struct dbAnchor *curanchor = NULL;	//The conductor pointing to the newest anchor added to the linked list
@@ -73,11 +105,9 @@ int eof_import_stepmania(char * fn)
 			eof_log("\tUser cancellation.  Aborting", 1);
 			return 2;
 		}
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_erase_track(eof_song, EOF_TRACK_DANCE, 1);
 	}
-
-///Only perform an undo if the track has content to erase
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	eof_erase_track(eof_song, EOF_TRACK_DANCE, 1);	//Erase the dance track in case it has any content
 
 	//Prompt whether to continue if the tempo map is locked
 	if(eof_song->tags->tempo_map_locked)
@@ -146,27 +176,8 @@ int eof_import_stepmania(char * fn)
 		linectr++;	//Increment line counter
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProcessing line #%lu", linectr);
 		eof_log(eof_log_string, 3);
-		semicolon = 0;	//Track whether this line contained a semicolon
 
-		//Clean up buffer content
-		for(ctr = 0; buffer[ctr] != '\0'; ctr++)
-		{
-			if((buffer[ctr] == '/') && (buffer[ctr + 1] == '/'))
-			{
-				buffer[ctr] = '\0';	//Truncate comment from the line
-				break;
-			}
-			if(buffer[ctr] == ';')
-			{
-				buffer[ctr] = '\0';	//Truncate end of tag symbol
-				semicolon = 1;
-				break;
-			}
-		}
-		while(ctr && isspace(buffer[ctr]))
-		{	//While the last character in the buffer is whitespace
-			buffer[ctr--] = '\0';	//Truncate it from the buffer
-		}
+		semicolon = eof_stepmania_cleanup_input(buffer);	//Clean up buffer content, tracking whether a semicolon was read
 
 		//Process line buffer
 		if(!tag_in_progress)
@@ -236,6 +247,19 @@ int eof_import_stepmania(char * fn)
 				continue;	//Read next line of input
 			}
 
+			ptr = strcasestr_spec(buffer, "#CREDIT:");
+			if(ptr)
+			{	//If this line contains the #CREDIT tag
+				if(!credit_parsed)
+				{	//If this tag wasn't parsed already
+					strncpy(credit, ptr, sizeof(credit) - 1);	//Store the chart author
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRead credit \"%s\"", credit);
+					eof_log(eof_log_string, 2);
+				}
+				credit_parsed = 1;
+				continue;	//Read next line of input
+			}
+
 			ptr = strcasestr_spec(buffer, "#SAMPLESTART:");
 			if(ptr)
 			{	//If this line contains the #SAMPLESTART tag
@@ -295,6 +319,47 @@ int eof_import_stepmania(char * fn)
 				tag_in_progress = 1;	//Expect to parse tempo changes on this line
 			}
 
+			ptr = strcasestr_spec(buffer, "#CHARTSTYLE:");
+			if(ptr)
+			{	//If this line contains the #CHARTSTYLE tag
+				is_ssc = 1;	//This tag is used in SSC files instead of SM files
+				ptr = strcasestr_spec(buffer, "Pad");
+				if(ptr)
+					pad_defined = 1;	//Supported dance track style confirmed
+				else
+					pad_defined = 0;	//Unsupported dance track style
+			}
+
+			ptr = strcasestr_spec(buffer, "#STEPSTYPE:");
+			if(ptr)
+			{	//If this line contains the #STEPSTYPE tag
+				is_ssc = 1;	//This tag is used in SSC files instead of SM files
+				ptr = strcasestr_spec(buffer, "dance-single");
+				if(ptr)
+					type_defined = 1;	//Supported dance track type confirmed
+				else
+					type_defined = 0;	//Unsupported dance track type
+			}
+
+			ptr = strcasestr_spec(buffer, "#DIFFICULTY:");
+			if(ptr)
+			{	//If this line contains the #DIFFICULTY tag
+				is_ssc = 1;	//This tag is used in SSC files instead of SM files
+				diff_defined = 1;	//Unless a supported difficulty name isn't read below, consider this information confirmed
+				if(strcasestr_spec(buffer, "Beginner"))
+					note_diff_in_progress = 0;
+				else if(strcasestr_spec(buffer, "Easy"))
+					note_diff_in_progress = 1;
+				else if(strcasestr_spec(buffer, "Medium"))
+					note_diff_in_progress = 2;
+				else if(strcasestr_spec(buffer, "Hard"))
+					note_diff_in_progress = 3;
+				else if(strcasestr_spec(buffer, "Challenge"))
+					note_diff_in_progress = 4;
+				else
+					diff_defined = 0;
+			}
+
 			///Stepmania supports a #TIMESIGNATURES tag, but it doesn't seem widely used and supposedly does not affect timing, only the display of measure markers
 
 			if(!tag_in_progress)
@@ -305,96 +370,116 @@ int eof_import_stepmania(char * fn)
 					size_t length;
 
 					eof_log("\t\tParsing #NOTES tag", 1);
-					tag_in_progress = 2;	//Expect to parse notes on subsequent lines
 
-					//Read next line defining the chart type
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);
-					linectr++;	//Increment line counter
-					if(pack_feof(inf))
+					if(is_ssc)
+					{	//If this is an SSC file, the track type and difficulty are expected to have been parsed already
+						if(!pad_defined || !type_defined || !diff_defined)
+						{	//If any of the required descriptors for this track dififculty haven't been parsed
+							eof_log("\t\tUnrecognized track difficulty.  Skipping", 1);
+							continue;
+						}
+					}
+					else
 					{
-						error = 1;	//Failed to read note type
-						continue;
-					}
-					if(!strcasestr_normal(buffer, "dance-single"))
-					{	//If this isn't a dance-single chart type
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnsupported chart type:%s.  Skipping", buffer);
-						eof_log(eof_log_string, 2);
-						tag_in_progress = 0;
-						continue;
-					}
+						//Read next line defining the chart type
+						(void) pack_fgets(buffer, (int)maxlinelength, inf);
+						linectr++;	//Increment line counter
+						if(pack_feof(inf))
+						{
+							error = 1;	//Failed to read note type
+							continue;
+						}
+						if(!strcasestr_normal(buffer, "dance-single"))
+						{	//If this isn't a dance-single chart type
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnsupported chart type:%s.  Skipping", buffer);
+							eof_log(eof_log_string, 2);
+							continue;
+						}
 
-					//Read next line defining the charter name
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);
-					linectr++;	//Increment line counter
-					if(pack_feof(inf))
-					{
-						error = 1;	//Failed to read charter name
-						continue;
-					}
-					for(ctr = 0; isspace(buffer[ctr]); ctr++)
+						//Read next line defining the charter name
+						(void) pack_fgets(buffer, (int)maxlinelength, inf);
+						linectr++;	//Increment line counter
+						if(pack_feof(inf))
+						{
+							error = 1;	//Failed to read charter name
+							continue;
+						}
+						for(ctr = 0; isspace(buffer[ctr]); ctr++);
 						ptr = &(buffer[ctr]);	//Find the first non whitespace character in the charter name
-					length = strlen(ptr);
-					if(length && (ptr[length - 1] == ':'))
-						ptr[length - 1] = '\0';	//If the charter name is followed by a colon as expected, truncate the colon from the string
-					if(ptr[0] != '\0')
-					{
-						strncpy(charter, ptr, sizeof(charter) - 1);	//Store the charter name
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRead charter name \"%s\"", charter);
-						eof_log(eof_log_string, 2);
-					}
+						length = strlen(ptr);
+						if(length && (ptr[length - 1] == ':'))
+							ptr[length - 1] = '\0';	//If the charter name is followed by a colon as expected, truncate the colon from the string
+						if(ptr[0] != '\0')
+						{
+							strncpy(charter, ptr, sizeof(charter) - 1);	//Store the charter name
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRead charter name \"%s\"", charter);
+							eof_log(eof_log_string, 2);
+						}
 
-					//Read next line defining the difficulty level
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);
-					linectr++;	//Increment line counter
-					if(pack_feof(inf))
-					{
-						error = 1;	//Failed to read difficulty level
-						continue;
+						//Read next line defining the difficulty level
+						(void) pack_fgets(buffer, (int)maxlinelength, inf);
+						linectr++;	//Increment line counter
+						if(pack_feof(inf))
+						{
+							error = 1;	//Failed to read difficulty level
+							continue;
+						}
+						if(strcasestr_spec(buffer, "Beginner"))
+							note_diff_in_progress = 0;
+						else if(strcasestr_spec(buffer, "Easy"))
+							note_diff_in_progress = 1;
+						else if(strcasestr_spec(buffer, "Medium"))
+							note_diff_in_progress = 2;
+						else if(strcasestr_spec(buffer, "Hard"))
+							note_diff_in_progress = 3;
+						else if(strcasestr_spec(buffer, "Challenge"))
+							note_diff_in_progress = 4;
+						else
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tUnrecognized difficulty level \"%s\"", buffer);
+							eof_log(eof_log_string, 1);
+							error =1;	//Did not read a valid difficulty level
+							continue;
+						}
+
+						//Read and ignore the difficulty rating
+						(void) pack_fgets(buffer, (int)maxlinelength, inf);
+						linectr++;	//Increment line counter
+						if(pack_feof(inf))
+						{
+							error = 1;	//Failed to read difficulty rating
+							continue;
+						}
+
+						//Read and ignore the 5 "radar values"
+						(void) pack_fgets(buffer, (int)maxlinelength, inf);
+						linectr++;	//Increment line counter
+						if(pack_feof(inf))
+						{
+							error = 1;	//Failed to read radar values
+							continue;
+						}
 					}
-					if(strcasestr_spec(buffer, "Beginner"))
-						note_diff_in_progress = 0;
-					else if(strcasestr_spec(buffer, "Easy"))
-						note_diff_in_progress = 1;
-					else if(strcasestr_spec(buffer, "Medium"))
-						note_diff_in_progress = 2;
-					else if(strcasestr_spec(buffer, "Hard"))
-						note_diff_in_progress = 3;
-					else if(strcasestr_spec(buffer, "Challenge"))
-						note_diff_in_progress = 4;
 					if(note_diff_parsed[note_diff_in_progress])
 					{	//If this difficulty was parsed already
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tMalformed file:  Multiple definitions of difficulty %s.  Aborting", note_diff_names[note_diff_in_progress]);
 						eof_log(eof_log_string, 1);
+						error = 1;
+						continue;
 					}
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRead difficulty name %s", note_diff_names[note_diff_in_progress]);
 					eof_log(eof_log_string, 1);
 					note_diff_parsed[note_diff_in_progress] = 1;	//Track that this difficulty's notes tag has been seen
-
-					//Read and ignore the difficulty rating
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);
-					linectr++;	//Increment line counter
-					if(pack_feof(inf))
-					{
-						error = 1;	//Failed to read difficulty rating
-						continue;
-					}
-
-					//Read and ignore the 5 "radar values"
-					(void) pack_fgets(buffer, (int)maxlinelength, inf);
-					linectr++;	//Increment line counter
-					if(pack_feof(inf))
-					{
-						error = 1;	//Failed to read radar values
-						continue;
-					}
+					tag_in_progress = 2;	//Expect to parse notes on subsequent lines
 
 					//Read first note entry in the measure
 					(void) pack_fgets(buffer, (int)maxlinelength, inf);
+					semicolon = eof_stepmania_cleanup_input(buffer);	//Clean up buffer content, tracking whether a semicolon was read
 					linectr++;	//Increment line counter
 
 					measurectr = 0;	//Track the number of measures that have been parsed
 					measure_in_progress = 0;	//No notes have been read in the first measure of notes yet
-				}
+				}//If this line contains the #NOTES tag
 			}//No tag is in progress yet
 		}//No tag is in progress yet
 
@@ -403,6 +488,7 @@ int eof_import_stepmania(char * fn)
 			double beat = 0, tempo = 0;
 			struct dbAnchor *newlink = NULL;
 
+			ptr = strcasestr_spec(buffer, "#BPMS:");
 			while(eof_read_stepmania_tempo(&ptr, &beat, &tempo))
 			{	//For each tempo change that can be read from the line buffer
 				tempos_parsed++;
@@ -680,6 +766,11 @@ int eof_import_stepmania(char * fn)
 						last_hold[ctr] = ULONG_MAX;
 					}
 				}
+
+				if(is_ssc)
+				{
+					pad_defined = type_defined = diff_defined = 1;	//Reset these statuses, they are defined per track difficulty
+				}
 			}
 		}//Process #NOTES tag
 	}//While an error was not encountered
@@ -690,13 +781,64 @@ int eof_import_stepmania(char * fn)
 	eof_truncate_chart(eof_song);								//Ensure a suitable number of beats are in the project and set eof_chart_length so the fixup logic doesn't delete notes improperly
 	eof_track_fixup_notes(eof_song, EOF_TRACK_DANCE, 1);		//Merge gems into chords as appropriate, perform other cleanup
 
-	///After file was parsed, if samplestart_parsed != ULONG_MAX and the project doesn't already have preview timings
-		///Define the preview timings (preview_start_time and preview_end_time INI tags)
-			///If samplelength_parsed != ULONG_MAX, use this as the length, otherwise default to 30 seconds?
-	///After file was parsed, import song title, artist name, charter name and genre metadata if the project doesn't already have it defined
-		///Only if these strings have something other than space characters (eof_check_string)
-	///Remove mid beat tempos if the user preference to do so is enabled
-	///Ensure eof_detect_difficulties gets called to update the difficulty statuses, such as by init after load logic that should be called by the menu function invoking the import
+	//Apply metadata
+	if(eof_check_string(title))
+	{	//If a song title was defined
+		if(!eof_check_string(eof_song->tags->title))
+		{	//If the song title isn't defined for the active project
+			(void) ustrcpy(eof_song->tags->title, title);	//Define it in song properties
+		}
+	}
+	if(eof_check_string(artist))
+	{	//If the artist was defined
+		if(!eof_check_string(eof_song->tags->artist))
+		{	//If the artist isn't defined for the active project
+			(void) ustrcpy(eof_song->tags->artist, artist);	//Define it in song properties
+		}
+	}
+	if(eof_check_string(charter))
+	{	//If the chart author was defined
+		if(!eof_check_string(eof_song->tags->frettist))
+		{	//If the chart author isn't defined for the active project
+			(void) ustrcpy(eof_song->tags->frettist, charter);	//Define it in song properties
+		}
+	}
+	else if(eof_check_string(credit))
+	{	//If the SSC chart author tag was defined
+		if(!eof_check_string(eof_song->tags->frettist))
+		{	//If the chart author isn't defined for the active project
+			(void) ustrcpy(eof_song->tags->frettist, credit);	//Define it in song properties
+		}
+	}
+	if(eof_check_string(genre))
+	{	//If the genre was defined
+		if(!eof_check_string(eof_song->tags->genre))
+		{	//If the genre isn't defined for the active project
+			(void) ustrcpy(eof_song->tags->genre, genre);	//Define it in song properties
+		}
+	}
+
+	//Apply song preview timings
+	if(samplestart_parsed != ULONG_MAX)
+	{	//If the preview start time (in milliseconds) was read
+		unsigned long index = 0, end_time;
+
+		if(!eof_find_ini_setting_tag(eof_song, &index, "preview_start_time"))
+		{	//If the preview start time isn't defined for the active project
+			if(samplelength_parsed != ULONG_MAX)
+				end_time = samplestart_parsed + samplelength_parsed;	//If the preview length was read, use it
+			else
+				end_time = samplelength_parsed + 30000;	//Otherwise default to 30 seconds
+
+			if(eof_song->tags->ini_settings + 2 < EOF_MAX_INI_SETTINGS)
+			{	//If the preview start and end INI tags can be stored into the project
+				(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_start_time = %lu", samplestart_parsed);
+				eof_song->tags->ini_settings++;
+				(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_end_time = %lu", end_time);
+				eof_song->tags->ini_settings++;
+			}
+		}
+	}
 
 	//Cleanup
 	while(chart->anchors)
@@ -714,19 +856,20 @@ int eof_import_stepmania(char * fn)
 
 int eof_read_stepmania_tempo(char **strptr, double *beat, double *tempo)
 {
-	char beatstr[11] = {0}, tempostr[11] = {0};
+	#define EOF_SM_TEMPO_STRING_SIZE 15
+	char beatstr[EOF_SM_TEMPO_STRING_SIZE + 1] = {0}, tempostr[EOF_SM_TEMPO_STRING_SIZE + 1] = {0};
 	unsigned index1, index2;
 	double beatvar, tempovar;
 	char *string;
 
-	if(!strptr)
+	if(!strptr || !(*strptr))
 		return 0;	//Error
 	string = *strptr;	//Simplify
 
 	//Read the beat number
 	for(index1 = index2 = 0; string[index1] != '='; index1++)
 	{	//Until the equal sign is read
-		if(index2 >= 10)
+		if(index2 >= EOF_SM_TEMPO_STRING_SIZE)
 			return 0;	//Malformed beat number
 		if(string[index1] == '\0')
 			return 0;	//End of line
@@ -741,7 +884,7 @@ int eof_read_stepmania_tempo(char **strptr, double *beat, double *tempo)
 	index1++;	//Seek past the equal sign
 	for(index2 = 0; string[index1] != ','; index1++)
 	{	//Until a comma is read to separate this tempo change from the next
-		if(index2 >= 10)
+		if(index2 >= EOF_SM_TEMPO_STRING_SIZE)
 			return 0;	//Malformed tempo
 		if(string[index1] == '\0')
 			break;	//End of line (the semicolon would have been truncated from the input by now)
