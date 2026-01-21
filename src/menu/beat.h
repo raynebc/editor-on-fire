@@ -127,9 +127,9 @@ int eof_events_add_check_proc(int msg, DIALOG *d, int c);
 	//If the user has just checked the "Rocksmith phrase marker" checkbox, the "Rocksmith solo phrase" checkbox becomes unchecked and enabled
 void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made);
 	//If ptr is NULL, then a blank event dialog is launched, allowing the user to add a new text event on the selected beat, and the flags parameter is handled as follows:
-	//	If (function & EOF_EVENT_FLAG_RS_PHRASE) is true, the "Rocksmith phrase marker" option is automatically checked, otherwise that checkbox is initialized to clear
-	//	Similarly, if (function & EOF_EVENT_FLAG_RS_SECTION) is true, the "Rocksmith section marker" option is automatically checked
-	//	Similarly, if (function & EOF_EVENT_FLAG_RS_EVENT) is true, the "Rocksmith event marker" option is automatically checked
+	//	If (flags & EOF_EVENT_FLAG_RS_PHRASE) is true, the "Rocksmith phrase marker" option is automatically checked, otherwise that checkbox is initialized to clear
+	//	Similarly, if (flags & EOF_EVENT_FLAG_RS_SECTION) is true, the "Rocksmith section marker" option is automatically checked
+	//	Similarly, if (flags & EOF_EVENT_FLAG_RS_EVENT) is true, the "Rocksmith event marker" option is automatically checked
 	//If ptr is not NULL, the event dialog is populated with the specified event's details and the event dialog is launched, allowing the user to edit the existing text event
 	//If *undo_made is zero, an undo state is made before altering the chart and *undo_made is set to nonzero
 void eof_add_or_edit_floating_text_event_at_timestamp(EOF_TEXT_EVENT *ptr, unsigned long timestamp, unsigned long flags, char *undo_made);

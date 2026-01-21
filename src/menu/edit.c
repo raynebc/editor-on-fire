@@ -2899,7 +2899,7 @@ int eof_menu_edit_select_like(void)
 
 int eof_menu_edit_precise_select_like(void)
 {
-	return eof_menu_edit_select_like_function(2);	//Perform select like logic, comparing note flags, ghost status, mute status
+	return eof_menu_edit_select_like_function(3);	//Perform select like logic, comparing note flags, ghost status, mute status, bend strength, slide end position
 }
 
 int eof_menu_edit_deselect_all(void)

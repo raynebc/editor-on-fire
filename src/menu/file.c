@@ -1487,8 +1487,8 @@ int eof_menu_file_default_ini_settings(void)
 
 	eof_color_dialog(eof_ini_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_ini_dialog);
-	if(eof_popup_dialog(eof_ini_dialog, 0) == 4)
-	{
+	if(eof_popup_dialog(eof_ini_dialog, 0) == 5)
+	{	//User clicked OK
 	}
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;

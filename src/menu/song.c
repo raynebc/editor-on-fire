@@ -226,7 +226,8 @@ DIALOG eof_ini_dialog[] =
 	{ eof_window_proc, 0,   48,  346, 232, 2,   23,  0,    0,      0,   0,   eof_etext2,          NULL, NULL },
 	{ d_agup_list_proc,   12,  84,  240, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_ini_list,NULL, NULL },
 	{ d_agup_push_proc,   264, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",              NULL, (void *)eof_ini_dialog_add },
-	{ d_agup_push_proc,   264, 124, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",           NULL, (void *)eof_ini_dialog_delete },
+	{ d_agup_push_proc,   264, 124,  68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",              NULL, (void *)eof_ini_dialog_edit },
+	{ d_agup_push_proc,   264, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",           NULL, (void *)eof_ini_dialog_delete },
 	{ d_agup_button_proc, 12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",              NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -1026,8 +1027,8 @@ int eof_menu_song_ini_settings(void)
 
 	eof_color_dialog(eof_ini_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_ini_dialog);
-	if(eof_popup_dialog(eof_ini_dialog, 0) == 4)
-	{
+	if(eof_popup_dialog(eof_ini_dialog, 0) == 5)
+	{	//User clicked OK
 	}
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -1556,12 +1557,14 @@ char * eof_ini_list(int index, int * size)
 			if(size)
 				*size = ecount;
 			if(ecount > 0)
-			{
+			{	//If there are settings in the list
 				eof_ini_dialog[3].flags = 0;
+				eof_ini_dialog[4].flags = 0;
 			}
 			else
 			{
-				eof_ini_dialog[3].flags = D_DISABLED;	//Disable the "Delete" Song INI dialog button if there are no settings
+				eof_ini_dialog[3].flags = D_DISABLED;	//Disable the "Edit" Song INI dialog button
+				eof_ini_dialog[4].flags = D_DISABLED;	//Disable the "Delete" Song INI dialog button
 			}
 			break;
 		}
@@ -1771,6 +1774,42 @@ int eof_ini_dialog_add(DIALOG * d)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
+	return D_O_K;
+}
+
+int eof_ini_dialog_edit(DIALOG * d)
+{
+	int i;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(!eof_ini_dialog_count)
+		return D_O_K;	//Target setting array not set
+
+	if((*eof_ini_dialog_count > 0) && (eof_ini_dialog[1].d1 < *eof_ini_dialog_count))
+	{	//If an INI entry is selected in the list
+		(void) ustrncpy(eof_etext, eof_ini_dialog_array[eof_ini_dialog[1].d1], EOF_INI_LENGTH - 1);	//Populate the dialog with the existing entry
+
+		eof_color_dialog(eof_ini_add_dialog, gui_fg_color, gui_bg_color);
+		eof_conditionally_center_dialog(eof_ini_add_dialog);
+		if(eof_popup_dialog(eof_ini_add_dialog, 2) == 3)
+		{	//If the user clicked OK
+			if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
+			{	//If something other than whitespace was entered
+				if(ustrncmp(eof_etext, eof_ini_dialog_array[eof_ini_dialog[1].d1], EOF_INI_LENGTH - 1))
+				{	//If the entry's text was changed
+					if(eof_song && (eof_ini_dialog_array == eof_song->tags->ini_setting))
+					{	//If it is the active project's INI settings that are being altered
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					}
+					(void) ustrncpy(eof_ini_dialog_array[eof_ini_dialog[1].d1], eof_etext, EOF_INI_LENGTH - 1);
+				}
+			}
+		}
+	}
+	(void) dialog_message(eof_ini_dialog, MSG_DRAW, 0, &i);
 	return D_O_K;
 }
 

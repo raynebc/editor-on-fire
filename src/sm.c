@@ -103,6 +103,7 @@ int eof_import_stepmania(char * fn)
 		if(alert("The dance track contains notes and will be", "erased in order to import the StepMania file.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to erase the track
 			eof_log("\tUser cancellation.  Aborting", 1);
+			free(buffer);
 			return 2;
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -116,6 +117,7 @@ int eof_import_stepmania(char * fn)
 		if(alert("The tempo map is locked and will prevent the", "import of the StepMania file's tempo changes.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user does not opt to continue
 			eof_log("\tUser cancellation.  Aborting", 1);
+			free(buffer);
 			return 2;
 		}
 	}
@@ -152,6 +154,7 @@ int eof_import_stepmania(char * fn)
 	if(!chart)
 	{
 		eof_log("\tError allocating memory.  Aborting", 1);
+		free(buffer);
 		return 1;
 	}
 	memset(chart, 0, sizeof(struct FeedbackChart));	//Init the structure to 0.  Offset will remain 0s unless defined otherwise, the anchors linked is initialized to NULL
@@ -162,6 +165,7 @@ int eof_import_stepmania(char * fn)
 	if(!inf)
 	{
 		eof_log("\tFailed to open input file.  Aborting", 1);
+		free(buffer);
 		free(chart);
 		return 1;
 	}
@@ -841,6 +845,7 @@ int eof_import_stepmania(char * fn)
 	}
 
 	//Cleanup
+	free(buffer);
 	while(chart->anchors)
 	{	//While there are links in the anchors list
 		struct dbAnchor *next = chart->anchors->next;	//Retain the address to the next link

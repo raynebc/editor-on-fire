@@ -83,6 +83,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			if(ustrlen(line_token) > 6)
 			{	//If the line is at least 7 characters long
 				/* find the first '=' */
+				equals = NULL;
 				for(i = 0; i < (unsigned long)ustrlen(line_token); i++)
 				{
 					if(ugetc(&line_token[uoffset(line_token, i)]) == '=')

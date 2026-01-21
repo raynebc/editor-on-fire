@@ -100,7 +100,8 @@ int eof_menu_song_seek_timestamp(void);				//Seeks to a user specified timestamp
 
 int eof_menu_song_file_info(void);
 int eof_menu_song_ini_settings(void);
-int eof_ini_dialog_add(DIALOG * d);			//Performs the INI setting add action presented in the INI settings dialog
+int eof_ini_dialog_add(DIALOG * d);		//Performs the INI setting add action presented in the INI settings dialog
+int eof_ini_dialog_edit(DIALOG * d);		//Performs the INI setting edit action presented in the INI settings dialog
 int eof_ini_dialog_delete(DIALOG * d);		//Performs the INI setting delete action presented in the INI settings dialog
 void eof_ini_dialog_delete_helper(unsigned long index);	//Used by eof_ini_dialog_delete() to remove the specified INI setting from the active project in the active INI setting dialog
 void eof_ini_delete(unsigned long index);	//Delete the specified INI setting from the active project outside of INI setting dialogs
