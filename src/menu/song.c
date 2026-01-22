@@ -232,10 +232,11 @@ DIALOG eof_ini_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+char eof_ini_add_dialog_string[30] = {0};
 DIALOG eof_ini_add_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
-	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Add INI Setting",NULL, NULL },
+	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   eof_ini_add_dialog_string,NULL, NULL },
 	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",          NULL, NULL },
 	{ eof_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,        NULL, NULL },
 	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
@@ -1752,6 +1753,10 @@ int eof_ini_dialog_add(DIALOG * d)
 	eof_color_dialog(eof_ini_add_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_ini_add_dialog);
 	(void) ustrcpy(eof_etext, "");
+	if(!eof_song || (eof_ini_dialog_array != eof_song->tags->ini_setting))
+		(void) ustrcpy(eof_ini_add_dialog_string, "Add default INI setting");
+	else
+		(void) ustrcpy(eof_ini_add_dialog_string, "Add INI setting");
 
 	if(eof_popup_dialog(eof_ini_add_dialog, 2) == 3)
 	{
@@ -1791,9 +1796,14 @@ int eof_ini_dialog_edit(DIALOG * d)
 	if((*eof_ini_dialog_count > 0) && (eof_ini_dialog[1].d1 < *eof_ini_dialog_count))
 	{	//If an INI entry is selected in the list
 		(void) ustrncpy(eof_etext, eof_ini_dialog_array[eof_ini_dialog[1].d1], EOF_INI_LENGTH - 1);	//Populate the dialog with the existing entry
+		if(!eof_song || (eof_ini_dialog_array != eof_song->tags->ini_setting))
+			(void) ustrcpy(eof_ini_add_dialog_string, "Edit default INI setting");
+		else
+			(void) ustrcpy(eof_ini_add_dialog_string, "Edit INI setting");
 
 		eof_color_dialog(eof_ini_add_dialog, gui_fg_color, gui_bg_color);
 		eof_conditionally_center_dialog(eof_ini_add_dialog);
+		eof_render();
 		if(eof_popup_dialog(eof_ini_add_dialog, 2) == 3)
 		{	//If the user clicked OK
 			if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))

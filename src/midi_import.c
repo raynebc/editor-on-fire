@@ -1084,7 +1084,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 			if(llplusnotes < nonllplusnotes)
 			{	//But most of the notes encountered were not in the range of LLPLUS
 				eof_import_events[i]->game2 = 0;	//Do not consider this an LLPLUS track
-				eof_log("\t\t!Track determined to not be LLPLUS", 1);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t!Track %lu determined to not be LLPLUS", i);
+				eof_log(eof_log_string, 2);
+			}
+			else
+			{
+				eof_import_events[i]->game = 3;	//Consider this an LLPLUS track
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t!Track %lu determined to be LLPLUS", i);
+				eof_log(eof_log_string, 1);
 			}
 		}
 	}//For each imported track
@@ -1995,13 +2002,8 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							}
 						}
 
-						else if((midinote >= 35) && (midinote <= 39))
-						{	//The range of notes used by the game Lightners Live Plus (LLPLUS)
-							if(eof_import_events[i]->game != 3)
-							{	//If this track wasn't detected as LLPLUS yet
-								eof_log("\t\t!LLPLUS track detected", 1);
-								eof_import_events[i]->game = 3;	//LLPLUS format detected
-							}
+						else if((midinote >= 35) && (midinote <= 39) && (eof_import_events[i]->game == 3))
+						{	//The range of notes used by the game Lightners Live Plus (LLPLUS), when the track was already determined to be LLPLUS format
 							diff = 0;	//LLPLUS charts only have one instrument and one difficulty
 							switch(midinote)
 							{
@@ -2473,33 +2475,42 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						{	//If the track was already found to have these markers
 							if((midinote == RB3_DRUM_YELLOW_FORCE) && rb_pro_yellow)
 							{	//If this event ends a pro yellow drum phrase
+								eof_log("\t\t\t\tApplying yellow tom marker", 2);
 								for(k = note_count[picked_track]; k > first_note; k--)
 								{	//Check for each note that has been imported for this track
 									if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
 									{	//If the note is positioned within this pro yellow drum phrase
-										sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
+										sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note to interpret it as a tom
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from yellow cymbal to tom", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1));
+										eof_log(eof_log_string, 3);
 									}
 								}
 								rb_pro_yellow = 0;
 							}
 							else if((midinote == RB3_DRUM_BLUE_FORCE) && rb_pro_blue)
 							{	//If this event ends a pro blue drum phrase
+								eof_log("\t\t\t\tApplying blue tom marker", 2);
 								for(k = note_count[picked_track]; k > first_note; k--)
 								{	//Check for each note that has been imported for this track
 									if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_blue_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
 									{	//If the note is positioned within this pro blue drum phrase
-										sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
+										sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note to interpret it as a tom
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from blue cymbal to tom", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1));
+										eof_log(eof_log_string, 3);
 									}
 								}
 								rb_pro_blue = 0;
 							}
 							else if((midinote == RB3_DRUM_GREEN_FORCE) && rb_pro_green)
 							{	//If this event ends a pro green drum phrase
+								eof_log("\t\t\t\tApplying green tom marker", 2);
 								for(k = note_count[picked_track]; k > first_note; k--)
 								{	//Check for each note that has been imported for this track, in reverse order
 									if((sp->legacy_track[tracknum]->note[k - 1]->pos >= rb_pro_green_pos) && (sp->legacy_track[tracknum]->note[k - 1]->pos <= event_realtime))
 									{	//If the note is positioned within this pro green drum phrase
-										sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
+										sp->legacy_track[tracknum]->note[k - 1]->flags &= (~EOF_DRUM_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note to interpret it as a tom
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tModifying note #%lu (Diff=%u, Pos=%lu, Mask=%u) from green cymbal to tom", k - 1, eof_get_note_type(sp, picked_track, k - 1), eof_get_note_pos(sp, picked_track, k - 1), eof_get_note_note(sp, picked_track, k - 1));
+										eof_log(eof_log_string, 3);
 									}
 								}
 								rb_pro_green = 0;

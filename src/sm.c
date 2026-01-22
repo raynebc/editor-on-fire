@@ -639,95 +639,98 @@ int eof_import_stepmania(char * fn)
 				eof_log(eof_log_string, 2);
 				measure_in_progress = 0;
 
-				eof_log("\t\t\tCreating notes:", 2);
-				measure_length = chart->resolution * 4;	//The number of chart ticks in a measure, assuming 4 beats per measure
-				measure_chartpos = measure_length * measurectr;	//The chart position of this measure
-				interval = (double)measure_length / (double)notectr;	//The length of the interval between each note definition in this measure
-				for(ctr = 0; (ctr < notectr) && !error; ctr++)
-				{	//For each note parsed for this measure, or until an error occurs
-					//Calculate timing
-					note_chartpos = measure_chartpos + (interval * ctr) + 0.5;	//The chart position of this note definition
-					notepos = eof_chartpos_to_msec(chart, note_chartpos, NULL) + 0.5;	//Convert this chart position to milliseconds
-					while((eof_song->beats < 2) || (notepos > eof_song->beat[eof_song->beats - 1]->pos))
-					{	//Until the project has enough beats to encompass this note
-						if(eof_song_append_beats(eof_song, 1))
-						{	//If a beat was successfully added
-							unsigned long newbeatpos = eof_song->beat[eof_song->beats - 1]->pos;
-							if(newbeatpos > eof_chart_length)
-								eof_chart_length = newbeatpos;	//Update eof_chart_length if appropriate, so that the grid snap logic will work
+				if(notectr)
+				{	//If there are any notes to import for this measure
+					eof_log("\t\t\tCreating notes:", 2);
+					measure_length = chart->resolution * 4;	//The number of chart ticks in a measure, assuming 4 beats per measure
+					measure_chartpos = measure_length * measurectr;	//The chart position of this measure
+					interval = (double)measure_length / (double)notectr;	//The length of the interval between each note definition in this measure
+					for(ctr = 0; (ctr < notectr) && !error; ctr++)
+					{	//For each note parsed for this measure, or until an error occurs
+						//Calculate timing
+						note_chartpos = measure_chartpos + (interval * ctr) + 0.5;	//The chart position of this note definition
+						notepos = eof_chartpos_to_msec(chart, note_chartpos, NULL) + 0.5;	//Convert this chart position to milliseconds
+						while((eof_song->beats < 2) || (notepos > eof_song->beat[eof_song->beats - 1]->pos))
+						{	//Until the project has enough beats to encompass this note
+							if(eof_song_append_beats(eof_song, 1))
+							{	//If a beat was successfully added
+								unsigned long newbeatpos = eof_song->beat[eof_song->beats - 1]->pos;
+								if(newbeatpos > eof_chart_length)
+									eof_chart_length = newbeatpos;	//Update eof_chart_length if appropriate, so that the grid snap logic will work
+							}
 						}
-					}
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tNote entry #%lu, pos = %lums", ctr, notepos);
-					eof_log(eof_log_string, 2);
-					if(!eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
-					{	//If that millisecond position isn't grid snapped
-						if(snappos != ULONG_MAX)
-						{	//If a valid snap position was determined
-							notepos = snappos;	//Resnap it
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tResnapped to %lums", notepos);
-							eof_log(eof_log_string, 2);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tNote entry #%lu, pos = %lums", ctr, notepos);
+						eof_log(eof_log_string, 2);
+						if(!eof_is_any_beat_interval_position(notepos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
+						{	//If that millisecond position isn't grid snapped
+							if(snappos != ULONG_MAX)
+							{	//If a valid snap position was determined
+								notepos = snappos;	//Resnap it
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tResnapped to %lums", notepos);
+								eof_log(eof_log_string, 2);
+							}
 						}
-					}
 
-					//Add note gems
-					for(ctr2 = 0; ctr2 < 4; ctr2++)
-					{	//For each of the 4 lanes in this dance chart
-						EOF_NOTE *newnote;
-						unsigned long newnotenum;
-						char gemtype = notes[ctr].gem[ctr2];	//Simplify
-						if(gemtype == '3')
-						{	//The end of a hold/roll note on this lane
-							if(last_hold[ctr2] == ULONG_MAX)
-							{	//If there is no beginning defined for such a note
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tMalformed file:  End of hold note specified with no defined beginning on line #%lu", linectr);
+						//Add note gems
+						for(ctr2 = 0; ctr2 < 4; ctr2++)
+						{	//For each of the 4 lanes in this dance chart
+							EOF_NOTE *newnote;
+							unsigned long newnotenum;
+							char gemtype = notes[ctr].gem[ctr2];	//Simplify
+							if(gemtype == '3')
+							{	//The end of a hold/roll note on this lane
+								if(last_hold[ctr2] == ULONG_MAX)
+								{	//If there is no beginning defined for such a note
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tMalformed file:  End of hold note specified with no defined beginning on line #%lu", linectr);
+									eof_log(eof_log_string, 1);
+								}
+								else
+								{	//Update the length of the hold/roll note in progress on this lane
+									unsigned long newlength = notepos - eof_get_note_pos(eof_song, EOF_TRACK_DANCE, last_hold[ctr2]);
+									eof_set_note_length(eof_song, EOF_TRACK_DANCE, last_hold[ctr2], newlength);
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tSustain note #%lu modified (lane #%lu, endpos = %lums)", last_hold[ctr2], ctr2, newlength);
+									eof_log(eof_log_string, 1);
+									last_hold[ctr2] = ULONG_MAX;	//Reset this to indicate no hold/roll note is in progress on this lane
+								}
+							}
+							else if(gemtype != '0')
+							{	//A new note gem on this lane
+								newnote = eof_track_add_create_note(eof_song, EOF_TRACK_DANCE, 1 << ctr2, notepos, 1, note_diff_in_progress, NULL);
+								newnotenum = eof_get_track_size(eof_song, EOF_TRACK_DANCE);
+								if(!newnote || !newnotenum)
+								{
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tFailed to add note.  Aborting");
+									eof_log(eof_log_string, 1);
+									error = 1;
+									break;
+								}
+
+								newnotenum--;	//The index of the last added note is the track size minus one, since the notes are not sorted
+								if(gemtype == '2')
+								{	//If this is the beginning of a hold note
+									last_hold[ctr2] = newnotenum;	//Store the index of this new note to be updated when the note ends
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tHold note #%lu added (lane #%lu)", newnotenum, ctr2);
+								}
+								else if(gemtype == '4')
+								{	//If this is the beginning of a roll note
+									last_hold[ctr2] = newnotenum;	//Store the index of this new note to be updated when the note ends
+									eof_set_note_roll(eof_song, EOF_TRACK_DANCE, newnotenum, 1 << ctr2);	//Make the gem that was just added a roll
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tRoll note #%lu added (lane #%lu)", newnotenum, ctr2);
+								}
+								else if(gemtype == 'M')
+								{
+									eof_set_note_mine(eof_song, EOF_TRACK_DANCE, newnotenum, 1 << ctr2);	//Make the gem that was just added a mine
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tMine note #%lu added (lane #%lu)", newnotenum, ctr2);
+								}
+								else
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tTap note #%lu added (lane #%lu)", newnotenum, ctr2);
+
+								///Determine whether to add support for 'L' (lift) and 'F' (fake) note types, each of which would need a bitmask to track per-lane
 								eof_log(eof_log_string, 1);
 							}
-							else
-							{	//Update the length of the hold/roll note in progress on this lane
-								unsigned long newlength = notepos - eof_get_note_pos(eof_song, EOF_TRACK_DANCE, last_hold[ctr2]);
-								eof_set_note_length(eof_song, EOF_TRACK_DANCE, last_hold[ctr2], newlength);
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tSustain note #%lu modified (lane #%lu, endpos = %lums)", last_hold[ctr2], ctr2, newlength);
-								eof_log(eof_log_string, 1);
-								last_hold[ctr2] = ULONG_MAX;	//Reset this to indicate no hold/roll note is in progress on this lane
-							}
 						}
-						else if(gemtype != '0')
-						{	//A new note gem on this lane
-							newnote = eof_track_add_create_note(eof_song, EOF_TRACK_DANCE, 1 << ctr2, notepos, 1, note_diff_in_progress, NULL);
-							newnotenum = eof_get_track_size(eof_song, EOF_TRACK_DANCE);
-							if(!newnote || !newnotenum)
-							{
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tFailed to add note.  Aborting");
-								eof_log(eof_log_string, 1);
-								error = 1;
-								break;
-							}
-
-							newnotenum--;	//The index of the last added note is the track size minus one, since the notes are not sorted
-							if(gemtype == '2')
-							{	//If this is the beginning of a hold note
-								last_hold[ctr2] = newnotenum;	//Store the index of this new note to be updated when the note ends
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tHold note #%lu added (lane #%lu)", newnotenum, ctr2);
-							}
-							else if(gemtype == '4')
-							{	//If this is the beginning of a roll note
-								last_hold[ctr2] = newnotenum;	//Store the index of this new note to be updated when the note ends
-								eof_set_note_roll(eof_song, EOF_TRACK_DANCE, newnotenum, 1 << ctr2);	//Make the gem that was just added a roll
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tRoll note #%lu added (lane #%lu)", newnotenum, ctr2);
-							}
-							else if(gemtype == 'M')
-							{
-								eof_set_note_mine(eof_song, EOF_TRACK_DANCE, newnotenum, 1 << ctr2);	//Make the gem that was just added a mine
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tMine note #%lu added (lane #%lu)", newnotenum, ctr2);
-							}
-							else
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\t\tTap note #%lu added (lane #%lu)", newnotenum, ctr2);
-
-							///Determine whether to add support for 'L' (lift) and 'F' (fake) note types, each of which would need a bitmask to track per-lane
-							eof_log(eof_log_string, 1);
-						}
-					}
-				}//For each note parsed for this measure
+					}//For each note parsed for this measure
+				}//If there are any notes to import for this measure
 				measurectr++;
 			}
 			else if(buffer[index] != '\0')

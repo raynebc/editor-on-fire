@@ -18,6 +18,7 @@ extern MENU eof_filtered_song_menu[EOF_SCRATCH_MENU_SIZE];
 extern char (*eof_ini_dialog_array)[EOF_INI_LENGTH];
 extern unsigned short *eof_ini_dialog_count;
 extern DIALOG eof_ini_dialog[];
+extern char eof_ini_add_dialog_string[30];
 extern DIALOG eof_ini_add_dialog[];
 extern DIALOG eof_song_properties_dialog[];
 extern DIALOG eof_catalog_entry_name_dialog[];

@@ -1575,7 +1575,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 		else if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{	//If this is a vocal track
-			#define EOF_LYRIC_PHRASE_PADDING 5
+			#define EOF_LYRIC_PHRASE_PADDING 0
+			///EOF_LYRIC_PHRASE_PADDING was originally implemented with a value of 5 for the sake of working around bugs in FoFiX, but unless modern rhythm games are found to have similar needs, it isn't worth maintaining this legacy workaround
 			unsigned long last_phrase = 0;	//Stores the absolute delta time of the last Note 105 On
 			int lastevent = 0;	//Track the last event written so running status can be utilized
 			char *exportname = sp->track[j]->name;	//By default, the track's regular name is used for export
