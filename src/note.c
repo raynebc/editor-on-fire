@@ -1367,8 +1367,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			}
 		}
 	}
-	else if(!eof_track_is_ghl_mode(eof_song, track) && (notenote & 32) && eof_track_is_legacy_guitar(eof_song, track))
-	{	//If this is NOT a GHL style track, is a legacy guitar track and contains a gem on lane 6 (renders similarly to a bass drum note)
+	else if(!eof_track_is_ghl_mode(eof_song, track) && (notenote & 32) && (eof_track_is_legacy_guitar(eof_song, track) || eof_track_is_beatable_mode(eof_song, track)))
+	{	//If this is NOT a GHL style track, is a legacy guitar track or a BEATABLE style track and contains a gem on lane 6 (renders similarly to a bass drum note)
 		if(eof_open_strum_enabled(track))
 		{	//If open strum is enabled for the track
 			drawline = 1;

@@ -5048,49 +5048,67 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//For each imported track
 		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
+			unsigned char thisfret;
+			unsigned char lowestfret = 0xFF;	//Used to track the lowest used fret value for the note
+
 			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || !(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (ctr2 + 1 >= gp->track[ctr]->notes))
 				continue;	//If this note isn't marked as being an undetermined direction of slide, or there's no note that follows, skip it
 
-			startfret = 0;
 			for(ctr3 = 0, bitmask = 1; ctr3 < 7; ctr3++, bitmask<<=1)
 			{	//For each of the 7 strings the GP format allows for
 				if(!(bitmask & gp->track[ctr]->note[ctr2]->note) || !(bitmask & gp->track[ctr]->note[ctr2 + 1]->note))
 					continue;	//If this string is not used for both this note and the next, skip it
 
-				startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);	//Record the lowest used fret on this note
+				thisfret = gp->track[ctr]->note[ctr2]->frets[ctr3];	//The fret number this note uses on this string
+				if(!thisfret)
+					continue;	//If this string is played open, it is not fretted and not a suitable string to use to evaluate the slide direction
+				if(thisfret >= lowestfret)
+					continue;	//If this string's fret isn't lower than any other that has been examined on this note, skip to the next string
+
 				if(gp->track[ctr]->note[ctr2 + 1]->frets[ctr3] & 0x80)
 				{	//If the end of the slide is defined by a mute note
 					endfret =  0;	//Force it to be a downward slide, the end fret of the slide will be undefined
 				}
 				else
 				{
-					endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);	//Record the lowest used fret on the next note
+					endfret = gp->track[ctr]->note[ctr2 + 1]->frets[ctr3];	//Look up the fret number the next note uses on this string
 				}
-				if(startfret == endfret)
-				{	//If both strings use the same fret
-					continue;	//Check the next string instead (this one might be being played open)
+				if(thisfret == endfret)
+				{	//The slide starts and ends on the same fret on this string?
+					continue;	//Check the next string instead
 				}
-				if(startfret > endfret)
-				{	//This is a downward slide
-					gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
+				startfret = thisfret;
+				lowestfret = thisfret;
+			}
+
+			if(startfret > endfret)
+			{	//This is a downward slide
+				gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
+			}
+			else
+			{	//This is an upward slide
+				gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
+			}
+			if(gp->track[ctr]->note[ctr2]->slideend == 0)
+			{	//If the slide ending hasn't been defined yet
+				if(!endfret)
+				{	//Special case:  A slide down to fret 0.  Notate this as an unpitched slide to fret 1
+					gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Clear the slide up flag
+					gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
+					gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+					gp->track[ctr]->note[ctr2]->unpitchend = 1;
 				}
 				else
-				{	//This is an upward slide
-					gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
-				}
-				if(gp->track[ctr]->note[ctr2]->slideend == 0)
-				{	//If the slide ending hasn't been defined yet
+				{	//Notate this as a normal pitched slide
 					gp->track[ctr]->note[ctr2]->slideend = endfret;
-					gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
 				}
-				break;
-			}//For each of the 7 strings the GP format allows for
+				gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
+			}
 			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || !(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-				continue;	//If either of the up/down slide flags aren't set, skip this note
+				continue;	//If either of the up/down slide flags aren't set (the slide direction was determined), skip this note
 
 			//Otherwise if both are set, the next note didn't use any of the same strings as the slide note
 			//Base the slide direction on the lowest fret value of that next note
-			startfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2);
 			endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);
 			if(startfret == endfret)
 				continue;	//If the slide and the following note start at the same fret position, skip this note as a slide direction can't be determined

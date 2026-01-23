@@ -3584,6 +3584,10 @@ void eof_render_3d_window(void)
 		numlanes = 6;
 		lastlane = 4;
 	}
+	if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+	{	//Special case:  BEATABLE tracks use 6 lanes but their 3D representation only draws 5 lanes, with gems drawn between the lanes like the drum track
+		numlanes = 5;
+	}
 	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !eof_render_bass_drum_in_lane)
 	{	//If a drum track is active and the user hasn't enabled the preference to render the bass drum in its own lane
 		if(!eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
@@ -5648,6 +5652,10 @@ void eof_set_3D_lane_positions(unsigned long track)
 	else
 	{
 		numlaneswidth = newnumlanes - 1;	//Otherwise, base the lane width on the number of lanes used in the track
+	}
+	if(eof_track_is_beatable_mode(eof_song, track))
+	{	//Special case:  BEATABLE tracks use 6 lanes but their 3D representation only draws 5 lanes, with gems drawn between the lanes like the drum track
+		newnumlanes = 5;
 	}
 
 	if(track && (newnumlanes == numlanes))	//If the xchart[] array doesn't need to be updated

@@ -4307,8 +4307,8 @@ int eof_open_strum_enabled(unsigned long track)
 	if(!eof_song || !track || (track >= eof_song->tracks))
 		return 0;
 
-	if(!eof_track_is_legacy_guitar(eof_song, track))
-	{	//If this isn't a legacy guitar track
+	if(!eof_track_is_legacy_guitar(eof_song, track) && !eof_track_is_beatable_mode(eof_song, track))
+	{	//If this isn't a legacy guitar track or a BEATABLE track
 		return 0;
 	}
 	return (eof_song->track[track]->flags & EOF_TRACK_FLAG_SIX_LANES);
