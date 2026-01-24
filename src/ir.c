@@ -1180,6 +1180,10 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 			(void) ustrcat(temp_string, " - ");
 		(void) ustrcat(temp_string, sp->tags->title);
 	}
+	if(temp_string[0] == '\0')
+	{	//If there is no defined artist or song title
+		(void) ustrcat(temp_string, "IMMERROCK");	//Use this as the name for the destination folder
+	}
 	if(option == 1)
 	{	//If a single arrangement is being exported, include its name in the export folder name
 		char *arrangement_name;

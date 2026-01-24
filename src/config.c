@@ -250,7 +250,7 @@ void eof_load_config(char * fn)
 	}
 	eof_gp_import_preference_1 = get_config_int("preferences", "eof_gp_import_preference_1", 0);
 	eof_gp_import_truncate_short_notes = get_config_int("preferences", "eof_gp_import_truncate_short_notes", 1);
-	eof_gp_import_truncate_short_chords = get_config_int("preferences", "eof_gp_import_truncate_short_chords", 1);
+	eof_gp_import_truncate_short_chords = get_config_int("preferences", "eof_gp_import_truncate_short_chords", 0);
 	eof_gp_import_replaces_track = get_config_int("preferences", "eof_gp_import_replaces_track", 1);
 	eof_gp_import_replaces_track = get_config_int("preferences", "eof_gp_import_nat_harmonics_only", 0);
 	eof_render_3d_rs_chords = get_config_int("preferences", "eof_render_3d_rs_chords", 0);

@@ -2711,19 +2711,29 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		}
 		length = eof_get_note_length(sp, track1, note1);
 		length2 = eof_get_note_length(sp, track2, note2);
-		if(length > length2)
-		{	//If the first note is longer
-			if(length2 + 3 < length)
-			{	//And it's by more than 3ms
-				return 1;	//Return not equal
+		if(thorough > 3)
+		{	//If the notes must be within 3ms
+			if(length > length2)
+			{	//If the first note is longer
+				if(length2 + 3 < length)
+				{	//And it's by more than 3ms
+					return 1;	//Return not equal
+				}
+			}
+			else
+			{	//If the second note is longer
+				if(length + 3 < length2)
+				{	//And it's by more than 3ms
+					return 1;	//Return not equal
+				}
 			}
 		}
 		else
-		{	//If the second note is longer
-			if(length + 3 < length2)
-			{	//And it's by more than 3ms
+		{	//The notes must both be with sustain or without sustain
+			if((length == 1) && (length2 != 1))	//First note has no sustain but second one does
 				return 1;	//Return not equal
-			}
+			if((length != 1) && (length2 == 1))	//First note has sustain but second one does not
+				return 1;	//Return not equal
 		}
 	}
 

@@ -1902,7 +1902,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[13].flags = D_SELECTED;		//Force pro drum MIDI notation
 			eof_import_export_preferences_dialog[14].flags = D_SELECTED;		//GP import truncates short notes
 			eof_import_export_preferences_dialog[15].flags = 0;				//RBN export slider as HOPO
-			eof_import_export_preferences_dialog[16].flags = D_SELECTED;		//GP import truncates short chords
+			eof_import_export_preferences_dialog[16].flags = 0;				//GP import truncates short chords
 			eof_import_export_preferences_dialog[17].flags = D_SELECTED;		//GP import replaces active track
 			eof_import_export_preferences_dialog[18].flags = 0;				//Imports drop mid beat tempos
 			eof_import_export_preferences_dialog[19].flags = 0;				//GP import nat. harmonics only
@@ -4425,7 +4425,7 @@ int eof_save_helper_checks(void)
 		if(!exists(oggfn))
 		{	//If the project has no preview audio defined
 			eof_clear_input();
-			allegro_message("Warning:  There is no preview audio defined.  Please use \"File>Export preview audio\" and save the project again to save it to each Drums Rock chart difficulty.");
+			allegro_message("Drums Rock:  There is no preview audio defined.  Please use \"File>Export preview audio\" and save the project again to save it to each Drums Rock chart difficulty.");
 		}
 		if(eof_check_drums_rock_track(eof_song, EOF_TRACK_DRUM) || eof_check_drums_rock_track(eof_song, EOF_TRACK_DRUM_PS))
 		{	//If user opted to cancel the save due to any prompted issues
@@ -4448,6 +4448,7 @@ int eof_save_helper(char *destfilename, char silent)
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 	unsigned short user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during Rocksmith and Bandfuse exports
+	int drums_rock_exported = 0;
 	int err;
 	int midi_export_success = 1;
 
@@ -4933,6 +4934,7 @@ int eof_save_helper(char *destfilename, char silent)
 		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 2, newfolderpath);
 		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 3, newfolderpath);
 //		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM, 4, newfolderpath);
+		drums_rock_exported = 1;
 	}
 	else if(eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM_PS))
 	{
@@ -4941,7 +4943,10 @@ int eof_save_helper(char *destfilename, char silent)
 		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 2, newfolderpath);
 		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 3, newfolderpath);
 //		(void) eof_export_drums_rock_track_diff(eof_song, EOF_TRACK_DRUM_PS, 4, newfolderpath);
+		drums_rock_exported = 1;
 	}
+	if(drums_rock_exported && eof_silence_loaded && !silent)
+		allegro_message("Drums Rock:  No chart audio is loaded so the export folder will be missing audio.");
 
 	/* export IMMERROCK files for all populated difficulties if enabled */
 	if(eof_write_immerrock_files)

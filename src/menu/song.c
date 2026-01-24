@@ -4980,7 +4980,7 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 				continue;	//If this note isn't in the same position as the one from the first track, skip it
 
 			timematch = 1;	//Note that there was a note at the same timestamp in both track difficulties
-			if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 3) == 0)
+			if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 4) == 0)
 			{	//If the notes match a thorough comparison
 				if(eof_track_is_pro_guitar_track(eof_song, track1))
 				{	//If pro guitar tracks are being compared
@@ -5034,7 +5034,7 @@ unsigned long eof_menu_song_compare_difficulties(unsigned long track1, unsigned 
 					continue;	//Skip it
 				if(tp2->technote[ctr]->type != diff2)	//If this tech note isn't in the designated comparison difficulty
 					continue;	//Skip it
-				if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 3) == 0)
+				if(eof_note_compare(eof_song, track1, ctr, track2, ctr2, 4) == 0)
 				{	//If the tech notes match
 					match = 1;
 					break;

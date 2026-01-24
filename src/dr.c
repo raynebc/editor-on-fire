@@ -542,7 +542,6 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	//Write song.ogg if it doesn't exist
 	if(eof_silence_loaded)
 	{
-		allegro_message("Drums Rock:  No chart audio is loaded so the export folder will be missing audio.");
 		eof_log("No chart audio is loaded so the export folder will be missing audio.", 2);
 	}
 	else

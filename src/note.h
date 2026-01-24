@@ -79,6 +79,7 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 	//If the thorough parameter is greater than 0, string mute status is also compared if the notes are pro guitar notes
 	//If the thorough parameter is greater than 1, ghost status is also compared if the notes are pro guitar notes
 	//If the thorough parameter is greater than 2, bend strength and pitched/unpitched slide end positions are also compared if the notes are pro guitar notes
+	//If the thorough parameter is greater than 3, the lengths of notes must be within 3ms of each other for them to match
 	//-1 is returned on error
 int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long note1, unsigned long note2);
 	//Compares two notes in the same track by invoking eof_note_compare, with a thorough option of 0

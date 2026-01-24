@@ -4791,7 +4791,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if((mute == 1) || (np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 							{	//If this note is entirely string muted (only bit 0 of the mute variable was set, ie. no non-muted notes) or is palm muted
-								truncate = 1;
+								if(eof_note_count_colors_bitmask(np[ctr2]->note) <= 1)
+								{	//If this is NOT a chord
+									truncate = 1;
+								}
 							}
 							if(truncate)
 							{	//If the above conditions were triggered
