@@ -87,6 +87,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches);
 	//Returns a bitmask defining which elements in the pitches array are populated to define the pitches used by the specified note/lyric
+	//This takes any defined capo placement into account in the case of pro guitar notes
 	//Gems that are string muted or ghosted are not reflected in this bitmask
 	//String muted gems have their open string pitches reflected in the pitches array, for use with IMMERROCK export
 	//Each pitch is returned through *pitches array, which must be at least 6 elements large

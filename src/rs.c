@@ -745,7 +745,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//For each of the 6 supported strings
 					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->frets[ctr2] & 0x80))
 					{	//If this string is played and not string muted
-						thisnote = eof_lookup_played_note(tp, track, ctr2, tp->note[ctr]->frets[ctr2]);	//Determine what note is being played
+						thisnote = eof_lookup_played_note(tp, track, ctr2, tp->note[ctr]->frets[ctr2], tp->ignore_tuning);	//Determine what note is being played
 						if((lastnote >= 0) && (lastnote != thisnote))
 						{	//If this string's played note doesn't match the note played by previous strings
 							failed = 1;
@@ -1905,7 +1905,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 				{	//For each of the 6 supported strings
 					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->frets[ctr2] & 0x80))
 					{	//If this string is played and not string muted
-						thisnote = eof_lookup_played_note(tp, track, ctr2, tp->note[ctr]->frets[ctr2]);	//Determine what note is being played
+						thisnote = eof_lookup_played_note(tp, track, ctr2, tp->note[ctr]->frets[ctr2], tp->ignore_tuning);	//Determine what note is being played
 						if((lastnote >= 0) && (lastnote != thisnote))
 						{	//If this string's played note doesn't match the note played by previous strings
 							failed = 1;

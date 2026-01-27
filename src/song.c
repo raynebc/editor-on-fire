@@ -8708,7 +8708,7 @@ int eof_get_pro_guitar_note_tone_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 			fretvalue = tp->note[note]->frets[i];
 			if(!(fretvalue & 0x80))
 			{	//If this string is not muted
-				notename = eof_lookup_played_note(tp, tp->parent->track_type, i, (fretvalue & 0x7F));	//Determine what note is played (masking out the muting bit)
+				notename = eof_lookup_played_note(tp, tp->parent->track_type, i, (fretvalue & 0x7F), 0);	//Determine what note is played (masking out the muting bit), DO take the capo into account
 			}
 			notename %= 12;		//Bounds enforcement
 			if(notename < 0)

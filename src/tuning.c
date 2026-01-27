@@ -273,7 +273,7 @@ int eof_lookup_tuned_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigne
 	return (notenum % 12);	//Return the note value in terms of half steps above note A
 }
 
-int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum, unsigned long fretnum)
+int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum, unsigned long fretnum, unsigned char ignore_tuning)
 {
 	int notenum;
 
@@ -285,7 +285,7 @@ int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsign
 		return -1;	//The fret value is undefined
 
 	fretnum &= 0x7F;	//Mask out the muting bit to reflect the defined fret value
-	if(tp->ignore_tuning)
+	if(ignore_tuning)
 	{	//If the chord detection is to ignore this track's tuning and assume standard
 		notenum = eof_lookup_default_string_tuning(tp, track, stringnum);	//Look up the default tuning for this string
 	}
@@ -405,7 +405,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 			if(tp->note[note]->note & bitmask)
 			{	//If this string is used in the note
 				stringctr++;	//Keep track of how many strings are used
-				retval = eof_lookup_played_note(tp, track, ctr, tp->note[note]->frets[ctr]);	//Look up the note played on this string at the specified fret
+				retval = eof_lookup_played_note(tp, track, ctr, tp->note[note]->frets[ctr], tp->ignore_tuning);	//Look up the note played on this string at the specified fret
 				if(retval >= 0)
 				{	//The note lookup succeeded
 					if(bass < 0)

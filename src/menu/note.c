@@ -432,7 +432,7 @@ MENU eof_note_toggle_mine_menu[] =
 	{eof_note_clear_menu_string_2, eof_menu_note_toggle_accent_red, NULL, 0, NULL},
 	{eof_note_clear_menu_string_3, eof_menu_note_toggle_accent_yellow, NULL, 0, NULL},
 	{eof_note_clear_menu_string_4, eof_menu_note_toggle_accent_blue, NULL, 0, NULL},
-	{"&All", eof_menu_note_toggle_accent_all, NULL, 0, NULL},
+	{"&All\t" CTRL_NAME "+M", eof_menu_note_toggle_accent_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

@@ -2059,6 +2059,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* manage RS phrases (CTRL+SHIFT+M in a pro guitar track) */
 	/* toggle palm muting (CTRL+M in a pro guitar track) */
 	/* mark/remark lyric phrase (CTRL+M in a vocal track) */
+	/* toggle mine all lanes (CTRL+M in dance track) */
 	/* toggle strum mid (SHIFT+M in a pro guitar track) */
 	/* toggle metronome (M) */
 	if(eof_key_char == 'm')
@@ -2075,6 +2076,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				if(eof_vocals_selected)
 				{
 					(void) eof_menu_lyric_line_mark();
+				}
+				else if(eof_selected_track == EOF_TRACK_DANCE)
+				{
+					(void) eof_menu_note_toggle_accent_all();
 				}
 				else
 				{
@@ -8238,19 +8243,13 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 
 		candidate = 0;	//Reset this status
 		npos = eof_get_note_pos(eof_song, eof_selected_track, i);
-		if(npos < x_tolerance)
-		{	//Avoid an underflow here
-			leftboundary = 0;
-		}
-		else
-		{
-			leftboundary = npos - x_tolerance;
-		}
 		if(effective_clickable_preference && (eof_vocals_selected || (hoverlane & eof_get_note_note(eof_song, eof_selected_track, i))))
 		{	//If the user enabled the preference to include note tails in the clickable area for notes, and the vocal track is active or the mouse is hovering over a lane this note uses
 			long next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);	//Find the next note in the track difficulty
 
 			nlen = eof_get_note_length(eof_song, eof_selected_track, i);
+			if(nlen > x_tolerance)
+				x_tolerance = 0;	//If the note is longer than the default tolerance provided for a note head and no note tail, remove the default tolerance
 			if(nlen < 0)
 			{	//If the note length was not retrievable
 				nlen = 0;
@@ -8276,6 +8275,14 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 		{	//Otherwise only include the note head as the clickable area, including the specified tolerance
 			nlen = 0;
 		}
+		if(npos < x_tolerance)
+		{	//Avoid an underflow here
+			leftboundary = 0;
+		}
+		else
+		{
+			leftboundary = npos - x_tolerance;
+		}
 		if(targetpos >= leftboundary)
 		{
 			if(targetpos <= npos + nlen + x_tolerance)
@@ -8285,11 +8292,12 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 			return -1;	//This and all remaining notes are after the target position, there can be no hover note
 
 		if(!candidate && snaplogic)
-		{	//If the position wasn't close enough to a note to be a match, but snaplogic is enabled, check the position's closes grid snap
+		{	//If the position wasn't close enough to a note to be a match, but snaplogic is enabled, check the position's closest grid snap
 			if(eof_pen_note.pos >= leftboundary)
 			{	//If the pen note is at/after this note's left-most clickable position (avoiding underflow)
 				if(eof_pen_note.pos <= npos + nlen + x_tolerance)
-					candidate = 1;	//This is a likely hover note
+					if(!effective_clickable_preference)	//Don't allow this logic when the clickable note/lyric tail preference is enabled, as it will improperly cause a note to be counted as hovered over
+						candidate = 1;	//This is a likely hover note
 			}
 			else
 				return -1;	//This and all remaining notes are after the target position, there can be no hover note
