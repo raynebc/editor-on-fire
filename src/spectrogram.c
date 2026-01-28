@@ -582,6 +582,11 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 		eof_log("Spectrogram: ALOGG failed to decode input audio file", 1);
 		done=-1;
 	}
+	else if(audio->len == 0)
+	{
+		eof_log("Spectrogram: ALOGG failed to process input audio file", 1);
+		done=-1;
+	}
 	else if((audio->bits != 8) && (audio->bits != 16))	//This logic currently only supports 8 and 16 bit audio
 	{
 		eof_log("Spectrogram: Invalid sample size", 1);
@@ -670,6 +675,7 @@ struct spectrogramstruct *eof_create_spectrogram(char *oggfilename)
 //Cleanup
 	alogg_destroy_ogg(oggstruct);
 	if(audio != NULL)
+		destroy_sample(audio);
 	if(oggbuffer)
 		free(oggbuffer);
 	if(done == -1)	//Unsuccessful completion

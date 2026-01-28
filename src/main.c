@@ -2055,6 +2055,14 @@ int eof_load_ogg_quick(char * filename)
 	if(loaded)
 	{
 		eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
+		if(!eof_music_length)
+		{
+			eof_log("\t\tFailed to process OGG file", 1);
+			alogg_destroy_ogg(eof_music_track);
+			eof_music_track = NULL;
+			free(eof_music_data);
+			loaded = -1;
+		}
 		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 	}
 	else
@@ -2149,18 +2157,26 @@ int eof_load_ogg(char * filename, char function)
 		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
 		if(eof_music_track)
 		{
-			loaded = 1;
 			eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoaded OGG file \"%s\" (%lums)", filename, eof_music_length);
-			eof_log(eof_log_string, 1);
-			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-			(void) ustrcpy(eof_loaded_ogg_name, output);	//Store the loaded OGG filename
-			eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
+			if(!eof_music_length)
+			{
+				alogg_destroy_ogg(eof_music_track);
+				eof_log("\t\t!Error:  ALOGG could not process audio", 1);
+			}
+			else
+			{
+				loaded = 1;
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoaded OGG file \"%s\" (%lums)", filename, eof_music_length);
+				eof_log(eof_log_string, 1);
+				eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+				(void) ustrcpy(eof_loaded_ogg_name, output);	//Store the loaded OGG filename
+				eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
+			}
 		}
 	}
 	if(!loaded)
 	{
-		allegro_message("Unable to load OGG file.\n%s\nMake sure your file is a valid OGG file.", ptr);
+		allegro_message("Unable to load OGG file.\n%s\nMake sure your file is a valid OGG file.  You may need to encode it to OGG outside of EOF.", ptr);
 		if(eof_music_data)
 		{
 			free(eof_music_data);
@@ -2219,7 +2235,7 @@ void eof_fix_waveform_graph(void)
 	if(eof_music_paused && eof_waveform)
 	{
 		eof_destroy_waveform(eof_waveform);
-		eof_waveform = eof_create_waveform_old(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
+		eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
 		if(eof_waveform)
 		{
 			eof_waveform_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu

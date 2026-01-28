@@ -1893,12 +1893,12 @@ int eof_menu_song_waveform(void)
 		{	//Don't try to generate the waveform data if the chart is playing
 			if(eof_waveform == NULL)
 			{
-				eof_waveform = eof_create_waveform_old(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
+				eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
 			}
 			else if(ustricmp(eof_waveform->oggfilename,eof_loaded_ogg_name) != 0)
 			{	//If the user opened a different OGG file since the waveform data was generated
 				eof_destroy_waveform(eof_waveform);
-				eof_waveform = eof_create_waveform_old(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
+				eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
 			}
 		}
 
@@ -1997,11 +1997,15 @@ static long get_ogg_length(const char * fn)
 	ogg = alogg_create_ogg_from_buffer(oggbuffer, (int)file_size_ex(fn));
 	if(ogg == NULL)
 	{
-		eof_log("ALOGG failed to open input audio file", 1);
+		eof_log("Error: ALOGG failed to open input audio file", 1);
 		free(oggbuffer);
 		return 0;	//Return failure
 	}
 	length = alogg_get_length_msecs_ogg_ul(ogg);
+	if(length == 0)
+	{
+		eof_log("Error: ALOGG failed to process input audio file", 1);
+	}
 	alogg_destroy_ogg(ogg);
 	free(oggbuffer);
 

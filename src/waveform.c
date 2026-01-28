@@ -286,157 +286,6 @@ void eof_render_waveform_line(unsigned int zeroamp, struct waveformchanneldata *
 	}
 }
 
-struct wavestruct *eof_create_waveform_new(char *oggfilename, unsigned long slicelength)
-{
-	ALOGG_OGG *oggstruct = NULL;
-	SAMPLE *audio = NULL;
-
-	struct wavestruct *waveform = NULL;
-	static struct wavestruct emptywaveform;	//all variables in this auto initialize to value 0
-	char done = 0;	//-1 on unsuccessful completion, 1 on successful completion
-	unsigned long slicenum = 0, slicesize = 0, total_samples = 0;
-	clock_t start, stop;
-	FILE *oggfp;
-
- 	eof_log("\tGenerating waveform", 1);
- 	eof_log("eof_create_waveform_new() entered", 1);
-
-	set_window_title("Generating Waveform Graph...");
-
-	if((oggfilename == NULL) || !slicelength)
-	{
-		eof_log("Waveform: Invalid parameters", 1);
-		return NULL;
-	}
-
-//Load OGG file into memory
-	start = clock();
-	oggfp = fopen(oggfilename, "rb");
-	if(!oggfp)
-	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Waveform: Failed to open input audio file: %s",strerror(errno));
-		eof_log(eof_log_string, 1);
-		return NULL;
-	}
-	oggstruct = alogg_create_ogg_from_file(oggfp);
-	if(oggstruct == NULL)
-	{
-		eof_log("Waveform: ALOGG failed to open input audio file", 1);
-		fclose(oggfp);
-		return NULL;
-	}
-	alogg_stop_ogg(oggstruct);
-	alogg_rewind_ogg(oggstruct);
-
-	total_samples = alogg_get_length_samples_ogg(oggstruct);	//Find the total number of samples that will be decoded
-	slicesize = alogg_get_wave_freq_ogg(oggstruct) * slicelength / 1000;	//Find the number of samples in each slice
-	if((alogg_get_wave_freq_ogg(oggstruct) * slicelength) % 1000)			//If there was any remainder
-		slicesize++;								//Increment the size of the slice
-	audio = create_sample(16, alogg_get_wave_is_stereo_ogg(oggstruct), alogg_get_wave_freq_ogg(oggstruct), slicesize);	//Allocate for enough samples to decode one slice at a time
-	if(!audio)
-	{
-		eof_log("Waveform: Unable to allocate sample buffer", 1);
-		done = -1;
-	}
-	else
-	{
-//Initialize waveform structure
-		waveform = (struct wavestruct *)malloc(sizeof(struct wavestruct));
-		if(waveform == NULL)
-		{
-			eof_log("Waveform: Unable to allocate memory for the waveform structure", 1);
-			done = -1;
-		}
-		else
-		{
-			*waveform = emptywaveform;					//Set all variables to value zero
-			waveform->slicelength = slicelength;
-			if(alogg_get_wave_is_stereo_ogg(oggstruct))	//If this audio file has two audio channels
-				waveform->is_stereo = 1;
-			else
-				waveform->is_stereo = 0;
-
-			if(audio->bits == 8)
-				waveform->zeroamp = 128;	//128 represents amplitude 0 for unsigned 8 bit audio samples
-			else
-				waveform->zeroamp = 32768;	//32768 represents amplitude 0 for unsigned 16 bit audio samples
-
-			waveform->oggfilename = (char *)malloc(strlen(oggfilename)+1);
-			if(waveform->oggfilename == NULL)
-			{
-				eof_log("Waveform: Unable to allocate memory for the audio filename string", 1);
-				done = -1;
-			}
-			else
-			{
-				waveform->slicesize = slicesize;
-
-				waveform->numslices = (double)total_samples / ((double)audio->freq * (double)slicelength / 1000.0);	//Find the number of slices to process
-				if(total_samples % waveform->numslices)		//If there's any remainder
-					waveform->numslices++;					//Increment the number of slices
-
-				strcpy(waveform->oggfilename,oggfilename);
-				waveform->oggstruct = oggstruct;
-				waveform->left.slices = (struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
-				if(waveform->left.slices == NULL)
-				{
-					eof_log("Waveform: Unable to allocate memory for the left channel waveform data", 1);
-					done = -1;
-				}
-				else if(waveform->is_stereo)	//If this OGG is stereo
-				{				//Allocate memory for the right channel waveform data
-					waveform->right.slices = (struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
-					if(waveform->right.slices == NULL)
-					{
-						eof_log("Waveform: Unable to allocate memory for the right channel waveform data", 1);
-						done = -1;
-					}
-				}
-			}
-		}
-	}
-
-	while(!done)
-	{
-		done = eof_process_next_waveform_slice_new(waveform, audio, slicenum++);
-	}
-
-//Cleanup
-	alogg_destroy_ogg(oggstruct);
-	if(audio != NULL)
-		destroy_sample(audio);
-	fclose(oggfp);
-	if(done == -1)	//Unsuccessful completion
-	{
-		if(waveform)
-		{
-			if(waveform->oggfilename)
-				free(waveform->oggfilename);
-			free(waveform);
-		}
-		allegro_message("Failed to generate waveform.  See log for details");
-		return NULL;	//Return error
-	}
-
-	//Cache the difference between each channel's zero amplitude and its maximum amplitude for optimized rendering
-	if(waveform->left.maxamp > waveform->zeroamp)
-		waveform->left.maxampoffset = waveform->left.maxamp - waveform->zeroamp;
-	else
-		waveform->left.maxampoffset = waveform->zeroamp - waveform->left.maxamp;
-	if(waveform->is_stereo)
-	{	//If there is right channel waveform data
-		if(waveform->right.maxamp > waveform->zeroamp)
-			waveform->right.maxampoffset = waveform->right.maxamp - waveform->zeroamp;
-		else
-			waveform->right.maxampoffset = waveform->zeroamp - waveform->right.maxamp;
-	}
-
-	stop = clock();
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWaveform generated in %f seconds", (double)(stop - start) / (double)CLOCKS_PER_SEC);
-	eof_log(eof_log_string, 1);
-	return waveform;	//Return waveform data
-}
-
 int eof_decode_one_ogg_buffer(ALOGG_OGG *ogg, SAMPLE *sample)
 {
 	unsigned long ctr, sample_len_bytes;
@@ -504,119 +353,6 @@ int eof_decode_ogg_samples(ALOGG_OGG *ogg, SAMPLE *sample, unsigned long count)
 	return 1;	//Success
 }
 
-int eof_process_next_waveform_slice_new(struct wavestruct *waveform, SAMPLE *audio, unsigned long slicenum)
-{
-	unsigned long sampleindex = 0;	//The byte index into audio->data
-	unsigned long samplesize = 0;	//Number of bytes for each sample: 1 for 8 bit audio, 2 for 16 bit audio.  Doubled for stereo
-	unsigned long ctr = 0;
-	double sum;			//Stores the sums of each sample's square (for finding the root mean square)
-	double rms;			//Stores the root square mean
-	unsigned min;		//Stores the lowest amplitude for the slice
-	unsigned peak;		//Stores the highest amplitude for the slice
-	unsigned long sample = 0;
-	char firstread;		//Set to nonzero after the first sample is read into the min/max variables
-	char channel = 0;
-	struct waveformslice *dest;	//The structure to write this slice's data to
-	char outofsamples = 0;		//Will be set to 1 if all samples in the audio structure have been processed
-
-///DEBUG
-static unsigned long sliceprintcount = 0;
-static int nonzero = 0;
-unsigned long samplecount = 0;
-int thisnonzero = 0;
-
-//Validate parameters
-	if((waveform == NULL) || (waveform->left.slices == NULL) || (audio == NULL))
-		return -1;	//Return error
-
-	if(waveform->is_stereo && (waveform->right.slices == NULL))
-		return -1;	//Return error
-
-	if((slicenum >= waveform->numslices))	//If this is more than the number of slices that were supposed to be read
-		return 1;	//Return out of samples
-
-	samplesize = audio->bits / 8;
-	if(waveform->is_stereo)		//Stereo data is interleaved as left channel, right channel, ...
-		samplesize += samplesize;	//Double the sample size
-
-	if(!eof_decode_one_ogg_buffer(waveform->oggstruct, audio))	//If one buffer's worth of samples couldn't be decoded
-		return -1;	//Return error
-
-	for(channel = 0; channel <= waveform->is_stereo; channel++)	//Process loop once for mono track, twice for stereo track
-	{
-//Initialize processing for this audio channel
-		sum = rms = min = peak = firstread = 0;
-		sampleindex = 0;	//Since each slice's PCM samples are decoded at the start of this function call, always start with the first sample in the buffer
-
-		if(channel)							//If processing the sample for the right channel
-			sampleindex += (audio->bits / 8);	//Seek past the left channel sample
-
-//Process audio samples for this channel
-		for(ctr = 0; ctr < waveform->slicesize; ctr++)
-		{
-			sample = ((unsigned char *)audio->data)[sampleindex];	//Store first sample byte (Allegro documentation states the sample data is stored in unsigned format)
-			if(audio->bits > 8)	//If this sample is more than one byte long (16 bit)
-				sample += ((unsigned char *)audio->data)[sampleindex+1]<<8;	//Assume little endian byte order, read the next (high byte) of data
-
-			if(!firstread)			//If this is the first sample
-			{
-				min = peak = sample;	//Assume it is the highest and lowest amplitude until found otherwise
-				firstread = 1;
-			}
-			else					//Track the highest and lowest amplitude
-			{
-				if(sample > peak)
-					peak = sample;
-				if(sample < min)
-					min = sample;
-			}
-
-///DEBUG
-if((sliceprintcount < 2) && (nonzero || (sample != waveform->zeroamp)))
-{
-if(!thisnonzero)
-{
-(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Slicenum %lu: (%lu samples)", slicenum, waveform->slicesize);
-eof_log(eof_log_string, 1);
-nonzero = 1;
-thisnonzero = 1;
-}
-(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%lu:%lX", samplecount, sample);
-eof_log(eof_log_string, 1);
-}
-samplecount++;
-
-			sum += ((double)sample*sample)/waveform->slicesize;	//Add the square of this sample divided by the number of samples to read
-			sampleindex += samplesize;		//Adjust index to point to next sample for this channel
-		}
-		rms = sqrt(sum);
-
-//Store results to the appropriate channel's waveform data array
-		if(channel == 0)
-		{
-			dest = &(waveform->left.slices[slicenum]);	//Store results to mono/left channel array
-			if(peak > waveform->left.maxamp)
-				waveform->left.maxamp = peak;	//Track absolute maximum amplitude of mono/left channel
-		}
-		else
-		{
-			dest = &(waveform->right.slices[slicenum]);	//Store results to right channel array
-			if(peak > waveform->right.maxamp)
-				waveform->right.maxamp = peak;	//Track absolute maximum amplitude of right channel
-		}
-
-		dest->min = min;
-		dest->peak = peak;
-		dest->rms = rms;
-	}
-
-///DEBUG
-if(nonzero)
-sliceprintcount++;
-
-	return outofsamples;	//Return success/completed status
-}
-
 void eof_dump_waveform_data(struct wavestruct *waveform, char *filename)
 {
 	PACKFILE *fp;
@@ -656,7 +392,7 @@ void eof_dump_waveform_data(struct wavestruct *waveform, char *filename)
 	pack_fclose(fp);
 }
 
-struct wavestruct *eof_create_waveform_old(char *oggfilename, unsigned long slicelength)
+struct wavestruct *eof_create_waveform(char *oggfilename, unsigned long slicelength)
 {
 	ALOGG_OGG *oggstruct = NULL;
 	SAMPLE *audio = NULL;
@@ -668,7 +404,7 @@ struct wavestruct *eof_create_waveform_old(char *oggfilename, unsigned long slic
 	clock_t start, stop;
 
  	eof_log("\tGenerating waveform", 1);
- 	eof_log("eof_create_waveform_old() entered", 1);
+ 	eof_log("eof_create_waveform() entered", 1);
 
 	set_window_title("Generating Waveform Graph...");
 
@@ -707,6 +443,11 @@ struct wavestruct *eof_create_waveform_old(char *oggfilename, unsigned long slic
 		eof_log("Waveform: Invalid sample size", 1);
 		done = -1;
 	}
+	else if(audio->len == 0)
+	{
+		eof_log("Waveform: Failed to parse OGG", 1);
+		done = -1;
+	}
 	else
 	{
 //Initialize waveform structure
@@ -743,23 +484,31 @@ struct wavestruct *eof_create_waveform_old(char *oggfilename, unsigned long slic
 					waveform->slicesize++;								//Increment the size of the slice
 
 				waveform->numslices = (double)audio->len / ((double)audio->freq * (double)slicelength / 1000.0);	//Find the number of slices to process
-				if(audio->len % waveform->numslices)		//If there's any remainder
-					waveform->numslices++;					//Increment the number of slices
-
-				strcpy(waveform->oggfilename,oggfilename);
-				waveform->left.slices = (struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
-				if(waveform->left.slices == NULL)
+				if(!waveform->numslices)
 				{
-					eof_log("Waveform: Unable to allocate memory for the left channel waveform data", 1);
+					eof_log("Waveform: Error processing audio", 1);
 					done = -1;
 				}
-				else if(waveform->is_stereo)	//If this OGG is stereo
-				{				//Allocate memory for the right channel waveform data
-					waveform->right.slices = (struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
-					if(waveform->right.slices == NULL)
+				else
+				{
+					if(audio->len % waveform->numslices)		//If there's any remainder
+						waveform->numslices++;					//Increment the number of slices
+
+					strcpy(waveform->oggfilename,oggfilename);
+					waveform->left.slices = (struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
+					if(waveform->left.slices == NULL)
 					{
-						eof_log("Waveform: Unable to allocate memory for the right channel waveform data", 1);
+						eof_log("Waveform: Unable to allocate memory for the left channel waveform data", 1);
 						done = -1;
+					}
+					else if(waveform->is_stereo)	//If this OGG is stereo
+					{				//Allocate memory for the right channel waveform data
+						waveform->right.slices = (struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
+						if(waveform->right.slices == NULL)
+						{
+							eof_log("Waveform: Unable to allocate memory for the right channel waveform data", 1);
+							done = -1;
+						}
 					}
 				}
 			}

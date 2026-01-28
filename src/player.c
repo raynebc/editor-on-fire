@@ -23,6 +23,12 @@ void eof_music_play(char resumelastspeed)
 		eof_log("\tInvalid playback conditions", 3);
 		return;
 	}
+	if(!eof_music_length)
+	{
+		eof_log("\tAudio not properly loaded", 1);
+		allegro_message("Warning:  Chart audio was not successfully loaded and is probably incompatible.  Please re-encode it to 44.1KHz stereo and reload the audio");
+		return ;
+	}
 	eof_music_paused = 1 - eof_music_paused;
 	if(!resumelastspeed)
 	{	//If the previous playback speed isn't being re-used, determine what speed to play at

@@ -4026,7 +4026,7 @@ void eof_track_rebuild_rs_tone_changes_list_strings(void)
 {
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned long tracknum, ctr;
-	size_t stringlen;
+	size_t stringlen = 0;
 	char *suffix, blank[] = "", def[] = " (D)", defaultfound = 0;
 
 	if(!eof_song_loaded || !eof_song || (!eof_track_is_pro_guitar_track(eof_song, eof_selected_track)))
@@ -4052,7 +4052,7 @@ void eof_track_rebuild_rs_tone_changes_list_strings(void)
 			stringlen += strlen(def);
 			defaultfound = 1;	//Track that at least one tone change still uses the default tone
 		}
-		stringlen = (size_t)snprintf(NULL, 0, "%02d:%02d.%03d: %s%s", ism, iss, isms, tp->tonechange[ctr].name, suffix) + 1;	//Find the number of characters needed to snprintf this string
+		stringlen += (size_t)snprintf(NULL, 0, "%02d:%02d.%03d: %s%s", ism, iss, isms, tp->tonechange[ctr].name, suffix) + 1;	//Find the number of characters needed to snprintf this string
 		eof_track_rs_tone_changes_list_strings[ctr] = malloc(stringlen);	//Allocate memory to build the string
 		if(!eof_track_rs_tone_changes_list_strings[ctr])
 		{

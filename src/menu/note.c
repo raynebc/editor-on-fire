@@ -115,7 +115,7 @@ MENU eof_lyric_line_menu[] =
 	{"Split &After selected", eof_menu_note_split_lyric_line_after_selected, NULL, 0, NULL},
 	{"Re&Pair timing", eof_menu_note_lyric_line_repair_timing, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
-	{"Toggle &Overdrive", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
+	{"Toggle &Overdrive\t" CTRL_NAME "+,", eof_menu_lyric_line_toggle_overdrive, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

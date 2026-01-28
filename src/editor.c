@@ -2008,26 +2008,35 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	}
 
 	/* decrease grid snap (,) */
+	/* toggle lyric line overdrive (CTRL+,) */
 	/* zoom out (ALT+,) */
 	if(eof_key_char == ',')
 	{
-		if(eof_input_mode == EOF_INPUT_FEEDBACK)
-		{	//If Feedback input method is in effect
-			stop_sample(eof_sound_grid_snap);
-			(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+		if(!KEY_EITHER_CTRL)
+		{	//CTRL is not held
+			if(eof_input_mode == EOF_INPUT_FEEDBACK)
+			{	//If Feedback input method is in effect
+				stop_sample(eof_sound_grid_snap);
+				(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+			}
+			eof_snap_mode--;
+			if(eof_snap_mode < 0)
+			{
+				eof_snap_mode = EOF_SNAP_NINTY_SIXTH;
+			}
+			eof_fixup_notes(eof_song);	//Run the fixup logic for all tracks, so that if the "Highlight non grid snapped notes" feature is in use, the highlighting can discontinue taking the custom grid snap into account
+			(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
+			eof_use_key();
 		}
-		eof_snap_mode--;
-		if(eof_snap_mode < 0)
-		{
-			eof_snap_mode = EOF_SNAP_NINTY_SIXTH;
-		}
-		eof_fixup_notes(eof_song);	//Run the fixup logic for all tracks, so that if the "Highlight non grid snapped notes" feature is in use, the highlighting can discontinue taking the custom grid snap into account
-		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
-		eof_use_key();
 	}
 	if((eof_key_code == KEY_COMMA) && KEY_EITHER_ALT)
 	{	//ALT keyboard shortcuts must test the key scan code because ASCII code won't work with modifiers
 		(void) eof_menu_edit_zoom_helper_out();
+		eof_use_key();
+	}
+	if((eof_key_code == KEY_COMMA) && KEY_EITHER_CTRL)
+	{
+		(void) eof_menu_lyric_line_toggle_overdrive();
 		eof_use_key();
 	}
 

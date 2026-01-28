@@ -195,6 +195,7 @@ int eof_copy_file(const char * src, const char * dest)
 	void *ptr = NULL;	//Used to buffer memory
 	unsigned long src_size = 0;
 	unsigned long i;
+	long long_src_size;
 
  	eof_log("eof_copy_file() entered", 1);
 
@@ -207,6 +208,7 @@ int eof_copy_file(const char * src, const char * dest)
 	eof_log(eof_log_string, 1);
 
 	src_size = (unsigned long)file_size_ex(src);
+	long_src_size = src_size;
 	if(src_size > LONG_MAX)
 		return 0;	//Unable to validate I/O due to Allegro's usage of signed values
 	src_fp = pack_fopen(src, "r");
@@ -226,21 +228,43 @@ int eof_copy_file(const char * src, const char * dest)
 	ptr = malloc((size_t)src_size);
 	if(ptr != NULL)
 	{	//If a buffer large enough to store the input file was created
-		long long_src_size = src_size;
-		eof_log("\tBuffer copying", 1);
-		if((pack_fread(ptr, long_src_size, src_fp) != long_src_size) || (pack_fwrite(ptr, long_src_size, dest_fp) != long_src_size))
-		{	//If there was an error reading from file or writing from memory
+		long bytes_read, bytes_written;
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tBuffer copying %ld bytes", long_src_size);
+		eof_log(eof_log_string, 1);
+		bytes_read = pack_fread(ptr, long_src_size, src_fp);
+		if(bytes_read != long_src_size)
+		{
+			eof_log("\t\tError reading to memory", 1);
 			free(ptr);	//Release buffer
 			return 0;	//Return error
 		}
+		bytes_written = pack_fwrite(ptr, long_src_size, dest_fp);
 		free(ptr);	//Release buffer
+		if(bytes_written != long_src_size)
+		{
+			eof_log("\t\tError writing to disk", 1);
+			return 0;	//Return error
+		}
 	}
 	else
 	{	//Otherwise copy the slow way (one byte at a time)
-		eof_log("\tByte by byte copying", 1);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tByte by byte copying %ld bytes", long_src_size);
+		eof_log(eof_log_string, 1);
 		for(i = 0; i < src_size; i++)
 		{
-			(void) pack_putc(pack_getc(src_fp), dest_fp);
+			int byte = pack_getc(src_fp);
+			if(byte == EOF)
+			{
+				eof_log("\t\tError reading source file", 1);
+				free(ptr);	//Release buffer
+				return 0;	//Return error
+			}
+			if(pack_putc(byte, dest_fp) == EOF)
+			{
+				eof_log("\t\tError writing destination file", 1);
+				free(ptr);	//Release buffer
+				return 0;	//Return error
+			}
 		}
 	}
 	(void) pack_fclose(src_fp);
