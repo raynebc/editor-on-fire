@@ -604,6 +604,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if any beat in the project has a tempo lower than the specified [NUMBER] of beats per minute, in which case the %FIRST_BEAT_SUBCEEDING_TEMPO% macro will print the location of the first offending beat.</td>
 </tr>
 <tr>
+<td>%IF_ANY_TEMPO_EXCEEDS_[NUMBER]%</td>
+<td>Evaluates as true if any beat in the project has a tempo higher than the specified [NUMBER] of beats per minute, in which case the %FIRST_BEAT_EXCEEDING_TEMPO% macro will print the location of the first offending beat.</td>
+</tr>
+<tr>
 <td>%IF_ACTIVE_TRACK_ANY_FHP_EXCEEDS_[NUMBER]%</td>
 <td>Evaluates as true if the active pro guitar track has any fret hand positions higher than the specified fret [NUMBER], in which case the %RS_FIRST_FHP_EXCEEDING_NUMBER% macro will print the location of the first offending fret hand position.  If a fret hand position in an inactive track meets this condition, %IF_INACTIVE_TRACKS_HAVE_RS_ERRORS% will evaluate as true.</td>
 </tr>
@@ -1130,6 +1134,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%FIRST_BEAT_SUBCEEDING_TEMPO%</td>
 <td>Prints the location of the first culprit of the %IF_ANY_TEMPO_SUBCEEDS_[NUMBER]% conditional macro (the first beat with a tempo slower than the specified BPM).</td>
+</tr>
+<tr>
+<td>%FIRST_BEAT_EXCEEDING_TEMPO%</td>
+<td>Prints the location of the first culprit of the %IF_ANY_TEMPO_EXCEEDS_[NUMBER]% conditional macro (the first beat with a tempo faster than the specified BPM).</td>
 </tr>
 <tr>
 <td>%RS_FIRST_FHP_EXCEEDING_NUMBER%</td>

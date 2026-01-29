@@ -6611,6 +6611,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	{	//The playback controls will not be accessible if the 3D preview window is rendering over it
 		if(window != eof_window_editor2)
 		{	//Only draw these controls for the main piano roll
+			unsigned min, sec;
 			if(eof_selected_control < 0)
 			{
 				draw_sprite(eof_screen, eof_image[EOF_IMAGE_CONTROLS_BASE], eof_screen_layout.controls_x, 22 + 8);
@@ -6619,7 +6620,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			{
 				draw_sprite(eof_screen, eof_image[EOF_IMAGE_CONTROLS_0 + eof_selected_control], eof_screen_layout.controls_x, 22 + 8);
 			}
-			textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02lu:%02lu", ((eof_music_pos.value - eof_av_delay) / 1000) / 60, ((eof_music_pos.value - eof_av_delay) / 1000) % 60);
+			eof_build_mmssms_string(eof_music_pos.value - eof_av_delay, &min, &sec, NULL, NULL);
+			textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02u:%02u", min, sec);
 		}
 	}
 

@@ -132,8 +132,9 @@ unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, uns
 	//The note count in the section with the most notes is returned via *max if maxptr is not NULL
 	//Returns the total number of section notes in the active track, or 0 on error
 
-void eof_notes_panel_print_time(unsigned long time, char *dest_buffer, unsigned long dest_buffer_size, int timeformat);
+void eof_notes_panel_print_time(unsigned long time, char *dest_buffer, int timeformat);
 	//Writes the specified timestamp to the specified buffer
-	//If timeformat is zero, the time is written as milliseconds, otherwise as mm:ss.ms
+	//If timeformat is zero, the time is written as milliseconds (#ms), otherwise as mm:ss.ms (two digit minutes, two digit seconds, 3 digit milliseconds)
+	//dest_buffer is required to be at least 10 characters long to account for this formatted string
 
 #endif

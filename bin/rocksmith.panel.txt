@@ -8,6 +8,10 @@ Rocksmith Panel (%TEXT_FILE%)
 
 %!IF_TEMPO_MAP_LOCKED%%IF_CHART_HAS_ANY_NOTES%%DISPLAY_ALERT%Tempo map is unlocked.
 
+;Tempo checks
+%IF_ANY_TEMPO_SUBCEEDS_40%%DISPLAY_ERROR%At least one tempo change is less than 40BPM:%NEWLINE%%FIRST_BEAT_SUBCEEDING_TEMPO%
+%IF_ANY_TEMPO_EXCEEDS_300%%DISPLAY_ERROR%At least one tempo change is more than 300BPM:%NEWLINE%%FIRST_BEAT_EXCEEDING_TEMPO%
+
 ;Metadata checks
 %!IF_SONG_TITLE_IS_DEFINED%%DISPLAY_ERROR%Song title is undefined.
 %!IF_ARTIST_NAME_IS_DEFINED%%DISPLAY_ERROR%Artist name is undefined.

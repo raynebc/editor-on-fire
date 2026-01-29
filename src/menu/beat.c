@@ -1145,8 +1145,7 @@ int eof_menu_beat_reset_offset(void)
 
 int eof_menu_beat_anchor(void)
 {
-	int mm, ss, ms;
-	int oldmm, oldss, oldms;
+	unsigned mm, ss, ms, oldmm, oldss, oldms;
 	unsigned long oldpos;
 	unsigned long newpos = 0;
 	int revert = 0;
@@ -1166,10 +1165,7 @@ int eof_menu_beat_anchor(void)
 	eof_render();
 	eof_color_dialog(eof_anchor_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_anchor_dialog);
-	oldmm = (eof_song->beat[eof_selected_beat]->pos / 1000) / 60;
-	oldss = (eof_song->beat[eof_selected_beat]->pos / 1000) % 60;
-	oldms = (eof_song->beat[eof_selected_beat]->pos) % 1000;
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%02d:%02d.%03d", oldmm, oldss, oldms);
+	eof_build_mmssms_string(eof_song->beat[eof_selected_beat]->pos, &oldmm, &oldss, &oldms, eof_etext2);
 	if(eof_popup_dialog(eof_anchor_dialog, 2) == 4)
 	{	//If the user clicked OK
 		ttext[0] = eof_etext2[0];
@@ -1899,6 +1895,7 @@ char * eof_events_list_all(int index, int * size)
 	char trackname[26] = {0};
 	char eventflags[30] = {0};
 	unsigned long x, count = 0, realindex;
+	unsigned min, sec, ms;
 
 	if(index < 0)
 	{	//Signal to return the list count
@@ -1970,7 +1967,8 @@ char * eof_events_list_all(int index, int * size)
 		}
 
 		eventpos = eof_get_text_event_pos(eof_song, realindex);
-		(void) snprintf(eof_event_list_text[index], sizeof(eof_event_list_text[index]) - 1, "(%02lu:%02lu.%03lu%s) %s", eventpos / 60000, (eventpos / 1000) % 60, eventpos % 1000, eventflags, eof_song->text_event[realindex]->text);
+		eof_build_mmssms_string(eventpos, &min, &sec, &ms, NULL);
+		(void) snprintf(eof_event_list_text[index], sizeof(eof_event_list_text[index]) - 1, "(%02u:%02u.%03u%s) %s", min, sec, ms, eventflags, eof_song->text_event[realindex]->text);
 		return eof_event_list_text[index];
 	}
 	return NULL;

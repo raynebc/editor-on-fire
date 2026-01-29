@@ -1254,3 +1254,31 @@ int eof_string_is_zero(char *string)
 
 	return 1;	//At least one zero and optionally a decimal point and one or more zeros were read
 }
+
+void eof_build_mmssms_string(unsigned long mspos, unsigned *min, unsigned *sec, unsigned *ms, char *string)
+{
+	unsigned ism, iss, isms;
+
+	ism = (mspos / 1000) / 60;
+	iss = (mspos / 1000) % 60;
+	isms = (mspos % 1000);
+
+	if(min)
+		*min = ism;	//If the calling function wanted to store the minutes, do so
+	if(sec)
+		*sec = iss;	//If the calling function wanted to store the seconds, do so
+	if(ms)
+		*ms = isms;	//If the calling function wanted to store the milliseconds, do so
+
+	if(string)
+	{	//If the calling function wants the formatted string
+		if(ism > 99)
+		{	//The timestamp is too large to display with only two digits
+			(void) sprintf(string, ">=100min");
+		}
+		else
+		{
+			(void) sprintf(string, "%02u:%02u.%03u", ism, iss, isms);
+		}
+	}
+}

@@ -1318,9 +1318,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 						section[strlen(section) - 1] = '\0';	//Truncate it from the end of the string
 					}
 				}
-				min = eventpos / 60000;
-				sec = (eventpos / 1000) % 60;
-				ms = eventpos % 1000;
+				eof_build_mmssms_string(eventpos, &min, &sec, &ms, NULL);
 				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\%s\"\n", min, sec, ms, section);	//Use this if IMMERROCK can display section names
 				(void) pack_fputs(temp_string, fp);	//Write section entry
 				lasteventpos = eventpos;	//Track the position of the last event that was exported
@@ -1333,9 +1331,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	if(fp)
 	{	//If any sections were written
 		eventpos = eof_determine_chart_length(sp) + 1;	//Obtain the timestamp of the end of the project's content, plus 1 millisecond
-		min = eventpos / 60000;
-		sec = (eventpos / 1000) % 60;
-		ms = eventpos % 1000;
+		eof_build_mmssms_string(eventpos, &min, &sec, &ms, NULL);
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\"\n", min, sec, ms);
 		(void) pack_fputs(temp_string, fp);	//Write an empty section  at that position
 		(void) pack_fclose(fp);
@@ -1474,7 +1470,8 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Year=%s\n", sp->tags->year);
 		(void) pack_fputs(temp_string, fp);	//Write release year
 	}
-	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Min:Sec=%lu:%02lu\n", eof_music_length / 60000, (eof_music_length / 1000) % 60);
+	eof_build_mmssms_string(eof_music_length, &min, &sec, NULL, NULL);
+	(void) snprintf(temp_string, sizeof(temp_string) - 1, "Min:Sec=%u:%02u\n", min, sec);
 	(void) pack_fputs(temp_string, fp);		//Write song length
 	avg_tempo = 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats);
 	(void) snprintf(temp_string, sizeof(temp_string) - 1, "BPM=%lu\n", (unsigned long)(avg_tempo + 0.5));

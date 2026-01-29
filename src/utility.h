@@ -114,4 +114,10 @@ int eof_string_is_zero(char *string);
 	//Returns nonzero if string is a proper representation of the number zero
 	//To be used to verify whether the return value of atof() being zero is meant to be an error or a conversion of the number 0
 
+void eof_build_mmssms_string(unsigned long mspos, unsigned *min, unsigned *sec, unsigned *ms, char *string);
+	//Converts the given millisecond timestamp into minutes, seconds and milliseconds, returning those through the unsigned pointers if they are not NULL
+	//If string is not NULL, the formatted string (mm:ss.mss) is written into it (two digit minutes, two digit seconds, two digit milliseconds)
+	//If the timestamp is >= 100 minutes, it won't be able to be represented this way and the string ">=100min" is written instead
+	//string is required to be a buffer at least 10 characters in size to store this string.
+
 #endif

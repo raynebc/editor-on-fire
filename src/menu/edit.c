@@ -2008,7 +2008,7 @@ int eof_menu_edit_paste_logic(int function)
 									{	//If the nearest beat interval position was determined
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Correcting tech note paste position from %lums to %lums", tnpos, closestpos);
 										eof_log(eof_log_string, 1);
-										tnpos = closestpos;	//Update the destination timestamp for the fhp
+										tnpos = closestpos;	//Update the destination timestamp for the tech note
 									}
 								}
 							}

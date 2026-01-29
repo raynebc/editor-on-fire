@@ -36,6 +36,7 @@ char eof_notes_macro_pitched_slide_missing_end_fret[50];
 char eof_notes_macro_bend_missing_strength[50];
 char eof_notes_macro_open_note_bend[50];
 char eof_notes_macro_tempo_subceeding_number[50];
+char eof_notes_macro_tempo_exceeding_number[50];
 char eof_notes_macro_fhp_exceeding_number[50];
 char eof_notes_macro_note_exceeding_fret[50];
 char eof_notes_macro_note_exceeding_diff[50];
@@ -1359,7 +1360,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if((eof_song->vocal_track[0]->lyric[ctr]->note == EOF_LYRIC_PERCUSSION) || (eof_find_lyric_line(ctr) != NULL))
 				continue;	//If this lyric is vocal percussion or is within a line, skip it
 
-			eof_notes_panel_print_time(eof_song->vocal_track[0]->lyric[ctr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+			eof_notes_panel_print_time(eof_song->vocal_track[0]->lyric[ctr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 			snprintf(eof_notes_macro_lyric_outside_line, sizeof(eof_notes_macro_lyric_outside_line) - 1, "%s - pos %s", eof_song->track[EOF_TRACK_VOCALS]->name, time_string);	//Write a string identifying the offending note
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -1455,7 +1456,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if((eof_song->vocal_track[0]->lyric[ctr]->text[0] != '\0') && (eof_string_has_non_ascii(eof_song->vocal_track[0]->lyric[ctr]->text)))
 			{	//If any of the lyrics that contain text have non ASCII characters
 				char time_string[15] = {0};
-				eof_notes_panel_print_time(eof_song->vocal_track[0]->lyric[ctr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+				eof_notes_panel_print_time(eof_song->vocal_track[0]->lyric[ctr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 				snprintf(eof_notes_macro_lyric_with_non_ascii, sizeof(eof_notes_macro_lyric_with_non_ascii) - 1, "%s - pos %s", eof_song->track[EOF_TRACK_VOCALS]->name, time_string);	//Write a string identifying the offending note
 				dest_buffer[0] = '\0';
 				return 3;	//True
@@ -1688,7 +1689,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
 							continue;	//Stop processing the rest of this track
 						}
-						eof_notes_panel_print_time(tp->pgnote[0]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						eof_notes_panel_print_time(tp->pgnote[0]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 						snprintf(eof_notes_macro_note_occurs_before_millis, sizeof(eof_notes_macro_note_occurs_before_millis) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[0]->type, time_string);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						retval = 3;	//True
@@ -1881,7 +1882,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								notectr = tp->pgnotes;	//Set a condition to break from the note loop
 								break;	//Break from string loop
 							}
-							eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+							eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 							snprintf(eof_notes_macro_pitched_slide_missing_linknext, sizeof(eof_notes_macro_pitched_slide_missing_linknext) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
 							retval = 3;	//True
@@ -1928,7 +1929,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							tonectr = tp->tonechanges;		//Trigger a condition to break out of tone loop
 							break;	//Break out of note loop
 						}
-						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 						snprintf(eof_notes_macro_note_starting_on_tone_change, sizeof(eof_notes_macro_note_starting_on_tone_change) - 1, "%s -diff %u: pos %s (%s)", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string, tp->tonechange[tonectr].name);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						retval = 3;	//True
@@ -2065,7 +2066,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
 						break;	//Stop processing the rest of this track
 					}
-					eof_notes_panel_print_time(tp->pgnote[ctr2]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+					eof_notes_panel_print_time(tp->pgnote[ctr2]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 					snprintf(eof_notes_macro_note_subceeding_fhp, sizeof(eof_notes_macro_note_subceeding_fhp) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, time_string);	//Write a string identifying the offending note
 					dest_buffer[0] = '\0';
 					retval = 3;	//True
@@ -2110,7 +2111,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
 								break;	//Stop processing the rest of this track
 							}
-							eof_notes_panel_print_time(tp->pgnote[ctr2]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+							eof_notes_panel_print_time(tp->pgnote[ctr2]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 							snprintf(eof_notes_macro_note_exceeding_fhp, sizeof(eof_notes_macro_note_exceeding_fhp) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[ctr2]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
 							retval = 3;	//True
@@ -2163,7 +2164,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 									notectr = tp->pgnotes;	//Set a condition to break from the note loop
 									break;	//Break from string loop
 								}
-								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_pitched_slide_missing_end_fret, sizeof(eof_notes_macro_pitched_slide_missing_end_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
@@ -2221,7 +2222,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 										notectr = tp->pgnotes;	//Set a condition to break from note loop
 										break;	//Break from string loop
 									}
-									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 									snprintf(eof_notes_macro_bend_missing_strength, sizeof(eof_notes_macro_bend_missing_strength) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 									dest_buffer[0] = '\0';
 									retval = 3;	//True
@@ -2278,7 +2279,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 									notectr = tp->pgnotes;	//Set a condition to break from note loop
 									break;	//Break from string loop
 								}
-								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_open_note_bend, sizeof(eof_notes_macro_open_note_bend) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
@@ -2382,8 +2383,34 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				if((unsigned long)(thistempo + DBL_EPSILON) < tempo)
 				{	//Accounting for floating point precision limitations, if the tempo on this beat is lower than the target
 					char time_string[15] = {0};
-					eof_notes_panel_print_time(eof_song->beat[ctr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+					eof_notes_panel_print_time(eof_song->beat[ctr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 					snprintf(eof_notes_macro_tempo_subceeding_number, sizeof(eof_notes_macro_tempo_subceeding_number) - 1, "Beat #%lu : pos %s : %.2fBPM", ctr, time_string, thistempo);	//Write a string identifying the offending beat
+					dest_buffer[0] = '\0';
+					return 3;	//True
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
+	count_string = strcasestr_spec(macro, "IF_ANY_TEMPO_EXCEEDS_");	//Get a pointer to the text that would be the tempo (integer)
+	if(count_string)
+	{	//If the macro is this string
+		unsigned long tempo;
+		double thistempo;
+
+		eof_notes_macro_tempo_exceeding_number[0] = '\0';	//Erase this string
+		if(eof_read_macro_number(count_string, &tempo))
+		{	//If the tempo was successfully parsed
+			for(ctr = 0; ctr < eof_song->beats; ctr++)
+			{	//For each beat in the project
+				thistempo = 60000000.0 / (double)eof_song->beat[ctr]->ppqn;
+				if((unsigned long)(thistempo + DBL_EPSILON) > tempo)
+				{	//Accounting for floating point precision limitations, if the tempo on this beat is greater than the target
+					char time_string[15] = {0};
+					eof_notes_panel_print_time(eof_song->beat[ctr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
+					snprintf(eof_notes_macro_tempo_exceeding_number, sizeof(eof_notes_macro_tempo_exceeding_number) - 1, "Beat #%lu : pos %s : %.2fBPM", ctr, time_string, thistempo);	//Write a string identifying the offending beat
 					dest_buffer[0] = '\0';
 					return 3;	//True
 				}
@@ -2421,7 +2448,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 								eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
 								break;	//Stop processing the rest of this track
 							}
-							eof_notes_panel_print_time(tp->handposition[ctr2].start_pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+							eof_notes_panel_print_time(tp->handposition[ctr2].start_pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 							snprintf(eof_notes_macro_fhp_exceeding_number, sizeof(eof_notes_macro_fhp_exceeding_number) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->handposition[ctr2].difficulty, time_string);	//Write a string identifying the offending FHP
 							dest_buffer[0] = '\0';
 							retval = 3;	//True
@@ -2462,7 +2489,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
 							break;	//Stop processing the rest of this track
 						}
-						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 						snprintf(eof_notes_macro_note_exceeding_fret, sizeof(eof_notes_macro_note_exceeding_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						retval = 3;	//True
@@ -2503,7 +2530,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 							eof_notes_inactive_track_has_rs_errors = 1;	//Track that an inactive track has a Rocksmith error
 							break;	//Stop processing the rest of this track
 						}
-						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 						snprintf(eof_notes_macro_note_exceeding_diff, sizeof(eof_notes_macro_note_exceeding_diff) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 						dest_buffer[0] = '\0';
 						retval = 3;	//True
@@ -2558,7 +2585,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 										notectr = tp->pgnotes;	//Set a condition to break from note loop
 										break;	//Break from string loop
 									}
-									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+									eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 									snprintf(eof_notes_macro_slide_exceeding_fret, sizeof(eof_notes_macro_slide_exceeding_fret) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 									dest_buffer[0] = '\0';
 									retval = 3;	//True
@@ -2647,7 +2674,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						eof_notes_inactive_track_has_rs_warnings = 1;	//Track that an inactive track has a Rocksmith warning
 						break;	//Stop processing the rest of this track
 					}
-					eof_notes_panel_print_time(tp->technote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+					eof_notes_panel_print_time(tp->technote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 					snprintf(eof_notes_macro_tech_note_missing_target, sizeof(eof_notes_macro_tech_note_missing_target) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->technote[notectr]->type, time_string);	//Write a string identifying the offending note
 					dest_buffer[0] = '\0';
 					retval = 3;	//True
@@ -2673,7 +2700,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					if(lyric->pos + lyric->length > line->end_pos)
 					{	//If this lyric extends beyond the end of the lyric line it begins in
 						char time_string[15] = {0};
-						eof_notes_panel_print_time(lyric->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						eof_notes_panel_print_time(lyric->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 						snprintf(eof_notes_macro_lyric_extending_outside_line, sizeof(eof_notes_macro_lyric_extending_outside_line) - 1, "pos %s : \"%s\"", time_string, lyric->text);	//Write a string identifying the offending lyric
 						dest_buffer[0] = '\0';
 						return 3;	//True
@@ -2745,7 +2772,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 									notectr = tp->pgnotes;	//Set a condition to break from note loop
 									break;	//Break from string loop
 								}
-								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+								eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 								snprintf(eof_notes_macro_technique_missing_sustain, sizeof(eof_notes_macro_technique_missing_sustain) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 								dest_buffer[0] = '\0';
 								retval = 3;	//True
@@ -2846,7 +2873,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					if(islower(lyricptr->text[0]))
 					{	//If the first character in the lyric's text is a lowercase letter
 						char time_string[15] = {0};
-						eof_notes_panel_print_time(lyricptr->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+						eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 						snprintf(eof_notes_macro_lyric_line_beginning_with_lowercase, sizeof(eof_notes_macro_lyric_line_beginning_with_lowercase) - 1, "pos %s : \"%s\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric
 						dest_buffer[0] = '\0';
 						return 3;	//True
@@ -2887,7 +2914,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						if(length > threshold_length)
 						{
 							char time_string[15] = {0};
-							eof_notes_panel_print_time(lyricptr->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+							eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 							snprintf(eof_notes_macro_lyric_line_exceeding_length, sizeof(eof_notes_macro_lyric_line_exceeding_length) - 1, "pos %s : \"%s\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric
 							dest_buffer[0] = '\0';
 							return 3;	//True
@@ -2952,7 +2979,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				if(disqualified)
 				{
 					char time_string[15] = {0};
-					eof_notes_panel_print_time(lyricptr->pos, time_string, sizeof(time_string) - 1, panel->timeformat);	//Build the timestamp in the current time format
+					eof_notes_panel_print_time(lyricptr->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 					snprintf(eof_notes_macro_lyric_line_contains_unwanted_punct, sizeof(eof_notes_macro_lyric_line_contains_unwanted_punct) - 1, "pos %s : \"%s\"", time_string, lyricptr->text);	//Write a string identifying the offending lyric
 					dest_buffer[0] = '\0';
 					return 3;	//True
@@ -3661,14 +3688,11 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 		else
 		{
-			int min, sec, inttime;
-			double ms, time;
+			unsigned min, sec;
+			double ms;
 
-			inttime = eof_song->beat[eof_selected_beat]->pos;	//Simplify
-			time = eof_song->beat[eof_selected_beat]->fpos;	//Simplify
-			ms = fmod(time, 1000.0);
-			min = (inttime / 1000) / 60;
-			sec = (inttime / 1000) % 60;
+			ms = fmod(eof_song->beat[eof_selected_beat]->fpos, 1000.0);
+			eof_build_mmssms_string(eof_song->beat[eof_selected_beat]->pos, &min, &sec, NULL, NULL);
 			snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%f", min, sec, ms);
 		}
 		return 1;
@@ -3709,7 +3733,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "SELECTED_NOTE_POS"))
 	{
 		if(eof_selection.current < tracksize)
-			eof_notes_panel_print_time(eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), dest_buffer, dest_buffer_size, panel->timeformat);	//Print in the current time format
+			eof_notes_panel_print_time(eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), dest_buffer, panel->timeformat);	//Print in the current time format
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
@@ -4016,17 +4040,15 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position (honoring the seek timing format specified in user preferences)
 	if(!ustricmp(macro, "SEEK_POSITION"))
 	{
-		int min, sec, ms;
+		unsigned sec, ms;
 
-		ms = (eof_music_pos.value - eof_av_delay) % 1000;
 		if(!eof_display_seek_pos_in_seconds)
 		{	//If the seek position is to be displayed as minutes:seconds.milliseconds
-			min = ((eof_music_pos.value - eof_av_delay) / 1000) / 60;
-			sec = ((eof_music_pos.value - eof_av_delay) / 1000) % 60;
-			snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
+			eof_build_mmssms_string(eof_music_pos.value - eof_av_delay, NULL, NULL, NULL, dest_buffer);
 		}
 		else
 		{	//If the seek position is to be displayed as seconds
+			ms = (eof_music_pos.value - eof_av_delay) % 1000;
 			sec = (eof_music_pos.value - eof_av_delay) / 1000;
 			snprintf(dest_buffer, dest_buffer_size, "%d.%03ds", sec, ms);
 		}
@@ -4048,7 +4070,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position in minutes:seconds.milliseconds format
 	if(!ustricmp(macro, "SEEK_POSITION_MIN_SEC"))
 	{
-		eof_notes_panel_print_time(eof_music_pos.value - eof_av_delay, dest_buffer, dest_buffer_size, 0);	//Print in mm:ss.ms format
+		eof_notes_panel_print_time(eof_music_pos.value - eof_av_delay, dest_buffer, 0);	//Print in mm:ss.ms format
 
 		return 1;
 	}
@@ -4095,7 +4117,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "START_POINT"))
 	{
 		if(eof_song->tags->start_point != ULONG_MAX)
-			eof_notes_panel_print_time(eof_song->tags->start_point, dest_buffer, dest_buffer_size, panel->timeformat);	//Print in the current time format
+			eof_notes_panel_print_time(eof_song->tags->start_point, dest_buffer, panel->timeformat);	//Print in the current time format
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
@@ -4105,7 +4127,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "END_POINT"))
 	{
 		if(eof_song->tags->end_point != ULONG_MAX)
-			eof_notes_panel_print_time(eof_song->tags->end_point, dest_buffer, dest_buffer_size, panel->timeformat);	//Print in the current time format
+			eof_notes_panel_print_time(eof_song->tags->end_point, dest_buffer, panel->timeformat);	//Print in the current time format
 		else
 			snprintf(dest_buffer, dest_buffer_size, "None");
 		return 1;
@@ -5369,6 +5391,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "FIRST_BEAT_EXCEEDING_TEMPO"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_tempo_exceeding_number);
+
+		return 1;
+	}
+
 	if(!ustricmp(macro, "RS_FIRST_FHP_EXCEEDING_NUMBER"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_fhp_exceeding_number);
@@ -6247,22 +6276,17 @@ unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, uns
 	return totalcount;
 }
 
-void eof_notes_panel_print_time(unsigned long time, char *dest_buffer, unsigned long dest_buffer_size, int timeformat)
+void eof_notes_panel_print_time(unsigned long time, char *dest_buffer, int timeformat)
 {
-	int min, sec, ms;
-
-	if(!dest_buffer || !dest_buffer_size)
+	if(!dest_buffer)
 		return;
 
 	if(!timeformat)
 	{	//Display simply in milliseconds
-		snprintf(dest_buffer, dest_buffer_size, "%lums", time);
+		snprintf(dest_buffer, 10, "%lums", time);
 	}
 	else
 	{	//Display in mm:ss.ms
-		ms = time % 1000;
-		min = (time / 1000) / 60;
-		sec = (time / 1000) % 60;
-		snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%03d", min, sec, ms);
+		eof_build_mmssms_string(time, NULL, NULL, NULL, dest_buffer);
 	}
 }

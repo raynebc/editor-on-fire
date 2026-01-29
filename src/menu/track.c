@@ -15,6 +15,7 @@
 #include "../song.h"
 #include "../tuning.h"
 #include "../undo.h"
+#include "../utility.h"
 #include "edit.h"
 #include "main.h"
 #include "note.h"
@@ -2147,7 +2148,7 @@ char eof_fret_hand_position_list_text[EOF_MAX_NOTES][25] = {{0}};
 char * eof_fret_hand_position_list(int index, int * size)
 {
 	unsigned long i, tracknum, ecount = 0;
-	int ism, iss, isms;
+	unsigned ism, iss, isms;
 
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return NULL;
@@ -2160,11 +2161,8 @@ char * eof_fret_hand_position_list(int index, int * size)
 		{	//If the fret hand position is in the active difficulty
 			if(ecount < EOF_MAX_TEXT_EVENTS)
 			{
-				unsigned long mspos = eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos;
-				ism = (mspos / 1000) / 60;
-				iss = (mspos / 1000) % 60;
-				isms = (mspos % 1000);
-				(void) snprintf(eof_fret_hand_position_list_text[ecount], sizeof(eof_fret_hand_position_list_text[ecount]) - 1, "%02d:%02d.%03d: Fret %lu", ism, iss, isms, eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos);
+				eof_build_mmssms_string(eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos, &ism, &iss, &isms, NULL);
+				(void) snprintf(eof_fret_hand_position_list_text[ecount], sizeof(eof_fret_hand_position_list_text[ecount]) - 1, "%02u:%02u.%03u: Fret %lu", ism, iss, isms, eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos);
 				ecount++;
 			}
 		}
@@ -4038,13 +4036,8 @@ void eof_track_rebuild_rs_tone_changes_list_strings(void)
 
 	for(ctr = 0; ctr < tp->tonechanges; ctr++)
 	{	//For each tone change
-		unsigned long mspos;
-		int ism, iss, isms;
-
-		mspos = tp->tonechange[ctr].start_pos;
-		ism = (mspos / 1000) / 60;
-		iss = (mspos / 1000) % 60;
-		isms = (mspos % 1000);
+		unsigned ism, iss, isms;
+		eof_build_mmssms_string(tp->tonechange[ctr].start_pos, &ism, &iss, &isms, NULL);
 		suffix = blank;
 		if(!strcmp(tp->tonechange[ctr].name, tp->defaulttone))
 		{	//If this tone is the track's default tone
