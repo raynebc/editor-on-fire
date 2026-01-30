@@ -194,4 +194,22 @@ int eof_menu_beat_summarize_tempo_changes_at_measures(void);
 	// its tempo is different from that of the beat before it
 	//Does not affect beats that are not within the scope of a time signature
 
+extern MENU eof_menu_beat_events_copy_menu[EOF_TRACKS_MAX];
+int eof_menu_beat_copy_events_track_1(void);
+int eof_menu_beat_copy_events_track_2(void);
+int eof_menu_beat_copy_events_track_3(void);
+int eof_menu_beat_copy_events_track_4(void);
+int eof_menu_beat_copy_events_track_5(void);
+int eof_menu_beat_copy_events_track_6(void);
+int eof_menu_beat_copy_events_track_7(void);
+int eof_menu_beat_copy_events_track_8(void);
+int eof_menu_beat_copy_events_track_9(void);
+int eof_menu_beat_copy_events_track_10(void);
+int eof_menu_beat_copy_events_track_11(void);
+int eof_menu_beat_copy_events_track_12(void);
+int eof_menu_beat_copy_events_track_13(void);
+int eof_menu_beat_copy_events_track_14(void);
+int eof_menu_beat_copy_events_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
+	//Copies the text events changes from the specified source track to the destination track
+
 #endif

@@ -96,6 +96,7 @@ MENU eof_beat_events_menu[] =
 	{"Place &Section", eof_menu_beat_add_section, NULL, 0, NULL},
 	{"&Copy events\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_events, NULL, 0, NULL},
 	{"&Paste events\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_events, NULL, 0, NULL},
+	{"Copy &From", NULL, eof_menu_beat_events_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -651,6 +652,17 @@ void eof_prepare_beat_menu(void)
 		{	//Otherwise use the unabridged Beat menu
 			eof_main_menu[5].child = eof_beat_menu;
 			eof_effective_beat_menu = eof_beat_menu;
+		}
+
+		/* events > copy from */
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
+		{	//For each track supported by EOF
+			eof_menu_beat_events_copy_menu[i].flags = 0;
+
+			if(!eof_track_count_events(eof_song, i + 1) || (i + 1 == eof_selected_track))
+			{	//If the track has no track specific events or is the active track
+				eof_menu_beat_events_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+			}
 		}
 	}//If a song is loaded
 }
@@ -3960,4 +3972,149 @@ int eof_menu_beat_summarize_tempo_changes_at_measures(void)
 	}
 
 	return 1;
+}
+
+MENU eof_menu_beat_events_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[0], eof_menu_beat_copy_events_track_1, NULL, 0, NULL},
+	{eof_menu_track_names[1], eof_menu_beat_copy_events_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_beat_copy_events_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_beat_copy_events_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_beat_copy_events_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_beat_copy_events_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_beat_copy_events_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_beat_copy_events_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_beat_copy_events_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_beat_copy_events_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_beat_copy_events_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_beat_copy_events_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_beat_copy_events_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_beat_copy_events_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+int eof_menu_beat_copy_events_track_1(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 1, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_2(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 2, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_3(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 3, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_4(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 4, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_5(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 5, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_6(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 6, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_7(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 7, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_8(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 8, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_9(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 9, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_10(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 10, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_11(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 11, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_12(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_13(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 13, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_14(void)
+{
+	return eof_menu_beat_copy_events_track_number(eof_song, 14, eof_selected_track);
+}
+
+int eof_menu_beat_copy_events_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
+{
+	int prompted = 0, undo_made = 0;
+	unsigned long ctr;
+
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
+		return 0;	//Invalid parameters
+
+ 	eof_log("eof_menu_beat_copy_events_track_number() entered", 1);
+
+	//Delete existing track-specific events in the destination track
+	for(ctr = sp->text_events; ctr > 0; ctr--)
+	{	//For each text event in the project, in reverse order
+		if(sp->text_event[ctr - 1]->track == desttrack)
+		{	//If this text event is in the destination track
+			if(!prompted && alert(NULL, "Warning:  Existing text events in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+			{	//If the user does not opt to continue
+				return 0;
+			}
+			prompted = 1;
+
+			if(!undo_made)
+			{
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			eof_song_delete_text_event(sp, ctr - 1);	//Delete the existing text event
+		}
+	}
+
+	//Copy events from the source track
+	if(!undo_made)
+	{
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		undo_made = 1;
+	}
+	for(ctr = sp->text_events; ctr > 0; ctr--)
+	{	//For each text event in the project, in reverse order
+		if(sp->text_event[ctr - 1]->track == sourcetrack)
+		{	//If this text event is in the source track
+			if(!eof_song_add_text_event(sp, sp->text_event[ctr - 1]->pos, sp->text_event[ctr - 1]->text, desttrack, sp->text_event[ctr - 1]->flags, 0))
+			{	//If the text event failed to be copied to the destination track
+				eof_log("\tFailed to copy text event", 1);
+				allegro_message("Failed to copy all text events");
+				break;
+			}
+		}
+	}
+
+	//Cleanup
+	eof_sort_events(sp);
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+
+	return 1;	//Return completion
 }

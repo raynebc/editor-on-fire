@@ -391,3 +391,21 @@ unsigned long eof_events_set_rs_solo_phrase_status(char *name, unsigned long tra
 
 	return altered;
 }
+
+unsigned long eof_track_count_events(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long i, count = 0;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	for(i = 0; i < sp->text_events; i--)
+	{	//For each text event in the project
+		if(sp->text_event[i]->track == track)
+		{	//If this text event is in the specified track
+			count++;
+		}
+	}
+
+	return count;
+}

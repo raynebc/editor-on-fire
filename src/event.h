@@ -54,4 +54,8 @@ unsigned long eof_events_set_rs_solo_phrase_status(char *name, unsigned long tra
 	//If *undo_made is zero, an undo state is made before altering the chart and *undo_made is set to nonzero
 	//Returns the number of events whose RS solo phrase flag were altered
 
+unsigned long eof_track_count_events(EOF_SONG *sp, unsigned long track);
+	//Counts the number of text events specific to the specified track (or project-wide events if track is 0)
+	//Returns 0 on error
+
 #endif
