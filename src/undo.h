@@ -22,6 +22,7 @@ extern char * eof_undo_filename[EOF_MAX_UNDO];
 extern int eof_undo_states_initialized;
 extern int eof_undo_current_index;
 extern int eof_undo_in_progress;
+extern int eof_import_unsaved;
 
 void eof_undo_reset(void);	//Clears all undo states
 int eof_undo_add(int type);	//Adds another undo state, except some cases where the requested undo type is the same as the previous undo (ie. a note addition/deletion)

@@ -432,6 +432,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	EOF_PHRASE_SECTION *phraseptr;
 	char album_art_filename[1024];
 	char *count_string, *name_string, name_buffer[101];
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_VOCAL_TRACK *vp;
 
 	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
@@ -634,7 +636,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+			tp = eof_song->pro_guitar_track[tracknum];
 
 			if(eof_menu_pro_guitar_track_get_tech_view_state(tp))
 			{	//If tech view is in effect
@@ -718,7 +720,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If a note is selected
 			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
-				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+				tp = eof_song->pro_guitar_track[tracknum];
 
 				if(eof_count_chord_lookup_matches(tp, eof_selected_track, eof_selection.current))
 				{	//If there's at least one chord lookup match
@@ -736,7 +738,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+			tp = eof_song->pro_guitar_track[tracknum];
 			if(tp->ignore_tuning)
 			{
 				dest_buffer[0] = '\0';
@@ -1665,7 +1667,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(count_string)
 	{	//If the macro is this string
 		unsigned long mscount;
-		EOF_PRO_GUITAR_TRACK *tp;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_occurs_before_millis[0] = '\0';	//Erase this string
@@ -1778,7 +1779,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if(match < eof_song->text_events)
 			{	//If there was an instance of the specified phrase applicable to the active track (specifically or project-wide)
 				unsigned long matchpos = eof_get_text_event_pos(eof_song, match);	//Get the position of this event in milliseconds
-				EOF_PRO_GUITAR_TRACK *tp;
 
 				for(ctr = 1; ctr < eof_song->tracks; ctr++)
 				{	//For each track in the project
@@ -1817,7 +1817,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				if(match < eof_song->text_events)
 				{	//If there was an instance of the specified phrase applicable to the track (specifically or project-wide)
 					unsigned long matchpos = eof_get_text_event_pos(eof_song, match);	//Get the position of this event in milliseconds
-					EOF_PRO_GUITAR_TRACK *tp;
 
 					tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 					for(ctr2 = tp->pgnotes; ctr2 > 0; ctr2--)
@@ -1849,7 +1848,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT"))
 	{
 		unsigned long stringnum, notectr, bitmask;
-		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
@@ -1901,7 +1899,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TONE_CHANGES_ON_NOTE"))
 	{
 		unsigned long tonectr, notectr;
-		EOF_PRO_GUITAR_TRACK *tp;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_starting_on_tone_change[0] = '\0';	//Erase this string
@@ -1950,7 +1947,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if(match < eof_song->text_events)
 			{	//If there was an instance of the COUNT phrase applicable to the active track (specifically or project-wide)
 				unsigned num = 0, den = 0;
-				EOF_PRO_GUITAR_TRACK *tp;
 				unsigned long matchbeat = eof_get_text_event_beat(eof_song, match);	//Get the beat containing the event
 
 				if(eof_get_effective_ts(eof_song, &num, &den, matchbeat, 0))
@@ -2003,7 +1999,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
+			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
 			eof_track_rebuild_rs_tone_names_list_strings(eof_selected_track, 1);
 			if(eof_track_rs_tone_names_list_strings_num > 1)
 			{	//If multiple tones are used
@@ -2020,11 +2016,28 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_RS_MORE_THAN_4_TONE_CHANGES"))
+	{
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track in the project
+			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
+				continue;	//Skip non pro guitar tracks
+			if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
+				continue;	//If any Rocksmith errors have already been found for inactive tracks, and this isn't the active track, skip processing it
+
+			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
+			if(eof_pro_guitar_track_count_unique_tone_changes(tp) > 4)
+				return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	if(!ustricmp(macro, "IF_TRACK_DIFF_HAS_NO_FHPS"))
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
+			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
 
 			for(ctr = 0; ctr < tp->handpositions; ctr++)
 			{	//For each fret hand position defined in this track
@@ -2041,7 +2054,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_NOTE_SUBCEEDS_FHP"))
 	{
-		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned char lowestfret, fhp;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
@@ -2081,7 +2093,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "IF_ACTIVE_TRACK_RS_ANY_NON_TAP_NOTE_EXCEEDS_FHP_BY_");	//Get a pointer to the text that would be the fret count
 	if(count_string)
 	{	//If the macro is this string
-		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned char highestfret, fhp;
 		unsigned long fretcount;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
@@ -2128,7 +2139,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_PITCHED_SLIDES_LACK_END_FRET"))
 	{
 		unsigned long stringnum, notectr, bitmask;
-		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
@@ -2184,7 +2194,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_BENDS_LACK_STRENGTH_DEFINITION"))
 	{
 		unsigned long stringnum, notectr, bitmask;
-		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
@@ -2243,7 +2252,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_OPEN_NOTES_BEND"))
 	{
 		unsigned long stringnum, notectr, bitmask;
-		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
@@ -2423,7 +2431,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "IF_ACTIVE_TRACK_ANY_FHP_EXCEEDS_");	//Get a pointer to the text that would be the FHP value
 	if(count_string)
 	{	//If the macro is this string
-		EOF_PRO_GUITAR_TRACK *tp;
 		unsigned long target_fhp = 0;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
@@ -2465,7 +2472,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(count_string)
 	{	//If the macro is this string
 		unsigned long notectr, target_fret = 0;
-		EOF_PRO_GUITAR_TRACK *tp;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_exceeding_fret[0] = '\0';	//Erase this string
@@ -2506,7 +2512,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(count_string)
 	{	//If the macro is this string
 		unsigned long notectr, target_diff = 0;
-		EOF_PRO_GUITAR_TRACK *tp;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_exceeding_diff[0] = '\0';	//Erase this string
@@ -2547,7 +2552,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(count_string)
 	{	//If the macro is this string
 		unsigned long stringnum, notectr, bitmask, target_fret;
-		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
@@ -2606,7 +2610,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_RS_BASS_TRACK_STRING_COUNT_EXCEEDED"))
 	{
 		unsigned long notectr;
-		EOF_PRO_GUITAR_TRACK *tp;
 
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
@@ -2652,7 +2655,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TECH_NOTES_LACK_TARGET"))
 	{
 		unsigned long notectr;
-		EOF_PRO_GUITAR_TRACK *tp;
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_tech_note_missing_target[0] = '\0';	//Erase this string
@@ -2736,7 +2738,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TECHNIQUES_MISSING_SUSTAIN"))
 	{	//If the macro is this string
 		unsigned long stringnum, notectr, bitmask;
-		EOF_PRO_GUITAR_TRACK *tp;
 		EOF_RS_TECHNIQUES tech = {0};
 		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
@@ -3823,8 +3824,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If a note is selected
 			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
-				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 				char fret_string[30];
+				tp = eof_song->pro_guitar_track[tracknum];
 
 				if(eof_get_pro_guitar_note_fret_string(tp, eof_selection.current, fret_string, 1))
 				{	//If the note's frets can be represented in string format
@@ -3849,10 +3850,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If a note is selected
 			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
-				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 				unsigned long matchcount;
 				char chord_match_string[30] = {0};
 				int scale = 0, chord = 0, isslash = 0, bassnote = 0;
+				tp = eof_song->pro_guitar_track[tracknum];
 
 				matchcount = eof_count_chord_lookup_matches(tp, eof_selected_track, eof_selection.current);
 				if(matchcount)
@@ -3888,8 +3889,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If a note is selected
 			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
-				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 				char finger_string[30] = {0};
+				tp = eof_song->pro_guitar_track[tracknum];
 
 				if(eof_get_note_eflags(eof_song, eof_selected_track, eof_selection.current) & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
 				{	//If this note has fingerless status
@@ -3918,8 +3919,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If a note is selected
 			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
-				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 				char tone_string[30] = {0};
+				tp = eof_song->pro_guitar_track[tracknum];
 
 				if(eof_get_pro_guitar_note_tone_string(tp, eof_selection.current, tone_string))
 				{	//If the note's tones can be represented in string format
@@ -3946,7 +3947,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{	//If a pro guitar track is active
 				char temp[10];
 				unsigned char pitchmask, pitches[6] = {0}, bitmask;
-				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+				tp = eof_song->pro_guitar_track[tracknum];
 
 				dest_buffer[0] = '\0';	//Empty this string
 				pitchmask = eof_get_midi_pitches(eof_song, eof_selected_track, eof_selection.current, pitches);	//Determine how many exportable pitches this note/lyric has
@@ -3996,8 +3997,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 			unsigned char position;
+			tp = eof_song->pro_guitar_track[tracknum];
 
 			position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos.value - eof_av_delay);	//Find if there's a fret hand position in effect
 			if(position)
@@ -4015,8 +4016,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 			unsigned long tone;
+			tp = eof_song->pro_guitar_track[tracknum];
 
 			tone = eof_pro_guitar_track_find_effective_tone(tp, eof_music_pos.value - eof_av_delay);	//Find if there's a tone change in effect
 			if(tone < EOF_MAX_PHRASES)
@@ -4550,7 +4551,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			unsigned long count = 0, totalnotecount = 0;
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -4584,7 +4585,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			unsigned long count = 0, totalnotecount = 0;
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -4724,7 +4725,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
 			unsigned long count = 0, totalnotecount = 0;
-			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+			vp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -4733,7 +4734,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each lyric in the track
-					if(eof_lyric_is_pitched(tp, ctr))
+					if(eof_lyric_is_pitched(vp, ctr))
 					{	//If the lyric has a valid pitch and isn't freestyle
 						count++;
 					}
@@ -4760,16 +4761,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
 			unsigned long count = 0, totalnotecount = 0;
-			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+			vp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				double percent;
 
-				for(ctr = 0; ctr < tp->lyrics; ctr++)
+				for(ctr = 0; ctr < vp->lyrics; ctr++)
 				{	//For each lyric in the track
-					if(tp->lyric[ctr]->note == 0)
+					if(vp->lyric[ctr]->note == 0)
 					{	//If the lyric has no defined pitch
 						count++;
 					}
@@ -4796,16 +4797,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
 			unsigned long count = 0, totalnotecount = 0;
-			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+			vp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				double percent;
 
-				for(ctr = 0; ctr < tp->lyrics; ctr++)
+				for(ctr = 0; ctr < vp->lyrics; ctr++)
 				{	//For each lyric in the track
-					if(tp->lyric[ctr]->note == EOF_LYRIC_PERCUSSION)
+					if(vp->lyric[ctr]->note == EOF_LYRIC_PERCUSSION)
 					{	//If the lyric is percussion
 						count++;
 					}
@@ -4832,7 +4833,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
 			unsigned long count = 0, totalnotecount = 0;
-			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+			vp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -4841,7 +4842,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each lyric in the track
-					if(eof_lyric_is_freestyle(tp, ctr) == 1)
+					if(eof_lyric_is_freestyle(vp, ctr) == 1)
 					{	//If the lyric has a freestyle marker (# or ^)
 						count++;
 					}
@@ -4868,16 +4869,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
 			unsigned long count = 0, totalnotecount = 0;
-			EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+			vp = eof_song->vocal_track[0];
 
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				double percent;
 
-				for(ctr = 1; ctr < tp->lyrics; ctr++)
+				for(ctr = 1; ctr < vp->lyrics; ctr++)
 				{	//For each lyric in the track after the first
-					if(tp->lyric[ctr]->text[0] == '+')
+					if(vp->lyric[ctr]->text[0] == '+')
 					{	//If the lyric's text begins with a + sign
 						count++;
 					}
@@ -5458,7 +5459,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+			tp = eof_song->pro_guitar_track[tracknum];
 			snprintf(dest_buffer, dest_buffer_size, "%s", eof_pro_guitar_track_find_effective_hand_mode_change(tp, eof_music_pos.value - eof_av_delay, NULL, NULL) ? "String" : "Chord");
 		}
 

@@ -21,6 +21,7 @@ int eof_redo_count = 0;
 int eof_redo_type = 0;
 int eof_undo_states_initialized = 0;
 int eof_undo_in_progress = 0;	//Used to prevent eof_destroy_song() from destroying the spectrogram and waveform data if they are already built
+int eof_import_unsaved = 0;		//Set to true at the end of an import and reset to 0 whenever a save or load subsequently occurs
 
 int eof_undo_load_state(const char * fn)
 {
@@ -273,7 +274,7 @@ int eof_undo_apply(void)
 	eof_undo_count--;
 	eof_redo_count = 1;
 	eof_change_count--;
-	if(eof_change_count == 0)
+	if(!eof_change_count && !eof_import_unsaved)
 	{
 		eof_changes = 0;
 	}
@@ -372,7 +373,7 @@ void eof_redo_apply(void)
 		}
 		eof_redo_count = 0;
 		eof_change_count++;
-		if(eof_change_count == 0)
+		if(!eof_change_count && !eof_import_unsaved)
 		{
 			eof_changes = 0;
 		}

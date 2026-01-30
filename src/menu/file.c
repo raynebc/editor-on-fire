@@ -737,7 +737,7 @@ int eof_menu_file_load(void)
 				eof_destroy_song(eof_song);
 				eof_song = NULL;
 				eof_song_loaded = 0;
-				eof_changes = 0;
+				eof_changes = eof_import_unsaved = 0;
 				eof_change_count = 0;
 				eof_show_mouse(NULL);
 				eof_cursor_visible = 1;
@@ -1180,7 +1180,7 @@ int eof_menu_file_midi_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			eof_changes = 1;
+			eof_changes = eof_import_unsaved = 1;
 			if(!eof_repair_midi_import_grid_snap())
 			{
 				eof_log("\tGrid snap correction failed.", 1);
@@ -1337,7 +1337,7 @@ int eof_menu_file_stepmania_import(void)
 			if(!retval)
 			{	//If the file was imported
 				eof_init_after_load(0);
-				eof_changes = 1;
+				eof_changes = eof_import_unsaved = 1;
 				retval = 0;
 			}
 			else
@@ -1357,7 +1357,7 @@ int eof_menu_file_stepmania_import(void)
 		{	//Import successful
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			eof_changes = 1;
+			eof_changes = eof_import_unsaved = 1;
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 			(void) replace_filename(eof_last_sm_path, returnedfn_path, "", 1024);	//Set the last loaded DR file path
 			eof_log("\tStepmania file loaded", 1);
@@ -2919,7 +2919,7 @@ int eof_menu_file_feedback_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			eof_changes = 1;
+			eof_changes = eof_import_unsaved = 1;
 			(void) replace_filename(eof_last_db_path, returnedfn_path, "", 1024);	//Set the last loaded Feedback file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
@@ -4418,6 +4418,22 @@ int eof_save_helper_checks(void)
 		}//For each track (until the user is warned about any offending notes)
 	}//If the user wants to save Rocksmith capable files
 
+	/* check for tempo changes outside the range of 40BPM through 300BPM, inclusive */
+	if(eof_write_rs_files || eof_write_rs2_files)
+	{	//If the user wants to save Rocksmith capable files
+		unsigned long pos = eof_check_tempo_range(40.0, 300.0);	//Check if there is a beat position with a tempo outside the acceptable range
+		if(pos != ULONG_MAX)
+		{	//If such a position was found
+			eof_seek_and_render_position(eof_selected_track, eof_note_type, pos);	//Render the track so the user can see where the correction needs to be made
+			eof_clear_input();
+			if(alert("Warning (RS):  At least one tempo change is below 40BPM or above 300BPM.", "Please make adjustments to ensure the best results in-game", "Cancel save?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user hasn't already answered this prompt, and opts to correct the issue
+				return 1;	//Return cancellation
+			}
+		}
+	}//If the user wants to save Rocksmith capable files
+
+
 	//Drums Rock related checks
 	if(eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM) || eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM_PS))
 	{	//If a Drums Rock track is to be exported
@@ -4968,7 +4984,7 @@ int eof_save_helper(char *destfilename, char silent)
 	}
 
 	/* finish up */
-	eof_changes = 0;
+	eof_changes = eof_import_unsaved = 0;
 	for(ctr = 0; ctr < eof_song->tags->oggs; ctr++)
 	{
 		if(eof_song->tags->ogg[ctr].modified)
@@ -5123,7 +5139,7 @@ int eof_menu_file_gh_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			eof_changes = 1;
+			eof_changes = eof_import_unsaved = 1;
 			(void) replace_filename(eof_last_gh_path, returnedfn_path, "", 1024);	//Set the last loaded GH file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
@@ -5991,7 +6007,7 @@ int eof_menu_file_gp_import(void)
 				char eof_changes_backup = eof_changes;	//Guitar Pro import will have set this if content was imported, remember this because eof_init_after_load() will clobber it
 
 				eof_init_after_load(0);
-				eof_changes = eof_changes_backup;		//Restore this value
+				eof_changes = eof_import_unsaved = eof_changes_backup;		//Restore this value
 				(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
 			}
 			else
@@ -6352,7 +6368,7 @@ int eof_menu_file_rs_import(void)
 			if(!eof_command_line_rs_import(returnedfn))
 			{	//If the file was imported
 				eof_init_after_load(0);
-				eof_changes = 1;
+				eof_changes = eof_import_unsaved = 1;
 			}
 			else
 			{	//Import failed

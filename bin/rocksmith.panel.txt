@@ -50,6 +50,7 @@ Rocksmith Panel (%TEXT_FILE%)
 ;Tone change checks
 %IF_ACTIVE_TRACK_RS_ANY_TONE_CHANGES_ON_NOTE%%DISPLAY_ERROR%At least 1 tone changes on note instead of before:%NEWLINE%%RS_FIRST_TONE_CHANGE_STARTING_ON_A_NOTE%
 %IF_RS_ONLY_ONE_TONE_CHANGE%%DISPLAY_WARNING%Tone changes used but no second tone defined.%ELSE%%IF_RS_NO_DEFAULT_TONE_DEFINED%%DISPLAY_WARNING%No default tone defined.
+%IF_RS_MORE_THAN_4_TONE_CHANGES%%DISPLAY_ERROR%This track uses more than 4 tone names.
 
 ;FHP checks
 %IF_TRACK_DIFF_HAS_NO_FHPS%%DISPLAY_WARNING%No fret hand positions defined in this difficulty.

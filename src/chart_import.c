@@ -410,6 +410,18 @@ EOF_SONG * eof_import_chart(const char * fn)
 	{
 		strncpy(sp->tags->frettist, chart->charter, sizeof(sp->tags->frettist) - 1);
 	}
+	if(chart->album)
+	{
+		strncpy(sp->tags->album, chart->album, sizeof(sp->tags->album) - 1);
+	}
+	if(chart->year)
+	{
+		strncpy(sp->tags->year, chart->year, sizeof(sp->tags->year) - 1);
+	}
+	if(chart->genre)
+	{
+		strncpy(sp->tags->genre, chart->genre, sizeof(sp->tags->genre) - 1);
+	}
 
 	/* read INI file */
 	(void) replace_filename(oggfn, fn, "song.ini", 1024);
@@ -1590,6 +1602,24 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					}
 					free(string2);	//This string is no longer used
 					string2 = NULL;
+				}
+				else if(strcasecmp(string1,"Album") == 0)
+				{
+					if(chart->album)
+						free(chart->album);	//If an album name was already imported, free that string
+					chart->album=string2;	//Save the album name tag
+				}
+				else if(strcasecmp(string1,"Year") == 0)
+				{
+					if(chart->year)
+						free(chart->year);	//If a year was already imported, free that string
+					chart->year=string2;	//Save the year tag
+				}
+				else if(strcasecmp(string1,"Genre") == 0)
+				{
+					if(chart->genre)
+						free(chart->genre);	//If a genre was already imported, free that string
+					chart->genre=string2;	//Save the genre tag
 				}
 				else if(strcasecmp(string1,"MusicStream") == 0)
 				{

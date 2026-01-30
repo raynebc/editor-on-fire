@@ -6409,3 +6409,36 @@ int eof_lookup_rocksmith_effective_section_at_pos(EOF_SONG *sp, unsigned long po
 
 	return 0;	//No matching section found
 }
+
+unsigned long eof_pro_guitar_track_count_unique_tone_changes(EOF_PRO_GUITAR_TRACK *tp)
+{
+	unsigned long ctr, ctr2, count = 0;
+	char unique_tone[EOF_MAX_PHRASES] = {0};	//Tracks whether each tone change wasn't the first one with its name (boolean)
+
+	if(!tp || !tp->tonechanges)
+		return 0;	//Invalid parameter or no tone changes in this track
+
+	//Determine the first instance of each tone name
+	for(ctr = 0; ctr < tp->tonechanges; ctr++)
+	{	//For each tone change in the track
+		if(!unique_tone[ctr])
+		{	//If this tone name wasn't already disqualified as a unique name
+			for(ctr2 = ctr + 1; ctr2 < tp->tonechanges; ctr2++)
+			{	//For each of the tone changes that follow
+				if(!strcmp(tp->tonechange[ctr].name, tp->tonechange[ctr2].name))
+				{	//If the tone names match
+					unique_tone[ctr2] = 1;	//This is not a unique tone name
+				}
+			}
+		}
+	}
+
+	//Count the number of unique tone names
+	for(ctr = 0; ctr < tp->tonechanges; ctr++)
+	{	//For each tone change in the track
+		if(!unique_tone[ctr])
+			count++;		//Count each tone that was considered the first of its name
+	}
+
+	return count;
+}

@@ -366,4 +366,7 @@ int eof_lookup_rocksmith_effective_section_at_pos(EOF_SONG *sp, unsigned long po
 	//Examines the text events applicable for the active track and stores the name of the section event immediately at/before thse specified position (if any) into section_name[]
 	//Returns 1 if a matching section is found.  If none is found, section_name[] is emptied and 0 is returned.  0 is returned upon error
 
+unsigned long eof_pro_guitar_track_count_unique_tone_changes(EOF_PRO_GUITAR_TRACK *tp);
+	//Returns the count of how many unique tone names exist among the specified track's tone changes
+
 #endif

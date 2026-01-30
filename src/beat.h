@@ -110,4 +110,8 @@ int eof_check_for_anchors_between_selected_beat_and_seek_pos(void);
 	//Returns zero if there are no anchors (excluding the selected beat) between the selected beat and the seek position
 	//Returns nonzero if there are anchors or upon error
 
+unsigned long eof_check_tempo_range(double minbpm, double maxbpm);
+	//Returns the millisecond position of the first beat whose tempo falls below minbpm or above maxbpm
+	//Returns ULONG_MAX upon error or if no tempos are outside this range
+
 #endif

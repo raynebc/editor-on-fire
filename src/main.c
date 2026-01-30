@@ -5527,7 +5527,7 @@ void eof_init_after_load(char initaftersavestate)
 	if(!initaftersavestate)
 	{	//If this wasn't cleanup after an undo/redo state, reset more variables
 		eof_set_music_pos(&eof_music_pos, eof_av_delay);
-		eof_changes = 0;
+		eof_changes = eof_import_unsaved = 0;
 		eof_undo_last_type = 0;
 		eof_change_count = 0;
 		eof_selected_catalog_entry = 0;

@@ -1227,3 +1227,27 @@ int eof_check_for_anchors_between_selected_beat_and_seek_pos(void)
 
 	return 0;	//None of the beats were anchors
 }
+
+unsigned long eof_check_tempo_range(double minbpm, double maxbpm)
+{
+	unsigned long i;
+
+	eof_log("eof_check_tempo_range() entered", 2);
+
+	if(!eof_song)
+		return ULONG_MAX;
+
+	for(i = 0; i < eof_song->beats; i++)
+	{	//For each beat
+		double thisbpm = 60000000 / eof_song->beat[i]->ppqn;
+		if(thisbpm < minbpm)
+		{	//If this beat's tempo is below the acceptable range, return its position
+			return eof_song->beat[i]->pos;
+		}
+		else if(thisbpm > maxbpm)
+		{	//If this beat's tempo is above the acceptable range, return its position
+			return eof_song->beat[i]->pos;
+		}
+	}
+	return ULONG_MAX;	//All tempos were within acceptable range
+}

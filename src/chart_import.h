@@ -58,6 +58,9 @@ struct FeedbackChart
 	char *name;
 	char *artist;
 	char *charter;
+	char *album;
+	char *year;
+	char *genre;
 	double offset;				//The chart's offset in SECONDS
 	unsigned long resolution;	//Is expected to be 192.  If it's missing in the .chart file, 192 could probably be assumed
 	char *audiofile;			//The MP3/OGG file specified in the chart file as the audio track
