@@ -447,6 +447,7 @@ extern int         eof_rs_import_all_handshapes;
 extern int         eof_rs2_export_version_8;
 extern int         eof_midi_export_enhanced_open_marker;
 extern int         eof_gp_import_remove_accent_from_staccato;
+extern int         eof_gp_import_track_specific_events;
 extern int         eof_db_import_suppress_5nc_conversion;
 extern int         eof_warn_missing_bass_fhps;
 extern int         eof_4_fret_range;

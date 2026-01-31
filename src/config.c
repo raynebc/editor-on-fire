@@ -295,6 +295,8 @@ void eof_load_config(char * fn)
 	eof_rs_import_all_handshapes = get_config_int("preferences", "eof_rs_import_all_handshapes", 0);
 	eof_rs2_export_version_8 = get_config_int("preferences", "eof_rs2_export_version_8", 0);
 	eof_midi_export_enhanced_open_marker = get_config_int("preferences", "eof_midi_export_enhanced_open_marker", 0);
+	eof_gp_import_remove_accent_from_staccato = get_config_int("preferences", "eof_gp_import_remove_accent_from_staccato", 0);
+	eof_gp_import_track_specific_events = get_config_int("preferences", "eof_gp_import_track_specific_events", 0);
 	eof_db_import_suppress_5nc_conversion = get_config_int("preferences", "eof_db_import_suppress_5nc_conversion", 0);
 	eof_dont_auto_name_double_stops = get_config_int("preferences", "eof_dont_auto_name_double_stops", 0);
 	eof_section_auto_adjust = get_config_int("preferences", "eof_section_auto_adjust", 1);
@@ -751,6 +753,8 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_rs_import_all_handshapes", eof_rs_import_all_handshapes);
 	set_config_int("preferences", "eof_rs2_export_version_8", eof_rs2_export_version_8);
 	set_config_int("preferences", "eof_midi_export_enhanced_open_marker", eof_midi_export_enhanced_open_marker);
+	set_config_int("preferences", "eof_gp_import_remove_accent_from_staccato", eof_gp_import_remove_accent_from_staccato);
+	set_config_int("preferences", "eof_gp_import_track_specific_events", eof_gp_import_track_specific_events);
 	set_config_int("preferences", "eof_db_import_suppress_5nc_conversion", eof_db_import_suppress_5nc_conversion);
 	set_config_int("preferences", "eof_dont_auto_name_double_stops", eof_dont_auto_name_double_stops);
 	set_config_int("preferences", "eof_section_auto_adjust", eof_section_auto_adjust);
