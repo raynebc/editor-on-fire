@@ -539,4 +539,7 @@ int eof_menu_set_beatable_slide_lane_2(void);		//Calls eof_menu_set_beatable_sli
 int eof_menu_set_beatable_slide_lane_3(void);		//Calls eof_menu_set_beatable_slide() to set a slide to lane 3
 int eof_menu_set_beatable_slide_lane_4(void);		//Calls eof_menu_set_beatable_slide() to set a slide to lane 4
 
+unsigned long eof_find_first_selected_note(void);
+	//Returns the index of the first note in the active track that is selected, otherwise returns EOF_MAX_NOTES - 1
+
 #endif

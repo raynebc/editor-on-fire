@@ -4790,7 +4790,7 @@ void eof_editor_logic(void)
 						}
 					}//If CTRL is not held
 
-					/* Ctrl+Click adds to selected notes */
+					/* Ctrl+Click adds to or removes selected notes */
 					else
 					{
 						if(eof_selection.multi[eof_selection.current] == 1)
@@ -4838,6 +4838,7 @@ void eof_editor_logic(void)
 					if(KEY_EITHER_CTRL && (eof_selection.multi[eof_selection.current] == 2))
 					{	//If a note is being deselected via CTRL+click (ignore whether the mouse moved because that seemed to make deselecting notes unreliable)
 						eof_selection.multi[eof_selection.current] = 0;
+						eof_selection.current = eof_find_first_selected_note();	//Set the selected note to the first of the notes that remain selected in this track difficulty
 						eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 					}
 					else if(!eof_mouse_drug)
@@ -4864,6 +4865,7 @@ void eof_editor_logic(void)
 							if(eof_selection.multi[eof_selection.current] == 2)
 							{	//Original CTRL+click deselection logic
 								eof_selection.multi[eof_selection.current] = 0;
+								eof_selection.current = eof_find_first_selected_note();	//Set the selected note to the first of the notes that remain selected in this track difficulty
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 							}
 							else if(eof_hover_note >= 0)
@@ -5724,6 +5726,7 @@ void eof_vocal_editor_logic(void)
 					if(KEY_EITHER_CTRL && (eof_selection.multi[eof_selection.current] == 2))
 					{	//If a note is being deselected via CTRL+click (ignore whether the mouse moved because that seemed to make deselecting notes unreliable)
 						eof_selection.multi[eof_selection.current] = 0;
+						eof_selection.current = eof_find_first_selected_note();	//Set the selected note to the first of the lyrics that remain selected
 						eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 					}
 					else if(!eof_mouse_drug)
@@ -5750,6 +5753,7 @@ void eof_vocal_editor_logic(void)
 							if(eof_selection.multi[eof_selection.current] == 2)
 							{	//Original CTRL+click deselection logic
 								eof_selection.multi[eof_selection.current] = 0;
+								eof_selection.current = eof_find_first_selected_note();	//Set the selected note to the first of the lyrics that remain selected
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
 							}
 							else if(eof_hover_note >= 0)

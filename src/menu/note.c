@@ -11895,3 +11895,22 @@ int eof_menu_set_beatable_slide_lane_4(void)
 {
 	return eof_menu_set_beatable_slide(4);
 }
+
+unsigned long eof_find_first_selected_note(void)
+{
+	unsigned long ctr, notes;
+
+	if(!eof_song)
+		return 0;	//Don't allow this function to run if no project is loaded
+	if(eof_selection.track != eof_selected_track)
+		return EOF_MAX_NOTES - 1;	//No notes in the active track are selected
+
+	notes = eof_get_track_size(eof_song, eof_selected_track);
+	for(ctr = 0; ctr < notes; ctr++)
+	{	//For each note in the active track
+		if(eof_selection.multi[ctr] == 1)
+			return ctr;	//If this note is selected, return this note's index
+	}
+
+	return EOF_MAX_NOTES - 1;	//No notes in the active track are selected
+}

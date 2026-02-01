@@ -34,10 +34,12 @@ int eof_gp_import_track(DIALOG * d);
 int eof_gp_import_guitar_track(int importvoice);
 	//Used if the selected track is being imported as a guitar pro track (even if the GP track is a drum track)
 	//importvoice specifies which voices are imported (1 = Lead, 2 = Bass, 3 = both)
+	//Returns 0 on failure or cancellation, otherwise returns D_CLOSE
 int eof_gp_import_drum_track(int importvoice, int function);
 	//Used if the selected track is being imported as a drum track
 	//importvoice specifies which voices are imported (1 = Lead, 2 = Bass, 3 = both)
 	//function specifies the destination track (1 = normal drums, 2 = Phase Shift drums, 3 = both)
+	//Returns 0 on failure or cancellation, otherwise returns D_CLOSE
 
 void eof_prepare_file_menu(void);
 

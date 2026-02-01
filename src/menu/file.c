@@ -47,6 +47,7 @@
 struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local variables, requiring the use of this global variable for the lyric track prompt dialog
 char lyricdetectionstring[1024] = {0};		//The display name given to the detection when displayed in the list box
 static int redefine_index = -1;
+char gp_import_undo_made;	//This is reset to zero by eof_menu_file_gp_import() and then tracked throughout the various GP import functions invoked when importing one or more tracks to ensure only one undo state gets made
 
 char eof_file_notes_panel_menu_string[1024];
 MENU eof_file_notes_panel_menu[] =
@@ -5774,7 +5775,7 @@ int eof_gp_import_guitar_track(int importvoice)
 int eof_gp_import_track(DIALOG * d)
 {
 	unsigned long ctr, selected;
-	int voicespresent = 0, importvoice = 0;
+	int voicespresent = 0, importvoice = 0, retval;
 
 	if(!d || (eof_parsed_gp_file->numtracks > INT_MAX) || (d->d1 >= (int)eof_parsed_gp_file->numtracks))
 		return 0;
@@ -5847,14 +5848,20 @@ int eof_gp_import_track(DIALOG * d)
 		{	//If the user opts to import this drum track as a drum track
 			int ret = alert3(NULL, "Import into which drum track(s)?", NULL, "&Normal", "&Phase Shift", "&Both", 'n', 'p', 'b');
 
-			return eof_gp_import_drum_track(importvoice, ret);
+			retval = eof_gp_import_drum_track(importvoice, ret);
 		}
 	}
 
-	return eof_gp_import_guitar_track(importvoice);	//Import into the active pro guitar track
+	retval = eof_gp_import_guitar_track(importvoice);	//Import into the active pro guitar track
+
+	if((retval != D_CLOSE) && gp_import_undo_made)
+	{	//If the drum or guitar track import failed or was cancelled, and the project had been modified by the import process
+		eof_menu_edit_undo();		//Undo the modification
+		gp_import_undo_made = 0;	//And track that no modifications remain from the import
+	}
+	return retval;
 }
 
-char gp_import_undo_made;
 int eof_gp_import_common(const char *fn)
 {
 	unsigned long ctr, ctr2, track;
@@ -5901,9 +5908,17 @@ int eof_gp_import_common(const char *fn)
 			eof_sort_events(eof_song);
 		}
 
+		//Launch the dialog to allow the user to import a track
 		eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
 		eof_conditionally_center_dialog(eof_gp_import_dialog);
-		(void) eof_popup_dialog(eof_gp_import_dialog, 0);	//Launch the dialog to allow the user to import a track
+		if(eof_popup_dialog(eof_gp_import_dialog, 0) == 3)
+		{	//If the user canceled the import instead of selecting a track
+			if(gp_import_undo_made)
+			{	//If the project had been modified by the import process
+				eof_menu_edit_undo();		//Undo the modification
+				gp_import_undo_made = 0;	//And track that no modifications remain from the import
+			}
+		}
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
@@ -5948,6 +5963,11 @@ int eof_gp_import_common(const char *fn)
 	}//The file was successfully parsed...
 	else
 	{
+		if(gp_import_undo_made)
+		{
+			eof_menu_edit_undo();	//If an undo state was made during the import, undo the modification
+			gp_import_undo_made = 0;	//And track that no modifications remain from the import
+		}
 		allegro_message("Failure.  Check log for details.");
 		return 1;	//Return failure
 	}
