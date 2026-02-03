@@ -268,7 +268,7 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track);
 	//If user refuses on any of the prompts or cancels any "Place RS Phrase" dialogs, or upon error, nonzero is returned.
 	//If the track is not populated, the function returns zero without checking the RS sections.
 
-int eof_same_excluding_ghosts(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note1, unsigned long note2);
+int eof_same_excluding_ghosts(EOF_PRO_GUITAR_TRACK *tp, unsigned long note1, unsigned long note2);
 	//Compares the two notes and returns zero if all non-ghosted gems have the same fret values (ignoring muted status)
 	//-1 is returned on error
 

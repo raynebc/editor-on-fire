@@ -4794,7 +4794,7 @@ int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long
 	return retval;	//Return not populated
 }
 
-int eof_same_excluding_ghosts(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note1, unsigned long note2)
+int eof_same_excluding_ghosts(EOF_PRO_GUITAR_TRACK *tp, unsigned long note1, unsigned long note2)
 {
 	unsigned long ctr, bitmask;
 
@@ -4871,7 +4871,7 @@ int eof_note_has_high_chord_density(EOF_SONG *sp, unsigned long track, unsigned 
 				unsigned long lanecount = eof_note_count_rs_lanes(sp, track, prevInHandShape, 2);
 				if(lanecount > 1)
 				{	//If the earlier note is a chord
-					if(!eof_same_excluding_ghosts(tp, track, note, prevInHandShape))
+					if(!eof_same_excluding_ghosts(tp, note, prevInHandShape))
 					{	//And it matches this chord (without regard for any ghost notes
 						return 1;
 					}

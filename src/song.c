@@ -8943,13 +8943,16 @@ int eof_pro_guitar_track_diff_has_fingering(EOF_SONG *sp, unsigned long track, u
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];	//Simplify
 	for(notectr = 0; notectr < tp->pgnotes; notectr++)
 	{	//For each note in the track
-		for(stringctr = 0, bitmask = 1; stringctr < 6; stringctr++, bitmask <<= 1)
-		{	//For each of the 6 usable strings
-			if(tp->pgnote[notectr]->note & bitmask)
-			{	//If this string is used
-				if(tp->pgnote[notectr]->finger[stringctr])
-				{	//If this string's fingering is defined
-					return 1;
+		if(tp->pgnote[notectr]->type == diff)
+		{	//If the note is in the specified difficulty
+			for(stringctr = 0, bitmask = 1; stringctr < 6; stringctr++, bitmask <<= 1)
+			{	//For each of the 6 usable strings
+				if(tp->pgnote[notectr]->note & bitmask)
+				{	//If this string is used
+					if(tp->pgnote[notectr]->finger[stringctr])
+					{	//If this string's fingering is defined
+						return 1;
+					}
 				}
 			}
 		}
