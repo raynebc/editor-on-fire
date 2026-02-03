@@ -690,7 +690,7 @@ int eof_validate_beatable_file(char *fn)
 	for(ctr = 0; ctr < songsections; ctr++)
 	{	//For each song section
 		unsigned long bpm, tsnum, tsden;
-		float start, duration, time;
+		float start, duration, timestamp;
 
 		bpm = pack_igetl(fp);
 		tsnum = pack_igetl(fp);
@@ -699,7 +699,7 @@ int eof_validate_beatable_file(char *fn)
 			error = 1;
 		if(pack_fread(&start, 4, fp) < 4)
 			error = 1;
-		if(pack_fread(&time, 4, fp) < 4)
+		if(pack_fread(&timestamp, 4, fp) < 4)
 			error = 1;
 
 		if(error)
@@ -709,7 +709,7 @@ int eof_validate_beatable_file(char *fn)
 			(void) pack_fclose(fp);
 			return 0;	//Return failure
 		}
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t0x%lX : %lu BPM, TS:  %lu/%lu, Dur: %fs, Start: %fs, TTime: %fs", fp_pos, bpm, tsnum, tsden, duration, start, time);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t0x%lX : %lu BPM, TS:  %lu/%lu, Dur: %fs, Start: %fs, TTime: %fs", fp_pos, bpm, tsnum, tsden, duration, start, timestamp);
 		eof_log(eof_log_string, 1);
 		fp_pos += 24;
 	}

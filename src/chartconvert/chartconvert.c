@@ -2259,8 +2259,7 @@ int export_midi(const char *filename, struct FeedbackChart *chart)
 		error |= (pack_putc(0x2F, tempf) == EOF);
 		error |= (pack_putc(0x00, tempf) == EOF);		//Write padding
 
-		if(tempf)
-			(void) pack_fclose(tempf);	//Close the temporary file
+		(void) pack_fclose(tempf);	//Close the temporary file
 		tempf = NULL;
 
 		//Write track to MIDI file being exported

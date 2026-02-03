@@ -5851,8 +5851,8 @@ int eof_gp_import_track(DIALOG * d)
 			retval = eof_gp_import_drum_track(importvoice, ret);
 		}
 	}
-
-	retval = eof_gp_import_guitar_track(importvoice);	//Import into the active pro guitar track
+	else
+		retval = eof_gp_import_guitar_track(importvoice);	//Import into the active pro guitar track
 
 	if((retval != D_CLOSE) && gp_import_undo_made)
 	{	//If the drum or guitar track import failed or was cancelled, and the project had been modified by the import process

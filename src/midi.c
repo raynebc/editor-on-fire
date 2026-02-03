@@ -4332,7 +4332,7 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 	struct eof_MIDI_data_event *eventptr;
 	char trackheader[4] = {'M', 'T', 'r', 'k'};
 	unsigned char endoftrack[3] = {0xFF, 0x2F, 0};
-	char tempfname[30];
+	char tempfname[30] = {0};
 	PACKFILE *tempf;
 	unsigned long lastdelta, deltapos, track_length, ctr;
 	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
@@ -4389,8 +4389,8 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 			(void) pack_putc(pack_getc(tempf), outf);	//Copy the byte to the output MIDI file
 		}
 		(void) pack_fclose(tempf);	//Close the temporary file
+		(void) delete_file(tempfname);
 	}
-	(void) delete_file(tempfname);
 }
 
 void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases)

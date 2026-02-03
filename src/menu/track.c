@@ -4045,7 +4045,7 @@ void eof_track_rebuild_rs_tone_changes_list_strings(void)
 			stringlen += strlen(def);
 			defaultfound = 1;	//Track that at least one tone change still uses the default tone
 		}
-		stringlen += (size_t)snprintf(NULL, 0, "%02d:%02d.%03d: %s%s", ism, iss, isms, tp->tonechange[ctr].name, suffix) + 1;	//Find the number of characters needed to snprintf this string
+		stringlen += (size_t)snprintf(NULL, 0, "%02u:%02u.%03u: %s%s", ism, iss, isms, tp->tonechange[ctr].name, suffix) + 1;	//Find the number of characters needed to snprintf this string
 		eof_track_rs_tone_changes_list_strings[ctr] = malloc(stringlen);	//Allocate memory to build the string
 		if(!eof_track_rs_tone_changes_list_strings[ctr])
 		{
@@ -4059,7 +4059,7 @@ void eof_track_rebuild_rs_tone_changes_list_strings(void)
 			eof_track_rs_tone_changes_list_strings = NULL;
 			return;
 		}
-		(void) snprintf(eof_track_rs_tone_changes_list_strings[ctr], stringlen, "%02d:%02d.%03d: %s%s", ism, iss, isms, tp->tonechange[ctr].name, suffix);
+		(void) snprintf(eof_track_rs_tone_changes_list_strings[ctr], stringlen, "%02u:%02u.%03u: %s%s", ism, iss, isms, tp->tonechange[ctr].name, suffix);
 	}
 	if(!defaultfound)
 	{	//If no tone changes in the arrangement use the default tone anymore (ie. all the ones that did were deleted)

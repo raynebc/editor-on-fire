@@ -450,7 +450,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				//Write vibrato
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
 				{
-					unsigned long x = deltalength, time;	//Init x with a value that will prevent writing a vibrato pitch bend at the end of the note unless earlier pitch bends were written for the note
+					unsigned long x = deltalength, timestamp;	//Init x with a value that will prevent writing a vibrato pitch bend at the end of the note unless earlier pitch bends were written for the note
 					long height;
 					double y;
 					double wave_period = 120;	//This is how many delta ticks it will take for the wave pattern to repeat (240 = every half beat)
@@ -474,9 +474,9 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height, channel, index++);	//Add a pitch bend that is the given value above or below neutral
 */
 
-					for(time = 0; time < length; time += pitch_bend_spacing)
+					for(timestamp = 0; timestamp < length; timestamp += pitch_bend_spacing)
 					{	//For each time interval of the note being exported
-						x = ((double)time * (double)deltalength) / (double)length;	//Get the delta tick amount into the note that this realtime position is
+						x = ((double)timestamp * (double)deltalength) / (double)length;	//Get the delta tick amount into the note that this realtime position is
 						y = sin(x * M_PI * 2.0 / wave_period);		//Solve for y where the sine wave is calculated to repeat its pattern in the given number of delta ticks (an x value of wave_period is where y would equal sin(2 * pi), where a sine wave officially repeats itself)
 						bend_amount = eof_get_bend_strength_at_pos(sp, track, i, stringnum, pos + x) * 640;	//The pitch bend event will also add in the amount that the note bends
 						if(y < 0)

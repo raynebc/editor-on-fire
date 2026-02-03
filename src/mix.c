@@ -581,7 +581,7 @@ SAMPLE *eof_mix_load_ogg_sample(char *fn)
 		}
 		if(loadedsample == NULL)
 			allegro_message("Couldn't load sample %s!",fn);
-		if(loadedsample->len == 0)
+		else if(loadedsample->len == 0)
 		{
 			allegro_message("Couldn't process sample %s!",fn);
 			destroy_sample(loadedsample);

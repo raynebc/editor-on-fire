@@ -2696,10 +2696,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			EOF_LYRIC *lyric = eof_song->vocal_track[0]->lyric[ctr];	//Simplify
 			if(lyric->note != EOF_LYRIC_PERCUSSION)
 			{	//If this is not a vocal percussion note
-				EOF_PHRASE_SECTION *line = eof_find_lyric_line(ctr);
-				if(line)
+				EOF_PHRASE_SECTION *lyricline = eof_find_lyric_line(ctr);
+				if(lyricline)
 				{	//If this lyric begins within a lyric line
-					if(lyric->pos + lyric->length > line->end_pos)
+					if(lyric->pos + lyric->length > lyricline->end_pos)
 					{	//If this lyric extends beyond the end of the lyric line it begins in
 						char time_string[15] = {0};
 						eof_notes_panel_print_time(lyric->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
@@ -3694,7 +3694,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 			ms = fmod(eof_song->beat[eof_selected_beat]->fpos, 1000.0);
 			eof_build_mmssms_string(eof_song->beat[eof_selected_beat]->pos, &min, &sec, NULL, NULL);
-			snprintf(dest_buffer, dest_buffer_size, "%02d:%02d.%f", min, sec, ms);
+			snprintf(dest_buffer, dest_buffer_size, "%02u:%02u.%f", min, sec, ms);
 		}
 		return 1;
 	}
@@ -4051,7 +4051,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the seek position is to be displayed as seconds
 			ms = (eof_music_pos.value - eof_av_delay) % 1000;
 			sec = (eof_music_pos.value - eof_av_delay) / 1000;
-			snprintf(dest_buffer, dest_buffer_size, "%d.%03ds", sec, ms);
+			snprintf(dest_buffer, dest_buffer_size, "%u.%03us", sec, ms);
 		}
 		return 1;
 	}
