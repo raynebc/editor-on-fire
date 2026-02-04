@@ -102,6 +102,7 @@ NCDFS_FILTER_LIST * eof_filter_bf_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_note_panel_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_array_txt_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_beatable_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_ffmpeg_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -130,6 +131,7 @@ char        eof_ps_executable_path[1024] = {0};
 char        eof_ps_executable_name[1024] = {0};
 char        eof_ps_songs_path[1024] = {0};
 char        eof_rs_to_tab_executable_path[1024] = {0};
+char        eof_ffmpeg_executable_path[1024] = {0};
 char        eof_last_frettist[256] = {0};
 char        eof_temp_filename[1024] = {0};	//A string for temporarily storing file paths
 char        eof_soft_cursor = 0;
@@ -2058,7 +2060,7 @@ int eof_load_ogg_quick(char * filename)
 			alogg_destroy_ogg(eof_music_track);
 			eof_music_track = NULL;
 			free(eof_music_data);
-			loaded = -1;
+			loaded = 0;
 		}
 		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 	}
@@ -2081,8 +2083,9 @@ int eof_load_ogg(char * filename, char function)
 	char * returnedfn = NULL;
 	char * ptr = filename;	//Used to refer to the OGG file that was processed from memory buffer
 	char output[1024] = {0};
+	char backup[1024] = {0};
 	char dest_name[256] = {0};
-	int loaded = 0;
+	int loaded = 0, attempt, failed = 0;
 	char load_silence = 0;
 	char * emptystring = "";
 
@@ -2096,89 +2099,157 @@ int eof_load_ogg(char * filename, char function)
 	eof_music_data_size = file_size_ex(filename);
 	strncpy(dest_name, get_filename(filename), sizeof(dest_name) - 1);	//By default, the specified file's name will be stored to the OGG profile
 	strncpy(output, filename, sizeof(output) - 1);	//By default, the specified file will be the one loaded
+	ptr = filename;	//The name of the file to cite if it fails to load
 	if(!eof_music_data)
 	{	//If the referenced file couldn't be buffered to memory, have the user browse for another file
 		(void) replace_filename(output, filename, "", 1024);	//Get the path of the target file's parent directory (the project folder)
-		returnedfn = ncd_file_select(0, output, "Select Music File", eof_filter_music_files);
+		if(exists(eof_ffmpeg_executable_path))
+		{	//If FFMPEG is linked, use the more inclusive file filter
+			returnedfn = ncd_file_select(0, output, "Select Music File", eof_filter_ffmpeg_files);
+		}
+		else
+		{
+			returnedfn = ncd_file_select(0, output, "Select Music File", eof_filter_music_files);
+		}
 		eof_clear_input();
 		if(returnedfn)
 		{	//User selected an OGG, WAV or MP3 file, write a suitably named OGG into the chart's destination folder
-			ptr = returnedfn;
+			ptr = returnedfn;	//The name of the file to cite if it fails to load
 			(void) replace_filename(output, filename, "", 1024);	//Store the path of the file's parent folder
 
 			if(!eof_audio_to_ogg(returnedfn, output, dest_name, (function == 2 ? 1 : 0)))
 			{	//If the file copy or conversion to create guitar.ogg (or a suitably named OGG file if function == 2) succeeded
 				(void) replace_filename(output, filename, dest_name, 1024);
-				eof_music_data = (void *)eof_buffer_file(output, 0, 0);
-				eof_music_data_size = file_size_ex(output);
+			}
+			else
+			{	//eof_audio_to_ogg() failed to convert the audio
+				strncpy(output, returnedfn, sizeof(output) - 1);	//Re-define this so FFMPEG can try to re-encode it below
 			}
 		}
 		else if(function)
 		{	//If the user canceled loading audio, and the calling function allows defaulting to second_of_silence.ogg
 			load_silence = 1;
 			ptr = emptystring;
-			get_executable_name(output, 1024);	//Get EOF's executable path
-			#ifdef ALLEGRO_MACOSX
-				(void) strncat(output, "/Contents/Resources/eof/", sizeof(output) - strlen(output) - 1);
-			#endif
-			(void) replace_filename(output, output, "second_of_silence.ogg", 1024);
+		}
+	}
+
+	for(attempt = 1; (attempt <= 3) && !loaded; attempt++)
+	{
+		if(load_silence && (attempt < 3))
+			continue;	//If no suitable audio file was selected, skip to the third iteration of this loop when silent audio will be loaded
+
+		if(attempt == 2)
+		{	//If the first attempt didn't succeed, attempt to load the audio after re-encoding it with FFMPEG
+			if(exists(eof_ffmpeg_executable_path))
+			{	//If FFMPEG is linked
+				eof_log("\tAttempting to re-encode input audio with FFMPEG", 1);
+				(void) snprintf(backup, sizeof(backup) - 1, "%s.original", output);
+				failed = 0;	//Reset this so the function can track whether it fails after trying to load the FFMPEG re-encode
+				if(!eof_copy_file(output, backup))
+				{	//If the input file couldn't be copied to filename.original
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFailed to create \"%s\"", backup);
+					eof_log(eof_log_string, 1);
+					break;
+				}
+				allegro_message("Attempting to re-encode audio with FFMPEG");
+				if(eof_ffmpeg_convert_audio(backup, output))
+				{	//If the input file couldn't be re-encoded with FFMPEG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFailed to re-encode \"%s\"", backup);
+					eof_log(eof_log_string, 1);
+					eof_copy_file(backup, output);	//Restore the backed up file to the original file name
+					break;
+				}
+			}
+			else
+				continue;	//Loading with the same steps would fail again
+		}
+		else if(attempt == 3)
+		{	//If the second attempt didn't succeed, attempt to load silent audio
+			if(function)
+			{	//If the calling function allows defaulting to second_of_silence.ogg
+				get_executable_name(output, 1024);	//Get EOF's executable path
+				#ifdef ALLEGRO_MACOSX
+					(void) strncat(output, "/Contents/Resources/eof/", sizeof(output) - strlen(output) - 1);
+				#endif
+				(void) replace_filename(output, output, "second_of_silence.ogg", 1024);
+				load_silence = 1;	//Track that the function is attempting to load no chart audio, just the silent placeholder
+			}
+		}
+		if(!eof_music_data)
+		{	//If audio isn't already buffered, buffer the audio being attempted during this iteration
 			eof_music_data = (void *)eof_buffer_file(output, 0, 0);
 			eof_music_data_size = file_size_ex(output);
 		}
-	}
-	if(eof_music_data)
-	{	//If the OGG file was able to buffer to memory
-		if(load_silence)
-		{	//If EOF failed over to silent audio
-			eof_silence_loaded = 1;	//Track this condition
-		}
-		else
-		{
-			eof_silence_loaded = 0;
-
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tApplying name \"%s\" to OGG profile", dest_name);
+		if(eof_music_data)
+		{	//If the OGG file was able to buffer to memory
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", output);
 			eof_log(eof_log_string, 1);
-			if(ogg_profile_name)
-			{	//This pointer should refer to the file name string in the default OGG profile
-				(void) ustrcpy(ogg_profile_name, dest_name);		//Update the OGG profile with the appropriate file name
-				ogg_profile_name = NULL;	//Reset this pointer
-			}
-			if(eof_song)
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tOGG profile file name is now \"%s\"", eof_song->tags->ogg[0].filename);
-				eof_log(eof_log_string, 2);
-			}
-		}
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", output);
-		eof_log(eof_log_string, 1);
-		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
-		if(eof_music_track)
-		{
-			eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
-			if(!eof_music_length)
-			{
-				alogg_destroy_ogg(eof_music_track);
-				eof_log("\t\t!Error:  ALOGG could not process audio", 1);
+			eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
+			if(eof_music_track)
+			{	//If the OGG file was loaded
+				eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
+				if(!eof_music_length)
+				{	//If ALOGG couldn't determine the audio length
+					alogg_destroy_ogg(eof_music_track);
+					eof_music_track = NULL;
+					free(eof_music_data);
+					eof_music_data = NULL;
+					eof_log("\t\t!Error:  ALOGG could not process audio", 1);
+					failed = 1;
+				}
+				else
+				{
+					loaded = 1;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoaded OGG file \"%s\" (%lums)", filename, eof_music_length);
+					eof_log(eof_log_string, 1);
+					eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+					(void) ustrcpy(eof_loaded_ogg_name, output);	//Store the loaded OGG filename
+					eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
+
+					if(load_silence)
+					{	//If EOF failed over to silent audio
+						eof_silence_loaded = 1;	//Track this condition
+					}
+					else
+					{
+						eof_silence_loaded = 0;
+
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tApplying name \"%s\" to OGG profile", dest_name);
+						eof_log(eof_log_string, 1);
+						if(ogg_profile_name)
+						{	//This pointer should refer to the file name string in the default OGG profile
+							(void) ustrcpy(ogg_profile_name, dest_name);		//Update the OGG profile with the appropriate file name
+							ogg_profile_name = NULL;	//Reset this pointer
+						}
+						if(eof_song)
+						{
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tOGG profile file name is now \"%s\"", eof_song->tags->ogg[0].filename);
+							eof_log(eof_log_string, 2);
+						}
+					}
+				}
 			}
 			else
+				failed = 1;
+		}//If the OGG file was able to buffer to memory
+	}//Try to load the audio up to two times
+
+	if(failed)
+	{
+		allegro_message("Unable to load OGG file.\n%s\nMake sure your file is a valid OGG file.  You may need to encode it to OGG outside of EOF, or use \"File>Link to>FFMPEG\" and EOF will try to re-encode it next time.", ptr);
+		if(!eof_silence_loaded)
+		{	//If the silent audio wasn't loaded, ensure all loaded audio is freed
+			if(eof_music_data)
 			{
-				loaded = 1;
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoaded OGG file \"%s\" (%lums)", filename, eof_music_length);
-				eof_log(eof_log_string, 1);
-				eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-				(void) ustrcpy(eof_loaded_ogg_name, output);	//Store the loaded OGG filename
-				eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
+				free(eof_music_data);
+				eof_music_data = NULL;
+			}
+			if(eof_music_track)
+			{
+				alogg_destroy_ogg(eof_music_track);
+				eof_music_track = NULL;
 			}
 		}
-	}
-	if(!loaded)
-	{
-		allegro_message("Unable to load OGG file.\n%s\nMake sure your file is a valid OGG file.  You may need to encode it to OGG outside of EOF.", ptr);
-		if(eof_music_data)
-		{
-			free(eof_music_data);
-		}
-		eof_music_data = NULL;
 	}
 
 	eof_fix_window_title();
@@ -4803,6 +4874,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_beatable_files, "beats", "BEATABLE (*.beats)", 1);
 
+	eof_filter_ffmpeg_files = ncdfs_filter_list_create();
+	if(!eof_filter_ffmpeg_files)
+	{
+		allegro_message("Could not create file list filter (*.ogg,*.mp3,*.wav,*.flac,*.ape,*.wma,*.aac,*.aif.*.alac,*.m4a,*.mka,*.opus)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_ffmpeg_files, "ogg;mp3;wav;flac;ape;wma;aac;aif;alac;m4a;mka;opus", "FFMPEG Audio Files (*.ogg,*.mp3,*.wav,*.flac,*.ape,*.wma,*.aac,*.aif.*.alac,*.m4a,*.mka,*.opus)", 1);
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -5400,6 +5479,8 @@ void eof_exit(void)
 		free(eof_filter_array_txt_files);
 	if(eof_filter_beatable_files)
 		free(eof_filter_beatable_files);
+	if(eof_filter_ffmpeg_files)
+		free(eof_filter_ffmpeg_files);
 	if(eof_os_clipboard)
 		free(eof_os_clipboard);
 

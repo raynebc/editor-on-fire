@@ -86,10 +86,13 @@ int eof_menu_file_link(unsigned char application);
 	//Prompts the user for an executable and song path
 	//If application is 0, they are stored as a link to FoF
 	//If application is 1, they are stored as a link to Phase Shift
-	//Otherwise only an executable path is asked for, and it is stored as a link to RocksmithToTab
+	//Otherwise only an executable path is asked for, and
+	//	If application is 2, it is stored as a link to RocksmithToTab
+	//	If application is >2, it is stored as a link to FFMPEG
 int eof_menu_file_link_fof(void);			//Calls eof_menu_file_link() to link to FoF
 int eof_menu_file_link_ps(void);			//Calls eof_menu_file_link() to link to Phase Shift
 int eof_menu_file_link_rs_to_tab(void);		//Calls eof_menu_file_link() to link to RocksmithToTab
+int eof_menu_file_link_ffmpeg(void);		//Calls eof_menu_file_link() to link to FFMPEG
 int eof_menu_file_exit(void);
 int eof_menu_file_gh_import(void);	//Prompt for a Guitar Hero chart file and import it
 int eof_menu_file_ghl_import(void);	//Prompt for a Guitar Hero Live chart file and import it into the active track

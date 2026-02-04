@@ -129,9 +129,10 @@ MENU eof_file_export_menu[] =
 
 MENU eof_file_menu_link_to[] =
 {
-	{"&FOF", eof_menu_file_link_fof, NULL, EOF_LINUX_DISABLE, NULL},
+	{"FOF", eof_menu_file_link_fof, NULL, EOF_LINUX_DISABLE, NULL},
 	{"&Phase Shift", eof_menu_file_link_ps, NULL, EOF_LINUX_DISABLE, NULL},
 	{"&RocksmithToTab", eof_menu_file_link_rs_to_tab, NULL, EOF_LINUX_DISABLE, NULL},
+	{"&FFMPEG", eof_menu_file_link_ffmpeg, NULL, EOF_LINUX_DISABLE, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2223,6 +2224,7 @@ int eof_menu_file_link(unsigned char application)
 	char *fofdisplayname = "FoF";
 	char *psdisplayname = "Phase Shift";
 	char *rstotabdisplayname = "RocksmithToTab.exe";
+	char *ffmpegdisplayname = "FFMPEG";
 	char titlebartext[100] = {0};
 	char *appdisplayname = NULL;
 	char * returnfolder = NULL;
@@ -2246,9 +2248,13 @@ int eof_menu_file_link(unsigned char application)
 	{	//User is linking to Phase Shift
 		appdisplayname = psdisplayname;
 	}
-	else
+	else if(application == 2)
 	{	//User is linking to RocksmithToTab
 		appdisplayname = rstotabdisplayname;
+	}
+	else
+	{	//User is linking to FFMPEG
+		appdisplayname = ffmpegdisplayname;
 	}
 	(void) snprintf(titlebartext, sizeof(titlebartext) - 1, "Locate %s Executable", appdisplayname);
 	returnedfn = ncd_file_select(0, NULL, titlebartext, eof_filter_exe_files);
@@ -2275,13 +2281,17 @@ int eof_menu_file_link(unsigned char application)
 				}
 			}
 		}
-		else
+		else if(application == 2)
 		{	//If linking to RocksmithToTab
 			(void) ustrcpy(eof_rs_to_tab_executable_path, returnedfn);
 			if(strcasestr_spec(returnedfn, "RocksmithToTabGUI.exe"))
 			{	//If the selected file name indicates that the user picked the GUI program
 				allegro_message("It appears you picked the GUI version of RocksmithToTab instead of the command line one (RocksmithToTab.exe).  Consider re-linking to the correct program if problems are encountered.");
 			}
+		}
+		else
+		{	//If linking to FFMPEG
+			(void) ustrcpy(eof_ffmpeg_executable_path, returnedfn);
 		}
 	}
 	eof_show_mouse(NULL);
@@ -2303,6 +2313,11 @@ int eof_menu_file_link_ps(void)
 int eof_menu_file_link_rs_to_tab(void)
 {
 	return eof_menu_file_link(2);	//Link to RocksmithToTab
+}
+
+int eof_menu_file_link_ffmpeg(void)
+{
+	return eof_menu_file_link(3);	//Link to FFMPEG
 }
 
 int eof_menu_file_exit(void)
@@ -3031,23 +3046,10 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		(void) snprintf(dest_name, 15, "guitar.ogg");
 	}
 	else
-	{	//Allow song.*, drums.*, rhythm.* and vocals.* to retain that part of their name
-		if(!ustricmp(src_name, "song.ogg") || !ustricmp(src_name, "song.mp3") || !ustricmp(src_name, "song.wav"))
-			(void) snprintf(dest_name, 15, "song.ogg");
-		else if(!ustricmp(src_name, "drums.ogg") || !ustricmp(src_name, "drums.mp3") || !ustricmp(src_name, "drums.wav"))
-			(void) snprintf(dest_name, 15, "drums.ogg");
-		else if(!ustricmp(src_name, "rhythm.ogg") || !ustricmp(src_name, "rhythm.mp3") || !ustricmp(src_name, "rhythm.wav"))
-			(void) snprintf(dest_name, 15, "rhythm.ogg");
-		else if(!ustricmp(src_name, "vocals.ogg") || !ustricmp(src_name, "vocals.mp3") || !ustricmp(src_name, "vocals.wav"))
-			(void) snprintf(dest_name, 15, "vocals.ogg");
-		else if(!ustricmp(src_name, "bass.ogg") || !ustricmp(src_name, "bass.mp3") || !ustricmp(src_name, "bass.wav"))
-			(void) snprintf(dest_name, 15, "bass.ogg");
-		else if(!ustricmp(src_name, "keys.ogg") || !ustricmp(src_name, "keys.mp3") || !ustricmp(src_name, "keys.wav"))
-			(void) snprintf(dest_name, 15, "keys.ogg");
-		else if(!ustricmp(src_name, "crowd.ogg") || !ustricmp(src_name, "crowd.mp3") || !ustricmp(src_name, "crowd.wav"))
-			(void) snprintf(dest_name, 15, "crowd.ogg");
-		else
-			(void) snprintf(dest_name, 15, "guitar.ogg");	//If it doesn't match any of those names, it will be renamed as guitar.ogg
+	{	//Allow song.*, drums.*, rhythm.* and vocals.*, bass.*, keys.*, crowd.* to retain that part of their name
+		(void) replace_extension(dest_name, src_name, "ogg", 15);
+		if(ustricmp(src_name, "song.ogg") && ustricmp(src_name, "drums.ogg") && ustricmp(src_name, "rhythm.ogg") && ustricmp(src_name, "vocals.ogg") && ustricmp(src_name, "bass.ogg") && ustricmp(src_name, "keys.ogg") && ustricmp(src_name, "crowd.ogg"))
+			(void) snprintf(dest_name, 15, "guitar.ogg");	//If the source file name isn't any of the tolerated names, name the output file as guitar.ogg
 	}
 
 	if(!ustricmp(src_name, dest_name))
@@ -3125,8 +3127,8 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 			return 2;	//Return user canceled conversion
 		}
 	}//Convert from WAV
-	else
-	{	//Copy as-is (assume OGG file)
+	else if(!ustricmp(get_extension(file), "ogg"))
+	{	//Copy as-is (assume valid OGG file)
 		eof_log("\tUsing source file in its original format (OGG assumed)", 1);
 
 		if(!eof_menu_file_new_supplement(directory, NULL, 1))
@@ -3154,25 +3156,40 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		return 0;	//Return success
 	}
 	else
-	{	//The file does not exist, test write permission
-		PACKFILE *fp;
+	{	//The file does not exist
+		if(exists(eof_ffmpeg_executable_path))
+		{	//If FFMPEG is linked, try to create the audio with it
+			eof_log("\t\tAudio conversion failed.  Attempting to convert with FFMPEG", 1);
+			(void) eof_ffmpeg_convert_audio(file, cfn);
+		}
 
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" was not created", cfn);
-		eof_log(eof_log_string, 1);
-
-		fp = pack_fopen(cfn, "wb");	//Attempt to create file
-		if(!fp)
+		if(exists(cfn))
 		{
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Could not manually create file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" created with FFMPEG", cfn);
 			eof_log(eof_log_string, 1);
+			return 0;	//Return success
 		}
 		else
-		{
-			pack_fclose(fp);
-			eof_log("Test file was able to be created manually, but the conversion utility could not do so", 1);
-			(void) delete_file(cfn);	//Delete permission test file
+		{	//The file does not exist, test write permission
+			PACKFILE *fp;
+
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" was not created", cfn);
+			eof_log(eof_log_string, 1);
+
+			fp = pack_fopen(cfn, "wb");	//Attempt to create test file
+			if(!fp)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Could not manually create test file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+				eof_log(eof_log_string, 1);
+			}
+			else
+			{
+				pack_fclose(fp);
+				eof_log("Test file was able to be written, but the conversion utility could not write file", 1);
+				(void) delete_file(cfn);	//Delete permission test file
+			}
+			return 4;	//Error
 		}
-		return 4;	//Error
 	}
 }
 
@@ -7007,9 +7024,10 @@ int eof_menu_file_export_guitar_pro(void)
 		}
 		else if(retval == 3)
 		{	//If the user opted to link the program
-			return eof_menu_file_link_rs_to_tab();
+			(void) eof_menu_file_link_rs_to_tab();
 		}
-		return 1;
+		if(!exists(eof_rs_to_tab_executable_path))
+			return 1;	//If RocksmithToTab is still not linked, return from this function
 	}
 
 	//Create temporary XML files

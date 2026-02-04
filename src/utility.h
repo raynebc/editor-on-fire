@@ -120,4 +120,8 @@ void eof_build_mmssms_string(unsigned long mspos, unsigned *min, unsigned *sec, 
 	//If the timestamp is >= 100 minutes, it won't be able to be represented this way and the string ">=100min" is written instead
 	//string is required to be a buffer at least 10 characters in size to store this string.
 
+int eof_ffmpeg_convert_audio(char *input, char *output);
+	//If FFMPEG is linked, use it to convert the audio from input filename to the output filename
+	//Returns nonzero on error
+
 #endif

@@ -5,6 +5,7 @@
 #include "main.h"	//For logging
 #include "mix.h"
 #include "foflc/RS_parse.h"	//For rs_lyric_substitute_char_extended()
+#include "menu/file.h"		//For eof_menu_file_link_ffmpeg()
 #include "modules/g-idle.h"	//For Idle()
 
 #ifdef USEMEMWATCH
@@ -1281,4 +1282,63 @@ void eof_build_mmssms_string(unsigned long mspos, unsigned *min, unsigned *sec, 
 			(void) sprintf(string, "%02u:%02u.%03u", ism, iss, isms);
 		}
 	}
+}
+
+int eof_ffmpeg_convert_audio(char *input, char *output)
+{
+	int retval;
+	char tempstr[1024] = {0};
+	char syscommand[1024] = {0};
+
+	eof_log("eof_ffmpeg_convert_audio() entered", 1);
+
+	//Ensure FFMPEG is linked
+	if(!exists(eof_ffmpeg_executable_path))
+	{	//If the path to FFMPEG is not defined or otherwise doesn't refer to a valid file
+		retval = alert3("FFMPEG is not properly linked", "First download the program", "Then use \"File>Link to FFMPEG\" to browse to the program", "OK", "Download", "Link", 0, 0, 0);
+		if(retval == 2)
+		{	//If the user opted to download the program
+			(void) eof_system("start https://www.ffmpeg.org/download.html");
+		}
+		else if(retval == 3)
+		{	//If the user opted to link the program
+			(void) eof_menu_file_link_ffmpeg();
+		}
+		if(!exists(eof_ffmpeg_executable_path))
+			return 1;	//If FFMPEG is still not linked, return failure
+	}
+
+	//Validate parameters
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tInput file:  %s", input);
+	eof_log(eof_log_string, 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOutput file:  %s", output);
+	eof_log(eof_log_string, 1);
+	if(!exists(input))
+	{
+		eof_log("\t\tInput file does not exist", 1);
+		return 2;	//Return failure
+	}
+	if(exists(output))
+	{
+		eof_log("\t\tOutput file will be overwritten", 1);
+		(void) delete_file(output);
+		if(exists(output))
+		{
+			eof_log("\t\tFailed to delete existing output file", 1);
+			return 3;	//Return failure
+		}
+	}
+
+	//Call program
+	(void) ustrcpy(syscommand, eof_ffmpeg_executable_path);
+	(void) uszprintf(tempstr, (int) sizeof(tempstr) - 1, " -i \"%s\" -y \"%s\"", input, output);
+	(void) ustrcat(syscommand, tempstr);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling FFMPEG as follows:  %s", syscommand);
+	eof_log(eof_log_string, 1);
+	(void) eof_system(syscommand);
+
+	if(exists(output))
+		return 0;	//The output file was written.  Return success
+
+	return 4;		//Return failure
 }

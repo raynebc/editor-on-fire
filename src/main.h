@@ -288,6 +288,7 @@ extern NCDFS_FILTER_LIST * eof_filter_bf_files;
 extern NCDFS_FILTER_LIST * eof_filter_note_panel_files;
 extern NCDFS_FILTER_LIST * eof_filter_array_txt_files;
 extern NCDFS_FILTER_LIST * eof_filter_beatable_files;
+extern NCDFS_FILTER_LIST * eof_filter_ffmpeg_files;
 
 extern int         eof_global_volume;
 
@@ -495,6 +496,7 @@ extern char        eof_ps_executable_path[1024];
 extern char        eof_ps_executable_name[1024];
 extern char        eof_ps_songs_path[1024];
 extern char        eof_rs_to_tab_executable_path[1024];
+extern char        eof_ffmpeg_executable_path[1024];
 extern char        eof_temp_filename[1024];
 extern char        eof_soft_cursor;
 extern char        eof_desktop;
@@ -797,8 +799,11 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
 void eof_cat_track_difficulty_string(char *str);	//Concatenates the current track name and difficulty name/number to the specified string
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
+	//Loads the specified OGG file with no error recovery
+	//Returns zero on error
 int eof_load_ogg(char * filename, char function);
 	//Loads the specified OGG file, or if it does not exist, have the user browse for an audio file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
+	//If the first attempt to load the OGG file fails, and FFMPEG is linked, it is used to re-encode the audio to OGG format and the loading of that file is attempted
 	//If function is 1, and the user cancels loading audio, "second_of_silence.ogg" is loaded instead, and nonzero is returned.
 	//If function is 2, the browsed file name is allowed to keep its original filename (instead of being forcibly renamed to guitar.ogg) if it has one of the following names:
 	//  song.ogg, drums.ogg, rhythm.ogg, vocals.ogg, bass.ogg, keys.ogg, crowd.ogg
