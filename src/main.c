@@ -2081,7 +2081,7 @@ int eof_load_ogg_quick(char * filename)
 int eof_load_ogg(char * filename, char function)
 {
 	char * returnedfn = NULL;
-	char * ptr = filename;	//Used to refer to the OGG file that was processed from memory buffer
+	char * ptr;
 	char output[1024] = {0};
 	char backup[1024] = {0};
 	char dest_name[256] = {0};

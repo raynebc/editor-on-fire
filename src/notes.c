@@ -428,12 +428,17 @@ int eof_expand_notes_window_text(char *src_buffer, char *dest_buffer, unsigned l
 
 int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel)
 {
-	unsigned long tracknum, tracksize, ctr, ctr2, ctr3;
+	unsigned long tracknum, tracksize, ctr, ctr2, ctr3, notectr, lead = 0, rhythm = 0, bass = 0, stringnum, bitmask, diff, pixelcount, count = 0, totalnotecount = 0;
+	int retval = 2;	//Consider this false unless an offending instance in the active track is found
 	EOF_PHRASE_SECTION *phraseptr;
-	char album_art_filename[1024];
-	char *count_string, *name_string, name_buffer[101];
+	char album_art_filename[1024], name_buffer[101];
+	char *count_string, *name_string;
+	char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_VOCAL_TRACK *vp;
+	EOF_RS_TECHNIQUES tech = {0};
+	double percent;
+	unsigned long min = 0, sec, ms;
 
 	if(!macro || !dest_buffer || (dest_buffer_size < 1) || !panel)
 		return 0;	//Invalid parameters
@@ -837,8 +842,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "IF_ACTIVE_DIFFICULTY_IS_NUMBER_");	//Get a pointer to the text that would be the difficulty number
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long diff;
-
 		if(eof_read_macro_number(count_string, &diff))
 		{	//If the difficulty number was successfully parsed
 			if(eof_note_type == diff)
@@ -901,7 +904,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//If the active difficulty has a solo section without any notes
 	if(!ustricmp(macro, "IF_ACTIVE_DIFFICULTY_HAS_EMPTY_SOLO"))
 	{
-		unsigned long numsolos, soloctr, notectr, notepos, solonotes;
+		unsigned long numsolos, soloctr, notepos, solonotes;
 		long nextnote;
 		EOF_PHRASE_SECTION *soloptr;
 
@@ -1469,7 +1472,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_IR_LEAD_ARRANGEMENT_DEFINED"))
 	{
-		unsigned long lead = 0, rhythm = 0, bass = 0;
 		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
 		{	//If the arrangement designations were determined
 			if(lead)
@@ -1484,7 +1486,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_IS_IR_LEAD_ARRANGEMENT"))
 	{
-		unsigned long lead = 0, rhythm = 0, bass = 0;
 		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
 		{	//If the arrangement designations were determined
 			if(lead == eof_selected_track)
@@ -1499,7 +1500,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_IR_RHYTHM_ARRANGEMENT_DEFINED"))
 	{
-		unsigned long lead = 0, rhythm = 0, bass = 0;
 		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
 		{	//If the arrangement designations were determined
 			if(rhythm)
@@ -1514,7 +1514,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_IS_IR_RHYTHM_ARRANGEMENT"))
 	{
-		unsigned long lead = 0, rhythm = 0, bass = 0;
 		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
 		{	//If the arrangement designations were determined
 			if(rhythm == eof_selected_track)
@@ -1529,7 +1528,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_IR_BASS_ARRANGEMENT_DEFINED"))
 	{
-		unsigned long lead = 0, rhythm = 0, bass = 0;
 		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
 		{	//If the arrangement designations were determined
 			if(bass)
@@ -1544,7 +1542,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_IS_IR_BASS_ARRANGEMENT"))
 	{
-		unsigned long lead = 0, rhythm = 0, bass = 0;
 		if(eof_detect_immerrock_arrangements(&lead, &rhythm, &bass))
 		{	//If the arrangement designations were determined
 			if(bass == eof_selected_track)
@@ -1667,7 +1664,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(count_string)
 	{	//If the macro is this string
 		unsigned long mscount;
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_occurs_before_millis[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &mscount))
@@ -1847,15 +1843,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_PITCHED_SLIDES_LACK_LINKNEXT"))
 	{
-		unsigned long stringnum, notectr, bitmask;
-		EOF_RS_TECHNIQUES tech = {0};
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
-
 		eof_notes_macro_pitched_slide_missing_linknext[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
-			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
-
 			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
@@ -1898,8 +1888,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TONE_CHANGES_ON_NOTE"))
 	{
-		unsigned long tonectr, notectr;
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
+		unsigned long tonectr;
 
 		eof_notes_macro_note_starting_on_tone_change[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -2055,7 +2044,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_NOTE_SUBCEEDS_FHP"))
 	{
 		unsigned char lowestfret, fhp;
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_subceeding_fhp[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -2095,7 +2083,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{	//If the macro is this string
 		unsigned char highestfret, fhp;
 		unsigned long fretcount;
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_note_exceeding_fhp[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &fretcount))
@@ -2138,15 +2125,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_PITCHED_SLIDES_LACK_END_FRET"))
 	{
-		unsigned long stringnum, notectr, bitmask;
-		EOF_RS_TECHNIQUES tech = {0};
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
-
 		eof_notes_macro_pitched_slide_missing_end_fret[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
-			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
-
 			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
@@ -2193,15 +2174,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_BENDS_LACK_STRENGTH_DEFINITION"))
 	{
-		unsigned long stringnum, notectr, bitmask;
-		EOF_RS_TECHNIQUES tech = {0};
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
-
 		eof_notes_macro_bend_missing_strength[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
-			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
-
 			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
@@ -2251,15 +2226,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_OPEN_NOTES_BEND"))
 	{
-		unsigned long stringnum, notectr, bitmask;
-		EOF_RS_TECHNIQUES tech = {0};
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
-
 		eof_notes_macro_open_note_bend[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
-			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
-
 			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
@@ -2353,7 +2322,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{	//If the macro is this string
 		if(eof_song)
 		{
-			unsigned long target_count = 0, count = 0;
+			unsigned long target_count = 0;
 
 			if(eof_read_macro_number(count_string, &target_count))
 			{	//If the RS section count was successfully parsed
@@ -2432,7 +2401,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(count_string)
 	{	//If the macro is this string
 		unsigned long target_fhp = 0;
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
 
 		eof_notes_macro_fhp_exceeding_number[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &target_fhp))
@@ -2471,8 +2439,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "IF_ACTIVE_TRACK_RS_ANY_NOTE_EXCEEDS_FRET_");	//Get a pointer to the text that would be the fret value
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long notectr, target_fret = 0;
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
+		unsigned long target_fret = 0;
 
 		eof_notes_macro_note_exceeding_fret[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &target_fret))
@@ -2511,8 +2478,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "IF_ACTIVE_TRACK_RS_ANY_NOTE_EXCEEDS_DIFF_");	//Get a pointer to the text that would be the difficulty number
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long notectr, target_diff = 0;
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
+		unsigned long target_diff = 0;
 
 		eof_notes_macro_note_exceeding_diff[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &target_diff))
@@ -2551,17 +2517,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "IF_ACTIVE_TRACK_RS_ANY_SLIDES_EXCEED_FRET_");	//Get a pointer to the text that would be the fret number
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long stringnum, notectr, bitmask, target_fret;
-		EOF_RS_TECHNIQUES tech = {0};
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
+		unsigned long target_fret;
 
 		eof_notes_macro_slide_exceeding_fret[0] = '\0';	//Erase this string
 		if(eof_read_macro_number(count_string, &target_fret))
 		{	//If the fret number was successfully parsed
 			for(ctr = 1; ctr < eof_song->tracks; ctr++)
 			{	//For each track in the project
-				char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
-
 				if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 					continue;	//Skip non pro guitar tracks
 				if(eof_notes_inactive_track_has_rs_errors && (ctr != eof_selected_track))
@@ -2609,8 +2571,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_RS_BASS_TRACK_STRING_COUNT_EXCEEDED"))
 	{
-		unsigned long notectr;
-
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
 			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];	//Simplify
@@ -2654,9 +2614,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TECH_NOTES_LACK_TARGET"))
 	{
-		unsigned long notectr;
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
-
 		eof_notes_macro_tech_note_missing_target[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
@@ -2737,14 +2694,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TECHNIQUES_MISSING_SUSTAIN"))
 	{	//If the macro is this string
-		unsigned long stringnum, notectr, bitmask;
-		EOF_RS_TECHNIQUES tech = {0};
-		int retval = 2;	//Consider this false unless an offending instance in the active track is found
-
 		eof_notes_macro_technique_missing_sustain[0] = '\0';	//Erase this string
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track in the project
-			char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
 			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//Skip non pro guitar tracks
 			if(eof_notes_inactive_track_has_rs_warnings && (ctr != eof_selected_track))
@@ -2841,9 +2793,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The active track has notes in at least two difficulties
 	if(!ustricmp(macro, "IF_TRACK_HAS_NOTES_IN_MULTIPLE_DIFFS"))
 	{
-		unsigned char diff;
-		char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that the correct note set can be examined
-
 		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);	//Examine the normal note set only
 		diff = eof_get_note_type(eof_song, eof_selected_track, 0);	//The difficulty of the first note in the active track
 		for(ctr = 1; ctr < tracksize; ctr++)
@@ -3028,8 +2977,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "MOVE_UP_PIXELS_");	//Get a pointer to the text that would be the pixel count
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long pixelcount;
-
 		if(eof_read_macro_number(count_string, &pixelcount))
 		{	//If the pixel count was successfully parsed
 			dest_buffer[0] = '\0';
@@ -3051,8 +2998,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "MOVE_DOWN_PIXELS_");		//Get a pointer to the text that would be the pixel count
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long pixelcount;
-
 		if(eof_read_macro_number(count_string, &pixelcount))
 		{	//If the pixel count was successfully parsed
 			dest_buffer[0] = '\0';
@@ -3074,8 +3019,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "MOVE_LEFT_PIXELS_");	//Get a pointer to the text that would be the pixel count
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long pixelcount;
-
 		if(eof_read_macro_number(count_string, &pixelcount))
 		{	//If the pixel count was successfully parsed
 			dest_buffer[0] = '\0';
@@ -3097,8 +3040,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "MOVE_RIGHT_PIXELS_");	//Get a pointer to the text that would be the pixel count
 	if(count_string)
 	{
-		unsigned long pixelcount;
-
 		if(eof_read_macro_number(count_string, &pixelcount))
 		{	//If the pixel count was successfully parsed
 			dest_buffer[0] = '\0';
@@ -3418,8 +3359,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track solo count
 	if(!ustricmp(macro, "TRACK_SOLO_COUNT"))
 	{
-		unsigned long count = eof_get_num_solos(eof_song, eof_selected_track);
-
+		count = eof_get_num_solos(eof_song, eof_selected_track);
 		if(count)
 		{	//If there are any solos in the active track
 			snprintf(dest_buffer, dest_buffer_size, "%lu", count);
@@ -3434,16 +3374,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track solo count
 	if(!ustricmp(macro, "TRACK_SOLO_NOTE_COUNT"))
 	{
-		unsigned long count;
-
 		count = eof_count_track_num_notes_with_tflag(EOF_NOTE_TFLAG_SOLO_NOTE);
 
 		if(count)
 		{	//If there are any solo notes in the active track
 			if(tracksize)
 			{	//Redundant check to satisfy Coverity
-				double percent;
-
 				percent = (double)count * 100.0 / tracksize;
 				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
 			}
@@ -3458,7 +3394,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track solo note stats
 	if(!ustricmp(macro, "TRACK_SOLO_NOTE_STATS"))
 	{
-		unsigned long count, solocount, min = 0, max = 0;
+		unsigned long solocount, max = 0;
 
 		count = eof_notes_panel_count_section_stats(EOF_SOLO_SECTION, &min, &max);
 		solocount = eof_get_num_solos(eof_song, eof_selected_track);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
@@ -3477,8 +3413,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track star power count
 	if(!ustricmp(macro, "TRACK_SP_COUNT"))
 	{
-		unsigned long count = eof_get_num_star_power_paths(eof_song, eof_selected_track);
-
+		count = eof_get_num_star_power_paths(eof_song, eof_selected_track);
 		if(count)
 		{	//If there are any star power sections in the active track
 			snprintf(dest_buffer, dest_buffer_size, "%lu", count);
@@ -3493,16 +3428,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track star power note count
 	if(!ustricmp(macro, "TRACK_SP_NOTE_COUNT"))
 	{
-		unsigned long count;
-
 		count = eof_count_track_num_notes_with_flag(EOF_NOTE_FLAG_SP);
 
 		if(count)
 		{	//If there are any star power sections in the active track
 			if(tracksize)
 			{	//Redundant check to satisfy Coverity
-				double percent;
-
 				percent = (double)count * 100.0 / tracksize;
 				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
 			}
@@ -3517,7 +3448,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Star power lyric line count
 	if(!ustricmp(macro, "SP_LYRIC_LINE_COUNT"))
 	{
-		unsigned long count = 0, linecount;
+		unsigned long linecount;
 
 		linecount = eof_get_num_lyric_sections(eof_song, EOF_TRACK_VOCALS);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
 		for(ctr = 0; ctr < linecount; ctr++)
@@ -3531,8 +3462,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 		if(count && linecount)
 		{
-			double percent;
-
 			percent = (double)count * 100.0 / linecount;
 			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
 		}
@@ -3546,7 +3475,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track star power note stats
 	if(!ustricmp(macro, "TRACK_SP_NOTE_STATS"))
 	{
-		unsigned long count, min = 0, max = 0, spcount;
+		unsigned long max = 0, spcount;
 
 		count = eof_notes_panel_count_section_stats(EOF_SP_SECTION, &min, &max);
 		spcount = eof_get_num_star_power_paths(eof_song, eof_selected_track);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
@@ -3565,8 +3494,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track slider count
 	if(!ustricmp(macro, "TRACK_SLIDER_COUNT"))
 	{
-		unsigned long count = eof_get_num_sliders(eof_song, eof_selected_track);
-
+		count = eof_get_num_sliders(eof_song, eof_selected_track);
 		if(count)
 		{	//If there are any slider sections in the active track
 			snprintf(dest_buffer, dest_buffer_size, "%lu", count);
@@ -3581,16 +3509,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track slider note count
 	if(!ustricmp(macro, "TRACK_SLIDER_NOTE_COUNT"))
 	{
-		unsigned long count;
-
 		count = eof_count_track_num_notes_with_flag(EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
 
 		if(count)
 		{	//If there are any slider sections in the active track
 			if(tracksize)
 			{	//Redundant check to satisfy Coverity
-				double percent;
-
 				percent = (double)count * 100.0 / tracksize;
 				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));
 			}
@@ -3605,7 +3529,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Track slider note stats
 	if(!ustricmp(macro, "TRACK_SLIDER_NOTE_STATS"))
 	{
-		unsigned long count, slidercount, min = 0, max = 0;
+		unsigned long slidercount, max = 0;
 
 		count = eof_notes_panel_count_section_stats(EOF_SLIDER_SECTION, &min, &max);
 		slidercount = eof_get_num_sliders(eof_song, eof_selected_track);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
@@ -3689,12 +3613,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		}
 		else
 		{
-			unsigned min, sec;
-			double ms;
+			double dms;
+			unsigned umin, usec;
 
-			ms = fmod(eof_song->beat[eof_selected_beat]->fpos, 1000.0);
-			eof_build_mmssms_string(eof_song->beat[eof_selected_beat]->pos, &min, &sec, NULL, NULL);
-			snprintf(dest_buffer, dest_buffer_size, "%02u:%02u.%f", min, sec, ms);
+			dms = fmod(eof_song->beat[eof_selected_beat]->fpos, 1000.0);
+			eof_build_mmssms_string(eof_song->beat[eof_selected_beat]->pos, &umin, &usec, NULL, NULL);
+			snprintf(dest_buffer, dest_buffer_size, "%02u:%02u.%f", umin, usec, dms);
 		}
 		return 1;
 	}
@@ -3946,7 +3870,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 			{	//If a pro guitar track is active
 				char temp[10];
-				unsigned char pitchmask, pitches[6] = {0}, bitmask;
+				unsigned char pitchmask, pitches[6] = {0};
 				tp = eof_song->pro_guitar_track[tracknum];
 
 				dest_buffer[0] = '\0';	//Empty this string
@@ -4041,8 +3965,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position (honoring the seek timing format specified in user preferences)
 	if(!ustricmp(macro, "SEEK_POSITION"))
 	{
-		unsigned sec, ms;
-
 		if(!eof_display_seek_pos_in_seconds)
 		{	//If the seek position is to be displayed as minutes:seconds.milliseconds
 			eof_build_mmssms_string(eof_music_pos.value - eof_av_delay, NULL, NULL, NULL, dest_buffer);
@@ -4051,7 +3973,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the seek position is to be displayed as seconds
 			ms = (eof_music_pos.value - eof_av_delay) % 1000;
 			sec = (eof_music_pos.value - eof_av_delay) / 1000;
-			snprintf(dest_buffer, dest_buffer_size, "%u.%03us", sec, ms);
+			snprintf(dest_buffer, dest_buffer_size, "%lu.%03lus", sec, ms);
 		}
 		return 1;
 	}
@@ -4059,11 +3981,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position in seconds.milliseconds format
 	if(!ustricmp(macro, "SEEK_POSITION_SEC"))
 	{
-		int sec, ms;
-
 		sec = (eof_music_pos.value - eof_av_delay) / 1000;
 		ms = (eof_music_pos.value - eof_av_delay) % 1000;
-		snprintf(dest_buffer, dest_buffer_size, "%d.%03ds", sec, ms);
+		snprintf(dest_buffer, dest_buffer_size, "%lu.%03lus", sec, ms);
 
 		return 1;
 	}
@@ -4079,8 +3999,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position as a percentage of the chart's total length
 	if(!ustricmp(macro, "SEEK_POSITION_PERCENT"))
 	{
-		double percent = (double)(eof_music_pos.value - eof_av_delay) * 100.0 / eof_chart_length;
-
+		percent = (double)(eof_music_pos.value - eof_av_delay) * 100.0 / eof_chart_length;
 		snprintf(dest_buffer, dest_buffer_size, "%.2f", percent);
 
 		return 1;
@@ -4097,8 +4016,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Number of notes in active track difficulty
 	if(!ustricmp(macro, "TRACK_DIFF_NOTE_COUNT"))
 	{
-		unsigned long count;
-
 		count = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);
 		snprintf(dest_buffer, dest_buffer_size, "%lu", count);
 		return 1;
@@ -4107,8 +4024,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Number of notes in the flattened active track difficulty
 	if(!ustricmp(macro, "TRACK_FLATTENED_DIFF_NOTE_COUNT"))
 	{
-		unsigned long count;
-
 		count = eof_get_track_flattened_diff_size(eof_song, eof_selected_track, eof_note_type);
 		snprintf(dest_buffer, dest_buffer_size, "%lu", count);
 		return 1;
@@ -4345,8 +4260,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
-			unsigned long count = 0;
-
 			(void) eof_count_selected_and_unselected_notes(&count);	//Count the number of notes in the active track difficulty
 			snprintf(dest_buffer, dest_buffer_size, "%lu (1 : %.2f notes)", eof_ch_sp_solution->deploy_count, (double)count / eof_ch_sp_solution->deploy_count);
 		}
@@ -4481,12 +4394,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "TRACK_DIFF_NUMBER_NOTES_WITH_GEM_COUNT_");	//Get a pointer to the text that would be the gem count
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long count, gemcount, totalnotecount = 0;
+		unsigned long gemcount;
 
 		if(eof_read_macro_number(count_string, &gemcount))
 		{	//If the gem count was successfully parsed
-			double percent;
-
 			count = eof_count_num_notes_with_gem_count(gemcount);		//Determine how many such notes are in the active track difficulty
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -4505,7 +4416,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of notes in the active track difficulty with a specific gem combination
 	if(strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_"))
 	{
-		unsigned long count;
 		unsigned char gems, toms, cymbals;
 		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_");	//Get a pointer to the text that is expected to be the gem combination
 
@@ -4521,14 +4431,11 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific gem combination
 	if(strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_"))
 	{
-		unsigned long count, totalnotecount = 0;
 		unsigned char gems, cymbals, toms;
 		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_");	//Get a pointer to the text that is expected to be the gem combination
 
 		if(eof_read_macro_gem_designations(gem_string, &gems, &toms, &cymbals))
 		{	//If the gem designations were successfully parsed
-			double percent;
-
 			count = eof_count_num_notes_with_gem_designation(gems, toms, cymbals);		//Determine how many such notes are in the active track difficulty
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);							//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -4550,14 +4457,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
-			unsigned long count = 0, totalnotecount = 0;
 			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 0; ctr < tp->notes; ctr++)
 				{	//For each note in the pro guitar track
 					if((tp->note[ctr]->type == eof_note_type) && eof_pro_guitar_note_is_open_chord(tp, ctr))
@@ -4584,14 +4487,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
-			unsigned long count = 0, totalnotecount = 0;
 			tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 0; ctr < tp->notes; ctr++)
 				{	//For each note in the pro guitar track
 					if((tp->note[ctr]->type == eof_note_type) && eof_pro_guitar_note_is_barre_chord(tp, ctr))
@@ -4618,13 +4517,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
-			unsigned long count = 0, totalnotecount = 0;
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each note in the track
 					if((eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && eof_is_string_muted(eof_song, eof_selected_track, ctr))
@@ -4651,13 +4546,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if((eof_note_type == EOF_NOTE_AMAZING) && (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 		{	//If the expert difficulty in either drum track is active
-			unsigned long count = 0, totalnotecount = 0;
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each note in the track
 					if((eof_get_note_type(eof_song, eof_selected_track, ctr) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, ctr) & 1))
@@ -4689,13 +4580,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If a drum track is active
-			unsigned long count = 0, totalnotecount = 0;
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each note in the track
 					if((eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_is_cymbal(eof_song, eof_selected_track, ctr)))
@@ -4724,14 +4611,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long count = 0, totalnotecount = 0;
 			vp = eof_song->vocal_track[0];
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each lyric in the track
 					if(eof_lyric_is_pitched(vp, ctr))
@@ -4760,14 +4643,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long count = 0, totalnotecount = 0;
 			vp = eof_song->vocal_track[0];
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 0; ctr < vp->lyrics; ctr++)
 				{	//For each lyric in the track
 					if(vp->lyric[ctr]->note == 0)
@@ -4796,14 +4675,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long count = 0, totalnotecount = 0;
 			vp = eof_song->vocal_track[0];
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 0; ctr < vp->lyrics; ctr++)
 				{	//For each lyric in the track
 					if(vp->lyric[ctr]->note == EOF_LYRIC_PERCUSSION)
@@ -4832,14 +4707,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long count = 0, totalnotecount = 0;
 			vp = eof_song->vocal_track[0];
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each lyric in the track
 					if(eof_lyric_is_freestyle(vp, ctr) == 1)
@@ -4868,14 +4739,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			unsigned long count = 0, totalnotecount = 0;
 			vp = eof_song->vocal_track[0];
-
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				double percent;
-
 				for(ctr = 1; ctr < vp->lyrics; ctr++)
 				{	//For each lyric in the track after the first
 					if(vp->lyric[ctr]->text[0] == '+')
@@ -4903,7 +4770,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	count_string = strcasestr_spec(macro, "COUNT_LYRICS_WITH_PITCH_NUMBER_");	//Get a pointer to the text that would be the pitch
 	if(count_string)
 	{	//If the macro is this string
-		unsigned long count = 0, pitch;
+		unsigned long pitch;
 
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
@@ -4930,9 +4797,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific pitch
 	if(strcasestr_spec(macro, "TRACK_COUNT_HIGHLIGHTED_NOTES"))
 	{
-		unsigned long count;
-
-		for(ctr = 0, count = 0; ctr < tracksize; ctr++)
+		for(ctr = 0; ctr < tracksize; ctr++)
 		{	//For each note in the active track
 			if(eof_note_is_highlighted(eof_song, eof_selected_track, ctr))
 				count++;	//Count the number of highlighted notes
@@ -5240,7 +5105,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song)
 		{
-			unsigned long count = eof_count_immerrock_sections();
+			count = eof_count_immerrock_sections();
 			if(count == 1)
 				snprintf(dest_buffer, dest_buffer_size, "1 section is defined.");
 			else
@@ -5253,7 +5118,6 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song)
 		{
-			unsigned long count = 0;
 			for(ctr = 0; ctr < eof_song->beats; ctr++)
 			{	//For each beat in the chart
 				if(eof_song->beat[ctr]->contained_rs_section_event >= 0)
@@ -5271,7 +5135,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "PRINT_IR_MISSING_FINGERING_COUNT_STRING"))
 	{
-		unsigned long count, total = 0;
+		unsigned long total = 0;
 		count = eof_count_immerrock_chords_missing_fingering(&total);
 		if(total == 1)
 			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chord is missing finger placement.", count, total);
@@ -5282,7 +5146,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 
 	if(!ustricmp(macro, "PRINT_RS_MISSING_FINGERING_COUNT_STRING"))
 	{
-		unsigned long count, total = 0;
+		unsigned long total = 0;
 		count = eof_count_immerrock_chords_missing_fingering(&total);
 		if(total == 1)
 			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chord is missing finger definition", count, total);

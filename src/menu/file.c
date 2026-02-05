@@ -5792,7 +5792,7 @@ int eof_gp_import_guitar_track(int importvoice)
 int eof_gp_import_track(DIALOG * d)
 {
 	unsigned long ctr, selected;
-	int voicespresent = 0, importvoice = 0, retval;
+	int voicespresent = 0, importvoice = 0, retval = 0;
 
 	if(!d || (eof_parsed_gp_file->numtracks > INT_MAX) || (d->d1 >= (int)eof_parsed_gp_file->numtracks))
 		return 0;
