@@ -5323,7 +5323,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 
 int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, int *prompt2, int *prompt3)
 {
-	char *buffer, *buffer2, *line;
+	char *buffer, *buffer2, *lineptr;
 	int failed = 0, format = 0, gh3_format = 0, empty = 1;
 	unsigned long ctr = 0, ctr2, linesread = 0, tracknum;
 	long position, lastposition = 0, note, fixednote, data, length, accent, item1 = 0, item2 = 0, item3 = 0;
@@ -5359,37 +5359,37 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 	{	//Until an error has occurred
 		if(!ctr)
 		{	//If this is the first line being parsed
-			line = ustrtok(buffer2, "\r\n");	//Initialize the tokenization and get first tokenized line
+			lineptr = ustrtok(buffer2, "\r\n");	//Initialize the tokenization and get first tokenized line
 		}
 		else
 		{
-			line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+			lineptr = ustrtok(NULL, "\r\n");	//Return the next tokenized line
 		}
 
-		if(!line)	//If a tokenized line of the file was not obtained
+		if(!lineptr)	//If a tokenized line of the file was not obtained
 			break;
-		if(line[0] == '\0')	//If this line is empty
+		if(lineptr[0] == '\0')	//If this line is empty
 			continue;	//Skip it
 		empty = 0;
-		if(strcasestr_spec(line, "hopo"))
+		if(strcasestr_spec(lineptr, "hopo"))
 		{	//If this line contains "hopo" (case insensitive)
 			explicit_hopo = 1;	//Track this
 			eof_log("\tExplicit HOPO indicator detected.", 1);
 			continue;			//Skip additional processing for the line
 		}
 
-		if(line[0] == '0')
+		if(lineptr[0] == '0')
 		{	//If this number is a zero
 			position = 0;
 			line_content = 1;	//Regard this as a number
 		}
 		else
 		{
-			if(toupper(line[0]) == 'H')
+			if(toupper(lineptr[0]) == 'H')
 			{	//If this line includes explicit HOPO notation
-				line++;	//Advance to the next character so the gem number can be read
+				lineptr++;	//Advance to the next character so the gem number can be read
 			}
-			position = atol(line);	//Convert the string into a number
+			position = atol(lineptr);	//Convert the string into a number
 			if(position < 0)
 			{	//If the number is an invalid position
 				failed = 4;	//Invalid data
@@ -5463,28 +5463,28 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 		{	//Until an error has occurred
 			if(!ctr)
 			{	//If this is the first line being parsed
-				line = ustrtok(buffer2, "\r\n");	//Initialize the tokenization and get first tokenized line
+				lineptr = ustrtok(buffer2, "\r\n");	//Initialize the tokenization and get first tokenized line
 			}
 			else
 			{
-				line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+				lineptr = ustrtok(NULL, "\r\n");	//Return the next tokenized line
 			}
 
-			if(!line)	//If a tokenized line of the file was not obtained
+			if(!lineptr)	//If a tokenized line of the file was not obtained
 				break;
-			if(line[0] == '\0')	//If this line is empty
+			if(lineptr[0] == '\0')	//If this line is empty
 				continue;	//Skip it
 			empty = 0;
-			if(strcasestr_spec(line, "hopo"))	//If this is the explicit HOPO notation indicator
+			if(strcasestr_spec(lineptr, "hopo"))	//If this is the explicit HOPO notation indicator
 				continue;	//Skip it
 
-			if(line[0] == '0')
+			if(lineptr[0] == '0')
 			{	//If this number is a zero
 				position = 0;
 			}
 			else
 			{
-				position = atol(line);	//Convert the string into a number
+				position = atol(lineptr);	//Convert the string into a number
 			}
 			if(first_number_parsed && (position < lastposition))
 			{	//If this isn't the first note parsed, and the timestamp is smaller then the previous timestamp
@@ -5493,23 +5493,23 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 			}
 			first_number_parsed = 1;	//Track that at least one number has been parsed
 			lastposition = position;	//Remember this timestamp for comparison with the next timestamp
-			line = ustrtok(NULL, "\r\n");	//Read the note duration
-			if(!line || (line[0] == '\0'))
+			lineptr = ustrtok(NULL, "\r\n");	//Read the note duration
+			if(!lineptr || (lineptr[0] == '\0'))
 			{	//If the line couldn't be read of the line is empty
 				gh3_format = 0;
 				break;
 			}
-			line = ustrtok(NULL, "\r\n");	//Read the note bitmask
-			if(!line || (line[0] == '\0'))
+			lineptr = ustrtok(NULL, "\r\n");	//Read the note bitmask
+			if(!lineptr || (lineptr[0] == '\0'))
 			{	//If the line couldn't be read of the line is empty
 				gh3_format = 0;
 				break;
 			}
-			if(toupper(line[0]) == 'H')
+			if(toupper(lineptr[0]) == 'H')
 			{	//If this line includes explicit HOPO notation
-				line++;	//Advance to the next character so the gem number can be read
+				lineptr++;	//Advance to the next character so the gem number can be read
 			}
-			note = atol(line);	//Convert the bitmask to integer format
+			note = atol(lineptr);	//Convert the bitmask to integer format
 			if(note > 63)
 			{	//If the note bitmask is larger than expected (higher than 6 set bits)
 				gh3_format = 0;
@@ -5664,28 +5664,28 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 		{	//Until an error has occurred
 			if(!ctr)
 			{	//If this is the first line being parsed
-				line = ustrtok(buffer, "\r\n");	//Initialize the tokenization and get first tokenized line
+				lineptr = ustrtok(buffer, "\r\n");	//Initialize the tokenization and get first tokenized line
 			}
 			else
 			{
-				line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+				lineptr = ustrtok(NULL, "\r\n");	//Return the next tokenized line
 			}
 
-			if(!line)	//If a tokenized line of the file was not obtained
+			if(!lineptr)	//If a tokenized line of the file was not obtained
 				break;
-			if(line[0] == '\0')	//If this line is empty
+			if(lineptr[0] == '\0')	//If this line is empty
 				continue;	//Skip it
 
 			//Read the position
 			if(previous_line_content != 1)
 			{
-				if(line[0] == '0')
+				if(lineptr[0] == '0')
 				{	//If this number is a zero
 					position = 0;
 				}
 				else
 				{
-					position = atol(line);	//Convert the string into a number
+					position = atol(lineptr);	//Convert the string into a number
 				}
 				line_content = 1;
 			}
@@ -5703,7 +5703,7 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 					unsigned long distance = (eof_song->beat[beat]->pos > position) ? (eof_song->beat[beat]->pos - position) : (position - eof_song->beat[beat]->pos);
 					unsigned long targetpos, flags = 0;
 
-					snprintf(sectionstring, sizeof(sectionstring) - 1, "[section %s]", line);	//Format the event text to be recognized as a section
+					snprintf(sectionstring, sizeof(sectionstring) - 1, "[section %s]", lineptr);	//Format the event text to be recognized as a section
 					if(distance <= 2)
 					{	//If the section is defined within 2ms of a beat marker
 						targetpos = beat;	//The section will be placed on this beat
@@ -5739,28 +5739,28 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 		{	//Until an error has occurred
 			if(!ctr)
 			{	//If this is the first line being parsed
-				line = ustrtok(buffer, "\r\n");	//Initialize the tokenization and get first tokenized line
+				lineptr = ustrtok(buffer, "\r\n");	//Initialize the tokenization and get first tokenized line
 			}
 			else
 			{
-				line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+				lineptr = ustrtok(NULL, "\r\n");	//Return the next tokenized line
 			}
 
-			if(!line)	//If a tokenized line of the file was not obtained
+			if(!lineptr)	//If a tokenized line of the file was not obtained
 				break;
-			if(line[0] == '\0')	//If this line is empty
+			if(lineptr[0] == '\0')	//If this line is empty
 				continue;	//Skip it
-			if(strcasestr_spec(line, "hopo"))	//If this is the explicit HOPO notation indicator
+			if(strcasestr_spec(lineptr, "hopo"))	//If this is the explicit HOPO notation indicator
 				continue;	//Skip it
 
 			//Read the position
-			if(line[0] == '0')
+			if(lineptr[0] == '0')
 			{	//If this number is a zero
 				position = 0;
 			}
 			else
 			{
-				position = atol(line);	//Convert the string into a number
+				position = atol(lineptr);	//Convert the string into a number
 			}
 
 			if(!format)
@@ -5781,17 +5781,17 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 			}
 			else
 			{	//This is note data, read the next line to get the note's composition
-				line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
-				if(!line || (line[0] == '\0') || (line[0] == '0'))
+				lineptr = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+				if(!lineptr || (lineptr[0] == '\0') || (lineptr[0] == '0'))
 				{	//If the line couldn't be read, is empty or is a zero
 					failed = 8;	//Invalid data
 					break;
 				}
-				if(toupper(line[0]) == 'H')
+				if(toupper(lineptr[0]) == 'H')
 				{	//If this line includes explicit HOPO notation
-					line++;	//Advance to the next character so the gem number can be read
+					lineptr++;	//Advance to the next character so the gem number can be read
 				}
-				data = atol(line);
+				data = atol(lineptr);
 				if(data == 0)
 				{	//If atol() couldn't convert the number
 					failed = 9;	//Invalid data
@@ -5802,18 +5802,18 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 				{	//The line that was just read and one more are expected to define the note
 					length = data;	//That line was the duration
 
-					line = ustrtok(NULL, "\r\n");	//Return the next tokenized line
-					if(!line || (line[0] == '\0') || (line[0] == '0'))
+					lineptr = ustrtok(NULL, "\r\n");	//Return the next tokenized line
+					if(!lineptr || (lineptr[0] == '\0') || (lineptr[0] == '0'))
 					{	//If the line couldn't be read, is empty or is a zero
 						failed = 8;	//Invalid data
 						break;
 					}
-					if(toupper(line[0]) == 'H')
+					if(toupper(lineptr[0]) == 'H')
 					{	//If this line includes explicit HOPO notation
 						this_note_explicit_hopo = 1;	//Track this
-						line++;	//Advance to the next character so the gem number can be read
+						lineptr++;	//Advance to the next character so the gem number can be read
 					}
-					data = atol(line);
+					data = atol(lineptr);
 					if(data == 0)
 					{	//If atol() couldn't convert the number
 						failed = 9;	//Invalid data

@@ -1083,6 +1083,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	char *diff_strings[3] = {"Lead_Difficulty", "Rhythm_Difficulty", "Bass_Difficulty"};
 	char *tuning_strings[3] = {"Lead_Tuning=", "Rhythm_Tuning=", "Bass_Tuning="};
 	char *midi_names[3] = {"GGLead.mid", "GGRhythm.mid", "GGBass.mid"};
+	char *trackname_strings[3] = {"TrackName_Lead", "TrackName_Rhythm", "TrackName_Bass"};
 	char *blank_name = "";
 	char numbered_diff[10] = {0};
 	char *diff_name = blank_name;
@@ -1489,7 +1490,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 		if(arr[arrctr])
 		{	//If this arrangement is being exported
 			if(sp->track[arr[arrctr]]->difficulty != 0xFF)
-			{	//If this tracks's difficulty is defined
+			{	//If this track's difficulty is defined
 				unsigned char difflevel = sp->track[arr[arrctr]]->difficulty;
 				if(difflevel < 1)	//Bounds check
 					difflevel = 1;
@@ -1538,8 +1539,21 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 		(void) snprintf(temp_string, sizeof(temp_string) - 1, "TrackNumber=%s\n", sp->tags->tracknumber);
 		(void) pack_fputs(temp_string, fp);	//Write track number
 	}
-	(void) pack_fclose(fp);
 
+	//Write custom track names
+	for(arrctr = 0; arrctr < 3; arrctr++)
+	{	//For each of the 3 arrangements that can be exported, in the order of lead, rhythm and bass
+		if(arr[arrctr])
+		{	//If this arrangement is being exported
+			if((sp->track[arr[arrctr]]->flags & EOF_TRACK_FLAG_ALT_NAME) && eof_check_string(sp->track[arr[arrctr]]->altname))
+			{	//If this track has an alternate name defined
+				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%s=%s\n", trackname_strings[arrctr], sp->track[arr[arrctr]]->altname);
+				(void) pack_fputs(temp_string, fp);		//Write track name
+			}
+		}
+	}
+
+	(void) pack_fclose(fp);
 
 	return 1;	//Return success
 }

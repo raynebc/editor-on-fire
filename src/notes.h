@@ -76,6 +76,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Returns 2 if the macro is a conditional test that evaluates as false, which signals that the all content from the macro until the end of the line or next %ENDIF% instance is to be skipped
 	//Returns 3 if the macro is a conditional test that evaluates as true, in which case the destination buffer is emptied
 	//Returns zero on error or if no matching string is found for the macro
+int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, unsigned long dest_buffer_size, EOF_TEXT_PANEL *panel);
+	//Used to process macros beginning with "IF_", to split eof_expand_notes_window_macro() up and to skip all of these string comparisons for non comparison macros
+	//Some of the more processing intensive tests using eof_get_rs_techniques() or eof_pro_guitar_track_find_effective_fret_hand_position() on every examined note will return false if the chart is not paused, so the tests themselves don't cause the program to lag and affect playback
 int eof_read_macro_color(char *string, int *color);
 	//Accepts a string and performs a comparison against known color names
 	//If a match is found, *color is set to the appropriate Allegro color
