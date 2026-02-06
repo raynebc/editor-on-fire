@@ -1595,6 +1595,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	char highlight_bad_slides = 0;	//Set to nonzero if the user opts to highlight notes that slide to or above fret 25
 	int original_eof_display_second_piano_roll;	//Used to store the status of the second piano roll. which must be disabled during this export to prevent problems caused when eof_detect_difficulties() is called various times during export
 	clock_t start_time, cur_time;
+	int linknextnoteslogged = 0;
 
 	eof_log("eof_export_rocksmith_2_track() entered", 1);
 	start_time = clock();
@@ -1604,6 +1605,44 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
 	}
+
+	//Count the number of populated difficulties in the track
+	original_eof_display_second_piano_roll = eof_display_second_piano_roll;	//Store the secondary piano roll status
+	eof_display_second_piano_roll = 0;										//Disable the secondary piano roll
+	(void) eof_detect_difficulties(sp, track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
+	{	//If the track is using the traditional 5 difficulty system
+		if(eof_track_diff_populated_status[4])
+		{	//If the BRE difficulty is populated
+			bre_populated = 1;	//Track that it was
+		}
+		eof_track_diff_populated_status[4] = 0;	//Ensure that the BRE difficulty is not exported
+	}
+	for(ctr = 0, numdifficulties = 0; ctr < 256; ctr++)
+	{	//For each possible difficulty
+		if(eof_track_diff_populated_status[ctr])
+		{	//If this difficulty is populated
+			numdifficulties++;	//Increment this counter
+		}
+	}
+	if(!numdifficulties)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\" in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
+		eof_log(eof_log_string, 1);
+		if(bre_populated && ((*user_warned & 1024) == 0))
+		{	//If the BRE difficulty was the only one populated, warn that it is being omitted (unless the user was already warned of this)
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Track>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
+			allegro_message("%s", eof_log_string);
+			eof_log(eof_log_string, 1);
+			*user_warned |= 1024;
+		}
+		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
+		eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
+		return 0;	//Return failure
+	}
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tExporting track \"%s\" in Rocksmith format", sp->track[track]->name);
+	eof_log(eof_log_string, 1);
 
 	//Check for invalid fret values
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
@@ -1660,40 +1699,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		return 2;	//Return user cancellation
 	}
 
-	//Count the number of populated difficulties in the track
-	original_eof_display_second_piano_roll = eof_display_second_piano_roll;	//Store the secondary piano roll status
-	eof_display_second_piano_roll = 0;										//Disable the secondary piano roll
-	(void) eof_detect_difficulties(sp, track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
-	if((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
-	{	//If the track is using the traditional 5 difficulty system
-		if(eof_track_diff_populated_status[4])
-		{	//If the BRE difficulty is populated
-			bre_populated = 1;	//Track that it was
-		}
-		eof_track_diff_populated_status[4] = 0;	//Ensure that the BRE difficulty is not exported
-	}
-	for(ctr = 0, numdifficulties = 0; ctr < 256; ctr++)
-	{	//For each possible difficulty
-		if(eof_track_diff_populated_status[ctr])
-		{	//If this difficulty is populated
-			numdifficulties++;	//Increment this counter
-		}
-	}
-	if(!numdifficulties)
-	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\" in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
-		eof_log(eof_log_string, 1);
-		if(bre_populated && ((*user_warned & 1024) == 0))
-		{	//If the BRE difficulty was the only one populated, warn that it is being omitted (unless the user was already warned of this)
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Track>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
-			allegro_message("%s", eof_log_string);
-			eof_log(eof_log_string, 1);
-			*user_warned |= 1024;
-		}
-		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
-		eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status
-		return 0;	//Return failure
-	}
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPre-checks completed by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
 
 	//Update target file name and open it for writing
 	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
@@ -1979,6 +1987,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"%d\" bonusArr=\"%d\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"%d\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"%d\" sustain=\"%d\" pathLead=\"%d\" pathRhythm=\"%d\" pathBass=\"%d\" />\n", represent, is_bonus, standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, pinch, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves, is_picked_bass, sustains, is_lead, is_rhythm, is_bass);
 	(void) pack_fputs(buffer, fp);
 
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTechnique detection completed by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
+
 	//Write the phrases and do other setup common to both Rocksmith exports
 	originalbeatcount = sp->beats;	//Store the original beat count
 	if(!eof_rs_export_common(sp, track, fp, user_warned, 2))
@@ -2018,7 +2030,11 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		if(!linked)
 			continue;	//If the previous note does not have linknext status applied to any string, skip this note
 
-		eof_log("\tCreating temporary notes to export chords with linknext as single notes.", 3);
+		if(!linknextnoteslogged)
+		{	//If the creation of these temporary notes wasn't logged yet
+			eof_log("\tCreating temporary notes to export chords with linknext as single notes.", 3);
+			linknextnoteslogged = 1;
+		}
 		tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic and exported as single notes
 		for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 		{	//For each of the 6 supported strings
@@ -2057,6 +2073,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}//For each of the 6 supported strings
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLinked chords broken into single notes by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
 
 	//Identify chords that have split status.  These will export as single notes instead of as chords.
 	for(ctr = 0; ctr < tp->notes; ctr++)
@@ -2103,6 +2123,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		tp->note[ctr]->tflags |= EOF_NOTE_TFLAG_IGNORE;	//Mark this chord to be ignored by the chord count/export logic as it will be exported as single notes
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSplit chords broken into single notes by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
 
 	//Identify chords that have chordify status.  These will export as chord tags that are linked to the single notes in the chord
 	//Such single note are marked as ignored and are moved forward 1ms so they start after the chord tag, and their sustains are shortened by 1ms (if possible) to compensate
@@ -2219,6 +2243,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tChordify processing completed by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
+
 	//Identify gems that will combine with adjacent single notes due to linknext status during chordnote export
 	//Mark single notes as ignored where appropriate
 	for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
@@ -2247,6 +2275,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 			}
 		}
 	}
+
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLinked gems identified by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
 
 	//Identify notes that are inside handshape phrases, handshapes for which will be treated differently than arpeggio phrases
 	for(ctr = 0; ctr < tp->notes; ctr++)
@@ -2329,6 +2361,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	}//For each arpeggio/handshape section in the track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
 
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tArpeggio/handshape processing completed by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
+
 	//Identify partially ghosted chords, those outside arpeggio phrases will need to be temporarily replaced with variations of the chords without the ghost notes
 	//Those inside arpeggio phrases will be copied without ghost notes.  The original's chord template will be used for handshape tag export and the copy will be used for chord tag export
 	for(ctr = 0; ctr < tp->notes; ctr++)
@@ -2404,6 +2440,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}
 	}//For each note in the active pro guitar track
 	eof_track_sort_notes(sp, track);	//Re-sort the notes
+
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPartially ghosted chord processing completed by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
 
 	//Write chord templates
 	chordlistsize = eof_build_chord_list(sp, track, &chordlist, 2);	//Build a list of all unique chords in the track
@@ -2516,6 +2556,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		}//For each of the entries in the unique chord list
 		(void) pack_fputs("  </chordTemplates>\n", fp);
 	}//There were chords
+
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tChord templates written by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
 
 	//Write some unknown information
 	(void) pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
@@ -3219,6 +3263,10 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	(void) pack_fputs("  </levels>\n", fp);
 	(void) pack_fputs("</song>\n", fp);
 	(void) pack_fclose(fp);
+
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDifficulties written by %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 2);
 
 	eof_rs_export_cleanup(sp, track);	//Remove all temporary notes that were added and remove ignore and arpeggio status from notes
 

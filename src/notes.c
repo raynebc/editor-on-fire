@@ -49,6 +49,7 @@ char eof_notes_macro_lyric_outside_line[50];
 char eof_notes_macro_lyric_line_beginning_with_lowercase[50];
 char eof_notes_macro_lyric_line_exceeding_length[50];
 char eof_notes_macro_lyric_line_contains_unwanted_punct[50];
+char eof_notes_macro_ir_comments_defined[50];
 char eof_notes_inactive_track_has_rs_warnings = 0;
 char eof_notes_inactive_track_has_rs_errors = 0;
 
@@ -2861,6 +2862,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "IR_COMMENTS_DEFINED_STRING"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_ir_comments_defined);
+
+		return 1;
+	}
+
 
 	///DEBUGGING MACROS
 	//The selected beat's PPQN value (used to calculate its BPM)
@@ -3407,6 +3415,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		{	//If the difficulty number was successfully parsed
 			if(eof_note_type == diff)
 			{	//If the number is the active difficulty number
+				dest_buffer[0] = '\0';
 				return 3;	//True
 			}
 
@@ -4578,7 +4587,10 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 
 			tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];	//Simplify
 			if(eof_pro_guitar_track_count_unique_tone_changes(tp) > 4)
+			{
+				dest_buffer[0] = '\0';
 				return 3;	//True
+			}
 		}
 
 		return 2;	//False
@@ -5515,7 +5527,63 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	if(!ustricmp(macro, "IF_AUDIO_IS_LOADED"))
 	{
 		if(!eof_silence_loaded)	//If an OGG file is loaded
-				return 3;		//True
+		{
+			dest_buffer[0] = '\0';
+			return 3;		//True
+		}
+
+		return 2;	//False
+	}
+
+	//Track alternate name
+	if(!ustricmp(macro, "IF_TRACK_ALT_NAME_DEFINED"))
+	{
+		if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (eof_song->track[eof_selected_track]->altname[0] != '\0'))
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//Song and track comments
+	if(!ustricmp(macro, "IF_IR_COMMENTS_DEFINED"))
+	{
+		char *value, song_comment = 0, lead_comment = 0, rhythm_comment = 0, bass_comment = 0;
+		unsigned long index;
+
+		eof_notes_macro_ir_comments_defined[0] = '\0';		//Erase this string
+		if(eof_check_string(eof_song->tags->loading_text))
+		{	//If the project has loading text defined
+			song_comment = 1;
+			count++;
+		}
+		value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Lead");
+		if(eof_check_string(value))
+		{	//If the lead track comments are defined and isn't just whitespace
+			lead_comment = 1;
+			count++;
+		}
+		value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Rhythm");
+		if(eof_check_string(value))
+		{	//If the lead track comments are defined and isn't just whitespace
+			rhythm_comment = 1;
+			count++;
+		}
+		value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Bass");
+		if(eof_check_string(value))
+		{	//If the lead track comments are defined and isn't just whitespace
+			bass_comment = 1;
+			count++;
+		}
+
+		if(count)
+		{
+			dest_buffer[0] = '\0';
+			snprintf(eof_notes_macro_ir_comments_defined, sizeof(eof_notes_macro_ir_comments_defined) - 1, "%s%s%s%s%s%s%s comment%s defined.", (song_comment ? "Song" : ""), (count > 1 ? ", " : ""), (lead_comment ? "Lead" : ""), (lead_comment && (count > 1) ? ", " : ""), (rhythm_comment ? "Rhythm" : ""), (rhythm_comment && (count > 1) ? ", " : ""), (bass_comment ? "Bass" : ""), (bass_comment && (count > 1)) ? "s" : "");
+			return 3;	//True
+		}
 
 		return 2;	//False
 	}

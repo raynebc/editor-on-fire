@@ -1,6 +1,7 @@
 #include <math.h>
 #include "beat.h"
 #include "event.h"
+#include "ini_import.h"
 #include "lc_import.h"
 #include "ir.h"
 #include "main.h"
@@ -1074,9 +1075,9 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	PACKFILE *fp;
 	int err = 0;
 	int jumpcode = 0;	//Used to catch failure by EOF_EXPORT_TO_LC()
-	char temp_string[1024], section[101], temp_filename2[1024], *ptr, album_art_filename[1024];
+	char temp_string[1024], section[101], temp_filename2[1024], *ptr, album_art_filename[1024], *value;
 	double avg_tempo;
-	unsigned long arrctr, ctr;
+	unsigned long arrctr, ctr, index;
 	unsigned long arr[3] = {gglead, ggrhythm, ggbass};
 	int arr_populated[3] = {0, 0, 0};
 	int arr_finger_placements[3] = {0, 0, 0};	//Tracks whether finger placement markers were written for each arrangement
@@ -1551,6 +1552,31 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 				(void) pack_fputs(temp_string, fp);		//Write track name
 			}
 		}
+	}
+
+	//Write song and track comments
+	if(eof_check_string(sp->tags->loading_text))
+	{	//If there is loading text defined in Song Properties
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Comment_Song=%s\n", sp->tags->loading_text);
+		(void) pack_fputs(temp_string, fp);		//Write song comment
+	}
+	value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Lead");
+	if(eof_check_string(value))
+	{	//If the lead track comments are defined and isn't just whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Comment_Lead=%s\n", value);
+		(void) pack_fputs(temp_string, fp);		//Write lead comment
+	}
+	value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Rhythm");
+	if(eof_check_string(value))
+	{	//If the lead track comments are defined and isn't just whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Comment_Rhythm=%s\n", value);
+		(void) pack_fputs(temp_string, fp);		//Write rhythm comment
+	}
+	value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Bass");
+	if(eof_check_string(value))
+	{	//If the lead track comments are defined and isn't just whitespace
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "Comment_Bass=%s\n", value);
+		(void) pack_fputs(temp_string, fp);		//Write bass comment
 	}
 
 	(void) pack_fclose(fp);

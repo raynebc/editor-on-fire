@@ -8012,7 +8012,7 @@ void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sour
 	char *text;
 	void *result = NULL;
 
- 	eof_log("eof_copy_note() entered", 3);
+/// 	eof_log("eof_copy_note() entered", 3);
 
 	//Validate parameters
 	if((ssp == NULL) || (sourcetrack >= ssp->tracks) || (sourcenote >= eof_get_track_size(ssp, sourcetrack)) || (dsp == NULL) || (desttrack >= dsp->tracks))

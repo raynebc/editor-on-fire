@@ -504,9 +504,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned char *velocities = default_velocities;				//The velocities used during export
 	unsigned char *ghost_velocities = default_ghost_velocities;
 	unsigned char *accent_velocities = default_accent_velocities;
+	clock_t start_time, cur_time;
 
 	memset(notetempname, 0, sizeof(notetempname));	//Init this memory to 0
 	eof_log("eof_export_midi() entered", 1);
+	start_time = clock();
 
 	if(!sp || !fn)
 	{
@@ -2770,7 +2772,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
 	eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 
-	eof_log("\tMIDI export completed", 1);
+	cur_time = clock();
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMIDI export completed in %.2f seconds", (((double)cur_time - (double)start_time) / CLOCKS_PER_SEC));
+	eof_log(eof_log_string, 1);
 	return 1;	//Return success
 }
 

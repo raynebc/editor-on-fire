@@ -696,6 +696,14 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>%IF_AUDIO_IS_LOADED%</td>
 <td>Evaluates as true if chart audio is loaded.</td>
 </tr>
+<tr>
+<td>%IF_TRACK_ALT_NAME_DEFINED%</td>
+<td>Evaluates as true if the alternate name of the active track has been defined (ie. via <a href="functions.htm#renametrack">Track>Rename</a>).</td>
+</tr>
+<tr>
+<td>%IF_IR_COMMENTS_DEFINED%</td>
+<td>Evaluates as true if the song comments ("Loading Text" in <a href="functions.htm#properties">Song>Properties</a>) is defined or any of the arrangement specific comments ("Comment_Lead", "Comment_Rhythm" or "Comment_Bass") are defined in "<a href="functions.htm#inisettings">Song>INI Settings</a>"), in which case the %IR_COMMENTS_DEFINED_STRING% macro will print a string listing which comments are defined.</td>
+</tr>
 </tbody>
 </table><br>
 
@@ -1523,6 +1531,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%FIRST_LYRIC_CONTAINING_UNWANTED_PUNCTUATION%</td>
 <td>Prints the position and text of the first culprit of the %IF_ANY_LYRICS_CONTAIN_PUNCTUATION_EXCEPT_[LIST]% conditional macro.</td>
+</tr>
+<tr>
+<td>%IR_COMMENTS_DEFINED_STRING%</td>
+<td>Prints a list of comments that will export to IMMERROCK which is created by the %IF_IR_COMMENTS_DEFINED% conditional macro.</td>
 </tr>
 
 </tbody>

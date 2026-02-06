@@ -1029,7 +1029,7 @@ int eof_menu_song_ini_settings(void)
 	eof_color_dialog(eof_ini_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_ini_dialog);
 	if(eof_popup_dialog(eof_ini_dialog, 0) == 5)
-	{	//User clicked OK
+	{	//User clicked Done
 	}
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -1775,6 +1775,7 @@ int eof_ini_dialog_add(DIALOG * d)
 		}
 	}
 
+	eof_render();	//Allow notes panels to redraw so INI related macros like %IF_IR_COMMENTS_DEFINED% can take visible effect right away
 	(void) dialog_message(eof_ini_dialog, MSG_DRAW, 0, &i);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -1819,6 +1820,7 @@ int eof_ini_dialog_edit(DIALOG * d)
 			}
 		}
 	}
+	eof_render();	//Allow notes panels to redraw so INI related macros like %IF_IR_COMMENTS_DEFINED% can take visible effect right away
 	(void) dialog_message(eof_ini_dialog, MSG_DRAW, 0, &i);
 	return D_O_K;
 }
@@ -1878,6 +1880,7 @@ int eof_ini_dialog_delete(DIALOG * d)
 			eof_ini_dialog[1].d1--;
 		}
 	}
+	eof_render();	//Allow notes panels to redraw so INI related macros like %IF_IR_COMMENTS_DEFINED% can take visible effect right away
 	(void) dialog_message(eof_ini_dialog, MSG_DRAW, 0, &i);
 	return D_O_K;
 }

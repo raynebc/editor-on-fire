@@ -971,6 +971,7 @@ int eof_menu_file_save_logic(char silent)
 		}
 	}
 
+	set_window_title("Saving");
 	if(!silent)
 	{	//Normal save
 		eof_log("\tSaving chart", 1);
@@ -997,6 +998,7 @@ int eof_menu_file_save_logic(char silent)
 	eof_render();
 
 	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
+	eof_fix_window_title();
 	return retval;
 }
 
