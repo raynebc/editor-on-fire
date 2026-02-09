@@ -734,42 +734,14 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 	return 0;
 }
 
-///
-/*
-char *eof_find_ini_setting_tag_OLD(EOF_SONG *sp, unsigned long *index, char *tag)
-{
-	unsigned long ctr;
-	char buffer[512] = {0};
-	char *ptr;
-
-	if(!sp || !index || !tag)
-		return NULL;	//Return error
-
-	(void) snprintf(buffer, sizeof(buffer) - 1, "%s =", tag);	//Build the left half of the string that results from this INI setting
-	for(ctr = 0; ctr < sp->tags->ini_settings; ctr++)
-	{	//For each INI setting in the project
-		ptr = strcasestr_spec(sp->tags->ini_setting[ctr], buffer);	//If this INI setting matches the specified tag, get the address of the first character after the equal sign
-		if(ptr)
-		{	//If this INI setting contains the specified tag
-			*index = ctr;	//Store the INI setting number containing this tag
-			return ptr;
-		}
-	}
-
-	return NULL;	//No match found
-}
-*/
-
 char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag)
 {
 	unsigned long ctr;
-///	char buffer[512] = {0};
 	char *ptr;
 
 	if(!sp || !index || !tag)
 		return NULL;	//Return error
 
-///	(void) snprintf(buffer, sizeof(buffer) - 1, "%s =", tag);	//Build the left half of the string that results from this INI setting
 	for(ctr = 0; ctr < sp->tags->ini_settings; ctr++)
 	{	//For each INI setting in the project
 		ptr = strcasestr_spec(sp->tags->ini_setting[ctr], tag);	//Search for this tag in the INI setting

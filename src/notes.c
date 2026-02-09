@@ -5581,7 +5581,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		if(count)
 		{
 			dest_buffer[0] = '\0';
-			snprintf(eof_notes_macro_ir_comments_defined, sizeof(eof_notes_macro_ir_comments_defined) - 1, "%s%s%s%s%s%s%s comment%s defined.", (song_comment ? "Song" : ""), (count > 1 ? ", " : ""), (lead_comment ? "Lead" : ""), (lead_comment && (count > 1) ? ", " : ""), (rhythm_comment ? "Rhythm" : ""), (rhythm_comment && (count > 1) ? ", " : ""), (bass_comment ? "Bass" : ""), (bass_comment && (count > 1)) ? "s" : "");
+			snprintf(eof_notes_macro_ir_comments_defined, sizeof(eof_notes_macro_ir_comments_defined) - 1, "%s%s%s%s%s%s%s comment%s defined.", (song_comment ? "Song" : ""), (song_comment && (count > 1) ? ", " : ""), (lead_comment ? "Lead" : ""), (lead_comment && (count > 1) ? ", " : ""), (rhythm_comment ? "Rhythm" : ""), (rhythm_comment && (count > 1) ? ", " : ""), (bass_comment ? "Bass" : ""), (bass_comment && (count > 1)) ? "s" : "");
 			return 3;	//True
 		}
 

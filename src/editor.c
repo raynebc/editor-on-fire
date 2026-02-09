@@ -8253,6 +8253,8 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 	}
 	for(i = 0; (i < eof_get_track_size(eof_song, eof_selected_track)); i++)
 	{	//For each note in the active track, until a hover note is found
+		int this_note_tolerance = x_tolerance;
+
 		if(eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type)
 			continue;	//If the note is not in the active difficulty, skip it
 
@@ -8264,7 +8266,7 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 
 			nlen = eof_get_note_length(eof_song, eof_selected_track, i);
 			if(nlen > x_tolerance)
-				x_tolerance = 0;	//If the note is longer than the default tolerance provided for a note head and no note tail, remove the default tolerance
+				this_note_tolerance = 0;	//If the note is longer than the default tolerance provided for a note head and no note tail, remove the default tolerance
 			if(nlen < 0)
 			{	//If the note length was not retrievable
 				nlen = 0;
@@ -8273,11 +8275,11 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 			{	//If there was a next note, ensure that the clickable area of the note is shortened to allow clickable space for that next note
 				unsigned long nextpos = eof_get_note_pos(eof_song, eof_selected_track, next);
 
-				if(npos + nlen + x_tolerance >= nextpos - x_tolerance)
+				if(npos + nlen + this_note_tolerance >= nextpos - this_note_tolerance)
 				{	//If the note's tail extends into the clickable area of the next note
-					if(nlen >= x_tolerance)
+					if(nlen >= this_note_tolerance)
 					{	//If the note length's clickable area can be reduced by the tolerance
-						nlen -= x_tolerance;
+						nlen -= this_note_tolerance;
 					}
 					else
 					{	//Otherwise don't allow the note's tail to be clickable because it's too close to the next note
@@ -8290,17 +8292,17 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 		{	//Otherwise only include the note head as the clickable area, including the specified tolerance
 			nlen = 0;
 		}
-		if(npos < x_tolerance)
+		if(npos < this_note_tolerance)
 		{	//Avoid an underflow here
 			leftboundary = 0;
 		}
 		else
 		{
-			leftboundary = npos - x_tolerance;
+			leftboundary = npos - this_note_tolerance;
 		}
 		if(targetpos >= leftboundary)
 		{
-			if(targetpos <= npos + nlen + x_tolerance)
+			if(targetpos <= npos + nlen + this_note_tolerance)
 				candidate = 1;	//This is a likely hover note
 		}
 		else if(!snaplogic)	//If the nearest snap position isn't being considered
@@ -8310,7 +8312,7 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 		{	//If the position wasn't close enough to a note to be a match, but snaplogic is enabled, check the position's closest grid snap
 			if(eof_pen_note.pos >= leftboundary)
 			{	//If the pen note is at/after this note's left-most clickable position (avoiding underflow)
-				if(eof_pen_note.pos <= npos + nlen + x_tolerance)
+				if(eof_pen_note.pos <= npos + nlen + this_note_tolerance)
 					if(!effective_clickable_preference)	//Don't allow this logic when the clickable note/lyric tail preference is enabled, as it will improperly cause a note to be counted as hovered over
 						candidate = 1;	//This is a likely hover note
 			}
@@ -8328,7 +8330,7 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 			}
 			return i;
 		}
-	}
+	}//For each note in the active track, until a hover note is found
 	return -1;	//No appropriate hover note found
 }
 

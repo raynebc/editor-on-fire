@@ -232,7 +232,7 @@ DIALOG eof_ini_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
-char eof_ini_add_dialog_string[30] = {0};
+char eof_ini_add_dialog_string[EOF_INI_ADD_DIALOG_STRING_LENGTH + 1] = {0};
 DIALOG eof_ini_add_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
@@ -267,9 +267,9 @@ DIALOG eof_song_properties_dialog[] =
 	{ eof_verified_edit_proc,74,326, 38,  20,  0,   0,   0,    0,      4,   0,   eof_etext5,     "0123456789", NULL },
 	{ d_agup_text_proc,    124, 310, 60,  12,  0,   0,   0,    0,      0,   0,   "Diff.",                NULL, NULL },
 	{ eof_verified_edit_proc,124,326,26,  20,  0,   0,   0,    0,      1,   0,   eof_etext7,        "0123456", NULL },
-	{ d_agup_text_proc,    208, 40,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text",         NULL, NULL },
+	{ d_agup_text_proc,    208, 40,  96,  12,  0,   0,   0,    0,      0,   0,   "Song Comment / Loading Text",         NULL, NULL },
 	{ eof_edit_proc,            208, 56,  256, 20,  0,   0,   0,    0,      255, 0,   eof_etext6,             NULL, NULL },
-	{ d_agup_text_proc,    208, 88,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text Preview", NULL, NULL },
+	{ d_agup_text_proc,    208, 88,  96,  12,  0,   0,   0,    0,      0,   0,   "Song Comment / Loading Text Preview", NULL, NULL },
 	{ d_agup_textbox_proc, 208, 104, 256,164,  0,   0,   0,    0,      0,   0,   eof_etext6,             NULL, NULL },
 	{ d_agup_check_proc,   160, 271, 136, 16,  0,   0,   0,    0,      1,   0,   "Lyrics",               NULL, NULL },
 	{ d_agup_check_proc,   160, 286, 136, 16,  0,   0,   0,    0,      1,   0,   "8th Note HO/PO",       NULL, NULL },
@@ -1754,12 +1754,12 @@ int eof_ini_dialog_add(DIALOG * d)
 	eof_conditionally_center_dialog(eof_ini_add_dialog);
 	(void) ustrcpy(eof_etext, "");
 	if(!eof_song || (eof_ini_dialog_array != eof_song->tags->ini_setting))
-		(void) ustrcpy(eof_ini_add_dialog_string, "Add default INI setting");
+		(void) ustrncpy(eof_ini_add_dialog_string, "Add default INI setting", EOF_INI_ADD_DIALOG_STRING_LENGTH);
 	else
-		(void) ustrcpy(eof_ini_add_dialog_string, "Add INI setting");
+		(void) ustrncpy(eof_ini_add_dialog_string, "Add INI setting", EOF_INI_ADD_DIALOG_STRING_LENGTH);
 
 	if(eof_popup_dialog(eof_ini_add_dialog, 2) == 3)
-	{
+	{	//User clicked OK
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{
 			if(eof_song && (eof_ini_dialog_array == eof_song->tags->ini_setting))
@@ -1798,9 +1798,9 @@ int eof_ini_dialog_edit(DIALOG * d)
 	{	//If an INI entry is selected in the list
 		(void) ustrncpy(eof_etext, eof_ini_dialog_array[eof_ini_dialog[1].d1], EOF_INI_LENGTH - 1);	//Populate the dialog with the existing entry
 		if(!eof_song || (eof_ini_dialog_array != eof_song->tags->ini_setting))
-			(void) ustrcpy(eof_ini_add_dialog_string, "Edit default INI setting");
+			(void) ustrncpy(eof_ini_add_dialog_string, "Edit default INI setting", EOF_INI_ADD_DIALOG_STRING_LENGTH);
 		else
-			(void) ustrcpy(eof_ini_add_dialog_string, "Edit INI setting");
+			(void) ustrncpy(eof_ini_add_dialog_string, "Edit INI setting", EOF_INI_ADD_DIALOG_STRING_LENGTH);
 
 		eof_color_dialog(eof_ini_add_dialog, gui_fg_color, gui_bg_color);
 		eof_conditionally_center_dialog(eof_ini_add_dialog);

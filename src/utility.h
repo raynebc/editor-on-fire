@@ -24,7 +24,7 @@ int eof_conditionally_copy_file(const char * src, const char * dest);
 	//Performs eof_copy_file() if the two specified files are of a different size
 int eof_file_compare(char *file1, char *file2);	//Returns zero if the two files are the same
 
-int eof_check_string(char * tp);	//Returns nonzero if the string contains at least one non space ' ' character before it terminates
+int eof_check_string(char * tp);	//Returns nonzero if the string contains at least one non space ' ' character before it terminates, returns zero if tp is NULL or if the string has no non-space characters
 
 //Unicode font handling stuff
 extern unsigned short * eof_ucode_table;						//Stores Unicode mappings for the 256 extended ASCII characters, some of which are set to 0x20 for nonprintable characters

@@ -319,6 +319,24 @@ int eof_menu_track_check_chord_snapping(void);
 int eof_menu_track_erase_note_names(void);
 	//Erases the name from every note in the track
 
+int eof_track_immerrock_comment_edit_do_dialog(char *title, char *text, unsigned long buffersize);
+	//Uses the eof_ini_add_dialog[] object to prompt to edit the specified string,
+	//title is used to set the dialog object title
+	//text is used to initialize the dialog input field (eof_etext)
+	//buffersize is to specify how many bytes, including the NULL byte, that can be written to text without overflowing
+	//The content of text is replaced if the user clicks OK, in which case zero is returned
+	//Nonzero is returned upon error or if the user cancels
+int eof_track_immerrock_song_comment(void);
+	//Calls eof_track_immerrock_comment_edit() to change the song comments
+int eof_track_immerrock_edit_ini_comment(char *title, char *commentname);
+	//Looks up the existing lead, rhythm or bass comment (stored as INI settings) and uses eof_track_immerrock_comment_edit_do_dialog() to edit the text of the existing INI setting or adds a new one as appropriate
+int eof_track_immerrock_lead_comment(void);
+	//Uses eof_track_immerrock_edit_ini_comment() to edit/add the lead comment
+int eof_track_immerrock_rhythm_comment(void);
+	//Uses eof_track_immerrock_edit_ini_comment() to edit/add the rhythm comment
+int eof_track_immerrock_bass_comment(void);
+	//Uses eof_track_immerrock_edit_ini_comment() to edit/add the bass comment
+
 int eof_track_set_chord_hand_mode_change(void);
 	//Uses eof_pro_guitar_track_set_hand_mode_change_at_timestamp() to set chord hand mode at the seek position
 int eof_track_set_string_hand_mode_change(void);

@@ -4,6 +4,7 @@
 #include "../dialog/proc.h"
 #include "../foflc/Lyric_storage.h"
 #include "../dialog.h"
+#include "../ini_import.h"
 #include "../ir.h"
 #include "../main.h"
 #include "../midi.h"
@@ -108,6 +109,15 @@ MENU eof_track_beatable_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_track_immerrock_comment_menu[] =
+{
+	{"&Song", eof_track_immerrock_song_comment, NULL, 0, NULL},
+	{"&Lead", eof_track_immerrock_lead_comment, NULL, 0, NULL},
+	{"&Rhythm", eof_track_immerrock_rhythm_comment, NULL, 0, NULL},
+	{"&Bass", eof_track_immerrock_bass_comment, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_track_immerrock_hand_mode_menu[] =
 {
 	{"&Chord", eof_track_set_chord_hand_mode_change, NULL, 0, NULL},
@@ -118,6 +128,7 @@ MENU eof_track_immerrock_hand_mode_menu[] =
 
 MENU eof_track_immerrock_menu[] =
 {
+	{"&Comment", NULL, eof_track_immerrock_comment_menu, 0, NULL},
 	{"&Hand mode", NULL, eof_track_immerrock_hand_mode_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -6242,6 +6253,128 @@ int eof_menu_track_erase_note_names(void)
 	}
 
 	return D_O_K;
+}
+
+int eof_track_immerrock_comment_edit_do_dialog(char *title, char *text, unsigned long buffersize)
+{
+	int retval = 2;	//Unless the user clicks OK on the dialog, it will be considered a cancellation
+
+	if(!title || !text)
+	{	//Satisfy Splint by checking value of d
+		return 1;	//Invalid parameters
+	}
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_ini_add_dialog, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_ini_add_dialog);
+	(void) ustrncpy(eof_etext, text, EOF_INI_LENGTH - 1);
+	(void) ustrncpy(eof_ini_add_dialog_string, title, EOF_INI_ADD_DIALOG_STRING_LENGTH);
+
+	if(eof_popup_dialog(eof_ini_add_dialog, 2) == 3)
+	{	//User clicked OK
+		(void) ustrncpy(text, eof_etext, buffersize - 1);
+		retval = 0;	//Success
+	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+
+	return retval;
+}
+
+int eof_track_immerrock_song_comment(void)
+{
+	char newstring[EOF_INI_LENGTH] = {0};
+
+	(void) ustrncpy(newstring, eof_song->tags->loading_text, EOF_INI_LENGTH - 1);
+	if(!eof_track_immerrock_comment_edit_do_dialog("Set song comment", newstring, EOF_INI_LENGTH))
+	{	//If the user clicked OK on the prompt to edit the comment
+		if((newstring[0] == '\0') || eof_check_string(newstring))
+		{	//If the edited string is completely empty, or if it contains at least one non space character
+			if(ustricmp(eof_song->tags->loading_text, newstring))
+			{	//If the string was altered
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				(void) ustrncpy(eof_song->tags->loading_text, newstring, EOF_INI_LENGTH - 1);	//Update the loading text in the project
+			}
+		}
+	}
+
+	return D_O_K;
+}
+
+int eof_track_immerrock_edit_ini_comment(char *title, char *commentname)
+{
+	char newstring[EOF_INI_LENGTH] = {0};
+	char *newvalue;		//The point in newstring[] after the equal sign, which the user is to define
+	char *oldvalue;		//The point in the existing INI entry after the equal sign, to be compared against the user's input
+	unsigned long index, writeable;
+	char isnew = 0;
+
+	if(!eof_song || !title || !commentname)
+		return D_O_K;	//Invalid parameters
+
+	//Find an existing lead arrangement comment entry, or prepare a new one if it doesn't exist
+	oldvalue = eof_find_ini_setting_tag(eof_song, &index, commentname);
+	if(!oldvalue || !eof_check_string(oldvalue))
+	{	//If the track comment was not defined already
+		isnew = 1;	//Track that this will be a new INI setting for the project
+		snprintf(newstring, EOF_INI_LENGTH - 1, "%s=", commentname);	//Build a new string for the user to edit
+	}
+	else
+	{	//The track comment already exists, make a copy of it for the user to edit
+		if(index >= eof_song->tags->ini_settings)
+			return D_O_K;	//Logic error, bound check failed
+
+		strncpy(newstring, eof_song->tags->ini_setting[index], EOF_INI_LENGTH - 1);
+		oldvalue = strcasestr_spec(eof_song->tags->ini_setting[index], "=");	//Reposition this to not skip whitespace after the existing entry's equal sign, in case the user had a reason to change that whitespace
+	}
+	newvalue = strcasestr_spec(newstring, "=");	//Find the character after the equal sign in the string the user will edit
+	if(!newvalue)
+		return D_O_K;		//Logic error, string setup failed
+
+	//Call the dialog to have the user edit the comment
+	writeable = EOF_INI_LENGTH - strlen(commentname) + 1;	//How many characters the destination array can accommodate after the comment tag name and equal sign
+	if(!eof_track_immerrock_comment_edit_do_dialog(title, newvalue, writeable))
+	{	//If the user clicked OK on the prompt to edit the comment
+		if((newvalue[0] != '\0') && !eof_check_string(newvalue))
+			return D_O_K;		//If the user entered nothing but whitespace, cancel adding/changing anything
+		if((newvalue[0] == '\0') && isnew)
+			return D_O_K;		//If the user entered no text and this would have been a new comment entry, cancel adding anything
+
+		if(!oldvalue)
+		{	//If this is a new comment
+			if(eof_song->tags->ini_settings < EOF_MAX_INI_SETTINGS)
+			{	//If another INI setting can be stored
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				strncpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], newstring, EOF_INI_LENGTH - 1);	//Append this comment to the end of the INI settings array
+				eof_song->tags->ini_settings++;
+			}
+		}
+		else if(ustricmp(oldvalue, newvalue))
+		{	//If the entered text is different from the existing comment
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			(void) ustrncpy(eof_song->tags->ini_setting[index], newstring, EOF_INI_LENGTH - 1);	//Update the existing INI setting for the comment
+		}
+	}
+
+	return D_O_K;
+}
+
+int eof_track_immerrock_lead_comment(void)
+{
+	return eof_track_immerrock_edit_ini_comment("Set lead comment", "Comment_Lead");
+}
+
+int eof_track_immerrock_rhythm_comment(void)
+{
+	return eof_track_immerrock_edit_ini_comment("Set rhythm comment", "Comment_Rhythm");
+}
+
+int eof_track_immerrock_bass_comment(void)
+{
+	return eof_track_immerrock_edit_ini_comment("Set bass comment", "Comment_Bass");
 }
 
 int eof_track_set_chord_hand_mode_change(void)

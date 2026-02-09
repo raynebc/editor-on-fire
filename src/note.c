@@ -1438,12 +1438,12 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		if((mask == 32) && !eof_track_is_ghl_mode(eof_song, track) && eof_track_is_legacy_guitar(eof_song, track) && !eof_open_strum_enabled(track))
 			continue;	//If this is a lane 6 gem in a legacy track, GHL mode is not enabled and open strum is not enabled, skip rendering this gem
 
-		#define EOF_HALF_3D_IMAGE_WIDTH 24
-		#define EOF_3D_IMAGE_HEIGHT 48
+//		#define EOF_HALF_3D_IMAGE_WIDTH 24		//Currently unused
+//		#define EOF_3D_IMAGE_HEIGHT 48			//Currently unused
 
 		//The full size (non HOPO) GHL gems are larger than the normal 5 lane gems
-		#define EOF_GHL_HALF_3D_IMAGE_WIDTH 36
-		#define EOF_GHL_3D_IMAGE_HEIGHT 72
+//		#define EOF_GHL_HALF_3D_IMAGE_WIDTH 36	//Currently unused
+//		#define EOF_GHL_3D_IMAGE_HEIGHT 72		//Currently unused
 
 		unsigned lanenum = ctr;	//For non GHL modes, each fret generally get its own lane
 		unsigned long half_image_width;
