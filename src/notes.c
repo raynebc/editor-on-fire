@@ -5550,38 +5550,53 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	//Song and track comments
 	if(!ustricmp(macro, "IF_IR_COMMENTS_DEFINED"))
 	{
-		char *value, song_comment = 0, lead_comment = 0, rhythm_comment = 0, bass_comment = 0;
+		char *value, *arrstring;
 		unsigned long index;
 
 		eof_notes_macro_ir_comments_defined[0] = '\0';		//Erase this string
 		if(eof_check_string(eof_song->tags->loading_text))
 		{	//If the project has loading text defined
-			song_comment = 1;
+			strncat(eof_notes_macro_ir_comments_defined, "Song", sizeof(eof_notes_macro_ir_comments_defined) - 1);
 			count++;
 		}
 		value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Lead");
 		if(eof_check_string(value))
 		{	//If the lead track comments are defined and isn't just whitespace
-			lead_comment = 1;
+			if(count > 0)
+				arrstring = ", Lead";	//If there were other arrangements written in this list already, prepend a comma
+			else
+				arrstring = "Lead";
+
+			strncat(eof_notes_macro_ir_comments_defined, arrstring, sizeof(eof_notes_macro_ir_comments_defined) - 1);
 			count++;
 		}
 		value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Rhythm");
 		if(eof_check_string(value))
 		{	//If the lead track comments are defined and isn't just whitespace
-			rhythm_comment = 1;
+			if(count > 0)
+				arrstring = ", Rhythm";	//If there were other arrangements written in this list already, prepend a comma
+			else
+				arrstring = "Rhythm";
+
+			strncat(eof_notes_macro_ir_comments_defined, arrstring, sizeof(eof_notes_macro_ir_comments_defined) - 1);
 			count++;
 		}
 		value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Bass");
 		if(eof_check_string(value))
 		{	//If the lead track comments are defined and isn't just whitespace
-			bass_comment = 1;
+			if(count > 0)
+				arrstring = ", Bass";	//If there were other arrangements written in this list already, prepend a comma
+			else
+				arrstring = "Bass";
+
+			strncat(eof_notes_macro_ir_comments_defined, arrstring, sizeof(eof_notes_macro_ir_comments_defined) - 1);
 			count++;
 		}
 
 		if(count)
 		{
 			dest_buffer[0] = '\0';
-			snprintf(eof_notes_macro_ir_comments_defined, sizeof(eof_notes_macro_ir_comments_defined) - 1, "%s%s%s%s%s%s%s comment%s defined.", (song_comment ? "Song" : ""), (song_comment && (count > 1) ? ", " : ""), (lead_comment ? "Lead" : ""), (lead_comment && (count > 1) ? ", " : ""), (rhythm_comment ? "Rhythm" : ""), (rhythm_comment && (count > 1) ? ", " : ""), (bass_comment ? "Bass" : ""), (bass_comment && (count > 1)) ? "s" : "");
+			strncat(eof_notes_macro_ir_comments_defined, " comments defined.", sizeof(eof_notes_macro_ir_comments_defined) - 1);
 			return 3;	//True
 		}
 

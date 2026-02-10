@@ -664,7 +664,14 @@ int eof_menu_file_new_wizard(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select Music File", eof_filter_music_files);
+	if(exists(eof_ffmpeg_executable_path))
+	{	//If FFMPEG is linked, use the more inclusive file filter
+		returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select Music File", eof_filter_ffmpeg_files);
+	}
+	else
+	{
+		returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select Music File", eof_filter_music_files);
+	}
 	eof_clear_input();
 	if(!returnedfn)
 	{
@@ -740,7 +747,7 @@ int eof_menu_file_load(void)
 				eof_destroy_song(eof_song);
 				eof_song = NULL;
 				eof_song_loaded = 0;
-				eof_changes = eof_import_unsaved = 0;
+				eof_changes = eof_project_unsaved = 0;
 				eof_change_count = 0;
 				eof_show_mouse(NULL);
 				eof_cursor_visible = 1;
@@ -1185,7 +1192,7 @@ int eof_menu_file_midi_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			eof_changes = eof_import_unsaved = 1;
+			eof_changes = eof_project_unsaved = 1;
 			if(!eof_repair_midi_import_grid_snap())
 			{
 				eof_log("\tGrid snap correction failed.", 1);
@@ -1342,7 +1349,7 @@ int eof_menu_file_stepmania_import(void)
 			if(!retval)
 			{	//If the file was imported
 				eof_init_after_load(0);
-				eof_changes = eof_import_unsaved = 1;
+				eof_changes = eof_project_unsaved = 1;
 				retval = 0;
 			}
 			else
@@ -1362,7 +1369,7 @@ int eof_menu_file_stepmania_import(void)
 		{	//Import successful
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			eof_changes = eof_import_unsaved = 1;
+			eof_changes = eof_project_unsaved = 1;
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 			(void) replace_filename(eof_last_sm_path, returnedfn_path, "", 1024);	//Set the last loaded DR file path
 			eof_log("\tStepmania file loaded", 1);
@@ -2941,7 +2948,7 @@ int eof_menu_file_feedback_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			eof_changes = eof_import_unsaved = 1;
+			eof_changes = eof_project_unsaved = 1;
 			(void) replace_filename(eof_last_db_path, returnedfn_path, "", 1024);	//Set the last loaded Feedback file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
@@ -3153,7 +3160,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 	snprintf(cfn, sizeof(cfn) - 1, "%s%s", directory, dest_name);	//Build the target file name
 	if(exists(cfn))
 	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" created", cfn);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" creation skipped.   File already exists.", cfn);
 		eof_log(eof_log_string, 1);
 		return 0;	//Return success
 	}
@@ -3201,12 +3208,11 @@ int eof_new_chart(char * filename)
 	char album[256] = {0};
 	char genre[256] = {0};
 	char tracknumber[32] = {0};
-	char oggfilename[1024] = {0};
+	char oggfilename[1024], tempfilename[1024];
 	char dest_name[15] = {0};
 	char * returnedfolder = NULL;
 	int ret = 0;
 	ALOGG_OGG * temp_ogg = NULL;
-	char * temp_buffer = NULL;
 	int temp_buffer_size = 0;
 	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};
 	unsigned long ctr = 0;
@@ -3227,6 +3233,40 @@ int eof_new_chart(char * filename)
 	(void) ustrcpy(oggfilename, filename);
 	(void) ustrcpy(eof_last_ogg_path, filename);
 
+
+	//Attempt to use the specified audio to create an OGG in the temp folder, converting as necessary.  tempfilename will reflect the path to the audio file from which metadata is subsequently read
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		return 1;
+	}
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tConverting input file \"%s\" to OGG at \"%s\"", filename, eof_temp_path_s);
+	eof_log(eof_log_string, 1);
+	ret = eof_audio_to_ogg(oggfilename, eof_temp_path_s, dest_name, 1);
+	if((ret != 0) && exists(eof_ffmpeg_executable_path))
+	{	//If a suitably named OGG was not created successfully, but FFMPEG is linked
+		eof_log("\tAttempting to re-encode input audio with FFMPEG", 1);
+		replace_filename(oggfilename, eof_temp_path_s, get_filename(filename), sizeof(oggfilename) - 1);	//Build a path where the input audio file name is appended to the temp folder
+		(void) replace_extension(oggfilename, oggfilename, "ogg", 1024);	//and its extension is changed to ogg
+		if(eof_ffmpeg_convert_audio(filename, oggfilename))
+		{	//If the input file couldn't be re-encoded to OGG with FFMPEG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFailed to re-encode \"%s\"", filename);
+			eof_log(eof_log_string, 1);
+		}
+		else
+			ret = eof_audio_to_ogg(dest_name, eof_etext3, dest_name, 1);	//Try to load the freshly-created audio again
+	}
+	if(ret != 0)	//If a suitably named OGG was not created successfully
+	{
+		allegro_message("Could not convert selected audio file, it may be corrupt or an unsupported format");
+		return ret;	//Return failure
+	}
+	replace_filename(tempfilename, eof_temp_path_s, dest_name, sizeof(tempfilename) - 1);	//Build a path to the file in the temp folder
+
+
+	//Attempt to load any recognizable metadata from the audio file at path tempfilename
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsing for metadata from \"%s\"", tempfilename);
+	eof_log(eof_log_string, 1);
 	eof_color_dialog(eof_file_new_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_file_new_dialog);
 	(void) ustrcpy(eof_etext, "");		//Used to store the Artist tag
@@ -3234,11 +3274,13 @@ int eof_new_chart(char * filename)
 	(void) ustrcpy(eof_etext3, "");
 	(void) ustrcpy(eof_etext4, "");		//Used to store the filename created with %Artist% - %Title%
 	eof_render();
-	if(!ustricmp("ogg", get_extension(oggfilename)))
+	if(!ustricmp("ogg", get_extension(tempfilename)))
 	{
+		char * temp_buffer = NULL;
+
 		eof_log("\tOGG file selected.", 2);
-		temp_buffer = eof_buffer_file(oggfilename, 0, 0);
-		temp_buffer_size = (int) file_size_ex(oggfilename);
+		temp_buffer = eof_buffer_file(tempfilename, 0, 0);
+		temp_buffer_size = (int) file_size_ex(tempfilename);
 		if(temp_buffer)
 		{
 			temp_ogg = alogg_create_ogg_from_buffer(temp_buffer, temp_buffer_size);
@@ -3251,10 +3293,14 @@ int eof_new_chart(char * filename)
 				(void) alogg_get_ogg_comment(temp_ogg, "GENRE", genre);
 				(void) alogg_get_ogg_comment(temp_ogg, "TRACKNUMBER", tracknumber);
 				strncpy(year, eof_etext3, sizeof(year) - 1);	//Truncate the string to fit
+				alogg_destroy_ogg(temp_ogg);
+				temp_ogg = NULL;
+				free(temp_buffer);
+				temp_buffer = NULL;
 			}
 		}
 	}
-	else if(!ustricmp("wav", get_extension(oggfilename)))
+	else if(!ustricmp("wav", get_extension(tempfilename)))
 	{
 		EOF_AUDIO_METADATA wanted_metadata[6] = {
 			{"IART", eof_etext, sizeof(eof_etext)},
@@ -3264,18 +3310,18 @@ int eof_new_chart(char * filename)
 			{"IGNR", genre, sizeof(genre)},
 			{"ITRK", tracknumber, sizeof(tracknumber)}};
 
-		eof_find_wav_metadata(oggfilename, wanted_metadata, 6);	//Search for this metadata
+		eof_find_wav_metadata(tempfilename, wanted_metadata, 6);	//Search for this metadata
 	}
-	else if(!ustricmp("mp3", get_extension(oggfilename)))
+	else if(!ustricmp("mp3", get_extension(tempfilename)))
 	{
 		#ifdef ALLEGRO_WINDOWS
 			//Windows has its own function to open files that have non ASCII characters in the file path
 			wchar_t widepath[1024] = {0};
 
-			(void) uconvert(oggfilename, U_UTF8, (char *)(&widepath[0]), U_UNICODE, 2048);
+			(void) uconvert(tempfilename, U_UTF8, (char *)(&widepath[0]), U_UNICODE, 2048);
 			tag.fp=_wfopen(widepath, L"rb");
 		#else
-			tag.fp=fopen(oggfilename,"rb");	//Open user-specified file for reading
+			tag.fp=fopen(tempfilename,"rb");	//Open user-specified file for reading
 		#endif
 
 		if(tag.fp != NULL)
@@ -3346,14 +3392,14 @@ int eof_new_chart(char * filename)
 		}
 	}
 
-	/* user fills in song information */
+
+	//Have user fill in song information
 	if(eof_popup_dialog(eof_file_new_dialog, 3) != 6)
 	{
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
-		alogg_destroy_ogg(temp_ogg);
-		free(temp_buffer);
+		delete_file(tempfilename);
 		return 1;	//Return failure
 	}
 
@@ -3372,7 +3418,8 @@ int eof_new_chart(char * filename)
 		(void) snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%s", eof_etext2);
 	}
 
-	/* user selects location for new song */
+
+	//Have user select location for new project, which is stored into eof_etext3
 	eof_color_dialog(eof_file_new_windows_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_file_new_windows_dialog);
 	eof_file_new_windows_dialog[1].flags = 0;
@@ -3390,6 +3437,7 @@ int eof_new_chart(char * filename)
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
 				eof_show_mouse(NULL);
+				delete_file(tempfilename);
 				return 1;	//Return failure
 			}
 			(void) ustrcpy(eof_etext3, returnedfolder);
@@ -3427,20 +3475,12 @@ int eof_new_chart(char * filename)
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
-		alogg_destroy_ogg(temp_ogg);
-		free(temp_buffer);
+		delete_file(tempfilename);
 		return 1;	//Return failure
 	}
 
-	/* if music file is MP3/WAV, convert it */
-	ret = eof_audio_to_ogg(oggfilename, eof_etext3, dest_name, 1);
-	if(ret != 0)	//If a suitably named OGG was not created successfully
-	{
-		allegro_message("Could not convert selected audio file, it may be corrupt or an unsupported format");
-		return ret;	//Return failure
-	}
 
-	/* destroy old chart in memory */
+	//Destroy old chart in memory and create new chart
 	if(eof_song)
 	{
 		eof_destroy_song(eof_song);
@@ -3449,7 +3489,6 @@ int eof_new_chart(char * filename)
 	}
 	(void) eof_destroy_ogg();
 
-	/* create new chart in memory */
 	eof_song = eof_create_song_populated();
 	if(!eof_song)
 	{
@@ -3457,8 +3496,10 @@ int eof_new_chart(char * filename)
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
+		delete_file(tempfilename);
 		return 1;	//Return failure
 	}
+
 
 	//Validate year string
 	if(strlen(year) != 4)		//If the year string isn't exactly 4 digits
@@ -3468,7 +3509,8 @@ int eof_new_chart(char * filename)
 			if(!isdigit(year[ctr]))	//If it contains a non numerical character
 				year[0]='\0';		//Empty the year array
 
-	/* fill in information */
+
+	//Apply metadata
 	(void) ustrcpy(eof_song->tags->artist, eof_etext);	//Prevent buffer overflow
 	(void) ustrcpy(eof_song->tags->title, eof_etext2);
 	(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
@@ -3476,58 +3518,45 @@ int eof_new_chart(char * filename)
 	(void) ustrcpy(eof_song->tags->album, album);
 	(void) ustrcpy(eof_song->tags->genre, genre);
 	(void) ustrcpy(eof_song->tags->tracknumber, tracknumber);
-	(void) ustrcpy(oggfilename, filename);
-	(void) replace_filename(eof_last_ogg_path, oggfilename, "", 1024);
+	(void) replace_filename(eof_last_ogg_path, filename, "", 1024);	//Remember the path of the last chosen audio file
 
-	/* load OGG */
-	(void) ustrcpy(eof_song_path, eof_etext3);
+
+	//Copy temp audio file to project folder, to which oggfilename will be the full path
+	(void) ustrcpy(eof_song_path, eof_etext3);	//Build the global variable path to the project folder
 	put_backslash(eof_song_path);
 	(void) ustrcpy(eof_last_eof_path, eof_song_path);
-	if(temp_ogg)
-	{	//If the user-specified audio file was an OGG file and was successfully loaded earlier in this function
-		eof_music_track = temp_ogg;
-		eof_music_data = temp_buffer;
-		eof_music_data_size = temp_buffer_size;
-		if(exists(oggfilename))
-		{	//As long as oggfilename still reflects a valid path to the OGG file
-			(void) ustrncpy(eof_loaded_ogg_name, oggfilename, sizeof(eof_loaded_ogg_name) - 1);
-			(void) ustrcpy(eof_song->tags->ogg[0].filename, get_filename(eof_loaded_ogg_name));	//Apply this file name to the OGG profile
-		}
-		else
-		{	//Due to some error, oggfilename isn't valid and should be reset to reflect the default filename of guitar.ogg (which is already applied to the OGG profile's file name)
-			(void) ustrcpy(eof_loaded_ogg_name, eof_etext3);
-			put_backslash(eof_loaded_ogg_name);
-			(void) ustrcat(eof_loaded_ogg_name, "guitar.ogg");
-		}
-	}
-	else
+	replace_filename(oggfilename, eof_song_path, dest_name, sizeof(oggfilename) - 1);	//Build the full path for what should become the audio file in the project folder
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCopying temp audio file \"%s\" to project folder as \"%s\"", tempfilename, oggfilename);
+	eof_log(eof_log_string, 1);
+	if(!eof_copy_file(tempfilename, oggfilename) || !exists(oggfilename))
 	{
-		(void) ustrcpy(oggfilename, eof_etext3);
-		put_backslash(oggfilename);
-		(void) ustrcat(oggfilename, "guitar.ogg");
-		if(!eof_load_ogg(oggfilename, 0))
-		{
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			eof_show_mouse(NULL);
-			return 1;	//Return failure
-		}
+		eof_log("\tFailed to copy temp audio file", 1);
+		eof_log(eof_log_string, 1);
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		eof_show_mouse(NULL);
+		delete_file(tempfilename);
+		return 1;	//Return failure
+	}
+
+
+	//Load OGG
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading OGG file \"%s\"", oggfilename);
+	eof_log(eof_log_string, 1);
+	if(!eof_load_ogg(oggfilename, 0))
+	{
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		eof_show_mouse(NULL);
+		delete_file(tempfilename);
+		return 1;	//Return failure
 	}
 	eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoaded OGG file \"%s\" (%lums)", eof_loaded_ogg_name, eof_music_length);
-	eof_log(eof_log_string, 1);
 	(void) ustrcpy(eof_loaded_song_name, "notes.eof");
 	(void) append_filename(eof_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_filename));	//Build the full path to the project file
 
-	eof_song_loaded = 1;
 
-	/* get ready to edit */
-	eof_init_after_load(0);	//Initialize variables
-	eof_cursor_visible = 1;
-	eof_pen_visible = 1;
-	eof_show_mouse(NULL);
-
-	/* enable open strum for legacy tracks if the relevant preference is enabled */
+	//Enable open strum for legacy tracks if the relevant preference is enabled
 	if(eof_enable_open_strums_by_default)
 	{	//If the user enabled this preference
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
@@ -3546,7 +3575,8 @@ int eof_new_chart(char * filename)
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	}
 
-	/* selectively disable the difficulty limit for pro guitar tracks */
+
+	//Selectively disable the difficulty limit for pro guitar tracks
 	if(!eof_write_rb_files && !eof_write_fof_files && (eof_write_rs_files || eof_write_rs2_files))
 	{	//If neither Rock Band nor FoF export are enabled, but either RS1 or RS2 export is enabled
 		eof_song->track[EOF_TRACK_PRO_BASS]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Enable unlimited difficulties
@@ -3557,7 +3587,8 @@ int eof_new_chart(char * filename)
 		eof_note_type = 0;	//And start in the first difficulty tab
 	}
 
-	/* add any default INI entries to the project's INI entries list */
+
+	//Add any default INI entries to the project's INI entries list
 	for(ctr = 0; ctr < eof_default_ini_settings; ctr++)
 	{	//For each of the default INI settings
 		if(ctr < EOF_MAX_INI_SETTINGS)
@@ -3567,7 +3598,17 @@ int eof_new_chart(char * filename)
 		}
 	}
 
+
+	//Cleanup
 	(void) eof_menu_file_quick_save();
+	delete_file(tempfilename);
+	eof_song_loaded = 1;
+	eof_init_after_load(0);	//Initialize variables
+	eof_changes = eof_project_unsaved = 1;	//Reflect that until a save has been performed, no project file has been written to disk
+	eof_fix_window_title();
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
 
 	return 0;	//Return success
 }
@@ -5008,7 +5049,7 @@ int eof_save_helper(char *destfilename, char silent)
 	}
 
 	/* finish up */
-	eof_changes = eof_import_unsaved = 0;
+	eof_changes = eof_project_unsaved = 0;
 	for(ctr = 0; ctr < eof_song->tags->oggs; ctr++)
 	{
 		if(eof_song->tags->ogg[ctr].modified)
@@ -5163,7 +5204,7 @@ int eof_menu_file_gh_import(void)
 		{
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
-			eof_changes = eof_import_unsaved = 1;
+			eof_changes = eof_project_unsaved = 1;
 			(void) replace_filename(eof_last_gh_path, returnedfn_path, "", 1024);	//Set the last loaded GH file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
@@ -6055,7 +6096,7 @@ int eof_menu_file_gp_import(void)
 				char eof_changes_backup = eof_changes;	//Guitar Pro import will have set this if content was imported, remember this because eof_init_after_load() will clobber it
 
 				eof_init_after_load(0);
-				eof_changes = eof_import_unsaved = eof_changes_backup;		//Restore this value
+				eof_changes = eof_project_unsaved = eof_changes_backup;		//Restore this value
 				(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
 			}
 			else
@@ -6416,7 +6457,7 @@ int eof_menu_file_rs_import(void)
 			if(!eof_command_line_rs_import(returnedfn))
 			{	//If the file was imported
 				eof_init_after_load(0);
-				eof_changes = eof_import_unsaved = 1;
+				eof_changes = eof_project_unsaved = 1;
 			}
 			else
 			{	//Import failed

@@ -2113,7 +2113,7 @@ int eof_load_ogg(char * filename, char function)
 		}
 		eof_clear_input();
 		if(returnedfn)
-		{	//User selected an OGG, WAV or MP3 file, write a suitably named OGG into the chart's destination folder
+		{	//User selected an audio file, write a suitably named OGG into the chart's destination folder
 			ptr = returnedfn;	//The name of the file to cite if it fails to load
 			(void) replace_filename(output, filename, "", 1024);	//Store the path of the file's parent folder
 
@@ -2222,7 +2222,7 @@ int eof_load_ogg(char * filename, char function)
 							ogg_profile_name = NULL;	//Reset this pointer
 						}
 						if(eof_song)
-						{
+						{	//If a project is loaded, store the file name into the OGG profile
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tOGG profile file name is now \"%s\"", eof_song->tags->ogg[0].filename);
 							eof_log(eof_log_string, 2);
 						}
@@ -5609,7 +5609,7 @@ void eof_init_after_load(char initaftersavestate)
 	if(!initaftersavestate)
 	{	//If this wasn't cleanup after an undo/redo state, reset more variables
 		eof_set_music_pos(&eof_music_pos, eof_av_delay);
-		eof_changes = eof_import_unsaved = 0;
+		eof_changes = eof_project_unsaved = 0;
 		eof_undo_last_type = 0;
 		eof_change_count = 0;
 		eof_selected_catalog_entry = 0;

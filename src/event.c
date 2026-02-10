@@ -399,7 +399,7 @@ unsigned long eof_track_count_events(EOF_SONG *sp, unsigned long track)
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;
 
-	for(i = 0; i < sp->text_events; i--)
+	for(i = 0; i < sp->text_events; i++)
 	{	//For each text event in the project
 		if(sp->text_event[i]->track == track)
 		{	//If this text event is in the specified track

@@ -135,10 +135,11 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 	// if the extension of the file is .wav, it is converted to OGG format,
 	// otherwise the specified file is simply copied to the specified directory
 	//If function is 0, the resulting file is named guitar.ogg, and "guitar.ogg" is written to *dest_name to confirm this to the calling function
-	//If function is nonzero, the pre-extension part of the file name is allowed to be kept (instead of being forcibly renamed to guitar.ogg) if it has one of the following names:
-	// song.mp3, song.wav, drums.mp3, drums.wav, rhythm.mp3, rhythm.wav, vocals.mp3 or vocals.wav
+	//If function is nonzero, the pre-extension part of the file name is allowed to be kept (instead of being forcibly renamed to guitar.ogg) if it has one of the following base names (pre-extension):
+	// song, drums, rhythm, vocals, bass, keys or crowd
 	// the selected destination OGG file name is written to *dest_name so the calling function is aware of the chosen file name
 	//dest_name is expected to be an array at least 15 bytes in size (all of the supported OGG names are shorter than this)
+	//	It has the name of the converted file stored into it, so that it is expected to be found at directory
 	//Returns zero on successful conversion or nonzero if conversion was canceled/unsuccessful
 
 void eof_restore_oggs_helper(void);
