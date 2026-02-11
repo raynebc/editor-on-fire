@@ -1474,20 +1474,33 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		{	//Only process one Tab shortcut per press and release of the Tab key
 			if(KEY_EITHER_CTRL)
 			{	//Track numbering begins at 1 instead of 0
+				unsigned long original_track = eof_selected_track;
+
 				if(KEY_EITHER_SHIFT)	//Shift instrument back 1 number
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					if(eof_selected_track > EOF_TRACKS_MIN)
-						(void) eof_menu_track_selected_track_number(eof_selected_track - 1, 1);
-					else
-						(void) eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1, 1);	//Wrap around
+
+					do{
+						if(eof_selected_track > EOF_TRACKS_MIN)
+							(void) eof_menu_track_selected_track_number(eof_selected_track - 1, 1);
+						else
+							(void) eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1, 1);	//Wrap around
+
+						if(!eof_ctrl_tab_skip_empty_tracks || eof_get_track_size_all(eof_song, eof_selected_track))
+							break;	//If the user preference is for CTRL+SHIFT+TAB to skip changing to empty tracks, and this track is not empty, break from loop
+					}while(original_track != eof_selected_track);	//Repeat up until the same track is reached again
 				}
 				else					//Shift instrument forward 1 number
 				{
-					if(eof_selected_track < EOF_TRACKS_MAX - 1)
-						(void) eof_menu_track_selected_track_number(eof_selected_track + 1, 1);
-					else
-						(void) eof_menu_track_selected_track_number(EOF_TRACKS_MIN, 1);	//Wrap around
+					do{
+						if(eof_selected_track < EOF_TRACKS_MAX - 1)
+							(void) eof_menu_track_selected_track_number(eof_selected_track + 1, 1);
+						else
+							(void) eof_menu_track_selected_track_number(EOF_TRACKS_MIN, 1);	//Wrap around
+
+						if(!eof_ctrl_tab_skip_empty_tracks || eof_get_track_size_all(eof_song, eof_selected_track))
+							break;	//If the user preference is for CTRL+TAB to skip changing to empty tracks, and this track is not empty, break from loop
+					}while(original_track != eof_selected_track);	//Repeat up until the same track is reached again
 				}
 			}
 			else
@@ -3176,8 +3189,9 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 	/* toggle rim shot (CTRL+SHIFT+R in the Phase Shift drum track) */
 	/* toggle beatable right snap (CTRL+SHIFT+R in a BEATABLE track) */
+	/* place RS moveR phrase (CTRL+SHIFT+R in a pro guitar track) */
 		if((eof_key_char == 'r') && KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
-		{
+		{	//If R, CTRL and SHIFT are all held
 			if(eof_selected_track == EOF_TRACK_DRUM_PS)
 			{	//If the Phase Shift drum track is active
 				eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -3186,12 +3200,15 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 			else if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
 			{	//If the active track is a BEATABLE track
-				if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
-				{	//Both SHIFT and CTRL are held
-					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_menu_beatable_toggle_beatable_rsnap();
-					eof_use_key();
-				}
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_beatable_toggle_beatable_rsnap();
+				eof_use_key();
+			}
+			else if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+			{	//If this is a pro guitar track
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_rocksmith_mover_phrase_dialog_add();
+				eof_use_key();
 			}
 		}
 

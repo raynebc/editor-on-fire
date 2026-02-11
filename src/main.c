@@ -209,6 +209,7 @@ int         eof_disable_rs_wav = 0;				//If nonzero, a WAV file for use in Rocks
 int         eof_display_seek_pos_in_seconds = 0;	//If nonzero, the seek position in the piano roll and information panel is given in seconds instead of minutes:seconds
 int         eof_note_tails_clickable = 0;		//If nonzero, when the mouse hovers over a note tail instead of just the note/lyric head, that note becomes the hover note
 int         eof_lyric_tails_clickable = 0;		//If nonzero, when the mouse hovers over a lyric tail instead of just the note/lyric head, that lyric becomes the hover note
+int         eof_ctrl_tab_skip_empty_tracks = 0;		//If nonzero, CTRL+TAB and SHIFT+CTRL+TAB shortcuts skip empty tracks
 int         eof_auto_complete_fingering = 1;	//If nonzero, offer to apply specified chord fingering to matching notes in the track
 int         eof_dont_auto_name_double_stops = 0;	//If nonzero, the chord detection logic will not name chords that have only two pitches (unique or otherwise)
 int         eof_section_auto_adjust = 1;		//If nonzero, section and FHP positions are updated when all their contained notes are simultaneously moved

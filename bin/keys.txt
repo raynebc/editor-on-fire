@@ -49,6 +49,8 @@ Playback and Seek controls:
 
         Hold both Ctrl and Shift while pressing to seek to the previous/next anchor
         position (when grid snap is disabled).
+
+        Hold ALT while pressing to seek to the previous/next anchor position.
         
         Hold ALT while pressing to seek to the previous/next time signature change.
 

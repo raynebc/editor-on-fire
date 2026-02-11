@@ -274,6 +274,7 @@ void eof_load_config(char * fn)
 	eof_display_seek_pos_in_seconds = get_config_int("preferences", "eof_display_seek_pos_in_seconds", 0);
 	eof_note_tails_clickable = get_config_int("preferences", "eof_note_tails_clickable", 0);
 	eof_lyric_tails_clickable = get_config_int("preferences", "eof_lyric_tails_clickable", 1);
+	eof_ctrl_tab_skip_empty_tracks = get_config_int("preferences", "eof_ctrl_tab_skip_empty_tracks", 0);
 	eof_render_grid_lines = get_config_int("preferences", "eof_render_grid_lines", 0);
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
 	eof_vanish_y = get_config_int("preferences", "eof_vanish_y", 0);
@@ -744,6 +745,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_display_seek_pos_in_seconds", eof_display_seek_pos_in_seconds);
 	set_config_int("preferences", "eof_note_tails_clickable", eof_note_tails_clickable);
 	set_config_int("preferences", "eof_lyric_tails_clickable", eof_lyric_tails_clickable);
+	set_config_int("preferences", "eof_ctrl_tab_skip_empty_tracks", eof_ctrl_tab_skip_empty_tracks);
 	set_config_int("preferences", "eof_render_grid_lines", eof_render_grid_lines);
 	set_config_int("preferences", "eof_auto_complete_fingering", eof_auto_complete_fingering);
 	set_config_int("preferences", "eof_rbn_export_slider_hopo", eof_rbn_export_slider_hopo);

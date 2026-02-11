@@ -30,12 +30,13 @@ Shift + N = Link-next
 Ctrl + Shift + O = Tremolo
 Shift + P = Add phrase
 Ctrl + Shift + P = Pop
-Ctrl + Shift + R = Resnap to grid
+Shift + R = Resnap to grid
+Ctrl + Shift + R = Place RS moveR phrase
 Ctrl + S = Save 
-Shift + S = Add section || Split lyric (Part_Vocals)
+Shift + S = Add RS section || Split lyric (Part_Vocals)
 Ctrl + T = Tap
 Shift + T = Midi tones
-Ctrl + Shift + T = Add tone where playback bar is
+Ctrl + Shift + T = Add tone change where playback bar is
 Ctrl + U = Unpitched slide
 Ctrl + V = Paste
 Shift + V = Vibrato
@@ -50,6 +51,7 @@ Ctrl + Enter = Quick swap between piano rolls
 Page Up/ Down = Move to next/ previous beat
 Shift + Page Up/ Down = Move to next/ previous note
 Ctrl + Shift + Page Up/ Down = Move to next/ previous grid snap line
+Alt + Page Up/ Down = Move to next/ previous anchor
 
 Shift + F11 = toggle 2D pane display (chord names/tone names/FHPs/Sections & Phrases)
 

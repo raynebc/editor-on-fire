@@ -239,6 +239,7 @@ DIALOG eof_preferences_dialog[] =
 	{ d_agup_check_proc, 248, 175, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are force strum",NULL, NULL },
 	{ d_agup_check_proc, 248, 159, 206, 16,  2,   23,  0,    0,      1,   0,   "Use FoF difficulty naming",NULL, NULL },
 	{ d_agup_check_proc, 16,  319, 175, 16,  2,   23,  0,    0,      1,   0,   "Make lyric tails clickable",NULL, NULL },
+	{ d_agup_check_proc, 16,  335, 210, 16,  2,   23,  0,    0,      1,   0,   "CTRL+TAB skips empty tracks",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1594,6 +1595,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[52].flags = eof_new_note_forced_strum ? D_SELECTED : 0;			//New notes are force strum
 	eof_preferences_dialog[53].flags = eof_use_fof_difficulty_naming ? D_SELECTED : 0;			//Use FoF difficulty naming
 	eof_preferences_dialog[54].flags = eof_lyric_tails_clickable ? D_SELECTED : 0;				//Make lyric tails clickable
+	eof_preferences_dialog[55].flags = eof_ctrl_tab_skip_empty_tracks ? D_SELECTED : 0;			//CTRL+TAB skips empty tracks
 
 	eof_log("\tLaunching preferences dialog", 2);
 
@@ -1716,6 +1718,7 @@ int eof_menu_file_preferences(void)
 			eof_new_note_forced_strum = (eof_preferences_dialog[52].flags == D_SELECTED ? 1 : 0);
 			eof_use_fof_difficulty_naming = (eof_preferences_dialog[53].flags == D_SELECTED ? 1 : 0);
 			eof_lyric_tails_clickable = (eof_preferences_dialog[54].flags == D_SELECTED ? 1 : 0);
+			eof_ctrl_tab_skip_empty_tracks = (eof_preferences_dialog[55].flags == D_SELECTED ? 1 : 0);
 			if(eof_use_fof_difficulty_naming)
 			{
 				eof_note_type_name = eof_note_type_name_fof;

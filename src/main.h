@@ -434,6 +434,7 @@ extern int         eof_disable_rs_wav;
 extern int         eof_display_seek_pos_in_seconds;
 extern int         eof_note_tails_clickable;
 extern int         eof_lyric_tails_clickable;
+extern int         eof_ctrl_tab_skip_empty_tracks;
 extern int         eof_auto_complete_fingering;
 extern int         eof_dont_auto_name_double_stops;
 extern int         eof_section_auto_adjust;
