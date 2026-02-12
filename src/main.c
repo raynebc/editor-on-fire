@@ -206,6 +206,7 @@ int         eof_dont_restrict_tone_change_timing = 0;	//If nonzero, tone changes
 int         eof_imports_recall_last_path = 0;	//If nonzero, various import dialogs will initialize the dialog to the path containing the last chosen import, instead of initializing to the project's folder
 int         eof_rewind_at_end = 1;				//If nonzero, chart rewinds when the end of chart is reached during playback
 int         eof_disable_rs_wav = 0;				//If nonzero, a WAV file for use in Rocksmith will not be maintained during save even if Rocksmith file export is enabled
+int         eof_disable_llplus_import = 0;			//If nonzero, LLPLUS detection logic is disabled during MIDI import, since that game ambiguously doesn't require any specific track name
 int         eof_display_seek_pos_in_seconds = 0;	//If nonzero, the seek position in the piano roll and information panel is given in seconds instead of minutes:seconds
 int         eof_note_tails_clickable = 0;		//If nonzero, when the mouse hovers over a note tail instead of just the note/lyric head, that note becomes the hover note
 int         eof_lyric_tails_clickable = 0;		//If nonzero, when the mouse hovers over a lyric tail instead of just the note/lyric head, that lyric becomes the hover note

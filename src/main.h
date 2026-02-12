@@ -431,6 +431,7 @@ extern int         eof_dont_restrict_tone_change_timing;
 extern int         eof_imports_recall_last_path;
 extern int         eof_rewind_at_end;
 extern int         eof_disable_rs_wav;
+extern int         eof_disable_llplus_import;
 extern int         eof_display_seek_pos_in_seconds;
 extern int         eof_note_tails_clickable;
 extern int         eof_lyric_tails_clickable;

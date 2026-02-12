@@ -286,6 +286,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   360, 220, 16,  2,   23,  0,    0,      1,   0,   "GP import events to track only",NULL, NULL },
 	{ d_agup_check_proc, 248, 360, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
 	{ d_agup_check_proc, 248, 375, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ d_agup_check_proc, 248, 390, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't import LLPLUS MIDI content",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1777,6 +1778,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[52].flags = 0;					//New notes are force strum
 			eof_preferences_dialog[53].flags = 0;					//Use FoF difficulty naming
 			eof_preferences_dialog[54].flags = D_SELECTED;			//Make lyric tails clickable
+			eof_preferences_dialog[55].flags = 0;					//CTRL+TAB skips empty tracks
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 
@@ -1862,6 +1864,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[37].flags = eof_gp_import_track_specific_events ? D_SELECTED : 0;		//GP import events to track only
 	eof_import_export_preferences_dialog[38].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
 	eof_import_export_preferences_dialog[39].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_import_export_preferences_dialog[40].flags = eof_disable_llplus_import ? D_SELECTED : 0;				//Don't import LLPLUS MIDI content
 
 	do
 	{	//Run the dialog
@@ -1904,6 +1907,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_gp_import_track_specific_events = (eof_import_export_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
 			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
 			eof_disable_rs_wav = (eof_import_export_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
+			eof_disable_llplus_import = (eof_import_export_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1943,6 +1947,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[37].flags = 0;				//GP import events to track only
 			eof_import_export_preferences_dialog[38].flags = 0;				//GH import sustain threshold prompt
 			eof_import_export_preferences_dialog[39].flags = 0;				//Don't write Rocksmith WAV file
+			eof_import_export_preferences_dialog[40].flags = 0;				//Don't import LLPLUS MIDI content
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -5035,7 +5040,7 @@ int eof_save_helper(char *destfilename, char silent)
 	/* export IMMERROCK files for all populated difficulties if enabled */
 	if(eof_write_immerrock_files)
 	{
-		eof_export_immerrock(silent);
+		eof_export_immerrock(silent, newfolderpath);
 	}
 
 	/* save OGG file if necessary*/

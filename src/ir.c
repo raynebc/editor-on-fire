@@ -1584,7 +1584,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	return 1;	//Return success
 }
 
-void eof_export_immerrock(char silent)
+void eof_export_immerrock(char silent, char *destpath)
 {
 	unsigned long gglead = 0, ggrhythm = 0, ggbass = 0;			//The arrangements identified for export with static difficulties
 	unsigned long ddgglead = 0, ddggrhythm = 0, ddggbass = 0;	//The arrangements identified for export as a single dynamic difficulty
@@ -1601,6 +1601,8 @@ void eof_export_immerrock(char silent)
 
 	if(!eof_song || !eof_song_loaded)
 		return;	//If no project is loaded
+	if(!destpath)
+		return;	//Invalid destination folder path
 
 	restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, eof_selected_track);
 	eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Disable tech view if applicable
@@ -1708,7 +1710,7 @@ void eof_export_immerrock(char silent)
 		eof_ir_export_allow_fhp_finger_placements = 2;	//If prompts are being suppressed, or the option to prompt for this is not enabled in export preferences, automatically decline an offer to derive missing finger placements from FHPs
 	else
 		eof_ir_export_allow_fhp_finger_placements = 0;	//Otherwise allow the user to be prompted
-	(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
+	(void) replace_filename(newfolderpath, destpath, "", 1024);	//Obtain the destination path
 	if(ddgglead || ddggrhythm || ddggbass)
 	{	//If any of the chosen arrangements will have the flattened dynamic difficulties exported
 		eof_export_immerrock_diff(eof_song, ddgglead, ddggrhythm, ddggbass, 0xFF, newfolderpath, 0, silent);	//Export the full flattened dynamic difficulty of each

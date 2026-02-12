@@ -434,6 +434,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int nonstandard_open_strum_marker_prompt = 0;	//In the event of a Sysex open strum marker that spans over multiple notes, tracks the user's choice on how to interpret them
 	char forcestrum = 0;	//Used to track whether the user opted to mark non HOPO notes as forced strum during Power Gig MIDI import (0 = not asked yet, 1 = accepted, 2 = declined)
 	unsigned long llplusnotes = 0, nonllplusnotes = 0;	//Track how many notes were determined to be LLPLUS related versus how many aren't
+	int llplussuppressionwarned = 0;	//Used to track whether the suppression of potential LLPLUS content due to the eof_disable_llplus_import import preference was logged
 
 	eof_log("eof_import_midi() entered", 1);
 
@@ -619,8 +620,16 @@ EOF_SONG * eof_import_midi(const char * fn)
 					}
 					if((d1 >= 35) && (d1 <= 39))
 					{	//The range of notes used by the game Lightners Live Plus (LLPLUS)
-						eof_import_events[i]->game2 = 3;	//Suspected LLPLUS MIDI track
-						llplusnotes++;		//Track LLPLUS notes imported
+						if(!eof_disable_llplus_import)
+						{	//If the import preference to suppress LLPLUS import is not enabled
+							eof_import_events[i]->game2 = 3;	//Suspected LLPLUS MIDI track
+							llplusnotes++;		//Track LLPLUS notes imported
+						}
+						else if(!llplussuppressionwarned)
+						{	//Otherwise if LLPLUS content is being suppressed, and this wasn't logged yet
+							eof_log("!\tPotential LLPLUS content is being ignored due to the \"Don't import LLPLUS MIDI content\" import preference", 1);
+							llplussuppressionwarned = 1;
+						}
 					}
 					else
 					{	//Keep track of how many notes outside the range of LLPLUS are encountered

@@ -73,9 +73,10 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	//If option is 1 (manual export of single arrangement), the created subfolder will include the name of the exported track
 	//If the specified tracks are not pro guitar tracks, or have no notes in the specified difficulty, no files or folders are created
 	//If silent is nonzero, warnings and prompts are suppressed in order to perform a quick save operation
-void eof_export_immerrock(char silent);
+void eof_export_immerrock(char silent, char *destpath);
 	//Chooses up to one lead, one rhythm and one bass arrangement for export based on the defined arrangement type of the active project's tracks
 	//Uses eof_export_immerrock_diff() to export content for these arrangements so that all easy difficulty level content is in one folder, medium in another folder, etc.
 	//If silent is nonzero, warnings and prompts are suppressed in order to perform a quick save operation
+	//destpath will be the folder level at which each difficulty's file folder will be written
 
 #endif
