@@ -2379,7 +2379,14 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if(eof_beat_num_valid(eof_song, beat))
 			{	//If the beat was found
 				eof_snap_logic(&temp, eof_song->beat[beat]->pos);	//Find grid snap length (in ms) starting at this beat
-				snprintf(dest_buffer, dest_buffer_size, "%.2fms , %.2fNPS", temp.snap_length, 1000.0 / temp.snap_length);
+				if(temp.snap_length)
+				{	//If the grid snap length was found
+					snprintf(dest_buffer, dest_buffer_size, "%.2fms , %.2fNPS", temp.snap_length, 1000.0 / temp.snap_length);
+				}
+				else
+				{
+					snprintf(dest_buffer, dest_buffer_size, "(Error)");
+				}
 			}
 			else
 			{

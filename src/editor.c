@@ -2480,6 +2480,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				(void) eof_detect_difficulties(eof_song, eof_selected_track);
 			}
 		}
+		else if(!key[KEY_ENTER])
+		{	//Enter is not held
+			eof_entering_note_note = NULL;	//Reset this, so that another note can be placed during playback
+		}
 	}//If the input method is classic or hold
 
 	/* Toggle the second piano roll (SHIFT+Enter) */

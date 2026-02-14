@@ -3470,7 +3470,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//If the note (after undoing the scaling for the time signature) is shorter than a quarter note
 						if(!(!isaltered && isquarterorlonger))
 						{	//If the note was encoded as a quarter note and wasn't part of a tuplet, avoid math rounding errors causing the above logic to detect as shorter than a quarter note
-							note_is_short = 1;
+							if(np[ctr2] && (np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) && (np[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
+							{	//Special case:  If this is a short note that is linked to by a legato slide, allow the note to keep its defined duration
+								eof_log("\t\t\t\tShort note linked to by legato slide will keep its duration", 2);
+							}
+							else
+								note_is_short = 1;
 						}
 					}
 

@@ -1239,7 +1239,7 @@ unsigned long eof_check_tempo_range(double minbpm, double maxbpm)
 
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
-		double thisbpm = 60000000 / eof_song->beat[i]->ppqn;
+		double thisbpm = 60000000.0 / eof_song->beat[i]->ppqn;
 		if(thisbpm < minbpm)
 		{	//If this beat's tempo is below the acceptable range, return its position
 			return eof_song->beat[i]->pos;
