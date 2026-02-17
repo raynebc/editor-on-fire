@@ -31,7 +31,10 @@ int eof_menu_star_power_erase_all(void);
 int eof_menu_sp_edit_timing(void);	//Uses eof_phrase_edit_timing() to edit the timings of the selected star power phrase (if such a phrase is defined)
 
 int eof_menu_lyric_line_mark(void);
-int eof_menu_lyric_line_unmark(void);
+int eof_menu_lyric_line_unmark_logic(int make_undo);
+	//Remove all lyric lines that include any of the currently selected lyrics
+	//Create an undo state if make_undo is nonzero
+int eof_menu_lyric_line_unmark(void);		//Uses eof_menu_lyric_line_unmark_logic() with the option to create an undo state
 int eof_menu_lyric_line_erase_all(void);
 int eof_menu_note_lyric_line_edit_timing(void);	//Uses eof_phrase_edit_timing() to edit the timings of the selected lyric's lyric phrase (if such a phrase is defined)
 int eof_menu_lyric_line_toggle_overdrive(void);

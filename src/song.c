@@ -3119,6 +3119,14 @@ int eof_menu_section_mark(unsigned long section_type)
 			}
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(section_type == EOF_LYRIC_PHRASE_SECTION)
+		{	//If the section that was added/edited is a lyric line
+			if(insp)
+			{	//If one or more existing lyric lines are being re-marked
+				(void) eof_menu_lyric_line_unmark_logic(0);	//Remove the lyric lines that the selected notes are in, don't make an undo state
+				insp = -1;
+			}
+		}
 		if(insp < 0)
 		{	//If selected notes are not within an existing section, add one
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding section of type %lu", section_type);
@@ -6570,6 +6578,17 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
 		{	//For each arpeggio/handshape phrase in the track (outer for loop)
+			//Delete the base chord if it already exists
+			unsigned long ghostnote = eof_find_note_at_pos(sp, track, tp->arpeggio[ctr].difficulty, tp->arpeggio[ctr].start_pos);
+
+			if(ghostnote < tp->notes)
+			{	//If a note was found at the start of this arpeggio/handshape
+				unsigned long note = eof_get_note_note(sp, track, ghostnote);
+				note &= ~eof_get_note_ghost(sp, track, ghostnote);	//Clear all gems that are ghosted
+				eof_set_note_note(sp, track, ghostnote, note);		//Update the note at the start of the arpeggio/handshape
+			}
+
+			//Build the base chord
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track (inner for loop)
 				if(((tp->note[ctr2]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[ctr2]->pos <= tp->arpeggio[ctr].end_pos)) && (tp->note[ctr2]->type == tp->arpeggio[ctr].difficulty))

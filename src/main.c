@@ -5091,6 +5091,10 @@ int eof_initialize(int argc, char * argv[])
 			}//If the recovery file exists
 			eof_recovery = pack_fopen(eof_recover_on_path, "w");	//Open the recovery active file for writing
 		}//If the file no longer exists, it is not open by another EOF instance
+		else
+		{	//The file is open for writing by another EOF instance
+///			allegro_message("EOF has detected that another instance of EOF is running.  Please make sure not to edit and save the same project in multiple instances at once.");
+		}
 	}//If the recovery status file is present
 	else
 	{

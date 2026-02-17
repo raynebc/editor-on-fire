@@ -3973,7 +3973,7 @@ int eof_menu_lyric_line_mark(void)
 	return retval;
 }
 
-int eof_menu_lyric_line_unmark(void)
+int eof_menu_lyric_line_unmark_logic(int make_undo)
 {
 	unsigned long i, j;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -3991,7 +3991,10 @@ int eof_menu_lyric_line_unmark(void)
 			{
 				if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->vocal_track[tracknum]->line[j].start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= eof_song->vocal_track[tracknum]->line[j].end_pos))
 				{
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					if(make_undo)
+					{	//If the calling function wanted to make an undo state
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					}
 					eof_vocal_track_delete_line(eof_song->vocal_track[tracknum], j);
 					break;
 				}
@@ -4004,6 +4007,11 @@ int eof_menu_lyric_line_unmark(void)
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
+}
+
+int eof_menu_lyric_line_unmark(void)
+{
+	return eof_menu_lyric_line_unmark_logic(1);
 }
 
 int eof_menu_lyric_line_erase_all(void)
