@@ -36,8 +36,12 @@ unsigned long eof_song_lookup_first_event(EOF_SONG *sp, const char *text, unsign
 char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track, unsigned long flags, unsigned char track_specific);
 	//Uses eof_song_lookup_first_event() to determine whether there is at least one event matching the specified criteria (the event text is case sensitive)
 	//Returns nonzero if there is at least one such event
-char eof_song_contains_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific);
+char eof_song_contains_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific, unsigned long *index);
 	//Similar to eof_song_contains_event(), but instead checks for the existence of any section event at the specified position matching the given flags/track specificity filtering
+	//If index is not NULL, the event index of the applicable section is returned through it
+char eof_lookup_effective_rockband_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific, unsigned long *index);
+	//Similar to eof_song_contains_section_at_pos(), but instead finds the last section event at/before the specified position matching the given flags/track specificity filtering
+	//If index is not NULL, the event index of the applicable section is returned through it
 char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text, unsigned long track);
 	//Returns nonzero if there is one or more text events that begins with the specified string exactly (case sensitive substring)
 	//If track is nonzero, only events in that track are checked for comparison, otherwise all events are checked
@@ -56,6 +60,9 @@ unsigned long eof_events_set_rs_solo_phrase_status(char *name, unsigned long tra
 
 unsigned long eof_track_count_events(EOF_SONG *sp, unsigned long track);
 	//Counts the number of text events specific to the specified track (or project-wide events if track is 0)
+	//Returns 0 on error
+unsigned long eof_count_rockband_sections(void);
+	//Counts the number of text events that qualify as Rock Band sections by eof_text_is_section_marker()
 	//Returns 0 on error
 
 #endif

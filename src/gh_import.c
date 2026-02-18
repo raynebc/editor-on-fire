@@ -3773,7 +3773,7 @@ int eof_ghl_import_common(const char *fn)
 						targetpos = eventpos;	//The section will be placed at this millisecond position
 						eventflags = EOF_EVENT_FLAG_FLOATING_POS;
 					}
-					if(eof_song_contains_section_at_pos(eof_song, eventpos, 0, ULONG_MAX, 0))
+					if(eof_song_contains_section_at_pos(eof_song, eventpos, 0, ULONG_MAX, 0, NULL))
 					{	//If a section already exists at this position for ANY track
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tIgnoring text event \"%s\" as there is already a section marker at %lums", sectionstring, eventpos);
 						eof_log(eof_log_string, 1);
@@ -5714,7 +5714,7 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 						targetpos = position;	//The section will be placed at this millisecond position
 						flags = EOF_EVENT_FLAG_FLOATING_POS;
 					}
-					if(eof_song_contains_section_at_pos(eof_song, position, 0, ULONG_MAX, 0))
+					if(eof_song_contains_section_at_pos(eof_song, position, 0, ULONG_MAX, 0, NULL))
 					{	//If a section already exists at this position for ANY track
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tIgnoring text event \"%s\" as there is already a section marker at %ldms", sectionstring, position);
 						eof_log(eof_log_string, 1);

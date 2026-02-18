@@ -238,7 +238,7 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track
 	return 0;	//Return no match found
 }
 
-char eof_song_contains_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific)
+char eof_song_contains_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific, unsigned long *index)
 {
 	unsigned long i;
 
@@ -262,11 +262,50 @@ char eof_song_contains_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned 
 		{	//If the text event exists at the specified position
 			if(eof_text_is_section_marker(sp->text_event[i]->text))
 			{	//If the text event is considered a section
+				if(index)
+					*index = i;	//If the calling function wanted the index number of the matching event, return it by reference
+
 				return 1;	//Return match found
 			}
 		}
 	}
 	return 0;	//Return no match found
+}
+
+char eof_lookup_effective_rockband_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific, unsigned long *index)
+{
+	unsigned long i;
+	char match = 0;
+
+	if(!sp)
+		return 0;	//Invalid parameters
+
+	for(i = 0; i < sp->text_events; i++)
+	{
+		if(eof_get_text_event_pos(sp, i) > pos)
+			break;	//If this text event and all others are after the target position, stop checking events
+
+		if(sp->text_event[i]->flags && ((sp->text_event[i]->flags & flags) == 0))
+		{	//If this event has any set flags and the specified flags filters out this event
+			continue;	//Skip this event
+		}
+		if(track_specific)
+		{	//If the track specific flag is to be matched
+			if(sp->text_event[i]->track != track)
+			{	//If this event isn't in the specified track
+				continue;	//Skip this event
+			}
+		}
+		if(eof_text_is_section_marker(sp->text_event[i]->text))
+		{	//If the text event is considered a section
+			if(index)
+				*index = i;	//If the calling function wanted the index number of the matching event, return it by reference
+
+			match = 1;	//Track that at least one applicable section name was found
+		}
+	}
+
+	return match;
 }
 
 char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text, unsigned long track)
@@ -408,4 +447,22 @@ unsigned long eof_track_count_events(EOF_SONG *sp, unsigned long track)
 	}
 
 	return count;
+}
+
+unsigned long eof_count_rockband_sections(void)
+{
+	unsigned long ctr, section_count = 0;
+
+	if(!eof_song)
+		return 0;
+
+	for(ctr = 0; ctr < eof_song->text_events; ctr++)
+	{	//For each text event in the project
+		if(eof_text_is_section_marker(eof_song->text_event[ctr]->text))
+		{	//If the text event is considered a section
+			section_count++;
+		}
+	}
+
+	return section_count;
 }

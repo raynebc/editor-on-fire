@@ -1060,6 +1060,8 @@ int eof_pro_guitar_track_diff_has_fingering(EOF_SONG *sp, unsigned long track, u
 	//Returns nonzero if ANY of the normal notes in the specified pro guitar track have any finger values defined
 int eof_track_is_pro_guitar_track(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a pro guitar track
+int eof_track_is_rock_band_3_compatible(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified track is compatible with Rock Band 3
 
 int eof_note_swap_ghl_black_white_gems(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//If the specified track is a GHL track, modifies the specified note so that the white and black gems are swapped

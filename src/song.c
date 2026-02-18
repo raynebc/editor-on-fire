@@ -8949,6 +8949,19 @@ int eof_track_is_pro_guitar_track(EOF_SONG *sp, unsigned long track)
 	return 0;
 }
 
+int eof_track_is_rock_band_3_compatible(EOF_SONG *sp, unsigned long track)
+{
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	if((track == EOF_TRACK_GUITAR) || (track == EOF_TRACK_BASS) || (track == EOF_TRACK_DRUM) || (track == EOF_TRACK_VOCALS) || (track == EOF_TRACK_KEYS) || (track == EOF_TRACK_PRO_KEYS) || (track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_GUITAR) || (track == EOF_TRACK_PRO_BASS_22) || (track == EOF_TRACK_PRO_GUITAR_22))
+	{	//If this is a track that is usable in Rock Band 3
+		return 1;
+	}
+
+	return 0;
+}
+
 int eof_pro_guitar_track_diff_has_fingering(EOF_SONG *sp, unsigned long track, unsigned char diff)
 {
 	unsigned long notectr, stringctr, bitmask;

@@ -915,7 +915,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long solocount, max = 0;
 
-		count = eof_notes_panel_count_section_stats(EOF_SOLO_SECTION, &min, &max);
+		count = eof_notes_panel_count_section_stats(EOF_SOLO_SECTION, &min, &max, eof_note_type);
 		solocount = eof_get_num_solos(eof_song, eof_selected_track);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
 
 		if(count && solocount)
@@ -996,7 +996,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long max = 0, spcount;
 
-		count = eof_notes_panel_count_section_stats(EOF_SP_SECTION, &min, &max);
+		count = eof_notes_panel_count_section_stats(EOF_SP_SECTION, &min, &max, eof_note_type);
 		spcount = eof_get_num_star_power_paths(eof_song, eof_selected_track);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
 
 		if(count && spcount)
@@ -1050,7 +1050,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long slidercount, max = 0;
 
-		count = eof_notes_panel_count_section_stats(EOF_SLIDER_SECTION, &min, &max);
+		count = eof_notes_panel_count_section_stats(EOF_SLIDER_SECTION, &min, &max, eof_note_type);
 		slidercount = eof_get_num_sliders(eof_song, eof_selected_track);	//Redundantly check that this isn't zero to resolve a false positive in Coverity
 
 		if(count && slidercount)
@@ -2613,6 +2613,19 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "PRINT_RB_SECTION_COUNT_STRING"))
+	{
+		if(eof_song)
+		{
+			count = eof_count_rockband_sections();
+			if(count == 1)
+				snprintf(dest_buffer, dest_buffer_size, "1 section is defined.");
+			else
+				snprintf(dest_buffer, dest_buffer_size, "%lu sections are defined.", count);
+		}
+		return 1;
+	}
+
 	if(!ustricmp(macro, "PRINT_IR_SECTION_COUNT_STRING"))
 	{
 		if(eof_song)
@@ -2664,6 +2677,18 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chord is missing finger definition", count, total);
 		else
 			snprintf(dest_buffer, dest_buffer_size, "%lu out of %lu chords are missing finger definition", count, total);
+		return 1;
+	}
+
+	if(!ustricmp(macro, "SEEK_RB_SECTION_CONDITIONAL"))
+	{
+		unsigned long index = 0;
+
+		if(eof_lookup_effective_rockband_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, eof_selected_track, 0, 0, &index))
+		{	//if a section name was found to be in effect at the seek position
+			snprintf(dest_buffer, dest_buffer_size, "%s", eof_song->text_event[index]->text);
+		}
+
 		return 1;
 	}
 
@@ -3112,10 +3137,22 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		return 2;	//False
 	}
 
-	//The Phase Shift drum tracks is active
+	//The Phase Shift drum track is active
 	if(!ustricmp(macro, "IF_IS_PS_DRUM_TRACK"))
 	{
 		if(eof_selected_track == EOF_TRACK_DRUM_PS)
+		{
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//The bonus pro guitar track is active
+	if(!ustricmp(macro, "IF_IS_BONUS_PRO_GUITAR_TRACK"))
+	{
+		if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 		{
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -3186,6 +3223,18 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	{
 		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		{	//If the active track is a guitar track
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//A track that is compatible with Rock Band 3 is active
+	if(!ustricmp(macro, "IF_IS_ANY_ROCK_BAND_3_TRACK"))
+	{
+		if(eof_track_is_rock_band_3_compatible(eof_song, eof_selected_track))
+		{	//If the active track is compatible with Rock Band 3
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -4131,6 +4180,17 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_RB_SECTIONS_DEFINED"))
+	{
+		if(eof_count_rockband_sections())
+		{	//If at least one section event is found
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	if(!ustricmp(macro, "IF_IR_SECTIONS_DEFINED"))
 	{
 		if(eof_count_immerrock_sections())
@@ -4167,6 +4227,19 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_SEEK_POS_IS_IN_RB_SECTION"))
+	{
+		unsigned long index = 0;
+
+		if(eof_lookup_effective_rockband_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, eof_selected_track, 0, 0, &index))
+		{	//if a section name was found to be in effect at the seek position
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	if(!ustricmp(macro, "IF_SEEK_POS_IS_IN_IR_SECTION"))
 	{
 		char section[50];
@@ -4186,6 +4259,17 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 
 		if(eof_lookup_rocksmith_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
 		{	//If a section name was found to be in effect at the seek position
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_RB_EXPORT_ENABLED"))
+	{
+		if(eof_write_rb_files)
+		{	//If the "Save separate Rock Band files" export preference is enabled
 			dest_buffer[0] = '\0';
 			return 3;	//True
 		}
@@ -4601,6 +4685,20 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		}
 
 		return 2;	//False
+	}
+
+	if(!ustricmp(macro, "IF_TRACK_HAS_NO_FHPS"))
+	{
+		if(tp)
+		{	//If the active track is a pro guitar track
+			if(tp->handpositions)
+			{	//If there is at least one fret hand position defined in this track
+				return 2;	//False
+			}
+		}
+
+		dest_buffer[0] = '\0';
+		return 3;	//True
 	}
 
 	if(!ustricmp(macro, "IF_TRACK_DIFF_HAS_NO_FHPS"))
@@ -6198,7 +6296,7 @@ unsigned long eof_count_track_num_notes_with_tflag(unsigned long tflags)
 	return count;
 }
 
-unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, unsigned long *minptr, unsigned long *maxptr)
+unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, unsigned long *minptr, unsigned long *maxptr, unsigned diff)
 {
 	unsigned long ctr, notectr, notepos, totalcount = 0, thiscount, tracknotecount, *sectioncount = NULL, min = 0, max = 0;
 	EOF_PHRASE_SECTION *phrase = NULL;
@@ -6217,10 +6315,13 @@ unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, uns
 			thiscount = 0;	//Reset this counter
 			while(notepos <= ptr->end_pos)
 			{	//For all notes at/before the end of this section instance
-				if(notepos >= ptr->start_pos)
-				{	//If the note is within the scope of this section instance
-					thiscount++;	//Count the number of notes in this section instance
-					totalcount++;	//Count the number of notes in all instances of this section
+				if((diff == 0xFF) || (eof_get_note_type(eof_song, eof_selected_track, notectr) == diff))
+				{	//If the note is within the scope of difficulty parameter
+					if(notepos >= ptr->start_pos)
+					{	//If the note is within the scope of this section instance's start/stop timing
+						thiscount++;	//Count the number of notes in this section instance
+						totalcount++;	//Count the number of notes in all instances of this section
+					}
 				}
 
 				//Iterate to next note

@@ -128,12 +128,13 @@ unsigned long eof_count_track_num_notes_with_tflag(unsigned long tflags);
 	//Examines all notes in the active track
 	//Returns the number of those that have the specified temporary flag(s)
 
-unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, unsigned long *minptr, unsigned long *maxptr);
+unsigned long eof_notes_panel_count_section_stats(unsigned long sectiontype, unsigned long *minptr, unsigned long *maxptr, unsigned diff);
 	//Examines the number of notes in the active track's sections of the specified type (ie. EOF_SOLO_SECTION or EOF_SP_SECTION)
 	//For performance purposes, requires that the specified sections are sorted (ie. using qsort() with eof_song_qsort_phrase_sections() )
 	//The note count in the section with the fewest notes is returned via *min if minptr is not NULL
 	//The note count in the section with the most notes is returned via *max if maxptr is not NULL
-	//Returns the total number of section notes in the active track, or 0 on error
+	//If diff is 0xFF, notes in all difficulties are examined, otherwise only the specified difficulty's notes are examined
+	//Returns the total number of applicable notes, or 0 on error
 
 void eof_notes_panel_print_time(unsigned long time, char *dest_buffer, int timeformat);
 	//Writes the specified timestamp to the specified buffer

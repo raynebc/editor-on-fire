@@ -195,6 +195,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active track is the Phase Shift drum track (PART REAL_DRUMS_PS).</td>
 </tr>
 <tr>
+<td>%IF_IS_BONUS_PRO_GUITAR_TRACK%</td>
+<td>Evaluates as true if the active track is the bonus pro guitar track (PART REAL_GUITAR_BONUS).</td>
+</tr>
+<tr>
 <td>%IF_IS_GHL_TRACK%</td>
 <td>Evaluates as true if the active track has GHL mode enabled.</td>
 </tr>
@@ -215,6 +219,9 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active track is a guitar/bass track of any kind (normal, GHL, pro guitar).</td>
 </tr>
 <tr>
+<td>%IF_IS_ANY_ROCK_BAND_3_TRACK%</td>
+<td>Evaluates as true if the active track is compatible with Rock Band 3.</td>
+</tr>
 <td>%IF_IS_DANCE_TRACK%</td>
 <td>Evaluates as true if the active track is the dance track.</td>
 </tr>
@@ -472,6 +479,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active track is the first pro guitar track defined as a bass arrangement.</td>
 </tr>
 <tr>
+<td>%IF_RB_SECTIONS_DEFINED%</td>
+<td>Evaluates as true if the project contains at least one text event that would export as a section usable with Rock Band.</td>
+</tr>
+<tr>
 <td>%IF_IR_SECTIONS_DEFINED%</td>
 <td>Evaluates as true if the project contains at least one text event that would export as a section usable with IMMERROCK.</td>
 </tr>
@@ -484,12 +495,20 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if at least one chord doesn't have complete fingering defined.</td>
 </tr>
 <tr>
+<td>%IF_SEEK_POS_IS_IN_RB_SECTION%</td>
+<td>Evaluates as true if the seek position is in portion of a chart that is defined as a section usable with Rock Band.</td>
+</tr>
+<tr>
 <td>%IF_SEEK_POS_IS_IN_IR_SECTION%</td>
 <td>Evaluates as true if the seek position is in portion of a chart that is defined as a section usable with IMMERROCK.</td>
 </tr>
 <tr>
 <td>%IF_SEEK_POS_IS_IN_RS_SECTION%</td>
 <td>Evaluates as true if the seek position is in portion of a chart that is defined as a section usable with Rocksmith.</td>
+</tr>
+<tr>
+<td>%IF_RB_EXPORT_ENABLED%</td>
+<td>Evaluates as true if the "Save separate Rock Band files" export preference is enabled.</td>
 </tr>
 <tr>
 <td>%IF_IR_EXPORT_ENABLED%</td>
@@ -560,8 +579,12 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if the active pro guitar track has defined the use of more than 4 unique tone names.</td>
 </tr>
 <tr>
-<td>%IF_TRACK_DIFF_HAS_NO_FHPS%</td>
+<td>%IF_TRACK_HAS_NO_FHPS%</td>
 <td>Evaluates as true if the active pro guitar track does not have any fret hand positions defined.</td>
+</tr>
+<tr>
+<td>%IF_TRACK_DIFF_HAS_NO_FHPS%</td>
+<td>Evaluates as true if the active pro guitar track difficulty does not have any fret hand positions defined.  Fret hand positions are difficulty-specific in Rocksmith.</td>
 </tr>
 <tr>
 <td>%IF_ACTIVE_TRACK_RS_ANY_NOTE_SUBCEEDS_FHP%</td>
@@ -907,7 +930,7 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 <tr>
 <td>%TRACK_SOLO_NOTE_STATS%</td>
-<td>Prints statistics about the number of notes in the active track's solo sections:  The minimum number among all solo sections, the maximum number among all solo sections and the mean number (the total number of solo notes divided by the number of solo sections).  If there aren't any, "None" is printed.</td>
+<td>Prints statistics about the number of notes in the active track difficulty's solo sections:  The minimum number among all solo sections, the maximum number among all solo sections and the mean number (the total number of solo notes divided by the number of solo sections).  If there aren't any, "None" is printed.</td>
 </tr>
 <tr>
 <td>%TRACK_SP_COUNT%</td>
@@ -923,7 +946,7 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 <tr>
 <td>%TRACK_SP_NOTE_STATS%</td>
-<td>Prints statistics about the number of notes in the active track's star power sections:  The minimum number among all star power sections, the maximum number among all star power sections and the mean number (the total number of star power notes divided by the number of star power sections).  If there aren't any, "None" is printed.</td>
+<td>Prints statistics about the number of notes in the active track difficulty's star power sections:  The minimum number among all star power sections, the maximum number among all star power sections and the mean number (the total number of star power notes divided by the number of star power sections).  If there aren't any, "None" is printed.</td>
 </tr>
 <tr>
 <td>%TRACK_SLIDER_COUNT%</td>
@@ -935,7 +958,7 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 <tr>
 <td>%TRACK_SLIDER_NOTE_STATS%</td>
-<td>Prints statistics about the number of notes in the active track's slider sections:  The minimum number among all slider sections, the maximum number among all slider sections and the mean number (the total number of slider notes divided by the number of slider sections).  If there aren't any, "None" is printed.</td>
+<td>Prints statistics about the number of notes in the active track difficulty's slider sections:  The minimum number among all slider sections, the maximum number among all slider sections and the mean number (the total number of slider notes divided by the number of slider sections).  If there aren't any, "None" is printed.</td>
 </tr>
 
 
@@ -1080,6 +1103,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <td>Prints the number of lyric lines that are defined in the vocal track.</td>
 </tr>
 <tr>
+<td>%PRINT_RB_SECTION_COUNT_STRING%</td>
+<td>Prints the number of text events formatted suitably to be treated as sections during Rock Band MIDI export.</td>
+</tr>
+<tr>
 <td>%PRINT_IR_SECTION_COUNT_STRING%</td>
 <td>Prints the number of text events formatted suitably to be treated as sections during IMMERROCK export.</td>
 </tr>
@@ -1094,6 +1121,10 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 <tr>
 <td>%PRINT_RS_MISSING_FINGERING_COUNT_STRING%</td>
 <td>Same as %PRINT_IR_MISSING_FINGERING_COUNT_STRING%, but uses Rocksmith terminology of "finger definitions".</td>
+</tr>
+<tr>
+<td>%SEEK_RB_SECTION_CONDITIONAL%</td>
+<td>Prints the active section in effect at the current seek position, searching within sections applicable to the pro guitar tracks that will export to Rock Band MIDI.</td>
 </tr>
 <tr>
 <td>%SEEK_IR_SECTION_CONDITIONAL%</td>

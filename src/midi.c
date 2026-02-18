@@ -470,7 +470,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned long tracknum=0;				//Used to de-obfuscate the track number
 
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
-	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
+	unsigned long lastdelta=0;				//Keeps track of the last written event's absolute delta time
+	unsigned long beatlastdelta = 0;			//Keeps track of the last event's delta position for any beat track that is generated, to ensure that an automatically-placed [end] event comes after it
 	char * tempstring = NULL;				//Used to store a copy of the lyric string into eof_midi_event[], so the string can be modified from the original
 	long length, deltalength;				//Used to cap drum notes
 	char prodrums = 0;						//Tracks whether the drum track being written includes Pro drum notation
@@ -679,7 +680,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		}
 		else if(featurerestriction == 3)
 		{	//If writing a C3 compliant MIDI
-			if((j != EOF_TRACK_GUITAR) && (j != EOF_TRACK_BASS) && (j != EOF_TRACK_DRUM) && (j != EOF_TRACK_VOCALS) && (j != EOF_TRACK_KEYS) && (j != EOF_TRACK_PRO_KEYS) && (j != EOF_TRACK_PRO_BASS) && (j != EOF_TRACK_PRO_GUITAR) && (j != EOF_TRACK_PRO_BASS_22) && (j != EOF_TRACK_PRO_GUITAR_22))
+			if(!eof_track_is_rock_band_3_compatible(sp, j))
 			{	//if this track is not valid for Rock Band 3
 				continue;	//Skip the track
 			}
@@ -2481,91 +2482,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	eof_write_tempo_track(tempotrackname, anchorlist, tslist, kslist, fp);	//Write the tempo track to file
 	(void) pack_fclose(fp);
 
-/* make events track */
-	if((featurerestriction != 2) && !eof_events_overridden_by_stored_MIDI_track(sp))
-	{	//Do not write an events track in a pro guitar upgrade MIDI, or if the project has an events track stored into it
-		if((sp->text_events) || (featurerestriction == 1) || (featurerestriction == 3))
-		{	//If there are manually defined text events, or if writing a RBN2 or C3 compliant MIDI (which requires certain events)
-			/* open the file */
-			fp = pack_fopen(eventtempname, "w");
-			if(!fp)
-			{
-				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
-				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open temporary MIDI track:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
-				eof_log(eof_log_string, 1);
-				return 0;	//Return failure
-			}
-
-			/* write the track name */
-			WriteVarLen(0, fp);
-			(void) pack_putc(0xFF, fp);
-			(void) pack_putc(0x03, fp);
-			WriteVarLen(ustrsize("EVENTS"), fp);
-			(void) pack_fwrite("EVENTS", ustrsize("EVENTS"), fp);
-
-			/* add MIDI events */
-			lastdelta = 0;
-			for(i = 0; i < sp->text_events; i++)
-			{
-				if(sp->text_event[i]->track == 0)
-				{	//If the text event is global (not specific to any single track)
-					double eventpos;
-
-					if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
-					{	//If this text event is assigned to a beat marker
-						if(sp->text_event[i]->pos >= sp->beats)
-						{	//If the text event is corrupted
-							sp->text_event[i]->pos = sp->beats - 1;	//Repair it by assigning it to the last beat marker
-						}
-					}
-					eventpos = eof_get_text_event_fpos(sp, i);
-					delta = eof_ConvertToDeltaTime(eventpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
-					eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
-					lastdelta = delta;					//Store this event's absolute delta time
-				}
-			}
-
-			if((featurerestriction == 1) || (featurerestriction == 3))
-			{	//If writing a RBN2 or C3 compliant MIDI
-				//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
-				//Check the existing events to see if such an event is already defined
-				if(!eof_song_contains_event(sp, "[end]", 0, 0xFFFF, 0))
-				{	//If the user did not define the end event, manually write it
-					eof_log("\t! Adding missing [end] event", 1);
-					delta = eof_chart_length + 1;	//Prepare to write the end event after the audio ends
-					if(sp->beat[sp->beats - 1]->pos > delta)
-					{	//If the last beat ends after the audio,
-						delta = sp->beat[sp->beats - 1]->pos + 1;	//Prepare to write the end event after it instead
-					}
-					delta = eof_ConvertToDeltaTime(delta, anchorlist, tslist, timedivision, 1, has_stored_tempo);
-					eof_write_text_event(delta - lastdelta, "[end]", fp);
-					lastdelta = delta;					//Store this event's absolute delta time
-				}
-			}
-
-			/* end of track */
-			WriteVarLen(0, fp);
-			(void) pack_putc(0xFF, fp);
-			(void) pack_putc(0x2F, fp);
-			(void) pack_putc(0x00, fp);
-
-			(void) pack_fclose(fp);
-			eventstrackwritten = 1;
-		}//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
-	}//Do not write an events track in a pro guitar upgrade MIDI
-
-	//Remove all temporary text events that were added during this export
-	for(i = sp->text_events; i > 0; i--)
-	{	//For each text event (in reverse order)
-		if(sp->text_event[i-1]->is_temporary)
-		{	//If this text event has been marked as temporary
-			eof_song_delete_text_event(sp, i-1);	//Delete it
-		}
-	}
-	eof_sort_events(sp);	//Re-sort
-
 /* make beat track */
 	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)	//Add the number of raw MIDI tracks to export to the track counter
 	{	//For each stored MIDI track
@@ -2645,6 +2561,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				lastdelta = delta2;					//Store this event's absolute delta time
 				(void) pack_putc(note_to_write, fp);		//Note 12 or 13
 				(void) pack_putc(0, fp);					//A note on with a velocity of 0 is treated as a note off
+				beatlastdelta = lastdelta;		//Track the end delta position of the last item written in the BEAT track
 			}
 
 			//Increment to the next beat
@@ -2664,6 +2581,95 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		(void) pack_fclose(fp);
 		beattrackwritten = 1;
 	}	//If writing a RBN2 compliant MIDI, write the beat track, which is required
+
+/* make events track */
+	if((featurerestriction != 2) && !eof_events_overridden_by_stored_MIDI_track(sp))
+	{	//Do not write an events track in a pro guitar upgrade MIDI, or if the project has an events track stored into it
+		if((sp->text_events) || (featurerestriction == 1) || (featurerestriction == 3))
+		{	//If there are manually defined text events, or if writing a RBN2 or C3 compliant MIDI (which requires certain events)
+			/* open the file */
+			fp = pack_fopen(eventtempname, "w");
+			if(!fp)
+			{
+				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+				eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+				eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open temporary MIDI track:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+				eof_log(eof_log_string, 1);
+				return 0;	//Return failure
+			}
+
+			/* write the track name */
+			WriteVarLen(0, fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x03, fp);
+			WriteVarLen(ustrsize("EVENTS"), fp);
+			(void) pack_fwrite("EVENTS", ustrsize("EVENTS"), fp);
+
+			/* add MIDI events */
+			lastdelta = 0;
+			for(i = 0; i < sp->text_events; i++)
+			{
+				if(sp->text_event[i]->track == 0)
+				{	//If the text event is global (not specific to any single track)
+					double eventpos;
+
+					if(!(sp->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS))
+					{	//If this text event is assigned to a beat marker
+						if(sp->text_event[i]->pos >= sp->beats)
+						{	//If the text event is corrupted
+							sp->text_event[i]->pos = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+						}
+					}
+					eventpos = eof_get_text_event_fpos(sp, i);
+					delta = eof_ConvertToDeltaTime(eventpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+					eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
+					lastdelta = delta;					//Store this event's absolute delta time
+				}
+			}
+
+			if((featurerestriction == 1) || (featurerestriction == 3))
+			{	//If writing a RBN2 or C3 compliant MIDI
+				//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
+				//Check the existing events to see if such an event is already defined
+				if(!eof_song_contains_event(sp, "[end]", 0, 0xFFFF, 0))
+				{	//If the user did not define the end event, manually write it
+					eof_log("\t! Adding missing [end] event", 1);
+					delta = eof_chart_length + 1;	//Prepare to write the end event after the audio ends
+					delta = eof_ConvertToDeltaTime(delta, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+					if(sp->beat[sp->beats - 1]->midi_pos > delta)
+					{	//If the last beat's delta position is after the audio position
+						delta = sp->beat[sp->beats - 1]->midi_pos;	//Prepare to write the end event at that position instead
+					}
+					if(beatlastdelta > delta)
+					{	//If a BEAT track was created and it had an event placed later yet
+						delta = beatlastdelta;	//Prepare to write the end event at that position instead
+					}
+					eof_write_text_event(delta - lastdelta, "[end]", fp);
+					lastdelta = delta;					//Store this event's absolute delta time
+				}
+			}
+
+			/* end of track */
+			WriteVarLen(0, fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x2F, fp);
+			(void) pack_putc(0x00, fp);
+
+			(void) pack_fclose(fp);
+			eventstrackwritten = 1;
+		}//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
+	}//Do not write an events track in a pro guitar upgrade MIDI
+
+	//Remove all temporary text events that were added during this export
+	for(i = sp->text_events; i > 0; i--)
+	{	//For each text event (in reverse order)
+		if(sp->text_event[i-1]->is_temporary)
+		{	//If this text event has been marked as temporary
+			eof_song_delete_text_event(sp, i-1);	//Delete it
+		}
+	}
+	eof_sort_events(sp);	//Re-sort
 
 /* write the main MIDI file */
 	fp = pack_fopen(fn, "w");
