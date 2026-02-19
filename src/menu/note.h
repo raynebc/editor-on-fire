@@ -125,7 +125,14 @@ int eof_menu_lyric_remove_pitch(void);		//Removes the pitch for all selected lyr
 extern long edit_pg_dialog_previous_note,  edit_pg_dialog_next_note, edit_pg_dialog_previous_undefined_note, edit_pg_dialog_next_undefined_note;
 	//Variables set by eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog() to allow the calling function to seek to notes when <- , << , >> or -> buttons are clicked
 
-int eof_menu_note_edit_pro_guitar_note(void);		//Allows a pro guitar note's properties to be defined
+int eof_menu_note_edit_pro_guitar_note_prepare_dialog(void);
+	//Initializes the contents of the eof_pro_guitar_note_dialog[] array based on eof_selection.current
+	//Returns nonzero on success
+int eof_menu_note_edit_pro_guitar_note_process_dialog(EOF_PRO_GUITAR_TRACK *tp, unsigned char *legacymaskptr, unsigned char *ghostmaskptr, unsigned long *flagsptr, unsigned long *eflagsptr);
+	//Inspects the user-altered contents of the eof_pro_guitar_note_dialog[] array to build the defined legacy bitmask, ghost bitmask, flags and eflags
+	//Returns nonzero on success
+int eof_menu_note_edit_pro_guitar_note(void);
+	//Allows a pro guitar note's properties to be defined
 int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog, char function);
 	//Updates the contents of the eof_pro_guitar_note_frets_dialog[] array based on eof_selection.current
 	//If dialog is 0, the dialog is prepared for the "Edit note frets / fingering" function,

@@ -4901,17 +4901,405 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+int eof_menu_note_edit_pro_guitar_note_prepare_dialog(void)
+{
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long ctr, stringcount;
+	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
+	unsigned char legacymask;		//Used to build the updated legacy note bitmask
+	unsigned char ghostmask;		//Used to build the updated ghost bitmask
+	unsigned long flags;			//Used to build the updated flag bitmask
+	unsigned long eflags;			//Used to build the updated extended flag bitmask
+	long previous_note = 0, next_note = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PRO_GUITAR_NOTE *np;
+
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+		return 0;	//Do not allow this function to run unless the pro guitar track is active
+
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 0;	//Do not allow this function to run if a valid note isn't selected
+
+	tp = eof_song->pro_guitar_track[tracknum];	//Simplify
+	np = tp->note[eof_selection.current];	//Simplify
+	if(!eof_music_paused)
+	{
+		eof_music_play(0);
+	}
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_pro_guitar_note_dialog, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_pro_guitar_note_dialog);
+
+	//Update the note name text box to match the last selected note
+	memcpy(eof_note_edit_name, np->name, sizeof(eof_note_edit_name));
+
+	//Find the next/previous notes if applicable
+	previous_note = eof_track_fixup_previous_note(eof_song, eof_selected_track, eof_selection.current);
+	if(previous_note >= 0)
+	{	//If there is a previous note
+		eof_pro_guitar_note_dialog[54].flags = D_EXIT;		//Make the previous note button clickable
+	}
+	else
+	{
+		eof_pro_guitar_note_dialog[54].flags = D_HIDDEN;	//Otherwise hide it
+	}
+	next_note = eof_track_fixup_next_note(eof_song, eof_selected_track, eof_selection.current);
+	if(next_note >= 0)
+	{	//If there is a next note
+		eof_pro_guitar_note_dialog[58].flags = D_EXIT;		//Make the next note button clickable
+	}
+	else
+	{
+		eof_pro_guitar_note_dialog[58].flags = D_HIDDEN;	//Otherwise hide it
+	}
+
+	//Update the fret text boxes (listed from top to bottom as string 1 through string 6)
+	stringcount = eof_count_track_lanes(eof_song, eof_selected_track);
+	if(eof_legacy_view)
+	{	//Special case:  If legacy view is enabled, correct stringcount
+		stringcount = tp->numstrings;
+	}
+	ghostmask = np->ghost;
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+	{	//For each of the 6 supported strings
+		if(ctr < stringcount)
+		{	//If this track uses this string, copy the fret value to the appropriate string
+			eof_pro_guitar_note_dialog[13 - (2 * ctr)].flags = 0;	//Ensure this text boxes' label is enabled
+			eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);	//Correct the string number for this label
+			eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = 0;	//Ensure this text box is enabled
+			eof_pro_guitar_note_dialog[28 - ctr].flags = (ghostmask & bitmask) ? D_SELECTED : 0;	//Ensure the ghost check box is enabled and cleared/checked appropriately
+			eof_pro_guitar_note_dialog[35 - ctr].flags = 0;		//Ensure the mute check box is enabled and cleared (it will be checked below if applicable)
+			if(np->note & bitmask)
+			{	//If this string is already defined as being in use, copy its fret value to the string
+				if(np->frets[ctr] & 0x80)
+				{	//If this string is muted (most significant bit is set)
+					eof_pro_guitar_note_dialog[35 - ctr].flags = D_SELECTED;	//Check the string's muted checkbox
+				}
+				if(np->frets[ctr] == 0xFF)
+				{	//If this string is muted with no fret value specified
+					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
+				}
+				else
+				{
+					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", np->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
+				}
+			}
+			else
+			{	//Otherwise empty the string
+				eof_fret_strings[ctr][0] = '\0';
+			}
+		}
+		else
+		{	//Otherwise disable the text box for this fret and empty the string
+			eof_pro_guitar_note_dialog[13 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text boxes' label is hidden
+			eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text box is hidden
+			eof_pro_guitar_note_dialog[28 - ctr].flags = D_HIDDEN;			//Ensure this ghost check box is hidden
+			eof_pro_guitar_note_dialog[35 - ctr].flags = D_HIDDEN;			//Ensure this mute check box is hidden
+			eof_fret_strings[ctr][0] = '\0';
+		}
+	}
+
+	//Update the legacy bitmask checkboxes
+	legacymask = np->legacymask;
+	eof_pro_guitar_note_dialog[17].flags = (legacymask & 16) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[18].flags = (legacymask & 8) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[19].flags = (legacymask & 4) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[20].flags = (legacymask & 2) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[21].flags = (legacymask & 1) ? D_SELECTED : 0;
+
+	//Clear the reverse slide checkbox
+	eof_pro_guitar_note_dialog[37].flags = 0;
+
+	//Update the note flag radio buttons
+	for(ctr = 0; ctr < 14; ctr++)
+	{	//Clear 14 of the status radio buttons
+		eof_pro_guitar_note_dialog[40 + ctr].flags = 0;
+	}
+	flags = np->flags;
+	eflags = np->eflags;
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+	{	//Select "HO"
+		eof_pro_guitar_note_dialog[40].flags = D_SELECTED;
+	}
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+	{	//Select "PO"
+		eof_pro_guitar_note_dialog[41].flags = D_SELECTED;
+	}
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+	{	//Select "Tap"
+		eof_pro_guitar_note_dialog[42].flags = D_SELECTED;
+	}
+	else
+	{	//Select "None"
+		eof_pro_guitar_note_dialog[43].flags = D_SELECTED;
+	}
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+	{	//Select Slide "Up"
+		eof_pro_guitar_note_dialog[44].flags = D_SELECTED;
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
+			eof_pro_guitar_note_dialog[37].flags = D_SELECTED;	//Reverse slide
+	}
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+	{	//Select Slide "Down"
+		eof_pro_guitar_note_dialog[45].flags = D_SELECTED;
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
+			eof_pro_guitar_note_dialog[37].flags = D_SELECTED;
+	}
+	else
+	{	//Select Slide "Neither"
+		eof_pro_guitar_note_dialog[46].flags = D_SELECTED;
+	}
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+	{	//Select Mute "String"
+		eof_pro_guitar_note_dialog[47].flags = D_SELECTED;
+	}
+	else if(flags &EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+	{	//Select Mute "Palm"
+		eof_pro_guitar_note_dialog[48].flags = D_SELECTED;
+	}
+	else
+	{	//Select Mute "Neither"
+		eof_pro_guitar_note_dialog[49].flags = D_SELECTED;
+	}
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+	{	//Select Strum "Up"
+		eof_pro_guitar_note_dialog[50].flags = D_SELECTED;
+	}
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
+	{	//Select Strum "Mid"
+		eof_pro_guitar_note_dialog[51].flags = D_SELECTED;
+	}
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
+	{	//Select Strum "Down"
+		eof_pro_guitar_note_dialog[52].flags = D_SELECTED;
+	}
+	else
+	{	//Select Strum "Any"
+		eof_pro_guitar_note_dialog[53].flags = D_SELECTED;
+	}
+	eof_pro_guitar_note_dialog[60].flags = eof_pro_guitar_note_dialog[61].flags = eof_pro_guitar_note_dialog[62].flags = 0;	//Deselect these radio buttons
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_POP)
+	{	//Select "Pop"
+		eof_pro_guitar_note_dialog[60].flags = D_SELECTED;
+	}
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
+	{	//Select "Slap"
+		eof_pro_guitar_note_dialog[61].flags = D_SELECTED;
+	}
+	else
+	{	//Select "Neither"
+		eof_pro_guitar_note_dialog[62].flags = D_SELECTED;
+	}
+	eof_pro_guitar_note_dialog[63].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT) ? D_SELECTED : 0;		//Update "Accent" checkbox value
+	eof_pro_guitar_note_dialog[64].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC) ? D_SELECTED : 0;	//Update "P.Harm" checkbox value
+	eof_pro_guitar_note_dialog[65].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) ? D_SELECTED : 0;		//Update "Vibrato" checkbox value
+	eof_pro_guitar_note_dialog[66].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC) ? D_SELECTED : 0;	//Update "Harmonic" checkbox value
+	eof_pro_guitar_note_dialog[67].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) ? D_SELECTED : 0;			//Update "Bend" checkbox value
+	eof_pro_guitar_note_dialog[68].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) ? D_SELECTED : 0;		//Update "Linknext" checkbox value
+	eof_pro_guitar_note_dialog[69].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE) ? D_SELECTED : 0;		//Update "Ignore" checkbox value
+	eof_pro_guitar_note_dialog[70].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) ? D_SELECTED : 0;	//Update "Sustain" checkbox value
+	eof_pro_guitar_note_dialog[73].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HD) ? D_SELECTED : 0;			//Update "Hi Dens" checkbox value
+	eof_pro_guitar_note_dialog[74].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) ? D_SELECTED : 0;			//Update "Split" checkbox value
+	eof_pro_guitar_note_dialog[75].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) ? D_SELECTED : 0;	//Update "Chordify" checkbox value
+	eof_pro_guitar_note_dialog[76].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS) ? D_SELECTED : 0;	//Update "Fingerless" checkbox value
+
+	//The remaining statuses depend on whether tech view is in effect
+	if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
+	{	//If tech view isn't in effect for the current track
+		eof_pro_guitar_note_dialog[71].flags = D_DISABLED;	//"Stop" status
+		eof_pro_guitar_note_dialog[77].flags = D_DISABLED;	//"Pre-bend" status
+		eof_pro_guitar_note_dialog[72].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS) ? D_SELECTED : 0;	//Update "Ghost HS" checkbox value
+	}
+	else
+	{	//Tech view is in effect
+		eof_pro_guitar_note_dialog[37].flags = D_DISABLED;	//Reverse slide
+		eof_pro_guitar_note_dialog[71].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP) ? D_SELECTED : 0;	//Update "Stop" checkbox value
+		eof_pro_guitar_note_dialog[72].flags = D_DISABLED;	//"Ghost HS" status
+		eof_pro_guitar_note_dialog[75].flags = D_DISABLED;	//"Chordify" status
+		eof_pro_guitar_note_dialog[77].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND) ? D_SELECTED : 0;	//Update "Pre-bend" checkbox value
+	}
+	return 1;	//Return success
+}
+
+int eof_menu_note_edit_pro_guitar_note_process_dialog(EOF_PRO_GUITAR_TRACK *tp, unsigned char *legacymaskptr, unsigned char *ghostmaskptr, unsigned long *flagsptr, unsigned long *eflagsptr)
+{
+	unsigned char legacymask;		//Used to build the updated legacy note bitmask
+	unsigned char ghostmask;		//Used to build the updated ghost bitmask
+	unsigned long flags;			//Used to build the updated flag bitmask
+	unsigned long eflags;			//Used to build the updated extended flag bitmask
+
+	if(!tp || !legacymaskptr || !ghostmaskptr || !flagsptr || !eflagsptr)
+		return 0;	//Invalid parameters
+
+//Save the updated legacy note bitmask
+	legacymask = 0;
+	if(eof_pro_guitar_note_dialog[17].flags == D_SELECTED)
+		legacymask |= 16;
+	if(eof_pro_guitar_note_dialog[18].flags == D_SELECTED)
+		legacymask |= 8;
+	if(eof_pro_guitar_note_dialog[19].flags == D_SELECTED)
+		legacymask |= 4;
+	if(eof_pro_guitar_note_dialog[20].flags == D_SELECTED)
+		legacymask |= 2;
+	if(eof_pro_guitar_note_dialog[21].flags == D_SELECTED)
+		legacymask |= 1;
+	*legacymaskptr = legacymask;
+
+//Save the updated ghost bitmask
+	ghostmask = 0;
+	if(eof_pro_guitar_note_dialog[23].flags == D_SELECTED)
+		ghostmask |= 32;
+	if(eof_pro_guitar_note_dialog[24].flags == D_SELECTED)
+		ghostmask |= 16;
+	if(eof_pro_guitar_note_dialog[25].flags == D_SELECTED)
+		ghostmask |= 8;
+	if(eof_pro_guitar_note_dialog[26].flags == D_SELECTED)
+		ghostmask |= 4;
+	if(eof_pro_guitar_note_dialog[27].flags == D_SELECTED)
+		ghostmask |= 2;
+	if(eof_pro_guitar_note_dialog[28].flags == D_SELECTED)
+		ghostmask |= 1;
+	*ghostmaskptr = ghostmask;
+
+//Save the updated note flag bitmask
+	flags = eflags = 0;
+	if(eof_pro_guitar_note_dialog[40].flags == D_SELECTED)
+	{	//HO is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag
+		flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
+	}
+	else if(eof_pro_guitar_note_dialog[41].flags == D_SELECTED)
+	{	//PO is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Set the pull off flag
+		flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
+	}
+	else if(eof_pro_guitar_note_dialog[42].flags == D_SELECTED)
+	{	//Tap is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Set the tap flag
+		flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
+	}
+	if(eof_pro_guitar_note_dialog[44].flags == D_SELECTED)
+	{	//Slide Up is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+		if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
+	}
+	else if(eof_pro_guitar_note_dialog[45].flags == D_SELECTED)
+	{	//Slide Down is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+		if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
+			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
+	}
+	if(eof_pro_guitar_note_dialog[47].flags == D_SELECTED)
+	{	//Mute String is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+	}
+	else if(eof_pro_guitar_note_dialog[48].flags == D_SELECTED)
+	{	//Mute Palm is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+	}
+	if(eof_pro_guitar_note_dialog[50].flags == D_SELECTED)
+	{	//Strum Up is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+	}
+	else if(eof_pro_guitar_note_dialog[51].flags == D_SELECTED)
+	{	//Strum Mid is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;
+	}
+	else if(eof_pro_guitar_note_dialog[52].flags == D_SELECTED)
+	{	//Strum Down is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
+	}
+	if(eof_pro_guitar_note_dialog[60].flags == D_SELECTED)
+	{	//Pop is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+	}
+	else if(eof_pro_guitar_note_dialog[61].flags == D_SELECTED)
+	{	//Slap is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+	}
+	if(eof_pro_guitar_note_dialog[63].flags == D_SELECTED)
+	{	//Accent is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
+	}
+	if(eof_pro_guitar_note_dialog[64].flags == D_SELECTED)
+	{	//Pinch Harmonic is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
+	}
+	if(eof_pro_guitar_note_dialog[65].flags == D_SELECTED)
+	{	//Vibrato is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+	}
+	if(eof_pro_guitar_note_dialog[66].flags == D_SELECTED)
+	{	//Harmonic is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+	}
+	if(eof_pro_guitar_note_dialog[67].flags == D_SELECTED)
+	{	//Bend is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+	}
+	if(eof_pro_guitar_note_dialog[68].flags == D_SELECTED)
+	{	//Linknext is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
+	}
+	if(eof_pro_guitar_note_dialog[69].flags == D_SELECTED)
+	{	//Ignore is selected
+		eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;
+	}
+	if(eof_pro_guitar_note_dialog[70].flags == D_SELECTED)
+	{	//Sustain is selected
+		eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;
+	}
+	if(eof_pro_guitar_note_dialog[71].flags == D_SELECTED)
+	{	//Stop is selected
+		eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
+	}
+	if(eof_pro_guitar_note_dialog[72].flags == D_SELECTED)
+	{	//Ghost HS is selected
+		eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS;
+	}
+	if(eof_pro_guitar_note_dialog[73].flags == D_SELECTED)
+	{	//High Density is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_HD;
+	}
+	if(eof_pro_guitar_note_dialog[74].flags == D_SELECTED)
+	{	//Split is selected
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
+	}
+	if(eof_pro_guitar_note_dialog[75].flags == D_SELECTED)
+	{	//Chordify is selected
+		eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY;
+	}
+	if(eof_pro_guitar_note_dialog[76].flags == D_SELECTED)
+	{	//Fingerless is selected
+		eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS;
+	}
+	if(eof_pro_guitar_note_dialog[77].flags == D_SELECTED)
+	{	//Pre-bend is selected, apply the normal bend status in addition to the pre-bend status
+		eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
+		flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+	}
+
+	*flagsptr = flags;
+	*eflagsptr = eflags;
+
+	return 1;	//Return success
+}
+
 int eof_menu_note_edit_pro_guitar_note(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long ctr, ctr2, stringcount, i;
+	unsigned long ctr, ctr2, i;
 	char undo_made = 0;	//Set to nonzero when an undo state is created
 	long fretvalue, highfretvalue;
 	char allmuted;					//Used to track whether all used strings are string muted
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	unsigned char legacymask;		//Used to build the updated legacy note bitmask
 	unsigned char ghostmask;		//Used to build the updated ghost bitmask
-	unsigned long flags;			//Used to build the updated flag bitmask
+	unsigned long dialogflags, flags;	//Used to build the updated flag bitmask
 	unsigned long eflags;			//Used to build the updated extended flag bitmask
 	char *newname = NULL, *tempptr;
 	char autoprompt[100] = {0};
@@ -4925,7 +5313,6 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	int note_selection_updated;
 	static char dont_ask = 0;	//Is set to nonzero if the user opts to suppress the prompt regarding modifying multiple selected notes
 	EOF_PRO_GUITAR_TRACK *tp;
-	EOF_PRO_GUITAR_NOTE *np;
 
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
@@ -4935,7 +5322,6 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		return 1;	//Do not allow this function to run if a valid note isn't selected
 
 	tp = eof_song->pro_guitar_track[tracknum];	//Simplify
-	np = tp->note[eof_selection.current];	//Simplify
 	highfretvalue = tp->numfrets;
 	if(!eof_music_paused)
 	{
@@ -4950,195 +5336,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 	do
 	{	//Prepare the dialog
-		retval = 0;
-	//Update the note name text box to match the last selected note
-		memcpy(eof_note_edit_name, np->name, sizeof(eof_note_edit_name));
-
-	//Find the next/previous notes if applicable
 		previous_note = eof_track_fixup_previous_note(eof_song, eof_selected_track, eof_selection.current);
-		if(previous_note >= 0)
-		{	//If there is a previous note
-			eof_pro_guitar_note_dialog[54].flags = D_EXIT;		//Make the previous note button clickable
-		}
-		else
-		{
-			eof_pro_guitar_note_dialog[54].flags = D_HIDDEN;	//Otherwise hide it
-		}
 		next_note = eof_track_fixup_next_note(eof_song, eof_selected_track, eof_selection.current);
-		if(next_note >= 0)
-		{	//If there is a next note
-			eof_pro_guitar_note_dialog[58].flags = D_EXIT;		//Make the next note button clickable
-		}
-		else
-		{
-			eof_pro_guitar_note_dialog[58].flags = D_HIDDEN;	//Otherwise hide it
-		}
-
-	//Update the fret text boxes (listed from top to bottom as string 1 through string 6)
-		stringcount = eof_count_track_lanes(eof_song, eof_selected_track);
-		if(eof_legacy_view)
-		{	//Special case:  If legacy view is enabled, correct stringcount
-			stringcount = tp->numstrings;
-		}
-		ghostmask = np->ghost;
-		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
-		{	//For each of the 6 supported strings
-			if(ctr < stringcount)
-			{	//If this track uses this string, copy the fret value to the appropriate string
-				eof_pro_guitar_note_dialog[13 - (2 * ctr)].flags = 0;	//Ensure this text boxes' label is enabled
-				eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);	//Correct the string number for this label
-				eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = 0;	//Ensure this text box is enabled
-				eof_pro_guitar_note_dialog[28 - ctr].flags = (ghostmask & bitmask) ? D_SELECTED : 0;	//Ensure the ghost check box is enabled and cleared/checked appropriately
-				eof_pro_guitar_note_dialog[35 - ctr].flags = 0;		//Ensure the mute check box is enabled and cleared (it will be checked below if applicable)
-				if(np->note & bitmask)
-				{	//If this string is already defined as being in use, copy its fret value to the string
-					if(np->frets[ctr] & 0x80)
-					{	//If this string is muted (most significant bit is set)
-						eof_pro_guitar_note_dialog[35 - ctr].flags = D_SELECTED;	//Check the string's muted checkbox
-					}
-					if(np->frets[ctr] == 0xFF)
-					{	//If this string is muted with no fret value specified
-						(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
-					}
-					else
-					{
-						(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", np->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
-					}
-				}
-				else
-				{	//Otherwise empty the string
-					eof_fret_strings[ctr][0] = '\0';
-				}
-			}
-			else
-			{	//Otherwise disable the text box for this fret and empty the string
-				eof_pro_guitar_note_dialog[13 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text boxes' label is hidden
-				eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text box is hidden
-				eof_pro_guitar_note_dialog[28 - ctr].flags = D_HIDDEN;			//Ensure this ghost check box is hidden
-				eof_pro_guitar_note_dialog[35 - ctr].flags = D_HIDDEN;			//Ensure this mute check box is hidden
-				eof_fret_strings[ctr][0] = '\0';
-			}
-		}
-
-	//Update the legacy bitmask checkboxes
-		legacymask = np->legacymask;
-		eof_pro_guitar_note_dialog[17].flags = (legacymask & 16) ? D_SELECTED : 0;
-		eof_pro_guitar_note_dialog[18].flags = (legacymask & 8) ? D_SELECTED : 0;
-		eof_pro_guitar_note_dialog[19].flags = (legacymask & 4) ? D_SELECTED : 0;
-		eof_pro_guitar_note_dialog[20].flags = (legacymask & 2) ? D_SELECTED : 0;
-		eof_pro_guitar_note_dialog[21].flags = (legacymask & 1) ? D_SELECTED : 0;
-
-	//Clear the reverse slide checkbox
-		eof_pro_guitar_note_dialog[37].flags = 0;
-
-	//Update the note flag radio buttons
-		for(ctr = 0; ctr < 14; ctr++)
-		{	//Clear 14 of the status radio buttons
-			eof_pro_guitar_note_dialog[40 + ctr].flags = 0;
-		}
-		flags = np->flags;
-		eflags = np->eflags;
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
-		{	//Select "HO"
-			eof_pro_guitar_note_dialog[40].flags = D_SELECTED;
-		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
-		{	//Select "PO"
-			eof_pro_guitar_note_dialog[41].flags = D_SELECTED;
-		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
-		{	//Select "Tap"
-			eof_pro_guitar_note_dialog[42].flags = D_SELECTED;
-		}
-		else
-		{	//Select "None"
-			eof_pro_guitar_note_dialog[43].flags = D_SELECTED;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-		{	//Select Slide "Up"
-			eof_pro_guitar_note_dialog[44].flags = D_SELECTED;
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
-				eof_pro_guitar_note_dialog[37].flags = D_SELECTED;	//Reverse slide
-		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-		{	//Select Slide "Down"
-			eof_pro_guitar_note_dialog[45].flags = D_SELECTED;
-			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
-				eof_pro_guitar_note_dialog[37].flags = D_SELECTED;
-		}
-		else
-		{	//Select Slide "Neither"
-			eof_pro_guitar_note_dialog[46].flags = D_SELECTED;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
-		{	//Select Mute "String"
-			eof_pro_guitar_note_dialog[47].flags = D_SELECTED;
-		}
-		else if(flags &EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
-		{	//Select Mute "Palm"
-			eof_pro_guitar_note_dialog[48].flags = D_SELECTED;
-		}
-		else
-		{	//Select Mute "Neither"
-			eof_pro_guitar_note_dialog[49].flags = D_SELECTED;
-		}
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
-		{	//Select Strum "Up"
-			eof_pro_guitar_note_dialog[50].flags = D_SELECTED;
-		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
-		{	//Select Strum "Mid"
-			eof_pro_guitar_note_dialog[51].flags = D_SELECTED;
-		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
-		{	//Select Strum "Down"
-			eof_pro_guitar_note_dialog[52].flags = D_SELECTED;
-		}
-		else
-		{	//Select Strum "Any"
-			eof_pro_guitar_note_dialog[53].flags = D_SELECTED;
-		}
-		eof_pro_guitar_note_dialog[60].flags = eof_pro_guitar_note_dialog[61].flags = eof_pro_guitar_note_dialog[62].flags = 0;	//Deselect these radio buttons
-		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_POP)
-		{	//Select "Pop"
-			eof_pro_guitar_note_dialog[60].flags = D_SELECTED;
-		}
-		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
-		{	//Select "Slap"
-			eof_pro_guitar_note_dialog[61].flags = D_SELECTED;
-		}
-		else
-		{	//Select "Neither"
-			eof_pro_guitar_note_dialog[62].flags = D_SELECTED;
-		}
-		eof_pro_guitar_note_dialog[63].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT) ? D_SELECTED : 0;		//Update "Accent" checkbox value
-		eof_pro_guitar_note_dialog[64].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC) ? D_SELECTED : 0;	//Update "P.Harm" checkbox value
-		eof_pro_guitar_note_dialog[65].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) ? D_SELECTED : 0;		//Update "Vibrato" checkbox value
-		eof_pro_guitar_note_dialog[66].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC) ? D_SELECTED : 0;	//Update "Harmonic" checkbox value
-		eof_pro_guitar_note_dialog[67].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) ? D_SELECTED : 0;			//Update "Bend" checkbox value
-		eof_pro_guitar_note_dialog[68].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) ? D_SELECTED : 0;		//Update "Linknext" checkbox value
-		eof_pro_guitar_note_dialog[69].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE) ? D_SELECTED : 0;		//Update "Ignore" checkbox value
-		eof_pro_guitar_note_dialog[70].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN) ? D_SELECTED : 0;	//Update "Sustain" checkbox value
-		eof_pro_guitar_note_dialog[73].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HD) ? D_SELECTED : 0;			//Update "Hi Dens" checkbox value
-		eof_pro_guitar_note_dialog[74].flags = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) ? D_SELECTED : 0;			//Update "Split" checkbox value
-		eof_pro_guitar_note_dialog[75].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY) ? D_SELECTED : 0;	//Update "Chordify" checkbox value
-		eof_pro_guitar_note_dialog[76].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS) ? D_SELECTED : 0;	//Update "Fingerless" checkbox value
-
-		//The remaining statuses depend on whether tech view is in effect
-		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
-		{	//If tech view isn't in effect for the current track
-			eof_pro_guitar_note_dialog[71].flags = D_DISABLED;	//"Stop" status
-			eof_pro_guitar_note_dialog[77].flags = D_DISABLED;	//"Pre-bend" status
-			eof_pro_guitar_note_dialog[72].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS) ? D_SELECTED : 0;	//Update "Ghost HS" checkbox value
-		}
-		else
-		{	//Tech view is in effect
-			eof_pro_guitar_note_dialog[37].flags = D_DISABLED;	//Reverse slide
-			eof_pro_guitar_note_dialog[71].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_STOP) ? D_SELECTED : 0;	//Update "Stop" checkbox value
-			eof_pro_guitar_note_dialog[72].flags = D_DISABLED;	//"Ghost HS" status
-			eof_pro_guitar_note_dialog[75].flags = D_DISABLED;	//"Chordify" status
-			eof_pro_guitar_note_dialog[77].flags = (eflags & EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND) ? D_SELECTED : 0;	//Update "Pre-bend" checkbox value
-		}
+		if(!eof_menu_note_edit_pro_guitar_note_prepare_dialog())
+			break;	//If the dialog couldn't be initialized, cancel this function
 
 		bitmask = 0;
 		retval = eof_popup_dialog(eof_pro_guitar_note_dialog, 2);	//Run the dialog, set initial focus to the name field
@@ -5186,6 +5387,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					}
 				}
 			}
+
+			//Process the dialog results
+			if(!eof_menu_note_edit_pro_guitar_note_process_dialog(tp, &legacymask, &ghostmask, &dialogflags, &eflags))
+				break;	//If the dialog couldn't be processed, cancel this function
 
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the track
@@ -5296,18 +5501,6 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					tp->note[i]->note = bitmask;
 				}
 
-//Save the updated legacy note bitmask
-				legacymask = 0;
-				if(eof_pro_guitar_note_dialog[17].flags == D_SELECTED)
-					legacymask |= 16;
-				if(eof_pro_guitar_note_dialog[18].flags == D_SELECTED)
-					legacymask |= 8;
-				if(eof_pro_guitar_note_dialog[19].flags == D_SELECTED)
-					legacymask |= 4;
-				if(eof_pro_guitar_note_dialog[20].flags == D_SELECTED)
-					legacymask |= 2;
-				if(eof_pro_guitar_note_dialog[21].flags == D_SELECTED)
-					legacymask |= 1;
 				if(legacymask != tp->note[i]->legacymask)
 				{	//If the legacy bitmask changed
 					if(!undo_made)
@@ -5318,21 +5511,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					tp->note[i]->legacymask = legacymask;
 				}
 
-//Save the updated ghost bitmask
-				ghostmask = 0;
-				if(eof_pro_guitar_note_dialog[23].flags == D_SELECTED)
-					ghostmask |= 32;
-				if(eof_pro_guitar_note_dialog[24].flags == D_SELECTED)
-					ghostmask |= 16;
-				if(eof_pro_guitar_note_dialog[25].flags == D_SELECTED)
-					ghostmask |= 8;
-				if(eof_pro_guitar_note_dialog[26].flags == D_SELECTED)
-					ghostmask |= 4;
-				if(eof_pro_guitar_note_dialog[27].flags == D_SELECTED)
-					ghostmask |= 2;
-				if(eof_pro_guitar_note_dialog[28].flags == D_SELECTED)
-						ghostmask |= 1;
-				ghostmask &= bitmask;	//Clear all lanes that are specified by the note bitmask as being used
+				ghostmask &= bitmask;	//Clear all lanes that are not specified by the note bitmask as being used
 				if(ghostmask != tp->note[i]->ghost)
 				{	//If the ghost mask changed
 					if(!undo_made)
@@ -5343,131 +5522,12 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					tp->note[i]->ghost = ghostmask;
 				}
 
-//Save the updated note flag bitmask
-				flags = flags & (EOF_NOTE_FLAG_HOPO | EOF_NOTE_FLAG_SP);	//Clear the flags variable, except retain the note's existing SP and HOPO flag statuses
-				eflags = 0;													//Clear the extended flags variable
-				if(eof_pro_guitar_note_dialog[40].flags == D_SELECTED)
-				{	//HO is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag
-					flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
-				}
-				else if(eof_pro_guitar_note_dialog[41].flags == D_SELECTED)
-				{	//PO is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Set the pull off flag
-					flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
-				}
-				else if(eof_pro_guitar_note_dialog[42].flags == D_SELECTED)
-				{	//Tap is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Set the tap flag
-					flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
-				}
-				if(eof_pro_guitar_note_dialog[44].flags == D_SELECTED)
-				{	//Slide Up is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-					if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
-				}
-				else if(eof_pro_guitar_note_dialog[45].flags == D_SELECTED)
-				{	//Slide Down is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-					if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
-						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
-				}
-				if(eof_pro_guitar_note_dialog[47].flags == D_SELECTED)
-				{	//Mute String is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
-				}
-				else if(eof_pro_guitar_note_dialog[48].flags == D_SELECTED)
-				{	//Mute Palm is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
-				}
-				if(eof_pro_guitar_note_dialog[50].flags == D_SELECTED)
-				{	//Strum Up is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
-				}
-				else if(eof_pro_guitar_note_dialog[51].flags == D_SELECTED)
-				{	//Strum Mid is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;
-				}
-				else if(eof_pro_guitar_note_dialog[52].flags == D_SELECTED)
-				{	//Strum Down is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
-				}
-				if(eof_pro_guitar_note_dialog[60].flags == D_SELECTED)
-				{	//Pop is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
-				}
-				else if(eof_pro_guitar_note_dialog[61].flags == D_SELECTED)
-				{	//Slap is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
-				}
-				if(eof_pro_guitar_note_dialog[63].flags == D_SELECTED)
-				{	//Accent is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
-				}
-				if(eof_pro_guitar_note_dialog[64].flags == D_SELECTED)
-				{	//Pinch Harmonic is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_P_HARMONIC;
-				}
-				if(eof_pro_guitar_note_dialog[65].flags == D_SELECTED)
-				{	//Vibrato is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
-				}
-				if(eof_pro_guitar_note_dialog[66].flags == D_SELECTED)
-				{	//Harmonic is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
-				}
-				if(eof_pro_guitar_note_dialog[67].flags == D_SELECTED)
-				{	//Bend is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-				}
-				if(eof_pro_guitar_note_dialog[68].flags == D_SELECTED)
-				{	//Linknext is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;
-				}
-				if(eof_pro_guitar_note_dialog[69].flags == D_SELECTED)
-				{	//Ignore is selected
-					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_IGNORE;
-				}
-				if(eof_pro_guitar_note_dialog[70].flags == D_SELECTED)
-				{	//Sustain is selected
-					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_SUSTAIN;
-				}
-				if(eof_pro_guitar_note_dialog[71].flags == D_SELECTED)
-				{	//Stop is selected
-					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_STOP;
-				}
-				if(eof_pro_guitar_note_dialog[72].flags == D_SELECTED)
-				{	//Ghost HS is selected
-					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_GHOST_HS;
-				}
-				if(eof_pro_guitar_note_dialog[73].flags == D_SELECTED)
-				{	//High Density is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HD;
-				}
-				if(eof_pro_guitar_note_dialog[74].flags == D_SELECTED)
-				{	//Split is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;
-				}
-				if(eof_pro_guitar_note_dialog[75].flags == D_SELECTED)
-				{	//Chordify is selected
-					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY;
-				}
-				if(eof_pro_guitar_note_dialog[76].flags == D_SELECTED)
-				{	//Fingerless is selected
-					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS;
-				}
-				if(eof_pro_guitar_note_dialog[77].flags == D_SELECTED)
-				{	//Pre-bend is selected, apply the normal bend status in addition to the pre-bend status
-					eflags |= EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-				}
-
+				flags = dialogflags;	//Start with the flags defined by the dialog, which are conditionally altered below on a per-note basis
+				flags |= tp->note[i]->flags & (EOF_NOTE_FLAG_HOPO | EOF_NOTE_FLAG_SP);	//Retain the note's existing SP and HOPO flag statuses
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this is a slide or bend note, retain the note's original RS notation flag so any existing bend strengths or slide positions are kept
 					flags |= (tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION);
 				}
-
 				if(allmuted && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 				{	//If all strings are muted and the user didn't specify a palm mute
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
@@ -5701,7 +5761,6 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			eof_selection.current = previous_note;	//Set the previous note as the currently selected note
 			eof_selection.multi[previous_note] = 1;	//Ensure the note selection includes the previous note
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, previous_note) + eof_av_delay);	//Seek to previous note
-			np = tp->note[eof_selection.current];	//Update note pointer
 			eof_render();	//Redraw the screen
 		}
 		else if(retval == 58)
@@ -5710,7 +5769,6 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			eof_selection.current = next_note;	//Set the next note as the currently selected note
 			eof_selection.multi[next_note] = 1;	//Ensure the note selection includes the next note
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, next_note) + eof_av_delay);	//Seek to next note
-			np = tp->note[eof_selection.current];	//Update note pointer
 			eof_render();	//Redraw the screen
 		}
 	}while((retval == 54) || (retval == 56) || (retval == 58));	//Re-run this dialog if the user clicked previous, apply or next
