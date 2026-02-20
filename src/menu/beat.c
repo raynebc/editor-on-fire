@@ -2206,7 +2206,6 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 			eof_add_or_edit_floating_text_event(ptr, flags, undo_made);	//Invoke the floating text event add/edit dialog instead
 			return;
 		}
-		newflags = ptr->flags;
 		eof_events_add_dialog[0].dp = eof_events_add_dialog_string2;	//Update the dialog window title to reflect that an event is being edited
 		if(ptr->track == eof_selected_track)
 		{	//If this event is specific to this track

@@ -799,7 +799,9 @@ int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, un
 
 		for(ctr = 0; ctr < interval; ctr++)
 		{	//For each instance of that beat interval
-			interval_pos = eof_song->beat[beatnum]->fpos + (ctr * interval_length) + 0.5;
+			double interval_pos_f = eof_song->beat[beatnum]->fpos + ((double)ctr * interval_length);	//Store this floating point result in a floating point variable, because in rare circumstances, adding 0.5 and storing directly into an integer led to unexplained math rounding errors
+
+			interval_pos = interval_pos_f + 0.5;	//Round that interval position to nearest whole millisecond
 			diff = (interval_pos > pos) ? (interval_pos - pos) : (pos - interval_pos);	//Get the distance between the target position and this grid snap
 
 			if(interval_pos == pos)

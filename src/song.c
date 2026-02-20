@@ -6572,48 +6572,54 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	//Ensure that the note at the beginning of each arpeggio/handshape phrase is authored correctly, converting into a base chord if necessary
 	if(eof_write_rs_files || eof_write_rs2_files || eof_write_bf_files || eof_write_immerrock_files)
 	{	//If the user wants to save Rocksmith, Bandfuse or IMMERROCK capable files
-		char restore_tech_view = 0;			//If tech view is in effect, it is temporarily disabled so that tech notes don't get added instead of regular notes
+		char restore_tech_view = 0;							//If tech view is in effect, it is temporarily disabled so that tech notes don't get added instead of regular notes
+		unsigned char oldfrets[6] = {0}, oldfinger[6] = {0}, oldnote;	//Used to retain a backup of any existing base chord's details
+		unsigned long ghostnote;
 
 		restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
 		eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
 		{	//For each arpeggio/handshape phrase in the track (outer for loop)
-			//Delete the base chord if it already exists
-			unsigned long ghostnote = eof_find_note_at_pos(sp, track, tp->arpeggio[ctr].difficulty, tp->arpeggio[ctr].start_pos);
+			oldnote = 0;
+			ghostnote = eof_find_note_at_pos(sp, track, tp->arpeggio[ctr].difficulty, tp->arpeggio[ctr].start_pos);	//Search for any existing base chord for this phrase
 
+			//Modify the phrase's existing base chord, or otherwise create one
 			if(ghostnote < tp->notes)
 			{	//If a note was found at the start of this arpeggio/handshape
 				unsigned long note = eof_get_note_note(sp, track, ghostnote);
-				note &= ~eof_get_note_ghost(sp, track, ghostnote);	//Clear all gems that are ghosted
+				memcpy(oldfrets, tp->note[ghostnote]->frets, sizeof(oldfrets));		//Clone the fret values
+				memcpy(oldfinger, tp->note[ghostnote]->finger, sizeof(oldfinger));	//Clone the finger values
+				oldnote = note;											//Clone the note bitmask
+				note &= ~eof_get_note_ghost(sp, track, ghostnote);	//Clear all gems that are ghosted (this will erase the fret and finger values for those gems)
 				eof_set_note_note(sp, track, ghostnote, note);		//Update the note at the start of the arpeggio/handshape
 			}
-
-			//Build the base chord
-			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
-			{	//For each note in the track (inner for loop)
-				if(((tp->note[ctr2]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[ctr2]->pos <= tp->arpeggio[ctr].end_pos)) && (tp->note[ctr2]->type == tp->arpeggio[ctr].difficulty))
-				{	//If this note is within the phrase
-					if(tp->note[ctr2]->pos > tp->arpeggio[ctr].start_pos + 10)
-					{	//If the note is later than 10ms after the start of the phrase
-						np = eof_track_add_create_note(sp, track, tp->note[ctr2]->note, tp->arpeggio[ctr].start_pos, tp->note[ctr2]->length, tp->note[ctr2]->type, NULL);	//Initialize a new ghost note at the phrase's position
-						if(np)
-						{	//If the new note was created
-							np->ghost = np->note;	//Make all used gems ghosted
-							memcpy(np->frets, tp->note[ctr2]->frets, sizeof(np->frets));	//Clone the fret values
+			else
+			{	//Build the base chord for this arpeggio/handshape
+				for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+				{	//For each note in the track (inner for loop)
+					if(((tp->note[ctr2]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[ctr2]->pos <= tp->arpeggio[ctr].end_pos)) && (tp->note[ctr2]->type == tp->arpeggio[ctr].difficulty))
+					{	//If this note is within the phrase
+						if(tp->note[ctr2]->pos > tp->arpeggio[ctr].start_pos + 10)
+						{	//If the note is later than 10ms after the start of the phrase
+							np = eof_track_add_create_note(sp, track, tp->note[ctr2]->note, tp->arpeggio[ctr].start_pos, tp->note[ctr2]->length, tp->note[ctr2]->type, NULL);	//Initialize a new ghost note at the phrase's position
+							if(np)
+							{	//If the new note was created
+								np->ghost = np->note;	//Make all used gems ghosted
+								memcpy(np->frets, tp->note[ctr2]->frets, sizeof(np->frets));	//Clone the fret values
+							}
 						}
+						break;	//Break inner for loop after processing the first note in the phrase
 					}
-					break;	//Break inner for loop after processing the first note in the phrase
 				}
 			}
-		}
-		eof_track_sort_notes(sp, track);
 
-		for(ctr = 0; ctr < tp->arpeggios; ctr++)
-		{	//For each arpeggio phrase in the track (outer for loop)
+			eof_track_sort_notes(sp, track);	//Sort the notes so they can be processed in chronological order below
+
+			//Alter the first note in the arpeggio/handshape phrase (the base chord)
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 			{	//For each note in the track (inner for loop)
 				unsigned char frets[6];	//Will be used to build a new fret array
-				unsigned char note;		//Will be used to build a new note bitmask
+				unsigned char note;	//Will be used to build a new note bitmask
 				unsigned char ghost;	//Will be used to build a new ghost bitmask
 
 				if((tp->note[ctr2]->pos < tp->arpeggio[ctr].start_pos) || (tp->note[ctr2]->pos > tp->arpeggio[ctr].start_pos + 10) || (tp->note[ctr2]->type != tp->arpeggio[ctr].difficulty))
@@ -6661,6 +6667,12 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				tp->note[ctr2]->ghost = ghost;
 				break;	//Exit the inner for loop (no other notes in this track will be within the arpeggio phrase that was just parsed)
 			}//For each note in the track (inner for loop)
+
+			//Restore the base chord's finger definitions if applicable
+			if((tp->note[ctr2]->note == oldnote) && !memcmp(tp->note[ctr2]->frets, oldfrets, sizeof(oldfrets)))
+			{	//If the base chord has the same fret values and used lanes as it did at the beginning of this loop
+				memcpy(tp->note[ctr2]->finger, oldfinger, sizeof(oldfinger));	//Re-apply the original fingering
+			}
 		}//For each arpeggio phrase in the track (outer for loop)
 
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable

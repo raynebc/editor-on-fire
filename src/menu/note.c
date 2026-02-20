@@ -6309,7 +6309,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					tp->note[i]->flags = flags;
 				}//For each note in the track
 
-				//Offer to update the fingering for all notes in the track matching the selected note (which all selected notes now match because they were altered if they didn't)
+				//Offer to update the fingering for all notes in the project matching the selected note (which all selected notes now match because they were altered if they didn't)
 				if(eof_note_count_colors(eof_song, eof_selected_track, eof_selection.current) > 1)
 				{	//If the note that was edited is a chord
 					if(fingeringdefined && eof_auto_complete_fingering && !(tp->note[eof_selection.current]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS))
