@@ -366,7 +366,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	if(exists(oggfn))
 	{	//If an existing audio file has been identified
 		(void) replace_filename(searchpath, oggfn, "", 1024);		//Store the path of the file's parent folder
-		ret = eof_audio_to_ogg(oggfn, searchpath, dest_name, 1);	//Create a suitably named OGG in the folder, converting to OGG if necessary
+		ret = eof_audio_to_ogg(oggfn, searchpath, dest_name, 1, 1);	//Create a suitably named OGG in the folder, converting to OGG if necessary (prompt before overwrite)
 		if(ret != 0)
 		{	//If guitar.ogg was not created successfully
 			DestroyFeedbackChart(chart, 1);

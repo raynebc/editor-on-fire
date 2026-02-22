@@ -2119,8 +2119,8 @@ int eof_load_ogg(char * filename, char function)
 			ptr = returnedfn;	//The name of the file to cite if it fails to load
 			(void) replace_filename(output, filename, "", 1024);	//Store the path of the file's parent folder
 
-			if(!eof_audio_to_ogg(returnedfn, output, dest_name, (function == 2 ? 1 : 0)))
-			{	//If the file copy or conversion to create guitar.ogg (or a suitably named OGG file if function == 2) succeeded
+			if(!eof_audio_to_ogg(returnedfn, output, dest_name, (function == 2 ? 1 : 0), 1))
+			{	//If the file copy or conversion to create guitar.ogg (or a suitably named OGG file if function == 2) succeeded (prompt before overwrite)
 				(void) replace_filename(output, filename, dest_name, 1024);
 			}
 			else

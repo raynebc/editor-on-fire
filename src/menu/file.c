@@ -3045,13 +3045,17 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 	allegro_message("%s",chartinfo);
 }
 
-int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function)
+int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function, char prompt)
 {
 	char syscommand[1024] = {0};
 	char cfn[1024] = {0};
 	char *src_name;
 
 	eof_log("eof_audio_to_ogg() entered", 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tInput:  \"%s\"", file);
+	eof_log(eof_log_string, 2);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOutput directory:  \"%s\"", directory);
+	eof_log(eof_log_string, 2);
 
 	if((file == NULL) || (directory == NULL) || (dest_name == NULL))
 		return 3;	//Return invalid filename
@@ -3070,6 +3074,8 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 			(void) snprintf(dest_name, 15, "guitar.ogg");	//If the source file name isn't any of the tolerated names, name the output file as guitar.ogg
 	}
 
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tChosen output filename:  \"%s\"", dest_name);
+	eof_log(eof_log_string, 2);
 	if(!ustricmp(src_name, dest_name))
 	{	//If the input file's name is the same as the OGG file that is to be created
 		(void) replace_filename(syscommand, file, "", 1024);	//Obtain the parent directory of the input file
@@ -3086,8 +3092,8 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		//If an MP3 is to be encoded to OGG, store a copy of the MP3 as "original.mp3"
 		if(ustricmp(syscommand,directory))
 		{	//If the user did not select a file named original.mp3 in the chart's folder, check to see if a such-named file will be overwritten
-			if(!eof_menu_file_new_supplement(directory, NULL, 2))
-			{	//If the user declined to overwrite an existing "original.mp3" file at the destination path
+			if(prompt && !eof_menu_file_new_supplement(directory, NULL, 2))
+			{	//If the calling function wanted to prompt the user before overwriting the target file, and the user declined to overwrite an existing "original.mp3" file at the destination path
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
 				eof_show_mouse(NULL);
@@ -3147,10 +3153,10 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 	}//Convert from WAV
 	else if(!ustricmp(get_extension(file), "ogg"))
 	{	//Copy as-is (assume valid OGG file)
-		eof_log("\tUsing source file in its original format (OGG assumed)", 1);
+		eof_log("\tUsing source file in its original format", 1);
 
-		if(!eof_menu_file_new_supplement(directory, NULL, 1))
-		{	//If the user declined to overwrite an existing "guitar.ogg" file at the destination path
+		if(prompt && !eof_menu_file_new_supplement(directory, NULL, 1))
+		{	//If the calling function wanted to prompt the user before overwriting the target file, and the user declined to overwrite an existing "guitar.ogg" file at the destination path
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
 			eof_changes = 0;
@@ -3162,14 +3168,20 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		(void) ustrcat(syscommand, dest_name);
 		if(ustricmp(file, syscommand))
 		{	//If the source and destination file are not the same, copy the file
+			if(exists(syscommand))
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDeleting existing file at destination path \"%s\"", syscommand);
+				eof_log(eof_log_string, 2);
+				delete_file(syscommand);
+			}
 			(void) eof_copy_file(file, syscommand);
 		}
 	}
 
 	snprintf(cfn, sizeof(cfn) - 1, "%s%s", directory, dest_name);	//Build the target file name
 	if(exists(cfn))
-	{
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" creation skipped.   File already exists.", cfn);
+	{	//If the file now exists at the destination folder
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile \"%s\" creation successful.", cfn);
 		eof_log(eof_log_string, 1);
 		return 0;	//Return success
 	}
@@ -3251,7 +3263,7 @@ int eof_new_chart(char * filename)
 	}
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tConverting input file \"%s\" to OGG at \"%s\"", filename, eof_temp_path_s);
 	eof_log(eof_log_string, 1);
-	ret = eof_audio_to_ogg(oggfilename, eof_temp_path_s, dest_name, 1);
+	ret = eof_audio_to_ogg(oggfilename, eof_temp_path_s, dest_name, 1, 0);
 	if((ret != 0) && exists(eof_ffmpeg_executable_path))
 	{	//If a suitably named OGG was not created successfully, but FFMPEG is linked
 		eof_log("\tAttempting to re-encode input audio with FFMPEG", 1);
@@ -3263,7 +3275,7 @@ int eof_new_chart(char * filename)
 			eof_log(eof_log_string, 1);
 		}
 		else
-			ret = eof_audio_to_ogg(dest_name, eof_etext3, dest_name, 1);	//Try to load the freshly-created audio again
+			ret = eof_audio_to_ogg(dest_name, eof_etext3, dest_name, 1, 0);	//Try to load the freshly-created audio again
 	}
 	if(ret != 0)	//If a suitably named OGG was not created successfully
 	{
@@ -3411,7 +3423,6 @@ int eof_new_chart(char * filename)
 		delete_file(tempfilename);
 		return 1;	//Return failure
 	}
-
 	eof_log("\tSong information confirmed", 1);
 
 	if((ustrlen(eof_etext) > 0) && (ustrlen(eof_etext2) > 0))
@@ -3477,6 +3488,21 @@ int eof_new_chart(char * filename)
 			eof_log("\tCreate new folder selected", 1);
 			(void) ustrcpy(eof_etext3, eof_songs_path);
 			(void) ustrcat(eof_etext3, eof_etext4);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNew project folder path:  \"%s\"", eof_etext3);
+			eof_log(eof_log_string, 1);
+
+			//Build the subfolder if it doesn't already exist
+			if(!eof_folder_exists(eof_etext3))
+			{	//If the export subfolder doesn't already exist
+				int err = eof_mkdir(eof_etext3);
+				if(err && !eof_folder_exists(eof_etext3))
+				{	//If it couldn't be created and is still not found to exist (in case the eof_mkdir return code was a false negative)
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCould not create new project folder path:  \"%s\"", eof_etext3);
+					eof_log(eof_log_string, 1);
+					allegro_message("Could not create folder!\n%s", eof_etext3);
+					return 1;	//Return failure:  Could not create export folder
+				}
+			}
 		}
 	}
 	else

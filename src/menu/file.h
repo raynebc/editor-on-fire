@@ -129,7 +129,7 @@ int eof_test_controller_conflict(EOF_CONTROLLER *controller, int start, int stop
 void EnumeratedBChartInfo(struct FeedbackChart *chart);
 	//Debug function to call an allegro_message with summary information about the passed chart
 
-int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function);
+int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function, char prompt);
 	//Uses the specified file to create an OGG file with a suitable name in the specified directory
 	//If the extension of the file is .mp3, it is converted to OGG format and a copy of the original mp3 file is stored at the specified directory,
 	// if the extension of the file is .wav, it is converted to OGG format,
@@ -140,6 +140,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 	// the selected destination OGG file name is written to *dest_name so the calling function is aware of the chosen file name
 	//dest_name is expected to be an array at least 15 bytes in size (all of the supported OGG names are shorter than this)
 	//	It has the name of the converted file stored into it, so that it is expected to be found at directory
+	//If prompt is nonzero, the user is prompted before allowing an existing chart file at the specified directory from being overwritten
 	//Returns zero on successful conversion or nonzero if conversion was canceled/unsuccessful
 
 void eof_restore_oggs_helper(void);
@@ -161,6 +162,7 @@ void eof_apply_display_settings(int mode);
 
 int eof_menu_file_new_supplement(char *directory, char *filename, char check);
 	//Checks the specified directory for the presence of chart related files and prompts whether the user wants to overwrite existing files
+	//If directory does not exist, this function attempts to create it, such as to build the project folder for a new project at the user's root song folder
 	//If filename isn't NULL, checks for the presence of this relative file name instead of notes.eof when checking if the folder contains the project file already
 	//If check & 1 is nonzero, guitar.ogg is checked for
 	//If check & 2 is nonzero, original.mp3 is checked for

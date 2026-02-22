@@ -12,7 +12,7 @@ typedef struct
 
 int eof_folder_exists(const char * dir);	//Returns nonzero if the specified file path exists and is a directory
 int eof_chdir(const char * dir);		//Changes the current working directory of the program.  Returns nonzero on error
-int eof_mkdir(const char * dir);
+int eof_mkdir(const char * dir);		//Attempts to create the specified directory, returns zero on success
 int eof_system(const char * command);	//Runs the specified system command, after reformatting the command string accordingly
 
 void *eof_buffer_file(const char * fn, char appendnull, char discardbom);

@@ -221,7 +221,7 @@ int eof_copy_file(const char * src, const char * dest)
 	dest_fp = pack_fopen(dest, "w");
 	if(!dest_fp)
 	{
-		eof_log("\tFailed to open destination file for writing", 1);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFailed to open destination file for writing:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		(void) pack_fclose(src_fp);
 		return 0;
 	}
