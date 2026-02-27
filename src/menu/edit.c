@@ -1127,8 +1127,9 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			notelength = eof_get_note_length(eof_song, j, i);
 			if((notepos + notelength >= start_pos) && (notepos < end_pos))
 			{	//If this note falls within the start->end time range
-				eof_write_clipboard_note(fp, eof_song, j, i, first_pos[j]);	//Write note data to disk
-				eof_write_clipboard_position_snap_data(fp, notepos);		//Write the grid snap position data for this note's position
+				eof_write_clipboard_note(fp, eof_song, j, i, first_pos[j]);				//Write note data to disk
+				eof_write_clipboard_position_snap_data(fp, notepos);				//Write the grid snap position data for this note's position
+				eof_write_clipboard_position_snap_data(fp, notepos + notelength);	//Write the grid snap position data for this note's end position
 			}//If this note falls within the start->end time range
 		}//For each note in this track
 
@@ -1253,8 +1254,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 	char unshare_drum_phrasing;
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
-	unsigned long intervalbeat = 0, intervalpos = 0;
-	unsigned char intervalvalue = 0, intervalnum = 0;
+	unsigned long intervalbeat = 0, intervalpos = 0, intervalbeat_end = 0, intervalpos_end = 0;
+	unsigned char intervalvalue = 0, intervalnum = 0, intervalvalue_end = 0, intervalnum_end = 0;
 
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
@@ -1326,7 +1327,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{
 		/* read the note */
 			eof_read_clipboard_note(fp, &temp_note, EOF_MAX_LYRIC_LENGTH + 1);
-			eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);	//Read its beat interval data
+			eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat, &intervalvalue, &intervalnum);				//Read its beat interval data
+			eof_read_clipboard_position_beat_interval_data(fp, &intervalbeat_end, &intervalvalue_end, &intervalnum_end);	//Read the beat interval data for its end position
 
 			if(temp_note.pos + temp_note.length < eof_chart_length)
 			{
@@ -1337,6 +1339,10 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 					notepos = intervalpos;	//Update the adjusted position for the note
 				}
 				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - notepos;
+				if(eof_find_beat_interval_position(intervalbeat_end, intervalvalue_end, intervalnum_end, &intervalpos_end))
+				{	//If the adjusted beat interval position of the note's end can be calculated
+					notelength = intervalpos_end - notepos;	//Update the adjusted position for the note's length
+				}
 				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, temp_note.name);
 
 				if(new_note)

@@ -8253,7 +8253,7 @@ void eof_seek_to_nearest_grid_snap(void)
 long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 {
 	unsigned long i, npos, leftboundary, hoverlane = 0;
-	long nlen;
+	long nlen;	//An additional tolerance for the right-most clickable coordinate, to be used if the make note/lyric tails clickable preference is enabled
 	int candidate;
 	int effective_clickable_preference;
 
@@ -8334,10 +8334,11 @@ long eof_find_hover_note(long targetpos, int x_tolerance, char snaplogic)
 		if(!candidate && snaplogic)
 		{	//If the position wasn't close enough to a note to be a match, but snaplogic is enabled, check the position's closest grid snap
 			if(eof_pen_note.pos >= leftboundary)
-			{	//If the pen note is at/after this note's left-most clickable position (avoiding underflow)
-				if(eof_pen_note.pos <= npos + nlen + this_note_tolerance)
-					if(!effective_clickable_preference)	//Don't allow this logic when the clickable note/lyric tail preference is enabled, as it will improperly cause a note to be counted as hovered over
-						candidate = 1;	//This is a likely hover note
+			{	//If the snapped pen note position is at/after this note's left-most clickable position (avoiding underflow)
+				if(eof_pen_note.pos < npos + nlen + this_note_tolerance)
+				{	//If the snapped pen note position is before the end of the note (capping it to before allows new notes to be placed at the grid snap position immediately adjacent to the end of a note)
+					candidate = 1;	//This is a likely hover note
+				}
 			}
 			else
 				return -1;	//This and all remaining notes are after the target position, there can be no hover note

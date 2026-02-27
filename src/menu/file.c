@@ -3765,6 +3765,9 @@ int eof_save_helper_checks(void)
 	{	//For each track (and only if the user didn't already decline to cancel when an offending note was found)
 		char restore_tech_view = 0;
 
+		if((ctr == EOF_TRACK_VOCALS) && !eof_write_fof_files && !eof_write_gh_files && !eof_write_rb_files)
+			continue;	//If this is the vocal track, and neither FoF, nor GH nor RB exports are enabled (the formats for which vocals are scored), skip this track
+
 		restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, ctr);	//Track which note set is in use
 		eof_menu_track_set_tech_view_state(eof_song, ctr, 0);	//Activate the normal note set
 
