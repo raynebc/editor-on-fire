@@ -299,14 +299,15 @@ DIALOG eof_pg_preferences_dialog[] =
 	{ d_agup_button_proc,86,  234, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
 	{ d_agup_button_proc,160, 234, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,  75, 340, 16,  2,   23,  0,    0,      1,   0,   "Apply crazy to repeated chords separated by a rest",NULL, NULL },
-	{ d_agup_check_proc, 16,  91, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
-	{ d_agup_check_proc, 248, 91, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
-	{ d_agup_check_proc, 16, 107, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
-	{ d_agup_check_proc, 248, 107, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
-	{ d_agup_check_proc, 16, 123, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
-	{ d_agup_check_proc, 248, 123, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
-	{ d_agup_check_proc, 16, 139, 168, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
-	{ d_agup_check_proc, 248, 139, 230, 16,  2,   23,  0,    0,      1,   0,   "Don't restrict tone change timing",NULL, NULL },
+	{ d_agup_check_proc, 16,  91, 340, 16,  2,   23,  0,    0,      1,   0,   "Auto rebuild arpeggio/handshape base chords",NULL, NULL },
+	{ d_agup_check_proc, 16,  107, 210, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+	{ d_agup_check_proc, 248, 107, 190, 16,  2,   23,  0,    0,      1,   0,   "3D render RS style chords",NULL, NULL },
+	{ d_agup_check_proc, 16, 123, 224, 16,  2,   23,  0,    0,      1,   0,   "Offer to auto complete fingering",NULL, NULL },
+	{ d_agup_check_proc, 248, 123, 206, 16,  2,   23,  0,    0,      1,   0,   "Don't auto-name double stops",NULL, NULL },
+	{ d_agup_check_proc, 16, 139, 168, 16,  2,   23,  0,    0,      1,   0,   "Auto-Adjust tech notes",NULL, NULL },
+	{ d_agup_check_proc, 248, 139, 216, 16,  2,   23,  0,    0,      1,   0,   "Fingering checks include mutes",NULL, NULL },
+	{ d_agup_check_proc, 16, 155, 168, 16,  2,   23,  0,    0,      1,   0,   "2D render RS piano roll",NULL, NULL },
+	{ d_agup_check_proc, 248, 155, 230, 16,  2,   23,  0,    0,      1,   0,   "Don't restrict tone change timing",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1983,14 +1984,15 @@ int eof_menu_file_gp_preferences(void)
 
 	//Use the currently configured settings to populate the dialog selections
 	eof_pg_preferences_dialog[4].flags = eof_enforce_chord_density ? D_SELECTED : 0;				//Apply crazy to repeated chords separated by a rest
-	eof_pg_preferences_dialog[5].flags = eof_inverted_chords_slash ? D_SELECTED : 0;				//Treat inverted chords as slash
-	eof_pg_preferences_dialog[6].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;				//3D render RS style chords
-	eof_pg_preferences_dialog[7].flags = eof_auto_complete_fingering ? D_SELECTED : 0;			//Offer to auto complete fingering
-	eof_pg_preferences_dialog[8].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;		//Don't auto-name double stops
-	eof_pg_preferences_dialog[9].flags = eof_technote_auto_adjust ? D_SELECTED : 0;				//Auto-Adjust tech notes
-	eof_pg_preferences_dialog[10].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;		//Fingering checks include mutes
-	eof_pg_preferences_dialog[11].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;			//2D render RS piano roll
-	eof_pg_preferences_dialog[12].flags = eof_dont_restrict_tone_change_timing ? D_SELECTED : 0;	//Don't restrict tone change timing
+	eof_pg_preferences_dialog[5].flags = eof_rebuild_arpeggio_base_chords ? D_SELECTED : 0;		//Auto rebuild arpeggio/handshape base chords
+	eof_pg_preferences_dialog[6].flags = eof_inverted_chords_slash ? D_SELECTED : 0;				//Treat inverted chords as slash
+	eof_pg_preferences_dialog[7].flags = eof_render_3d_rs_chords ? D_SELECTED : 0;				//3D render RS style chords
+	eof_pg_preferences_dialog[8].flags = eof_auto_complete_fingering ? D_SELECTED : 0;			//Offer to auto complete fingering
+	eof_pg_preferences_dialog[9].flags = eof_dont_auto_name_double_stops ? D_SELECTED : 0;		//Don't auto-name double stops
+	eof_pg_preferences_dialog[10].flags = eof_technote_auto_adjust ? D_SELECTED : 0;				//Auto-Adjust tech notes
+	eof_pg_preferences_dialog[11].flags = eof_fingering_checks_include_mutes ? D_SELECTED : 0;		//Fingering checks include mutes
+	eof_pg_preferences_dialog[12].flags = eof_render_2d_rs_piano_roll ? D_SELECTED : 0;			//2D render RS piano roll
+	eof_pg_preferences_dialog[13].flags = eof_dont_restrict_tone_change_timing ? D_SELECTED : 0;	//Don't restrict tone change timing
 
 	eof_log("\tLaunching Guitar Pro Preferences dialog", 2);
 
@@ -2002,28 +2004,30 @@ int eof_menu_file_gp_preferences(void)
 			eof_log("\t\"OK\" clicked.  Applying changes if any.", 2);
 
 			eof_enforce_chord_density = (eof_pg_preferences_dialog[4].flags == D_SELECTED ? 1 : 0);
-			eof_inverted_chords_slash = (eof_pg_preferences_dialog[5].flags == D_SELECTED ? 1 : 0);
-			eof_render_3d_rs_chords = (eof_pg_preferences_dialog[6].flags == D_SELECTED ? 1 : 0);
-			eof_auto_complete_fingering = (eof_pg_preferences_dialog[7].flags == D_SELECTED ? 1 : 0);
-			eof_dont_auto_name_double_stops = (eof_pg_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
-			eof_technote_auto_adjust = (eof_pg_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
-			eof_fingering_checks_include_mutes = (eof_pg_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
-			eof_render_2d_rs_piano_roll = (eof_pg_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
-			eof_dont_restrict_tone_change_timing = (eof_pg_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
+			eof_rebuild_arpeggio_base_chords = (eof_pg_preferences_dialog[5].flags == D_SELECTED ? 1 : 0);
+			eof_inverted_chords_slash = (eof_pg_preferences_dialog[6].flags == D_SELECTED ? 1 : 0);
+			eof_render_3d_rs_chords = (eof_pg_preferences_dialog[7].flags == D_SELECTED ? 1 : 0);
+			eof_auto_complete_fingering = (eof_pg_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
+			eof_dont_auto_name_double_stops = (eof_pg_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
+			eof_technote_auto_adjust = (eof_pg_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
+			eof_fingering_checks_include_mutes = (eof_pg_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
+			eof_render_2d_rs_piano_roll = (eof_pg_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
+			eof_dont_restrict_tone_change_timing = (eof_pg_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
 			eof_log("\t\"Default\" clicked.  Applying default settings.", 2);
 
 			eof_pg_preferences_dialog[4].flags = 0;					//Apply crazy to repeated chords separated by a rest
-			eof_pg_preferences_dialog[5].flags = 0;					//Treat inverted chords as slash
-			eof_pg_preferences_dialog[6].flags = 0;					//3D render RS style chords
-			eof_pg_preferences_dialog[7].flags = D_SELECTED;		//Offer to auto complete fingering
-			eof_pg_preferences_dialog[8].flags = 0;					//Don't auto-name double stops
-			eof_pg_preferences_dialog[9].flags = D_SELECTED;		//Auto-Adjust tech notes
-			eof_pg_preferences_dialog[10].flags = 0;				//Fingering checks include mutes
-			eof_pg_preferences_dialog[11].flags = 0;				//2D render RS piano roll
-			eof_pg_preferences_dialog[12].flags = 0;				//Don't restrict tone change timing
+			eof_pg_preferences_dialog[5].flags = 0;					//Auto rebuild arpeggio/handshape base chords
+			eof_pg_preferences_dialog[6].flags = 0;					//Treat inverted chords as slash
+			eof_pg_preferences_dialog[7].flags = 0;					//3D render RS style chords
+			eof_pg_preferences_dialog[8].flags = D_SELECTED;		//Offer to auto complete fingering
+			eof_pg_preferences_dialog[9].flags = 0;					//Don't auto-name double stops
+			eof_pg_preferences_dialog[10].flags = D_SELECTED;		//Auto-Adjust tech notes
+			eof_pg_preferences_dialog[11].flags = 0;				//Fingering checks include mutes
+			eof_pg_preferences_dialog[12].flags = 0;				//2D render RS piano roll
+			eof_pg_preferences_dialog[13].flags = 0;				//Don't restrict tone change timing
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 

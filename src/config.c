@@ -268,6 +268,7 @@ void eof_load_config(char * fn)
 		eof_min_note_distance_intervals = 1;	//Reset it to 1/# measure
 	}
 	eof_enforce_chord_density = get_config_int("preferences", "eof_enforce_chord_density", 0);
+	eof_rebuild_arpeggio_base_chords = get_config_int("preferences", "eof_rebuild_arpeggio_base_chords", 0);
 	eof_imports_recall_last_path = get_config_int("preferences", "eof_imports_recall_last_path", 0);
 	eof_rewind_at_end = get_config_int("preferences", "eof_rewind_at_end", 1);
 	eof_disable_rs_wav = get_config_int("preferences", "eof_disable_rs_wav", 0);
@@ -734,6 +735,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_enable_open_strums_by_default", eof_enable_open_strums_by_default);
 	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
 	set_config_int("preferences", "eof_enforce_chord_density", eof_enforce_chord_density);
+	set_config_int("preferences", "eof_rebuild_arpeggio_base_chords", eof_rebuild_arpeggio_base_chords);
 	set_config_int("preferences", "eof_chord_density_threshold", eof_chord_density_threshold);
 	set_config_int("preferences", "eof_min_note_distance", eof_min_note_distance);
 	set_config_int("preferences", "eof_min_note_distance_intervals", eof_min_note_distance_intervals);

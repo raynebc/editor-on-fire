@@ -193,6 +193,7 @@ int         eof_gp_import_replaces_track = 1;	//If nonzero during GP import, the
 int         eof_gp_import_nat_harmonics_only = 0;	//If nonzero during GP import, only natural harmonics are imported as notes with harmonic status
 int         eof_min_note_length = 0;			//Specifies the user-configured minimum length for legacy guitar/bass notes (for making Guitar Hero customs, is set to 0 if undefined)
 int         eof_enforce_chord_density = 0;		//Specifies whether repeated chords that are separated by a rest automatically have crazy status applied to force RS export as low density chords
+int         eof_rebuild_arpeggio_base_chords = 0;		//Specifies whether pro guitar track fixup logic will forcibly delete and recreate the base chord at the beginning of each arpeggio/handshape
 unsigned    eof_chord_density_threshold = 10000;	//Specifies the maximum distance between repeated chords that allows them to be marked as high density (repeat lines)
 unsigned    eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
 unsigned    eof_min_note_distance_intervals = 0;	//If 0, the minimum distance between notes is observed to be in ms.  If 1, it's observed to be /# measure.  If 2, it's observed to be 1/# beat.
@@ -1103,12 +1104,18 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 		#endif
 	#endif
 
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAttempting to set autodetected windowed graphics mode:  %lu x %lu", effectivewidth, effectiveheight);
+	eof_log(eof_log_string, 2);
 	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, effectivewidth, effectiveheight, 0, 0))
 	{	//If the specified window size could not be set, try again in full screen mode
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tset_gfx_mode() failed.  Attempting to set autodetected graphics mode:  %lu x %lu", effectivewidth, effectiveheight);
+		eof_log(eof_log_string, 1);
 		if(set_gfx_mode(GFX_AUTODETECT, effectivewidth, effectiveheight, 0, 0))
 		{	//If it failed again
 			if(eof_screen_zoom)
 			{	//If x2 zoom display is enabled
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tset_gfx_mode() failed.  Disabling x2 zoom (%lu x %lu)", width, height);
+				eof_log(eof_log_string, 1);
 				eof_screen_zoom = 0;	//Disable x2 zoom
 				eof_set_display_mode(width, height);
 				allegro_message("Warning:  Failed to enable x2 zoom.\nTry setting a smaller program window size first.");
@@ -1116,10 +1123,14 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 			}
 			if(width != eof_screen_width_default)
 			{	//If the custom width failed to be applied, revert to the default width for this window height
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tset_gfx_mode() failed.  Attempting to revert to the default width for this window height (%lu x %lu)", eof_screen_width_default, height);
+				eof_log(eof_log_string, 2);
 				eof_set_display_mode(eof_screen_width_default, height);
 				allegro_message("Warning:  Failed to set custom display width, reverted to default.\nTry setting a different width.");
 				return 2;
 			}
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAttempting to set safe graphics mode (%lu x %lu)", effectivewidth, effectiveheight);
+			eof_log(eof_log_string, 2);
 			if(set_gfx_mode(GFX_SAFE, width, eof_screen_height, 0, 0))
 			{	//If the window size could not be set at all
 				allegro_message("Can't set up screen!  Error: %s",allegro_error);
