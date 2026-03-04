@@ -3289,8 +3289,8 @@ int eof_new_chart(char * filename)
 	replace_filename(tempfilename, eof_temp_path_s, dest_name, sizeof(tempfilename) - 1);	//Build a path to the file in the temp folder
 
 
-	//Attempt to load any recognizable metadata from the audio file at path tempfilename
-	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsing for metadata from \"%s\"", tempfilename);
+	//Attempt to load any recognizable metadata from the audio file at path filename
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsing for metadata from \"%s\"", filename);
 	eof_log(eof_log_string, 1);
 	eof_color_dialog(eof_file_new_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_file_new_dialog);
@@ -3299,13 +3299,13 @@ int eof_new_chart(char * filename)
 	(void) ustrcpy(eof_etext3, "");
 	(void) ustrcpy(eof_etext4, "");		//Used to store the filename created with %Artist% - %Title%
 	eof_render();
-	if(!ustricmp("ogg", get_extension(tempfilename)))
+	if(!ustricmp("ogg", get_extension(filename)))
 	{
 		char * temp_buffer = NULL;
 
 		eof_log("\tOGG file selected.", 2);
-		temp_buffer = eof_buffer_file(tempfilename, 0, 0);
-		temp_buffer_size = (int) file_size_ex(tempfilename);
+		temp_buffer = eof_buffer_file(filename, 0, 0);
+		temp_buffer_size = (int) file_size_ex(filename);
 		if(temp_buffer)
 		{
 			temp_ogg = alogg_create_ogg_from_buffer(temp_buffer, temp_buffer_size);
@@ -3325,7 +3325,7 @@ int eof_new_chart(char * filename)
 			}
 		}
 	}
-	else if(!ustricmp("wav", get_extension(tempfilename)))
+	else if(!ustricmp("wav", get_extension(filename)))
 	{
 		EOF_AUDIO_METADATA wanted_metadata[6] = {
 			{"IART", eof_etext, sizeof(eof_etext)},
@@ -3335,18 +3335,18 @@ int eof_new_chart(char * filename)
 			{"IGNR", genre, sizeof(genre)},
 			{"ITRK", tracknumber, sizeof(tracknumber)}};
 
-		eof_find_wav_metadata(tempfilename, wanted_metadata, 6);	//Search for this metadata
+		eof_find_wav_metadata(filename, wanted_metadata, 6);	//Search for this metadata
 	}
-	else if(!ustricmp("mp3", get_extension(tempfilename)))
+	else if(!ustricmp("mp3", get_extension(filename)))
 	{
 		#ifdef ALLEGRO_WINDOWS
 			//Windows has its own function to open files that have non ASCII characters in the file path
 			wchar_t widepath[1024] = {0};
 
-			(void) uconvert(tempfilename, U_UTF8, (char *)(&widepath[0]), U_UNICODE, 2048);
+			(void) uconvert(filename, U_UTF8, (char *)(&widepath[0]), U_UNICODE, 2048);
 			tag.fp=_wfopen(widepath, L"rb");
 		#else
-			tag.fp=fopen(tempfilename,"rb");	//Open user-specified file for reading
+			tag.fp=fopen(filename,"rb");	//Open user-specified file for reading
 		#endif
 
 		if(tag.fp != NULL)

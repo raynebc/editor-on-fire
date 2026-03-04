@@ -1163,6 +1163,53 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Seek position's beat number
+	if(!ustricmp(macro, "SEEK_POS_BEAT"))
+	{
+		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+
+		if(beatnum < eof_song->beats)
+		{	//The seek position is between the first and last beats
+			snprintf(dest_buffer, dest_buffer_size, "%lu", beatnum);
+		}
+		else
+		{
+			dest_buffer[0] = '\0';
+		}
+		return 1;
+	}
+
+	//Seek position's measure number
+	if(!ustricmp(macro, "SEEK_POS_BEAT_MEASURE"))
+	{
+		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+
+		if(beatnum < eof_song->beats)
+		{	//The seek position is between the first and last beats
+			if(eof_song->beat[beatnum]->has_ts)
+				snprintf(dest_buffer, dest_buffer_size, "%ld", eof_song->beat[beatnum]->measurenum);
+			else
+				snprintf(dest_buffer, dest_buffer_size, "(TS undefined)");
+		}
+
+		return 1;
+	}
+
+	//Seek position's beat's position in measure
+	if(!ustricmp(macro, "SEEK_POS_BEAT_POSITION_IN_MEASURE"))
+	{
+		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+
+		if(beatnum < eof_song->beats)
+		{	//The seek position is between the first and last beats
+			if(eof_song->beat[beatnum]->has_ts)
+				snprintf(dest_buffer, dest_buffer_size, "(Beat %d/%d)", eof_song->beat[beatnum]->beat_within_measure + 1, eof_song->beat[beatnum]->num_beats_in_measure);
+			else
+				snprintf(dest_buffer, dest_buffer_size, "(TS undefined)");
+		}
+		return 1;
+	}
+
 	//Selected note/lyric
 	if(!ustricmp(macro, "SELECTED_NOTE"))
 	{
@@ -3084,6 +3131,37 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		{
 			dest_buffer[0] = '\0';
 			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//The seek position is within the scope of a beat
+	if(!ustricmp(macro, "IF_SEEK_POS_BEAT"))
+	{
+		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+
+		if(beatnum < eof_song->beats)
+		{	//The seek position is between the first and last beats
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	//The seek position is within the scope of a beat that has a time signature in effect
+	if(!ustricmp(macro, "IF_SEEK_POS_BEAT_HAS_TS"))
+	{
+		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+
+		if(beatnum < eof_song->beats)
+		{	//The seek position is between the first and last beats
+			if(eof_song->beat[beatnum]->has_ts)
+			{
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
 		}
 
 		return 2;	//False

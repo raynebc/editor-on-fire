@@ -1121,13 +1121,32 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 		{
 			if(j != i)
 			{	//Comparing each lyric line to each other lyric line
-				if((tp->line[i].end_pos >= tp->line[j].start_pos) && (tp->line[i].start_pos <= tp->line[j].end_pos))
-				{	//If the lines overlap
-					tp->line[i].end_pos = tp->line[j].start_pos - 2;	//End the earlier line 2ms before the start of the later line
-				}
-				else if((tp->line[i].end_pos < tp->line[j].start_pos) && (tp->line[i].end_pos + 1 >= tp->line[j].start_pos))
-				{	//If the lines are not at least 2ms apart from each other
-					tp->line[i].end_pos = tp->line[j].start_pos - 2;	//End the earlier line 2ms before the start of the later line
+				if((tp->line[i].end_pos < tp->line[j].start_pos) && (tp->line[i].end_pos + 1 >= tp->line[j].start_pos))
+				{	//If the lines don't end at least 2ms apart from each other
+					if(tp->line[j].start_pos > 2)
+					{	//If the lyric line from the outer loop can be shortened by 2ms
+						unsigned long k, lastlyric = ULONG_MAX;
+
+						tp->line[i].end_pos = tp->line[j].start_pos - 2;	//Shorten it
+
+						for(k = 0; k < tp->lyrics; k++)
+						{	//For each lyric
+							if((tp->lyric[k]->pos <= tp->line[i].end_pos) && (tp->lyric[k]->pos >= tp->line[i].start_pos))
+							{	//If this lyric is within the line being shortened
+								lastlyric = k;	//Keep track of this lyric
+							}
+						}
+						if(lastlyric < tp->lyrics)
+						{	//If the last lyric that was in the line being shortened was identified
+							if(tp->lyric[lastlyric]->pos + tp->lyric[lastlyric]->length > tp->line[i].end_pos)
+							{	//And it extends beyond the end of the lyric line that was just shortened
+								if(tp->lyric[lastlyric]->pos < tp->line[i].end_pos)
+								{	//If that lyric can be shortened to end at the same position that the line does
+									tp->lyric[lastlyric]->length = tp->line[i].end_pos - tp->lyric[lastlyric]->pos;	//Shorten it
+								}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -1501,7 +1520,7 @@ char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned notenum, 
 	return 0;	//Return no match
 }
 
-void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned notenum, unsigned long flag, char operation, char startpoint)
+void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned long notenum, unsigned long flag, char operation, char startpoint)
 {
 // 	eof_log("eof_set_flags_at_legacy_note_pos() entered");
 

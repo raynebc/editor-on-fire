@@ -5757,19 +5757,25 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		}//If user clicked OK or Apply
 		else if(retval == 54)
 		{	//If user clicked <- (previous note)
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-			eof_selection.current = previous_note;	//Set the previous note as the currently selected note
-			eof_selection.multi[previous_note] = 1;	//Ensure the note selection includes the previous note
-			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, previous_note) + eof_av_delay);	//Seek to previous note
-			eof_render();	//Redraw the screen
+			if(previous_note >= 0)
+			{	//Redundant bounds check to satisfy a false positive in Coverity
+				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+				eof_selection.current = previous_note;	//Set the previous note as the currently selected note
+				eof_selection.multi[previous_note] = 1;	//Ensure the note selection includes the previous note
+				eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, previous_note) + eof_av_delay);	//Seek to previous note
+				eof_render();	//Redraw the screen
+			}
 		}
 		else if(retval == 58)
 		{	//If user clicked -> (next note)
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-			eof_selection.current = next_note;	//Set the next note as the currently selected note
-			eof_selection.multi[next_note] = 1;	//Ensure the note selection includes the next note
-			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, next_note) + eof_av_delay);	//Seek to next note
-			eof_render();	//Redraw the screen
+			if(next_note >= 0)
+			{	//Redundant bounds check to satisfy a false positive in Coverity
+				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+				eof_selection.current = next_note;	//Set the next note as the currently selected note
+				eof_selection.multi[next_note] = 1;	//Ensure the note selection includes the next note
+				eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, next_note) + eof_av_delay);	//Seek to next note
+				eof_render();	//Redraw the screen
+			}
 		}
 	}while((retval == 54) || (retval == 56) || (retval == 58));	//Re-run this dialog if the user clicked previous, apply or next
 

@@ -176,6 +176,14 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>Evaluates as true if there is a time signature in effect at the selected beat (a time signature change is placed at or before the selected beat).</td>
 </tr>
 <tr>
+<td>%IF_SEEK_POS_BEAT%</td>
+<td>Evaluates as true if the seek position is within the scope of a beat instead of being before the first beat or after the last beat.</td>
+</tr>
+<tr>
+<td>%IF_SEEK_POS_BEAT_HAS_TS%</td>
+<td>Evaluates as true if the seek position is within the scope of a beat that has a time signature in effect.</td>
+</tr>
+<tr>
 <td>%IF_IS_VOCAL_TRACK%</td>
 <td>Evaluates as true if the active track is the vocal track.</td>
 </tr>
@@ -1011,7 +1019,19 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 <tr>
 <td>%BEAT_POSITION_IN_MEASURE%</td>
-<td>Prints the beat number within a measure the selected beat is.  If no time signature is in effect at the selected beat's position (<a href="functions.htm#timesignature">Beat>Time signature</a> was not used to define a time signature on that or any previous beat), "(TS undefined)" is printed.</td>
+<td>Prints the beat number within the measure the selected beat is.  If no time signature is in effect at the selected beat's position (<a href="functions.htm#timesignature">Beat>Time signature</a> was not used to define a time signature on that or any previous beat), "(TS undefined)" is printed.</td>
+</tr>
+<tr>
+<td>%SEEK_POS_BEAT%</td>
+<td>Prints the beat number the seek position is in, or nothing if the seek position is outside of the scope of all beats.</td>
+</tr>
+<tr>
+<td>%SEEK_POS_BEAT_MEASURE%</td>
+<td>Prints the measure number of the beat the seek position is in, or "(TS undefined)" if the seek position is not within the effect of a time signature.</td>
+</tr>
+<tr>
+<td>%SEEK_POS_BEAT_POSITION_IN_MEASURE%</td>
+<td>Prints the beat number within the measure the seek position is in, or "(TS undefined)" if the seek position is not within the effect of a time signature.</td>
 </tr>
 <tr>
 <td>%BEAT_COUNT%</td>

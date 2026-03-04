@@ -977,7 +977,7 @@ char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned notenum, 
 	//for the specified flag.  If any of the notes have the flag set, nonzero is returned
 	//This is used for writing RB3 style pro drum phrases during MIDI export
 	//The track's notes array is expected to be sorted
-void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned notenum, unsigned long flag, char operation, char startpoint);
+void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp, unsigned long notenum, unsigned long flag, char operation, char startpoint);
 	//Sets or clears the specified flag on all notes at the specified note's timestamp
 	//If startpoint is 0, the process will start from the first note in the track with note #notenum's position
 	//	otherwise the process will start from note #notenum
