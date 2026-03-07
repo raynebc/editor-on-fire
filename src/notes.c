@@ -2152,7 +2152,93 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			}
 			else
 			{
-				snprintf(dest_buffer, dest_buffer_size, "0 (0%%)");
+				snprintf(dest_buffer, dest_buffer_size, "None");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
+	//Display the number of notes containing mine dance notes (and the corresponding percentage that is of all notes) in the active dance difficulty
+	if(!ustricmp(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_MINES"))
+	{
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+		{	//If a dance track is active
+			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				unsigned long totalgemcount = 0, minegemcount = 0;
+				double percent2;
+
+				for(ctr = 0; ctr < tracksize; ctr++)
+				{	//For each note in the track
+					if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+					{	//If the note is in the active difficulty
+						unsigned char minemask = eof_get_note_mine(eof_song, eof_selected_track, ctr);
+						unsigned char notemask = eof_get_note_note(eof_song, eof_selected_track, ctr);
+						minemask &= notemask;	//Set minemask to reflect only mine gems
+						if(minemask)
+						{	//If this note has at least one mine gem
+							count++;
+							minegemcount += eof_note_count_colors_bitmask(minemask);	//Count the number of individual mine gems
+						}
+						totalgemcount += eof_note_count_colors_bitmask(notemask);	//Count the number of all note gems
+					}
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				percent2 = (double)minegemcount * 100.0 / (double)totalgemcount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%), %lu gems (~%lu%%)", count, (unsigned long)(percent + 0.5), minegemcount, (unsigned long)(percent2 + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "None");
+			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
+	//Display the number of notes containing roll dance notes (and the corresponding percentage that is of all notes) in the active dance difficulty
+	if(!ustricmp(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_ROLLS"))
+	{
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+		{	//If a dance track is active
+			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			if(totalnotecount)
+			{
+				unsigned long totalgemcount = 0, rollgemcount = 0;
+				double percent2;
+
+				for(ctr = 0; ctr < tracksize; ctr++)
+				{	//For each note in the track
+					if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
+					{	//If the note is in the active difficulty
+						unsigned char rollmask = eof_get_note_roll(eof_song, eof_selected_track, ctr);
+						unsigned char notemask = eof_get_note_note(eof_song, eof_selected_track, ctr);
+						rollmask &= notemask;	//Set rollmask to reflect only roll gems
+						if(rollmask)
+						{	//If this note has at least one roll gem
+							count++;
+							rollgemcount += eof_note_count_colors_bitmask(rollmask);	//Count the number of individual roll gems
+						}
+						totalgemcount += eof_note_count_colors_bitmask(notemask);	//Count the number of all note gems
+					}
+				}
+				percent = (double)count * 100.0 / (double)totalnotecount;
+				percent2 = (double)rollgemcount * 100.0 / (double)totalgemcount;
+				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%), %lu gems (~%lu%%)", count, (unsigned long)(percent + 0.5), rollgemcount, (unsigned long)(percent2 + 0.5));	//Round to the nearest percent
+			}
+			else
+			{
+				snprintf(dest_buffer, dest_buffer_size, "None");
 			}
 		}
 		else

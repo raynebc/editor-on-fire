@@ -3662,6 +3662,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									else
 									{	//Otherwise discard this beat text
 										free(gp->text_event[gp->text_events]);	//Free the memory allocated to store this text event
+										eof_log("\t\t\t\tDropped text event", 1);
 									}
 								}
 								if(eof_gp_import_text_techniques)

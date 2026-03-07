@@ -5890,6 +5890,11 @@ void eof_start_logging(void)
 				allegro_message("Error opening log file for writing.  Move EOF to a file path without any special (ie. accented) characters if applicable.");
 			#endif
 		}
+		else
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting to log file:  %s", log_filename);
+			eof_log(eof_log_string, 2);
+		}
 		#ifdef ALLEGRO_WINDOWS
 		{
 			char *systemdrive, programfilespath[30] = "";	//Used to obtain the x86 and x64 Program Files folders via environment variables

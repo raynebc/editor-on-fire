@@ -722,7 +722,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
 				{	//And it is at the same position as this note
 					if(!(tp->note[i-1]->eflags & EOF_NOTE_EFLAG_DISJOINTED))
-					{	//If one of them (and thus neither) have disjointed status, merge them both
+					{	//If one of them does not have disjointed status (and thus neither does), merge them both
 						unsigned long flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, tp->parent->track_behavior, tp->note[next]->note);	//Get a flag bitmask where all lane specific flags for lanes that the next (merging) note uses have been cleared
 						tp->note[i-1]->note |= tp->note[next]->note;			//Merge the note bitmasks
 						tp->note[i-1]->flags = flags | tp->note[next]->flags;	//Merge the flags
@@ -733,7 +733,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 					}
 				}
 				else
-				{	//Otherwise ensure on doesn't overlap the other improperly
+				{	//Otherwise ensure one doesn't overlap the other improperly
 					long maxlength = eof_get_note_max_length(sp, track, i - 1, 1);	//Determine the maximum length for this note, taking its crazy status into account
 					if((maxlength > 0) && (eof_get_note_length(sp, track, i - 1) > maxlength))
 					{	//If the note is longer than its maximum length (provided that maxlength was calculated with a valid value)
@@ -6280,6 +6280,28 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}
 	}
 
+	//Check for matching disjointed gems at the same timestamp, which should negate each other (such as when trying to toggle a gem off in a track where disjointed status is applied by force, such as a BEATABLE track)
+	for(i = 0; i < tp->notes; i++)
+	{	//For each note
+		if(tp->note[i]->eflags & EOF_NOTE_EFLAG_DISJOINTED)
+		{	//If this note has disjointed status
+			for(ctr = i + 1; ctr < tp->notes; ctr++)
+			{	//For the remaining notes in the track
+				if(tp->note[ctr]->pos > tp->note[i]->pos)
+					break;		//Once there are no more notes at the same timestamp as the outer loop's note, stop checking for matches
+				if(!(tp->note[ctr]->eflags & EOF_NOTE_EFLAG_DISJOINTED))
+					continue;	//If the note doesn't have disjointed status, skip it
+				if(tp->note[ctr]->type != tp->note[i]->type)
+					continue;	//If the note isn't in the same difficulty as the outer loop's note, skip it
+				if(tp->note[ctr]->note == tp->note[i]->note)
+				{	//If both notes have the same note bitmask, they cancel each other out.  Clearing the note bitmasks will cause the loop below to delete them
+					tp->note[ctr]->note = 0;
+					tp->note[i]->note = 0;
+				}
+			}
+		}
+	}
+
 	for(i = tp->notes; i > 0; i--)
 	{	//For each note in the track, in reverse order
 		/* ensure notes within an arpeggio phrase (but not a handshape phrase) are marked as "crazy" */
@@ -6328,67 +6350,70 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			if(next >= 0)
 			{	//If there is another note in this track
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
-				{	//If this note and the next are at the same position, merge them
-					unsigned char lower = 0;	//Is set to nonzero if the next note has a lower fret value
+				{	//If this note and the next are at the same position
+					if(!(tp->note[i-1]->eflags & EOF_NOTE_EFLAG_DISJOINTED))
+					{	//If one of them does not have disjointed status (and thus neither does), merge them both
+						unsigned char lower = 0;	//Is set to nonzero if the next note has a lower fret value
 
-					//Determine which of the two notes uses the lowest fret value, as this determines which note's end of pitched/unpitched slide positions are kept
-					if(eof_pro_guitar_note_lowest_fret(tp, next) < eof_pro_guitar_note_lowest_fret(tp, i - 1))
-					{	//If the next note uses a lower fret value
-						lower = 1;	//Note that next note's end of pitched/unpitched slide takes priority
-					}
-
-					//Perform additional merging logic for pro guitar tracks, because Rocksmith custom files define single notes and chords at the same position in order to define chord techniques
-					if(tp->note[next]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-					{	//If the next note is a slide
-						if(lower)
-						{	//If the next note's slide end position is to be used
-							tp->note[i-1]->slideend = tp->note[next]->slideend;	//Copy the slide end position
+						//Determine which of the two notes uses the lowest fret value, as this determines which note's end of pitched/unpitched slide positions are kept
+						if(eof_pro_guitar_note_lowest_fret(tp, next) < eof_pro_guitar_note_lowest_fret(tp, i - 1))
+						{	//If the next note uses a lower fret value
+							lower = 1;	//Note that next note's end of pitched/unpitched slide takes priority
 						}
-					}
-					if(tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-					{	//If the next note is a bend
-						tp->note[i-1]->bendstrength = tp->note[next]->bendstrength;	//Copy the bend strength
-					}
-					if(tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-					{	//If the next note is an unpitched slide
-						if(lower)
-						{	//If the next note's unpitched slide end position is to be used
-							tp->note[i-1]->unpitchend = tp->note[next]->unpitchend;	//Copy the unpitched slide end position
-						}
-					}
-					flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, EOF_PRO_GUITAR_TRACK_BEHAVIOR, tp->note[next]->note);
-					//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
-					flags |= tp->note[next]->flags;	//Merge the next note's flags
-					if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) != (tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT))
-					{	//If the two merged notes had dislike split status
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;	//Remove split status from the merged flags to allow it to be nicely imported from RS files
-					}
-					tp->note[i-1]->flags = flags;	//Update the flags for the merged note
-					if(tp->note[next]->length > tp->note[i-1]->length)
-					{	//If the next note is longer
-						tp->note[i-1]->length = tp->note[next]->length;	//Update the length for the merged note
-					}
 
-					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-					{	//For each of the next note's 6 usable strings
-						if(tp->note[next]->note & bitmask)
-						{	//If this string is used
-							if((tp->note[i-1]->note & bitmask) && !(tp->note[i-1]->ghost & bitmask) && (tp->note[next]->ghost & bitmask))
-							{	//If this note has a gem on this string that is not ghosted but that of the next note is, don't copy that gem from the latter
-							}
-							else
-							{
-								tp->note[i-1]->frets[ctr] = tp->note[next]->frets[ctr];		//Overwrite this note's fret value on this string with that of the next note
-								tp->note[i-1]->finger[ctr] = tp->note[next]->finger[ctr];	//Overwrite this note's fingering on this string with that of the next note
-
-								tp->note[i-1]->ghost &= ~bitmask;							//Clear this note's ghost status on this string
-								tp->note[i-1]->ghost |= (tp->note[next]->ghost & bitmask);	//Apply that of the next note
-								tp->note[i-1]->note |= bitmask;								//Track that there is a gem on this string
+						//Perform additional merging logic for pro guitar tracks, because Rocksmith custom files define single notes and chords at the same position in order to define chord techniques
+						if(tp->note[next]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+						{	//If the next note is a slide
+							if(lower)
+							{	//If the next note's slide end position is to be used
+								tp->note[i-1]->slideend = tp->note[next]->slideend;	//Copy the slide end position
 							}
 						}
-					}
-					eof_pro_guitar_track_delete_note(tp, next);
-				}//If this note and the next are at the same position, merge them
+						if(tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+						{	//If the next note is a bend
+							tp->note[i-1]->bendstrength = tp->note[next]->bendstrength;	//Copy the bend strength
+						}
+						if(tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+						{	//If the next note is an unpitched slide
+							if(lower)
+							{	//If the next note's unpitched slide end position is to be used
+								tp->note[i-1]->unpitchend = tp->note[next]->unpitchend;	//Copy the unpitched slide end position
+							}
+						}
+						flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, EOF_PRO_GUITAR_TRACK_BEHAVIOR, tp->note[next]->note);
+						//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
+						flags |= tp->note[next]->flags;	//Merge the next note's flags
+						if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT) != (tp->note[next]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SPLIT))
+						{	//If the two merged notes had dislike split status
+							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SPLIT;	//Remove split status from the merged flags to allow it to be nicely imported from RS files
+						}
+						tp->note[i-1]->flags = flags;	//Update the flags for the merged note
+						if(tp->note[next]->length > tp->note[i-1]->length)
+						{	//If the next note is longer
+							tp->note[i-1]->length = tp->note[next]->length;	//Update the length for the merged note
+						}
+
+						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+						{	//For each of the next note's 6 usable strings
+							if(tp->note[next]->note & bitmask)
+							{	//If this string is used
+								if((tp->note[i-1]->note & bitmask) && !(tp->note[i-1]->ghost & bitmask) && (tp->note[next]->ghost & bitmask))
+								{	//If this note has a gem on this string that is not ghosted but that of the next note is, don't copy that gem from the latter
+								}
+								else
+								{
+									tp->note[i-1]->frets[ctr] = tp->note[next]->frets[ctr];		//Overwrite this note's fret value on this string with that of the next note
+									tp->note[i-1]->finger[ctr] = tp->note[next]->finger[ctr];	//Overwrite this note's fingering on this string with that of the next note
+
+									tp->note[i-1]->ghost &= ~bitmask;							//Clear this note's ghost status on this string
+									tp->note[i-1]->ghost |= (tp->note[next]->ghost & bitmask);	//Apply that of the next note
+									tp->note[i-1]->note |= bitmask;								//Track that there is a gem on this string
+								}
+							}
+						}
+						eof_pro_guitar_track_delete_note(tp, next);
+					}//If one of them does not have disjointed status (and thus neither does), merge them both
+				}//If this note and the next are at the same position
 				else
 				{	//Otherwise ensure one doesn't overlap the other improperly
 					if(!eof_menu_track_get_tech_view_state(sp, track))

@@ -5394,6 +5394,8 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the track
+				char fretchanged = 0;	//Used to track whether any fret number fields were changed for this note
+
 				if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
 					continue;	//If the note isn't selected or in the active track difficulty, skip it
 
@@ -5457,6 +5459,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 								undo_made = 1;
 							}
+							fretchanged = 1;	//Track that at least one fret value changed for this note
 							tp->note[i]->frets[ctr] = fretvalue;
 							if((fretvalue & 0x7F) != (tp->note[i]->frets[ctr] & 0x7F))
 							{	//If this fret value (ignoring the MSB indicating string muting) changed
@@ -5543,6 +5546,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					}
 					tp->note[i]->flags = flags;
 					tp->note[i]->eflags = eflags;
+				}
+				if(fretchanged)
+				{
+					memset(tp->note[i]->finger, 0, 8);	//Initialize all fingering for the note to undefined
 				}
 			}//For each note in the track
 
@@ -10265,8 +10272,8 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	eof_pro_guitar_note_bend_strength_dialog[2].flags = 0;	//Clear the half steps radio button
 	eof_pro_guitar_note_bend_strength_dialog[3].flags = 0;	//Clear the quarter steps radio button
 	if((np->bendstrength & 0x7F) == 0)
-	{	//If the selected note has no bend strength defined, or otherwise a value of 0
-		if(tp->note != tp->technote)
+	{	//If the selected note has no bend strength defined, or is otherwise a value of 0
+		if(tp->notes != tp->technotes)
 		{	//Normal notes are not allowed to have a bend strength of 0
 			eof_etext[0] = '\0';	//Otherwise it's not valid, empty this string
 		}
@@ -10275,6 +10282,11 @@ int eof_pro_guitar_note_bend_strength(char undo)
 			if(!(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 			{	//If the note's flags indicate the bend strength is not defined
 				eof_etext[0] = '\0';	//Empty this string
+			}
+			else
+			{
+				eof_etext[0] = '0';	//Initialize the input field to '0'
+				eof_etext[1] = '\0';
 			}
 		}
 		eof_pro_guitar_note_bend_strength_dialog[lastselected].flags = D_SELECTED;

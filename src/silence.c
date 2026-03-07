@@ -463,6 +463,7 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#endif
 
+	eof_log_cwd();
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling oggenc as follows:  %s", sys_command);
 	eof_log(eof_log_string, 1);
 	if(eof_system(sys_command))
@@ -665,6 +666,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#endif
 
+	eof_log_cwd();
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling oggenc as follows:  %s", sys_command);
 	eof_log(eof_log_string, 1);
 	if(eof_system(sys_command))

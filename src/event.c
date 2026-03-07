@@ -272,6 +272,33 @@ char eof_song_contains_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned 
 	return 0;	//Return no match found
 }
 
+char eof_event_exists(EOF_SONG *sp, unsigned long pos, char *text, unsigned long track, unsigned long flags)
+{
+	unsigned long i;
+
+	if(!sp || !text)
+		return 0;	//Invalid parameters
+
+	for(i = 0; i < sp->text_events; i++)
+	{	//For each text event
+		if(sp->text_event[i]->pos == pos)
+		{	//If the text event is at the same position as the target
+			if(sp->text_event[i]->track == track)
+			{	//If the text event has the same track specificity as the target
+				if(sp->text_event[i]->flags == flags)
+				{	//If the text event has the same flags as the target
+					if(!strcmp(sp->text_event[i]->text, text))
+					{	//If the text event has the same text as the target
+						return 1;	//Return match
+					}
+				}
+			}
+		}
+	}
+
+	return 0;	//Return no match found
+}
+
 char eof_lookup_effective_rockband_section_at_pos(EOF_SONG *sp, unsigned long pos, unsigned long track, unsigned long flags, unsigned char track_specific, unsigned long *index)
 {
 	unsigned long i;

@@ -138,6 +138,7 @@
 
 //The following extended flag pertains to legacy notes
 #define EOF_NOTE_EFLAG_DISJOINTED 128	//This flag specifies that affected notes will not be merged by fixup logic even when they are at the same timestamp, unless they have lanes in common
+									///Experimentally, allow tech notes to use this status to more easily define statuses on a per string basis without having to place them at different timestamps to avoid being merged by the fixup logic
 
 //The following extended flags are not specific to a track format
 #define EOF_NOTE_EFLAG_SP_DEPLOY 1073741824		//This flag specifies that star power is to be deployed at the affected note, for predicting scoring in a particular game

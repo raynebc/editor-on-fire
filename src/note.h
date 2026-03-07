@@ -64,9 +64,9 @@ BITMAP *eof_create_text_bitmap(char *text, unsigned long padding, int textcol, i
 	//Used to create a bordered rectangle bitmap with the specified text in the specified font, allowing the mono-spaced symbol and regular fonts to be used interchangeably
 	//Scale is a multiplier for the bitmap's height and width
 	//Returns the created bitmap, or NULL upon error
-void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck);
+void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char function);
 	//Used to store notations (ie. "PM" for palm mute) for the specified note into the buffer, which should be able to hold at least 65 characters just to guarantee an overflow isn't possible
-	//If sanitycheck is nonzero and the specified note is a pro guitar note, the validity of any pitched/unpitched slide technique it has is checked
+	//If function & 1 is nonzero, slide sanity checking is performed and the specified note is a pro guitar note, the validity of any pitched/unpitched slide technique it has is checked
 	// and if the end position is not valid, a question mark is appended after the slide notation character
 int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2, char thorough);
 	//Compares the two notes and returns 0 under the following conditions:
@@ -86,9 +86,10 @@ int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long not
 int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2, char thorough);
 	//Compares two pro guitar notes and returns 0 if both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
 	//If the notes do not match, or are from differently formatted tracks, 1 is returned
-	//If the thorough parameter is greater than 0, string mute status is also compared
-	//If the thorough parameter is greater than 1, ghost status is also compared
-	//If the thorough parameter is greater than 2, bend strength and pitched/unpitched slide end positions are also compared
+	//If the thorough parameter is greater than 0, string mute status is also compared if the notes are pro guitar notes
+	//If the thorough parameter is greater than 1, ghost status is also compared if the notes are pro guitar notes
+	//If the thorough parameter is greater than 2, bend strength and pitched/unpitched slide end positions are also compared if the notes are pro guitar notes
+	//If the thorough parameter is greater than 3, the lengths of notes must be within 3ms of each other for them to match
 	//-1 is returned on error
 int eof_pro_guitar_note_compare_fingerings(EOF_PRO_GUITAR_NOTE *np1, EOF_PRO_GUITAR_NOTE *np2);
 	//Compares the fingering between the specified notes and returns 0 if both use the same strings and define the same fingering for all used strings

@@ -575,7 +575,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}//If a pro guitar track is being rendered
 
 		//Render tab notations before the note, so that the former doesn't render a solid background over the latter
-		eof_get_note_notation(notation, track, notenum, 1);	//Get the tab playing notation for this note
+		eof_get_note_notation(notation, track, notenum, 1);	//Get the tab playing notation for this note, enable slide sanity checking
 		if(notation[0] != '\0')
 		{	//If the note has notations
 			if(!strcmp(notation, eof_last_tab_notation))
@@ -2233,7 +2233,7 @@ BITMAP *eof_create_text_bitmap(char *text, unsigned long padding, int textcol, i
 	return bmp;
 }
 
-void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char sanitycheck)
+void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note, unsigned char function)
 {
 	unsigned long index = 0, flags = 0, eflags = 0, number = 0;
 	char buffer2[5] = {0};
@@ -2333,8 +2333,8 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
 		{	//If the note slides up or down and defines the ending fret for the slide
-			if(((np->slideend == lowestfret) || !lowestfret) && sanitycheck)
-			{	//If the slide is not valid (it ends on the same fret it starts on or the note/chord is played open) and sanity checking is enabled
+			if(((np->slideend == lowestfret) || !lowestfret) && (function & 1))
+			{	//If the slide is not valid (it ends on the same fret it starts on or the note/chord is played open) and slide sanity checking is enabled
 				buffer[index++] = '?';	//Place this character to alert the user
 			}
 			else
@@ -2389,8 +2389,8 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 		{
-			if(((lowestfret == np->unpitchend) || !lowestfret) && sanitycheck)
-			{	//If the unpitched slide is not valid (it ends on the same fret it starts on or the note/chord is played open) and sanity checking is enabled
+			if(((lowestfret == np->unpitchend) || !lowestfret) && (function & 1))
+			{	//If the unpitched slide is not valid (it ends on the same fret it starts on or the note/chord is played open) and slide sanity checking is enabled
 				buffer[index++] = '?';	//Place this character to alert the user
 			}
 			else
@@ -2599,9 +2599,9 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 	}
 	else
-	{
-		if((eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (eflags & EOF_NOTE_EFLAG_DISJOINTED))
-		{	//If the note is a legacy note and has disjointed status
+	{	//This is not a BEATABLE track
+		if(eflags & EOF_NOTE_EFLAG_DISJOINTED)
+		{	//If the note has disjointed status
 			buffer[index++] = 'D';
 		}
 

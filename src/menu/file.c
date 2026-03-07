@@ -5967,12 +5967,15 @@ int eof_gp_import_track(DIALOG * d)
 int eof_gp_import_common(const char *fn)
 {
 	unsigned long ctr, ctr2, track;
+	EOF_PRO_GUITAR_TRACK *tp = NULL;
+	EOF_PRO_GUITAR_NOTE *n1, *n2;
 
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
-		return 1;	//Return failure
+		return 1;	//Return failure if the destination track isn't a pro guitar track
 	if(!fn)
 		return 1;	//If no file name is specified, return failure
 
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 	eof_parsed_gp_file = eof_load_gp(fn, &gp_import_undo_made);	//Parse the GP file, make an undo state if time signatures are imported
 
 	if(eof_parsed_gp_file)
@@ -5998,8 +6001,16 @@ int eof_gp_import_common(const char *fn)
 					track = 0;		//Otherwise import the event to be project-wide
 
 				for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
-				{	//For each of the text events
-					(void) eof_song_add_text_event(eof_song, eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text, track, eof_parsed_gp_file->text_event[ctr]->flags, 0);	//Add the event to the active project
+				{	//For each of the text events imported from the GP file
+					if(!eof_event_exists(eof_song, eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text, track, eof_parsed_gp_file->text_event[ctr]->flags))
+					{	//If an identical text event doesn't exist in the active project
+						(void) eof_song_add_text_event(eof_song, eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text, track, eof_parsed_gp_file->text_event[ctr]->flags, 0);	//Add the event to the active project
+					}
+					else
+					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDiscarding duplicate text event:  beat = %lu , text = %s", eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text);
+						eof_log(eof_log_string, 1);
+					}
 				}
 			}
 			for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
@@ -6010,7 +6021,7 @@ int eof_gp_import_common(const char *fn)
 			eof_sort_events(eof_song);
 		}
 
-		//Launch the dialog to allow the user to import a track
+//Launch the dialog to allow the user to import a track
 		eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
 		eof_conditionally_center_dialog(eof_gp_import_dialog);
 		if(eof_popup_dialog(eof_gp_import_dialog, 0) == 3)
@@ -6024,6 +6035,30 @@ int eof_gp_import_common(const char *fn)
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
+
+//Check for dislike tech notes at the same position and apply disjointed status to ensure they are not merged by fixup logic
+		if(gp_import_undo_made)
+		{	//If a track was imported
+			eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 1);	//Make the tech note set active
+			for(ctr = 0; ctr < tp->notes; ctr++)
+			{	//For each tech note in the track that was just imported
+				n1 = tp->note[ctr];	//Simplify
+				for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
+				{	//For each tech note that follows it
+					n2 = tp->note[ctr2];	//Simplify
+					if(n1->pos == n2->pos)
+					{	//If both tech notes are at the same position
+						if((n1->flags != n2->flags) || (n1->eflags != n2->eflags) || (n1->bendstrength != n2->bendstrength) || (n1->slideend != n2->slideend) || (n1->unpitchend != n2->unpitchend))
+						{	//If the tech notes differ in mostly any way other than which lanes ar eused
+							tp->note[ctr]->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//Apply disjointed status to both
+							tp->note[ctr2]->eflags |= EOF_NOTE_EFLAG_DISJOINTED;
+						}
+					}
+				}
+			}
+			eof_pro_guitar_track_sort_notes(tp);	//Sort the tech notes
+			eof_menu_track_set_tech_view_state(eof_song, eof_selected_track, 0);	//Make the normal note set active
+		}
 
 //Release the Guitar Pro structure's memory
 		for(ctr = 0; ctr < eof_parsed_gp_file->numtracks; ctr++)
