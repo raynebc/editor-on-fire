@@ -222,6 +222,8 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	(void) replace_filename(soggfn, eof_song_path, "silence.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+	#elif defined ALLEGRO_MACOSX
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "/usr/local/bin/oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
@@ -459,6 +461,8 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	}
 	#ifdef ALLEGRO_WINDOWS
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
+	#elif defined ALLEGRO_MACOSX
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "/usr/local/bin/oggenc -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#else
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#endif
@@ -471,6 +475,8 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 		eof_log("\t\toggenc failed.  Retrying by specifying a quality level instead of a target bitrate", 1);
 		#ifdef ALLEGRO_WINDOWS
 			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
+		#elif defined ALLEGRO_MACOSX
+			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "/usr/local/bin/oggenc -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
 		#else
 			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
 		#endif
@@ -564,7 +570,11 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	/* decode MP3 */
 	(void) replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
 	(void) replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
+	#ifdef ALLEGRO_MACOSX
+	(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "/usr/local/bin/lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
+	#else
 	(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
+	#endif
 	(void) eof_system(sys_command);
 
 	/* insert silence */
@@ -662,6 +672,8 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
+	#elif defined ALLEGRO_MACOSX
+		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "/usr/local/bin/oggenc -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#else
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#endif
@@ -674,6 +686,8 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 		eof_log("\t\toggenc failed.  Retrying by specifying a quality level instead of a target bitrate", 1);
 		#ifdef ALLEGRO_WINDOWS
 			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
+		#elif defined ALLEGRO_MACOSX
+			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "/usr/local/bin/oggenc -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
 		#else
 			(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc -o \"%s\" -q 9 \"%s\"", soggfn, wavfn);
 		#endif

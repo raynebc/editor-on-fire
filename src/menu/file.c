@@ -3120,6 +3120,8 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 			#ifdef ALLEGRO_WINDOWS
 				(void) eof_copy_file(file, "eoftemp.mp3");
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "mp3toogg \"eoftemp.mp3\" %s \"%s%s\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, dest_name, file);
+			#elif defined ALLEGRO_MACOSX
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "/usr/local/bin/lame --decode \"%s\" - | /usr/local/bin/oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%s%s\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory, dest_name);
 			#else
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%s%s\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory, dest_name);
 			#endif
@@ -3144,6 +3146,8 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 			(void) snprintf(cfn, sizeof(cfn) - 1, "%soriginal.wav", directory);		//Get the destination path of the original.wav to be created
 			#ifdef ALLEGRO_WINDOWS
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "wavtoogg \"%s\" %s \"%s%s\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory, dest_name);
+			#elif defined ALLEGRO_MACOSX
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "/usr/local/bin/oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s%s\"", eof_ogg_quality[(int)eof_ogg_setting], file, directory, dest_name);
 			#else
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s%s\"", eof_ogg_quality[(int)eof_ogg_setting], file, directory, dest_name);
 			#endif
@@ -7033,6 +7037,8 @@ int eof_menu_file_export_chart_range(void)
 				(void) delete_file(oggpath);	//Delete any existing OGG file with the same name
 				#ifdef ALLEGRO_WINDOWS
 					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], temppath, oggpath);
+				#elif defined ALLEGRO_MACOSX
+					(void) uszprintf(syscommand, (int) sizeof(syscommand), "/usr/local/bin/oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], temppath, oggpath);
 				#else
 					(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], temppath, oggpath);
 				#endif
@@ -7107,6 +7113,8 @@ int eof_menu_file_export_audio_range(void)
 			(void) delete_file(oggpath);	//Delete any existing OGG file with the same name
 			#ifdef ALLEGRO_WINDOWS
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], wavpath, oggpath);
+			#elif defined ALLEGRO_MACOSX
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "/usr/local/bin/oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], wavpath, oggpath);
 			#else
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s\" -o \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], wavpath, oggpath);
 			#endif
@@ -7317,6 +7325,8 @@ int eof_menu_file_export_song_preview(void)
 			(void) replace_filename(targetpath, eof_song_path, "", 1024);	//Build the path for the preview files' parent folder
 			#ifdef ALLEGRO_WINDOWS
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
+			#elif defined ALLEGRO_MACOSX
+				(void) uszprintf(syscommand, (int) sizeof(syscommand), "/usr/local/bin/oggenc --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[eof_ogg_setting], targetpath, wavname, targetpath);
 			#else
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[eof_ogg_setting], targetpath, wavname, targetpath);
 			#endif

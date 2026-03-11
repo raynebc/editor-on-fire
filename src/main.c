@@ -4919,10 +4919,22 @@ int eof_initialize(int argc, char * argv[])
 			(void) delete_file("foo");
 		}
 		else
-		{
-			eof_supports_mp3 = 0;
-			(void) delete_file("foo");
-			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
+		{	//lame and/or oggenc were not able to be called from the current working directory, ie. not in the PATH variable
+			//The audio conversion utilities package offered for use with EOF is expected to install them at /usr/local/bin/
+
+			if((eof_system("/usr/local/bin/lame -S check.wav >foo") == 0) && (eof_system("/usr/local/bin/oggenc -h >foo") == 0))
+			{
+				eof_log("\tMP3 and OGG tools found at /usr/local/bin/", 1);
+				eof_supports_mp3 = 1;
+				(void) delete_file("check.mp3");
+				(void) delete_file("foo");
+			}
+			else
+			{
+				eof_supports_mp3 = 0;
+				(void) delete_file("foo");
+				allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
+			}
 		}
 	#else
 		if((eof_system("lame -S check.wav >foo") == 0) && (eof_system("oggenc -h >foo") == 0))
@@ -4954,6 +4966,8 @@ int eof_initialize(int argc, char * argv[])
 			{	//If the wave file was successfully created
 				#ifdef ALLEGRO_WINDOWS
 				if((eof_system("oggenc2 -o silence.ogg -b 128 silence.wav") == 0) &&
+				#elif defined ALLEGRO_MACOSX
+				if((eof_system("/usr/local/bin/oggenc -o silence.ogg -b 128 silence.wav") == 0) &&
 				#else
 				if((eof_system("oggenc -o silence.ogg -b 128 silence.wav") == 0) &&
 				#endif

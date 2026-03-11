@@ -230,6 +230,11 @@ See the detailed explanation earlier in this document for instructions on how to
 <td>%IF_IS_ANY_ROCK_BAND_3_TRACK%</td>
 <td>Evaluates as true if the active track is compatible with Rock Band 3.</td>
 </tr>
+<tr>
+<td>%IF_IS_BEATABLE_TRACK%</td>
+<td>Evaluates as true if the active track has BEATABLE mode active.</td>
+</tr>
+<tr>
 <td>%IF_IS_DANCE_TRACK%</td>
 <td>Evaluates as true if the active track is the dance track.</td>
 </tr>
@@ -489,6 +494,10 @@ See the detailed explanation earlier in this document for instructions on how to
 <tr>
 <td>%IF_RB_SECTIONS_DEFINED%</td>
 <td>Evaluates as true if the project contains at least one text event that would export as a section usable with Rock Band.</td>
+</tr>
+<tr>
+<td>%IF_EVENT_DEFINED_[TEXT]%</td>
+<td>Evaluates as true if a text event with the specified [TEXT] (exact case-sensitive match) exists in the project.</td>
 </tr>
 <tr>
 <td>%IF_IR_SECTIONS_DEFINED%</td>
@@ -1281,19 +1290,30 @@ These macros are "expanded" into (replaced with) appropriate text which is print
 </tr>
 <tr>
 <td>%TRACK_DIFF_NOTE_COUNT_AND_RATIO_EXPERT_PLUS_BASS%</td>
-<td>Prints the number of expert+ bass notes in the active track difficulty, and the percentage of the track difficulty's total note count that represents.  If the active track difficulty is not Expert in either of the drum tracks, "None" is printed.</td>
+<td>Prints the number of expert+ bass notes in the active track difficulty, and the percentage of the active track difficulty's total note count that represents.  If the active track difficulty is not Expert in either of the drum tracks, "None" is printed.</td>
 </tr>
 <tr>
 <td>%TRACK_DIFF_NOTE_COUNT_AND_RATIO_CYMBALS%</td>
-<td>Prints the number of notes with cymbals in the active track difficulty, and the percentage of the track difficulty's total note count that represents.  If the active track difficulty doesn't have any cymbals, "None" is printed.</td>
+<td>Prints the number of notes with cymbals in the active track difficulty, and the percentage of the active track difficulty's total note count that represents.  If the active track difficulty doesn't have any cymbals, "None" is printed.</td>
 </tr>
 <tr>
 <td>%TRACK_DIFF_NOTE_COUNT_AND_RATIO_MINES%</td>
-<td>Prints the number of notes with mines in the active track difficulty, and the percentage of the track difficulty's total note count that represents.  Also displays the number of individual mine gems and the percentage of the track difficulty's total gem count that represents.  If the active track difficulty doesn't have any mines, "None" is printed.</td>
+<td>Prints the number of notes with mines in the active track difficulty, and the percentage of the active track difficulty's total note count that represents.  Also displays the number of individual mine gems and the percentage of the track difficulty's total gem count that represents.  If the active track difficulty doesn't have any mines, "None" is printed.</td>
 </tr>
 <tr>
 <td>%TRACK_DIFF_NOTE_COUNT_AND_RATIO_ROLLS%</td>
-<td>Prints the number of notes with rolls in the active track difficulty, and the percentage of the track difficulty's total note count that represents.  Also displays the number of individual roll gems and the percentage of the track difficulty's total gem count that represents.  If the active track difficulty doesn't have any rolls, "None" is printed.</td>
+<td>Prints the number of notes with rolls in the active track difficulty, and the percentage of the active track difficulty's total note count that represents.  Also displays the number of individual roll gems and the percentage of the track difficulty's total gem count that represents.  If the active track difficulty doesn't have any rolls, "None" is printed.</td>
+</tr>
+<tr>
+<td>TRACK_DIFF_NOTE_COUNT_AND_RATIO_STATUS_[STATUSES]%</td>
+<td>Prints the number of notes having ALL of the specified statuses, and the percentage of the active track difficulty's total note count that represents.  [STATUSES] is a list of the following entries which can optionally be separated with spaces, commas, underscores, etc.  All text up until the macro's closing percent sign are included:<br><br>
+Pro guitar statuses:<br>
+UP_STRUM:  Pro guitar notes with up strum status<br>
+MID_STRUM:  Pro guitar notes with mid strum status<br>
+DOWN_STRUM:  Pro guitar notes with down strum status<br><br>
+BEATABLE statuses:<br>
+LSNAP:  BEATABLE notes with left snap status<br>
+RSNAP:  BEATABLE notes with right snap status</td>
 </tr>
 <tr>
 <td>%TRACK_DIFF_COUNT_AND_RATIO_PITCHED_LYRIC%</td>

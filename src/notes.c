@@ -432,7 +432,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	unsigned long tracknum, tracksize, ctr, bitmask, pixelcount, count = 0, totalnotecount = 0;
 	EOF_PHRASE_SECTION *phraseptr;
 	char album_art_filename[1024];
-	char *count_string;
+	char *count_string, *color_string, *gem_string, *status_string;
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	EOF_VOCAL_TRACK *vp = NULL;
 	double percent;
@@ -576,10 +576,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//Change the printed text color
-	if(strcasestr_spec(macro, "TEXT_COLOR_"))
+	color_string = strcasestr_spec(macro, "TEXT_COLOR_");		//Get a pointer to the text that is expected to be the color name
+	if(color_string)
 	{
 		int newcolor;
-		char *color_string = strcasestr_spec(macro, "TEXT_COLOR_");	//Get a pointer to the text that is expected to be the color name
 
 		if(eof_read_macro_color(color_string, &newcolor))
 		{	//If the color was successfully parsed
@@ -600,10 +600,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//Change the printed text background color
-	if(strcasestr_spec(macro, "TEXT_BACKGROUND_COLOR_"))
+	color_string = strcasestr_spec(macro, "TEXT_BACKGROUND_COLOR_");	//Get a pointer to the text that is expected to be the color name
+	if(color_string)
 	{
 		int newcolor;
-		char *color_string = strcasestr_spec(macro, "TEXT_BACKGROUND_COLOR_");	//Get a pointer to the text that is expected to be the color name
 
 		if(eof_read_macro_color(color_string, &newcolor))
 		{	//If the color was successfully parsed
@@ -1973,10 +1973,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//Display the number of notes in the active track difficulty with a specific gem combination
-	if(strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_"))
+	gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_");	//Get a pointer to the text that is expected to be the gem combination
+	if(gem_string)
 	{
 		unsigned char gems, toms, cymbals;
-		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_INSTANCES_");	//Get a pointer to the text that is expected to be the gem combination
 
 		if(eof_read_macro_gem_designations(gem_string, &gems, &toms, &cymbals))
 		{	//If the gem designations were successfully parsed
@@ -1988,10 +1988,10 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	}
 
 	//Display the number of notes (and the corresponding percentage that is of all notes) in the active track difficulty with a specific gem combination
-	if(strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_"))
+	gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_");	//Get a pointer to the text that is expected to be the gem combination
+	if(gem_string)
 	{
 		unsigned char gems, cymbals, toms;
-		char *gem_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_INSTANCES_");	//Get a pointer to the text that is expected to be the gem combination
 
 		if(eof_read_macro_gem_designations(gem_string, &gems, &toms, &cymbals))
 		{	//If the gem designations were successfully parsed
@@ -2240,6 +2240,50 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			{
 				snprintf(dest_buffer, dest_buffer_size, "None");
 			}
+		}
+		else
+		{
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		}
+
+		return 1;
+	}
+
+	//Display the number of notes containing all of one or more statuses (and the corresponding percentage that is of all notes) in the active track difficulty
+	status_string = strcasestr_spec(macro, "TRACK_DIFF_NOTE_COUNT_AND_RATIO_STATUS_");	//Get a pointer to the text that is expected to be the status list
+	if(status_string)
+	{
+		unsigned long flaglist = 0;
+
+		(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+		if(totalnotecount)
+		{
+			if(tp)
+			{	//If a pro guitar track is active
+				if(strcasestr_normal(status_string, "UP_STRUM"))
+					flaglist |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Evaluate up strum status
+				if(strcasestr_normal(status_string, "MID_STRUM"))
+					flaglist |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;	//Evaluate mid strum status
+				if(strcasestr_normal(status_string, "DOWN_STRUM"))
+					flaglist |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;	//Evaluate down strum status
+			}
+			else if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+			{	//If a BEATABLE track is active
+				if(strcasestr_normal(status_string, "LSNAP"))
+					flaglist |= EOF_BEATABLE_NOTE_FLAG_LSNAP;		//Evaluate left snap status
+				if(strcasestr_normal(status_string, "RSNAP"))
+					flaglist |= EOF_BEATABLE_NOTE_FLAG_RSNAP;		//Evaluate right snap status
+			}
+
+			for(ctr = 0; ctr < tracksize; ctr++)
+			{	//For each note in the track
+				if((eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (((eof_get_note_flags(eof_song, eof_selected_track, ctr) & flaglist) == flaglist)))
+				{	//If the note is in the active difficulty and has all of the specified statuses
+					count++;
+				}
+			}
+			percent = (double)count * 100.0 / (double)totalnotecount;
+			snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%)", count, (unsigned long)(percent + 0.5));	//Round to the nearest percent
 		}
 		else
 		{
@@ -3406,6 +3450,18 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		return 2;	//False
 	}
 
+	//A track that is in BEATABLE mode is active
+	if(!ustricmp(macro, "IF_IS_BEATABLE_TRACK"))
+	{
+		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+		{	//If the active track is in BEATABLE mode
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	//The dance track is active
 	if(!ustricmp(macro, "IF_IS_DANCE_TRACK"))
 	{
@@ -4350,6 +4406,21 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		{	//If at least one section event is found
 			dest_buffer[0] = '\0';
 			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
+	name_string = strcasestr_spec(macro, "IF_EVENT_DEFINED_");	//Get a pointer to the text that would be the event text
+	if(name_string)
+	{	//If the macro is this string
+		if(eof_read_macro_string(name_string, name_buffer))
+		{	//If the phrase name was successfully parsed
+			if(eof_song_contains_event(eof_song, name_string, 0, 0xFFFF, 0))
+			{	//If the project has the text event
+				dest_buffer[0] = '\0';
+				return 3;	//True
+			}
 		}
 
 		return 2;	//False
