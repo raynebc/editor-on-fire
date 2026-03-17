@@ -25,10 +25,11 @@ A default notes.panel.txt file is provided with EOF for general editing purposes
 <ul>
 <li>Clone Hero panel:  Various details relevant for charting for the game Clone Hero.</li>
 <li>IMMERROCK panel:  Various details relevant for charting for the game IMMERROCK.</li>
-<li>Info panel:  The normal Information panel.</li>
+<li>Information panel:  The normal Information panel displayed by default at the bottom left corner of the EOF program window.</li>
 <li>Note Controls panel:  Lists keyboard shortcuts applicable to the active track.</li>
 <li>Note Counts panel:  Lists the number of instances of each possible gem combination present in the active track.</li>
 <li>Rocksmith panel:  Extensive details and quality checks relevant for charting for the game Rocksmith.</li>
+<li>Rock Band panel:  Various details relevant for charting for the Rock Band franchise of games.</li>
 </ul>
 
 
@@ -156,6 +157,7 @@ Everything from the <b>%IF_IS_VOCAL_TRACK%</b> macro until the end of the line i
 <a name="macrolist"><h1>Macro list</h1>
 <blockquote>
 These are all of the macros that can be used with the Notes panel.  Some macros allow numbers or other text to be defined by the user, such as to cite a particular length, timestamp or name.  In such cases, replace [NUMBER] with numeric digits such as 1000.  In cases of macros that have [NAME], replace that with the desired text, such as the name of a text event.  For [NAME], since spaces cannot be used within the macro, a single underscore _ is interpreted as a space, and two consecutive underscores __ are interpreted as a single underscore.<br><br>
+The display of some of the more processing intensive macros such as Rocksmith related ones that perform tech note processing is disabled during chart playback so the processing doesn't cause the program to hit a CPU bottleneck and impair the playback.<br><br>
 <b><u>Tip:</u></b>  Some web browsers will allow you to hold CTRL and left click on the macro name to highlight the entire name.  This makes it easier to copy to the clipboard and paste into the notes.panel.txt file in order to change what is to be displayed in the Notes panel.  CTRL+click the macro name again or click someplace else on the page in order to deselect it.
 <blockquote>
 

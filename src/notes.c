@@ -1187,7 +1187,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(beatnum < eof_song->beats)
 		{	//The seek position is between the first and last beats
 			if(eof_song->beat[beatnum]->has_ts)
-				snprintf(dest_buffer, dest_buffer_size, "%ld", eof_song->beat[beatnum]->measurenum);
+				snprintf(dest_buffer, dest_buffer_size, "%lu", eof_song->beat[beatnum]->measurenum);
 			else
 				snprintf(dest_buffer, dest_buffer_size, "(TS undefined)");
 		}
@@ -1203,7 +1203,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(beatnum < eof_song->beats)
 		{	//The seek position is between the first and last beats
 			if(eof_song->beat[beatnum]->has_ts)
-				snprintf(dest_buffer, dest_buffer_size, "(Beat %d/%d)", eof_song->beat[beatnum]->beat_within_measure + 1, eof_song->beat[beatnum]->num_beats_in_measure);
+				snprintf(dest_buffer, dest_buffer_size, "(Beat %u/%u)", eof_song->beat[beatnum]->beat_within_measure + 1, eof_song->beat[beatnum]->num_beats_in_measure);
 			else
 				snprintf(dest_buffer, dest_buffer_size, "(TS undefined)");
 		}
@@ -2168,12 +2168,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
 		{	//If a dance track is active
+			unsigned long totalgemcount = 0, minegemcount = 0;
+			double percent2;
+
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				unsigned long totalgemcount = 0, minegemcount = 0;
-				double percent2;
-
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each note in the track
 					if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
@@ -2189,6 +2189,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						totalgemcount += eof_note_count_colors_bitmask(notemask);	//Count the number of all note gems
 					}
 				}
+			}
+			if(totalnotecount && totalgemcount)
+			{	//If the number of notes and gems were suitably counted
 				percent = (double)count * 100.0 / (double)totalnotecount;
 				percent2 = (double)minegemcount * 100.0 / (double)totalgemcount;
 				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%), %lu gems (~%lu%%)", count, (unsigned long)(percent + 0.5), minegemcount, (unsigned long)(percent2 + 0.5));	//Round to the nearest percent
@@ -2211,12 +2214,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
 		{	//If a dance track is active
+			unsigned long totalgemcount = 0, rollgemcount = 0;
+			double percent2;
+
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
-				unsigned long totalgemcount = 0, rollgemcount = 0;
-				double percent2;
-
 				for(ctr = 0; ctr < tracksize; ctr++)
 				{	//For each note in the track
 					if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
@@ -2232,6 +2235,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 						totalgemcount += eof_note_count_colors_bitmask(notemask);	//Count the number of all note gems
 					}
 				}
+			}
+			if(totalnotecount && totalgemcount)
+			{	//If the number of notes and gems were suitably counted
 				percent = (double)count * 100.0 / (double)totalnotecount;
 				percent2 = (double)rollgemcount * 100.0 / (double)totalgemcount;
 				snprintf(dest_buffer, dest_buffer_size, "%lu (~%lu%%), %lu gems (~%lu%%)", count, (unsigned long)(percent + 0.5), rollgemcount, (unsigned long)(percent2 + 0.5));	//Round to the nearest percent

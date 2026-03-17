@@ -420,7 +420,6 @@ MENU eof_note_drum_menu[] =
 	{"Toggle &B cymbal+tom\t" CTRL_NAME "+ALT+B", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
 	{"Toggle G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
 	{"&Accent", NULL, eof_note_drum_accent_menu, 0, NULL},
-	{"&Disjointed", NULL, eof_note_disjointed_menu, 0, NULL},
 	{"&Ghost", NULL, eof_note_drum_ghost_menu, 0, NULL},
 	{"&Flam", NULL, eof_note_drum_flam_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
@@ -469,7 +468,7 @@ MENU eof_note_clear_roll_menu[] =
 	{eof_note_clear_menu_string_2, eof_menu_note_clear_ghost_red, NULL, 0, NULL},
 	{eof_note_clear_menu_string_3, eof_menu_note_clear_ghost_yellow, NULL, 0, NULL},
 	{eof_note_clear_menu_string_4, eof_menu_note_clear_ghost_blue, NULL, 0, NULL},
-	{"&All", eof_menu_note_clear_accent_all, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_ghost_all, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -484,7 +483,6 @@ MENU eof_note_dance_menu[] =
 {
 	{"&Mine", NULL, eof_note_dance_mine_menu, 0, NULL},
 	{"&Roll", NULL, eof_note_dance_roll_menu, 0, NULL},
-	{"&Disjointed", NULL, eof_note_disjointed_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -651,7 +649,6 @@ MENU eof_note_clone_hero_sp_deploy_menu[] =
 
 MENU eof_note_clone_hero_menu[] =
 {
-	{"&Disjointed", NULL, eof_note_disjointed_menu, 0, NULL},
 	{"S&P deploy", NULL, eof_note_clone_hero_sp_deploy_menu, 0, NULL},
 	{"Convert GHL &Open\t" CTRL_NAME "+G", eof_menu_note_convert_to_ghl_open, NULL, 0, NULL},
 	{"&Swap GHL B/W gems", eof_menu_note_swap_ghl_black_white_gems, NULL, 0, NULL},
@@ -707,6 +704,7 @@ MENU eof_note_menu[] =
 	{"Re&Flect", NULL, eof_note_reflect_menu, 0, NULL},
 	{"&Clone Hero", NULL, eof_note_clone_hero_menu, 0, NULL},
 	{"Simplif&Y", NULL, eof_note_simplify_menu, 0, NULL},
+	{"Dis&Jointed", NULL, eof_note_disjointed_menu, 0, NULL},
 	{"Remove statuses", eof_menu_remove_statuses, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -1180,6 +1178,9 @@ void eof_prepare_note_menu(void)
 			{
 				eof_lyric_line_menu[2].flags = D_DISABLED;
 			}
+
+			/* Note>Disjointed */
+			eof_note_menu[25].flags = D_DISABLED | D_HIDDEN;
 		}//PART VOCALS SELECTED
 		else
 		{	//PART VOCALS NOT SELECTED
@@ -1442,6 +1443,9 @@ void eof_prepare_note_menu(void)
 				eof_note_toggle_menu[5].flags = D_DISABLED;
 				eof_note_clear_menu[5].flags = D_DISABLED;
 			}
+
+			/* Note>Disjointed */
+			eof_note_menu[25].flags = 0;
 		}//PART VOCALS NOT SELECTED
 
 		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
@@ -1480,13 +1484,13 @@ void eof_prepare_note_menu(void)
 
 			if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 			{	//If GHL mode is enabled
-				eof_note_clone_hero_menu[2].flags = 0;	//Note>Clone Hero>Convert GHL Open
-				eof_note_clone_hero_menu[3].flags = 0;	//Note>Clone Hero>Swap GHL B/W gems
+				eof_note_clone_hero_menu[1].flags = 0;	//Note>Clone Hero>Convert GHL Open
+				eof_note_clone_hero_menu[2].flags = 0;	//Note>Clone Hero>Swap GHL B/W gems
 			}
 			else
 			{
+				eof_note_clone_hero_menu[1].flags = D_DISABLED;
 				eof_note_clone_hero_menu[2].flags = D_DISABLED;
-				eof_note_clone_hero_menu[3].flags = D_DISABLED;
 			}
 		}
 		else
@@ -11621,8 +11625,8 @@ int eof_menu_note_remove_disjointed(void)
 
 int eof_menu_note_toggle_disjointed(void)
 {
-	(void) eof_menu_note_toggle_flag(1, EOF_LEGACY_TRACK_FORMAT, EOF_NOTE_EFLAG_DISJOINTED);
-	eof_legacy_track_fixup_notes(eof_song, eof_selected_track, 1);
+	(void) eof_menu_note_toggle_flag(1, EOF_ANY_TRACK_FORMAT, EOF_NOTE_EFLAG_DISJOINTED);
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 
 	return 1;
 }

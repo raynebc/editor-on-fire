@@ -120,7 +120,7 @@ Note and Beat Editing:
 
         Pro guitar track:
 
-        Open the selected pro guitar notes in the edit pro guitar
+        Open the clicked pro guitar note in the edit pro guitar
         note dialog.  If no notes are selected, the note under
         the mouse when the middle click is performed is opened in
         the dialog.  If fingering view is active, the "Edit note

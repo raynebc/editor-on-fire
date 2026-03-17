@@ -6224,13 +6224,14 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	long maxlength;
 	long nextnote;
 	unsigned char fretvalue;
-	long next;
+	long next, prev;
 	char allmuted;	//Used to track whether all used strings are string muted
 	EOF_PRO_GUITAR_TRACK * tp;
 	EOF_RS_TECHNIQUES ptr = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	char has_link_next;	//Is set to nonzero if any strings used in the note have sustain status applied
 	EOF_PHRASE_SECTION *pp, *ppp;
 	EOF_PRO_GUITAR_NOTE *np;
+	int notes_added = 0;	//Set to nonzero if a disjointed chord is broken up into multiple notes, which would necessitate a note sort
 
 	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)) || !sp->beats)
 	{
@@ -6278,6 +6279,77 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				break;	//Break from inner for loop
 			}
 		}
+	}
+
+	//Process disjointed status by breaking up affected chords into single gem notes, apply the status to notes at the same difficulty and timestamp
+	for(i = tp->notes; i > 0; i--)
+	{	//For each note (in reverse order)
+		if(tp->note[i-1]->eflags & EOF_NOTE_EFLAG_DISJOINTED)
+		{	//If this note has disjointed status
+			tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Add crazy status to ensure other editor logic allows the overlapping notes with minimal interference
+
+			//Force any other notes at the same timestamp to have this status as well
+			next = eof_fixup_next_pro_guitar_note(tp, i-1);		//See if there's a next note in this track difficulty
+			prev = eof_fixup_previous_pro_guitar_note(tp, i-1);	//See if there's a previous note in this track difficulty
+			while(prev >= 0)
+			{	//Until all such previous notes are exhausted
+				if(tp->note[i-1]->pos != tp->note[prev]->pos)
+				{	//If the previous note is not at the same timestamp as the note being processed
+					break;	//Stop looking at earlier notes
+				}
+				next = prev;	//Otherwise make that previous note the first note the statuses are applied to below
+				prev = eof_fixup_previous_pro_guitar_note(tp, prev);	//See if there's a previous note in this track difficulty
+			}
+			while(next >= 0)
+			{	//If there are notes that may need the statuses applied
+				if(tp->note[i-1]->pos != tp->note[next]->pos)
+				{	//If the note isn't at the same timestamp as the one being processed
+					break;	//No other applicable notes to apply the statuses to
+				}
+				tp->note[next]->eflags |= EOF_NOTE_EFLAG_DISJOINTED;	//The next note is at the same timestamp, so ensure it has disjointed status
+				tp->note[next]->flags |= EOF_NOTE_FLAG_CRAZY;		//As well as crazy status
+				next = eof_fixup_next_pro_guitar_note(tp, next);			//See if there's a next note in this track difficulty
+			}
+
+			//Break up disjointed chords into multiple single gem notes
+			if(eof_note_count_colors_bitmask(tp->note[i-1]->note) > 1)
+			{	//If this note has more than one gem
+				char first_found = 0;
+
+				for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+				{	//For each string in the track
+					if(tp->note[i-1]->note & bitmask)
+					{	//If the note has a gem on this lane
+						if(!first_found)
+						{	//If this is the first gem in the note
+							first_found = 1;	//Track this, it will be left in this note
+						}
+						else
+						{	//Otherwise it will be split off into a new note
+							np = eof_track_add_create_note(sp, track, bitmask, tp->note[i-1]->pos, tp->note[i-1]->length, tp->note[i-1]->type, NULL);	//Initialize a new single note at this position
+
+							if(np)
+							{	//If the new note was created
+								tp->note[i-1]->note &= ~bitmask;		//Remove this gem from the original note
+								np->flags = tp->note[i-1]->flags;			//Clone the flags
+								np->eflags = tp->note[i-1]->eflags;		//Clone the extended flags (this will include the disjointed status flag)
+								np->ghost = tp->note[i-1]->ghost;		//Clone the ghost bitmask
+								np->ghost &= np->note;				//Clear any ghost bits for lanes not used by this note
+								np->finger[ctr] = tp->note[i-1]->finger[ctr];	//Copy this string's defined fingering
+								tp->note[i-1]->finger[ctr] = 0;			//Remove this string's defined fingering from the original note so the rest of the fixup logic doesn't erase the note's defined fingering
+								memcpy(np->frets, tp->note[i-1]->frets, sizeof(np->frets));		//Clone the frets array, allow the fixup logic to clear array elements appropriately
+								notes_added = 1;						//Track that the notes will now need to be re-sorted
+							}
+						}
+					}
+				}
+			}//If this note has more than one gem
+		}//If this note has disjointed status
+	}//For each note (in reverse order)
+
+	if(notes_added)
+	{	//If any disjointed chords were broken up into multiple notes
+		eof_track_sort_notes(sp, track);	//Sort the notes
 	}
 
 	//Check for matching disjointed gems at the same timestamp, which should negate each other (such as when trying to toggle a gem off in a track where disjointed status is applied by force, such as a BEATABLE track)

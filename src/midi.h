@@ -96,7 +96,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format);
 	//Writes a normal MIDI file of the specified chart's vocal and pro guitar tracks to the specified file
 	//For lyrics, each pitched lyric (vocal percussion notes are excluded) is written as a MIDI note on channel 0
 	//For pro guitar notes, each non muted note of each used string is written as a MIDI note
-	//If format is zero, a format suitable for Synthesia or Songs2See is written, where each note within an arrangement uses the same channel, incrementing from 1
+	//If format is zero, a format suitable for Synthesia or Songs2See is written, where each note within a track uses the same channel, all notes from the subsequent track uses 1 channel higher, etc.
 	//If format is nonzero, a format suitable for Fretlight M-Player is written, where low E uses channel 15 and high E uses channel 10 (16 - lane number),
 	//  all velocities are written as 127 and track names are prefixed with "FMP - " as required by the Fretlight M-Player program.
 	//  In this format, each pro guitar/bass track is written twice (once each in Synthesia and Fretlight formats) to allow synth playback of arrangements in Fretlight M-Player

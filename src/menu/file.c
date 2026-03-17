@@ -3055,14 +3055,14 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 	char cfn[1024] = {0};
 	char *src_name;
 
+	if((file == NULL) || (directory == NULL) || (dest_name == NULL))
+		return 3;	//Return invalid filename
+
 	eof_log("eof_audio_to_ogg() entered", 1);
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tInput:  \"%s\"", file);
 	eof_log(eof_log_string, 2);
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tOutput directory:  \"%s\"", directory);
 	eof_log(eof_log_string, 2);
-
-	if((file == NULL) || (directory == NULL) || (dest_name == NULL))
-		return 3;	//Return invalid filename
 
 	src_name = get_filename(file);
 
