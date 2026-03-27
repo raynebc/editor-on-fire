@@ -1082,10 +1082,16 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 			/* compare this note to the next one of the same type
 			   to make sure they don't overlap */
 			next = eof_fixup_next_lyric(tp, i-1);
+			while((next >= 0) && (tp->lyric[next]->type != tp->lyric[i-1]->type))
+			{
+				next = eof_fixup_next_lyric(tp, next);
+			}
 			if(next >= 0)
 			{	//If there is a lyric after this lyric
 				if(tp->lyric[i-1]->pos == tp->lyric[next]->pos)
 				{	//And it is at the same position as this lyric, delete it
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDeleting duplicate lyric at %lums (type %u) \"%s\" due to existing lyric \"%s\"", tp->lyric[next]->pos, tp->lyric[next]->type, tp->lyric[next]->text, tp->lyric[i-1]->text);
+					eof_log(eof_log_string, 1);
 					eof_vocal_track_delete_lyric(tp, next);
 				}
 				else
@@ -1278,6 +1284,10 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	eof_note_type_name[3][0] = ' ';
 	eof_note_type_name[4][0] = ' ';
 	eof_vocal_tab_name[0][0] = ' ';
+	eof_vocal_tab_name[1][0] = ' ';
+	eof_vocal_tab_name[2][0] = ' ';
+	eof_vocal_tab_name[3][0] = ' ';
+	eof_vocal_tab_name[4][0] = ' ';
 	eof_dance_tab_name[0][0] = ' ';
 	eof_dance_tab_name[1][0] = ' ';
 	eof_dance_tab_name[2][0] = ' ';
@@ -1296,10 +1306,10 @@ unsigned char eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 		note_type = eof_get_note_type(sp, track, i);
 		if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{
-			if(sp->vocal_track[sp->track[track]->tracknum]->lyrics)
+			if(note_type < EOF_MAX_DIFFICULTIES)
 			{
-				eof_vocal_tab_name[0][0] = '*';
-				eof_track_diff_populated_status[0] = 1;
+				eof_vocal_tab_name[note_type][0] = '*';
+				eof_track_diff_populated_status[note_type] = 1;
 			}
 		}
 		else
@@ -2893,7 +2903,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		case EOF_LYRIC_PHRASE_SECTION:	//Lyric Phrase section
 			if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 			{	//Lyric phrases are only valid for vocal tracks
-				int retval = eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, difficulty);
+				int retval = eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, 0xFF);
 				if(retval)
 				{	//The lyric line was added
 					sp->vocal_track[tracknum]->line[sp->vocal_track[tracknum]->lines - 1].flags = flags;	//Apply overdrive if applicable
@@ -3118,6 +3128,8 @@ int eof_menu_section_mark(unsigned long section_type)
 				diff = eof_note_type;	//Arpeggio/handshape phrases are exceptions, which will be defined for the active track difficulty
 			if((section_type == EOF_TREMOLO_SECTION) && (eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
 				diff = eof_note_type;	//When dynamic difficulty is in effect, tremolo phrases apply to the active track difficulty
+			if((section_type == EOF_LYRIC_PHRASE_SECTION) && (eof_selected_track == EOF_TRACK_VOCALS))
+				diff = 0;	//Lyric lines are always based on PART VOCALS and shared across harmonies
 			flags = 0;					//All non catalog section types are initialized with no flags
 		}
 		else

@@ -1487,7 +1487,7 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 		{
 			eof_vocals_selected = 1;
 			eof_note_type = eof_note_type_v;	//Retrieve the difficulty number last in effect when the vocal track was last active
-			maxdiff = 0;			//For now, the default lyric set (PART VOCALS) will be selected when changing to PART VOCALS
+			maxdiff = 3;			//Allow Lyrics + HARM1/2/3 tabs when changing to PART VOCALS
 		}
 		else
 		{

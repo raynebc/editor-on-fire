@@ -958,11 +958,11 @@ int eof_menu_edit_paste_vocal_logic(int function)
 
 		if(!oldpaste)
 		{	//If new paste logic is being used, this lyric pastes into a position relative to the start and end of a beat marker
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, 0, temp_lyric.name);
+			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, temp_lyric.type, temp_lyric.name);
 		}
 		else
 		{	//If old paste logic is being used, this lyric pastes into a position relative to the previous pasted note
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, 0, temp_lyric.name);
+			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, temp_lyric.type, temp_lyric.name);
 		}
 		if(new_lyric)
 		{	//If the lyric was successfully created

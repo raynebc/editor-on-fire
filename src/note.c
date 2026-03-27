@@ -1038,11 +1038,22 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 
 		if(notenum < eof_song->vocal_track[0]->lyrics-1)		//If there is another lyric
 		{							//Find its would-be X coordinate (use as X2 for clipping rect)
-			nextnp=eof_song->vocal_track[0]->lyric[notenum+1];
-			if(pos < leftcoord)
-				X2 = 20 + (nextnp->pos) / eof_zoom;
-			else
-				X2 = 20 - ((pos - leftcoord)) + nextnp->pos / eof_zoom;
+			unsigned long nextnum;
+			for(nextnum = notenum + 1; nextnum < eof_song->vocal_track[0]->lyrics; nextnum++)
+			{
+				if(eof_song->vocal_track[0]->lyric[nextnum]->type == np->type)
+				{
+					nextnp = eof_song->vocal_track[0]->lyric[nextnum];
+					break;
+				}
+			}
+			if(nextnp)
+			{
+				if(pos < leftcoord)
+					X2 = 20 + (nextnp->pos) / eof_zoom;
+				else
+					X2 = 20 - ((pos - leftcoord)) + nextnp->pos / eof_zoom;
+			}
 		}
 	}
 
@@ -2125,9 +2136,12 @@ EOF_PHRASE_SECTION *eof_find_lyric_line(unsigned long lyricnum)
 		return NULL;
 	}
 	lyricpos=eof_song->vocal_track[0]->lyric[lyricnum]->pos;
+	unsigned char lyric_type = eof_song->vocal_track[0]->lyric[lyricnum]->type;
 
 	for(linectr=0;linectr<eof_song->vocal_track[0]->lines;linectr++)
 	{
+		if(!eof_lyric_line_applies_to_type(&eof_song->vocal_track[0]->line[linectr], lyric_type))
+			continue;	//If this lyric line doesn't apply to this lyric set, skip it
 		if((eof_song->vocal_track[0]->line[linectr].start_pos <= lyricpos) && (eof_song->vocal_track[0]->line[linectr].end_pos >= lyricpos))
 			return &(eof_song->vocal_track[0]->line[linectr]);	//Line found, return it
 	}

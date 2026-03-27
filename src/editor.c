@@ -52,7 +52,7 @@ EOF_SNAP_DATA eof_tail_snap;
 
 double eof_pos_distance(double p1, double p2)
 {
-//	eof_log("eof_pos_distance() entered");
+	//	eof_log("eof_pos_distance() entered");
 
 	if(p1 > p2)
 	{
@@ -88,7 +88,7 @@ void eof_select_beat(unsigned long beat)
 
 void eof_get_snap_ts(EOF_SNAP_DATA * sp, unsigned long beat)
 {
-//	eof_log("eof_get_snap_ts() entered");
+	//	eof_log("eof_get_snap_ts() entered");
 
 	unsigned long tsbeat = 0, i;
 
@@ -146,7 +146,7 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, unsigned long beat)
 
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 {
-//	eof_log("eof_snap_logic() entered");
+	//	eof_log("eof_snap_logic() entered");
 
 	unsigned long least = ULONG_MAX;	//Initialize to an invalid value
 	unsigned long i;
@@ -443,7 +443,7 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 {
 	char measure_snap = 0;	//Unless a custom per-measure grid snap is defined, all grid snaps are per beat
 	int interval = 4;
-//	eof_log("eof_snap_length_logic() entered");
+	//	eof_log("eof_snap_length_logic() entered");
 
 	if(!sp)
 	{
@@ -876,7 +876,7 @@ int eof_find_beat_interval_position(unsigned long beat, unsigned char intervalva
 
 void eof_read_editor_keys(void)
 {
-//	eof_log("eof_read_editor_keys() entered");
+	//	eof_log("eof_read_editor_keys() entered");
 
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used for simplifying note placement logic
@@ -912,52 +912,52 @@ void eof_read_editor_keys(void)
 		eof_read_controller(&eof_drums);
 	}
 
-///DEBUG
-if(eof_key_code == KEY_PAUSE)
-{
-	eof_use_key();
-	//Debug action here
-
-	if(eof_song_loaded)
+	///DEBUG
+	if(eof_key_code == KEY_PAUSE)
 	{
-	}
-}
+		eof_use_key();
+		//Debug action here
 
-///ALT handling testing
-/*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
-{
-	if(KEY_EITHER_SHIFT)
-	{	//SHIFT is held
-		if(KEY_EITHER_CTRL)
-		{	//CTRL and SHIFT are held
-			allegro_message("CTRL+ALT+SHIFT+M captured!");
+		if(eof_song_loaded)
+		{
+		}
+	}
+
+	///ALT handling testing
+	/*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
+	{
+		if(KEY_EITHER_SHIFT)
+		{	//SHIFT is held
+			if(KEY_EITHER_CTRL)
+			{	//CTRL and SHIFT are held
+				allegro_message("CTRL+ALT+SHIFT+M captured!");
+			}
+			else
+			{	//Only SHIFT is held
+				allegro_message("ALT+SHIFT+M captured!");
+			}
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 		}
 		else
-		{	//Only SHIFT is held
-			allegro_message("ALT+SHIFT+M captured!");
-		}
-		eof_shift_used = 1;	//Track that the SHIFT key was used
-	}
-	else
-	{	//SHIFT is not held
-		if(KEY_EITHER_CTRL)
-		{	//CTRL is held
-			allegro_message("CTRL+ALT+M captured!");
-		}
-		else
-		{	//Neither CTRL nor SHIFT are held
-			allegro_message("ALT+M captured!");
+		{	//SHIFT is not held
+			if(KEY_EITHER_CTRL)
+			{	//CTRL is held
+				allegro_message("CTRL+ALT+M captured!");
+			}
+			else
+			{	//Neither CTRL nor SHIFT are held
+				allegro_message("ALT+M captured!");
+			}
 		}
 	}
-}
-if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
-{
-	allegro_message("ALT+V captured!");
-}
-*/
+	if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
+	{
+		allegro_message("ALT+V captured!");
+	}
+	*/
 
 
-/* keyboard shortcuts that may or may not be used when the chart/catalog is playing */
+	/* keyboard shortcuts that may or may not be used when the chart/catalog is playing */
 
 	/* seek to first note (CTRL+Home) */
 	/* select previous (SHIFT+Home) */
@@ -2545,7 +2545,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 	}
 
-/* keyboard shortcuts that only apply when the chart is playing (non drum record type input methods) */
+	/* keyboard shortcuts that only apply when the chart is playing (non drum record type input methods) */
 
 	if(!eof_music_paused && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 	{	//If the chart is playing and a drum track is not active
@@ -2633,7 +2633,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, 0, "");
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, eof_note_type, "");
 				}
 				else
 				{
@@ -2669,7 +2669,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 						eof_entering_note_lyric->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, 0, "");
+					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, eof_note_type, "");
 					if(new_lyric)
 					{
 						eof_entering_note_lyric = new_lyric;
@@ -2772,28 +2772,28 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}//If the input method is guitar strum
 	}//If the chart is playing and PART DRUMS is not active
 
-/* keyboard shortcuts that apply when the chart is paused and nothing is playing */
+	/* keyboard shortcuts that apply when the chart is paused and nothing is playing */
 
 	if(eof_music_paused && !eof_music_catalog_playback)
 	{	//If the chart is paused and no catalog entries are playing
-	/* lower playback speed (;) */
+		/* lower playback speed (;) */
 		if(eof_key_char == ';')
 		{
 			(void) eof_menu_edit_playback_speed_helper_slower();
 			eof_use_key();
 		}
 
-	/* increase playback speed (') */
+		/* increase playback speed (') */
 		if(eof_key_char == '\'')
 		{
 			(void) eof_menu_edit_playback_speed_helper_faster();
 			eof_use_key();
 		}
 
-	/* toggle anchor (A) */
-	/* select all (CTRL+A) */
-	/* anchor beat (SHIFT+A) */
-	/* toggle accent (CTRL+SHIFT+A in a pro guitar track) */
+		/* toggle anchor (A) */
+		/* select all (CTRL+A) */
+		/* anchor beat (SHIFT+A) */
+		/* toggle accent (CTRL+SHIFT+A in a pro guitar track) */
 		if(eof_key_char == 'a')
 		{
 			if(!KEY_EITHER_CTRL)
@@ -2823,8 +2823,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* decrease note length ( [ , SHIFT+[ or CTRL+SHIFT+[ ) */
-	/* move notes backward one grid snap position ( CTRL+[ ) */
+		/* decrease note length ( [ , SHIFT+[ or CTRL+SHIFT+[ ) */
+		/* move notes backward one grid snap position ( CTRL+[ ) */
 		if(eof_key_code == KEY_OPENBRACE)
 		{
 			if(!KEY_EITHER_CTRL || (KEY_EITHER_CTRL && KEY_EITHER_SHIFT))
@@ -2883,8 +2883,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* increase note length ( ] , SHIFT+ ] or CTRL+SHIFT+] ) */
-	/* move notes forward one grid snap position ( CTRL+] ) */
+		/* increase note length ( ] , SHIFT+ ] or CTRL+SHIFT+] ) */
+		/* move notes forward one grid snap position ( CTRL+] ) */
 		if(eof_key_code == KEY_CLOSEBRACE)
 		{
 			if(!KEY_EITHER_CTRL || (KEY_EITHER_CTRL && KEY_EITHER_SHIFT))
@@ -2943,9 +2943,9 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* toggle tapping status (CTRL+T in a pro guitar track) */
-	/* toggle crazy status (T) */
-	/* add tone change (CTRL+SHIFT+T in a pro guitar track) */
+		/* toggle tapping status (CTRL+T in a pro guitar track) */
+		/* toggle crazy status (T) */
+		/* add tone change (CTRL+SHIFT+T in a pro guitar track) */
 		if((eof_key_char == 't') && !KEY_EITHER_ALT)
 		{
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
@@ -2972,7 +2972,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 
-	/* Mark tremolo (CTRL+SHIFT+O) */
+		/* Mark tremolo (CTRL+SHIFT+O) */
 		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_key_char == 'o'))
 		{
 			(void) eof_menu_tremolo_mark();
@@ -2980,11 +2980,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* select like (CTRL+L) */
-	/* precise select like (SHIFT+L) */
-	/* edit lyric (L in PART VOCALS) */
-	/* set slide end fret (CTRL+SHIFT+L in a pro guitar track) */
-	/* toggle beatable left snap (CTRL+SHIFT+L in a beatable track) */
+		/* select like (CTRL+L) */
+		/* precise select like (SHIFT+L) */
+		/* edit lyric (L in PART VOCALS) */
+		/* set slide end fret (CTRL+SHIFT+L in a pro guitar track) */
+		/* toggle beatable left snap (CTRL+SHIFT+L in a beatable track) */
 		if(eof_key_char == 'l')
 		{
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
@@ -3026,8 +3026,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 
-	/* toggle freestyle (F in a vocal track) */
-	/* toggle flam (SHIFT+F in a drum track */
+		/* toggle freestyle (F in a vocal track) */
+		/* toggle flam (SHIFT+F in a drum track */
 		if((eof_key_char == 'f') && !KEY_EITHER_CTRL && !KEY_EITHER_WIN)
 		{	//If neither CTRL nor the Windows key are held
 			if(KEY_EITHER_SHIFT)
@@ -3049,10 +3049,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 
-	/* deselect all (CTRL+D) */
-	/* double BPM (CTRL+SHIFT+D) */
-	/* conditional deselect (ALT+D) */
-	/* toggle pro guitar strum down (SHIFT+D in a pro guitar track, non Feedback input modes) */
+		/* deselect all (CTRL+D) */
+		/* double BPM (CTRL+SHIFT+D) */
+		/* conditional deselect (ALT+D) */
+		/* toggle pro guitar strum down (SHIFT+D in a pro guitar track, non Feedback input modes) */
 		if(eof_key_char == 'd')
 		{
 			if(KEY_EITHER_CTRL)
@@ -3087,11 +3087,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 
-	/* cycle HOPO status (H in a legacy track) */
-	/* toggle hammer on status (H in a pro guitar track) */
-	/* toggle harmonic (CTRL+H in a pro guitar track) */
-	/* toggle pinch harmonic (SHIFT+H in a pro guitar track) */
-	/* mark handshape phrase (CTRL+SHIFT+H in a pro guitar track) */
+		/* cycle HOPO status (H in a legacy track) */
+		/* toggle hammer on status (H in a pro guitar track) */
+		/* toggle harmonic (CTRL+H in a pro guitar track) */
+		/* toggle pinch harmonic (SHIFT+H in a pro guitar track) */
+		/* mark handshape phrase (CTRL+SHIFT+H in a pro guitar track) */
 		if((eof_key_char == 'h') && !KEY_EITHER_ALT)
 		{
 			if(KEY_EITHER_CTRL)
@@ -3131,8 +3131,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* toggle unpitched slide (CTRL+U in a pro guitar track) */
-	/* toggle pro guitar strum up (SHIFT+U in a pro guitar track, non Feedback input modes) */
+		/* toggle unpitched slide (CTRL+U in a pro guitar track) */
+		/* toggle pro guitar strum up (SHIFT+U in a pro guitar track, non Feedback input modes) */
 		if(eof_key_char == 'u')
 		{
 			if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
@@ -3150,9 +3150,9 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* toggle pull off status (P in a pro guitar track) */
-	/* place Rocksmith phrase (SHIFT+P in a pro guitar track) */
-	/* toggle pop status (CTRL+SHIFT+P in a pro guitar track) */
+		/* toggle pull off status (P in a pro guitar track) */
+		/* place Rocksmith phrase (SHIFT+P in a pro guitar track) */
+		/* toggle pop status (CTRL+SHIFT+P in a pro guitar track) */
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
 			if(eof_key_char == 'p')
@@ -3177,7 +3177,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 
-	/* toggle open hi hat (SHIFT+O) */
+		/* toggle open hi hat (SHIFT+O) */
 		if((eof_key_char == 'o') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -3185,7 +3185,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* toggle pedal controlled hi hat (SHIFT+P in the PS drum track) */
+		/* toggle pedal controlled hi hat (SHIFT+P in the PS drum track) */
 		if((eof_key_char == 'p') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM_PS))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -3193,9 +3193,9 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* toggle rim shot (CTRL+SHIFT+R in the Phase Shift drum track) */
-	/* toggle beatable right snap (CTRL+SHIFT+R in a BEATABLE track) */
-	/* place RS moveR phrase (CTRL+SHIFT+R in a pro guitar track) */
+		/* toggle rim shot (CTRL+SHIFT+R in the Phase Shift drum track) */
+		/* toggle beatable right snap (CTRL+SHIFT+R in a BEATABLE track) */
+		/* place RS moveR phrase (CTRL+SHIFT+R in a pro guitar track) */
 		if((eof_key_char == 'r') && KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//If R, CTRL and SHIFT are all held
 			if(eof_selected_track == EOF_TRACK_DRUM_PS)
@@ -3218,10 +3218,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 
-	/* mark/remark slider (SHIFT+S, in a five lane guitar/bass track) */
-	/* place Rocksmith section (SHIFT+S, in a pro guitar track) */
-	/* toggle sizzle hi hat (SHIFT+S, in the PS drum track) */
-	/* split lyric (SHIFT+S in PART VOCALS) */
+		/* mark/remark slider (SHIFT+S, in a five lane guitar/bass track) */
+		/* place Rocksmith section (SHIFT+S, in a pro guitar track) */
+		/* toggle sizzle hi hat (SHIFT+S, in the PS drum track) */
+		/* split lyric (SHIFT+S in PART VOCALS) */
 		if((eof_key_char == 's') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//S and SHIFT are held, but CTRL is not
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
@@ -3252,9 +3252,9 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If the active track is a pro guitar track
-	/* edit pro guitar note (N in a pro guitar track) */
-	/* toggle linknext status (SHIFT+N in a pro guitar track) */
-	/* toggle pre-bend status (CTRL+SHIFT+N in a pro guitar track) */
+			/* edit pro guitar note (N in a pro guitar track) */
+			/* toggle linknext status (SHIFT+N in a pro guitar track) */
+			/* toggle pre-bend status (CTRL+SHIFT+N in a pro guitar track) */
 			if(eof_key_char == 'n')
 			{
 				if(KEY_EITHER_CTRL)
@@ -3282,14 +3282,14 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 			}
 
-	/* edit pro guitar fret/finger values (F in a pro guitar track) */
+			/* edit pro guitar fret/finger values (F in a pro guitar track) */
 			if((eof_key_char == 'f') && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && !KEY_EITHER_WIN)
 			{
 				(void) eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
 				eof_use_key();
 			}
 
-	/* set fret hand position (SHIFT+F in a pro guitar track) */
+			/* set fret hand position (SHIFT+F in a pro guitar track) */
 			if((eof_key_char == 'f') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -3297,7 +3297,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_use_key();
 			}
 
-	/* list fret hand positions (CTRL+SHIFT+F in a pro guitar track) */
+			/* list fret hand positions (CTRL+SHIFT+F in a pro guitar track) */
 			if((eof_key_char == 'f') && KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -3305,7 +3305,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_use_key();
 			}
 
-	/* toggle slap status (CTRL+SHIFT+S in a pro guitar track) */
+			/* toggle slap status (CTRL+SHIFT+S in a pro guitar track) */
 			if((eof_key_char == 's') && KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT)
 			{	//If both CTRL and SHIFT are held, but ALT is not
 				(void) eof_menu_note_toggle_slap();
@@ -3313,9 +3313,9 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 			}
 
-	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
-	/* set pro guitar finger values (CTRL+~, CTRL+#, when fingering view is enabled) */
-	/* toggle ghost status (CTRL+G in a pro guitar track) */
+			/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
+			/* set pro guitar finger values (CTRL+~, CTRL+#, when fingering view is enabled) */
+			/* toggle ghost status (CTRL+G in a pro guitar track) */
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
 				//CTRL+# or CTRL+Fn # in a pro guitar track sets the fret values of selected notes
@@ -3459,8 +3459,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}//If CTRL is held but SHIFT is not
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{	//If SHIFT is held, but CTRL is not
-	/* set fret value shortcut bitmask (SHIFT+Numpad #) */
-	/* toggle string mute status (SHIFT+X) */
+				/* set fret value shortcut bitmask (SHIFT+Numpad #) */
+				/* toggle string mute status (SHIFT+X) */
 				if(eof_key_code == KEY_0_PAD)
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -3530,7 +3530,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}//If SHIFT is held, but CTRL is not
 		}//If the active track is a pro guitar track
 
-	/* set BEATABLE slide to lane (CTRL+~, CTRL+# in a BEATABLE track) */
+		/* set BEATABLE slide to lane (CTRL+~, CTRL+# in a BEATABLE track) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 		{	//If CTRL is held but SHIFT is not
 			if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
@@ -3563,7 +3563,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 
-	/* halve BPM (CTRL+SHIFT+X) */
+		/* halve BPM (CTRL+SHIFT+X) */
 		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_key_char == 'x'))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -3571,7 +3571,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* set active difficulty number (CTRL+SHIFT+~, CTRL+SHIFT+#, CTRL+SHIFT+Fn #) */
+		/* set active difficulty number (CTRL+SHIFT+~, CTRL+SHIFT+#, CTRL+SHIFT+Fn #) */
 		if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//If both CTRL and SHIFT are held
 			if(eof_key_code == KEY_TILDE)
@@ -3737,8 +3737,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}//If both CTRL and SHIFT are held
 
-	/* set mini piano octave focus (SHIFT+# in a vocal track) */
-	/* toggle lane (SHIFT+# in a non vocal track) */
+		/* set mini piano octave focus (SHIFT+# in a vocal track) */
+		/* toggle lane (SHIFT+# in a non vocal track) */
 		if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 		{	//If SHIFT is held down and CTRL is not
 			if(eof_vocals_selected)
@@ -3818,7 +3818,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 #endif
 
-	/* Lyric import (SHIFT+F8) */
+			/* Lyric import (SHIFT+F8) */
 			if(eof_key_code == KEY_F8)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -4118,7 +4118,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}//If the mouse is in the fretboard area
 		}//If CTRL is not held down and the input method is rex mundi or Feedback
 
-	/* add beat (CTRL+Ins) */
+		/* add beat (CTRL+Ins) */
 		if(eof_key_code == KEY_INSERT)
 		{
 			if(KEY_EITHER_CTRL)
@@ -4128,11 +4128,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}
 
-	/* delete note (Del) */
-	/* delete beat (CTRL+Del) */
-	/* delete effective fret hand position (SHIFT+Del in a pro guitar track when no notes are selected) */
-	/* delete notes and any fret hand positions at their timestamps (SHIFT+Del in a pro guitar track when any notes are selected) */
-	/* delete note with lower difficulties (CTRL+SHIFT+Del) */
+		/* delete note (Del) */
+		/* delete beat (CTRL+Del) */
+		/* delete effective fret hand position (SHIFT+Del in a pro guitar track when no notes are selected) */
+		/* delete notes and any fret hand positions at their timestamps (SHIFT+Del in a pro guitar track when any notes are selected) */
+		/* delete note with lower difficulties (CTRL+SHIFT+Del) */
 		if(eof_key_code == KEY_DEL)
 		{
 			if(KEY_EITHER_SHIFT)
@@ -4175,8 +4175,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* place bookmark (CTRL+Numpad #) */
-	/* seek to bookmark (Numpad #) */
+		/* place bookmark (CTRL+Numpad #) */
+		/* seek to bookmark (Numpad #) */
 		if(!KEY_EITHER_SHIFT)
 		{	//If SHIFT is not held
 			if(eof_key_code == KEY_0_PAD)
@@ -4301,28 +4301,28 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 		}//If SHIFT is not held
 
-	/* paste (CTRL+V) */
+		/* paste (CTRL+V) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'v'))
 		{	//If CTRL is held and SHIFT is not
 			(void) eof_menu_edit_paste();
 			eof_use_key();
 		}
 
-	/* paste at mouse (SHIFT+Insert) */
+		/* paste at mouse (SHIFT+Insert) */
 		if(eof_paste_at_mouse)
 		{	//If eof_editor_logic_common() detected SHIFT+Insert
 			(void) eof_menu_edit_paste_at_mouse();
 			eof_paste_at_mouse = 0;
 		}
 
-	/* toggle Notes panel (CTRL+P) */
+		/* toggle Notes panel (CTRL+P) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && (eof_key_char == 'p'))
 		{	//If CTRL is held and SHIFT is not
 			(void) eof_display_notes_panel();
 			eof_use_key();
 		}
 
-	/* scroll by partial screen (ALT+scroll wheel) */
+		/* scroll by partial screen (ALT+scroll wheel) */
 		if(KEY_EITHER_ALT && eof_mickey_z)
 		{
 			eof_song_seek_partial_screen(eof_mickey_z);
@@ -4331,7 +4331,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	}//If the chart is paused and no catalog entries are playing
 	else if(!eof_music_catalog_playback)
 	{	//If the chart is playing
-	/* lower playback speed (;) */
+		/* lower playback speed (;) */
 		if(eof_key_code == KEY_SEMICOLON)
 		{	//Read the scan code because the ASCII code cannot represent CTRL or SHIFT with the semicolon key
 			if(eof_playback_speed != 100)
@@ -4351,7 +4351,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			eof_use_key();
 		}
 
-	/* increase playback speed (') */
+		/* increase playback speed (') */
 		if(eof_key_code == KEY_QUOTE)
 		{	//Read the scan code because the ASCII code cannot represent CTRL or SHIFT with the apostrophe key
 			if(eof_playback_speed != 1000)
@@ -4483,9 +4483,9 @@ void eof_editor_drum_logic(void)
 
 void eof_editor_logic(void)
 {
-//	eof_log("eof_editor_logic() entered");
+	//	eof_log("eof_editor_logic() entered");
 
-	unsigned long i, note, notepos, numtabs;
+	unsigned long i, note, notepos;
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
 	EOF_NOTE * new_note = NULL;
@@ -5287,65 +5287,9 @@ void eof_editor_logic(void)
 		}
 	}//If the chart is not paused
 
-	/* select difficulty */
-	numtabs = eof_get_number_displayed_tabs();
-	eof_difficulty_tab_boundary_x1 = 13;
-	eof_difficulty_tab_boundary_x2 = 12 + numtabs * 80 + 12 - 1 - 1;
-	eof_difficulty_tab_boundary_y1 = eof_window_editor->y + 7;
-	eof_difficulty_tab_boundary_y2 = eof_window_editor->y + 20 + 8 - 1;
-	if((eof_scaled_mouse_x >= eof_difficulty_tab_boundary_x1) && (eof_scaled_mouse_x <= eof_difficulty_tab_boundary_x2) && (eof_scaled_mouse_y >= eof_difficulty_tab_boundary_y1) && (eof_scaled_mouse_y <= eof_difficulty_tab_boundary_y2))
-	{	//If the left mouse button is held down and the mouse is over one of the difficulty tabs, and full screen 3d mode isn't in effect
-		eof_mouse_area = 1;
-		if((mouse_b & 1) && !eof_full_screen_3d)
-		{	//If the left mouse button is held down, and full screen 3d mode isn't in effect
-			eof_hover_type = (eof_scaled_mouse_x - 12) / 80;	//Determine which tab number was clicked
-			if(eof_hover_type < 0)
-			{	//Bounds check
-				eof_hover_type = 0;
-			}
-			else if(eof_hover_type >= numtabs)
-			{
-				eof_hover_type = numtabs - 1;
-			}
-			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-			{	//If this track is not limited to 5 difficulties
-				if(eof_hover_type == numtabs - 1)
-				{	//If the last tab was clicked
-					eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - 1;	//Change to the highest difficulty in the track
-				}
-				else if(eof_hover_type > 0)
-				{	//If the first tab (which will already change to the track's lowest difficulty) wasn't clicked
-					if(eof_note_type < numtabs / 2)
-					{	//If the tabs represent the lowest difficulties
-						eof_hover_type = eof_hover_type - 1;
-					}
-					else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - (numtabs / 2))
-					{	//If the tabs represent the highest difficulties
-						eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - numtabs + 1 + eof_hover_type;
-					}
-					else
-					{	//If the center tab represents the active difficulty
-						eof_hover_type = eof_hover_type + eof_note_type - (numtabs / 2);
-					}
-				}
-				mouse_b &= ~1;	//Clear the left mouse button status or else the tab logic will run during next loop and cause the highest difficulty to be accepted
-			}
-			if(eof_note_type != eof_hover_type)
-			{
-				eof_note_type = eof_hover_type;
-				eof_mix_find_claps();
-				eof_mix_start_helper();
-				eof_fix_window_title();
-				(void) eof_detect_difficulties(eof_song, eof_selected_track);
-				eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
-				eof_ch_sp_solution = NULL;
-			}
-		}
-	}
-	else
-	{
-		eof_hover_type = -1;
-	}
+
+
+
 
 	if(((mouse_b & 2) || (eof_key_code == KEY_INSERT)) && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
 	{	//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
@@ -5419,15 +5363,11 @@ void eof_editor_logic(void)
 		eof_show_mouse(NULL);
 	}//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 
-	if(!(mouse_b & 1))
-	{	//If the left mouse button is not being held at this point
-		eof_mouse_bound = eof_mouse_boundary_x1 = eof_mouse_boundary_x2 = eof_mouse_boundary_y1 = eof_mouse_boundary_y2 = 0;	//Release the mouse from its boundary
-	}
 }
 
 void eof_vocal_editor_logic(void)
 {
-//	eof_log("eof_vocal_editor_logic() entered");
+	//	eof_log("eof_vocal_editor_logic() entered");
 
 	unsigned long i, notepos;
 	unsigned long tracknum;
@@ -6052,7 +5992,7 @@ void eof_vocal_editor_logic(void)
 							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - 1);
 						}
 						eof_snap_length_logic(&eof_tail_snap);
-//							allegro_message("%d, %d\n%lu, %lu", eof_tail_snap.length, eof_tail_snap.beat, eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i), eof_song->beat[eof_tail_snap.beat]->pos);	//Debugging
+						//							allegro_message("%d, %d\n%lu, %lu", eof_tail_snap.length, eof_tail_snap.beat, eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i), eof_song->beat[eof_tail_snap.beat]->pos);	//Debugging
 						eof_song->vocal_track[tracknum]->lyric[i]->length -= eof_tail_snap.length;
 						if(eof_song->vocal_track[tracknum]->lyric[i]->length > 1)
 						{
@@ -6192,11 +6132,16 @@ void eof_vocal_editor_logic(void)
 		}//Full screen 3D view is not in effect
 		eof_show_mouse(NULL);
 	}//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
+
+	if(!(mouse_b & 1))
+	{	//If the left mouse button is not being held at this point
+		eof_mouse_bound = eof_mouse_boundary_x1 = eof_mouse_boundary_x2 = eof_mouse_boundary_y1 = eof_mouse_boundary_y2 = 0;	//Release the mouse from its boundary
+	}
 }
 
 int eof_get_ts_text(unsigned long beat, char * buffer)
 {
-//	eof_log("eof_get_ts_text() entered");
+	//	eof_log("eof_get_ts_text() entered");
 	int ret = 0;
 
 	if(!buffer || !eof_song || (beat >= eof_song->beats))
@@ -6333,7 +6278,7 @@ void eof_render_editor_notes(EOF_WINDOW *window)
 
 void eof_render_editor_window(EOF_WINDOW *window)
 {
-//	eof_log("eof_render_editor_window() entered");
+	//	eof_log("eof_render_editor_window() entered");
 	EOF_PRO_GUITAR_TRACK *tp = NULL;
 	char render_tech_notes = 0;
 	unsigned long temptrack;
@@ -6345,7 +6290,7 @@ void eof_render_editor_window(EOF_WINDOW *window)
 	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the user disabled the 2D window's rendering (or enabled full screen 3D view)
 		return;											//Return immediately
 
-//	eof_log("\tRendering piano roll.", 3);
+	//	eof_log("\tRendering piano roll.", 3);
 	if(eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 	{	//If this is a vocal track
 		eof_render_vocal_editor_window(window);
@@ -6379,7 +6324,7 @@ void eof_render_editor_window(EOF_WINDOW *window)
 
 void eof_render_vocal_editor_window(EOF_WINDOW *window)
 {
-//	eof_log("eof_render_vocal_editor_window() entered");
+	//	eof_log("eof_render_vocal_editor_window() entered");
 
 	unsigned long i;
 	unsigned long tracknum;
@@ -6390,6 +6335,7 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	int n;
 	int ny;
 	int red = 0;
+	unsigned char lyric_type = eof_note_type;
 
 	if(!eof_song_loaded || (eof_song->track[eof_selected_track]->track_format != EOF_VOCAL_TRACK_FORMAT) || !window)
 		return;
@@ -6415,12 +6361,16 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	/* draw lyric lines */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lines; i++)
 	{ 	//The -5 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
+		if(!eof_lyric_line_applies_to_type(&eof_song->vocal_track[tracknum]->line[i], lyric_type))
+			continue;	//If this lyric line doesn't apply to the active lyric set, skip it
 		rectfill(window->screen, lpos + eof_song->vocal_track[tracknum]->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, lpos + eof_song->vocal_track[tracknum]->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track[tracknum]->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
 	}
 
 	start = eof_determine_piano_roll_left_edge();
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{	//For each lyric
+		if(eof_song->vocal_track[tracknum]->lyric[i]->type != lyric_type)
+			continue;	//If this lyric doesn't apply to the active lyric set, skip it
 		if(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length >= start)
 		{	//If the lyric would render at or after the left edge of the piano roll
 			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused && (eof_hover_note == i))
@@ -6547,7 +6497,7 @@ void eof_render_editor_window_2(void)
 
 unsigned long eof_determine_piano_roll_left_edge(void)
 {
-//	eof_log("eof_determine_piano_roll_left_edge() entered");
+	//	eof_log("eof_determine_piano_roll_left_edge() entered");
 
 	unsigned long pos = eof_music_pos.value / eof_zoom;
 
@@ -6562,7 +6512,7 @@ unsigned long eof_determine_piano_roll_left_edge(void)
 
 unsigned long eof_determine_piano_roll_right_edge(void)
 {
-//	eof_log("eof_determine_piano_roll_right_edge() entered", 1);
+	//	eof_log("eof_determine_piano_roll_right_edge() entered", 1);
 
 	unsigned long pos = eof_music_pos.value / eof_zoom;
 
@@ -6576,7 +6526,7 @@ unsigned long eof_determine_piano_roll_right_edge(void)
 
 void eof_render_editor_window_common(EOF_WINDOW *window)
 {
-//	eof_log("eof_render_editor_window_common() entered");
+	//	eof_log("eof_render_editor_window_common() entered");
 
 	unsigned long i, j, ctr, notepos, markerlength, tracksize;
 	int pos = eof_music_pos.value / eof_zoom;	//Current seek position
@@ -6676,7 +6626,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 		}
 
-	/* draw SP sections */
+		/* draw SP sections */
 		numsections = eof_get_num_star_power_paths(eof_song, eof_selected_track);
 		for(i = 0; i < numsections; i++)
 		{	//For each solo section in the track
@@ -6693,7 +6643,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
-	/* draw track tuning */
+			/* draw track tuning */
 			if((pos <= 320) && !eof_legacy_view)
 			{	//If the area left of the first beat marker is visible and legacy view is not in effect
 				int notenum;
@@ -6709,7 +6659,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				}
 			}
 
-	/* draw arpeggio sections */
+			/* draw arpeggio sections */
 			for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 			{	//For each arpeggio section in the track
 				sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
@@ -6725,7 +6675,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				}
 			}
 
-	/* draw undefined legacy mask markers */
+			/* draw undefined legacy mask markers */
 			if(eof_legacy_view)
 			{	//If legacy view is in effect
 				int markerpos;
@@ -6761,7 +6711,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				}
 			}
 
-	/* draw capo position */
+			/* draw capo position */
 			if(tp->capo)
 			{	//If the track uses a capo
 				if(pos <= 320)
@@ -6788,7 +6738,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				}
 			}
 
-	/* draw drum notes with too many gems markers */
+			/* draw drum notes with too many gems markers */
 			if(eof_track_is_drums_rock_mode(eof_song, eof_selected_track))
 			{	//If Drums Rock mode is enabled
 				int markerpos;
@@ -7056,8 +7006,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				textprintf_centre_ex(window->screen, eof_mono_font, lpos + (msec / eof_zoom), EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%ds", psec);
 			}
 		}
-///		if(++label_ctr >= label_one_of_every)
-///			label_ctr = 1;	//Once enough timestamp labels were skipped based on the zoom level, reset this counter
+	///		if(++label_ctr >= label_one_of_every)
+	///			label_ctr = 1;	//Once enough timestamp labels were skipped based on the zoom level, reset this counter
 	}
 	vline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, bottomlane_y + 1, eof_color_white);
 
@@ -7410,7 +7360,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 
 void eof_render_editor_window_common2(EOF_WINDOW *window)
 {
-//	eof_log("eof_render_editor_window_common2() entered");
+	//	eof_log("eof_render_editor_window_common2() entered");
 
 	int pos = eof_music_pos.value / eof_zoom;	//Current seek position compensated for zoom level
 	int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
@@ -7611,8 +7561,8 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 				}
 				textout_ex(window->screen, font, "(*)", xcoord + text_length(font, tab_text) / 2 - text_length(font, "(*)"), ycoord, fgcol, bgcol);
 			}
-			if((eof_selected_track == EOF_TRACK_VOCALS) && (i == eof_vocals_tab))
-			{	//Break after  rendering the one difficulty tab name for the vocal track
+			if((eof_selected_track == EOF_TRACK_VOCALS) && (numtabs == 1) && (i == eof_vocals_tab))
+			{	//Break after rendering the one difficulty tab name for the vocal track
 				break;
 			}
 		}//For each difficulty tab rendered
@@ -7766,7 +7716,7 @@ void eof_mark_edited_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, u
 
 unsigned char eof_find_pen_note_mask(void)
 {
-//	eof_log("eof_find_pen_note_mask() entered");
+	//	eof_log("eof_find_pen_note_mask() entered");
 
 	unsigned long laneborder;
 	unsigned long i;
@@ -8090,19 +8040,84 @@ void eof_editor_logic_common(void)
 			}
 		}
 
-		/* handle scroll bar click */
-		if((eof_scaled_mouse_y >= eof_window_editor->y + eof_window_editor->h - 17) && (eof_scaled_mouse_y < eof_window_editor->y + eof_window_editor->h))
+	/* handle scroll bar click */
+	if((eof_scaled_mouse_y >= eof_window_editor->y + eof_window_editor->h - 17) && (eof_scaled_mouse_y < eof_window_editor->y + eof_window_editor->h))
+	{
+		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
-			if(!eof_full_screen_3d && (mouse_b & 1))
+			eof_music_actual_pos = ((double)eof_chart_length / (double)(eof_window_editor->w - 8.0)) * (double)(eof_scaled_mouse_x - 4.0);
+			if(eof_music_actual_pos > eof_chart_length)
 			{
-				eof_music_actual_pos = ((double)eof_chart_length / (double)(eof_window_editor->w - 8.0)) * (double)(eof_scaled_mouse_x - 4.0);
-				if(eof_music_actual_pos > eof_chart_length)
-				{
-					eof_music_actual_pos = eof_chart_length;
+				eof_music_actual_pos = eof_chart_length;
+			}
+			eof_set_seek_position(eof_music_actual_pos + eof_av_delay);
+		}
+	}
+
+	/* select difficulty */
+	{
+		unsigned long numtabs = eof_get_number_displayed_tabs();
+		eof_difficulty_tab_boundary_x1 = 13;
+		eof_difficulty_tab_boundary_x2 = 12 + numtabs * 80 + 12 - 1 - 1;
+		eof_difficulty_tab_boundary_y1 = eof_window_editor->y + 7;
+		eof_difficulty_tab_boundary_y2 = eof_window_editor->y + 20 + 8 - 1;
+		if((eof_scaled_mouse_x >= eof_difficulty_tab_boundary_x1) && (eof_scaled_mouse_x <= eof_difficulty_tab_boundary_x2) && (eof_scaled_mouse_y >= eof_difficulty_tab_boundary_y1) && (eof_scaled_mouse_y <= eof_difficulty_tab_boundary_y2))
+		{	//If the left mouse button is held down and the mouse is over one of the difficulty tabs, and full screen 3d mode isn't in effect
+			eof_mouse_area = 1;
+			if((mouse_b & 1) && !eof_full_screen_3d)
+			{	//If the left mouse button is held down, and full screen 3d mode isn't in effect
+				eof_hover_type = (eof_scaled_mouse_x - 12) / 80;	//Determine which tab number was clicked
+				if(eof_hover_type < 0)
+				{	//Bounds check
+					eof_hover_type = 0;
 				}
-				eof_set_seek_position(eof_music_actual_pos + eof_av_delay);
+				else if(eof_hover_type >= (long)numtabs)
+				{
+					eof_hover_type = numtabs - 1;
+				}
+				if((eof_selected_track != EOF_TRACK_VOCALS) && (eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
+				{	//If this track is not limited to 5 difficulties
+					if(eof_hover_type == (long)numtabs - 1)
+					{	//If the last tab was clicked
+						eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - 1;	//Change to the highest difficulty in the track
+					}
+					else if(eof_hover_type > 0)
+					{	//If the first tab (which will already change to the track's lowest difficulty) wasn't clicked
+						if(eof_note_type < numtabs / 2)
+						{	//If the tabs represent the lowest difficulties
+							eof_hover_type = eof_hover_type - 1;
+						}
+						else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - (numtabs / 2))
+						{	//If the tabs represent the highest difficulties
+							eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - numtabs + 1 + eof_hover_type;
+						}
+						else
+						{	//If the center tab represents the active difficulty
+							eof_hover_type = eof_hover_type + eof_note_type - (numtabs / 2);
+						}
+					}
+					mouse_b &= ~1;	//Clear the left mouse button status or else the tab logic will run during next loop and cause the highest difficulty to be accepted
+				}
+				if(eof_note_type != (unsigned long)eof_hover_type)
+				{
+					(void) eof_set_active_difficulty(eof_hover_type);
+					if(eof_selected_track == EOF_TRACK_VOCALS)
+					{	//Keep the vocal difficulty cache in sync when clicking tabs
+						eof_note_type_v = eof_note_type;
+					}
+					eof_mix_find_claps();
+					eof_mix_start_helper();
+					(void) eof_detect_difficulties(eof_song, eof_selected_track);
+					eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
+					eof_ch_sp_solution = NULL;
+				}
 			}
 		}
+		else
+		{
+			eof_hover_type = -1;
+		}
+	}
 
 		/* handle initial SHIFT key press */
 		if(KEY_EITHER_SHIFT && eof_shift_released)
@@ -8172,6 +8187,8 @@ void eof_editor_logic_common(void)
 		//Find the hover lyric, if there is one
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{	//Find the hover lyric if there is one
+			if(eof_song->vocal_track[0]->lyric[i]->type != eof_note_type)
+				continue;	//If this lyric doesn't apply to the active lyric set, skip it
 			npos = eof_song->vocal_track[0]->lyric[i]->pos;
 			if((examined_music_pos - eof_av_delay > npos) && (examined_music_pos - eof_av_delay < npos + (eof_song->vocal_track[0]->lyric[i]->length > 100 ? eof_song->vocal_track[0]->lyric[i]->length : 100)))
 			{
@@ -8363,7 +8380,7 @@ void eof_update_seek_selection(unsigned long start, unsigned long stop, char des
 	unsigned long t1 = start, t2 = start, i, notepos;
 	char first = 1;
 
-//Sort the start and stop time in chronological order
+	//Sort the start and stop time in chronological order
 	eof_seek_selection_start = start;
 	eof_seek_selection_end = stop;
 	if(stop < start)
@@ -8375,7 +8392,7 @@ void eof_update_seek_selection(unsigned long start, unsigned long stop, char des
 		t2 = stop;
 	}
 
-//Clear the selection array
+	//Clear the selection array
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	if(start == stop)
 	{	//If the seek selection is removed
@@ -8387,7 +8404,7 @@ void eof_update_seek_selection(unsigned long start, unsigned long stop, char des
 		return;
 	}
 
-//Update the selection
+	//Update the selection
 	eof_selection.track = eof_selected_track;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{
@@ -8440,8 +8457,8 @@ unsigned char eof_set_active_difficulty(unsigned char diff)
 		eof_note_type_max = EOF_NOTE_CHALLENGE;	//However, the dance track has 5 usable difficulties
 	}
 	else if(eof_selected_track == EOF_TRACK_VOCALS)
-	{	//The vocal track only has 1 usable difficulty
-		eof_note_type_max = EOF_NOTE_SUPAEASY;
+	{	//The vocal track has 4 usable tabs: Lyrics + HARM1/2/3
+		eof_note_type_max = 3;
 	}
 
 	if(diff <= eof_note_type_max)
@@ -8464,7 +8481,7 @@ unsigned long eof_get_number_displayed_tabs(void)
 	//Determine how many tabs to draw
 	if(eof_selected_track == EOF_TRACK_VOCALS)
 	{	//If a vocal track is active
-		numtabs = 1;
+		numtabs = 4;
 	}
 	else if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 	{	//If the track's difficulty limit has been removed
