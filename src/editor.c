@@ -920,6 +920,34 @@ void eof_read_editor_keys(void)
 
 		if(eof_song_loaded)
 		{
+
+#include "drumbeats.h"
+(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+put_backslash(eof_temp_filename);
+(void) ustrcat(eof_temp_filename, "DrumBeats");
+put_backslash(eof_temp_filename);
+if(!eof_folder_exists(eof_temp_filename))
+{	//If the export subfolder doesn't already exist
+	eof_mkdir(eof_temp_filename);
+}
+if(eof_check_string(eof_song->tags->title))
+{	//If the title of the song is defined
+	(void) ustrcat(eof_temp_filename, eof_song->tags->title);
+}
+else
+{
+	(void) ustrcat(eof_temp_filename, "SONGNAME");
+}
+if(eof_check_string(eof_song->tags->artist))
+{	//If the artist of the song is defined
+	(void) ustrcat(eof_temp_filename, " - ");
+	(void) ustrcat(eof_temp_filename, eof_song->tags->artist);
+}
+(void) replace_extension(eof_temp_filename, eof_temp_filename, "mid", 1024);
+eof_export_drumbeats_midi(eof_song, eof_selected_track, eof_note_type, eof_temp_filename);
+(void) replace_extension(eof_temp_filename, eof_temp_filename, "ogg", 1024);
+eof_copy_file(eof_loaded_ogg_name, eof_temp_filename);
+
 		}
 	}
 

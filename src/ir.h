@@ -19,6 +19,7 @@ void eof_add_midi_pitch_bend_event_qsteps(unsigned long pos, unsigned quarter_st
 	//Each quarter step adds a pitch bend amount of 640 to the neutral bend value of 8192
 int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char diff, char *fn);
 	//Exports the specified pro guitar track difficulty to a MIDI file suited for use in the game IMMERROCK
+	//Returns zero on error
 int eof_search_image_files(char *folderpath, char *filenamebase, char *match, unsigned long match_arraysize);
 	//Accepts a path to a folder (which must end in a folder separator),
 	// uses replace_filename() to append the file name base, then uses

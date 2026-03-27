@@ -1639,6 +1639,7 @@ int eof_menu_edit_paste_logic(int function)
 	unsigned char intervalvalue = 0, intervalnum = 0;
 
 	int ret = 0;
+	int lane_exceeded_prompt = 0;
 
 	memset(&temp_note, 0, sizeof(EOF_EXTENDED_NOTE));
 	memset(&first_note, 0, sizeof(EOF_EXTENDED_NOTE));
@@ -1722,7 +1723,8 @@ int eof_menu_edit_paste_logic(int function)
 		char message[120] = {0};
 		(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
 		eof_clear_input();
-		if(alert(NULL, message, "Gems will either be dropped, or added to form all-lane chords for such notes.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		lane_exceeded_prompt = alert3(NULL, message, "Gems will either be dropped, or added to form all-lane chords for such notes.  Continue?", "&Yes", "&No", "Yes and &Highlight", 'y', 'n', 'h');
+		if(lane_exceeded_prompt == 2)
 		{	//If user does not opt to continue after being alerted of this lane limit issue
 			(void) pack_fclose(fp);
 			ret = 0;
@@ -1826,9 +1828,16 @@ int eof_menu_edit_paste_logic(int function)
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
 			temp_note.note = temp_note.legacymask;
 		}
-		if((temp_note.note > maxbitmask) && ((temp_note.note & maxbitmask) == 0))
-		{	//If this note only uses lanes higher than the active track allows
-			temp_note.note = maxbitmask;	//Alter this note to be an all-lane chord
+		if(temp_note.note > maxbitmask)
+		{	//If this note uses a lane higher than the active track allows
+			if((temp_note.note & maxbitmask) == 0)
+			{	//If this note only uses lanes higher than the active track allows
+				temp_note.note = maxbitmask;	//Alter this note to be an all-lane chord
+			}
+			if(lane_exceeded_prompt == 3)
+			{	//If the user opted to highlight notes that are altered this way
+				temp_note.flags |= EOF_NOTE_FLAG_HIGHLIGHT;
+			}
 		}
 		eof_sanitize_note_flags(&temp_note.flags, sourcetrack, eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 

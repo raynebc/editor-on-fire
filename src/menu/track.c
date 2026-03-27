@@ -386,13 +386,20 @@ void eof_prepare_track_menu(void)
 		}
 
 		/* Disable expert+ bass drum */
-		if(eof_song->tags->double_bass_drum_disabled)
-		{
-			eof_track_menu[8].flags = D_SELECTED;	//Track>Disable expert+ bass drum
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If the active track is a drum track
+			if(eof_song->tags->double_bass_drum_disabled)
+			{
+				eof_track_menu[8].flags = D_SELECTED;	//Track>Disable expert+ bass drum
+			}
+			else
+			{
+				eof_track_menu[8].flags = 0;
+			}
 		}
 		else
-		{
-			eof_track_menu[8].flags = 0;
+		{	//Otherwise disable and hide the "Disable expert+ bass drum" function
+			eof_track_menu[8].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		/* popup messages copy from */
