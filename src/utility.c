@@ -785,45 +785,99 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 	unsigned long ctr, ctr2;
 	EOF_VOCAL_TRACK *tp;
 	char buffer[1024], buffer2[50] = {0}, error = 0, unsorted = 0;
-	unsigned long lastend = 0, lastlyricindex, matches;
+	unsigned long lastend_by_type[4] = {0, 0, 0, 0};
+	unsigned long lastend_all = 0, matches, anymatches, lastlyricpos;
+	unsigned char line_type;
+	unsigned char first_match_type;
+	char have_lastpos, have_first_type;
+	char have_lastend_by_type[4] = {0, 0, 0, 0};
+	char have_lastend_all = 0;
+	char multiple_sets = 0;
+	unsigned long lyric_counts[4] = {0, 0, 0, 0};
 
 	if(!sp)
 		return;
 
 	tp = sp->vocal_track[0];
+	for(ctr = 0; ctr < tp->lyrics; ctr++)
+	{
+		if(tp->lyric[ctr]->type != 0)
+		{
+			multiple_sets = 1;
+		}
+		if(tp->lyric[ctr]->type <= 3)
+		{
+			lyric_counts[tp->lyric[ctr]->type]++;
+		}
+	}
 	for(ctr = 0; ctr < tp->lines; ctr++)
 	{	//For each lyric line
+		line_type = tp->line[ctr].difficulty;
 		if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
 		{
 			error = 1;
 			break;
 		}
-		if(ctr && (tp->line[ctr].start_pos <= lastend))
+		if(line_type == 0xFF)
 		{
-			error = 2;
-			break;
+			if(have_lastend_all && (tp->line[ctr].start_pos <= lastend_all))
+			{
+				error = 2;
+				break;
+			}
 		}
-		if(tp->line[ctr].difficulty != 255)
+		else if(line_type <= 3)
+		{
+			if(have_lastend_by_type[line_type] && (tp->line[ctr].start_pos <= lastend_by_type[line_type]))
+			{
+				error = 2;
+				break;
+			}
+		}
+		else
 		{
 			error = 3;
 			break;
 		}
-		matches = lastlyricindex = 0;	//Reset these
+		if((line_type != 0xFF) && (line_type > 3))
+		{
+			error = 3;
+			break;
+		}
+		matches = anymatches = 0;	//Reset these
+		have_lastpos = 0;
 		for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
 		{	//For each lyric
 			if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
 			{	//If this lyric is within the scope of the lyric line
-				if(matches && (ctr2 > lastlyricindex + 1))
+				anymatches++;
+				if(!eof_lyric_line_applies_to_type(&tp->line[ctr], tp->lyric[ctr2]->type))
+					continue;	//If this lyric doesn't apply to this lyric line, skip it
+				if(have_lastpos && (tp->lyric[ctr2]->pos < lastlyricpos))
 				{
 					error = 4;
 					break;
 				}
 				matches++;	//Keep track of how many lyrics were found to be in this line
-				lastlyricindex = ctr2;	//Keep track of the last lyric index found to be in this line
+				lastlyricpos = tp->lyric[ctr2]->pos;
+				have_lastpos = 1;
 			}
 		}
-		lastend = tp->line[ctr].end_pos;
-		if(!matches)
+		if(line_type == 0xFF)
+		{
+			lastend_all = tp->line[ctr].end_pos;
+			have_lastend_all = 1;
+		}
+		else if(line_type <= 3)
+		{
+			lastend_by_type[line_type] = tp->line[ctr].end_pos;
+			have_lastend_by_type[line_type] = 1;
+		}
+		if(!matches && anymatches && !multiple_sets)
+		{	//Lyrics were found, but not for the applicable lyric set
+			error = 6;
+		}
+		else if(!matches)
 		{	//No lyrics were in this line
 			error = 5;
 		}
@@ -838,8 +892,14 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 		else
 			eof_log("\tLyric dump", 1);
 
+		lastend_all = 0;
+		have_lastend_all = 0;
+		memset(lastend_by_type, 0, sizeof(lastend_by_type));
+		memset(have_lastend_by_type, 0, sizeof(have_lastend_by_type));
+
 		for(ctr = 0; ctr < tp->lines;)
 		{	//For each lyric line
+			line_type = tp->line[ctr].difficulty;
 			if(tp->line[ctr].start_pos >= tp->line[ctr].end_pos)
 			{
 				eof_log("\t\t!Lyric line timings corrupt.  Repairing", 1);
@@ -852,25 +912,47 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 					tp->line[ctr].start_pos = temp;
 				}
 			}
-			if(ctr && (tp->line[ctr].start_pos <= lastend))
+			if(line_type == 0xFF)
 			{
-				eof_log("\t\t!Lyric line overlaps previous line.  Repairing", 1);
-				tp->line[ctr].start_pos = lastend + 1;	//Make the lyric line begin 1ms after the end of the previous line
+				if(have_lastend_all && (tp->line[ctr].start_pos <= lastend_all))
+				{
+					eof_log("\t\t!Lyric line overlaps previous line.  Repairing", 1);
+					tp->line[ctr].start_pos = lastend_all + 1;	//Make the lyric line begin 1ms after the end of the previous line
+				}
 			}
-			if(tp->line[ctr].difficulty != 255)
+			else if(line_type <= 3)
 			{
-				eof_log("\t\t!Lyric line is the wrong difficulty.  Repairing", 1);
-				tp->line[ctr].difficulty = 255;
+				if(have_lastend_by_type[line_type] && (tp->line[ctr].start_pos <= lastend_by_type[line_type]))
+				{
+					eof_log("\t\t!Lyric line overlaps previous line.  Repairing", 1);
+					tp->line[ctr].start_pos = lastend_by_type[line_type] + 1;	//Make the lyric line begin 1ms after the end of the previous line
+				}
 			}
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  Diff %u, %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].difficulty, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
-			eof_log(eof_log_string, 1);
+			else
+			{
+				eof_log("\t\t!Lyric line has an invalid difficulty.  Repairing", 1);
+				tp->line[ctr].difficulty = 0xFF;
+				line_type = tp->line[ctr].difficulty;
+			}
 			buffer[0] = '\0';	//Empty the buffer
-			matches = lastlyricindex = 0;	//Reset these
+			matches = anymatches = 0;	//Reset these
+			have_lastpos = 0;
+			lastlyricpos = 0;
+			first_match_type = 0;
+			have_first_type = 0;
 			for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
 			{	//For each lyric
 				if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
 				{	//If this lyric is within the scope of the lyric line
-					if(matches && (ctr2 > lastlyricindex + 1))
+					anymatches++;
+					if(!have_first_type)
+					{
+						first_match_type = tp->lyric[ctr2]->type;
+						have_first_type = 1;
+					}
+					if(!eof_lyric_line_applies_to_type(&tp->line[ctr], tp->lyric[ctr2]->type))
+						continue;	//If this lyric doesn't apply to this lyric line, skip it
+					if(have_lastpos && (tp->lyric[ctr2]->pos < lastlyricpos))
 					{
 						eof_log("\t\t\t!Lyrics out of order.", 1);
 						unsorted = 1;
@@ -878,20 +960,102 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 					snprintf(buffer2, sizeof(buffer2) - 1, "%lu (%s) ", ctr2, tp->lyric[ctr2]->text);
 					strncat(buffer, buffer2, sizeof(buffer) - 1);	//Append data about this lyric to the buffer
 					matches++;	//Keep track of how many lyrics were found to be in this line
-					lastlyricindex = ctr2;	//Keep track of the last lyric index found to be in this line
+					lastlyricpos = tp->lyric[ctr2]->pos;
+					have_lastpos = 1;
 				}
 			}
+			if((tp->line[ctr].difficulty != 0xFF) && !matches && anymatches && have_first_type)
+			{
+				if(multiple_sets)
+				{
+					eof_log("\t\t!Lyric line is the wrong difficulty.  Leaving as-is due to multiple lyric sets.", 1);
+				}
+				else
+				{
+					eof_log("\t\t!Lyric line is the wrong difficulty.  Repairing", 1);
+					tp->line[ctr].difficulty = first_match_type;
+				}
+
+				if(!multiple_sets)
+				{
+					buffer[0] = '\0';	//Rebuild the buffer using the repaired difficulty
+					matches = 0;
+					have_lastpos = 0;
+					lastlyricpos = 0;
+					for(ctr2 = 0; ctr2 < tp->lyrics; ctr2++)
+					{	//For each lyric
+						if((tp->lyric[ctr2]->pos >= tp->line[ctr].start_pos) && (tp->lyric[ctr2]->pos <= tp->line[ctr].end_pos))
+						{	//If this lyric is within the scope of the lyric line
+							if(!eof_lyric_line_applies_to_type(&tp->line[ctr], tp->lyric[ctr2]->type))
+								continue;	//If this lyric doesn't apply to this lyric line, skip it
+							if(have_lastpos && (tp->lyric[ctr2]->pos < lastlyricpos))
+							{
+								eof_log("\t\t\t!Lyrics out of order.", 1);
+								unsorted = 1;
+							}
+							snprintf(buffer2, sizeof(buffer2) - 1, "%lu (%s) ", ctr2, tp->lyric[ctr2]->text);
+							strncat(buffer, buffer2, sizeof(buffer) - 1);	//Append data about this lyric to the buffer
+							matches++;	//Keep track of how many lyrics were found to be in this line
+							lastlyricpos = tp->lyric[ctr2]->pos;
+							have_lastpos = 1;
+						}
+					}
+				}
+			}
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine #%lu:  Diff %u, %lums to %lums contains lyric numbers:", ctr, tp->line[ctr].difficulty, tp->line[ctr].start_pos, tp->line[ctr].end_pos);
+			eof_log(eof_log_string, 1);
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%s", buffer);
 			eof_log(eof_log_string, 1);
 
-			lastend = tp->line[ctr].end_pos;
+			if(line_type == 0xFF)
+			{
+				lastend_all = tp->line[ctr].end_pos;
+				have_lastend_all = 1;
+			}
+			else if(line_type <= 3)
+			{
+				lastend_by_type[line_type] = tp->line[ctr].end_pos;
+				have_lastend_by_type[line_type] = 1;
+			}
 			if(!matches)
-			{	//No lyrics were in this line, do not increment ctr and instead process the next line which will now become line #ctr
-				eof_log("\t\t!Lyric line is empty.  Repairing", 1);
-				eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
+			{	//No lyrics were in this line
+				if(multiple_sets)
+				{
+					unsigned char ldiff = tp->line[ctr].difficulty;
+					char keep = 0;
+
+					if(ldiff <= 3)
+					{
+						if(lyric_counts[ldiff] > 0)
+							keep = 1;
+					}
+					else if(ldiff == 0xFF)
+					{
+						if(tp->lyrics > 0)
+							keep = 1;
+					}
+
+					if(keep)
+					{
+						eof_log("\t\t!Lyric line is empty.  Leaving as-is due to multiple lyric sets.", 1);
+						ctr++;	//Keep the line and move on
+					}
+					else
+					{
+						eof_log("\t\t!Lyric line is empty.  Repairing", 1);
+						eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
+					}
+				}
+				else
+				{
+					eof_log("\t\t!Lyric line is empty.  Repairing", 1);
+					eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
+				}
 			}
 			else
+			{
 				ctr++;	//Process the next lyric line on the next loop
+			}
 		}
 
 		if(unsorted)

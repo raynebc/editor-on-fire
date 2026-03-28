@@ -37,6 +37,7 @@ typedef struct
 	int game	;	//Is set to 0 to indicate a Frets on Fire, Rock Band or Guitar Hero style MIDI is being imported, 1 to indicate a Power Gig MIDI is being imported, 2 to indicate a Guitar Hero animation track is being imported or 3 to indicate an LLPLUS MIDI is being imported
 	int game2;	//Used to track a potential game format detection, since the presence of LLPLUS notes may be ambiguous unless no other mandatory criteria (such as Rock Band style track names) are encountered
 	unsigned char diff;	//Some tracks (such as the pro keys and Power Gig tracks) have all of their contents applicable to a single difficulty level
+	unsigned char lyric_set;	//For vocal tracks, indicates which lyric set (0=PART VOCALS, 1=HARM1, 2=HARM2, 3=HARM3)
 	unsigned long tracknum;
 } EOF_IMPORT_MIDI_EVENT_LIST;
 
@@ -72,8 +73,171 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 	lp->game = 0;
 	lp->game2 = 0;
 	lp->diff = 0;
+	lp->lyric_set = 0;
 	lp->tracknum = 0;
 	return lp;
+}
+
+static unsigned char eof_midi_import_get_lyric_set(const char *trackname)
+{
+	if(!trackname)
+	{
+		return 0;
+	}
+	if(!ustricmp(trackname, "HARM1") || !ustricmp(trackname, "PART HARM1"))
+		return 1;
+	if(!ustricmp(trackname, "HARM2") || !ustricmp(trackname, "PART HARM2"))
+		return 2;
+	if(!ustricmp(trackname, "HARM3") || !ustricmp(trackname, "PART HARM3"))
+		return 3;
+	return 0;
+}
+
+static void eof_midi_import_dump_lyric_lines(EOF_SONG *sp, const char *label)
+{
+	unsigned long i;
+	EOF_VOCAL_TRACK *tp;
+
+	if(!sp || !label)
+	{
+		return;
+	}
+	if(sp->vocal_tracks < 1)
+	{
+		return;
+	}
+
+	tp = sp->vocal_track[0];
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLyric line dump (%s): %lu lines", label, tp->lines);
+	eof_log(eof_log_string, 1);
+
+	for(i = 0; i < tp->lines; i++)
+	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLine %lu: diff %u, %lums-%lums, flags 0x%lX", i, tp->line[i].difficulty, tp->line[i].start_pos, tp->line[i].end_pos, tp->line[i].flags);
+		eof_log(eof_log_string, 1);
+	}
+}
+
+static void eof_midi_import_dump_lyric_counts(EOF_SONG *sp, const char *label)
+{
+	EOF_VOCAL_TRACK *tp;
+	unsigned long i;
+	unsigned long lyric_counts[4] = {0, 0, 0, 0};
+	unsigned long line_counts[4] = {0, 0, 0, 0};
+	unsigned long min_pos[4] = {ULONG_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX};
+	unsigned long max_pos[4] = {0, 0, 0, 0};
+
+	if(!sp || !label || (sp->vocal_tracks < 1))
+		return;
+
+	tp = sp->vocal_track[0];
+	for(i = 0; i < tp->lyrics; i++)
+	{
+		unsigned char t = tp->lyric[i]->type;
+		if(t > 3)
+			continue;
+		lyric_counts[t]++;
+		if(tp->lyric[i]->pos < min_pos[t])
+			min_pos[t] = tp->lyric[i]->pos;
+		if(tp->lyric[i]->pos > max_pos[t])
+			max_pos[t] = tp->lyric[i]->pos;
+	}
+	for(i = 0; i < tp->lines; i++)
+	{
+		unsigned char t = tp->line[i].difficulty;
+		if(t == 0xFF)
+			continue;
+		if(t > 3)
+			continue;
+		line_counts[t]++;
+	}
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLyric counts (%s): L0=%lu L1=%lu L2=%lu L3=%lu", label, lyric_counts[0], lyric_counts[1], lyric_counts[2], lyric_counts[3]);
+	eof_log(eof_log_string, 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLyric ranges (%s): L0=%lu-%lu L1=%lu-%lu L2=%lu-%lu L3=%lu-%lu", label,
+		(min_pos[0] == ULONG_MAX ? 0 : min_pos[0]), max_pos[0],
+		(min_pos[1] == ULONG_MAX ? 0 : min_pos[1]), max_pos[1],
+		(min_pos[2] == ULONG_MAX ? 0 : min_pos[2]), max_pos[2],
+		(min_pos[3] == ULONG_MAX ? 0 : min_pos[3]), max_pos[3]);
+	eof_log(eof_log_string, 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLine counts (%s): D0=%lu D1=%lu D2=%lu D3=%lu", label, line_counts[0], line_counts[1], line_counts[2], line_counts[3]);
+	eof_log(eof_log_string, 1);
+}
+
+static void eof_midi_import_autogen_lyric_lines(EOF_SONG *sp, unsigned char lyric_set)
+{
+	EOF_VOCAL_TRACK *tp;
+	unsigned long i;
+	unsigned long lyric_count = 0;
+	unsigned long line_count = 0;
+	unsigned long line_start = 0;
+	unsigned long line_end = 0;
+	unsigned long last_end = 0;
+		unsigned long gap = 1000;	//Split lines when lyrics are at least 1s apart
+	char have_line = 0;
+
+	if(!sp || (sp->vocal_tracks < 1))
+		return;
+	if(lyric_set > 3)
+		return;
+
+	tp = sp->vocal_track[0];
+	for(i = 0; i < tp->lines; i++)
+	{
+		if((tp->line[i].difficulty == lyric_set) || (tp->line[i].difficulty == 0xFF))
+		{
+			line_count++;
+		}
+	}
+	for(i = 0; i < tp->lyrics; i++)
+	{
+		if(tp->lyric[i]->type == lyric_set)
+		{
+			lyric_count++;
+		}
+	}
+
+	if(lyric_count == 0)
+		return;
+	if(line_count > 0)
+		return;
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAutogenerating lyric lines for set %u (lyrics=%lu)", lyric_set, lyric_count);
+	eof_log(eof_log_string, 1);
+
+	for(i = 0; i < tp->lyrics; i++)
+	{
+		if(tp->lyric[i]->type != lyric_set)
+			continue;
+
+		if(!have_line)
+		{
+			line_start = tp->lyric[i]->pos;
+			line_end = tp->lyric[i]->pos + tp->lyric[i]->length;
+			last_end = line_end;
+			have_line = 1;
+			continue;
+		}
+
+		if(tp->lyric[i]->pos > last_end + gap)
+		{
+			if(tp->lines >= EOF_MAX_LYRIC_LINES)
+			{
+				eof_log("\t\tUnable to add more lyric lines (limit reached)", 1);
+				break;
+			}
+			(void) eof_vocal_track_add_line(tp, line_start, last_end, 0xFF);
+			line_start = tp->lyric[i]->pos;
+		}
+
+		line_end = tp->lyric[i]->pos + tp->lyric[i]->length;
+		last_end = line_end;
+	}
+
+	if(have_line && (tp->lines < EOF_MAX_LYRIC_LINES))
+	{
+		(void) eof_vocal_track_add_line(tp, line_start, last_end, 0xFF);
+	}
 }
 
 static void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
@@ -402,7 +566,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned long beat;
 	long picked_track;
 	char used_track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};	//for Rock Band songs, we need to ignore certain tracks
+	unsigned char used_vocal_set[4] = {0};	//Track which lyric sets were imported so harmonies aren't skipped
 	unsigned char lane = 0;				//Used to track the lane referenced by a MIDI on/off note
+	unsigned char lyric_set = 0;		//Tracks which vocal lyric set is being imported (0=PART VOCALS, 1=HARM1, 2=HARM2, 3=HARM3)
 	char diff = -1;						//Used to track the difficulty referenced by a MIDI on/off note (-1 means difficulty undetermined)
 	unsigned char lane_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};	//Maps each lane to a note bitmask value
 	unsigned long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
@@ -781,6 +947,16 @@ EOF_SONG * eof_import_midi(const char * fn)
 									eof_import_events[i]->game = 0;	//Note that this is a FoF/RB/GH style MIDI
 									eof_import_events[i]->diff = eof_midi_tracks[j].difficulty;
 									eof_import_events[i]->tracknum = j;
+									eof_import_events[i]->lyric_set = eof_midi_import_get_lyric_set(text);
+									if((eof_import_events[i]->type == EOF_TRACK_HARM) && (eof_import_events[i]->lyric_set > 0))
+									{	//Import harmony tracks into the vocal track with the correct lyric set
+										eof_import_events[i]->type = EOF_TRACK_VOCALS;
+									}
+								if(eof_import_events[i]->type == EOF_TRACK_VOCALS)
+								{
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tVocal track name \"%s\" assigned lyric_set %u", text, eof_import_events[i]->lyric_set);
+									eof_log(eof_log_string, 1);
+								}
 									if(ustrstr(text," GHL"))
 									{	//If this is a GHL track name
 										isghl = 1;
@@ -1398,9 +1574,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
-		int last_105 = 0;
-		int last_106 = 0;
-		unsigned long overdrive_pos = 0;
+		int last_105[4] = {0, 0, 0, 0};
+		int last_106[4] = {0, 0, 0, 0};
+		unsigned long overdrive_pos[4] = {0, 0, 0, 0};
+		long last_lyric_index[4] = {-1, -1, -1, -1};
 		char rb_pro_yellow = 0;					//Tracks the status of forced yellow pro drum notation
 		unsigned long rb_pro_yellow_pos = 0;		//Tracks the last start time of a forced yellow pro drum phrase
 		char rb_pro_blue = 0;					//Tracks the status of forced yellow pro drum notation
@@ -1409,8 +1586,9 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		unsigned long rb_pro_green_pos = 0;		//Tracks the last start time of a forced green pro drum phrase
 		unsigned long notenum = 0;
 		char fretwarning = 0;					//Tracks whether the user was warned about the track violating its standard fret limit, if applicable
-		unsigned long linestart = 0;				//Tracks the start of a line of lyrics for Power Gig MIDIs, which don't formally mark line placements with a note
-		char linetrack = 0;						//Is set to nonzero when linestart is tracking the position of the current line of lyrics
+		unsigned long linestart[4] = {0, 0, 0, 0};				//Tracks the start of a line of lyrics for Power Gig MIDIs, which don't formally mark line placements with a note
+		char linetrack[4] = {0, 0, 0, 0};						//Is set to nonzero when linestart is tracking the position of the current line of lyrics
+		char powergig_sp_vocal[4] = {0, 0, 0, 0};				//Tracks Power Gig star power status per lyric set
 		char filter = 0;							//Is set to nonzero if the track's note limit is reached and upon prompting, the user opts to import only the expert difficulty
 
 		if(eof_import_events[i]->type < 0)
@@ -1427,7 +1605,17 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 			continue;
 		}
 		picked_track = (eof_import_events[i]->type >= 1) ? eof_import_events[i]->type : ((rbg == 0) ? EOF_TRACK_GUITAR : -1);	//If the imported track didn't have a defined name, assume it is the guitar track if that track wasn't already found (un-named tracks is a behavior of very old authoring tools like the Freetar SNG to MIDI converter)
-		if((picked_track < 0) || ((unsigned long)picked_track >= sp->tracks) || used_track[picked_track])
+		lyric_set = eof_import_events[i]->lyric_set;
+		if((picked_track < 0) || ((unsigned long)picked_track >= sp->tracks))
+			continue;	//If this is not a valid track to process, skip it
+		if(picked_track == EOF_TRACK_VOCALS)
+		{
+			if(lyric_set > 3)
+				lyric_set = 0;	//Safety clamp
+			if(used_vocal_set[lyric_set])
+				continue;	//If this lyric set was already imported, skip this track
+		}
+		else if(used_track[picked_track])
 			continue;	//If this is not a valid track to process, skip it
 
 		first_note = note_count[picked_track];
@@ -1527,26 +1715,35 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					/* lyric line indicator */
 					if(midinote == 105)
 					{
-						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
-						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
-						last_105 = sp->vocal_track[0]->lines;
+						if(lyric_set == 0)
+						{
+							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
+							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
+							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].difficulty = 0xFF;
+							last_105[lyric_set] = sp->vocal_track[0]->lines;
+						}
 					}
 					else if(midinote == 106)
 					{
-						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
-						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
-						last_106 = sp->vocal_track[0]->lines;
+						if(lyric_set == 0)
+						{
+							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
+							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
+							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].difficulty = 0xFF;
+							last_106[lyric_set] = sp->vocal_track[0]->lines;
+						}
 					}
 					/* overdrive */
 					else if(midinote == 116)
 					{
-						overdrive_pos = event_realtime;
+						if(lyric_set == 0)
+							overdrive_pos[lyric_set] = event_realtime;
 					}
 					else if((midinote == 96) || (midinote == 97) || ((midinote >= EOF_LYRIC_PITCH_MIN) && (midinote <= EOF_LYRIC_PITCH_MAX)))
 					{	//If this is a vocal percussion note (96 or 97) or if it is a valid vocal pitch
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
-							if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
+							if((sp->vocal_track[0]->lyric[k]->pos == event_realtime) && (sp->vocal_track[0]->lyric[k]->type == lyric_set))
 							{
 								break;
 							}
@@ -1554,17 +1751,20 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						/* no note associated with this lyric so create a new note */
 						if(k == note_count[picked_track])
 						{
+							sp->vocal_track[0]->lyric[note_count[picked_track]]->type = lyric_set;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->note = midinote;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->midi_pos = event_miditime;
 							sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
 							if(gridsnap)
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->tflags |= EOF_NOTE_TFLAG_RESNAP;	//Track that the lyric is expected to be grid snapped after MIDI import completes
+							last_lyric_index[lyric_set] = note_count[picked_track];
 							note_count[picked_track]++;
 						}
 						else
 						{
 							sp->vocal_track[0]->lyric[k]->note = midinote;
+							last_lyric_index[lyric_set] = k;
 						}
 					}
 				}
@@ -1575,28 +1775,36 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					/* lyric line indicator */
 					if(midinote == 105)
 					{
-						sp->vocal_track[0]->line[last_105].end_pos = event_realtime;
+						if(lyric_set != 0)
+						{
+							continue;
+						}
+						sp->vocal_track[0]->line[last_105[lyric_set]].end_pos = event_realtime;
 //#ifdef EOF_DEBUG_MIDI_IMPORT
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[last_105].start_pos, sp->vocal_track[0]->line[last_105].end_pos);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[last_105[lyric_set]].start_pos, sp->vocal_track[0]->line[last_105[lyric_set]].end_pos);
 						eof_log(eof_log_string, 3);
 //#endif
 						sp->vocal_track[0]->lines++;
-						if(overdrive_pos == sp->vocal_track[0]->line[last_105].start_pos)
+						if(overdrive_pos[lyric_set] == sp->vocal_track[0]->line[last_105[lyric_set]].start_pos)
 						{
-							sp->vocal_track[0]->line[last_105].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;
+							sp->vocal_track[0]->line[last_105[lyric_set]].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;
 						}
 					}
 					else if(midinote == 106)
 					{
-						sp->vocal_track[0]->line[last_106].end_pos = event_realtime;
+						if(lyric_set != 0)
+						{
+							continue;
+						}
+						sp->vocal_track[0]->line[last_106[lyric_set]].end_pos = event_realtime;
 //#ifdef EOF_DEBUG_MIDI_IMPORT
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[last_106].start_pos, sp->vocal_track[0]->line[last_106].end_pos);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[last_106[lyric_set]].start_pos, sp->vocal_track[0]->line[last_106[lyric_set]].end_pos);
 						eof_log(eof_log_string, 3);
 //#endif
 						sp->vocal_track[0]->lines++;
-						if(overdrive_pos == sp->vocal_track[0]->line[last_106].start_pos)
+						if(overdrive_pos[lyric_set] == sp->vocal_track[0]->line[last_106[lyric_set]].start_pos)
 						{
-							sp->vocal_track[0]->line[last_106].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;
+							sp->vocal_track[0]->line[last_106[lyric_set]].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;
 						}
 					}
 					/* overdrive */
@@ -1609,9 +1817,9 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					}
 					else if((midinote >= EOF_LYRIC_PITCH_MIN) && (midinote <= EOF_LYRIC_PITCH_MAX))
 					{
-						if(note_count[picked_track] > 0)
+						if(last_lyric_index[lyric_set] >= 0)
 						{
-							sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->length = event_realtime - sp->vocal_track[0]->lyric[note_count[picked_track] - 1]->pos;
+							sp->vocal_track[0]->lyric[last_lyric_index[lyric_set]]->length = event_realtime - sp->vocal_track[0]->lyric[last_lyric_index[lyric_set]]->pos;
 						}
 					}
 				}
@@ -1651,7 +1859,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						//Determine which note this lyric event lines up with
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
-							if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
+							if((sp->vocal_track[0]->lyric[k]->pos == event_realtime) && (sp->vocal_track[0]->lyric[k]->type == lyric_set))
 							{
 								break;
 							}
@@ -1661,31 +1869,36 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						{
 							if(ustrstr(eof_import_events[i]->event[j]->text, "\\r"))
 							{	//If this lyric contains the string Power Gig uses for a line break, add the line definition
-								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart;
-								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
-								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
+								if(lyric_set == 0)
+								{
+									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart[lyric_set];
+									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
+									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
+									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].difficulty = 0xFF;
 //#ifdef EOF_DEBUG_MIDI_IMPORT
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos, sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos);
-								eof_log(eof_log_string, 3);
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos, sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos);
+									eof_log(eof_log_string, 3);
 //#endif
-								sp->vocal_track[0]->lines++;
-								linetrack = 0;
+									sp->vocal_track[0]->lines++;
+								}
+								linetrack[lyric_set] = 0;
 							}
 							else
 							{	//Otherwise add the lyric
+								sp->vocal_track[0]->lyric[note_count[picked_track]]->type = lyric_set;
 								strcpy(sp->vocal_track[0]->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->note = 0;
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->midi_pos = event_miditime;
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->pos = event_realtime;
 								sp->vocal_track[0]->lyric[note_count[picked_track]]->length = 100;
-								if(!linetrack)
+								if(!linetrack[lyric_set])
 								{	//If this is the first lyric in this line of lyrics
-									linestart = event_realtime;	//This is the starting position
-									linetrack = 1;
+									linestart[lyric_set] = event_realtime;	//This is the starting position
+									linetrack[lyric_set] = 1;
 								}
 								if(eof_import_events[i]->game == 1)
 								{	//If the MIDI is in Power Gig notation
-									if(powergig_sp)
+									if(powergig_sp_vocal[lyric_set] && (lyric_set == 0))
 									{	//If a star power phrase is in progress
 										sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//The line this lyric is in gets marked with star power status
 									}
@@ -1700,10 +1913,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						else
 						{
 							strcpy(sp->vocal_track[0]->lyric[k]->text, eof_import_events[i]->event[j]->text);
-							if(!linetrack)
+							if(!linetrack[lyric_set])
 							{	//If this is the first lyric in this line of lyrics
-								linestart = event_realtime;	//This is the starting position
-								linetrack = 1;
+								linestart[lyric_set] = event_realtime;	//This is the starting position
+								linetrack[lyric_set] = 1;
 							}
 						}
 						text_event_imported = 1;	//Track that this was imported as a lyric, to prevent it from also importing as a text event
@@ -1723,12 +1936,13 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						{	//These control change events mark "mojo" sections (the equivalent of star power phrases)
 							if(eof_import_events[i]->event[j]->d2 == 127)
 							{	//This starts the phrase
-								powergig_sp = 1;
-								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Any lyric line in progress gets marked with star power status
+								powergig_sp_vocal[lyric_set] = 1;
+								if(lyric_set == 0)
+									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Any lyric line in progress gets marked with star power status
 							}
 							else
 							{	//This ends the phrase
-								powergig_sp = 0;
+								powergig_sp_vocal[lyric_set] = 0;
 							}
 						}
 					}//If the MIDI is in Power Gig notation
@@ -3760,21 +3974,41 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		{	//If this is not a Power Gig formatted MIDI, only allow one MIDI track to import into each track in the project
 			if(eof_get_track_size(sp, picked_track) > 0)
 			{	//If at least one note was imported
-				used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
+				if(picked_track == EOF_TRACK_VOCALS)
+				{
+					used_vocal_set[lyric_set] = 1;	//Note that this lyric set has been imported, duplicate instances will be ignored
+				}
+				else
+				{
+					used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
+				}
 			}
 		}
 	}//For each imported track
 
-//#ifdef EOF_DEBUG_MIDI_IMPORT
 eof_log("\tThird pass complete", 1);
-//#endif
+eof_midi_import_dump_lyric_lines(sp, "post import (pre-clean)");
+eof_midi_import_dump_lyric_counts(sp, "post import (pre-clean)");
 
 	/* delete empty lyric lines */
+	{
+		unsigned long lyric_counts[4] = {0, 0, 0, 0};
+		for(j = 0; j < sp->vocal_track[0]->lyrics; j++)
+		{
+			unsigned char t = sp->vocal_track[0]->lyric[j]->type;
+			if(t <= 3)
+			{
+				lyric_counts[t]++;
+			}
+		}
+
 	for(i = sp->vocal_track[0]->lines; i > 0; i--)
 	{
 		lc = 0;
 		for(j = 0; j < sp->vocal_track[0]->lyrics; j++)
 		{
+			if(!eof_lyric_line_applies_to_type(&sp->vocal_track[0]->line[i-1], sp->vocal_track[0]->lyric[j]->type))
+				continue;	//If this lyric line doesn't apply to this lyric set, skip it
 			if((sp->vocal_track[0]->lyric[j]->pos >= sp->vocal_track[0]->line[i-1].start_pos) && (sp->vocal_track[0]->lyric[j]->pos <= sp->vocal_track[0]->line[i-1].end_pos))
 			{
 				lc++;
@@ -3782,9 +4016,50 @@ eof_log("\tThird pass complete", 1);
 		}
 		if(lc <= 0)
 		{
-			eof_vocal_track_delete_line(sp->vocal_track[0], i-1);
+			unsigned char ldiff = sp->vocal_track[0]->line[i-1].difficulty;
+			char keep = 0;
+
+			if(ldiff == 0xFF)
+			{
+				if(sp->vocal_track[0]->lyrics > 0)
+					keep = 1;
+			}
+			else if(ldiff <= 3)
+			{
+				if(lyric_counts[ldiff] > 0)
+					keep = 1;
+			}
+
+			if(keep)
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tKeeping empty lyric line (set has lyrics): diff %u, %lums-%lums", ldiff, sp->vocal_track[0]->line[i-1].start_pos, sp->vocal_track[0]->line[i-1].end_pos);
+				eof_log(eof_log_string, 1);
+			}
+			else
+			{
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDeleting empty lyric line: diff %u, %lums-%lums", ldiff, sp->vocal_track[0]->line[i-1].start_pos, sp->vocal_track[0]->line[i-1].end_pos);
+				eof_log(eof_log_string, 1);
+				eof_vocal_track_delete_line(sp->vocal_track[0], i-1);
+			}
 		}
 	}
+	}
+	eof_midi_import_autogen_lyric_lines(sp, 0);
+
+	//Normalize lyric lines so only PART VOCALS lines remain (harmonies inherit these)
+	for(i = sp->vocal_track[0]->lines; i > 0; i--)
+	{
+		unsigned char ldiff = sp->vocal_track[0]->line[i-1].difficulty;
+		if(ldiff != 0xFF)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNormalizing lyric line to shared set: diff %u, %lums-%lums", ldiff, sp->vocal_track[0]->line[i-1].start_pos, sp->vocal_track[0]->line[i-1].end_pos);
+			eof_log(eof_log_string, 1);
+			sp->vocal_track[0]->line[i-1].difficulty = 0xFF;
+		}
+	}
+
+	eof_midi_import_dump_lyric_lines(sp, "post clean");
+	eof_midi_import_dump_lyric_counts(sp, "post clean");
 
 //Perform an additional check to ensure pro drum notations are correct
 	if(prodrums)

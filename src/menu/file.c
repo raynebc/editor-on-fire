@@ -3783,8 +3783,17 @@ int eof_save_helper_checks(void)
 		{	//For each note in the track
 			long next;
 			unsigned long effective_note_distance, thisnotepos, nextnotepos;
+			unsigned char thisnotetype = 0;
 
-			next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
+			if(eof_song->track[ctr]->track_format == EOF_VOCAL_TRACK_FORMAT)
+			{	//For vocals, only compare against the next lyric in the same harmony tab
+				thisnotetype = eof_get_note_type(eof_song, ctr, ctr2);
+				next = eof_track_fixup_next_note_applicable_to_diff(eof_song, ctr, ctr2, thisnotetype);
+			}
+			else
+			{
+				next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
+			}
 			if(next <= 0)
 				continue;	//If this note doesn't have a note that follows, skip it
 

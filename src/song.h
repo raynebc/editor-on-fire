@@ -4,6 +4,12 @@
 #include <allegro.h>
 #include "alogg/include/alogg.h"
 
+#if defined(__GNUC__)
+	#define EOF_UNUSED __attribute__((unused))
+#else
+	#define EOF_UNUSED
+#endif
+
 ///Item limits
 #define EOF_MAX_TEXT_EVENTS       4096
 #define EOF_MAX_GRID_SNAP_INTERVALS 97
@@ -260,6 +266,19 @@ typedef struct
 	unsigned char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions, RS tremolos), or 0xFF if it otherwise applies to all difficulties
 
 } EOF_PHRASE_SECTION;
+
+static int EOF_UNUSED eof_lyric_line_applies_to_type(const EOF_PHRASE_SECTION *line, unsigned char lyric_type)
+{
+	if(!line)
+	{
+		return 0;
+	}
+	if(line->difficulty == 0xFF)
+	{
+		return 1;
+	}
+	return (line->difficulty == lyric_type);
+}
 
 
 ///Track formats
