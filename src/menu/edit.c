@@ -866,6 +866,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 	unsigned long lastlinenum = 0xFFFFFFFF, linestart = 0, lineend = 0, lineflags;	//Used to create lyric lines
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
 	unsigned long targetpos = EOF_SEEK_POS;	//By default, assume the paste will occur at the seek position
+	unsigned char target_type = eof_note_type;	//Paste vocals into the active tab (VOCALS/HARM1/2/3)
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
@@ -962,11 +963,11 @@ int eof_menu_edit_paste_vocal_logic(int function)
 
 		if(!oldpaste)
 		{	//If new paste logic is being used, this lyric pastes into a position relative to the start and end of a beat marker
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, temp_lyric.type, temp_lyric.name);
+			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, target_type, temp_lyric.name);
 		}
 		else
 		{	//If old paste logic is being used, this lyric pastes into a position relative to the previous pasted note
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, temp_lyric.type, temp_lyric.name);
+			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, target_type, temp_lyric.name);
 		}
 		if(new_lyric)
 		{	//If the lyric was successfully created
@@ -1021,7 +1022,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 	{
 		for(j = 0; j < eof_song->vocal_track[tracknum]->lyrics; j++)
 		{
-			if(eof_song->vocal_track[tracknum]->lyric[j]->pos == paste_pos[i])
+			if((eof_song->vocal_track[tracknum]->lyric[j]->pos == paste_pos[i]) && (eof_song->vocal_track[tracknum]->lyric[j]->type == target_type))
 			{
 				eof_selection.multi[j] = 1;
 				break;
@@ -1639,6 +1640,7 @@ int eof_menu_edit_paste_logic(int function)
 	unsigned long source_id = 0;
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
 	unsigned long targetpos = EOF_SEEK_POS;	//By default, assume the paste will occur at the seek position
+	unsigned char target_type = eof_note_type;	//Paste vocals into the active tab (VOCALS/HARM1/2/3)
 	EOF_PRO_GUITAR_TRACK *stp = NULL;	//eof_song->pro_guitar_track[srctracknum];	//Simplify
 	EOF_PRO_GUITAR_TRACK *dtp = NULL;	//eof_song->pro_guitar_track[tracknum];		//Simplify
 	unsigned long firstpastepos = 0;	//Will store the timestamp of the first pasted note
@@ -5259,3 +5261,4 @@ int eof_menu_edit_benchmark_rubberband(void)
 
 	return 1;
 }
+
