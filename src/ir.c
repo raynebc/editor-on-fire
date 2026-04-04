@@ -133,7 +133,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
 	PACKFILE * fp;
-	unsigned long i, stringnum, bitmask, deltapos, deltalength, channelctr;
+	unsigned long i, j, stringnum, bitmask, deltapos, deltalength, channelctr;
 	unsigned long delta = 0, nextdeltapos;
 	int channel;
 	int technique_vel[6] = {1, 6, 11, 16, 21, 26};	//Technique markers denote the affected string based on the velocity (ie. low E techniques are written with velocity 1)
@@ -214,12 +214,22 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	//Write notes
 	for(i = 0; i < eof_get_track_size(sp, track); i++)
 	{	//For each note in the track
-		unsigned long pos	, length, note, flags;
+		unsigned long pos	, length, note, flags, nextflags;
 		unsigned char finger;
 
 		if(!eof_note_applies_to_diff(sp, track, i, diff))
 		{	//If this note isn't in the target difficulty (static or dynamic as applicable)
 			continue;	//Skip it
+		}
+
+		//Look for the next note that will export
+		for(j = i + 1, nextflags = 0; j < eof_get_track_size(sp, track); j++)
+		{	//For each reamining note in the track
+			if(eof_note_applies_to_diff(sp, track, j, diff))
+			{	//If the note is in the target difficulty (static or dynamic as applicable)
+				nextflags = eof_get_note_flags(sp, track, j);	//Get that note's flags
+				break;
+			}
 		}
 
 		pitchmask = eof_get_midi_pitches(sp, track, i, pitches);	//Determine how many exportable pitches this note/lyric has
@@ -291,7 +301,6 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 			{	//If this string is used
 				EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};		//Used to process bend points
 
-				///Change all of these so the note off for each marker is the same timestamp as the note on
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 				{	//If this note is palm muted
 					eof_add_midi_event_indexed(deltapos, 0x90, 12, technique_vel[stringnum], 15, index++);		//Note 12, channel 15 with the string's dedicated velocity number indicates palm mute in IMMERROCK
@@ -307,8 +316,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					eof_add_midi_event_indexed(deltapos, 0x90, 14, technique_vel[stringnum], 15, index++);		//Note 14, channel 15 with the string's dedicated velocity number indicates natural harmonic in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 14, 0, 15, index++);
 				}
-				if(flags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
-				{	//If this note is a hammer on or a pull off
+				if(nextflags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
+				{	//If the NEXT note is a hammer on or a pull off
 					eof_add_midi_event_indexed(deltapos, 0x90, 15, technique_vel[stringnum], 15, index++);		//Note 15, channel 15 with the string's dedicated velocity number indicates hammer on or pull off in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 15, 0, 15, index++);
 				}

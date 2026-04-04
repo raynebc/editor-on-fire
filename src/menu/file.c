@@ -15,6 +15,7 @@
 #include "../config.h"	//For eof_lookup_drum_mapping()
 #include "../dialog.h"
 #include "../dr.h"
+#include "../drumbeats.h"
 #include "../ini.h"
 #include "../ini_import.h"
 #include "../ir.h"
@@ -124,7 +125,8 @@ MENU eof_file_export_menu[] =
 	{"&Preview audio", eof_menu_file_export_song_preview, NULL, 0, NULL},
 	{"&IMMERROCK", eof_menu_file_export_immerrock_track_diff, NULL, 0, NULL},
 	{"&BEATABLE", eof_menu_file_export_beatable_track, NULL, 0, NULL},
-	{"&LLPLUS", eof_menu_file_export_llplus_track, NULL, 0, NULL},
+	{"&LLPLUS", eof_menu_file_export_llplus_track_diff, NULL, 0, NULL},
+	{"&DrumBeats", eof_menu_file_export_drumbeats_track_diff, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -422,11 +424,14 @@ DIALOG eof_lyric_detections_dialog[]=
 
 void eof_prepare_file_menu(void)
 {
+	unsigned long track_diff_note_count = 0;
 	if(eof_song && eof_song_loaded)
 	{	//If a chart is loaded
 		#ifdef ALLEGRO_WINDOWS
 		int has_pg_notes = eof_song_has_pro_guitar_content(eof_song);
 		#endif
+
+		track_diff_note_count = eof_get_track_diff_size_normal(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 
 		eof_file_menu[2].flags = 0;	//Save
 		eof_file_menu[3].flags = 0;	//Save As
@@ -470,7 +475,7 @@ void eof_prepare_file_menu(void)
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
 			eof_file_import_menu[6].flags = 0; // Import>Rocksmith
-			eof_file_export_menu[5].flags = eof_get_track_diff_size_normal(eof_song, eof_selected_track, eof_note_type) ? 0 : D_DISABLED;	//Export>IMMERROCK
+			eof_file_export_menu[5].flags = track_diff_note_count ? 0 : D_DISABLED;	//Export>IMMERROCK
 		}
 		else
 		{
@@ -480,10 +485,23 @@ void eof_prepare_file_menu(void)
 		}
 		eof_file_display_menu[5].flags = 0;	//Benchmark image sequence
 
-		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
+		if(eof_track_is_beatable_mode(eof_song, eof_selected_track) && eof_get_track_size(eof_song, eof_selected_track))
 			eof_file_export_menu[6].flags = 0;	//File>Export>BEATABLE
 		else
 			eof_file_export_menu[6].flags = D_DISABLED;
+
+		if(track_diff_note_count)
+		{	//The active track difficulty has at least one note
+			eof_file_export_menu[7].flags = 0;	//File>Export>LLPLUS
+			eof_file_export_menu[8].flags = 0;	//File>Export>DrumBeats
+		}
+		else
+		{
+			eof_file_export_menu[7].flags = D_DISABLED;
+			eof_file_export_menu[8].flags = D_DISABLED;
+		}
+		if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+			eof_file_export_menu[8].flags = D_DISABLED;	//Don't allow DrumBeats export for non drum tracks
 	}
 	else
 	{	//No chart is loaded
@@ -7418,11 +7436,11 @@ int eof_menu_file_export_beatable_track(void)
 	return 1;
 }
 
-int eof_menu_file_export_llplus_track(void)
+int eof_menu_file_export_llplus_track_diff(void)
 {
 	char temp_string[1024], temp_filename2[1024];
 
-	eof_log("eof_menu_file_export_llplus_track() entered", 1);
+	eof_log("eof_menu_file_export_llplus_track_diff() entered", 1);
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
 		return 0;
@@ -7454,6 +7472,54 @@ int eof_menu_file_export_llplus_track(void)
 	eof_export_llplus_midi(eof_temp_filename);
 
 	return 1;
+}
+
+int eof_menu_file_export_drumbeats_track_diff(void)
+{
+	eof_log("eof_menu_file_export_drumbeats_track_diff() entered", 1);
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return failure
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tExporting track:  %s", eof_song->track[eof_selected_track]->name);
+	eof_log(eof_log_string, 1);
+
+	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+	put_backslash(eof_temp_filename);
+	(void) ustrcat(eof_temp_filename, "DrumBeats");
+	put_backslash(eof_temp_filename);
+	if(!eof_folder_exists(eof_temp_filename))
+	{	//If the export subfolder doesn't already exist
+		eof_mkdir(eof_temp_filename);
+	}
+	if(eof_check_string(eof_song->tags->title))
+	{	//If the title of the song is defined
+		(void) ustrcat(eof_temp_filename, eof_song->tags->title);
+	}
+	else
+	{
+		(void) ustrcat(eof_temp_filename, "SONGNAME");
+	}
+	if(eof_check_string(eof_song->tags->artist))
+	{	//If the artist of the song is defined
+		(void) ustrcat(eof_temp_filename, " - ");
+		(void) ustrcat(eof_temp_filename, eof_song->tags->artist);
+	}
+	(void) replace_extension(eof_temp_filename, eof_temp_filename, "mid", 1024);
+	if(!eof_export_drumbeats_midi(eof_song, eof_selected_track, eof_note_type, eof_temp_filename))
+	{
+		eof_log("\t\tError exporting MIDI", 1);
+		return 0;	//Return failure
+	}
+	(void) replace_extension(eof_temp_filename, eof_temp_filename, "ogg", 1024);
+	eof_copy_file(eof_loaded_ogg_name, eof_temp_filename);
+	if(!exists(eof_temp_filename))
+	{
+		eof_log("\t\tError exporting audio", 1);
+		return 0;	//Return failure
+	}
+
+	return 1;	//Return success
 }
 
 void eof_rebuild_notes_window(void)

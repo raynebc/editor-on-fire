@@ -4527,13 +4527,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										frets[ctr4] += eof_gp_import_slide_in_fret_count;	//Set the beginning of the slide the number of frets the config file specifies for slide in notes
 										slide_in_from_warned++;	//Track that such a slide in was encountered
 									}
-									else
-									{
+									else if(byte & 3)
+									{	//This note is a shift slide or legato slide
 										if(byte & 2)
 										{	//If this is a legato slide
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
 										}
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+									}
+									else
+									{
+										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t!Warning:  Ignoring invalid slide type of %d", byte);
+										eof_log(eof_log_string, 1);
 									}
 								}//Version 5 or newer GP file
 								if(slide_in_from_warned == 1)

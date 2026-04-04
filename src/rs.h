@@ -305,7 +305,7 @@ unsigned long eof_get_highest_fret_in_time_range(EOF_SONG *sp, unsigned long tra
 	//Expects the notes to be sorted in order to maximize performance
 
 unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long stringnum, EOF_RS_TECHNIQUES *ptr, char target, char checktechnotes);
-	//Reads the flags of the specified note and sets variables in the specified techniques structure to reflect the cumulative set of techniques used by the normal note and overlapping tech notes on the specified string
+	//Reads the flags of the specified normal note and sets variables in the specified techniques structure to reflect the cumulative set of techniques used by the normal note and overlapping tech notes on the specified string
 	///This function expects that the normal note set is active
 	//The structure is explicitly block filled with zeroes to ensure that memory comparison functions between two instances of the technique structure will behave as expected
 	//  If checktechnotes is nonzero, the techniques of any tech notes applicable to the specified string of the note are taken into account
