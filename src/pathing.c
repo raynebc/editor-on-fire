@@ -1318,7 +1318,7 @@ int eof_ch_sp_path_setup(EOF_SP_PATH_SOLUTION **bestptr, EOF_SP_PATH_SOLUTION **
 	}
 
 	///Initialize arrays and structures
-	(void) eof_count_selected_and_unselected_notes(&note_count);	//Count the number of notes in the active track difficulty
+	note_count = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 	if(!note_count)
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
@@ -2482,7 +2482,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 
 	//Evaluate solutions
 	solutionctr = first_deploy;	//The first worker process will be directed to calculate this solution set
-	(void) eof_count_selected_and_unselected_notes(&trackdiffsize);	//Count the number of notes in the active track difficulty
+	trackdiffsize = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 	*deployment_notes = 0;			//Reset this count so the first solution will be counted as the one with the most notes played during SP deployments
 	while(!done && !error && !canceled)
 	{	//Until the supervisor's job is completed
@@ -3286,7 +3286,6 @@ void eof_ch_sp_solution_rebuild(void)
 {
 	static unsigned long solution_track = 0xFF;		//Records the track for which the solution structure was built
 	static unsigned solution_diff = 0xFF;			//Records the difficulty for which the solution structure was built
-	unsigned long note_count = 0;
 
 	//Destroy the solution structure if necessary
 	if(eof_ch_sp_solution && ((eof_selected_track != solution_track) || (eof_note_type != solution_diff)))
@@ -3295,9 +3294,8 @@ void eof_ch_sp_solution_rebuild(void)
 		eof_ch_sp_solution = NULL;
 	}
 
-	(void) eof_count_selected_and_unselected_notes(&note_count);	//Count the number of notes in the active track difficulty
-	if(!note_count)
-	{	//If there aren't any, don't bother building the solution structure
+	if(!eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type))
+	{	//If there aren't any notes in the active track difficulty, don't bother building the solution structure
 		return;
 	}
 

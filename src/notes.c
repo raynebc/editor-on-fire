@@ -1819,7 +1819,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		eof_ch_sp_solution_wanted = 1;
 		if(eof_ch_sp_solution && eof_ch_sp_solution->score)
 		{	//If the global star power solution structure is built and a score was determined
-			(void) eof_count_selected_and_unselected_notes(&count);	//Count the number of notes in the active track difficulty
+			count = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			snprintf(dest_buffer, dest_buffer_size, "%lu (1 : %.2f notes)", eof_ch_sp_solution->deploy_count, (double)count / eof_ch_sp_solution->deploy_count);
 		}
 		else
@@ -1958,7 +1958,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_read_macro_number(count_string, &gemcount))
 		{	//If the gem count was successfully parsed
 			count = eof_count_num_notes_with_gem_count(gemcount);		//Determine how many such notes are in the active track difficulty
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{	//If there's at least one note in the active track difficulty
 				percent = (double)count * 100.0 / (double)totalnotecount;
@@ -1996,7 +1996,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_read_macro_gem_designations(gem_string, &gems, &toms, &cymbals))
 		{	//If the gem designations were successfully parsed
 			count = eof_count_num_notes_with_gem_designation(gems, toms, cymbals);		//Determine how many such notes are in the active track difficulty
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);							//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{	//If there's at least one note in the active track difficulty
 				percent = (double)count * 100.0 / (double)totalnotecount;
@@ -2016,7 +2016,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(tp)
 		{	//If a pro guitar track is active
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < tp->notes; ctr++)
@@ -2045,7 +2045,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(tp)
 		{	//If a pro guitar track is active
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < tp->notes; ctr++)
@@ -2074,7 +2074,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(tp)
 		{	//If a pro guitar track is active
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < tracksize; ctr++)
@@ -2103,7 +2103,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if((eof_note_type == EOF_NOTE_AMAZING) && (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 		{	//If the expert difficulty in either drum track is active
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < tracksize; ctr++)
@@ -2137,7 +2137,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If a drum track is active
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < tracksize; ctr++)
@@ -2171,7 +2171,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			unsigned long totalgemcount = 0, minegemcount = 0;
 			double percent2;
 
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < tracksize; ctr++)
@@ -2217,7 +2217,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			unsigned long totalgemcount = 0, rollgemcount = 0;
 			double percent2;
 
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < tracksize; ctr++)
@@ -2261,7 +2261,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long flaglist = 0;
 
-		(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+		totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 		if(totalnotecount)
 		{
 			if(tp)
@@ -2304,7 +2304,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < tracksize; ctr++)
@@ -2335,7 +2335,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < vp->lyrics; ctr++)
@@ -2366,7 +2366,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 0; ctr < vp->lyrics; ctr++)
@@ -2397,6 +2397,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
@@ -2428,7 +2429,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(eof_vocals_selected)
 		{	//If the vocal track is active
-			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
+			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
 			{
 				for(ctr = 1; ctr < vp->lyrics; ctr++)

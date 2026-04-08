@@ -2184,9 +2184,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}
 			else if(!KEY_EITHER_SHIFT)
 			{	//Only ALT is held
-				unsigned long totalnotecount = 0;
-				(void) eof_count_selected_and_unselected_notes(&totalnotecount);
-				if(totalnotecount)
+				if(eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type))
 				{	//If there are any notes in the active track difficulty
 					(void) eof_menu_edit_select_conditional();
 				}

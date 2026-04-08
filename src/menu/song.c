@@ -382,7 +382,7 @@ void eof_prepare_song_menu(void)
 		eof_catalog_menu[1].flags = eof_catalog_full_width ? D_SELECTED : 0;	//Update "Song>Catalog>Full width" check status
 		eof_song_seek_menu[6].flags = (eof_music_pos.value == eof_music_rewind_pos) ? D_DISABLED : 0;	//Update Rewind enable status
 
-		(void) eof_count_selected_and_unselected_notes(&totalnotecount);	//Count the number of notes in the active track difficulty
+		totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 
 		if(totalnotecount)
 		{	//If there are any notes in the active track difficulty
