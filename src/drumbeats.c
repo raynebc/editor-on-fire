@@ -4,6 +4,7 @@
 #include "main.h"
 #include "midi.h"
 #include "mix.h"
+#include "utility.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -46,9 +47,7 @@ int eof_export_drumbeats_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		eof_log("\tNot a drum track.  Aborting export", 1);
 		return 0;	//Return failure
 	}
-	i = 0;
-	(void) eof_count_selected_and_unselected_notes(&i);			//Count the number of notes in the active track difficulty
-	if(!i)
+	if(!eof_get_track_diff_size(sp, track, diff))
 	{	//Target track difficulty has no notes
 		eof_log("\tEmpty track difficulty.  Aborting export", 1);
 		return 0;
@@ -389,4 +388,142 @@ int eof_export_drumbeats_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	eof_log(eof_log_string, 1);
 
 	return 1;	//Return success
+}
+
+int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
+{
+	unsigned diff;
+	char diff_written[4] = {0};
+	char *midi_names[4] = {"notes_easy.mid", "notes_medium.mid", "notes_hard.mid", "notes_expert.mid"};
+	char temp_string[1024];
+	int err;
+	PACKFILE *fp;
+
+	//Validate parameters
+	if(!sp || (track >= sp->tracks))
+	{
+		eof_log("\tError saving:  Invalid parameters", 1);
+		return 0;	//Return failure
+	}
+	if(sp->track[track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+	{	//Only allow drum tracks to export to this format
+		eof_log("\tNot a drum track.  Aborting export", 1);
+		return 0;	//Return failure
+	}
+	if(!eof_get_track_size(sp, track))
+	{	//Target track has no notes
+		eof_log("\tEmpty track.  Aborting export", 1);
+		return 0;
+	}
+
+	eof_log("eof_export_drumbeats() entered", 2);
+	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
+
+	//Write song.ogg
+	if(eof_silence_loaded)
+	{
+		allegro_message("DrumBeats:  No chart audio is loaded so the export folder will be missing audio.");
+		eof_log("No chart audio is loaded so the export folder will be missing audio.", 2);
+	}
+	else
+	{
+		(void) replace_filename(eof_temp_filename, eof_temp_filename, "song.ogg", (int) sizeof(eof_temp_filename));
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+		eof_log(eof_log_string, 2);
+		if(!eof_conditionally_copy_file(eof_loaded_ogg_name, eof_temp_filename))
+		{
+			allegro_message("Could not export audio!\n%s", eof_temp_filename);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Could not export audio!\n%s", eof_temp_filename);
+			eof_log(eof_log_string, 2);
+
+			return 0;	//Return failure
+		}
+	}
+
+	//Write each MIDI file
+	err = 0;
+	for(diff = 0; diff < 4; diff++)
+	{	//For each of the first four difficulties
+		if(!eof_get_track_diff_size(sp, track, diff))
+		{	//If there are no notes in this track difficulty
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tTrack difficulty #%u is empty.  Skipping.", diff);
+			eof_log(eof_log_string, 2);
+			continue;
+		}
+		(void) replace_filename(eof_temp_filename, eof_temp_filename, midi_names[diff], (int) sizeof(eof_temp_filename));
+		if(eof_export_drumbeats_midi(sp, track, diff, eof_temp_filename))
+		{
+			diff_written[diff] = 1;
+		}
+		else
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFailed to export difficulty #%u", diff);
+			eof_log(eof_log_string, 1);
+			err = 1;
+		}
+	}
+
+	//Write packer utility JSON
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, "project.json", (int) sizeof(eof_temp_filename));
+	fp = pack_fopen(eof_temp_filename, "w");
+	if(!fp)
+	{
+		eof_log("\tError saving:  Cannot open project.json for writing", 1);
+		err = 1;
+	}
+	else
+	{
+		(void) pack_fputs("{\n", fp);
+		if(eof_check_string(sp->tags->title))
+		{	//If a song title is defined
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Title\": \"%s\",\n", sp->tags->title);
+			(void) pack_fputs(temp_string, fp);		//Write song title
+		}
+		if(eof_check_string(sp->tags->artist))
+		{	//If artist name is defined
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Artist\": \"%s\",\n", sp->tags->artist);
+			(void) pack_fputs(temp_string, fp);		//Write artist
+		}
+		if(eof_check_string(sp->tags->frettist))
+		{	//If the chart author is defined
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Charter\": \"%s\",\n", sp->tags->frettist);
+			(void) pack_fputs(temp_string, fp);		//Write chart author
+		}
+		if(eof_check_string(sp->tags->genre))
+		{	//If the genre is defined
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Genre\": \"%s\",\n", sp->tags->genre);
+			(void) pack_fputs(temp_string, fp);		//Write genre
+		}
+		(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Song_Audio\": \"song.ogg\",\n");
+		(void) pack_fputs(temp_string, fp);		//Write chart audio filename
+		if(diff_written[0])
+		{	//If the easy difficulty MIDI was exported
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Notes_Easy\": \"%s\",\n", midi_names[0]);
+			(void) pack_fputs(temp_string, fp);		//Write easy MIDI filename
+		}
+		if(diff_written[1])
+		{	//If the medium difficulty MIDI was exported
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Notes_Medium\": \"%s\",\n", midi_names[1]);
+			(void) pack_fputs(temp_string, fp);		//Write medium MIDI filename
+		}
+		if(diff_written[2])
+		{	//If the hard difficulty MIDI was exported
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Notes_Hard\": \"%s\",\n", midi_names[2]);
+			(void) pack_fputs(temp_string, fp);		//Write hard MIDI filename
+		}
+		if(diff_written[3])
+		{	//If the expert difficulty MIDI was exported
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Notes_Expert\": \"%s\",\n", midi_names[3]);
+			(void) pack_fputs(temp_string, fp);		//Write expert MIDI filename
+		}
+		(void) pack_fputs("}\n", fp);
+		pack_fclose(fp);
+	}
+
+	if(err)
+	{
+		allegro_message("There were one or more errors.  Check log for details.");
+	}
+
+	return 1; 		//Return success
 }

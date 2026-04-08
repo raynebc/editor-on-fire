@@ -126,7 +126,7 @@ MENU eof_file_export_menu[] =
 	{"&IMMERROCK", eof_menu_file_export_immerrock_track_diff, NULL, 0, NULL},
 	{"&BEATABLE", eof_menu_file_export_beatable_track, NULL, 0, NULL},
 	{"&LLPLUS", eof_menu_file_export_llplus_track_diff, NULL, 0, NULL},
-	{"&DrumBeats", eof_menu_file_export_drumbeats_track_diff, NULL, 0, NULL},
+	{"&DrumBeats", eof_menu_file_export_drumbeats_track, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -7474,9 +7474,11 @@ int eof_menu_file_export_llplus_track_diff(void)
 	return 1;
 }
 
-int eof_menu_file_export_drumbeats_track_diff(void)
+int eof_menu_file_export_drumbeats_track(void)
 {
-	eof_log("eof_menu_file_export_drumbeats_track_diff() entered", 1);
+	char temp_filename[1024];
+
+	eof_log("eof_menu_file_export_drumbeats_track() entered", 1);
 
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
 		return 0;	//Return failure
@@ -7484,42 +7486,16 @@ int eof_menu_file_export_drumbeats_track_diff(void)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tExporting track:  %s", eof_song->track[eof_selected_track]->name);
 	eof_log(eof_log_string, 1);
 
-	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
-	put_backslash(eof_temp_filename);
-	(void) ustrcat(eof_temp_filename, "DrumBeats");
-	put_backslash(eof_temp_filename);
-	if(!eof_folder_exists(eof_temp_filename))
+	(void) replace_filename(temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+	put_backslash(temp_filename);
+	(void) ustrcat(temp_filename, "DrumBeats");
+	put_backslash(temp_filename);
+	if(!eof_folder_exists(temp_filename))
 	{	//If the export subfolder doesn't already exist
-		eof_mkdir(eof_temp_filename);
-	}
-	if(eof_check_string(eof_song->tags->title))
-	{	//If the title of the song is defined
-		(void) ustrcat(eof_temp_filename, eof_song->tags->title);
-	}
-	else
-	{
-		(void) ustrcat(eof_temp_filename, "SONGNAME");
-	}
-	if(eof_check_string(eof_song->tags->artist))
-	{	//If the artist of the song is defined
-		(void) ustrcat(eof_temp_filename, " - ");
-		(void) ustrcat(eof_temp_filename, eof_song->tags->artist);
-	}
-	(void) replace_extension(eof_temp_filename, eof_temp_filename, "mid", 1024);
-	if(!eof_export_drumbeats_midi(eof_song, eof_selected_track, eof_note_type, eof_temp_filename))
-	{
-		eof_log("\t\tError exporting MIDI", 1);
-		return 0;	//Return failure
-	}
-	(void) replace_extension(eof_temp_filename, eof_temp_filename, "ogg", 1024);
-	eof_copy_file(eof_loaded_ogg_name, eof_temp_filename);
-	if(!exists(eof_temp_filename))
-	{
-		eof_log("\t\tError exporting audio", 1);
-		return 0;	//Return failure
+		eof_mkdir(temp_filename);
 	}
 
-	return 1;	//Return success
+	return eof_export_drumbeats(eof_song, eof_selected_track, temp_filename);
 }
 
 void eof_rebuild_notes_window(void)
