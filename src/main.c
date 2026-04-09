@@ -224,6 +224,7 @@ int         eof_disable_ini_export = 0;			//If nonzero, song.ini is not written 
 int         eof_gh_import_sustain_threshold_prompt = 0;	//If nonzero, GH import will prompt whether to apply a sustain threshold determined by half of the first beat's length (as per GH3 rules)
 int         eof_rs_import_all_handshapes = 0;	//If nonzero, RS import will load all handshapes and not just those used in specialized circumstances for authoring custom charts
 int         eof_rs2_export_version_8 = 0;		//If nonzero, high density chords will export to RS2 XML without the highDensity status and without chordnote tags, to suit compatibility differences with DLC builder versus the Rocksmith custom song toolkit
+int         eof_rs_export_suppress_tempo_warning = 0;	//If nonzero, the check/warning about tempos < 40BPM or > 300BPM is skipped
 int         eof_midi_export_enhanced_open_marker = 0;	//If nonzero, open notes and chords export to MIDI with the use of an "[ENHANCED_OPENS]" text event and a MIDI marker one note below lane 1
 int         eof_gp_import_remove_accent_from_staccato = 0;	//If nonzero, staccato notes have accent status removed during GP import
 int         eof_gp_import_track_specific_events = 0;		//If nonzero, text events imported from Guitar Pro files are added only to the active track instead of the entire project

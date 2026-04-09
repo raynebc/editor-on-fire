@@ -1482,12 +1482,31 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(tp)
 		{	//If a pro guitar track is active
+			unsigned long index = 0;
 			unsigned char position;
 
-			position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos.value - eof_av_delay);	//Find if there's a fret hand position in effect
-			if(position)
+			index = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos.value - eof_av_delay);	//Find if there's a fret hand position in effect
+			if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos.value - eof_av_delay, &index, NULL, 0))
 			{	//If a fret hand position is in effect
-				snprintf(dest_buffer, dest_buffer_size, "%u", position);
+				unsigned long highest, nextanchorpos, width = 4;
+
+				position = tp->handposition[index].end_pos;		//The fret hand position fret value
+				nextanchorpos = tp->note[tp->notes - 1]->pos + 1;	//In case there are no other anchors, initialize this to reflect covering all remaining notes
+				for(ctr = index + 1; ctr < tp->handpositions; ctr++)
+				{	//For the remainder of the fret hand positions
+					if(tp->handposition[ctr].difficulty == eof_note_type)
+					{	//If the hand position is in the active difficulty
+						nextanchorpos = tp->handposition[ctr].start_pos;	//Track its position
+						break;
+					}
+				}
+				highest = eof_get_highest_fret_in_time_range(eof_song, eof_selected_track, eof_note_type, tp->handposition[index].start_pos, nextanchorpos - 1);	//Find the highest fret number used within the scope of this fret hand position
+				if(highest > position + 3)
+				{	//If any notes within the scope of this fret hand position require the anchor width to be increased beyond 4 frets
+					width = highest - position + 1;	//Determine the minimum needed width
+				}
+
+				snprintf(dest_buffer, dest_buffer_size, "%u (w=%lu)", position, width);
 				return 1;
 			}
 		}

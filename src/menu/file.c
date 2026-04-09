@@ -118,7 +118,7 @@ MENU eof_file_preferences_menu[] =
 
 MENU eof_file_export_menu[] =
 {
-	{"&Chart range", eof_menu_file_export_chart_range, NULL, D_DISABLED, NULL},
+	{"&Chart range", eof_menu_file_export_chart_range, NULL, 0, NULL},
 	{"&Audio range", eof_menu_file_export_audio_range, NULL, D_DISABLED, NULL},
 	{"&Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
 	{"Image &Sequence", eof_write_image_sequence, NULL, 0, NULL},
@@ -249,10 +249,10 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ eof_window_proc,0,   48,  500, 375, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  380, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  380, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 380, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,  "Cancel",              NULL, NULL },
+	{ eof_window_proc,0,   48,  500, 390, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  395, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  395, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160, 395, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,  "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,    75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248,  75,  224, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI files",NULL, NULL },
 	{ d_agup_check_proc, 16,    90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -288,10 +288,12 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   345, 300, 16,  2,   23,  0,    0,      1,   0,   "Offer to derive finger placements from FHPs",NULL, NULL },
 	{ d_agup_check_proc, 16,   360, 220, 16,  2,   23,  0,    0,      1,   0,   "GP import events to track only",NULL, NULL },
 	{ d_agup_check_proc, 248, 360, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
-	{ d_agup_check_proc, 248, 375, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
-	{ d_agup_check_proc, 248, 390, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't import LLPLUS MIDI content",NULL, NULL },
+	{ d_agup_check_proc, 248, 375, 244, 16,  2,   23,  0,    0,      1,   0,   "RS export suppress tempo warning",NULL, NULL },
+	{ d_agup_check_proc, 248, 390, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ d_agup_check_proc, 248, 405, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't import LLPLUS MIDI content",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
+
 
 DIALOG eof_pg_preferences_dialog[] =
 {
@@ -1883,8 +1885,9 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[36].flags = eof_offer_fhp_derived_finger_placements ? D_SELECTED : 0;//Offer to derive finger placements from FHPs
 	eof_import_export_preferences_dialog[37].flags = eof_gp_import_track_specific_events ? D_SELECTED : 0;		//GP import events to track only
 	eof_import_export_preferences_dialog[38].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
-	eof_import_export_preferences_dialog[39].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
-	eof_import_export_preferences_dialog[40].flags = eof_disable_llplus_import ? D_SELECTED : 0;				//Don't import LLPLUS MIDI content
+	eof_import_export_preferences_dialog[39].flags = eof_rs_export_suppress_tempo_warning ? D_SELECTED : 0;	//RS export suppress tempo warning
+	eof_import_export_preferences_dialog[40].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_import_export_preferences_dialog[41].flags = eof_disable_llplus_import ? D_SELECTED : 0;				//Don't import LLPLUS MIDI content
 
 	do
 	{	//Run the dialog
@@ -1926,8 +1929,9 @@ int eof_menu_file_import_export_preferences(void)
 			eof_offer_fhp_derived_finger_placements = (eof_import_export_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_track_specific_events = (eof_import_export_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
 			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
-			eof_disable_rs_wav = (eof_import_export_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
-			eof_disable_llplus_import = (eof_import_export_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
+			eof_rs_export_suppress_tempo_warning = (eof_import_export_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
+			eof_disable_rs_wav = (eof_import_export_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
+			eof_disable_llplus_import = (eof_import_export_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1966,8 +1970,9 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[36].flags = 0;				//Offer to derive finger placements from FHPs
 			eof_import_export_preferences_dialog[37].flags = 0;				//GP import events to track only
 			eof_import_export_preferences_dialog[38].flags = 0;				//GH import sustain threshold prompt
-			eof_import_export_preferences_dialog[39].flags = 0;				//Don't write Rocksmith WAV file
-			eof_import_export_preferences_dialog[40].flags = 0;				//Don't import LLPLUS MIDI content
+			eof_import_export_preferences_dialog[39].flags = 0;				//RS export suppress tempo warning
+			eof_import_export_preferences_dialog[40].flags = 0;				//Don't write Rocksmith WAV file
+			eof_import_export_preferences_dialog[41].flags = 0;				//Don't import LLPLUS MIDI content
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -4548,8 +4553,8 @@ int eof_save_helper_checks(void)
 	}//If the user wants to save Rocksmith capable files
 
 	/* check for tempo changes outside the range of 40BPM through 300BPM, inclusive */
-	if(eof_write_rs_files || eof_write_rs2_files)
-	{	//If the user wants to save Rocksmith capable files
+	if((eof_write_rs_files || eof_write_rs2_files) && !eof_rs_export_suppress_tempo_warning)
+	{	//If the user wants to save Rocksmith capable files, and this warning wasn't suppressed in preferences
 		unsigned long pos = eof_check_tempo_range(40.0, 300.0);	//Check if there is a beat position with a tempo outside the acceptable range
 		if(pos != ULONG_MAX)
 		{	//If such a position was found
@@ -4560,7 +4565,7 @@ int eof_save_helper_checks(void)
 				return 1;	//Return cancellation
 			}
 		}
-	}//If the user wants to save Rocksmith capable files
+	}//If the user wants to save Rocksmith capable files, and this warning wasn't suppressed in preferences
 
 
 	//Drums Rock related checks

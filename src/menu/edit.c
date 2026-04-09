@@ -1633,6 +1633,7 @@ int eof_menu_edit_paste_logic(int function)
 	EOF_PRO_GUITAR_TRACK *stp = NULL;	//eof_song->pro_guitar_track[srctracknum];	//Simplify
 	EOF_PRO_GUITAR_TRACK *dtp = NULL;	//eof_song->pro_guitar_track[tracknum];		//Simplify
 	unsigned long firstpastepos = 0;	//Will store the timestamp of the first pasted note
+	EOF_PHRASE_SECTION *tremoloptr = NULL;	//Used to recreate tremolo phrasees
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
@@ -1922,6 +1923,33 @@ int eof_menu_edit_paste_logic(int function)
 			}
 		}
 
+		//Recreate tremolo phrases
+		if(source_id == eof_log_id)
+		{	//If the copy/paste is being performed within the same EOF instance
+			unsigned long originalnotepos = temp_note.pos + firstnotepos;			//The original position of the copied note
+
+			if(eof_get_section_instance_at_pos(eof_song, sourcetrack, EOF_TREMOLO_SECTION, originalnotepos))
+			{	//If the source note was inside any tremolo phrase
+				if(tremoloptr)
+				{	//If the previous pasted note was already put into a new tremolo phrase
+					tremoloptr->end_pos = newnotepos + newnotelength;	//Extend the tremolo phrase to encompass the new pasted note
+				}
+				else
+				{	//No tremolo phrase is in effect
+					if(!eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, newnotepos))
+					{	//If the pasted note is not already in the scope of a tremolo phrase, create a new one
+						unsigned char diff = 0xFF;	//By default, assume the tremolo is not specific to any difficulty
+						if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+							diff = eof_note_type;	//When dynamic difficulty is in effect, tremolo phrases apply to the active track difficulty
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, diff, newnotepos, newnotepos + newnotelength, 0, "");	//Add a new tremolo phrase
+						tremoloptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, newnotepos);		//Track the pointer of the new tremolo phrase
+					}
+				}
+			}
+			else
+				tremoloptr = NULL;		//Only track newly created tremolos for the sake of encompassing consecutive tremolo notes
+		}
+
 		/* process pro guitar data */
 		if(!dtp)
 			continue;	//If the track being pasted into isn't a pro guitar track, skip the remainder of the logic below
@@ -1950,7 +1978,7 @@ int eof_menu_edit_paste_logic(int function)
 			continue;	//Skip the remaining logic below as it only applies to pro guitar
 		}
 
-		//If the copy/paste is being performed within the same EOF instance
+		//If the copy/paste is being performed within the same EOF instance between pro guitar tracks
 		if(source_id == eof_log_id)
 		{
 			//Paste arpeggio/handshape phrasing
