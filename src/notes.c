@@ -1435,7 +1435,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				unsigned char pitchmask, pitches[6] = {0};
 
 				dest_buffer[0] = '\0';	//Empty this string
-				pitchmask = eof_get_midi_pitches(eof_song, eof_selected_track, eof_selection.current, pitches);	//Determine how many exportable pitches this note/lyric has
+				pitchmask = eof_get_midi_pitches(eof_song, eof_selected_track, eof_selection.current, pitches, 0);	//Determine how many exportable pitches this note/lyric has, treating string mutes as open notes
 				for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
 				{	//For each of the track's usable strings
 					if(pitchmask & bitmask)

@@ -1792,10 +1792,11 @@ int eof_menu_note_pitched_transpose(int dir, char option)
 		if(eof_note_can_pitch_transpose(eof_song, eof_selected_track, notectr, dir))
 		{	//If this note can transpose
 			char newfrets[8] = {0};
+			char mutestatus;
 
 			note = eof_get_note_note(eof_song, eof_selected_track, notectr);
 			ghost = eof_get_note_ghost(eof_song, eof_selected_track, notectr);
-			pitchmask = eof_get_midi_pitches(eof_song, eof_selected_track, notectr, pitches);
+			pitchmask = eof_get_midi_pitches(eof_song, eof_selected_track, notectr, pitches, 1);	//Allow muted/ghosted gems to have their pitch transpose
 
 			///Transpose fret values first, because eof_set_note_note() will clear fret values for unused strings
 			for(stringctr = 0, bitmask = 1; stringctr < tp->numstrings; stringctr++, bitmask <<= 1)
@@ -1808,10 +1809,12 @@ int eof_menu_note_pitched_transpose(int dir, char option)
 
 				if(pitchmask & bitmask)
 				{	//If this string has a pitch to transpose
+					mutestatus = tp->pgnote[notectr]->frets[stringctr] & 0x80;	//Retain the string mute status if present
 					stringpitch =  tp->tuning[targetstring] + eof_lookup_default_string_tuning_absolute(tp, eof_selected_track, targetstring) + tp->capo;	//Determine the pitch of the string the note pitch will transpose to
 					if(stringpitch > pitches[stringctr])
 						return 0;	//Logic error
 					newfrets[targetstring] = pitches[stringctr] - stringpitch;
+					newfrets[targetstring] |= mutestatus;	//Reapply the string mute status if applicable
 					if(newfrets[targetstring] > tp->numfrets)
 						return 0;	//Logic error
 				}
@@ -4518,7 +4521,7 @@ int eof_note_can_pitch_transpose(EOF_SONG *sp, unsigned long track, unsigned lon
 		return 0;	//Can't transpose up if this note has a gem on the highest lane
 
 	//Check whether each pitch played in the note can transpose
-	pitchmask = eof_get_midi_pitches(sp, track, notenum, pitches);
+	pitchmask = eof_get_midi_pitches(sp, track, notenum, pitches, 1);	//Allow muted/ghosted gems to have their pitch transpose
 	for(stringctr = 0, bitmask = 1; stringctr < tp->numstrings; stringctr++, bitmask <<= 1)
 	{	//For each string in this track
 		if(pitchmask & bitmask)

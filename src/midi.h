@@ -85,11 +85,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//If format is 2, a GH3 variation of the normal MIDI is exported where the forced HOPO marker (5 higher than the MIDI note for lane 1)
 	//  is written with a length of 0 delta ticks.  All other features are exported identically to the normal MIDI
 
-unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches);
+unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches, int function);
 	//Returns a bitmask defining which elements in the pitches array are populated to define the pitches used by the specified note/lyric
 	//This takes any defined capo placement into account in the case of pro guitar notes
-	//Gems that are string muted or ghosted are not reflected in this bitmask
-	//String muted gems have their open string pitches reflected in the pitches array, for use with IMMERROCK export
+	//If function is 0, gems that are string muted or ghosted are not reflected in this bitmask, otherwise they are reflected in the bitmask
+	//If function is 0, string muted gems have their open string pitches reflected in the pitches array (for use with IMMERROCK export), otherwise the pitches reflect the pitch for the gems' fret value
 	//Each pitch is returned through *pitches array, which must be at least 6 elements large
 	//0 is returned on error or if the specified note contains no pitches (pitchless or percussion lyric, or fully string muted or fully ghosted pro guitar note)
 int eof_export_music_midi(EOF_SONG *sp, char *fn, char format);

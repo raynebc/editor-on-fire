@@ -2784,7 +2784,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	return 1;	//Return success
 }
 
-unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches)
+unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char *pitches, int function)
 {
 	unsigned char pitchmask = 0, notenote, ctr, bitmask;
 
@@ -2808,17 +2808,17 @@ unsigned char eof_get_midi_pitches(EOF_SONG *sp, unsigned long track, unsigned l
 		{	//For each of the 6 supported strings
 			if(tp->note[note]->note & bitmask)
 			{	//If this string is used
-				if(!(tp->note[note]->ghost & bitmask))
-				{	//If this string is not ghosted
-					unsigned char effective_fret_value =  tp->note[note]->frets[ctr];
-					if(tp->note[note]->frets[ctr] & 0x80)
-					{	//If this string is muted
+				if(!(tp->note[note]->ghost & bitmask) || function)
+				{	//If this string is not ghosted, or the function parameter allows for ghosted strings to be counted
+					unsigned char effective_fret_value =  tp->note[note]->frets[ctr] & 0x7F;	//Mask out the mute status bit if applicable
+					if((tp->note[note]->frets[ctr] & 0x80) && !function)
+					{	//If this string is muted, and the function parameter specifies to treat string muted notes as the open note pitch for the string
 						effective_fret_value = 0;	//Have the pitch array element for this string reflect an open note
 					}
 					//This note is found by adding default tuning for the string, the offset defining the current tuning, the position of any capo in use and the fret number being played
 					pitches[ctr] = tp->tuning[ctr] + eof_lookup_default_string_tuning_absolute(tp, track, ctr) + effective_fret_value + tp->capo;	//Store it in the pitch array
-					if(!(tp->note[note]->frets[ctr] & 0x80))
-					{	//If this string is not muted
+					if(!(tp->note[note]->frets[ctr] & 0x80) || function)
+					{	//If this string is not muted, or the function parameter allows for muted strings to be counted
 						pitchmask |= bitmask;	//Set the appropriate bit in the mask
 					}
 				}
@@ -2993,7 +2993,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 					}
 				}
 
-				pitchmask = eof_get_midi_pitches(sp, j, i, pitches);	//Determine how many exportable pitches this note/lyric has
+				pitchmask = eof_get_midi_pitches(sp, j, i, pitches, 0);	//Determine how many exportable pitches this note/lyric has, treating string mutes as open notes
 				if(!pitchmask)
 					continue;	//If no pitches would be exported for this note/lyric, skip it
 

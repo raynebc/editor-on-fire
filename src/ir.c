@@ -232,7 +232,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 			}
 		}
 
-		pitchmask = eof_get_midi_pitches(sp, track, i, pitches);	//Determine how many exportable pitches this note/lyric has
+		pitchmask = eof_get_midi_pitches(sp, track, i, pitches, 0);	//Determine how many exportable pitches this note/lyric has, treating string mutes as open notes
 		is_muted = eof_is_string_muted(sp, track, i);			//Determine if all played strings in the note are string muted (which would result in pitchmask being 0)
 		if(!pitchmask && !is_muted)
 			continue;	//If no pitches would be exported for this note/lyric, and that's not due to all played strings being string muted, skip it

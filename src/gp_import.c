@@ -1684,7 +1684,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	double measure_position;		//Tracks the current position as an amount within the current measure
 	unsigned long allflags;			//Tracks the flags for the current note
 	unsigned long flags;			//Tracks the flags for the current string while individual strings are being parsed, after which this variable stores the combined flags of all gems in the note
-	unsigned long tflags;			//Tracks any temporary flags marked for a note
+	unsigned long tflags, gtflags;	//Tracks any temporary flags marked for a note or grace note, respectively
 	unsigned long tieflags;			//Tracks the flags for the tie gems only in the current note (so that tie chords containing a different string than the connecting note won't apply linknext status if it's not appropriate)
 	unsigned char bendstrength;		//Tracks the note's bend strength if applicable
 	struct guitar_pro_bend bendstruct = {0, 0, {0}, {0}};	//Stores data about the bend being parsed
@@ -3347,7 +3347,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
 					rest_note = 0;	//Assume a note isn't a rest note unless found otherwise
 					bendstruct.bendpoints = 0;	//Assume the note has no bend points unless any are parsed
-					tieflags = allflags = tflags = 0;
+					tieflags = allflags = tflags = gtflags = 0;
 					bendstrength = 0;
 					note_is_short = 0;
 					note_is_staccato = 0;
@@ -4337,7 +4337,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										if(!graceonbeat)
 										{	//if the grace note is before the beat
 											grace_position = measure_position - grace_duration;	//Reposition it accordingly
-											tflags = EOF_NOTE_TFLAG_GRACE;	//Recognized this as a flam note if it is imported as a percussion track
+											gtflags = EOF_NOTE_TFLAG_GRACE;	//Recognized this as a flam note if it is imported as a percussion track
 										}
 										beat_position = grace_position * curnum;								//How many whole beats into the current measure the position is
 										partial_beat_position = (grace_position * curnum) - beat_position;	//How far into this beat the grace note begins
@@ -4383,7 +4383,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//GP4 and older formats have a tendency to mark unpitched slides as "slide from note" as well, remove the redundant status set earlier
 									if(byte == - 2)
 									{	//Slide in from above
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										tflags |= EOF_NOTE_TFLAG_SLIDE_IN;
 										flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 										if(!unpitchend || (fret_value < unpitchend))
 										{	//Track the lowest fret value for the slide end position
@@ -4396,7 +4396,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//Slide in from below
 										if(fret_value > 1)
 										{	//Don't allow this unless sliding into a fret higher than 1
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											tflags |= EOF_NOTE_TFLAG_SLIDE_IN;
 											flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 											if(!unpitchend || (fret_value < unpitchend))
 											{	//Track the lowest fret value for the slide end position
@@ -4499,7 +4499,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//This note slides in from below
 										if(fret_value > 1)
 										{	//Don't allow this unless sliding into a fret higher than 1
-											flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+											tflags |= EOF_NOTE_TFLAG_SLIDE_IN;
 											flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 											if(!unpitchend || (fret_value < unpitchend))
 											{	//Track the lowest fret value for the slide end position
@@ -4518,7 +4518,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									else if(byte & 32)
 									{	//This note slides in from above
-										flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+										tflags |= EOF_NOTE_TFLAG_SLIDE_IN;
 										flags |= EOF_NOTE_FLAG_HIGHLIGHT;
 										if(!unpitchend || (fret_value < unpitchend))
 										{	//Track the lowest fret value for the slide end position
@@ -4735,6 +4735,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								return NULL;
 							}
 							np[ctr2]->flags = flags;
+							np[ctr2]->tflags =tflags;
 							for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
 							{	//For each of this track's natively supported strings
 								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
@@ -4749,8 +4750,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								np[ctr2]->frets[ctr4] = frets[convertednum];	//Copy the fret number for this string
 								np[ctr2]->finger[ctr4] = finger[convertednum];	//Copy the finger number used to fret the string (is nonzero if defined)
 							}
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
-							{	//If the note had an unpitched slide
+							if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (tflags & EOF_NOTE_TFLAG_SLIDE_IN))
+							{	//If the note had an unpitched slide in/out
 								np[ctr2]->unpitchend = unpitchend;	//Apply the end position that was previously determined
 								if(unpitchend > tp->numfrets)
 								{	//If this unpitched slide requires the fret limit to be increased
@@ -4809,8 +4810,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if(truncate)
 							{	//If the above conditions were triggered
-								if(!(notebends) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO) && !(np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
-								{	//If this note doesn't have bend, slide, vibrato or unpitched slide status
+								if(!(notebends) && !(np[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)) && !(np[ctr2]->tflags & EOF_NOTE_TFLAG_SLIDE_IN))
+								{	//If this note doesn't have bend, slide, vibrato or unpitched slide (in or out) status
 									np[ctr2]->length = 1;	//Remove the note's sustain
 								}
 							}
@@ -4903,7 +4904,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(strings);
 								return NULL;
 							}
-							gnp->tflags = tflags;	//Track the grace note status for the sake of being able to treat as flam notation for percussion tracks
+							gnp->tflags = gtflags;	//Track the grace note status for the sake of being able to treat as flam notation for percussion tracks
 							if(strings[ctr2] > 6)
 							{	//If this is a 7 string track
 								if(effective_drop_7)
@@ -5148,21 +5149,24 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//For each imported track
 		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
-			EOF_PRO_GUITAR_NOTE *gnp;
+			EOF_PRO_GUITAR_NOTE *nnp;	//The pointer to the new note being added
 
-			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))		//If this note wasn't marked as an unpitched slide during import
-				continue;	//Skip the note
-			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_NOTE_FLAG_HIGHLIGHT))		//If this note wasn't highlighted in order to mark an unpitched slide in (to tell it apart from unpitched slide out notes)
+			if(!(gp->track[ctr]->note[ctr2]->tflags & EOF_NOTE_TFLAG_SLIDE_IN))		//If this note wasn't marked as an unpitched slide in during import
 				continue;	//Skip the note
 			if(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)	//If this note was already linked to a tie note that follows it
 				continue;	//Skip the note
 
-			gnp = eof_pro_guitar_track_add_note(gp->track[ctr]);		//Add a new note to the current track
-			if(gnp)
+			nnp = eof_pro_guitar_track_add_note(gp->track[ctr]);		//Add a new note to the current track
+			if(nnp)
 			{	//If the note was able to be allocated
 				int dir = 0;	//Tracks whether the slide in is to convert into an upward (>0) or downward (<0) slide
 				unsigned long beatnum = eof_get_beat(eof_song, gp->track[ctr]->note[ctr2]->pos);
 				unsigned long beatlength = eof_get_beat_length(eof_song, beatnum);
+
+				nnp->flags = gp->track[ctr]->note[ctr2]->flags;		//The new note will inherit all of the statuses/techniques that were defined for the original note
+				nnp->flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;		//Except for the highlight status
+				gp->track[ctr]->note[ctr2]->flags = EOF_NOTE_FLAG_HIGHLIGHT;	//And the original note will just become a slide note (with highlighting)
+				nnp->length = gp->track[ctr]->note[ctr2]->length;	//The new note will inherit the length of the orginal note
 
 				//Find the direction of the slide and apply it to the note, place the newly added note 1/# beat after the slide beginning and link it
 				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
@@ -5172,10 +5176,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						if(gp->track[ctr]->note[ctr2]->note & bitmask)
 						{	//If this is a string used in the note
 							unsigned long snappos = 0;	//Used to grid snap the new note
+							unsigned long gap;		//The distance after the original note the new note is to be placed
 							if(!dir)
 							{	//If the direction was not found yet
 								gp->track[ctr]->note[ctr2]->length = 1;
-								gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Clear the unpitched slide flag
+								gp->track[ctr]->note[ctr2]->tflags &= ~EOF_NOTE_TFLAG_SLIDE_IN;					//Clear the slide in temporary flag
 								gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Denote that the slide end will be defined
 								gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;			//Link it to the newly added note
 								if(gp->track[ctr]->note[ctr2]->frets[ctr3] > gp->track[ctr]->note[ctr2]->unpitchend)
@@ -5188,34 +5193,36 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								dir = gp->track[ctr]->note[ctr2]->unpitchend - gp->track[ctr]->note[ctr2]->frets[ctr3];
 							}
-							gnp->pos = gp->track[ctr]->note[ctr2]->pos + ((double)beatlength / (double)eof_gp_import_slide_in_beat_interval) + 0.5;	//Place the newly added note 1/# beat forward, based on the eof_gp_import_slide_in_beat_interval eof.cfg setting
-							if(!eof_is_any_beat_interval_position(gnp->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
+							gap = ((double)beatlength / (double)eof_gp_import_slide_in_beat_interval) + 0.5;
+							nnp->pos = gp->track[ctr]->note[ctr2]->pos + gap;	//Place the newly added note 1/# beat forward, based on the eof_gp_import_slide_in_beat_interval eof.cfg setting
+							nnp->length -= gap;							//Update the newly added note's length accordingly
+							if(!eof_is_any_beat_interval_position(nnp->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
 							{	//If this note is not beat interval snapped
 								if(snappos != ULONG_MAX)
 								{	//If the nearest snap position was determined
-									if((snappos + 1 == gnp->pos) || (gnp->pos + 1 == snappos))
-										gnp->pos = snappos;	//If the nearest grid snap position for this new note is found to be within 1ms, snap to the grid
+									if((snappos + 1 == nnp->pos) || (nnp->pos + 1 == snappos))
+										nnp->pos = snappos;	//If the nearest grid snap position for this new note is found to be within 1ms, snap to the grid
 								}
 							}
-							gnp->note |= bitmask;	//Copy the gem to the newly added note
+							nnp->note |= bitmask;	//Copy the gem to the newly added note
 							if(dir < 0)
 							{	//Downward slide
 								if(gp->track[ctr]->note[ctr2]->frets[ctr3] > dir * -1)
 								{	//If the note can slide down enough
-									gnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Decrease the fret number to reflect the slide
+									nnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Decrease the fret number to reflect the slide
 								}
 								else
 								{
-									gnp->frets[ctr3] = 1;
+									nnp->frets[ctr3] = 1;
 								}
 							}
 							else
 							{	//Upward slide
-								gnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Increase the fret number to reflect the slide
+								nnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Increase the fret number to reflect the slide
 							}
-							if(!gp->track[ctr]->note[ctr2]->slideend || (gnp->frets[ctr3] < gp->track[ctr]->note[ctr2]->slideend))
+							if(!gp->track[ctr]->note[ctr2]->slideend || (nnp->frets[ctr3] < gp->track[ctr]->note[ctr2]->slideend))
 							{	//Track the lowest fret value for the slide end position
-								gp->track[ctr]->note[ctr2]->slideend = gnp->frets[ctr3];		//And set that as the end of the pitched slide
+								gp->track[ctr]->note[ctr2]->slideend = nnp->frets[ctr3];		//And set that as the end of the pitched slide
 							}
 							gp->track[ctr]->note[ctr2]->unpitchend = 0;
 						}
