@@ -99,6 +99,7 @@ NCDFS_FILTER_LIST * eof_filter_gp_lyric_text_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_rs_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_bf_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_songsterr_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_note_panel_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_array_txt_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_beatable_files = NULL;
@@ -4864,6 +4865,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_bf_files, "rif", "Bandfuse chart files (*.rif)", 1);
 
+	eof_filter_songsterr_files = ncdfs_filter_list_create();
+	if(!eof_filter_songsterr_files)
+	{
+		allegro_message("Could not create file list filter (*.json)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_songsterr_files, "json", "Songsterr metadata (*.json)", 1);
+
 	eof_filter_note_panel_files = ncdfs_filter_list_create();
 	if(!eof_filter_note_panel_files)
 	{
@@ -5505,6 +5514,8 @@ void eof_exit(void)
 		free(eof_filter_sonic_visualiser_files);
 	if(eof_filter_bf_files)
 		free(eof_filter_bf_files);
+	if(eof_filter_songsterr_files)
+		free(eof_filter_songsterr_files);
 	if(eof_filter_note_panel_files)
 		free(eof_filter_note_panel_files);
 	if(eof_filter_array_txt_files)

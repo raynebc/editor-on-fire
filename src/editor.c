@@ -7989,7 +7989,7 @@ void eof_editor_logic_common(void)
 									}
 									else
 									{	//Update beat timings to reflect the beat being clicked and drug
-										eof_recalculate_beats(eof_song, eof_selected_beat);
+										eof_recalculate_beats(eof_song, eof_selected_beat, eof_mickeys_x * eof_zoom);
 									}
 									if(KEY_EITHER_CTRL && !was_already_anchored && eof_selected_beat)	//CTRL+click and dragging a beat marker after the first changes the previous anchor's tempo
 									{	//If the beat that was just moved wasn't already an anchor, and CTRL was held, and verifying again that the selected beat is not the first beat

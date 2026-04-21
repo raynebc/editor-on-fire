@@ -240,4 +240,9 @@ int eof_menu_file_gh3_section_import(void);
 int eof_menu_file_drum_midi_velocities(void);
 	//Prompts the user to define the velocities to be used for generic MIDI export, ie. for Phase Shift
 
+int eof_menu_file_songsterr_import(void);
+	//Allows user to import a Songsterr JSON file defining sync points for measures
+	//Since timing is defined per measure, a time signature must be in effect starting with beat 0
+	//Optionally allows the user to input the URL of a Songsterr transcription and launches a web browser to the URL that allows the JSON file to be downloaded
+
 #endif

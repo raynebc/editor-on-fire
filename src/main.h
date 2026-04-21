@@ -285,6 +285,7 @@ extern NCDFS_FILTER_LIST * eof_filter_gp_lyric_text_files;
 extern NCDFS_FILTER_LIST * eof_filter_rs_files;
 extern NCDFS_FILTER_LIST * eof_filter_sonic_visualiser_files;
 extern NCDFS_FILTER_LIST * eof_filter_bf_files;
+extern NCDFS_FILTER_LIST * eof_filter_songsterr_files;
 extern NCDFS_FILTER_LIST * eof_filter_note_panel_files;
 extern NCDFS_FILTER_LIST * eof_filter_array_txt_files;
 extern NCDFS_FILTER_LIST * eof_filter_beatable_files;

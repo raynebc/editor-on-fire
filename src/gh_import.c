@@ -3620,7 +3620,7 @@ int eof_ghl_import_common(const char *fn)
 									eof_log(eof_log_string, 1);
 									eof_song->beat[beat + 1]->fpos = newpos;						//Update that beat's timing
 									eof_song->beat[beat + 1]->pos = newpos;		//Round to nearest ms
-									eof_recalculate_beats(eof_song, beat + 1);	//Update beat timings surround the mid beat change
+									eof_recalculate_beats(eof_song, beat + 1, 0);	//Update beat timings surround the mid beat change
 								}
 								continue;	//Process next tempo change
 							}
@@ -3648,7 +3648,7 @@ int eof_ghl_import_common(const char *fn)
 							eof_log(eof_log_string, 1);
 							eof_song->beat[beat]->fpos = (double)changes[ctr].position * 1000.0;	//Reposition the beat
 							eof_song->beat[beat]->pos = eof_song->beat[beat]->fpos + 0.5;		//Round to nearest millisecond
-							eof_recalculate_beats(eof_song, beat);	//Adjust the previous and next anchor accordingly
+							eof_recalculate_beats(eof_song, beat, 0);	//Adjust the previous and next anchor accordingly
 						}
 						if(mid_beat_change)
 						{

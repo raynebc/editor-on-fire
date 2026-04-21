@@ -6503,7 +6503,7 @@ int eof_name_search_replace(void)
 	eof_etext2[0] = '\0';	//Empty the "With" field
 	eof_cursor_visible = 0;
 	eof_render();
-	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
+	eof_color_dialog(eof_name_search_replace_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_name_search_replace_dialog);
 
 	if(eof_popup_dialog(eof_name_search_replace_dialog, focus) == 7)

@@ -22,7 +22,7 @@ unsigned long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat);
 int eof_beat_is_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns nonzero if the specified beat number is an anchor based on its flag or a change in tempo from the prior beat
 unsigned long eof_calculate_beats_logic(EOF_SONG * sp, int addbeats);
-	//Sets the timestamp and anchor status of each beat existing for the duration of the chart by using the tempo map
+	//Sets the timestamp and anchor status of each beat existing for the duration of the chart by using the tempos defined on each beat
 	//If addbeats is nonzero, creates beats if there aren't enough to extend to one beat past the end of the chart as defined by eof_chart_length
 	//Updates eof_chart_length to reflect the last beat's timestamp if the latter is larger
 	//Returns nonzero to indicate the number of beats added to the project
@@ -44,9 +44,11 @@ void eof_change_accurate_ts(EOF_SONG * sp, char function);
 	//If function is nonzero, such beats are calculated without regard to time signature the way EOF originally did
 	//If function is zero, such beats are calculated with regard to time signature (ie. beats in 4/8 are shorter than 4/4 if they use the same tempo)
 void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat);
-	//Recalculates and applies the tempo of the anchors before and after the specified beat, updating beat timestamps, etc.
-void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat);
-	//Recalculates and applies the tempo and timings on both sides of cbeat based on the previous and next anchors, such as when dragging a beat marker to define cbeat as an anchor
+	//Recalculates and applies the tempo of the anchors before and after the specified beat based on those anchors' floating point timestamps, updating position and tempo on all beats in between
+	//If there is no anchor after the specified beat, all beats up to the end of the project are altered
+void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat, unsigned long diff);
+	//Recalculates and applies the tempo and timings on both sides of cbeat based on the previous and next anchors' floating point timestamps
+	//Unlike eof_realign_beats(), if there is no anchor after cbeat, the beats after cbeat do not have their tempo altered but instead have diff added to them (ie. eof_mickeys_x * eof_zoom to perform click and drag logic to move the last anchor in a chart)
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);
 	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);

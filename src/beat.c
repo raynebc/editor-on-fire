@@ -461,7 +461,7 @@ void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat)
 	}
 }
 
-void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
+void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat, unsigned long diff)
 {
 	unsigned long i;
 	unsigned long last_anchor = eof_find_previous_anchor(sp, cbeat);
@@ -563,7 +563,7 @@ void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat)
 		for(i = cbeat + 1; i < sp->beats; i++)
 		{
 			assert(i < EOF_MAX_BEATS);	//Put an assertion here to resolve a false positive with Coverity
-			sp->beat[i]->fpos += eof_mickeys_x * eof_zoom;
+			sp->beat[i]->fpos += diff;
 			sp->beat[i]->pos = sp->beat[i]->fpos + 0.5;	//Round up
 		}
 	}

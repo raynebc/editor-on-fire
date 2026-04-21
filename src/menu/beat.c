@@ -1213,7 +1213,7 @@ int eof_menu_beat_anchor(void)
 				eof_song->beat[eof_selected_beat]->fpos++;
 				eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
 				eof_mickeys_x = 1;
-				eof_recalculate_beats(eof_song, eof_selected_beat);
+				eof_recalculate_beats(eof_song, eof_selected_beat, 0);
 				if((eof_selected_beat < eof_song->beats - 1) && (eof_song->beat[eof_selected_beat]->pos > eof_song->beat[eof_selected_beat + 1]->pos - 100))
 				{	//If there is another beat, and the selected beat was moved to within 99ms of it, undo the operation
 					(void) eof_undo_apply();
@@ -1229,7 +1229,7 @@ int eof_menu_beat_anchor(void)
 				eof_song->beat[eof_selected_beat]->fpos--;
 				eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
 				eof_mickeys_x = 1;
-				eof_recalculate_beats(eof_song, eof_selected_beat);
+				eof_recalculate_beats(eof_song, eof_selected_beat, 0);
 				if(eof_song->beat[eof_selected_beat]->pos < eof_song->beat[eof_selected_beat - 1]->pos + 100)
 				{
 					(void) eof_undo_apply();
@@ -1287,7 +1287,7 @@ int eof_menu_beat_move_to_seek_pos(void)
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos = eof_music_pos.value - eof_av_delay;	//Update the selected beat's position
-	eof_recalculate_beats(eof_song, eof_selected_beat);	//Update beat timings
+	eof_recalculate_beats(eof_song, eof_selected_beat, 0);	//Update beat timings
 	eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 	eof_fixup_notes(eof_song);										//Update note highlighting
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting

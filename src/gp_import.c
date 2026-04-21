@@ -3013,11 +3013,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}//If the first sync point wasn't placed at the first beat
 		eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
 		eof_song->tags->accurate_ts = 1;	//Enable the accurate TS option, since comparable logic was used to calculate sync point positions
-		eof_calculate_tempo_map(eof_song);	//Update the tempo and anchor status of all beats
+		eof_calculate_tempo_map(eof_song);	//Update the tempo changes of the beats to reflect the millisecond just applied, update anchor status of all beats
 		free(sync_points);
 		free(num);
 		free(den);
-		eof_calculate_tempo_map(eof_song);	//Update the tempo changes of the beats to reflect the millisecond timing just applied
 		eof_log("Sync points applied", 1);
 	}//If synchronization data was imported from the input Go PlayAlong file
 

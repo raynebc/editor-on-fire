@@ -104,6 +104,7 @@ MENU eof_file_import_menu[] =
 	{"&Drums Rock", eof_menu_file_drums_rock_import, NULL, 0, NULL},
 	{"&Stepmania", eof_menu_file_stepmania_import, NULL, 0, NULL},
 	{"GP style lyric text", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
+	{"Songsterr &Timing", eof_menu_file_songsterr_import, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -473,6 +474,7 @@ void eof_prepare_file_menu(void)
 			eof_file_import_menu[12].flags = D_DISABLED;
 
 		eof_file_import_menu[14].flags = 0;	//Import>GP style lyric text
+		eof_file_import_menu[15].flags = 0;	//Import>Songsterr timing
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{
 			eof_file_import_menu[5].flags = 0; // Import>Guitar Pro
@@ -520,6 +522,7 @@ void eof_prepare_file_menu(void)
 		eof_file_import_menu[11].flags = D_DISABLED;	//Import>Guitar Hero Live
 		eof_file_import_menu[12].flags = D_DISABLED;	//Import>Drums Rock
 		eof_file_import_menu[14].flags = D_DISABLED;	//Import>GP style lyric text
+		eof_file_import_menu[15].flags = D_DISABLED;	//Import>Songsterr timing
 		eof_file_display_menu[5].flags = D_DISABLED;	//Benchmark image sequence
 	}
 
@@ -6218,6 +6221,7 @@ int eof_menu_file_gp_import(void)
 		(void) replace_filename(eof_last_gp_path, returnedfn_path, "", 1024);	//Set the last loaded GP file path
 	}
 	eof_fix_window_title();
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_render();
 
 	return 1;
@@ -7482,6 +7486,7 @@ int eof_menu_file_export_llplus_track_diff(void)
 int eof_menu_file_export_drumbeats_track(void)
 {
 	char temp_filename[1024];
+	int err;
 
 	eof_log("eof_menu_file_export_drumbeats_track() entered", 1);
 
@@ -7497,7 +7502,12 @@ int eof_menu_file_export_drumbeats_track(void)
 	put_backslash(temp_filename);
 	if(!eof_folder_exists(temp_filename))
 	{	//If the export subfolder doesn't already exist
-		eof_mkdir(temp_filename);
+		err = eof_mkdir(temp_filename);
+		if(err && !eof_folder_exists(temp_filename))
+		{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
+			allegro_message("Could not create folder!\n%s", temp_filename);
+			return 0;	//Return failure:  Could not create export folder
+		}
 	}
 
 	return eof_export_drumbeats(eof_song, eof_selected_track, temp_filename);
@@ -8145,4 +8155,303 @@ int eof_menu_file_drum_midi_velocities(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	return 1;
+}
+
+DIALOG eof_menu_file_songsterr_import_dialog[] =
+{
+	/* (proc)                (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2)    (dp3) */
+	{ eof_window_proc,      0,  0,  315, 151, 2,   23,  0,    0,      0,   0,   "Import Songsterr timing", NULL, NULL },
+	{ d_agup_text_proc,      15, 30,  64,  8,   2,   23,  0,    0,      0,   0,   "Paste in the URL of a Songsterr transcription",    NULL, NULL },
+	{ d_agup_text_proc,      15, 46,  64,  8,   2,   23,  0,    0,      0,   0,   "with a s### song ID and r### revision ID.",    NULL, NULL },
+	{ d_agup_text_proc,      15, 62,  64,  8,   2,   23,  0,    0,      0,   0,   "Download it in web browser then import it:",    NULL, NULL },
+	{ eof_edit_proc,             15, 81,  256, 20,  0,   0,   0,    0,      255, 0,   eof_etext,             NULL, NULL },
+	{ d_agup_button_proc,    15,  109, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Download",       NULL, NULL },
+	{ d_agup_button_proc,    110, 109, 84,  28,  2,   23,  0, D_EXIT, 0,   0,   "Import",             NULL, NULL },
+	{ d_agup_button_proc,    210, 109, 78,  28,  2,   23,  0,  D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_file_songsterr_import(void)
+{
+	char *returnedfn = NULL, *initial, *textbuffer;
+	int retval, error =0;
+	unsigned num = 0, den = 0;
+	unsigned long index, index2;
+
+	eof_log("eof_menu_file_songsterr_import() entered", 1);
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+
+	if(!eof_get_effective_ts(eof_song, &num, &den, 0, 1) || !num || !den)
+	{	//If no valid time signature could be found to be in effect on the first beat
+		allegro_message("Time signatures must be in effect starting with the first beat in order to use this import function");
+		return D_O_K;
+	}
+
+	//Init and launch dialog
+	eof_color_dialog(eof_menu_file_songsterr_import_dialog, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_menu_file_songsterr_import_dialog);
+	eof_etext[0] = '\0';
+
+	do
+	{	//Run the dialog
+		retval = eof_popup_dialog(eof_menu_file_songsterr_import_dialog, 4);
+		if(retval == 5)
+		{	//User clicked download, parse the song and revision IDs and launch a browser window for the JSON file
+			 char song_id_string[10], revision_id_string[10], *match, *match2;
+			 long song_id, revision_id;
+
+			 index = 0;
+			 song_id_string[0] = '\0';
+			 revision_id_string[0] = '\0';
+			 match = strcasestr_spec(eof_etext, "-tab-s");
+			 if(!match)
+			 {
+			 	allegro_message("This is not recognized as an appropriate Songsterr revision URL.  Make sure to click the \"Revision from (date)\" link at the top of the tab to get the right URL");
+			 	eof_etext[0] = '\0';	//Erase the invalid URL
+			 	continue;		//Re-run the dialog
+			 }
+
+			 //Find and parse the song ID
+			 do
+			 {	//Find the last instance of this substring in case the name of the song itself was somehow a match
+				match2 = strcasestr_spec(match, "-tab-s");
+				if(match2)
+					match = match2;
+			 }while(match2);
+
+			 while(match[index] != '/')
+			 {	//Until the next forward slash is found
+			 	if((index >= 9) || !isdigit(match[index]))
+				{	//If too many characters were read or this character is not a digit
+					allegro_message("Invalid song ID, please recheck the URL");
+					eof_etext[0] = '\0';	//Erase the invalid URL
+					break;
+				}
+				song_id_string[index] = match[index];	//Copy the next digit to the song ID string
+				index++;
+			 }
+			if(eof_etext[0] == '\0')
+				continue;	//If the song ID was not considered valid, re-run the dialog
+			 song_id_string[index] = '\0';	//Terminate the song ID string
+
+			 //Parse the revision ID
+			 if(match[index] == '/')
+			 {	//The expected slash was found
+			 	index++;					//Seek past the slash character
+				match = &(match[index]);	//Update the match pointer to the address of the first character in the revision number
+				index = 0;
+			 	match2 = strcasestr_spec(match, "...");	//On a tab with multiple revisions, the URL may include an old revision number, an ellipsis and the new revision number
+			 	if(match2)
+					match = match2;	//If that was the case, get the revision number after the elipsis
+				if(match[index] == 'r')
+				{	//The expected r character was found
+					index++;					//Seek past the r character
+					match = &(match[index]);	//Update the match pointer to the address of the first character in the revision number
+					index = 0;
+				}
+
+				while(isdigit(match[index]))
+				{
+					if(index >= 9)
+					{	//If too many characters were read
+						allegro_message("Invalid revision ID, please recheck the URL");
+						eof_etext[0] = '\0';	//Erase the invalid URL
+						break;
+					}
+					revision_id_string[index] = match[index];	//Copy the next digit to the revision ID string
+					index++;
+				}
+				if(eof_etext[0] == '\0')
+					continue;	//If the revision ID was not considered valid, re-run the dialog
+				revision_id_string[index] = '\0';	//Terminate the revision ID string
+			 }
+
+			 //Build and launch the URL
+			 song_id = atol(song_id_string);
+			 revision_id = atol(revision_id_string);
+			 if(!song_id || !revision_id)
+			 {
+				allegro_message("Invalid song or revision ID, please recheck the URL");
+				eof_etext[0] = '\0';	//Erase the invalid URL
+				continue;		//Re-run the dialog
+			 }
+		 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "start https://www.songsterr.com/api/video-points/%ld/%ld/list", song_id, revision_id);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIdentified song ID %lu, Revision ID %lu.  Launching command:  %s", song_id, revision_id, eof_etext2);
+			eof_log(eof_log_string, 1);
+		 	(void) eof_system(eof_etext2);
+		}
+		else if(retval == 6)
+		{	//User clicked import, have user browse for the JSON file
+			char  *syncpoints, point[31], another;
+			unsigned long beatctr, needed, measurectr = 1;
+			double timestamp, lastbeatlen;
+
+			initial = eof_last_eof_path;	//Start at the project's path
+			returnedfn = ncd_file_select(0, initial, "Import Songsterr JSON", eof_filter_songsterr_files);
+			eof_clear_input();
+			if(!returnedfn)
+			{	//If the user did not select a file
+				retval = 5;	//Set a value for retval to have the dialog run again
+				continue;	//Re-run the dialog
+			}
+
+			//User selected a file, import it
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tImporting Songsterr JSON file:  %s", returnedfn);
+			eof_log(eof_log_string, 1);
+			textbuffer = (char *)eof_buffer_file(returnedfn, 1, 0);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer
+			if(!textbuffer)
+			{	//If the file could not be loaded into memory
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Failed to buffer file:  \"%s\"", strerror(errno));
+				eof_log(eof_log_string, 1);
+				allegro_message("Failed to buffer file:  %s", strerror(errno));
+				break;	//Exit the dialog loop
+			}
+			syncpoints = strcasestr_spec(textbuffer, "\"points\":[");	//Find the first sync point in the JSON
+			if(!syncpoints)
+			{	//Sync points were not found
+				eof_log("\tNo sync points found", 1);
+				allegro_message("No sync points found");
+			}
+			else
+			{	//Sync points were found
+				//Reset the tempo map
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+				for(beatctr = 0; beatctr < eof_song->beats; beatctr++)
+				{	//For all beats in the project
+					eof_song->beat[beatctr]->ppqn = 500000;	//Reset to 120BPM
+					if(beatctr && (eof_get_ts(eof_song, NULL, NULL, beatctr) != 1))
+					{	//If this isn't the first beat, and there is not a time signature defined on this beat
+						eof_song->beat[beatctr]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Clear the anchor flag
+					}
+				}
+				eof_calculate_beats(eof_song);	//Rebuild the beat timings based on the defined tempo changes
+				eof_process_beat_statistics(eof_song, eof_selected_track);		//Find the measure numbering for all beats
+
+				//Process sync points
+				beatctr = index = 0;
+				while((syncpoints[index] != '\0') && (syncpoints[index] != ']') && !error)
+				{	//While neither the end of the buffer nor the end of the sync point array have been reached, or until an error was detected
+					//Read the next sync point
+					index2 = 0;
+					while(isdigit(syncpoints[index]) || (syncpoints[index] == '.'))
+					{	//While the next characters are digits or decimal points
+						if(index2 >= 30)
+						{	//If the number string is longer than allowed
+							eof_log("\tMalformed sync point", 1);
+							allegro_message("Malformed sync point");
+							error = 1;
+							break;
+						}
+						point[index2++] = syncpoints[index++];	//Copy the digit or decimal point into the point string
+					}
+					if(!error && ((syncpoints[index] != ']') && (syncpoints[index] != ',')))
+					{	//If this timestamp ended with anything other than a comma (another point follows) or closing bracket (end of points)
+						eof_log("\tMalformed sync point list", 1);
+						allegro_message("Malformed sync point list");
+						error = 1;
+					}
+					else if(syncpoints[index] == ',')
+					{	//If the next character in the buffer is a comma
+						index++;		//Seek past it to allow the next loop iteration to read the next timestamp
+						another = 1;	//Track that another timestamp is expected on the next loop iteration
+					}
+					else if(syncpoints[index] == ']')
+					{	//If the next character in the buffer is a closing bracket
+						another = 0;	//Track that another timestamp is not expected on the next loop iteration
+					}
+					if(error)
+						break;
+					point[index2] = '\0';	//Terminate the string
+					timestamp = atof(point);
+					if((timestamp == 0.0) && !eof_string_is_zero(point))
+					{	//If the string could not be converted to a floating point number
+						eof_log("\tInvalid number", 1);
+						allegro_message("Invalid number");
+						error = 1;
+						break;
+					}
+					timestamp *= 1000.0;	//Convert the timestamp from seconds to milliseconds
+
+					//Apply the sync point to the next measure in the project
+					if(eof_song->beat[beatctr]->measurenum != measurectr)
+					{	//If the beat statistics don't reflect the current beat being the start of the expected measure
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLogic error:  Beat statistics do not reflect measure %lu as beginning at beat %lu", measurectr, beatctr);
+						eof_log(eof_log_string, 1);
+						allegro_message("Measure %lu not found", measurectr);
+						error = 1;
+						break;
+					}
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tApplying sync point:  Measure %lu : %fms", measurectr, timestamp);
+					eof_log(eof_log_string, 1);
+					eof_song->beat[beatctr]->fpos = timestamp;		//Apply the floating point timestamp
+					eof_song->beat[beatctr]->pos = timestamp + 0.5;	//Round it to nearest millisecond for the integer timestamp
+					eof_recalculate_beats(eof_song, beatctr, 0);			//Adjust the tempo map to reflect beat #beatctr having been moved
+					eof_song->beat[beatctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Make the moved beat an anchor
+
+					//If there will be another sync point, advance to the next measure whose timestamp will be updated
+					if(another)
+					{	//If this sync point was followed by a comma
+						needed = beatctr + eof_song->beat[beatctr]->num_beats_in_measure;	//The number of the beat at the beginning of the next measure
+						if(another && (needed >= eof_song->beats))
+						{	//If another timestamp is going to be read, but there aren't enough beats to advance to the start of the next measure
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAdding %lu beats to allow enough to reach measure #%lu", needed - eof_song->beats, measurectr++);
+							eof_log(eof_log_string, 2);
+							if(!eof_song_append_beats(eof_song, needed - eof_song->beats))
+							{	//If the needed beats could not be added
+								eof_log("\tFailed to add beats for next sync point", 1);
+								allegro_message("Failed to add beats for next sync point");
+								error = 1;
+								break;
+							}
+							eof_process_beat_statistics(eof_song, eof_selected_track);		//Update the measure numbering for the new beats
+						}
+						beatctr = needed;	//Advance to the beat that was determined to be at the start of the next measure
+						measurectr++;
+					}
+				}//While neither the end of the buffer nor the end of the sync point array have been reached, or until an error was detected
+
+				//Cleanup
+				if(error)
+				{	//If an error was detected
+					eof_menu_edit_undo();		//Undo the modifications made by this function
+				}
+				else
+				{	//If the import succeeded
+					//Update timings for the rest of the beats
+					if(beatctr > 0)
+					{	//If there were multiple sync points
+						lastbeatlen = eof_get_beat_length(eof_song, beatctr - 1);	//Get the length of the beat immediately before the last sync point (since the last sync point will have the default 120BPM instead of reflecting something closer to the song's actual used tempo)
+					}
+					else
+					{	//If there was only one sync point
+						lastbeatlen = eof_get_beat_length(eof_song, beatctr);	//Get the length of the first beat
+					}
+					while(beatctr + 1< eof_song->beats)
+					{	//For each of the beats after the last applied sync point
+						eof_song->beat[beatctr + 1]->fpos = eof_song->beat[beatctr]->fpos + lastbeatlen;
+						eof_song->beat[beatctr + 1]->pos = eof_song->beat[beatctr + 1]->fpos + 0.5;
+						beatctr++;
+					}
+					eof_calculate_tempo_map(eof_song);	//Determine tempo changes based on the beats' timestamps
+					(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+				}
+			}//Sync points were found
+
+			free(textbuffer);
+			eof_truncate_chart(eof_song);		//Remove excess beats
+			eof_process_beat_statistics(eof_song, eof_selected_track);
+		}//User clicked import, have user browse for the JSON file
+	}while(retval == 5);	//Until user clicked something other than the Download button or presses Esc
+
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	(void) eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_render();
+
+	return D_O_K;
 }
