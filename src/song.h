@@ -134,7 +134,7 @@
 												//	but the handshape tag written reflecting a chord where the ghost gems are included.  This allows the author to have multiple partial chords display
 												//	as if they all used the full chord's handshape in-game
 #define EOF_PRO_GUITAR_NOTE_EFLAG_CHORDIFY   16	//This flag specifies a note with "chordify" status, affecting its export to RS2 XML as a chord tag with no chordnote subtags, and with ignored single notes if the chord uses sustain
-#define EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS 32	//This flag specifies that a chord has no defined fingering and will RS export reflecting as such
+#define EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS 32	//This flag specifies that a chord intentionally has no defined fingering and will RS export reflecting as such, and fingering view and IR/RS notes panels will also reflect this
 #define EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND   64	//This flag specifies that a bend tech note is to be interpreted as a pre-bend even if it's not at the start position of the normal note it affects
 
 //The following extended flag pertains to legacy notes

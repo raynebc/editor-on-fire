@@ -823,6 +823,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 						unsigned char fingernum = 0;
 						int retval = eof_pro_guitar_note_derive_string_fingering(eof_song, track, notenum, ctr, &fingernum);	//Determine what the fingering for this note is, deriving it from handshape/arpeggio/FHP if possible
 
+						if(eof_get_note_eflags(eof_song, track, notenum) & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+							retval = 1;	//If the note has fingerless status, override the coloration to be green (ie. no error)
+
 						if(retval == 0)
 						{	//No fingering was determined for this gem
 							snprintf(notation, 2, " ");

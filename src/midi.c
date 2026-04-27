@@ -3713,7 +3713,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime, struct Tempo_change *ancho
 	unsigned long delta = 0;
 	double reltime = 0.0;
 	unsigned long ctr;
-	unsigned long realtimeint = realtime;	//The integer representation of the target timestamp is used in the grid snap matching logic
+	unsigned long realtimeint = realtime + 0.5;	//The integer representation of the target timestamp is used in the grid snap matching logic
 	unsigned long beatnum, gridsnapnum, interval;
 
 	assert_wrapper(temp != NULL);	//Ensure the tempomap is populated

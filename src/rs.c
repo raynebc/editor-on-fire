@@ -3589,6 +3589,10 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 
 	if(!tp || (note >= tp->notes))
 		return 0;	//Invalid parameters
+	if(tp->note[note]->eflags & EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS)
+	{	//If this note is defined as being "fingerless", it intentionally has no explicit fingering
+		return 1;	//Return fingering valid
+	}
 
 	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
 	{	//For each string supported by this track

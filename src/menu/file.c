@@ -8442,6 +8442,7 @@ int eof_menu_file_songsterr_import(void)
 			}//Sync points were found
 
 			free(textbuffer);
+			eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
 			eof_truncate_chart(eof_song);		//Remove excess beats
 			eof_process_beat_statistics(eof_song, eof_selected_track);
 		}//User clicked import, have user browse for the JSON file
