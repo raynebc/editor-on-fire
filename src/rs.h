@@ -213,6 +213,10 @@ EOF_PHRASE_SECTION *eof_pro_guitar_track_find_effective_fret_hand_position_defin
 	//If function is nonzero, then the hand position must be exactly at the specified time position to be considered "in effect"
 	//If non NULL is returned, the index of the effective fret hand position is returned through *index if its pointer isn't NULL, and the position's index within the specified difficulty is returned through *diffindex if its pointer isn't NULL
 	//If NULL is returned, neither *index nor *diffindex are altered
+unsigned long eof_pro_guitar_find_fret_hand_position_width(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);
+	//Examines the specified track's content and determines the fret width of the specified fret hand position
+	//When the specified track has no notes, the effective width is 4 frets
+	//Returns 0 on error
 unsigned long eof_find_effective_rs_phrase(unsigned long position);
 	//Returns the eof_track_manage_rs_phrases() dialog's phrase number in effect (at or before) at the specified timestamp, or 0 if no phrase was in effect at that position
 	//This function assumes that the beat statistics are properly cached for the active track

@@ -12,7 +12,7 @@ EOF_WINDOW * eof_window_create(int x, int y, int w, int h, BITMAP * bp)
 	if(bp == NULL)
 		return NULL;
 
- 	eof_log("eof_window_create() entered", 1);
+ 	eof_log("eof_window_create() entered", 2);
 
 	wp = malloc(sizeof(EOF_WINDOW));
 	if(wp)
@@ -28,7 +28,7 @@ EOF_WINDOW * eof_window_create(int x, int y, int w, int h, BITMAP * bp)
 
 void eof_window_destroy(EOF_WINDOW * wp)
 {
- 	eof_log("eof_window_destroy() entered", 1);
+ 	eof_log("eof_window_destroy() entered", 2);
 
 	if(wp)
 	{

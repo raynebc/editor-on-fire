@@ -1483,37 +1483,17 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(tp)
 		{	//If a pro guitar track is active
 			unsigned long index = 0;
-			unsigned char position;
 
-			index = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos.value - eof_av_delay);	//Find if there's a fret hand position in effect
 			if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos.value - eof_av_delay, &index, NULL, 0))
 			{	//If a fret hand position is in effect
-				unsigned long highest, nexthandpos, width = 4;
+				unsigned long position, width;
 
 				position = tp->handposition[index].end_pos;		//The fret hand position fret value
-				if(tp->pgnotes)
-				{	//If there is at least one normal note
-					nexthandpos = tp->pgnote[tp->pgnotes - 1]->pos + 1;	//In case there are no other FHPs, initialize this to reflect covering all remaining notes
+				width = eof_pro_guitar_find_fret_hand_position_width(tp, index);	//Determine the width of the fret hand position
+				if(width)
+				{	//If the width was determined
+					snprintf(dest_buffer, dest_buffer_size, "%lu (w=%lu)", position, width);
 				}
-				else
-				{	//There are no notes
-					nexthandpos = eof_song->beat[eof_song->beats - 1]->pos;	//Otherwise use the position of the last beat marker
-				}
-				for(ctr = index + 1; ctr < tp->handpositions; ctr++)
-				{	//For the remainder of the fret hand positions
-					if(tp->handposition[ctr].difficulty == eof_note_type)
-					{	//If the hand position is in the active difficulty
-						nexthandpos = tp->handposition[ctr].start_pos;	//Track its position
-						break;
-					}
-				}
-				highest = eof_get_highest_fret_in_time_range(eof_song, eof_selected_track, eof_note_type, tp->handposition[index].start_pos, nexthandpos - 1);	//Find the highest fret number used within the scope of this fret hand position
-				if(highest > position + 3)
-				{	//If any notes within the scope of this fret hand position require the anchor width to be increased beyond 4 frets
-					width = highest - position + 1;	//Determine the minimum needed width
-				}
-
-				snprintf(dest_buffer, dest_buffer_size, "%u (w=%lu)", position, width);
 				return 1;
 			}
 		}
@@ -2800,7 +2780,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "IR_ALBUM_ART_FILENAME"))
 	{
 		album_art_filename[0] = '\0';	//Empth this string
-		if(eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, 0))
+		if(eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, NULL, 0))
 		{	//If the project folder has any suitably named album art for use with IMMERROCK
 			snprintf(dest_buffer, dest_buffer_size, "%s", get_filename(album_art_filename));
 		}
@@ -4225,7 +4205,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	if(!ustricmp(macro, "IF_PROJECT_HAS_IR_ALBUM_ART"))
 	{
 		album_art_filename[0] = '\0';	//Empth this string
-		if(eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, 0))
+		if(eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, NULL, 0))
 		{	//If the project folder has any suitably named album art for use with IMMERROCK
 			dest_buffer[0] = '\0';
 			return 3;	//True

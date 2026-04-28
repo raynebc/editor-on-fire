@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include "drumbeats.h"
 #include "event.h"
+#include "ir.h"
 #include "main.h"
 #include "midi.h"
 #include "mix.h"
@@ -393,9 +394,10 @@ int eof_export_drumbeats_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 {
 	unsigned diff;
-	char diff_written[4] = {0};
+	char diff_written[4] = {0}, preview_written = 0, art_written = 0;
 	char *midi_names[4] = {"notes_easy.mid", "notes_medium.mid", "notes_hard.mid", "notes_expert.mid"};
-	char temp_string[1024];
+	char *preview_name = "preview.ogg", *art_name = "cover.png";
+	char temp_string[1024], album_art_filename[1024];
 	int err;
 	PACKFILE *fp;
 
@@ -438,6 +440,61 @@ int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 
 			return 0;	//Return failure
 		}
+	}
+
+	//Write preview.ogg if it doesn't exist in the export folder and it has been created for the project
+	(void) replace_filename(temp_string, eof_song_path, preview_name, 1024);		//Build the path to the preview.ogg filename in the project folder
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, preview_name, (int) sizeof(eof_temp_filename));	//Build the path to the preview.ogg filename to write to the export folder
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
+	(void) eof_conditionally_copy_file(temp_string, eof_temp_filename);	//Copy preview.ogg there if a file of the same size doesn't already exist
+	if(exists(eof_temp_filename))
+	{	//If preview.ogg exists in the export folder
+		preview_written = 1;
+	}
+
+	//Write album art
+	album_art_filename[0] = '\0';	//Empty this string
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, art_name, 1024);	//Build the path to the album art file to write to the export folder
+	if(!exists(eof_temp_filename))
+	{	//If cover.png does not exist in the export folder
+		eof_log("\tAlbum art not found in export folder, checking project folder.", 2);
+		eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, "png", 1);	//Check for any suitable files in the project folder, preferring PNG format
+		if(exists(album_art_filename))
+		{	//If a JPG, PNG or TIFF file with a base filename of "Album", "Cover", "Label" or "Image" exist in the project folder
+			if(!ustricmp(get_extension(album_art_filename), "png"))
+			{	//If the album art file with a .png extension was found in the project folder
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+				eof_log(eof_log_string, 2);
+				(void) eof_conditionally_copy_file(album_art_filename, eof_temp_filename);	//Copy the album art to the export folder if a file of the same size doesn't already exist
+			}
+			else
+			{	//The album art exists in another format
+				if(exists(eof_ffmpeg_executable_path))
+				{	//If FFMPEG is linked, use it to convert the image
+					char syscommand[1024] = {0}, tempstr[1024];
+					(void) ustrcpy(syscommand, eof_ffmpeg_executable_path);
+					(void) uszprintf(tempstr, (int) sizeof(tempstr) - 1, " -i \"%s\" \"%s\"", album_art_filename, eof_temp_filename);
+					(void) ustrcat(syscommand, tempstr);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling FFMPEG as follows:  %s", syscommand);
+					eof_log(eof_log_string, 1);
+					(void) eof_system(syscommand);
+				}
+				else
+				{
+					allegro_message("Album art was found but is not in the correct format.  Convert it to PNG format or use \"File>Link to>FFMPEG\" to have EOF use FFMPEG to convert it.");
+				}
+			}
+		}
+		else
+			eof_log("\tAlbum art not found in project folder.", 2);
+	}
+	else
+		eof_log("\tAlbum art already exists in export folder, skipping copy", 2);
+
+	if(exists(eof_temp_filename))
+	{	//If the cover.png exists in the export folder
+		art_written = 1;
 	}
 
 	//Write each MIDI file
@@ -515,6 +572,16 @@ int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 		{	//If the expert difficulty MIDI was exported
 			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Notes_Expert\": \"%s\",\n", midi_names[3]);
 			(void) pack_fputs(temp_string, fp);		//Write expert MIDI filename
+		}
+		if(preview_written)
+		{	//If a preview.ogg file was exported
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Preview_Audio\": \"%s\",\n", preview_name);
+			(void) pack_fputs(temp_string, fp);		//Write preview audio filename
+		}
+		if(art_written)
+		{	//If cover.png was exported
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "	\"Album_Cover\": \"%s\",\n", art_name);
+			(void) pack_fputs(temp_string, fp);		//Write album art filename
 		}
 		(void) pack_fputs("}\n", fp);
 		pack_fclose(fp);

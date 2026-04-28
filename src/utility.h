@@ -21,7 +21,7 @@ void *eof_buffer_file(const char * fn, char appendnull, char discardbom);
 	//If discardbom is nonzero, any EF BB BF, FE FF or FF FE byte order mark sequence at the beginning of the file is discarded and not included in the buffer
 int eof_copy_file(const char * src, const char * dest);	//Copies the source file to the destination file.  Returns 0 upon error
 int eof_conditionally_copy_file(const char * src, const char * dest);
-	//Performs eof_copy_file() if the two specified files are of a different size
+	//Performs eof_copy_file() if the destination file doesn't already exist, or if it does but the two specified files are of a different size
 int eof_file_compare(char *file1, char *file2);	//Returns zero if the two files are the same
 
 int eof_check_string(char * tp);	//Returns nonzero if the string contains at least one non space ' ' character before it terminates, returns zero if tp is NULL or if the string has no non-space characters

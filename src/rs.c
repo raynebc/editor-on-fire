@@ -4335,6 +4335,41 @@ EOF_PHRASE_SECTION *eof_pro_guitar_track_find_effective_fret_hand_position_defin
 	return ptr;	//Return any hand position address that has been found
 }
 
+unsigned long eof_pro_guitar_find_fret_hand_position_width(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
+{
+	unsigned long ctr, highest, nexthandpos, width = 4;
+	unsigned char position, diff;
+
+	if(!tp || (index >= tp->handpositions))
+		return 0;	//Invalid parameters
+
+	position = tp->handposition[index].end_pos;	//The specified fret hand position's fret value
+	diff = tp->handposition[index].difficulty;
+	if(tp->pgnotes)
+	{	//If there is at least one normal note in the specified track
+		nexthandpos = tp->pgnote[tp->pgnotes - 1]->pos + 1;	//In case there are no other FHPs, initialize this to reflect covering all remaining notes
+	}
+	else
+	{	//There are no notes in the track
+		return 4;	//The default width of 4 frets is in effect
+	}
+	for(ctr = index + 1; ctr < tp->handpositions; ctr++)
+	{	//For the remainder of the fret hand positions
+		if(tp->handposition[ctr].difficulty == diff)
+		{	//If the hand position is in the same difficulty as the specified FHP
+			nexthandpos = tp->handposition[ctr].start_pos;	//Track its position
+			break;
+		}
+	}
+	highest = eof_get_highest_fret_in_time_range(eof_song, eof_selected_track, diff, tp->handposition[index].start_pos, nexthandpos - 1);	//Find the highest fret number used within the scope of this fret hand position
+	if(highest > position + 3)
+	{	//If any notes within the scope of this fret hand position require the anchor width to be increased beyond 4 frets
+		width = highest - position + 1;	//Determine the minimum needed width
+	}
+
+	return width;
+}
+
 unsigned long eof_pro_guitar_track_find_effective_tone(EOF_PRO_GUITAR_TRACK *tp, unsigned long position)
 {
 	unsigned long ctr;

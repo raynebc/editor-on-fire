@@ -727,7 +727,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	return 1;	//Return success
 }
 
-int eof_search_image_files(char *folderpath, char *filenamebase, char *match, unsigned long match_arraysize)
+int eof_search_image_files(char *folderpath, char *filenamebase, char *match, unsigned long match_arraysize, char *preferred_ext)
 {
 	char filename[1024] = {0}, filepath[1024] = {0};
 
@@ -739,7 +739,19 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 	(void) replace_extension(filename, filename, "jpg", sizeof(filename) - 1);
 	(void) replace_filename(filepath, folderpath, filename, sizeof(filename) - 1);
 
+	//Test whether filenamebase.[EXT] exists, reflecting any preferred extension passed by the calling function
+	if(preferred_ext)
+	{	//If a preferred file extension was given
+		(void) replace_extension(filepath, filepath, preferred_ext, sizeof(filename) - 1);
+		if(exists(filepath))
+		{
+			strncpy(match, filepath, match_arraysize);
+			return 1;	//Return match
+		}
+	}
+
 	//Test whether filenamebase.jpg exists
+	(void) replace_extension(filepath, filepath, "jpg", sizeof(filename) - 1);
 	if(exists(filepath))
 	{
 		strncpy(match, filepath, match_arraysize);
@@ -773,7 +785,7 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 	return 0;	//No matches
 }
 
-int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename, unsigned long filenamesize, char force_recheck)
+int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename, unsigned long filenamesize, char *preferred_ext, char force_recheck)
 {
 	static clock_t last_checktime = 0;
 	static char first_check = 1;
@@ -787,13 +799,13 @@ int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename
 	this_checktime = clock();
 	if(force_recheck || first_check || ((this_checktime - last_checktime) / CLOCKS_PER_SEC >=  10))
 	{	//If the calling function demands a recheck, if this is the first call to the function or at least 10 seconds have passed since this function performed file system checks
-		eof_search_image_files(folderpath, "Cover", album_art_filename, filenamesize);
+		eof_search_image_files(folderpath, "Cover", album_art_filename, filenamesize, preferred_ext);
 		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "Cover" exists in the export folder
-			eof_search_image_files(folderpath, "Album", album_art_filename, filenamesize);
+			eof_search_image_files(folderpath, "Album", album_art_filename, filenamesize, preferred_ext);
 		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "Album" exists in the export folder
-			eof_search_image_files(folderpath, "Label", album_art_filename, filenamesize);
+			eof_search_image_files(folderpath, "Label", album_art_filename, filenamesize, preferred_ext);
 		if(album_art_filename[0] == '\0')	//If no JPG, PNG or TIFF file with a base filename of "Label" exists in the export folder
-			eof_search_image_files(folderpath, "Image", album_art_filename, filenamesize);
+			eof_search_image_files(folderpath, "Image", album_art_filename, filenamesize, preferred_ext);
 
 		if(exists(album_art_filename))
 		{	//If a JPG, PNG or TIFF file with a base filename of "Album", "Cover", "Label" or "Image" exist in the target folder
@@ -1406,10 +1418,10 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	//Write album art
 	album_art_filename[0] = '\0';	//Empty this string
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "", (int) sizeof(eof_temp_filename));	//Build path to export folder
-	if(!eof_search_image_files(eof_temp_filename, "Cover", album_art_filename, sizeof(album_art_filename) - 1))
+	if(!eof_search_image_files(eof_temp_filename, "Cover", album_art_filename, sizeof(album_art_filename) - 1, NULL))
 	{	//If no JPG, PNG or TIFF file with a base filename of "Cover" exists in the export folder
 		eof_log("\tAlbum art not found in export folder, checking project folder.", 2);
-		eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, 1);	//Check for any suitable files in the project folder
+		eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, NULL, 1);	//Check for any suitable files in the project folder
 		if(exists(album_art_filename))
 		{	//If a JPG, PNG or TIFF file with a base filename of "Album", "Cover", "Label" or "Image" exist in the project folder
 			(void) replace_extension(temp_filename2, "Cover.jpg", get_extension(album_art_filename), sizeof(temp_filename2) - 1);	//Build output filename based on the extension of the found file

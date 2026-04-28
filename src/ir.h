@@ -20,17 +20,19 @@ void eof_add_midi_pitch_bend_event_qsteps(unsigned long pos, unsigned quarter_st
 int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char diff, char *fn);
 	//Exports the specified pro guitar track difficulty to a MIDI file suited for use in the game IMMERROCK
 	//Returns zero on error
-int eof_search_image_files(char *folderpath, char *filenamebase, char *match, unsigned long match_arraysize);
+int eof_search_image_files(char *folderpath, char *filenamebase, char *match, unsigned long match_arraysize, char *preferred_ext);
 	//Accepts a path to a folder (which must end in a folder separator),
 	// uses replace_filename() to append the file name base, then uses
 	// replace_extension() to append and test for the existence of the file
 	// with .jpg, .jpeg, .png or .tiff extensions.
+	//If preferred_ext is not NULL (ie. is "bmp"), it is tested before the other extensions
 	//If any of these filenames exist, the first one found is stored in match
 	// and nonzero is returned.  If no matches are found, 0 is returned
 	//match_arraysize is the number of bytes the match array can store, to avoid
 	// buffer overflow
-int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename, unsigned long filenamesize, char force_recheck);
+int eof_check_for_immerrock_album_art(char *folderpath, char *album_art_filename, unsigned long filenamesize, char *preferred_ext, char force_recheck);
 	//Checks for the presence of any JPG, PNG or TIF file with a base filename of "Cover", "Album", "Label" or "Image" in the given folder path
+	//If preferred_ext is not NULL (ie. is "bmp"), it is tested before the other extensions
 	//If invalid parameters are given, zero is returned
 	//If no file match is found, zero is returned and the album_art_filename string is emptied
 	//If a match is found, the matching file name is written to the album_art_filename string (bounds limited to filenamesize) and nonzero is returned

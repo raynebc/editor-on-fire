@@ -1741,7 +1741,7 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long ctr;
 
- 	eof_log("eof_song_delete_track() entered", 1);
+ 	eof_log("eof_song_delete_track() entered", 2);
 
 	if((sp == NULL) || !track || (track >= sp->tracks) || (sp->track[track] == NULL))
 		return 0;	//Return error

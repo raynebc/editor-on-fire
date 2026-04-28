@@ -4167,7 +4167,7 @@ int eof_dump_midi_track(const char *inputfile, PACKFILE *outf)
 	char trackheader[8] = {'M', 'T', 'r', 'k', 0, 0, 0, 0};
 	unsigned long i;
 
-	eof_log("eof_dump_midi_track() entered", 1);
+	eof_log("eof_dump_midi_track() entered", 2);
 
 	if((inputfile == NULL) || (outf == NULL))
 	{
