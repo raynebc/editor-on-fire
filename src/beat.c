@@ -1251,3 +1251,35 @@ unsigned long eof_check_tempo_range(double minbpm, double maxbpm)
 	}
 	return ULONG_MAX;	//All tempos were within acceptable range
 }
+
+int eof_replace_chart_delay_with_beat(void)
+{
+	unsigned long i;
+	double newbpm;
+
+	if(eof_song->beat[0]->pos == 0)
+		return 1;	//If there is no space before the first beat marker, no changes are needed
+
+	if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
+	{	//If the beats array was successfully resized
+		for(i = eof_song->beats - 1; i > 0; i--)
+		{
+			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+		}
+		eof_song->beat[0]->pos = eof_song->beat[0]->fpos = 0;
+		eof_song->beat[0]->flags = eof_song->beat[1]->flags;	//Copy the flags (ie. Time Signature) of the original first beat marker
+		eof_song->tags->ogg[0].midi_offset = 0;
+		newbpm = 60000.0 / eof_song->beat[1]->fpos;	//60000ms / length of new beat (the MIDI delay) = Tempo
+		eof_song->beat[0]->ppqn = 60000000.0 / newbpm;	//60000000usec_per_minute / tempo = PPQN
+		eof_move_text_events(eof_song, 0, 1, 1);
+		if(eof_song->beat[1]->ppqn != eof_song->beat[0]->ppqn)
+		{	//If this operation caused the first and second beat markers to have different tempos,
+			eof_song->beat[1]->flags = EOF_BEAT_FLAG_ANCHOR;		//Set the second beat marker's anchor flag
+		}
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+	}
+	else
+		return 0;	//Return failure
+
+	return 1;	//Return success
+}

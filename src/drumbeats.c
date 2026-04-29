@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include "beat.h"
 #include "drumbeats.h"
 #include "event.h"
 #include "ir.h"
@@ -6,6 +7,7 @@
 #include "midi.h"
 #include "mix.h"
 #include "utility.h"
+#include "menu/beat.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -394,7 +396,7 @@ int eof_export_drumbeats_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 {
 	unsigned diff;
-	char diff_written[4] = {0}, preview_written = 0, art_written = 0;
+	char diff_written[4] = {0}, preview_written = 0, art_written = 0, beat_inserted = 0;
 	char *midi_names[4] = {"notes_easy.mid", "notes_medium.mid", "notes_hard.mid", "notes_expert.mid"};
 	char *preview_name = "preview.ogg", *art_name = "cover.png";
 	char temp_string[1024], album_art_filename[1024];
@@ -499,6 +501,23 @@ int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 
 	//Write each MIDI file
 	err = 0;
+	if(eof_song->beat[0]->pos != 0)
+	{	//If the first beat doesn't begin at 0ms
+		if(!eof_replace_chart_delay_with_beat())
+		{	//If a beat couldn't be inserted to fill in that space
+			err = 1;
+			eof_log("\tFailed to replace the chart delay with a beat", 1);
+		}
+		else
+		{	//The beat was added
+			beat_inserted = 1;
+			eof_log("\tReplaced the chart delay with a temporary beat", 1);
+			if(eof_get_ts(eof_song, NULL, NULL, 1))
+			{	//If the original first beat has a time signature
+				(void) eof_apply_ts(1, 4, 0, eof_song, 0);	//Define the new first beat as taking up a full measure
+			}
+		}
+	}
 	for(diff = 0; diff < 4; diff++)
 	{	//For each of the first four difficulties
 		if(!eof_get_track_diff_size(sp, track, diff))
@@ -516,6 +535,20 @@ int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 		{
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tFailed to export difficulty #%u", diff);
 			eof_log(eof_log_string, 1);
+			err = 1;
+		}
+	}
+	if(beat_inserted)
+	{	//If a temporary beat was inserted, remove it now
+		unsigned long beats = eof_song->beats;
+		eof_menu_beat_push_offset_up_logic();
+		if((beats > eof_song->beats) && (eof_song->beat[0]->pos != 0))
+		{
+			eof_log("\tRemoved temporary beat, restoring the chart delay", 1);
+		}
+		else
+		{
+			eof_log("\tFailed to remove temporary beat", 1);
 			err = 1;
 		}
 	}

@@ -1055,16 +1055,10 @@ int eof_menu_beat_push_offset_back_menu(void)
 	return eof_menu_beat_push_offset_back(&undo_made);
 }
 
-int eof_menu_beat_push_offset_up(void)
+void eof_menu_beat_push_offset_up_logic(void)
 {
 	unsigned long i;
 
-	if(!eof_song)
-		return 1;
-	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
-		return 1;							//Return without making changes
-
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
 		memcpy(eof_song->beat[i], eof_song->beat[i + 1], sizeof(EOF_BEAT_MARKER));
@@ -1074,13 +1068,22 @@ int eof_menu_beat_push_offset_up(void)
 	eof_move_text_events(eof_song, 0, 1, -1);
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	eof_fixup_notes(eof_song);
+}
+
+int eof_menu_beat_push_offset_up(void)
+{
+	if(!eof_song)
+		return 1;
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	eof_menu_beat_push_offset_up_logic();
 	return 1;
 }
 
 int eof_menu_beat_reset_offset(void)
 {
-	int i;
-	double newbpm;
 	char undo_made = 0;
 	unsigned long last_pos;
 
@@ -1131,28 +1134,8 @@ int eof_menu_beat_reset_offset(void)
 	{	//If an undo state hasn't been made yet
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	}
-	if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
-	{	//If the beats array was successfully resized
-		for(i = eof_song->beats - 1; i > 0; i--)
-		{
-			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
-		}
-		eof_song->beat[0]->pos = eof_song->beat[0]->fpos = 0;
-		eof_song->beat[0]->flags = eof_song->beat[1]->flags;	//Copy the flags (ie. Time Signature) of the original first beat marker
-		eof_song->tags->ogg[0].midi_offset = 0;
-		newbpm = 60000.0 / eof_song->beat[1]->fpos;	//60000ms / length of new beat (the MIDI delay) = Tempo
-		eof_song->beat[0]->ppqn = 60000000.0 / newbpm;	//60000000usec_per_minute / tempo = PPQN
-		eof_move_text_events(eof_song, 0, 1, 1);
-		if(eof_song->beat[1]->ppqn != eof_song->beat[0]->ppqn)
-		{	//If this operation caused the first and second beat markers to have different tempos,
-			eof_song->beat[1]->flags = EOF_BEAT_FLAG_ANCHOR;		//Set the second beat marker's anchor flag
-		}
-		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-	}
-	else
-		return 0;	//Return failure
 
-	return 1;	//Return success
+	return eof_replace_chart_delay_with_beat();
 }
 
 int eof_menu_beat_anchor(void)

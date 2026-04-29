@@ -4777,6 +4777,7 @@ DIALOG eof_menu_song_time_range_dialog[] =
 {
 	/* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
 	{ eof_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   eof_etext,             NULL, NULL },
+	{ d_agup_text_proc,      12,  28,  60,  12,  0,   0,   0,    0,      0,   0,   eof_etext4, NULL, NULL },
 	{ d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)", NULL, NULL },
 	{ eof_verified_edit_proc,12,  72,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
 	{ d_agup_text_proc,      12,  100, 60,  12,  0,   0,   0,    0,      0,   0,   "Stop position (ms)",  NULL, NULL },
@@ -4799,7 +4800,7 @@ int eof_run_time_range_dialog(unsigned long *start, unsigned long *end)
 	eof_render();
 	eof_color_dialog(eof_menu_song_time_range_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_menu_song_time_range_dialog);
-	if(eof_popup_dialog(eof_menu_song_time_range_dialog, 2) == 5)
+	if(eof_popup_dialog(eof_menu_song_time_range_dialog, 2) == 6)
 	{	//User clicked OK
 		if(!eof_check_string(eof_etext2) || !eof_check_string(eof_etext3))
 		{	//If either the start or stop fields had no non-space characters

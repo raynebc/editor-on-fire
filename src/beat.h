@@ -116,4 +116,9 @@ unsigned long eof_check_tempo_range(double minbpm, double maxbpm);
 	//Returns the millisecond position of the first beat whose tempo falls below minbpm or above maxbpm
 	//Returns ULONG_MAX upon error or if no tempos are outside this range
 
+int eof_replace_chart_delay_with_beat(void);
+	//Replaces the portion of the chart before 0s with a new beat, or does nothing if the first beat is at 0ms
+	//Used by eof_menu_beat_reset_offset() and by DrumBeats export
+	//Returns nonzero on success
+
 #endif

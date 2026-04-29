@@ -7262,19 +7262,26 @@ int eof_menu_file_export_song_preview(void)
 	{	//If the positions were NOT read from the INI settings
 		if(eof_seek_selection_start != eof_seek_selection_end)
 		{	//If there is a seek selection
+			strncpy(eof_etext4, "Using seek selection", sizeof(eof_etext4) - 1);
 			start = eof_seek_selection_start;
 			stop = eof_seek_selection_end;
 		}
 		else if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
 		{	//If both the start and end points are defined with different timestamps
+			strncpy(eof_etext4, "Using start/end points", sizeof(eof_etext4) - 1);
 			start = eof_song->tags->start_point;
 			stop = eof_song->tags->end_point;
 		}
 		else
 		{	//Default the start time to the current seek position and the stop time 30 seconds later
+			strncpy(eof_etext4, "Using current seek position", sizeof(eof_etext4) - 1);
 			start = eof_music_pos.value - eof_av_delay;
 			stop = start + 30000; //30,000 ms later
 		}
+	}
+	else
+	{
+		strncpy(eof_etext4, "Using preview INI settings", sizeof(eof_etext4) - 1);
 	}
 
 	strncpy(eof_etext, "Set preview timings", sizeof(eof_etext) - 1);	//Set the title of the eof_menu_song_time_range_dialog dialog

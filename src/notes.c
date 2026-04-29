@@ -1148,7 +1148,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_song->beat[eof_selected_beat]->has_ts)
 			snprintf(dest_buffer, dest_buffer_size, "%ld", eof_selected_measure);
 		else
-			snprintf(dest_buffer, dest_buffer_size, "(TS undefined)");
+			snprintf(dest_buffer, dest_buffer_size, "(TS undef)");
 
 		return 1;
 	}
@@ -1159,7 +1159,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		if(eof_song->beat[eof_selected_beat]->has_ts)
 			snprintf(dest_buffer, dest_buffer_size, "(Beat %d/%d)", eof_beat_in_measure + 1, eof_beats_in_measure);
 		else
-			snprintf(dest_buffer, dest_buffer_size, "(TS undefined)");
+			snprintf(dest_buffer, dest_buffer_size, "(TS undef)");
 		return 1;
 	}
 
@@ -1189,7 +1189,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if(eof_song->beat[beatnum]->has_ts)
 				snprintf(dest_buffer, dest_buffer_size, "%lu", eof_song->beat[beatnum]->measurenum);
 			else
-				snprintf(dest_buffer, dest_buffer_size, "(TS undefined)");
+				snprintf(dest_buffer, dest_buffer_size, "(TS undef)");
 		}
 
 		return 1;
@@ -1205,7 +1205,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 			if(eof_song->beat[beatnum]->has_ts)
 				snprintf(dest_buffer, dest_buffer_size, "(Beat %u/%u)", eof_song->beat[beatnum]->beat_within_measure + 1, eof_song->beat[beatnum]->num_beats_in_measure);
 			else
-				snprintf(dest_buffer, dest_buffer_size, "(TS undefined)");
+				snprintf(dest_buffer, dest_buffer_size, "(TS undef)");
 		}
 		return 1;
 	}
