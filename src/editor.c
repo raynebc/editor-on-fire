@@ -50,9 +50,21 @@ unsigned long eof_tech_anchor_diff[EOF_TRACKS_MAX] = {0};
 EOF_SNAP_DATA eof_snap;
 EOF_SNAP_DATA eof_tail_snap;
 
-double eof_pos_distance(double p1, double p2)
+unsigned long eof_pos_distance(unsigned long p1, unsigned long p2)
 {
 //	eof_log("eof_pos_distance() entered");
+
+	if(p1 > p2)
+	{
+		return p1 - p2;
+	}
+
+	return p2 - p1;
+}
+
+double eof_fpos_distance(double p1, double p2)
+{
+//	eof_log("eof_fpos_distance() entered");
 
 	if(p1 > p2)
 	{
@@ -350,7 +362,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			/* see which one we snap to */
 			for(i = 0; i < interval + 1; i++)
 			{
-				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
+				sp->grid_distance[i] = eof_fpos_distance(sp->grid_pos[i], sp->pos);
 			}
 			sp->previous_snap = sp->grid_pos[0] + 0.5;		//Initialize these values
 			sp->next_snap = sp->grid_pos[1] + 0.5;
@@ -397,7 +409,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			//see which one we snap to
 			for(i = 0; i < interval + 1; i++)
 			{	//Calculate the distance between the grid snap and the target position
-				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
+				sp->grid_distance[i] = eof_fpos_distance(sp->grid_pos[i], sp->pos);
 			}
 			sp->previous_snap = sp->grid_pos[0] + 0.5;		//Initialize these values
 			sp->next_snap = sp->grid_pos[1] + 0.5;

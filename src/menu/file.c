@@ -8286,7 +8286,7 @@ int eof_menu_file_songsterr_import(void)
 				continue;		//Re-run the dialog
 			 }
 		 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "start https://www.songsterr.com/api/video-points/%ld/%ld/list", song_id, revision_id);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIdentified song ID %lu, Revision ID %lu.  Launching command:  %s", song_id, revision_id, eof_etext2);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tIdentified song ID %ld, Revision ID %ld.  Launching command:  %s", song_id, revision_id, eof_etext2);
 			eof_log(eof_log_string, 1);
 		 	(void) eof_system(eof_etext2);
 		}
@@ -8403,7 +8403,7 @@ int eof_menu_file_songsterr_import(void)
 					if(another)
 					{	//If this sync point was followed by a comma
 						needed = beatctr + eof_song->beat[beatctr]->num_beats_in_measure;	//The number of the beat at the beginning of the next measure
-						if(another && (needed >= eof_song->beats))
+						if(needed >= eof_song->beats)
 						{	//If another timestamp is going to be read, but there aren't enough beats to advance to the start of the next measure
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAdding %lu beats to allow enough to reach measure #%lu", needed - eof_song->beats, measurectr++);
 							eof_log(eof_log_string, 2);

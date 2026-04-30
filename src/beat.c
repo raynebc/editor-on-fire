@@ -252,19 +252,27 @@ int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report)
 {
 	unsigned long ctr, expected_pos_int;
 	double expected_pos;
-	int corrupt = 0;
+	int corrupt = 0, tempo_corrupt = 0, corrections = 0;
 
 	if(!sp)
 		return 1;	//Invalid parameters
 
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat
+		int pos_corrupt = 0, fpos_corrupt = 0;
+		unsigned long oldpos;
+		double oldfpos;
 		expected_pos = eof_calculate_beat_pos_by_prev_beat_tempo(sp, ctr);
 		expected_pos_int = expected_pos + 0.5;	//Round to nearest ms
 
-		if((expected_pos_int != sp->beat[ctr]->pos) && (fabs(expected_pos - sp->beat[ctr]->fpos) > 0.5))
+		if(eof_pos_distance(expected_pos_int, sp->beat[ctr]->pos) > 1)
+			pos_corrupt = 1;	//If the integer position is more than 1ms away from its expected value (to allow for number rounding accuracy limitations)
+		if(eof_fpos_distance(expected_pos, sp->beat[ctr]->fpos) > 0.5)
+			fpos_corrupt = 1;
+
+		if(pos_corrupt || fpos_corrupt)
 		{	//If this beat's timestamp doesn't accurately reflect the previous beat's tempo
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "The tempo map is corrupt beginning with beat #%lu (defined position is %fms, %lums, expected is %fms, %lums)", ctr, sp->beat[ctr]->fpos, sp->beat[ctr]->pos, expected_pos, expected_pos_int);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "The tempo map is corrupt at beat #%lu (defined position is %fms, %lums, expected is %fms, %lums)", ctr, sp->beat[ctr]->fpos, sp->beat[ctr]->pos, expected_pos, expected_pos_int);
 			eof_log(eof_log_string, 1);
 			corrupt = 1;
 
@@ -275,27 +283,54 @@ int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report)
 			}
 			else
 			{
-				if(alert(eof_log_string, NULL, "Recreate tempo changes based on beat positions?", "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opts to correct the tempo map
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					if(sp->beat[0]->pos != sp->tags->ogg[0].midi_offset)
-					{	//If the first beat's position doesn't reflect the MIDI delay of the current OGG profile
-						sp->beat[0]->pos = sp->beat[0]->fpos = sp->tags->ogg[0].midi_offset;
-					}
-					eof_calculate_tempo_map(sp);
-					return 1;
+				oldpos = sp->beat[ctr]->pos;
+				oldfpos = sp->beat[ctr]->fpos;
+				if(!pos_corrupt && fpos_corrupt)
+				{	//If the integer position reflected the previous beat's tempo but the floating point position did not
+					sp->beat[ctr]->fpos = expected_pos;	//Reset the floating point position
+					corrections = 1;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCorrecting beat #%lu : From pos=%lu fpos=%f to pos=%lu fpos=%f", ctr, oldpos, oldfpos, sp->beat[ctr]->pos, expected_pos);
+					eof_log(eof_log_string, 1);
 				}
-				else
-				{
-					break;
+				else if(pos_corrupt && !fpos_corrupt)
+				{	//If the floating point position reflected the previous beat's tempo but the integer position did not
+					sp->beat[ctr]->pos = sp->beat[ctr]->fpos + 0.5;	//Reset the integer position
+					corrections = 1;
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCorrecting beat #%lu : From pos=%lu fpos=%f to pos=%lu fpos=%f", ctr, oldpos, oldfpos, sp->beat[ctr]->pos, sp->beat[ctr]->fpos);
+					eof_log(eof_log_string, 1);
+				}
+				else if(pos_corrupt && fpos_corrupt)
+				{	//Both the integer and floating point positions disagree with the previous beat's tempo
+					if(sp->beat[ctr]->pos == (unsigned long)(sp->beat[ctr]->fpos + 0.5))
+					{	//But both timestamps agree with each other
+						tempo_corrupt = 1;
+					}
 				}
 			}
+		}
+	}//For each beat
+
+	if(tempo_corrupt)
+	{	//If tempo changes disagreed with the beat timings
+		if(alert("Tempo map corruption is detected", NULL, "Recreate tempo changes based on beat positions?", "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to correct the tempo map
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			if(sp->beat[0]->pos != sp->tags->ogg[0].midi_offset)
+			{	//If the first beat's position doesn't reflect the MIDI delay of the current OGG profile
+				sp->beat[0]->pos = sp->beat[0]->fpos = sp->tags->ogg[0].midi_offset;
+			}
+			eof_calculate_tempo_map(sp);
+			corrections = 1;
 		}
 	}
 
 	if(!corrupt && report)
 	{
 		allegro_message("Tempo map is valid");
+	}
+	else if(corrections && report)
+	{
+		allegro_message("Tempo map corrections were made");
 	}
 
 	return 1;

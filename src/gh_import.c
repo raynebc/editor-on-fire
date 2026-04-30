@@ -3642,7 +3642,7 @@ int eof_ghl_import_common(const char *fn)
 						}
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tApplied %fBPM to beat #%lu at delta pos %lu (%fms)", 60000000.0 / (double)changes[ctr].num1, beat, eof_song->beat[beat]->midi_pos, eof_song->beat[beat]->fpos);
 						eof_log(eof_log_string, 1);
-						if(eof_pos_distance(eof_song->beat[beat]->fpos, changes[ctr].position * 1000.0) > 0.5)
+						if(eof_fpos_distance(eof_song->beat[beat]->fpos, changes[ctr].position * 1000.0) > 0.5)
 						{	//If the GHL timing is inaccurate by at least 0.5ms, use it because the note timings depend on that inaccurate timing
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\t\tModifying beat position to %fms", (double)changes[ctr].position * 1000.0);
 							eof_log(eof_log_string, 1);

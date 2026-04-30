@@ -35,7 +35,7 @@ double eof_calculate_beat_pos_by_prev_beat_tempo(EOF_SONG *sp, unsigned long bea
 	//If the specified beat number is 0, the position returned is the current OGG profile's MIDI delay
 int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report);
 	//Uses eof_calculate_beat_pos_by_prev_beat_tempo() on each beat to determine if any have an unexpected timestamp
-	//If any do, the user is prompted whether to recreeate the tempo changes to reflect the beat timings
+	//If any do, the user is prompted whether to recreate the tempo changes to reflect the beat timings
 	//If the user opts to do so, eof_calculate_tempo_map() is used to carry this out
 	//If report is nonzero, and no tempo issues are found, a message is displayed to this effect
 void eof_change_accurate_ts(EOF_SONG * sp, char function);
