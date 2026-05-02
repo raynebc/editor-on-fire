@@ -27,17 +27,22 @@ extern DIALOG eof_rocksmith_event_dialog[];
 void eof_prepare_beat_menu(void);			//Enable/disable Beat menu items prior to drawing the menu
 int eof_menu_beat_add(void);
 int eof_menu_beat_bpm_change(void);
-int eof_menu_beat_apply_ts(unsigned num, unsigned den);	//Applies the specified time signature to the selected beat, re-calculating beat timings based on the "Use accurate time signatures" chart property and performing auto-adjust logic if enabled in preferences
+int eof_menu_beat_apply_ts_logic(unsigned num, unsigned den, char recalculate);
+	//Applies the specified time signature to the selected beat,
+	//If recalculate is nonzero, and the "Use accurate time signatures" chart property is enabled, this function calls eof_calculate_beats() to re-calculate beat timings
+	//	If note auto-adjust is also enabled in preferences, this function performs auto-adjust logic to reflect the beat timing changes
+int eof_menu_beat_apply_ts(unsigned num, unsigned den);	//Calls eof_menu_beat_apply_ts_logic() to apply the time signature and recalculate the beat timings
 int eof_menu_beat_ts_2_4(void);	//Calls eof_menu_beat_apply_ts() to apply 2/4 time signature
 int eof_menu_beat_ts_3_4(void);	//Calls eof_menu_beat_apply_ts() to apply 3/4 time signature
 int eof_menu_beat_ts_4_4(void);	//Calls eof_menu_beat_apply_ts() to apply 4/4 time signature
 int eof_menu_beat_ts_5_4(void);	//Calls eof_menu_beat_apply_ts() to apply 5/4 time signature
 int eof_menu_beat_ts_6_4(void);	//Calls eof_menu_beat_apply_ts() to apply 6/4 time signature
-int eof_menu_beat_ts_custom_dialog(unsigned start);
+int eof_menu_beat_ts_custom_dialog(unsigned start, char recalculate);
 	//Calls the custom TS dialog and places the chosen TS on the selected beat, making an undo state, allowing the calling function to handle remaining steps
 	//Uses eof_menu_beat_apply_ts() to apply the time signature and any relevant beat map recalculation, note auto-adjust, etc.
 	//If start is nonzero, the numerator field is given initial focus on dialog launch, otherwise the denominator is
 	//Returns nonzero if a valid time signature was chosen and applied to the selected beat
+	//If recalculate is nonzero, eof_menu_beat_apply_ts_logic() will alter the beat timings to reflect the time signature chosen by the user
 int eof_menu_beat_ts_custom(void);	//Applies user-selected time signature and recalculates beat lengths depending on the accurate TS chart option
 int eof_menu_beat_ts_convert(void);	//Applies user-selected time signature and recalculates tempos to leave beat markers in their existing positions
 int eof_menu_beat_ts_off(void);

@@ -496,7 +496,7 @@ void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat)
 	}
 }
 
-void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat, unsigned long diff)
+void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat, long diff)
 {
 	unsigned long i;
 	unsigned long last_anchor = eof_find_previous_anchor(sp, cbeat);
@@ -1225,39 +1225,42 @@ void eof_remove_ts(unsigned long beatnum)
 
 int eof_check_for_anchors_between_selected_beat_and_seek_pos(void)
 {
-	unsigned long beat1, beat2;
+	unsigned long seek_beat, seek_pos, ctr;
 
 	if(!eof_song)
 		return 1;							//No project loaded
 	if(!eof_beat_num_valid(eof_song, eof_selected_beat))
 		return 1;							//Logic error
 
-	//Check for the presence of any anchored beat markers between the selected beat and the seek position
-	beat1 = beat2 = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
-	if(!eof_beat_num_valid(eof_song, beat1) || !eof_beat_num_valid(eof_song, beat2))
+	//Determine which beat the seek position is in
+	seek_pos = eof_music_pos.value - eof_av_delay;	//Simplify
+	seek_beat = eof_get_beat(eof_song, seek_pos);
+	if(!eof_beat_num_valid(eof_song, seek_beat))
 		return 1;	//Logic error (seek position may be after the project's last beat)
 
-	if(beat1 == beat2)
-		return 0;	//If the beat is only moving forward before the next beat's current position, allow it
-
-	if(eof_selected_beat < beat1)
-	{	//If the selected beat is before the seek position
-		beat1 = eof_selected_beat;
+	if(eof_song->beat[eof_selected_beat]->pos == seek_pos)
+	{	//If the selected beat is already at the seek position
+		return 1;
+	}
+	if(eof_song->beat[eof_selected_beat]->pos < seek_pos)
+	{	//If the selected beat is before the seek position, check beats in a forward direction
+		for(ctr = eof_selected_beat + 1; ctr < eof_song->beats; ctr++)
+		{	//For the remaining beats in the project
+			if(eof_song->beat[ctr]->pos > seek_pos)
+				break;	//If this beat and all others are after the seek position, stop checking beats
+			if(eof_song->beat[ctr]->flags & EOF_BEAT_FLAG_ANCHOR)
+				return 1;	//If this beat is at/before the seek position and is an anchor, return anchor found
+		}
 	}
 	else
-	{	//The selected beat is at/after the seek position
-		beat2 = eof_selected_beat;
-	}
-	while(beat1 < beat2)
-	{	//For each beat between the selected beat's start position and beat containing the end position
-		if(beat1 != eof_selected_beat)
-		{	//If this isn't the beat which is currently selected (which will move regardless of whether it's already an anchor)
-			if(eof_song->beat[beat1]->flags & EOF_BEAT_FLAG_ANCHOR)
-			{	//If this beat is an anchor
-				return 1;
-			}
+	{	//The selected beat is after the seek position, check beats in a backward direction
+		for(ctr = eof_selected_beat; ctr > 0; ctr--)
+		{	//For the remaining beats in the project, in reverse order
+			if(eof_song->beat[ctr - 1]->pos < seek_pos)
+				break;	//If this beat and all others are before the seek position, stop checking beats
+			if(eof_song->beat[ctr - 1]->flags & EOF_BEAT_FLAG_ANCHOR)
+				return 1;	//If this beat is at/after the seek position and is an anchor, return anchor found
 		}
-		beat1++;
 	}
 
 	return 0;	//None of the beats were anchors

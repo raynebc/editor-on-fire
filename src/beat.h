@@ -46,7 +46,7 @@ void eof_change_accurate_ts(EOF_SONG * sp, char function);
 void eof_realign_beats(EOF_SONG * sp, unsigned long cbeat);
 	//Recalculates and applies the tempo of the anchors before and after the specified beat based on those anchors' floating point timestamps, updating position and tempo on all beats in between
 	//If there is no anchor after the specified beat, all beats up to the end of the project are altered
-void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat, unsigned long diff);
+void eof_recalculate_beats(EOF_SONG * sp, unsigned long cbeat, long diff);
 	//Recalculates and applies the tempo and timings on both sides of cbeat based on the previous and next anchors' floating point timestamps
 	//Unlike eof_realign_beats(), if there is no anchor after cbeat, the beats after cbeat do not have their tempo altered but instead have diff added to them (ie. eof_mickeys_x * eof_zoom to perform click and drag logic to move the last anchor in a chart)
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);
@@ -110,7 +110,8 @@ void eof_remove_ts(unsigned long beatnum);
 
 int eof_check_for_anchors_between_selected_beat_and_seek_pos(void);
 	//Returns zero if there are no anchors (excluding the selected beat) between the selected beat and the seek position
-	//Returns nonzero if there are anchors or upon error
+	//Returns nonzero if there are anchors, if the seek position is at the selected beat or upon error
+	//If the seek position is on an anchored beat, nonzero is returned
 
 unsigned long eof_check_tempo_range(double minbpm, double maxbpm);
 	//Returns the millisecond position of the first beat whose tempo falls below minbpm or above maxbpm

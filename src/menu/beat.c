@@ -760,15 +760,15 @@ int eof_menu_beat_bpm_change(void)
 	return 1;
 }
 
-int eof_menu_beat_apply_ts(unsigned num, unsigned den)
+int eof_menu_beat_apply_ts_logic(unsigned num, unsigned den, char recalculate)
 {
 	if(!eof_song)
 		return 0;	//No project is loaded
 	if((num == 0) || (num > 256) || ((den != 1) && (den != 2) && (den != 4) && (den != 8) && (den != 16) && (den != 32) && (den != 64) && (den != 128) && (den != 256)))
 		return 0;	//If a valid time signature wasn't specified, return error
 
-	if(eof_song->tags->accurate_ts)
-	{	//If the chart's "Use accurate time signatures" property is enabled
+	if(eof_song->tags->accurate_ts && recalculate)
+	{	//If the chart's "Use accurate time signatures" property is enabled, and the calling function opted to recalculate beat timings
 		if(eof_note_auto_adjust)
 		{	//If the note auto-adjust preference is enabled
 			(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
@@ -777,8 +777,8 @@ int eof_menu_beat_apply_ts(unsigned num, unsigned den)
 
 	(void) eof_apply_ts(num, den, eof_selected_beat, eof_song, 1);
 
-	if(eof_song->tags->accurate_ts)
-	{	//If the chart's "Use accurate time signatures" property is enabled
+	if(eof_song->tags->accurate_ts && recalculate)
+	{	//If the chart's "Use accurate time signatures" property is enabled, and the calling function opted to recalculate beat timings
 		eof_calculate_beats(eof_song);	//Recalculate the beat timings to reflect time signatures
 		if(eof_note_auto_adjust)
 		{	//If the note auto-adjust preference is enabled
@@ -790,6 +790,11 @@ int eof_menu_beat_apply_ts(unsigned num, unsigned den)
 	eof_select_beat(eof_selected_beat);
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
 	return 1;
+}
+
+int eof_menu_beat_apply_ts(unsigned num, unsigned den)
+{
+	return eof_menu_beat_apply_ts_logic(num, den, 1);
 }
 
 int eof_menu_beat_ts_2_4(void)
@@ -830,7 +835,7 @@ DIALOG eof_custom_ts_dialog[] =
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
-int eof_menu_beat_ts_custom_dialog(unsigned start)
+int eof_menu_beat_ts_custom_dialog(unsigned start, char recalculate)
 {
 	unsigned num = 4, den = 4;
 	int retval = 0;
@@ -870,7 +875,7 @@ int eof_menu_beat_ts_custom_dialog(unsigned start)
 			}
 			else
 			{	//User provided a valid time signature
-				retval = eof_menu_beat_apply_ts(num, den);
+				retval = eof_menu_beat_apply_ts_logic(num, den, recalculate);	//Apply the time signature, reflecting the calling function's choice of whether to alter beat timings
 			}
 		}
 	}
@@ -883,7 +888,7 @@ int eof_menu_beat_ts_custom_dialog(unsigned start)
 
 int eof_menu_beat_ts_custom(void)
 {
-	if(eof_menu_beat_ts_custom_dialog(1))
+	if(eof_menu_beat_ts_custom_dialog(1, 1))	//Apply the user-specified time signature with the option to alter the beat timings
 	{	//If a valid time signature was chosen and applied
 		eof_calculate_beats(eof_song);
 		eof_truncate_chart(eof_song);
@@ -900,7 +905,7 @@ int eof_menu_beat_ts_convert(void)
 
 	if(!eof_song->tags->accurate_ts)
 		return 1;	//Don't allow this function to run if the accurate TS chart option is not enabled
-	if(!eof_menu_beat_ts_custom_dialog(0))
+	if(!eof_menu_beat_ts_custom_dialog(0, 0))	//Apply the user-specified time signature with the option to NOT alter the beat timings, as they are intended to be kept
 		return 1;	//If a valid time signature was not chosen and applied, return immediately
 
 	(void) eof_get_ts(eof_song, &num, &den, eof_selected_beat);	//Obtain the new TS
@@ -909,7 +914,7 @@ int eof_menu_beat_ts_convert(void)
 		eof_song->beat[ctr]->ppqn = 1000 * (eof_song->beat[ctr + 1]->pos - eof_song->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length (this is the formula "beat_length = 60000 / BPM" rewritten to solve for ppqn)
 		if(den != 4)
 		{	//If the time signature needs to be taken into account
-			eof_song->beat[ctr]->ppqn *= (double)den / 4.0;	//Adjust for it
+			eof_song->beat[ctr]->ppqn *= ((double)den / 4.0);	//Adjust for it
 		}
 		ctr++;	//Iterate to next beat
 		if(eof_get_ts(eof_song, &num, &den, ctr) == 1)
@@ -1257,6 +1262,9 @@ int eof_menu_beat_toggle_anchor(void)
 
 int eof_menu_beat_move_to_seek_pos(void)
 {
+	double diff;
+	unsigned long i;
+
 	if(!eof_song)
 		return 1;							//No project loaded
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
@@ -1268,11 +1276,30 @@ int eof_menu_beat_move_to_seek_pos(void)
 	if(eof_check_for_anchors_between_selected_beat_and_seek_pos())
 		return 1;							//Don't allow this function to move the selected beat through an anchor
 
+	if(eof_note_auto_adjust)
+		(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
+
+	diff = eof_music_pos.value - eof_av_delay - eof_song->beat[eof_selected_beat]->fpos;	//The additive time differential between the beat's original and new positions
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos = eof_music_pos.value - eof_av_delay;	//Update the selected beat's position
-	eof_recalculate_beats(eof_song, eof_selected_beat, 0);	//Update beat timings
-	eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
-	eof_fixup_notes(eof_song);										//Update note highlighting
+	if(eof_selected_beat == 0)
+	{	//If it was the first beat marker that was altered
+		eof_song->tags->ogg[0].midi_offset = eof_music_pos.value - eof_av_delay;	//Update the chart delay
+		for(i = 1; i < eof_song->beats; i++)
+		{	//For each of the remaining beats
+			eof_song->beat[i]->fpos += diff;	//Move them by the same amount the first beat was moved
+			eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;
+		}
+	}
+	else
+	{
+		eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
+		eof_recalculate_beats(eof_song, eof_selected_beat, diff);	//Update beat timings, allow all beats after the target beat to be moved if there is no anchor to keep them in place
+	}
+
+	if(eof_note_auto_adjust)
+		(void) eof_menu_edit_cut_paste(0, 1);	//Apply auto-adjust data for the entire chart
+	eof_fixup_notes(eof_song);							//Update note highlighting
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update tab highlighting
 
 	return 1;

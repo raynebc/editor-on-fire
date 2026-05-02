@@ -7962,8 +7962,10 @@ void eof_editor_logic_common(void)
 									{	//CTRL+click and dragging the first beat marker resizes the first beat without moving the other beats
 										if((eof_song->beats > 1) && (eof_song->beat[0]->fpos + rdiff + 50 < eof_song->beat[1]->fpos))
 										{	//But only if the beat is more than 50 ms away from the next beat
+											eof_song->beat[1]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Anchor the second beat to preserve the tempo map from that point on
 											eof_song->beat[0]->fpos += rdiff;
 											eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round up to nearest ms
+											eof_realign_beats(eof_song, 0);	//Correct the first beat's tempo
 										}
 									}
 								}
