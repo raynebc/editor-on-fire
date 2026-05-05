@@ -3711,57 +3711,77 @@ int eof_menu_note_default_no_hi_hat(void)
 }
 
 /* split a lyric into multiple pieces (look for ' ' characters) */
-static void eof_split_lyric(unsigned long lyric)
+static void eof_split_lyric(unsigned long lyric, char undo_made)
 {
-	unsigned long i, l, c = 0, lastc;
+	unsigned long i, length, splitlength, nextpos, pieces, originalendpos;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long piece = 1, pieces = 1;
-	char * token = NULL;
+	char * token = NULL, space, c, *lyricstr;
+	EOF_LYRIC *lyricptr, *newptr;
 	size_t stringlen;
 
 	if(!eof_vocals_selected)
 		return;
 	if(lyric >= eof_song->vocal_track[tracknum]->lyrics)
 		return;	//Invalid parameter
-	stringlen = strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text);
+	lyricptr = eof_song->vocal_track[tracknum]->lyric[lyric];		//Simplify
+	lyricstr = lyricptr->text;	//Simplify
+	stringlen = strlen(lyricstr);
 
 	/* see how many pieces there are */
-	for(i = 0; i < (unsigned long) stringlen; i++)
-	{
-		lastc = c;
-		c = eof_song->vocal_track[tracknum]->lyric[lyric]->text[i];
-		if((c == ' ') && (lastc != ' '))
+	for(i = 0, space = 1, pieces = 0; i < (unsigned long) stringlen; i++)
+	{	//For each character in thelyric
+		c = lyricstr[i];
+		if(c == ' ')
+		{	//If this character is a space
+			space = 1;	//Track that this is the case
+		}
+		else
 		{
-			if((i + 1 < (unsigned long)strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text)) && (eof_song->vocal_track[tracknum]->lyric[lyric]->text[i+1] != ' '))
-			{	//Only count this as a piece if there is a non space character after this space
-				pieces++;
+			if(space)
+			{	//This is the first non-space character in the string, or otherwise the first non-space character after a space character
+				pieces++;	//This will be the start of an additional lyric after the split
 			}
+			space = 0;
 		}
 	}
 
+	if(pieces < 2)
+		return;	//Don't modify the lyric unless it will split into at least two pieces
+	if(!undo_made)
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);		//If the split lyric function hadn't made an undo state yet, make one now
+
 	/* shorten the original note */
-	l = eof_song->vocal_track[tracknum]->lyric[lyric]->length;
-	if(l < pieces * 20)
+	length = lyricptr->length;
+	originalendpos = lyricptr->pos + length;	//Track the original length of the lyric
+	if(length < pieces + ((pieces - 1) * 20))
 	{	//Ensure that the original lyric is long enough to encompass a gap of 20ms between each split (pieces - 1) * 20 plus a minimum duration of 1ms each (pieces)
 		return;	//Cancel the operation if it's not long enough
 	}
-	eof_song->vocal_track[tracknum]->lyric[lyric]->length = l / pieces - 20;
-	if(eof_song->vocal_track[tracknum]->lyric[lyric]->length < 1)
+	splitlength = (length - ((pieces - 1) * 20)) / pieces;	//The original lyric length minus a 20ms gap beteween each split piece, divided by the number of resulting lyrics will be how long each lyric will be
+	if(splitlength < 0)
 	{	//Enforce a minimum lyric duration of 1
-		eof_song->vocal_track[tracknum]->lyric[lyric]->length = 1;
+		splitlength = 1;
 	}
+	lyricptr->length = splitlength;
+	nextpos = lyricptr->pos + splitlength + 20;	//This will be the position of the next lyric piece
 
 	/* split at spaces */
-	(void) strtok(eof_song->vocal_track[tracknum]->lyric[lyric]->text, " ");
+	(void) strtok(lyricstr, " ");
 	do
 	{
 		token = strtok(NULL, " ");
 		if(token)
 		{
-			(void) eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[lyric]->note, eof_song->vocal_track[tracknum]->lyric[lyric]->pos + ((double)l / pieces) * piece, (double)l / pieces - 20.0, 0, token);
-			piece++;
+			newptr = (EOF_LYRIC *)eof_track_add_create_note(eof_song, eof_selected_track, lyricptr->note, nextpos, splitlength, 0, token);
+			nextpos += splitlength + 20;	//The position of the next lyric piece
 		}
 	} while(token != NULL);
+
+	//Since the original lyric length divided into pieces may have resulted in the real even length being fractional, there may be leftover millseconds of the original lyric's duration
+	if(newptr && (newptr->pos + newptr->length < originalendpos))
+	{	//If the last lyric doesn't end where the original lyric did
+		newptr->length = originalendpos - newptr->pos;	//Extend it to that position
+	}
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 }
@@ -3785,12 +3805,18 @@ int eof_menu_split_lyric(void)
 	eof_conditionally_center_dialog(eof_split_lyric_dialog);
 	(void) ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
 	if(eof_popup_dialog(eof_split_lyric_dialog, 2) == 3)
-	{
+	{	//User clicked OK
 		if(strchr(eof_etext, ' ') && eof_check_string(eof_etext))
 		{	//If the string contains at least one space character and one non space character
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			char undo_made = 0;
+
+			if(strcmp(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text))
+			{	//If the user altered the string in the dialog
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
 			(void) ustrcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext);
-			eof_split_lyric(eof_selection.current);
+			eof_split_lyric(eof_selection.current, undo_made);
 		}
 	}
 	eof_cursor_visible = 1;
@@ -10535,7 +10561,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 						tp->lines = 0;	//Erase any existing lyric lines in the track
 						firstlinephrasecreated = 1;
 					}
-					(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0xFF);	//Add a line phrase
+					(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, 0xFF);	//Add a line phrase
 					if(ctr + 1 < tp->lyrics)
 					{	//If there's at least one more lyric
 						linestart = tp->lyric[ctr + 1]->pos;	//Track its start position
@@ -10595,7 +10621,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 
 	if(lastlyricend)
 	{	//If there was a lyric line in progress
-		(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0xFF);	//Add a line phrase
+		(void) eof_vocal_track_add_line(tp, linestart, lastlyricend, 0, 0xFF);	//Add a line phrase
 	}
 
 	(void) pack_fclose(fp);
@@ -11682,7 +11708,7 @@ int eof_menu_note_split_lyric_line_after_selected(void)
 							thisline->end_pos = thispos + eof_get_note_length(eof_song, eof_selected_track, i);
 
 							//Create a new lyric line starting at the next lyric that ends at the same timestamp as this lyric line
-							eof_vocal_track_add_line(tp, nextpos, end, diff);
+							eof_vocal_track_add_line(tp, nextpos, end, 0, diff);
 							if(old_lyric_count >= tp->lines)
 								allegro_message("Split after lyric line failed");
 						}

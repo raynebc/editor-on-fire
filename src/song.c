@@ -1195,13 +1195,13 @@ int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos
 	return 0;	//Return error
 }
 
-int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned char difficulty)
+int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned long flags, unsigned char difficulty)
 {
 	if(tp && (tp->lines < EOF_MAX_LYRIC_LINES))
 	{	//If the maximum number of lyric phrases hasn't already been defined
 		tp->line[tp->lines].start_pos = start_pos;
 		tp->line[tp->lines].end_pos = end_pos;
-		tp->line[tp->lines].flags = 0;	//Ensure that a blank flag status is initialized
+		tp->line[tp->lines].flags = flags;
 		tp->line[tp->lines].name[0] = '\0';
 		tp->line[tp->lines].difficulty = difficulty;
 		tp->lines++;
@@ -2816,7 +2816,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 	return *ptr;
 }
 
-EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long pos)
+EOF_PHRASE_SECTION *eof_get_section_instance_at_pos_of_diff(EOF_SONG *sp, unsigned long track, int diff, unsigned long sectiontype, unsigned long pos)
 {
 	unsigned long *sectioncount = NULL, ctr;
 	EOF_PHRASE_SECTION *ptr = NULL;
@@ -2828,14 +2828,22 @@ EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long 
 	{	//If the array of this section type was found
 		for(ctr = 0; ctr < *sectioncount; ctr++)
 		{	//For each instance
-			if((pos >= ptr[ctr].start_pos) && (pos <= ptr[ctr].end_pos))
-			{	//If the specified position is within this instance
-				return &ptr[ctr];	//Return it by reference
+			if((diff > 0xFF) || (diff == ptr[ctr].difficulty))
+			{	//If the difficulty of the section is not being checked, or if the section's difficulty matches the difficulty being checked
+				if((pos >= ptr[ctr].start_pos) && (pos <= ptr[ctr].end_pos))
+				{	//If the specified position is within this instance
+					return &ptr[ctr];	//Return it by reference
+				}
 			}
 		}
 	}
 
 	return NULL;	//No match found
+}
+
+EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long pos)
+{
+	return eof_get_section_instance_at_pos_of_diff(sp, track, 0xFFFF, sectiontype, pos);	//Look up the specified section at the specified position WITHOUT regard to its applicable difficulty level
 }
 
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
@@ -2893,10 +2901,9 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		case EOF_LYRIC_PHRASE_SECTION:	//Lyric Phrase section
 			if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 			{	//Lyric phrases are only valid for vocal tracks
-				int retval = eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, difficulty);
+				int retval = eof_vocal_track_add_line(sp->vocal_track[tracknum], start, end, flags, difficulty);
 				if(retval)
 				{	//The lyric line was added
-					sp->vocal_track[tracknum]->line[sp->vocal_track[tracknum]->lines - 1].flags = flags;	//Apply overdrive if applicable
 					return 1;	//Return success
 				}
 			}

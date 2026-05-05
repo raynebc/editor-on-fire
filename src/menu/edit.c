@@ -752,9 +752,10 @@ int eof_menu_edit_copy_vocal(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long first_pos = -1;
+	unsigned long first_pos = ULONG_MAX;
 	unsigned long first_beat = ULONG_MAX;
 	char note_check = 0;
+	char first_pos_read = 0;
 	int copy_notes = 0;
 	PACKFILE * fp;
 	int note_selection_updated;
@@ -771,9 +772,10 @@ int eof_menu_edit_copy_vocal(void)
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
 		{
 			copy_notes++;
-			if(first_selected || (eof_song->vocal_track[tracknum]->lyric[i]->pos < first_pos))
+			if(!first_pos_read || (eof_song->vocal_track[tracknum]->lyric[i]->pos < first_pos))
 			{	//If this is the first selected lyric in the active track, or if this lyric is the earliest selected one found so far
 				first_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
+				first_pos_read = 1;
 			}
 			if(first_selected)
 			{	//Track the beat number containing the first selected lyric
@@ -802,7 +804,8 @@ int eof_menu_edit_copy_vocal(void)
 		return 1;
 	}
 	(void) pack_iputl(eof_log_id, fp);		//Store the source EOF instance number
-	(void) pack_iputl(copy_notes, fp);
+	(void) pack_iputl(first_pos, fp);		//Store the first copied lyric's original timestamp
+	(void) pack_iputl(copy_notes, fp);		//Store the number of notes contained by the clipboard
 	(void) pack_iputl(first_beat, fp);
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -848,7 +851,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	unsigned long paste_count = 0;
-	unsigned long first_beat = 0;
+	unsigned long first_beat = 0, firstnotepos;
 	unsigned long this_beat;
 	unsigned long copy_notes;
 	long new_pos = -1;
@@ -860,7 +863,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste lyrics starting at the seek position instead of the original in-beat positions
 	char clipboard_path[50];
 	unsigned long source_id = 0;
-	unsigned long lastlinenum = 0xFFFFFFFF, linestart = 0, lineend = 0;	//Used to create lyric lines
+	unsigned long lastlinenum = 0xFFFFFFFF, linestart = 0, lineend = 0, lineflags;	//Used to create lyric lines
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
 	unsigned long targetpos = eof_music_pos.value - eof_av_delay;	//By default, assume the paste will occur at the seek position
 
@@ -898,7 +901,8 @@ int eof_menu_edit_paste_vocal_logic(int function)
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	source_id = pack_igetl(fp);			//Read the source EOF instance number
-	copy_notes = pack_igetl(fp);
+	firstnotepos = pack_igetl(fp);			//Read the original timestamp of the first lyric on the clipboard
+	copy_notes = pack_igetl(fp);			//Read the number of notes on the clipboard
 	first_beat = pack_igetl(fp);
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	eof_selection.current = EOF_MAX_NOTES - 1;
@@ -973,14 +977,22 @@ int eof_menu_edit_paste_vocal_logic(int function)
 			{	//If the copy/paste is being performed within the same EOF instance
 				if(temp_lyric.phrasenum != lastlinenum)
 				{	//If this pasted lyric's source line number is different from that of the previous pasted lyric
+					EOF_PHRASE_SECTION *phraseptr;
+
 					if(lastlinenum != 0xFFFFFFFF)
 					{	//If the previous pasted lyric's source lyric was in a line
-						if(lastlinenum < eof_song->vocal_track[0]->lines)
-						{	//Bounds check
-							(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, eof_song->vocal_track[0]->line[lastlinenum].flags, NULL);
-						}
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, lineflags, NULL);
 					}
 					linestart = new_lyric->pos;	//Track start of new line
+					phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, temp_lyric.pos + firstnotepos);	//Look up the lyric line at the source note's original position
+					if(phraseptr)
+					{	//If the original lyric line from the source lyrics was found
+						lineflags = phraseptr->flags;	//Retain any overdrive status
+					}
+					else
+					{	//The original lyric line was not found
+						lineflags = 0;
+					}
 				}
 				if(temp_lyric.phrasenum != 0xFFFFFFFF)
 				{	//If this pasted lyric's source lyric is in a line
@@ -994,10 +1006,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 	{	//If the copy/paste is being performed within the same EOF instance
 		if(lastlinenum != 0xFFFFFFFF)
 		{	//If a lyric line was in progress when the last of the lyrics were pasted, add the line now
-			if(lastlinenum < eof_song->vocal_track[0]->lines)
-			{	//Bounds check
-				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, eof_song->vocal_track[0]->line[lastlinenum].flags, NULL);
-			}
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, 0xFF, linestart, lineend, lineflags, NULL);
 		}
 	}
 	(void) pack_fclose(fp);
@@ -1622,7 +1631,7 @@ int eof_menu_edit_paste_logic(int function)
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	unsigned long maxbitmask = (1 << numlanes) - 1;	//A bitmask representing the highest valid note bitmask (a gem on all used lanes in the destination track)
 	double newpasteoffset = 0.0;	//This will be used to allow new paste to paste notes starting at the seek position instead of the original in-beat positions
-	unsigned long lastarpeggnum = 0xFFFFFFFF, arpeggstart = 0, arpeggend = 0;	//Used to create arpeggio/handshape phrases
+	unsigned long lastarpeggnum = 0xFFFFFFFF, arpeggstart = 0, arpeggend = 0, arpeggflags = 0;	//Used to create arpeggio/handshape phrases
 	char clipboard_path[50];
 	int warning = 0;
 	char isghl;	//Set to nonzero if the clipboard's source track had GHL mode enabled, which changes the interpretation of lane 6 gems
@@ -1638,6 +1647,7 @@ int eof_menu_edit_paste_logic(int function)
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
 	unsigned char intervalvalue = 0, intervalnum = 0;
+	char arpeggerror = 0;
 
 	int ret = 0;
 	int lane_exceeded_prompt = 0;
@@ -1986,34 +1996,67 @@ int eof_menu_edit_paste_logic(int function)
 			{	//If this pasted note's source arpeggio is different from that of the previous pasted note
 				if(lastarpeggnum != 0xFFFFFFFF)
 				{	//If the previous pasted note's source note was in an arpeggio/handshape
-					if(lastarpeggnum < stp->arpeggios)
-					{	//Bounds check
-						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, stp->arpeggio[lastarpeggnum].flags, NULL);
+					if(eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, arpeggflags, NULL))
+					{	//If the arpeggio section was added
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCreated pasted %s from %lums to %lums", ((arpeggflags & EOF_RS_ARP_HANDSHAPE) ? "handshape" : "arpeggio"), arpeggstart, arpeggend);
+						eof_log(eof_log_string, 2);
+					}
+					else
+					{
+						eof_log("\t! Failed to add arpeggio", 1);
+						arpeggerror = 1;
 					}
 				}
 				arpeggstart = np->pos;	//Track start of new arpeggio
 			}
 			if(temp_note.phrasenum != 0xFFFFFFFF)
 			{	//If this pasted note's source note is in an arpeggio/handshape
-				arpeggend = np->pos + np->length;	//Track end position of arpeggio
-				if(temp_note.phrasenum < stp->arpeggios)
-				{	//Bounds check
+				EOF_PHRASE_SECTION *phraseptr;
+
+				phraseptr = eof_get_section_instance_at_pos_of_diff(eof_song, eof_selected_track, sourcediff, EOF_ARPEGGIO_SECTION, temp_note.pos + firstnotepos);	//Look up the arpeggio/handshape at the source note's original position
+				if(phraseptr)
+				{	//The arpeggio was found, update arpeggend based on how many beats long the source arpeggio was
 					unsigned long srcstartbeat, srcendbeat, dststartbeat;
 					double srcstartpos, srcendpos, dststartpos, dstendpos, beatlength;
 
-					srcstartbeat = eof_get_beat(eof_song, stp->arpeggio[temp_note.phrasenum].start_pos);
-					srcendbeat = eof_get_beat(eof_song, stp->arpeggio[temp_note.phrasenum].end_pos);
+					arpeggflags = phraseptr->flags;	//Track whether this is a handshape or an arpeggio
+					srcstartbeat = eof_get_beat(eof_song, phraseptr->start_pos);
+					srcendbeat = eof_get_beat(eof_song, phraseptr->end_pos);
 					if(srcendbeat >= srcstartbeat)
 					{	//Validate
-						srcstartpos = eof_get_porpos(stp->arpeggio[temp_note.phrasenum].start_pos);	//How far into the source beat the copied phrase begins
-						srcendpos = eof_get_porpos(stp->arpeggio[temp_note.phrasenum].end_pos);	//How far into the source beat the copied phrase ends
+						srcstartpos = eof_get_porpos(phraseptr->start_pos);	//How far into the source beat the copied phrase begins
+						srcendpos = eof_get_porpos(phraseptr->end_pos);	//How far into the source beat the copied phrase ends
 						dststartpos = eof_get_porpos(arpeggstart);								//How far into the beat the created phrase should start
 						beatlength = ((srcendbeat - srcstartbeat) * 100.0) + srcendpos - srcstartpos;	//The floating point length in percent of beats for how long the copied phrase is
 						dststartbeat = eof_get_beat(eof_song, arpeggstart);						//Which beat the created phrase should start in
 						dstendpos = eof_put_porpos(dststartbeat, beatlength + dststartpos, 0.0);		//The timestamp at which the created phrase should end
 
 						arpeggend = dstendpos;	//If the bounds check and validation passed, this accurate timing will replace the end position of the last pasted note in the phrase
+
+						if(temp_note.phrasenum != lastarpeggnum)
+						{	//If this pasted note's source arpeggio is different from that of the previous pasted note
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRecreating source arpeggio %lu:  Original beat position %f (%lums) - %f (%lums), destination beat position %f (%lums)", temp_note.phrasenum, (double) srcstartbeat + (srcstartpos / 100.0), phraseptr->start_pos, (double) srcendbeat + (srcendpos / 100.0), phraseptr->end_pos, (double)dststartbeat + (dststartpos / 100.0), arpeggstart);
+							eof_log(eof_log_string, 2);
+						}
+						else
+						{	//Log the updated end position of the arpeggio that will be created next
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTo-be-created arpeggio ending updated to beat position %f (%lums)", dststartbeat + (beatlength + dststartpos) / 100.0, arpeggend);
+							eof_log(eof_log_string, 2);
+						}
 					}
+					else
+					{	//Logic error
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t! Source arpeggio start beat %lu and end beat %lu mis-calculated", srcstartbeat, srcendbeat);
+						eof_log(eof_log_string, 1);
+						arpeggerror = 1;
+					}
+				}
+				else
+				{	//The arpeggio was not found
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t! Arpeggio from copied note at %lums not found, resetting the arpeggio ending to the pasted note ending", temp_note.pos + firstnotepos);
+					arpeggflags = EOF_RS_ARP_HANDSHAPE;	//Assume handshape, as arpeggios are rarely authored anymore
+					arpeggend = np->pos + np->length;	//Update the arpeggio end position to reflect the end of the pasted note
+					eof_log(eof_log_string, 1);
 				}
 			}
 			lastarpeggnum = temp_note.phrasenum;
@@ -2072,17 +2115,26 @@ int eof_menu_edit_paste_logic(int function)
 		double firstpastednotebeatpos = eof_get_porpos_sp_abs(eof_song, firstpastepos);	//The number of beats (as a percentage) from the first beat where the first note was pasted
 		double thisfhpbeatpos;	//The number of beats (as a percentage) from the first beat where the currently examined FHP exists
 		unsigned long fhpctr;
+		char fhperror = 0;
 
 		//Finish pasting arpeggio/handshape phrasing
 		if(lastarpeggnum != 0xFFFFFFFF)
 		{	//If an arpeggio phrase was in progress when the last of the notes were pasted, add the phrase now
-			if(lastarpeggnum < stp->arpeggios)
-			{	//Bounds check
-				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, stp->arpeggio[lastarpeggnum].flags, NULL);
+			if(eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, arpeggstart, arpeggend, arpeggflags, NULL))
+			{	//If the arpeggio section was added
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCreated pasted %s from %lums to %lums", ((arpeggflags & EOF_RS_ARP_HANDSHAPE) ? "handshape" : "arpeggio"), arpeggstart, arpeggend);
+				eof_log(eof_log_string, 2);
+			}
+			else
+			{
+				eof_log("\t! Failed to add arpeggio", 1);
+				arpeggerror = 1;
 			}
 		}
 
 		//Recreate fret hand positions from the source notes
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tRecreating source FHPs from %lums to %lums, beginning with first copied note at beat position %f, first pasted note at beat position %f (%lums)", firstnotepos, lastnoteend, firstcopiednotebeatpos / 100.0, firstpastednotebeatpos / 100.0, firstpastepos);
+		eof_log(eof_log_string, 1);
 		if(!eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		{	//If tech view is not active for the destination track
 			for(fhpctr = 0; fhpctr < stp->handpositions; fhpctr++)
@@ -2092,6 +2144,8 @@ int eof_menu_edit_paste_logic(int function)
 				if((thisfhppos >= firstnotepos) && (thisfhppos <= lastnoteend) && (stp->handposition[fhpctr].difficulty == sourcediff))
 				{	//If this fret hand position exists anywhere within the scope of the copied notes and is in the copied notes' track difficulty
 					thisfhpbeatpos = eof_get_porpos_sp_abs(eof_song, thisfhppos);	//Determine the FHP's position so it can be compared with that of the first copied note
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSource FHP #%lu at beat position %f (%lums)", fhpctr, thisfhpbeatpos / 100.0, thisfhppos);
+					eof_log(eof_log_string, 1);
 					if(thisfhpbeatpos >= firstcopiednotebeatpos)
 					{	//If the FHP's position was correctly determined to be at/after the first copied note
 						long thisnewfhppos = eof_put_porpos_sp(eof_song, 0, firstpastednotebeatpos + thisfhpbeatpos - firstcopiednotebeatpos, 0.0);	//Calculate the timestamp for the pasted FHP, which will be relative to the first pasted note
@@ -2111,13 +2165,30 @@ int eof_menu_edit_paste_logic(int function)
 							}
 						}
 
-						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, thisnewfhppos, stp->handposition[fhpctr].end_pos, 0, NULL);	//Add the FHP
+						if(!eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, thisnewfhppos, stp->handposition[fhpctr].end_pos, 0, NULL))
+						{	//If the FHP failed to be added
+							eof_log("! Failed to add FHP", 1);
+							fhperror = 1;
+						}
+					}
+					else
+					{	//Logic error
+						eof_log("! eof_get_porpos_sp_abs() did not return the expected value", 1);
+						fhperror = 1;
 					}
 				}
 			}
 			eof_pro_guitar_track_sort_fret_hand_positions(dtp);	//Sort the fret hand positions in the event any were added
-		}
-	}
+			if(fhperror)
+			{	//If there was an error encountered while recreating FHPs
+				allegro_message("Warning:  At least one FHP failed to be recreated, please check logging for details");
+			}
+			if(arpeggerror)
+			{	//If there was an error encountered while recreating arpeggios
+				allegro_message("Warning:  At least one arpeggio/handshape failed to be recreated, please check logging for details");
+			}
+		}//If tech view is not active for the destination track
+	}//If the copy/paste is being performed within the same EOF instance between pro guitar tracks
 	(void) pack_fclose(fp);
 	eof_truncate_chart(eof_song);	//Update chart variables for any beats that were added to accommodate the paste
 	eof_track_sort_notes(eof_song, eof_selected_track);

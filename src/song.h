@@ -230,7 +230,7 @@ typedef struct
 	unsigned char bendstrength;
 	unsigned char slideend;
 	unsigned char unpitchend;
-	unsigned long phrasenum;	//The arpeggio/handshape/lyric phrase number this note is part of (or 0xFFFFFFFF if not applicable)
+	unsigned long phrasenum;	//The arpeggio/handshape/lyric phrase number this note is part of at the time of the copy, not necessarily at the time of paste (or 0xFFFFFFFF if not applicable)
 	unsigned char sp_deploy;	//If the note's EOF_NOTE_EFLAG_SP_DEPLOY flag is set, used to track for which games the star power deployment is being predicted (ie. bit 1 for Clone Hero)
 
 } EOF_EXTENDED_NOTE;
@@ -777,9 +777,12 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 	//If the section type is not applicable for the track in question, *count is set to NULL and *ptr is set to NULL
 	//count is guaranteed to point to a valid counter variable if this function returns non NULL
 	//Arpeggio and handshape phrases both share the same array of phrases, so the calling function must take that into account
-EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long pos);
-	//Returns a pointer to the first instance of the specified section type of the specified track that the specified position is within
+EOF_PHRASE_SECTION *eof_get_section_instance_at_pos_of_diff(EOF_SONG *sp, unsigned long track, int diff, unsigned long sectiontype, unsigned long pos);
+	//Returns a pointer to the first instance of the specified section type of the specified track difficulty that the specified position is within
+	//If diff is > 0xFF, the difficulty sections apply to is ignored, otherwise if diff == 0xFF sections that apply to all difficulties are checked, otherwise sections that apply only to the specified diff are checked
 	//Returns NULL if pos is not within any such section or upon error
+EOF_PHRASE_SECTION *eof_get_section_instance_at_pos(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long pos);
+	//Calls eof_get_section_instance_at_pos_of_diff() with a diff value of 0xFFFF to perform the lookup while ignoring the difficulty level
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, unsigned char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name);
 	//Adds the specified section to the specified track if it's valid for the track, track 0 is used to reference certain items that are project-wide in scope
 	//!Many of the section types that are added are automatically sorted afterward, so the calling function can't assume that the last section in an array was the newly added section
@@ -888,7 +891,7 @@ long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Retu
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the next lyric, or -1 if there is none
 void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel);	//Performs cleanup of the specified lyric track (based on the currently loaded audio and chart).  If sel is zero, the currently selected note is deselected automatically.
 int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Marks all lyric phrases within the specified time span for overdrive.  Returns nonzero on success
-int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned char difficulty);
+int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos, unsigned long flags, unsigned char difficulty);
 	//Adds a lyric phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 	//The difficulty level at this time is typically going to just be 0xFF to indicate it applies to the entire track
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//Deletes the specified lyric phrase and moves all phrases that follow back in the array one position

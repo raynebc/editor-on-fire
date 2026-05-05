@@ -1372,7 +1372,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 
 		hide_pos = last_ending + 3000;
 		temp_lyric = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, hide_pos, 1000, 0, "Hide();");	//Append a temporary control event to hide the lyrics 3 seconds after that ending
-		if(eof_vocal_track_add_line(tp, hide_pos, hide_pos + 1000, 0xFF))
+		if(eof_vocal_track_add_line(tp, hide_pos, hide_pos + 1000, 0, 0xFF))
 			newline = 1;	//Track whether a new lyric line was successfully added to encompass that control event
 
 		qsort(tp->line, (size_t)tp->lines, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_phrase_sections);	//Sort the lyric lines

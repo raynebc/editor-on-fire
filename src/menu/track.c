@@ -5336,7 +5336,7 @@ int eof_menu_track_repair_grid_snap(void)
 
 	oldnotecount = eof_get_track_size_all(eof_song, eof_selected_track);	//Store the number of notes (and tech notes if applicable) for later comparison
 
-	eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 0, 1, &undo_made);			//Move sections to nearest grid snap of ANY grid size
+	eof_auto_adjust_sections(eof_song, eof_selected_track, 0, 0, 1, &undo_made);			//Move sections (including FHPs) to nearest grid snap of ANY grid size
 	(void) eof_auto_adjust_tech_notes(eof_song, eof_selected_track, 0, 0, 1, &undo_made);	//Move tech notes to nearest grid snap of ANY grid size
 
 	//Process notes

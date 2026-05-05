@@ -1106,7 +1106,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			else
 			{	//Otherwise consider this an ending to the previous line in progress and the beginning of a new line
 				lyric_off = eof_chartpos_to_msec(chart, current_event->chartpos, NULL) - 1.0;	//End the previous line 1ms before the beginning of this line
-				(void) eof_vocal_track_add_line(sp->vocal_track[0], lyric_on, lyric_off, 0xFF);
+				(void) eof_vocal_track_add_line(sp->vocal_track[0], lyric_on, lyric_off, 0, 0xFF);
 				lyric_on = pos;
 			}
 		}
@@ -1114,7 +1114,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		{	//If this is a Clone Hero end of lyric line marker (and such a marker is expected), add the lyric line definition to the vocal track
 			lyric_off = eof_chartpos_to_msec(chart, current_event->chartpos, NULL);	//Store the real timestamp associated with the end of the lyric line
 			lyric_status = 0;
-			(void) eof_vocal_track_add_line(sp->vocal_track[0], lyric_on, lyric_off + 0.5, 0xFF);
+			(void) eof_vocal_track_add_line(sp->vocal_track[0], lyric_on, lyric_off + 0.5, 0, 0xFF);
 		}
 		else
 		{

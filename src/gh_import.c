@@ -1314,7 +1314,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric phrase at %lu ms", phrasestart);
 	eof_log(eof_log_string, 1);
 #endif
-		(void) eof_vocal_track_add_line(tp, phrasestart, phrasestart, 0xFF);	//Add the phrase with a temporary end position
+		(void) eof_vocal_track_add_line(tp, phrasestart, phrasestart, 0, 0xFF);	//Add the phrase with a temporary end position
 	}
 	eof_process_gh_lyric_phrases(sp);	//Create proper end positions for each lyric phrase
 
@@ -2756,7 +2756,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric phrase at %lu ms", phrasestart);
 			eof_log(eof_log_string, 1);
 #endif
-			(void) eof_vocal_track_add_line(tp, phrasestart, phrasestart, 0xFF);	//Add the phrase with a temporary end position
+			(void) eof_vocal_track_add_line(tp, phrasestart, phrasestart, 0, 0xFF);	//Add the phrase with a temporary end position
 		}
 	}
 	eof_process_gh_lyric_phrases(sp);	//Create proper end positions for each lyric phrase
@@ -3882,7 +3882,7 @@ int eof_ghl_import_common(const char *fn)
 				}
 				else
 				{
-					(void) eof_vocal_track_add_line(eof_song->vocal_track[0], linestart, lineend, 0xFF);
+					(void) eof_vocal_track_add_line(eof_song->vocal_track[0], linestart, lineend, 0, 0xFF);
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tAdded lyric line from %lums to %lums", linestart, lineend);
 					eof_log(eof_log_string, 1);
 					linestarted = 0;
@@ -4031,7 +4031,7 @@ int eof_ghl_import_common(const char *fn)
 //End the lyric line if one was in progress
 	if(linestarted)
 	{
-		(void) eof_vocal_track_add_line(eof_song->vocal_track[0], linestart, lineend, 0xFF);
+		(void) eof_vocal_track_add_line(eof_song->vocal_track[0], linestart, lineend, 0, 0xFF);
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGHL:  \t\tAdded lyric line from %lums t %lums", linestart, lineend);
 		eof_log(eof_log_string, 1);
 	}
