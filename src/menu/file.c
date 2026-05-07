@@ -788,6 +788,7 @@ int eof_menu_file_load(void)
 		eof_chart_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
 		eof_init_after_load(0);
 		eof_fixup_notes(eof_song);
+		eof_enforce_midi_section_endings(0);	//Ensure that all sections that would export to MIDI are long enough for Clone Hero to include all expected notes
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);	//Update arrays for note set population and highlighting
 	}//If the user selected a file
 	eof_show_mouse(NULL);
@@ -1235,6 +1236,7 @@ int eof_menu_file_midi_import(void)
 ///			eof_skip_mid_beats_in_measure_numbering = 1;	//Enable mid beat tempo changes to be ignored in the measure numbering now that any applicable warnings were given
 			(void) eof_check_for_notes_preceding_sections(0);	//Warn if there are notes that precede the first section event, if there are any sections
 			eof_beat_stats_cached = 0;
+			eof_enforce_midi_section_endings(0);	//Ensure that all sections that would export to MIDI are long enough for Clone Hero to include all expected notes
 		}
 		else
 		{
@@ -4720,6 +4722,7 @@ int eof_save_helper(char *destfilename, char silent)
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));	//Update the relative project filename
 
 	/* save the MIDI, INI and other files*/
+	eof_enforce_midi_section_endings(silent);	//Ensure that all sections that would export to MIDI are long enough for Clone Hero to include all expected notes
 	if(!silent && (eof_write_fof_files || eof_write_rb_files))
 	{	//If prompts aren't being suppressed, and FoF or RB MIDIs are to be exported
 		eof_check_vocals(eof_song, &fixvoxpitches, &fixvoxphrases);

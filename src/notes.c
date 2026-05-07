@@ -3224,6 +3224,24 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "TOP_OF_2D_PANEL_SHOWS"))
+	{
+		if(eof_2d_render_top_option == 5)
+			snprintf(dest_buffer, dest_buffer_size, "Note names");
+		else if(eof_2d_render_top_option == 6)
+			snprintf(dest_buffer, dest_buffer_size, "Section names");
+		else if(eof_2d_render_top_option == 7)
+			snprintf(dest_buffer, dest_buffer_size, "Fret hand positions");
+		else if(eof_2d_render_top_option == 8)
+			snprintf(dest_buffer, dest_buffer_size, "RS section names");
+		else if(eof_2d_render_top_option == 9)
+			snprintf(dest_buffer, dest_buffer_size, "RS sections and phrases");
+		else if(eof_2d_render_top_option == 10)
+			snprintf(dest_buffer, dest_buffer_size, "Tone changes");
+
+		return 1;
+	}
+
 	return 0;	//Macro not supported
 }
 

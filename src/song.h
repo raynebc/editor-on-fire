@@ -794,6 +794,11 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 	//Returns zero on error
 int eof_menu_section_mark(unsigned long section_type);
 	//Performs the logic to mark/re-mark sections that is common among solo, star power, etc. sections
+void eof_enforce_midi_section_endings(int silent);
+	//Examines all sections in all tracks and for those that export to MIDI, ensures that each section ends at least 1ms after all notes beginning within the section's start and end positions
+	//This is to ensure that Clone Hero processes the section as expected
+	//If a section would have been extended by 1ms but couldn't because it would then include a note that wasn't originally in the section, that note is highlighted
+	//If silent is zero, a dialog message is displayed to the user explaining the outcome of this function
 
 unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track);		//Returns the number of lanes in the specified track, or the default of 5.  The value returned is expected to be less than EOF_MAX_FRETS
 int eof_track_add_trill(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a trill phrase at the specified start and stop timestamp

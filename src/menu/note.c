@@ -3758,7 +3758,7 @@ static void eof_split_lyric(unsigned long lyric, char undo_made)
 		return;	//Cancel the operation if it's not long enough
 	}
 	splitlength = (length - ((pieces - 1) * 20)) / pieces;	//The original lyric length minus a 20ms gap beteween each split piece, divided by the number of resulting lyrics will be how long each lyric will be
-	if(splitlength < 0)
+	if(splitlength < 1)
 	{	//Enforce a minimum lyric duration of 1
 		splitlength = 1;
 	}

@@ -3214,6 +3214,117 @@ int eof_menu_section_mark(unsigned long section_type)
 	return 1;
 }
 
+void eof_enforce_midi_section_endings(int silent)
+{
+	unsigned long sectiontype;
+	char resize_conflict = 0;	//Set to 1 if a section couldn't be extended by 1ms as needed because it would cause it to include a note that wasn't already in the section
+	char corrections_made = 0;
+
+	if(!eof_song)
+		return;
+
+	eof_log("eof_enforce_midi_section_endings() entered", 1);
+	eof_sort_notes(eof_song);	//The notes must be sorted
+
+	for(sectiontype = 1; sectiontype <= EOF_NUM_SECTION_TYPES; sectiontype++)
+	{	//For each type of section that exists
+		unsigned long sectionnum, *sectioncount = NULL, endpos, ctr, track, tracksize;
+		EOF_PHRASE_SECTION *phrase = NULL;
+		int skip = 0;
+
+		switch(sectiontype)
+		{
+			case EOF_BOOKMARK_SECTION:
+			case EOF_FRET_CATALOG_SECTION:
+			case EOF_ARPEGGIO_SECTION:
+			case EOF_TRAINER_SECTION:
+			case EOF_CUSTOM_MIDI_NOTE_SECTION:
+			case EOF_PREVIEW_SECTION:
+			case EOF_FRET_HAND_POS_SECTION:
+			case EOF_RS_POPUP_MESSAGE:
+			case EOF_RS_TONE_CHANGE:
+			case EOF_HANDSHAPE_SECTION:
+			case EOF_HAND_MODE_CHANGE:
+				skip = 1;	//These section types are not modified by this function
+			break;
+
+			default:
+			break;
+		}
+
+		for(track = 1; track < eof_song->tracks; track++)
+		{	//For each track in the project
+			char restore_tech_view;
+
+			if(skip || !eof_lookup_track_section_type(eof_song, track, sectiontype, &sectioncount, &phrase) || !phrase)
+				continue;	//If this type of section doesn't get updated by the auto adjust logic or there are no instances of this type of section in this track, skip it
+
+			restore_tech_view = eof_menu_track_get_tech_view_state(eof_song, track);
+			eof_menu_track_set_tech_view_state(eof_song, track, 0);	//Disable tech view if applicable
+
+			for(sectionnum = 0; sectionnum < *sectioncount; sectionnum++)
+			{	//For each instance of this type of section in the track
+				char need_resize = 0, cant_resize = 0;
+				endpos = phrase[sectionnum].end_pos;
+
+				tracksize = eof_get_track_size(eof_song, track);
+				for(ctr = 0; ctr < tracksize; ctr++)
+				{	//For each note in this track
+					unsigned long notepos = eof_get_note_pos(eof_song, track, ctr);
+
+					if(notepos == endpos)
+					{	//If this note starts at the end position of this section instance
+						need_resize = 1;
+					}
+					else if(notepos == endpos + 1)
+					{	//If this note starts 1ms after the end position of this section instance
+						cant_resize = 1;
+						eof_or_note_flags(eof_song, track, ctr, EOF_NOTE_FLAG_HIGHLIGHT);	//Highlight the note
+					}
+					else if(notepos > endpos + 1)
+					{	//If this and all notes begin over 1ms after the end position of this section instance
+						break;	//Stop iterating notes for this section instance
+					}
+				}
+
+				if(need_resize)
+				{	//If this section instance should extend 1ms longer to ensure it ends after the beginning position of all encompassed notes
+					if(cant_resize)
+					{	//If this section instance cannot extend 1ms because it would then overlap a note that wasn't in the section instnace
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s:  Cannot extend %s section number %lu by 1ms to end after note at %lums because another note begins at that position", eof_song->track[track]->name, eof_section_type_names[sectiontype], sectionnum, endpos);
+						eof_log(eof_log_string, 1);
+						resize_conflict = 1;	//Track that this conflict occurred
+					}
+					else
+					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s:  Extending %s section number %lu by 1ms to end after note at %lums", eof_song->track[track]->name, eof_section_type_names[sectiontype], sectionnum, endpos);
+						eof_log(eof_log_string, 1);
+						phrase[sectionnum].end_pos++;	//Otherwise extend this section instance by 1ms
+						corrections_made = 1;
+					}
+				}
+			}
+
+			eof_menu_track_set_tech_view_state(eof_song, track, restore_tech_view);	//Re-enable tech view if applicable
+		}
+	}
+
+	if(!silent && (corrections_made || resize_conflict))
+	{
+		char *string1 = "Section end positions were corrected";
+		char *string2 = "At least 1 section wasn't corrected because it would add unrelated notes";
+		char *string3 = "Those notes have been highlighted";
+		char *string4 = "";
+		char *line1, *line2, *line3;
+
+		line1 = corrections_made ? string1 : string4;
+		line2 = resize_conflict ? string2 : string4;
+		line3 = resize_conflict ? string3 : string4;
+
+		allegro_message("%s\n%s\n%s\n", line1, line2, line3);
+	}
+}
+
 int eof_save_song_string_pf(char *buffer, PACKFILE *fp)
 {
 	unsigned long length = 0, ctr;
