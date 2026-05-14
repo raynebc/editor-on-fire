@@ -1994,7 +1994,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 	//Write the phrases and do other setup common to both Rocksmith exports
 	originalbeatcount = sp->beats;	//Store the original beat count
 	if(!eof_rs_export_common(sp, track, fp, user_warned, 2))
-	{	//If there was an error adding temporary phrases, sections, beats tot he project and writing the phrases to file
+	{	//If there was an error adding temporary phrases, sections, beats to the project and writing the phrases to file
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable
 		(void) pack_fclose(fp);
 		eof_display_second_piano_roll = original_eof_display_second_piano_roll;	//Restore the secondary piano roll status

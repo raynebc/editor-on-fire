@@ -1965,24 +1965,115 @@ int eof_menu_song_spectrogram(void)
 	return 0;	//Return success
 }
 
+unsigned long eof_leading_silence_dialog_amount;
 DIALOG eof_leading_silence_dialog[] =
 {
 	/* (proc)                 (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)    (d1)  (d2) (dp)                     (dp2) (dp3) */
-	{ eof_window_proc,  	  0,   48,  200, 288, 2,   23,  0,    0,          0,   0,   "Leading Silence",       NULL, NULL },
+	{ eof_window_proc,  	  0,   48,  200, 308, 2,   23,  0,    0,          0,   0,   "Leading Silence",       NULL, NULL },
 	{ d_agup_text_proc,       16,  80,  110, 20,  2,   23,  0,    0,          0,   0,   "Add:",                  NULL, NULL },
 	{ d_agup_radio_proc,      16,  100, 110, 15,  2,   23,  0,    0,          0,   0,   "Milliseconds",          NULL, NULL },
 	{ d_agup_radio_proc,      16,  120, 110, 15,  2,   23,  0,    0,          0,   0,   "Beats",                 NULL, NULL },
 	{ d_agup_text_proc,       16,  140, 110, 20,  2,   23,  0,    0,          0,   0,   "Pad:",                  NULL, NULL },
 	{ d_agup_radio_proc,      16,  160, 110, 15,  2,   23,  0,    0,          0,   0,   "Milliseconds",          NULL, NULL },
 	{ d_agup_radio_proc,      16,  180, 110, 15,  2,   23,  0,    0,          0,   0,   "Beats",                 NULL, NULL },
-	{ eof_verified_edit_proc, 16,  200, 110, 20,  2,   23,  0,    0,          10,  0,   eof_etext,       "1234567890", NULL },
+	{ eof_leading_silence_edit_proc, 16,  200, 74, 20,  2,   23,  0,    0,            10,  0,   eof_etext,       "1234567890", NULL },
+	{ d_agup_text_proc,       100,  200, 74, 20,  2,   23,  0,    0,           10,  0,   eof_etext2,       NULL, NULL },
 	{ d_agup_check_proc,      16,  226, 180, 16,  2,   23,  0,    D_SELECTED, 1,   0,   "Adjust Notes/Beats",    NULL, NULL },
-	{ d_agup_radio_proc,      16,  246, 160, 15,  2,   23,  0,    0,          1,   0,   "Stream copy (oggCat)",  NULL, NULL },
-	{ d_agup_radio_proc,      16,  266, 90,  15,  2,   23,  0,    0,          1,   0,   "Re-encode",             NULL, NULL },
-	{ d_agup_button_proc,     16,  292, 68,  28,  2,   23,  '\r', D_EXIT,     0,   0,   "OK",                    NULL, NULL },
-	{ d_agup_button_proc,     116, 292, 68,  28,  2,   23,  0,    D_EXIT,     0,   0,   "Cancel",                NULL, NULL },
+	{ d_agup_check_proc,      16,  246, 174, 16,  2,   23,  0,    D_SELECTED, 1,   0,   "Add RS COUNT measure",    NULL, NULL },
+	{ d_agup_radio_proc,      16,  266, 160, 15,  2,   23,  0,    0,          1,   0,   "Stream copy (oggCat)",  NULL, NULL },
+	{ d_agup_radio_proc,      16,  286, 90,  15,  2,   23,  0,    0,          1,   0,   "Re-encode",             NULL, NULL },
+	{ d_agup_button_proc,     16,  312, 68,  28,  2,   23,  '\r', D_EXIT,     0,   0,   "OK",                    NULL, NULL },
+	{ d_agup_button_proc,     116, 312, 68,  28,  2,   23,  0,    D_EXIT,     0,   0,   "Cancel",                NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
+
+static void eof_redraw_leading_silence_string(void)
+{
+	int junk = 0;
+	unsigned long amount;
+
+	 amount = eof_evaluate_leading_silence_dialog();
+	 if(amount != eof_leading_silence_dialog_amount)
+	 {	//If the dialog changed in a way that alters the amount of leading silence to be added
+	 	if(amount == ULONG_MAX)
+		{	//If the input field is blank or not able to be converted to a valid number
+			eof_etext2[0] = '\0';
+		}
+		else
+		{
+			snprintf(eof_etext2, sizeof(eof_etext2) - 1, "-> %lums", amount);
+		}
+	 	eof_leading_silence_dialog_amount = amount;
+	 	(void) dialog_message(eof_leading_silence_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+	 }
+}
+
+int eof_leading_silence_radio_proc(int msg, DIALOG *d, int c)
+{
+	int retval = d_agup_radio_proc(msg, d, c);	//Process the event
+
+	eof_redraw_leading_silence_string();
+	return retval;
+}
+
+int eof_leading_silence_edit_proc(int msg, DIALOG *d, int c)
+{
+	int retval = eof_verified_edit_proc(msg, d, c);		//Process the event
+
+	eof_redraw_leading_silence_string();
+	return retval;
+}
+
+unsigned long eof_evaluate_leading_silence_dialog(void)
+{
+	unsigned long silence_length = ULONG_MAX, input, beat_length, count_measure_length = 0;
+	unsigned num = 4, den = 4;
+
+	if(!eof_song || (eof_song->beats < 2))
+		return ULONG_MAX;
+
+	input = atoi(eof_etext);
+	if(!input && !eof_string_is_zero(eof_etext))	//If atoi() returned 0, but the string does not contain a string representing zero
+		return ULONG_MAX;				//Return error
+	beat_length = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
+
+	if(eof_leading_silence_dialog[10].flags & D_SELECTED)
+	{	//Add RS COUNT measure
+		if((eof_get_ts(eof_song, &num, &den, 0) != 1) || !num)
+		{	//If a time signature doesn't exist on the first beat or it couldn't be read, or if the numerator is not a valid number
+			eof_log("\teof_evaluate_leading_silence_dialog() couldn't detect the time signature on beat 1, assuming 4/4", 1);
+			num = 4;
+		}
+		count_measure_length += num * beat_length;
+	}
+
+	if(eof_leading_silence_dialog[2].flags & D_SELECTED)
+	{	//Add milliseconds
+		silence_length = count_measure_length + input;
+	}
+	else if(eof_leading_silence_dialog[3].flags & D_SELECTED)
+	{	//Add beats
+		silence_length = count_measure_length + (beat_length * input);
+	}
+	else if(eof_leading_silence_dialog[5].flags & D_SELECTED)
+	{	//Pad milliseconds
+		silence_length = count_measure_length + input;
+		if(silence_length > eof_song->beat[0]->pos)
+		{
+			silence_length -= eof_song->beat[0]->pos;
+		}
+	}
+	else if(eof_leading_silence_dialog[6].flags & D_SELECTED)
+	{	//Pad beats
+		silence_length = count_measure_length + (beat_length * input);
+		if(silence_length > eof_song->beat[0]->pos)
+		{
+			silence_length -= eof_song->beat[0]->pos;
+		}
+	}
+
+	return silence_length;
+}
 
 static long get_ogg_length(const char * fn)
 {
@@ -2017,7 +2108,6 @@ static long get_ogg_length(const char * fn)
 
 int eof_menu_song_add_silence(void)
 {
-	double beat_length;
 	unsigned long silence_length = 0;
 	long current_length = 0;
 	long after_silence_length = 0;
@@ -2025,23 +2115,30 @@ int eof_menu_song_add_silence(void)
 	unsigned long i, x;
 	char fn[1024] = {0};
 	char mp3fn[1024] = {0};
-	static int creationmethod = 10;	//Stores the user's last selected leading silence creation method (default to re-encode, which is menu item 10 in eof_leading_silence_dialog[])
+	static int creationmethod = 12;	//Stores the user's last selected leading silence creation method (default to re-encode, which is menu item 10 in eof_leading_silence_dialog[])
+	static int firstlaunch = 1;
 	int retval;
 	unsigned long old_eof_music_length = eof_music_length;	//Keep track of the current chart audio's length to compare with after silence was added
 
 	eof_log("eof_menu_song_add_silence() entered", 1);
 
-	if(eof_silence_loaded)
-	{	//Do not allow this function to run when no audio is loaded
+	if(eof_silence_loaded || !eof_song || (eof_song->beats < 2))
+	{	//Do not allow this function to run when no audio is loaded or if there aren't at least two beats in the project
 		return 1;
 	}
 
-	eof_leading_silence_dialog[9].flags = 0;
-	eof_leading_silence_dialog[10].flags = 0;
+	if(firstlaunch && (eof_write_rs_files || eof_write_rs2_files))
+	{	//If this is the first time this dialog is launched during this EOF session, and Rocksmith export is enabled
+		eof_leading_silence_dialog[10].flags = D_SELECTED;	//Automatically enable the "Add RS COUNT measure" option
+	}
+	firstlaunch = 0;
+
+	eof_leading_silence_dialog[11].flags = 0;
+	eof_leading_silence_dialog[12].flags = 0;
 	if(eof_supports_oggcat == 0)
 	{	//If EOF has not found oggCat to be available, disable it in the menu and select re-encode
-		creationmethod = 10;	//eof_leading_silence_dialog[10] is the re-encode option
-		eof_leading_silence_dialog[9].flags = D_DISABLED;	//Disable the stream copy option
+		creationmethod = 12;	//eof_leading_silence_dialog[12] is the re-encode option
+		eof_leading_silence_dialog[11].flags = D_DISABLED;	//Disable the stream copy option
 	}
 
 	eof_leading_silence_dialog[creationmethod].flags = D_SELECTED;	//Select the last selected creation method
@@ -2062,16 +2159,20 @@ int eof_menu_song_add_silence(void)
 	eof_leading_silence_dialog[6].flags = 0;
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "0");
 
-	if(eof_popup_dialog(eof_leading_silence_dialog, 7) == 11)
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "-> 0ms");		//These are used by the callback functions to display the amount of leading silence that will be added
+	eof_leading_silence_dialog_amount = 0;
+
+	if(eof_popup_dialog(eof_leading_silence_dialog, 7) == 13)
 	{	//User clicked OK
 		(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
 		eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since changing silence will require a new WAV file to be written
 
 		(void) snprintf(fn, sizeof(fn) - 1, "%s.backup", eof_loaded_ogg_name);
 		current_length = get_ogg_length(eof_loaded_ogg_name);
-		/* revert to original file */
-		if(atoi(eof_etext) <= 0)
-		{
+
+		silence_length = eof_evaluate_leading_silence_dialog();
+		if((silence_length == 0) || (silence_length == ULONG_MAX))
+		{	//If the user entered zero or there was an error, cancel the addition of leading silence
 			if(eof_file_compare(fn, eof_loaded_ogg_name) == 0)
 			{	//If the backup audio is already loaded (the loaded file is an exact copy of the backup)
 				return 1;	//Return without making any changes
@@ -2097,37 +2198,10 @@ int eof_menu_song_add_silence(void)
 		else
 		{	//Add silence
 			eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
-			if(eof_leading_silence_dialog[2].flags & D_SELECTED)
-			{	//Add milliseconds
-				silence_length = atoi(eof_etext);
-			}
-			else if(eof_leading_silence_dialog[3].flags & D_SELECTED)
-			{	//Add beats
-				beat_length = eof_calc_beat_length(eof_song, 0);
-				silence_length = beat_length * (double)atoi(eof_etext);
-			}
-			else if(eof_leading_silence_dialog[5].flags & D_SELECTED)
-			{	//Pad milliseconds
-				silence_length = atoi(eof_etext);
-				if(silence_length > eof_song->beat[0]->pos)
-				{
-					silence_length -= eof_song->beat[0]->pos;
-				}
-			}
-			else if(eof_leading_silence_dialog[6].flags & D_SELECTED)
-			{	//Pad beats
-				beat_length = eof_calc_beat_length(eof_song, 0);
-				silence_length = beat_length * (double)atoi(eof_etext);
-				printf("%lu\n", silence_length);
-				if(silence_length > eof_song->beat[0]->pos)
-				{
-					silence_length -= eof_song->beat[0]->pos;
-				}
-			}
 
-			if((eof_leading_silence_dialog[9].flags == D_SELECTED) && eof_supports_oggcat)
+			if((eof_leading_silence_dialog[11].flags == D_SELECTED) && eof_supports_oggcat)
 			{	//User opted to use oggCat
-				creationmethod = 9;		//Remember this as the default next time
+				creationmethod = 11;		//Remember this as the default next time
 				retval = eof_add_silence(eof_loaded_ogg_name, silence_length);
 			}
 			else
@@ -2135,12 +2209,12 @@ int eof_menu_song_add_silence(void)
 				(void) replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
 				if(exists(mp3fn))
 				{
-					creationmethod = 10;	//Remember this as the default next time
+					creationmethod = 12;	//Remember this as the default next time
 					retval = eof_add_silence_recode_mp3(eof_loaded_ogg_name, silence_length);
 				}
 				else
 				{
-					creationmethod = 10;	//Remember this as the default next time
+					creationmethod = 12;	//Remember this as the default next time
 					retval = eof_add_silence_recode(eof_loaded_ogg_name, silence_length);
 				}
 			}
@@ -2160,15 +2234,15 @@ int eof_menu_song_add_silence(void)
 
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLeading silence failure detected.  Chart audio went from %lums to %lums in length", old_eof_music_length, eof_music_length);
 			eof_log(eof_log_string, 1);
-			if(alert("Warning:  The leading silence operation seemed to have failed.", ((creationmethod == 9) ? stream_copy_message : ""), "Undo?", "&Yes", "&No", 'y', 'n') == 1)
+			if(alert("Warning:  The leading silence operation seemed to have failed.", ((creationmethod == 10) ? stream_copy_message : ""), "Undo?", "&Yes", "&No", 'y', 'n') == 1)
 			{	//If the user opts to undo the operation
 				(void) eof_undo_apply();
 			}
 		}
 		else
 		{	//Operation succeeded, adjust notes/beats
-			if(eof_leading_silence_dialog[8].flags & D_SELECTED)
-			{
+			if(eof_leading_silence_dialog[9].flags & D_SELECTED)
+			{	//If the adjust notes/beats option was enabled
 				if(after_silence_length != 0)
 				{
 					adjust = after_silence_length - current_length;
@@ -2191,6 +2265,53 @@ int eof_menu_song_add_silence(void)
 					}
 				}
 				(void) eof_adjust_notes(ULONG_MAX, adjust);
+
+				//Add RS COUNT measure if applicable
+				if(eof_leading_silence_dialog[10].flags & D_SELECTED)
+				{	//Add RS COUNT measure
+					unsigned num = 4, den = 4, added = 0;
+					char undo_made = 1;
+					unsigned long beat_length = eof_song->beat[1]->pos - eof_song->beat[0]->pos, ctr;
+
+					if((eof_get_ts(eof_song, &num, &den, 0) != 1) || !num)
+					{	//If a time signature doesn't exist on the first beat or it couldn't be read, or if the numerator is not a valid number
+						eof_log("\eof_menu_song_add_silence() couldn't detect the time signature on beat 1, assuming 4/4", 1);
+						allegro_message("No time signature detected on the first beat.  4/4 will be assumed");
+						num = den = 4;
+					}
+					else
+					{
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tInserting COUNT measure (%u beats)", num);
+						eof_log(eof_log_string, 1);
+					}
+					if(eof_song->beat[0]->pos >= (num * beat_length))
+					{	//If there is enough time before the first beat to insert one measure
+						for(ctr = 0; ctr < num; ctr++)
+						{	//For each of the beats that need to be added
+							if(eof_menu_beat_push_offset_back(&undo_made))
+							{	//If the beat was sucessfully prepended to the beginning of the chart
+								eof_song->beat[1]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Remove the anchor from the former first beat
+								if(ctr + 1 >= num)
+								{	//If this is the last beat that will be added (the first beat of the COUNT measure)
+									(void) eof_song_add_text_event(eof_song, 0, "B0", 0, EOF_EVENT_FLAG_RS_EVENT, 0);	//Add a global high pitch tick event
+									(void) eof_song_add_text_event(eof_song, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 0);	//Add a COUNT RS phrase
+								}
+								else
+								{
+									(void) eof_song_add_text_event(eof_song, 0, "B1", 0, EOF_EVENT_FLAG_RS_EVENT, 0);	//Add a global low pitch tick event
+								}
+								added++;	//Track how many beats were added
+							}
+						}
+						if(added == num)
+						{	//If the complete measure of beats was added
+							eof_selected_beat = 0;						//Ensure the time signature is applied to the new first beat
+							eof_menu_beat_apply_ts_logic(num, den, 1, 0);	//Apply that time signature, don't make another undo state
+							eof_selected_beat = added;					//Ensure the time signature is removed from the original first beat
+							eof_menu_beat_ts_off_logic(0);				//Remove that time signature, don't make another undo state
+						}
+					}
+				}
 			}
 			eof_fixup_notes(eof_song);
 			eof_calculate_beats(eof_song);

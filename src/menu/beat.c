@@ -760,7 +760,7 @@ int eof_menu_beat_bpm_change(void)
 	return 1;
 }
 
-int eof_menu_beat_apply_ts_logic(unsigned num, unsigned den, char recalculate)
+int eof_menu_beat_apply_ts_logic(unsigned num, unsigned den, char recalculate, char undo)
 {
 	if(!eof_song)
 		return 0;	//No project is loaded
@@ -775,7 +775,7 @@ int eof_menu_beat_apply_ts_logic(unsigned num, unsigned den, char recalculate)
 		}
 	}
 
-	(void) eof_apply_ts(num, den, eof_selected_beat, eof_song, 1);
+	(void) eof_apply_ts(num, den, eof_selected_beat, eof_song, undo);
 
 	if(eof_song->tags->accurate_ts && recalculate)
 	{	//If the chart's "Use accurate time signatures" property is enabled, and the calling function opted to recalculate beat timings
@@ -794,7 +794,7 @@ int eof_menu_beat_apply_ts_logic(unsigned num, unsigned den, char recalculate)
 
 int eof_menu_beat_apply_ts(unsigned num, unsigned den)
 {
-	return eof_menu_beat_apply_ts_logic(num, den, 1);
+	return eof_menu_beat_apply_ts_logic(num, den, 1, 1);
 }
 
 int eof_menu_beat_ts_2_4(void)
@@ -875,7 +875,7 @@ int eof_menu_beat_ts_custom_dialog(unsigned start, char recalculate)
 			}
 			else
 			{	//User provided a valid time signature
-				retval = eof_menu_beat_apply_ts_logic(num, den, recalculate);	//Apply the time signature, reflecting the calling function's choice of whether to alter beat timings
+				retval = eof_menu_beat_apply_ts_logic(num, den, recalculate, 1);	//Apply the time signature, reflecting the calling function's choice of whether to alter beat timings
 			}
 		}
 	}
@@ -935,10 +935,15 @@ int eof_menu_beat_ts_convert(void)
 	return 1;
 }
 
-int eof_menu_beat_ts_off(void)
+int eof_menu_beat_ts_off_logic(char undo)
 {
+	unsigned long flags;
+
+	if(!eof_song || (eof_selected_beat >= eof_song->beats))
+		return 1;	//Inavlid parameters
+
 //Clear the beat's status except for its anchor and event flags
-	unsigned long flags = eof_song->beat[eof_selected_beat]->flags;
+	flags = eof_song->beat[eof_selected_beat]->flags;
 
 	flags &= ~EOF_BEAT_FLAG_START_4_4;	//Clear this TS flag
 	flags &= ~EOF_BEAT_FLAG_START_2_4;	//Clear this TS flag
@@ -950,14 +955,23 @@ int eof_menu_beat_ts_off(void)
 	flags &= ~0x00FF0000;	//Clear any custom TS denominator
 	if(flags != eof_song->beat[eof_selected_beat]->flags)
 	{	//If the user has changed the time signature status of this beat
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(undo)
+		{	//If the calling function wants to create an undo state
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		}
 		eof_song->beat[eof_selected_beat]->flags = flags;
 		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		eof_calculate_beats(eof_song);
 		eof_truncate_chart(eof_song);
 		eof_select_beat(eof_selected_beat);
 	}
+
 	return 1;
+}
+
+int eof_menu_beat_ts_off(void)
+{
+	return eof_menu_beat_ts_off_logic(1);
 }
 
 void eof_menu_beat_delete_logic(unsigned long beat)
@@ -1016,7 +1030,7 @@ int eof_menu_beat_push_offset_back(char *undo_made)
 	double backamount;
 
 	if(!eof_song)
-		return 1;
+		return 0;
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 0;							//Return without making changes
 	if(!undo_made)

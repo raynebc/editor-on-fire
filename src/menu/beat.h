@@ -27,10 +27,11 @@ extern DIALOG eof_rocksmith_event_dialog[];
 void eof_prepare_beat_menu(void);			//Enable/disable Beat menu items prior to drawing the menu
 int eof_menu_beat_add(void);
 int eof_menu_beat_bpm_change(void);
-int eof_menu_beat_apply_ts_logic(unsigned num, unsigned den, char recalculate);
+int eof_menu_beat_apply_ts_logic(unsigned num, unsigned den, char recalculate, char undo);
 	//Applies the specified time signature to the selected beat,
 	//If recalculate is nonzero, and the "Use accurate time signatures" chart property is enabled, this function calls eof_calculate_beats() to re-calculate beat timings
 	//	If note auto-adjust is also enabled in preferences, this function performs auto-adjust logic to reflect the beat timing changes
+	//The undo parameter is passed to eof_apply_ts() to create an undo state if nonzero
 int eof_menu_beat_apply_ts(unsigned num, unsigned den);	//Calls eof_menu_beat_apply_ts_logic() to apply the time signature and recalculate the beat timings
 int eof_menu_beat_ts_2_4(void);	//Calls eof_menu_beat_apply_ts() to apply 2/4 time signature
 int eof_menu_beat_ts_3_4(void);	//Calls eof_menu_beat_apply_ts() to apply 3/4 time signature
@@ -45,7 +46,8 @@ int eof_menu_beat_ts_custom_dialog(unsigned start, char recalculate);
 	//If recalculate is nonzero, eof_menu_beat_apply_ts_logic() will alter the beat timings to reflect the time signature chosen by the user
 int eof_menu_beat_ts_custom(void);	//Applies user-selected time signature and recalculates beat lengths depending on the accurate TS chart option
 int eof_menu_beat_ts_convert(void);	//Applies user-selected time signature and recalculates tempos to leave beat markers in their existing positions
-int eof_menu_beat_ts_off(void);
+int eof_menu_beat_ts_off_logic(char undo);	//Removes the time signature and all related flags from the selected beat, creating an undo state if undo is nonzero
+int eof_menu_beat_ts_off(void);		//Calls eof_menu_beat_ts_off() with the option to create an undo state
 
 int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp, char *undo_made);
 	//Applies the specified key signature to the specified beat

@@ -112,7 +112,7 @@ unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata
 
 int eof_string_is_zero(char *string);
 	//Returns nonzero if string is a proper representation of the number zero
-	//To be used to verify whether the return value of atof() being zero is meant to be an error or a conversion of the number 0
+	//To be used to verify whether the return value of atof() or atoi() being zero is meant to be an error or a conversion of the number 0
 
 void eof_build_mmssms_string(unsigned long mspos, unsigned *min, unsigned *sec, unsigned *ms, char *string);
 	//Converts the given millisecond timestamp into minutes, seconds and milliseconds, returning those through the unsigned pointers if they are not NULL

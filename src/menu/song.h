@@ -148,6 +148,14 @@ int eof_menu_song_spectrogram_settings(void);
 int eof_menu_song_spectrogram(void);	//Toggle the display of the spectrogram on/off, generating the spectrogram data if necessary
 int eof_menu_song_add_silence(void);
 
+int eof_leading_silence_radio_proc(int msg, DIALOG *d, int c);
+	//Radio button function used in the leading silence dialog, to update the string displaying the amount of silence that will be added
+int eof_leading_silence_edit_proc(int msg, DIALOG *d, int c);
+	//Edit field function used in the leading silence dialog, to update the string displaying the amount of silence that will be added
+unsigned long eof_evaluate_leading_silence_dialog(void);
+	//Processes the contents of eof_leading_silence_dialog[] to determine how much silence is to be added
+	//Returns ULONG_MAX if there is an error
+
 int eof_menu_catalog_edit_name(void);	//Brings up a dialog window allowing the user to define a fret catalog entry's name
 int eof_menu_song_legacy_view(void);	//Toggles the view of pro guitar tracks as legacy notes
 
