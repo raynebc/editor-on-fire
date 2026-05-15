@@ -44,8 +44,8 @@ NCDFS_FILTER_LIST * ncdfs_filter_list_create(void)
 
 int ncdfs_filter_list_add(NCDFS_FILTER_LIST * lp, char * ext, char * desc, int df)
 {
-	ustrcpy(lp->filter[lp->filters].extension, ext);
-	ustrcpy(lp->filter[lp->filters].description, desc);
+	ustrncpy(lp->filter[lp->filters].extension, ext, sizeof(lp->filter[lp->filters].extension) - 1);
+	ustrncpy(lp->filter[lp->filters].description, desc, sizeof(lp->filter[lp->filters].description) - 1);
 	if(df)
 	{
 		lp->default_filter = lp->filters;
@@ -87,14 +87,14 @@ static int ncd_file_select_allegro_want_all(NCDFS_FILTER_LIST * lp)
 
 		if(lp)
 		{
+			int plen = 0;
 			for(i = 0; i < lp->filters; i++)
 			{
 				if(i > 0)
 				{
-					strcat(pattern, ";");
+					plen += snprintf(pattern + plen, sizeof(pattern) - plen, ";");
 				}
-				strcat(pattern, "*.");
-				strcat(pattern, lp->filter[i].extension);
+				plen += snprintf(pattern + plen, sizeof(pattern) - plen, "*.%s", lp->filter[i].extension);
 			}
 		}
 
@@ -118,7 +118,7 @@ static int ncd_file_select_allegro_want_all(NCDFS_FILTER_LIST * lp)
 			c = al_get_native_file_dialog_count(fcp);
 			if(c > 0)
 			{
-				strcpy(ncdfs_internal_return_path, al_get_native_file_dialog_path(fcp, 0));
+				snprintf(ncdfs_internal_return_path, sizeof(ncdfs_internal_return_path), "%s", al_get_native_file_dialog_path(fcp, 0));
 			}
 			al_destroy_native_file_dialog(fcp);
 			if(c > 0)
