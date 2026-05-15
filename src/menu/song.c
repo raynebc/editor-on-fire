@@ -2310,6 +2310,7 @@ int eof_menu_song_add_silence(void)
 							eof_selected_beat = added;					//Ensure the time signature is removed from the original first beat
 							eof_menu_beat_ts_off_logic(0);				//Remove that time signature, don't make another undo state
 						}
+						eof_sort_events(eof_song);
 					}
 				}
 			}

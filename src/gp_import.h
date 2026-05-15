@@ -97,6 +97,9 @@
 	int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr);
 		//Reads the next GPA sync point into the referenced structure, advancing *buffer to point to the character after the timestamp read (is '#' between timestamps or '<' after the last timestamp)
 		//Returns nonzero on success
+	void eof_apply_gpa_sync_points(struct eof_guitar_pro_struct *gp, struct eof_gpa_sync_point *sync_points, unsigned long num_sync_points);
+		//Accepts a pointer to the Guitar Pro content being parsed, an array of sync points parsed from a Go PlayAlong XML file, and the number of points in the array
+		//Corrects the timings and applies them to the active project's tempo map
 
 #endif
 

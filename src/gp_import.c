@@ -2775,250 +2775,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		eof_calculate_beats(eof_song);	//Rebuild the tempo map to reflect any time signature changes
 	}
 
-//Correct Go PlayAlong timings by rebuilding the quarter note lengths
+//Apply Go PlayAlong timings if applicable
  	if(sync_points)
 	{	//If synchronization data was imported from the input Go PlayAlong file
-		double fbeatctr, qnotectr;
-		unsigned char *num;	//Will point to an array with the TS numerator of every measure
-		unsigned char *den;	//Will point to an array with the TS denominator of every measure
-		unsigned long nummeasures;	//The number of entries in the above arrays
-		double curpos = 0.0, beat_length = 500.0, last_qnote_length = 500.0;	//By default, assume 120BPM at 4/4 meter
-		char mid_beat;	//Tracks whether the sync point applied to the beat was mid-beat
-		unsigned long firstsyncpointbeat = 0;	//This will track the first beat to have its position set by a sync point
-
-		eof_log("Unwrapping beats", 1);
-		(void) eof_unwrap_gp_track(gp, 0, 1, 1);	//Unwrap all measures in the GP file, applying time signatures where appropriate.  No notes are imported yet, but allow text events to be unwrapped
-		eof_process_beat_statistics(eof_song, eof_selected_track);		//Find the measure numbering for all beats
-
-		//Build a temporary tsarray[], since GPA import needs one reflecting unwrapped measures, and the GP import that follows needs one reflecting the original wrapped measures
-		nummeasures = eof_song->beat[eof_song->beats - 1]->measurenum;	//Derive the number of measures based off the last unwrapped beat's measure number
-		num = (unsigned char *)malloc(sizeof(unsigned char) * nummeasures);	//Allocate memory for the arrays
-		den = (unsigned char *)malloc(sizeof(unsigned char) * nummeasures);
-		if(!num || !den)
-		{
-			if(num)
-				free(num);
-			if(den)
-				free(den);
-			eof_log("Error allocating memory (13)", 1);
-			(void) pack_fclose(inf);
-			free(gp->names);
-			free(gp->instrument_types);
-			for(ctr = 0; ctr < tracks; ctr++)
-			{	//Free all previously allocated track structures
-				free(gp->track[ctr]);
-			}
-			for(ctr = 0; ctr < gp->text_events; ctr++)
-			{	//Free all allocated text events
-				free(gp->text_event[ctr]);
-			}
-			free(gp->track);
-			free(np);
-			free(hopo);
-			free(hopobeatnum);
-			free(hopomeasurenum);
-			free(durations);
-			free(note_durations);
-			free(gp);
-			free(tsarray);
-			free(strings);
-			free(sync_points);
-			return NULL;
-		}
-		memset(num, 0, sizeof(char) * nummeasures);	//Fill with 0s to satisfy Splint
-		memset(den, 0, sizeof(char) * nummeasures);
-		for(ctr = 0; ctr < nummeasures; ctr++)
-		{	//For each unwrapped measure
-			for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
-			{	//For each beat in the project
-				if(eof_song->beat[ctr2]->measurenum == ctr + 1)
-				{	//If this beat is in the targeted measure
-					num[ctr] = eof_song->beat[ctr2]->num_beats_in_measure;	//Populate the TS arrays with the measure information
-					den[ctr] = eof_song->beat[ctr2]->beat_unit;
-					break;
-				}
-			}
-		}
-
-		eof_log("Correcting sync point timings", 1);
-		for(ctr = 0; ctr < num_sync_points; ctr++)
-		{	//For each sync point from the Go PlayAlong file
-			if(ctr + 1 >= num_sync_points)
-			{	//If this is the last sync point, retain the original quarter note length specified in the XML file
-				sync_points[ctr].real_qnote_length = sync_points[ctr].qnote_length;
-				qnotectr = 0;
-			}
-			else
-			{	//Otherwise base the quarter note length on the amount of time and number of beats between this next sync point and the next
-				if(sync_points[ctr + 1].measure > sync_points[ctr].measure)
-				{	//If the next sync point ends in a different measure
-					fbeatctr = (1.0 - sync_points[ctr].pos_in_measure) * num[sync_points[ctr].measure];	//Initialize the counter to the number of beats between this sync point and the end of the measure it's in
-					qnotectr = fbeatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
-					for(ctr2 = sync_points[ctr].measure + 1; ctr2 < sync_points[ctr + 1].measure; ctr2++)
-					{	//For each remaining measure until the one the sync point is in
-						fbeatctr += num[ctr2];	//Add this measure's number of beats to the counter
-						qnotectr += num[ctr2] / ((double)den[ctr2] / 4.0);	//Add this measure's number of quarter notes to the counter
-					}
-					fbeatctr += sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure];	//Add the number of beats into the measure the later sync point is
-					qnotectr += (sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure]) / ((double)den[sync_points[ctr + 1].measure] / 4.0);	//Add the number of quarter notes into the measure the later sync point is
-				}
-				else
-				{	//This sync point and the next end in the same measure
-					fbeatctr = sync_points[ctr + 1].pos_in_measure - sync_points[ctr].pos_in_measure;	//Get the distance between them in measures
-					fbeatctr *= num[sync_points[ctr].measure];	//Convert this value to the number of beats between the sync points
-					qnotectr = fbeatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
-				}
-				sync_points[ctr].beat_length = ((double)sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / fbeatctr;	//Get the beat length
-				sync_points[ctr].real_qnote_length = (sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / qnotectr;	//Get the quarter note length (the distance between this sync point and the next divided by the number of quarter notes between them)
-			}
-#ifdef GP_IMPORT_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu:  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\t# of qnotes to next sync point:  %f\tCorrected length:  %fms", ctr, sync_points[ctr].realtime_pos, sync_points[ctr].measure + 1.0 + sync_points[ctr].pos_in_measure, sync_points[ctr].qnote_length, qnotectr, sync_points[ctr].real_qnote_length);
-			eof_log(eof_log_string, 1);
-#endif
-		}//For each sync point from the Go PlayAlong file
-
-//Apply Go PlayAlong timings now if applicable
-		eof_log("Applying sync point timings", 1);
-		for(ctr = 0; ctr < eof_song->beats; ctr++)
-		{	//For each beat in the project
-			mid_beat = 0;	//Reset this condition
-			measure_position = (double)eof_song->beat[ctr]->beat_within_measure / (double)eof_song->beat[ctr]->num_beats_in_measure;	//Find this beat's position in the measure, as a value between 0 and 1
-			for(ctr2 = 0; ctr2 < num_sync_points; ctr2++)
-			{	//For each sync point from the Go PlayAlong file
-				if(sync_points[ctr2].processed)
-					continue;	//If the sync point was already handled, skip it
-
-				if(sync_points[ctr2].measure + 1 == eof_song->beat[ctr]->measurenum)
-				{	//If the sync point belongs in the same measure as this beat (GPA files number measures starting with 0)
-					if(fabs(measure_position - sync_points[ctr2].pos_in_measure) < (1.0 / (double)eof_song->beat[ctr]->num_beats_in_measure) * 0.05)
-					{	//If this sync point is close enough (within 5% of the beat's length) to this beat to be considered tied to the beat
-#ifdef GP_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (On-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
-						eof_log(eof_log_string, 1);
-#endif
-						eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
-						curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
-						last_qnote_length = sync_points[ctr2].real_qnote_length;
-						sync_points[ctr2].processed = 1;
-						if(!ctr2)
-						{	//If this is the first sync point
-							firstsyncpointbeat = ctr;	//Track which beat was the first to be affected by any sync points
-						}
-						break;	//Exit sync point loop
-					}
-				}
-				if((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure < (double)eof_song->beat[ctr]->measurenum + measure_position)
-				{	//If the beat is beyond the sync point, the sync point is not within 5% of a beat line and is located between beats
-					double temp;
-#ifdef GP_IMPORT_DEBUG
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (Mid-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
-					eof_log(eof_log_string, 1);
-#endif
-					//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
-					mid_beat = 1;
-					temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of measures between this beat and the sync point before it
-					temp *= (double)num[sync_points[ctr2].measure];	//The number of beats between this beat and the sync point before it
-					curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].real_qnote_length);
-					last_qnote_length = sync_points[ctr2].real_qnote_length;
-					sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings
-					if(!ctr2)
-					{	//If this is the first sync point
-						firstsyncpointbeat = ctr;	//Track which beat was the first to be affected by any sync points
-					}
-					break;	//Exit sync point loop
-				}
-				else
-				{	//Otherwise if the beat is before the sync point
-					break;
-				}
-			}//For each sync point from the Go PlayAlong file
-			eof_song->beat[ctr]->fpos = curpos;							//Apply the current position to this beat
-			eof_song->beat[ctr]->pos = eof_song->beat[ctr]->fpos + 0.5;	//Round up
-			if(mid_beat)
-			{	//If a mid beat sync point was processed
-				ctr--;	//Rewind one beat in case the next sync point is also at or before this beat (happens if the user defines multiple sync points within the span of one beat)
-			}
-			else
-			{	//Otherwise advance the position variable
-				beat_length = last_qnote_length / ((double)eof_song->beat[ctr]->beat_unit / 4.0);
-				curpos += beat_length;
-			}
-#ifdef GP_IMPORT_DEBUG
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeat #%lu set at pos = %lu, fpos = %f", ctr, eof_song->beat[ctr]->pos, eof_song->beat[ctr]->fpos);
-			eof_log(eof_log_string, 2);
-			if((ctr > 0) && (eof_song->beat[ctr - 1]->fpos >= eof_song->beat[ctr]->fpos))
-			{	//If this beat isn't after the previous beat
-				eof_log("\t\t\tError:  Invalid beat position.", 1);
-			}
-#endif
-		}//For each beat in the project
-		if(firstsyncpointbeat != 0)
-		{	//If the first sync point wasn't placed at the first beat
-			if(eof_song->beats > firstsyncpointbeat + 1)
-			{	//If there are at least two beats positioned by the sync points
-#ifdef GP_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFirst sync point is not at measure 1.0.  Positioning the %lu preceding beats using the first sync point's quarter note length of %fms", firstsyncpointbeat, sync_points[0].real_qnote_length);
-				eof_log(eof_log_string, 1);
-#endif
-				skipbeatsourcectr = firstsyncpointbeat;	//Store the number of beats that are being omitted from import
-				for(ctr = firstsyncpointbeat; ctr > 0; ctr--)
-				{	//For each beat before the first beat that was affected by any sync points, in reverse order
-					beat_length = sync_points[0].real_qnote_length / ((double)eof_song->beat[ctr - 1]->beat_unit / 4.0);	//Determine the length of this beat based on the time signature in effect
-					if(eof_song->beat[ctr]->fpos >= beat_length)
-					{	//If going back one beat length doesn't result in a negative timestamp
-						eof_song->beat[ctr - 1]->fpos = eof_song->beat[ctr]->fpos - beat_length;	//Place this beat one beat length behind the one that follows
-						eof_song->beat[ctr - 1]->pos = eof_song->beat[ctr - 1]->fpos + 0.5;			//Round up
-						skipbeatsourcectr--;	//Keep track of the number of beats that haven't been verified to be at or after 0ms
-#ifdef GP_IMPORT_DEBUG
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tBeat #%lu reset to pos = %lu, fpos = %f", ctr - 1, eof_song->beat[ctr - 1]->pos, eof_song->beat[ctr - 1]->fpos);
-						eof_log(eof_log_string, 1);
-#endif
-					}
-					else
-					{	//This beat is positioned before 0ms
-						break;
-					}
-				}
-				//Remove the appropriate number of beats from the front of the beat array so that beat 0 is the first one with a positive timestamp
-				if(skipbeatsourcectr)
-				{	//If any beats were positioned before 0ms
-					allegro_message("Warning:  This Go PlayAlong file is synchronized in a way that puts one or more beats before the start of the audio, these beats will be omitted from the import.");
-#ifdef GP_IMPORT_DEBUG
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%lu beats are positioned before 0ms, they will be omitted from import", skipbeatsourcectr);
-					eof_log(eof_log_string, 1);
-#endif
-					for(ctr = 0; ctr < skipbeatsourcectr; ctr++)
-					{	//For each of the beats that need to be omitted during import since they are before 0ms
-						unsigned tsnum = 0, tsden = 0;
-
-						(void) eof_get_ts(eof_song, &tsnum, &tsden, 1);			//Store the time signature change at this beat, if there is one
-						eof_song->beat[1]->flags = eof_song->beat[0]->flags;	//Retain the deleted beat's flags (ie. time signatures)
-						if(tsnum)
-						{	//If the now-first beat had a time signature change
-							(void) eof_apply_ts(tsnum, tsden, 1, eof_song, 0);	//Re-apply it now so it isn't lost
-						}
-						eof_song_delete_beat(eof_song, 0);						//Delete the first beat in the project
-					}
-					//Re-correct the placement of any section markers that were previously imported
-					for(ctr2 = 0; ctr2 < gp->text_events; ctr2++)
-					{	//For each section marker that was imported
-						if(gp->text_event[ctr2]->pos >= skipbeatsourcectr)
-						{	//If the event can be moved back the appropriate number of beats
-							gp->text_event[ctr2]->pos -= skipbeatsourcectr;	//Do so
-						}
-					}
-					eof_cleanup_beat_flags(eof_song);	//Rebuild the beat flags so the correct beats are marked as having text events
-				}
-			}//If there are at least two beats positioned by the sync points
-		}//If the first sync point wasn't placed at the first beat
-		eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
-		eof_song->tags->accurate_ts = 1;	//Enable the accurate TS option, since comparable logic was used to calculate sync point positions
-		eof_calculate_tempo_map(eof_song);	//Update the tempo changes of the beats to reflect the millisecond just applied, update anchor status of all beats
+		eof_apply_gpa_sync_points(gp, sync_points, num_sync_points);
 		free(sync_points);
-		free(num);
-		free(den);
-		eof_log("Sync points applied", 1);
-	}//If synchronization data was imported from the input Go PlayAlong file
+	}
 
 
 //Read track data
@@ -4045,7 +3807,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(bytemask & 4)
 						{	//Ghost note
-							ghost |= bitmask;	//Mark this string as being ghosted
+							if((gp->instrument_types[ctr2] == 3) || eof_gp_import_keep_ghost_guitar_status)
+							{	//If this track is a drum track, or if the user preference is to keep ghost status for guitar/bass tracks
+								ghost |= bitmask;	//Mark this string as being ghosted
+							}
 						}
 						if((bytemask & 1) && (fileversion < 500))
 						{	//Time independent duration (for versions of the format older than 5.x)
@@ -6050,6 +5815,237 @@ int eof_get_next_gpa_sync_point(char **buffer, struct eof_gpa_sync_point *ptr)
 	ptr->beat_length = 0.0;
 	ptr->processed = 0;
 	return 1;	//Return success
+}
+
+void eof_apply_gpa_sync_points(struct eof_guitar_pro_struct *gp, struct eof_gpa_sync_point *sync_points, unsigned long num_sync_points)
+{
+	double fbeatctr, qnotectr, measure_position;
+	unsigned char *num;	//Will point to an array with the TS numerator of every measure
+	unsigned char *den;	//Will point to an array with the TS denominator of every measure
+	unsigned long nummeasures;	//The number of entries in the above arrays
+	double curpos = 0.0, beat_length = 500.0, last_qnote_length = 500.0;	//By default, assume 120BPM at 4/4 meter
+	char mid_beat;	//Tracks whether the sync point applied to the beat was mid-beat
+	unsigned long firstsyncpointbeat = 0;	//This will track the first beat to have its position set by a sync point
+	unsigned long skipbeatsourcectr = 0;
+		//During GPA import, timings can be configured so that beats start at a negative position (before the start of the audio) if the first sync point is not at measure 1
+		//This counter is an offset indicating how many beats of content are being omitted from the imported track, so source beat #N is imported to beat #(N-skipbeatsourcectr) in the project
+	unsigned long ctr, ctr2;
+
+	if(!eof_song || !sync_points || !num_sync_points)	//If no Go PlayAlong timings were provided or a project is not loaded
+		return;								//Cancel
+
+//Correct Go PlayAlong timings by rebuilding the quarter note lengths
+	eof_log("Unwrapping beats", 1);
+	(void) eof_unwrap_gp_track(gp, 0, 1, 1);					//Unwrap all measures in the GP file, applying time signatures where appropriate.  No notes are imported yet, but allow text events to be unwrapped
+	eof_process_beat_statistics(eof_song, eof_selected_track);	//Find the measure numbering for all beats
+
+	//Build a temporary tsarray[], since GPA import needs one reflecting unwrapped measures, and the GP import that follows needs one reflecting the original wrapped measures
+	nummeasures = eof_song->beat[eof_song->beats - 1]->measurenum;	//Derive the number of measures based off the last unwrapped beat's measure number
+	num = (unsigned char *)malloc(sizeof(unsigned char) * nummeasures);	//Allocate memory for the arrays
+	den = (unsigned char *)malloc(sizeof(unsigned char) * nummeasures);
+	if(!num || !den)
+	{
+		if(num)
+			free(num);
+		if(den)
+			free(den);
+		eof_log("Error allocating memory (13)", 1);
+		eof_log("Failed to prcoess GPA XML", 1);
+		return;
+	}
+	memset(num, 0, sizeof(char) * nummeasures);	//Fill with 0s to satisfy Splint
+	memset(den, 0, sizeof(char) * nummeasures);
+	for(ctr = 0; ctr < nummeasures; ctr++)
+	{	//For each unwrapped measure
+		for(ctr2 = 0; ctr2 < eof_song->beats; ctr2++)
+		{	//For each beat in the project
+			if(eof_song->beat[ctr2]->measurenum == ctr + 1)
+			{	//If this beat is in the targeted measure
+				num[ctr] = eof_song->beat[ctr2]->num_beats_in_measure;	//Populate the TS arrays with the measure information
+				den[ctr] = eof_song->beat[ctr2]->beat_unit;
+				break;
+			}
+		}
+	}
+
+	eof_log("Correcting sync point timings", 1);
+	for(ctr = 0; ctr < num_sync_points; ctr++)
+	{	//For each sync point from the Go PlayAlong file
+		if(ctr + 1 >= num_sync_points)
+		{	//If this is the last sync point, retain the original quarter note length specified in the XML file
+			sync_points[ctr].real_qnote_length = sync_points[ctr].qnote_length;
+			qnotectr = 0;
+		}
+		else
+		{	//Otherwise base the quarter note length on the amount of time and number of beats between this next sync point and the next
+			if(sync_points[ctr + 1].measure > sync_points[ctr].measure)
+			{	//If the next sync point ends in a different measure
+				fbeatctr = (1.0 - sync_points[ctr].pos_in_measure) * num[sync_points[ctr].measure];	//Initialize the counter to the number of beats between this sync point and the end of the measure it's in
+				qnotectr = fbeatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
+				for(ctr2 = sync_points[ctr].measure + 1; ctr2 < sync_points[ctr + 1].measure; ctr2++)
+				{	//For each remaining measure until the one the sync point is in
+					fbeatctr += num[ctr2];	//Add this measure's number of beats to the counter
+					qnotectr += num[ctr2] / ((double)den[ctr2] / 4.0);	//Add this measure's number of quarter notes to the counter
+				}
+				fbeatctr += sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure];	//Add the number of beats into the measure the later sync point is
+				qnotectr += (sync_points[ctr + 1].pos_in_measure * num[sync_points[ctr + 1].measure]) / ((double)den[sync_points[ctr + 1].measure] / 4.0);	//Add the number of quarter notes into the measure the later sync point is
+			}
+			else
+			{	//This sync point and the next end in the same measure
+				fbeatctr = sync_points[ctr + 1].pos_in_measure - sync_points[ctr].pos_in_measure;	//Get the distance between them in measures
+				fbeatctr *= num[sync_points[ctr].measure];	//Convert this value to the number of beats between the sync points
+				qnotectr = fbeatctr / ((double)den[sync_points[ctr].measure] / 4.0);	//Convert the beat counter to the number of quarter notes
+			}
+			sync_points[ctr].beat_length = ((double)sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / fbeatctr;	//Get the beat length
+			sync_points[ctr].real_qnote_length = (sync_points[ctr + 1].realtime_pos - sync_points[ctr].realtime_pos) / qnotectr;	//Get the quarter note length (the distance between this sync point and the next divided by the number of quarter notes between them)
+		}
+#ifdef GP_IMPORT_DEBUG
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu:  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\t# of qnotes to next sync point:  %f\tCorrected length:  %fms", ctr, sync_points[ctr].realtime_pos, sync_points[ctr].measure + 1.0 + sync_points[ctr].pos_in_measure, sync_points[ctr].qnote_length, qnotectr, sync_points[ctr].real_qnote_length);
+		eof_log(eof_log_string, 1);
+#endif
+	}//For each sync point from the Go PlayAlong file
+
+//Apply Go PlayAlong timings now if applicable
+	eof_log("Applying sync point timings", 1);
+	for(ctr = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the project
+		mid_beat = 0;	//Reset this condition
+		measure_position = (double)eof_song->beat[ctr]->beat_within_measure / (double)eof_song->beat[ctr]->num_beats_in_measure;	//Find this beat's position in the measure, as a value between 0 and 1
+		for(ctr2 = 0; ctr2 < num_sync_points; ctr2++)
+		{	//For each sync point from the Go PlayAlong file
+			if(sync_points[ctr2].processed)
+				continue;	//If the sync point was already handled, skip it
+
+			if(sync_points[ctr2].measure + 1 == eof_song->beat[ctr]->measurenum)
+			{	//If the sync point belongs in the same measure as this beat (GPA files number measures starting with 0)
+				if(fabs(measure_position - sync_points[ctr2].pos_in_measure) < (1.0 / (double)eof_song->beat[ctr]->num_beats_in_measure) * 0.05)
+				{	//If this sync point is close enough (within 5% of the beat's length) to this beat to be considered tied to the beat
+#ifdef GP_IMPORT_DEBUG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (On-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
+					eof_log(eof_log_string, 1);
+#endif
+					eof_song->beat[ctr]->fpos = eof_song->beat[ctr]->pos = sync_points[ctr2].realtime_pos;	//Apply the timestamp
+					curpos = sync_points[ctr2].realtime_pos;			//Update the ongoing position variable
+					last_qnote_length = sync_points[ctr2].real_qnote_length;
+					sync_points[ctr2].processed = 1;
+					if(!ctr2)
+					{	//If this is the first sync point
+						firstsyncpointbeat = ctr;	//Track which beat was the first to be affected by any sync points
+					}
+					break;	//Exit sync point loop
+				}
+			}
+			if((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure < (double)eof_song->beat[ctr]->measurenum + measure_position)
+			{	//If the beat is beyond the sync point, the sync point is not within 5% of a beat line and is located between beats
+				double temp;
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSync point #%lu (Mid-beat):  Pos:  %lums\tMeasure:  %f\tQuarter note length:  %fms\tCorrected length:  %fms", ctr2, sync_points[ctr2].realtime_pos, sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure, sync_points[ctr2].qnote_length, sync_points[ctr2].real_qnote_length);
+				eof_log(eof_log_string, 1);
+#endif
+				//This is the first beat that surpassed this sync point, find out how far into last beat the sync point is, and use the beat length to derive the position of the next beat
+				mid_beat = 1;
+				temp = (double)eof_song->beat[ctr]->measurenum + measure_position - ((double)sync_points[ctr2].measure + 1.0 + sync_points[ctr2].pos_in_measure);	//The number of measures between this beat and the sync point before it
+				temp *= (double)num[sync_points[ctr2].measure];	//The number of beats between this beat and the sync point before it
+				curpos = sync_points[ctr2].realtime_pos + (temp * sync_points[ctr2].real_qnote_length);
+				last_qnote_length = sync_points[ctr2].real_qnote_length;
+				sync_points[ctr2].processed = 1;	//Mark this sync point as processed, but don't break from loop, so that if there are multiple sync points within the span of one beat, only the last one is used to alter beat timings
+				if(!ctr2)
+				{	//If this is the first sync point
+					firstsyncpointbeat = ctr;	//Track which beat was the first to be affected by any sync points
+				}
+				break;	//Exit sync point loop
+			}
+			else
+			{	//Otherwise if the beat is before the sync point
+				break;
+			}
+		}//For each sync point from the Go PlayAlong file
+		eof_song->beat[ctr]->fpos = curpos;							//Apply the current position to this beat
+		eof_song->beat[ctr]->pos = eof_song->beat[ctr]->fpos + 0.5;	//Round up
+		if(mid_beat)
+		{	//If a mid beat sync point was processed
+			ctr--;	//Rewind one beat in case the next sync point is also at or before this beat (happens if the user defines multiple sync points within the span of one beat)
+		}
+		else
+		{	//Otherwise advance the position variable
+			beat_length = last_qnote_length / ((double)eof_song->beat[ctr]->beat_unit / 4.0);
+			curpos += beat_length;
+		}
+#ifdef GP_IMPORT_DEBUG
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeat #%lu set at pos = %lu, fpos = %f", ctr, eof_song->beat[ctr]->pos, eof_song->beat[ctr]->fpos);
+		eof_log(eof_log_string, 2);
+		if((ctr > 0) && (eof_song->beat[ctr - 1]->fpos >= eof_song->beat[ctr]->fpos))
+		{	//If this beat isn't after the previous beat
+			eof_log("\t\t\tError:  Invalid beat position.", 1);
+		}
+#endif
+	}//For each beat in the project
+	if(firstsyncpointbeat != 0)
+	{	//If the first sync point wasn't placed at the first beat
+		if(eof_song->beats > firstsyncpointbeat + 1)
+		{	//If there are at least two beats positioned by the sync points
+#ifdef GP_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFirst sync point is not at measure 1.0.  Positioning the %lu preceding beats using the first sync point's quarter note length of %fms", firstsyncpointbeat, sync_points[0].real_qnote_length);
+			eof_log(eof_log_string, 1);
+#endif
+			skipbeatsourcectr = firstsyncpointbeat;	//Store the number of beats that are being omitted from import
+			for(ctr = firstsyncpointbeat; ctr > 0; ctr--)
+			{	//For each beat before the first beat that was affected by any sync points, in reverse order
+				beat_length = sync_points[0].real_qnote_length / ((double)eof_song->beat[ctr - 1]->beat_unit / 4.0);	//Determine the length of this beat based on the time signature in effect
+				if(eof_song->beat[ctr]->fpos >= beat_length)
+				{	//If going back one beat length doesn't result in a negative timestamp
+					eof_song->beat[ctr - 1]->fpos = eof_song->beat[ctr]->fpos - beat_length;	//Place this beat one beat length behind the one that follows
+					eof_song->beat[ctr - 1]->pos = eof_song->beat[ctr - 1]->fpos + 0.5;			//Round up
+					skipbeatsourcectr--;	//Keep track of the number of beats that haven't been verified to be at or after 0ms
+#ifdef GP_IMPORT_DEBUG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tBeat #%lu reset to pos = %lu, fpos = %f", ctr - 1, eof_song->beat[ctr - 1]->pos, eof_song->beat[ctr - 1]->fpos);
+					eof_log(eof_log_string, 1);
+#endif
+				}
+				else
+				{	//This beat is positioned before 0ms
+					break;
+				}
+			}
+			//Remove the appropriate number of beats from the front of the beat array so that beat 0 is the first one with a positive timestamp
+			if(skipbeatsourcectr)
+			{	//If any beats were positioned before 0ms
+				allegro_message("Warning:  This Go PlayAlong file is synchronized in a way that puts one or more beats before the start of the audio, these beats will be omitted from the import.");
+#ifdef GP_IMPORT_DEBUG
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%lu beats are positioned before 0ms, they will be omitted from import", skipbeatsourcectr);
+				eof_log(eof_log_string, 1);
+#endif
+				for(ctr = 0; ctr < skipbeatsourcectr; ctr++)
+				{	//For each of the beats that need to be omitted during import since they are before 0ms
+					unsigned tsnum = 0, tsden = 0;
+
+					(void) eof_get_ts(eof_song, &tsnum, &tsden, 1);			//Store the time signature change at this beat, if there is one
+					eof_song->beat[1]->flags = eof_song->beat[0]->flags;	//Retain the deleted beat's flags (ie. time signatures)
+					if(tsnum)
+					{	//If the now-first beat had a time signature change
+						(void) eof_apply_ts(tsnum, tsden, 1, eof_song, 0);	//Re-apply it now so it isn't lost
+					}
+					eof_song_delete_beat(eof_song, 0);						//Delete the first beat in the project
+				}
+				//Re-correct the placement of any section markers that were previously imported
+				for(ctr2 = 0; ctr2 < gp->text_events; ctr2++)
+				{	//For each section marker that was imported
+					if(gp->text_event[ctr2]->pos >= skipbeatsourcectr)
+					{	//If the event can be moved back the appropriate number of beats
+						gp->text_event[ctr2]->pos -= skipbeatsourcectr;	//Do so
+					}
+				}
+				eof_cleanup_beat_flags(eof_song);	//Rebuild the beat flags so the correct beats are marked as having text events
+			}
+		}//If there are at least two beats positioned by the sync points
+	}//If the first sync point wasn't placed at the first beat
+	eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
+	eof_song->tags->accurate_ts = 1;	//Enable the accurate TS option, since comparable logic was used to calculate sync point positions
+	eof_calculate_tempo_map(eof_song);	//Update the tempo changes of the beats to reflect the millisecond just applied, update anchor status of all beats
+	free(sync_points);
+	free(num);
+	free(den);
+	eof_log("Sync points applied", 1);
 }
 
 #endif

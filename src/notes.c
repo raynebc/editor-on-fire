@@ -2308,7 +2308,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of pitched lyrics (and the corresponding percentage that is of all notes) in the active vocal track
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_PITCHED_LYRIC"))
 	{
-		if(eof_vocals_selected)
+		if(vp)
 		{	//If the vocal track is active
 			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -2339,7 +2339,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of unpitched lyrics (and the corresponding percentage that is of all notes) in the active vocal track
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_UNPITCHED_LYRIC"))
 	{
-		if(eof_vocals_selected)
+		if(vp)
 		{	//If the vocal track is active
 			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -2370,7 +2370,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of vocal percussion lyrics (and the corresponding percentage that is of all notes) in the active vocal track
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_PERCUSSION_LYRIC"))
 	{
-		if(eof_vocals_selected)
+		if(vp)
 		{	//If the vocal track is active
 			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -2401,7 +2401,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of freestyle lyrics (and the corresponding percentage that is of all notes) in the active vocal track
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_FREESTYLE_LYRIC"))
 	{
-		if(eof_vocals_selected)
+		if(vp)
 		{	//If the vocal track is active
 			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			(void) eof_count_selected_and_unselected_notes(&totalnotecount);			//Count the number of notes in the active track difficulty
@@ -2433,7 +2433,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Display the number of pitch shifts (and the corresponding percentage that is of all notes) in the active vocal track
 	if(!ustricmp(macro, "TRACK_DIFF_COUNT_AND_RATIO_PITCH_SHIFT_LYRIC"))
 	{
-		if(eof_vocals_selected)
+		if(vp)
 		{	//If the vocal track is active
 			totalnotecount = eof_get_track_diff_size(eof_song, eof_selected_track, eof_note_type);	//Count the number of notes in the active track difficulty
 			if(totalnotecount)
@@ -2467,7 +2467,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{	//If the macro is this string
 		unsigned long pitch;
 
-		if(eof_vocals_selected)
+		if(vp)
 		{	//If the vocal track is active
 			if(eof_read_macro_number(count_string, &pitch))
 			{	//If the pitch number was successfully parsed

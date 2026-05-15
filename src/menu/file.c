@@ -288,6 +288,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   330, 300, 16,  2,   23,  0,    0,      1,   0,   "GP import remove accent from staccato notes",NULL, NULL },
 	{ d_agup_check_proc, 16,   345, 300, 16,  2,   23,  0,    0,      1,   0,   "Offer to derive finger placements from FHPs",NULL, NULL },
 	{ d_agup_check_proc, 16,   360, 220, 16,  2,   23,  0,    0,      1,   0,   "GP import events to track only",NULL, NULL },
+	{ d_agup_check_proc, 16,   375, 207, 16,  2,   23,  0,    0,      1,   0,   "GP import ghost guitar status",NULL, NULL },
 	{ d_agup_check_proc, 248, 360, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
 	{ d_agup_check_proc, 248, 375, 244, 16,  2,   23,  0,    0,      1,   0,   "RS export suppress tempo warning",NULL, NULL },
 	{ d_agup_check_proc, 248, 390, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
@@ -1873,7 +1874,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[19].flags = eof_gp_import_nat_harmonics_only ? D_SELECTED : 0;		//GP import nat. harmonics only
 	eof_import_export_preferences_dialog[20].flags = eof_imports_recall_last_path ? D_SELECTED : 0;			//Import dialogs recall last path
 	eof_import_export_preferences_dialog[21].flags = eof_use_ts ? D_SELECTED : 0;							//Import/Export TS
-	eof_import_export_preferences_dialog[22].flags = eof_db_import_suppress_5nc_conversion ? D_SELECTED : 0;//dB import skips 5nc conversion
+	eof_import_export_preferences_dialog[22].flags = eof_db_import_suppress_5nc_conversion ? D_SELECTED : 0;	//dB import skips 5nc conversion
 	eof_import_export_preferences_dialog[23].flags = eof_warn_missing_bass_fhps ? D_SELECTED : 0;			//Warn about missing bass FHPs
 	eof_import_export_preferences_dialog[24].flags = eof_abridged_rs2_export ? D_SELECTED : 0;				//Abridged Rocksmith 2 export
 	eof_import_export_preferences_dialog[25].flags = eof_rs2_export_extended_ascii_lyrics ? D_SELECTED : 0;		//Allow RS2 extended ASCII lyrics
@@ -1885,14 +1886,15 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[31].flags = eof_rs2_export_version_8 ? D_SELECTED : 0;				//RS2 export version 8 (DLC Builder) style XML
 	eof_import_export_preferences_dialog[32].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
 	eof_import_export_preferences_dialog[33].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
-	eof_import_export_preferences_dialog[34].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;//MIDI export CH/YARG open note/chord markers
+	eof_import_export_preferences_dialog[34].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;	//MIDI export CH/YARG open note/chord markers
 	eof_import_export_preferences_dialog[35].flags = eof_gp_import_remove_accent_from_staccato ? D_SELECTED : 0;//GP import remove accent from staccato notes
-	eof_import_export_preferences_dialog[36].flags = eof_offer_fhp_derived_finger_placements ? D_SELECTED : 0;//Offer to derive finger placements from FHPs
+	eof_import_export_preferences_dialog[36].flags = eof_offer_fhp_derived_finger_placements ? D_SELECTED : 0;	//Offer to derive finger placements from FHPs
 	eof_import_export_preferences_dialog[37].flags = eof_gp_import_track_specific_events ? D_SELECTED : 0;		//GP import events to track only
-	eof_import_export_preferences_dialog[38].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
-	eof_import_export_preferences_dialog[39].flags = eof_rs_export_suppress_tempo_warning ? D_SELECTED : 0;	//RS export suppress tempo warning
-	eof_import_export_preferences_dialog[40].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
-	eof_import_export_preferences_dialog[41].flags = eof_disable_llplus_import ? D_SELECTED : 0;				//Don't import LLPLUS MIDI content
+	eof_import_export_preferences_dialog[38].flags = eof_gp_import_keep_ghost_guitar_status ? D_SELECTED : 0;	//GP import ghost guitar status
+	eof_import_export_preferences_dialog[39].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
+	eof_import_export_preferences_dialog[40].flags = eof_rs_export_suppress_tempo_warning ? D_SELECTED : 0;	//RS export suppress tempo warning
+	eof_import_export_preferences_dialog[41].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_import_export_preferences_dialog[42].flags = eof_disable_llplus_import ? D_SELECTED : 0;				//Don't import LLPLUS MIDI content
 
 	do
 	{	//Run the dialog
@@ -1933,10 +1935,11 @@ int eof_menu_file_import_export_preferences(void)
 			eof_gp_import_remove_accent_from_staccato = (eof_import_export_preferences_dialog[35].flags == D_SELECTED ? 1 : 0);
 			eof_offer_fhp_derived_finger_placements = (eof_import_export_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
 			eof_gp_import_track_specific_events = (eof_import_export_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
-			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
-			eof_rs_export_suppress_tempo_warning = (eof_import_export_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
-			eof_disable_rs_wav = (eof_import_export_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
-			eof_disable_llplus_import = (eof_import_export_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_keep_ghost_guitar_status = (eof_import_export_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
+			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
+			eof_rs_export_suppress_tempo_warning = (eof_import_export_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
+			eof_disable_rs_wav = (eof_import_export_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
+			eof_disable_llplus_import = (eof_import_export_preferences_dialog[42].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1974,10 +1977,11 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[35].flags = 0;				//GP import remove accent from staccato notes
 			eof_import_export_preferences_dialog[36].flags = 0;				//Offer to derive finger placements from FHPs
 			eof_import_export_preferences_dialog[37].flags = 0;				//GP import events to track only
-			eof_import_export_preferences_dialog[38].flags = 0;				//GH import sustain threshold prompt
-			eof_import_export_preferences_dialog[39].flags = 0;				//RS export suppress tempo warning
-			eof_import_export_preferences_dialog[40].flags = 0;				//Don't write Rocksmith WAV file
-			eof_import_export_preferences_dialog[41].flags = 0;				//Don't import LLPLUS MIDI content
+			eof_import_export_preferences_dialog[38].flags = 0;				//GP import ghost guitar status
+			eof_import_export_preferences_dialog[39].flags = 0;				//GH import sustain threshold prompt
+			eof_import_export_preferences_dialog[40].flags = 0;				//RS export suppress tempo warning
+			eof_import_export_preferences_dialog[41].flags = 0;				//Don't write Rocksmith WAV file
+			eof_import_export_preferences_dialog[42].flags = 0;				//Don't import LLPLUS MIDI content
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -6201,8 +6205,8 @@ int eof_menu_file_gp_import(void)
 
 		if(newchart)
 		{	//If a project wasn't already opened when the import was started
-			if(!eof_command_line_gp_import(returnedfn))
-			{	//If the file was imported
+			if(!eof_command_line_gp_import(returnedfn) && eof_song)
+			{	//If the file was imported (and a redundant eof_song check to satisfy Coverity)
 				char eof_changes_backup = eof_changes;	//Guitar Pro import will have set this if content was imported, remember this because eof_init_after_load() will clobber it
 
 				eof_init_after_load(0);

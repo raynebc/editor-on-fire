@@ -229,6 +229,7 @@ int         eof_rs_export_suppress_tempo_warning = 0;	//If nonzero, the check/wa
 int         eof_midi_export_enhanced_open_marker = 0;	//If nonzero, open notes and chords export to MIDI with the use of an "[ENHANCED_OPENS]" text event and a MIDI marker one note below lane 1
 int         eof_gp_import_remove_accent_from_staccato = 0;	//If nonzero, staccato notes have accent status removed during GP import
 int         eof_gp_import_track_specific_events = 0;		//If nonzero, text events imported from Guitar Pro files are added only to the active track instead of the entire project
+int         eof_gp_import_keep_ghost_guitar_status = 0;	//If nonzero, ghost note status is kept for guitar/bass notes during Guitar Pro import.  Ghost status is kept for drum notes are retained regardless of this setting
 int         eof_db_import_suppress_5nc_conversion = 0;	//If nonzero, five note chords are not converted to open notes during Feedback import
 int         eof_warn_missing_bass_fhps = 1;		//If nonzero, the Rocksmith export checks will complain about FHPs not being defined for bass arrangements
 int         eof_4_fret_range = 1;				//Defines the lowest fret number at which the fret hand has a range of 4 frets, for fret hand position generation (the default value of 1 indicates this range for the entire fretboard)

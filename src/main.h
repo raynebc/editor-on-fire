@@ -454,6 +454,7 @@ extern int         eof_rs_export_suppress_tempo_warning;
 extern int         eof_midi_export_enhanced_open_marker;
 extern int         eof_gp_import_remove_accent_from_staccato;
 extern int         eof_gp_import_track_specific_events;
+extern int         eof_gp_import_keep_ghost_guitar_status;
 extern int         eof_db_import_suppress_5nc_conversion;
 extern int         eof_warn_missing_bass_fhps;
 extern int         eof_4_fret_range;
