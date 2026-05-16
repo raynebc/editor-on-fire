@@ -471,17 +471,17 @@ int eof_evaluate_ch_sp_path_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUM
 				thiscached = 1;
 			}
 			(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%s%lu", (ctr ? ", " : ""), (thiscached ? "*" : ""), solution->deployments[ctr]);
-			strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+			eof_strncat(eof_log_string, tempstring, sizeof(eof_log_string));
 		}
 		if(using_last_cache)
 		{
 			(void) snprintf(tempstring, sizeof(tempstring) - 1, " (Last cache resuming from index %lu)", index);
-			strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+			eof_strncat(eof_log_string, tempstring, sizeof(eof_log_string));
 		}
 
 		if(!solution->num_deployments)
 		{	//If there were no star power deployments in this solution
-			strncat(eof_log_string, "(none)", sizeof(eof_log_string) - 1);
+			eof_strncat(eof_log_string, "(none)", sizeof(eof_log_string));
 		}
 		eof_log_casual(eof_log_string, 1, 1, 1);
 
@@ -1663,7 +1663,7 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 			sec = ms / 1000;
 			ms -= 1000 * sec;
 			(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu:%lu.%lu", (ctr ? ", " : ""), min, sec, ms);	//Generate timestamp, prefixing with a comma and spacing after the first
-			strncat(timestamps, tempstring, sizeof(timestamps) - 1);	//Append to timestamps string
+			eof_strncat(timestamps, tempstring, sizeof(timestamps));	//Append to timestamps string
 
 			eof_big_number_add_big_number(&solution_count, validcount);		//Count the number of valid and invalid solutions tested
 			eof_big_number_add_big_number(&solution_count, invalidcount);
@@ -1684,7 +1684,7 @@ void eof_ch_sp_path_report_solution(EOF_SP_PATH_SOLUTION *solution, EOF_BIG_NUMB
 			}
 
 			(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), solution->deployments[ctr]);
-			strncat(indexes, tempstring, sizeof(indexes) - 1);	//Append to indexes string
+			eof_strncat(indexes, tempstring, sizeof(indexes));	//Append to indexes string
 		}
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t%s", timestamps);
 		eof_log(eof_log_string, 1);
@@ -2321,10 +2321,10 @@ void eof_ch_sp_path_worker(char *job_file)
 				for(ctr = 0; ctr < testing.num_deployments; ctr++)
 				{	//For each deployment in the chosen solution
 					(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing.deployments[ctr]);
-					strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+					eof_strncat(eof_log_string, tempstring, sizeof(eof_log_string));
 				}
 				(void) snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing.score);
-				strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+				eof_strncat(eof_log_string, tempstring, sizeof(eof_log_string));
 				eof_log(eof_log_string, 1);
 				eof_log("Waiting for next job", 1);
 			}
@@ -2789,10 +2789,10 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 										for(ctr = 0; ctr < testing->num_deployments; ctr++)
 										{	//For each deployment in the chosen solution
 											(void) snprintf(tempstring, sizeof(tempstring) - 1, "%s%lu", (ctr ? ", " : ""), testing->deployments[ctr]);
-											strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+											eof_strncat(eof_log_string, tempstring, sizeof(eof_log_string));
 										}
 										(void) snprintf(tempstring, sizeof(tempstring) - 1, ".  Score = %lu", testing->score);
-										strncat(eof_log_string, tempstring, sizeof(eof_log_string) - 1);
+										eof_strncat(eof_log_string, tempstring, sizeof(eof_log_string));
 										eof_log_casual(eof_log_string, 1, 1, 1);
 										if(elapsed_time < 5.0)
 										{	//If the worker completed in less than five seconds

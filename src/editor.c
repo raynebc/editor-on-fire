@@ -7635,11 +7635,11 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 		eof_cat_track_difficulty_string(temp);	//Fill the string with the name and number of the track difficulty being rendered
 		if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		{	//If tech view is active in the secondary piano roll
-			strncat(temp, "(Tech view)", 100);
+			eof_strncat(temp, "(Tech view)", sizeof(temp));
 		}
 		if(eof_fingering_view)
 		{	//If fingering view is in effect
-			strncat(temp, "(Fingering view)", 100);
+			eof_strncat(temp, "(Fingering view)", sizeof(temp));
 		}
 		if(eof_track_diff_highlighted_status[eof_note_type2])
 		{	//If any notes in the secondary piano roll's active tab have highlighting

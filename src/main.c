@@ -2168,7 +2168,7 @@ int eof_load_ogg(char * filename, char function)
 					break;
 				}
 				allegro_message("Attempting to re-encode audio with FFMPEG");
-				if(eof_ffmpeg_convert_audio(backup, output))
+				if(eof_ffmpeg_convert_file(backup, output))
 				{	//If the input file couldn't be re-encoded with FFMPEG
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFailed to re-encode \"%s\"", backup);
 					eof_log(eof_log_string, 1);
@@ -4257,7 +4257,7 @@ BITMAP *eof_load_pcx(char *filename)
 	//Check for the specified file in the resources folder
 	(void) snprintf(path, sizeof(path) - 1, "resources");
 	put_backslash(path);	//Append a file separator
-	(void) strncat(path, filename, sizeof(path) - 1);	//Append the file name
+	(void) eof_strncat(path, filename, sizeof(path));	//Append the file name
 
 	if(exists(path))
 	{
@@ -4282,7 +4282,7 @@ FONT *eof_load_bitmap_font(char *filename)
 	//Check for the specified file in the resources folder
 	(void) snprintf(path, sizeof(path) - 1, "resources");
 	put_backslash(path);	//Append a file separator
-	(void) strncat(path, filename, sizeof(path) - 1);	//Append the file name
+	(void) eof_strncat(path, filename, sizeof(path));	//Append the file name
 
 	if(exists(path))
 	{
@@ -6018,7 +6018,7 @@ void eof_log_casual(const char *text, int level, int prefix, int newline)
 					buffer[0] = '\0';	//Empty the buffer
 					buffered_chars = 0;
 				}
-				strncat(buffer, buffer2, sizeof(buffer) - 1);
+				eof_strncat(buffer, buffer2, sizeof(buffer));
 				buffered_chars += length;	//Track the number of characters in the buffer
 			}
 		}
@@ -6924,7 +6924,7 @@ int eof_lookup_program_folder(char *path, unsigned long pathsize)
 	#ifdef ALLEGRO_MACOSX
 		if(exe_is_bundle(path))
 		{
-			(void) strncat(path, "/Contents/Resources/eof/", pathsize - strlen(path) - 1);
+			(void) strncat(path, "/Contents/Resources/eof/", pathsize - strlen(path));
 		}
 		else
 		{
@@ -6951,7 +6951,7 @@ int eof_validate_temp_folder(void)
 	#ifdef ALLEGRO_MACOSX
 		if(exe_is_bundle(correct_wd))
 		{
-			(void) strncat(correct_wd, "/Contents/Resources/eof/", sizeof(correct_wd) - strlen(correct_wd) - 1);
+			(void) strncat(correct_wd, "/Contents/Resources/eof/", sizeof(correct_wd) - strlen(correct_wd));
 		}
 		else
 		{

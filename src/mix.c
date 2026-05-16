@@ -472,7 +472,7 @@ SAMPLE *eof_load_wav(char *filename)
 	//Check for the specified file in the resources folder
 	(void) snprintf(path, sizeof(path) - 1, "resources");
 	put_backslash(path);	//Append a file separator
-	(void) strncat(path, filename, sizeof(path) - 1);	//Append the file name
+	(void) eof_strncat(path, filename, sizeof(path));	//Append the file name
 
 	if(exists(path))
 	{

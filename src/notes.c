@@ -5927,7 +5927,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		eof_notes_macro_ir_comments_defined[0] = '\0';		//Erase this string
 		if(eof_check_string(eof_song->tags->loading_text))
 		{	//If the project has loading text defined
-			strncat(eof_notes_macro_ir_comments_defined, "Song", sizeof(eof_notes_macro_ir_comments_defined) - 1);
+			eof_strncat(eof_notes_macro_ir_comments_defined, "Song", sizeof(eof_notes_macro_ir_comments_defined));
 			count++;
 		}
 		value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Lead");
@@ -5938,7 +5938,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 			else
 				arrstring = "Lead";
 
-			strncat(eof_notes_macro_ir_comments_defined, arrstring, sizeof(eof_notes_macro_ir_comments_defined) - 1);
+			eof_strncat(eof_notes_macro_ir_comments_defined, arrstring, sizeof(eof_notes_macro_ir_comments_defined));
 			count++;
 		}
 		value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Rhythm");
@@ -5949,7 +5949,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 			else
 				arrstring = "Rhythm";
 
-			strncat(eof_notes_macro_ir_comments_defined, arrstring, sizeof(eof_notes_macro_ir_comments_defined) - 1);
+			eof_strncat(eof_notes_macro_ir_comments_defined, arrstring, sizeof(eof_notes_macro_ir_comments_defined));
 			count++;
 		}
 		value = eof_find_ini_setting_tag(eof_song, &index, "Comment_Bass");
@@ -5960,14 +5960,14 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 			else
 				arrstring = "Bass";
 
-			strncat(eof_notes_macro_ir_comments_defined, arrstring, sizeof(eof_notes_macro_ir_comments_defined) - 1);
+			eof_strncat(eof_notes_macro_ir_comments_defined, arrstring, sizeof(eof_notes_macro_ir_comments_defined));
 			count++;
 		}
 
 		if(count)
 		{
 			dest_buffer[0] = '\0';
-			strncat(eof_notes_macro_ir_comments_defined, " comments defined.", sizeof(eof_notes_macro_ir_comments_defined) - 1);
+			eof_strncat(eof_notes_macro_ir_comments_defined, " comments defined.", sizeof(eof_notes_macro_ir_comments_defined));
 			return 3;	//True
 		}
 

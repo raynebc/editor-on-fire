@@ -3230,7 +3230,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		if(exists(eof_ffmpeg_executable_path))
 		{	//If FFMPEG is linked, try to create the audio with it
 			eof_log("\t\tAudio conversion failed.  Attempting to convert with FFMPEG", 1);
-			(void) eof_ffmpeg_convert_audio(file, cfn);
+			(void) eof_ffmpeg_convert_file(file, cfn);
 		}
 
 		if(exists(cfn))
@@ -3309,7 +3309,7 @@ int eof_new_chart(char * filename)
 		eof_log("\tAttempting to re-encode input audio with FFMPEG", 1);
 		replace_filename(oggfilename, eof_temp_path_s, get_filename(filename), sizeof(oggfilename) - 1);	//Build a path where the input audio file name is appended to the temp folder
 		(void) replace_extension(oggfilename, oggfilename, "ogg", 1024);	//and its extension is changed to ogg
-		if(eof_ffmpeg_convert_audio(filename, oggfilename))
+		if(eof_ffmpeg_convert_file(filename, oggfilename))
 		{	//If the input file couldn't be re-encoded to OGG with FFMPEG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFailed to re-encode \"%s\"", filename);
 			eof_log(eof_log_string, 1);
@@ -6565,6 +6565,15 @@ int eof_menu_file_rs_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{	//If a file was selected for import
+		if(!ustricmp(get_extension(returnedfn), "xml"))
+		{	//If an XML file was selected
+			snprintf(returnedfn_path, sizeof(returnedfn_path) - 1, "%s.bak", returnedfn);	//Create a string with that XML file name with ".bak" appended
+			if(!exists(returnedfn_path))
+			{	//If such a file backup doesn't already exist
+				eof_log("\tBacking up selected XML file during Rocksmith import", 1);
+				eof_copy_file(returnedfn, returnedfn_path);
+			}
+		}
 		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
 
 		if(newchart)

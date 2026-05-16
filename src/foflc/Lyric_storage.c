@@ -15,6 +15,7 @@
 #ifdef EOF_BUILD
 //For EOF debug logging
 #include "../main.h"
+#include "../utility.h"
 #endif
 
 #ifdef S_SPLINT_S
@@ -2372,12 +2373,12 @@ snprintf(eof_log_string, EOF_LOG_STRING_SIZE - 1, "\tLine %lu: \"", linectr);
 			printf("'%s' ",curpiece->lyric);
 #ifdef EOF_BUILD
 snprintf(tempstr, sizeof(tempstr) - 1, "'%s' ", curpiece->lyric);
-strncat(eof_log_string, tempstr, EOF_LOG_STRING_SIZE - 1);
+eof_strncat(eof_log_string, tempstr, EOF_LOG_STRING_SIZE);
 #endif
 		}
 		(void) puts("\"");
 #ifdef EOF_BUILD
-strncat(eof_log_string, "\"", EOF_LOG_STRING_SIZE - 1);
+eof_strncat(eof_log_string, "\"", EOF_LOG_STRING_SIZE);
 eof_log(eof_log_string, 2);
 #endif
 	}

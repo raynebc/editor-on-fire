@@ -876,7 +876,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 						unsorted = 1;
 					}
 					snprintf(buffer2, sizeof(buffer2) - 1, "%lu (%s) ", ctr2, tp->lyric[ctr2]->text);
-					strncat(buffer, buffer2, sizeof(buffer) - 1);	//Append data about this lyric to the buffer
+					eof_strncat(buffer, buffer2, sizeof(buffer));	//Append data about this lyric to the buffer
 					matches++;	//Keep track of how many lyrics were found to be in this line
 					lastlyricindex = ctr2;	//Keep track of the last lyric index found to be in this line
 				}
@@ -1284,13 +1284,13 @@ void eof_build_mmssms_string(unsigned long mspos, unsigned *min, unsigned *sec, 
 	}
 }
 
-int eof_ffmpeg_convert_audio(char *input, char *output)
+int eof_ffmpeg_convert_file(char *input, char *output)
 {
 	int retval;
 	char tempstr[1024] = {0};
 	char syscommand[1024] = {0};
 
-	eof_log("eof_ffmpeg_convert_audio() entered", 1);
+	eof_log("eof_ffmpeg_convert_file() entered", 1);
 
 	//Ensure FFMPEG is linked
 	if(!exists(eof_ffmpeg_executable_path))
@@ -1341,4 +1341,23 @@ int eof_ffmpeg_convert_audio(char *input, char *output)
 		return 0;	//The output file was written.  Return success
 
 	return 4;		//Return failure
+}
+
+char *eof_strncat(char * destination, const char * source, size_t buffer_size)
+{
+	size_t destination_size, count;
+
+	if(!destination || !source)
+		return destination;	//Invalid parameters
+
+	destination_size = strlen(destination) + 1;		//The number of bytes the destination string is using, including the NULL termination byte
+	if(destination_size >= buffer_size)
+	{	//If the destination buffer is already overflowed, not NULL terminated or otherwise cannot store any more bytes
+		return destination;	//Do not alter the string
+	}
+
+	count = buffer_size - destination_size;			//Count how many more bytes the buffer can store
+	strncat(destination, source, count);				//Concatenate up to that many bytes from the source string to the buffer
+
+	return destination;
 }

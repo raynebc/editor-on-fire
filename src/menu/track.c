@@ -862,7 +862,7 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 				{	//Otherwise update the tuning string
 					tuning %= 12;	//Guarantee this value is in the range of [0,11]
 					strncpy(tuning_list[ctr], eof_note_names[tuning], sizeof(tuning_list[0]) - 1);
-					strncat(tuning_list[ctr], "  ", sizeof(tuning_list[0])-1);	//Pad with a space to ensure old string is overwritten
+					eof_strncat(tuning_list[ctr], "  ", sizeof(tuning_list[0]));	//Pad with a space to ensure old string is overwritten
 					tuning_list[ctr][sizeof(tuning_list[0])-1] = '\0';	//Guarantee this string is truncated
 				}
 			}

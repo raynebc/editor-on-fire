@@ -4477,13 +4477,13 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 				temptitle[ctr] = '_';	//Substitute it with an underscore
 			}
 		}
-		(void) ustrncat(buffer, temptitle, (int)num - 1);
+		(void) eof_strncat(buffer, temptitle, num);
 	}
 	else
 	{	//Otherwise default to "guitar"
-		(void) ustrncat(buffer, "guitar", (int)num - 1);
+		(void) eof_strncat(buffer, "guitar", num);
 	}
-	(void) ustrncat(buffer, "_rocksmith.wav", (int)num - 1);
+	(void) eof_strncat(buffer, "_rocksmith.wav", num);
 	buffer[num - 1] = '\0';	//Ensure the finalized string is terminated
 }
 

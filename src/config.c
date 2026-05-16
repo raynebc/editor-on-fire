@@ -950,10 +950,10 @@ void eof_build_gp_drum_mapping_string(char *destination, size_t size, unsigned c
 
 		if(writecount)
 		{	//If this isn't the first number written
-			strncat(destination, ",", size - 1);	//Separate with a comma
+			eof_strncat(destination, ",", size);	//Separate with a comma
 		}
 		(void) snprintf(str, sizeof(str) - 1, "%d", mapping_list[ctr]);	//Convert the number to ASCII
-		strncat(destination, str, size - 1);						//Append it to the destination string
+		eof_strncat(destination, str, size);						//Append it to the destination string
 		writecount++;
 	}
 	if(!writecount)
