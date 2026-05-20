@@ -1343,7 +1343,7 @@ int eof_ffmpeg_convert_file(char *input, char *output)
 	return 4;		//Return failure
 }
 
-char *eof_strncat(char * destination, const char * source, size_t buffer_size)
+char *eof_strncat(char *destination, const char *source, size_t buffer_size)
 {
 	size_t destination_size, count;
 
@@ -1360,4 +1360,24 @@ char *eof_strncat(char * destination, const char * source, size_t buffer_size)
 	strncat(destination, source, count);				//Concatenate up to that many bytes from the source string to the buffer
 
 	return destination;
+}
+
+unsigned long eof_pos_distance(unsigned long p1, unsigned long p2)
+{
+	if(p1 > p2)
+	{
+		return p1 - p2;
+	}
+
+	return p2 - p1;
+}
+
+double eof_fpos_distance(double p1, double p2)
+{
+	if(p1 > p2)
+	{
+		return p1 - p2;
+	}
+
+	return p2 - p1;
 }

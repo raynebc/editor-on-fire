@@ -1671,8 +1671,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char *hopo;			//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
 	unsigned long *hopobeatnum;	//Will store the beat (note) number for which each track's last ho/po notation was defined, to ensure that the status is properly applied to the following note
 	unsigned long *hopomeasurenum;	//Likewise tracks which measure each track's last ho/po notation was defined, to allow tracking for these statuses between different measures
-	char *durations;	//Will store the last imported note duration for each track (to handle triplet feel notation)
-	double *note_durations;	//Will store the effective duration (in terms of a whole measure) for the last imported note in each track
 	char tripletfeel = 0;	//The current triplet feel notation in effect (0 = none, 1 = 8th note, 2 = 16th note)
 	char user_warned = 0;	//Used to track user warnings about the file being corrupt
 	char string_warning = 0;	//Used to track a user warning about the string count for a track being higher than what EOF supports
@@ -1694,7 +1692,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	unsigned char gracetrans = 0;	//Tracks the grace note's transition type
 	char new_note;					//Tracks whether a new note is to be created
 	char tie_note;					//Tracks whether a note is a tie note
-	char rest_note;					//Tracks whether a note is a rest note
 	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
 	unsigned char curnum = 4, curden = 4;	//Stores the current time signature (4/4 assumed until one is explicitly defined)
 	unsigned long totalbeats = 0;			//Count the total number of beats in the Guitar Pro file's transcription
@@ -2316,9 +2313,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	hopo = malloc(sizeof(char) * tracks);					//Allocate memory for storing HOPO information
 	hopobeatnum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
 	hopomeasurenum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
-	durations = malloc(sizeof(char) * tracks);				//Allocate memory for storing note lengths
-	note_durations = malloc(sizeof(double) * tracks);		//Allocate memory for storing note durations
-	if(!gp->names || !gp->instrument_types || !np || !hopo || !hopobeatnum || !hopomeasurenum || !durations || !note_durations)
+	if(!gp->names || !gp->instrument_types || !np || !hopo || !hopobeatnum || !hopomeasurenum)
 	{
 		eof_log("Error allocating memory (6)", 1);
 		(void) pack_fclose(inf);
@@ -2334,10 +2329,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(hopobeatnum);
 		if(hopomeasurenum)
 			free(hopomeasurenum);
-		if(durations)
-			free(durations);
-		if(note_durations)
-			free(note_durations);
 		free(gp);
 		free(tsarray);
 		if(sync_points)
@@ -2348,8 +2339,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	memset(hopo, -1, sizeof(char) * tracks);							//Set all tracks to have no HOPO status
 	memset(hopobeatnum, 0, sizeof(unsigned long) * tracks);
 	memset(hopomeasurenum, 0, sizeof(unsigned long) * tracks);
-	memset(durations, 0, sizeof(char) * tracks);
-	memset(note_durations, 0, sizeof(double) * tracks);
 	memset(gp->instrument_types, 0, sizeof(char) * tracks);				//Set the instrument type for all tracks to undefined
 	gp->track = malloc(sizeof(EOF_PRO_GUITAR_TRACK *) * tracks);		//Allocate memory for pro guitar track pointers
 	gp->text_events = 0;
@@ -2363,8 +2352,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(hopo);
 		free(hopobeatnum);
 		free(hopomeasurenum);
-		free(durations);
-		free(note_durations);
 		free(gp);
 		free(tsarray);
 		if(sync_points)
@@ -2390,8 +2377,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(hopo);
 			free(hopobeatnum);
 			free(hopomeasurenum);
-			free(durations);
-			free(note_durations);
 			free(gp);
 			free(tsarray);
 			if(sync_points)
@@ -2426,8 +2411,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(hopo);
 		free(hopobeatnum);
 		free(hopomeasurenum);
-		free(durations);
-		free(note_durations);
 		free(gp);
 		free(tsarray);
 		if(sync_points)
@@ -2527,8 +2510,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(hopo);
 								free(hopobeatnum);
 								free(hopomeasurenum);
-								free(durations);
-								free(note_durations);
 								free(gp);
 								free(tsarray);
 								if(sync_points)
@@ -2597,8 +2578,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(hopo);
 								free(hopobeatnum);
 								free(hopomeasurenum);
-								free(durations);
-								free(note_durations);
 								free(gp);
 								free(tsarray);
 								if(sync_points)
@@ -2700,8 +2679,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(hopo);
 			free(hopobeatnum);
 			free(hopomeasurenum);
-			free(durations);
-			free(note_durations);
 			free(gp);
 			free(tsarray);
 			free(strings);
@@ -2846,8 +2823,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(hopo);
 			free(hopobeatnum);
 			free(hopomeasurenum);
-			free(durations);
-			free(note_durations);
 			free(gp);
 			free(tsarray);
 			free(strings);
@@ -2888,8 +2863,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(hopo);
 			free(hopobeatnum);
 			free(hopomeasurenum);
-			free(durations);
-			free(note_durations);
 			free(gp);
 			free(tsarray);
 			free(strings);
@@ -3019,10 +2992,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//For each measure
 		curnum = tsarray[ctr].num;	//Obtain the time signature for this measure
 		curden = tsarray[ctr].den;
-		if(tripletfeel != tsarray[ctr].tripletfeel)
-		{	//If the triplet feel is not the same as the previous measure
-			memset(durations, 0, sizeof(char) * tracks);	//Reset the triplet feel tracking
-		}
 		tripletfeel = tsarray[ctr].tripletfeel;	//Obtain the triplet feel for this measure
 
 #ifdef GP_IMPORT_DEBUG
@@ -3083,8 +3052,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					free(hopo);
 					free(hopobeatnum);
 					free(hopomeasurenum);
-					free(durations);
-					free(note_durations);
 					free(gp);
 					free(tsarray);
 					free(strings);
@@ -3098,15 +3065,17 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					unsigned char frets[7] = {0};		//Store fret values for each string
 					unsigned char gracefrets[7] = {0};	//Store fret values for each string (for tracking grace notes)
 					unsigned long beat_position;
-					double partial_beat_position, beat_length;
+					double partial_beat_position, beat_length_ms;
 					char notebends = 0;	//Tracks whether any bend points were parsed for the note, since they may be applied as tech notes instead of toward the regular note
 					char isquarterorlonger = 0, isaltered = 0;	//Boolean statuses used to more accurately track whether the "GP import truncates short notes" should take effect
 					char istuplet = 0;		//Set to nonzero if the note is explicitly in a tuplet (ie. triplet), which will cause any "triplet feel" notation to be ignored
 
+					char isupbeat = 0, isdownbeat = 0;	//Used to determine whether a note falls on an up beat or down beat, for triplet feel handling
+					double beat_length;
+
 					unpitchend = 0;	//Assume no unpitched slide unless one is defined
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
-					rest_note = 0;	//Assume a note isn't a rest note unless found otherwise
 					bendstruct.bendpoints = 0;	//Assume the note has no bend points unless any are parsed
 					tieflags = allflags = tflags = gtflags = 0;
 					bendstrength = 0;
@@ -3118,7 +3087,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//Beat is a rest
 						(void) pack_getc(inf);	//Rest beat type (empty/rest)
 						new_note = 0;
-						rest_note = 1;
 					}
 					byte = pack_getc(inf);		//Read beat duration
 					if((byte < -2) || (byte > 4))
@@ -3182,51 +3150,44 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						note_duration = 1.0;	//Force the maximum length of a note to be 1 measure.  GP must correctly write tie notes to define longer notes
 						eof_log("\t\t\tWarning:  GP file defines an invalid note duration, capping to 1 measure long.", 1);
 					}
-					if(tripletfeel && (byte == (durations[ctr2] & 0x3F)) && (byte == tripletfeel) && !istuplet)
-					{	//If triplet feel is in effect, the note is the same length as the previously imported note for this track (masking out the MSB used to track whether that previous note was a rest and the second MSB used to track whether the previous note was dotted)
-						//is the length of any configured triplet feel notation and is not explicitly in a tuplet set of notes, apply triplet feel modifications
-						if(np[ctr2] && !(durations[ctr2] & 0x80))
-						{	//If a previous note was imported and not a rest note
-							np[ctr2]->length *= (4.0 / 3.0);	//Update the previous note to reflect triplet feel (it is made the length of two triplets)
+
+					//Determine whether triplet feel will influence this note's length
+					if(tripletfeel && (byte == tripletfeel) && !istuplet)
+					{	//If triplet feel is in effect, this note is the length that is altered by triplet feel and this note isn't in a tuplet, check if this note occurs on a down beat or up beat position
+						beat_length = 1.0 / (double)curnum;	//The amount of a measure (from 0 to 1) that represents one beat (the distance between each up beat)
+						for(ctr4 = 0; ctr4 < curnum; ctr4++)
+						{	//For each beat in this measure
+							double this_down_beat, this_up_beat;
+							unsigned this_down_beat_percent, this_up_beat_percent, this_measure_pos_percent;
+
+							this_down_beat = (double)ctr4 * beat_length;			//How far into the measure this down beat is
+							this_up_beat = this_down_beat + (beat_length * (4.0 / 6.0));	//When triplet feel has influenced the up beat note, the down beat note would have to be one half beat plus one triplet of a beat further ahead
+
+							this_down_beat_percent = (this_down_beat * 100.0) + 0.5;	//Convert these values into integer format percentages to compare, since floating point comparison is unreliable
+							this_up_beat_percent = (this_up_beat * 100.0) + 0.5;
+							this_measure_pos_percent = (measure_position * 100.0) + 0.5;
+
+							if(eof_pos_distance(this_measure_pos_percent, this_down_beat_percent) <= 1)
+							{	//If this note is within 1% of being on the down beat position, allowing for rounding error
+								isdownbeat = 1;
+								break;
+							}
+							else if(eof_pos_distance(this_measure_pos_percent, this_up_beat_percent) <= 1)
+							{	//If this note is within 1% of being on the up beat position, allowing for rounding error
+								isupbeat = 1;
+								break;
+							}
 						}
-						measure_position += (note_durations[ctr2] / 3.0);	//Advance the measure position by an extra third of the previously imported note's length
-						note_duration *= (2.0 / 3.0);		//Update the current note to reflect triplet feel (it is made the length of one triplet)
-						durations[ctr2] = 0;	//Reset the triplet feel notation to require two notes
 					}
-					else if(tripletfeel && (durations[ctr2] & 0x40) && ((durations[ctr2] & 0x3F) + 1 == byte) && (byte == tripletfeel))
-					{	//If triplet feel is in effect, the previous note was a dotted note, that dot notation added a length equivalent to the current note and the current note is the triplet feel value
-						if(np[ctr2] && !(durations[ctr2] & 0x80))
-						{	//If a previous note was imported and not a rest note
-							double baselength, dottedlength;
-							baselength = np[ctr2]->length * 2.0 / 3.0;		//Get the length of the previous note that was not affected by the dotted notation
-							dottedlength = baselength / 2.0;				//Get the amount of the previous note that was increased by the dotted notation
-							dottedlength *= (4.0 / 3.0);					//Update that dotted notation's length to to reflect triplet feel (it is made the length of two triplets)
-							np[ctr2]->length = baselength + dottedlength;	//Update the previous note's length to reflect that the dotted portion is made the length of two triplets due to triplet feel
-						}
-						measure_position += (note_durations[ctr2] / 9.0);	//Advance the measure position by an extra third of the length that was added to the previously imported note by its dotted notation
-						note_duration *= (2.0 / 3.0);		//Update the current note to reflect triplet feel (it is made the length of one triplet)
-						durations[ctr2] = 0;	//Reset the triplet feel notation to require two notes
+					if(isdownbeat)
+					{	//If this note is affected by triplet feel and is to be lengthened due to being on a down beat
+						note_duration *= (4.0 / 3.0);	//The note is one triplet's length longer
 					}
-					else
-					{	//Otherwise just track the duration of the note being imported
-						if(istuplet)
-						{	//If this note was in a tuplet
-							durations[ctr2] = 0;	//Reset the triplet feel notation to ignore this note and require two other ones
-						}
-						else
-						{
-							durations[ctr2] = byte;	//Track the duration of the note being imported for triplet feel
-						}
-						if(rest_note)
-						{	//If this is a rest note
-							durations[ctr2] |= 0x80;	//Set the MSB of this value to ensure EOF doesn't try to modify a note duration for a rest regarding triplet feel, since no note would have been created to represent a rest
-						}
-						if(bytemask & 1)
-						{	//If the note was dotted
-							durations[ctr2] |= 0x40;	//Set the second most significant bit of this value to track that the note is dotted, to track a special case where a dotted note can trigger triplet feel with the next note
-						}
-						note_durations[ctr2] = note_duration;
+					else if(isupbeat)
+					{	//If this note is affected by triplet feel and is to be shortened due to being on an up beat
+						note_duration *= (2.0 / 3.0);	//The note is one triplet's length shorter
 					}
+
 					if(note_duration / ((double)curden / (double)curnum) < 0.25)
 					{	//If the note (after undoing the scaling for the time signature) is shorter than a quarter note
 						if(!(!isaltered && isquarterorlonger))
@@ -3397,8 +3358,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										free(hopo);
 										free(hopobeatnum);
 										free(hopomeasurenum);
-										free(durations);
-										free(note_durations);
 										free(gp);
 										free(tsarray);
 										free(strings);
@@ -3544,8 +3503,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(hopo);
 								free(hopobeatnum);
 								free(hopomeasurenum);
-								free(durations);
-								free(note_durations);
 								free(gp);
 								free(tsarray);
 								free(strings);
@@ -3707,8 +3664,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//If this beat's content is being imported
 						importnote = 1;
 						beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
-						beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-						laststartpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+						beat_length_ms = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+						laststartpos = eof_song->beat[beat_position]->fpos + (beat_length_ms * partial_beat_position);
 
 						//Determine the realtime end position of the note that was just parsed
 						beat_position = (measure_position + note_duration) * curnum;
@@ -3751,16 +3708,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(hopo);
 							free(hopobeatnum);
 							free(hopomeasurenum);
-							free(durations);
-							free(note_durations);
 							free(gp);
 							free(tsarray);
 							free(strings);
 							return NULL;
 						}//If there aren't enough beats in the project for some reason, add enough to continue
 
-						beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-						lastendpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+						beat_length_ms = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+						lastendpos = eof_song->beat[beat_position]->fpos + (beat_length_ms * partial_beat_position);
 					}
 					else
 					{	//If this beat's content is NOT being imported because its timestamp is before 0ms
@@ -3935,8 +3890,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									free(hopo);
 									free(hopobeatnum);
 									free(hopomeasurenum);
-									free(durations);
-									free(note_durations);
 									free(gp);
 									free(tsarray);
 									free(strings);
@@ -4003,8 +3956,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											free(hopo);
 											free(hopobeatnum);
 											free(hopomeasurenum);
-											free(durations);
-											free(note_durations);
 											free(gp);
 											free(tsarray);
 											free(strings);
@@ -4109,16 +4060,16 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										if(beat_position >= skipbeatsourcectr)
 										{	//If this beat's content is being imported
 											beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
-											beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-											lastgracestartpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+											beat_length_ms = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+											lastgracestartpos = eof_song->beat[beat_position]->fpos + (beat_length_ms * partial_beat_position);
 
 											//Determine the realtime end position of the note that was just parsed
 											beat_position = (grace_position + grace_duration) * curnum;
 											partial_beat_position = (grace_position + grace_duration) * curnum - beat_position;	//How far into this beat the grace note ends
 											beat_position += curbeat;	//Add the number of beats into the track the current measure is
 											beat_position -= skipbeatsourcectr;	//Offset by the number of beats being skipped
-											beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-											lastgraceendpos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);
+											beat_length_ms = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+											lastgraceendpos = eof_song->beat[beat_position]->fpos + (beat_length_ms * partial_beat_position);
 										}
 									}
 								}//If the defined duration is valid
@@ -4491,8 +4442,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(hopo);
 								free(hopobeatnum);
 								free(hopomeasurenum);
-								free(durations);
-								free(note_durations);
 								free(gp);
 								free(tsarray);
 								free(strings);
@@ -4614,6 +4563,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - strlen(eof_log_string) - 1);
 							}
 							eof_log(eof_log_string, 1);
+							if(isdownbeat)
+								eof_log("\t\t\t\tLengthened as a triplet feel down beat", 1);
+							else if(isupbeat)
+								eof_log("\t\t\t\tShortened as a triplet feel up beat", 1);
 #endif
 						}//If a new note is to be created
 						else if(np[ctr2] && tie_note)
@@ -4661,8 +4614,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(hopo);
 								free(hopobeatnum);
 								free(hopomeasurenum);
-								free(durations);
-								free(note_durations);
 								free(gp);
 								free(tsarray);
 								free(strings);
@@ -5075,8 +5026,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	free(hopo);
 	free(hopobeatnum);
 	free(hopomeasurenum);
-	free(durations);
-	free(note_durations);
 	(void) puts("\nSuccess");
 	return gp;
 }

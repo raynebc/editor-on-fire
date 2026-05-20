@@ -7,6 +7,7 @@
 #include "rs.h"
 #include "song.h"
 #include "undo.h"
+#include "utility.h"
 #include "menu/edit.h"	//For auto-adjust functions
 
 #ifdef USEMEMWATCH

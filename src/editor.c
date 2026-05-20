@@ -50,30 +50,6 @@ unsigned long eof_tech_anchor_diff[EOF_TRACKS_MAX] = {0};
 EOF_SNAP_DATA eof_snap;
 EOF_SNAP_DATA eof_tail_snap;
 
-unsigned long eof_pos_distance(unsigned long p1, unsigned long p2)
-{
-//	eof_log("eof_pos_distance() entered");
-
-	if(p1 > p2)
-	{
-		return p1 - p2;
-	}
-
-	return p2 - p1;
-}
-
-double eof_fpos_distance(double p1, double p2)
-{
-//	eof_log("eof_fpos_distance() entered");
-
-	if(p1 > p2)
-	{
-		return p1 - p2;
-	}
-
-	return p2 - p1;
-}
-
 void eof_select_beat(unsigned long beat)
 {
 	eof_log("eof_select_beat() entered", 1);

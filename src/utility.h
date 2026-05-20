@@ -124,10 +124,15 @@ int eof_ffmpeg_convert_file(char *input, char *output);
 	//If FFMPEG is linked, use it to convert the file from input filename to the output filename
 	//Returns nonzero on error
 
-char *eof_strncat(char * destination, const char * source, size_t buffer_size);
+char *eof_strncat(char *destination, const char *source, size_t buffer_size);
 	//Performs all necessary safety checks to concatenate the source string to the destination string, given the destination buffer's size and taking the required NULL termination byte into account
 	//Returns without altering the destination buffer if the destination buffer is already overflowed (NULL termination occurs after the end of the buffer) or if no more bytes can be concatenated to it
 	//Similar to strncat_s(), but does not depend on the compiler supporting the C11 standard, and copies the entire source string if possible instead of just a given number of bytes
 	//As is standard for strncat(), the destination buffer is returned regardless of success
+
+unsigned long eof_pos_distance(unsigned long p1, unsigned long p2);
+	//Returns the difference between the two integer numbers as a positive value
+double eof_fpos_distance(double p1, double p2);
+	//Returns the difference between the two floating point numbers as a positive value
 
 #endif
