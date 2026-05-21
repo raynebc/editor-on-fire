@@ -1656,6 +1656,69 @@ int main(int argc, char *argv[])
 
 #define GP_IMPORT_DEBUG
 
+void eof_guitar_pro_import_release_memory(struct eof_guitar_pro_import_vars *vars)
+{
+	unsigned long ctr, ctr2;
+
+	if(vars)
+	{
+		if(vars->gp)
+		{
+			if(vars->gp->names)
+				free(vars->gp->names);
+			if(vars->gp->instrument_types)
+				free(vars->gp->instrument_types);
+			if(vars->gp->track)
+			{
+				for(ctr = 0; ctr < vars->gp->numtracks; ctr++)
+				{	//For each track that was to be imported
+					if(vars->gp->track[ctr])
+					{	//If this track had memory allocated
+						free(vars->gp->track[ctr]);
+					}
+					if(vars->gp->names[ctr])
+					{	//if this track had a name allocated
+						free(vars->gp->names[ctr]);
+					}
+					for(ctr2 = 0; ctr2 < vars->gp->track[ctr]->notes; ctr2++)
+					{	//Free all notes in this track
+						free(vars->gp->track[ctr]->note[ctr2]);
+					}
+					for(ctr2 = 0; ctr2 < vars->gp->track[ctr]->technotes; ctr2++)
+					{	//Free all tech notes in this track
+						free(vars->gp->track[ctr]->technote[ctr2]);
+					}
+				}
+				free(vars->gp->track);
+			}
+			for(ctr = 0; ctr < vars->gp->text_events; ctr++)
+			{	//Free all allocated text events
+				free(vars->gp->text_event[ctr]);
+			}
+
+			free(vars->gp);
+		}
+		if(vars->np)
+			free(vars->np);
+		if(vars->hopo)
+			free(vars->hopo);
+		if(vars->hopobeatnum)
+			free(vars->hopobeatnum);
+		if(vars->hopomeasurenum)
+			free(vars->hopomeasurenum);
+		if(vars->tsarray)
+			free(vars->tsarray);
+		if(vars->sync_points)
+			free(vars->sync_points);
+		if(vars->strings)
+			free(vars->strings);
+		if(vars->inf)
+			(void) pack_fclose(vars->inf);
+		if(vars->inf2)
+			(void) pack_fclose(vars->inf2);
+	}
+}
+
 struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
 	#define EOF_GP_IMPORT_BUFFER_SIZE 256
@@ -1663,14 +1726,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	unsigned char usedstrings, definedstrings;
 	unsigned char usedtie;	//Tracks which strings in an imported note were tie notes
 	unsigned word = 0, fileversion;
-	unsigned long dword = 0, ctr, ctr2, ctr3, ctr4, ctr5, tracks = 0, measures = 0, *strings, beats = 0;
-	PACKFILE *inf = NULL, *inf2;	//The GPA import logic will open the file handle for the Guitar Pro file in inf if applicable
-	struct eof_guitar_pro_struct *gp = NULL;
-	struct eof_gp_measure *tsarray;	//Stores measure information relating to time signatures, alternate endings and navigational symbols
-	EOF_PRO_GUITAR_NOTE **np;	//Will store the last created note for each track (for handling tie and grace notes)
-	char *hopo;			//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
-	unsigned long *hopobeatnum;	//Will store the beat (note) number for which each track's last ho/po notation was defined, to ensure that the status is properly applied to the following note
-	unsigned long *hopomeasurenum;	//Likewise tracks which measure each track's last ho/po notation was defined, to allow tracking for these statuses between different measures
+	unsigned long dword = 0, ctr, ctr2, ctr3, ctr4, ctr5, tracks = 0, measures = 0, beats = 0;
 	char tripletfeel = 0;	//The current triplet feel notation in effect (0 = none, 1 = 8th note, 2 = 16th note)
 	char user_warned = 0;	//Used to track user warnings about the file being corrupt
 	char string_warning = 0;	//Used to track a user warning about the string count for a track being higher than what EOF supports
@@ -1705,7 +1761,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char parse_gpa = 0;		//Will be set to nonzero if the specified file is detected to be XML, in which case, the Go PlayAlong file will be parsed
 	size_t maxlinelength;
 	unsigned long linectr = 2, num_sync_points = 0, raw_num_sync_points = 0;
-	struct eof_gpa_sync_point *sync_points = NULL, temp_sync_point = {0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0};
+	struct eof_gpa_sync_point temp_sync_point = {0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0};
 	char error = 0;
 	char *musical_symbols[19] = {"Coda", "Double Coda", "Segno", "Segno Segno", "Fine", "Da Capo", "Da Capo al Coda", "Da Capo al double Coda", "Da Capo al Fine", "Da Segno", "Da Segno al Coda", "Da Segno al double Coda", "Da Segno al Fine", "Da Segno Segno", "Da Segno Segno al Coda", "Da Segno Segno al double Coda", "Da Segno Segno al Fine", "Da Coda", "Da double Coda"};
 	unsigned char unpitchend;	//Tracks the end position for imported notes that slide in/out with no formal slide definition
@@ -1716,6 +1772,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char importnote = 0;	//A boolean variable tracking whether each note is at or after 0ms and will import
 	unsigned slide_in_from_warned = 0;	//Tracks whether the user has been warned that slide in from above/below notes were encountered
 	char hastitle = 0, hasartist = 0, hasalbum = 0;	//Tracks whether the Guitar Pro file has metadata that can be applied to the project
+	static struct eof_guitar_pro_import_vars vars;	//Store all of the memory and file pointers together to simplify freeing them.  A static struct has all members auto-initialized to 0/NULL
+	struct eof_guitar_pro_struct *retval;
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_load_gp() entered", 1);
@@ -1729,8 +1787,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 //First, parse the input file to see if it is a Go PlayAlong XML file
 	//Allocate memory buffers large enough to hold any line in this file
-	inf2 = pack_fopen(fn, "rt");
-	if(!inf2)
+	vars.inf2 = pack_fopen(fn, "rt");
+	if(!vars.inf2)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input GP file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
@@ -1740,17 +1798,17 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(!maxlinelength)
 	{
 		eof_log("\tError finding the largest line in the file.  Aborting", 1);
-		(void) pack_fclose(inf2);
+		(void) pack_fclose(vars.inf2);
 		return NULL;
 	}
 	buffer2 = (char *)malloc(maxlinelength);
 	if(!buffer2)
 	{
 		eof_log("\tError allocating memory (1).  Aborting", 1);
-		(void) pack_fclose(inf2);
+		(void) pack_fclose(vars.inf2);
 		return NULL;
 	}
-	if(pack_fgets(buffer2, (int)maxlinelength, inf2))
+	if(pack_fgets(buffer2, (int)maxlinelength, vars.inf2))
 	{	//If the line was read
 		if(strcasestr_spec(buffer2, "<?xml") || strcasestr_spec(buffer2, "<song"))
 		{	//If the file is determined to be XML based
@@ -1760,7 +1818,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				if(alert(NULL, "The tempo map must be unlocked in order to import a Go PlayAlong file.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user does not opt to unlock the tempo map
 					eof_log("\tUser cancellation.  Aborting", 1);
-					(void) pack_fclose(inf2);
+					(void) pack_fclose(vars.inf2);
 					return NULL;
 				}
 				eof_song->tags->tempo_map_locked = 0;	//Unlock the tempo map
@@ -1776,13 +1834,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		char identity = 0;	//Set to 1 if any Go PlayAlong tags are found, 2 if a Rocksmith phrase tag is found
 
 		eof_log("\tParsing Go PlayAlong file", 1);
-		if(!pack_fgets(buffer2, (int)maxlinelength, inf2))
+		if(!pack_fgets(buffer2, (int)maxlinelength, vars.inf2))
 		{	//I/O error
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tGo PlayAlong import failed on line #%lu:  Unable to read from file:  \"%s\"", linectr, strerror(errno));
 			eof_log(eof_log_string, 1);
 			error = 1;
 		}
-		while(!error && !pack_feof(inf2))
+		while(!error && !pack_feof(vars.inf2))
 		{	//Until there was an error reading from the file or end of file is reached
 			ptr = strcasestr_spec(buffer2, "<scoreUrl>");	//Find the beginning of the GP file name, if present on this line
 			if(ptr)
@@ -1801,8 +1859,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				shrink_xml_text(buffer4, sizeof(buffer4), buffer3);	//Convert any escape sequences in the file name to regular characters
 				(void) replace_filename(eof_temp_filename, fn, "", 1024);
 				strncat(eof_temp_filename, buffer4, 1024 - strlen(eof_temp_filename) - 1);	//Build the path to the GP file
-				inf = pack_fopen(eof_temp_filename, "rb");
-				if(!inf)
+				vars.inf = pack_fopen(eof_temp_filename, "rb");
+				if(!vars.inf)
 				{
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError loading:  Cannot open GP file (%s) specified in XML file:  \"%s\"", eof_temp_filename, strerror(errno));	//Get the Operating System's reason for the failure
 					eof_log(eof_log_string, 1);
@@ -1811,8 +1869,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					eof_log("\t\tRetrying without converting escape sequences in the GP5 file name", 1);
 					(void) replace_filename(eof_temp_filename, fn, "", 1024);
 					strncat(eof_temp_filename, buffer3, 1024 - strlen(eof_temp_filename) - 1);	//Build the path to the GP file, with the unaltered scoreUrl file name from the XML file
-					inf = pack_fopen(eof_temp_filename, "rb");
-					if(!inf)
+					vars.inf = pack_fopen(eof_temp_filename, "rb");
+					if(vars.inf)
 					{
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError loading:  Cannot open GP file (%s) specified in XML file:  \"%s\"", eof_temp_filename, strerror(errno));	//Get the Operating System's reason for the failure
 						eof_log(eof_log_string, 1);
@@ -1864,15 +1922,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				//Allocate array for sync points
 				if(raw_num_sync_points)
 				{	//If there is a valid number of sync entries
-					sync_points = malloc(sizeof(struct eof_gpa_sync_point) * raw_num_sync_points);
-					if(!sync_points)
+					vars.sync_points = malloc(sizeof(struct eof_gpa_sync_point) * raw_num_sync_points);
+					if(!vars.sync_points)
 					{
 						eof_log("\t\tError allocating memory (2).  Aborting", 1);
 						error = 1;
 					}
 					else
 					{
-						memset(sync_points, 0, sizeof(struct eof_gpa_sync_point) * raw_num_sync_points);	//Fill with 0s to satisfy Splint
+						memset(vars.sync_points, 0, sizeof(struct eof_gpa_sync_point) * raw_num_sync_points);	//Fill with 0s to satisfy Splint
 					}
 				}
 
@@ -1889,20 +1947,20 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 ///FOR DEBUGGING
 //					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f)", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
 //					eof_log(eof_log_string, 1);
-					assert(sync_points != NULL);	//Unneeded check to resolve false positive in Splint
+					assert(vars.sync_points != NULL);	//Unneeded check to resolve false positive in Splint
 					if(temp_sync_point.is_negative)
 					{	//If this sync point has a negative timestamp
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f) is before 0s, it will be skipped.", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
 						eof_log(eof_log_string, 1);
 					}
-					else if(num_sync_points && ((temp_sync_point.measure + temp_sync_point.pos_in_measure <= sync_points[num_sync_points - 1].measure + sync_points[num_sync_points - 1].pos_in_measure) || (temp_sync_point.realtime_pos <= sync_points[num_sync_points - 1].realtime_pos)))
+					else if(num_sync_points && ((temp_sync_point.measure + temp_sync_point.pos_in_measure <= vars.sync_points[num_sync_points - 1].measure + vars.sync_points[num_sync_points - 1].pos_in_measure) || (temp_sync_point.realtime_pos <= vars.sync_points[num_sync_points - 1].realtime_pos)))
 					{	//If there was a previous sync point added, and this sync point isn't a later timestamp or measure position
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSync point #%lu (time = %lums, measure = %f) is out of chronological order, it will be skipped.", ctr, temp_sync_point.realtime_pos, temp_sync_point.measure + 1.0 + temp_sync_point.pos_in_measure);
 						eof_log(eof_log_string, 1);
 					}
 					else
 					{	//This sync point is valid, add it to the array
-						memcpy(&sync_points[num_sync_points], &temp_sync_point, sizeof(temp_sync_point));	//Copy the structure to the array
+						memcpy(&vars.sync_points[num_sync_points], &temp_sync_point, sizeof(temp_sync_point));	//Copy the structure to the array
 						num_sync_points++;	//Maintain this as the count of valid sync points
 					}
 				}
@@ -1916,7 +1974,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				error = 1;
 			}
 
-			(void) pack_fgets(buffer2, (int)maxlinelength, inf2);	//Read next line of text
+			(void) pack_fgets(buffer2, (int)maxlinelength, vars.inf2);	//Read next line of text
 			linectr++;	//Increment line counter
 		}//Until there was an error reading from the file or end of file is reached
 		if(error)
@@ -1935,34 +1993,29 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				default:
 				break;
 			}
-			if(inf)
-				(void) pack_fclose(inf);
-			(void) pack_fclose(inf2);
-			if(sync_points)
-				free(sync_points);
+			eof_guitar_pro_import_release_memory(&vars);
 			free(buffer2);
 			return NULL;
 		}
 	}//If the input file was determined to be an XML file
-	(void) pack_fclose(inf2);
 	free(buffer2);
 
 
 //Initialize pointers and handles
-	if(!inf)
+	if(!vars.inf)
 	{	//If the input GP file wasn't opened for reading by the GPA parse logic earlier
-		inf = pack_fopen(gpfile, "rb");
+		vars.inf = pack_fopen(gpfile, "rb");
 	}
 	//In the past, the WebTabPlayer website corrupted GP files in some ways, including by inserting a BOM at the beginning of the file, check for this and ignore it if necessary
-	if(inf)
+	if(vars.inf)
 	{	//If the file was opened
 		char reopen = 1;	//If the BOM sequence is not read, the file will have to be reopened, since Allegro can't simply rewind it
 
-		if(pack_getc(inf) == 0xEF)
+		if(pack_getc(vars.inf) == 0xEF)
 		{	//The first byte in a BOM sequence
-			if(pack_getc(inf) == 0xBB)
+			if(pack_getc(vars.inf) == 0xBB)
 			{	//The second byte in a BOM sequence
-				if(pack_getc(inf) == 0xBF)
+				if(pack_getc(vars.inf) == 0xBF)
 				{	//The third byte in a BOM sequence
 					eof_log("Warning:  This GP file is corrupted (begins with a Byte Order Mark sequence), attempting to recover", 1);
 					reopen = 0;	//Don't re-open the file
@@ -1972,33 +2025,31 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		if(reopen)
 		{
-			(void) pack_fclose(inf);
-			inf = pack_fopen(gpfile, "rb");
+			(void) pack_fclose(vars.inf);
+			vars.inf = NULL;
+			vars.inf = pack_fopen(gpfile, "rb");
 		}
 	}
-	if(!inf)
+	if(!vars.inf)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input GP file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
-	gp = malloc(sizeof(struct eof_guitar_pro_struct));
-	if(!gp)
+	vars.gp = calloc(1, sizeof(struct eof_guitar_pro_struct));	//Init the allocated memory to NULL
+	if(!vars.gp)
 	{
 		eof_log("Error allocating memory (3)", 1);
-		(void) pack_fclose(inf);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
-	memset(gp, 0, sizeof(struct eof_guitar_pro_struct));	//Fill with 0s to satisfy Splint
+	memset(vars.gp, 0, sizeof(struct eof_guitar_pro_struct));	//Fill with 0s to satisfy Splint
 
 
 //Read file version string
-	(void) eof_read_gp_string(inf, &word, buffer, 0);	//Read file version string
-	(void) pack_fseek(inf, 30 - word);			//Skip the padding that follows the version string
+	(void) eof_read_gp_string(vars.inf, &word, buffer, 0);	//Read file version string
+	(void) pack_fseek(vars.inf, 30 - word);			//Skip the padding that follows the version string
 	if(!strcmp(buffer, "FICHIER GUITARE PRO v1.01"))
 	{
 		fileversion = 101;
@@ -2051,13 +2102,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{
 		allegro_message("File format version not supported\n(make sure it's GP5 format or older)");
 		eof_log("File format version not supported", 1);
-		(void) pack_fclose(inf);
-		free(gp);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
-	gp->fileversion = fileversion;	//Store this so that the unwrapping function can handle differing formatting for alternate endings
+	vars.gp->fileversion = fileversion;	//Store this so that the unwrapping function can handle differing formatting for alternate endings
 #ifdef GP_IMPORT_DEBUG
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsing version %u guitar pro file", fileversion);
 	eof_log(eof_log_string, 1);
@@ -2065,14 +2113,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 
 //Read past various ignored information
-	(void) eof_read_gp_string(inf, NULL, buffer3, 1);	//Read title string
+	(void) eof_read_gp_string(vars.inf, NULL, buffer3, 1);	//Read title string
 	if(eof_check_string(buffer3) && !eof_check_string(eof_song->tags->title))
 		hastitle = 1;	//Track if the GP file defines the song title and the active project does not
-	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read subtitle string
-	(void) eof_read_gp_string(inf, NULL, buffer4, 1);	//Read artist string
+	(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read subtitle string
+	(void) eof_read_gp_string(vars.inf, NULL, buffer4, 1);	//Read artist string
 	if(eof_check_string(buffer4) && !eof_check_string(eof_song->tags->artist))
 		hasartist = 1;	//Track if the GP file defines the artist name and the active project does not
-	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read album string
+	(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read album string
 	if(eof_check_string(buffer) && !eof_check_string(eof_song->tags->album))
 		hasalbum = 1;	//Track if the GP file defines the album name and the active project does not
 	if(hastitle || hasartist || hasalbum)
@@ -2098,130 +2146,124 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 	if(fileversion >= 500)
 	{	//The words field only exists in version 5.x or higher versions of the format
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read words string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read words string
 	}
-	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read music string
-	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read copyright string
-	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read tab string
-	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read instructions string
-	pack_ReadDWORDLE(inf, &dword);			//Read the number of notice entries
+	(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read music string
+	(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read copyright string
+	(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read tab string
+	(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read instructions string
+	pack_ReadDWORDLE(vars.inf, &dword);			//Read the number of notice entries
 	if(dword > 1000)
 	{	//Compare the notice entry count against an arbitrarily large number to satisfy Coverity
 		eof_log("\t\t\tToo many notice entries, aborting.", 1);
-		(void) pack_fclose(inf);
-		free(gp);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
 	while(dword > 0)
 	{	//Read each notice entry
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read notice string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read notice string
 		dword--;
 	}
 	if(fileversion < 500)
 	{	//The shuffle rhythm feel field only exists here in version 4.x or older of the format
-		(void) pack_getc(inf);
+		(void) pack_getc(vars.inf);
 	}
 	if(fileversion >= 400)
 	{	//The lyrics fields only exist in version 4.x or newer of the format
-		pack_ReadDWORDLE(inf, NULL);	//Read the lyrics' associated track number
+		pack_ReadDWORDLE(vars.inf, NULL);	//Read the lyrics' associated track number
 		for(ctr = 0; ctr < 5; ctr++)
 		{
-			pack_ReadDWORDLE(inf, &dword);	//Read the start from bar #
-			pack_ReadDWORDLE(inf, &dword);	//Read the lyric string length
+			pack_ReadDWORDLE(vars.inf, &dword);	//Read the start from bar #
+			pack_ReadDWORDLE(vars.inf, &dword);	//Read the lyric string length
 			buffer2 = malloc((size_t)dword + 1);	//Allocate a buffer large enough for the lyric string (plus a NULL terminator)
 			if(!buffer2)
 			{
 				eof_log("Error allocating memory (4)", 1);
-				(void) pack_fclose(inf);
-				free(gp);
-				if(sync_points)
-					free(sync_points);
+				eof_guitar_pro_import_release_memory(&vars);
 				return NULL;
 			}
-			(void) pack_fread(buffer2, dword, inf);	//Read the lyric string
+			(void) pack_fread(buffer2, dword, vars.inf);	//Read the lyric string
 			buffer2[dword] = '\0';				//Terminate the string
 			free(buffer2);						//Free the buffer
 		}
 	}
 	if(fileversion > 500)
 	{	//The volume/equalization settings only exist in versions newer than 5.0 of the format
-		pack_ReadDWORDLE(inf, &dword);	//Read the master volume
-		(void) pack_fseek(inf, 4);			//Unknown data
-		(void) pack_getc(inf);		//32Hz band lowered
-		(void) pack_getc(inf);		//60Hz band lowered
-		(void) pack_getc(inf);		//125Hz band lowered
-		(void) pack_getc(inf);		//250Hz band lowered
-		(void) pack_getc(inf);		//500Hz band lowered
-		(void) pack_getc(inf);		//1KHz band lowered
-		(void) pack_getc(inf);		//2KHz band lowered
-		(void) pack_getc(inf);		//4KHz band lowered
-		(void) pack_getc(inf);		//8KHz band lowered
-		(void) pack_getc(inf);		//16KHz band lowered
-		(void) pack_getc(inf);		//Gain lowered
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the master volume
+		(void) pack_fseek(vars.inf, 4);			//Unknown data
+		(void) pack_getc(vars.inf);		//32Hz band lowered
+		(void) pack_getc(vars.inf);		//60Hz band lowered
+		(void) pack_getc(vars.inf);		//125Hz band lowered
+		(void) pack_getc(vars.inf);		//250Hz band lowered
+		(void) pack_getc(vars.inf);		//500Hz band lowered
+		(void) pack_getc(vars.inf);		//1KHz band lowered
+		(void) pack_getc(vars.inf);		//2KHz band lowered
+		(void) pack_getc(vars.inf);		//4KHz band lowered
+		(void) pack_getc(vars.inf);		//8KHz band lowered
+		(void) pack_getc(vars.inf);		//16KHz band lowered
+		(void) pack_getc(vars.inf);		//Gain lowered
 	}
 	if(fileversion >= 500)
 	{	//The page setup settings only exist in version 5.x or newer of the format
-		pack_ReadDWORDLE(inf, &dword);	//Read the page format length
-		pack_ReadDWORDLE(inf, &dword);	//Read the page format width
-		pack_ReadDWORDLE(inf, &dword);	//Read the left margin
-		pack_ReadDWORDLE(inf, &dword);	//Read the right margin
-		pack_ReadDWORDLE(inf, &dword);	//Read the top margin
-		pack_ReadDWORDLE(inf, &dword);	//Read the bottom margin
-		pack_ReadDWORDLE(inf, &dword);	//Read the score size
-		pack_ReadWORDLE(inf, &word);	//Read the enabled header/footer fields bitmask
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the title header/footer string
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the subtitle header/footer string
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the artist header/footer string
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the album header/footer string
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words (lyricist) header/footer string
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the music (composer) header/footer string
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words & music header/footer string
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 1 header/footer string
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 2 header/footer string
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the page number header/footer string
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the page format length
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the page format width
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the left margin
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the right margin
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the top margin
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the bottom margin
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the score size
+		pack_ReadWORDLE(vars.inf, &word);	//Read the enabled header/footer fields bitmask
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the title header/footer string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the subtitle header/footer string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the artist header/footer string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the album header/footer string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the words (lyricist) header/footer string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the music (composer) header/footer string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the words & music header/footer string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the Copyright line 1 header/footer string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the Copyright line 2 header/footer string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the page number header/footer string
 
 		//The tempo string only exists in version 5.x or newer of the format
-		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo string
+		(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the tempo string
 	}
-	pack_ReadDWORDLE(inf, &dword);	//Read the tempo
+	pack_ReadDWORDLE(vars.inf, &dword);	//Read the tempo
 	if(fileversion > 500)
 	{	//There is a byte of unknown data/padding here in versions newer than 5.0 of the format
-		(void) pack_fseek(inf, 1);		//Unknown data
+		(void) pack_fseek(vars.inf, 1);		//Unknown data
 	}
 	if(fileversion >= 400)
 	{	//Versions 4.0 and newer of the format store key and octave information here
-		(void) pack_getc(inf);			//Read the key
-		(void) pack_fseek(inf, 3);		//Unknown data
-		(void) pack_getc(inf);
+		(void) pack_getc(vars.inf);			//Read the key
+		(void) pack_fseek(vars.inf, 3);		//Unknown data
+		(void) pack_getc(vars.inf);
 	}
 	else
 	{	//Older versions stored only key information here
-		pack_ReadDWORDLE(inf, &dword);	//Read the key
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the key
 	}
 	for(ctr = 0; ctr < 64; ctr++)
 	{	//Read data for each of the 64 usable channels
-		pack_ReadDWORDLE(inf, &dword);	//Read the instrument patch number
-		gp->channel_instrument[ctr] = dword & 0xFF;	//Store the instrument patch number
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the instrument patch number
+		vars.gp->channel_instrument[ctr] = dword & 0xFF;	//Store the instrument patch number
 		patches[ctr] = dword;				//Store the instrument patch for later reference
-		(void) pack_getc(inf);				//Read the volume
-		(void) pack_getc(inf);				//Read the pan value
-		(void) pack_getc(inf);				//Read the chorus value
-		(void) pack_getc(inf);				//Read the reverb value
-		(void) pack_getc(inf);				//Read the phaser value
-		(void) pack_getc(inf);				//Read the tremolo value
-		pack_ReadWORDLE(inf, NULL);		//Read two bytes of unknown data/padding
+		(void) pack_getc(vars.inf);				//Read the volume
+		(void) pack_getc(vars.inf);				//Read the pan value
+		(void) pack_getc(vars.inf);				//Read the chorus value
+		(void) pack_getc(vars.inf);				//Read the reverb value
+		(void) pack_getc(vars.inf);				//Read the phaser value
+		(void) pack_getc(vars.inf);				//Read the tremolo value
+		pack_ReadWORDLE(vars.inf, NULL);		//Read two bytes of unknown data/padding
 	}
 	if(fileversion >= 500)
 	{	//Versions 5.0 and newer of the format store 19 musical directional symbols and a master reverb setting here
 		for(ctr = 0; ctr < 19; ctr++)
 		{	//For each of the musical directional symbols
-			pack_ReadWORDLE(inf, &word);	//Read symbol position
-			gp->symbols[ctr] = word;		//Store the measure number this symbol appears on
+			pack_ReadWORDLE(vars.inf, &word);	//Read symbol position
+			vars.gp->symbols[ctr] = word;		//Store the measure number this symbol appears on
 			if(word != 0xFFFF)
 			{	//If the symbol's use is defined
-				gp->symbols[ctr]--;			//Change the numbering to reflect the first measure being #0
+				vars.gp->symbols[ctr]--;			//Change the numbering to reflect the first measure being #0
 
 #ifdef GP_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\"%s\" symbol is at measure #%u", musical_symbols[ctr], word);
@@ -2230,41 +2272,41 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 		}
 
-		pack_ReadDWORDLE(inf, &dword);	//Read the master reverb value
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the master reverb value
 
 		//Validate symbols
-		if(gp->symbols[EOF_CODA_SYMBOL] == 0xFFFF)
+		if(vars.gp->symbols[EOF_CODA_SYMBOL] == 0xFFFF)
 		{	//If no Coda symbol was placed
-			gp->symbols[EOF_DA_CAPO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_CODA_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+			vars.gp->symbols[EOF_DA_CAPO_AL_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_CODA_SYMBOL] = 0xFFFF;	//These symbols aren't valid
 		}
-		if(gp->symbols[EOF_DOUBLE_CODA_SYMBOL] == 0xFFFF)
+		if(vars.gp->symbols[EOF_DOUBLE_CODA_SYMBOL] == 0xFFFF)
 		{	//If no Double Coda symbol was placed
-			gp->symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_DOUBLE_CODA_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+			vars.gp->symbols[EOF_DA_CAPO_AL_DOUBLE_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_DOUBLE_CODA_SYMBOL] = 0xFFFF;	//These symbols aren't valid
 		}
-		if(gp->symbols[EOF_SEGNO_SYMBOL] == 0xFFFF)
+		if(vars.gp->symbols[EOF_SEGNO_SYMBOL] == 0xFFFF)
 		{	//If no Segno symbol was placed
-			gp->symbols[EOF_DA_SEGNO_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+			vars.gp->symbols[EOF_DA_SEGNO_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_AL_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_AL_DOUBLE_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//These symbols aren't valid
 		}
-		if(gp->symbols[EOF_SEGNO_SEGNO_SYMBOL] == 0xFFFF)
+		if(vars.gp->symbols[EOF_SEGNO_SEGNO_SYMBOL] == 0xFFFF)
 		{	//If no Segno Segno symbol was placed
-			gp->symbols[EOF_DA_SEGNO_SEGNO_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+			vars.gp->symbols[EOF_DA_SEGNO_SEGNO_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_SEGNO_AL_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_SEGNO_AL_DOUBLE_CODA_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//These symbols aren't valid
 		}
-		if(gp->symbols[EOF_FINE_SYMBOL] == 0xFFFF)
+		if(vars.gp->symbols[EOF_FINE_SYMBOL] == 0xFFFF)
 		{	//If no Fine symbol was placed
-			gp->symbols[EOF_DA_CAPO_AL_FINE_SYMBOL] = gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//These symbols aren't valid
+			vars.gp->symbols[EOF_DA_CAPO_AL_FINE_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_AL_FINE_SYMBOL] = vars.gp->symbols[EOF_DA_SEGNO_SEGNO_AL_FINE_SYMBOL] = 0xFFFF;	//These symbols aren't valid
 		}
 	}
 	else
 	{	//Older versions of the GP format do not define the placement of these symbols
 		for(ctr = 0; ctr < 19; ctr++)
 		{	//For each of the musical directional symbols
-			gp->symbols[ctr] = 0xFFFF;		//Track that this symbol is not in use
+			vars.gp->symbols[ctr] = 0xFFFF;		//Track that this symbol is not in use
 		}
 	}
 
 
 //Read track data
-	pack_ReadDWORDLE(inf, &measures);	//Read the number of measures
+	pack_ReadDWORDLE(vars.inf, &measures);	//Read the number of measures
 #ifdef GP_IMPORT_DEBUG
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of measures: %lu", measures);
 	eof_log(eof_log_string, 1);
@@ -2272,26 +2314,20 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(measures > 5000)
 	{	//Compare the measure point count against an arbitrarily large number to satisfy Coverity
 		eof_log("\t\t\tToo many measures, aborting.", 1);
-		(void) pack_fclose(inf);
-		free(gp);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
-	tsarray = malloc(sizeof(struct eof_gp_measure) * measures);	//Allocate memory to store the time signature effective for each measure
-	if(!tsarray)
+	vars.tsarray = malloc(sizeof(struct eof_gp_measure) * measures);	//Allocate memory to store the time signature effective for each measure
+	if(!vars.tsarray)
 	{
 		eof_log("Error allocating memory (5)", 1);
-		(void) pack_fclose(inf);
-		free(gp);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
-	memset(tsarray, 0, sizeof(struct eof_gp_measure) * measures);	//Fill with 0s to satisfy Splint
-	gp->measure = tsarray;		//Store this array into the Guitar Pro structure
-	gp->measures = measures;	//Store the measure count as well
-	pack_ReadDWORDLE(inf, &tracks);	//Read the number of tracks
+	memset(vars.tsarray, 0, sizeof(struct eof_gp_measure) * measures);	//Fill with 0s to satisfy Splint
+	vars.gp->measure = vars.tsarray;		//Store this array into the Guitar Pro structure
+	vars.gp->measures = measures;	//Store the measure count as well
+	pack_ReadDWORDLE(vars.inf, &tracks);	//Read the number of tracks
 #ifdef GP_IMPORT_DEBUG
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of tracks: %lu", tracks);
 	eof_log(eof_log_string, 1);
@@ -2299,132 +2335,67 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(tracks >= 100)
 	{	//Compare the track count against an arbitrarily large number to satisfy Coverity
 		eof_log("\t\t\tToo many tracks, aborting.", 1);
-		(void) pack_fclose(inf);
-		free(gp);
-		free(tsarray);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
-	gp->numtracks = tracks;
-	gp->names = malloc(sizeof(char *) * tracks);			//Allocate memory for track name strings
-	gp->instrument_types = malloc(sizeof(char) * tracks);	//Allocate memory for the track instrument types
-	np = malloc(sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Allocate memory for the array of last created notes
-	hopo = malloc(sizeof(char) * tracks);					//Allocate memory for storing HOPO information
-	hopobeatnum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
-	hopomeasurenum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
-	if(!gp->names || !gp->instrument_types || !np || !hopo || !hopobeatnum || !hopomeasurenum)
+	vars.gp->numtracks = tracks;
+	vars.gp->names = malloc(sizeof(char *) * tracks);			//Allocate memory for track name strings
+	vars.gp->instrument_types = malloc(sizeof(char) * tracks);	//Allocate memory for the track instrument types
+	vars.np = malloc(sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Allocate memory for the array of last created notes
+	vars.hopo = malloc(sizeof(char) * tracks);					//Allocate memory for storing HOPO information
+	vars.hopobeatnum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
+	vars.hopomeasurenum = malloc(sizeof(unsigned long) * tracks);	//Allocate memory for storing HOPO information
+	if(!vars.gp->names || !vars.gp->instrument_types || !vars.np || !vars.hopo || !vars.hopobeatnum || !vars.hopomeasurenum)
 	{
 		eof_log("Error allocating memory (6)", 1);
-		(void) pack_fclose(inf);
-		if(gp->names)
-			free(gp->names);
-		if(gp->instrument_types)
-			free(gp->instrument_types);
-		if(np)
-			free(np);
-		if(hopo)
-			free(hopo);
-		if(hopobeatnum)
-			free(hopobeatnum);
-		if(hopomeasurenum)
-			free(hopomeasurenum);
-		free(gp);
-		free(tsarray);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
-	memset(np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);				//Set all last created note pointers to NULL
-	memset(hopo, -1, sizeof(char) * tracks);							//Set all tracks to have no HOPO status
-	memset(hopobeatnum, 0, sizeof(unsigned long) * tracks);
-	memset(hopomeasurenum, 0, sizeof(unsigned long) * tracks);
-	memset(gp->instrument_types, 0, sizeof(char) * tracks);				//Set the instrument type for all tracks to undefined
-	gp->track = malloc(sizeof(EOF_PRO_GUITAR_TRACK *) * tracks);		//Allocate memory for pro guitar track pointers
-	gp->text_events = 0;
-	if(!gp->track)
+	memset(vars.np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);			//Set all last created note pointers to NULL
+	memset(vars.hopo, -1, sizeof(char) * tracks);							//Set all tracks to have no HOPO status
+	memset(vars.hopobeatnum, 0, sizeof(unsigned long) * tracks);
+	memset(vars.hopomeasurenum, 0, sizeof(unsigned long) * tracks);
+	memset(vars.gp->instrument_types, 0, sizeof(char) * tracks);			//Set the instrument type for all tracks to undefined
+	vars.gp->track = calloc(tracks, sizeof(EOF_PRO_GUITAR_TRACK *));		//Allocate memory for pro guitar track pointers, init the allocated memory to NULL
+	vars.gp->text_events = 0;
+	if(!vars.gp->track)
 	{
 		eof_log("Error allocating memory (7)", 1);
-		(void) pack_fclose(inf);
-		free(gp->names);
-		free(gp->instrument_types);
-		free(np);
-		free(hopo);
-		free(hopobeatnum);
-		free(hopomeasurenum);
-		free(gp);
-		free(tsarray);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
 	for(ctr = 0; ctr < tracks; ctr++)
 	{	//Initialize each pro guitar track
-		gp->track[ctr] = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
-		if(!gp->track[ctr])
+		vars.gp->track[ctr] = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
+		if(!vars.gp->track[ctr])
 		{
 			eof_log("Error allocating memory (8)", 1);
-			(void) pack_fclose(inf);
-			free(gp->names);
-			free(gp->instrument_types);
-			while(ctr > 0)
-			{	//Free all previously allocated track structures
-				free(gp->track[ctr - 1]);
-				ctr--;
-			}
-			free(gp->track);	//Free array of track pointers
-			free(np);
-			free(hopo);
-			free(hopobeatnum);
-			free(hopomeasurenum);
-			free(gp);
-			free(tsarray);
-			if(sync_points)
-				free(sync_points);
+			eof_guitar_pro_import_release_memory(&vars);
 			return NULL;
 		}
-		memset(gp->track[ctr], 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
-		gp->track[ctr]->numfrets = 22;
-		gp->track[ctr]->note = gp->track[ctr]->pgnote;	//Put the regular pro guitar note array into effect
-		gp->track[ctr]->parent = NULL;
+		memset(vars.gp->track[ctr], 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
+		vars.gp->track[ctr]->numfrets = 22;
+		vars.gp->track[ctr]->note = vars.gp->track[ctr]->pgnote;	//Put the regular pro guitar note array into effect
+		vars.gp->track[ctr]->parent = NULL;
 	}
 
 
 //Read measure data
 	//Allocate memory for an array to track the number of strings for each track
-	strings = malloc(sizeof(unsigned long) * tracks);
-	if(!strings)
+	vars.strings = calloc(1, sizeof(unsigned long) * tracks);	//Init the allocated memory to NULL
+	if(!vars.strings)
 	{
 		eof_log("Error allocating memory (9)", 1);
-		(void) pack_fclose(inf);
-		free(gp->names);
-		free(gp->instrument_types);
-		for(ctr = 0; ctr < tracks; ctr++)
-		{	//Free all previously allocated track structures
-			if(gp->track[ctr])
-			{	//Redundant NULL check to satisfy Splint
-				free(gp->track[ctr]);
-			}
-		}
-		free(gp->track);
-		free(np);
-		free(hopo);
-		free(hopobeatnum);
-		free(hopomeasurenum);
-		free(gp);
-		free(tsarray);
-		if(sync_points)
-			free(sync_points);
+		eof_guitar_pro_import_release_memory(&vars);
 		return NULL;
 	}
-	memset(strings, 0, sizeof(unsigned long) * tracks);	//Fill with 0s to satisfy Splint
 #ifdef GP_IMPORT_DEBUG
 	eof_log("\tParsing measure data", 1);
 #endif
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
 		int alt_endings = 0;
-		bytemask = pack_getc(inf);	//Read the measure bitmask
+		bytemask = pack_getc(vars.inf);	//Read the measure bitmask
 		start_of_repeat = num_of_repeats = 0;	//Reset these values
 		if(fileversion < 300)
 		{	//Versions of the format older than 3.0
@@ -2434,22 +2405,22 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 			if(bytemask & 2)
 			{	//End of repeat
-				num_of_repeats = pack_getc(inf);	//Read number of repeats
+				num_of_repeats = pack_getc(vars.inf);	//Read number of repeats
 			}
 			if(bytemask & 4)
 			{	//Number of alternate ending
-				alt_endings = pack_getc(inf);	//Read alternate ending number
+				alt_endings = pack_getc(vars.inf);	//Read alternate ending number
 			}
 		}
 		else
 		{	//Versions of the format 3.0 and newer
 			if(bytemask & 1)
 			{	//Time signature change (numerator)
-				curnum = pack_getc(inf);
+				curnum = pack_getc(vars.inf);
 			}
 			if(bytemask & 2)
 			{	//Time signature change (denominator)
-				curden = pack_getc(inf);
+				curden = pack_getc(vars.inf);
 			}
 #ifdef GP_IMPORT_DEBUG
 			if(bytemask & 3)
@@ -2464,7 +2435,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 			if(bytemask & 8)
 			{	//End of repeat
-				num_of_repeats = pack_getc(inf);	//Read number of repeats
+				num_of_repeats = pack_getc(vars.inf);	//Read number of repeats
 				if(fileversion >= 500)
 				{	//Version 5 of the format has slightly different counting for repeats
 					num_of_repeats--;
@@ -2474,177 +2445,136 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			{	//Versions 3 and 4 define the alternate ending next, followed by the section definition, then the key signature
 				if(bytemask & 16)
 				{	//Number of alternate ending
-					alt_endings = pack_getc(inf);	//Read alternate ending number
+					alt_endings = pack_getc(vars.inf);	//Read alternate ending number
 				}
 				if(bytemask & 32)
 				{	//New section
-					(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
+					(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read section string
 #ifdef GP_IMPORT_DEBUG
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
 					eof_log(eof_log_string, 1);
 #endif
-					if((buffer[0] != '\0') && (gp->text_events < EOF_MAX_TEXT_EVENTS))
+					if((buffer[0] != '\0') && (vars.gp->text_events < EOF_MAX_TEXT_EVENTS))
 					{	//If the section marker has any text in its name and the maximum number of text events hasn't already been defined
 						if(eof_gp_import_text)
 						{	//If phrases/sections are to be imported
-							gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-							if(!gp->text_event[gp->text_events])
+							vars.gp->text_event[vars.gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+							if(!vars.gp->text_event[vars.gp->text_events])
 							{
 								eof_log("Error allocating memory (10)", 1);
-								(void) pack_fclose(inf);
-								free(gp->names);
-								free(gp->instrument_types);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free all previously allocated track structures
-									if(gp->track[ctr])
-									{	//Redundant NULL check to satisfy Splint
-										free(gp->track[ctr]);
-									}
-								}
-								for(ctr = 0; ctr < gp->text_events; ctr++)
-								{	//Free all allocated text events
-									free(gp->text_event[ctr]);
-								}
-								free(gp->track);
-								free(np);
-								free(hopo);
-								free(hopobeatnum);
-								free(hopomeasurenum);
-								free(gp);
-								free(tsarray);
-								if(sync_points)
-									free(sync_points);
+								eof_guitar_pro_import_release_memory(&vars);
 								return NULL;
 							}
-							gp->text_event[gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
-							gp->text_event[gp->text_events]->track = 0;
+							vars.gp->text_event[vars.gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
+							vars.gp->text_event[vars.gp->text_events]->track = 0;
 							rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
 							if(eof_gp_import_preference_1 || !rssectionname)
 							{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
-								(void) ustrcpy(gp->text_event[gp->text_events]->text, buffer);
-								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
+								(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, buffer);
+								vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
 							}
 							else
 							{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
-								(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
-								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-								gp->text_event[gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
+								(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, rssectionname);
+								vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
+								vars.gp->text_event[vars.gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
 							}
-							gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
-							gp->text_events++;
+							vars.gp->text_event[vars.gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
+							vars.gp->text_events++;
 						}
 					}
-					(void) pack_getc(inf);								//Read section string color (Red intensity)
-					(void) pack_getc(inf);								//Read section string color (Green intensity)
-					(void) pack_getc(inf);								//Read section string color (Blue intensity)
-					(void) pack_getc(inf);								//Read unused value
+					(void) pack_getc(vars.inf);								//Read section string color (Red intensity)
+					(void) pack_getc(vars.inf);								//Read section string color (Green intensity)
+					(void) pack_getc(vars.inf);								//Read section string color (Blue intensity)
+					(void) pack_getc(vars.inf);								//Read unused value
 				}//New section
 				if(bytemask & 64)
 				{	//Key signature change
-					(void) pack_getc(inf);	//Read the key
-					(void) pack_getc(inf);	//Read the major/minor byte
+					(void) pack_getc(vars.inf);	//Read the key
+					(void) pack_getc(vars.inf);	//Read the major/minor byte
 				}
 			}
 			else
 			{	//Version 5 and newer define these items in a different order and some other items afterward
 				if(bytemask & 32)
 				{	//New section
-					(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
+					(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read section string
 #ifdef GP_IMPORT_DEBUG
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
 					eof_log(eof_log_string, 1);
 #endif
-					if((buffer[0] != '\0') && (gp->text_events < EOF_MAX_TEXT_EVENTS))
+					if((buffer[0] != '\0') && (vars.gp->text_events < EOF_MAX_TEXT_EVENTS))
 					{	//If the section marker has any text in its name and the maximum number of text events hasn't already been defined
 						if(eof_gp_import_text)
 						{	//If phrases/sections are to be imported
-							gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-							if(!gp->text_event[gp->text_events])
+							vars.gp->text_event[vars.gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+							if(!vars.gp->text_event[vars.gp->text_events])
 							{
 								eof_log("Error allocating memory (11)", 1);
-								(void) pack_fclose(inf);
-								free(gp->names);
-								free(gp->instrument_types);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free all previously allocated track structures
-									free(gp->track[ctr]);
-								}
-								for(ctr = 0; ctr < gp->text_events; ctr++)
-								{	//Free all allocated text events
-									free(gp->text_event[ctr]);
-								}
-								free(gp->track);
-								free(np);
-								free(hopo);
-								free(hopobeatnum);
-								free(hopomeasurenum);
-								free(gp);
-								free(tsarray);
-								if(sync_points)
-									free(sync_points);
+								eof_guitar_pro_import_release_memory(&vars);
 								return NULL;
 							}
-							memset(gp->text_event[gp->text_events], 0, sizeof(EOF_TEXT_EVENT));	//Fill with 0s to satisfy Splint
-							gp->text_event[gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
-							gp->text_event[gp->text_events]->track = 0;
+							memset(vars.gp->text_event[vars.gp->text_events], 0, sizeof(EOF_TEXT_EVENT));	//Fill with 0s to satisfy Splint
+							vars.gp->text_event[vars.gp->text_events]->pos = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
+							vars.gp->text_event[vars.gp->text_events]->track = 0;
 							rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
 							if(eof_gp_import_preference_1 || !rssectionname)
 							{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
-								(void) ustrcpy(gp->text_event[gp->text_events]->text, buffer);
-								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
+								(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, buffer);
+								vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
 							}
 							else
 							{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
-								(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
-								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-								gp->text_event[gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
+								(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, rssectionname);
+								vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
+								vars.gp->text_event[vars.gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
 							}
-							gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
-							gp->text_events++;
+							vars.gp->text_event[vars.gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
+							vars.gp->text_events++;
 						}
 					}
-					(void) pack_getc(inf);								//Read section string color (Red intensity)
-					(void) pack_getc(inf);								//Read section string color (Green intensity)
-					(void) pack_getc(inf);								//Read section string color (Blue intensity)
-					(void) pack_getc(inf);								//Read unused value
+					(void) pack_getc(vars.inf);								//Read section string color (Red intensity)
+					(void) pack_getc(vars.inf);								//Read section string color (Green intensity)
+					(void) pack_getc(vars.inf);								//Read section string color (Blue intensity)
+					(void) pack_getc(vars.inf);								//Read unused value
 				}//New section
 				if(bytemask & 64)
 				{	//Key signature change
-					(void) pack_getc(inf);	//Read the key
-					(void) pack_getc(inf);	//Read the major/minor byte
+					(void) pack_getc(vars.inf);	//Read the key
+					(void) pack_getc(vars.inf);	//Read the major/minor byte
 				}
 				if((bytemask & 1) || (bytemask & 2))
 				{	//If either a new TS numerator or denominator was set, read the beam by eight notes values
-					(void) pack_getc(inf);
-					(void) pack_getc(inf);
-					(void) pack_getc(inf);
-					(void) pack_getc(inf);
+					(void) pack_getc(vars.inf);
+					(void) pack_getc(vars.inf);
+					(void) pack_getc(vars.inf);
+					(void) pack_getc(vars.inf);
 				}
 				if(bytemask & 16)
 				{	//Number of alternate ending
-					alt_endings = pack_getc(inf);	//Read alternate ending number
+					alt_endings = pack_getc(vars.inf);	//Read alternate ending number
 				}
 				else
 				{	//If a GP5 file doesn't define an alternate ending here, ignore a byte of padding
-					(void) pack_getc(inf);
+					(void) pack_getc(vars.inf);
 				}
-				tripletfeel = pack_getc(inf);		//Read triplet feel value
-				(void) pack_getc(inf);		//Unknown data
+				tripletfeel = pack_getc(vars.inf);		//Read triplet feel value
+				(void) pack_getc(vars.inf);		//Unknown data
 			}//Version 5 and newer define these items in a different order and some other items afterward
 		}//Versions of the format 3.0 and newer
 		if(bytemask & 128)
 		{	//Double bar
 		}
-		tsarray[ctr].alt_endings = alt_endings;
-		tsarray[ctr].num = curnum;	//Store this measure's time signature for future reference
-		tsarray[ctr].den = curden;
-		tsarray[ctr].start_of_repeat = start_of_repeat;
-		tsarray[ctr].tripletfeel = tripletfeel;
+		vars.tsarray[ctr].alt_endings = alt_endings;
+		vars.tsarray[ctr].num = curnum;	//Store this measure's time signature for future reference
+		vars.tsarray[ctr].den = curden;
+		vars.tsarray[ctr].start_of_repeat = start_of_repeat;
+		vars.tsarray[ctr].tripletfeel = tripletfeel;
 		if(ctr == 0)
 		{	//If this is the first measure
-			tsarray[ctr].start_of_repeat = 1;	//It is a start of repeat by default
+			vars.tsarray[ctr].start_of_repeat = 1;	//It is a start of repeat by default
 		}
-		tsarray[ctr].num_of_repeats = num_of_repeats;
+		vars.tsarray[ctr].num_of_repeats = num_of_repeats;
 		totalbeats += curnum;		//Add the number of beats in this measure to the ongoing counter
 	}//For each measure
 	if(eof_song->beats < totalbeats + 2)
@@ -2660,36 +2590,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 			//Otherwise if the beat was not appended
 			eof_log("Error allocating memory (12)", 1);
-			(void) pack_fclose(inf);
-			free(gp->names);
-			free(gp->instrument_types);
-			for(ctr = 0; ctr < tracks; ctr++)
-			{	//Free all previously allocated track structures
-				if(gp->track[ctr])
-				{	//Redundant NULL check to satisfy Splint
-					free(gp->track[ctr]);
-				}
-			}
-			for(ctr = 0; ctr < gp->text_events; ctr++)
-			{	//Free all allocated text events
-				free(gp->text_event[ctr]);
-			}
-			free(gp->track);
-			free(np);
-			free(hopo);
-			free(hopobeatnum);
-			free(hopomeasurenum);
-			free(gp);
-			free(tsarray);
-			free(strings);
-			if(sync_points)
-				free(sync_points);
+			eof_guitar_pro_import_release_memory(&vars);
 			return NULL;
 		}
 		eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 	}
 	eof_clear_input();
-	if(!sync_points)
+	if(!vars.sync_points)
 	{	//Skip prompting to import time signatures if importing a Go PlayAlong file
 		if(eof_use_ts && !eof_song->tags->tempo_map_locked)
 		{	//If user has enabled the preference to import time signatures, and the project's tempo map isn't locked (skip the prompt if importing a Go PlayAlong file)
@@ -2720,21 +2627,21 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	curnum = curden = 0;
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure in the GP file
-		for(ctr2 = 0; ctr2 < gp->text_events; ctr2++)
+		for(ctr2 = 0; ctr2 < vars.gp->text_events; ctr2++)
 		{	//For each section marker that was imported
-			if((gp->text_event[ctr2]->pos == ctr) && (!gp->text_event[ctr2]->is_temporary))
+			if((vars.gp->text_event[ctr2]->pos == ctr) && (!vars.gp->text_event[ctr2]->is_temporary))
 			{	//If the section marker was defined on this measure (and it hasn't been converted to use beat numbering yet
-				gp->text_event[ctr2]->pos = beatctr;
-				gp->text_event[ctr2]->is_temporary = 1;	//Track that this event has been converted to beat numbering
+				vars.gp->text_event[ctr2]->pos = beatctr;
+				vars.gp->text_event[ctr2]->is_temporary = 1;	//Track that this event has been converted to beat numbering
 			}
 		}
-		for(ctr2 = 0; ctr2 < tsarray[ctr].num; ctr2++, beatctr++)
+		for(ctr2 = 0; ctr2 < vars.tsarray[ctr].num; ctr2++, beatctr++)
 		{	//For each beat in this measure, count the beats
-			if(import_ts || sync_points)
+			if(import_ts || vars.sync_points)
 			{	//If the user opted to replace the active project's TS changes, or if a Go PlayAlong file is being imported
-				if(!ctr2 && ((tsarray[ctr].num != curnum) || (tsarray[ctr].den != curden)))
+				if(!ctr2 && ((vars.tsarray[ctr].num != curnum) || (vars.tsarray[ctr].den != curden)))
 				{	//If this is a time signature change on the first beat of the measure
-					(void) eof_apply_ts(tsarray[ctr].num, tsarray[ctr].den, beatctr, eof_song, 0);	//Apply the change to the active project
+					(void) eof_apply_ts(vars.tsarray[ctr].num, vars.tsarray[ctr].den, beatctr, eof_song, 0);	//Apply the change to the active project
 				}
 				else
 				{	//Otherwise clear all beat flags except those that aren't TS related
@@ -2743,20 +2650,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 			}
 		}
-		curnum = tsarray[ctr].num;
-		curden = tsarray[ctr].den;
+		curnum = vars.tsarray[ctr].num;
+		curden = vars.tsarray[ctr].den;
 	}
 
-	if(import_ts || sync_points)
+	if(import_ts || vars.sync_points)
 	{	//If the user opted to replace the active project's TS changes, or if a Go PlayAlong file is being imported
 		eof_calculate_beats(eof_song);	//Rebuild the tempo map to reflect any time signature changes
 	}
 
 //Apply Go PlayAlong timings if applicable
- 	if(sync_points)
+ 	if(vars.sync_points)
 	{	//If synchronization data was imported from the input Go PlayAlong file
-		eof_apply_gpa_sync_points(gp, sync_points, num_sync_points);
-		free(sync_points);
+		eof_apply_gpa_sync_points(vars.gp, vars.sync_points, num_sync_points);
 	}
 
 
@@ -2766,10 +2672,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 	for(ctr = 0; ctr < tracks; ctr++)
 	{	//For each track
-		bytemask = pack_getc(inf);	//Read the track bitmask
+		bytemask = pack_getc(vars.inf);	//Read the track bitmask
 		if(bytemask & 1)
 		{	//Is a drum track
-			gp->instrument_types[ctr] = 3;	//Note that this is a drum track
+			vars.gp->instrument_types[ctr] = 3;	//Note that this is a drum track
 #ifdef GP_IMPORT_DEBUG
 			eof_log("\t\t\tThis track is defined as a drum track", 1);
 #endif
@@ -2793,84 +2699,39 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{	//Is set to have the tuning displayed
 		}
 
-		(void) eof_read_gp_string(inf, &word, buffer, 0);		//Read track name string
+		(void) eof_read_gp_string(vars.inf, &word, buffer, 0);		//Read track name string
 		if(buffer[0] == '\0')
 		{	//If the track has no name
 			(void) snprintf(buffer, sizeof(buffer) - 1, "Track #%lu", ctr + 1);
 		}
-		gp->names[ctr] = malloc(sizeof(buffer) + 1);	//Allocate memory to store track name string into guitar pro structure
-		if(!gp->names[ctr])
+		vars.gp->names[ctr] = malloc(sizeof(buffer) + 1);	//Allocate memory to store track name string into guitar pro structure
+		if(!vars.gp->names[ctr])
 		{
 			eof_log("Error allocating memory (13)", 1);
-			(void) pack_fclose(inf);
-			while(ctr > 0)
-			{	//Free the previous track name strings
-				free(gp->names[ctr - 1]);
-				ctr--;
-			}
-			free(gp->names);
-			free(gp->instrument_types);
-			for(ctr = 0; ctr < tracks; ctr++)
-			{	//Free all previously allocated track structures
-				free(gp->track[ctr]);
-			}
-			for(ctr = 0; ctr < gp->text_events; ctr++)
-			{	//Free all allocated text events
-				free(gp->text_event[ctr]);
-			}
-			free(gp->track);
-			free(np);
-			free(hopo);
-			free(hopobeatnum);
-			free(hopomeasurenum);
-			free(gp);
-			free(tsarray);
-			free(strings);
+			eof_guitar_pro_import_release_memory(&vars);
 			return NULL;
 		}
-		strcpy(gp->names[ctr], buffer);
+		strcpy(vars.gp->names[ctr], buffer);
 #ifdef GP_IMPORT_DEBUG
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack #%lu: %s", ctr + 1, buffer);
 		eof_log(eof_log_string, 1);
 #endif
-		(void) pack_fseek(inf, 40 - word);			//Skip the padding that follows the track name string
-		pack_ReadDWORDLE(inf, &strings[ctr]);		//Read the number of strings in this track
-		gp->track[ctr]->numstrings = strings[ctr];
+		(void) pack_fseek(vars.inf, 40 - word);				//Skip the padding that follows the track name string
+		pack_ReadDWORDLE(vars.inf, &vars.strings[ctr]);		//Read the number of strings in this track
+		vars.gp->track[ctr]->numstrings = vars.strings[ctr];
 #ifdef GP_IMPORT_DEBUG
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu strings", strings[ctr]);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu strings", vars.strings[ctr]);
 		eof_log(eof_log_string, 1);
 #endif
-		if(strings[ctr] > 7)
+		if(vars.strings[ctr] > 7)
 		{	//7 is the highest number of strings Guitar Pro supports for any track
 			eof_log("Invalid string count", 1);
-			(void) pack_fclose(inf);
-			for(ctr = 0; ctr < tracks; ctr++)
-			{	//Free the previous track name strings
-				free(gp->names[ctr]);
-			}
-			free(gp->names);
-			free(gp->instrument_types);
-			for(ctr = 0; ctr < tracks; ctr++)
-			{	//Free all previously allocated track structures
-				free(gp->track[ctr]);
-			}
-			for(ctr = 0; ctr < gp->text_events; ctr++)
-			{	//Free all allocated text events
-				free(gp->text_event[ctr]);
-			}
-			free(gp->track);
-			free(np);
-			free(hopo);
-			free(hopobeatnum);
-			free(hopomeasurenum);
-			free(gp);
-			free(tsarray);
-			free(strings);
+			eof_guitar_pro_import_release_memory(&vars);
 			return NULL;
 		}
-		if((gp->instrument_types[ctr] != 3) && (strings[ctr] > 6))
+		if((vars.gp->instrument_types[ctr] != 3) && (vars.strings[ctr] > 6))
 		{	//If this isn't a drum track, warn user that EOF will not import more than 6 strings if applicable
-			gp->track[ctr]->numstrings = 6;
+			vars.gp->track[ctr]->numstrings = 6;
 			if(!string_warning)
 			{
 				eof_clear_input();
@@ -2887,41 +2748,41 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		for(ctr2 = 0; ctr2 < 7; ctr2++)
 		{	//For each of the 7 possible usable strings
-			if(ctr2 < strings[ctr])
+			if(ctr2 < vars.strings[ctr])
 			{	//If this string is used
-				pack_ReadDWORDLE(inf, &dword);	//Read the tuning for this string
+				pack_ReadDWORDLE(vars.inf, &dword);	//Read the tuning for this string
 #ifdef GP_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTuning for string #%lu: MIDI note %lu (%s)", ctr2 + 1, dword, eof_note_names[(dword + 3) % 12]);
 				eof_log(eof_log_string, 1);
 #endif
 				if(!drop_1 && (ctr2 < 6))
 				{	//If the user isn't importing string 7, don't store the tuning for anything after the first six strings
-					gp->track[ctr]->tuning[gp->track[ctr]->numstrings - 1 - ctr2] = dword;	//Store the absolute MIDI note, this will have to be converted to the track and string count specific relative value once mapped to an EOF instrument track (Guitar Pro stores the tuning in string order starting from #1, reversed from EOF)
+					vars.gp->track[ctr]->tuning[vars.gp->track[ctr]->numstrings - 1 - ctr2] = dword;	//Store the absolute MIDI note, this will have to be converted to the track and string count specific relative value once mapped to an EOF instrument track (Guitar Pro stores the tuning in string order starting from #1, reversed from EOF)
 				}
 				else if(drop_1 && (ctr2 > 0))
 				{	//If the user is importing string 7, don't import the first string
-					gp->track[ctr]->tuning[gp->track[ctr]->numstrings - 1 - ctr2 + 1] = dword;	//Store the tuning for each string 1 index later, since string 2 is imported as string 1, etc.
+					vars.gp->track[ctr]->tuning[vars.gp->track[ctr]->numstrings - 1 - ctr2 + 1] = dword;	//Store the tuning for each string 1 index later, since string 2 is imported as string 1, etc.
 				}
 			}
 			else
 			{
-				pack_ReadDWORDLE(inf, NULL);	//Skip this padding
+				pack_ReadDWORDLE(vars.inf, NULL);	//Skip this padding
 			}
 		}
-		if(eof_track_is_drop_tuned(gp->track[ctr]))
+		if(eof_track_is_drop_tuned(vars.gp->track[ctr]))
 		{	//If this track has a drop tuning
-			gp->track[ctr]->ignore_tuning = 0;
+			vars.gp->track[ctr]->ignore_tuning = 0;
 		}
-		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI port used for this track
-		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI channel used for this track
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the MIDI port used for this track
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the MIDI channel used for this track
 		if((dword > 0) && (dword < 64))
 		{	//Bounds check the value of dword
 			int patchnum = patches[dword - 1];
 
 			if((patchnum >=24) && (patchnum <= 31))
 			{	//These are the defined guitar instrument numbers in Guitar Pro
-				assert(gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
-				gp->instrument_types[ctr] = 1;
+				assert(vars.gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
+				vars.gp->instrument_types[ctr] = 1;
 #ifdef GP_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tThis track is defined as a guitar track (instrument %d)", patchnum);
 				eof_log(eof_log_string, 1);
@@ -2929,57 +2790,57 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 			else if((patchnum >= 32) && (patchnum <= 39))
 			{	//These are the defined bass guitar instrument numbers in Guitar Pro
-				assert(gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
-				gp->instrument_types[ctr] = 2;
+				assert(vars.gp->instrument_types != NULL);	//Unneeded check to resolve a false positive in Splint
+				vars.gp->instrument_types[ctr] = 2;
 #ifdef GP_IMPORT_DEBUG
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tThis track is defined as a bass guitar track (instrument %d)", patchnum);
 				eof_log(eof_log_string, 1);
 #endif
 			}
 		}
-		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI channel used for this track's effects
-		pack_ReadDWORDLE(inf, &dword);	//Read the number of frets used for this track
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the MIDI channel used for this track's effects
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the number of frets used for this track
 #ifdef GP_IMPORT_DEBUG
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNumber of frets: %lu", dword);
 		eof_log(eof_log_string, 1);
 #endif
-		gp->track[ctr]->numfrets = dword;
-		pack_ReadDWORDLE(inf, &dword);	//Read the capo position for this track
-		gp->track[ctr]->capo = dword;	//Store it into the guitar pro structure
+		vars.gp->track[ctr]->numfrets = dword;
+		pack_ReadDWORDLE(vars.inf, &dword);	//Read the capo position for this track
+		vars.gp->track[ctr]->capo = dword;	//Store it into the guitar pro structure
 #ifdef GP_IMPORT_DEBUG
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tCapo position: %lu", dword);
 		eof_log(eof_log_string, 1);
 #endif
-		(void) pack_getc(inf);						//Track color (Red intensity)
-		(void) pack_getc(inf);						//Track color (Green intensity)
-		(void) pack_getc(inf);						//Track color (Blue intensity)
-		(void) pack_getc(inf);						//Read unused value
+		(void) pack_getc(vars.inf);						//Track color (Red intensity)
+		(void) pack_getc(vars.inf);						//Track color (Green intensity)
+		(void) pack_getc(vars.inf);						//Track color (Blue intensity)
+		(void) pack_getc(vars.inf);						//Read unused value
 		if(fileversion > 500)
 		{
-			(void) pack_getc(inf);				//Track properties 1 bitmask
-			(void) pack_getc(inf);				//Track properties 2 bitmask
-			(void) pack_getc(inf);				//Unknown data
-			(void) pack_getc(inf);				//MIDI bank
-			(void) pack_getc(inf);				//Human playing
-			(void) pack_getc(inf);				//Auto accentuation on the beat
-			(void) pack_fseek(inf, 31);			//Unknown data
-			(void) pack_getc(inf);				//Selected sound bank option
-			(void) pack_fseek(inf, 7);				//Unknown data
-			(void) pack_getc(inf);				//Low frequency band lowered
-			(void) pack_getc(inf);				//Mid frequency band lowered
-			(void) pack_getc(inf);				//High frequency band lowered
-			(void) pack_getc(inf);				//Gain lowered
-			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 1
-			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 2
+			(void) pack_getc(vars.inf);				//Track properties 1 bitmask
+			(void) pack_getc(vars.inf);				//Track properties 2 bitmask
+			(void) pack_getc(vars.inf);				//Unknown data
+			(void) pack_getc(vars.inf);				//MIDI bank
+			(void) pack_getc(vars.inf);				//Human playing
+			(void) pack_getc(vars.inf);				//Auto accentuation on the beat
+			(void) pack_fseek(vars.inf, 31);			//Unknown data
+			(void) pack_getc(vars.inf);				//Selected sound bank option
+			(void) pack_fseek(vars.inf, 7);				//Unknown data
+			(void) pack_getc(vars.inf);				//Low frequency band lowered
+			(void) pack_getc(vars.inf);				//Mid frequency band lowered
+			(void) pack_getc(vars.inf);				//High frequency band lowered
+			(void) pack_getc(vars.inf);				//Gain lowered
+			(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read track instrument effect 1
+			(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read track instrument effect 2
 		}
 		else if(fileversion == 500)
 		{
-			(void) pack_fseek(inf, 45);		//Unknown data
+			(void) pack_fseek(vars.inf, 45);		//Unknown data
 		}
 	}//For each track
 	if(fileversion >= 500)
 	{
-		(void) pack_getc(inf);	//Unknown data
+		(void) pack_getc(vars.inf);	//Unknown data
 	}
 
 
@@ -2990,9 +2851,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
-		curnum = tsarray[ctr].num;	//Obtain the time signature for this measure
-		curden = tsarray[ctr].den;
-		tripletfeel = tsarray[ctr].tripletfeel;	//Obtain the triplet feel for this measure
+		curnum = vars.tsarray[ctr].num;	//Obtain the time signature for this measure
+		curden = vars.tsarray[ctr].den;
+		tripletfeel = vars.tsarray[ctr].tripletfeel;	//Obtain the triplet feel for this measure
 
 #ifdef GP_IMPORT_DEBUG
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMeasure #%lu", ctr + 1);
@@ -3003,9 +2864,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{	//For each track
 			unsigned voice, maxvoices = 1;
 			char effective_drop_7 = drop_7;	//By default, this will reflect the user's choice regarding 7 string guitar tracks
-			EOF_PRO_GUITAR_TRACK *tp = gp->track[ctr2];	//Simplify
+			EOF_PRO_GUITAR_TRACK *tp = vars.gp->track[ctr2];	//Simplify
 
-			if(gp->instrument_types[ctr2] == 3)
+			if(vars.gp->instrument_types[ctr2] == 3)
 			{	//If this track is a drum track
 				effective_drop_7 = 1;	//It is assumed that only the first 6 strings encode drum notes
 			}
@@ -3020,41 +2881,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			for(voice = 0; voice < maxvoices; voice++)
 			{	//For each voice
 				measure_position = 0.0;
-				pack_ReadDWORDLE(inf, &beats);	//Read number of "beats" (which are more accurately considered notes)
+				pack_ReadDWORDLE(vars.inf, &beats);	//Read number of "beats" (which are more accurately considered notes)
 				if(beats > 1000)
 				{	//Compare the beat count against an arbitrarily large number to satisfy Coverity
 					eof_log("\t\t\tToo many beats (notes) in this measure, aborting.", 1);
-					(void) pack_fclose(inf);
-					for(ctr = 0; ctr < tracks; ctr++)
-					{	//Free the previous track name strings
-						free(gp->names[ctr]);
-					}
-					free(gp->names);
-					free(gp->instrument_types);
-					for(ctr = 0; ctr < tracks; ctr++)
-					{	//Free all previously allocated track structures
-						for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-						{	//Free all notes in this track
-							free(gp->track[ctr]->note[ctr2]);
-						}
-						for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-						{	//Free all tech notes in this track
-							free(gp->track[ctr]->technote[ctr2]);
-						}
-						free(gp->track[ctr]);
-					}
-					for(ctr = 0; ctr < gp->text_events; ctr++)
-					{	//Free all allocated text events
-						free(gp->text_event[ctr]);
-					}
-					free(gp->track);
-					free(np);
-					free(hopo);
-					free(hopobeatnum);
-					free(hopomeasurenum);
-					free(gp);
-					free(tsarray);
-					free(strings);
+					eof_guitar_pro_import_release_memory(&vars);
 					return NULL;
 				}
 				for(ctr3 = 0; ctr3 < beats; ctr3++)
@@ -3082,13 +2913,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					note_is_short = 0;
 					note_is_staccato = 0;
 					memset(finger, 0, sizeof(finger));	//Clear the finger array
-					bytemask = pack_getc(inf);	//Read beat bitmask
+					bytemask = pack_getc(vars.inf);	//Read beat bitmask
 					if(bytemask & 64)
 					{	//Beat is a rest
-						(void) pack_getc(inf);	//Rest beat type (empty/rest)
+						(void) pack_getc(vars.inf);	//Rest beat type (empty/rest)
 						new_note = 0;
 					}
-					byte = pack_getc(inf);		//Read beat duration
+					byte = pack_getc(vars.inf);		//Read beat duration
 					if((byte < -2) || (byte > 4))
 					{	//If it's an invalid note length
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "!Invalid note length:  Measure %lu, track %lu, voice %u, beat %lu, length %d", ctr, ctr2, voice, ctr3, byte);
@@ -3107,7 +2938,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 					if(bytemask & 32)
 					{	//Beat is an N-tuplet
-						pack_ReadDWORDLE(inf, &dword);	//Number of notes played within the "tuplet" (ie. 3 = triplet)
+						pack_ReadDWORDLE(vars.inf, &dword);	//Number of notes played within the "tuplet" (ie. 3 = triplet)
 						switch(dword)
 						{	//The length of each note in an N-tuplet depends on N
 							case 6:
@@ -3192,7 +3023,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//If the note (after undoing the scaling for the time signature) is shorter than a quarter note
 						if(!(!isaltered && isquarterorlonger))
 						{	//If the note was encoded as a quarter note and wasn't part of a tuplet, avoid math rounding errors causing the above logic to detect as shorter than a quarter note
-							if(np[ctr2] && (np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) && (np[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
+							if(vars.np[ctr2] && (vars.np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT) && (vars.np[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
 							{	//Special case:  If this is a short note that is linked to by a legato slide, allow the note to keep its defined duration
 								eof_log("\t\t\t\tShort note linked to by legato slide will keep its duration", 2);
 							}
@@ -3203,98 +3034,98 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 					if(bytemask & 2)
 					{	//Beat has a chord diagram
-						word = pack_getc(inf);	//Read chord diagram format
+						word = pack_getc(vars.inf);	//Read chord diagram format
 						if(word == 0)
 						{	//Chord diagram format 0, ie. GP3
-							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read chord name
-							pack_ReadDWORDLE(inf, &dword);				//Read the diagram fret position
+							(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read chord name
+							pack_ReadDWORDLE(vars.inf, &dword);				//Read the diagram fret position
 							if(dword)
 							{	//If the diagram is properly defined
-								for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
+								for(ctr4 = 0; ctr4 < vars.strings[ctr2]; ctr4++)
 								{	//For each string defined in the track
-									pack_ReadDWORDLE(inf, &dword);			//Read the fret played on this string
+									pack_ReadDWORDLE(vars.inf, &dword);			//Read the fret played on this string
 								}
 							}
 						}//Chord diagram format 0, ie. GP3
 						else if(word == 1)
 						{	//Chord diagram format 1, ie. GP4
-							(void) pack_getc(inf);			//Read sharp/flat indicator
-							(void) pack_fseek(inf, 3);			//Unknown data
-							(void) pack_getc(inf);			//Read chord root
+							(void) pack_getc(vars.inf);			//Read sharp/flat indicator
+							(void) pack_fseek(vars.inf, 3);			//Unknown data
+							(void) pack_getc(vars.inf);			//Read chord root
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(vars.inf, 3);		//Unknown data
 							}
-							(void) pack_getc(inf);			//Read chord type
+							(void) pack_getc(vars.inf);			//Read chord type
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(vars.inf, 3);		//Unknown data
 							}
-							(void) pack_getc(inf);			//9th/11th/13th option
+							(void) pack_getc(vars.inf);			//9th/11th/13th option
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(vars.inf, 3);		//Unknown data
 							}
-							pack_ReadDWORDLE(inf, &dword);	//Read bass note (lowest note played in string)
-							(void) pack_getc(inf);			//+/- option
-							(void) pack_fseek(inf, 4);			//Unknown data
-							word = pack_getc(inf);			//Read chord name string length
-							(void) pack_fread(buffer, 20, inf);	//Read chord name (which is padded to 20 bytes)
+							pack_ReadDWORDLE(vars.inf, &dword);	//Read bass note (lowest note played in string)
+							(void) pack_getc(vars.inf);			//+/- option
+							(void) pack_fseek(vars.inf, 4);			//Unknown data
+							word = pack_getc(vars.inf);			//Read chord name string length
+							(void) pack_fread(buffer, 20, vars.inf);	//Read chord name (which is padded to 20 bytes)
 							buffer[word] = '\0';				//Ensure string is terminated to be the right length
-							(void) pack_fseek(inf, 2);			//Unknown data
-							(void) pack_getc(inf);			//Tonality of the fifth
+							(void) pack_fseek(vars.inf, 2);			//Unknown data
+							(void) pack_getc(vars.inf);			//Tonality of the fifth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(vars.inf, 3);		//Unknown data
 							}
-							(void) pack_getc(inf);			//Tonality of the ninth
+							(void) pack_getc(vars.inf);			//Tonality of the ninth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(vars.inf, 3);		//Unknown data
 							}
-							(void) pack_getc(inf);			//Tonality of the eleventh
+							(void) pack_getc(vars.inf);			//Tonality of the eleventh
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								(void) pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(vars.inf, 3);		//Unknown data
 							}
-							pack_ReadDWORDLE(inf, &dword);	//Base fret for diagram
+							pack_ReadDWORDLE(vars.inf, &dword);	//Base fret for diagram
 							for(ctr4 = 0; ctr4 < 7; ctr4++)
 							{	//For each of the 7 possible usable strings
-								if(ctr4 < strings[ctr2])
+								if(ctr4 < vars.strings[ctr2])
 								{	//If this string is used in the track
-									pack_ReadDWORDLE(inf, &dword);	//Fret value played (-1 means unused in chord)
+									pack_ReadDWORDLE(vars.inf, &dword);	//Fret value played (-1 means unused in chord)
 								}
 								else
 								{
-									pack_ReadDWORDLE(inf, NULL);	//Skip this padding
+									pack_ReadDWORDLE(vars.inf, NULL);	//Skip this padding
 								}
 							}
-							(void) pack_getc(inf);	//Read the number of barres in this chord
+							(void) pack_getc(vars.inf);	//Read the number of barres in this chord
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
 							{	//For each of the 5 possible barres
-								(void) pack_getc(inf);	//Read the barre position/padding
+								(void) pack_getc(vars.inf);	//Read the barre position/padding
 							}
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
 							{	//For each of the 5 possible barres
-								(void) pack_getc(inf);	//Read the barre start string/padding
+								(void) pack_getc(vars.inf);	//Read the barre start string/padding
 							}
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
 							{	//For each of the 5 possible barres
-								(void) pack_getc(inf);	//Read the barre stop string/padding
+								(void) pack_getc(vars.inf);	//Read the barre stop string/padding
 							}
-							(void) pack_getc(inf);		//Chord includes first interval?
-							(void) pack_getc(inf);		//Chord includes third interval?
-							(void) pack_getc(inf);		//Chord includes fifth interval?
-							(void) pack_getc(inf);		//Chord includes seventh interval?
-							(void) pack_getc(inf);		//Chord includes ninth interval?
-							(void) pack_getc(inf);		//Chord includes eleventh interval?
-							(void) pack_getc(inf);		//Chord includes thirteenth interval?
-							(void) pack_getc(inf);		//Unknown data
+							(void) pack_getc(vars.inf);		//Chord includes first interval?
+							(void) pack_getc(vars.inf);		//Chord includes third interval?
+							(void) pack_getc(vars.inf);		//Chord includes fifth interval?
+							(void) pack_getc(vars.inf);		//Chord includes seventh interval?
+							(void) pack_getc(vars.inf);		//Chord includes ninth interval?
+							(void) pack_getc(vars.inf);		//Chord includes eleventh interval?
+							(void) pack_getc(vars.inf);		//Chord includes thirteenth interval?
+							(void) pack_getc(vars.inf);		//Unknown data
 							for(ctr4 = 0; ctr4 < 7; ctr4++)
 							{	//For each of the 7 possible usable strings
-								if(ctr4 < strings[ctr2])
+								if(ctr4 < vars.strings[ctr2])
 								{	//If this string is used in the track
-									byte = pack_getc(inf);	//Finger # used to play string
+									byte = pack_getc(vars.inf);	//Finger # used to play string
 									if(byte == 0)
 									{	//Thumb, remap to EOF's definition of thumb = 5
 										byte = 5;
@@ -3306,17 +3137,17 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								else
 								{
-									(void) pack_getc(inf);		//Skip this padding
+									(void) pack_getc(vars.inf);		//Skip this padding
 								}
 							}
-							(void) pack_getc(inf);	//Chord fingering displayed?
+							(void) pack_getc(vars.inf);	//Chord fingering displayed?
 						}//Chord diagram format 1, ie. GP4
 					}//Beat has a chord diagram
 					if(bytemask & 4)
 					{	//Beat has text
-						(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read beat text string
+						(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read beat text string
 						rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
-						if(gp->text_events < EOF_MAX_TEXT_EVENTS)
+						if(vars.gp->text_events < EOF_MAX_TEXT_EVENTS)
 						{	//If the maximum number of text events hasn't already been defined
 #ifdef GP_IMPORT_DEBUG
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tBeat text found at beat #%lu:  \"%s\"", curbeat, buffer);
@@ -3326,62 +3157,32 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//If this beat's content is being imported
 								if(eof_gp_import_text)
 								{	//If phrases/sections are to be imported
-									gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-									if(!gp->text_event[gp->text_events])
+									vars.gp->text_event[vars.gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+									if(!vars.gp->text_event[vars.gp->text_events])
 									{
 										eof_log("Error allocating memory (14)", 1);
-										(void) pack_fclose(inf);
-										for(ctr = 0; ctr < tracks; ctr++)
-										{	//Free the previous track name strings
-											free(gp->names[ctr]);
-										}
-										free(gp->names);
-										free(gp->instrument_types);
-										for(ctr = 0; ctr < tracks; ctr++)
-										{	//Free all previously allocated track structures
-											for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-											{	//Free all notes in this track
-												free(gp->track[ctr]->note[ctr2]);
-											}
-											for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-											{	//Free all tech notes in this track
-												free(gp->track[ctr]->technote[ctr2]);
-											}
-											free(gp->track[ctr]);
-										}
-										for(ctr = 0; ctr < gp->text_events; ctr++)
-										{	//Free all allocated text events
-											free(gp->text_event[ctr]);
-										}
-										free(gp->track);
-										free(np);
-										free(hopo);
-										free(hopobeatnum);
-										free(hopomeasurenum);
-										free(gp);
-										free(tsarray);
-										free(strings);
+										eof_guitar_pro_import_release_memory(&vars);
 										return NULL;
 									}
-									gp->text_event[gp->text_events]->pos = curbeat - skipbeatsourcectr;
-									gp->text_event[gp->text_events]->track = 0;
-									gp->text_event[gp->text_events]->is_temporary = 1;	//Track that the event's beat number has already been determined
+									vars.gp->text_event[vars.gp->text_events]->pos = curbeat - skipbeatsourcectr;
+									vars.gp->text_event[vars.gp->text_events]->track = 0;
+									vars.gp->text_event[vars.gp->text_events]->is_temporary = 1;	//Track that the event's beat number has already been determined
 									if(rssectionname)
 									{	//If this beat text matches a valid Rocksmith section name, import it with the section's native name
-										(void) ustrcpy(gp->text_event[gp->text_events]->text, rssectionname);
-										gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-										gp->text_event[gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
-										gp->text_events++;
+										(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, rssectionname);
+										vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
+										vars.gp->text_event[vars.gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
+										vars.gp->text_events++;
 									}
 									else if(!eof_gp_import_preference_1)
 									{	//If the user preference to discard beat text that doesn't match a RS section isn't enabled, import it as a RS phrase
-										(void) ustrcpy(gp->text_event[gp->text_events]->text, buffer);	//Copy the beat text as-is
-										gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
-										gp->text_events++;
+										(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, buffer);	//Copy the beat text as-is
+										vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
+										vars.gp->text_events++;
 									}
 									else
 									{	//Otherwise discard this beat text
-										free(gp->text_event[gp->text_events]);	//Free the memory allocated to store this text event
+										free(vars.gp->text_event[vars.gp->text_events]);	//Free the memory allocated to store this text event
 										eof_log("\t\t\t\tDropped text event", 1);
 									}
 								}
@@ -3389,25 +3190,25 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If techniques are to be imported from beat text
 									if(!stricmp(buffer, "T"))
 									{	//Thumb (slap) notation in bass tracks, tap notation in guitar tracks
-										if(gp->instrument_types[ctr2] == 2)
+										if(vars.gp->instrument_types[ctr2] == 2)
 										{	//If this is a bass track
 											allflags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
 										}
-										else if(gp->instrument_types[ctr2] == 1)
+										else if(vars.gp->instrument_types[ctr2] == 1)
 										{	//If this is a guitar tarck
 											allflags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
 										}
 									}
 									else if(!stricmp(buffer, "P"))
 									{	//Pop notation in bass tracks
-										if(gp->instrument_types[ctr2] == 2)
+										if(vars.gp->instrument_types[ctr2] == 2)
 										{	//If this is a bass track
 											allflags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
 										}
 									}
 									if(!stricmp(buffer, "S"))
 									{	//Slap notation in bass tracks
-										if(gp->instrument_types[ctr2] == 2)
+										if(vars.gp->instrument_types[ctr2] == 2)
 										{	//If this is a bass track
 											allflags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
 										}
@@ -3420,10 +3221,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//Beat has effects
 						unsigned char byte1, byte2 = 0;
 
-						byte1 = pack_getc(inf);	//Read beat effects 1 bitmask
+						byte1 = pack_getc(vars.inf);	//Read beat effects 1 bitmask
 						if(fileversion >= 400)
 						{	//Versions 4.0 and higher of the format have a second beat effects bitmask
-							byte2 = pack_getc(inf);	//Extended beat effects bitmask
+							byte2 = pack_getc(vars.inf);	//Extended beat effects bitmask
 							if(byte2 & 1)
 							{	//Rasguedo
 							}
@@ -3449,7 +3250,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(byte1 & 32)
 						{	//Tapping/popping/slapping
-							byte = pack_getc(inf);	//Read tapping/popping/slapping indicator
+							byte = pack_getc(vars.inf);	//Read tapping/popping/slapping indicator
 							if(byte == 0)
 							{	//Tremolo bar
 							}
@@ -3467,53 +3268,23 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if(fileversion < 400)
 							{
-								pack_ReadDWORDLE(inf, &dword);	//String effect value
+								pack_ReadDWORDLE(vars.inf, &dword);	//String effect value
 							}
 						}
 						if(byte2 & 4)
 						{	//Tremolo bar
-							if(eof_gp_parse_bend(inf, NULL))
+							if(eof_gp_parse_bend(vars.inf, NULL))
 							{	//If there was an error parsing the bend
 								allegro_message("Error parsing bend, file is corrupt");
-								(void) pack_fclose(inf);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free the previous track name strings
-									free(gp->names[ctr]);
-								}
-								free(gp->names);
-								free(gp->instrument_types);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free all previously allocated track structures
-									for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-									{	//Free all notes in this track
-										free(gp->track[ctr]->note[ctr2]);
-									}
-									for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-									{	//Free all tech notes in this track
-										free(gp->track[ctr]->technote[ctr2]);
-									}
-									free(gp->track[ctr]);
-								}
-								for(ctr = 0; ctr < gp->text_events; ctr++)
-								{	//Free all allocated text events
-									free(gp->text_event[ctr]);
-								}
-								free(gp->track);
-								free(np);
-								free(hopo);
-								free(hopobeatnum);
-								free(hopomeasurenum);
-								free(gp);
-								free(tsarray);
-								free(strings);
+								eof_guitar_pro_import_release_memory(&vars);
 								return NULL;
 							}
 						}
 						if(byte1 & 64)
 						{	//Stroke (strum) effect
 							unsigned char upspeed;
-							upspeed = pack_getc(inf);	//Up strum speed
-							(void) pack_getc(inf);				//Down strum speed
+							upspeed = pack_getc(vars.inf);	//Up strum speed
+							(void) pack_getc(vars.inf);				//Down strum speed
 							if(!upspeed)
 							{	//Strum down
 								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
@@ -3525,7 +3296,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(byte2 & 2)
 						{	//Pickstroke effect
-							byte = pack_getc(inf);	//Pickstroke effect (up/down)
+							byte = pack_getc(vars.inf);	//Pickstroke effect (up/down)
 							if(byte == 1)
 							{	//Upward pick
 								allflags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
@@ -3540,15 +3311,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//Beat has mix table change
 						char volume_change = 0, pan_change = 0, chorus_change = 0, reverb_change = 0, phaser_change = 0, tremolo_change = 0, tempo_change = 0;
 
-						(void) pack_getc(inf);	//New instrument number
+						(void) pack_getc(vars.inf);	//New instrument number
 						if(fileversion >= 500)
 						{	//These fields are only in version 5.x files
-							pack_ReadDWORDLE(inf, &dword);	//RSE related number
-							pack_ReadDWORDLE(inf, &dword);	//RSE related number
-							pack_ReadDWORDLE(inf, &dword);	//RSE related number
-							(void) pack_fseek(inf, 4);				//Unknown data
+							pack_ReadDWORDLE(vars.inf, &dword);	//RSE related number
+							pack_ReadDWORDLE(vars.inf, &dword);	//RSE related number
+							pack_ReadDWORDLE(vars.inf, &dword);	//RSE related number
+							(void) pack_fseek(vars.inf, 4);				//Unknown data
 						}
-						byte = pack_getc(inf);	//New volume
+						byte = pack_getc(vars.inf);	//New volume
 						if(byte == -1)
 						{	//No change
 						}
@@ -3556,7 +3327,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{
 							volume_change = 1;
 						}
-						byte = pack_getc(inf);	//New pan value
+						byte = pack_getc(vars.inf);	//New pan value
 						if(byte == -1)
 						{	//No change
 						}
@@ -3564,7 +3335,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{
 							pan_change = 1;
 						}
-						byte = pack_getc(inf);	//New chorus value
+						byte = pack_getc(vars.inf);	//New chorus value
 						if(byte == -1)
 						{	//No change
 						}
@@ -3572,7 +3343,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{
 							chorus_change = 1;
 						}
-						byte = pack_getc(inf);	//New reverb value
+						byte = pack_getc(vars.inf);	//New reverb value
 						if(byte == -1)
 						{	//No change
 						}
@@ -3580,7 +3351,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{
 							reverb_change = 1;
 						}
-						byte = pack_getc(inf);	//New phaser value
+						byte = pack_getc(vars.inf);	//New phaser value
 						if(byte == -1)
 						{	//No change
 						}
@@ -3588,7 +3359,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{
 							phaser_change = 1;
 						}
-						byte = pack_getc(inf);	//New tremolo value
+						byte = pack_getc(vars.inf);	//New tremolo value
 						if(byte == -1)
 						{	//No change
 						}
@@ -3598,9 +3369,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(fileversion >= 500)
 						{	//These fields are only in version 5.x files
-							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo text string
+							(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the tempo text string
 						}
-						pack_ReadDWORDLE(inf, &dword);	//New tempo
+						pack_ReadDWORDLE(vars.inf, &dword);	//New tempo
 						if((long)dword == -1)
 						{	//No change
 						}
@@ -3610,48 +3381,48 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(volume_change)
 						{	//This field only exists if a new volume was defined
-							(void) pack_getc(inf);	//New volume change transition
+							(void) pack_getc(vars.inf);	//New volume change transition
 						}
 						if(pan_change)
 						{	//This field only exists if a new pan value was defined
-							(void) pack_getc(inf);	//New pan change transition
+							(void) pack_getc(vars.inf);	//New pan change transition
 						}
 						if(chorus_change)
 						{	//This field only exists if a new  chorus value was defined
-							(void) pack_getc(inf);	//New chorus change transition
+							(void) pack_getc(vars.inf);	//New chorus change transition
 						}
 						if(reverb_change)
 						{	//This field only exists if a new reverb value was defined
-							(void) pack_getc(inf);	//New reverb change transition
+							(void) pack_getc(vars.inf);	//New reverb change transition
 						}
 						if(phaser_change)
 						{	//This field only exists if a new phaser value was defined
-							(void) pack_getc(inf);	//New phaser change transition
+							(void) pack_getc(vars.inf);	//New phaser change transition
 						}
 						if(tremolo_change)
 						{	//This field only exists if a new tremolo value was defined
-							(void) pack_getc(inf);	//New tremolo change transition
+							(void) pack_getc(vars.inf);	//New tremolo change transition
 						}
 						if(tempo_change)
 						{	//These fields only exists if a new tempo was defined
-							(void) pack_getc(inf);	//New tempo change transition
+							(void) pack_getc(vars.inf);	//New tempo change transition
 							if(fileversion > 500)
 							{	//This field only exists in versions newer than 5.0 of the format
-								(void) pack_getc(inf);	//Tempo text string hidden
+								(void) pack_getc(vars.inf);	//Tempo text string hidden
 							}
 						}
 						if(fileversion >= 400)
 						{	//This field is not in version 3.0 files, assume 4.x or higher
-							(void) pack_getc(inf);	//Mix table change applied tracks bitmask
+							(void) pack_getc(vars.inf);	//Mix table change applied tracks bitmask
 						}
 						if(fileversion >= 500)
 						{	//This unknown byte is only in version 5.x files
-							(void) pack_fseek(inf, 1);		//Unknown data
+							(void) pack_fseek(vars.inf, 1);		//Unknown data
 						}
 						if(fileversion > 500)
 						{	//These strings are only in versions newer than 5.0 of the format
-							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 2 string
-							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 1 string
+							(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the Effect 2 string
+							(void) eof_read_gp_string(vars.inf, NULL, buffer, 1);	//Read the Effect 1 string
 						}
 					}//Beat has mix table change
 
@@ -3680,37 +3451,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 							//Otherwise if a beat couldn't be appended to the project
 							eof_log("Error allocating memory (15)", 1);
-							(void) pack_fclose(inf);
-							for(ctr = 0; ctr < tracks; ctr++)
-							{	//Free the previous track name strings
-								free(gp->names[ctr]);
-							}
-							free(gp->names);
-							free(gp->instrument_types);
-							for(ctr = 0; ctr < tracks; ctr++)
-							{	//Free all previously allocated track structures
-								for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-								{	//Free all notes in this track
-									free(gp->track[ctr]->note[ctr2]);
-								}
-								for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-								{	//Free all tech notes in this track
-									free(gp->track[ctr]->technote[ctr2]);
-								}
-								free(gp->track[ctr]);
-							}
-							for(ctr = 0; ctr < gp->text_events; ctr++)
-							{	//Free all allocated text events
-								free(gp->text_event[ctr]);
-							}
-							free(gp->track);
-							free(np);
-							free(hopo);
-							free(hopobeatnum);
-							free(hopomeasurenum);
-							free(gp);
-							free(tsarray);
-							free(strings);
+							eof_guitar_pro_import_release_memory(&vars);
 							return NULL;
 						}//If there aren't enough beats in the project for some reason, add enough to continue
 
@@ -3722,7 +3463,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						importnote = 0;
 					}
 
-					usedstrings = pack_getc(inf);		//Used strings bitmask
+					usedstrings = pack_getc(vars.inf);		//Used strings bitmask
 					definedstrings = 0;	//Reset this bitmask, which will reflect which strings this note actually uses for playable notes, instead of what combination it and all other note effects (like grace notes) are in use
 					usedtie = 0;	//Reset this bitmask
 					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask >>= 1)
@@ -3733,11 +3474,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						if(!(bitmask & usedstrings))
 							continue;	//If this string is not used, skip it
 
-						bytemask = pack_getc(inf);	//Note bitmask
+						bytemask = pack_getc(vars.inf);	//Note bitmask
 						if(bytemask & 32)
 						{	//Note type is defined
 							definedstrings |= bitmask;
-							byte = pack_getc(inf);	//Note type (1 = normal, 2 = tie, 3 = dead (muted))
+							byte = pack_getc(vars.inf);	//Note type (1 = normal, 2 = tie, 3 = dead (muted))
 							thisgemtype = byte;
 							if(byte == 1)
 							{	//Normal note
@@ -3747,7 +3488,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							else if(byte == 2)
 							{	//If this string is playing a tied note (it is still ringing from a previously played note)
-								if(np[ctr2] && (np[ctr2]->note && bitmask))
+								if(vars.np[ctr2] && (vars.np[ctr2]->note && bitmask))
 								{	//If there is a previously created note, and it used this string, alter its length
 									tie_note = 1;
 									usedtie |= bitmask;	//Track that this string is a tie note
@@ -3762,28 +3503,28 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(bytemask & 4)
 						{	//Ghost note
-							if((gp->instrument_types[ctr2] == 3) || eof_gp_import_keep_ghost_guitar_status)
+							if((vars.gp->instrument_types[ctr2] == 3) || eof_gp_import_keep_ghost_guitar_status)
 							{	//If this track is a drum track, or if the user preference is to keep ghost status for guitar/bass tracks
 								ghost |= bitmask;	//Mark this string as being ghosted
 							}
 						}
 						if((bytemask & 1) && (fileversion < 500))
 						{	//Time independent duration (for versions of the format older than 5.x)
-							(void) pack_getc(inf);	//Time independent duration value
-							(void) pack_getc(inf);	//Time independent duration values
+							(void) pack_getc(vars.inf);	//Time independent duration value
+							(void) pack_getc(vars.inf);	//Time independent duration values
 						}
 						if(bytemask & 16)
 						{	//Note dynamic
-							(void) pack_getc(inf);	//Get the dynamic value
+							(void) pack_getc(vars.inf);	//Get the dynamic value
 						}
 						if(bytemask & 32)
 						{	//Note type is defined
-							byte = pack_getc(inf);	//Fret number
+							byte = pack_getc(vars.inf);	//Fret number
 							if(thisgemtype == 2)
 							{	//If this gem is a tie note, recall the last fretting of this string in this track, since overlapping tie notes may prevent a simple check of the previous note from having the desired fret value
-								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+								unsigned int convertednum = vars.strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
 
-								if((strings[ctr2] > 6) && effective_drop_7)
+								if((vars.strings[ctr2] > 6) && effective_drop_7)
 								{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
@@ -3809,9 +3550,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								frets[ctr4] |= byte;	//OR this value, so that the muted status can be kept if it is set
 							}
 						}
-						if((hopo[ctr2] >= 0) && ((ctr3 > hopobeatnum[ctr2]) || (ctr > hopomeasurenum[ctr2])))
+						if((vars.hopo[ctr2] >= 0) && ((ctr3 > vars.hopobeatnum[ctr2]) || (ctr > vars.hopomeasurenum[ctr2])))
 						{	//If the previous note was marked as leading into a hammer on or pull off with the next (this) note
-							if(byte < hopo[ctr2])
+							if(byte < vars.hopo[ctr2])
 							{	//If this note is a lower fret than the previous note
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//This note is a pull off
 							}
@@ -3819,12 +3560,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//Otherwise this note is a hammer on
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
 							}
-							hopo[ctr2] = -1;	//Reset this status before it is checked if this note is marked (to signal the next note being HO/PO)
+							vars.hopo[ctr2] = -1;	//Reset this status before it is checked if this note is marked (to signal the next note being HO/PO)
 						}
 
 						if(bytemask & 128)
 						{	//Right/left hand fingering
-							byte = pack_getc(inf);	//Left hand fingering
+							byte = pack_getc(vars.inf);	//Left hand fingering
 							if(byte == 0)
 							{	//Thumb, remap to EOF's definition of thumb = 5
 								byte = 5;
@@ -3833,66 +3574,36 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//If the finger number is defined
 								finger[ctr4] = byte;	//Store into the finger array
 							}
-							(void) pack_getc(inf);	//Right hand fingering
+							(void) pack_getc(vars.inf);	//Right hand fingering
 						}
 						if((bytemask & 1) && (fileversion >= 500))
 						{	//Time independent duration (for versions of the format 5.x or newer)
-							(void) pack_fseek(inf, 8);		//Unknown data
+							(void) pack_fseek(vars.inf, 8);		//Unknown data
 						}
 						if(fileversion >= 500)
 						{	//This padding isn't in version 3.x and 4.x files
-							(void) pack_fseek(inf, 1);		//Unknown data
+							(void) pack_fseek(vars.inf, 1);		//Unknown data
 						}
 						if(bytemask & 8)
 						{	//Note effects
 							char byte1, byte2 = 0;
-							byte1 = pack_getc(inf);	//Note effect bitmask
+							byte1 = pack_getc(vars.inf);	//Note effect bitmask
 							if(fileversion >= 400)
 							{	//Version 4.0 and higher of the file format has a second note effect bitmask
-								byte2 = pack_getc(inf);	//Note effect 2 bitmask
+								byte2 = pack_getc(vars.inf);	//Note effect 2 bitmask
 							}
 							if(byte1 & 1)
 							{	//Bend
-								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+								unsigned int convertednum = vars.strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
 
-								if((strings[ctr2] > 6) && effective_drop_7)
+								if((vars.strings[ctr2] > 6) && effective_drop_7)
 								{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
-								if(eof_gp_parse_bend(inf, &bendstruct) || (bendstruct.bendpoints > 30))
+								if(eof_gp_parse_bend(vars.inf, &bendstruct) || (bendstruct.bendpoints > 30))
 								{	//If there was an error parsing the bend, or if bendpoints wasn't capped at 30 (a redundant check to satisfy a false positive in Coverity)
 									allegro_message("Error parsing bend, file is corrupt");
-									(void) pack_fclose(inf);
-									for(ctr = 0; ctr < tracks; ctr++)
-									{	//Free the previous track name strings
-										free(gp->names[ctr]);
-									}
-									free(gp->names);
-									free(gp->instrument_types);
-									for(ctr = 0; ctr < tracks; ctr++)
-									{	//Free all previously allocated track structures
-										for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-										{	//Free all notes in this track
-											free(gp->track[ctr]->note[ctr2]);
-										}
-										for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-										{	//Free all tech notes in this track
-											free(gp->track[ctr]->technote[ctr2]);
-										}
-										free(gp->track[ctr]);
-									}
-									for(ctr = 0; ctr < gp->text_events; ctr++)
-									{	//Free all allocated text events
-										free(gp->text_event[ctr]);
-									}
-									free(gp->track);
-									free(np);
-									free(hopo);
-									free(hopobeatnum);
-									free(hopomeasurenum);
-									free(gp);
-									free(tsarray);
-									free(strings);
+									eof_guitar_pro_import_release_memory(&vars);
 									return NULL;
 								}
 								//Don't mark entire chords with bend status, Guitar Pro defines which strings are to be bent
@@ -3928,37 +3639,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										if(!pgnp)
 										{
 											eof_log("Error allocating memory (16)", 1);
-											(void) pack_fclose(inf);
-											for(ctr = 0; ctr < tracks; ctr++)
-											{	//Free the previous track name strings
-												free(gp->names[ctr]);
-											}
-											free(gp->names);
-											free(gp->instrument_types);
-											for(ctr = 0; ctr < tracks; ctr++)
-											{	//Free all previously allocated track structures
-												for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-												{	//Free all notes in this track
-													free(gp->track[ctr]->note[ctr2]);
-												}
-												for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-												{	//Free all tech notes in this track
-													free(gp->track[ctr]->technote[ctr2]);
-												}
-												free(gp->track[ctr]);
-											}
-											for(ctr = 0; ctr < gp->text_events; ctr++)
-											{	//Free all allocated text events
-												free(gp->text_event[ctr]);
-											}
-											free(gp->track);
-											free(np);
-											free(hopo);
-											free(hopobeatnum);
-											free(hopomeasurenum);
-											free(gp);
-											free(tsarray);
-											free(strings);
+											eof_guitar_pro_import_release_memory(&vars);
 											return NULL;
 										}
 										pgnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
@@ -4000,9 +3681,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}//Bend
 							if(byte1 & 2)
 							{	//Hammer on/pull off from current note (next note gets the HO/PO status)
-								hopo[ctr2] = frets[ctr4] & 0x7F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
-								hopobeatnum[ctr2] = ctr3;		//Track which beat (note) number has the HO/PO status
-								hopomeasurenum[ctr2] = ctr;		//Track which measure number has the HO/PO status
+								vars.hopo[ctr2] = frets[ctr4] & 0x7F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
+								vars.hopobeatnum[ctr2] = ctr3;		//Track which beat (note) number has the HO/PO status
+								vars.hopomeasurenum[ctr2] = ctr;		//Track which measure number has the HO/PO status
 							}
 							if(byte1 & 4)
 							{	//Slide from current note (GP3 format indicator)
@@ -4019,21 +3700,21 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								gracetrans = graceonbeat = 0;
 
 								grace |= bitmask;	//Mark this string as having a grace note
-								gracefrets[ctr4] = pack_getc(inf);	//Grace note fret number
+								gracefrets[ctr4] = pack_getc(vars.inf);	//Grace note fret number
 
-								(void) pack_getc(inf);	//Grace note dynamic value
+								(void) pack_getc(vars.inf);	//Grace note dynamic value
 								if(fileversion >= 500)
 								{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
-									gracetrans = pack_getc(inf);	//Grace note transition type
+									gracetrans = pack_getc(vars.inf);	//Grace note transition type
 								}
 								else
 								{	//The purpose of this field in 4.x or older files is unknown
-									(void) pack_fseek(inf, 1);		//Unknown data
+									(void) pack_fseek(vars.inf, 1);		//Unknown data
 								}
-								dur = pack_getc(inf) - 1;	//Grace note duration
+								dur = pack_getc(vars.inf) - 1;	//Grace note duration
 								if(fileversion >= 500)
 								{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
-									graceonbeat = pack_getc(inf);	//Grace note position
+									graceonbeat = pack_getc(vars.inf);	//Grace note position
 									if(graceonbeat & 1)
 									{	//If this grace note is string muted
 										gracefrets[ctr4] |= 0x80;	//Set the mute bit
@@ -4085,14 +3766,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if(byte2 & 4)
 							{	//Tremolo picking
-								(void) pack_getc(inf);	//Tremolo picking speed
+								(void) pack_getc(vars.inf);	//Tremolo picking speed
 								flags |= EOF_NOTE_FLAG_IS_TREMOLO;
 							}
 							if(byte2 & 8)
 							{	//Slide
 								unsigned char proposed_unpitchend = 0;
 								unsigned char fret_value = frets[ctr4] & 0x7F;	//Store the value of this fret, masking out the mute bit
-								byte = pack_getc(inf);	//Slide type
+								byte = pack_getc(vars.inf);	//Slide type
 								if(fileversion < 500)
 								{	//If the GP file is older than version 5
 									flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//GP4 and older formats have a tendency to mark unpitched slides as "slide from note" as well, remove the redundant status set earlier
@@ -4264,7 +3945,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}//Slide
 							if(byte2 & 16)
 							{	//Harmonic
-								byte = pack_getc(inf);	//Harmonic type
+								byte = pack_getc(vars.inf);	//Harmonic type
 								if(byte == 1)
 								{	//Natural harmonic
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
@@ -4281,13 +3962,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Other harmonic types will only be applied to imported notes if the user didn't enable the preference to ignore them
 									if(byte == 2)
 									{	//Artificial harmonic
-										(void) pack_getc(inf);	//Read harmonic note
-										(void) pack_getc(inf);	//Read sharp/flat status
-										(void) pack_getc(inf);	//Read octave status
+										(void) pack_getc(vars.inf);	//Read harmonic note
+										(void) pack_getc(vars.inf);	//Read sharp/flat status
+										(void) pack_getc(vars.inf);	//Read octave status
 									}
 									else if(byte == 3)
 									{	//Tapped harmonic
-										(void) pack_getc(inf);	//Right hand fret
+										(void) pack_getc(vars.inf);	//Right hand fret
 									}
 									if(!eof_gp_import_nat_harmonics_only)
 									{	//If the user opted to ignore harmonic status except for natural harmonics
@@ -4297,8 +3978,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if(byte2 & 32)
 							{	//Trill
-								(void) pack_getc(inf);	//Trill with fret
-								(void) pack_getc(inf);	//Trill duration
+								(void) pack_getc(vars.inf);	//Trill with fret
+								(void) pack_getc(vars.inf);	//Trill duration
 								flags |= EOF_NOTE_FLAG_IS_TRILL;
 ///It might be necessary to insert notes here for the trill phrase
 							}
@@ -4332,10 +4013,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					flags = allflags;	//Beyond this point, the flags variable is expected to reflect the combined flags for all gems in this note
 					if(fileversion >= 500)
 					{	//Version 5.0 and higher of the file format stores a note transpose mask and unknown data here
-						pack_ReadWORDLE(inf, &word);	//Transpose bitmask
+						pack_ReadWORDLE(vars.inf, &word);	//Transpose bitmask
 						if(word & 0x800)
 						{	//If bit 11 of the transpose bitmask was set, there is an additional byte of unknown data
-							(void) pack_fseek(inf, 1);	//Unknown data
+							(void) pack_fseek(vars.inf, 1);	//Unknown data
 						}
 					}
 					if(importnote)
@@ -4347,7 +4028,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 							for(ctr4 = 0, dwbitmask = 1; ctr4 < 32; ctr4++, dwbitmask <<= 1)
 							{	//For each bit in the flags bitmask
-								if(!(np[ctr2]->flags & dwbitmask) && (tieflags & dwbitmask))
+								if(!(vars.np[ctr2]->flags & dwbitmask) && (tieflags & dwbitmask))
 								{	//If the previous note's flags bit was clear and this note's tie flags bit is not (only checking the flags on the tie gems)
 									if(tieflags & ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM | EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM))
 									{	//If the flags were different when disregarding strum direction
@@ -4359,9 +4040,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(!newtech)
 							{	//If the tie note doesn't enable a technique not in use by the previous note, alter the previous note's length to include the tie note
 								long oldlength;
-								unsigned int convertedtie = usedtie >> (7 - strings[ctr2]);	//Re-map from GP's string numbering to EOF's
+								unsigned int convertedtie = usedtie >> (7 - vars.strings[ctr2]);	//Re-map from GP's string numbering to EOF's
 
-								if(strings[ctr2] > 6)
+								if(vars.strings[ctr2] > 6)
 								{	//If this is a 7 string track
 									if(effective_drop_7)
 									{	//The user opted to drop string 7 instead of string 1
@@ -4374,7 +4055,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								else
 								{	//This track has less than 7 strings
-									convertedtie |= usedtie >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB (merge the bitmask so that on-beat grace notes combine with the note they affect)
+									convertedtie |= usedtie >> (7 - vars.strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB (merge the bitmask so that on-beat grace notes combine with the note they affect)
 								}
 
 								//Search backward for correct note to alter
@@ -4402,7 +4083,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//Otherwise create a new note, since the tie note changes the techniques in use
 								tie_note = 0;	//Reset this to prevent this note's flags and bend strength from overriding those of the previous note
 								new_note = 1;	//Set this to nonzero, the if() block below will create the note
-								np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Set the linknext flag on the previous note
+								vars.np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Set the linknext flag on the previous note
 							}
 						}//If this was defined as a tie note
 
@@ -4410,49 +4091,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{	//If a new note is to be created
 							char truncate = 0;	//Is set to nonzero if any conditions are met that should cause the note's sustain to be removed
 
-							np[ctr2] = eof_pro_guitar_track_add_note(tp);	//Add a new note to the current track
-							if(!np[ctr2])
+							vars.np[ctr2] = eof_pro_guitar_track_add_note(tp);	//Add a new note to the current track
+							if(!vars.np[ctr2])
 							{
 								eof_log("Error allocating memory (17)", 1);
-								(void) pack_fclose(inf);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free the previous track name strings
-									free(gp->names[ctr]);
-								}
-								free(gp->names);
-								free(gp->instrument_types);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free all previously allocated track structures
-									for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-									{	//Free all notes in this track
-										free(gp->track[ctr]->note[ctr2]);
-									}
-									for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-									{	//Free all tech notes in this track
-										free(gp->track[ctr]->technote[ctr2]);
-									}
-									free(gp->track[ctr]);
-								}
-								for(ctr = 0; ctr < gp->text_events; ctr++)
-								{	//Free all allocated text events
-									free(gp->text_event[ctr]);
-								}
-								free(gp->track);
-								free(np);
-								free(hopo);
-								free(hopobeatnum);
-								free(hopomeasurenum);
-								free(gp);
-								free(tsarray);
-								free(strings);
+								eof_guitar_pro_import_release_memory(&vars);
 								return NULL;
 							}
-							np[ctr2]->flags = flags;
-							np[ctr2]->tflags =tflags;
-							for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
+							vars.np[ctr2]->flags = flags;
+							vars.np[ctr2]->tflags =tflags;
+							for(ctr4 = 0; ctr4 < vars.strings[ctr2]; ctr4++)
 							{	//For each of this track's natively supported strings
-								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
-								if((strings[ctr2] > 6) && effective_drop_7)
+								unsigned int convertednum = vars.strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+								if((vars.strings[ctr2] > 6) && effective_drop_7)
 								{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
@@ -4460,72 +4111,72 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If convertednum became an unexpectedly large value (ie. integer underflow) or six strings have already been processed
 									break;	//Stop translating fretting and fingering data
 								}
-								np[ctr2]->frets[ctr4] = frets[convertednum];	//Copy the fret number for this string
-								np[ctr2]->finger[ctr4] = finger[convertednum];	//Copy the finger number used to fret the string (is nonzero if defined)
+								vars.np[ctr2]->frets[ctr4] = frets[convertednum];	//Copy the fret number for this string
+								vars.np[ctr2]->finger[ctr4] = finger[convertednum];	//Copy the finger number used to fret the string (is nonzero if defined)
 							}
 							if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) || (tflags & EOF_NOTE_TFLAG_SLIDE_IN))
 							{	//If the note had an unpitched slide in/out
-								np[ctr2]->unpitchend = unpitchend;	//Apply the end position that was previously determined
+								vars.np[ctr2]->unpitchend = unpitchend;	//Apply the end position that was previously determined
 								if(unpitchend > tp->numfrets)
 								{	//If this unpitched slide requires the fret limit to be increased
 									tp->numfrets = unpitchend;	//Make it so
 								}
 							}
-							np[ctr2]->legacymask = 0;
-							np[ctr2]->midi_length = 0;
-							np[ctr2]->midi_pos = 0;
-							np[ctr2]->name[0] = '\0';
-							if(strings[ctr2] > 6)
+							vars.np[ctr2]->legacymask = 0;
+							vars.np[ctr2]->midi_length = 0;
+							vars.np[ctr2]->midi_pos = 0;
+							vars.np[ctr2]->name[0] = '\0';
+							if(vars.strings[ctr2] > 6)
 							{	//If this is a 7 string track
 								if(effective_drop_7)
 								{	//The user opted to drop string 7 instead of string 1
-									np[ctr2]->note = definedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
-									np[ctr2]->ghost = ghost >> 1;		//Likewise translate the ghost bit mask
+									vars.np[ctr2]->note = definedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
+									vars.np[ctr2]->ghost = ghost >> 1;		//Likewise translate the ghost bit mask
 								}
 								else
 								{	//The user opted to drop string 1
-									np[ctr2]->note = definedstrings & 63;	//Mask out string 1
-									np[ctr2]->ghost = ghost & 63;		//Likewise mask out string 1 of the ghost bit mask
+									vars.np[ctr2]->note = definedstrings & 63;	//Mask out string 1
+									vars.np[ctr2]->ghost = ghost & 63;		//Likewise mask out string 1 of the ghost bit mask
 								}
 							}
 							else
 							{	//This track has less than 7 strings
-								np[ctr2]->note = definedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
-								np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);			//Likewise translate the ghost bit mask
+								vars.np[ctr2]->note = definedstrings >> (7 - vars.strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
+								vars.np[ctr2]->ghost = ghost >> (7 - vars.strings[ctr2]);			//Likewise translate the ghost bit mask
 							}
-							np[ctr2]->type = voice;					//Store lead voice notes in difficulty 0, bass voice notes in difficulty 1
-							np[ctr2]->bendstrength = bendstrength;	//Apply the note's bend strength if applicable
+							vars.np[ctr2]->type = voice;					//Store lead voice notes in difficulty 0, bass voice notes in difficulty 1
+							vars.np[ctr2]->bendstrength = bendstrength;	//Apply the note's bend strength if applicable
 
 							//Set the start position and length of the note
-							np[ctr2]->pos = laststartpos + 0.5;	//Round up to nearest millisecond
-							np[ctr2]->length = lastendpos - laststartpos + 0.5;	//Round up to nearest millisecond
+							vars.np[ctr2]->pos = laststartpos + 0.5;	//Round up to nearest millisecond
+							vars.np[ctr2]->length = lastendpos - laststartpos + 0.5;	//Round up to nearest millisecond
 
 							if(note_is_short)
 							{	//If this note is shorter than a quarter note
-								if(!(np[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
+								if(!(vars.np[ctr2]->flags & EOF_NOTE_FLAG_IS_TREMOLO))
 								{	//If this note doesn't have tremolo status
-									if((eof_note_count_colors_bitmask(np[ctr2]->note) == 1) && eof_gp_import_truncate_short_notes)
+									if((eof_note_count_colors_bitmask(vars.np[ctr2]->note) == 1) && eof_gp_import_truncate_short_notes)
 									{	//If this is a single note and the preference to drop the note's sustain in this circumstance is enabled
 										truncate = 1;
 									}
-									else if((eof_note_count_colors_bitmask(np[ctr2]->note) > 1) && eof_gp_import_truncate_short_chords)
+									else if((eof_note_count_colors_bitmask(vars.np[ctr2]->note) > 1) && eof_gp_import_truncate_short_chords)
 									{	//If this is a chord and the preference to drop the note's sustain in this circumstance is enabled
 										truncate = 1;
 									}
 								}
 							}
-							if((mute == 1) || (np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+							if((mute == 1) || (vars.np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 							{	//If this note is entirely string muted (only bit 0 of the mute variable was set, ie. no non-muted notes) or is palm muted
-								if(eof_note_count_colors_bitmask(np[ctr2]->note) <= 1)
+								if(eof_note_count_colors_bitmask(vars.np[ctr2]->note) <= 1)
 								{	//If this is NOT a chord
 									truncate = 1;
 								}
 							}
 							if(truncate)
 							{	//If the above conditions were triggered
-								if(!(notebends) && !(np[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)) && !(np[ctr2]->tflags & EOF_NOTE_TFLAG_SLIDE_IN))
+								if(!(notebends) && !(vars.np[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)) && !(vars.np[ctr2]->tflags & EOF_NOTE_TFLAG_SLIDE_IN))
 								{	//If this note doesn't have bend, slide, vibrato or unpitched slide (in or out) status
-									np[ctr2]->length = 1;	//Remove the note's sustain
+									vars.np[ctr2]->length = 1;	//Remove the note's sustain
 								}
 							}
 
@@ -4536,27 +4187,27 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tDue to strange note timing, note #%lu was moved to Start: %lums", tp->notes - 2, tp->note[tp->notes - 2]->pos);
 								eof_log(eof_log_string, 1);
 							}
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %ldms\tFrets: ", tp->notes - 1, np[ctr2]->pos, np[ctr2]->length);
-							assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
-							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %ldms\tFrets: ", tp->notes - 1, vars.np[ctr2]->pos, vars.np[ctr2]->length);
+							assert(vars.strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
+							for(ctr4 = 0, bitmask = 1; ctr4 < vars.strings[ctr2]; ctr4++, bitmask <<= 1)
 							{	//For each of this track's natively supported strings
 								char temp[10];
-								if(np[ctr2]->note & bitmask)
+								if(vars.np[ctr2]->note & bitmask)
 								{	//If this string is used
-									if(np[ctr2]->frets[ctr4] & 0x80)
+									if(vars.np[ctr2]->frets[ctr4] & 0x80)
 									{	//If this string is muted
 										(void) snprintf(temp, sizeof(temp) - 1, "X");
 									}
 									else
 									{
-										(void) snprintf(temp, sizeof(temp) - 1, "%u", np[ctr2]->frets[ctr4]);
+										(void) snprintf(temp, sizeof(temp) - 1, "%u", vars.np[ctr2]->frets[ctr4]);
 									}
 								}
 								else
 								{
 									(void) snprintf(temp, sizeof(temp) - 1, "_");
 								}
-								if(ctr4 + 1 < strings[ctr2])
+								if(ctr4 + 1 < vars.strings[ctr2])
 								{	//If there is another string
 									(void) strncat(temp, ", ", sizeof(temp) - strlen(temp) - 1);
 								}
@@ -4569,12 +4220,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								eof_log("\t\t\t\tShortened as a triplet feel up beat", 1);
 #endif
 						}//If a new note is to be created
-						else if(np[ctr2] && tie_note)
+						else if(vars.np[ctr2] && tie_note)
 						{	//Otherwise if this was a tie note
-							np[ctr2]->flags |= flags;	//Apply this tie note's flags to the previous note
-							if(bendstrength > np[ctr2]->bendstrength)
+							vars.np[ctr2]->flags |= flags;	//Apply this tie note's flags to the previous note
+							if(bendstrength > vars.np[ctr2]->bendstrength)
 							{	//If this tie note defined a stronger bend than the original note
-								np[ctr2]->bendstrength = bendstrength;	//Apply this tie note's bend strength
+								vars.np[ctr2]->bendstrength = bendstrength;	//Apply this tie note's bend strength
 							}
 						}
 
@@ -4586,41 +4237,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(!gnp)
 							{
 								eof_log("Error allocating memory (18)", 1);
-								(void) pack_fclose(inf);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free the previous track name strings
-									free(gp->names[ctr]);
-								}
-								free(gp->names);
-								free(gp->instrument_types);
-								for(ctr = 0; ctr < tracks; ctr++)
-								{	//Free all previously allocated track structures
-									for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
-									{	//Free all notes in this track
-										free(gp->track[ctr]->note[ctr2]);
-									}
-									for(ctr2 = 0; ctr2 < gp->track[ctr]->technotes; ctr2++)
-									{	//Free all tech notes in this track
-										free(gp->track[ctr]->technote[ctr2]);
-									}
-									free(gp->track[ctr]);
-								}
-								for(ctr = 0; ctr < gp->text_events; ctr++)
-								{	//Free all allocated text events
-									free(gp->text_event[ctr]);
-								}
-								free(gp->track);
-								free(np);
-								free(hopo);
-								free(hopobeatnum);
-								free(hopomeasurenum);
-								free(gp);
-								free(tsarray);
-								free(strings);
+								eof_guitar_pro_import_release_memory(&vars);
 								return NULL;
 							}
 							gnp->tflags = gtflags;	//Track the grace note status for the sake of being able to treat as flam notation for percussion tracks
-							if(strings[ctr2] > 6)
+							if(vars.strings[ctr2] > 6)
 							{	//If this is a 7 string track
 								if(effective_drop_7)
 								{	//The user opted to drop string 7 instead of string 1
@@ -4633,13 +4254,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							else
 							{	//This track has less than 7 strings
-								gnp->note |= grace >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB (merge the bitmask so that on-beat grace notes combine with the note they affect)
+								gnp->note |= grace >> (7 - vars.strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB (merge the bitmask so that on-beat grace notes combine with the note they affect)
 							}
 							gnp->type = voice;	//Store lead voice notes in difficulty 0, bass voice notes in difficulty 1
-							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
+							for(ctr4 = 0, bitmask = 1; ctr4 < vars.strings[ctr2]; ctr4++, bitmask <<= 1)
 							{	//For each of this track's natively supported strings
-								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
-								if((strings[ctr2] > 6) && effective_drop_7)
+								unsigned int convertednum = vars.strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 8 fret values per note, it just only uses 6 by default)
+								if((vars.strings[ctr2] > 6) && effective_drop_7)
 								{	//If this is a 7 string Guitar Pro track and the user opted to drop string 7 instead of string 1
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
@@ -4663,12 +4284,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(gracetrans == 1)
 								{	//Grace note slides into normal note
 									gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
-									if(!gnp->slideend || (np[ctr2]->frets[ctr4] < gnp->slideend))
+									if(!gnp->slideend || (vars.np[ctr2]->frets[ctr4] < gnp->slideend))
 									{	//Track the lowest fret value for the slide end position
-										gnp->slideend = np[ctr2]->frets[ctr4];						//The end of slide position is the fret position of the note the grace note affects
+										gnp->slideend = vars.np[ctr2]->frets[ctr4];						//The end of slide position is the fret position of the note the grace note affects
 									}
 									gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;		//Add linknext status to the grace note so it appears nicely as a slide-in in Rocksmith
-									if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
+									if(gnp->frets[ctr4] > vars.np[ctr2]->frets[ctr4])
 									{	//If the grace note's fret value is higher than the normal note's
 										gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The grace note slides down
 									}
@@ -4679,22 +4300,22 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								else if(gracetrans == 2)
 								{	//Grace note bends to normal note
-									if(gnp->frets[ctr4] < np[ctr2]->frets[ctr4])
+									if(gnp->frets[ctr4] < vars.np[ctr2]->frets[ctr4])
 									{	//This only makes sense if the grace note's fret value is lower than the normal note's
 										gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//The grace note bends up to the next note
 										gnp->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Define the grace note's end of slide position
-										gnp->bendstrength = np[ctr2]->frets[ctr4] - gnp->frets[ctr4];	//Set the bend strength to the number of half steps needed to reach the normal note
+										gnp->bendstrength = vars.np[ctr2]->frets[ctr4] - gnp->frets[ctr4];	//Set the bend strength to the number of half steps needed to reach the normal note
 									}
 								}
 								else if(gracetrans == 3)
 								{	//Grace note is hammered onto or pulled off to perform the note it precedes
-									if(gnp->frets[ctr4] > np[ctr2]->frets[ctr4])
+									if(gnp->frets[ctr4] > vars.np[ctr2]->frets[ctr4])
 									{	//If the grace note's fret value is higher than the normal note's
-										np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//The grace note is pulled off of
+										vars.np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//The grace note is pulled off of
 									}
 									else
 									{	//The grace note's fret value is lower than the normal note's
-										np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//The grace note is hammered on from
+										vars.np[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//The grace note is hammered on from
 									}
 								}
 							}//For each of this track's natively supported strings
@@ -4707,21 +4328,21 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//If this grace note displaces the note it is associated with
 								unsigned long snappos = 0;
 
-								np[ctr2]->pos += gnp->length;			//Delay the note by the length of the grace note
-								if(np[ctr2]->length >= gnp->length)
-									np[ctr2]->length -= gnp->length;		//Shorten the note by the same length if possible
+								vars.np[ctr2]->pos += gnp->length;			//Delay the note by the length of the grace note
+								if(vars.np[ctr2]->length >= gnp->length)
+									vars.np[ctr2]->length -= gnp->length;		//Shorten the note by the same length if possible
 
-								if(!eof_is_any_beat_interval_position(np[ctr2]->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
+								if(!eof_is_any_beat_interval_position(vars.np[ctr2]->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
 								{	//If this displaced note is not beat interval snapped
 									if(snappos != ULONG_MAX)
 									{	//If the nearest snap position was determined
-										if((snappos + 1 == np[ctr2]->pos) || (np[ctr2]->pos + 1 == snappos))
-											np[ctr2]->pos = snappos;	//If the nearest grid snap position for this displaced note is found to be within 1ms, snap to the grid
+										if((snappos + 1 == vars.np[ctr2]->pos) || (vars.np[ctr2]->pos + 1 == snappos))
+											vars.np[ctr2]->pos = snappos;	//If the nearest grid snap position for this displaced note is found to be within 1ms, snap to the grid
 									}
 								}
 
 #ifdef GP_IMPORT_DEBUG
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tGrace note displaces parent note:  Start: %lums\tLength: %ldms", np[ctr2]->pos, np[ctr2]->length);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tGrace note displaces parent note:  Start: %lums\tLength: %ldms", vars.np[ctr2]->pos, vars.np[ctr2]->length);
 								eof_log(eof_log_string, 1);
 #endif
 							}
@@ -4740,8 +4361,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							eof_pro_guitar_track_sort_notes(tp);	//Sort so that the grace note is earlier than the note it applies to, to allow the tie note logic to work as expected
 #ifdef GP_IMPORT_DEBUG
 							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tGrace note #%lu (%s beat):  Start: %lums\tLength: %ldms\tFrets: ", tp->notes - 1, (graceonbeat ? "On" : "Before"), gnp->pos, gnp->length);
-							assert(strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
-							for(ctr4 = 0, bitmask = 1; ctr4 < strings[ctr2]; ctr4++, bitmask <<= 1)
+							assert(vars.strings[ctr2] < 8);	//Redundant assertion to resolve a false positive in Coverity
+							for(ctr4 = 0, bitmask = 1; ctr4 < vars.strings[ctr2]; ctr4++, bitmask <<= 1)
 							{	//For each of this track's natively supported strings
 								char temp[10];
 								if(gnp->note & bitmask)
@@ -4752,7 +4373,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{
 									(void) snprintf(temp, sizeof(temp) - 1, "_");
 								}
-								if(ctr4 + 1 < strings[ctr2])
+								if(ctr4 + 1 < vars.strings[ctr2])
 								{	//If there is another string
 									(void) strncat(temp, ", ", sizeof(temp) - strlen(temp) - 1);
 								}
@@ -4767,41 +4388,41 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}//For each voice
 			if(fileversion >= 500)
 			{
-				(void) pack_fseek(inf, 1);		//Unknown data
+				(void) pack_fseek(vars.inf, 1);		//Unknown data
 			}
 		}//For each track
 		curbeat += curnum;	//Add this measure's number of beats to the beat counter
 	}//For each measure
 
 //Correct slide directions
-	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
-		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+		for(ctr2 = 0; ctr2 < vars.gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
 			unsigned char thisfret;
 			unsigned char lowestfret = 0xFF;	//Used to track the lowest used fret value for the note
 
-			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || !(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (ctr2 + 1 >= gp->track[ctr]->notes))
+			if(!(vars.gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || !(vars.gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) || (ctr2 + 1 >= vars.gp->track[ctr]->notes))
 				continue;	//If this note isn't marked as being an undetermined direction of slide, or there's no note that follows, skip it
 
 			for(ctr3 = 0, bitmask = 1; ctr3 < 7; ctr3++, bitmask<<=1)
 			{	//For each of the 7 strings the GP format allows for
-				if(!(bitmask & gp->track[ctr]->note[ctr2]->note) || !(bitmask & gp->track[ctr]->note[ctr2 + 1]->note))
+				if(!(bitmask & vars.gp->track[ctr]->note[ctr2]->note) || !(bitmask & vars.gp->track[ctr]->note[ctr2 + 1]->note))
 					continue;	//If this string is not used for both this note and the next, skip it
 
-				thisfret = gp->track[ctr]->note[ctr2]->frets[ctr3];	//The fret number this note uses on this string
+				thisfret = vars.gp->track[ctr]->note[ctr2]->frets[ctr3];	//The fret number this note uses on this string
 				if(!thisfret)
 					continue;	//If this string is played open, it is not fretted and not a suitable string to use to evaluate the slide direction
 				if(thisfret >= lowestfret)
 					continue;	//If this string's fret isn't lower than any other that has been examined on this note, skip to the next string
 
-				if(gp->track[ctr]->note[ctr2 + 1]->frets[ctr3] & 0x80)
+				if(vars.gp->track[ctr]->note[ctr2 + 1]->frets[ctr3] & 0x80)
 				{	//If the end of the slide is defined by a mute note
 					endfret =  0;	//Force it to be a downward slide, the end fret of the slide will be undefined
 				}
 				else
 				{
-					endfret = gp->track[ctr]->note[ctr2 + 1]->frets[ctr3];	//Look up the fret number the next note uses on this string
+					endfret = vars.gp->track[ctr]->note[ctr2 + 1]->frets[ctr3];	//Look up the fret number the next note uses on this string
 				}
 				if(thisfret == endfret)
 				{	//The slide starts and ends on the same fret on this string?
@@ -4813,103 +4434,103 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 			if(startfret > endfret)
 			{	//This is a downward slide
-				gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
+				vars.gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
 			}
 			else
 			{	//This is an upward slide
-				gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
+				vars.gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
 			}
-			if(gp->track[ctr]->note[ctr2]->slideend == 0)
+			if(vars.gp->track[ctr]->note[ctr2]->slideend == 0)
 			{	//If the slide ending hasn't been defined yet
 				if(!endfret)
 				{	//Special case:  A slide down to fret 0.  Notate this as an unpitched slide to fret 1
-					gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Clear the slide up flag
-					gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
-					gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
-					gp->track[ctr]->note[ctr2]->unpitchend = 1;
+					vars.gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Clear the slide up flag
+					vars.gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
+					vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+					vars.gp->track[ctr]->note[ctr2]->unpitchend = 1;
 				}
 				else
 				{	//Notate this as a normal pitched slide
-					gp->track[ctr]->note[ctr2]->slideend = endfret;
+					vars.gp->track[ctr]->note[ctr2]->slideend = endfret;
 				}
-				gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
+				vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
 			}
-			if(!(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || !(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			if(!(vars.gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || !(vars.gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				continue;	//If either of the up/down slide flags aren't set (the slide direction was determined), skip this note
 
 			//Otherwise if both are set, the next note didn't use any of the same strings as the slide note
 			//Base the slide direction on the lowest fret value of that next note
-			endfret = eof_pro_guitar_note_lowest_fret(gp->track[ctr], ctr2 + 1);
+			endfret = eof_pro_guitar_note_lowest_fret(vars.gp->track[ctr], ctr2 + 1);
 			if(startfret == endfret)
 				continue;	//If the slide and the following note start at the same fret position, skip this note as a slide direction can't be determined
 
 			if(startfret > endfret)
 			{	//This is a downward slide
-				gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
+				vars.gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
 			}
 			else
 			{	//This is an upward slide
-				gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
+				vars.gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
 			}
-			if(gp->track[ctr]->note[ctr2]->slideend == 0)
+			if(vars.gp->track[ctr]->note[ctr2]->slideend == 0)
 			{	//If the slide ending hasn't been defined yet
-				gp->track[ctr]->note[ctr2]->slideend = endfret;
-				gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
+				vars.gp->track[ctr]->note[ctr2]->slideend = endfret;
+				vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
 			}
 		}//For each note in the track
 	}//For each imported track
 
 //Convert slide in from above/below notation to pitched slides that each link to a note 1/# beat after them
-	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
-		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+		for(ctr2 = 0; ctr2 < vars.gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
 			EOF_PRO_GUITAR_NOTE *nnp;	//The pointer to the new note being added
 
-			if(!(gp->track[ctr]->note[ctr2]->tflags & EOF_NOTE_TFLAG_SLIDE_IN))		//If this note wasn't marked as an unpitched slide in during import
+			if(!(vars.gp->track[ctr]->note[ctr2]->tflags & EOF_NOTE_TFLAG_SLIDE_IN))		//If this note wasn't marked as an unpitched slide in during import
 				continue;	//Skip the note
-			if(gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)	//If this note was already linked to a tie note that follows it
+			if(vars.gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)	//If this note was already linked to a tie note that follows it
 				continue;	//Skip the note
 
-			nnp = eof_pro_guitar_track_add_note(gp->track[ctr]);		//Add a new note to the current track
+			nnp = eof_pro_guitar_track_add_note(vars.gp->track[ctr]);		//Add a new note to the current track
 			if(nnp)
 			{	//If the note was able to be allocated
 				int dir = 0;	//Tracks whether the slide in is to convert into an upward (>0) or downward (<0) slide
-				unsigned long beatnum = eof_get_beat(eof_song, gp->track[ctr]->note[ctr2]->pos);
+				unsigned long beatnum = eof_get_beat(eof_song, vars.gp->track[ctr]->note[ctr2]->pos);
 				unsigned long beatlength = eof_get_beat_length(eof_song, beatnum);
 
-				nnp->flags = gp->track[ctr]->note[ctr2]->flags;		//The new note will inherit all of the statuses/techniques that were defined for the original note
+				nnp->flags = vars.gp->track[ctr]->note[ctr2]->flags;		//The new note will inherit all of the statuses/techniques that were defined for the original note
 				nnp->flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;		//Except for the highlight status
-				gp->track[ctr]->note[ctr2]->flags = EOF_NOTE_FLAG_HIGHLIGHT;	//And the original note will just become a slide note (with highlighting)
-				nnp->length = gp->track[ctr]->note[ctr2]->length;	//The new note will inherit the length of the orginal note
+				vars.gp->track[ctr]->note[ctr2]->flags = EOF_NOTE_FLAG_HIGHLIGHT;	//And the original note will just become a slide note (with highlighting)
+				nnp->length = vars.gp->track[ctr]->note[ctr2]->length;	//The new note will inherit the length of the orginal note
 
 				//Find the direction of the slide and apply it to the note, place the newly added note 1/# beat after the slide beginning and link it
 				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
-					if(ctr3 < gp->track[ctr]->numstrings)
+					if(ctr3 < vars.gp->track[ctr]->numstrings)
 					{	//If this is a string used in the track
-						if(gp->track[ctr]->note[ctr2]->note & bitmask)
+						if(vars.gp->track[ctr]->note[ctr2]->note & bitmask)
 						{	//If this is a string used in the note
 							unsigned long snappos = 0;	//Used to grid snap the new note
 							unsigned long gap;		//The distance after the original note the new note is to be placed
 							if(!dir)
 							{	//If the direction was not found yet
-								gp->track[ctr]->note[ctr2]->length = 1;
-								gp->track[ctr]->note[ctr2]->tflags &= ~EOF_NOTE_TFLAG_SLIDE_IN;					//Clear the slide in temporary flag
-								gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Denote that the slide end will be defined
-								gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;			//Link it to the newly added note
-								if(gp->track[ctr]->note[ctr2]->frets[ctr3] > gp->track[ctr]->note[ctr2]->unpitchend)
+								vars.gp->track[ctr]->note[ctr2]->length = 1;
+								vars.gp->track[ctr]->note[ctr2]->tflags &= ~EOF_NOTE_TFLAG_SLIDE_IN;					//Clear the slide in temporary flag
+								vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Denote that the slide end will be defined
+								vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;			//Link it to the newly added note
+								if(vars.gp->track[ctr]->note[ctr2]->frets[ctr3] > vars.gp->track[ctr]->note[ctr2]->unpitchend)
 								{	//Downward slide
-									gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+									vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 								}
 								else
 								{	//Upward slide
-									gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+									vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 								}
-								dir = gp->track[ctr]->note[ctr2]->unpitchend - gp->track[ctr]->note[ctr2]->frets[ctr3];
+								dir = vars.gp->track[ctr]->note[ctr2]->unpitchend - vars.gp->track[ctr]->note[ctr2]->frets[ctr3];
 							}
 							gap = ((double)beatlength / (double)eof_gp_import_slide_in_beat_interval) + 0.5;
-							nnp->pos = gp->track[ctr]->note[ctr2]->pos + gap;	//Place the newly added note 1/# beat forward, based on the eof_gp_import_slide_in_beat_interval eof.cfg setting
+							nnp->pos = vars.gp->track[ctr]->note[ctr2]->pos + gap;	//Place the newly added note 1/# beat forward, based on the eof_gp_import_slide_in_beat_interval eof.cfg setting
 							nnp->length -= gap;							//Update the newly added note's length accordingly
 							if(!eof_is_any_beat_interval_position(nnp->pos, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
 							{	//If this note is not beat interval snapped
@@ -4922,9 +4543,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							nnp->note |= bitmask;	//Copy the gem to the newly added note
 							if(dir < 0)
 							{	//Downward slide
-								if(gp->track[ctr]->note[ctr2]->frets[ctr3] > dir * -1)
+								if(vars.gp->track[ctr]->note[ctr2]->frets[ctr3] > dir * -1)
 								{	//If the note can slide down enough
-									nnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Decrease the fret number to reflect the slide
+									nnp->frets[ctr3] = vars.gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Decrease the fret number to reflect the slide
 								}
 								else
 								{
@@ -4933,39 +4554,39 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							else
 							{	//Upward slide
-								nnp->frets[ctr3] = gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Increase the fret number to reflect the slide
+								nnp->frets[ctr3] = vars.gp->track[ctr]->note[ctr2]->frets[ctr3] + dir;	//Increase the fret number to reflect the slide
 							}
-							if(!gp->track[ctr]->note[ctr2]->slideend || (nnp->frets[ctr3] < gp->track[ctr]->note[ctr2]->slideend))
+							if(!vars.gp->track[ctr]->note[ctr2]->slideend || (nnp->frets[ctr3] < vars.gp->track[ctr]->note[ctr2]->slideend))
 							{	//Track the lowest fret value for the slide end position
-								gp->track[ctr]->note[ctr2]->slideend = nnp->frets[ctr3];		//And set that as the end of the pitched slide
+								vars.gp->track[ctr]->note[ctr2]->slideend = nnp->frets[ctr3];		//And set that as the end of the pitched slide
 							}
-							gp->track[ctr]->note[ctr2]->unpitchend = 0;
+							vars.gp->track[ctr]->note[ctr2]->unpitchend = 0;
 						}
 					}
 				}
 			}
 		}
-		eof_pro_guitar_track_sort_notes(gp->track[ctr]);	//Sort the track again in case notes were added
+		eof_pro_guitar_track_sort_notes(vars.gp->track[ctr]);	//Sort the track again in case notes were added
 	}
 
 //Remove string muted notes from chords that contain at least one non muted note
-	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
-		for(ctr2 = gp->track[ctr]->notes; ctr2 > 0; ctr2--)
+		for(ctr2 = vars.gp->track[ctr]->notes; ctr2 > 0; ctr2--)
 		{	//For each note in the track (in reverse order)
-			if(!eof_is_partially_string_muted(gp->track[ctr], ctr2 - 1))
+			if(!eof_is_partially_string_muted(vars.gp->track[ctr], ctr2 - 1))
 				continue;	//If this note doesn't have at least one muted and one non muted gem, skip it
 
 			for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
-				if(ctr3 < gp->track[ctr]->numstrings)
+				if(ctr3 < vars.gp->track[ctr]->numstrings)
 				{	//If this is a string used in the track
-					if(gp->track[ctr]->note[ctr2 - 1]->note & bitmask)
+					if(vars.gp->track[ctr]->note[ctr2 - 1]->note & bitmask)
 					{	//If this is a string used in the note
-						if(gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] & 0x80)
+						if(vars.gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] & 0x80)
 						{	//If this string is muted
-							gp->track[ctr]->note[ctr2 - 1]->note &= ~bitmask;	//Clear this string's gem
-							gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] = 0;	//Erase the fret value
+							vars.gp->track[ctr]->note[ctr2 - 1]->note &= ~bitmask;	//Clear this string's gem
+							vars.gp->track[ctr]->note[ctr2 - 1]->frets[ctr3] = 0;	//Erase the fret value
 						}
 					}
 				}
@@ -4974,60 +4595,56 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 
 //Unwrap repeat sections if necessary
-	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
-		if(eof_unwrap_gp_track(gp, ctr, import_ts, 0))
+		if(eof_unwrap_gp_track(vars.gp, ctr, import_ts, 0))
 		{	//If the track failed to unwrap
-			allegro_message("Warning:  Failed to unwrap repeats for track #%lu (%s).", ctr + 1, gp->names[ctr]);
+			allegro_message("Warning:  Failed to unwrap repeats for track #%lu (%s).", ctr + 1, vars.gp->names[ctr]);
 		}
 		import_ts = 0;	//Only unwrap the time signatures on the first pass
 	}
 
 //Create trill phrases
-	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
-		eof_build_trill_phrases(gp->track[ctr]);	//Add trill phrases to encompass the notes that have the trill flag set
+		eof_build_trill_phrases(vars.gp->track[ctr]);	//Add trill phrases to encompass the notes that have the trill flag set
 	}
 
 //Create tremolo phrases
-	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
 		if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) || !eof_gp_import_replaces_track)
 		{	//If the active project's active track already had the difficulty limit removed, or if the user preference is to import the GP file into the active track difficulty instead of replacing the whole track
-			eof_build_tremolo_phrases(gp->track[ctr], 0);	//Add tremolo phrases defined in the lead voice
-			eof_build_tremolo_phrases(gp->track[ctr], 1);	//Add tremolo phrases defined in the rhythm voice
+			eof_build_tremolo_phrases(vars.gp->track[ctr], 0);	//Add tremolo phrases defined in the lead voice
+			eof_build_tremolo_phrases(vars.gp->track[ctr], 1);	//Add tremolo phrases defined in the rhythm voice
 		}
 		else
 		{	//Otherwise it will apply to all track difficulties
-			eof_build_tremolo_phrases(gp->track[ctr], 0xFF);	//Add tremolo phrases and define them to apply to all track difficulties
+			eof_build_tremolo_phrases(vars.gp->track[ctr], 0xFF);	//Add tremolo phrases and define them to apply to all track difficulties
 		}
 	}//For each imported track
 
 //Validate any imported note/chord fingerings and duplicate defined fingerings to matching notes
-	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
-		eof_pro_guitar_track_fix_fingerings(gp->track[ctr], NULL, 0);	//Erase partial note fingerings, replicate valid finger definitions (within imported track only) to matching notes without finger definitions, don't make any additional undo states for corrections to the imported track
+		eof_pro_guitar_track_fix_fingerings(vars.gp->track[ctr], NULL, 0);	//Erase partial note fingerings, replicate valid finger definitions (within imported track only) to matching notes without finger definitions, don't make any additional undo states for corrections to the imported track
 	}
 
 //Sanitize note statuses in case there are any conflicts
-	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
-		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
+		for(ctr2 = 0; ctr2 < vars.gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
-			eof_sanitize_note_flags(&gp->track[ctr]->note[ctr2]->flags, EOF_TRACK_PRO_GUITAR, EOF_TRACK_PRO_GUITAR);	//Clean up status flags to suit a pro guitar track
+			eof_sanitize_note_flags(&vars.gp->track[ctr]->note[ctr2]->flags, EOF_TRACK_PRO_GUITAR, EOF_TRACK_PRO_GUITAR);	//Clean up status flags to suit a pro guitar track
 		}
 	}
 
 //Clean up
-	(void) pack_fclose(inf);
-	free(strings);
-	free(tsarray);
-	free(np);
-	free(hopo);
-	free(hopobeatnum);
-	free(hopomeasurenum);
 	(void) puts("\nSuccess");
-	return gp;
+	retval = vars.gp;	//Keep this pointer
+	vars.gp = NULL;	//Clear this pointer from the vars structure so it's not freed below
+	eof_guitar_pro_import_release_memory(&vars);
+	return retval;
 }
 
 int eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts, char beats_only)

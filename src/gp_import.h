@@ -73,6 +73,22 @@
 		char processed;				//Is set to nonzero after the sync point is incorporated into the project's tempo map
 	};
 
+	//Store most of the memory and file pointers in a struct to more efficiently free them upon error
+	struct eof_guitar_pro_import_vars
+	{
+		struct eof_guitar_pro_struct *gp;			//Stores the Guitar Pro data being imported
+		EOF_PRO_GUITAR_NOTE **np;			//Will store the last created note for each track (for handling tie and grace notes)
+		char *hopo;							//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
+		unsigned long *hopobeatnum;			//Will store the beat (note) number for which each track's last ho/po notation was defined, to ensure that the status is properly applied to the following note
+		unsigned long *hopomeasurenum;		//Likewise tracks which measure each track's last ho/po notation was defined, to allow tracking for these statuses between different measures
+		struct eof_gp_measure *tsarray;			//Stores measure information relating to time signatures, alternate endings and navigational symbols
+		struct eof_gpa_sync_point *sync_points;	//Stores sync point data parsed from a Go PlayAlong XML file
+		unsigned long *strings;					//Stores the number of strings for each track
+		PACKFILE *inf, *inf2;					//PACKFILE handles for file I/O
+	};
+
+	void eof_guitar_pro_import_release_memory(struct eof_guitar_pro_import_vars *vars);	//Releases the memory and frees the file handles of the pointers contained in vars (when they aren't NULL)
+
 	void eof_gp_debug_log(PACKFILE *inf, char *text);
 		//Logs the text
 	EOF_SONG *eof_import_gp(const char * fn);
