@@ -2013,7 +2013,7 @@ int eof_menu_edit_paste_logic(int function)
 			{	//If this pasted note's source note is in an arpeggio/handshape
 				EOF_PHRASE_SECTION *phraseptr;
 
-				phraseptr = eof_get_section_instance_at_pos_of_diff(eof_song, eof_selected_track, sourcediff, EOF_ARPEGGIO_SECTION, temp_note.pos + firstnotepos);	//Look up the arpeggio/handshape at the source note's original position
+				phraseptr = eof_get_section_instance_at_pos_of_diff(eof_song, sourcetrack, sourcediff, EOF_ARPEGGIO_SECTION, temp_note.pos + firstnotepos);	//Look up the arpeggio/handshape at the source note's original position
 				if(phraseptr)
 				{	//The arpeggio was found, update arpeggend based on how many beats long the source arpeggio was
 					unsigned long srcstartbeat, srcendbeat, dststartbeat;

@@ -4219,10 +4219,25 @@ int eof_save_helper_checks(void)
 
 					for(ctr3 = start + 1; !user_prompted && (ctr3 <= end); ctr3++)
 					{	//For each beat between them, after the first (which will always be at/before the beginning of the arpeggio, when the condition being checked can only happen to a beat AFTER the start of the arpeggio)
+						unsigned long event_pos, mover_pos;
+
 						if(eof_song->beat[ctr3]->contained_section_event < 0)
 							continue;	//If this beat does not have an RS phrase defined, skip it
 
-						//Otherwise it marks a phrase change
+						//Otherwise it marks a phrase change, determine the effective position of this phrase taking moveR into account as appropriate
+						event_pos = eof_song->beat[ctr3]->pos;	//The effective position of the examined phrase/section, depending on the presence of a moveR phrase
+						mover_pos = eof_beat_contains_mover_rs_phrase(eof_song, ctr3, ctr, NULL);	//Determine if this beat has a "moveR" phrase
+						if(mover_pos)
+						{	//If this beat has a "moveR" phrase to displace any RS phrases/sections on that beat
+							mover_pos = eof_get_pos_num_notes_after_timestamp(eof_song, ctr, eof_song->beat[ctr3]->pos, mover_pos);	//Determine the position the RS phrase/section are being moved to
+							if(mover_pos)
+							{	//If that position was determined
+								event_pos = mover_pos;		//That is the timestamp a note must cross to trigger this warning
+							}
+						}
+						if(event_pos > eof_get_beat(eof_song, tp->arpeggio[ctr2].end_pos))
+							continue;	//If moveR caused the RS phrase to occur after the end of this arpeggio/handshape, it's no longer an issue, skip to the next arpeggio/handshape
+
 						eof_2d_render_top_option = 9;					//Change the user preference to render RS phrases and sections at the top of the piano roll
 						if(tp->arpeggio[ctr2].difficulty != 0xFF)
 						{	//If this is a difficulty specific arpeggio

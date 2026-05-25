@@ -364,6 +364,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	int dcol2 = dcol;
 	int ncol = eof_color_silver;	//Note color defaults to silver unless the note is not star power
 	int lcol = makecol(128, 128, 128);	//The color used to draw the vertical line over the note's position
+	int boxcol = eof_color_white;	//The color used to draw the edges of the fret number box
 	unsigned long ctr;
 	unsigned long mask;	//Used to mask out colors in the for loop
 	int radius,dotsize;
@@ -517,6 +518,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	{
 		dcol = eof_color_white;
 	}
+	if(p)
+	{
+		boxcol = eof_color_red;	//For selected pro guitar notes, draw the fret number box with red edges to make it easier to tell that they're selected
+	}
 
 	//Render tab notation
 	if(track != 0)
@@ -562,7 +567,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 						}
 					}
 
-					fretbmp = eof_create_fret_number_bitmap(NULL, notation, 0, 2, textcol, bgcol, eof_symbol_font);	//Build a bordered bitmap for the technique, allow 2 pixels for padding
+					fretbmp = eof_create_fret_number_bitmap(NULL, notation, 0, 2, textcol, bgcol, boxcol, eof_symbol_font);	//Build a bordered bitmap for the technique, allow 2 pixels for padding
 					if(fretbmp != NULL)
 					{	//Render the bitmap in place of the note and then destroy the bitmap
 						y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
@@ -815,8 +820,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					BITMAP *fretbmp;
 
 					if(!eof_fingering_view)
-					{	//Render the fret number over the center of the note (but only if the active track is a pro guitar track)
-						fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 2, tcol, dcol, font);	//Allow 2 pixels for padding
+					{	//Render the fret number over the center of the note (but only if fingering view is not active)
+						fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 2, tcol, dcol, boxcol, font);	//Allow 2 pixels for padding
 					}
 					else
 					{	//Render the finger number instead
@@ -854,7 +859,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 								snprintf(notation, 2, "%u", fingernum);
 							}
 						}
-						fretbmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, font);
+						fretbmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
 					}
 					if(fretbmp != NULL)
 					{	//Render the bitmap on top of the 2D note and then destroy the bitmap
@@ -1704,7 +1709,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 		if(!eof_legacy_view && (notenote & mask) && (eof_track_is_pro_guitar_track(eof_song, track)))
 		{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
-			bmp1 = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, font);	//Create a bitmap showing the gem's fret value
+			bmp1 = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], NULL, ctr, 8, eof_color_white, eof_color_black, eof_color_white, font);	//Create a bitmap showing the gem's fret value
 			bmpxpos1 = xchart[lanenum] - 8;
 			bmpypos = 200 - (image_height / 2) + offset_y_3d;
 			bmpzpos = npos;
@@ -2155,7 +2160,7 @@ unsigned long eof_find_lyric_number(EOF_LYRIC * np)
 	return 0;
 }
 
-BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, unsigned char stringnum, unsigned long padding, int textcol, int fillcol, FONT *font)
+BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, unsigned char stringnum, unsigned long padding, int textcol, int fillcol, int boxcol, FONT *font)
 {
 	BITMAP *fretbmp = NULL;
 	int height, width;
@@ -2197,7 +2202,7 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, uns
 	if(fretbmp != NULL)
 	{	//Render the fret number on top of the 3D note
 		clear_to_color(fretbmp, fillcol);
-		rect(fretbmp, 0, 0, width - 1, height - 1, textcol);	//Draw a border along the edge of this bitmap
+		rect(fretbmp, 0, 0, width - 1, height - 1, boxcol);	//Draw a border along the edge of this bitmap
 		textprintf_ex(fretbmp, font, (padding / 2.0) + 1, 0, textcol, -1, "%s", text);	//Center the text between the padding (including one extra pixel for left padding), rounding to the right if the padding is an odd value
 	}
 

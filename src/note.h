@@ -56,7 +56,7 @@ unsigned long eof_find_lyric_number(EOF_LYRIC * np);
 	//Finds the lyric in the lyric[] array and returns its index, or 0 on error or lyric not found
 	//error checking can be achieved by testing if(!returnval && (lyric[returnval] != np))
 
-BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, unsigned char stringnum, unsigned long padding, int textcol, int fillcol, FONT *font);
+BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, char *text, unsigned char stringnum, unsigned long padding, int textcol, int fillcol, int boxcol, FONT *font);
 	//Used to create a bordered rectangle bitmap with the specified string number, for use in the editor or 3D window, returns NULL on error
 	//The specified font is used, allowing the mono-spaced symbol and regular fonts to be used interchangeably
 	//If note is NULL, a bitmap containing the string in the text pointer is used instead

@@ -86,17 +86,17 @@ MENU eof_beat_halve_bpm_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
-char *eof_beat_events_menu_place_section_text_non_pg = "Place &Section\tShift+E";
-char *eof_beat_events_menu_place_section_text_pg = "Place &Section";
+char *eof_beat_events_menu_place_section_text_non_pg = "&Place section\tShift+E";
+char *eof_beat_events_menu_place_section_text_pg = "&Place section";
 MENU eof_beat_events_menu[] =
 {
 	{"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
 	{"&Events", eof_menu_beat_events, NULL, 0, NULL},
 	{"Clear all events", eof_menu_beat_clear_events, NULL, 0, NULL},
-	{"Place &Section", eof_menu_beat_add_section, NULL, 0, NULL},
 	{"&Copy events\t" CTRL_NAME "+Shift+C", eof_menu_beat_copy_events, NULL, 0, NULL},
 	{"&Paste events\t" CTRL_NAME "+Shift+V", eof_menu_beat_paste_events, NULL, 0, NULL},
 	{"Copy &From", NULL, eof_menu_beat_events_copy_menu, 0, NULL},
+	{"Place &Trainer event", eof_menu_beat_trainer_event, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -104,7 +104,7 @@ MENU eof_beat_bpm_menu[] =
 {
 	{"&BPM Change", eof_menu_beat_bpm_change, NULL, 0, NULL},
 	{"&Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
-	{"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
+	{"C&Alculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
 	{"&Estimate BPM", eof_menu_beat_estimate_bpm, NULL, 0, NULL},
 	{"&Fix tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
 	{"&Double BPM", NULL, eof_beat_double_bpm_menu, 0, NULL},
@@ -113,11 +113,21 @@ MENU eof_beat_bpm_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_beat_tempo_map_menu[] =
+{
+	{"&Copy tempo map", eof_menu_beat_copy_tempo_map, NULL, 0, NULL},
+	{"&Paste tempo map", eof_menu_beat_paste_tempo_map, NULL, 0, NULL},
+	{"&Validate tempo map", eof_menu_beat_validate_tempo_map, NULL, 0, NULL},
+	{"&Export beat timings", eof_menu_beat_export_beat_timings, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_beat_menu[] =
 {
 	{"&BPM", NULL, eof_beat_bpm_menu, 0, NULL},
 	{"Time &Signature", NULL, eof_beat_time_signature_menu, 0, NULL},
 	{"&Key Signature", NULL, eof_beat_key_signature_menu, 0, NULL},
+	{"&Tempo map", NULL, eof_beat_tempo_map_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Add\t" CTRL_NAME "+Ins", eof_menu_beat_add, NULL, 0, NULL},
 	{"Delete\t" CTRL_NAME "+Del", eof_menu_beat_delete, NULL, 0, NULL},
@@ -128,17 +138,13 @@ MENU eof_beat_menu[] =
 	{"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
 	{"De&Lete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
 	{"Anchor measures", eof_menu_beat_anchor_measures, NULL, 0, NULL},
-	{"&Copy tempo map", eof_menu_beat_copy_tempo_map, NULL, 0, NULL},
-	{"&Paste tempo map", eof_menu_beat_paste_tempo_map, NULL, 0, NULL},
-	{"&Validate tempo map", eof_menu_beat_validate_tempo_map, NULL, 0, NULL},
 	{"Lock tempo map", eof_menu_beat_lock_tempo_map, NULL, 0, NULL},
 	{"Remove mid-beat status", eof_menu_beat_remove_mid_beat_status, NULL, 0, NULL},
 	{"Move to seek pos", eof_menu_beat_move_to_seek_pos, NULL, 0, NULL},
-	{"Export beat timings", eof_menu_beat_export_beat_timings, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Events", NULL, eof_beat_events_menu, 0, NULL},
 	{"&Rocksmith", NULL, eof_beat_rocksmith_menu, 0, NULL},
-	{"Place &Trainer event", eof_menu_beat_trainer_event, NULL, 0, NULL},
+	{"&Place section", eof_menu_beat_add_section, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -333,17 +339,17 @@ void eof_prepare_beat_menu(void)
 	if(eof_song && eof_song_loaded)
 	{	//If a song is loaded
 		//Several beat menu items are disabled below if the tempo map is locked.  Clear those items' flags in case the lock was removed
-		eof_beat_menu[4].flags = 0;		//Add
-		eof_beat_menu[5].flags = 0;		//Delete
-		eof_beat_menu[6].flags = 0;		//Push offset back
-		eof_beat_menu[7].flags = 0;		//Push offset up
-		eof_beat_menu[8].flags = 0;		//Reset offset to zero
-		eof_beat_menu[9].flags = 0;		//Anchor
-		eof_beat_menu[10].flags = 0;	//Toggle anchor
-		eof_beat_menu[11].flags = 0;	//Delete anchor
-		eof_beat_menu[12].flags = 0;	//Anchor measures
-		eof_beat_menu[14].flags = 0;	//Paste tempo map
-		eof_beat_menu[18].flags = 0;	//Move to seek pos
+		eof_beat_menu[5].flags = 0;		//Add
+		eof_beat_menu[6].flags = 0;		//Delete
+		eof_beat_menu[7].flags = 0;		//Push offset back
+		eof_beat_menu[8].flags = 0;		//Push offset up
+		eof_beat_menu[9].flags = 0;		//Reset offset to zero
+		eof_beat_menu[10].flags = 0;		//Anchor
+		eof_beat_menu[11].flags = 0;		//Toggle anchor
+		eof_beat_menu[12].flags = 0;		//Delete anchor
+		eof_beat_menu[13].flags = 0;		//Anchor measures
+		eof_beat_menu[16].flags = 0;		//Move to seek pos
+		eof_beat_tempo_map_menu[1].flags = 0;	//Paste tempo map
 
 		eof_beat_bpm_menu[0].flags = 0;	//BPM>BPM change
 		eof_beat_bpm_menu[1].flags = 0;	//BPM>Reset BPM
@@ -366,69 +372,69 @@ void eof_prepare_beat_menu(void)
 //Beat>Add and Delete validation
 		if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
 		{	//If there are no anchors after the selected beat, disable Beat>Add and Delete, as they'd have no effect
-			eof_beat_menu[4].flags = D_DISABLED;
 			eof_beat_menu[5].flags = D_DISABLED;
+			eof_beat_menu[6].flags = D_DISABLED;
 		}
 		else
 		{
-			eof_beat_menu[4].flags = 0;	//Add
-			eof_beat_menu[5].flags = 0;	//Delete
+			eof_beat_menu[5].flags = 0;	//Add
+			eof_beat_menu[6].flags = 0;	//Delete
 		}
 		if(eof_selected_beat == 0)
 		{	//If the first beat marker is selected, disable Beat>Delete, as this beat is not allowed to be deleted
-			eof_beat_menu[5].flags = D_DISABLED;
+			eof_beat_menu[6].flags = D_DISABLED;
 		}
 //Beat>Push Offset Up and Push Offset Back validation
 		if(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
 		{	//If the current MIDI delay is at least as long as the first beat's length, enable Beat>Push Offset Back
-			eof_beat_menu[6].flags = 0;	//Push offset back
-		}
-		else
-		{
-			eof_beat_menu[6].flags = D_DISABLED;
-		}
-		if(eof_song->beats > 1)
-		{	//If the chart has at least two beat markers, enable Beat>Push Offset Up
-			eof_beat_menu[7].flags = 0;	//Push offset up
+			eof_beat_menu[7].flags = 0;	//Push offset back
 		}
 		else
 		{
 			eof_beat_menu[7].flags = D_DISABLED;
 		}
-//Beat>Reset offset to zero validation
-		if(eof_song->beat[0]->pos > 0)
-		{	//If the current MIDI delay is not zero, enable Beat>Reset offset to zero
-			eof_beat_menu[8].flags = 0;	//Reset offset to zero
+		if(eof_song->beats > 1)
+		{	//If the chart has at least two beat markers, enable Beat>Push Offset Up
+			eof_beat_menu[8].flags = 0;	//Push offset up
 		}
 		else
 		{
 			eof_beat_menu[8].flags = D_DISABLED;
 		}
-//Beat>Anchor Beat and Toggle Anchor validation
-		if(eof_beat_is_mandatory_anchor(eof_song, eof_selected_beat))
-		{	//If the selected beat is required to be an anchor
-			eof_beat_menu[10].flags = D_DISABLED;	//Toggle anchor
-		}
-		else
-		{
-			eof_beat_menu[10].flags = 0;
-		}
-		if(eof_selected_beat != 0)
-		{	//If the first beat marker is not selected, enable Beat>Anchor Beat and Toggle Anchor
-			eof_beat_menu[9].flags = 0;		//Anchor beat
+//Beat>Reset offset to zero validation
+		if(eof_song->beat[0]->pos > 0)
+		{	//If the current MIDI delay is not zero, enable Beat>Reset offset to zero
+			eof_beat_menu[9].flags = 0;	//Reset offset to zero
 		}
 		else
 		{
 			eof_beat_menu[9].flags = D_DISABLED;
 		}
-//Beat>Delete Anchor validation
-		if((eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_selected_beat != 0))
-		{	//If the selected beat is an anchor, and the first beat marker is not selected, enable Beat>Delete Anchor
-			eof_beat_menu[11].flags = 0;	//Delete anchor
+//Beat>Anchor Beat and Toggle Anchor validation
+		if(eof_beat_is_mandatory_anchor(eof_song, eof_selected_beat))
+		{	//If the selected beat is required to be an anchor
+			eof_beat_menu[11].flags = D_DISABLED;	//Toggle anchor
 		}
 		else
 		{
-			eof_beat_menu[11].flags = D_DISABLED;
+			eof_beat_menu[11].flags = 0;
+		}
+		if(eof_selected_beat != 0)
+		{	//If the first beat marker is not selected, enable Beat>Anchor Beat and Toggle Anchor
+			eof_beat_menu[10].flags = 0;		//Anchor beat
+		}
+		else
+		{
+			eof_beat_menu[10].flags = D_DISABLED;
+		}
+//Beat>Delete Anchor validation
+		if((eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_selected_beat != 0))
+		{	//If the selected beat is an anchor, and the first beat marker is not selected, enable Beat>Delete Anchor
+			eof_beat_menu[12].flags = 0;	//Delete anchor
+		}
+		else
+		{
+			eof_beat_menu[12].flags = D_DISABLED;
 		}
 //Beat>Reset BPM validation
 		for(i = 1; i < eof_song->beats; i++)
@@ -476,41 +482,41 @@ void eof_prepare_beat_menu(void)
 		/* lock tempo map */
 		if(eof_song->tags->tempo_map_locked)
 		{
-			eof_beat_menu[16].flags = D_SELECTED;	//Beat>Lock tempo map
+			eof_beat_menu[14].flags = D_SELECTED;	//Beat>Lock tempo map
 		}
 		else
 		{
-			eof_beat_menu[16].flags = 0;
+			eof_beat_menu[14].flags = 0;
 		}
 
 		/* remove mid beat status */
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_MIDBEAT)
 		{	//If the selected beat has the mid beat flag set
-			eof_beat_menu[17].flags = 0;	//Remove mid-beat status
+			eof_beat_menu[15].flags = 0;	//Remove mid-beat status
 		}
 		else
 		{
-			eof_beat_menu[17].flags = D_DISABLED;
+			eof_beat_menu[15].flags = D_DISABLED;
 		}
 
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar/bass track is active
-			eof_beat_menu[22].flags = 0;	//Beat>Rocksmith>
-			eof_beat_events_menu[3].text = eof_beat_events_menu_place_section_text_pg;	//Show this menu function without the SHIFT+E shortcut, since it's used for placing Rocksmith Events if a pro guitar track is active
+			eof_beat_menu[19].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[20].text = eof_beat_events_menu_place_section_text_pg;	//Show the "place section" menu function without the SHIFT+E shortcut, since it's used for placing Rocksmith Events if a pro guitar track is active
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
-				eof_beat_menu[23].flags = D_DISABLED;
+				eof_beat_events_menu[6].flags = D_DISABLED;
 			}
 			else
 			{
-				eof_beat_menu[23].flags = 0;	//Place Trainer Event
+				eof_beat_events_menu[6].flags = 0;	//Place Trainer Event
 			}
 		}
 		else
 		{
-			eof_beat_events_menu[3].text = eof_beat_events_menu_place_section_text_non_pg;	//In a non pro guitar track, SHIFT+E will invoke the "Place section" function
-			eof_beat_menu[22].flags = D_DISABLED | D_HIDDEN;
-			eof_beat_menu[23].flags = D_DISABLED | D_HIDDEN;
+			eof_beat_menu[19].flags = D_DISABLED | D_HIDDEN;
+			eof_beat_menu[20].text = eof_beat_events_menu_place_section_text_non_pg;	//In a non pro guitar track, SHIFT+E will invoke the "Place section" function
+			eof_beat_events_menu[6].flags = D_DISABLED | D_HIDDEN;
 		}
 //Re-flag the active Time Signature for the selected beat
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -599,22 +605,22 @@ void eof_prepare_beat_menu(void)
 
 		if(eof_check_for_anchors_between_selected_beat_and_seek_pos() || (eof_song->beat[eof_selected_beat]->pos == eof_music_pos.value - eof_av_delay))
 		{	//If there are anchors between the selected beat and seek position, or the selected beat is at the seek position already
-			eof_beat_menu[18].flags = D_DISABLED;	//Move to seek pos
+			eof_beat_menu[16].flags = D_DISABLED;	//Move to seek pos
 		}
 
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the chart's tempo map is locked, disable various beat operations
-			eof_beat_menu[4].flags = D_DISABLED;	//Add
-			eof_beat_menu[5].flags = D_DISABLED;	//Delete
-			eof_beat_menu[6].flags = D_DISABLED;	//Push offset back
-			eof_beat_menu[7].flags = D_DISABLED;	//Push offset up
-			eof_beat_menu[8].flags = D_DISABLED;	//Reset offset to zero
-			eof_beat_menu[9].flags = D_DISABLED;	//Anchor
-			eof_beat_menu[10].flags = D_DISABLED;	//Toggle anchor
-			eof_beat_menu[11].flags = D_DISABLED;	//Delete anchor
-			eof_beat_menu[12].flags = D_DISABLED;	//Anchor measures
-			eof_beat_menu[14].flags = D_DISABLED;	//Paste tempo map
-			eof_beat_menu[18].flags = D_DISABLED;	//Move to seek pos
+			eof_beat_menu[5].flags = D_DISABLED;		//Add
+			eof_beat_menu[6].flags = D_DISABLED;		//Delete
+			eof_beat_menu[7].flags = D_DISABLED;		//Push offset back
+			eof_beat_menu[8].flags = D_DISABLED;		//Push offset up
+			eof_beat_menu[9].flags = D_DISABLED;		//Reset offset to zero
+			eof_beat_menu[10].flags = D_DISABLED;	//Anchor
+			eof_beat_menu[11].flags = D_DISABLED;	//Toggle anchor
+			eof_beat_menu[12].flags = D_DISABLED;	//Delete anchor
+			eof_beat_menu[13].flags = D_DISABLED;	//Anchor measures
+			eof_beat_menu[16].flags = D_DISABLED;	//Move to seek pos
+			eof_beat_tempo_map_menu[1].flags = D_DISABLED;	//Paste tempo map
 
 			eof_beat_bpm_menu[0].flags = D_DISABLED;	//BPM>BPM change
 			eof_beat_bpm_menu[1].flags = D_DISABLED;	//BPM>Reset BPM
