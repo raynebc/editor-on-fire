@@ -474,13 +474,7 @@ int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 			{	//The album art exists in another format
 				if(exists(eof_ffmpeg_executable_path))
 				{	//If FFMPEG is linked, use it to convert the image
-					char syscommand[1024] = {0}, tempstr[1024];
-					(void) ustrcpy(syscommand, eof_ffmpeg_executable_path);
-					(void) uszprintf(tempstr, (int) sizeof(tempstr) - 1, " -i \"%s\" \"%s\"", album_art_filename, eof_temp_filename);
-					(void) ustrcat(syscommand, tempstr);
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling FFMPEG as follows:  %s", syscommand);
-					eof_log(eof_log_string, 1);
-					(void) eof_system(syscommand);
+					(void) eof_ffmpeg_convert_file(album_art_filename, eof_temp_filename);
 				}
 				else
 				{
