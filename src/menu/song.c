@@ -1291,13 +1291,13 @@ int eof_menu_song_test(char application)
 	/* save temporary song */
 	(void) ustrcpy(temppath, songs_path);
 	(void) ustrcat(temppath, "EOFTemp\\");
-	(void) append_filename(temppath2, temppath, "notes.eof", 1024);
+	(void) append_filename(temppath2, temppath, "notes.eof", sizeof(temppath2));
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
 	if(!eof_save_song(eof_song, temppath2))
 	{
 		allegro_message("Song could not be tested!\nMake sure you set the %s song folder correctly (\"Link To %s\")!", appdisplayname, appdisplayname);
-		get_executable_name(temppath, 1024);
+		get_executable_name(temppath, sizeof(temppath));
 		(void) replace_filename(temppath, temppath, "", sizeof(temppath));
 		(void) eof_chdir(temppath);
 		eof_show_mouse(NULL);
@@ -1305,9 +1305,9 @@ int eof_menu_song_test(char application)
 		eof_pen_visible = 1;
 		return 1;
 	}
-	(void) append_filename(temppath2, temppath, "notes.mid", 1024);
+	(void) append_filename(temppath2, temppath, "notes.mid", sizeof(temppath2));
 	(void) eof_export_midi(eof_song, temppath2, 0, 1, 1, 0);	//Export the temporary MIDI, make pitchless/phraseless lyric corrections automatically
-	(void) append_filename(temppath2, temppath, "song.ini", 1024);
+	(void) append_filename(temppath2, temppath, "song.ini", sizeof(temppath2));
 	(void) eof_save_ini(eof_song, temppath2, 1);
 	(void) snprintf(syscommand, sizeof(syscommand) - 1, "%sguitar.ogg", eof_song_path);
 	(void) snprintf(temppath2, sizeof(temppath2) - 1, "%sEOFTemp\\guitar.ogg", songs_path);
@@ -1368,7 +1368,7 @@ int eof_menu_song_test(char application)
 	(void) eof_system("rd /s /q EOFTemp");
 
 	/* switch back to EOF folder */
-	get_executable_name(temppath, 1024);
+	get_executable_name(temppath, sizeof(temppath));
 	(void) replace_filename(temppath, temppath, "", sizeof(temppath));
 	(void) eof_chdir(temppath);
 

@@ -2570,7 +2570,7 @@ int eof_ch_sp_path_supervisor_process_solve(EOF_SP_PATH_SOLUTION *best, EOF_SP_P
 							{	//If there hasn't been an I/O error
 								if(workers[workerctr].job_count == 1)
 								{	//If this job will initiate a worker process
-									get_executable_name(exepath, (int) sizeof(exepath) - 1);	//Get the full path to the running EOF executable
+									get_executable_name(exepath, (int) sizeof(exepath));	//Get the full path to the running EOF executable
 
 									#ifdef ALLEGRO_WINDOWS
 										///Windows can easily launch another EOF instance over the command line

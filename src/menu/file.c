@@ -768,7 +768,7 @@ int eof_menu_file_load(void)
 		{
 			eof_log("\tCouldn't load OGG, trying guitar.ogg", 1);
 			/* upon fail, fall back to "guitar.ogg" */
-			(void) append_filename(temp_filename, eof_song_path, "guitar.ogg", 1024);
+			(void) append_filename(temp_filename, eof_song_path, "guitar.ogg", sizeof(temp_filename));
 			if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 			{
 				eof_log("\tCouldn't load guitar.ogg, continuing with no audio", 1);
@@ -893,7 +893,7 @@ int eof_menu_file_load_ogg(void)
 			eof_show_mouse(NULL);
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
-			(void) append_filename(eof_temp_filename, eof_song_path, "notes.lostoggbackup.eof", 1024);
+			(void) append_filename(eof_temp_filename, eof_song_path, "notes.lostoggbackup.eof", sizeof(eof_temp_filename));
 			allegro_message("%s", eof_temp_filename);
 			if(!eof_save_song(eof_song, eof_temp_filename))
 			{
@@ -1451,7 +1451,7 @@ int eof_command_line_stepmania_import(char *fn)
 	}
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
-	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
+	(void) append_filename(nfn, eof_song_path, "guitar.ogg", sizeof(nfn));
 	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
 	{	//If that also fails
 		eof_destroy_song(eof_song);
@@ -3395,14 +3395,14 @@ int eof_new_chart(char * filename)
 			if(ID3FrameProcessor(&tag))		//If ID3v2 frames are found
 			{
 				(void) GrabID3TextFrame(&tag,"TPE1",eof_etext,(unsigned long)(sizeof(eof_etext)/sizeof(char)));		//Store the Artist info in eof_etext[]
-				eof_convert_from_extended_ascii(eof_etext, 1024);
+				eof_convert_from_extended_ascii(eof_etext, sizeof(eof_etext));
 				(void) GrabID3TextFrame(&tag,"TIT2",eof_etext2,(unsigned long)(sizeof(eof_etext2)/sizeof(char)));		//Store the Title info in eof_etext2[]
-				eof_convert_from_extended_ascii(eof_etext2, 1024);
+				eof_convert_from_extended_ascii(eof_etext2, sizeof(eof_etext2));
 				(void) GrabID3TextFrame(&tag,"TYER",year,(unsigned long)(sizeof(year)/sizeof(char)));				//Store the Year info in year[]
 				eof_sanitize_string(year);			//Filter out unprintable and extended ASCII
-				eof_convert_from_extended_ascii(eof_etext2, 1024);
+				eof_convert_from_extended_ascii(eof_etext2, sizeof(eof_etext2));
 				(void) GrabID3TextFrame(&tag,"TALB",album,(unsigned long)(sizeof(album)/sizeof(char)));			//Store the Album info in album[]
-				eof_convert_from_extended_ascii(album, 256);
+				eof_convert_from_extended_ascii(album, sizeof(album));
 				(void) GrabID3TextFrame(&tag,"TCON",genre,(unsigned long)(sizeof(genre)/sizeof(char)));			//Store the Genre info in genre[]
 				eof_sanitize_string(album);			//Filter out unprintable and extended ASCII
 				if((genre[0] != '\0') && (genre[1] == '\0'))
@@ -3424,14 +3424,14 @@ int eof_new_chart(char * filename)
 				char buffer[1024] = {0};
 				if((eof_etext[0]=='\0') && (tag.id3v1artist != NULL))
 				{
-					(void) strncpy(buffer, tag.id3v1artist, 1023);
-					eof_convert_from_extended_ascii(buffer, 1024);
+					(void) strncpy(buffer, tag.id3v1artist, sizeof(buffer) - 1);
+					eof_convert_from_extended_ascii(buffer, sizeof(buffer));
 					(void) ustrcpy(eof_etext, buffer);
 				}
 				if((eof_etext2[0]=='\0') && (tag.id3v1title != NULL))
 				{
-					(void) strncpy(buffer, tag.id3v1title, 1023);
-					eof_convert_from_extended_ascii(buffer, 1024);
+					(void) strncpy(buffer, tag.id3v1title, sizeof(buffer) - 1);
+					eof_convert_from_extended_ascii(buffer, sizeof(buffer));
 					(void) ustrcpy(eof_etext2, buffer);
 				}
 				if((year[0]=='\0') && (tag.id3v1year != NULL))
@@ -3440,8 +3440,8 @@ int eof_new_chart(char * filename)
 				}
 				if((album[0]=='\0') && (tag.id3v1album != NULL))
 				{
-					(void) strncpy(buffer, tag.id3v1album, 1023);
-					eof_convert_from_extended_ascii(buffer, 1024);
+					(void) strncpy(buffer, tag.id3v1album, sizeof(buffer) - 1);
+					eof_convert_from_extended_ascii(buffer, sizeof(buffer));
 					buffer[255] = '\0';	//Ensure this will fit in the album string
 					(void) ustrcpy(album, buffer);
 				}
@@ -6278,7 +6278,7 @@ int eof_command_line_gp_import(char *fn)
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
-	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
+	(void) append_filename(nfn, eof_song_path, "guitar.ogg", sizeof(nfn));
 	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
 	{
 		eof_destroy_song(eof_song);
@@ -6685,7 +6685,7 @@ int eof_command_line_rs_import(char *fn)
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
-	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
+	(void) append_filename(nfn, eof_song_path, "guitar.ogg", sizeof(nfn));
 	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
 	{
 		eof_destroy_song(eof_song);

@@ -335,8 +335,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 		}
 	}
-	memcpy(backup_filename, fn, 1024);	//Back up the filename that is passed, if the calling function passed the file selection dialog's return path, that buffer will be clobbered if a file dialog to select the audio is launched
-										//This path will be used later to set the song and project paths at the end of the import
+	memcpy(backup_filename, fn, sizeof(backup_filename));	//Back up the filename that is passed, if the calling function passed the file selection dialog's return path, that buffer will be clobbered if a file dialog to select the audio is launched
+													//This path will be used later to set the song and project paths at the end of the import
 
 	/* identify/convert audio file to load */
 	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path

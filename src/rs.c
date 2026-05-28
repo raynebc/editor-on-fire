@@ -4469,7 +4469,7 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	put_backslash(buffer);
 	if(eof_song->tags->title[0] != '\0')
 	{	//If the chart has a defined song title
-		memcpy(temptitle, eof_song->tags->title, 256);	//Clone the song title
+		memcpy(temptitle, eof_song->tags->title, sizeof(temptitle));	//Clone the song title
 		for(ctr = 0; temptitle[ctr] != '\0'; ctr++)
 		{	//For each character in the song title
 			if(eof_is_illegal_filename_character(temptitle[ctr]))

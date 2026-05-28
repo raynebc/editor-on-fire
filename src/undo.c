@@ -175,7 +175,7 @@ int eof_undo_add(int type)
 		fp = pack_fopen(fn, "w");	//Open the recovery definition file for writing
 		if(fp)
 		{	//If the file opened
-			(void) append_filename(temp, eof_song_path, eof_loaded_song_name, 1024);	//Construct the full path to the project file
+			(void) append_filename(temp, eof_song_path, eof_loaded_song_name, sizeof(temp));	//Construct the full path to the project file
 			(void) pack_fputs(eof_undo_filename[eof_undo_current_index], fp);			//Write the undo file path
 			(void) pack_fputs("\n", fp);												//Write a newline character
 			(void) pack_fputs(temp, fp);												//Write the project path

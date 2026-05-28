@@ -1858,7 +1858,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				buffer3[ctr] = '\0';	//Terminate the string
 				shrink_xml_text(buffer4, sizeof(buffer4), buffer3);	//Convert any escape sequences in the file name to regular characters
 				(void) replace_filename(eof_temp_filename, fn, "", sizeof(eof_temp_filename));
-				strncat(eof_temp_filename, buffer4, 1024 - strlen(eof_temp_filename) - 1);	//Build the path to the GP file
+				eof_strncat(eof_temp_filename, buffer4, sizeof(eof_temp_filename));	//Build the path to the GP file
 				vars.inf = pack_fopen(eof_temp_filename, "rb");
 				if(!vars.inf)
 				{
@@ -1868,7 +1868,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					//Retry building the file path without converting escape sequences, in case Go PlayAlong did not correctly encode letters like ampersand
 					eof_log("\t\tRetrying without converting escape sequences in the GP5 file name", 1);
 					(void) replace_filename(eof_temp_filename, fn, "", sizeof(eof_temp_filename));
-					strncat(eof_temp_filename, buffer3, 1024 - strlen(eof_temp_filename) - 1);	//Build the path to the GP file, with the unaltered scoreUrl file name from the XML file
+					eof_strncat(eof_temp_filename, buffer3, sizeof(eof_temp_filename));	//Build the path to the GP file, with the unaltered scoreUrl file name from the XML file
 					vars.inf = pack_fopen(eof_temp_filename, "rb");
 					if(vars.inf)
 					{

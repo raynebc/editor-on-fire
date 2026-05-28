@@ -234,7 +234,7 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	}
 
 	/* stitch the original file to the silence file */
-	if(!getcwd(old_wd, 1024))
+	if(!getcwd(old_wd, sizeof(old_wd)))
 	{	//If the current working directory could not be obtained
 		eof_fix_window_title();
 		return 5;	//Return error:  Could not obtain current working directory
@@ -242,10 +242,10 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 
 	(void) eof_chdir(eof_song_path);	//Change directory to the project's folder, since oggCat does not support paths that have any Unicode/extended ASCII, relative paths will be given
 	#ifdef ALLEGRO_WINDOWS
-		get_executable_name(oggcfn, 1024);
+		get_executable_name(oggcfn, sizeof(oggcfn));
 		(void) replace_filename(oggcfn, oggcfn, "oggCat.exe", sizeof(oggcfn));	//Build the full path to oggCat
 	#else
-		ustrzcpy(oggcfn, 1024, "oggCat");
+		ustrzcpy(oggcfn, sizeof(oggcfn), "oggCat");
 	#endif
 	rel_oggfn = get_filename(oggfn);		//Get the relative path to the target OGG file
 	rel_backupfn = get_filename(backupfn);	//Get the relative path to the backup of the target OGG file

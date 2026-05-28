@@ -2184,7 +2184,7 @@ int eof_load_ogg(char * filename, char function)
 		{	//If the second attempt didn't succeed, attempt to load silent audio
 			if(function)
 			{	//If the calling function allows defaulting to second_of_silence.ogg
-				get_executable_name(output, 1024);	//Get EOF's executable path
+				get_executable_name(output, sizeof(output));	//Get EOF's executable path
 				#ifdef ALLEGRO_MACOSX
 					(void) strncat(output, "/Contents/Resources/eof/", sizeof(output) - strlen(output) - 1);
 				#endif
@@ -3104,7 +3104,7 @@ void eof_render_extended_ascii_fonts(void)
 		sprintf(buffer, "%u:", ch);
 		buffer[4] = (unsigned char)ch;
 		buffer[5] = '\0';
-		eof_convert_from_extended_ascii(buffer, 200);
+		eof_convert_from_extended_ascii(buffer, sizeof(buffer));
 
 		textprintf_ex(eof_window_info->screen, font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
 	//	textprintf_ex(eof_window_info->screen, eof_allegro_font, x, 12*ctr,  eof_color_white, eof_color_black, "%s", buffer);
@@ -4659,7 +4659,7 @@ int eof_initialize(int argc, char * argv[])
 	//Ensure the current working directory is EOF's program folder
 	if(!file_exists("eof.dat", 0, NULL))
 	{	//If eof.dat doesn't exist in the current working directory (ie. opening a file with EOF over command line)
-		get_executable_name(temp_filename, 1024);
+		get_executable_name(temp_filename, sizeof(temp_filename));
 		(void) replace_filename(temp_filename, temp_filename, "", sizeof(temp_filename));
 		if(eof_chdir(temp_filename))
 		{
@@ -4713,7 +4713,7 @@ int eof_initialize(int argc, char * argv[])
 	}
 	if((eof_songs_path[0] == '\0') || !eof_folder_exists(eof_songs_path))
 	{	//If the user-specified song folder couldn't be loaded from the config file above, or if the folder does not exist
-		get_executable_name(eof_songs_path, 1024);	//Set it to EOF's program file folder
+		get_executable_name(eof_songs_path, sizeof(eof_songs_path));	//Set it to EOF's program file folder
 		(void) replace_filename(eof_songs_path, eof_songs_path, "", sizeof(eof_songs_path));
 	}
 	put_backslash(eof_songs_path);	//Append a file separator if necessary
@@ -5110,7 +5110,7 @@ int eof_initialize(int argc, char * argv[])
 							(void) replace_filename(eof_song_path, eof_filename, "", sizeof(eof_song_path));		//Set the song folder path
 							(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));	//Set the last loaded song path
 							(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
-							(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, 1024);	//Construct the full OGG path
+							(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, sizeof(temp_filename));	//Construct the full OGG path
 							if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 							{
 								allegro_message("Failed to load OGG!");
@@ -5171,7 +5171,7 @@ int eof_initialize(int argc, char * argv[])
 				(void) eof_import_ini(eof_song, temp_filename, warn);	//Read song.ini and prompt to replace values of existing settings in the project if they are different (unless user preference suppresses the prompts)
 
 				/* attempt to load the OGG profile OGG */
-				(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, 1024);
+				(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, sizeof(temp_filename));
 				if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 				{
 					allegro_message("Failed to load OGG!");
@@ -5375,7 +5375,7 @@ int eof_initialize(int argc, char * argv[])
 		{	//If the user hasn't been prompted to set a song path yet
 			char exepath[1024] = {0};
 
-			get_executable_name(exepath, 1024);	//Set it to EOF's program file folder
+			get_executable_name(exepath, sizeof(exepath));	//Set it to EOF's program file folder
 			(void) replace_filename(exepath, exepath, "", sizeof(exepath));
 			put_backslash(exepath);	//Append a file separator if necessary
 
@@ -5879,7 +5879,7 @@ void eof_start_logging(void)
 		srand(time(NULL));	//Seed the random number generator with the current time
 		// coverity[dont_call]
 		eof_log_id = ((unsigned int) rand()) % 1000;	//Create a 3 digit random number to represent this EOF instance
-		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
+		get_executable_name(log_filename, sizeof(log_filename));	//Get the path of the EOF binary that is running
 		if(ch_sp_path_worker_logging)
 		{	//If this is a worker process, use the process number in the log file name
 			char tempstr[10];
@@ -6044,7 +6044,7 @@ void eof_log_notes(EOF_SONG *sp, unsigned long track)
 void eof_log_cwd(void)
 {
 	char cwd[1024];
-	if(!getcwd(cwd, 1024))
+	if(!getcwd(cwd, sizeof(cwd)))
 	{	//Couldn't obtain current working directory
 		eof_log("\tCould not detect working directory", 1);
 		return;
@@ -6066,7 +6066,7 @@ void eof_log_cwd(void)
 			return 0;	//Memory allocation failed, return failure
 		for(i = 0; i < eof_windows_argc; i++)
 		{
-			eof_windows_argv[i] = malloc(1024 * sizeof(char));
+			eof_windows_argv[i] = calloc(1024, sizeof(char));
 			if(eof_windows_argv[i] == NULL)
 			{	//If the allocation failed
 				while(i > 0)
@@ -6077,7 +6077,6 @@ void eof_log_cwd(void)
 				free(eof_windows_argv);
 				return 0;	//Return failure
 			}
-			memset(eof_windows_argv[i], 0, 1024);
 			(void) uconvert((char *)eof_windows_internal_argv[i], U_UNICODE, eof_windows_argv[i], U_UTF8, 4096);
 		}
 		retval = eof_initialize(eof_windows_argc, eof_windows_argv);
@@ -6943,12 +6942,12 @@ int eof_validate_temp_folder(void)
 	char correct_wd[1024], cwd[1024];
 
 	//Determine the CWD and what it is supposed to be
-	if(!getcwd(cwd, 1024))
+	if(!getcwd(cwd, sizeof(cwd)))
 	{	//Couldn't obtain current working directory
 		return 1;
 	}
 	put_backslash(cwd);	//Append a file separator if necessary
-	get_executable_name(correct_wd, 1024);
+	get_executable_name(correct_wd, sizeof(correct_wd));
 	#ifdef ALLEGRO_MACOSX
 		if(exe_is_bundle(correct_wd))
 		{
@@ -6981,7 +6980,7 @@ int eof_validate_temp_folder(void)
 	if(eof_folder_exists(eof_temp_path))
 		return 0;	//If this folder already exists
 
-	if(!getcwd(cwd, 1024))
+	if(!getcwd(cwd, sizeof(cwd)))
 	{	//Couldn't obtain current working directory
 		return 1;
 	}
