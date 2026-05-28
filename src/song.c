@@ -229,14 +229,14 @@ EOF_SONG * eof_create_song(void)
 		return NULL;
 	}
 	memset(sp->tags, 0, sizeof(EOF_SONG_TAGS));	//Fill with 0s to satisfy Splint
-	(void) ustrcpy(sp->tags->artist, "");
-	(void) ustrcpy(sp->tags->title, "");
-	(void) ustrcpy(sp->tags->frettist, "");
-	(void) ustrcpy(sp->tags->year, "");
-	(void) ustrcpy(sp->tags->loading_text, "");
-	(void) ustrcpy(sp->tags->album, "");
-	(void) ustrcpy(sp->tags->genre, "");
-	(void) ustrcpy(sp->tags->tracknumber, "");
+	(void) ustrzcpy(sp->tags->artist, sizeof(sp->tags->artist), "");
+	(void) ustrzcpy(sp->tags->title, sizeof(sp->tags->title), "");
+	(void) ustrzcpy(sp->tags->frettist, sizeof(sp->tags->frettist), "");
+	(void) ustrzcpy(sp->tags->year, sizeof(sp->tags->year), "");
+	(void) ustrzcpy(sp->tags->loading_text, sizeof(sp->tags->loading_text), "");
+	(void) ustrzcpy(sp->tags->album, sizeof(sp->tags->album), "");
+	(void) ustrzcpy(sp->tags->genre, sizeof(sp->tags->genre), "");
+	(void) ustrzcpy(sp->tags->tracknumber, sizeof(sp->tags->tracknumber), "");
 	sp->tags->lyrics = 0;
 	sp->tags->eighth_note_hopo = 0;
 	sp->tags->eof_fret_hand_pos_1_pg = 0;
@@ -256,7 +256,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->ogg[0].modified = 0;
 	sp->tags->ogg[0].description[0] = '\0';
 	sp->tags->ogg[0].flags = 0;
-	(void) ustrcpy(sp->tags->ogg[0].filename, "guitar.ogg");
+	(void) ustrzcpy(sp->tags->ogg[0].filename, sizeof(sp->tags->ogg[0].filename), "guitar.ogg");
 	sp->tags->oggs = 1;
 	sp->tags->revision = 0;
 	sp->tags->difficulty = 0xFF;
@@ -435,10 +435,10 @@ EOF_SONG * eof_load_song(const char * fn)
 	(void) pack_fclose(fp);
 
 //Update path variables
-	(void) ustrcpy(eof_filename, fn);
+	(void) ustrzcpy(eof_filename, sizeof(eof_filename), fn);
 	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
-	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) ustrzcpy(eof_loaded_song_name, sizeof(eof_loaded_song_name), get_filename(eof_filename));
 
 	eof_log("\tProject loaded", 1);
 
@@ -1721,8 +1721,8 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 	ptr3->track_format = trackdetails->track_format;
 	ptr3->track_behavior = trackdetails->track_behavior;
 	ptr3->track_type = trackdetails->track_type;
-	(void) ustrcpy(ptr3->name, trackdetails->name);
-	(void) ustrcpy(ptr3->altname, trackdetails->altname);
+	(void) ustrzcpy(ptr3->name, sizeof(ptr3->name), trackdetails->name);
+	(void) ustrzcpy(ptr3->altname, sizeof(ptr3->altname), trackdetails->altname);
 	ptr3->difficulty = trackdetails->difficulty;
 	ptr3->numdiffs = 5;	//By default, all tracks are limited to the original 5 difficulties
 	ptr3->flags = trackdetails->flags;
@@ -2879,7 +2879,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					}
 					else
 					{
-						(void) ustrcpy(sp->catalog->entry[sp->catalog->entries].name, name);
+						(void) ustrzcpy(sp->catalog->entry[sp->catalog->entries].name, sizeof(sp->catalog->entry[0].name), name);
 					}
 					sp->catalog->entries++;
 				}
@@ -2945,7 +2945,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				}
 				else
 				{
-					(void) ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
+					(void) ustrzcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, sizeof(sp->pro_guitar_track[0]->arpeggio[0].name), name);
 				}
 				if((unsigned char)difficulty == 0xFF)
 				{	//Beta versions of EOF 1.8 (up to beta 15) stored arpeggios without a specified difficulty, re-assign them to Expert
@@ -2985,7 +2985,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				}
 				else
 				{
-					(void) ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
+					(void) ustrzcpy(sp->legacy_track[tracknum]->slider[count].name, sizeof(sp->legacy_track[0]->slider[0].name), name);
 				}
 				sp->legacy_track[tracknum]->sliders++;
 				eof_sort_and_merge_overlapping_sections(sp->legacy_track[tracknum]->slider, &sp->legacy_track[tracknum]->sliders);	//Sort and remove overlapping instances
@@ -3010,7 +3010,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						}
 						else
 						{
-							(void) ustrcpy(sp->pro_guitar_track[tracknum]->handposition[count].name, name);
+							(void) ustrzcpy(sp->pro_guitar_track[tracknum]->handposition[count].name, sizeof(sp->pro_guitar_track[0]->handposition[0].name), name);
 						}
 						sp->pro_guitar_track[tracknum]->handpositions++;
 						return 1;	//Return success
@@ -3035,7 +3035,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				}
 				else
 				{
-					(void) ustrcpy(sp->pro_guitar_track[tracknum]->popupmessage[count].name, name);
+					(void) ustrzcpy(sp->pro_guitar_track[tracknum]->popupmessage[count].name, sizeof(sp->pro_guitar_track[0]->popupmessage[0].name), name);
 				}
 				sp->pro_guitar_track[tracknum]->popupmessages++;
 				eof_sort_and_merge_overlapping_sections(sp->pro_guitar_track[tracknum]->popupmessage, &sp->pro_guitar_track[tracknum]->popupmessages);	//Sort and remove overlapping instances
@@ -3053,7 +3053,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 
 				//Otherwise add the tone change to the project
 				sp->pro_guitar_track[tracknum]->tonechange[count].start_pos = start;
-				(void) ustrcpy(sp->pro_guitar_track[tracknum]->tonechange[count].name, name);
+				(void) ustrzcpy(sp->pro_guitar_track[tracknum]->tonechange[count].name, sizeof(sp->pro_guitar_track[0]->tonechange[0].name), name);
 				for(ctr = 0; ctr < (unsigned long)strlen(sp->pro_guitar_track[tracknum]->tonechange[count].name); ctr++)
 				{	//For each character in the name
 					if(sp->pro_guitar_track[tracknum]->tonechange[count].name[ctr] == ' ')
@@ -5398,7 +5398,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 			ptr->tflags = 0;
 			if(text != NULL)
 			{
-				(void) ustrcpy(ptr->name, text);
+				(void) ustrzcpy(ptr->name, sizeof(ptr->name), text);
 			}
 			else
 			{
@@ -5421,7 +5421,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 			ptr2->note = note;
 			if(text != NULL)
 			{
-				(void) ustrcpy(ptr2->text, text);
+				(void) ustrzcpy(ptr2->text, sizeof(ptr2->text), text);
 			}
 			else
 			{
@@ -5439,7 +5439,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char
 			ptr3 = (EOF_PRO_GUITAR_NOTE *)new_note;
 			if(text != NULL)
 			{
-				(void) ustrcpy(ptr3->name, text);
+				(void) ustrzcpy(ptr3->name, sizeof(ptr3->name), text);
 			}
 			else
 			{
@@ -8457,7 +8457,7 @@ int eof_create_image_sequence(char benchmark_only)
 		}
 
 		/* check to make sure \sequence folder exists */
-		(void) ustrcpy(eof_temp_filename, eof_song_path);
+		(void) ustrzcpy(eof_temp_filename, sizeof(eof_temp_filename), eof_song_path);
 		(void) replace_filename(eof_temp_filename, eof_temp_filename, "", (int)sizeof(eof_temp_filename));
 		put_backslash(eof_temp_filename);
 		(void) ustrcat(eof_temp_filename, "sequence");
@@ -8805,21 +8805,21 @@ void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				(void) ustrcpy(sp->legacy_track[tracknum]->note[note]->name, name);
+				(void) ustrzcpy(sp->legacy_track[tracknum]->note[note]->name, sizeof(sp->legacy_track[0]->note[0]->name), name);
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
 			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				(void) ustrcpy(sp->vocal_track[tracknum]->lyric[note]->text, name);
+				(void) ustrzcpy(sp->vocal_track[tracknum]->lyric[note]->text, sizeof(sp->vocal_track[0]->lyric[0]->text), name);
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				(void) ustrcpy(sp->pro_guitar_track[tracknum]->note[note]->name, name);
+				(void) ustrzcpy(sp->pro_guitar_track[tracknum]->note[note]->name, sizeof(sp->pro_guitar_track[0]->note[0]->name), name);
 			}
 		break;
 
@@ -11128,10 +11128,10 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 	csp->tags->start_point = csp->tags->end_point = ULONG_MAX;	//And don't retain the start/end points
 	csp->resolution = sp->resolution;
 	csp->fpbeattimes = sp->fpbeattimes;
-	(void) ustrcpy(csp->tags->ogg[0].filename, "guitar.ogg");	//Create a default OGG profile
+	(void) ustrzcpy(csp->tags->ogg[0].filename, sizeof(csp->tags->ogg[0].filename), "guitar.ogg");	//Create a default OGG profile
 	csp->tags->ogg[0].midi_offset = 0;
 	csp->tags->ogg[0].modified = 0;
-	(void) ustrcpy(csp->tags->ogg[0].description, "");
+	(void) ustrzcpy(csp->tags->ogg[0].description, sizeof(csp->tags->ogg[0].description), "");
 
 	//Clone beat map
 	for(ctr = 0; ctr < sp->beats; ctr++)
@@ -11839,7 +11839,7 @@ void eof_convert_all_lyrics_from_extended_ascii(EOF_VOCAL_TRACK *tp)
 		{	//If the string was able to be converted
 			if(ustrsizez(buffer) < EOF_MAX_LYRIC_LENGTH)
 			{	//If the converted string will fit
-				(void) ustrcpy(tp->lyric[ctr]->text, buffer);	//Store it as the new lyric text
+				(void) ustrzcpy(tp->lyric[ctr]->text, sizeof(tp->lyric[ctr]->text), buffer);	//Store it as the new lyric text
 			}
 		}
 	}

@@ -175,7 +175,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 			{
 				bp->type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 				bp->key = i;
-				(void) ustrcpy(bp->name, scancode_to_name(i));
+				(void) ustrzcpy(bp->name, sizeof(bp->name), scancode_to_name(i));
 				return 1;
 			}
 		}
@@ -256,7 +256,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 	}
 	if(key[KEY_ESC])
 	{	//If user pressed Escape, undefine this controller button
-		(void) ustrcpy(bp->name, "(none)");
+		(void) ustrzcpy(bp->name, sizeof(bp->name), "(none)");
 		bp->type=bp->joy=bp->index=bp->d=bp->key=bp->held=bp->pressed=bp->released = 0;
 	}
 	return 0;
@@ -278,7 +278,7 @@ void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 		{
 			case EOF_CONTROLLER_BUTTON_TYPE_KEY:
 			{
-				(void) ustrcpy(cp->button[i].name, scancode_to_name(cp->button[i].key));
+				(void) ustrzcpy(cp->button[i].name, sizeof(cp->button[0].name), scancode_to_name(cp->button[i].key));
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON:

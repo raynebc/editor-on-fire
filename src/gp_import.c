@@ -2470,12 +2470,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
 							if(eof_gp_import_preference_1 || !rssectionname)
 							{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
-								(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, buffer);
+								(void) ustrzcpy(vars.gp->text_event[vars.gp->text_events]->text, sizeof(vars.gp->text_event[0]->text), buffer);
 								vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
 							}
 							else
 							{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
-								(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, rssectionname);
+								(void) ustrzcpy(vars.gp->text_event[vars.gp->text_events]->text, sizeof(vars.gp->text_event[0]->text), rssectionname);
 								vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
 								vars.gp->text_event[vars.gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
 							}
@@ -2520,12 +2520,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
 							if(eof_gp_import_preference_1 || !rssectionname)
 							{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
-								(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, buffer);
+								(void) ustrzcpy(vars.gp->text_event[vars.gp->text_events]->text, sizeof(vars.gp->text_event[0]->text), buffer);
 								vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
 							}
 							else
 							{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
-								(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, rssectionname);
+								(void) ustrzcpy(vars.gp->text_event[vars.gp->text_events]->text, sizeof(vars.gp->text_event[0]->text), rssectionname);
 								vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
 								vars.gp->text_event[vars.gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
 							}
@@ -3169,14 +3169,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									vars.gp->text_event[vars.gp->text_events]->is_temporary = 1;	//Track that the event's beat number has already been determined
 									if(rssectionname)
 									{	//If this beat text matches a valid Rocksmith section name, import it with the section's native name
-										(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, rssectionname);
+										(void) ustrzcpy(vars.gp->text_event[vars.gp->text_events]->text, sizeof(vars.gp->text_event[0]->text), rssectionname);
 										vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
 										vars.gp->text_event[vars.gp->text_events]->flags |= EOF_EVENT_FLAG_RS_PHRASE;		//As well as a RS phrase
 										vars.gp->text_events++;
 									}
 									else if(!eof_gp_import_preference_1)
 									{	//If the user preference to discard beat text that doesn't match a RS section isn't enabled, import it as a RS phrase
-										(void) ustrcpy(vars.gp->text_event[vars.gp->text_events]->text, buffer);	//Copy the beat text as-is
+										(void) ustrzcpy(vars.gp->text_event[vars.gp->text_events]->text, sizeof(vars.gp->text_event[0]->text), buffer);	//Copy the beat text as-is
 										vars.gp->text_event[vars.gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
 										vars.gp->text_events++;
 									}

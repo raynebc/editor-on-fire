@@ -657,7 +657,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 				{	//If the song title is defined
 					if(!eof_check_string(eof_song->tags->title))
 					{	//If the song title isn't defined for the active project
-						(void) ustrcpy(eof_song->tags->title, ptr);	//Define it in song properties
+						(void) ustrzcpy(eof_song->tags->title, sizeof(eof_song->tags->title), ptr);	//Define it in song properties
 					}
 				}
 
@@ -666,7 +666,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 				{	//If the artist is defined
 					if(!eof_check_string(eof_song->tags->artist))
 					{	//If the artist isn't defined for the active project
-						(void) ustrcpy(eof_song->tags->artist, ptr);	//Define it in song properties
+						(void) ustrzcpy(eof_song->tags->artist, sizeof(eof_song->tags->artist), ptr);	//Define it in song properties
 					}
 				}
 

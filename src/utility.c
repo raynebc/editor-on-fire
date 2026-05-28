@@ -1330,7 +1330,7 @@ int eof_ffmpeg_convert_file(char *input, char *output)
 	}
 
 	//Call program
-	(void) ustrcpy(syscommand, eof_ffmpeg_executable_path);
+	(void) ustrzcpy(syscommand, sizeof(syscommand), eof_ffmpeg_executable_path);
 	(void) uszprintf(tempstr, (int) sizeof(tempstr) - 1, " -i \"%s\" -y \"%s\"", input, output);
 	(void) ustrcat(syscommand, tempstr);
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling FFMPEG as follows:  %s", syscommand);

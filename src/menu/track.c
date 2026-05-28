@@ -788,7 +788,7 @@ int eof_track_rename(void)
 
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
 	{	//If the track already has an alternate name
-		(void) ustrcpy(eof_etext, eof_song->track[eof_selected_track]->altname);	//Copy it into the input field
+		(void) ustrzcpy(eof_etext, sizeof(eof_etext), eof_song->track[eof_selected_track]->altname);	//Copy it into the input field
 	}
 	else
 	{
@@ -812,7 +812,7 @@ int eof_track_rename(void)
 			}
 
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			(void) ustrcpy(eof_song->track[eof_selected_track]->altname, eof_etext);	//Update the track entry
+			(void) ustrzcpy(eof_song->track[eof_selected_track]->altname, sizeof(eof_song->track[0]->altname), eof_etext);	//Update the track entry
 			if(eof_etext[0] != '\0')
 			{	//If the alternate name string is not empty
 				eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_ALT_NAME;	//Set this flag
@@ -2310,7 +2310,7 @@ int eof_track_rs_popup_add(void)
 		(void) eof_get_selected_note_range(&sel_start, &sel_end, 1);
 	}
 
-	(void) ustrcpy(eof_etext, "");
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), "");
 	if(sel_start != sel_end)
 	{	//If notes in this track difficulty are selected
 		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", sel_start);				//Initialize the start time with the start of the selection
@@ -2319,7 +2319,7 @@ int eof_track_rs_popup_add(void)
 	else
 	{
 		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_music_pos.value - eof_av_delay);	//Otherwise initialize the start time with the current seek position
-		(void) ustrcpy(eof_etext3, "");
+		(void) ustrzcpy(eof_etext3, sizeof(eof_etext3), "");
 	}
 	if(eof_popup_dialog(eof_song_rs_popup_add_dialog, 1) == 6)
 	{	//User clicked OK
@@ -2592,7 +2592,7 @@ int eof_track_rs_popup_messages_edit(DIALOG * d)
 	if((eof_rs_popup_messages_dialog[1].d1 < 0) || ((unsigned long)eof_rs_popup_messages_dialog[1].d1 >= tp->popupmessages))
 		return D_O_K;	//Invalid popup message selected in list
 	ptr = &(tp->popupmessage[eof_rs_popup_messages_dialog[1].d1]);
-	(void) ustrcpy(eof_etext, ptr->name);
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), ptr->name);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", ptr->start_pos);
 	(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%lu", ptr->end_pos - ptr->start_pos);
 
@@ -2624,7 +2624,7 @@ int eof_track_rs_popup_messages_edit(DIALOG * d)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_rs_popup_messages_dialog_undo_made = 1;
 				}
-				(void) ustrcpy(ptr->name, eof_etext);	//Update the popup message string
+				(void) ustrzcpy(ptr->name, sizeof(ptr->name), eof_etext);	//Update the popup message string
 				ptr->name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
 				ptr->start_pos = start;				//Update start timestamp
 				ptr->end_pos = start + duration;	//Update end timestamp
@@ -3953,14 +3953,14 @@ int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 		//Otherwise edit it instead of adding a new tone change
 		eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
 		eof_conditionally_center_dialog(eof_track_rs_tone_change_add_dialog);
-		(void) ustrcpy(eof_etext, tp->tonechange[ctr].name);
+		(void) ustrzcpy(eof_etext, sizeof(eof_etext), tp->tonechange[ctr].name);
 		eof_clear_input();
 		if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
 		{	//User clicked OK
 			if(eof_etext[0] != '\0')
 			{	//If a tone key name is specified
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				(void) ustrcpy(tp->tonechange[ctr].name, eof_etext);	//Update the tone name string
+				(void) ustrzcpy(tp->tonechange[ctr].name, sizeof(tp->tonechange[0].name), eof_etext);	//Update the tone name string
 				tp->tonechange[ctr].name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
 			}
 		}
@@ -3970,7 +3970,7 @@ int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 	eof_color_dialog(eof_track_rs_tone_change_add_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_track_rs_tone_change_add_dialog);
 
-	(void) ustrcpy(eof_etext, "");
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), "");
 	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
 	{	//User clicked OK
 		if(eof_etext[0] != '\0')
@@ -4260,7 +4260,7 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 	if((unsigned long)eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges)
 		return D_O_K;	//Invalid tone change selected in list
 	ptr = &(tp->tonechange[eof_track_rs_tone_changes_dialog[1].d1]);
-	(void) ustrcpy(eof_etext, ptr->name);
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), ptr->name);
 
 	eof_clear_input();
 	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
@@ -4272,7 +4272,7 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				eof_track_rs_tone_changes_dialog_undo_made = 1;
 			}
-			(void) ustrcpy(ptr->name, eof_etext);	//Update the tone name string
+			(void) ustrzcpy(ptr->name, sizeof(ptr->name), eof_etext);	//Update the tone name string
 			ptr->name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
 		}
 	}

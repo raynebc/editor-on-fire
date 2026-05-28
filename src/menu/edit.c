@@ -2468,7 +2468,7 @@ int eof_menu_edit_zoom_custom(void)
 	eof_render();
 	eof_color_dialog(eof_custom_zoom_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_custom_zoom_dialog);
-	(void) ustrcpy(eof_etext2, "");
+	(void) ustrzcpy(eof_etext2, sizeof(eof_etext2), "");
 	if(eof_popup_dialog(eof_custom_zoom_dialog, 2) == 3)
 	{	//User clicked OK
 		userinput = atoi(eof_etext2);

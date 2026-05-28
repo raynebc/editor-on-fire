@@ -29,7 +29,7 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long pos, char 
 		return NULL;	//If the allocation failed, return NULL
 
 	sp->text_event[sp->text_events]->text[0] = '\0';	//Eliminate false positive in Splint
-	(void) ustrcpy(sp->text_event[sp->text_events]->text, text);
+	(void) ustrzcpy(sp->text_event[sp->text_events]->text, sizeof(sp->text_event[0]->text), text);
 	sp->text_event[sp->text_events]->pos = pos;
 	if(track >= sp->tracks)
 	{	//If this is an invalid track

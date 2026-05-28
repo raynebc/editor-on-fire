@@ -943,13 +943,13 @@ void eof_prepare_note_menu(void)
 		{
 			eof_star_power_menu[1].flags = 0;	//Mark/re-mark
 			eof_star_power_menu[3].flags = 0;	//Edit timing
-			(void) ustrcpy(eof_star_power_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+W");
+			(void) ustrzcpy(eof_star_power_menu_mark_text, sizeof(eof_star_power_menu_mark_text), "Re-&Mark\t" CTRL_NAME "+W");
 		}
 		else
 		{
 			eof_star_power_menu[1].flags = D_DISABLED;
 			eof_star_power_menu[3].flags = D_DISABLED;
-			(void) ustrcpy(eof_star_power_menu_mark_text, "&Mark\t" CTRL_NAME "+W");
+			(void) ustrzcpy(eof_star_power_menu_mark_text, sizeof(eof_star_power_menu_mark_text), "&Mark\t" CTRL_NAME "+W");
 		}
 
 		/* star power copy from */
@@ -969,13 +969,13 @@ void eof_prepare_note_menu(void)
 		{
 			eof_solo_menu[1].flags = 0;
 			eof_solo_menu[3].flags = 0;	//Edit timing
-			(void) ustrcpy(eof_solo_menu_mark_text, "Re-&Mark");
+			(void) ustrzcpy(eof_solo_menu_mark_text, sizeof(eof_solo_menu_mark_text), "Re-&Mark");
 		}
 		else
 		{
 			eof_solo_menu[1].flags = D_DISABLED;
 			eof_solo_menu[3].flags = D_DISABLED;
-			(void) ustrcpy(eof_solo_menu_mark_text, "&Mark");
+			(void) ustrzcpy(eof_solo_menu_mark_text, sizeof(eof_solo_menu_mark_text), "&Mark");
 		}
 
 		/* solo copy from */
@@ -996,7 +996,7 @@ void eof_prepare_note_menu(void)
 			eof_lyric_line_menu[3].flags = 0;	//Note>Lyrics>Lyric Lines>Edit timing
 			eof_lyric_line_menu[4].flags = 0;	//Note>Lyrics>Lyric Lines>Split after selected
 			eof_lyric_line_menu[7].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
-			(void) ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+M/X");
+			(void) ustrzcpy(eof_lyric_line_menu_mark_text, sizeof(eof_lyric_line_menu_mark_text), "Re-&Mark\t" CTRL_NAME "+M/X");
 		}
 		else
 		{
@@ -1004,7 +1004,7 @@ void eof_prepare_note_menu(void)
 			eof_lyric_line_menu[3].flags = D_DISABLED;
 			eof_lyric_line_menu[4].flags = D_DISABLED;
 			eof_lyric_line_menu[7].flags = D_DISABLED;
-			(void) ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\t" CTRL_NAME "+M/X");
+			(void) ustrzcpy(eof_lyric_line_menu_mark_text, sizeof(eof_lyric_line_menu_mark_text), "&Mark\t" CTRL_NAME "+M/X");
 		}
 
 		/* arpeggio mark/remark */
@@ -1013,13 +1013,13 @@ void eof_prepare_note_menu(void)
 		{
 			eof_arpeggio_menu[1].flags = 0;				//Note>Pro Guitar>Arpeggio>Remove
 			eof_arpeggio_menu[3].flags = 0;				//Note>Pro Guitar>Arpeggio>Edit timing
-			(void) ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark");
+			(void) ustrzcpy(eof_arpeggio_menu_mark_text, sizeof(eof_arpeggio_menu_mark_text), "Re-&Mark");
 		}
 		else
 		{
 			eof_arpeggio_menu[1].flags = D_DISABLED;
 			eof_arpeggio_menu[3].flags = D_DISABLED;
-			(void) ustrcpy(eof_arpeggio_menu_mark_text, "&Mark");
+			(void) ustrzcpy(eof_arpeggio_menu_mark_text, sizeof(eof_arpeggio_menu_mark_text), "&Mark");
 		}
 
 		/* handshape mark/remark */
@@ -1028,13 +1028,13 @@ void eof_prepare_note_menu(void)
 		{
 			eof_handshape_menu[1].flags = 0;			//Note>Pro Guitar>Handshape>Remove
 			eof_handshape_menu[3].flags = 0;			//Note>Pro Guitar>Handshape>Edit timing
-			(void) ustrcpy(eof_handshape_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+Shift+H");
+			(void) ustrzcpy(eof_handshape_menu_mark_text, sizeof(eof_handshape_menu_mark_text), "Re-&Mark\t" CTRL_NAME "+Shift+H");
 		}
 		else
 		{
 			eof_handshape_menu[1].flags = D_DISABLED;
 			eof_handshape_menu[3].flags = D_DISABLED;
-			(void) ustrcpy(eof_handshape_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+H");
+			(void) ustrzcpy(eof_handshape_menu_mark_text, sizeof(eof_handshape_menu_mark_text), "&Mark\t" CTRL_NAME "+Shift+H");
 		}
 
 		/* arpeggio copy from */
@@ -1338,13 +1338,13 @@ void eof_prepare_note_menu(void)
 			{
 				eof_trill_menu[1].flags = 0;	//Note>Trill>Remove
 				eof_trill_menu[3].flags = 0;	//Note>Trill>Edit timing
-				(void) ustrcpy(eof_trill_menu_mark_text, "Re-&Mark");
+				(void) ustrzcpy(eof_trill_menu_mark_text, sizeof(eof_trill_menu_mark_text), "Re-&Mark");
 			}
 			else
 			{
 				eof_trill_menu[1].flags = D_DISABLED;
 				eof_trill_menu[3].flags = D_DISABLED;
-				(void) ustrcpy(eof_trill_menu_mark_text, "&Mark");
+				(void) ustrzcpy(eof_trill_menu_mark_text, sizeof(eof_trill_menu_mark_text), "&Mark");
 			}
 
 			/* Trill copy from */
@@ -1364,13 +1364,13 @@ void eof_prepare_note_menu(void)
 			{
 				eof_tremolo_menu[1].flags = 0;	//Note>Tremolo>Remove
 				eof_tremolo_menu[3].flags = 0;	//Note>Tremolo>Edit timing
-				(void) ustrcpy(eof_tremolo_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+Shift+O");
+				(void) ustrzcpy(eof_tremolo_menu_mark_text, sizeof(eof_tremolo_menu_mark_text), "Re-&Mark\t" CTRL_NAME "+Shift+O");
 			}
 			else
 			{
 				eof_tremolo_menu[1].flags = D_DISABLED;
 				eof_tremolo_menu[3].flags = D_DISABLED;
-				(void) ustrcpy(eof_tremolo_menu_mark_text, "&Mark\t" CTRL_NAME "+Shift+O");
+				(void) ustrzcpy(eof_tremolo_menu_mark_text, sizeof(eof_tremolo_menu_mark_text), "&Mark\t" CTRL_NAME "+Shift+O");
 			}
 
 			/* Tremolo copy from */
@@ -1387,13 +1387,13 @@ void eof_prepare_note_menu(void)
 			/* Rename Trill and Tremolo menus as necessary for the drum track */
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
 			{	//If a legacy/pro guitar/bass/keys track is active, set the guitar terminology for trill and tremolo sections
-				(void) ustrcpy(eof_trill_menu_text, "&Trill");
-				(void) ustrcpy(eof_tremolo_menu_text, "Tre&molo");
+				(void) ustrzcpy(eof_trill_menu_text, sizeof(eof_trill_menu_text), "&Trill");
+				(void) ustrzcpy(eof_tremolo_menu_text, sizeof(eof_tremolo_menu_text), "Tre&molo");
 			}
 			else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a legacy drum track is active, set the drum terminology for trill and tremolo sections
-				(void) ustrcpy(eof_trill_menu_text, "Special Drum R&Oll");
-				(void) ustrcpy(eof_tremolo_menu_text, "Drum Rol&L");
+				(void) ustrzcpy(eof_trill_menu_text, sizeof(eof_trill_menu_text), "Special Drum R&Oll");
+				(void) ustrzcpy(eof_tremolo_menu_text, sizeof(eof_tremolo_menu_text), "Drum Rol&L");
 			}
 			else
 			{	//Disable and hide these submenus unless a track that can use them is active
@@ -1411,13 +1411,13 @@ void eof_prepare_note_menu(void)
 			{
 				eof_slider_menu[1].flags = 0;	//Note>Slider>Remove
 				eof_slider_menu[3].flags = 0;	//Note>Slider>Edit timing
-				(void) ustrcpy(eof_slider_menu_mark_text, "Re-&Mark\tShift+S");
+				(void) ustrzcpy(eof_slider_menu_mark_text, sizeof(eof_slider_menu_mark_text), "Re-&Mark\tShift+S");
 			}
 			else
 			{
 				eof_slider_menu[1].flags = D_DISABLED;
 				eof_slider_menu[3].flags = D_DISABLED;
-				(void) ustrcpy(eof_slider_menu_mark_text, "&Mark\tShift+S");
+				(void) ustrzcpy(eof_slider_menu_mark_text, sizeof(eof_slider_menu_mark_text), "&Mark\tShift+S");
 			}
 
 			/* Toggle>Purple */
@@ -3803,7 +3803,7 @@ int eof_menu_split_lyric(void)
 	eof_render();
 	eof_color_dialog(eof_split_lyric_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_split_lyric_dialog);
-	(void) ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
 	if(eof_popup_dialog(eof_split_lyric_dialog, 2) == 3)
 	{	//User clicked OK
 		if(strchr(eof_etext, ' ') && eof_check_string(eof_etext))
@@ -3815,7 +3815,7 @@ int eof_menu_split_lyric(void)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				undo_made = 1;
 			}
-			(void) ustrcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext);
+			(void) ustrzcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, sizeof(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text), eof_etext);
 			eof_split_lyric(eof_selection.current, undo_made);
 		}
 	}
@@ -4640,7 +4640,7 @@ int eof_new_lyric_dialog(void)
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_lyric_dialog);
-	(void) ustrcpy(eof_etext, "");
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), "");
 
 	if(eof_pen_lyric.note != EOF_LYRIC_PERCUSSION)		//If not entering a percussion note
 	{
@@ -4656,7 +4656,7 @@ int eof_new_lyric_dialog(void)
 	{	//If the user clicked OK on the edit lyric prompt, a vocal percussion note is being added or the user suppressed the prompt to add lyric text
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_lyric.note, eof_pen_lyric.pos, eof_pen_lyric.length, 0, NULL);
-		(void) ustrcpy(new_lyric->text, eof_etext);
+		(void) ustrzcpy(new_lyric->text, sizeof(new_lyric->text), eof_etext);
 		eof_selection.track = EOF_TRACK_VOCALS;
 		eof_selection.current_pos = new_lyric->pos;
 		eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -4694,7 +4694,7 @@ int eof_edit_lyric_dialog(void)
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_lyric_dialog);
-	(void) ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
 	if(eof_popup_dialog(eof_lyric_dialog, 2) == 3)	//User hit OK on "Edit Lyric" dialog instead of canceling
 	{
 		if(eof_is_freestyle(eof_etext))		//If the text entered had one or more freestyle characters
@@ -4709,7 +4709,7 @@ int eof_edit_lyric_dialog(void)
 			}
 			else
 			{
-				(void) ustrcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext);
+				(void) ustrzcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, sizeof(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text), eof_etext);
 				eof_fix_lyric(eof_song->vocal_track[tracknum],eof_selection.current);	//Correct the freestyle character if necessary
 			}
 		}
@@ -5611,7 +5611,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 										undo_made = 1;
 									}
-									(void) ustrcpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name);
+									(void) ustrzcpy(eof_get_note_name(eof_song, eof_selected_track, ctr), EOF_NAME_LENGTH, eof_note_edit_name);
 								}
 							}
 						}
@@ -5674,7 +5674,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 											eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 											undo_made = 1;
 										}
-										(void) ustrcpy(tempptr, newname);	//Update the note's name to the user selection
+										(void) ustrzcpy(tempptr, EOF_NAME_LENGTH, newname);	//Update the note's name to the user selection
 									}
 								}
 							}
@@ -8122,7 +8122,7 @@ int eof_menu_note_edit_name(void)
 		}
 		else
 		{	//Otherwise copy the note name into the edit field
-			(void) ustrcpy(eof_etext, notename);
+			(void) ustrzcpy(eof_etext, sizeof(eof_etext), notename);
 		}
 
 		if(eof_popup_dialog(dialog_to_use, 2) == 3)	//User hit OK

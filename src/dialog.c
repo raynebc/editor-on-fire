@@ -184,12 +184,12 @@ void eof_prepare_menus(void)
 		{	//For each track supported by EOF
 			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the track name string representing this track
-				(void) ustrcpy(eof_menu_track_names[i], eof_song->track[i + 1]->name);
+				(void) ustrzcpy(eof_menu_track_names[i], sizeof(eof_menu_track_names[0]), eof_song->track[i + 1]->name);
 					//Copy the track name to the menu string
 			}
 			else
 			{	//Write a blank string for the track name
-				(void) ustrcpy(eof_menu_track_names[i],"");
+				(void) ustrzcpy(eof_menu_track_names[i], sizeof(eof_menu_track_names[0]), "");
 			}
 		}
 	}

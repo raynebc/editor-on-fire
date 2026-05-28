@@ -1396,10 +1396,10 @@ EOF_SONG * eof_import_gh(const char * fn)
 		}
 
 //Update path variables
-		(void) ustrcpy(eof_filename, fn);
+		(void) ustrzcpy(eof_filename, sizeof(eof_filename), fn);
 		(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));
 		(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
-		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+		(void) ustrzcpy(eof_loaded_song_name, sizeof(eof_loaded_song_name), get_filename(eof_filename));
 		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio

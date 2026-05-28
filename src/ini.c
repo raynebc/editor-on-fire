@@ -42,12 +42,12 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 	/* write artist name */
 	if(ustrlen(sp->tags->artist) > 0)
 	{
-		(void) ustrcpy(ini_string, "[song]\r\nartist = ");
+		(void) ustrzcpy(ini_string, sizeof(ini_string), "[song]\r\nartist = ");
 		(void) ustrcat(ini_string, sp->tags->artist);
 	}
 	else
 	{
-		(void) ustrcpy(ini_string, "[song]\r\nartist = ");
+		(void) ustrzcpy(ini_string, sizeof(ini_string), "[song]\r\nartist = ");
 		(void) ustrcat(ini_string, "Unknown Artist");
 	}
 

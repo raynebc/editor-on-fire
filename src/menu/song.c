@@ -334,12 +334,12 @@ void eof_prepare_song_menu(void)
 			if((i + 1 < EOF_TRACKS_MAX) && (i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
 				ptr[0] = ' ';	//Add a leading space
-				(void) ustrcpy(&(ptr[1]),eof_song->track[i+1]->name);
+				(void) ustrzcpy(&(ptr[1]), sizeof(eof_track_selected_menu_text[0]), eof_song->track[i+1]->name);
 					//Append the track name to the menu string, starting at index 1
 			}
 			else
 			{	//Write a blank string for the track name
-				(void) ustrcpy(eof_track_selected_menu_text[i],"");
+				(void) ustrzcpy(eof_track_selected_menu_text[i], sizeof(eof_track_selected_menu_text[0]), "");
 			}
 		}
 		eof_track_selected_menu[eof_selected_track-1].flags = D_SELECTED;	//Track numbering begins at 1 instead of 0
@@ -1074,15 +1074,15 @@ int eof_menu_song_properties(void)
 	eof_render();
 	eof_color_dialog(eof_song_properties_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_song_properties_dialog);
-	(void) ustrcpy(eof_etext, eof_song->tags->title);
-	(void) ustrcpy(eof_etext2, eof_song->tags->artist);
-	(void) ustrcpy(eof_etext3, eof_song->tags->frettist);
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), eof_song->tags->title);
+	(void) ustrzcpy(eof_etext2, sizeof(eof_etext2), eof_song->tags->artist);
+	(void) ustrzcpy(eof_etext3,sizeof(eof_etext3),  eof_song->tags->frettist);
 	(void) snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%ld", eof_song->tags->ogg[0].midi_offset);
-	(void) ustrcpy(eof_etext5, eof_song->tags->year);
-	(void) ustrcpy(eof_etext6, eof_song->tags->loading_text);
-	(void) ustrcpy(eof_etext8, eof_song->tags->album);
-	(void) ustrcpy(eof_etext9, eof_song->tags->genre);
-	(void) ustrcpy(eof_etext10, eof_song->tags->tracknumber);
+	(void) ustrzcpy(eof_etext5, sizeof(eof_etext5), eof_song->tags->year);
+	(void) ustrzcpy(eof_etext6, sizeof(eof_etext6), eof_song->tags->loading_text);
+	(void) ustrzcpy(eof_etext8, sizeof(eof_etext8), eof_song->tags->album);
+	(void) ustrzcpy(eof_etext9, sizeof(eof_etext9), eof_song->tags->genre);
+	(void) ustrzcpy(eof_etext10, sizeof(eof_etext10), eof_song->tags->tracknumber);
 	eof_song_properties_dialog[23].flags = eof_song->tags->lyrics ? D_SELECTED : 0;
 	eof_song_properties_dialog[24].flags = eof_song->tags->eighth_note_hopo ? D_SELECTED : 0;
 	eof_song_properties_dialog[25].flags = eof_song->tags->eof_fret_hand_pos_1_pg ? D_SELECTED : 0;
@@ -1129,21 +1129,21 @@ int eof_menu_song_properties(void)
 			allegro_message("Text too large for allocated buffer!");
 			return 1;
 		}
-		(void) ustrcpy(eof_song->tags->title, eof_etext);
-		(void) ustrcpy(eof_song->tags->artist, eof_etext2);
-		(void) ustrcpy(eof_song->tags->frettist, eof_etext3);
-		(void) ustrcpy(eof_song->tags->year, eof_etext5);
-		(void) ustrcpy(eof_song->tags->loading_text, eof_etext6);
-		(void) ustrcpy(eof_song->tags->album, eof_etext8);
-		(void) ustrcpy(eof_song->tags->genre, eof_etext9);
-		(void) ustrcpy(eof_song->tags->tracknumber, eof_etext10);
+		(void) ustrzcpy(eof_song->tags->title, sizeof(eof_song->tags->title), eof_etext);
+		(void) ustrzcpy(eof_song->tags->artist, sizeof(eof_song->tags->artist), eof_etext2);
+		(void) ustrzcpy(eof_song->tags->frettist, sizeof(eof_song->tags->frettist), eof_etext3);
+		(void) ustrzcpy(eof_song->tags->year, sizeof(eof_song->tags->year), eof_etext5);
+		(void) ustrzcpy(eof_song->tags->loading_text, sizeof(eof_song->tags->loading_text), eof_etext6);
+		(void) ustrzcpy(eof_song->tags->album, sizeof(eof_song->tags->album), eof_etext8);
+		(void) ustrzcpy(eof_song->tags->genre, sizeof(eof_song->tags->genre), eof_etext9);
+		(void) ustrzcpy(eof_song->tags->tracknumber, sizeof(eof_song->tags->tracknumber), eof_etext10);
 		eof_song->tags->lyrics = newlyrics;
 		eof_song->tags->eighth_note_hopo = neweighth_note_hopo;
 		eof_song->tags->eof_fret_hand_pos_1_pg = neweof_fret_hand_pos_1_pg;
 		eof_song->tags->eof_fret_hand_pos_1_pb = neweof_fret_hand_pos_1_pb;
 		eof_song->tags->accurate_ts = newaccurate_ts;
 		eof_song->tags->foflc_export_without_pitch_shifts = newfoflc_export_without_pitch_shifts;
-		(void) ustrcpy(eof_last_frettist, eof_etext3);
+		(void) ustrzcpy(eof_last_frettist, sizeof(eof_last_frettist), eof_etext3);
 		if(!eof_is_number(eof_etext4))
 		{
 			invalid = 1;
@@ -1289,7 +1289,7 @@ int eof_menu_song_test(char application)
 	(void) eof_mkdir("EOFTemp");
 
 	/* save temporary song */
-	(void) ustrcpy(temppath, songs_path);
+	(void) ustrzcpy(temppath, sizeof(temppath), songs_path);
 	(void) ustrcat(temppath, "EOFTemp\\");
 	(void) append_filename(temppath2, temppath, "notes.eof", sizeof(temppath2));
 	eof_sort_notes(eof_song);
@@ -1324,7 +1324,7 @@ int eof_menu_song_test(char application)
 	/* execute appropriate application to launch chart */
 	if(application == 1)
 	{	//If the user wants to test the chart in FoF
-		(void) ustrcpy(syscommand, executablename);
+		(void) ustrzcpy(syscommand, sizeof(syscommand), executablename);
 		(void) ustrcat(syscommand, " -p \"EOFTemp\" -D ");
 		(void) uszprintf(temppath, (int) sizeof(temppath) - 1, "%d", difficulty);
 		(void) ustrcat(syscommand, temppath);
@@ -1752,7 +1752,7 @@ int eof_ini_dialog_add(DIALOG * d)
 	eof_render();
 	eof_color_dialog(eof_ini_add_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_ini_add_dialog);
-	(void) ustrcpy(eof_etext, "");
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), "");
 	if(!eof_song || (eof_ini_dialog_array != eof_song->tags->ini_setting))
 		(void) ustrncpy(eof_ini_add_dialog_string, "Add default INI setting", EOF_INI_ADD_DIALOG_STRING_LENGTH);
 	else
@@ -2828,13 +2828,13 @@ int eof_menu_catalog_edit_name(void)
 		eof_render();
 		eof_color_dialog(eof_catalog_entry_name_dialog, gui_fg_color, gui_bg_color);
 		eof_conditionally_center_dialog(eof_catalog_entry_name_dialog);
-		(void) ustrcpy(eof_etext, eof_song->catalog->entry[eof_selected_catalog_entry].name);
+		(void) ustrzcpy(eof_etext, sizeof(eof_etext), eof_song->catalog->entry[eof_selected_catalog_entry].name);
 		if(eof_popup_dialog(eof_catalog_entry_name_dialog, 2) == 3)	//User hit OK
 		{
 			if(ustrcmp(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext))	//If the updated string (eof_etext) is different
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				(void) ustrcpy(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext);
+				(void) ustrzcpy(eof_song->catalog->entry[eof_selected_catalog_entry].name, sizeof(eof_song->catalog->entry[0].name), eof_etext);
 			}
 		}
 	}

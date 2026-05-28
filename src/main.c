@@ -1307,11 +1307,11 @@ void eof_fix_window_title(void)
 
 	if(eof_changes)
 	{
-		(void) ustrcpy(eof_window_title, "*EOF - ");
+		(void) ustrzcpy(eof_window_title, sizeof(eof_window_title), "*EOF - ");
 	}
 	else
 	{
-		(void) ustrcpy(eof_window_title, "EOF - ");
+		(void) ustrzcpy(eof_window_title, sizeof(eof_window_title), "EOF - ");
 	}
 	if(eof_song && eof_song_loaded)
 	{
@@ -2089,7 +2089,7 @@ int eof_load_ogg_quick(char * filename)
 		}
 	}
 
-	(void) ustrcpy(eof_loaded_ogg_name,filename);	//Store the loaded OGG filename
+	(void) ustrzcpy(eof_loaded_ogg_name, sizeof(eof_loaded_ogg_name), filename);	//Store the loaded OGG filename
 	eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
 
 	return loaded;
@@ -2220,7 +2220,7 @@ int eof_load_ogg(char * filename, char function)
 					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoaded OGG file \"%s\" (%lums)", filename, eof_music_length);
 					eof_log(eof_log_string, 1);
 					eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-					(void) ustrcpy(eof_loaded_ogg_name, output);	//Store the loaded OGG filename
+					(void) ustrzcpy(eof_loaded_ogg_name, sizeof(eof_loaded_ogg_name), output);	//Store the loaded OGG filename
 					eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
 
 					if(load_silence)
@@ -5106,10 +5106,10 @@ int eof_initialize(int argc, char * argv[])
 								allegro_message("Unable to load last undo state. File could be corrupt!");
 								return 0;
 							}
-							(void) ustrcpy(eof_filename, ptr);		//Set the full project path
+							(void) ustrzcpy(eof_filename, sizeof(eof_filename), ptr);		//Set the full project path
 							(void) replace_filename(eof_song_path, eof_filename, "", sizeof(eof_song_path));		//Set the song folder path
 							(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));	//Set the last loaded song path
-							(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
+							(void) ustrzcpy(eof_loaded_song_name, sizeof(eof_loaded_song_name), get_filename(eof_filename));	//Set the project filename
 							(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, sizeof(temp_filename));	//Construct the full OGG path
 							if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 							{

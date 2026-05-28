@@ -793,35 +793,35 @@ int eof_import_stepmania(char * fn)
 	{	//If a song title was defined
 		if(!eof_check_string(eof_song->tags->title))
 		{	//If the song title isn't defined for the active project
-			(void) ustrcpy(eof_song->tags->title, title);	//Define it in song properties
+			(void) ustrzcpy(eof_song->tags->title, sizeof(eof_song->tags->title), title);	//Define it in song properties
 		}
 	}
 	if(eof_check_string(artist))
 	{	//If the artist was defined
 		if(!eof_check_string(eof_song->tags->artist))
 		{	//If the artist isn't defined for the active project
-			(void) ustrcpy(eof_song->tags->artist, artist);	//Define it in song properties
+			(void) ustrzcpy(eof_song->tags->artist, sizeof(eof_song->tags->artist), artist);	//Define it in song properties
 		}
 	}
 	if(eof_check_string(charter))
 	{	//If the chart author was defined
 		if(!eof_check_string(eof_song->tags->frettist))
 		{	//If the chart author isn't defined for the active project
-			(void) ustrcpy(eof_song->tags->frettist, charter);	//Define it in song properties
+			(void) ustrzcpy(eof_song->tags->frettist, sizeof(eof_song->tags->frettist), charter);	//Define it in song properties
 		}
 	}
 	else if(eof_check_string(credit))
 	{	//If the SSC chart author tag was defined
 		if(!eof_check_string(eof_song->tags->frettist))
 		{	//If the chart author isn't defined for the active project
-			(void) ustrcpy(eof_song->tags->frettist, credit);	//Define it in song properties
+			(void) ustrzcpy(eof_song->tags->frettist, sizeof(eof_song->tags->frettist), credit);	//Define it in song properties
 		}
 	}
 	if(eof_check_string(genre))
 	{	//If the genre was defined
 		if(!eof_check_string(eof_song->tags->genre))
 		{	//If the genre isn't defined for the active project
-			(void) ustrcpy(eof_song->tags->genre, genre);	//Define it in song properties
+			(void) ustrzcpy(eof_song->tags->genre, sizeof(eof_song->tags->genre), genre);	//Define it in song properties
 		}
 	}
 

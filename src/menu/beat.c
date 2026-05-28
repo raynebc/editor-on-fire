@@ -552,13 +552,13 @@ void eof_prepare_beat_menu(void)
 		{
 			if((eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS))
 			{
-				(void) ustrcpy(eof_ts_menu_off_text, "No Change");
+				(void) ustrzcpy(eof_ts_menu_off_text, sizeof(eof_ts_menu_off_text), "No Change");
 				break;
 			}
 		}
 		if(i == eof_selected_beat)
 		{
-			(void) ustrcpy(eof_ts_menu_off_text, "&Off");
+			(void) ustrzcpy(eof_ts_menu_off_text, sizeof(eof_ts_menu_off_text), "&Off");
 		}
 //Re-flag the active Key Signature for the selected beat
 		for(i = 0; i < 16; i++)
@@ -585,13 +585,13 @@ void eof_prepare_beat_menu(void)
 		{
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_KEY_SIG)
 			{
-				(void) ustrcpy(eof_ks_menu_off_text, "No Change");
+				(void) ustrzcpy(eof_ks_menu_off_text, sizeof(eof_ks_menu_off_text), "No Change");
 				break;
 			}
 		}
 		if(i == eof_selected_beat)
 		{
-			(void) ustrcpy(eof_ks_menu_off_text, "&Off");
+			(void) ustrzcpy(eof_ks_menu_off_text, sizeof(eof_ks_menu_off_text), "&Off");
 		}
 
 		if((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat + 1]->ppqn != eof_song->beat[eof_selected_beat]->ppqn))
@@ -2292,7 +2292,7 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 	{	//Otherwise clear it
 		eof_events_add_dialog[7].flags = 0;
 	}
-	(void) ustrcpy(eof_etext, ptr->text);
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), ptr->text);
 
 	//Run and process the dialog results
 	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
@@ -2355,7 +2355,7 @@ void eof_add_or_edit_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *
 			}
 			else
 			{	//Otherwise edit the existing event
-				(void) ustrcpy(ptr->text, effective_text);
+				(void) ustrzcpy(ptr->text, sizeof(ptr->text), effective_text);
 				ptr->track = newtrack;
 				ptr->flags = newflags;
 			}
@@ -2420,7 +2420,7 @@ void eof_add_or_edit_floating_text_event_at_timestamp(EOF_TEXT_EVENT *ptr, unsig
 	{
 		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", timestamp);	//Initialize the event's time field with the specified position
 	}
-	(void) ustrcpy(eof_etext, ptr->text);
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), ptr->text);
 
 	//Run and process the dialog results
 	eof_color_dialog(eof_floating_events_add_dialog, gui_fg_color, gui_bg_color);
@@ -2449,7 +2449,7 @@ void eof_add_or_edit_floating_text_event_at_timestamp(EOF_TEXT_EVENT *ptr, unsig
 			}
 			else
 			{	//Otherwise edit the existing event
-				(void) ustrcpy(ptr->text, effective_text);
+				(void) ustrzcpy(ptr->text, sizeof(ptr->text), effective_text);
 				ptr->pos = newpos;
 				ptr->track = newtrack;
 			}
@@ -3204,7 +3204,7 @@ int eof_rocksmith_section_dialog_add(void)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
 			if(ptr)
 			{	//If an existing RS section is being edited
-				(void) ustrcpy(ptr->text, newstring);
+				(void) ustrzcpy(ptr->text, sizeof(ptr->text), newstring);
 				ptr->flags = newflags;
 				ptr->track = newtrack;
 			}

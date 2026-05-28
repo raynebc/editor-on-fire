@@ -351,7 +351,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		(void) replace_filename(searchpath, fn, "*.ogg", sizeof(searchpath));
 		if(al_findfirst(searchpath, &info, FA_ALL))
 		{
-			(void) ustrcpy(oldoggpath, eof_last_ogg_path);
+			(void) ustrzcpy(oldoggpath, sizeof(oldoggpath), eof_last_ogg_path);
 			(void) replace_filename(eof_last_ogg_path, fn, "", sizeof(eof_last_ogg_path));
 		}
 
@@ -389,7 +389,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	{
 		DestroyFeedbackChart(chart, 1);
 		eof_destroy_song(sp);
-		(void) ustrcpy(eof_last_ogg_path, oldoggpath); // remember previous OGG directory if we fail
+		(void) ustrzcpy(eof_last_ogg_path, sizeof(eof_last_ogg_path), oldoggpath); // remember previous OGG directory if we fail
 		return NULL;
 	}
 
@@ -1265,10 +1265,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 
 //Update path variables
-	(void) ustrcpy(eof_filename, backup_filename);
+	(void) ustrzcpy(eof_filename, sizeof(eof_filename), backup_filename);
 	(void) replace_filename(eof_song_path, backup_filename, "", sizeof(eof_song_path));
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
-	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) ustrzcpy(eof_loaded_song_name, sizeof(eof_loaded_song_name), get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 	cur_time = clock();

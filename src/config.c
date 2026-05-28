@@ -335,33 +335,33 @@ void eof_load_config(char * fn)
 	eof_desktop = get_config_int("display", "true_color", 1);
 
 	/* read paths */
-	(void) ustrcpy(eof_fof_executable_path, get_config_string("paths", "fof_path", ""));
-	(void) ustrcpy(eof_fof_executable_name, get_filename(eof_fof_executable_path));
-	(void) ustrcpy(eof_fof_songs_path, get_config_string("paths", "fof_songs_path", ""));
-	(void) ustrcpy(eof_ps_executable_path, get_config_string("paths", "ps_path", ""));
-	(void) ustrcpy(eof_ps_executable_name, get_filename(eof_ps_executable_path));
-	(void) ustrcpy(eof_rs_to_tab_executable_path, get_config_string("paths", "rs_to_tab_path", ""));
-	(void) ustrcpy(eof_ffmpeg_executable_path, get_config_string("paths", "eof_ffmpeg_executable_path", ""));
-	(void) ustrcpy(eof_ps_songs_path, get_config_string("paths", "ps_songs_path", ""));
-	(void) ustrcpy(eof_songs_path, get_config_string("paths", "songs_path", ""));
-	(void) ustrcpy(eof_last_eof_path, get_config_string("paths", "eof_path", ""));
-	(void) ustrcpy(eof_last_ogg_path, get_config_string("paths", "ogg_path", ""));
-	(void) ustrcpy(eof_last_midi_path, get_config_string("paths", "midi_path", ""));
-	(void) ustrcpy(eof_last_dr_path, get_config_string("paths", "dr_path", ""));
-	(void) ustrcpy(eof_last_sm_path, get_config_string("paths", "sm_path", ""));
-	(void) ustrcpy(eof_last_db_path, get_config_string("paths", "db_path", ""));
-	(void) ustrcpy(eof_last_gh_path, get_config_string("paths", "gh_path", ""));
-	(void) ustrcpy(eof_last_ghl_path, get_config_string("paths", "ghl_path", ""));
-	(void) ustrcpy(eof_last_lyric_path, get_config_string("paths", "lyric_path", ""));
-	(void) ustrcpy(eof_last_gp_path, get_config_string("paths", "gp_path", ""));
-	(void) ustrcpy(eof_last_rs_path, get_config_string("paths", "rs_path", ""));
-	(void) ustrcpy(eof_last_sonic_visualiser_path, get_config_string("paths", "sonic_visualiser_path", ""));
-	(void) ustrcpy(eof_last_bf_path, get_config_string("paths", "bf_path", ""));
-	(void) ustrcpy(eof_last_browsed_notes_panel_path, get_config_string("paths", "eof_last_browsed_notes_panel_path", ""));
-	(void) ustrcpy(eof_current_notes_panel_path, get_config_string("paths", "eof_current_notes_panel_path", ""));
+	(void) ustrzcpy(eof_fof_executable_path, sizeof(eof_fof_executable_path), get_config_string("paths", "fof_path", ""));
+	(void) ustrzcpy(eof_fof_executable_name, sizeof(eof_fof_executable_name), get_filename(eof_fof_executable_path));
+	(void) ustrzcpy(eof_fof_songs_path, sizeof(eof_fof_songs_path), get_config_string("paths", "fof_songs_path", ""));
+	(void) ustrzcpy(eof_ps_executable_path, sizeof(eof_ps_executable_path), get_config_string("paths", "ps_path", ""));
+	(void) ustrzcpy(eof_ps_executable_name, sizeof(eof_ps_executable_name), get_filename(eof_ps_executable_path));
+	(void) ustrzcpy(eof_rs_to_tab_executable_path, sizeof(eof_rs_to_tab_executable_path), get_config_string("paths", "rs_to_tab_path", ""));
+	(void) ustrzcpy(eof_ffmpeg_executable_path, sizeof(eof_ffmpeg_executable_path), get_config_string("paths", "eof_ffmpeg_executable_path", ""));
+	(void) ustrzcpy(eof_ps_songs_path, sizeof(eof_ps_songs_path), get_config_string("paths", "ps_songs_path", ""));
+	(void) ustrzcpy(eof_songs_path, sizeof(eof_songs_path), get_config_string("paths", "songs_path", ""));
+	(void) ustrzcpy(eof_last_eof_path, sizeof(eof_last_eof_path), get_config_string("paths", "eof_path", ""));
+	(void) ustrzcpy(eof_last_ogg_path, sizeof(eof_last_ogg_path), get_config_string("paths", "ogg_path", ""));
+	(void) ustrzcpy(eof_last_midi_path, sizeof(eof_last_midi_path), get_config_string("paths", "midi_path", ""));
+	(void) ustrzcpy(eof_last_dr_path, sizeof(eof_last_dr_path), get_config_string("paths", "dr_path", ""));
+	(void) ustrzcpy(eof_last_sm_path, sizeof(eof_last_sm_path), get_config_string("paths", "sm_path", ""));
+	(void) ustrzcpy(eof_last_db_path, sizeof(eof_last_db_path), get_config_string("paths", "db_path", ""));
+	(void) ustrzcpy(eof_last_gh_path, sizeof(eof_last_gh_path), get_config_string("paths", "gh_path", ""));
+	(void) ustrzcpy(eof_last_ghl_path, sizeof(eof_last_ghl_path), get_config_string("paths", "ghl_path", ""));
+	(void) ustrzcpy(eof_last_lyric_path, sizeof(eof_last_lyric_path), get_config_string("paths", "lyric_path", ""));
+	(void) ustrzcpy(eof_last_gp_path, sizeof(eof_last_gp_path), get_config_string("paths", "gp_path", ""));
+	(void) ustrzcpy(eof_last_rs_path, sizeof(eof_last_rs_path), get_config_string("paths", "rs_path", ""));
+	(void) ustrzcpy(eof_last_sonic_visualiser_path, sizeof(eof_last_sonic_visualiser_path), get_config_string("paths", "sonic_visualiser_path", ""));
+	(void) ustrzcpy(eof_last_bf_path, sizeof(eof_last_bf_path), get_config_string("paths", "bf_path", ""));
+	(void) ustrzcpy(eof_last_browsed_notes_panel_path, sizeof(eof_last_browsed_notes_panel_path), get_config_string("paths", "eof_last_browsed_notes_panel_path", ""));
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), get_config_string("paths", "eof_current_notes_panel_path", ""));
 
 	/* read editor settings */
-	(void) ustrcpy(eof_last_frettist, get_config_string("editor", "frettist", ""));
+	(void) ustrzcpy(eof_last_frettist, sizeof(eof_last_frettist), get_config_string("editor", "frettist", ""));
 	eof_snap_mode = get_config_int("editor", "snap_mode", 0);
 	if((eof_snap_mode < 0) || (eof_snap_mode > EOF_SNAP_CUSTOM))
 	{
@@ -441,7 +441,7 @@ void eof_load_config(char * fn)
 	eof_grid_line_solid = get_config_int("other", "eof_grid_line_solid", 0);
 	eof_grid_line_gap = get_config_int("other", "eof_grid_line_gap", 0);
 
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_1", "35,36"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_1", "35,36"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_1, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {35,36,0};
@@ -451,7 +451,7 @@ void eof_load_config(char * fn)
 		memcpy(gp_drum_import_lane_1, default_mapping, sizeof(default_mapping));
 	}
 
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_2", "38,40"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_2", "38,40"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_2, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {38,40,0};
@@ -460,7 +460,7 @@ void eof_load_config(char * fn)
 		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_2, default_mapping, sizeof(default_mapping));
 	}
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_2_rimshot", "37"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_2_rimshot", "37"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_2_rimshot, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {37,0};
@@ -470,7 +470,7 @@ void eof_load_config(char * fn)
 		memcpy(gp_drum_import_lane_2_rimshot, default_mapping, sizeof(default_mapping));
 	}
 
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3", "47,50"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_3", "47,50"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_3, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {47,50,0};
@@ -479,7 +479,7 @@ void eof_load_config(char * fn)
 		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_3, default_mapping, sizeof(default_mapping));
 	}
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3_cymbal", "42,54,92"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_3_cymbal", "42,54,92"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_3_cymbal, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {42,54,92,0};
@@ -488,7 +488,7 @@ void eof_load_config(char * fn)
 		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_3_cymbal, default_mapping, sizeof(default_mapping));
 	}
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3_hi_hat_pedal", "44"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_3_hi_hat_pedal", "44"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_3_hi_hat_pedal, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {44,0};
@@ -497,7 +497,7 @@ void eof_load_config(char * fn)
 		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_3_hi_hat_pedal, default_mapping, sizeof(default_mapping));
 	}
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_3_hi_hat_open", "46"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_3_hi_hat_open", "46"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_3_hi_hat_open, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {46,0};
@@ -507,7 +507,7 @@ void eof_load_config(char * fn)
 		memcpy(gp_drum_import_lane_3_hi_hat_open, default_mapping, sizeof(default_mapping));
 	}
 
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_4", "45,48"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_4", "45,48"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_4, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {45,48,0};
@@ -516,7 +516,7 @@ void eof_load_config(char * fn)
 		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_4, default_mapping, sizeof(default_mapping));
 	}
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_4_cymbal", "51,53,56,59"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_4_cymbal", "51,53,56,59"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_4_cymbal, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {51,53,56,59,0};
@@ -526,7 +526,7 @@ void eof_load_config(char * fn)
 		memcpy(gp_drum_import_lane_4_cymbal, default_mapping, sizeof(default_mapping));
 	}
 
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_5", "41,43"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_5", "41,43"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_5, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {41,43,0};
@@ -535,7 +535,7 @@ void eof_load_config(char * fn)
 		allegro_message("%s", eof_log_string);
 		memcpy(gp_drum_import_lane_5, default_mapping, sizeof(default_mapping));
 	}
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_5_cymbal", "49,52,55,57"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_5_cymbal", "49,52,55,57"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_5_cymbal, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {49,52,55,57,0};
@@ -545,7 +545,7 @@ void eof_load_config(char * fn)
 		memcpy(gp_drum_import_lane_5_cymbal, default_mapping, sizeof(default_mapping));
 	}
 
-	(void) ustrcpy(gp_drum_mappings, get_config_string("other", "gp_drum_import_lane_6", "0"));
+	(void) ustrzcpy(gp_drum_mappings, sizeof(gp_drum_mappings), get_config_string("other", "gp_drum_import_lane_6", "0"));
 	if(!eof_parse_gp_drum_mappings(gp_drum_import_lane_6, gp_drum_mappings, EOF_GP_DRUM_MAPPING_COUNT))
 	{	//If the drum mappings couldn't be parsed and stored
 		unsigned char default_mapping[] = {0};

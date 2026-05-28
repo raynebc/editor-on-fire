@@ -550,7 +550,7 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	if(!directory)
 		return 0;	//Return error
 
-	(void) ustrcpy(syscommand, directory);
+	(void) ustrzcpy(syscommand, sizeof(syscommand), directory);
 
 	/* remove slash from folder name so we can check if it exists */
 	if((syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '\\') || (syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '/'))
@@ -831,8 +831,8 @@ int eof_menu_file_save_as(void)
 		retval = eof_save_helper(buffer, 0);	//Perform "Save As" operation to the selected path
 		if(retval == 0)
 		{	//If the "Save as" operation succeeded, update folder path strings
-			(void) ustrcpy(eof_song_path, new_foldername);	//Set the project folder path
-			(void) ustrcpy(eof_last_eof_path, new_foldername);
+			(void) ustrzcpy(eof_song_path, sizeof(eof_song_path), new_foldername);	//Set the project folder path
+			(void) ustrzcpy(eof_last_eof_path, sizeof(eof_last_eof_path), new_foldername);
 		}
 		else if(retval == 1)
 		{
@@ -979,7 +979,7 @@ int eof_menu_file_save_logic(char silent)
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tProject file \"%s\" does not exist.  Checking existence of project folder", eof_temp_filename);
 		eof_log(eof_log_string, 1);
 
-		(void) ustrcpy(eof_temp_filename, eof_song_path);
+		(void) ustrzcpy(eof_temp_filename, sizeof(eof_temp_filename), eof_song_path);
 		if((eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '\\') || (eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '/'))
 		{	//If the path ends in a separator
 			eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] = '\0';	//Remove it
@@ -1089,7 +1089,7 @@ int eof_menu_file_lyrics_import(void)
 			(void) eof_copy_file(returnedfn, templyricfile);	//Copy this to a temporary file containing normal ASCII characters
 			returnedfn = templyricfile;	//Change the target file path to the temporary file
 		}
-		(void) ustrcpy(eof_filename, returnedfn);	//Store another copy of the lyric file name, since if it's a vocal rhythm file, the user will have to select a MIDI file, whose path will be stored in returnedfn
+		(void) ustrzcpy(eof_filename, sizeof(eof_filename), returnedfn);	//Store another copy of the lyric file name, since if it's a vocal rhythm file, the user will have to select a MIDI file, whose path will be stored in returnedfn
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 		{	//If the import failed
@@ -1436,10 +1436,10 @@ int eof_command_line_stepmania_import(char *fn)
 	eof_song_loaded = 1;
 
 //Update path variables
-	(void) ustrcpy(eof_filename, fn);
+	(void) ustrzcpy(eof_filename, sizeof(eof_filename), fn);
 	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
-	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) ustrzcpy(eof_loaded_song_name, sizeof(eof_loaded_song_name), get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 	retval = eof_import_stepmania(fn);
@@ -2265,7 +2265,7 @@ int eof_menu_file_song_folder(void)
 	returnfolder = ncd_folder_select("Set EOF Song Folder");
 	if(returnfolder)
 	{
-		(void) ustrcpy(eof_songs_path, returnfolder);
+		(void) ustrzcpy(eof_songs_path, sizeof(eof_songs_path), returnfolder);
 		retval = 1;
 	}
 	eof_show_mouse(NULL);
@@ -2325,21 +2325,21 @@ int eof_menu_file_link(unsigned char application)
 			{
 				if(application == 0)
 				{	//User is linking to FoF
-					(void) ustrcpy(eof_fof_executable_name, get_filename(returnedfn));
-					(void) ustrcpy(eof_fof_executable_path, returnedfn);
-					(void) ustrcpy(eof_fof_songs_path, returnfolder);
+					(void) ustrzcpy(eof_fof_executable_name, sizeof(eof_fof_executable_name), get_filename(returnedfn));
+					(void) ustrzcpy(eof_fof_executable_path, sizeof(eof_fof_executable_path), returnedfn);
+					(void) ustrzcpy(eof_fof_songs_path, sizeof(eof_fof_songs_path), returnfolder);
 				}
 				else
 				{	//User is linking to Phase Shift
-					(void) ustrcpy(eof_ps_executable_name, get_filename(returnedfn));
-					(void) ustrcpy(eof_ps_executable_path, returnedfn);
-					(void) ustrcpy(eof_ps_songs_path, returnfolder);
+					(void) ustrzcpy(eof_ps_executable_name, sizeof(eof_ps_executable_name), get_filename(returnedfn));
+					(void) ustrzcpy(eof_ps_executable_path, sizeof(eof_ps_executable_path), returnedfn);
+					(void) ustrzcpy(eof_ps_songs_path, sizeof(eof_ps_songs_path), returnfolder);
 				}
 			}
 		}
 		else if(application == 2)
 		{	//If linking to RocksmithToTab
-			(void) ustrcpy(eof_rs_to_tab_executable_path, returnedfn);
+			(void) ustrzcpy(eof_rs_to_tab_executable_path, sizeof(eof_rs_to_tab_executable_path), returnedfn);
 			if(strcasestr_spec(returnedfn, "RocksmithToTabGUI.exe"))
 			{	//If the selected file name indicates that the user picked the GUI program
 				allegro_message("It appears you picked the GUI version of RocksmithToTab instead of the command line one (RocksmithToTab.exe).  Consider re-linking to the correct program if problems are encountered.");
@@ -2347,7 +2347,7 @@ int eof_menu_file_link(unsigned char application)
 		}
 		else
 		{	//If linking to FFMPEG
-			(void) ustrcpy(eof_ffmpeg_executable_path, returnedfn);
+			(void) ustrzcpy(eof_ffmpeg_executable_path, sizeof(eof_ffmpeg_executable_path), returnedfn);
 		}
 	}
 	eof_show_mouse(NULL);
@@ -2968,7 +2968,7 @@ int eof_menu_file_feedback_import(void)
 	if(returnedfn)
 	{
 		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
-		(void) ustrcpy(eof_filename, returnedfn);
+		(void) ustrzcpy(eof_filename, sizeof(eof_filename), returnedfn);
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 		{	//Import failed
@@ -3205,7 +3205,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 			eof_show_mouse(NULL);
 			return 1;	//Return user declined to overwrite existing files
 		}
-		(void) ustrcpy(syscommand, directory);
+		(void) ustrzcpy(syscommand, sizeof(syscommand), directory);
 		put_backslash(syscommand);
 		(void) ustrcat(syscommand, dest_name);
 		if(ustricmp(file, syscommand))
@@ -3293,8 +3293,8 @@ int eof_new_chart(char * filename)
 		}
 	}
 
-	(void) ustrcpy(oggfilename, filename);
-	(void) ustrcpy(eof_last_ogg_path, filename);
+	(void) ustrzcpy(oggfilename, sizeof(oggfilename), filename);
+	(void) ustrzcpy(eof_last_ogg_path, sizeof(eof_last_ogg_path), filename);
 
 
 	//Attempt to use the specified audio to create an OGG in the temp folder, converting as necessary.  tempfilename will reflect the path to the audio file from which metadata is subsequently read
@@ -3332,10 +3332,10 @@ int eof_new_chart(char * filename)
 	eof_log(eof_log_string, 1);
 	eof_color_dialog(eof_file_new_dialog, gui_fg_color, gui_bg_color);
 	eof_conditionally_center_dialog(eof_file_new_dialog);
-	(void) ustrcpy(eof_etext, "");		//Used to store the Artist tag
-	(void) ustrcpy(eof_etext2, "");		//Used to store the Title tag
-	(void) ustrcpy(eof_etext3, "");
-	(void) ustrcpy(eof_etext4, "");		//Used to store the filename created with %Artist% - %Title%
+	(void) ustrzcpy(eof_etext, sizeof(eof_etext), "");		//Used to store the Artist tag
+	(void) ustrzcpy(eof_etext2, sizeof(eof_etext2), "");		//Used to store the Title tag
+	(void) ustrzcpy(eof_etext3, sizeof(eof_etext3), "");
+	(void) ustrzcpy(eof_etext4, sizeof(eof_etext4), "");		//Used to store the filename created with %Artist% - %Title%
 	eof_render();
 	if(!ustricmp("ogg", get_extension(filename)))
 	{
@@ -3426,24 +3426,24 @@ int eof_new_chart(char * filename)
 				{
 					(void) strncpy(buffer, tag.id3v1artist, sizeof(buffer) - 1);
 					eof_convert_from_extended_ascii(buffer, sizeof(buffer));
-					(void) ustrcpy(eof_etext, buffer);
+					(void) ustrzcpy(eof_etext, sizeof(eof_etext), buffer);
 				}
 				if((eof_etext2[0]=='\0') && (tag.id3v1title != NULL))
 				{
 					(void) strncpy(buffer, tag.id3v1title, sizeof(buffer) - 1);
 					eof_convert_from_extended_ascii(buffer, sizeof(buffer));
-					(void) ustrcpy(eof_etext2, buffer);
+					(void) ustrzcpy(eof_etext2, sizeof(eof_etext2), buffer);
 				}
 				if((year[0]=='\0') && (tag.id3v1year != NULL))
 				{
-					(void) ustrcpy(year, tag.id3v1year);
+					(void) ustrzcpy(year, sizeof(year), tag.id3v1year);
 				}
 				if((album[0]=='\0') && (tag.id3v1album != NULL))
 				{
 					(void) strncpy(buffer, tag.id3v1album, sizeof(buffer) - 1);
 					eof_convert_from_extended_ascii(buffer, sizeof(buffer));
 					buffer[255] = '\0';	//Ensure this will fit in the album string
-					(void) ustrcpy(album, buffer);
+					(void) ustrzcpy(album, sizeof(album), buffer);
 				}
 			}
 
@@ -3502,7 +3502,7 @@ int eof_new_chart(char * filename)
 				delete_file(tempfilename);
 				return 1;	//Return failure
 			}
-			(void) ustrcpy(eof_etext3, returnedfolder);
+			(void) ustrzcpy(eof_etext3, sizeof(eof_etext3), returnedfolder);
 		}
 		else if(eof_file_new_windows_dialog[2].flags & D_SELECTED)
 		{	//Use Source Audio's Folder
@@ -3528,7 +3528,7 @@ int eof_new_chart(char * filename)
 			}
 #endif
 			eof_log("\tCreate new folder selected", 1);
-			(void) ustrcpy(eof_etext3, eof_songs_path);
+			(void) ustrzcpy(eof_etext3, sizeof(eof_etext3), eof_songs_path);
 			(void) ustrcat(eof_etext3, eof_etext4);
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNew project folder path:  \"%s\"", eof_etext3);
 			eof_log(eof_log_string, 1);
@@ -3588,20 +3588,20 @@ int eof_new_chart(char * filename)
 
 
 	//Apply metadata
-	(void) ustrcpy(eof_song->tags->artist, eof_etext);	//Prevent buffer overflow
-	(void) ustrcpy(eof_song->tags->title, eof_etext2);
-	(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
-	(void) ustrcpy(eof_song->tags->year, year);	//The year tag that was read from an MP3 (if applicable)
-	(void) ustrcpy(eof_song->tags->album, album);
-	(void) ustrcpy(eof_song->tags->genre, genre);
-	(void) ustrcpy(eof_song->tags->tracknumber, tracknumber);
+	(void) ustrzcpy(eof_song->tags->artist, sizeof(eof_song->tags->artist), eof_etext);	//Prevent buffer overflow
+	(void) ustrzcpy(eof_song->tags->title, sizeof(eof_song->tags->title), eof_etext2);
+	(void) ustrzcpy(eof_song->tags->frettist, sizeof(eof_song->tags->frettist), eof_last_frettist);
+	(void) ustrzcpy(eof_song->tags->year, sizeof(eof_song->tags->year), year);	//The year tag that was read from an MP3 (if applicable)
+	(void) ustrzcpy(eof_song->tags->album, sizeof(eof_song->tags->album), album);
+	(void) ustrzcpy(eof_song->tags->genre, sizeof(eof_song->tags->genre), genre);
+	(void) ustrzcpy(eof_song->tags->tracknumber, sizeof(eof_song->tags->tracknumber), tracknumber);
 	(void) replace_filename(eof_last_ogg_path, filename, "", sizeof(eof_last_ogg_path));	//Remember the path of the last chosen audio file
 
 
 	//Copy temp audio file to project folder, to which oggfilename will be the full path
-	(void) ustrcpy(eof_song_path, eof_etext3);	//Build the global variable path to the project folder
+	(void) ustrzcpy(eof_song_path, sizeof(eof_song_path), eof_etext3);	//Build the global variable path to the project folder
 	put_backslash(eof_song_path);
-	(void) ustrcpy(eof_last_eof_path, eof_song_path);
+	(void) ustrzcpy(eof_last_eof_path, sizeof(eof_last_eof_path), eof_song_path);
 	replace_filename(oggfilename, eof_song_path, dest_name, sizeof(oggfilename));	//Build the full path for what should become the audio file in the project folder
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCopying temp audio file \"%s\" to project folder as \"%s\"", tempfilename, oggfilename);
 	eof_log(eof_log_string, 1);
@@ -3629,7 +3629,7 @@ int eof_new_chart(char * filename)
 		return 1;	//Return failure
 	}
 	eof_music_length = alogg_get_length_msecs_ogg_ul(eof_music_track);
-	(void) ustrcpy(eof_loaded_song_name, "notes.eof");
+	(void) ustrzcpy(eof_loaded_song_name, sizeof(eof_loaded_song_name), "notes.eof");
 	(void) append_filename(eof_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_filename));	//Build the full path to the project file
 
 
@@ -4674,7 +4674,7 @@ int eof_save_helper(char *destfilename, char silent)
 	{	//Perform save as
 		function = 2;
 		(void) replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
-		(void) ustrcpy(eof_temp_filename, destfilename);
+		(void) ustrzcpy(eof_temp_filename, sizeof(eof_temp_filename), destfilename);
 		if(eof_temp_filename[1022] != '\0')	//If the source filename was too long to store in the array
 			return 4;			//Return failure:  Destination path too long
 		(void) replace_filename(newfolderpath, destfilename, "", sizeof(newfolderpath));	//Obtain the destination path
@@ -4739,8 +4739,8 @@ int eof_save_helper(char *destfilename, char silent)
 		allegro_message("%s", eof_log_string);
 		return 9;	//Return failure:  Could not create project file
 	}
-	(void) ustrcpy(eof_filename, eof_temp_filename);	//Update the absolute project filename
-	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));	//Update the relative project filename
+	(void) ustrzcpy(eof_filename, sizeof(eof_filename), eof_temp_filename);	//Update the absolute project filename
+	(void) ustrzcpy(eof_loaded_song_name, sizeof(eof_loaded_song_name), get_filename(eof_temp_filename));	//Update the relative project filename
 
 	/* save the MIDI, INI and other files*/
 	eof_enforce_midi_section_endings(silent);	//Ensure that all sections that would export to MIDI are long enough for Clone Hero to include all expected notes
@@ -4876,7 +4876,7 @@ int eof_save_helper(char *destfilename, char silent)
 			midi_export_success &= eof_export_midi(eof_song, eof_temp_filename, 3, fixvoxpitches, fixvoxphrases, 0);	//Write a MIDI containing the RBN and pro guitar content
 
 			//Write a DTA file for the pro guitar upgrade
-			(void) ustrcpy(eof_temp_filename, newfolderpath);
+			(void) ustrzcpy(eof_temp_filename, sizeof(eof_temp_filename), newfolderpath);
 			put_backslash(eof_temp_filename);
 			(void) ustrcat(eof_temp_filename, "songs_upgrades");
 			if(!eof_folder_exists(eof_temp_filename))
@@ -6228,7 +6228,7 @@ int eof_menu_file_gp_import(void)
 
 				eof_init_after_load(0);
 				eof_changes = eof_project_unsaved = eof_changes_backup;		//Restore this value
-				(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
+				(void) ustrzcpy(eof_song->tags->frettist, sizeof(eof_song->tags->frettist), eof_last_frettist);
 			}
 			else
 			{	//Import failed
@@ -6271,10 +6271,10 @@ int eof_command_line_gp_import(char *fn)
 	}
 
 //Update path variables
-	(void) ustrcpy(eof_filename, fn);
+	(void) ustrzcpy(eof_filename, sizeof(eof_filename), fn);
 	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
-	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) ustrzcpy(eof_loaded_song_name, sizeof(eof_loaded_song_name), get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
@@ -6678,10 +6678,10 @@ int eof_command_line_rs_import(char *fn)
 	}
 
 //Update path variables
-	(void) ustrcpy(eof_filename, fn);
+	(void) ustrzcpy(eof_filename, sizeof(eof_filename), fn);
 	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
-	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+	(void) ustrzcpy(eof_loaded_song_name, sizeof(eof_loaded_song_name), get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
@@ -7095,7 +7095,7 @@ int eof_menu_file_export_chart_range(void)
 		}
 
 		(void) replace_extension(oggpath, temppath, "ogg", sizeof(oggpath));			//Build the path to the target OGG file to create
-		(void) ustrcpy(csp->tags->ogg[0].filename, get_filename(oggpath));	//Create a default OGG profile using this name
+		(void) ustrzcpy(csp->tags->ogg[0].filename, sizeof(csp->tags->ogg[0].filename), get_filename(oggpath));	//Create a default OGG profile using this name
 		if(!eof_save_song(csp, temppath))
 		{
 			eof_log("Failed to save clone project.", 1);
@@ -7256,8 +7256,8 @@ int eof_menu_file_export_guitar_pro(void)
 	eof_abridged_rs2_export = original_eof_abridged_rs2_export;	//Restore this user preference
 
 	//Call program
-	(void) ustrcpy(syscommand, eof_rs_to_tab_executable_path);
-	(void) ustrcpy(tempstr2, eof_song_path);
+	(void) ustrzcpy(syscommand, sizeof(syscommand), eof_rs_to_tab_executable_path);
+	(void) ustrzcpy(tempstr2, sizeof(tempstr2), eof_song_path);
 	if(ustrlen(tempstr2))
 	{	//As long as a valid project path was obtained
 		if(ugetat(tempstr2, ustrlen(tempstr2) - 1) == '\\')
@@ -7703,7 +7703,7 @@ int eof_menu_file_notes_panel_notes(void)
 	{	//If the notes window was already open
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 	}
-	(void) ustrcpy(eof_current_notes_panel_path, "notes.panel.txt");
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), "notes.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the default notes.panel.txt file, recover panel file from eof.dat if necessary
 }
 
@@ -7724,7 +7724,7 @@ int eof_menu_file_notes_panel_note_controls(void)
 	{	//If the notes window was already open
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 	}
-	(void) ustrcpy(eof_current_notes_panel_path, "note_controls.panel.txt");
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), "note_controls.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the note_controls.panel.txt file, recover panel file from eof.dat if necessary
 }
 
@@ -7745,7 +7745,7 @@ int eof_menu_file_notes_panel_information(void)
 	{	//If the notes window was already open
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 	}
-	(void) ustrcpy(eof_current_notes_panel_path, "info.panel.txt");
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), "info.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the info.panel.txt file, recover panel file from eof.dat if necessary
 }
 
@@ -7766,7 +7766,7 @@ int eof_menu_file_notes_panel_note_counts(void)
 	{	//If the notes window was already open
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 	}
-	(void) ustrcpy(eof_current_notes_panel_path, "note_counts.panel.txt");
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), "note_counts.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the note_counts.panel.txt, recover panel file from eof.dat if necessary
 }
 
@@ -7787,7 +7787,7 @@ int eof_menu_file_notes_panel_rockband(void)
 	{	//If the notes window was already open
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 	}
-	(void) ustrcpy(eof_current_notes_panel_path, "rockband.panel.txt");
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), "rockband.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the rockband.panel.txt, recover panel file from eof.dat if necessary
 }
 
@@ -7808,7 +7808,7 @@ int eof_menu_file_notes_panel_rocksmith(void)
 	{	//If the notes window was already open
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 	}
-	(void) ustrcpy(eof_current_notes_panel_path, "rocksmith.panel.txt");
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), "rocksmith.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the rocksmith.panel.txt, recover panel file from eof.dat if necessary
 }
 
@@ -7829,7 +7829,7 @@ int eof_menu_file_notes_panel_immerrock(void)
 	{	//If the notes window was already open
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 	}
-	(void) ustrcpy(eof_current_notes_panel_path, "immerrock.panel.txt");
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), "immerrock.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the immerrock.panel.txt, recover panel file from eof.dat if necessary
 }
 
@@ -7850,7 +7850,7 @@ int eof_menu_file_notes_panel_clone_hero(void)
 	{	//If the notes window was already open
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
 	}
-	(void) ustrcpy(eof_current_notes_panel_path, "clone_hero.panel.txt");
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), "clone_hero.panel.txt");
 	return eof_display_notes_panel_logic(1);	//Load the clone_hero.panel.txt, recover panel file from eof.dat if necessary
 }
 
@@ -7861,7 +7861,7 @@ int eof_menu_file_notes_panel_user(void)
 	if((eof_last_browsed_notes_panel_path[0] == '\0') || !exists(eof_last_browsed_notes_panel_path))
 		return eof_menu_file_notes_panel_browse();	//If the last browsed panel file path is undefined or is no longer valid, have the user browse for a file
 
-	(void) ustrcpy(eof_current_notes_panel_path, eof_last_browsed_notes_panel_path);	//This is the file that eof_display_notes_panel() will load
+	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), eof_last_browsed_notes_panel_path);	//This is the file that eof_display_notes_panel() will load
 	if(eof_enable_notes_panel)
 	{	//If the notes window was already open
 		eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on
@@ -7897,8 +7897,8 @@ int eof_menu_file_notes_panel_browse(void)
 	{	//If a file was selected for load
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoading Notes panel file:  %s", returnedfn);
 		eof_log(eof_log_string, 1);
-		(void) ustrcpy(eof_current_notes_panel_path, returnedfn);	//This is the file that eof_display_notes_panel() will load
-		(void) ustrcpy(eof_last_browsed_notes_panel_path, returnedfn);		//Track this as the last notes panel file the user browsed to
+		(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), returnedfn);	//This is the file that eof_display_notes_panel() will load
+		(void) ustrzcpy(eof_last_browsed_notes_panel_path, sizeof(eof_last_browsed_notes_panel_path), returnedfn);		//Track this as the last notes panel file the user browsed to
 		if(eof_enable_notes_panel)
 		{	//If the notes window was already open
 			eof_enable_notes_panel = 0;	//Toggle this because the function call below will toggle it back to on

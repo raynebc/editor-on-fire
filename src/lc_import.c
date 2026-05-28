@@ -282,7 +282,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 			if(ustrlen(curpiece->lyric) > EOF_MAX_LYRIC_LENGTH)
 				return -1;	//Return error (lyric too large to store in EOF's array)
 			if(curpiece->pitch == VOCALPERCUSSION)
-				(void) ustrcpy(temp->text, "");	//Copy an empty string for a vocal percussion note
+				(void) ustrzcpy(temp->text, sizeof(temp->text), "");	//Copy an empty string for a vocal percussion note
 			else
 			{	//ustrcpy() should be avoided for this purpose because it drops extended ASCII characters
 				(void) strncpy(temp->text, curpiece->lyric, sizeof(temp->text) - 1);
