@@ -600,7 +600,7 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 		if(!filename)	//If a filename was not specified
 			return 0;	//Invalid parameters
 		(void) replace_filename(eof_temp_filename, directory, filename, sizeof(eof_temp_filename));
-		(void) replace_extension(eof_temp_filename, eof_temp_filename, "ogg", 1024);
+		(void) replace_extension(eof_temp_filename, eof_temp_filename, "ogg", sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			eof_clear_input();
@@ -610,7 +610,7 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 				return 0;
 			}
 		}
-		(void) replace_extension(eof_temp_filename, eof_temp_filename, "wav", 1024);
+		(void) replace_extension(eof_temp_filename, eof_temp_filename, "wav", sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			eof_clear_input();
@@ -802,6 +802,7 @@ int eof_menu_file_load(void)
 int eof_menu_file_save_as(void)
 {
 	char new_foldername[1024] = {0};
+	char buffer[1025] = {0};
 	char * returnedfn = NULL;
 	int retval;
 
@@ -826,7 +827,8 @@ int eof_menu_file_save_as(void)
 		if(eof_menu_file_new_supplement(new_foldername, get_filename(returnedfn), 8) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
 			return 1;	//Return failure
 
-		retval = eof_save_helper(returnedfn, 0);	//Perform "Save As" operation to the selected path
+		strncpy(buffer, returnedfn, sizeof(buffer) - 1);	//Make a working copy of the selected destination folder path so eof_save_helper() can modify it, ensure buffer[] remains NULL terminated by copying 1 less byte than it can accommodate
+		retval = eof_save_helper(buffer, 0);	//Perform "Save As" operation to the selected path
 		if(retval == 0)
 		{	//If the "Save as" operation succeeded, update folder path strings
 			(void) ustrcpy(eof_song_path, new_foldername);	//Set the project folder path
@@ -1438,7 +1440,7 @@ int eof_command_line_stepmania_import(char *fn)
 	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 	retval = eof_import_stepmania(fn);
 	if(retval == 2)
@@ -3308,7 +3310,7 @@ int eof_new_chart(char * filename)
 	{	//If a suitably named OGG was not created successfully, but FFMPEG is linked
 		eof_log("\tAttempting to re-encode input audio with FFMPEG", 1);
 		replace_filename(oggfilename, eof_temp_path_s, get_filename(filename), sizeof(oggfilename));	//Build a path where the input audio file name is appended to the temp folder
-		(void) replace_extension(oggfilename, oggfilename, "ogg", 1024);	//and its extension is changed to ogg
+		(void) replace_extension(oggfilename, oggfilename, "ogg", sizeof(oggfilename));	//and its extension is changed to ogg
 		if(eof_ffmpeg_convert_file(filename, oggfilename))
 		{	//If the input file couldn't be re-encoded to OGG with FFMPEG
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFailed to re-encode \"%s\"", filename);
@@ -4682,7 +4684,7 @@ int eof_save_helper(char *destfilename, char silent)
 	if(!eof_disable_backups)
 	{	//Only do this if the user did not disable automatic backups
 		(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", (int) sizeof(eof_temp_filename));	//Ensure the chart's file path has a .eof extension
-		(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof.bak", 1024);	//(filename).previous_save.eof.bak will be store the last save operation
+		(void) replace_extension(tempfilename2, eof_temp_filename, "previous_save.eof.bak", sizeof(tempfilename2));	//(filename).previous_save.eof.bak will be store the last save operation
 		if(exists(tempfilename2))
 		{	//If the lastsave file exists
 			(void) delete_file(tempfilename2);	//Delete it
@@ -6273,7 +6275,7 @@ int eof_command_line_gp_import(char *fn)
 	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
 	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
@@ -6680,7 +6682,7 @@ int eof_command_line_rs_import(char *fn)
 	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
 	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
 	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
@@ -7084,7 +7086,7 @@ int eof_menu_file_export_chart_range(void)
 	{
 		eof_log("\tSaving cloned chart", 1);
 
-		(void) replace_extension(temppath, returnedfn, "eof", 1024);		//Ensure the chart is saved with a .eof extension
+		(void) replace_extension(temppath, returnedfn, "eof", sizeof(temppath));		//Ensure the chart is saved with a .eof extension
 		(void) replace_filename(new_foldername, temppath, "", sizeof(new_foldername));		//Obtain the chosen destination folder path
 		if(eof_menu_file_new_supplement(new_foldername, get_filename(temppath), 4) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
 		{
@@ -7092,7 +7094,7 @@ int eof_menu_file_export_chart_range(void)
 			return 0;	//Return failure
 		}
 
-		(void) replace_extension(oggpath, temppath, "ogg", 1024);			//Build the path to the target OGG file to create
+		(void) replace_extension(oggpath, temppath, "ogg", sizeof(oggpath));			//Build the path to the target OGG file to create
 		(void) ustrcpy(csp->tags->ogg[0].filename, get_filename(oggpath));	//Create a default OGG profile using this name
 		if(!eof_save_song(csp, temppath))
 		{
@@ -7104,7 +7106,7 @@ int eof_menu_file_export_chart_range(void)
 		if(!eof_silence_loaded)
 		{	//If chart audio is loaded
 			eof_log("\tSaving audio excerpt.", 1);
-			(void) replace_extension(temppath, temppath, "wav", 1024);
+			(void) replace_extension(temppath, temppath, "wav", sizeof(temppath));
 			eof_export_audio_time_range(eof_music_track, start / 1000.0, end / 1000.0, temppath);	//Build the WAV file
 			if(exists(temppath))
 			{	//If the WAV file was created, convert it to OGG
@@ -7168,7 +7170,7 @@ int eof_menu_file_export_audio_range(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		(void) replace_extension(oggpath, returnedfn, "ogg", 1024);		//Ensure the file is saved with a .ogg extension
+		(void) replace_extension(oggpath, returnedfn, "ogg", sizeof(oggpath));		//Ensure the file is saved with a .ogg extension
 		if(exists(oggpath))
 		{	//If the specified file path already exists
 			eof_clear_input();
@@ -7180,7 +7182,7 @@ int eof_menu_file_export_audio_range(void)
 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tSaving audio excerpt to \"%s\"", oggpath);
 		eof_log(eof_log_string, 1);
-		(void) replace_extension(wavpath, oggpath, "wav", 1024);
+		(void) replace_extension(wavpath, oggpath, "wav", sizeof(wavpath));
 		eof_export_audio_time_range(eof_music_track, start / 1000.0, end / 1000.0, wavpath);	//Build the WAV file
 		if(exists(wavpath))
 		{	//If the WAV file was created, convert it to OGG

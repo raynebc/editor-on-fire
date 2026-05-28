@@ -1400,7 +1400,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));
 		(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", sizeof(eof_loaded_song_name));
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
 		ogg_profile_name = sp->tags->ogg[0].filename;	//Store the pointer to the OGG profile filename to be updated by eof_load_ogg()

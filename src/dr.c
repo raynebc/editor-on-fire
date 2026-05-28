@@ -764,8 +764,8 @@ int eof_import_drums_rock_track_diff(char * fn)
 						{	//If this was the first pass of the loop, see if the user simply selected a file that isn't the expected notes.csv file
 							if(stricmp(get_filename(fn), "notes.csv"))
 							{	//If the user specified a file not named notes.csv
-								(void) replace_filename(fn, fn, "notes.csv", sizeof(fn));	//Build expected path to notes.csv
-								if(exists(fn))
+								(void) replace_filename(eof_filename, fn, "notes.csv", sizeof(eof_filename));	//Build expected path to notes.csv
+								if(exists(eof_filename))
 								{	//If that file exists, attempt to load it in the next for loop iteration
 									eof_log("\tnotes.csv was not specified as the import file, but it does exist, attempting to import that file.", 1);
 									(void) pack_fclose(inf);

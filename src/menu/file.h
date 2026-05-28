@@ -153,6 +153,7 @@ int eof_save_helper_checks(void);
 int eof_save_helper(char *destfilename, char silent);
 	//Performs logic that is common among "Save" and "Save as", including various validation checks
 	//"Save as" operations should pass the destination file path through destfilename
+	//destfilename is expected to be an array at least 1024 bytes in size
 	//  (but the calling function must not use eof_temp_filename[] to pass the target filename, as this function destroys that array's contents)
 	//"Save" operations should pass NULL for destfilename
 	//Returns zero on success, one on user cancellation, other values on error

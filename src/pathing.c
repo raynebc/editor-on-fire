@@ -2015,8 +2015,8 @@ void eof_ch_sp_path_worker(char *job_file)
 
 		return;
 	}
-	(void) replace_extension(jobreadyfilename, job_file, "jobready", 1024);		//Create the path to the file indicating the job file is ready to read
-	(void) replace_extension(jobkillfilename, job_file, "kill", 1024);			//Create the path to the kill signal file
+	(void) replace_extension(jobreadyfilename, job_file, "jobready", sizeof(jobreadyfilename));		//Create the path to the file indicating the job file is ready to read
+	(void) replace_extension(jobkillfilename, job_file, "kill", sizeof(jobkillfilename));			//Create the path to the kill signal file
 
 	//Worker main loop
 	while(EOF_PERSISTENT_WORKER && !done && !error && !canceled)
@@ -2228,7 +2228,7 @@ void eof_ch_sp_path_worker(char *job_file)
 		}//If a job file is present, parse it
 		else
 		{	//If no job is present, check for the kill signal from the supervisor
-			(void) replace_extension(filename, job_file, "kill", 1024);		//Create the path to the kill signal file
+			(void) replace_extension(filename, job_file, "kill", sizeof(filename));		//Create the path to the kill signal file
 			if(exists(filename))
 			{	//If this signal file is present
 				if(ch_sp_path_worker_logging)
@@ -2282,14 +2282,14 @@ void eof_ch_sp_path_worker(char *job_file)
 
 		if(error)
 		{	//If the job was not successfully processed
-			(void) replace_extension(filename, job_file, "fail", 1024);		//Create a results file to specify failure
+			(void) replace_extension(filename, job_file, "fail", sizeof(filename));		//Create a results file to specify failure
 			outf = pack_fopen(filename, "w");
 			(void) pack_fclose(outf);	//Close the results file
 			idle = 0;
 		}
 		else if(canceled)
 		{	//If the user canceled the job during solution evaluation
-			(void) replace_extension(filename, job_file, "cancel", 1024);	//Create a results file to specify cancellation
+			(void) replace_extension(filename, job_file, "cancel", sizeof(filename));	//Create a results file to specify cancellation
 			outf = pack_fopen(filename, "w");
 			if(outf)
 			{
@@ -2306,7 +2306,7 @@ void eof_ch_sp_path_worker(char *job_file)
 		}
 		else if(done)
 		{	//If the supervisor commanded the worker to stop
-			(void) replace_extension(filename, job_file, "dead", 1024);	//Create a results file to specify the worker will terminate
+			(void) replace_extension(filename, job_file, "dead", sizeof(filename));	//Create a results file to specify the worker will terminate
 			outf = pack_fopen(filename, "w");
 			(void) pack_fclose(outf);	//Close the results file
 			idle = 0;
@@ -2328,7 +2328,7 @@ void eof_ch_sp_path_worker(char *job_file)
 				eof_log(eof_log_string, 1);
 				eof_log("Waiting for next job", 1);
 			}
-			(void) replace_extension(filename, job_file, "success", 1024);	//Create a results file to contain the best solution
+			(void) replace_extension(filename, job_file, "success", sizeof(filename));	//Create a results file to contain the best solution
 			outf = pack_fopen(filename, "w");
 			if(outf)
 			{

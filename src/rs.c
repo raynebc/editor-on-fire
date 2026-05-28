@@ -570,7 +570,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		arrangement_name = sp->track[track]->name;
 	}
 	(void) snprintf(buffer, 600, "%s.xml", arrangement_name);
-	(void) replace_filename(fn, fn, buffer, sizeof(fn));
+	(void) replace_filename(fn, fn, buffer, 1024);
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
@@ -1713,7 +1713,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		arrangement_name = sp->track[track]->name;
 	}
 	(void) snprintf(buffer, 600, "%s_RS2.xml", arrangement_name);
-	(void) replace_filename(fn, fn, buffer, sizeof(fn));
+	(void) replace_filename(fn, fn, buffer, 1024);
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{

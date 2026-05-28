@@ -1433,7 +1433,7 @@ void eof_prepare_undo(int type)
 	eof_ch_sp_solution = NULL;
 	if(!eof_disable_backups && (eof_change_count % 10 == 0))
 	{	//If automatic backups are not disabled, backup the EOF project every 10 undo states
-		(void) replace_extension(fn, eof_filename, "backup.eof.bak", 1024);
+		(void) replace_extension(fn, eof_filename, "backup.eof.bak", sizeof(fn));
 		eof_log("\tSaving periodic backup", 1);
 		if(!eof_save_song(eof_song, fn))
 		{

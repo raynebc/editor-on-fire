@@ -736,13 +736,13 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 
 	//Build the full path to filenamebase.jpg
 	strncpy(filename, filenamebase, sizeof(filename) - 1);
-	(void) replace_extension(filename, filename, "jpg", sizeof(filename) - 1);
-	(void) replace_filename(filepath, folderpath, filename, sizeof(filename) - 1);
+	(void) replace_extension(filename, filename, "jpg", sizeof(filename));
+	(void) replace_filename(filepath, folderpath, filename, sizeof(filename));
 
 	//Test whether filenamebase.[EXT] exists, reflecting any preferred extension passed by the calling function
 	if(preferred_ext)
 	{	//If a preferred file extension was given
-		(void) replace_extension(filepath, filepath, preferred_ext, sizeof(filename) - 1);
+		(void) replace_extension(filepath, filepath, preferred_ext, sizeof(filename));
 		if(exists(filepath))
 		{
 			strncpy(match, filepath, match_arraysize);
@@ -751,7 +751,7 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 	}
 
 	//Test whether filenamebase.jpg exists
-	(void) replace_extension(filepath, filepath, "jpg", sizeof(filename) - 1);
+	(void) replace_extension(filepath, filepath, "jpg", sizeof(filename));
 	if(exists(filepath))
 	{
 		strncpy(match, filepath, match_arraysize);
@@ -759,7 +759,7 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 	}
 
 	//Test whether filenamebase.jpeg exists
-	(void) replace_extension(filepath, filepath, "jpeg", sizeof(filename) - 1);
+	(void) replace_extension(filepath, filepath, "jpeg", sizeof(filename));
 	if(exists(filepath))
 	{
 		strncpy(match, filepath, match_arraysize);
@@ -767,7 +767,7 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 	}
 
 	//Test whether filenamebase.png exists
-	(void) replace_extension(filepath, filepath, "png", sizeof(filename) - 1);
+	(void) replace_extension(filepath, filepath, "png", sizeof(filename));
 	if(exists(filepath))
 	{
 		strncpy(match, filepath, match_arraysize);
@@ -775,7 +775,7 @@ int eof_search_image_files(char *folderpath, char *filenamebase, char *match, un
 	}
 
 	//Test whether filenamebase.tiff exists
-	(void) replace_extension(filepath, filepath, "tiff", sizeof(filename) - 1);
+	(void) replace_extension(filepath, filepath, "tiff", sizeof(filename));
 	if(exists(filepath))
 	{
 		strncpy(match, filepath, match_arraysize);
@@ -1424,7 +1424,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 		eof_check_for_immerrock_album_art(eof_song_path, album_art_filename, sizeof(album_art_filename) - 1, NULL, 1);	//Check for any suitable files in the project folder
 		if(exists(album_art_filename))
 		{	//If a JPG, PNG or TIFF file with a base filename of "Album", "Cover", "Label" or "Image" exist in the project folder
-			(void) replace_extension(temp_filename2, "Cover.jpg", get_extension(album_art_filename), sizeof(temp_filename2) - 1);	//Build output filename based on the extension of the found file
+			(void) replace_extension(temp_filename2, "Cover.jpg", get_extension(album_art_filename), sizeof(temp_filename2));	//Build output filename based on the extension of the found file
 			(void) replace_filename(eof_temp_filename, eof_temp_filename, get_filename(temp_filename2), (int) sizeof(eof_temp_filename));	//Build path to destination file
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
 			eof_log(eof_log_string, 2);
