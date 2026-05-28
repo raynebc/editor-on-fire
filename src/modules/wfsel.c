@@ -44,8 +44,8 @@ NCDFS_FILTER_LIST * ncdfs_filter_list_create(void)
 
 int ncdfs_filter_list_add(NCDFS_FILTER_LIST * lp, char * ext, char * desc, int df)
 {
-	ustrcpy(lp->filter[lp->filters].extension, ext);
-	ustrcpy(lp->filter[lp->filters].description, desc);
+	ustrzcpy(lp->filter[lp->filters].extension, sizeof(lp->filter[0].extension), ext);
+	ustrzcpy(lp->filter[lp->filters].description, sizeof(lp->filter[0].description), desc);
 	if(df)
 	{
 		lp->default_filter = lp->filters;
@@ -143,7 +143,7 @@ char * ncd_file_select_allegro(int type, char * initial, const char * title, NCD
 	}
 	else
 	{
-		ustrcpy(ncdfs_internal_return_path, initial);
+		ustrzcpy(ncdfs_internal_return_path, sizeof(ncdfs_internal_return_path), initial);
 	}
 
 	/* build filter string */
@@ -159,7 +159,7 @@ char * ncd_file_select_allegro(int type, char * initial, const char * title, NCD
 		}
 		else
 		{
-			ustrcpy(realfilter, "");
+			ustrzcpy(realfilter, sizeof(realfilter), "");
 			epos = 0;
 			for(i = 0; i < lp->filters; i++)
 			{
@@ -213,11 +213,11 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 
 			if(!initial)
 			{
-				ustrcpy(ncdfs_internal_return_path, "");
+				ustrzcpy(ncdfs_internal_return_path, sizeof(ncdfs_internal_return_path), "");
 			}
 			else
 			{
-				ustrcpy(ncdfs_internal_return_path, initial);
+				ustrzcpy(ncdfs_internal_return_path, sizeof(ncdfs_internal_return_path), initial);
 			}
 
 			/* build filter string */
