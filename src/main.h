@@ -504,6 +504,7 @@ extern char        eof_ps_songs_path[1024];
 extern char        eof_rs_to_tab_executable_path[1024];
 extern char        eof_ffmpeg_executable_path[1024];
 extern char        eof_temp_filename[1024];
+extern char        eof_temp_filename2[1024];
 extern char        eof_soft_cursor;
 extern char        eof_desktop;
 extern int         eof_input_mode;

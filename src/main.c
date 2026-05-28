@@ -135,6 +135,7 @@ char        eof_rs_to_tab_executable_path[1024] = {0};
 char        eof_ffmpeg_executable_path[1024] = {0};
 char        eof_last_frettist[256] = {0};
 char        eof_temp_filename[1024] = {0};	//A string for temporarily storing file paths
+char        eof_temp_filename2[1024] = {0};
 char        eof_soft_cursor = 0;
 char        eof_desktop = 1;
 unsigned long eof_av_delay = 200;

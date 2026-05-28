@@ -6543,6 +6543,7 @@ int eof_menu_file_rs_import(void)
 	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
 	char *initial;
 	char newchart = 0;	//Is set to nonzero if a new chart is created to store the imported RS file
+	int error;
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -6593,7 +6594,8 @@ int eof_menu_file_rs_import(void)
 
 		if(newchart)
 		{	//If a project wasn't already opened when the import was started
-			if(!eof_command_line_rs_import(returnedfn))
+			error = eof_command_line_rs_import(returnedfn);
+			if(!error)
 			{	//If the file was imported
 				eof_init_after_load(0);
 				eof_changes = eof_project_unsaved = 1;
@@ -6608,9 +6610,23 @@ int eof_menu_file_rs_import(void)
 		}
 		else
 		{	//A project was already open
-			(void) eof_rs_import_common(returnedfn);	//Import the specified Rocksmith XML file into the active pro guitar/bass track
+			error = eof_rs_import_common(returnedfn);	//Import the specified Rocksmith XML file into the active pro guitar/bass track
 		}
-		(void) replace_filename(eof_last_rs_path, returnedfn_path, "", 1024);	//Set the last loaded Rocksmith file path
+		(void) replace_filename(eof_last_rs_path, returnedfn_path, "", sizeof(eof_last_rs_path));	//Set the last loaded Rocksmith file path
+
+		//Convert DDS format album art from the Rocksmith custom to PNG format if it exists
+		if(!error && exists(eof_ffmpeg_executable_path))
+		{	//If the file successfully imported, and FFMPEG is linked
+			(void) replace_filename(eof_temp_filename, returnedfn, "cover.dds", sizeof(eof_temp_filename));	//Build the path to a cover.dds album art file that may have been extracted by DLCB
+			if(exists(eof_temp_filename))
+			{	//If cover.dds exists
+				(void) replace_filename(eof_temp_filename2, returnedfn, "cover.png", sizeof(eof_temp_filename2));	//Build the path of the cover.png file to convert it to
+				if(!exists(eof_temp_filename2))
+				{	//If that file doesn't already exist
+					(void) eof_ffmpeg_convert_file(eof_temp_filename, eof_temp_filename2);	//Use FFMPEG to convert the image
+				}
+			}
+		}
 	}
 	eof_fix_window_title();
 	eof_render();
