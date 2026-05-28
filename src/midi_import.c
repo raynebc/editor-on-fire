@@ -454,12 +454,12 @@ EOF_SONG * eof_import_midi(const char * fn)
 	{	//If the user did not disable automatic backups
 		/* backup "notes.mid" if it exists in the folder with the imported MIDI
 		   as it will be overwritten upon save */
-		(void) replace_filename(eof_temp_filename, fn, "notes.mid", 1024);
+		(void) replace_filename(eof_temp_filename, fn, "notes.mid", sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			/* do not overwrite an existing backup, this prevents the original backed up MIDI from
 			   being overwritten if the user imports the MIDI again */
-			(void) replace_filename(backup_filename, fn, "notes.mid.backup", 1024);
+			(void) replace_filename(backup_filename, fn, "notes.mid.backup", sizeof(backup_filename));
 			if(!exists(backup_filename))
 			{
 				(void) eof_copy_file(eof_temp_filename, backup_filename);
@@ -468,12 +468,12 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 		/* backup "song.ini" if it exists in the folder with the imported MIDI
 		   as it will be overwritten upon save */
-		(void) replace_filename(eof_temp_filename, fn, "song.ini", 1024);
+		(void) replace_filename(eof_temp_filename, fn, "song.ini", sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			/* do not overwrite an existing backup, this prevents the original backed up song.ini from
 			   being overwritten if the user imports the MIDI again */
-			(void) replace_filename(backup_filename, fn, "song.ini.backup", 1024);
+			(void) replace_filename(backup_filename, fn, "song.ini.backup", sizeof(backup_filename));
 			if(!exists(backup_filename))
 			{
 				(void) eof_copy_file(eof_temp_filename, backup_filename);
@@ -489,7 +489,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	}
 
 	/* read INI file */
-	(void) replace_filename(backup_filename, fn, "song.ini", 1024);
+	(void) replace_filename(backup_filename, fn, "song.ini", sizeof(backup_filename));
 	eof_midi_import_drum_accent_velocity = 127;		//By default, assume drum notes with a velocity of 127 are accent notes if the INI file doesn't define otherwise
 	eof_midi_import_drum_ghost_velocity = 1;		//By default, assume drum notes with a velocity of 1 are ghost notes if the INI file doesn't define otherwise
 	(void) eof_import_ini(sp, backup_filename, 0);
@@ -3936,8 +3936,8 @@ eof_log("\tThird pass complete", 1);
 
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);
-	(void) replace_filename(eof_song_path, fn, "", 1024);
-	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 

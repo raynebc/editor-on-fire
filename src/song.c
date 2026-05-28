@@ -436,8 +436,8 @@ EOF_SONG * eof_load_song(const char * fn)
 
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);
-	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
-	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 
 	eof_log("\tProject loaded", 1);

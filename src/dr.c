@@ -279,7 +279,7 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
  	eof_log("eof_export_drums_rock_track_diff() entered", 1);
 
 	//Build the path to the Drums Rock folder for this track difficulty
-	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
+	(void) replace_filename(eof_temp_filename, destpath, "", sizeof(eof_temp_filename));	//Obtain the destination folder path
 	put_backslash(eof_temp_filename);
 	temp_string[0] = '\0';	//Empty this string
 	if(eof_check_string(sp->tags->artist))
@@ -556,14 +556,14 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	}
 
 	//Write preview.ogg if it doesn't exist and it has been created for the project
-	(void) replace_filename(temp_filename2, eof_song_path, "preview.ogg", 1024);
+	(void) replace_filename(temp_filename2, eof_song_path, "preview.ogg", sizeof(temp_filename2));
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "preview.ogg", (int) sizeof(eof_temp_filename));
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
 	eof_log(eof_log_string, 2);
 	(void) eof_conditionally_copy_file(temp_filename2, eof_temp_filename);	//Copy preview.ogg there if a file of the same size doesn't already exist
 
 	//Write album.jpg if it doesn't exist in the destination and it exists in the project folder
-	(void) replace_filename(temp_filename2, eof_song_path, "album.jpg", 1024);
+	(void) replace_filename(temp_filename2, eof_song_path, "album.jpg", sizeof(temp_filename2));
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, "album.jpg", (int) sizeof(eof_temp_filename));
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
 	eof_log(eof_log_string, 2);
@@ -597,7 +597,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 		return 1;	//For now, don't import unless a drum track is active
 
 	//Parse info.csv if it exists
-	(void) replace_filename(eof_temp_filename, fn, "info.csv", 1024);	//Build expected path to info.csv
+	(void) replace_filename(eof_temp_filename, fn, "info.csv", sizeof(eof_temp_filename));	//Build expected path to info.csv
 	inf = pack_fopen(eof_temp_filename, "rt");				//Open file in text mode
 	if(inf)
 	{	//If info.csv was opened
@@ -764,7 +764,7 @@ int eof_import_drums_rock_track_diff(char * fn)
 						{	//If this was the first pass of the loop, see if the user simply selected a file that isn't the expected notes.csv file
 							if(stricmp(get_filename(fn), "notes.csv"))
 							{	//If the user specified a file not named notes.csv
-								(void) replace_filename(fn, fn, "notes.csv", 1024);	//Build expected path to notes.csv
+								(void) replace_filename(fn, fn, "notes.csv", sizeof(fn));	//Build expected path to notes.csv
 								if(exists(fn))
 								{	//If that file exists, attempt to load it in the next for loop iteration
 									eof_log("\tnotes.csv was not specified as the import file, but it does exist, attempting to import that file.", 1);

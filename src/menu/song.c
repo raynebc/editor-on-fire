@@ -1298,7 +1298,7 @@ int eof_menu_song_test(char application)
 	{
 		allegro_message("Song could not be tested!\nMake sure you set the %s song folder correctly (\"Link To %s\")!", appdisplayname, appdisplayname);
 		get_executable_name(temppath, 1024);
-		(void) replace_filename(temppath, temppath, "", 1024);
+		(void) replace_filename(temppath, temppath, "", sizeof(temppath));
 		(void) eof_chdir(temppath);
 		eof_show_mouse(NULL);
 		eof_cursor_visible = 1;
@@ -1314,7 +1314,7 @@ int eof_menu_song_test(char application)
 	(void) eof_copy_file(syscommand, temppath2);
 
 	/* switch to the applicable rhythm game's program folder */
-	(void) replace_filename(temppath, executablepath, "", 1024);
+	(void) replace_filename(temppath, executablepath, "", sizeof(temppath));
 	if(eof_chdir(temppath))
 	{
 		allegro_message("Song could not be tested!\nMake sure you set the %s song folder correctly (\"Link To %s\")!", appdisplayname, appdisplayname);
@@ -1340,7 +1340,7 @@ int eof_menu_song_test(char application)
 		if(phaseshiftfp)
 		{
 			(void) fprintf(phaseshiftfp, "cd %s\n", temppath);
-			(void) replace_filename(temppath, temppath2, "", 1024);	//Get the path to the temporary chart's folder
+			(void) replace_filename(temppath, temppath2, "", sizeof(temppath));	//Get the path to the temporary chart's folder
 			if(temppath[strlen(temppath)-1] == '\\')
 			{	//Remove the trailing backslash because Phase Shift doesn't handle it correctly
 				temppath[strlen(temppath)-1] = '\0';
@@ -1369,7 +1369,7 @@ int eof_menu_song_test(char application)
 
 	/* switch back to EOF folder */
 	get_executable_name(temppath, 1024);
-	(void) replace_filename(temppath, temppath, "", 1024);
+	(void) replace_filename(temppath, temppath, "", sizeof(temppath));
 	(void) eof_chdir(temppath);
 
 	return 1;
@@ -2206,7 +2206,7 @@ int eof_menu_song_add_silence(void)
 			}
 			else
 			{	//User opted to re-encode
-				(void) replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
+				(void) replace_filename(mp3fn, eof_song_path, "original.mp3", sizeof(mp3fn));
 				if(exists(mp3fn))
 				{
 					creationmethod = 12;	//Remember this as the default next time
@@ -3575,7 +3575,7 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 //Have user browse for a MIDI/RBA file
 		if(!ustricmp(get_extension(returnedfn), "rba"))
 		{	//If the selected file has a .rba extension, extract the MIDI file
-			(void) replace_filename(tempfilename, returnedfn, "eof_rba_import.tmp", 1024);
+			(void) replace_filename(tempfilename, returnedfn, "eof_rba_import.tmp", sizeof(tempfilename));
 			if(eof_extract_rba_midi(returnedfn,tempfilename) == 0)
 			{	//If this was an RBA file and the MIDI was extracted successfully
 				eof_work_midi = load_midi(tempfilename);	//Buffer extracted MIDI file
@@ -3594,7 +3594,7 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 		}
 
 //Parse the MIDI delay from song.ini if it exists in the same folder as the MIDI
-		(void) replace_filename(tempfilename, returnedfn, "song.ini", 1024);
+		(void) replace_filename(tempfilename, returnedfn, "song.ini", sizeof(tempfilename));
 		set_config_file(tempfilename);
 		delay = get_config_int("song", "delay", 0);
 		if(delay)

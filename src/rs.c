@@ -570,7 +570,7 @@ int eof_export_rocksmith_1_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		arrangement_name = sp->track[track]->name;
 	}
 	(void) snprintf(buffer, 600, "%s.xml", arrangement_name);
-	(void) replace_filename(fn, fn, buffer, 1024);
+	(void) replace_filename(fn, fn, buffer, sizeof(fn));
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
@@ -1713,7 +1713,7 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		arrangement_name = sp->track[track]->name;
 	}
 	(void) snprintf(buffer, 600, "%s_RS2.xml", arrangement_name);
-	(void) replace_filename(fn, fn, buffer, 1024);
+	(void) replace_filename(fn, fn, buffer, sizeof(fn));
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
@@ -4463,7 +4463,7 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	if(!buffer || !parent_folder)
 		return;	//Invalid parameters
 
-	(void) replace_filename(buffer, parent_folder, "", (int)num - 1);	//Obtain the destination path
+	(void) replace_filename(buffer, parent_folder, "", (int)num);	//Obtain the destination path
 
 	//Build target WAV file name
 	put_backslash(buffer);
@@ -4505,7 +4505,7 @@ void eof_delete_rocksmith_wav(void)
 	eof_get_rocksmith_wav_path(checkfn, eof_song_path, sizeof(checkfn));	//Build the path to the WAV file written for Rocksmith during save
 	if(!exists(checkfn))
 	{	//If the path based on the song title does not exist, delete guitar.wav because this is the name it will use if the song title has characters invalid for a filename
-		(void) replace_filename(checkfn, eof_song_path, "guitar.wav", 1024);
+		(void) replace_filename(checkfn, eof_song_path, "guitar.wav", sizeof(checkfn));
 	}
 	if(exists(checkfn))
 	{	//If the target file exists

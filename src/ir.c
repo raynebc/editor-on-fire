@@ -1190,7 +1190,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 
 	//Build the path to the IMMERROCK folder for this track difficulty
 	//Use song metadata and difficulty level to build the "Artist - Song - Difficulty" string and build a subfolder of that name in the project folder
-	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
+	(void) replace_filename(eof_temp_filename, destpath, "", sizeof(eof_temp_filename));	//Obtain the destination folder path
 	put_backslash(eof_temp_filename);
 	temp_string[0] = '\0';	//Empty this string
 	if(eof_check_string(sp->tags->artist))
@@ -1731,7 +1731,7 @@ void eof_export_immerrock(char silent, char *destpath)
 		eof_ir_export_allow_fhp_finger_placements = 2;	//If prompts are being suppressed, or the option to prompt for this is not enabled in export preferences, automatically decline an offer to derive missing finger placements from FHPs
 	else
 		eof_ir_export_allow_fhp_finger_placements = 0;	//Otherwise allow the user to be prompted
-	(void) replace_filename(newfolderpath, destpath, "", 1024);	//Obtain the destination path
+	(void) replace_filename(newfolderpath, destpath, "", sizeof(newfolderpath));	//Obtain the destination path
 	if(ddgglead || ddggrhythm || ddggbass)
 	{	//If any of the chosen arrangements will have the flattened dynamic difficulties exported
 		eof_export_immerrock_diff(eof_song, ddgglead, ddggrhythm, ddggbass, 0xFF, newfolderpath, 0, silent);	//Export the full flattened dynamic difficulty of each

@@ -216,10 +216,10 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 		eof_fix_window_title();
 		return 3;	//Return error:  Couldn't create silent audio
 	}
-	(void) replace_filename(wavfn, eof_song_path, "silence.wav", 1024);
+	(void) replace_filename(wavfn, eof_song_path, "silence.wav", sizeof(wavfn));
 	(void) save_wav(wavfn, silence_sample);
 	destroy_sample(silence_sample);
-	(void) replace_filename(soggfn, eof_song_path, "silence.ogg", 1024);
+	(void) replace_filename(soggfn, eof_song_path, "silence.ogg", sizeof(soggfn));
 	#ifdef ALLEGRO_WINDOWS
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#elif defined ALLEGRO_MACOSX
@@ -243,7 +243,7 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	(void) eof_chdir(eof_song_path);	//Change directory to the project's folder, since oggCat does not support paths that have any Unicode/extended ASCII, relative paths will be given
 	#ifdef ALLEGRO_WINDOWS
 		get_executable_name(oggcfn, 1024);
-		(void) replace_filename(oggcfn, oggcfn, "oggCat.exe", 1024);	//Build the full path to oggCat
+		(void) replace_filename(oggcfn, oggcfn, "oggCat.exe", sizeof(oggcfn));	//Build the full path to oggCat
 	#else
 		ustrzcpy(oggcfn, 1024, "oggCat");
 	#endif
@@ -439,10 +439,10 @@ int eof_add_silence_recode(char * oggfn, unsigned long ms)
 	/* encode the audio */
 	destroy_sample(decoded);	//This is no longer needed
 	free(oggbuffer);
-	(void) replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
+	(void) replace_filename(wavfn, eof_song_path, "encode.wav", sizeof(wavfn));
 	(void) save_wav(wavfn, combined);
 	destroy_sample(combined);	//This is no longer needed
-	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
+	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", sizeof(soggfn));
 
 	//Obtain an appropriate bitrate
 	if(eof_ogg_settings())
@@ -568,8 +568,8 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	}
 
 	/* decode MP3 */
-	(void) replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
-	(void) replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
+	(void) replace_filename(wavfn, eof_song_path, "decode.wav", sizeof(wavfn));
+	(void) replace_filename(mp3fn, eof_song_path, "original.mp3", sizeof(mp3fn));
 	#ifdef ALLEGRO_MACOSX
 	(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "/usr/local/bin/lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
 	#else
@@ -641,7 +641,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	}
 
 	/* save combined WAV */
-	(void) replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
+	(void) replace_filename(wavfn, eof_song_path, "encode.wav", sizeof(wavfn));
 	if(!save_wav(wavfn, combined))
 	{
 		destroy_sample(decoded);	//This is no longer needed
@@ -669,7 +669,7 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 		bitrate = 256;	//In case this happens, use a bitrate of 256Kbps, which should be good enough for a very high quality file
 	}
 
-	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
+	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", sizeof(soggfn));
 	#ifdef ALLEGRO_WINDOWS
 		(void) uszprintf(sys_command, (int) sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, bitrate, wavfn);
 	#elif defined ALLEGRO_MACOSX
@@ -721,12 +721,12 @@ int eof_add_silence_recode_mp3(char * oggfn, unsigned long ms)
 	(void) eof_copy_file(soggfn, oggfn);	//Copy encode.ogg to the filename of the original OGG
 
 	/* clean up */
-	(void) replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
+	(void) replace_filename(wavfn, eof_song_path, "decode.wav", sizeof(wavfn));
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCleaning up.  Deleting:\n\t\t%s", wavfn);
 	eof_log(eof_log_string, 1);
 	(void) delete_file(wavfn);		//Delete decode.wav
 
-	(void) replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
+	(void) replace_filename(wavfn, eof_song_path, "encode.wav", sizeof(wavfn));
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%s", wavfn);
 	eof_log(eof_log_string, 1);
 	(void) delete_file(wavfn);		//Delete encode.wav

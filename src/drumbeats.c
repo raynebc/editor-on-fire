@@ -421,7 +421,7 @@ int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 	}
 
 	eof_log("eof_export_drumbeats() entered", 2);
-	(void) replace_filename(eof_temp_filename, destpath, "", 1024);	//Obtain the destination folder path
+	(void) replace_filename(eof_temp_filename, destpath, "", sizeof(eof_temp_filename));	//Obtain the destination folder path
 
 	//Write song.ogg
 	if(eof_silence_loaded)
@@ -445,7 +445,7 @@ int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 	}
 
 	//Write preview.ogg if it doesn't exist in the export folder and it has been created for the project
-	(void) replace_filename(temp_string, eof_song_path, preview_name, 1024);		//Build the path to the preview.ogg filename in the project folder
+	(void) replace_filename(temp_string, eof_song_path, preview_name, sizeof(temp_string));		//Build the path to the preview.ogg filename in the project folder
 	(void) replace_filename(eof_temp_filename, eof_temp_filename, preview_name, (int) sizeof(eof_temp_filename));	//Build the path to the preview.ogg filename to write to the export folder
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
 	eof_log(eof_log_string, 2);
@@ -457,7 +457,7 @@ int eof_export_drumbeats(EOF_SONG *sp, unsigned long track, char *destpath)
 
 	//Write album art
 	album_art_filename[0] = '\0';	//Empty this string
-	(void) replace_filename(eof_temp_filename, eof_temp_filename, art_name, 1024);	//Build the path to the album art file to write to the export folder
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, art_name, sizeof(eof_temp_filename));	//Build the path to the album art file to write to the export folder
 	if(!exists(eof_temp_filename))
 	{	//If cover.png does not exist in the export folder
 		eof_log("\tAlbum art not found in export folder, checking project folder.", 2);

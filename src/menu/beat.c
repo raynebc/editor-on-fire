@@ -3894,7 +3894,7 @@ int eof_menu_beat_export_beat_timings(void)
 
 	if(eof_popup_dialog(eof_export_beat_timings_dialog, 2) == 5)
 	{	//User clicked OK
-		(void) replace_filename(buffer, eof_song_path, "timings.txt", 1024);	//Obtain the destination filename
+		(void) replace_filename(buffer, eof_song_path, "timings.txt", sizeof(buffer));	//Obtain the destination filename
 		fp = pack_fopen(buffer, "w");
 		if(!fp)
 		{

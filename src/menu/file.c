@@ -573,7 +573,7 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	put_backslash(directory);
 	if(check & 1)
 	{	//If checking for the presence of guitar.ogg
-		(void) replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
+		(void) replace_filename(eof_temp_filename, directory, "guitar.ogg", sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			eof_clear_input();
@@ -585,7 +585,7 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	}
 	if(check & 2)
 	{	//If checking for the presence of original.mp3
-		(void) replace_filename(eof_temp_filename, directory, "original.mp3", 1024);
+		(void) replace_filename(eof_temp_filename, directory, "original.mp3", sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			eof_clear_input();
@@ -599,7 +599,7 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	{	//If checking for the presence of [filename].ogg and [filename].eof
 		if(!filename)	//If a filename was not specified
 			return 0;	//Invalid parameters
-		(void) replace_filename(eof_temp_filename, directory, filename, 1024);
+		(void) replace_filename(eof_temp_filename, directory, filename, sizeof(eof_temp_filename));
 		(void) replace_extension(eof_temp_filename, eof_temp_filename, "ogg", 1024);
 		if(exists(eof_temp_filename))
 		{
@@ -620,7 +620,7 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 				return 0;
 			}
 		}
-		(void) replace_filename(eof_temp_filename, directory, filename, 1024);
+		(void) replace_filename(eof_temp_filename, directory, filename, sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			eof_clear_input();
@@ -633,23 +633,23 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 	}
 	if(check & ~(1 | 2 | 4))
 	{	//If checking for the presence of any of the default chart file names
-		(void) replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
+		(void) replace_filename(eof_temp_filename, directory, "guitar.ogg", sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			err = 1;
 		}
-		(void) replace_filename(eof_temp_filename, directory, "original.mp3", 1024);
+		(void) replace_filename(eof_temp_filename, directory, "original.mp3", sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			err = 1;
 		}
 		if(filename)
 		{	//If the calling function specified a project file name to check for
-			(void) replace_filename(eof_temp_filename, directory, filename, 1024);
+			(void) replace_filename(eof_temp_filename, directory, filename, sizeof(eof_temp_filename));
 		}
 		else
 		{	//Otherwise check for an existing project file named "notes.eof"
-			(void) replace_filename(eof_temp_filename, directory, "notes.eof", 1024);
+			(void) replace_filename(eof_temp_filename, directory, "notes.eof", sizeof(eof_temp_filename));
 		}
 		if(exists(eof_temp_filename))
 		{
@@ -657,12 +657,12 @@ int eof_menu_file_new_supplement(char *directory, char *filename, char check)
 		}
 		if(eof_write_fof_files)
 		{	//If the user opted to save Frets on Fire and Phase Shift files
-			(void) replace_filename(eof_temp_filename, directory, "song.ini", 1024);
+			(void) replace_filename(eof_temp_filename, directory, "song.ini", sizeof(eof_temp_filename));
 			if(exists(eof_temp_filename))
 			{
 				err = 1;
 			}
-			(void) replace_filename(eof_temp_filename, directory, "notes.mid", 1024);
+			(void) replace_filename(eof_temp_filename, directory, "notes.mid", sizeof(eof_temp_filename));
 			if(exists(eof_temp_filename))
 			{
 				err = 1;
@@ -757,13 +757,13 @@ int eof_menu_file_load(void)
 		eof_log(eof_log_string, 1);
 
 		/* check song.ini and prompt user to load any external edits */
-		(void) replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
+		(void) replace_filename(temp_filename, eof_song_path, "song.ini", sizeof(temp_filename));
 		(void) eof_import_ini(eof_song, temp_filename, warn);	//Read song.ini and prompt to replace values of existing settings in the project if they are different (unless user preference suppresses the prompts)
 
 		/* attempt to load the first OGG profile's OGG */
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAttempting to load first OGG profile \"%s\"", eof_song->tags->ogg[0].filename);
 		eof_log(eof_log_string, 1);
-		(void) replace_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, 1024);
+		(void) replace_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, sizeof(temp_filename));
 		if(!eof_load_ogg_quick(temp_filename))
 		{
 			eof_log("\tCouldn't load OGG, trying guitar.ogg", 1);
@@ -822,7 +822,7 @@ int eof_menu_file_save_as(void)
 	{
 		eof_log("\tPerforming \"Save as\"", 1);
 
-		(void) replace_filename(new_foldername, returnedfn, "", 1024);		//Obtain the chosen destination folder path
+		(void) replace_filename(new_foldername, returnedfn, "", sizeof(new_foldername));		//Obtain the chosen destination folder path
 		if(eof_menu_file_new_supplement(new_foldername, get_filename(returnedfn), 8) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
 			return 1;	//Return failure
 
@@ -871,8 +871,8 @@ int eof_menu_file_load_ogg(void)
 	eof_delete_rocksmith_wav();		//Delete the Rocksmith WAV file since loading different audio will require a new WAV file to be written
 
 	/* make sure selected file is in the same path as the current chart */
-	(void) replace_filename(checkfn, returnedfn, "", 1024);
-	(void) replace_filename(checkfn2, eof_song_path, "", 1024);
+	(void) replace_filename(checkfn, returnedfn, "", sizeof(checkfn));
+	(void) replace_filename(checkfn2, eof_song_path, "", sizeof(checkfn2));
 	if(ustricmp(checkfn, checkfn2))
 	{
 		allegro_message("OGGs can only be loaded from the current song folder!\n");
@@ -918,7 +918,7 @@ int eof_menu_file_load_ogg(void)
 		(void) eof_menu_song_seek_end();
 	}
 	eof_music_seek(eof_music_pos.value - eof_av_delay);
-	(void) replace_filename(eof_last_ogg_path, returnedfn, "", 1024);
+	(void) replace_filename(eof_last_ogg_path, returnedfn, "", sizeof(eof_last_ogg_path));
 	eof_log("\t\t\tOGG loaded", 1);
 
 	return 1;
@@ -1147,7 +1147,7 @@ int eof_menu_file_lyrics_import(void)
 			eof_truncate_chart(eof_song);	//Add beats to the chart if necessary to encompass the imported lyrics
 			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 			eof_reset_lyric_preview_lines();
-			(void) replace_filename(eof_last_lyric_path, returnedfn, "", 1024);	//Set the last loaded lyric file path
+			(void) replace_filename(eof_last_lyric_path, returnedfn, "", sizeof(eof_last_lyric_path));	//Set the last loaded lyric file path
 		}
 
 		if(tempfile)
@@ -1206,7 +1206,7 @@ int eof_menu_file_midi_import(void)
 		(void) eof_destroy_ogg();
 		if(!ustricmp(get_extension(returnedfn), "rba"))
 		{
-			(void) replace_filename(tempfilename, returnedfn, "eof_rba_import.tmp", 1024);
+			(void) replace_filename(tempfilename, returnedfn, "eof_rba_import.tmp", sizeof(tempfilename));
 			if(eof_extract_rba_midi(returnedfn,tempfilename) == 0)
 			{	//If this was an RBA file and the MIDI was extracted successfully
 				eof_song = eof_import_midi(tempfilename);
@@ -1229,7 +1229,7 @@ int eof_menu_file_midi_import(void)
 			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);
-			(void) replace_filename(eof_last_midi_path, returnedfn_path, "", 1024);	//Set the last loaded MIDI file path
+			(void) replace_filename(eof_last_midi_path, returnedfn_path, "", sizeof(eof_last_midi_path));	//Set the last loaded MIDI file path
 			eof_determine_phrase_status(eof_song, eof_selected_track);	//Update HOPO statuses
 			eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
 			eof_beat_stats_cached = 0;
@@ -1306,7 +1306,7 @@ int eof_menu_file_drums_rock_import(void)
 		{
 			eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);
-			(void) replace_filename(eof_last_dr_path, returnedfn_path, "", 1024);	//Set the last loaded DR file path
+			(void) replace_filename(eof_last_dr_path, returnedfn_path, "", sizeof(eof_last_dr_path));	//Set the last loaded DR file path
 			eof_log("\tDrums Rock file loaded", 1);
 		}
 	}
@@ -1401,7 +1401,7 @@ int eof_menu_file_stepmania_import(void)
 			eof_init_after_load(0);
 			eof_changes = eof_project_unsaved = 1;
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
-			(void) replace_filename(eof_last_sm_path, returnedfn_path, "", 1024);	//Set the last loaded DR file path
+			(void) replace_filename(eof_last_sm_path, returnedfn_path, "", sizeof(eof_last_sm_path));	//Set the last loaded DR file path
 			eof_log("\tStepmania file loaded", 1);
 		}
 		if((retval == 1) || (retval > 2))
@@ -1435,8 +1435,8 @@ int eof_command_line_stepmania_import(char *fn)
 
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);
-	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
-	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
@@ -2994,7 +2994,7 @@ int eof_menu_file_feedback_import(void)
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
 			eof_changes = eof_project_unsaved = 1;
-			(void) replace_filename(eof_last_db_path, returnedfn_path, "", 1024);	//Set the last loaded Feedback file path
+			(void) replace_filename(eof_last_db_path, returnedfn_path, "", sizeof(eof_last_db_path));	//Set the last loaded Feedback file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_song_enforce_mid_beat_tempo_change_removal();	//Remove mid beat tempo changes if applicable
 			(void) eof_check_for_notes_preceding_sections(0);	//Warn if there are notes that precede the first section event, if there are any sections
@@ -3114,7 +3114,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 	eof_log(eof_log_string, 2);
 	if(!ustricmp(src_name, dest_name))
 	{	//If the input file's name is the same as the OGG file that is to be created
-		(void) replace_filename(syscommand, file, "", 1024);	//Obtain the parent directory of the input file
+		(void) replace_filename(syscommand, file, "", sizeof(syscommand));	//Obtain the parent directory of the input file
 		if(!ustricmp(syscommand,directory))				//Special case:  The input and output file are the same
 		{
 			return 0;									//Return success without altering the existing OGG file
@@ -3307,7 +3307,7 @@ int eof_new_chart(char * filename)
 	if((ret != 0) && exists(eof_ffmpeg_executable_path))
 	{	//If a suitably named OGG was not created successfully, but FFMPEG is linked
 		eof_log("\tAttempting to re-encode input audio with FFMPEG", 1);
-		replace_filename(oggfilename, eof_temp_path_s, get_filename(filename), sizeof(oggfilename) - 1);	//Build a path where the input audio file name is appended to the temp folder
+		replace_filename(oggfilename, eof_temp_path_s, get_filename(filename), sizeof(oggfilename));	//Build a path where the input audio file name is appended to the temp folder
 		(void) replace_extension(oggfilename, oggfilename, "ogg", 1024);	//and its extension is changed to ogg
 		if(eof_ffmpeg_convert_file(filename, oggfilename))
 		{	//If the input file couldn't be re-encoded to OGG with FFMPEG
@@ -3322,7 +3322,7 @@ int eof_new_chart(char * filename)
 		allegro_message("Could not convert selected audio file, it may be corrupt or an unsupported format");
 		return ret;	//Return failure
 	}
-	replace_filename(tempfilename, eof_temp_path_s, dest_name, sizeof(tempfilename) - 1);	//Build a path to the file in the temp folder
+	replace_filename(tempfilename, eof_temp_path_s, dest_name, sizeof(tempfilename));	//Build a path to the file in the temp folder
 
 
 	//Attempt to load any recognizable metadata from the audio file at path filename
@@ -3506,7 +3506,7 @@ int eof_new_chart(char * filename)
 		{	//Use Source Audio's Folder
 			eof_log("\tUse source audio's folder selected", 1);
 			eof_render();
-			(void) replace_filename(eof_etext3, filename, "", 1024);
+			(void) replace_filename(eof_etext3, filename, "", sizeof(eof_etext3));
 		}
 		else
 		{	//Create New Folder
@@ -3593,14 +3593,14 @@ int eof_new_chart(char * filename)
 	(void) ustrcpy(eof_song->tags->album, album);
 	(void) ustrcpy(eof_song->tags->genre, genre);
 	(void) ustrcpy(eof_song->tags->tracknumber, tracknumber);
-	(void) replace_filename(eof_last_ogg_path, filename, "", 1024);	//Remember the path of the last chosen audio file
+	(void) replace_filename(eof_last_ogg_path, filename, "", sizeof(eof_last_ogg_path));	//Remember the path of the last chosen audio file
 
 
 	//Copy temp audio file to project folder, to which oggfilename will be the full path
 	(void) ustrcpy(eof_song_path, eof_etext3);	//Build the global variable path to the project folder
 	put_backslash(eof_song_path);
 	(void) ustrcpy(eof_last_eof_path, eof_song_path);
-	replace_filename(oggfilename, eof_song_path, dest_name, sizeof(oggfilename) - 1);	//Build the full path for what should become the audio file in the project folder
+	replace_filename(oggfilename, eof_song_path, dest_name, sizeof(oggfilename));	//Build the full path for what should become the audio file in the project folder
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCopying temp audio file \"%s\" to project folder as \"%s\"", tempfilename, oggfilename);
 	eof_log(eof_log_string, 1);
 	if(!eof_copy_file(tempfilename, oggfilename) || !exists(oggfilename))
@@ -4595,7 +4595,7 @@ int eof_save_helper_checks(void)
 	//Drums Rock related checks
 	if(eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM) || eof_track_is_drums_rock_mode(eof_song, EOF_TRACK_DRUM_PS))
 	{	//If a Drums Rock track is to be exported
-		(void) replace_filename(oggfn, eof_song_path, "preview.ogg", 1024);
+		(void) replace_filename(oggfn, eof_song_path, "preview.ogg", sizeof(oggfn));
 		if(!exists(oggfn))
 		{	//If the project has no preview audio defined
 			eof_clear_input();
@@ -4666,7 +4666,7 @@ int eof_save_helper(char *destfilename, char silent)
 			return 3;	//Return failure:  Invalid paths
 		}
 		(void) append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, (int) sizeof(eof_temp_filename));
-		(void) replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
+		(void) replace_filename(newfolderpath, eof_song_path, "", sizeof(newfolderpath));	//Obtain the destination path
 	}
 	else
 	{	//Perform save as
@@ -4675,7 +4675,7 @@ int eof_save_helper(char *destfilename, char silent)
 		(void) ustrcpy(eof_temp_filename, destfilename);
 		if(eof_temp_filename[1022] != '\0')	//If the source filename was too long to store in the array
 			return 4;			//Return failure:  Destination path too long
-		(void) replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
+		(void) replace_filename(newfolderpath, destfilename, "", sizeof(newfolderpath));	//Obtain the destination path
 	}
 
 	/* rotate out the last save file (filename).previous_save.eof.bak */
@@ -5299,7 +5299,7 @@ int eof_menu_file_gh_import(void)
 			eof_song_loaded = 1;
 			eof_init_after_load(0);
 			eof_changes = eof_project_unsaved = 1;
-			(void) replace_filename(eof_last_gh_path, returnedfn_path, "", 1024);	//Set the last loaded GH file path
+			(void) replace_filename(eof_last_gh_path, returnedfn_path, "", sizeof(eof_last_gh_path));	//Set the last loaded GH file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
 			eof_beat_stats_cached = 0;
@@ -5378,7 +5378,7 @@ int eof_menu_file_ghl_import(void)
 		{	//A project was already open
 			if(!eof_ghl_import_common(returnedfn))
 			{	//If the file imported
-				(void) replace_filename(eof_last_ghl_path, returnedfn_path, "", 1024);	//Set the last loaded GHL file path
+				(void) replace_filename(eof_last_ghl_path, returnedfn_path, "", sizeof(eof_last_ghl_path));	//Set the last loaded GHL file path
 				eof_cleanup_beat_flags(eof_song);				//Update anchor flags as necessary for any time signature changes
 				eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_detect_mid_measure_ts_changes() below
 				eof_beat_stats_cached = 0;
@@ -5390,7 +5390,7 @@ int eof_menu_file_ghl_import(void)
 				allegro_message("Could not import GHL file!");
 			}
 		}
-		(void) replace_filename(eof_last_gp_path, returnedfn_path, "", 1024);	//Set the last loaded GP file path
+		(void) replace_filename(eof_last_gp_path, returnedfn_path, "", sizeof(eof_last_gp_path));	//Set the last loaded GP file path
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -6240,7 +6240,7 @@ int eof_menu_file_gp_import(void)
 		{	//A project was already open
 			(void) eof_gp_import_common(returnedfn);
 		}
-		(void) replace_filename(eof_last_gp_path, returnedfn_path, "", 1024);	//Set the last loaded GP file path
+		(void) replace_filename(eof_last_gp_path, returnedfn_path, "", sizeof(eof_last_gp_path));	//Set the last loaded GP file path
 	}
 	eof_fix_window_title();
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
@@ -6270,8 +6270,8 @@ int eof_command_line_gp_import(char *fn)
 
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);
-	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
-	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
@@ -6677,8 +6677,8 @@ int eof_command_line_rs_import(char *fn)
 
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);
-	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
-	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
@@ -6952,7 +6952,7 @@ int eof_menu_file_sonic_visualiser_import(void)
 	//Cleanup
 	eof_calculate_tempo_map(eof_song);	//Determine all tempo changes based on the beats' timestamps
 	eof_truncate_chart(eof_song);		//Remove excess beat markers and update the eof_chart_length variable
-	(void) replace_filename(eof_last_sonic_visualiser_path, returnedfn, "", 1024);	//Set the last loaded Sonic Visualiser file path
+	(void) replace_filename(eof_last_sonic_visualiser_path, returnedfn, "", sizeof(eof_last_sonic_visualiser_path));	//Set the last loaded Sonic Visualiser file path
 	free(buffer);
 	(void) pack_fclose(inf);
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
@@ -7003,7 +7003,7 @@ int eof_menu_file_bf_import(void)
 			eof_change_count = 0;
 		}
 		(void) eof_destroy_ogg();
-		(void) replace_filename(eof_last_bf_path, eof_filename, "", 1024);
+		(void) replace_filename(eof_last_bf_path, eof_filename, "", sizeof(eof_last_bf_path));
 
 		eof_song = eof_load_bf(returnedfn);
 		if(eof_song)
@@ -7013,7 +7013,7 @@ int eof_menu_file_bf_import(void)
 			eof_sort_notes(eof_song);
 			eof_fixup_notes(eof_song);
 			(void) eof_detect_difficulties(eof_song, eof_selected_track);
-			(void) replace_filename(eof_last_bf_path, returnedfn_path, "", 1024);	//Set the last loaded Bandfuse file path
+			(void) replace_filename(eof_last_bf_path, returnedfn_path, "", sizeof(eof_last_bf_path));	//Set the last loaded Bandfuse file path
 			eof_cleanup_beat_flags(eof_song);	//Update anchor flags as necessary for any time signature changes
 			eof_log("\tImport complete", 1);
 		}
@@ -7085,7 +7085,7 @@ int eof_menu_file_export_chart_range(void)
 		eof_log("\tSaving cloned chart", 1);
 
 		(void) replace_extension(temppath, returnedfn, "eof", 1024);		//Ensure the chart is saved with a .eof extension
-		(void) replace_filename(new_foldername, temppath, "", 1024);		//Obtain the chosen destination folder path
+		(void) replace_filename(new_foldername, temppath, "", sizeof(new_foldername));		//Obtain the chosen destination folder path
 		if(eof_menu_file_new_supplement(new_foldername, get_filename(temppath), 4) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
 		{
 			eof_destroy_song(csp);
@@ -7387,7 +7387,7 @@ int eof_menu_file_export_song_preview(void)
 		{	//Otherwise default to "guitar"
 			(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
 		}
-		(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
+		(void) replace_filename(targetpath, eof_song_path, wavname, sizeof(targetpath));	//Build the target path for the preview WAV file
 		(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
 		eof_export_audio_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
 		if(!exists(targetpath))
@@ -7395,15 +7395,15 @@ int eof_menu_file_export_song_preview(void)
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError writing file \"%s\":  \"%s\", retrying with a target name of guitar_preview.wav", targetpath, strerror(errno));	//Get the Operating System's reason for the failure
 			eof_log(eof_log_string, 1);
 			(void) snprintf(wavname, sizeof(wavname), "guitar_preview.wav");
-			(void) replace_filename(targetpath, eof_song_path, wavname, 1024);	//Build the target path for the preview WAV file
+			(void) replace_filename(targetpath, eof_song_path, wavname, sizeof(targetpath));	//Build the target path for the preview WAV file
 			(void) delete_file(targetpath);	//Delete the preview WAV file if it already exists
 			eof_export_audio_time_range(eof_music_track, start / 1000.0, stop / 1000.0, targetpath);	//Build the preview WAV file
 		}
 		if(exists(targetpath))
 		{	//If the preview WAV file was created, convert it to OGG
-			(void) replace_filename(targetpath, eof_song_path, "preview.ogg", 1024);	//Build the target for the preview OGG file
+			(void) replace_filename(targetpath, eof_song_path, "preview.ogg", sizeof(targetpath));	//Build the target for the preview OGG file
 			(void) delete_file(targetpath);	//Delete the preview OGG file if it already exists
-			(void) replace_filename(targetpath, eof_song_path, "", 1024);	//Build the path for the preview files' parent folder
+			(void) replace_filename(targetpath, eof_song_path, "", sizeof(targetpath));	//Build the path for the preview files' parent folder
 			#ifdef ALLEGRO_WINDOWS
 				(void) uszprintf(syscommand, (int) sizeof(syscommand), "oggenc2 --quiet -q %s --resample 44100 -s 0 \"%s%s\" -o \"%spreview.ogg\"", eof_ogg_quality[(int)eof_ogg_setting], targetpath, wavname, targetpath);
 			#elif defined ALLEGRO_MACOSX
@@ -7455,7 +7455,7 @@ int eof_menu_file_export_immerrock_track_diff(void)
 		default:
 			gglead = eof_selected_track;
 	}
-	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+	(void) replace_filename(eof_temp_filename, eof_song_path, "", sizeof(eof_temp_filename));	//Obtain the destination path
 	eof_export_immerrock_diff(eof_song, gglead, ggrhythm, ggbass, eof_note_type, eof_temp_filename, 1, 0);
 
 	return 1;
@@ -7474,7 +7474,7 @@ int eof_menu_file_export_beatable_track(void)
 	eof_log(eof_log_string, 1);
 
 	//Build the export file name
-	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+	(void) replace_filename(eof_temp_filename, eof_song_path, "", sizeof(eof_temp_filename));	//Obtain the destination path
 	temp_string[0] = '\0';	//Empty this string
 	if(eof_check_string(eof_song->tags->artist))
 	{	//If the artist of the song is defined
@@ -7512,7 +7512,7 @@ int eof_menu_file_export_llplus_track_diff(void)
 	eof_log(eof_log_string, 1);
 
 	//Build the export file name
-	(void) replace_filename(eof_temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+	(void) replace_filename(eof_temp_filename, eof_song_path, "", sizeof(eof_temp_filename));	//Obtain the destination path
 	temp_string[0] = '\0';	//Empty this string
 	if(eof_check_string(eof_song->tags->artist))
 	{	//If the artist of the song is defined
@@ -7550,7 +7550,7 @@ int eof_menu_file_export_drumbeats_track(void)
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tExporting track:  %s", eof_song->track[eof_selected_track]->name);
 	eof_log(eof_log_string, 1);
 
-	(void) replace_filename(temp_filename, eof_song_path, "", 1024);	//Obtain the destination path
+	(void) replace_filename(temp_filename, eof_song_path, "", sizeof(temp_filename));	//Obtain the destination path
 	put_backslash(temp_filename);
 	(void) ustrcat(temp_filename, "DrumBeats");
 	put_backslash(temp_filename);
@@ -7885,7 +7885,7 @@ int eof_menu_file_notes_panel_browse(void)
 	}
 
 	eof_log("Browsing for Notes panel file", 1);
-	(void) replace_filename(initial, eof_last_browsed_notes_panel_path, "", 1024);	//Get the initial folder path for the browse dialog
+	(void) replace_filename(initial, eof_last_browsed_notes_panel_path, "", sizeof(initial));	//Get the initial folder path for the browse dialog
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tInitializing browse dialog to \"%s\"", initial);
 	eof_log(eof_log_string, 1);
 
@@ -8009,7 +8009,7 @@ int eof_menu_file_multiple_array_txt_import(void)
 			char *ptr;
 
 			//Build the path to folder that would contain these (two folder levels higher than the selected array.txt file)
-			(void) replace_filename(rootfolder, returnedfn, "", 1024);
+			(void) replace_filename(rootfolder, returnedfn, "", sizeof(rootfolder));
 			ptr = ustrrchr(rootfolder, '/');	//Find the last folder separator in the path
 			if(!ptr)
 				ptr = ustrrchr(rootfolder, '\\');
@@ -8028,7 +8028,7 @@ int eof_menu_file_multiple_array_txt_import(void)
 				eof_log("\tCould not parse parent of parent folder", 1);
 				return 0;
 			}
-			(void) replace_filename(rootfolder, rootfolder, "", 1024);	//Strip the folder name from the path
+			(void) replace_filename(rootfolder, rootfolder, "", sizeof(rootfolder));	//Strip the folder name from the path
 			put_backslash(rootfolder);	//Ensure it ends in a folder separator
 
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tGHOT root identified as \"%s\"", rootfolder);

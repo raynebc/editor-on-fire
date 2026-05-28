@@ -1182,8 +1182,8 @@ EOF_SONG *eof_load_bf(char * fn)
 
 //Update path variables
 	(void) ustrcpy(eof_filename, fn);
-	(void) replace_filename(eof_song_path, fn, "", 1024);
-	(void) replace_filename(eof_last_eof_path, fn, "", 1024);
+	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));
+	(void) replace_filename(eof_last_eof_path, fn, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(fn));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 

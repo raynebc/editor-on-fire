@@ -323,12 +323,12 @@ EOF_SONG * eof_import_chart(const char * fn)
 	{	//If the user did not disable automatic backups
 		/* backup "song.ini" if it exists in the folder with the imported MIDI
 		as it will be overwritten upon save */
-		(void) replace_filename(eof_temp_filename, fn, "song.ini", 1024);
+		(void) replace_filename(eof_temp_filename, fn, "song.ini", sizeof(eof_temp_filename));
 		if(exists(eof_temp_filename))
 		{
 			/* do not overwrite an existing backup, this prevents the original backed up song.ini from
 			being overwritten if the user imports the MIDI again */
-			(void) replace_filename(backup_filename, fn, "song.ini.backup", 1024);
+			(void) replace_filename(backup_filename, fn, "song.ini.backup", sizeof(backup_filename));
 			if(!exists(backup_filename))
 			{
 				(void) eof_copy_file(eof_temp_filename, backup_filename);
@@ -339,40 +339,40 @@ EOF_SONG * eof_import_chart(const char * fn)
 										//This path will be used later to set the song and project paths at the end of the import
 
 	/* identify/convert audio file to load */
-	(void) replace_filename(eof_song_path, fn, "", 1024);	//Set the project folder path
-	(void) replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg by default
+	(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));	//Set the project folder path
+	(void) replace_filename(oggfn, fn, "guitar.ogg", sizeof(oggfn));	//Look for guitar.ogg by default
 	if((chart->audiofile != NULL) && !exists(oggfn))
 	{	//If the imported chart defines which audio file to use AND guitar.ogg doesn't exist
-		(void) replace_filename(oggfn, fn, chart->audiofile, 1024);
+		(void) replace_filename(oggfn, fn, chart->audiofile, sizeof(oggfn));
 	}
 	if(!exists(oggfn))
 	{	//If neither guitar.ogg nor the file specified in the chart file exist, look for OGG files in the chart directory
 		/* start file selector at chart directory */
-		(void) replace_filename(searchpath, fn, "*.ogg", 1024);
+		(void) replace_filename(searchpath, fn, "*.ogg", sizeof(searchpath));
 		if(al_findfirst(searchpath, &info, FA_ALL))
 		{
 			(void) ustrcpy(oldoggpath, eof_last_ogg_path);
-			(void) replace_filename(eof_last_ogg_path, fn, "", 1024);
+			(void) replace_filename(eof_last_ogg_path, fn, "", sizeof(eof_last_ogg_path));
 		}
 
 		/* if there is only one OGG file, load it */
 		else if(al_findnext(&info))
 		{
-			(void) replace_filename(oggfn, fn, info.name, 1024);
+			(void) replace_filename(oggfn, fn, info.name, sizeof(oggfn));
 		}
 		al_findclose(&info);
 	}
 
 	if(exists(oggfn))
 	{	//If an existing audio file has been identified
-		(void) replace_filename(searchpath, oggfn, "", 1024);		//Store the path of the file's parent folder
+		(void) replace_filename(searchpath, oggfn, "", sizeof(searchpath));		//Store the path of the file's parent folder
 		ret = eof_audio_to_ogg(oggfn, searchpath, dest_name, 1, 1);	//Create a suitably named OGG in the folder, converting to OGG if necessary (prompt before overwrite)
 		if(ret != 0)
 		{	//If guitar.ogg was not created successfully
 			DestroyFeedbackChart(chart, 1);
 			return NULL;
 		}
-		(void) replace_filename(oggfn, fn, dest_name, 1024);	//Update the name of the OGG file that eof_load_ogg() is to access
+		(void) replace_filename(oggfn, fn, dest_name, sizeof(oggfn));	//Update the name of the OGG file that eof_load_ogg() is to access
 	}
 
 	/* create empty song */
@@ -424,7 +424,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 
 	/* read INI file */
-	(void) replace_filename(oggfn, fn, "song.ini", 1024);
+	(void) replace_filename(oggfn, fn, "song.ini", sizeof(oggfn));
 	(void) eof_import_ini(sp, oggfn, 0);
 
 	/* set up beat markers */
@@ -1266,8 +1266,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 //Update path variables
 	(void) ustrcpy(eof_filename, backup_filename);
-	(void) replace_filename(eof_song_path, backup_filename, "", 1024);
-	(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+	(void) replace_filename(eof_song_path, backup_filename, "", sizeof(eof_song_path));
+	(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 	(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 

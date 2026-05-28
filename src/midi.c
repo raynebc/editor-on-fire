@@ -2699,7 +2699,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 	if(expertpluswritten)
 	{
-		(void) replace_filename(expertplusfilename, fn, expertplusshortname, 1024);	//Build the path for the output expert+ MIDI
+		(void) replace_filename(expertplusfilename, fn, expertplusshortname, sizeof(expertplusfilename));	//Build the path for the output expert+ MIDI
 		fp3 = pack_fopen(expertplusfilename, "w");
 		if(!fp3)
 			expertpluswritten = 0;	//Cancel trying to write Expert+ and save the normal MIDI instead

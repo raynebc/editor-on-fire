@@ -1331,8 +1331,8 @@ EOF_SONG * eof_import_gh(const char * fn)
 	eof_log("eof_import_gh() entered", 1);
 
 	//Build the paths to guitar.ogg and song.ini ahead of time, as fn can be clobbered by browsing for an external section names file during GH import below
-	(void) replace_filename(oggfn, fn, "guitar.ogg", 1024);
-	(void) replace_filename(inifn, fn, "song.ini", 1024);
+	(void) replace_filename(oggfn, fn, "guitar.ogg", sizeof(oggfn));
+	(void) replace_filename(inifn, fn, "song.ini", sizeof(inifn));
 	eof_allocate_ucode_table();
 	eof_gh_unicode_encoding_detected = 0;	//Reset this condition
 	sp = eof_import_gh_note(fn);	//Attempt to load as a "NOTE" format GH file
@@ -1366,7 +1366,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 			{
 				/* do not overwrite an existing backup, this prevents the original backed up song.ini from
 				being overwritten if the user imports the MIDI again */
-				(void) replace_filename(backup_filename, inifn, "song.ini.backup", 1024);
+				(void) replace_filename(backup_filename, inifn, "song.ini.backup", sizeof(backup_filename));
 				if(!exists(backup_filename))
 				{
 					(void) eof_copy_file(eof_temp_filename, backup_filename);
@@ -1397,8 +1397,8 @@ EOF_SONG * eof_import_gh(const char * fn)
 
 //Update path variables
 		(void) ustrcpy(eof_filename, fn);
-		(void) replace_filename(eof_song_path, fn, "", 1024);
-		(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+		(void) replace_filename(eof_song_path, fn, "", sizeof(eof_song_path));
+		(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));
 		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 		(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 
@@ -6085,7 +6085,7 @@ unsigned long eof_import_array_txt_folder(const char *filename, char *undo_made,
 	if(!filename || !undo_made || !prompt1 || !prompt2 || !prompt3)
 		return 0;	//Invalid parameters
 
-	(void) replace_filename(searchpath, filename, "*.txt", 1024);	//Build the search string to find all text files in the specified file's folder path
+	(void) replace_filename(searchpath, filename, "*.txt", sizeof(searchpath));	//Build the search string to find all text files in the specified file's folder path
 	done = al_findfirst(searchpath, &info, FA_ALL);
 	if(done)
 	{	//If no file matches are found
@@ -6096,7 +6096,7 @@ unsigned long eof_import_array_txt_folder(const char *filename, char *undo_made,
 
 	while(!done)
 	{
-		(void) replace_filename(searchpath, searchpath, info.name, 1024);	//Build the path to this search result
+		(void) replace_filename(searchpath, searchpath, info.name, sizeof(searchpath));	//Build the path to this search result
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImporting \"%s\"", searchpath);
 		eof_log(eof_log_string, 1);
 		retval = eof_import_array_txt(searchpath, undo_made, prompt1, prompt2, prompt3);	//Attempt to import this search result

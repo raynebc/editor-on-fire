@@ -2119,7 +2119,7 @@ int eof_load_ogg(char * filename, char function)
 	ptr = filename;	//The name of the file to cite if it fails to load
 	if(!eof_music_data)
 	{	//If the referenced file couldn't be buffered to memory, have the user browse for another file
-		(void) replace_filename(output, filename, "", 1024);	//Get the path of the target file's parent directory (the project folder)
+		(void) replace_filename(output, filename, "", sizeof(output));	//Get the path of the target file's parent directory (the project folder)
 		if(exists(eof_ffmpeg_executable_path))
 		{	//If FFMPEG is linked, use the more inclusive file filter
 			returnedfn = ncd_file_select(0, output, "Select Music File", eof_filter_ffmpeg_files);
@@ -2132,11 +2132,11 @@ int eof_load_ogg(char * filename, char function)
 		if(returnedfn)
 		{	//User selected an audio file, write a suitably named OGG into the chart's destination folder
 			ptr = returnedfn;	//The name of the file to cite if it fails to load
-			(void) replace_filename(output, filename, "", 1024);	//Store the path of the file's parent folder
+			(void) replace_filename(output, filename, "", sizeof(output));	//Store the path of the file's parent folder
 
 			if(!eof_audio_to_ogg(returnedfn, output, dest_name, (function == 2 ? 1 : 0), 1))
 			{	//If the file copy or conversion to create guitar.ogg (or a suitably named OGG file if function == 2) succeeded (prompt before overwrite)
-				(void) replace_filename(output, filename, dest_name, 1024);
+				(void) replace_filename(output, filename, dest_name, sizeof(output));
 			}
 			else
 			{	//eof_audio_to_ogg() failed to convert the audio
@@ -2188,7 +2188,7 @@ int eof_load_ogg(char * filename, char function)
 				#ifdef ALLEGRO_MACOSX
 					(void) strncat(output, "/Contents/Resources/eof/", sizeof(output) - strlen(output) - 1);
 				#endif
-				(void) replace_filename(output, output, "second_of_silence.ogg", 1024);
+				(void) replace_filename(output, output, "second_of_silence.ogg", sizeof(output));
 				load_silence = 1;	//Track that the function is attempting to load no chart audio, just the silent placeholder
 			}
 		}
@@ -4660,7 +4660,7 @@ int eof_initialize(int argc, char * argv[])
 	if(!file_exists("eof.dat", 0, NULL))
 	{	//If eof.dat doesn't exist in the current working directory (ie. opening a file with EOF over command line)
 		get_executable_name(temp_filename, 1024);
-		(void) replace_filename(temp_filename, temp_filename, "", 1024);
+		(void) replace_filename(temp_filename, temp_filename, "", sizeof(temp_filename));
 		if(eof_chdir(temp_filename))
 		{
 			allegro_message("Could not load program data!\n%s\nMove EOF to a file path without any special (ie. accented) characters if applicable.", temp_filename);
@@ -4714,7 +4714,7 @@ int eof_initialize(int argc, char * argv[])
 	if((eof_songs_path[0] == '\0') || !eof_folder_exists(eof_songs_path))
 	{	//If the user-specified song folder couldn't be loaded from the config file above, or if the folder does not exist
 		get_executable_name(eof_songs_path, 1024);	//Set it to EOF's program file folder
-		(void) replace_filename(eof_songs_path, eof_songs_path, "", 1024);
+		(void) replace_filename(eof_songs_path, eof_songs_path, "", sizeof(eof_songs_path));
 	}
 	put_backslash(eof_songs_path);	//Append a file separator if necessary
 
@@ -5107,8 +5107,8 @@ int eof_initialize(int argc, char * argv[])
 								return 0;
 							}
 							(void) ustrcpy(eof_filename, ptr);		//Set the full project path
-							(void) replace_filename(eof_song_path, eof_filename, "", 1024);		//Set the song folder path
-							(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);	//Set the last loaded song path
+							(void) replace_filename(eof_song_path, eof_filename, "", sizeof(eof_song_path));		//Set the song folder path
+							(void) replace_filename(eof_last_eof_path, eof_filename, "", sizeof(eof_last_eof_path));	//Set the last loaded song path
 							(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
 							(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[0].filename, 1024);	//Construct the full OGG path
 							if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
@@ -5167,7 +5167,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 
 				/* check song.ini and prompt user to load any external edits */
-				(void) replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
+				(void) replace_filename(temp_filename, eof_song_path, "song.ini", sizeof(temp_filename));
 				(void) eof_import_ini(eof_song, temp_filename, warn);	//Read song.ini and prompt to replace values of existing settings in the project if they are different (unless user preference suppresses the prompts)
 
 				/* attempt to load the OGG profile OGG */
@@ -5207,7 +5207,7 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rba"))
 			{
-				(void) replace_filename(temp_filename, argv[i], "eof_rba_import.tmp", 1024);
+				(void) replace_filename(temp_filename, argv[i], "eof_rba_import.tmp", sizeof(temp_filename));
 
 				if(eof_extract_rba_midi(argv[i], temp_filename) == 0)
 				{	//If this was an RBA file and the MIDI was extracted successfully
@@ -5265,7 +5265,7 @@ int eof_initialize(int argc, char * argv[])
 					return 0;
 				}
 				eof_song_loaded = 1;
-				(void) replace_filename(eof_last_gh_path, eof_filename, "", 1024);
+				(void) replace_filename(eof_last_gh_path, eof_filename, "", sizeof(eof_last_gh_path));
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rif"))
 			{	//Import a Bandfuse chart via command line
@@ -5280,7 +5280,7 @@ int eof_initialize(int argc, char * argv[])
 					return 0;
 				}
 				eof_song_loaded = 1;
-				(void) replace_filename(eof_last_bf_path, eof_filename, "", 1024);
+				(void) replace_filename(eof_last_bf_path, eof_filename, "", sizeof(eof_last_bf_path));
 			}
 			else if(!ustricmp(get_extension(argv[i]), "xml"))
 			{	//Import a Rocksmith arrangement or Go PlayAlong XML file via command line
@@ -5376,7 +5376,7 @@ int eof_initialize(int argc, char * argv[])
 			char exepath[1024] = {0};
 
 			get_executable_name(exepath, 1024);	//Set it to EOF's program file folder
-			(void) replace_filename(exepath, exepath, "", 1024);
+			(void) replace_filename(exepath, exepath, "", sizeof(exepath));
 			put_backslash(exepath);	//Append a file separator if necessary
 
 			if(!ustrcmp(eof_songs_path, exepath))
@@ -5885,11 +5885,11 @@ void eof_start_logging(void)
 			char tempstr[10];
 
 			(void) snprintf(tempstr, sizeof(tempstr) - 1, "%lu.log", ch_sp_path_worker_number);
-			(void) replace_filename(log_filename, log_filename, tempstr, 1024);
+			(void) replace_filename(log_filename, log_filename, tempstr, sizeof(log_filename));
 		}
 		else
 		{	//Normal EOF process
-			(void) replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
+			(void) replace_filename(log_filename, log_filename, "eof_log.txt", sizeof(log_filename));
 
 			#ifndef ALLEGRO_WINDOWS
 			//For non Windows builds, try to set the log's parent folder to ~/Library/Logs
@@ -6956,10 +6956,10 @@ int eof_validate_temp_folder(void)
 		}
 		else
 		{
-			(void) replace_filename(correct_wd, correct_wd, "", 1024);
+			(void) replace_filename(correct_wd, correct_wd, "", sizeof(correct_wd));
 		}
 	#else
-		(void) replace_filename(correct_wd, correct_wd, "", 1024);
+		(void) replace_filename(correct_wd, correct_wd, "", sizeof(correct_wd));
 	#endif
 
 	//Change CWD if necessary
