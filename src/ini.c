@@ -43,73 +43,73 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 	if(ustrlen(sp->tags->artist) > 0)
 	{
 		(void) ustrzcpy(ini_string, sizeof(ini_string), "[song]\r\nartist = ");
-		(void) ustrcat(ini_string, sp->tags->artist);
+		(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->artist);
 	}
 	else
 	{
 		(void) ustrzcpy(ini_string, sizeof(ini_string), "[song]\r\nartist = ");
-		(void) ustrcat(ini_string, "Unknown Artist");
+		(void) ustrzcat(ini_string, sizeof(ini_string), "Unknown Artist");
 	}
 
 	/* write song name */
 	if(ustrlen(sp->tags->title) > 0)
 	{
-		(void) ustrcat(ini_string, "\r\nname = ");
-		(void) ustrcat(ini_string, sp->tags->title);
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nname = ");
+		(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->title);
 	}
 	else
 	{
-		(void) ustrcat(ini_string, "\r\nname = ");
-		(void) ustrcat(ini_string, "Untitled");
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nname = ");
+		(void) ustrzcat(ini_string, sizeof(ini_string), "Untitled");
 	}
 
 	/* write frettist/charter name */
 	if(ustrlen(sp->tags->frettist) > 0)
 	{
-		(void) ustrcat(ini_string, "\r\nfrets = ");
-		(void) ustrcat(ini_string, sp->tags->frettist);
-		(void) ustrcat(ini_string, "\r\ncharter = ");		//Newer games like Phase Shift and Clone Hero also support this tag
-		(void) ustrcat(ini_string, sp->tags->frettist);
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nfrets = ");
+		(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->frettist);
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\ncharter = ");		//Newer games like Phase Shift and Clone Hero also support this tag
+		(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->frettist);
 	}
 
 	/* write album name */
 	if(ustrlen(sp->tags->album) > 0)
 	{
-		(void) ustrcat(ini_string, "\r\nalbum = ");
-		(void) ustrcat(ini_string, sp->tags->album);
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nalbum = ");
+		(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->album);
 	}
 
 	/* write genre */
 	if(ustrlen(sp->tags->genre) > 0)
 	{
-		(void) ustrcat(ini_string, "\r\ngenre = ");
-		(void) ustrcat(ini_string, sp->tags->genre);
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\ngenre = ");
+		(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->genre);
 	}
 
 	/* write track number */
 	if(ustrlen(sp->tags->tracknumber) > 0)
 	{
-		(void) ustrcat(ini_string, "\r\ntrack = ");
-		(void) ustrcat(ini_string, sp->tags->tracknumber);
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\ntrack = ");
+		(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->tracknumber);
 	}
 
 	/* write midi offset */
-	(void) ustrcat(ini_string, "\r\ndelay = ");
+	(void) ustrzcat(ini_string, sizeof(ini_string), "\r\ndelay = ");
 	(void) snprintf(buffer, sizeof(buffer) - 1, "%ld", sp->tags->ogg[0].midi_offset);
-	(void) ustrcat(ini_string, buffer);
+	(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 
 	/* write year */
 	if(ustrlen(sp->tags->year) > 0)
 	{
-		(void) ustrcat(ini_string, "\r\nyear = ");
-		(void) ustrcat(ini_string, sp->tags->year);
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nyear = ");
+		(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->year);
 	}
 
 	/* write loading text */
 	if(ustrlen(sp->tags->loading_text) > 0)
 	{
-		(void) ustrcat(ini_string, "\r\nloading_phrase = ");
-		(void) ustrcat(ini_string, sp->tags->loading_text);
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nloading_phrase = ");
+		(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->loading_text);
 	}
 
 	/* write difficulty tags */
@@ -193,30 +193,30 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 		if(!eof_get_track_size_normal(sp, i))
 		{	//If this track is empty
 			(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = -1", diff_tag);	//Write an "empty track" difficulty tag
-			(void) ustrcat(ini_string, buffer);
+			(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 		}
 		else
 		{
 			if(sp->track[i]->difficulty != 0xFF)
 			{	//If the track's difficulty is defined
 				(void) snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = %u", diff_tag, sp->track[i]->difficulty);
-				(void) ustrcat(ini_string, buffer);
+				(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 			}
 		}
 	}
 	if(((sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
 	{	//If there is a defined pro drum difficulty
 		(void) snprintf(buffer, sizeof(buffer) - 1, "\r\ndiff_drums_real = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);
-		(void) ustrcat(ini_string, buffer);
+		(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 	}
 	else if(!eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
 	{	//Otherwise if there are also no cymbals defined
-		(void) ustrcat(ini_string, "\r\ndiff_drums_real = -1");	//Write a pro drum not present tag
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\ndiff_drums_real = -1");	//Write a pro drum not present tag
 	}
 	if(((sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
 	{	//If there is a defined harmony difficulty
 		(void) snprintf(buffer, sizeof(buffer) - 1, "\r\ndiff_vocals_harm = %lu", (sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);
-		(void) ustrcat(ini_string, buffer);
+		(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 	}
 	else
 	{
@@ -233,23 +233,23 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 		}
 		if(!harmoniesfound)
 		{	//If none of the stored MIDI tracks appeared to have harmonies
-			(void) ustrcat(ini_string, "\r\ndiff_vocals_harm = -1");	//Write a vocal harmonies not present tag
+			(void) ustrzcat(ini_string, sizeof(ini_string), "\r\ndiff_vocals_harm = -1");	//Write a vocal harmonies not present tag
 		}
 	}
 	if(sp->tags->difficulty != 0xFF)
 	{	//If there is a defined band difficulty
 		(void) snprintf(buffer, sizeof(buffer) - 1, "\r\ndiff_band = %lu", sp->tags->difficulty);
-		(void) ustrcat(ini_string, buffer);
+		(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 	}
 
 	/* write other settings */
 	if(sp->tags->lyrics)
 	{
-		(void) ustrcat(ini_string, "\r\nlyrics = True");
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nlyrics = True");
 	}
 	if(sp->tags->eighth_note_hopo)
 	{
-		(void) ustrcat(ini_string, "\r\neighthnote_hopo = 1");
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\neighthnote_hopo = 1");
 	}
 
 	/* check for use of open bass strumming and write a tag if necessary */
@@ -262,7 +262,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 			{	//For each note in the bass guitar track
 				if(sp->legacy_track[tracknum]->note[j]->note & 32)
 				{	//If lane 6 (open bass) is populated
-					(void) ustrcat(ini_string, "\r\nsysex_open_bass = True");	//Write the open strum Sysex presence tag (used in Phase Shift) to identify that this Sysex phrase will be written to MIDI
+					(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nsysex_open_bass = True");	//Write the open strum Sysex presence tag (used in Phase Shift) to identify that this Sysex phrase will be written to MIDI
 					i = sp->tracks;	//Trigger the exit of the outer loop
 					break;	//Exit loops
 				}
@@ -288,7 +288,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 	}
 	if(slidesfound)
 	{	//If this chart has at least one pro guitar slide
-		(void) ustrcat(ini_string, "\r\nsysex_pro_slide = True");	//Write the pro guitar slide Sysex presence tag (used in Phase Shift) to identify that up/down slide Sysex phrases will be written to MIDI
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nsysex_pro_slide = True");	//Write the pro guitar slide Sysex presence tag (used in Phase Shift) to identify that up/down slide Sysex phrases will be written to MIDI
 	}
 
 	/* check for use of open or pedal controlled hi hat or rim shot and write tags if necessary */
@@ -306,11 +306,11 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 	}
 	if(hihatmarkersfound)
 	{	//If this chart has at least one yellow cymbal marked as open, pedal controlled or sizzle hi hat
-		(void) ustrcat(ini_string, "\r\nsysex_high_hat_ctrl = True");	//Write the high hat control Sysex presence tag (used in Phase Shift) to identify that hi hat Sysex phrases will be written to MIDI
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nsysex_high_hat_ctrl = True");	//Write the high hat control Sysex presence tag (used in Phase Shift) to identify that hi hat Sysex phrases will be written to MIDI
 	}
 	if(rimshotmarkersfound)
 	{	//If this chart has at least one note marked as a rim shot
-		(void) ustrcat(ini_string, "\r\nsysex_rimshot = True");	//Write the rim shot Sysex presence tag (used in Phase Shift) to identify that rim shot Sysex phrases will be written to MIDI
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nsysex_rimshot = True");	//Write the rim shot Sysex presence tag (used in Phase Shift) to identify that rim shot Sysex phrases will be written to MIDI
 	}
 
 	/* check for use of slider sections and write a tag if necessary */
@@ -318,122 +318,122 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 	{	//For each track in the chart (skipping track 0)
 		if(eof_get_num_sliders(sp, i))
 		{	//If the track has a slider section
-			(void) ustrcat(ini_string, "\r\nsysex_slider = True");	//Write the slider Sysex presence tag (used in Phase Shift) to identify that slider Sysex phrases will be written to MIDI
+			(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nsysex_slider = True");	//Write the slider Sysex presence tag (used in Phase Shift) to identify that slider Sysex phrases will be written to MIDI
 			break;
 		}
 	}
 
-	(void) ustrcat(ini_string, "\r\nmultiplier_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power
+	(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nmultiplier_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power
 
 	/* check for use of cymbal notation */
 	if(eof_force_pro_drum_midi_notation || (eof_track_has_cymbals(sp, EOF_TRACK_DRUM) || eof_track_has_cymbals(sp, EOF_TRACK_DRUM_PS)))
 	{	//If the use of pro drum notation is being forced by user preference or either drum track has any notes marked as cymbals
-		(void) ustrcat(ini_string, "\r\npro_drums = True");	//Write the pro drum tag, which indicates notes default as cymbals unless marked as toms (used in Phase Shift)
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\npro_drums = True");	//Write the pro drum tag, which indicates notes default as cymbals unless marked as toms (used in Phase Shift)
 	}
 
 	/* check for five lane drums */
 	if(eof_five_lane_drums_enabled())
 	{	//If the drum track's fifth lane is enabled
-		(void) ustrcat(ini_string, "\r\nfive_lane_drums = True");	//Write the five lane drum tag, which allows the game to decide how to present the chart during playback (used in Phase Shift)
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\nfive_lane_drums = True");	//Write the five lane drum tag, which allows the game to decide how to present the chart during playback (used in Phase Shift)
 	}
 
 	/* check for accented drums */
 	if(eof_track_has_accent(sp, EOF_TRACK_DRUM) || eof_track_has_accent(sp, EOF_TRACK_DRUM_PS))
 	{
-		(void) ustrcat(ini_string, "\r\neof_midi_import_drum_accent_velocity = 127");	//Write this tag to indicate to Phase Shift that EOF is using velocity 127 to define accented drum notes
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\neof_midi_import_drum_accent_velocity = 127");	//Write this tag to indicate to Phase Shift that EOF is using velocity 127 to define accented drum notes
 	}
 
 	/* check for ghosted drums */
 	if(eof_track_has_ghost(sp, EOF_TRACK_DRUM) || eof_track_has_ghost(sp, EOF_TRACK_DRUM_PS))
 	{
-		(void) ustrcat(ini_string, "\r\neof_midi_import_drum_ghost_velocity = 1");		//Write this tag to indicate that EOF is using velocity 1 to define ghosted drum notes
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\neof_midi_import_drum_ghost_velocity = 1");		//Write this tag to indicate that EOF is using velocity 1 to define ghosted drum notes
 	}
 
 	/* write tuning tags */
 	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_GUITAR))
 	{	//If the 17 fret pro guitar track is populated
-		(void) ustrcat(ini_string, "\r\n");
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\n");
 		tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
-		(void) ustrcat(ini_string, "real_guitar_tuning =");	//Write the pro guitar tuning tag
+		(void) ustrzcat(ini_string, sizeof(ini_string), "real_guitar_tuning =");	//Write the pro guitar tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
 			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
-			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
+			(void) ustrzcat(ini_string, sizeof(ini_string), buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_GUITAR, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
 			(void) snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);
-			(void) ustrcat(ini_string, buffer);
+			(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 		}
 	}
 	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_GUITAR_22))
 	{	//If the 22 fret pro guitar track is populated
-		(void) ustrcat(ini_string, "\r\n");
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\n");
 		tracknum = sp->track[EOF_TRACK_PRO_GUITAR_22]->tracknum;
-		(void) ustrcat(ini_string, "real_guitar_22_tuning =");	//Write the pro guitar tuning tag
+		(void) ustrzcat(ini_string, sizeof(ini_string), "real_guitar_22_tuning =");	//Write the pro guitar tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
 			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
-			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
+			(void) ustrzcat(ini_string, sizeof(ini_string), buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_GUITAR_22, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
 			(void) snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);
-			(void) ustrcat(ini_string, buffer);
+			(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 		}
 	}
 	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_BASS))
 	{	//If the 17 fret pro bass track is populated
-		(void) ustrcat(ini_string, "\r\n");
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\n");
 		tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
-		(void) ustrcat(ini_string, "real_bass_tuning =");	//Write the pro bass tuning tag
+		(void) ustrzcat(ini_string, sizeof(ini_string), "real_bass_tuning =");	//Write the pro bass tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
 			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
-			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
+			(void) ustrzcat(ini_string, sizeof(ini_string), buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_BASS, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
 			(void) snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);
-			(void) ustrcat(ini_string, buffer);
+			(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 		}
 	}
 	if(eof_get_track_size_normal(sp, EOF_TRACK_PRO_BASS_22))
 	{	//If the 22 fret pro bass track is populated
-		(void) ustrcat(ini_string, "\r\n");
+		(void) ustrzcat(ini_string, sizeof(ini_string), "\r\n");
 		tracknum = sp->track[EOF_TRACK_PRO_BASS_22]->tracknum;
-		(void) ustrcat(ini_string, "real_bass_22_tuning =");	//Write the pro bass tuning tag
+		(void) ustrzcat(ini_string, sizeof(ini_string), "real_bass_22_tuning =");	//Write the pro bass tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
 			(void) snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
-			(void) ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
+			(void) ustrzcat(ini_string, sizeof(ini_string), buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_BASS_22, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
 			(void) snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);
-			(void) ustrcat(ini_string, buffer);
+			(void) ustrzcat(ini_string, sizeof(ini_string), buffer);
 		}
 	}
 
 	/* write custom INI settings */
-	(void) ustrcat(ini_string, "\r\n");
+	(void) ustrzcat(ini_string, sizeof(ini_string), "\r\n");
 	for(i = 0; i < sp->tags->ini_settings; i++)
 	{
 		if(ustrlen(sp->tags->ini_setting[i]) > 0)
 		{
-			(void) ustrcat(ini_string, sp->tags->ini_setting[i]);
-			(void) ustrcat(ini_string, "\r\n");
+			(void) ustrzcat(ini_string, sizeof(ini_string), sp->tags->ini_setting[i]);
+			(void) ustrzcat(ini_string, sizeof(ini_string), "\r\n");
 		}
 	}
 
 	/* write song length */
 	(void) snprintf(buffer, sizeof(buffer) - 1, "song_length = %lu", eof_music_length);
-	(void) ustrcat(ini_string, buffer);	//Append the song length tag to the ongoing INI string
-	(void) ustrcat(ini_string, "\r\n");
+	(void) ustrzcat(ini_string, sizeof(ini_string), buffer);	//Append the song length tag to the ongoing INI string
+	(void) ustrzcat(ini_string, sizeof(ini_string), "\r\n");
 
 	(void) pack_fwrite(ini_string, ustrsize(ini_string), fp);
 	(void) pack_fclose(fp);
@@ -547,10 +547,10 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 	{	//For each string used in the track
 		if(i != 0)
 		{	//If this isn't the first string, append a space after the last tuning that was written
-			(void) ustrcat(buffer2, " ");
+			(void) ustrzcat(buffer2, sizeof(buffer2), " ");
 		}
 		(void) snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
-		(void) ustrcat(buffer2, buffer3);	//Append the string's tuning value to the ongoing tuning string
+		(void) ustrzcat(buffer2, sizeof(buffer2), buffer3);	//Append the string's tuning value to the ongoing tuning string
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "   (real_guitar_tuning (%s))\n", buffer2);	//Build the complete pro guitar tuning string line
 	(void) pack_fputs(buffer, fp);
@@ -561,10 +561,10 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 	{	//For each string used in the track
 		if(i != 0)
 		{	//If this isn't the first string, append a space after the last tuning that was written
-			(void) ustrcat(buffer2, " ");
+			(void) ustrzcat(buffer2, sizeof(buffer2), " ");
 		}
 		(void) snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i] % 12);	//Write the string's tuning value (signed integer), disregarding which octave the pitch is in since tunings of more than 11 steps are only allowed for RS2
-		(void) ustrcat(buffer2, buffer3);	//Append the string's tuning value to the ongoing tuning string
+		(void) ustrzcat(buffer2, sizeof(buffer2), buffer3);	//Append the string's tuning value to the ongoing tuning string
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "   (real_bass_tuning (%s))\n", buffer2);	//Build the complete pro bass tuning string line
 	(void) pack_fputs(buffer, fp);

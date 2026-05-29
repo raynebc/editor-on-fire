@@ -1195,17 +1195,17 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	temp_string[0] = '\0';	//Empty this string
 	if(eof_check_string(sp->tags->artist))
 	{	//If the artist of the song is defined
-		(void) ustrcat(temp_string, sp->tags->artist);
+		(void) ustrzcat(temp_string, sizeof(temp_string), sp->tags->artist);
 	}
 	if(eof_check_string(sp->tags->title))
 	{	//If the title of the song is defined
 		if(temp_string[0] != '\0')
-			(void) ustrcat(temp_string, " - ");
-		(void) ustrcat(temp_string, sp->tags->title);
+			(void) ustrzcat(temp_string, sizeof(temp_string), " - ");
+		(void) ustrzcat(temp_string, sizeof(temp_string), sp->tags->title);
 	}
 	if(temp_string[0] == '\0')
 	{	//If there is no defined artist or song title
-		(void) ustrcat(temp_string, "IMMERROCK");	//Use this as the name for the destination folder
+		(void) ustrzcat(temp_string, sizeof(temp_string), "IMMERROCK");	//Use this as the name for the destination folder
 	}
 	if(option == 1)
 	{	//If a single arrangement is being exported, include its name in the export folder name
@@ -1230,20 +1230,20 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 				arrangement_name = sp->track[effective_arrangement]->name;
 			}
 			if(temp_string[0] != '\0')
-				(void) ustrcat(temp_string, " - ");
-			(void) ustrcat(temp_string, arrangement_name);
+				(void) ustrzcat(temp_string, sizeof(temp_string), " - ");
+			(void) ustrzcat(temp_string, sizeof(temp_string), arrangement_name);
 		}
 	}
 	if(diff_name[0] != '\0')
 	{	//If a specific difficulty other than the flattened maximum dynamic difficulty is being exported
 		if(temp_string[0] != '\0')
-			(void) ustrcat(temp_string, " - ");
-		(void) ustrcat(temp_string, diff_name);
+			(void) ustrzcat(temp_string, sizeof(temp_string), " - ");
+		(void) ustrzcat(temp_string, sizeof(temp_string), diff_name);
 	}
 
 	//Build the subfolder if it doesn't already exist
 	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
-	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
+	(void) ustrzcat(eof_temp_filename, sizeof(eof_temp_filename), temp_filename2);	//Append to the destination folder path
 	if(!eof_folder_exists(eof_temp_filename))
 	{	//If the export subfolder doesn't already exist
 		err = eof_mkdir(eof_temp_filename);

@@ -284,17 +284,17 @@ int eof_export_drums_rock_track_diff(EOF_SONG * sp, unsigned long track, unsigne
 	temp_string[0] = '\0';	//Empty this string
 	if(eof_check_string(sp->tags->artist))
 	{	//If the artist of the song is defined
-		(void) ustrcat(temp_string, sp->tags->artist);
-		(void) ustrcat(temp_string, " - ");
+		(void) ustrzcat(temp_string, sizeof(temp_string), sp->tags->artist);
+		(void) ustrzcat(temp_string, sizeof(temp_string), " - ");
 	}
 	if(eof_check_string(sp->tags->title))
 	{	//If the title of the song is defined
-		(void) ustrcat(temp_string, sp->tags->title);
-		(void) ustrcat(temp_string, " - ");
+		(void) ustrzcat(temp_string, sizeof(temp_string), sp->tags->title);
+		(void) ustrzcat(temp_string, sizeof(temp_string), " - ");
 	}
-	(void) ustrcat(temp_string, eof_note_type_name_dr[diff]);
+	(void) ustrzcat(temp_string, sizeof(temp_string), eof_note_type_name_dr[diff]);
 	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
-	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
+	(void) ustrzcat(eof_temp_filename, sizeof(eof_temp_filename), temp_filename2);	//Append to the destination folder path
 
 	//Build the subfolder if it doesn't already exist
 	if(!eof_folder_exists(eof_temp_filename))

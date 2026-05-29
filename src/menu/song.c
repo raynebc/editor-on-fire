@@ -1290,7 +1290,7 @@ int eof_menu_song_test(char application)
 
 	/* save temporary song */
 	(void) ustrzcpy(temppath, sizeof(temppath), songs_path);
-	(void) ustrcat(temppath, "EOFTemp\\");
+	(void) ustrzcat(temppath, sizeof(temppath), "EOFTemp\\");
 	(void) append_filename(temppath2, temppath, "notes.eof", sizeof(temppath2));
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
@@ -1325,12 +1325,12 @@ int eof_menu_song_test(char application)
 	if(application == 1)
 	{	//If the user wants to test the chart in FoF
 		(void) ustrzcpy(syscommand, sizeof(syscommand), executablename);
-		(void) ustrcat(syscommand, " -p \"EOFTemp\" -D ");
+		(void) ustrzcat(syscommand, sizeof(syscommand), " -p \"EOFTemp\" -D ");
 		(void) uszprintf(temppath, (int) sizeof(temppath) - 1, "%d", difficulty);
-		(void) ustrcat(syscommand, temppath);
-		(void) ustrcat(syscommand, " -P ");
+		(void) ustrzcat(syscommand, sizeof(syscommand), temppath);
+		(void) ustrzcat(syscommand, sizeof(syscommand), " -P ");
 		(void) uszprintf(temppath, (int) sizeof(temppath) - 1, "%d", part);
-		(void) ustrcat(syscommand, temppath);
+		(void) ustrzcat(syscommand, sizeof(syscommand), temppath);
 		(void) eof_system(syscommand);
 	}
 	else

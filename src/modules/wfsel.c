@@ -378,7 +378,7 @@ char * ncd_folder_select(char * title)
 			{
 				SHGetPathFromIDList(pidl, ncdfs_internal_windows_return_folder);
 				uconvert((char *)ncdfs_internal_windows_return_folder, U_UNICODE, ncdfs_internal_return_folder, U_UTF8, 4096);
-				ustrcat(ncdfs_internal_return_folder, "\\");
+				ustrzcat(ncdfs_internal_return_folder, sizeof(ncdfs_internal_return_folder), "\\");
 				return ncdfs_internal_return_folder;
 			}
 			return NULL;

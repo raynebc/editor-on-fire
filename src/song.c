@@ -8460,7 +8460,7 @@ int eof_create_image_sequence(char benchmark_only)
 		(void) ustrzcpy(eof_temp_filename, sizeof(eof_temp_filename), eof_song_path);
 		(void) replace_filename(eof_temp_filename, eof_temp_filename, "", (int)sizeof(eof_temp_filename));
 		put_backslash(eof_temp_filename);
-		(void) ustrcat(eof_temp_filename, "sequence");
+		(void) ustrzcat(eof_temp_filename, sizeof(eof_temp_filename), "sequence");
 		eof_clear_input();
 		if(!eof_folder_exists(eof_temp_filename))
 		{	//If this folder doesn't already exist

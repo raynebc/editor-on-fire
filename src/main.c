@@ -1250,24 +1250,24 @@ int eof_set_display_mode(unsigned long width, unsigned long height)
 	return 1;
 }
 
-void eof_cat_track_difficulty_string(char *str)
+void eof_cat_track_difficulty_string(char *str, unsigned long buffersize)
 {
 	if(!str)
 		return;	//Invalid parameter
 
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
 	{	//If this track has an alternate name, append the track's alternate name
-		(void) ustrcat(str, eof_song->track[eof_selected_track]->altname);
+		(void) ustrzcat(str, buffersize, eof_song->track[eof_selected_track]->altname);
 	}
 	else
 	{	//Otherwise append the track's native name
-		(void) ustrcat(str, eof_song->track[eof_selected_track]->name);
+		(void) ustrzcat(str, buffersize, eof_song->track[eof_selected_track]->name);
 	}
 	if(!eof_vocals_selected)
 	{	//If the vocal track isn't active, append other information such as the current difficulty
 		char *ptr;
 
-		(void) ustrcat(str, "  ");
+		(void) ustrzcat(str, buffersize, "  ");
 		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 		{	//If this track is not limited to 5 difficulties
 			char diff_string[15] = {0};			//Used to generate the string for a numbered difficulty
@@ -1276,12 +1276,12 @@ void eof_cat_track_difficulty_string(char *str)
 			{	//If this difficulty is populated
 				diff_string[0] = '*';
 			}
-			(void) ustrcat(str, diff_string);
+			(void) ustrzcat(str, buffersize, diff_string);
 		}
 		else if(eof_selected_track == EOF_TRACK_DANCE)
 		{	//If the dance track is active
 			ptr = eof_dance_tab_name[eof_note_type];
-			(void) ustrcat(str, ptr);					//Append the active dance difficulty name
+			(void) ustrzcat(str, buffersize, ptr);					//Append the active dance difficulty name
 		}
 		else
 		{
@@ -1289,15 +1289,15 @@ void eof_cat_track_difficulty_string(char *str)
 				ptr = eof_beatable_tab_name[eof_note_type];
 			else
 				ptr = eof_note_type_name[eof_note_type];
-			(void) ustrcat(str, ptr);					//Append the active track difficulty name
+			(void) ustrzcat(str, buffersize, ptr);					//Append the active track difficulty name
 		}
 	}
 
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
 	{	//If this track has an alternate name, append the track's native name
-		(void) ustrcat(str, " (");
-		(void) ustrcat(str, eof_song->track[eof_selected_track]->name);
-		(void) ustrcat(str, ")");
+		(void) ustrzcat(str, buffersize, " (");
+		(void) ustrzcat(str, buffersize, eof_song->track[eof_selected_track]->name);
+		(void) ustrzcat(str, buffersize, ")");
 	}
 }
 
@@ -1315,82 +1315,82 @@ void eof_fix_window_title(void)
 	}
 	if(eof_song && eof_song_loaded)
 	{
-		eof_cat_track_difficulty_string(eof_window_title);	//Append the track difficulty's title to the window title
+		eof_cat_track_difficulty_string(eof_window_title, sizeof(eof_window_title));	//Append the track difficulty's title to the window title
 
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If this is a pro guitar track being displayed
 			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
 			if(tp->note == tp->technote)
 			{	//If tech view is enabled
-				(void) ustrcat(eof_window_title, "(Tech view)");
+				(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Tech view)");
 			}
 			if(eof_fingering_view)
 			{	//If fingering view is enabled
-				(void) ustrcat(eof_window_title, "(Fingering view)");
+				(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Fingering view)");
 			}
 			if(eof_flat_dd_view && eof_track_has_dynamic_difficulty(eof_song, eof_selected_track))
 			{
-				(void) ustrcat(eof_window_title, "(Flat DD view)");
+				(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Flat DD view)");
 			}
 			if(eof_legacy_view)
 			{	//If legacy view is enabled
-				(void) ustrcat(eof_window_title, "(Legacy view)");
+				(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Legacy view)");
 			}
 		}
 
 		if(eof_track_is_ghl_mode(eof_song, eof_selected_track))
 		{	//If GHL mode is enabled for the active track
-			(void) ustrcat(eof_window_title, "(GHL)");
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(GHL)");
 		}
 		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK)
 		{
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_DRUMS_ROCK_REMAP)
 			{	//If note remapping is also enabled
-				(void) ustrcat(eof_window_title, "(Drums Rock, remapped)");
+				(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Drums Rock, remapped)");
 			}
 			else
 			{
-				(void) ustrcat(eof_window_title, "(Drums Rock)");
+				(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Drums Rock)");
 			}
 		}
 		if(eof_track_is_beatable_mode(eof_song, eof_selected_track))
 		{
-			(void) ustrcat(eof_window_title, "(BEATABLE)");
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(BEATABLE)");
 			if(eof_note_type == 4)
-				(void) ustrcat(eof_window_title, " ! This difficulty won't export !");
+				(void) ustrzcat(eof_window_title, sizeof(eof_window_title), " ! This difficulty won't export !");
 		}
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the tempo map is locked
-			(void) ustrcat(eof_window_title, "(Tempo map locked)");
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Tempo map locked)");
 		}
 		if(eof_song->tags->click_drag_disabled)
 		{	//If click and drag is disabled
-			(void) ustrcat(eof_window_title, "(Click+drag disabled)");
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Click+drag disabled)");
 		}
 		if(eof_song->tags->double_bass_drum_disabled && (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 		{	//If expert+ bass drum is disabled and a drum track is active
-			(void) ustrcat(eof_window_title, "(Expert+ drums off)");
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Expert+ drums off)");
 		}
 		if(eof_silence_loaded)
 		{	//If no chart audio is actually loaded
-			(void) ustrcat(eof_window_title, "(No audio loaded)");
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(No audio loaded)");
 		}
 		if(eof_song_has_stored_tempo_track(eof_song))
 		{	//If the project has a stored tempo track
-			(void) ustrcat(eof_window_title, "(Stored tempo map)");
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Stored tempo map)");
 		}
 		if(eof_phase_cancellation)
 		{	//If center panned vocals are being removed
-			(void) ustrcat(eof_window_title, "(Phase cancellation)");
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Phase cancellation)");
 		}
 		if(eof_center_isolation)
 		{	//If center panned vocals are being amplified
-			(void) ustrcat(eof_window_title, "(Center isolation)");
+			(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "(Center isolation)");
 		}
 	}
 	else
 	{
-		(void) ustrcat(eof_window_title, "No Song");
+		(void) ustrzcat(eof_window_title, sizeof(eof_window_title), "No Song");
 	}
 	set_window_title(eof_window_title);
 	eof_window_title_dirty = 0;
@@ -3427,7 +3427,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 				{	//If space is nonzero, append a space if possible
 					if(currentlength+1 <= MAX_LYRIC_PREVIEW_LENGTH)
 					{	//If appending a space would NOT cause an overflow
-						(void) ustrcat(lline[x], " ");
+						(void) ustrzcat(lline[x], sizeof(lline[0]), " ");
 						currentlength++;	//Track the length of this preview line
 					}
 					else
@@ -3457,7 +3457,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 				break;													//Stop building this line's preview
 
 		//Append string
-			(void) ustrcat(lline[x], eof_song->vocal_track[0]->lyric[i]->text);
+			(void) ustrzcat(lline[x], sizeof(lline[0]), eof_song->vocal_track[0]->lyric[i]->text);
 			currentlength += lyriclength;									//Track the length of this preview line
 
 		//Truncate a '/' character off the end of the lyric line if it exists (TB:RB notation for a forced line break)

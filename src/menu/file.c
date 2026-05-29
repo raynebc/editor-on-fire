@@ -3207,7 +3207,7 @@ int eof_audio_to_ogg(char *file, char *directory, char *dest_name, char function
 		}
 		(void) ustrzcpy(syscommand, sizeof(syscommand), directory);
 		put_backslash(syscommand);
-		(void) ustrcat(syscommand, dest_name);
+		(void) ustrzcat(syscommand, sizeof(syscommand), dest_name);
 		if(ustricmp(file, syscommand))
 		{	//If the source and destination file are not the same, copy the file
 			if(exists(syscommand))
@@ -3529,7 +3529,7 @@ int eof_new_chart(char * filename)
 #endif
 			eof_log("\tCreate new folder selected", 1);
 			(void) ustrzcpy(eof_etext3, sizeof(eof_etext3), eof_songs_path);
-			(void) ustrcat(eof_etext3, eof_etext4);
+			(void) ustrzcat(eof_etext3, sizeof(eof_etext3), eof_etext4);
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNew project folder path:  \"%s\"", eof_etext3);
 			eof_log(eof_log_string, 1);
 
@@ -4878,7 +4878,7 @@ int eof_save_helper(char *destfilename, char silent)
 			//Write a DTA file for the pro guitar upgrade
 			(void) ustrzcpy(eof_temp_filename, sizeof(eof_temp_filename), newfolderpath);
 			put_backslash(eof_temp_filename);
-			(void) ustrcat(eof_temp_filename, "songs_upgrades");
+			(void) ustrzcat(eof_temp_filename, sizeof(eof_temp_filename), "songs_upgrades");
 			if(!eof_folder_exists(eof_temp_filename))
 			{	//If the songs_upgrades folder doesn't already exist
 				err = eof_mkdir(eof_temp_filename);
@@ -7266,7 +7266,7 @@ int eof_menu_file_export_guitar_pro(void)
 		}
 	}
 	(void) uszprintf(tempstr, (int) sizeof(tempstr) - 1, " --xml \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" -o \"%s\"", temppath1, temppath2, temppath3, temppath4, temppath5, tempstr2);
-	(void) ustrcat(syscommand, tempstr);
+	(void) ustrzcat(syscommand, sizeof(syscommand), tempstr);
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling RocksmithToTab as follows:  %s", syscommand);
 	eof_log(eof_log_string, 1);
 	(void) eof_system(syscommand);
@@ -7480,21 +7480,21 @@ int eof_menu_file_export_beatable_track(void)
 	temp_string[0] = '\0';	//Empty this string
 	if(eof_check_string(eof_song->tags->artist))
 	{	//If the artist of the song is defined
-		(void) ustrcat(temp_string, eof_song->tags->artist);
+		(void) ustrzcat(temp_string, sizeof(temp_string), eof_song->tags->artist);
 	}
 	if(temp_string[0] != '\0')
-		(void) ustrcat(temp_string, " - ");
+		(void) ustrzcat(temp_string, sizeof(temp_string), " - ");
 	if(eof_check_string(eof_song->tags->title))
 	{	//If the title of the song is defined
-		(void) ustrcat(temp_string, eof_song->tags->title);
+		(void) ustrzcat(temp_string, sizeof(temp_string), eof_song->tags->title);
 	}
 	else
 	{
-		(void) ustrcat(temp_string, "song");
+		(void) ustrzcat(temp_string, sizeof(temp_string), "song");
 	}
-	(void) ustrcat(temp_string, ".beats");
+	(void) ustrzcat(temp_string, sizeof(temp_string), ".beats");
 	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
-	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
+	(void) ustrzcat(eof_temp_filename, sizeof(eof_temp_filename), temp_filename2);	//Append to the destination folder path
 
 	eof_export_beatable(eof_song, eof_selected_track, eof_temp_filename);
 
@@ -7518,21 +7518,21 @@ int eof_menu_file_export_llplus_track_diff(void)
 	temp_string[0] = '\0';	//Empty this string
 	if(eof_check_string(eof_song->tags->artist))
 	{	//If the artist of the song is defined
-		(void) ustrcat(temp_string, eof_song->tags->artist);
+		(void) ustrzcat(temp_string, sizeof(temp_string), eof_song->tags->artist);
 	}
 	if(temp_string[0] != '\0')
-		(void) ustrcat(temp_string, " - ");
+		(void) ustrzcat(temp_string, sizeof(temp_string), " - ");
 	if(eof_check_string(eof_song->tags->title))
 	{	//If the title of the song is defined
-		(void) ustrcat(temp_string, eof_song->tags->title);
+		(void) ustrzcat(temp_string, sizeof(temp_string), eof_song->tags->title);
 	}
 	else
 	{
-		(void) ustrcat(temp_string, "song");
+		(void) ustrzcat(temp_string, sizeof(temp_string), "song");
 	}
-	(void) ustrcat(temp_string, ".llplus.mid");
+	(void) ustrzcat(temp_string, sizeof(temp_string), ".llplus.mid");
 	eof_build_sanitized_filename_string(temp_string, temp_filename2);	//Filter out characters that can't be used in filenames
-	(void) ustrcat(eof_temp_filename, temp_filename2);	//Append to the destination folder path
+	(void) ustrzcat(eof_temp_filename, sizeof(eof_temp_filename), temp_filename2);	//Append to the destination folder path
 
 	eof_export_llplus_midi(eof_temp_filename);
 
@@ -7554,7 +7554,7 @@ int eof_menu_file_export_drumbeats_track(void)
 
 	(void) replace_filename(temp_filename, eof_song_path, "", sizeof(temp_filename));	//Obtain the destination path
 	put_backslash(temp_filename);
-	(void) ustrcat(temp_filename, "DrumBeats");
+	(void) ustrzcat(temp_filename, sizeof(temp_filename), "DrumBeats");
 	put_backslash(temp_filename);
 	if(!eof_folder_exists(temp_filename))
 	{	//If the export subfolder doesn't already exist

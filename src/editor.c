@@ -7608,7 +7608,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	{	//Otherwise display the secondary piano roll's track difficulty
 		char temp[101] = {0};
 		temp[0] = '\0';	//Empty the string
-		eof_cat_track_difficulty_string(temp);	//Fill the string with the name and number of the track difficulty being rendered
+		eof_cat_track_difficulty_string(temp, sizeof(temp));	//Fill the string with the name and number of the track difficulty being rendered
 		if(eof_menu_track_get_tech_view_state(eof_song, eof_selected_track))
 		{	//If tech view is active in the secondary piano roll
 			eof_strncat(temp, "(Tech view)", sizeof(temp));
