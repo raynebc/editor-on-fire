@@ -255,8 +255,14 @@ int eof_detect_tempo_map_corruption(EOF_SONG *sp, int report)
 	double expected_pos;
 	int corrupt = 0, tempo_corrupt = 0, corrections = 0;
 
-	if(!sp)
+	if(!sp || (!sp->beats))
 		return 1;	//Invalid parameters
+
+	if(!(sp->beat[0]->flags & EOF_BEAT_FLAG_ANCHOR))
+	{	//If the first beat is not an anchor
+		eof_song->beat[0]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Make it an anchor
+		corrections = 1;
+	}
 
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat

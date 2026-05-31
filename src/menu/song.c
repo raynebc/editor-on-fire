@@ -2277,7 +2277,6 @@ int eof_menu_song_add_silence(void)
 					{	//If a time signature doesn't exist on the first beat or it couldn't be read, or if the numerator is not a valid number
 						eof_log("\eof_menu_song_add_silence() couldn't detect the time signature on beat 1, assuming 4/4", 1);
 						allegro_message("No time signature detected on the first beat.  4/4 will be assumed");
-						num = den = 4;
 					}
 					else
 					{

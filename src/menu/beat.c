@@ -122,17 +122,25 @@ MENU eof_beat_tempo_map_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_beat_push_offset_menu[] =
+{
+	{"&Back beat", eof_menu_beat_push_offset_back_menu, NULL, 0, NULL},
+	{"Back &Measure", eof_menu_beat_push_offset_back_measure, NULL, 0, NULL},
+	{"&Up beat", eof_menu_beat_push_offset_up, NULL, 0, NULL},
+	{"Up measur&E", eof_menu_beat_push_offset_up_measure, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_beat_menu[] =
 {
 	{"&BPM", NULL, eof_beat_bpm_menu, 0, NULL},
 	{"Time &Signature", NULL, eof_beat_time_signature_menu, 0, NULL},
 	{"&Key Signature", NULL, eof_beat_key_signature_menu, 0, NULL},
 	{"&Tempo map", NULL, eof_beat_tempo_map_menu, 0, NULL},
+	{"Push &Offset", NULL, eof_beat_push_offset_menu, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Add\t" CTRL_NAME "+Ins", eof_menu_beat_add, NULL, 0, NULL},
 	{"Delete\t" CTRL_NAME "+Del", eof_menu_beat_delete, NULL, 0, NULL},
-	{"Push Offset Back", eof_menu_beat_push_offset_back_menu, NULL, 0, NULL},
-	{"Push Offset Up", eof_menu_beat_push_offset_up, NULL, 0, NULL},
 	{"Reset Offset to Zero", eof_menu_beat_reset_offset, NULL, 0, NULL},
 	{"Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
 	{"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
@@ -334,22 +342,26 @@ DIALOG eof_export_beat_timings_dialog[]=
 
 void eof_prepare_beat_menu(void)
 {
-	unsigned long i;
+	unsigned long i, beat_length;
+	unsigned num = 4, den = 4;
 
 	if(eof_song && eof_song_loaded)
 	{	//If a song is loaded
 		//Several beat menu items are disabled below if the tempo map is locked.  Clear those items' flags in case the lock was removed
-		eof_beat_menu[5].flags = 0;		//Add
-		eof_beat_menu[6].flags = 0;		//Delete
-		eof_beat_menu[7].flags = 0;		//Push offset back
-		eof_beat_menu[8].flags = 0;		//Push offset up
-		eof_beat_menu[9].flags = 0;		//Reset offset to zero
-		eof_beat_menu[10].flags = 0;		//Anchor
-		eof_beat_menu[11].flags = 0;		//Toggle anchor
-		eof_beat_menu[12].flags = 0;		//Delete anchor
-		eof_beat_menu[13].flags = 0;		//Anchor measures
-		eof_beat_menu[16].flags = 0;		//Move to seek pos
-		eof_beat_tempo_map_menu[1].flags = 0;	//Paste tempo map
+		eof_beat_menu[6].flags = 0;		//Add
+		eof_beat_menu[7].flags = 0;		//Delete
+		eof_beat_menu[8].flags = 0;		//Reset offset to zero
+		eof_beat_menu[9].flags = 0;		//Anchor
+		eof_beat_menu[10].flags = 0;		//Toggle anchor
+		eof_beat_menu[11].flags = 0;		//Delete anchor
+		eof_beat_menu[12].flags = 0;		//Anchor measures
+		eof_beat_menu[15].flags = 0;		//Move to seek pos
+		eof_beat_tempo_map_menu[1].flags = 0;	//Tempo Map>Paste tempo map
+		eof_beat_menu[4].flags = 0;				//Push Offset>
+		eof_beat_push_offset_menu[0].flags = 0;	//Push Offset>Back Beat
+		eof_beat_push_offset_menu[1].flags = 0;	//Push Offset>Back Measure
+		eof_beat_push_offset_menu[2].flags = 0;	//Push Offset>Up Beat
+		eof_beat_push_offset_menu[3].flags = 0;	//Push Offset>Up Measure
 
 		eof_beat_bpm_menu[0].flags = 0;	//BPM>BPM change
 		eof_beat_bpm_menu[1].flags = 0;	//BPM>Reset BPM
@@ -372,69 +384,68 @@ void eof_prepare_beat_menu(void)
 //Beat>Add and Delete validation
 		if(!eof_beat_num_valid(eof_song, eof_find_next_anchor(eof_song, eof_selected_beat)))
 		{	//If there are no anchors after the selected beat, disable Beat>Add and Delete, as they'd have no effect
-			eof_beat_menu[5].flags = D_DISABLED;
 			eof_beat_menu[6].flags = D_DISABLED;
+			eof_beat_menu[7].flags = D_DISABLED;
 		}
 		else
 		{
-			eof_beat_menu[5].flags = 0;	//Add
-			eof_beat_menu[6].flags = 0;	//Delete
+			eof_beat_menu[6].flags = 0;	//Add
+			eof_beat_menu[7].flags = 0;	//Delete
 		}
 		if(eof_selected_beat == 0)
 		{	//If the first beat marker is selected, disable Beat>Delete, as this beat is not allowed to be deleted
-			eof_beat_menu[6].flags = D_DISABLED;
-		}
-//Beat>Push Offset Up and Push Offset Back validation
-		if(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
-		{	//If the current MIDI delay is at least as long as the first beat's length, enable Beat>Push Offset Back
-			eof_beat_menu[7].flags = 0;	//Push offset back
-		}
-		else
-		{
 			eof_beat_menu[7].flags = D_DISABLED;
 		}
-		if(eof_song->beats > 1)
-		{	//If the chart has at least two beat markers, enable Beat>Push Offset Up
-			eof_beat_menu[8].flags = 0;	//Push offset up
+//Beat>Push Offset>Up Beat and Back Beat validation
+		beat_length = eof_song->beat[1]->pos - eof_song->beat[0]->pos;	//The length of the first beat
+		if(eof_song->beat[0]->pos < beat_length)
+		{	//If the current MIDI delay is not at least as long as the first beat's length, disable Beat>Push Offset>Back Beat
+			eof_beat_push_offset_menu[0].flags = D_DISABLED;	//Push Offset>Back Beat
+		}
+		eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
+		if(eof_song->beat[0]->pos < (num * beat_length))
+		{	//If the current MIDI delay is not at least as long as one measure, disable Beat>Push Offset>Back Measure
+			eof_beat_push_offset_menu[1].flags = D_DISABLED;	//Push Offset>Back>Back Measure
+		}
+		if(eof_song->beats < 2)
+		{	//If the chart does not have at least two beat markers, disnable Beat>Push Offset>Up Beat and Up Measure
+			eof_beat_push_offset_menu[2].flags = D_DISABLED;	//Push Offset>Up Beat
+			eof_beat_push_offset_menu[3].flags = D_DISABLED;	//Push Offset>Up Measure
+		}
+//Beat>Reset offset to zero validation
+		if(eof_song->beat[0]->pos > 0)
+		{	//If the current MIDI delay is not zero, enable Beat>Reset offset to zero
+			eof_beat_menu[8].flags = 0;	//Reset offset to zero
 		}
 		else
 		{
 			eof_beat_menu[8].flags = D_DISABLED;
 		}
-//Beat>Reset offset to zero validation
-		if(eof_song->beat[0]->pos > 0)
-		{	//If the current MIDI delay is not zero, enable Beat>Reset offset to zero
-			eof_beat_menu[9].flags = 0;	//Reset offset to zero
+//Beat>Anchor Beat and Toggle Anchor validation
+		if(eof_selected_beat != 0)
+		{	//If the first beat marker is not selected, enable Beat>Anchor Beat and Toggle Anchor
+			eof_beat_menu[9].flags = 0;		//Anchor beat
 		}
 		else
 		{
 			eof_beat_menu[9].flags = D_DISABLED;
 		}
-//Beat>Anchor Beat and Toggle Anchor validation
 		if(eof_beat_is_mandatory_anchor(eof_song, eof_selected_beat))
 		{	//If the selected beat is required to be an anchor
-			eof_beat_menu[11].flags = D_DISABLED;	//Toggle anchor
+			eof_beat_menu[10].flags = D_DISABLED;	//Toggle anchor
 		}
 		else
 		{
-			eof_beat_menu[11].flags = 0;
-		}
-		if(eof_selected_beat != 0)
-		{	//If the first beat marker is not selected, enable Beat>Anchor Beat and Toggle Anchor
-			eof_beat_menu[10].flags = 0;		//Anchor beat
-		}
-		else
-		{
-			eof_beat_menu[10].flags = D_DISABLED;
+			eof_beat_menu[10].flags = 0;
 		}
 //Beat>Delete Anchor validation
 		if((eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_selected_beat != 0))
 		{	//If the selected beat is an anchor, and the first beat marker is not selected, enable Beat>Delete Anchor
-			eof_beat_menu[12].flags = 0;	//Delete anchor
+			eof_beat_menu[11].flags = 0;	//Delete anchor
 		}
 		else
 		{
-			eof_beat_menu[12].flags = D_DISABLED;
+			eof_beat_menu[11].flags = D_DISABLED;
 		}
 //Beat>Reset BPM validation
 		for(i = 1; i < eof_song->beats; i++)
@@ -482,27 +493,27 @@ void eof_prepare_beat_menu(void)
 		/* lock tempo map */
 		if(eof_song->tags->tempo_map_locked)
 		{
-			eof_beat_menu[14].flags = D_SELECTED;	//Beat>Lock tempo map
+			eof_beat_menu[13].flags = D_SELECTED;	//Beat>Lock tempo map
 		}
 		else
 		{
-			eof_beat_menu[14].flags = 0;
+			eof_beat_menu[13].flags = 0;
 		}
 
 		/* remove mid beat status */
 		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_MIDBEAT)
 		{	//If the selected beat has the mid beat flag set
-			eof_beat_menu[15].flags = 0;	//Remove mid-beat status
+			eof_beat_menu[14].flags = 0;	//Remove mid-beat status
 		}
 		else
 		{
-			eof_beat_menu[15].flags = D_DISABLED;
+			eof_beat_menu[14].flags = D_DISABLED;
 		}
 
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar/bass track is active
-			eof_beat_menu[19].flags = 0;	//Beat>Rocksmith>
-			eof_beat_menu[20].text = eof_beat_events_menu_place_section_text_pg;	//Show the "place section" menu function without the SHIFT+E shortcut, since it's used for placing Rocksmith Events if a pro guitar track is active
+			eof_beat_menu[18].flags = 0;	//Beat>Rocksmith>
+			eof_beat_menu[19].text = eof_beat_events_menu_place_section_text_pg;	//Show the "place section" menu function without the SHIFT+E shortcut, since it's used for placing Rocksmith Events if a pro guitar track is active
 			if(eof_selected_track == EOF_TRACK_PRO_GUITAR_B)
 			{	//The trainer event system is not compatible with the bonus track
 				eof_beat_events_menu[6].flags = D_DISABLED;
@@ -514,8 +525,8 @@ void eof_prepare_beat_menu(void)
 		}
 		else
 		{
-			eof_beat_menu[19].flags = D_DISABLED | D_HIDDEN;
-			eof_beat_menu[20].text = eof_beat_events_menu_place_section_text_non_pg;	//In a non pro guitar track, SHIFT+E will invoke the "Place section" function
+			eof_beat_menu[18].flags = D_DISABLED | D_HIDDEN;
+			eof_beat_menu[19].text = eof_beat_events_menu_place_section_text_non_pg;	//In a non pro guitar track, SHIFT+E will invoke the "Place section" function
 			eof_beat_events_menu[6].flags = D_DISABLED | D_HIDDEN;
 		}
 //Re-flag the active Time Signature for the selected beat
@@ -605,22 +616,21 @@ void eof_prepare_beat_menu(void)
 
 		if(eof_check_for_anchors_between_selected_beat_and_seek_pos() || (eof_song->beat[eof_selected_beat]->pos == eof_music_pos.value - eof_av_delay))
 		{	//If there are anchors between the selected beat and seek position, or the selected beat is at the seek position already
-			eof_beat_menu[16].flags = D_DISABLED;	//Move to seek pos
+			eof_beat_menu[15].flags = D_DISABLED;	//Move to seek pos
 		}
 
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the chart's tempo map is locked, disable various beat operations
-			eof_beat_menu[5].flags = D_DISABLED;		//Add
-			eof_beat_menu[6].flags = D_DISABLED;		//Delete
-			eof_beat_menu[7].flags = D_DISABLED;		//Push offset back
-			eof_beat_menu[8].flags = D_DISABLED;		//Push offset up
-			eof_beat_menu[9].flags = D_DISABLED;		//Reset offset to zero
-			eof_beat_menu[10].flags = D_DISABLED;	//Anchor
-			eof_beat_menu[11].flags = D_DISABLED;	//Toggle anchor
-			eof_beat_menu[12].flags = D_DISABLED;	//Delete anchor
-			eof_beat_menu[13].flags = D_DISABLED;	//Anchor measures
-			eof_beat_menu[16].flags = D_DISABLED;	//Move to seek pos
-			eof_beat_tempo_map_menu[1].flags = D_DISABLED;	//Paste tempo map
+			eof_beat_menu[6].flags = D_DISABLED;		//Add
+			eof_beat_menu[7].flags = D_DISABLED;		//Delete
+			eof_beat_menu[8].flags = D_DISABLED;		//Reset offset to zero
+			eof_beat_menu[9].flags = D_DISABLED;		//Anchor
+			eof_beat_menu[10].flags = D_DISABLED;	//Toggle anchor
+			eof_beat_menu[11].flags = D_DISABLED;	//Delete anchor
+			eof_beat_menu[12].flags = D_DISABLED;	//Anchor measures
+			eof_beat_menu[15].flags = D_DISABLED;	//Move to seek pos
+			eof_beat_tempo_map_menu[1].flags = D_DISABLED;	//Tempo Map>Paste tempo map
+			eof_beat_menu[4].flags = D_DISABLED;		//Push Offset>
 
 			eof_beat_bpm_menu[0].flags = D_DISABLED;	//BPM>BPM change
 			eof_beat_bpm_menu[1].flags = D_DISABLED;	//BPM>Reset BPM
@@ -1080,6 +1090,48 @@ int eof_menu_beat_push_offset_back_menu(void)
 	return eof_menu_beat_push_offset_back(&undo_made);
 }
 
+int eof_menu_beat_push_offset_back_measure(void)
+{
+	unsigned num = 4, den = 4, ctr;
+	char undo_made = 0, error = 0;
+	unsigned long beat_length, selected_beat_backup;
+
+	if(!eof_song)
+		return 0;
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 0;							//Return without making changes
+	if(eof_song->beats < 2)
+		return 0;	//Error condition
+
+	beat_length = eof_song->beat[1]->pos - eof_song->beat[0]->pos;	//The length of the first beat
+	eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
+
+	if(eof_song->beat[0]->pos >= (num * beat_length))
+	{	//If there is enough time before the first beat to insert one measure
+		for(ctr = 0; ctr < num; ctr++)
+		{	//For each of the beats that need to be added
+			if(!eof_menu_beat_push_offset_back(&undo_made))
+			{	//If the beat was not sucessfully prepended to the beginning of the chart
+				allegro_message("Failed to add beats");
+				error = 1;
+				break;
+			}
+			eof_song->beat[1]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Remove the anchor from the former first beat
+		}
+		if(!error)
+		{	//If all beats were added
+			selected_beat_backup = eof_selected_beat;		//Remember the original selected beat
+			eof_selected_beat = 0;						//Ensure the time signature is applied to the new first beat
+			eof_menu_beat_apply_ts_logic(num, den, 1, 0);	//Apply that time signature, don't make another undo state
+			eof_selected_beat = num;					//Ensure the time signature is removed from the original first beat
+			eof_menu_beat_ts_off_logic(0);				//Remove that time signature, don't make another undo state
+			eof_selected_beat = selected_beat_backup + num;	//Restore the original selected beat, taking the new number of beats into account
+		}
+		eof_beat_stats_cached = 0;					//Mark the cached beat stats as not current
+	}
+	return 1;
+}
+
 void eof_menu_beat_push_offset_up_logic(void)
 {
 	unsigned long i;
@@ -1090,6 +1142,7 @@ void eof_menu_beat_push_offset_up_logic(void)
 	}
 	eof_song_delete_beat(eof_song, eof_song->beats - 1);
 	eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
+	eof_song->beat[0]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure the first beat is anchored
 	eof_move_text_events(eof_song, 0, 1, -1);
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	eof_fixup_notes(eof_song);
@@ -1104,6 +1157,51 @@ int eof_menu_beat_push_offset_up(void)
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_menu_beat_push_offset_up_logic();
+	eof_fixup_notes(eof_song);
+	return 1;
+}
+
+int eof_menu_beat_push_offset_up_measure(void)
+{
+	unsigned num = 4, den = 4, ctr;
+	unsigned long selected_beat_backup, beat_count;
+	char error = 0;
+
+	if(!eof_song)
+		return 1;
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
+
+	selected_beat_backup = eof_selected_beat;		//Remember the original selected beat
+	eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+
+	for(ctr = 0; ctr < num; ctr++)
+	{	//For each of the beats that need to be added
+		beat_count = eof_song->beats;		//Remember how many beats there were before removing one
+		eof_menu_beat_push_offset_up_logic();
+		if(beat_count <= eof_song->beats)
+		{	//If eof_menu_beat_push_offset_up_logic() did not remove one beat
+			allegro_message("Failed to remove beats");
+			error = 1;
+			break;
+		}
+	}
+	if(!error)
+	{	//If all appropriate beats were removed
+		eof_selected_beat = 0;						//Ensure the time signature is applied to the new first beat
+		eof_menu_beat_apply_ts_logic(num, den, 1, 0);	//Apply that time signature, don't make another undo state
+		if(selected_beat_backup < num)
+		{	//If the beat the was selected has been removed
+			eof_selected_beat = 0;	//Select the now first beat
+		}
+		else
+		{
+			eof_selected_beat = selected_beat_backup - num;	//Otherwise re-select the originally selected beat taking into account the new numbering
+		}
+	}
+	eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+	eof_fixup_notes(eof_song);
 	return 1;
 }
 

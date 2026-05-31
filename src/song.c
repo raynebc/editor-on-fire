@@ -6902,14 +6902,15 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				memcpy(tp->note[ctr2]->frets, frets, 6);	//Apply changes (if any) to the note at the base of the arpeggio phrase
 				tp->note[ctr2]->note = note;
 				tp->note[ctr2]->ghost = ghost;
+
+				//Restore the base chord's finger definitions if applicable
+				if((tp->note[ctr2]->note == oldnote) && !memcmp(tp->note[ctr2]->frets, oldfrets, sizeof(oldfrets)))
+				{	//If the base chord has the same fret values and used lanes as it did at the beginning of this loop
+					memcpy(tp->note[ctr2]->finger, oldfinger, sizeof(oldfinger));	//Re-apply the original fingering
+				}
+
 				break;	//Exit the inner for loop (no other notes in this track will be within the arpeggio phrase that was just parsed)
 			}//For each note in the track (inner for loop)
-
-			//Restore the base chord's finger definitions if applicable
-			if((tp->note[ctr2]->note == oldnote) && !memcmp(tp->note[ctr2]->frets, oldfrets, sizeof(oldfrets)))
-			{	//If the base chord has the same fret values and used lanes as it did at the beginning of this loop
-				memcpy(tp->note[ctr2]->finger, oldfinger, sizeof(oldfinger));	//Re-apply the original fingering
-			}
 		}//For each arpeggio phrase in the track (outer for loop)
 
 		eof_menu_track_set_tech_view_state(sp, track, restore_tech_view);	//Re-enable tech view if applicable

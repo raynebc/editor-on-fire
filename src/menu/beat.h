@@ -76,8 +76,10 @@ int eof_menu_beat_push_offset_back(char *undo_made);
 	//Appends a new beat structure and moves all beats one forward, with their timestamps adjusted to compensate for the duration of the first beat.  Returns nonzero on success.
 	//If *undo_made is zero, an undo state is made before altering the chart and *undo_made is set to nonzero
 int eof_menu_beat_push_offset_back_menu(void);	//Calls eof_menu_beat_push_offset_back() with the option of making an undo state
+int eof_menu_beat_push_offset_back_measure(void);	//Calls eof_menu_beat_push_offset_back() enough times to add one measure's worth of beats (assuming 4/4 if no time signature is in effect on the first beat), making a single undo state
 void eof_menu_beat_push_offset_up_logic(void);		//Performs the beatmap manipulation for eof_menu_beat_push_offset_up(), without honoring any tempo map locking (used by DrumBeats export)
-int eof_menu_beat_push_offset_up(void);
+int eof_menu_beat_push_offset_up(void);			//Calls eof_menu_beat_push_offset_up_logic() if the tempo map is not locked, creating an undo state
+int eof_menu_beat_push_offset_up_measure(void);	//Calls eof_menu_beat_push_offset_up_logic() enough times to remove one measure's worth of beats (assuming 4/4 if no time signature is in effect on the first beat), making a single undo state
 int eof_menu_beat_toggle_anchor(void);
 int eof_menu_beat_move_to_seek_pos(void);	//Moves the selected beat to the seek position if there are no anchors between the selected beat's start and destination positions
 int eof_menu_beat_export_beat_timings(void); //Exports all beat timings to either milliseconds or intervals per second
