@@ -6350,6 +6350,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	EOF_PHRASE_SECTION *pp, *ppp;
 	EOF_PRO_GUITAR_NOTE *np;
 	int notes_added = 0;	//Set to nonzero if a disjointed chord is broken up into multiple notes, which would necessitate a note sort
+	char has_disjointed = 0;
 
 	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)) || !sp->beats)
 	{
@@ -6404,6 +6405,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	{	//For each note (in reverse order)
 		if(tp->note[i-1]->eflags & EOF_NOTE_EFLAG_DISJOINTED)
 		{	//If this note has disjointed status
+			has_disjointed = 1;	//Track that at least one note has this status
 			tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Add crazy status to ensure other editor logic allows the overlapping notes with minimal interference
 
 			//Force any other notes at the same timestamp to have this status as well
@@ -6471,22 +6473,25 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 	}
 
 	//Check for matching disjointed gems at the same timestamp, which should negate each other (such as when trying to toggle a gem off in a track where disjointed status is applied by force, such as a BEATABLE track)
-	for(i = 0; i < tp->notes; i++)
-	{	//For each note
-		if(tp->note[i]->eflags & EOF_NOTE_EFLAG_DISJOINTED)
-		{	//If this note has disjointed status
-			for(ctr = i + 1; ctr < tp->notes; ctr++)
-			{	//For the remaining notes in the track
-				if(tp->note[ctr]->pos > tp->note[i]->pos)
-					break;		//Once there are no more notes at the same timestamp as the outer loop's note, stop checking for matches
-				if(!(tp->note[ctr]->eflags & EOF_NOTE_EFLAG_DISJOINTED))
-					continue;	//If the note doesn't have disjointed status, skip it
-				if(tp->note[ctr]->type != tp->note[i]->type)
-					continue;	//If the note isn't in the same difficulty as the outer loop's note, skip it
-				if(tp->note[ctr]->note == tp->note[i]->note)
-				{	//If both notes have the same note bitmask, they cancel each other out.  Clearing the note bitmasks will cause the loop below to delete them
-					tp->note[ctr]->note = 0;
-					tp->note[i]->note = 0;
+	if(has_disjointed)
+	{	//If any notes were found in the previous loop to have disjointed status
+		for(i = 0; i < tp->notes; i++)
+		{	//For each note
+			if(tp->note[i]->eflags & EOF_NOTE_EFLAG_DISJOINTED)
+			{	//If this note has disjointed status
+				for(ctr = i + 1; ctr < tp->notes; ctr++)
+				{	//For the remaining notes in the track
+					if(tp->note[ctr]->pos > tp->note[i]->pos)
+						break;		//Once there are no more notes at the same timestamp as the outer loop's note, stop checking for matches
+					if(!(tp->note[ctr]->eflags & EOF_NOTE_EFLAG_DISJOINTED))
+						continue;	//If the note doesn't have disjointed status, skip it
+					if(tp->note[ctr]->type != tp->note[i]->type)
+						continue;	//If the note isn't in the same difficulty as the outer loop's note, skip it
+					if(tp->note[ctr]->note == tp->note[i]->note)
+					{	//If both notes have the same note bitmask, they cancel each other out.  Clearing the note bitmasks will cause the loop below to delete them
+						tp->note[ctr]->note = 0;
+						tp->note[i]->note = 0;
+					}
 				}
 			}
 		}
@@ -6728,49 +6733,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}//If the note is valid, perform other cleanup
 	}//For each note in the track
 
-	//Run another pass to check crazy notes overlapping with gems on their same lanes more than 1 note ahead
-	for(i = 0; i < tp->notes; i++)
-	{	//For each note
-		if(!(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY))
-			continue;	//If this note is not marked as crazy, skip it
-
-		//Otherwise find the next gem that occupies any of the same lanes
-		has_link_next = 0;	//Reset this status
-		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-		{	//For each of the 6 supported strings
-			if(tp->note[i]->note & bitmask)
-			{	//If this string is used
-				(void) eof_get_rs_techniques(sp, track, i, ctr, &ptr, 2, 1);	//Get the statuses in effect for this string, checking all applicable tech notes
-				if(ptr.linknext)
-				{	//If this string used linkNext status
-					has_link_next = 1;
-					break;	//The other strings don't need to be checked
-				}
-			}
-		}
-		if(has_link_next)
-			continue;	//If this note has linknext status, skip the logic below to enforce a minimum gap between notes
-
-		next = i;
-		while(1)
-		{
-			next = eof_fixup_next_pro_guitar_note(tp, next);
-			if(next >= 0)
-			{	//If there's a note in this difficulty after this note
-				if(tp->note[i]->note & tp->note[next]->note)
-				{	//And it uses at least one of the same lanes as the crazy note being checked
-					if(tp->note[i]->pos + tp->note[i]->length >= tp->note[next]->pos - 1)
-					{	//If it does not end at least 1ms before the next note starts
-						tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;	//Truncate the crazy note so it does not overlap the next gem on its lane(s)
-					}
-					break;
-				}
-			}
-			else
-				break;
-		}
-	}
-
+	//Clear the hammer on flag from notes in tremolo phrases
 	for(i = 0; i < tp->tremolos; i++)
 	{	//For each tremolo section in the track
 		for(ctr = 0; ctr < tp->notes; ctr++)
@@ -6836,6 +6799,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 						break;	//Break inner for loop after processing the first note in the phrase
 					}
 				}
+				eof_track_sort_notes(sp, track);	//Sort the notes so they can be processed in chronological order below
 			}
 			else if(eof_rebuild_arpeggio_base_chords)
 			{	//Otherwise if a note was found at the beginning of the phrase, and if the user preference to recreate the base chord at the beginning of each arpeggio/handshape phrase is enabled
@@ -6847,8 +6811,6 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				note &= ~eof_get_note_ghost(sp, track, ghostnote);	//Clear all gems that are ghosted (this will erase the fret and finger values for those gems)
 				eof_set_note_note(sp, track, ghostnote, note);		//Update the note at the start of the arpeggio/handshape
 			}
-
-			eof_track_sort_notes(sp, track);	//Sort the notes so they can be processed in chronological order below
 
 			//Alter the first note in the arpeggio/handshape phrase (the base chord)
 			for(ctr2 = 0; ctr2 < tp->notes; ctr2++)

@@ -1177,7 +1177,7 @@ int eof_menu_beat_push_offset_up_measure(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 
 	for(ctr = 0; ctr < num; ctr++)
-	{	//For each of the beats that need to be added
+	{	//For each of the beats that need to be removed
 		beat_count = eof_song->beats;		//Remember how many beats there were before removing one
 		eof_menu_beat_push_offset_up_logic();
 		if(beat_count <= eof_song->beats)
