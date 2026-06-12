@@ -223,8 +223,8 @@ int eof_menu_note_toggle_hi_hat_sizzle(void);	//Toggles the sizzle hi hat status
 int eof_menu_note_remove_hi_hat_status(void);	//Removes the open, pedal controlled and sizzle hi hat statuses for selected yellow (or red during a disco flip) drum notes
 int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selected red drum notes
 int eof_menu_note_remove_rimshot(void);			//Removes the rimshot status for selected red drum notes
-int eof_menu_note_toggle_flam(void);			//Toggles the flam status for selected drum notes
-int eof_menu_note_remove_flam(void);			//Toggles the flam status for selected drum notes
+int eof_menu_note_toggle_generic_flam(void);		//Toggles the generic flam status for selected drum notes
+int eof_menu_note_remove_generic_flam(void);		//Toggles the generic flam status for selected drum notes
 int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected pro guitar notes
 int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected pro guitar notes
 int eof_menu_note_toggle_bend_logic(int function);	//Shared logic for toggling bend and pre-bend statuses, a function value of 0 toggles bend, otherwise the function toggles pre-bend
@@ -306,6 +306,22 @@ int eof_menu_note_clear_blue(void);		//Clears the gem on lane 4 (originally colo
 int eof_menu_note_clear_purple(void);		//Clears the gem on lane 5 (originally colored purple)
 int eof_menu_note_clear_orange(void);		//Clears the gem on lane 6 (originally colored orange)
 
+int eof_menu_note_toggle_rimshot_green(void);		//Toggles the rimshot bit on lane 1 (originally colored green)
+int eof_menu_note_toggle_rimshot_red(void);		//Toggles the rimshot bit on lane 2 (originally colored red)
+int eof_menu_note_toggle_rimshot_yellow(void);		//Toggles the rimshot bit on lane 3 (originally colored yellow)
+int eof_menu_note_toggle_rimshot_blue(void);		//Toggles the rimshot bit on lane 4 (originally colored blue)
+int eof_menu_note_toggle_rimshot_purple(void);		//Toggles the rimshot bit on lane 5 (originally colored purple)
+int eof_menu_note_toggle_rimshot_orange(void);	//Toggles the rimshot bit on lane 6 (originally colored orange)
+int eof_menu_note_toggle_rimshot_all(void);		//Toggles the rimshot bit on all lanes
+
+int eof_menu_note_clear_rimshot_green(void);	//Clears the rimshot bit on lane 1 (originally colored green)
+int eof_menu_note_clear_rimshot_red(void);		//Clears the rimshot bit on lane 2 (originally colored red)
+int eof_menu_note_clear_rimshot_yellow(void);	//Clears the rimshot bit on lane 3 (originally colored yellow)
+int eof_menu_note_clear_rimshot_blue(void);	//Clears the rimshot bit on lane 4 (originally colored blue)
+int eof_menu_note_clear_rimshot_purple(void);	//Clears the rimshot bit on lane 5 (originally colored purple)
+int eof_menu_note_clear_rimshot_orange(void);	//Clears the rimshot bit on lane 6 (originally colored orange)
+int eof_menu_note_clear_rimshot_all(void);		//Clears the rimshot bit on all lanes
+
 int eof_menu_note_toggle_accent_green(void);	//Toggles the accent bit on lane 1 (originally colored green)
 int eof_menu_note_toggle_accent_red(void);	//Toggles the accent bit on lane 2 (originally colored red)
 int eof_menu_note_toggle_accent_yellow(void);	//Toggles the accent bit on lane 3 (originally colored yellow)
@@ -337,6 +353,78 @@ int eof_menu_note_clear_ghost_blue(void);		//Clears the ghost bit on lane 4 (ori
 int eof_menu_note_clear_ghost_purple(void);	//Clears the ghost bit on lane 5 (originally colored purple)
 int eof_menu_note_clear_ghost_orange(void);	//Clears the ghost bit on lane 6 (originally colored orange)
 int eof_menu_note_clear_ghost_all(void);		//Clears the ghost bit on all lanes
+
+int eof_menu_note_toggle_flat_flam_green(void);		//Toggles the flam bit on lane 1 (originally colored green) and sets the flat flam status
+int eof_menu_note_toggle_flat_flam_red(void);		//Toggles the flam bit on lane 2 (originally colored red) and sets the flat flam status
+int eof_menu_note_toggle_flat_flam_yellow(void);	//Toggles the flam bit on lane 3 (originally colored yellow) and sets the flat flam status
+int eof_menu_note_toggle_flat_flam_blue(void);		//Toggles the flam bit on lane 4 (originally colored blue) and sets the flat flam status
+int eof_menu_note_toggle_flat_flam_purple(void);	//Toggles the flam bit on lane 5 (originally colored purple) and sets the flat flam status
+int eof_menu_note_toggle_flat_flam_orange(void);	//Toggles the flam bit on lane 6 (originally colored orange) and sets the flat flam status
+int eof_menu_note_toggle_flat_flam_all(void);		//Toggles the flam bit on all lanes and sets the flat flam status
+
+int eof_menu_note_toggle_flam_green(void);	//Toggles the flam bit on lane 1 (originally colored green) and clears the flat flam status
+int eof_menu_note_toggle_flam_red(void);		//Toggles the flam bit on lane 2 (originally colored red) and clears the flat flam status
+int eof_menu_note_toggle_flam_yellow(void);	//Toggles the flam bit on lane 3 (originally colored yellow) and clears the flat flam status
+int eof_menu_note_toggle_flam_blue(void);		//Toggles the flam bit on lane 4 (originally colored blue) and clears the flat flam status
+int eof_menu_note_toggle_flam_purple(void);	//Toggles the flam bit on lane 5 (originally colored purple) and clears the flat flam status
+int eof_menu_note_toggle_flam_orange(void);	//Toggles the flam bit on lane 6 (originally colored orange) and clears the flat flam status
+int eof_menu_note_toggle_flam_all(void);		//Toggles the flam bit on all lanes and clears the flat flam status
+
+int eof_menu_note_clear_flam_green(void);		//Clears the flam bit on lane 1 (originally colored green)
+int eof_menu_note_clear_flam_red(void);		//Clears the flam bit on lane 2 (originally colored red)
+int eof_menu_note_clear_flam_yellow(void);		//Clears the flam bit on lane 3 (originally colored yellow)
+int eof_menu_note_clear_flam_blue(void);		//Clears the flam bit on lane 4 (originally colored blue)
+int eof_menu_note_clear_flam_purple(void);		//Clears the flam bit on lane 5 (originally colored purple)
+int eof_menu_note_clear_flam_orange(void);		//Clears the flam bit on lane 6 (originally colored orange)
+int eof_menu_note_clear_flam_all(void);		//Clears the flam bit on all lanes
+
+int eof_menu_note_toggle_crossstick_green(void);	//Toggles the cross stick bit on lane 1 (originally colored green)
+int eof_menu_note_toggle_crossstick_red(void);		//Toggles the cross stick bit on lane 2 (originally colored red)
+int eof_menu_note_toggle_crossstick_yellow(void);	//Toggles the cross stick bit on lane 3 (originally colored yellow)
+int eof_menu_note_toggle_crossstick_blue(void);		//Toggles the cross stick bit on lane 4 (originally colored blue)
+int eof_menu_note_toggle_crossstick_purple(void);	//Toggles the cross stick bit on lane 5 (originally colored purple)
+int eof_menu_note_toggle_crossstick_orange(void);	//Toggles the cross stick bit on lane 6 (originally colored orange)
+int eof_menu_note_toggle_crossstick_all(void);		//Toggles the cross stick bit on all lanes
+
+int eof_menu_note_clear_crossstick_green(void);		//Clears the cross stick bit on lane 1 (originally colored green)
+int eof_menu_note_clear_crossstick_red(void);		//Clears the cross stick bit on lane 2 (originally colored red)
+int eof_menu_note_clear_crossstick_yellow(void);		//Clears the cross stick bit on lane 3 (originally colored yellow)
+int eof_menu_note_clear_crossstick_blue(void);		//Clears the cross stick bit on lane 4 (originally colored blue)
+int eof_menu_note_clear_crossstick_purple(void);		//Clears the cross stick bit on lane 5 (originally colored purple)
+int eof_menu_note_clear_crossstick_orange(void);	//Clears the cross stick bit on lane 6 (originally colored orange)
+int eof_menu_note_clear_crossstick_all(void);		//Clears the cross stick bit on all lanes
+
+int eof_menu_note_toggle_bellzone_green(void);		//Toggles the bellzone bit on lane 1 (originally colored green)
+int eof_menu_note_toggle_bellzone_red(void);		//Toggles the bellzone bit on lane 2 (originally colored red)
+int eof_menu_note_toggle_bellzone_yellow(void);	//Toggles the bellzone bit on lane 3 (originally colored yellow)
+int eof_menu_note_toggle_bellzone_blue(void);		//Toggles the bellzone bit on lane 4 (originally colored blue)
+int eof_menu_note_toggle_bellzone_purple(void);	//Toggles the bellzone bit on lane 5 (originally colored purple)
+int eof_menu_note_toggle_bellzone_orange(void);	//Toggles the bellzone bit on lane 6 (originally colored orange)
+int eof_menu_note_toggle_bellzone_all(void);		//Toggles the bellzone bit on all lanes
+
+int eof_menu_note_clear_bellzone_green(void);		//Clears the bellzone bit on lane 1 (originally colored green)
+int eof_menu_note_clear_bellzone_red(void);		//Clears the bellzone bit on lane 2 (originally colored red)
+int eof_menu_note_clear_bellzone_yellow(void);		//Clears the bellzone bit on lane 3 (originally colored yellow)
+int eof_menu_note_clear_bellzone_blue(void);		//Clears the bellzone bit on lane 4 (originally colored blue)
+int eof_menu_note_clear_bellzone_purple(void);		//Clears the bellzone bit on lane 5 (originally colored purple)
+int eof_menu_note_clear_bellzone_orange(void);		//Clears the bellzone bit on lane 6 (originally colored orange)
+int eof_menu_note_clear_bellzone_all(void);			//Clears the bellzone bit on all lanes
+
+int eof_menu_note_toggle_edgezone_green(void);	//Toggles the edgezone bit on lane 1 (originally colored green)
+int eof_menu_note_toggle_edgezone_red(void);		//Toggles the edgezone bit on lane 2 (originally colored red)
+int eof_menu_note_toggle_edgezone_yellow(void);	//Toggles the edgezone bit on lane 3 (originally colored yellow)
+int eof_menu_note_toggle_edgezone_blue(void);		//Toggles the edgezone bit on lane 4 (originally colored blue)
+int eof_menu_note_toggle_edgezone_purple(void);	//Toggles the edgezone bit on lane 5 (originally colored purple)
+int eof_menu_note_toggle_edgezone_orange(void);	//Toggles the edgezone bit on lane 6 (originally colored orange)
+int eof_menu_note_toggle_edgezone_all(void);		//Toggles the edgezone bit on all lanes
+
+int eof_menu_note_clear_edgezone_green(void);		//Clears the edgezone bit on lane 1 (originally colored green)
+int eof_menu_note_clear_edgezone_red(void);		//Clears the edgezone bit on lane 2 (originally colored red)
+int eof_menu_note_clear_edgezone_yellow(void);		//Clears the edgezone bit on lane 3 (originally colored yellow)
+int eof_menu_note_clear_edgezone_blue(void);		//Clears the edgezone bit on lane 4 (originally colored blue)
+int eof_menu_note_clear_edgezone_purple(void);		//Clears the edgezone bit on lane 5 (originally colored purple)
+int eof_menu_note_clear_edgezone_orange(void);	//Clears the edgezone bit on lane 6 (originally colored orange)
+int eof_menu_note_clear_edgezone_all(void);		//Clears the edgezone bit on all lanes
 
 int eof_menu_split_lyric(void);
 int eof_menu_note_edit_name(void);		//Enables the name for selected notes to be altered

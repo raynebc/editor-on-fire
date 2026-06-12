@@ -1898,12 +1898,17 @@ int eof_menu_edit_paste_logic(int function)
 			eflags |= temp_note.eflags;
 			eof_set_note_eflags(eof_song, eof_selected_track, match, eflags);	//Merge the extended flags
 
-			eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);		//Merge the note bitmask
-			eof_set_note_accent(eof_song, eof_selected_track, match, eof_get_note_accent(eof_song, eof_selected_track, match) | temp_note.accent);	//Merge the accent bitmask
-			eof_set_note_ghost(eof_song, eof_selected_track, match, eof_get_note_ghost(eof_song, eof_selected_track, match) | temp_note.ghost);		//Merge the ghost bitmask
+			eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);				//Merge the note bitmask
+			eof_set_note_accent(eof_song, eof_selected_track, match, eof_get_note_accent(eof_song, eof_selected_track, match) | temp_note.accent);			//Merge the accent bitmask
+			eof_set_note_ghost(eof_song, eof_selected_track, match, eof_get_note_ghost(eof_song, eof_selected_track, match) | temp_note.ghost);				//Merge the ghost bitmask
+			eof_set_note_flam(eof_song, eof_selected_track, match, eof_get_note_flam(eof_song, eof_selected_track, match) | temp_note.flam);				//Merge the flam bitmask
+			eof_set_note_rimshot(eof_song, eof_selected_track, match, eof_get_note_rimshot(eof_song, eof_selected_track, match) | temp_note.rimshot);		//Merge the rimshot bitmask
+			eof_set_note_crossstick(eof_song, eof_selected_track, match, eof_get_note_crossstick(eof_song, eof_selected_track, match) | temp_note.crossstick);	//Merge the cross stick bitmask
+			eof_set_note_bellzone(eof_song, eof_selected_track, match, eof_get_note_bellzone(eof_song, eof_selected_track, match) | temp_note.bellzone);		//Merge the bell zone bitmask
+			eof_set_note_edgezone(eof_song, eof_selected_track, match, eof_get_note_edgezone(eof_song, eof_selected_track, match) | temp_note.edgezone);	//Merge the edge zone bitmask
 			//Erase ghost and legacy flags
 			if(dtp)
-			{
+			{	//If pasting into a pro guitar track
 				dtp->note[match]->legacymask = 0;	//Clear the legacy bit mask
 				dtp->note[match]->ghost = 0;	//Clear the ghost bit mask
 			}
@@ -1917,6 +1922,11 @@ int eof_menu_edit_paste_logic(int function)
 				eof_set_note_eflags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.eflags);
 				eof_set_note_accent(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.accent);
 				eof_set_note_ghost(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.ghost);
+				eof_set_note_flam(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flam);
+				eof_set_note_rimshot(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.rimshot);
+				eof_set_note_crossstick(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.crossstick);
+				eof_set_note_bellzone(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.bellzone);
+				eof_set_note_edgezone(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.edgezone);
 				if(isghl != eof_track_is_ghl_mode(eof_song, eof_selected_track))
 				{	//If the source and destination tracks for this paste didn't have matching GHL mode status, convert the note
 					if(eof_note_convert_ghl_authoring(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1))
@@ -4499,6 +4509,7 @@ void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, un
 			*flags &= ~EOF_DRUM_NOTE_FLAG_B_COMBO;			//Erase the blue tom/cymbal combo flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_G_COMBO;			//Erase the green tom/cymbal combo flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_FLAM;				//Erase the flam flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_FLAT_FLAM;			//Erase the flat flam flag
 		}
 	}
 	else
@@ -4579,7 +4590,7 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	(void) eof_load_song_string_pf(temp_note->name, fp, (size_t)namelength);	//Read the note's name, up to the specified number of characters
 	temp_note->type = pack_getc(fp);		//Read the note's difficulty
 	temp_note->note = pack_getc(fp);		//Read the note's bitmask value
-	temp_note->accent = pack_getc(fp);		//Read the note's accent bitmask value
+	temp_note->accent = pack_getc(fp);	//Read the note's accent bitmask value
 	temp_note->beat = pack_igetl(fp);		//Read the beat the note starts in
 	temp_note->endbeat = pack_igetl(fp);	//Read the beat the note ends in
 	temp_note->pos = pack_igetl(fp);		//Read the note's position relative to within the selection
@@ -4593,11 +4604,16 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	temp_note->legacymask = pack_getc(fp);		//Read the note's legacy bitmask
 	(void) pack_fread(temp_note->frets, (long)sizeof(temp_note->frets), fp);	//Read the note's fret array
 	(void) pack_fread(temp_note->finger, (long)sizeof(temp_note->finger), fp);	//Read the note's finger array
-	temp_note->ghost = pack_getc(fp);			//Read the note's ghost bitmask
+	temp_note->ghost = pack_getc(fp);		//Read the note's ghost bitmask
+	temp_note->flam = pack_getc(fp);			//Read the note's flam bitmask
+	temp_note->rimshot = pack_getc(fp);		//Read the note's rimshot bitmask
+	temp_note->crossstick = pack_getc(fp);		//Read the note's cross stick bitmask
+	temp_note->bellzone = pack_getc(fp);		//Read the note's bell hit zone bitmask
+	temp_note->edgezone = pack_getc(fp);	//Read the note's edge hit zone bitmask
 	temp_note->bendstrength = pack_getc(fp);	//Read the note's bend strength
 	temp_note->slideend = pack_getc(fp);		//Read the note's slide end position
-	temp_note->unpitchend = pack_getc(fp);		//Read the note's unpitched slide end position
-	temp_note->phrasenum = pack_igetl(fp);		//Read the arpeggio/handshape/lyric phrase number the note is in
+	temp_note->unpitchend = pack_getc(fp);	//Read the note's unpitched slide end position
+	temp_note->phrasenum = pack_igetl(fp);	//Read the arpeggio/handshape/lyric phrase number the note is in
 }
 
 void eof_read_clipboard_position_beat_interval_data(PACKFILE *fp, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum)
@@ -4657,11 +4673,16 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 			}
 		}
 		(void) pack_putc(np->legacymask, fp);					//Write the pro guitar note's legacy bitmask
-		(void) pack_fwrite(np->frets, (long)sizeof(frets), fp);	//Write the note's fret array
-		(void) pack_fwrite(np->finger, (long)sizeof(finger), fp);//Write the note's finger array
+		(void) pack_fwrite(np->frets, (long)sizeof(frets), fp);		//Write the note's fret array
+		(void) pack_fwrite(np->finger, (long)sizeof(finger), fp);	//Write the note's finger array
 		(void) pack_putc(np->ghost, fp);						//Write the note's ghost bitmask
-		(void) pack_putc(np->bendstrength, fp);					//Write the note's bend strength
-		(void) pack_putc(np->slideend, fp);						//Write the note's slide end position
+		(void) pack_putc(0, fp);								//Write a blank flam bitmask
+		(void) pack_putc(0, fp);								//Write a blank rimshot bitmask
+		(void) pack_putc(0, fp);								//Write a blank cross stick bitmask
+		(void) pack_putc(0, fp);								//Write a blank bell hit zone bitmask
+		(void) pack_putc(0, fp);								//Write a blank edge hit zone bitmask
+		(void) pack_putc(np->bendstrength, fp);				//Write the note's bend strength
+		(void) pack_putc(np->slideend, fp);					//Write the note's slide end position
 		(void) pack_putc(np->unpitchend, fp);					//Write the note's unpitched slide end position
 		(void) pack_iputl(arpeggnum, fp);						//Write the arpeggio/handshape number the phrase is in
 	}
@@ -4688,6 +4709,11 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 		(void) pack_fwrite(frets, (long)sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
 		(void) pack_fwrite(finger, (long)sizeof(finger), fp);	//Write 0 data for the note's finger array (legacy notes pasted into a pro guitar track will have no fingering by default)
 		(void) pack_putc(eof_get_note_ghost(sp, track, note), fp);	//Write the note's ghost bitmask
+		(void) pack_putc(eof_get_note_flam(sp, track, note), fp);	//Write the note's flam bitmask
+		(void) pack_putc(eof_get_note_rimshot(sp, track, note), fp);	//Write the note's rimshot bitmask
+		(void) pack_putc(eof_get_note_crossstick(sp, track, note), fp);	//Write the note's cross stick bitmask
+		(void) pack_putc(eof_get_note_bellzone(sp, track, note), fp);	//Write the note's bell hit zone bitmask
+		(void) pack_putc(eof_get_note_edgezone(sp, track, note), fp);	//Write the note's edge hit zone bitmask
 		(void) pack_putc(0, fp);			//Write a blank bend strength
 		(void) pack_putc(0, fp);			//Write a blank slide end position
 		(void) pack_putc(0, fp);			//Write a blank unpitched slide end position

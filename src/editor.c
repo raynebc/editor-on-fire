@@ -3022,7 +3022,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 				{	//If a drum track is active
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					(void) eof_menu_note_toggle_flam();
+					(void) eof_menu_note_toggle_generic_flam();
 					eof_use_key();
 				}
 			}

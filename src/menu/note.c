@@ -305,6 +305,30 @@ MENU eof_note_clear_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_toggle_rimshot_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_rimshot_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_rimshot_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_rimshot_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_rimshot_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_toggle_rimshot_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_toggle_rimshot_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_rimshot_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_rimshot_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_rimshot_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_rimshot_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_rimshot_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_rimshot_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_clear_rimshot_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_clear_rimshot_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_rimshot_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_toggle_accent_menu[] =
 {
 	{eof_note_clear_menu_string_1, eof_menu_note_toggle_accent_green, NULL, 0, NULL},
@@ -353,6 +377,126 @@ MENU eof_note_clear_ghost_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_toggle_flat_flam_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_flat_flam_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_flat_flam_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_flat_flam_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_flat_flam_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_toggle_flat_flam_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_toggle_flat_flam_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_flat_flam_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_flat_flam_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_flam_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_flam_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_flam_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_flam_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_clear_flam_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_clear_flam_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_flam_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_toggle_flam_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_flam_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_flam_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_flam_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_flam_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_toggle_flam_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_toggle_flam_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_flam_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_flam_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_flam_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_flam_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_flam_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_flam_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_clear_flam_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_clear_flam_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_flam_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_toggle_crossstick_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_crossstick_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_crossstick_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_crossstick_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_crossstick_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_toggle_crossstick_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_toggle_crossstick_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_crossstick_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_crossstick_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_crossstick_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_crossstick_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_crossstick_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_crossstick_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_clear_crossstick_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_clear_crossstick_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_crossstick_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_toggle_bellzone_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_bellzone_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_bellzone_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_bellzone_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_bellzone_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_toggle_bellzone_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_toggle_bellzone_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_bellzone_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_bellzone_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_bellzone_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_bellzone_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_bellzone_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_bellzone_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_clear_bellzone_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_clear_bellzone_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_bellzone_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_toggle_edgezone_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_toggle_edgezone_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_toggle_edgezone_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_toggle_edgezone_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_toggle_edgezone_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_toggle_edgezone_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_toggle_edgezone_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_toggle_edgezone_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_clear_edgezone_menu[] =
+{
+	{eof_note_clear_menu_string_1, eof_menu_note_clear_edgezone_green, NULL, 0, NULL},
+	{eof_note_clear_menu_string_2, eof_menu_note_clear_edgezone_red, NULL, 0, NULL},
+	{eof_note_clear_menu_string_3, eof_menu_note_clear_edgezone_yellow, NULL, 0, NULL},
+	{eof_note_clear_menu_string_4, eof_menu_note_clear_edgezone_blue, NULL, 0, NULL},
+	{eof_note_clear_menu_string_5, eof_menu_note_clear_edgezone_purple, NULL, 0, NULL},
+	{eof_note_clear_menu_string_6, eof_menu_note_clear_edgezone_orange, NULL, 0, NULL},
+	{"&All", eof_menu_note_clear_edgezone_all, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_freestyle_menu[] =
 {
 	{"&On", eof_menu_set_freestyle_on, NULL, 0, NULL},
@@ -367,6 +511,30 @@ MENU eof_note_drum_hi_hat_menu[] =
 	{"&Pedal hi hat",eof_menu_note_default_pedal_hi_hat, NULL, 0, NULL},
 	{"&Sizzle hi hat",eof_menu_note_default_sizzle_hi_hat, NULL, 0, NULL},
 	{"&Non hi hat",eof_menu_note_default_no_hi_hat, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_drum_cymbal_menu[] =
+{
+	{"&Toggle cymbal\t" CTRL_NAME "+ALT+C", eof_menu_note_toggle_rb3_cymbal_all, NULL, 0, NULL},
+	{"Toggle &Yellow\t" CTRL_NAME "+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
+	{"Toggle &Blue\t" CTRL_NAME "+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
+	{"Toggle &Green\t" CTRL_NAME "+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
+	{"&Remove cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
+	{"Mark new notes as &Cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
+	{"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
+	{"Toggle Y note as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
+	{"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
+	{"Remove &Hi hat status", eof_menu_note_remove_hi_hat_status, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_drum_rimshot_menu[] =
+{
+	{"Toggle &Snare\t" CTRL_NAME "+Shift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
+	{"&Remove snare", eof_menu_note_remove_rimshot, NULL, 0, NULL},
+	{"&Toggle", NULL, eof_note_toggle_rimshot_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_rimshot_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -391,37 +559,67 @@ MENU eof_note_disjointed_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_drum_generic_flam_menu[] =
+{
+	{"&Toggle\tSHIFT+F", eof_menu_note_toggle_generic_flam, NULL, 0, NULL},
+	{"&Remove", eof_menu_note_remove_generic_flam, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_drum_flat_flam_menu[] =
+{
+	{"&Toggle", NULL, eof_note_toggle_flat_flam_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_flat_flam_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_drum_flam_menu[] =
 {
-	{"&Toggle\tSHIFT+F", eof_menu_note_toggle_flam, NULL, 0, NULL},
-	{"&Remove", eof_menu_note_remove_flam, NULL, 0, NULL},
+	{"&Toggle", NULL, eof_note_toggle_flam_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_flam_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_drum_crossstick_menu[] =
+{
+	{"&Toggle", NULL, eof_note_toggle_crossstick_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_crossstick_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_drum_bellzone_menu[] =
+{
+	{"&Toggle", NULL, eof_note_toggle_bellzone_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_bellzone_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_drum_edgezone_menu[] =
+{
+	{"&Toggle", NULL, eof_note_toggle_edgezone_menu, 0, NULL},
+	{"&Clear", NULL, eof_note_clear_edgezone_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_drum_menu[] =
 {
-	{"&Toggle cymbal\t" CTRL_NAME "+ALT+C", eof_menu_note_toggle_rb3_cymbal_all, NULL, 0, NULL},
-	{"Toggle Yellow cymbal\t" CTRL_NAME "+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
-	{"Toggle Blue cymbal\t" CTRL_NAME "+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
-	{"Toggle Green cymbal\t" CTRL_NAME "+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
-	{"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
-	{"Mark new notes as &Cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
 	{"Toggle expert+ bass drum\t" CTRL_NAME "+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
 	{"Remove expert+ bass drum", eof_menu_note_remove_double_bass, NULL, 0, NULL},
 	{"Mark new notes as &Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
-	{"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
-	{"Toggle Y note as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
-	{"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
-	{"Remove &Hi hat status", eof_menu_note_remove_hi_hat_status, NULL, 0, NULL},
 	{"&Mark new Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
-	{"Toggle R note as rim shot\t" CTRL_NAME "+Shift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
-	{"Remove &Rim shot status", eof_menu_note_remove_rimshot, NULL, 0, NULL},
 	{"Toggle &Y cymbal+tom\t" CTRL_NAME "+ALT+Y", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
 	{"Toggle &B cymbal+tom\t" CTRL_NAME "+ALT+B", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
 	{"Toggle G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
+	{"&Cymbal", NULL, eof_note_drum_cymbal_menu, 0, NULL},
+	{"&Rim shot", NULL, eof_note_drum_rimshot_menu, 0, NULL},
 	{"&Accent", NULL, eof_note_drum_accent_menu, 0, NULL},
 	{"&Ghost", NULL, eof_note_drum_ghost_menu, 0, NULL},
+	{"Gener&Ic flam", NULL, eof_note_drum_generic_flam_menu, 0, NULL},
+	{"F&Lat flam", NULL, eof_note_drum_flat_flam_menu, 0, NULL},
 	{"&Flam", NULL, eof_note_drum_flam_menu, 0, NULL},
+	{"Cro&ss stick", NULL, eof_note_drum_crossstick_menu, 0, NULL},
+	{"Bell z&One", NULL, eof_note_drum_bellzone_menu, 0, NULL},
+	{"E&Dge zone", NULL, eof_note_drum_edgezone_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1222,38 +1420,38 @@ void eof_prepare_note_menu(void)
 
 				if(eof_selected_track == EOF_TRACK_DRUM_PS)
 				{	//If the PS drum track is active
-					eof_note_drum_menu[9].flags = 0;		//Enable toggle Y note as open hi hat
-					eof_note_drum_menu[10].flags = 0;	//Enable toggle Y note as pedal hi hat
-					eof_note_drum_menu[11].flags = 0;	//Enable toggle Y note as sizzle hi hat
-					eof_note_drum_menu[13].flags = 0;	//Enable mark new Y notes as submenu
-					eof_note_drum_menu[14].flags = 0;	//Enable toggle R note as rim shot
-					eof_note_drum_menu[15].flags = 0;	//Enable remove rim shot status
-					eof_note_drum_menu[16].flags = 0;	//Enable toggle Y cymbal+tom
-					eof_note_drum_menu[17].flags = 0;	//Enable toggle B cymbal+tom
-					eof_note_drum_menu[18].flags = 0;	//Enable toggle G cymbal+tom
+					eof_note_drum_menu[3].flags = 0;		//Enable mark new Y notes as submenu
+					eof_note_drum_menu[4].flags = 0;		//Enable toggle Y cymbal+tom
+					eof_note_drum_menu[5].flags = 0;		//Enable toggle B cymbal+tom
+					eof_note_drum_menu[6].flags = 0;		//Enable toggle G cymbal+tom
+					eof_note_drum_rimshot_menu[0].flags = 0;	//Enable Rimshot>Toggle snare
+					eof_note_drum_rimshot_menu[1].flags = 0;	//Enable Rimshot>Remove snare
+					eof_note_drum_cymbal_menu[6].flags = 0;	//Enable Cymbal>toggle Y note as open hi hat
+					eof_note_drum_cymbal_menu[7].flags = 0;	//Enable Cymbal>toggle Y note as pedal hi hat
+					eof_note_drum_cymbal_menu[8].flags = 0;	//Enable Cymbal>toggle Y note as sizzle hi hat
 				}
 				else
 				{	//Otherwise disable and hide these items
-					eof_note_drum_menu[9].flags = D_DISABLED | D_HIDDEN;
-					eof_note_drum_menu[10].flags = D_DISABLED | D_HIDDEN;
-					eof_note_drum_menu[11].flags = D_DISABLED | D_HIDDEN;
-					eof_note_drum_menu[13].flags = D_DISABLED | D_HIDDEN;
-					eof_note_drum_menu[14].flags = D_DISABLED | D_HIDDEN;
-					eof_note_drum_menu[15].flags = D_DISABLED | D_HIDDEN;
-					eof_note_drum_menu[16].flags = D_DISABLED | D_HIDDEN;
-					eof_note_drum_menu[17].flags = D_DISABLED | D_HIDDEN;
-					eof_note_drum_menu[18].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[3].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[4].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[5].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_menu[6].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_rimshot_menu[0].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_rimshot_menu[1].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_cymbal_menu[6].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_cymbal_menu[7].flags = D_DISABLED | D_HIDDEN;
+					eof_note_drum_cymbal_menu[8].flags = D_DISABLED | D_HIDDEN;
 				}
 			}
 
 			/* toggle Expert+ bass drum */
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (eof_note_type == EOF_NOTE_AMAZING))
 			{	//If the Amazing difficulty of a drum track is active
-				eof_note_drum_menu[6].flags = 0;			//Note>Drum>Toggle Expert+ Bass Drum
+				eof_note_drum_menu[0].flags = 0;			//Note>Drum>Toggle Expert+ Bass Drum
 			}
 			else
 			{
-				eof_note_drum_menu[6].flags = D_DISABLED;
+				eof_note_drum_menu[0].flags = D_DISABLED;
 			}
 
 			/* HOPO */
@@ -2833,6 +3031,189 @@ int eof_menu_note_clear_orange(void)
 	return 1;
 }
 
+int eof_menu_note_toggle_rimshot_mask(unsigned char mask)
+{
+	unsigned long i;
+	unsigned char undo_made = 0, rimshot, notemask;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			notemask = eof_get_note_note(eof_song, eof_selected_track, i);
+			if(notemask & mask)
+			{	//If the note has a gem on the specified lane
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				rimshot = eof_get_note_rimshot(eof_song, eof_selected_track, i);
+				rimshot ^= mask;
+				rimshot &= notemask;	//Restrict the rimshot bitmask to only the lanes currently in use for this note
+				eof_set_note_rimshot(eof_song, eof_selected_track, i, rimshot);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_rimshot_lane(unsigned int lanenum)
+{
+	return eof_menu_note_toggle_rimshot_mask(1 << (lanenum - 1));
+}
+
+int eof_menu_note_toggle_rimshot_green(void)
+{
+	return eof_menu_note_toggle_rimshot_lane(1);
+}
+
+int eof_menu_note_toggle_rimshot_red(void)
+{
+	return eof_menu_note_toggle_rimshot_lane(2);
+}
+
+int eof_menu_note_toggle_rimshot_yellow(void)
+{
+	return eof_menu_note_toggle_rimshot_lane(3);
+}
+
+int eof_menu_note_toggle_rimshot_blue(void)
+{
+	return eof_menu_note_toggle_rimshot_lane(4);
+}
+
+int eof_menu_note_toggle_rimshot_purple(void)
+{
+	return eof_menu_note_toggle_rimshot_lane(5);
+}
+
+int eof_menu_note_toggle_rimshot_orange(void)
+{
+	return eof_menu_note_toggle_rimshot_lane(6);
+}
+
+int eof_menu_note_toggle_rimshot_all(void)
+{
+	return eof_menu_note_toggle_rimshot_mask(0xFF);
+}
+
+int eof_menu_note_clear_rimshot_lane(unsigned int lanenum)
+{
+	unsigned long i;
+	unsigned char rimshot, mask, undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
+	{
+		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
+	}
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	mask = 1 << (lanenum - 1);
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			rimshot = eof_get_note_rimshot(eof_song, eof_selected_track, i);
+			if((eof_get_note_note(eof_song, eof_selected_track, i) & mask) && (rimshot & mask))
+			{	//If the note has a gem on the specified lane and it is a rimshot gem
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				rimshot &= ~mask;
+				eof_set_note_rimshot(eof_song, eof_selected_track, i, rimshot);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_clear_rimshot_green(void)
+{
+	return eof_menu_note_clear_rimshot_lane(1);
+}
+
+int eof_menu_note_clear_rimshot_red(void)
+{
+	return eof_menu_note_clear_rimshot_lane(2);
+}
+
+int eof_menu_note_clear_rimshot_yellow(void)
+{
+	return eof_menu_note_clear_rimshot_lane(3);
+}
+
+int eof_menu_note_clear_rimshot_blue(void)
+{
+	return eof_menu_note_clear_rimshot_lane(4);
+}
+
+int eof_menu_note_clear_rimshot_purple(void)
+{
+	return eof_menu_note_clear_rimshot_lane(5);
+}
+
+int eof_menu_note_clear_rimshot_orange(void)
+{
+	return eof_menu_note_clear_rimshot_lane(6);
+}
+
+int eof_menu_note_clear_rimshot_all(void)
+{
+	unsigned long i;
+	unsigned char undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_get_note_rimshot(eof_song, eof_selected_track, i))
+			{	//If this note has any rimshot gems
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_set_note_rimshot(eof_song, eof_selected_track, i, 0);	//Clear the accent mask
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
 int eof_menu_note_toggle_accent_mask(unsigned char mask)
 {
 	unsigned long i;
@@ -2926,14 +3307,14 @@ int eof_menu_note_clear_accent_lane(unsigned int lanenum)
 		return 1;
 	}
 
+	mask = 1 << (lanenum - 1);
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is in the active instrument difficulty and is selected
 			accent = eof_get_note_accent(eof_song, eof_selected_track, i);
-			mask = 1 << (lanenum - 1);
 			if((eof_get_note_note(eof_song, eof_selected_track, i) & mask) && (accent & mask))
-			{	//If the note has a gem on the specified lane and it is accented
+			{	//If the note has a gem on the specified lane and it is an accent gem
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -2998,7 +3379,7 @@ int eof_menu_note_clear_accent_all(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is in the active instrument difficulty and is selected
 			if(eof_get_note_accent(eof_song, eof_selected_track, i))
-			{	//If this note has accent status
+			{	//If this note has any accent gems
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -3109,14 +3490,14 @@ int eof_menu_note_clear_ghost_lane(unsigned int lanenum)
 		return 1;
 	}
 
+	mask = 1 << (lanenum - 1);
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is in the active instrument difficulty and is selected
 			ghost = eof_get_note_ghost(eof_song, eof_selected_track, i);
-			mask = 1 << (lanenum - 1);
 			if((eof_get_note_note(eof_song, eof_selected_track, i) & mask) && (ghost & mask))
-			{	//If the note has a gem on the specified lane and it is ghosted
+			{	//If the note has a gem on the specified lane and it is a ghost gem
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -3181,13 +3562,825 @@ int eof_menu_note_clear_ghost_all(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is in the active instrument difficulty and is selected
 			if(eof_get_note_ghost(eof_song, eof_selected_track, i))
-			{	//If this note has ghost status
+			{	//If this note has any ghost gems
 				if(!undo_made)
 				{	//If an undo state hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
 				eof_set_note_ghost(eof_song, eof_selected_track, i, 0);	//Clear the ghost bitmask
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_flam_mask_logic(unsigned char mask, char type)
+{
+	unsigned long i, flags;
+	unsigned char undo_made = 0, flam, notemask;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			notemask = eof_get_note_note(eof_song, eof_selected_track, i);
+			if(notemask & mask)
+			{	//If the note has a gem applicable to the specified mask
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				flam = eof_get_note_flam(eof_song, eof_selected_track, i);
+				flam ^= mask;
+				flam &= notemask;	//Restrict the flam bitmask to only the lanes currently in use for this note
+				eof_set_note_flam(eof_song, eof_selected_track, i, flam);
+
+				//Update flat flam status accordingly
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				if(flam && type)
+				{	//If there are any flam gems set, and the calling function wanted the note to be a flat flam
+					flags |= EOF_DRUM_NOTE_FLAG_FLAT_FLAM;	//Set the flat flam status
+				}
+				else
+				{	//There are no flam gems set anymore, or the calling function wanted to set the note to be a normal flam
+					flags &= ~EOF_DRUM_NOTE_FLAG_FLAT_FLAM;	//Clear the flat flam status
+				}
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_flat_flam_mask(unsigned char mask)
+{
+	return eof_menu_note_toggle_flam_mask_logic(mask, 1);
+}
+
+int eof_menu_note_toggle_flat_flam_lane(unsigned int lanenum)
+{
+	return eof_menu_note_toggle_flat_flam_mask(1 << (lanenum - 1));
+}
+
+int eof_menu_note_toggle_flat_flam_green(void)
+{
+	return eof_menu_note_toggle_flat_flam_lane(1);
+}
+
+int eof_menu_note_toggle_flat_flam_red(void)
+{
+	return eof_menu_note_toggle_flat_flam_lane(2);
+}
+
+int eof_menu_note_toggle_flat_flam_yellow(void)
+{
+	return eof_menu_note_toggle_flat_flam_lane(3);
+}
+
+int eof_menu_note_toggle_flat_flam_blue(void)
+{
+	return eof_menu_note_toggle_flat_flam_lane(4);
+}
+
+int eof_menu_note_toggle_flat_flam_purple(void)
+{
+	return eof_menu_note_toggle_flat_flam_lane(5);
+}
+
+int eof_menu_note_toggle_flat_flam_orange(void)
+{
+	return eof_menu_note_toggle_flat_flam_lane(6);
+}
+
+int eof_menu_note_toggle_flat_flam_all(void)
+{
+	return eof_menu_note_toggle_flat_flam_mask(0xFF);
+}
+
+int eof_menu_note_toggle_flam_mask(unsigned char mask)
+{
+	return eof_menu_note_toggle_flam_mask_logic(mask, 0);
+}
+
+int eof_menu_note_toggle_flam_lane(unsigned int lanenum)
+{
+	return eof_menu_note_toggle_flam_mask(1 << (lanenum - 1));
+}
+
+int eof_menu_note_toggle_flam_green(void)
+{
+	return eof_menu_note_toggle_flam_lane(1);
+}
+
+int eof_menu_note_toggle_flam_red(void)
+{
+	return eof_menu_note_toggle_flam_lane(2);
+}
+
+int eof_menu_note_toggle_flam_yellow(void)
+{
+	return eof_menu_note_toggle_flam_lane(3);
+}
+
+int eof_menu_note_toggle_flam_blue(void)
+{
+	return eof_menu_note_toggle_flam_lane(4);
+}
+
+int eof_menu_note_toggle_flam_purple(void)
+{
+	return eof_menu_note_toggle_flam_lane(5);
+}
+
+int eof_menu_note_toggle_flam_orange(void)
+{
+	return eof_menu_note_toggle_flam_lane(6);
+}
+
+int eof_menu_note_toggle_flam_all(void)
+{
+	return eof_menu_note_toggle_flam_mask(0xFF);
+}
+
+int eof_menu_note_clear_flam_lane(unsigned int lanenum)
+{
+	unsigned long i;
+	unsigned char flam, mask, undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
+	{
+		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
+	}
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	mask = 1 << (lanenum - 1);
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			flam = eof_get_note_flam(eof_song, eof_selected_track, i);
+			if((eof_get_note_note(eof_song, eof_selected_track, i) & mask) && (flam & mask))
+			{	//If the note has a gem on the specified lane and it is a flam gem
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				flam &= ~mask;
+				eof_set_note_flam(eof_song, eof_selected_track, i, flam);
+				if(!flam)
+				{	//If there are no flam bits set anymore for this note
+					unsigned long flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+					flags &= ~EOF_DRUM_NOTE_FLAG_FLAT_FLAM;	//Clear the flat flam status
+					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+				}
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_clear_flam_green(void)
+{
+	return eof_menu_note_clear_flam_lane(1);
+}
+
+int eof_menu_note_clear_flam_red(void)
+{
+	return eof_menu_note_clear_flam_lane(2);
+}
+
+int eof_menu_note_clear_flam_yellow(void)
+{
+	return eof_menu_note_clear_flam_lane(3);
+}
+
+int eof_menu_note_clear_flam_blue(void)
+{
+	return eof_menu_note_clear_flam_lane(4);
+}
+
+int eof_menu_note_clear_flam_purple(void)
+{
+	return eof_menu_note_clear_flam_lane(5);
+}
+
+int eof_menu_note_clear_flam_orange(void)
+{
+	return eof_menu_note_clear_flam_lane(6);
+}
+
+int eof_menu_note_clear_flam_all(void)
+{
+	unsigned long i, flags;
+	unsigned char undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_get_note_flam(eof_song, eof_selected_track, i))
+			{	//If this note has any flam gems
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_set_note_flam(eof_song, eof_selected_track, i, 0);	//Clear the flam bitmask
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				flags &= ~EOF_DRUM_NOTE_FLAG_FLAT_FLAM;		//Clear the flat flam status
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_crossstick_mask_logic(unsigned char mask)
+{
+	unsigned long i, flags;
+	unsigned char undo_made = 0, crossstick, notemask;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			notemask = eof_get_note_note(eof_song, eof_selected_track, i);
+			if(notemask & mask)
+			{	//If the note has a gem applicable to the specified mask
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				crossstick = eof_get_note_crossstick(eof_song, eof_selected_track, i);
+				crossstick ^= mask;
+				crossstick &= notemask;	//Restrict the cross stick bitmask to only the lanes currently in use for this note
+				eof_set_note_crossstick(eof_song, eof_selected_track, i, crossstick);
+
+				//Update flat cross stick status accordingly
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_crossstick_mask(unsigned char mask)
+{
+	return eof_menu_note_toggle_crossstick_mask_logic(mask);
+}
+
+int eof_menu_note_toggle_crossstick_lane(unsigned int lanenum)
+{
+	return eof_menu_note_toggle_crossstick_mask(1 << (lanenum - 1));
+}
+
+int eof_menu_note_toggle_crossstick_green(void)
+{
+	return eof_menu_note_toggle_crossstick_lane(1);
+}
+
+int eof_menu_note_toggle_crossstick_red(void)
+{
+	return eof_menu_note_toggle_crossstick_lane(2);
+}
+
+int eof_menu_note_toggle_crossstick_yellow(void)
+{
+	return eof_menu_note_toggle_crossstick_lane(3);
+}
+
+int eof_menu_note_toggle_crossstick_blue(void)
+{
+	return eof_menu_note_toggle_crossstick_lane(4);
+}
+
+int eof_menu_note_toggle_crossstick_purple(void)
+{
+	return eof_menu_note_toggle_crossstick_lane(5);
+}
+
+int eof_menu_note_toggle_crossstick_orange(void)
+{
+	return eof_menu_note_toggle_crossstick_lane(6);
+}
+
+int eof_menu_note_toggle_crossstick_all(void)
+{
+	return eof_menu_note_toggle_crossstick_mask(0xFF);
+}
+
+int eof_menu_note_clear_crossstick_lane(unsigned int lanenum)
+{
+	unsigned long i;
+	unsigned char crossstick, mask, undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
+	{
+		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
+	}
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	mask = 1 << (lanenum - 1);
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			crossstick = eof_get_note_crossstick(eof_song, eof_selected_track, i);
+			if((eof_get_note_note(eof_song, eof_selected_track, i) & mask) && (crossstick & mask))
+			{	//If the note has a gem on the specified lane and it is a cross stick gem
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				crossstick &= ~mask;
+				eof_set_note_crossstick(eof_song, eof_selected_track, i, crossstick);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_clear_crossstick_green(void)
+{
+	return eof_menu_note_clear_crossstick_lane(1);
+}
+
+int eof_menu_note_clear_crossstick_red(void)
+{
+	return eof_menu_note_clear_crossstick_lane(2);
+}
+
+int eof_menu_note_clear_crossstick_yellow(void)
+{
+	return eof_menu_note_clear_crossstick_lane(3);
+}
+
+int eof_menu_note_clear_crossstick_blue(void)
+{
+	return eof_menu_note_clear_crossstick_lane(4);
+}
+
+int eof_menu_note_clear_crossstick_purple(void)
+{
+	return eof_menu_note_clear_crossstick_lane(5);
+}
+
+int eof_menu_note_clear_crossstick_orange(void)
+{
+	return eof_menu_note_clear_crossstick_lane(6);
+}
+
+int eof_menu_note_clear_crossstick_all(void)
+{
+	unsigned long i;
+	unsigned char undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_get_note_crossstick(eof_song, eof_selected_track, i))
+			{	//If this note has any cross stick gems
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_set_note_crossstick(eof_song, eof_selected_track, i, 0);	//Clear the cross stick bitmask
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_bellzone_mask(unsigned char mask)
+{
+	unsigned long i;
+	unsigned char undo_made = 0, bellzone, notemask;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			notemask = eof_get_note_note(eof_song, eof_selected_track, i);
+			if(notemask & mask)
+			{	//If the note has a gem applicable to the specified mask
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				bellzone = eof_get_note_bellzone(eof_song, eof_selected_track, i);
+				bellzone ^= mask;
+				bellzone &= notemask;	//Restrict the bellzone bitmask to only the lanes currently in use for this note
+				eof_set_note_bellzone(eof_song, eof_selected_track, i, bellzone);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_bellzone_lane(unsigned int lanenum)
+{
+	return eof_menu_note_toggle_bellzone_mask(1 << (lanenum - 1));
+}
+
+int eof_menu_note_toggle_bellzone_green(void)
+{
+	return eof_menu_note_toggle_bellzone_lane(1);
+}
+
+int eof_menu_note_toggle_bellzone_red(void)
+{
+	return eof_menu_note_toggle_bellzone_lane(2);
+}
+
+int eof_menu_note_toggle_bellzone_yellow(void)
+{
+	return eof_menu_note_toggle_bellzone_lane(3);
+}
+
+int eof_menu_note_toggle_bellzone_blue(void)
+{
+	return eof_menu_note_toggle_bellzone_lane(4);
+}
+
+int eof_menu_note_toggle_bellzone_purple(void)
+{
+	return eof_menu_note_toggle_bellzone_lane(5);
+}
+
+int eof_menu_note_toggle_bellzone_orange(void)
+{
+	return eof_menu_note_toggle_bellzone_lane(6);
+}
+
+int eof_menu_note_toggle_bellzone_all(void)
+{
+	return eof_menu_note_toggle_bellzone_mask(0xFF);
+}
+
+int eof_menu_note_clear_bellzone_lane(unsigned int lanenum)
+{
+	unsigned long i;
+	unsigned char bellzone, mask, undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
+	{
+		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
+	}
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	mask = 1 << (lanenum - 1);
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			bellzone = eof_get_note_bellzone(eof_song, eof_selected_track, i);
+			if((eof_get_note_note(eof_song, eof_selected_track, i) & mask) && (bellzone & mask))
+			{	//If the note has a gem on the specified lane and it is a bell zone gem
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				bellzone &= ~mask;
+				eof_set_note_bellzone(eof_song, eof_selected_track, i, bellzone);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_clear_bellzone_green(void)
+{
+	return eof_menu_note_clear_bellzone_lane(1);
+}
+
+int eof_menu_note_clear_bellzone_red(void)
+{
+	return eof_menu_note_clear_bellzone_lane(2);
+}
+
+int eof_menu_note_clear_bellzone_yellow(void)
+{
+	return eof_menu_note_clear_bellzone_lane(3);
+}
+
+int eof_menu_note_clear_bellzone_blue(void)
+{
+	return eof_menu_note_clear_bellzone_lane(4);
+}
+
+int eof_menu_note_clear_bellzone_purple(void)
+{
+	return eof_menu_note_clear_bellzone_lane(5);
+}
+
+int eof_menu_note_clear_bellzone_orange(void)
+{
+	return eof_menu_note_clear_bellzone_lane(6);
+}
+
+int eof_menu_note_clear_bellzone_all(void)
+{
+	unsigned long i;
+	unsigned char undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_get_note_bellzone(eof_song, eof_selected_track, i))
+			{	//If this note has any bell zone gems
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_set_note_bellzone(eof_song, eof_selected_track, i, 0);	//Clear the bellzone bitmask
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_edgezone_mask(unsigned char mask)
+{
+	unsigned long i;
+	unsigned char undo_made = 0, edgezone, notemask;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			notemask = eof_get_note_note(eof_song, eof_selected_track, i);
+			if(notemask & mask)
+			{	//If the note has a gem applicable to the specified mask
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				edgezone = eof_get_note_edgezone(eof_song, eof_selected_track, i);
+				edgezone ^= mask;
+				edgezone &= notemask;	//Restrict the edgezone bitmask to only the lanes currently in use for this note
+				eof_set_note_edgezone(eof_song, eof_selected_track, i, edgezone);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_edgezone_lane(unsigned int lanenum)
+{
+	return eof_menu_note_toggle_edgezone_mask(1 << (lanenum - 1));
+}
+
+int eof_menu_note_toggle_edgezone_green(void)
+{
+	return eof_menu_note_toggle_edgezone_lane(1);
+}
+
+int eof_menu_note_toggle_edgezone_red(void)
+{
+	return eof_menu_note_toggle_edgezone_lane(2);
+}
+
+int eof_menu_note_toggle_edgezone_yellow(void)
+{
+	return eof_menu_note_toggle_edgezone_lane(3);
+}
+
+int eof_menu_note_toggle_edgezone_blue(void)
+{
+	return eof_menu_note_toggle_edgezone_lane(4);
+}
+
+int eof_menu_note_toggle_edgezone_purple(void)
+{
+	return eof_menu_note_toggle_edgezone_lane(5);
+}
+
+int eof_menu_note_toggle_edgezone_orange(void)
+{
+	return eof_menu_note_toggle_edgezone_lane(6);
+}
+
+int eof_menu_note_toggle_edgezone_all(void)
+{
+	return eof_menu_note_toggle_edgezone_mask(0xFF);
+}
+
+int eof_menu_note_clear_edgezone_lane(unsigned int lanenum)
+{
+	unsigned long i;
+	unsigned char edgezone, mask, undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if((eof_count_track_lanes(eof_song, eof_selected_track) < lanenum) || !lanenum)
+	{
+		return 1;	//Don't do anything if the specified lane number is higher than the number the active track contains or if it is otherwise invalid
+	}
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	mask = 1 << (lanenum - 1);
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			edgezone = eof_get_note_edgezone(eof_song, eof_selected_track, i);
+			if((eof_get_note_note(eof_song, eof_selected_track, i) & mask) && (edgezone & mask))
+			{	//If the note has a gem on the specified lane and it is an edge zone gem
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				edgezone &= ~mask;
+				eof_set_note_edgezone(eof_song, eof_selected_track, i, edgezone);
+			}
+		}
+	}
+
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
+int eof_menu_note_clear_edgezone_green(void)
+{
+	return eof_menu_note_clear_edgezone_lane(1);
+}
+
+int eof_menu_note_clear_edgezone_red(void)
+{
+	return eof_menu_note_clear_edgezone_lane(2);
+}
+
+int eof_menu_note_clear_edgezone_yellow(void)
+{
+	return eof_menu_note_clear_edgezone_lane(3);
+}
+
+int eof_menu_note_clear_edgezone_blue(void)
+{
+	return eof_menu_note_clear_edgezone_lane(4);
+}
+
+int eof_menu_note_clear_edgezone_purple(void)
+{
+	return eof_menu_note_clear_edgezone_lane(5);
+}
+
+int eof_menu_note_clear_edgezone_orange(void)
+{
+	return eof_menu_note_clear_edgezone_lane(6);
+}
+
+int eof_menu_note_clear_edgezone_all(void)
+{
+	unsigned long i;
+	unsigned char undo_made = 0;
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+
+	if(eof_count_selected_and_unselected_notes(NULL) == 0)
+	{
+		return 1;
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is in the active instrument difficulty and is selected
+			if(eof_get_note_edgezone(eof_song, eof_selected_track, i))
+			{	//If this note has any edge zone gems
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_set_note_edgezone(eof_song, eof_selected_track, i, 0);	//Clear the ghost bitmask
 			}
 		}
 	}
@@ -3645,12 +4838,12 @@ int eof_menu_note_default_cymbal(void)
 	if(eof_mark_drums_as_cymbal)
 	{
 		eof_mark_drums_as_cymbal = 0;
-		eof_note_drum_menu[5].flags = 0;
+		eof_note_drum_cymbal_menu[5].flags = 0;
 	}
 	else
 	{
 		eof_mark_drums_as_cymbal = 1;
-		eof_note_drum_menu[5].flags = D_SELECTED;
+		eof_note_drum_cymbal_menu[5].flags = D_SELECTED;
 	}
 	return 1;
 }
@@ -3660,12 +4853,12 @@ int eof_menu_note_default_double_bass(void)
 	if(eof_mark_drums_as_double_bass)
 	{
 		eof_mark_drums_as_double_bass = 0;
-		eof_note_drum_menu[8].flags = 0;
+		eof_note_drum_menu[2].flags = 0;
 	}
 	else
 	{
 		eof_mark_drums_as_double_bass = 1;
-		eof_note_drum_menu[8].flags = D_SELECTED;
+		eof_note_drum_menu[2].flags = D_SELECTED;
 	}
 	return 1;
 }
@@ -9265,7 +10458,7 @@ int eof_menu_note_remove_rimshot(void)
 	return 1;
 }
 
-int eof_menu_note_toggle_flam(void)
+int eof_menu_note_toggle_generic_flam(void)
 {
 	unsigned long i, flags;
 	long u = 0;
@@ -9298,7 +10491,7 @@ int eof_menu_note_toggle_flam(void)
 	return 1;
 }
 
-int eof_menu_note_remove_flam(void)
+int eof_menu_note_remove_generic_flam(void)
 {
 	unsigned long i, flags;
 	long u = 0;

@@ -75,7 +75,8 @@
 #define EOF_DRUM_NOTE_FLAG_Y_COMBO          8192	//This flag means the yellow drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
 #define EOF_DRUM_NOTE_FLAG_B_COMBO         16384	//This flag means the blue drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
 #define EOF_DRUM_NOTE_FLAG_G_COMBO         32768	//This flag means the green drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
-#define EOF_DRUM_NOTE_FLAG_FLAM           262144	//This flag means the drum note is a flam
+#define EOF_DRUM_NOTE_FLAG_FLAM              262144	//This flag means the drum note is a generic flam (old flam status that applied to the entire note)
+#define EOF_DRUM_NOTE_FLAG_FLAT_FLAM     524288	//This flag means the drum note has lane-specific flam gems that are part of a flat flam instead of a normal flam
 
 //The following flags pertain to legacy guitar notes
 #define EOF_GUITAR_NOTE_FLAG_IS_SLIDER	512		//This flag will be set by eof_determine_phrase_status() if the note is in a slider section
@@ -173,7 +174,12 @@ typedef struct
 	unsigned char type;		//Stores the note's difficulty
 	unsigned char note;		//Stores the note's fret values
 	unsigned char accent;		//Stores the note's accent bitmask (for drums) or mine bitmask (for dance)
-	unsigned char ghost;		//Stores the note's ghost bitmask (for drums)
+	unsigned char ghost;		//Stores the note's ghost bitmask (for drums) or roll bitmask (for dance)
+	unsigned char flam;		//Stores the note's flam bitmask (for drums)
+	unsigned char rimshot;		//Stores the note's rimshot bitmask (for drums)
+	unsigned char crossstick;	//Stores the note's cross stick bitmask (for drums)
+	unsigned char bellzone;		//Stores the note's bell hit zone bitmask (for drums)
+	unsigned char edgezone;	//Stores the note's edge hit zone bitmask (for drums)
 	unsigned long midi_pos;
 	unsigned long midi_length;
 	unsigned long pos;
@@ -227,6 +233,11 @@ typedef struct
 	unsigned char frets[8];
 	unsigned char finger[8];
 	unsigned char ghost;		//Stores the legacy or pro guitar note's ghost bitmask
+	unsigned char flam;		//Stores the legacy note's flam bitmask
+	unsigned char rimshot;		//Stores the legacy note's rimshot bitmask
+	unsigned char crossstick;	//Stores the legacy note's cross stick bitmask
+	unsigned char bellzone;		//Stores the legacy note's bell hit zone bitmask
+	unsigned char edgezone;	//Stores the legacy note's edge hit zone bitmask
 	unsigned char bendstrength;
 	unsigned char slideend;
 	unsigned char unpitchend;
@@ -725,6 +736,11 @@ unsigned long eof_get_note_eflags(EOF_SONG *sp, unsigned long track, unsigned lo
 void eof_set_note_eflags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long eflags);	//Sets the extended flags of the specified pro guitar or legacy note
 unsigned char eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the ghost bitmask of the specified legacy or pro guitar note, or 0 on error
+unsigned char eof_get_note_flam(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the flam bitmask of the speficied legacy note, or 0 on error
+unsigned char eof_get_note_rimshot(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the rimshot status of the specified legacy note, or 0 on error
+unsigned char eof_get_note_crossstick(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the cross stick status of the specified legacy note, or 0 on error
+unsigned char eof_get_note_bellzone(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the bell hit zone bitmask of the specified legacy note, or 0 on error
+unsigned char eof_get_note_edgezone(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the edge hit zone bitmask of the specified legacy note, or 0 on error
 unsigned char eof_get_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the roll status (stored in the ghost bitmask variable) of the specified dance note, or 0 on error or if the track isn't a dance track
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);
 	//Sets the note value of the specified track's note/lyric
@@ -734,6 +750,11 @@ unsigned char eof_get_note_mine(EOF_SONG *sp, unsigned long track, unsigned long
 void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the accent bitmask value of the specified note
 void eof_set_note_mine(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the mine status (stored in the accent bitmask variable) of the specified dance note (or does nothing for other tracks)
 void eof_set_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the ghost bitmask value of the specified legacy or pro guitar note
+void eof_set_note_flam(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the flam bitmask of the specified legacy note
+void eof_set_note_rimshot(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the rimshot bitmask of the specified legacy note
+void eof_set_note_crossstick(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the cross stick bitmask of the specified legacy note
+void eof_set_note_bellzone(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the bell hit zone bitmask of the specified legacy note
+void eof_set_note_edgezone(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the edge hit zone bitmask of the specified legacy note
 void eof_set_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the roll status (stored in the ghost bitmask variable) of the specified dance note (or does nothing for other tracks)
 unsigned char eof_get_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the SP deploy bitmask of the specified note, or 0 on error
 void eof_set_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the SP deploy bitmask of the specified note

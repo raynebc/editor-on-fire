@@ -212,6 +212,31 @@ Custom track data block definitions
 		{
 			1 byte:  The ghost note bitmask for the legacy note
 		}
+	Custom data block ID 12:  Flam note bitmask
+		FLAM CHUNK, for each note in the legacy track
+		{
+			1 byte:  The flam note bitmask for the legacy note
+		}
+	Custom data block ID 13:  Rimshot note bitmask
+		RIMSHOT CHUNK, for each note in the legacy track
+		{
+			1 byte:  The rimshot bitmask for the legacy note
+		}
+	Custom data block ID 14:  Cross stick note bitmask
+		CROSS STICK CHUNK, for each note in the legacy track
+		{
+			1 byte:  The cross stick bitmask for the legacy note
+		}
+	Custom data block ID 15:  Bell hit zone note bitmask
+		BELL HIT ZONE CHUNK, for each note in the legacy track
+		{
+			1 byte:  The bell hit zone bitmask for the legacy note
+		}
+	Custom data block ID 16:  Edge hit zone note bitmask
+		EDGE HIT ZONE CHUNK, for each note in the legacy track
+		{
+			1 byte:  The edge hit zone bitmask for the legacy note
+		}
 
 =========================================		
 }

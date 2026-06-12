@@ -2589,7 +2589,97 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						{	//Ensure this logic only runs for a legacy track
 							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 							{	//For each note in this track
-								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->ghost = pack_getc(fp);		//Read ghost accent bitmask
+								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->ghost = pack_getc(fp);		//Read ghost bitmask
+							}
+						}
+					break;
+
+					case 12:	//Flam note bitmasks
+						if(custom_data_size < 5)
+						{	//This data block is expected to be at least 5 bytes long
+							char *error = "Error:  Invalid custom data block size (flam note bitmasks).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a legacy track
+							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+							{	//For each note in this track
+								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->flam = pack_getc(fp);		//Read flam bitmask
+							}
+						}
+					break;
+
+					case 13:	//Rimshot note bitmasks
+						if(custom_data_size < 5)
+						{	//This data block is expected to be at least 5 bytes long
+							char *error = "Error:  Invalid custom data block size (rimshot note bitmasks).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a legacy track
+							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+							{	//For each note in this track
+								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->rimshot = pack_getc(fp);		//Read rimshot bitmask
+							}
+						}
+					break;
+
+					case 14:	//Cross stick note bitmasks
+						if(custom_data_size < 5)
+						{	//This data block is expected to be at least 5 bytes long
+							char *error = "Error:  Invalid custom data block size (cross stick note bitmasks).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a legacy track
+							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+							{	//For each note in this track
+								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->crossstick = pack_getc(fp);		//Read cross stick bitmask
+							}
+						}
+					break;
+
+					case 15:	//Bell hit zone note bitmasks
+						if(custom_data_size < 5)
+						{	//This data block is expected to be at least 5 bytes long
+							char *error = "Error:  Invalid custom data block size (bell hit zone note bitmasks).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a legacy track
+							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+							{	//For each note in this track
+								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->bellzone = pack_getc(fp);		//Read bell hit zone note bitmask
+							}
+						}
+					break;
+
+					case 16:	//Edge hit zone note bitmasks
+						if(custom_data_size < 5)
+						{	//This data block is expected to be at least 5 bytes long
+							char *error = "Error:  Invalid custom data block size (edge hit zone note bitmasks).  Aborting";
+
+							allegro_message("%s", error);
+							eof_log(error, 1);
+							return 0;
+						}
+						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						{	//Ensure this logic only runs for a legacy track
+							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+							{	//For each note in this track
+								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->edgezone = pack_getc(fp);		//Read edge hit zone note bitmask
 							}
 						}
 					break;
@@ -3409,7 +3499,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_start_end_points;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_accent,has_diff_count,has_sp_deploy,has_ghost,has_handmodechanges;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_diff_count,has_sp_deploy,has_handmodechanges;
+	char has_accent, has_ghost, has_flam, has_rimshot, has_crossstick, has_bellzone, has_edgezone;	//Drum note statuses
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
 	int temp_file_error = 0;	//Set to nonzero if the temp files for any custom data blocks couldn't be written due to the temp files used to create the data being empty (ie. disk full)
@@ -4177,7 +4268,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = has_sp_deploy = has_ghost = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = has_sp_deploy = has_ghost = has_flam = has_rimshot = has_crossstick = has_bellzone = has_edgezone = 0;
 		if(track_ctr && tp && (eof_track_is_pro_guitar_track(sp, track_ctr)))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
@@ -4239,8 +4330,53 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					break;
 				}
 			}
+			//Check if any notes have lane-specific flam status
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				if(eof_get_note_flam(sp, track_ctr, ctr))
+				{	//If at least one gem has flam status
+					has_flam = 1;
+					break;
+				}
+			}
+			//Check if any notes have lane-specific rimshot status
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				if(eof_get_note_rimshot(sp, track_ctr, ctr))
+				{	//If at least one gem has rimshot status
+					has_rimshot = 1;
+					break;
+				}
+			}
+			//Check if any notes have lane-specific cross stick status
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				if(eof_get_note_crossstick(sp, track_ctr, ctr))
+				{	//If at least one gem has cross stick status
+					has_crossstick = 1;
+					break;
+				}
+			}
+			//Check if any notes have lane-specific bell zone status
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				if(eof_get_note_bellzone(sp, track_ctr, ctr))
+				{	//If at least one gem has flam status
+					has_bellzone = 1;
+					break;
+				}
+			}
+			//Check if any notes have lane-specific edge zone status
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				if(eof_get_note_edgezone(sp, track_ctr, ctr))
+				{	//If at least one gem has flam status
+					has_edgezone = 1;
+					break;
+				}
+			}
 		}
-		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent + has_diff_count + has_sp_deploy + has_ghost;
+		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent + has_diff_count + has_sp_deploy + has_ghost + has_flam + has_rimshot + has_crossstick + has_bellzone + has_edgezone;
 		if(track_custom_block_count)
 		{	//If writing data in a custom data block
 			(void) pack_iputl(track_custom_block_count, fp);		//Write the number of custom data blocks
@@ -4356,6 +4492,51 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
 					{	//For each note in the track
 						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->ghost, fp);	//Write this note's ghost note bitmask
+					}
+				}
+				if(has_flam)
+				{	//Write flam bitmasks
+					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (flam bitmask data and a 4 byte block ID)
+					(void) pack_iputl(12, fp);		//Write the flam note bitmask custom data block ID
+					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+					{	//For each note in the track
+						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->flam, fp);	//Write this note's flam note bitmask
+					}
+				}
+				if(has_rimshot)
+				{	//Write rimshot bitmasks
+					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (flam bitmask data and a 4 byte block ID)
+					(void) pack_iputl(13, fp);		//Write the rimshot note bitmask custom data block ID
+					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+					{	//For each note in the track
+						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->rimshot, fp);	//Write this note's rimshot note bitmask
+					}
+				}
+				if(has_crossstick)
+				{	//Write cross stick  bitmasks
+					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (flam bitmask data and a 4 byte block ID)
+					(void) pack_iputl(14, fp);		//Write the rimshot note bitmask custom data block ID
+					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+					{	//For each note in the track
+						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->crossstick, fp);	//Write this note's cross stick note bitmask
+					}
+				}
+				if(has_bellzone)
+				{	//Write bell hit zone bitmasks
+					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (flam bitmask data and a 4 byte block ID)
+					(void) pack_iputl(15, fp);		//Write the bell hit zone note bitmask custom data block ID
+					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+					{	//For each note in the track
+						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->bellzone, fp);	//Write this note's bell hit zone note bitmask
+					}
+				}
+				if(has_edgezone)
+				{	//Write edge hit zone bitmasks
+					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (flam bitmask data and a 4 byte block ID)
+					(void) pack_iputl(16, fp);		//Write the edge hit zone note bitmask custom data block ID
+					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+					{	//For each note in the track
+						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->edgezone, fp);	//Write this note's edge hit zone note bitmask
 					}
 				}
 			}
@@ -5311,6 +5492,126 @@ unsigned char eof_get_note_ghost(EOF_SONG *sp, unsigned long track, unsigned lon
 	return 0;	//Return error or not applicable
 }
 
+unsigned char eof_get_note_flam(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->flam;
+			}
+		break;
+
+		default:
+		break;
+	}
+
+	return 0;	//Return error or not applicable
+}
+
+unsigned char eof_get_note_rimshot(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->rimshot;
+			}
+		break;
+
+		default:
+		break;
+	}
+
+	return 0;	//Return error or not applicable
+}
+
+unsigned char eof_get_note_crossstick(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->crossstick;
+			}
+		break;
+
+		default:
+		break;
+	}
+
+	return 0;	//Return error or not applicable
+}
+
+unsigned char eof_get_note_bellzone(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->bellzone;
+			}
+		break;
+
+		default:
+		break;
+	}
+
+	return 0;	//Return error or not applicable
+}
+
+unsigned char eof_get_note_edgezone(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->edgezone;
+			}
+		break;
+
+		default:
+		break;
+	}
+
+	return 0;	//Return error or not applicable
+}
+
 unsigned char eof_get_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	if(track != EOF_TRACK_DANCE)
@@ -5778,6 +6079,116 @@ void eof_set_note_ghost(EOF_SONG *sp, unsigned long track, unsigned long note, u
 	}
 }
 
+void eof_set_note_flam(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->flam = value;
+			}
+		break;
+
+		default:
+		break;
+	}
+}
+
+void eof_set_note_rimshot(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->rimshot = value;
+			}
+		break;
+
+		default:
+		break;
+	}
+}
+
+void eof_set_note_crossstick(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->crossstick = value;
+			}
+		break;
+
+		default:
+		break;
+	}
+}
+
+void eof_set_note_bellzone(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->bellzone = value;
+			}
+		break;
+
+		default:
+		break;
+	}
+}
+
+void eof_set_note_edgezone(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->edgezone = value;
+			}
+		break;
+
+		default:
+		break;
+	}
+}
+
 void eof_set_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
 {
 	if(track == EOF_TRACK_DANCE)
@@ -5907,7 +6318,7 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 
 			tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 			eof_pro_guitar_track_toggle_tech_view(tp);
-			eof_pro_guitar_track_fixup_notes(sp, track, sel);	//Also fixup the tech note set
+			eof_pro_guitar_track_fixup_notes(sp, track, sel);	//Also fixup the other note set
 			eof_pro_guitar_track_toggle_tech_view(tp);
 		break;
 
@@ -6366,6 +6777,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	eof_track_sort_notes(sp, track);	//Ensure the notes are sorted
+
 	//Loop through notes looking for any marked as temporary or ignored and return from function if any are found to avoid merging/deleting them
 	for(i = 0; i < tp->notes; i++)
 	{	//For each note in the track
