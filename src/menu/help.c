@@ -277,8 +277,14 @@ int eof_reset_audio(void)
 
 int eof_reload_config(void)
 {
+	unsigned current_track = eof_selected_track;
+	unsigned current_diff = eof_note_type;
+
 	eof_default_ini_settings = 0;	//Erase any loaded default INI settings, they will be reloaded
 	eof_load_config("eof.cfg");
+
+	eof_selected_track = current_track;	//Restore the track difficulty that was in effect
+	eof_note_type = current_diff;
 
 	eof_close_menu = 1;			//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 	return D_O_K;

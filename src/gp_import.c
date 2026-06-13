@@ -1716,6 +1716,8 @@ void eof_guitar_pro_import_release_memory(struct eof_guitar_pro_import_vars *var
 			(void) pack_fclose(vars->inf);
 		if(vars->inf2)
 			(void) pack_fclose(vars->inf2);
+
+		memset(vars, 0, sizeof(struct eof_guitar_pro_import_vars));	//Re-initialize the variable structure to all zeroes since Guitar Pro import may depend on this
 	}
 }
 
@@ -3706,6 +3708,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(fileversion >= 500)
 								{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
 									gracetrans = pack_getc(vars.inf);	//Grace note transition type
+									if(gracetrans == 1)
+										note_is_short = 0;	//If this grace note has a slide transition, force the note being slid into to keep its sustain even if it would otherwise have been trucated due to the import preference to truncate short notes
 								}
 								else
 								{	//The purpose of this field in 4.x or older files is unknown

@@ -52,7 +52,7 @@ EOF_SNAP_DATA eof_tail_snap;
 
 void eof_select_beat(unsigned long beat)
 {
-	eof_log("eof_select_beat() entered", 1);
+	eof_log("eof_select_beat() entered", 3);
 
 	if(!eof_song || (beat >= eof_song->beats))
 		return;

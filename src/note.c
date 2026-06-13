@@ -364,7 +364,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	int dcol2 = dcol;
 	int ncol = eof_color_silver;	//Note color defaults to silver unless the note is not star power
 	int lcol = makecol(128, 128, 128);	//The color used to draw the vertical line over the note's position
-	int boxcol = eof_color_white;	//The color used to draw the edges of the fret number box
+	int boxcol = eof_color_black;	//The color used to draw the edges of the fret number box
 	unsigned long ctr;
 	unsigned long mask;	//Used to mask out colors in the for loop
 	int radius,dotsize;
