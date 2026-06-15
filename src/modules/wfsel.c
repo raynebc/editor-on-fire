@@ -91,10 +91,10 @@ static int ncd_file_select_allegro_want_all(NCDFS_FILTER_LIST * lp)
 			{
 				if(i > 0)
 				{
-					strcat(pattern, ";");
+				strcat_s(pattern, sizeof(pattern), ";");
 				}
-				strcat(pattern, "*.");
-				strcat(pattern, lp->filter[i].extension);
+			strcat_s(pattern, sizeof(pattern), "*.");
+			strcat_s(pattern, sizeof(pattern), lp->filter[i].extension);
 			}
 		}
 
@@ -118,7 +118,7 @@ static int ncd_file_select_allegro_want_all(NCDFS_FILTER_LIST * lp)
 			c = al_get_native_file_dialog_count(fcp);
 			if(c > 0)
 			{
-				strcpy(ncdfs_internal_return_path, al_get_native_file_dialog_path(fcp, 0));
+				strcpy_s(ncdfs_internal_return_path, sizeof(ncdfs_internal_return_path), al_get_native_file_dialog_path(fcp, 0));
 			}
 			al_destroy_native_file_dialog(fcp);
 			if(c > 0)
