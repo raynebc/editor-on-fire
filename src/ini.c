@@ -255,8 +255,8 @@ int eof_save_ini(EOF_SONG * sp, char * fn, char silent)
 	/* check for use of open bass strumming and write a tag if necessary */
 	for(i = 1; i < sp->tracks; i++)
 	{	//For each track in the chart (skipping track 0)
-		if(eof_open_strum_enabled(i))
-		{	//If open strumming was enabled for this track during the time of the save
+		if(eof_open_strum_enabled(i) && !eof_midi_export_enhanced_open_marker)
+		{	//If open strumming was enabled for this track during the time of the save, and the preference to export open notes as MIDI notes instead of Sysex was not enabled
 			tracknum = sp->track[i]->tracknum;
 			for(j = 0; j < sp->legacy_track[tracknum]->notes; j++)
 			{	//For each note in the bass guitar track

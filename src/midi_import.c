@@ -2194,6 +2194,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						{	//Legacy solos are marked with note 103
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 						}
+						else if((midinote == 104) && (eof_get_num_sliders(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Sliders (tap notes) are marked with note 104
+							phraseptr = eof_get_slider(sp, picked_track, eof_get_num_sliders(sp, picked_track));
+						}
 						else if((midinote == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Star power is marked with note 116
 							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
@@ -2542,6 +2546,12 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							phraseptr->end_pos = event_realtime;
 							eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
+						}
+						else if((midinote == 104) && (eof_get_num_sliders(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//End of a slider phrase
+							phraseptr = eof_get_slider(sp, picked_track, eof_get_num_sliders(sp, picked_track));
+							phraseptr->end_pos = event_realtime;
+							eof_set_num_sliders(sp, picked_track, eof_get_num_sliders(sp, picked_track) + 1);
 						}
 						else if((midinote == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a star power phrase

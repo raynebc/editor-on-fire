@@ -284,7 +284,7 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   285, 310, 16,  2,   23,  0,    0,      1,   0,   "RS2 export version 8 (DLC Builder) style XML",NULL, NULL },
 	{ d_agup_check_proc, 16,   300, 218, 16,  2,   23,  0,    0,      1,   0,   "RS import loads all handshapes",NULL, NULL },
 	{ d_agup_check_proc, 248, 300, 202, 16,  2,   23,  0,    0,      1,   0,   "Don't write song INI file",NULL, NULL },
-	{ d_agup_check_proc, 16,   315, 315, 16,  2,   23,  0,    0,      1,   0,   "MIDI export CH/YARG open note/chord markers",NULL, NULL },
+	{ d_agup_check_proc, 16,   315, 315, 16,  2,   23,  0,    0,      1,   0,   "MIDI export CH/YARG open note/slider markers",NULL, NULL },
 	{ d_agup_check_proc, 16,   330, 300, 16,  2,   23,  0,    0,      1,   0,   "GP import remove accent from staccato notes",NULL, NULL },
 	{ d_agup_check_proc, 16,   345, 300, 16,  2,   23,  0,    0,      1,   0,   "Offer to derive finger placements from FHPs",NULL, NULL },
 	{ d_agup_check_proc, 16,   360, 220, 16,  2,   23,  0,    0,      1,   0,   "GP import events to track only",NULL, NULL },
@@ -1888,7 +1888,7 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[31].flags = eof_rs2_export_version_8 ? D_SELECTED : 0;				//RS2 export version 8 (DLC Builder) style XML
 	eof_import_export_preferences_dialog[32].flags = eof_rs_import_all_handshapes ? D_SELECTED : 0;			//RS import loads all handshapes
 	eof_import_export_preferences_dialog[33].flags = eof_disable_ini_export ? D_SELECTED : 0;				//Don't write INI file
-	eof_import_export_preferences_dialog[34].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;	//MIDI export CH/YARG open note/chord markers
+	eof_import_export_preferences_dialog[34].flags = eof_midi_export_enhanced_open_marker ? D_SELECTED : 0;	//MIDI export CH/YARG open note/slider markers
 	eof_import_export_preferences_dialog[35].flags = eof_gp_import_remove_accent_from_staccato ? D_SELECTED : 0;//GP import remove accent from staccato notes
 	eof_import_export_preferences_dialog[36].flags = eof_offer_fhp_derived_finger_placements ? D_SELECTED : 0;	//Offer to derive finger placements from FHPs
 	eof_import_export_preferences_dialog[37].flags = eof_gp_import_track_specific_events ? D_SELECTED : 0;		//GP import events to track only
@@ -1975,7 +1975,7 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[31].flags = 0;				//RS2 export version 8 (DLC Builder) style XML
 			eof_import_export_preferences_dialog[32].flags = 0;				//RS import loads all handshapes
 			eof_import_export_preferences_dialog[33].flags = 0;				//Don't write INI file
-			eof_import_export_preferences_dialog[34].flags = 0;				//MIDI export CH/YARG open note/chord markers
+			eof_import_export_preferences_dialog[34].flags = 0;				//MIDI export CH/YARG open note/slider markers
 			eof_import_export_preferences_dialog[35].flags = 0;				//GP import remove accent from staccato notes
 			eof_import_export_preferences_dialog[36].flags = 0;				//Offer to derive finger placements from FHPs
 			eof_import_export_preferences_dialog[37].flags = 0;				//GP import events to track only

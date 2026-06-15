@@ -237,6 +237,6 @@ void eof_write_ghwt_drum_array_txt(EOF_SONG *sp, char *fn);
 	//Writes a text file containing timestamps and codes for the specified chart's expert drum track difficulty, for use with authoring drum charts for Guitar Hero World Tour
 
 void eof_log_midi_event_list(void);
-	//Exhaustive logs the contents of eof_midi_event[]
+	//Exhaustively logs the contents of eof_midi_event[]
 
 #endif

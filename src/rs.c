@@ -4046,9 +4046,22 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 	{	//For each beat in the project
 		if((sp->beat[beatctr]->contained_section_event >= 0) || ((beatctr + 1 >= sp->beats) && started))
 		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+			//Take moveR into account
+			unsigned long event_pos = eof_song->beat[beatctr]->pos;	//The effective position of the examined phrase/section, depending on the presence of a moveR phrase
+			unsigned long mover_pos = eof_beat_contains_mover_rs_phrase(eof_song, beatctr, track, NULL);	//Determine if this beat has a "moveR" phrase
+
+			if(mover_pos)
+			{	//If this beat has a "moveR" phrase to displace itself and any sections on that beat
+				mover_pos = eof_get_pos_num_notes_after_timestamp(eof_song, track, eof_song->beat[beatctr]->pos, mover_pos);	//Determine the position the phrase/section are being moved to
+				if(mover_pos)
+				{	//If that position was determined
+					event_pos = mover_pos;		//That is the timestamp a note must cross to trigger this warning
+				}
+			}
+
 			if(started)
 			{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
-				endpos = sp->beat[beatctr]->pos - 1;	//Track this as the end position of the phrase
+				endpos = event_pos - 1;	//Track this as the end position of the phrase
 				if((startpos >= effectivestart) && (startpos <= effectivestop))
 				{	//If this phrase begins in the portion of the chart affected by this function
 					(void) eof_enforce_rs_phrase_begin_with_fret_hand_position(sp, track, difficulty, startpos, endpos, &eof_fret_hand_position_list_dialog_undo_made, 0);	//Add a fret hand position to the beginning of the phrase
@@ -4056,7 +4069,7 @@ void eof_generate_efficient_hand_positions_logic(EOF_SONG *sp, unsigned long tra
 			}//If the first phrase marker has been encountered, this beat marks the end of a phrase
 
 			started = 1;	//Track that a phrase has been encountered
-			startpos = sp->beat[beatctr]->pos;	//Track the starting position of the phrase
+			startpos = event_pos;	//Track the starting position of the phrase
 		}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
 	}//For each beat in the project
 

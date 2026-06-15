@@ -4822,9 +4822,22 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 			{	//For each beat in the project
 				if((eof_song->beat[ctr2]->contained_section_event >= 0) || ((ctr2 + 1 >= eof_song->beats) && started))
 				{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+					//Take moveR into account
+					unsigned long event_pos = eof_song->beat[ctr2]->pos;	//The effective position of the examined phrase/section, depending on the presence of a moveR phrase
+					unsigned long mover_pos = eof_beat_contains_mover_rs_phrase(eof_song, ctr2, ctr, NULL);	//Determine if this beat has a "moveR" phrase
+
+					if(mover_pos)
+					{	//If this beat has a "moveR" phrase to displace itself and any sections on that beat
+						mover_pos = eof_get_pos_num_notes_after_timestamp(eof_song, ctr, eof_song->beat[ctr2]->pos, mover_pos);	//Determine the position the phrase/section are being moved to
+						if(mover_pos)
+						{	//If that position was determined
+							event_pos = mover_pos;		//That is the timestamp of the RS phrase
+						}
+					}
+
 					if(started)
 					{	//If the first phrase marker has been encountered, this beat marks the end of a phrase
-						endpos = eof_song->beat[ctr2]->pos - 1;	//Track this as the end position of the phrase
+						endpos = event_pos - 1;	//Track this as the end position of the phrase
 						for(ctr3 = 0; ctr3 < 256; ctr3++)
 						{	//For each of the 255 possible difficulties
 							if(!eof_track_diff_populated_status[ctr3])
@@ -4871,7 +4884,7 @@ int eof_check_fret_hand_positions_option(char report, char *undo_made)
 					}
 
 					started = 1;	//Track that a phrase has been encountered
-					startpos = eof_song->beat[ctr2]->pos;	//Track the starting position of the phrase
+					startpos = event_pos;	//Track the starting position of the phrase
 				}//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
 			}//For each beat in the project
 		}//If this track has any manually defined fret hand positions

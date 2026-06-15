@@ -626,6 +626,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		char isghl = 0;							//Set to nonzero if the track is to be exported as a GHL track (non GHWT MIDI format, no export feature restrictions, track flag indicates GHL mode active)
 		char ghlname[EOF_NAME_LENGTH + 1 + 4];	//GHL tracks have a " GHL" suffix applied to their name during export
 		char write_enhanced_opens = 0;			//Set to nonzero if an "[ENHANCED_OPENS]" text event is defined anywhere in the track, or upon the encountering of the first legacy guitar open note/chord if the eof_midi_export_enhanced_open_marker preference is enabled
+		char enable_chart_dynamics_written = 0;	//Set to nonzero of an "[ENABLE_CHART_DYNAMICS]" text event is defined anywhere in the track, or upon encountering the first ghost/accent drum note and writing a non RB compliant MIDI (in which case a temporary "[ENABLE_CHART_DYNAMICS]" text event is added for export
 
 		if(eof_get_track_size_normal(sp, j) == 0)	//If this track has no notes
 			continue;	//Skip the track
@@ -636,7 +637,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		if(!featurerestriction && !format && eof_track_is_ghl_mode(sp, j))
 			isghl = 1;	//Note whether this track will export as a GHL track
 		if(eof_song_contains_event(sp, "[ENHANCED_OPENS]", j, 0, 1))
-			write_enhanced_opens = 1;	//Note that the current track has the enhanced opens modifier
+			write_enhanced_opens = 1;	//Note that the current track has the enhanced opens indicator
+		if(eof_song_contains_event(sp, "[ENABLE_CHART_DYNAMICS]", j, 0, 1))
+			enable_chart_dynamics_written = 1;	//Note that the current track has the chart dynamics indicator
 
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting track \"%s\"", sp->track[j]->name);
 		eof_log(eof_log_string, 2);
@@ -869,6 +872,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						default:
 						break;
 					}
+
+					if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (featurerestriction == 0) && !enable_chart_dynamics_written)
+					{	//If this is a drum note and a Rock Band compliant MIDI is not being written and this chart wasn't already found to contain any dynamic techniques (accent or ghost notes)
+						if(accent || ghost)
+						{	//If this is an accent or ghost note
+							unsigned long firstbeatpos;
+
+							eof_log("\t! Adding missing [ENABLE_CHART_DYNAMICS] event", 1);
+							firstbeatpos = eof_ConvertToDeltaTime(sp->beat[0]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the first beat
+							eof_add_midi_text_event(firstbeatpos, "[ENABLE_CHART_DYNAMICS]", 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
+							enable_chart_dynamics_written = 1;
+						}
+					}
 				}
 
 				deltapos = eof_ConvertToDeltaTime(notepos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the note
@@ -1018,6 +1034,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 								{	//But absolutely not for the BRE difficulty
 									if(!eof_midi_note_already_added(deltapos, deltapos + deltalength, RB3_DRUM_YELLOW_FORCE))
 									{	//If a yellow tom marker wasn't written for this position in another difficulty
+										eof_log("\t\tWriting yellow tom marker", 2);
 										eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
 										eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
 									}
@@ -1084,6 +1101,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 								{	//But absolutely not for the BRE difficulty
 									if(!eof_midi_note_already_added(deltapos, deltapos + deltalength, RB3_DRUM_BLUE_FORCE))
 									{	//If a blue tom marker wasn't written for this position in another difficulty
+										eof_log("\t\tWriting blue tom marker", 2);
 										eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
 										eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
 									}
@@ -1129,6 +1147,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 								{	//But absolutely not for the BRE difficulty
 									if(!eof_midi_note_already_added(deltapos, deltapos + deltalength, RB3_DRUM_GREEN_FORCE))
 									{	//If a green tom marker wasn't written for this position in another difficulty
+										eof_log("\t\tWriting green tom marker", 2);
 										eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
 										eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
 									}
@@ -1156,6 +1175,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If this is an open strum note
 					if(isghl)
 					{	//If this is a GHL mode track
+						eof_log("\t\tWriting GHL open strum marker", 2);
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset - 1, vel, 0);				//Write as 1 note below lane 1
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset - 1, vel, 0);
 					}
@@ -1169,11 +1189,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						}
 						if(!write_enhanced_opens && eof_midi_export_enhanced_open_marker)
 						{	//If an "[ENHANCED_OPENS]" text event was not manually defined by the user, but the applicable export preference was enabled to use this notation
+							unsigned long firstbeatpos;
+
 							eof_log("\t! Adding missing [ENHANCED_OPENS] event", 1);
-							(void) eof_song_add_text_event(sp, 0, "[ENHANCED_OPENS]", j, 0, 1);	//Add it as a temporary event on the first beat in this track
+							firstbeatpos = eof_ConvertToDeltaTime(sp->beat[0]->fpos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the first beat
+							eof_add_midi_text_event(firstbeatpos, "[ENHANCED_OPENS]", 0, i);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 							write_enhanced_opens = 1;	//Ensure enhanced open notation will be used below
 						}
 
+						eof_log("\t\tWriting open strum marker", 2);
 						if(write_enhanced_opens)
 						{	//If enhanced open notes are being used, write it as 1 note below lane 1
 							eof_add_midi_event(deltapos, 0x90, midi_note_offset - 1, vel, 0);
@@ -1234,6 +1258,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					if(noteflags & EOF_NOTE_FLAG_CRAZY)
 						markerlength = 1;	//But if the note has crazy status, the marker will be 1 tick, ensuring it can overlap notes without affecting their HOPO status
 
+					eof_log("\t\tWriting forced HOPO marker", 2);
 					if(isghl)
 					{	//If writing a GHL format track
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
@@ -1280,6 +1305,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					if(noteflags & EOF_NOTE_FLAG_CRAZY)
 						markerlength = 1;	//But if the note has crazy status, the marker will be 1 ticks, ensuring it can overlap notes without affecting their HOPO status
 
+					eof_log("\t\tWriting forced non-HOPO marker", 2);
 					if(isghl)
 					{	//If writing a GHL format track
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, vel, 0);
@@ -1315,8 +1341,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{
 					if(featurerestriction == 0)
 					{	//Only write flam notation if not writing a Rock Band compliant MIDI
-						eof_add_midi_event(deltapos, 0x90, 109, vel, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, 109, vel, 0);
+						if(!eof_midi_note_already_added(deltapos, deltapos + deltalength, 109))
+						{	//If a flam marker wasn't written for this position in another difficulty
+							eof_log("\t\tWriting generic flam marker", 2);
+							eof_add_midi_event(deltapos, 0x90, 109, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, 109, vel, 0);
+						}
 					}
 				}
 			}//For each note in the track
@@ -1337,6 +1367,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If writing the GHWT MIDI variant
 					marker = 106;	//Use this marker instead
 				}
+				eof_log("\t\tWriting star power marker", 2);
 				eof_add_midi_event(deltapos, 0x90, marker, vel, 0);
 				eof_add_midi_event(deltapos + deltalength, 0x80, marker, vel, 0);
 			}
@@ -1353,6 +1384,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 						deltalength = 1;
 					}
+					eof_log("\t\tWriting solo marker", 2);
 					eof_add_midi_event(deltapos, 0x90, 103, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, 103, vel, 0);
 				}
@@ -1370,6 +1402,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 						deltalength = 1;
 					}
+					eof_log("\t\tWriting tremolo marker", 2);
 					eof_add_midi_event(deltapos, 0x90, 126, vel, 0);	//Note 126 denotes a tremolo marker
 					eof_add_midi_event(deltapos + deltalength, 0x80, 126, vel, 0);
 				}
@@ -1385,6 +1418,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
 				}
+				eof_log("\t\tWriting trill marker", 2);
 				eof_add_midi_event(deltapos, 0x90, 127, vel, 0);	//Note 127 denotes a trill marker
 				eof_add_midi_event(deltapos + deltalength, 0x80, 127, vel, 0);
 			}
@@ -1410,7 +1444,18 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					else
 					{
-						eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, 0xFF, 4);	//Write custom slider phrase markers
+						if(eof_midi_export_enhanced_open_marker)
+						{	//If the export preference is to write CH/YARG notation for open notes, do so for sliders as well
+							if(!eof_midi_note_already_added(deltapos, deltapos + deltalength, 104))
+							{	//If a slider marker wasn't written for this position in another difficulty
+								eof_add_midi_event(deltapos, 0x90, 104, vel, 0);	//Use note 104 to mark the slider
+								eof_add_midi_event(deltapos + deltalength, 0x80, 104, vel, 0);
+							}
+						}
+						else
+						{	//Write Sysex slider phrase markers
+							eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, 0xFF, 4);
+						}
 					}
 				}
 			}
@@ -4870,7 +4915,10 @@ void eof_log_midi_event_list(void)
 	for(ctr = 0; ctr < eof_midi_events; ctr++)
 	{	//For each event in the list
 		ptr = &eof_midi_event[ctr];
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMIDI event:  Pos = %lu, type = 0x%X, note = %d, vel = %d, ch = %d", (*ptr)->pos, (*ptr)->type, (*ptr)->note, (*ptr)->velocity, (*ptr)->channel);
+		if(((*ptr)->type == 0x80) || ((*ptr)->type == 0x90))	//Note on/off event
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMIDI event:  Pos = %lu, type = 0x%X, note = %d, vel = %d, ch = %d", (*ptr)->pos, (*ptr)->type, (*ptr)->note, (*ptr)->velocity, (*ptr)->channel);
+		else if(((*ptr)->type == 0x01) && (*ptr)->dp)//Text event
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMIDI event:  Pos = %lu, type = 0x%X, text = \"%s\"", (*ptr)->pos, (*ptr)->type, (*ptr)->dp);
 		eof_log(eof_log_string, 3);
 	}
 }
