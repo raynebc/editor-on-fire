@@ -379,6 +379,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char backup_filename[1024] = {0};
 	char ttit[256] = {0};
 	EOF_PHRASE_SECTION *phraseptr = NULL, *phraseptr2 = NULL;
+	unsigned long *phrasecount;
 	unsigned long bitmask;
 	char chord0name[100] = "", chord1name[100] = "", chord2name[100] = "", chord3name[100] = "", *chordname = NULL;	//Used for chord name import
 	char debugstring[400] = {0};
@@ -2541,35 +2542,50 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								}
 						}
 
+						phrasecount = NULL;
 						if((midinote == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a solo phrase
-							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
-							phraseptr->end_pos = event_realtime;
-							eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
+							if(eof_lookup_track_section_type(sp, picked_track, EOF_SOLO_SECTION, &phrasecount, &phraseptr))
+							{	//If the solo phrase in progress was found
+								phraseptr[*phrasecount].end_pos = event_realtime;	//Update the end position of the phrase entry that was written to when the note on event was processed
+								(*phrasecount)++;	//Increment the phrase count
+							}
 						}
 						else if((midinote == 104) && (eof_get_num_sliders(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a slider phrase
-							phraseptr = eof_get_slider(sp, picked_track, eof_get_num_sliders(sp, picked_track));
-							phraseptr->end_pos = event_realtime;
-							eof_set_num_sliders(sp, picked_track, eof_get_num_sliders(sp, picked_track) + 1);
+							if(eof_lookup_track_section_type(sp, picked_track, EOF_SLIDER_SECTION, &phrasecount, &phraseptr))
+							{	//If the slider phrase in progress was found
+								phraseptr[*phrasecount].end_pos = event_realtime;	//Update the end position of the phrase entry that was written to when the note on event was processed
+								(*phrasecount)++;	//Increment the phrase count
+							}
 						}
 						else if((midinote == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a star power phrase
-							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-							phraseptr->end_pos = event_realtime;
-							eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
+							if(eof_lookup_track_section_type(sp, picked_track, EOF_SP_SECTION, &phrasecount, &phraseptr))
+							{	//If the star power phrase in progress was found
+								phraseptr[*phrasecount].end_pos = event_realtime;	//Update the end position of the phrase entry that was written to when the note on event was processed
+								(*phrasecount)++;	//Increment the phrase count
+							}
 						}
 						else if((midinote == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a tremolo phrase
-							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
-							phraseptr->end_pos = event_realtime;
-							eof_set_num_tremolos(sp, picked_track, eof_get_num_tremolos(sp, picked_track) + 1);
+							if(eof_lookup_track_section_type(sp, picked_track, EOF_TREMOLO_SECTION, &phrasecount, &phraseptr))
+							{	//If the tremolo phrase in progress was found
+								phraseptr[*phrasecount].end_pos = event_realtime;	//Update the end position of the phrase entry that was written to when the note on event was processed
+								(*phrasecount)++;	//Increment the phrase count
+							}
 						}
 						else if((midinote == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a trill phrase
-							phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
-							phraseptr->end_pos = event_realtime;
-							eof_set_num_trills(sp, picked_track, eof_get_num_trills(sp, picked_track) + 1);
+							if(eof_lookup_track_section_type(sp, picked_track, EOF_TRILL_SECTION, &phrasecount, &phraseptr))
+							{	//If the trill phrase in progress was found
+								phraseptr[*phrasecount].end_pos = event_realtime;	//Update the end position of the phrase entry that was written to when the note on event was processed
+								(*phrasecount)++;	//Increment the phrase count
+							}
+						}
+						if(phrasecount)
+						{	//If a phrase was added above, remove any overlapping duplicates
+							eof_sort_and_merge_overlapping_sections(phraseptr, phrasecount);
 						}
 					}//If the MIDI is in Rock Band/FoF/Phase Shift notation
 
@@ -2642,6 +2658,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 				{	//Sysex event
 					if((eof_import_events[i]->event[j]->d1 == 8) && (!strncmp(eof_import_events[i]->event[j]->dp, "PS", 3)))
 					{	//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
+						phrasecount = NULL;
 						switch(eof_import_events[i]->event[j]->dp[3])
 						{	//Check the value of the message ID
 							case 0:	//Phrase marker
@@ -2735,13 +2752,13 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 											}
 											else if(eof_import_events[i]->event[j]->dp[6] == 0)
 											{	//End of phrase
-												phraseptr = eof_get_slider(sp, picked_track, eof_get_num_sliders(sp, picked_track));
-												if(phraseptr)
-												{	//If another slider can be added
+												if(eof_lookup_track_section_type(sp, picked_track, EOF_SLIDER_SECTION, &phrasecount, &phraseptr) && (*phrasecount < EOF_MAX_PHRASES))
+												{	//If the slider phrase in progress was found and another can be added
 													phraseptr->start_pos = sliderpos[0];
 													phraseptr->end_pos = event_realtime;
 													phraseptr->name[0] = '\0';	//Ensure the section name string is empty
-													eof_set_num_sliders(sp, picked_track, eof_get_num_sliders(sp, picked_track) + 1);
+													(*phrasecount)++;			//Increment the phrase count
+													eof_sort_and_merge_overlapping_sections(phraseptr, phrasecount);	//Remove any duplicate, overlapping slider
 												}
 												else
 												{

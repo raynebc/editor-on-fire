@@ -1439,11 +1439,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					eof_log(eof_log_string, 2);
 					if(format == 1)
 					{	//If writing the GHWT MIDI variant
+						eof_log("\t\tWriting GHWT slider marker", 2);
 						eof_add_midi_event(deltapos, 0x90, 103, vel, 0);	//Use note 103 to mark the slider
 						eof_add_midi_event(deltapos + deltalength, 0x80, 103, vel, 0);
 					}
 					else
 					{
+						eof_log("\t\tWriting slider marker", 2);
 						if(eof_midi_export_enhanced_open_marker)
 						{	//If the export preference is to write CH/YARG notation for open notes, do so for sliders as well
 							if(!eof_midi_note_already_added(deltapos, deltapos + deltalength, 104))
@@ -1452,10 +1454,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 								eof_add_midi_event(deltapos + deltalength, 0x80, 104, vel, 0);
 							}
 						}
-						else
-						{	//Write Sysex slider phrase markers
-							eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, 0xFF, 4);
-						}
+
+						//Write Sysex slider phrase markers
+						eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, 0xFF, 4);
 					}
 				}
 			}
