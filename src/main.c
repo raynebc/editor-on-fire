@@ -356,6 +356,7 @@ int         eof_emergency_stop = 0;	//Set to nonzero by eof_switch_out_callback(
 int         ch_sp_path_worker = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker parameter to have it run as a worker process for star power pathing evaluation
 int         ch_sp_path_worker_logging = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker_logging parameter, which will allow logging to be performed during solving
 unsigned long ch_sp_path_worker_number = 0;	//Set to the number in the job filename, for creating worker-specific logging
+unsigned slide_in_from_warned = 0;	//Tracks whether the user has been warned yet this program session that slide in from above/below notes were encountered
 
 char eof_default_ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH] = {{0}};	//Stores the entries of the [default_ini_settings] section in the config file
 unsigned short eof_default_ini_settings = 0;	//The number of such entries in memory

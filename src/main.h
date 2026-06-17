@@ -528,6 +528,7 @@ extern int         eof_emergency_stop;
 extern int         ch_sp_path_worker;
 extern int         ch_sp_path_worker_logging;
 extern unsigned long ch_sp_path_worker_number;
+extern unsigned slide_in_from_warned;
 extern char        eof_default_ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH];
 extern unsigned short eof_default_ini_settings;
 

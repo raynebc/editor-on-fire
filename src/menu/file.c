@@ -6040,31 +6040,27 @@ int eof_gp_import_common(const char *fn)
 
 //If the GP file contained section markers, offer to import them now
 		if(eof_parsed_gp_file->text_events)
-		{	//If there were text events imported
-			eof_clear_input();
-			if(alert(NULL, "Import Guitar Pro file's section markers/beat text as Rocksmith phrases/sections?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-			{	//If the user opts to import RS phrases and sections from GP files
-				if(!gp_import_undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					gp_import_undo_made = 1;
-				}
-				if(eof_gp_import_track_specific_events)
-					track = eof_selected_track;	//If the user preference is to import the text events only into the active track
-				else
-					track = 0;		//Otherwise import the event to be project-wide
+		{	//If there were text events imported due to the user preference to import them being enabled, carry out their import
+			if(!gp_import_undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				gp_import_undo_made = 1;
+			}
+			if(eof_gp_import_track_specific_events)
+				track = eof_selected_track;	//If the user preference is to import the text events only into the active track
+			else
+				track = 0;		//Otherwise import the event to be project-wide
 
-				for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
-				{	//For each of the text events imported from the GP file
-					if(!eof_event_exists(eof_song, eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text, track, eof_parsed_gp_file->text_event[ctr]->flags))
-					{	//If an identical text event doesn't exist in the active project
-						(void) eof_song_add_text_event(eof_song, eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text, track, eof_parsed_gp_file->text_event[ctr]->flags, 0);	//Add the event to the active project
-					}
-					else
-					{
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDiscarding duplicate text event:  beat = %lu , text = %s", eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text);
-						eof_log(eof_log_string, 1);
-					}
+			for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
+			{	//For each of the text events imported from the GP file
+				if(!eof_event_exists(eof_song, eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text, track, eof_parsed_gp_file->text_event[ctr]->flags))
+				{	//If an identical text event doesn't exist in the active project
+					(void) eof_song_add_text_event(eof_song, eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text, track, eof_parsed_gp_file->text_event[ctr]->flags, 0);	//Add the event to the active project
+				}
+				else
+				{
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tDiscarding duplicate text event:  beat = %lu , text = %s", eof_parsed_gp_file->text_event[ctr]->pos, eof_parsed_gp_file->text_event[ctr]->text);
+					eof_log(eof_log_string, 1);
 				}
 			}
 			for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)

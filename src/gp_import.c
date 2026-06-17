@@ -1772,10 +1772,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		//During GPA import, timings can be configured so that beats start at a negative position (before the start of the audio) if the first sync point is not at measure 1
 		//This counter is an offset indicating how many beats of content are being omitted from the imported track, so source beat #N is imported to beat #(N-skipbeatsourcectr) in the project
 	char importnote = 0;	//A boolean variable tracking whether each note is at or after 0ms and will import
-	unsigned slide_in_from_warned = 0;	//Tracks whether the user has been warned that slide in from above/below notes were encountered
 	char hastitle = 0, hasartist = 0, hasalbum = 0;	//Tracks whether the Guitar Pro file has metadata that can be applied to the project
 	static struct eof_guitar_pro_import_vars vars;	//Store all of the memory and file pointers together to simplify freeing them.  A static struct has all members auto-initialized to 0/NULL
 	struct eof_guitar_pro_struct *retval;
+	unsigned long existing_time_signature_count;	//Used to determine whether the active project has any time signatures to potentially preserve, so as to prompt whether to overwrite them during import
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_load_gp() entered", 1);
@@ -2597,29 +2597,32 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 	}
-	eof_clear_input();
 	if(!vars.sync_points)
-	{	//Skip prompting to import time signatures if importing a Go PlayAlong file
+	{	//Importing just a Guitar Pro file, dtermine whether any time signatures may need to be preserved
 		if(eof_use_ts && !eof_song->tags->tempo_map_locked)
 		{	//If user has enabled the preference to import time signatures, and the project's tempo map isn't locked (skip the prompt if importing a Go PlayAlong file)
-			eof_clear_input();
-			if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-			{	//If the user opts to import those from this Guitar Pro file into the active project
-				import_ts = 1;
-				if(undo_made && (*undo_made == 0))
-				{	//If calling function wants to track an undo state being made if time signatures are imported into the project
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					*undo_made = 1;
+			import_ts = 1;	//Tentatively plan to import time signature changes unless the user declines to overwrite time signatures that differ with existing ones in the project
+			for(ctr = 0, existing_time_signature_count = 0; ctr < eof_song->beats; ctr++)
+			{	//For each beat in the project
+				if(eof_get_ts(eof_song, NULL, NULL, ctr) == 1)
+				{	//If this beat has a defined time signature
+					existing_time_signature_count++;	//Count the time signature definitions
 				}
 			}
+			if(!existing_time_signature_count)
+				eof_log("\t\tImporting time signatures due to there being none defined yet in the project", 1);
 		}
 		else
 		{	//TS change importing is being skipped
+			eof_log("\t\tSkipping import of time signatures due to preference or tempo map being locked", 1);
+			eof_clear_input();
 			allegro_message("To allow time signatures to be imported, ensure the \"Import/Export TS\" preference is enabled and the tempo map isn't locked");
 		}
 	}
 	else
-	{	//Make an undo state before processing Go PlayAlong file, which will overwrite the tempo map
+	{	//Importing a Go PlayAlong file, which will overwrite the tempo map
+		existing_time_signature_count = 0;	//If a Go PlayAlong file is being imported, automatically overwrite any existing time signatures in the project
+		eof_log("\t\tForcibly importing time signatures and tempo changes as required for GPA import", 1);
 		if(undo_made && (*undo_made == 0))
 		{	//If calling function wants to track an undo state being made if time signatures are imported into the project
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -2640,7 +2643,35 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		for(ctr2 = 0; ctr2 < vars.tsarray[ctr].num; ctr2++, beatctr++)
 		{	//For each beat in this measure, count the beats
 			if(import_ts || vars.sync_points)
-			{	//If the user opted to replace the active project's TS changes, or if a Go PlayAlong file is being imported
+			{	//If the user preference is to import TS changes, or if a Go PlayAlong file is being imported
+				if(existing_time_signature_count)
+				{	//If the project had time signatures defined before this import started to potentially preserve, and a Go PlayAlong file is not being imported
+					unsigned num = 0, den = 0;
+
+					eof_get_effective_ts(eof_song, &num, &den, beatctr, 1);	//Populate num and den with the time signature in effect at this beat in the project, or leave them at 0 if there is no signature defined
+					if((num != vars.tsarray[ctr].num) || (den != vars.tsarray[ctr].den))
+					{	//If this beat in the GP track would reflect a change in time signature
+						eof_clear_input();
+						if(alert(NULL, "Import Guitar Pro file's differing time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If the user opts to import time signatures from this Guitar Pro file into the active project
+							eof_log("\t\tOpted to import time signatures that differ with existing ones in the project", 1);
+							existing_time_signature_count = 0;		//Track that there are no pre-existing time signatures to preserve, import them from the GP file
+							if(undo_made && (*undo_made == 0))
+							{	//If calling function wants to track an undo state being made if time signatures are imported into the project
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								*undo_made = 1;
+							}
+						}
+						else
+						{
+							eof_log("\t\tDeclined to import time signatures that differ with existing ones in the project", 1);
+							import_ts = 0;	//Track that the user declined to import time signatures
+							break;	//Exit for loop
+						}
+					}
+				}
+
+				//If the import of time signatures wasn't declined
 				if(!ctr2 && ((vars.tsarray[ctr].num != curnum) || (vars.tsarray[ctr].den != curden)))
 				{	//If this is a time signature change on the first beat of the measure
 					(void) eof_apply_ts(vars.tsarray[ctr].num, vars.tsarray[ctr].den, beatctr, eof_song, 0);	//Apply the change to the active project
