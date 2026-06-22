@@ -402,7 +402,7 @@ void eof_prepare_beat_menu(void)
 		{	//If the current MIDI delay is not at least as long as the first beat's length, disable Beat>Push Offset>Back Beat
 			eof_beat_push_offset_menu[0].flags = D_DISABLED;	//Push Offset>Back Beat
 		}
-		eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
+		(void) eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
 		if(eof_song->beat[0]->pos < (num * beat_length))
 		{	//If the current MIDI delay is not at least as long as one measure, disable Beat>Push Offset>Back Measure
 			eof_beat_push_offset_menu[1].flags = D_DISABLED;	//Push Offset>Back>Back Measure
@@ -1104,7 +1104,7 @@ int eof_menu_beat_push_offset_back_measure(void)
 		return 0;	//Error condition
 
 	beat_length = eof_song->beat[1]->pos - eof_song->beat[0]->pos;	//The length of the first beat
-	eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
+	(void) eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
 
 	if(eof_song->beat[0]->pos >= (num * beat_length))
 	{	//If there is enough time before the first beat to insert one measure
@@ -1173,7 +1173,7 @@ int eof_menu_beat_push_offset_up_measure(void)
 		return 1;							//Return without making changes
 
 	selected_beat_backup = eof_selected_beat;		//Remember the original selected beat
-	eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
+	(void) eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 
 	for(ctr = 0; ctr < num; ctr++)

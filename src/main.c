@@ -601,7 +601,7 @@ double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos)
 	unsigned long beat;
 	unsigned char intervalvalue, intervalnum;
 
-//	eof_log("eof_get_porpos() entered", 3);
+//	eof_log("eof_get_porpos_sp() entered", 3);
 
 	if(!sp || (sp->beats < 2))
 		return 0.0;	//Invalid parameters
@@ -654,7 +654,7 @@ double eof_get_beatpos_abs(EOF_SONG *sp, unsigned long pos)
 	unsigned long beat;
 	unsigned char intervalvalue, intervalnum;
 
-//	eof_log("eof_get_porpos() entered", 3);
+//	eof_log("eof_get_beatpos_abs() entered", 3);
 
 	if(!sp || (sp->beats < 2))
 		return 0.0;	//Invalid parameters
