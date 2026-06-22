@@ -599,6 +599,7 @@ double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos)
 {
 	double porpos = 0.0, blength, rpos;
 	unsigned long beat;
+	unsigned char intervalvalue, intervalnum;
 
 //	eof_log("eof_get_porpos() entered", 3);
 
@@ -609,6 +610,12 @@ double eof_get_porpos_sp(EOF_SONG *sp, unsigned long pos)
 	if(!eof_beat_num_valid(sp, beat))
 	{	//If eof_get_beat() returned error
 		beat = sp->beats - 1;	//Assume the note position is relative to the last beat marker
+	}
+	if(pos == sp->beat[beat]->pos)
+		return 0.0;
+	if(eof_is_any_beat_interval_position(pos, NULL, &intervalvalue, &intervalnum, NULL, eof_prefer_midi_friendly_grid_snapping))
+	{	//If this position is considered a beat interval, perform cleaner math
+		return (((double)intervalnum / (double)intervalvalue)) * 100.0;
 	}
 	if(beat < sp->beats - 1)
 	{
@@ -639,6 +646,41 @@ double eof_get_porpos_sp_abs(EOF_SONG *sp, unsigned long pos)
 	abspos = eof_get_porpos_sp(sp, pos);	//abspos is the percentage into a beat the specified timestamp is
 	abspos += ((double)beat * 100.0);		//abspos is the number of beats (as a percentage) that the specified timestamp is relative to the project's first beat
 	return abspos;
+}
+
+double eof_get_beatpos_abs(EOF_SONG *sp, unsigned long pos)
+{
+	double porpos = 0.0, blength, rpos;
+	unsigned long beat;
+	unsigned char intervalvalue, intervalnum;
+
+//	eof_log("eof_get_porpos() entered", 3);
+
+	if(!sp || (sp->beats < 2))
+		return 0.0;	//Invalid parameters
+
+	beat = eof_get_beat(sp, pos);
+	if(!eof_beat_num_valid(sp, beat))
+	{	//If eof_get_beat() returned error
+		beat = sp->beats - 1;	//Assume the note position is relative to the last beat marker
+	}
+	if(pos == sp->beat[beat]->pos)
+		return beat;
+	if(eof_is_any_beat_interval_position(pos, NULL, &intervalvalue, &intervalnum, NULL, eof_prefer_midi_friendly_grid_snapping))
+	{	//If this position is considered a beat interval, perform cleaner math
+		return ((double)beat + ((double)intervalnum / (double)intervalvalue));
+	}
+	if(beat < sp->beats - 1)
+	{
+		blength = sp->beat[beat + 1]->fpos - sp->beat[beat]->fpos;
+	}
+	else
+	{
+		blength = sp->beat[sp->beats - 1]->fpos - sp->beat[sp->beats - 2]->fpos;
+	}
+	rpos = (double)pos - sp->beat[beat]->fpos;
+	porpos = (double)beat + (rpos / blength);
+	return porpos;
 }
 
 long eof_put_porpos(unsigned long beat, double porpos, double offset)

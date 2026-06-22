@@ -766,6 +766,10 @@ double eof_get_porpos_sp_abs(EOF_SONG *sp, unsigned long pos);
 	//Returns the number of beats (as a percentage) that the specified timestamp is relative to the project's first beat, as a way to track a timing measured in beats
 	//To be used with eof_put_porpos_sp()
 	//Returns 0.0 on error
+double eof_get_beatpos_abs(EOF_SONG *sp, unsigned long pos);
+	//Returns the number of beats (where 1.0 is one full beat) that the specified timestamp is relative to the project's first beat, as a way to track a timing measured in beats
+	//Fewer floating point math operations may make this more accurate if the measurement as a percentage isn't specifically needed
+	//Returns 0.0 on error
 long eof_put_porpos_sp(EOF_SONG *sp, unsigned long beat, double porpos, double offset);
 	//Returns the timestamp of the specified position (defined as a percentage) within a specified beat, or -1 on error
 	//porpos can be a positive or negative value larger in magnitude than 100.0 to indicate the position is more than one beat length from the specified beat

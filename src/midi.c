@@ -235,6 +235,21 @@ void eof_add_phase_shift_sysex_phrase(unsigned long deltastart, unsigned long de
 	eof_add_sysex_event(deltastop, 8, phase_shift_sysex_phrase, 0);	//Write the phrase stop marker
 }
 
+void eof_add_phase_shift_lane_specific_sysex_phrase(unsigned long deltastart, unsigned long deltastop, unsigned lane_mask, unsigned char diff, unsigned char phraseid)
+{
+	unsigned char phase_shift_sysex_phrase[10] = {'P','S','\0',0,0,0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum)
+
+	phase_shift_sysex_phrase[3] = 1;	//Set the Sysex message ID (1 = lane-specific phrase marker)
+	phase_shift_sysex_phrase[4] = ((lane_mask >> 8) & 0xFF);	//Set the high byte of the lane bitmask
+	phase_shift_sysex_phrase[5] = (lane_mask & 0xFF);		//Set the low byte of the lane bitmask
+	phase_shift_sysex_phrase[6] = diff;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+	phase_shift_sysex_phrase[7] = phraseid;	//Set the phrase ID
+	phase_shift_sysex_phrase[8] = 1;	//Set the phrase status (1 = Phrase start)
+	eof_add_sysex_event(deltastart, 10, phase_shift_sysex_phrase, 1);	//Write the phrase start marker
+	phase_shift_sysex_phrase[8] = 0;	//Set the phrase status (0 = Phrase stop)
+	eof_add_sysex_event(deltastop, 10, phase_shift_sysex_phrase, 0);	//Write the phrase stop marker
+}
+
 unsigned long eof_find_midi_event_needle(unsigned char num)
 {
 	unsigned long ctr;
@@ -995,6 +1010,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							{	//If this note is marked as a rim shot
 								if(featurerestriction == 0)
 								{	//Only write this notation if not writing a Rock Band compliant MIDI
+									eof_log("\t\tWriting generic snare rimshot marker", 2);
 									eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, type, 7);	//Write custom rim shot phrase markers
 								}
 							}
@@ -1346,6 +1362,50 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							eof_log("\t\tWriting generic flam marker", 2);
 							eof_add_midi_event(deltapos, 0x90, 109, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, 109, vel, 0);
+						}
+					}
+				}
+
+				/* write lane-specific Sysex markers */
+				if(featurerestriction == 0)
+				{	//Only write this notation if not writing a Rock Band compliant MIDI
+					unsigned char rimshot = eof_get_note_rimshot(sp, j, i) & note;
+					unsigned char crossstick = eof_get_note_crossstick(sp, j, i) & note;
+					unsigned char bellzone = eof_get_note_bellzone(sp, j, i) & note;
+					unsigned char edgezone = eof_get_note_edgezone(sp, j, i) & note;
+					unsigned char flam = eof_get_note_flam(sp, j, i) & note;
+
+					if(rimshot)
+					{	//If any gems of this note are marked with lane-specific rimshot status
+						eof_log("\t\tWriting lane specific rimshot marker", 2);
+						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 7);	//Write lane specific rim shot phrase markers
+					}
+					if(crossstick)
+					{	//If any gems of this note are marked with lane-specific cross stick status
+						eof_log("\t\tWriting lane specific cross stick marker", 2);
+						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 20);	//Write lane specific cross stick phrase markers
+					}
+					if(bellzone)
+					{	//If any gems of this note are marked with lane-specific bell zone hit status
+						eof_log("\t\tWriting lane specific bell zone marker", 2);
+						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 21);	//Write lane specific bell zone hit phrase markers
+					}
+					if(edgezone)
+					{	//If any gems of this note are marked with lane-specific edge zone hit status
+						eof_log("\t\tWriting lane specific edge zone marker", 2);
+						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 22);	//Write lane specific edge zone hit phrase markers
+					}
+					if(flam)
+					{	//If any gems of this note are marked with lane-specific flam status
+						if(!(noteflags & EOF_DRUM_NOTE_FLAG_FLAT_FLAM))
+						{	//Normal flam
+							eof_log("\t\tWriting lane specific normal flam marker", 2);
+							eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 23);	//Write lane specific flam phrase markers
+						}
+						else
+						{	//Flat flam
+							eof_log("\t\tWriting lane specific flat flam marker", 2);
+							eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 24);	//Write lane specific flam phrase markers
 						}
 					}
 				}

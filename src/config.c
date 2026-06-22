@@ -296,7 +296,7 @@ void eof_load_config(char * fn)
 	eof_disable_ini_export = get_config_int("preferences", "eof_disable_ini_export", 0);
 	eof_gh_import_sustain_threshold_prompt = get_config_int("preferences", "eof_gh_import_sustain_threshold_prompt", 0);
 	eof_rs_import_all_handshapes = get_config_int("preferences", "eof_rs_import_all_handshapes", 0);
-	eof_rs2_export_version_8 = get_config_int("preferences", "eof_rs2_export_version_8", 0);
+	eof_rs2_export_version_8 = get_config_int("preferences", "eof_rs2_export_version_8", 1);
 	eof_rs_export_suppress_tempo_warning = get_config_int("preferences", "eof_rs_export_suppress_tempo_warning", 0);
 	eof_midi_export_enhanced_open_marker = get_config_int("preferences", "eof_midi_export_enhanced_open_marker", 0);
 	eof_gp_import_remove_accent_from_staccato = get_config_int("preferences", "eof_gp_import_remove_accent_from_staccato", 0);

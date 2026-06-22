@@ -6135,7 +6135,7 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 	{	//If the user did not define a COUNT phrase that applies to either the track being exported or all tracks
 		if((sp->beat[0]->contained_section_event >= 0) && ((*user_warned & 16) == 0))
 		{	//If there is already a phrase defined on the first beat, and the user wasn't warned of this problem yet
-			allegro_message("Warning:  There is no COUNT phrase (or it's not defined in all uppercase letters), but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+			allegro_message("Warning (RS):  There is no COUNT phrase (or it's not defined in all uppercase letters), but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
 			*user_warned |= 16;
 		}
 		eof_log("\t! Adding missing COUNT phrase", 1);

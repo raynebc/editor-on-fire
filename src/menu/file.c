@@ -28,6 +28,7 @@
 #include "../rs.h"
 #include "../rs_import.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
+#include "../smashdrums.h"
 #include "../song.h"
 #include "../sm.h"
 #include "../tuning.h"
@@ -122,12 +123,13 @@ MENU eof_file_export_menu[] =
 	{"&Chart range", eof_menu_file_export_chart_range, NULL, 0, NULL},
 	{"&Audio range", eof_menu_file_export_audio_range, NULL, D_DISABLED, NULL},
 	{"&Guitar pro", eof_menu_file_export_guitar_pro, NULL, D_DISABLED, NULL},
-	{"Image &Sequence", eof_write_image_sequence, NULL, 0, NULL},
+	{"Image se&Quence", eof_write_image_sequence, NULL, 0, NULL},
 	{"&Preview audio", eof_menu_file_export_song_preview, NULL, 0, NULL},
 	{"&IMMERROCK", eof_menu_file_export_immerrock_track_diff, NULL, 0, NULL},
 	{"&BEATABLE", eof_menu_file_export_beatable_track, NULL, 0, NULL},
 	{"&LLPLUS", eof_menu_file_export_llplus_track_diff, NULL, 0, NULL},
 	{"&DrumBeats", eof_menu_file_export_drumbeats_track, NULL, 0, NULL},
+	{"&Smash Drums", eof_menu_file_export_smashdrums_track, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -499,14 +501,19 @@ void eof_prepare_file_menu(void)
 		{	//The active track difficulty has at least one note
 			eof_file_export_menu[7].flags = 0;	//File>Export>LLPLUS
 			eof_file_export_menu[8].flags = 0;	//File>Export>DrumBeats
+			eof_file_export_menu[9].flags = 0;	//File>Export>Smash Drums
 		}
 		else
 		{
 			eof_file_export_menu[7].flags = D_DISABLED;
 			eof_file_export_menu[8].flags = D_DISABLED;
+			eof_file_export_menu[9].flags = D_DISABLED;
 		}
 		if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		{
 			eof_file_export_menu[8].flags = D_DISABLED;	//Don't allow DrumBeats export for non drum tracks
+			eof_file_export_menu[9].flags = D_DISABLED;	//Same for Smash Drums
+		}
 	}
 	else
 	{	//No chart is loaded
@@ -7563,6 +7570,36 @@ int eof_menu_file_export_drumbeats_track(void)
 	}
 
 	return eof_export_drumbeats(eof_song, eof_selected_track, temp_filename);
+}
+
+int eof_menu_file_export_smashdrums_track(void)
+{
+	char temp_filename[1024];
+	int err;
+
+	eof_log("eof_menu_file_export_smashdrums_track() entered", 1);
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 0;	//Return failure
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tExporting track:  %s", eof_song->track[eof_selected_track]->name);
+	eof_log(eof_log_string, 1);
+
+	(void) replace_filename(temp_filename, eof_song_path, "", sizeof(temp_filename));	//Obtain the destination path
+	put_backslash(temp_filename);
+	(void) ustrzcat(temp_filename, sizeof(temp_filename), "Smash Drums");
+	put_backslash(temp_filename);
+	if(!eof_folder_exists(temp_filename))
+	{	//If the export subfolder doesn't already exist
+		err = eof_mkdir(temp_filename);
+		if(err && !eof_folder_exists(temp_filename))
+		{	//If it couldn't be created and is still not found to exist (in case the previous check was a false negative)
+			allegro_message("Could not create folder!\n%s", temp_filename);
+			return 0;	//Return failure:  Could not create export folder
+		}
+	}
+
+	return eof_export_smashdrums(eof_song, eof_selected_track, temp_filename);
 }
 
 void eof_rebuild_notes_window(void)

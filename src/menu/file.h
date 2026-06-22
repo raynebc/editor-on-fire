@@ -66,6 +66,7 @@ int eof_menu_file_export_immerrock_track_diff(void);	//Exports the active pro gu
 int eof_menu_file_export_beatable_track(void);	//Exports the active BEATABLE track using eof_export_beatable()
 int eof_menu_file_export_llplus_track_diff(void);		//Exports the active track difficulty using eof_export_llplus_midi()
 int eof_menu_file_export_drumbeats_track(void);		//Exports the active drum track to a "DrumBeats" subfolder of the project folder using eof_export_drumbeats()
+int eof_menu_file_export_smashdrums_track(void);	//Exports the active drum track to a "Smash Drums" subfolder of the project folder using eof_export_smashdrums()
 int eof_menu_file_midi_import(void);
 int eof_menu_file_drums_rock_import(void);
 int eof_menu_file_stepmania_import(void);

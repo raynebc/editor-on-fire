@@ -1,6 +1,8 @@
 #ifndef EOF_IR_H
 #define EOF_IR_H
 
+#include "song.h"
+
 extern int eof_ir_export_allow_fhp_finger_placements;		//Tracks whether the user opts to use finger placements derived from FHPs during export
 extern int eof_ir_export_midi_wrote_finger_placements;	//Tracks whether any finger placements were written during the last call to eof_export_immerrock_midi()
 
