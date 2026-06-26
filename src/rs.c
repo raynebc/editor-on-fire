@@ -6490,7 +6490,6 @@ int eof_lookup_rocksmith_effective_section_at_pos(EOF_SONG *sp, unsigned long po
 			}
 			if(ptr)
 			{	//If the text event's string or flags indicate a section marker
-				ptr = sp->text_event[ctr]->text;	//Use the section name verbatim
 				strncpy(section_name, ptr, section_name_size);		//Copy the section name
 				if(!(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION))
 				{	//If the section name isn't a Rocksmith section, modify the string if necessary

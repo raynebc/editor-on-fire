@@ -158,7 +158,7 @@ Please see "<a href="functions.htm#settings">File->Settings</a>" and "<a href="f
 Define the velocity values used during MIDI export for normal, accent and ghost drum notes on a per-lane basis as any of the valid values from 1 through 127.  This will allow for finer control of the display of drum notes in Phase Shift.<br><br>
 
 <h2><a name="manualsettings">Manual configuration settings</a></h2>
-There are some more niche settings that don't have a graphical dialog to configure them with, so altering them would require closing all EOF instances and editing eof.cfg (in the same folder as eof.exe) in a text editor by changing the value after the equal sign.  Alternatively, you can edit the eof.cfg file while EOF is running and use the "<a href="functions.htm#reloadconfig">Help>Reload config</a>" function to load the change without having to restart EOF.  Keep in mind that each instance of EOF updates the config file when closed, so if you have two EOF instances open, edit eof.cfg, reload the changes in instance 1, close instance 1 and then close instance 2, the net result is that instance 2 undoes the manually edited changes when it rewrites the config file because it never loaded the manual changes.  Colors are defined in hexadecimal digits as RRGGBB.  These variables are pre-defined in their appropriate categories (ie. "[colors]") so only edit the existing definitions in eof.cfg (such as by performing a search to find the entry) instead of adding new ones or they will not be honored.  In order to revert any of these to the default setting, you can simply delete the entire the variable and value and save eof.cfg and EOF will recreate the variable with its default value when it is launched and exited again.<br><br>
+There are some more niche settings that don't have a graphical dialog to configure them with, so altering them would require closing all EOF instances and editing eof.cfg (in the same folder as eof.exe) in a text editor by changing the value after the equal sign.  Alternatively, you can edit the eof.cfg file while EOF is running and use the "<a href="functions.htm#reloadconfig">Help>Reload config</a>" function to load the change without having to restart EOF.  Keep in mind that each instance of EOF updates the config file when closed, so if you have two EOF instances open, edit eof.cfg, reload the changes in instance 1, close instance 1 and then close instance 2, the net result is that instance 2 undoes the manually edited changes when it rewrites the config file because it never loaded the manual changes.  Colors are defined in hexadecimal digits as RRGGBB (or -1 for transparency).  These variables are pre-defined in their appropriate categories (ie. "[colors]") so only edit the existing definitions in eof.cfg (such as by performing a search to find the entry) instead of adding new ones or they will not be honored.  In order to revert any of these to the default setting, you can simply delete the entire the variable and value and save eof.cfg and EOF will recreate the variable with its default value when it is launched and exited again.<br><br>
 eof_midi_synth_instrument_guitar_muted<br>
 eof_midi_synth_instrument_guitar_harm<br>
 eof_midi_synth_instrument_guitar<br>
@@ -184,7 +184,7 @@ eof_notes_panel_success_fg_color<br>
 eof_notes_panel_alert_bg_color<br>
 eof_notes_panel_alert_fg_color<br>
 eof_notes_panel_info_bg_color<br>
-eof_notes_panel_info_fg_color :  The foreground and background colors used to print text within the %DISPLAY_ERROR%, %DISPLAY_WARNING%, %DISPLAY_SUCCESS% and %DISPLAY_ALERT% tags.  eof_notes_panel_info_bg_color and eof_notes_panel_info_fg_color are the colors for normal text.  A value of -1 indicates transparency, otherwise an RRGGBB hexadecimal number defines an opaque color.<br><br>
+eof_notes_panel_info_fg_color :  The foreground and background colors used to print text within the %DISPLAY_ERROR%, %DISPLAY_WARNING%, %DISPLAY_SUCCESS% and %DISPLAY_ALERT% tags.  eof_notes_panel_info_bg_color and eof_notes_panel_info_fg_color are the colors for normal text.<br><br>
 
 drums_rock_remap_lane_1<br>
 drums_rock_remap_lane_2<br>
@@ -213,6 +213,9 @@ gp_drum_import_lane_6 :  Define to which lane and note type (tom or cymbal) each
 
 eof_color_highlight1 :  The color for static highlighting that is manually applied with "Note>Highlight>On" or during various prompts.<br>
 eof_color_highlight2 :  The color for dynamic highlighting that updates automatically, such as "Song>Highlight non grid snapped notes.<br><br>
+
+eof_tab_notation_bg_color<br>
+eof_tab_notation_fg_color : The foreground and background color used to print the tab notation for special techniques at the bottom of the piano roll.<br><br>
 
 eof_4_fret_range :  The fret number starting at which the player's fret hand is able to stretch enough to cover four frets without changing position.  This should be left as fret 1.<br>
 eof_5_fret_range :  The fret number starting at which the player's fret hand is able to stretch enough to cover five frets without changing position.<br>

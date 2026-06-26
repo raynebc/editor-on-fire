@@ -399,20 +399,24 @@ void eof_load_config(char * fn)
 		eof_waveform_renderscale = 100;	//Bounds check
 
 	/* read notes panel colors */
-	eof_notes_panel_error_bg_color = get_config_hex("colors", "eof_notes_panel_error_bg_color", 0xFF0000);			//The RGB equivalent of makecol(255, 0, 0) (red)
-	eof_notes_panel_error_fg_color = get_config_hex("colors", "eof_notes_panel_error_fg_color", 0xFFFFFF);			//The RGB equivalent of makecol(255, 255, 255) (white)
-	eof_notes_panel_warning_bg_color = get_config_hex("colors", "eof_notes_panel_warning_bg_color", 0xFFFF00);	//The RGB equivalent of makecol(255, 255, 0) (yellow)
-	eof_notes_panel_warning_fg_color = get_config_hex("colors", "eof_notes_panel_warning_fg_color", 0x000000);	//The RGB equivalent of makecol(0, 0, 0) (black)
-	eof_notes_panel_success_bg_color = get_config_hex("colors", "eof_notes_panel_success_bg_color", 0x00FF00);		//The RGB equivalent of makecol(0, 255, 0) (green)
-	eof_notes_panel_success_fg_color = get_config_hex("colors", "eof_notes_panel_success_fg_color", 0x000000);		//The RGB equivalent of makecol(0, 0, 0) (black)
-	eof_notes_panel_alert_bg_color = get_config_hex("colors", "eof_notes_panel_alert_bg_color", 0x0000FF);			//The RGB equivalent of makecol(0, 0, 255) (blue)
-	eof_notes_panel_alert_fg_color = get_config_hex("colors", "eof_notes_panel_alert_fg_color", 0xFFFF00);			//The RGB equivalent of makecol(255, 255, 0) (yellow)
-	eof_notes_panel_info_bg_color = -1;																//Used by Allegro to designate transparency
-	eof_notes_panel_info_fg_color = get_config_hex("colors", "eof_notes_panel_info_fg_color", 0xFFFFFF);			//The RGB equivalent of makecol(255, 255, 255) (white)
+	eof_notes_panel_error_bg_color_raw = get_config_hex("colors", "eof_notes_panel_error_bg_color", 0xFF0000);			//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_notes_panel_error_fg_color_raw = get_config_hex("colors", "eof_notes_panel_error_fg_color", 0xFFFFFF);			//The RGB equivalent of makecol(255, 255, 255) (white)
+	eof_notes_panel_warning_bg_color_raw = get_config_hex("colors", "eof_notes_panel_warning_bg_color", 0xFFFF00);	//The RGB equivalent of makecol(255, 255, 0) (yellow)
+	eof_notes_panel_warning_fg_color_raw = get_config_hex("colors", "eof_notes_panel_warning_fg_color", 0x000000);		//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_notes_panel_success_bg_color_raw = get_config_hex("colors", "eof_notes_panel_success_bg_color", 0x00FF00);		//The RGB equivalent of makecol(0, 255, 0) (green)
+	eof_notes_panel_success_fg_color_raw = get_config_hex("colors", "eof_notes_panel_success_fg_color", 0x000000);		//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_notes_panel_alert_bg_color_raw = get_config_hex("colors", "eof_notes_panel_alert_bg_color", 0x0000FF);			//The RGB equivalent of makecol(0, 0, 255) (blue)
+	eof_notes_panel_alert_fg_color_raw = get_config_hex("colors", "eof_notes_panel_alert_fg_color", 0xFFFF00);			//The RGB equivalent of makecol(255, 255, 0) (yellow)
+	eof_notes_panel_info_bg_color_raw = get_config_hex("colors", "eof_notes_panel_info_bg_color", -1);				//-1 is used by Allegro to designate transparency
+	eof_notes_panel_info_fg_color_raw = get_config_hex("colors", "eof_notes_panel_info_fg_color", 0xFFFFFF);			//The RGB equivalent of makecol(255, 255, 255) (white)
 
 	/* read highlight colors */
 	eof_color_highlight1_raw = get_config_hex("colors", "eof_color_highlight1", 0xFFFF00UL);	//The RGB equivalent of makecol(255, 255, 0), AKA yellow
 	eof_color_highlight2_raw = get_config_hex("colors", "eof_color_highlight2", 0x00FFFFUL);	//The RGB equivalent of makecol(0, 255, 255), AKA cyan
+
+	/* other colors */
+	eof_tab_notation_bg_color_raw = get_config_hex("colors", "eof_tab_notation_bg_color", 0x000000);			//The RGB equivalent of makecol(00, 0, 0) (black)
+	eof_tab_notation_fg_color_raw = get_config_hex("colors", "eof_tab_notation_fg_color", 0xFF0000);			//The RGB equivalent of makecol(255, 0, 0) (red)
 
 	if(exists(fn))
 	{	//Only try to load the controller buttons if the config file exists, otherwise the defaults will be erased
@@ -835,20 +839,24 @@ void eof_save_config(char * fn)
 	set_config_int("waveform", "eof_waveform_renderscale", eof_waveform_renderscale);
 
 	/* write notes panel colors */
-	set_config_hex("colors", "eof_notes_panel_error_bg_color", eof_notes_panel_error_bg_color);
-	set_config_hex("colors", "eof_notes_panel_error_fg_color", eof_notes_panel_error_fg_color);
-	set_config_hex("colors", "eof_notes_panel_warning_bg_color", eof_notes_panel_warning_bg_color);
-	set_config_hex("colors", "eof_notes_panel_warning_fg_color", eof_notes_panel_warning_fg_color);
-	set_config_hex("colors", "eof_notes_panel_success_bg_color", eof_notes_panel_success_bg_color);
-	set_config_hex("colors", "eof_notes_panel_success_fg_color", eof_notes_panel_success_fg_color	);
-	set_config_hex("colors", "eof_notes_panel_alert_bg_color", eof_notes_panel_alert_bg_color);
-	set_config_hex("colors", "eof_notes_panel_alert_fg_color", eof_notes_panel_alert_fg_color);
-	set_config_hex("colors", "eof_notes_panel_info_bg_color", eof_notes_panel_info_bg_color);
-	set_config_hex("colors", "eof_notes_panel_info_fg_color", eof_notes_panel_info_fg_color);
+	set_config_hex("colors", "eof_notes_panel_error_bg_color", eof_notes_panel_error_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_error_fg_color", eof_notes_panel_error_fg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_warning_bg_color", eof_notes_panel_warning_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_warning_fg_color", eof_notes_panel_warning_fg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_success_bg_color", eof_notes_panel_success_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_success_fg_color", eof_notes_panel_success_fg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_alert_bg_color", eof_notes_panel_alert_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_alert_fg_color", eof_notes_panel_alert_fg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_info_bg_color", eof_notes_panel_info_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_info_fg_color", eof_notes_panel_info_fg_color_raw);
 
 	/* write highlight colors (raw format to avoid color corruption on subsequent launches of EOF) */
 	set_config_hex("colors", "eof_color_highlight1", eof_color_highlight1_raw);
 	set_config_hex("colors", "eof_color_highlight2", eof_color_highlight2_raw);
+
+	/* write other colors */
+	set_config_hex("colors", "eof_tab_notation_bg_color", eof_tab_notation_bg_color_raw);
+	set_config_hex("colors", "eof_tab_notation_fg_color", eof_tab_notation_fg_color_raw);
 
 	eof_log("\tSaving controller configs", 3);
 	eof_controller_save_config(&eof_guitar, "guitar");

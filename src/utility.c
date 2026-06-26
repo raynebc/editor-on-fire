@@ -623,6 +623,9 @@ int eof_remake_color(int hexrgb)
 {
 	int r, g, b;
 
+	if(hexrgb == -1)
+		return -1;	//Special case:  transparency
+
 	r = (hexrgb >> 16) & 0xFF;
 	g = (hexrgb >> 8) & 0xFF;
 	b = hexrgb & 0xFF;

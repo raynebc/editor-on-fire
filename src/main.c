@@ -536,6 +536,11 @@ char eof_waveform_renderscale_enabled = 0;	//Specifies whether waveform graph he
 unsigned eof_waveform_renderscale = 100;		//Specifies a scale factor for the render height to make the graph taller and more visible
 
 /* notes panel colors */
+int eof_notes_panel_error_bg_color_raw, eof_notes_panel_error_fg_color_raw;
+int eof_notes_panel_warning_bg_color_raw, eof_notes_panel_warning_fg_color_raw;
+int eof_notes_panel_success_bg_color_raw, eof_notes_panel_success_fg_color_raw;
+int eof_notes_panel_alert_bg_color_raw, eof_notes_panel_alert_fg_color_raw;
+int eof_notes_panel_info_bg_color_raw, eof_notes_panel_info_fg_color_raw;
 int eof_notes_panel_error_bg_color, eof_notes_panel_error_fg_color;
 int eof_notes_panel_warning_bg_color, eof_notes_panel_warning_fg_color;
 int eof_notes_panel_success_bg_color, eof_notes_panel_success_fg_color;
@@ -547,6 +552,12 @@ int eof_color_highlight1_raw;	//The raw hex formatted RRGGBB colors that need to
 int eof_color_highlight2_raw;
 int eof_color_highlight1;		//The color used for static highlighting
 int eof_color_highlight2;		//The color used for dynamic highlighting
+
+/* other colors*/
+int eof_tab_notation_bg_color_raw;
+int eof_tab_notation_fg_color_raw;
+int eof_tab_notation_bg_color;
+int eof_tab_notation_fg_color;
 
 /* GP import drum note mappings */
 unsigned char gp_drum_import_lane_1[EOF_GP_DRUM_MAPPING_COUNT] = {0};
@@ -4542,6 +4553,18 @@ int eof_load_data(void)
 	eof_color_waveform_rms = eof_remake_color(eof_color_waveform_rms_raw);
 	eof_color_highlight1 = eof_remake_color(eof_color_highlight1_raw);
 	eof_color_highlight2 = eof_remake_color(eof_color_highlight2_raw);
+	eof_notes_panel_error_bg_color = eof_remake_color(eof_notes_panel_error_bg_color_raw);
+	eof_notes_panel_error_fg_color = eof_remake_color(eof_notes_panel_error_fg_color_raw);
+	eof_notes_panel_warning_bg_color = eof_remake_color(eof_notes_panel_warning_bg_color_raw);
+	eof_notes_panel_warning_fg_color = eof_remake_color(eof_notes_panel_warning_fg_color_raw);
+	eof_notes_panel_success_bg_color = eof_remake_color(eof_notes_panel_success_bg_color_raw);
+	eof_notes_panel_success_fg_color = eof_remake_color(eof_notes_panel_success_fg_color_raw);
+	eof_notes_panel_alert_bg_color = eof_remake_color(eof_notes_panel_alert_bg_color_raw);
+	eof_notes_panel_alert_fg_color = eof_remake_color(eof_notes_panel_alert_fg_color_raw);
+	eof_notes_panel_info_bg_color = eof_remake_color(eof_notes_panel_info_bg_color_raw);
+	eof_notes_panel_info_fg_color = eof_remake_color(eof_notes_panel_info_fg_color_raw);
+	eof_tab_notation_bg_color = eof_remake_color(eof_tab_notation_bg_color_raw);
+	eof_tab_notation_fg_color = eof_remake_color(eof_tab_notation_fg_color_raw);
 
 	gui_fg_color = agup_fg_color;
 	gui_bg_color = agup_bg_color;

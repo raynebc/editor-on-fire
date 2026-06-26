@@ -58,7 +58,9 @@ int eof_string_is_hexadecimal(char *string);
 
 int eof_is_illegal_filename_character(char c);	//Returns nonzero if the specified character is not legal for use in a filename in Windows
 
-int eof_remake_color(int hexrgb);	//Accepts a color in hexadecimal RGB format and returns the result of makecol() passed each relevant byte
+int eof_remake_color(int hexrgb);
+	//Accepts a color in hexadecimal RGB format and returns the result of makecol() passed each relevant byte
+	//If hexrgb is -1, -1 is returned to properly allow the transparency value to be handled
 
 PACKFILE *eof_pack_fopen_retry(const char *filename, const char *mode, unsigned count);
 	//Attempts to open the specified file in the specified mode up to [count] number of times, with a 1ms delay between each attempt

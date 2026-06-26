@@ -12,6 +12,7 @@ int eof_menu_help_tutorial(void);
 int eof_menu_help_vocals_tutorial(void);
 int eof_menu_help_pro_guitar_tutorial(void);
 int eof_menu_help_immerrock_tutorial(void);
+int eof_menu_help_smash_drums_tutorial(void);
 int eof_menu_help_about(void);
 
 int eof_reset_display(void);				//Rebuilds the program window with the current window size

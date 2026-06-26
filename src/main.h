@@ -631,6 +631,11 @@ extern char eof_waveform_renderrightchannel;
 extern char eof_waveform_renderscale_enabled;
 extern unsigned eof_waveform_renderscale;
 
+extern int eof_notes_panel_error_bg_color_raw, eof_notes_panel_error_fg_color_raw;
+extern int eof_notes_panel_warning_bg_color_raw, eof_notes_panel_warning_fg_color_raw;
+extern int eof_notes_panel_success_bg_color_raw, eof_notes_panel_success_fg_color_raw;
+extern int eof_notes_panel_alert_bg_color_raw, eof_notes_panel_alert_fg_color_raw;
+extern int eof_notes_panel_info_bg_color_raw, eof_notes_panel_info_fg_color_raw;
 extern int eof_notes_panel_error_bg_color, eof_notes_panel_error_fg_color;
 extern int eof_notes_panel_warning_bg_color, eof_notes_panel_warning_fg_color;
 extern int eof_notes_panel_success_bg_color, eof_notes_panel_success_fg_color;
@@ -641,6 +646,9 @@ extern int eof_color_highlight1_raw;
 extern int eof_color_highlight2_raw;
 extern int eof_color_highlight1;
 extern int eof_color_highlight2;
+
+extern int eof_tab_notation_bg_color_raw, eof_tab_notation_fg_color_raw;
+extern int eof_tab_notation_bg_color, eof_tab_notation_fg_color;
 
 extern eof_color eof_color_green_struct;
 extern eof_color eof_color_red_struct;

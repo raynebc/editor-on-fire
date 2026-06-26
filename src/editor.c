@@ -4365,7 +4365,7 @@ void eof_editor_drum_logic(void)
 	int bitmask;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
 
-	eof_log("eof_editor_drum_logic() entered", 2);
+//	eof_log("eof_editor_drum_logic() entered", 2);
 
 	if(eof_drums.button[0].held)
 	{

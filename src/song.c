@@ -10983,6 +10983,9 @@ void eof_export_audio_time_range(ALOGG_OGG * ogg, double start_time, double end_
 	if(!ogg || !fn)
 		return;	//Invalid parameters
 
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tExporting audio from %fs to %fs", start_time, end_time);
+	eof_log(eof_log_string, 1);
+
 	num_samples = (end_time - start_time) * alogg_get_wave_freq_ogg(ogg) * (alogg_get_wave_is_stereo_ogg(ogg) ? 2 : 1);
 	eof_export_audio_time_range_sample = create_sample(alogg_get_wave_bits_ogg(ogg), alogg_get_wave_is_stereo_ogg(ogg), alogg_get_wave_freq_ogg(ogg), num_samples / (alogg_get_wave_is_stereo_ogg(ogg) ? 2 : 1));
 	eof_export_audio_time_range_ctr = 0;

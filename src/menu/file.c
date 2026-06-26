@@ -776,7 +776,7 @@ int eof_menu_file_load(void)
 			eof_log("\tCouldn't load OGG, trying guitar.ogg", 1);
 			/* upon fail, fall back to "guitar.ogg" */
 			(void) append_filename(temp_filename, eof_song_path, "guitar.ogg", sizeof(temp_filename));
-			if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
+			if(!eof_load_ogg(temp_filename, 2))	//If user does not provide audio, fail over to using silent audio
 			{
 				eof_log("\tCouldn't load guitar.ogg, continuing with no audio", 1);
 				eof_destroy_song(eof_song);

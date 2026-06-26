@@ -18,6 +18,7 @@ MENU eof_help_menu[] =
 	{"&Vocals Tutorial", eof_menu_help_vocals_tutorial, NULL, 0, NULL},
 	{"&Pro Guitar Tutorial", eof_menu_help_pro_guitar_tutorial, NULL, 0, NULL},
 	{"&IMMERROCK Tutorial", eof_menu_help_immerrock_tutorial, NULL, 0, NULL},
+	{"&Smash Drums Tutorial", eof_menu_help_smash_drums_tutorial, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Reset &Display\tShift+F5", eof_reset_display, NULL, 0, NULL},
 	{"Reset audi&O", eof_reset_audio, NULL, 0, NULL},
@@ -208,6 +209,27 @@ int eof_menu_help_immerrock_tutorial(void)
 			(void) eof_system("open immerrocktutorial/index.htm");
 		#else
 			(void) eof_system("xdg-open immerrocktutorial/index.htm");
+		#endif
+	#endif
+	return 1;
+}
+
+int eof_menu_help_smash_drums_tutorial(void)
+{
+	if(eof_validate_temp_folder())
+	{	//Ensure the correct working directory and presence of the temporary folder
+		eof_log("\tCould not validate working directory and temp folder", 1);
+		eof_log_cwd();
+		return 1;
+	}
+
+	#ifdef ALLEGRO_WINDOWS
+		(void) eof_system("start smashdrumstutorial\\index.htm");
+	#else
+		#ifdef ALLEGRO_MACOSX
+			(void) eof_system("open smashdrumstutorial/index.htm");
+		#else
+			(void) eof_system("xdg-open smashdrumstutorial/index.htm");
 		#endif
 	#endif
 	return 1;
