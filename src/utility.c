@@ -6,6 +6,7 @@
 #include "mix.h"
 #include "foflc/RS_parse.h"	//For rs_lyric_substitute_char_extended()
 #include "menu/file.h"		//For eof_menu_file_link_ffmpeg()
+#include "menu/track.h"
 #include "modules/g-idle.h"	//For Idle()
 
 #ifdef USEMEMWATCH
@@ -1383,4 +1384,28 @@ double eof_fpos_distance(double p1, double p2)
 	}
 
 	return p2 - p1;
+}
+
+int d_eof_list_proc(int msg, struct DIALOG *d, int c)
+{
+	int retval, x, junk;
+
+	if((msg == MSG_CLICK) && d && (d->dp2) && (key_shifts & KB_CTRL_FLAG))
+	{	//If a click was registered, this is a multi-selection list procedure and CTRL is held
+		x = msg;
+		retval = d_agup_list_proc(msg, d, c);	//Must call this first, d1 isn't updated to reflect the last-clicked item until this is run
+		x = msg;
+		if(((char *)d->dp2)[d->d1] == 0)
+		{	//If this item is deselected after being CTRL+clicked
+			d->flags |= D_DIRTY;
+			eof_render();
+			(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
+			(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+			return D_REDRAWME;
+		}
+
+		return retval;
+	}
+	else
+		return d_agup_list_proc(msg, d, c);
 }

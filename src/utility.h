@@ -2,6 +2,7 @@
 #define EOF_UTILITY_H
 
 #include "song.h"
+#include "agup/agup.h"
 
 typedef struct
 {
@@ -136,5 +137,9 @@ unsigned long eof_pos_distance(unsigned long p1, unsigned long p2);
 	//Returns the difference between the two integer numbers as a positive value
 double eof_fpos_distance(double p1, double p2);
 	//Returns the difference between the two floating point numbers as a positive value
+
+int d_eof_list_proc(int msg, struct DIALOG *d, int c);
+	//Allegro's d_list_proc() function has a bug where CTRL+click doesn't properly deselect items in a multi-selection list box until another item is CTRL+clicked on
+	//This function attempts to correct this by deselecting the item immediately in the selection array
 
 #endif

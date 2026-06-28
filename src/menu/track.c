@@ -1910,9 +1910,34 @@ int eof_track_pro_guitar_move_fret_hand_position_next_note(DIALOG * d)
 	return D_O_K;
 }
 
+void eof_fret_hand_positions_list_find_selected(void)
+{
+	unsigned long tracknum, i;
+
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+		return;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if((eof_fret_hand_position_list_dialog[1].d1 >= 0) && (eof_fret_hand_position_list_dialog[1].d1 < EOF_MAX_NOTES))
+	{	//If a valid FHP entry in the list is selected
+		eof_fret_hand_position_list_selection[eof_fret_hand_position_list_dialog[1].d1] = 1;	//Ensure this is reflected in the selection array
+	}
+	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
+	{	//For each fret hand position
+		eof_song->pro_guitar_track[tracknum]->handposition[i].flags &= ~EOF_PHRASE_FLAG_GENERIC;	//Clear this flag, which will be used to track which FHPs are selected in the list
+		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty != eof_note_type)
+			continue;	//If this fret hand position is not in the active difficulty, skip it
+
+		if(eof_fret_hand_position_list_selection[i])
+		{	//If this fret hand position is selected
+			eof_song->pro_guitar_track[tracknum]->handposition[i].flags |= EOF_PHRASE_FLAG_GENERIC;	//Set this flag to denote this FHP as being selected
+		}
+	}
+}
+
 int eof_fret_hand_position_delete(DIALOG * d)
 {
-	unsigned long tracknum, ecount = 0, i;
+	unsigned long tracknum, ecount, i, deleted_count = 0;
 	int junk;
 
 	if(!d)
@@ -1922,52 +1947,53 @@ int eof_fret_hand_position_delete(DIALOG * d)
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return D_O_K;
 	if(eof_fret_hand_position_list_dialog[1].d1 < 0)
-		return D_O_K;
+		return D_O_K;		//Invalid selection
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_song->pro_guitar_track[tracknum]->handpositions == 0)
-	{
-		return D_O_K;
-	}
-	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
-	{	//For each fret hand position
-		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty != eof_note_type)
-			continue;	//If this fret hand position is not in the active difficulty, skip it
+		return D_O_K;		//There are no FHPs in the active track
 
-		/* if we've reached the item that is selected, delete it */
-		if((unsigned long)eof_fret_hand_position_list_dialog[1].d1 == ecount)
-		{
+	eof_fret_hand_positions_list_find_selected();	//Mark all selected FHPs with the EOF_PHRASE_FLAG_GENERIC flag
+
+	//Delete all FHPs that were selected
+	for(i = eof_song->pro_guitar_track[tracknum]->handpositions; i > 0; i--)
+	{	//For each FHP, in reverse order
+		if(eof_song->pro_guitar_track[tracknum]->handposition[i - 1].flags & EOF_PHRASE_FLAG_GENERIC)
+		{	//If this FHP was selected in the list, delete it
 			if(!eof_fret_hand_position_list_dialog_undo_made)
 			{	//If an undo state hasn't been made yet since launching this dialog
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				eof_fret_hand_position_list_dialog_undo_made = 1;
 			}
 
-			/* remove the hand position, update the selection in the list box and exit */
-			eof_pro_guitar_track_delete_hand_position(eof_song->pro_guitar_track[tracknum], i);
-			eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
-			eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
-			for(i = 0, ecount = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
-			{	//For each remaining fret hand position
-				if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
-				{	//If the fret hand position is in the active difficulty
-					ecount++;
-				}
-			}
-			if(((unsigned long)eof_fret_hand_position_list_dialog[1].d1 >= ecount) && (ecount > 0))
-			{	//If the last list item was deleted and others remain
-				eof_fret_hand_position_list_dialog[1].d1--;	//Select the one before the one that was deleted, or the last event, whichever one remains
-			}
-			eof_render();	//Redraw the screen
-			(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
-			(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
-			return D_REDRAW;
+			eof_pro_guitar_track_delete_hand_position(eof_song->pro_guitar_track[tracknum], i - 1);
+			deleted_count++;
 		}
-
-		/* go to next event */
-		ecount++;
 	}
-	return D_O_K;
+
+	if(!deleted_count)
+		return D_O_K;	//If no FHPs were deleted, return without doing anything else
+
+	//Re-select the currently active FHP in the list after having deleted the selected ones
+	for(i = 0, ecount = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
+	{	//For each remaining fret hand position
+		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
+		{	//If the fret hand position is in the active difficulty
+			ecount++;	//Count how many FHPs remain to be listed
+		}
+	}
+	if(((unsigned long)eof_fret_hand_position_list_dialog[1].d1 >= ecount) && (ecount > 0))
+	{	//If the last list item was deleted and others remain
+		eof_fret_hand_position_list_dialog[1].d1--;	//Select the one before the one that was deleted, or the last event, whichever one remains
+	}
+
+	eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
+	eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
+	eof_render();	//Redraw the screen
+	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
+	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+
+	return D_REDRAW;
 }
 
 int eof_fret_hand_position_delete_all(DIALOG * d)
@@ -2129,6 +2155,90 @@ int eof_fret_hand_position_edit(DIALOG * d)
 	return D_O_K;
 }
 
+int eof_fret_hand_position_increment(DIALOG *d)
+{
+	unsigned long tracknum, i;
+	int junk;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+		return D_O_K;
+	if(eof_fret_hand_position_list_dialog[1].d1 < 0)
+		return D_O_K;		//Invalid selection
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_song->pro_guitar_track[tracknum]->handpositions == 0)
+		return D_O_K;		//There are no FHPs in the active track
+
+	eof_fret_hand_positions_list_find_selected();	//Mark all selected FHPs with the EOF_PHRASE_FLAG_GENERIC flag
+	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
+	{	//For each fret hand position
+		if(eof_song->pro_guitar_track[tracknum]->handposition[i].flags & EOF_PHRASE_FLAG_GENERIC)
+		{	//If this FHP was selected in the list, alter it
+			if(eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos < eof_song->pro_guitar_track[tracknum]->numfrets)
+			{	//If this FHP is lower than the track's fret count, it can be increased by 1
+				if(!eof_fret_hand_position_list_dialog_undo_made)
+				{	//If an undo state hasn't been made yet since launching this dialog
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					eof_fret_hand_position_list_dialog_undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos++;	//Increment it
+			}
+		}
+	}
+
+	eof_render();	//Redraw the screen
+	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
+	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+
+	return D_REDRAW;
+}
+
+int eof_fret_hand_position_decrement(DIALOG *d)
+{
+	unsigned long tracknum, i;
+	int junk;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
+		return D_O_K;
+	if(eof_fret_hand_position_list_dialog[1].d1 < 0)
+		return D_O_K;		//Invalid selection
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_song->pro_guitar_track[tracknum]->handpositions == 0)
+		return D_O_K;		//There are no FHPs in the active track
+
+	eof_fret_hand_positions_list_find_selected();	//Mark all selected FHPs with the EOF_PHRASE_FLAG_GENERIC flag
+	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
+	{	//For each fret hand position
+		if(eof_song->pro_guitar_track[tracknum]->handposition[i].flags & EOF_PHRASE_FLAG_GENERIC)
+		{	//If this FHP was selected in the list, alter it
+			if(eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos > 1)
+			{	//If this FHP is higher than 1, it can be reduced by 1
+				if(!eof_fret_hand_position_list_dialog_undo_made)
+				{	//If an undo state hasn't been made yet since launching this dialog
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					eof_fret_hand_position_list_dialog_undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos--;	//Decrement it
+			}
+		}
+	}
+
+	eof_render();	//Redraw the screen
+	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_START, 0, &junk);	//Re-initialize the dialog
+	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+
+	return D_REDRAW;
+}
+
 int eof_fret_hand_position_seek_prev(DIALOG * d)
 {
 	if(!d)
@@ -2162,6 +2272,7 @@ int eof_fret_hand_position_seek_next(DIALOG * d)
 }
 
 char eof_fret_hand_position_list_text[EOF_MAX_NOTES][25] = {{0}};
+char eof_fret_hand_position_list_selection[EOF_MAX_NOTES] = {0};
 
 char * eof_fret_hand_position_list(int index, int * size)
 {
@@ -2234,12 +2345,14 @@ DIALOG eof_fret_hand_position_list_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
 	{ eof_window_proc,        0,   48,  270, 277, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
-	{ d_agup_list_proc,        12,  84,  170, 188, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list,NULL, NULL },
+	{ d_eof_list_proc,        12,  84,  170, 188, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list, eof_fret_hand_position_list_selection, NULL },
 	{ d_agup_push_proc,  190, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",     NULL, (void *)eof_fret_hand_position_delete },
 	{ d_agup_push_proc,  190, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all", NULL, (void *)eof_fret_hand_position_delete_all },
 	{ d_agup_push_proc,  190, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",  NULL, (void *)eof_fret_hand_position_seek },
 	{ d_agup_push_proc,  190, 204, 68,  28,  2,   23,  'e',    D_EXIT, 0,   0, "&Edit",       NULL, (void *)eof_fret_hand_position_edit },
 	{ d_agup_push_proc,  190, 244, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Generate", NULL, (void *)eof_generate_hand_positions_current_track_difficulty },
+	{ d_agup_push_proc,  122, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "--",     NULL, (void *)eof_fret_hand_position_decrement },
+	{ d_agup_push_proc,  156, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "++",   NULL, (void *)eof_fret_hand_position_increment },
 	{ d_agup_push_proc,  190, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "<",     NULL, (void *)eof_fret_hand_position_seek_prev },
 	{ d_agup_push_proc,  224, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   ">",     NULL, (void *)eof_fret_hand_position_seek_next },
 	{ d_agup_button_proc,12,  284, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
@@ -2261,8 +2374,10 @@ int eof_track_fret_hand_positions(void)
 	eof_conditionally_center_dialog(eof_fret_hand_position_list_dialog);
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	memset(eof_fret_hand_position_list_selection, 0, EOF_MAX_NOTES);	//Deselect all FHPs in the list
 	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos.value - eof_av_delay, NULL, &diffindex, 0);	//Determine if a hand position exists at the current seek position
 	eof_fret_hand_position_list_dialog[1].d1 = diffindex;	//Pre-select the hand position in effect (if one exists) at the current seek position
+	eof_fret_hand_position_list_selection[diffindex] = 1;	//And ensure the selection list reflects that
 	eof_fret_hand_position_list_dialog[0].dp = eof_fret_hand_position_list_dialog_title_string;	//Replace the string used for the title bar with a dynamic one
 	eof_fret_hand_position_list_dialog_undo_made = 0;			//Reset this condition
 	(void) eof_popup_dialog(eof_fret_hand_position_list_dialog, 1);	//Launch the dialog

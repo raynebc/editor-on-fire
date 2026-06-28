@@ -14,8 +14,9 @@ extern DIALOG eof_pro_guitar_tuning_dialog[];
 extern DIALOG eof_note_set_num_frets_strings_dialog[];
 extern DIALOG eof_fret_hand_position_list_dialog[];
 
+extern char eof_fret_hand_position_list_selection[EOF_MAX_NOTES];		//Used to track the selection status of the items in the eof_fret_hand_position_list() procedure
 extern char eof_fret_hand_position_list_dialog_undo_made;			//Used to track an undo state having been made in the fret hand positions dialog
-extern char eof_fret_hand_position_list_dialog_title_string[30];	//This will be rebuilt by the list box count function to display the number of positions present
+extern char eof_fret_hand_position_list_dialog_title_string[30];			//This will be rebuilt by the list box count function to display the number of positions present
 
 extern char **eof_track_rs_tone_names_list_strings;				//A list of unique tone names that is build with eof_track_rebuild_rs_tone_names_list_strings()
 extern unsigned long eof_track_rs_tone_names_list_strings_num;	//Indicates the number of entries in the above array
@@ -93,7 +94,9 @@ int eof_track_pro_guitar_move_fret_hand_position_prev_note(DIALOG * d);
 int eof_track_pro_guitar_move_fret_hand_position_next_note(DIALOG * d);
 	//Alters the fret hand position set/edit dialog's target timestamp to the next note in the active track difficulty, if applicable
 int eof_track_fret_hand_positions(void);
-	//Displays the fret hand positions defined for the active track difficulty, allowing them to be deleted
+	//Displays the fret hand positions defined for the active track difficulty, allowing them to be altered
+void eof_fret_hand_positions_list_find_selected(void);
+	//Examines eof_fret_hand_position_list() function's selection list and updates the EOF_PHRASE_FLAG_GENERIC on every FHP in the active track to reflect whether the FHP was selected in the list
 int eof_track_fret_hand_positions_copy_from(void);
 	//Allows the user to copy fret hand positions defined in another difficulty into the current track difficulty
 char * eof_track_fret_hand_positions_copy_from_list(int index, int * size);

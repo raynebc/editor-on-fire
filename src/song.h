@@ -166,6 +166,7 @@
 #define EOF_LYRIC_LINE_FLAG_OVERDRIVE 1
 #define EOF_RS_ARP_HANDSHAPE               2	//A modifier for arpeggio sections that will cause the section to export to XML without "-arp" appended to the chord template name
 										//It will also not force notes within the phrase to have crazy status or for chords to split into single notes
+#define EOF_PHRASE_FLAG_GENERIC           4	//Used for generic purposes such as to track whether an FHP is selected in the multi-selection fret hand positions list dialog
 
 
 typedef struct

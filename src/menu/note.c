@@ -912,9 +912,9 @@ MENU eof_filtered_note_menu[EOF_SCRATCH_MENU_SIZE];	//This will be built by eof_
 DIALOG eof_lyric_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2) (dp3) */
-	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Edit Lyric", NULL, NULL },
+	{ eof_window_proc, 0,   48,  600, 106, 2,   23,  0,    0,      0,   0,   "Edit Lyric", NULL, NULL },
 	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",      NULL, NULL },
-	{ eof_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,    NULL, NULL },
+	{ eof_edit_proc,   48,  80,  534, 20,  2,   23,  0,    0,      255, 0,   eof_etext,    NULL, NULL },
 	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",         NULL, NULL },
 	{ d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",     NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -923,9 +923,9 @@ DIALOG eof_lyric_dialog[] =
 DIALOG eof_split_lyric_dialog[] =
 {
 	/* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-	{ eof_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Split Lyric", NULL, NULL },
+	{ eof_window_proc, 0,   48,  600, 106, 2,   23,  0,    0,      0,   0,   "Split Lyric", NULL, NULL },
 	{ d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
-	{ eof_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+	{ eof_edit_proc,   48,  80,  534, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
 	{ d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
 	{ d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",          NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
