@@ -122,7 +122,7 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 	char *phase_names[8] = {"INVALID", "intro", "verse", "prechorus", "CHORUS", "bridge", "solo", "outro"};
 	char *diff_names[4] = {"ChartEasy", "ChartNormal", "ChartHard", "ChartExtreme"};
 	double beat_pos;	//The calculated position of an item measured in beats (phases and notes)
-	unsigned char note, ghost, accent;
+	unsigned char note, ghost, accent, first_beat_missing_phase = 0;
 
 	//Validate parameters
 	if(!sp || (track >= sp->tracks))
@@ -146,7 +146,7 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 		return 0;
 	}
 
-	eof_log("eof_export_smashdrums() entered", 2);
+	eof_log("eof_export_smashdrums() entered", 1);
 	(void) replace_filename(eof_temp_filename, destpath, "", sizeof(eof_temp_filename));	//Obtain the destination folder path
 
 	//Determine which track difficulties will export as which JSON difficulties, since the highest defined difficulty must export as expert
@@ -302,6 +302,11 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 				{	//If this text event isn't in the same position as the last one that was found to be a valid phase instance
 					if(eof_text_event_is_smashdrums_phase(sp->text_event[ctr]->text))
 					{	//If this text event is a usable phase (section) type in Smash Drums
+						if(!phase_count && (sp->text_event[ctr]->pos != 0))
+						{	//If this is the first applicable section marker, but it is not on the first beat
+							first_beat_missing_phase = 1;	//Remember this so an intro phase can be inserted at the first beat
+							phase_count++;			//And add that to the count
+						}
 						phase_count++;	//Keep count
 						last_phase_match = sp->text_event[ctr]->pos;
 					}
@@ -311,57 +316,58 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 
 		//Write song phases
 		(void) pack_fputs("	\"SongPhases\": [\n", fp);
-		if(!phase_count)
-		{	//If there are no defined phases, write a default intro phase
+		phases_written = 0;
+		if(first_beat_missing_phase)
+		{	//If there was not a phase defined at the first beat, insert one
 			(void) pack_fputs("		{\n", fp);
 			(void) pack_fputs("			\"beat\": 0.0,\n", fp);
 			(void) pack_fputs("			\"phase\": 1,\n", fp);
 			(void) pack_fputs("			\"power\": 1,\n", fp);
 			(void) pack_fputs("			\"phaseName\": \"Intro\"\n", fp);
 			(void) pack_fputs("		}\n", fp);
+			phases_written++;	//This counts as the first phase written to file
 		}
-		else
-		{	//Write all defined phases
-			for(ctr = 0, phases_written = 0, last_phase_match = ULONG_MAX; ctr < sp->text_events; ctr++)
-			{	//For each text event in the project
-				if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == track))
-				{	//If the text event has no associated track or is specific to the track being exported
-					if(sp->text_event[ctr]->pos != last_phase_match)
-					{	//If this text event isn't in the same position as the last one that was found to be a valid phase instance
-						phase_number = eof_text_event_is_smashdrums_phase(sp->text_event[ctr]->text);
-						if(phase_number)
-						{	//If this text event is a usable phase (section) type in Smash Drums
-							phases_written++;	//Keep count
-							last_phase_match = sp->text_event[ctr]->pos;
-							(void) pack_fputs("		{\n", fp);
-							if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS)
-							{	//If this text event is defined at an arbitrary timstamp instead of on a beat marker,
-								beat_pos = eof_get_beatpos_abs(sp, sp->text_event[ctr]->pos);	//Calculate this event's position measured in beats
-								(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"beat\": %f,\n", beat_pos);
-							}
-							else
-							{	//This text event is defined on a beat marker
-								(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"beat\": %lu.0,\n", sp->text_event[ctr]->pos);
-							}
-							(void) pack_fputs(temp_string, fp);
-							(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"phase\": %u,\n", phase_number);
-							(void) pack_fputs(temp_string, fp);
-							(void) pack_fputs("			\"power\": 1,\n", fp);
-							(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"phaseName\": \"%s\"\n", phase_names[phase_number]);
-							(void) pack_fputs(temp_string, fp);
-							if(phases_written < phase_count)
-							{	//If another phase will be written, add a comma after this phase ends
-								(void) pack_fputs("		},\n", fp);
-							}
-							else
-							{	//This is the last phase
-								(void) pack_fputs("		}\n", fp);
-							}
+
+		//Write all manually defined phases
+		for(ctr = 0, last_phase_match = ULONG_MAX; ctr < sp->text_events; ctr++)
+		{	//For each text event in the project
+			if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == track))
+			{	//If the text event has no associated track or is specific to the track being exported
+				if(sp->text_event[ctr]->pos != last_phase_match)
+				{	//If this text event isn't in the same position as the last one that was found to be a valid phase instance
+					phase_number = eof_text_event_is_smashdrums_phase(sp->text_event[ctr]->text);
+					if(phase_number)
+					{	//If this text event is a usable phase (section) type in Smash Drums
+						phases_written++;	//Keep count
+						last_phase_match = sp->text_event[ctr]->pos;
+						(void) pack_fputs("		{\n", fp);
+						if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_FLOATING_POS)
+						{	//If this text event is defined at an arbitrary timstamp instead of on a beat marker,
+							beat_pos = eof_get_beatpos_abs(sp, sp->text_event[ctr]->pos);	//Calculate this event's position measured in beats
+							(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"beat\": %f,\n", beat_pos);
 						}
-					}//If this text event isn't in the same position as the last one that was found to be a valid phase instance
-				}//If the text event has no associated track or is specific to the track being exported
-			}//For each text event in the project
-		}//Write all defined phases
+						else
+						{	//This text event is defined on a beat marker
+							(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"beat\": %lu.0,\n", sp->text_event[ctr]->pos);
+						}
+						(void) pack_fputs(temp_string, fp);
+						(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"phase\": %u,\n", phase_number);
+						(void) pack_fputs(temp_string, fp);
+						(void) pack_fputs("			\"power\": 1,\n", fp);
+						(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"phaseName\": \"%s\"\n", phase_names[phase_number]);
+						(void) pack_fputs(temp_string, fp);
+						if(phases_written < phase_count)
+						{	//If another phase will be written, add a comma after this phase ends
+							(void) pack_fputs("		},\n", fp);
+						}
+						else
+						{	//This is the last phase
+							(void) pack_fputs("		}\n", fp);
+						}
+					}
+				}//If this text event isn't in the same position as the last one that was found to be a valid phase instance
+			}//If the text event has no associated track or is specific to the track being exported
+		}//For each text event in the project
 		(void) pack_fputs("	],\n", fp);
 
 		//Write notes
@@ -426,5 +432,6 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 		pack_fclose(fp);
 	}//JSON file was opened for writing
 
+	eof_log("eof_export_smashdrums() completed", 1);
 	return 1;		//Return success
 }

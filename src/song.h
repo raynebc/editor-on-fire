@@ -166,7 +166,8 @@
 #define EOF_LYRIC_LINE_FLAG_OVERDRIVE 1
 #define EOF_RS_ARP_HANDSHAPE               2	//A modifier for arpeggio sections that will cause the section to export to XML without "-arp" appended to the chord template name
 										//It will also not force notes within the phrase to have crazy status or for chords to split into single notes
-#define EOF_PHRASE_FLAG_GENERIC           4	//Used for generic purposes such as to track whether an FHP is selected in the multi-selection fret hand positions list dialog
+#define EOF_PHRASE_FLAG_GENERIC           4	//Used for generic purposes such as to track whether an FHP is selected in the multi-selection fret hand positions list dialog, which FHPs have been transposed during a tuning change, etc
+										//Each function using this value is responsible for clearing it from FHPs before applying it to FHPs and testing for it
 
 
 typedef struct
@@ -1125,7 +1126,7 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile);
 	//Parses the notes in the clipboard file, returning the highest used lane among them (or 0 if all such notes have no gems, ie. corrupted clipboard)
 unsigned long eof_get_pro_guitar_note_lowest_fret_value(EOF_PRO_GUITAR_NOTE *np);
 	//Returns the lowest used fret in the specified pro guitar note
-	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
+	//If the parameters are invalid or the specific pro guitar note's gems are all open notes or muted with no fret specified, 0 is returned
 unsigned long eof_get_lowest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Calls eof_get_pro_guitar_note_lowest_fret_value() on the specified note
 unsigned long eof_get_pro_guitar_note_highest_fret_value(EOF_PRO_GUITAR_NOTE *np);

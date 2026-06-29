@@ -609,11 +609,11 @@ MENU eof_note_drum_menu[] =
 	{"&Mark new Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
 	{"Toggle &Y cymbal+tom\t" CTRL_NAME "+ALT+Y", eof_menu_note_toggle_rb3_cymbal_combo_yellow, NULL, 0, NULL},
 	{"Toggle &B cymbal+tom\t" CTRL_NAME "+ALT+B", eof_menu_note_toggle_rb3_cymbal_combo_blue, NULL, 0, NULL},
-	{"Toggle G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
+	{"Toggle &G cymbal+tom\t" CTRL_NAME "+ALT+G", eof_menu_note_toggle_rb3_cymbal_combo_green, NULL, 0, NULL},
 	{"&Cymbal", NULL, eof_note_drum_cymbal_menu, 0, NULL},
 	{"&Rim shot", NULL, eof_note_drum_rimshot_menu, 0, NULL},
 	{"&Accent", NULL, eof_note_drum_accent_menu, 0, NULL},
-	{"&Ghost", NULL, eof_note_drum_ghost_menu, 0, NULL},
+	{"G&Host", NULL, eof_note_drum_ghost_menu, 0, NULL},
 	{"Gener&Ic flam", NULL, eof_note_drum_generic_flam_menu, 0, NULL},
 	{"F&Lat flam", NULL, eof_note_drum_flat_flam_menu, 0, NULL},
 	{"&Flam", NULL, eof_note_drum_flam_menu, 0, NULL},
@@ -4602,16 +4602,15 @@ int eof_menu_note_toggle_rb3_cymbal_green_logic(int function, char *undo_made)
 		}
 		else
 		{	//Toggle green tom/cymbal combo status
-			if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL)
-			{	//If this note is already a cymbal
-				if(!*undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					*undo_made = 1;
-				}
-				tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_G_COMBO;						//Toggle the green tom/cymbal combo flag on this note only
-				u = 1;
+			if(!*undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
 			}
+			tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_G_COMBO;				//Toggle the green tom/cymbal combo flag on this note only
+			if(!(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+				tp->note[i]->flags |= EOF_DRUM_NOTE_FLAG_G_CYMBAL;			//If this note wasn't a cymbal yet, make it one
+			u = 1;
 		}
 	}
 	if(u)
@@ -4673,16 +4672,15 @@ int eof_menu_note_toggle_rb3_cymbal_yellow_logic(int function, char *undo_made)
 		}
 		else
 		{	//Toggle yellow tom/cymbal combo status
-			if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL)
-			{	//If this note is already a cymbal
-				if(!*undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					*undo_made = 1;
-				}
-				tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_Y_COMBO;					//Toggle the yellow tom/cymbal combo flag on this note only
-				u = 1;
+			if(!*undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
 			}
+			tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_Y_COMBO;				//Toggle the yellow tom/cymbal combo flag on this note only
+			if(!(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+				tp->note[i]->flags |= EOF_DRUM_NOTE_FLAG_Y_CYMBAL;			//If this note wasn't a cymbal yet, make it one
+			u = 1;
 		}
 	}
 	if(u)
@@ -4744,16 +4742,16 @@ int eof_menu_note_toggle_rb3_cymbal_blue_logic(int function, char *undo_made)
 		}
 		else
 		{	//Toggle blue tom/cymbal combo status
-			if(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL)
-			{	//If this note is already a cymbal
-				if(!*undo_made)
-				{	//If an undo state hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					*undo_made = 1;
-				}
-				tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_B_COMBO;					//Toggle the blue tom/cymbal combo flag on this note only
-				u = 1;
+			if(!*undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
 			}
+			tp->note[i]->flags ^= EOF_DRUM_NOTE_FLAG_B_COMBO;				//Toggle the blue tom/cymbal combo flag on this note only
+			if(!(tp->note[i]->flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+				tp->note[i]->flags |= EOF_DRUM_NOTE_FLAG_B_CYMBAL;			//If this note wasn't a cymbal yet, make it one
+
+			u = 1;
 		}
 	}
 	if(u)

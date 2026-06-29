@@ -1069,18 +1069,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						{	//Only write these notations if not writing a Rock Band compliant MIDI
 							if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN)
 							{	//If this note is marked as an open hi hat note
+								eof_log("\t\tWriting open hi hat marker", 2);
 								eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, type, 5);	//Write custom open hi hat phrase markers
 							}
 							else if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
 							{	//If this note is marked as a pedal controlled hi hat note
+								eof_log("\t\tWriting pedal hi hat marker", 2);
 								eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, type, 6);	//Write custom pedal controlled hi hat phrase markers
 							}
 							else if(noteflags & EOF_DRUM_NOTE_FLAG_Y_SIZZLE)
 							{	//If this note is marked as a sizzle hi hat note
+								eof_log("\t\tWriting sizzle hi hat marker", 2);
 								eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, type, 8);	//Write custom sizzle hi hat phrase markers
 							}
 							if(noteflags & EOF_DRUM_NOTE_FLAG_Y_COMBO)
 							{	//If this note is marked as a yellow tom/cymbal combo
+								eof_log("\t\tWriting yellow tom+cymbal marker", 2);
 								eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, type, 17);	//Write custom yellow tom+cymbal phrase markers
 							}
 						}//Only write these notations if not writing a Rock Band compliant MIDI
@@ -1128,6 +1132,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 3, vel, 0);
 						if(noteflags & EOF_DRUM_NOTE_FLAG_B_COMBO)
 						{	//If this note is marked as a blue tom/cymbal combo
+							eof_log("\t\tWriting blue tom+cymbal marker", 2);
 							eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, type, 18);	//Write custom blue tom+cymbal phrase markers
 						}
 					}
@@ -1174,6 +1179,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 4, vel, 0);
 						if(noteflags & EOF_DRUM_NOTE_FLAG_G_COMBO)
 						{	//If this note is marked as a green tom/cymbal combo
+							eof_log("\t\tWriting green tom+cymbal marker", 2);
 							eof_add_phase_shift_sysex_phrase(deltapos, deltapos + deltalength, type, 19);	//Write custom green tom+cymbal phrase markers
 						}
 					}

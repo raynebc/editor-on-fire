@@ -211,7 +211,7 @@ unsigned char eof_pro_guitar_track_find_effective_fret_hand_position(EOF_PRO_GUI
 EOF_PHRASE_SECTION *eof_pro_guitar_track_find_effective_fret_hand_position_definition(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position, unsigned long *index, unsigned long *diffindex, char function);
 	//Similar to eof_pro_guitar_track_find_effective_fret_hand_position(), but returns a pointer to the hand position in effect, or NULL if none are in effect
 	//If function is nonzero, then the hand position must be exactly at the specified time position to be considered "in effect"
-	//If non NULL is returned, the index of the effective fret hand position is returned through *index if its pointer isn't NULL, and the position's index within the specified difficulty is returned through *diffindex if its pointer isn't NULL
+	//If non NULL is returned, the index of the effective fret hand position is returned through *index if its pointer isn't NULL, and the position's index within the specified difficulty is returned through *diffindex (to identify which FHP should be selected in the dialog list) if its pointer isn't NULL
 	//If NULL is returned, neither *index nor *diffindex are altered
 unsigned long eof_pro_guitar_find_fret_hand_position_width(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);
 	//Examines the specified track's content and determines the fret width of the specified fret hand position

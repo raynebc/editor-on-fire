@@ -1311,15 +1311,23 @@ int eof_track_tuning(void)
 
 int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 {
-	unsigned long ctr, ctr2, ctr3, bitmask, noteset;
+	unsigned long ctr, ctr2, ctr3, bitmask, noteset, fhp, fhp_to_transpose;
 	unsigned char prompt = 0, skiptranspose, warning = 0, first, diffmask = 0;
 	char val = 0;
 	char restore_tech_view = 0;		//If tech view is in effect, it is temporarily disabled until after the secondary piano roll has been rendered
+	unsigned long limit = 21;		//Unless Rocksmith 1 or Rock Band export are enabled, assume Rocksmith 2's limit
 
 	if(!tp || !tuningdiff)
 		return 0;	//Error
 
+	if(eof_write_rs_files || eof_write_rb_files)
+		limit = 19;	//Rocksmith 1 and Rock Band only support fret hand positions as high as fret 19
 	restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+
+	for(ctr = 0; ctr < tp->handpositions; ctr++)
+	{	//For each fret hand position in the track
+		tp->handposition[ctr].flags &= ~EOF_PHRASE_FLAG_GENERIC;	//Clear this flag, which will track which FHPs have been transposed
+	}
 
 	for(noteset = 0; noteset < 2; noteset++)
 	{	//For each the normal and the tech note set
@@ -1331,6 +1339,17 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 			{	//On the first pass, validate whether the note can be transposed automatically, on second pass, alter the note
 				if(!noteset)
 				{	//Only check fret values for normal notes, because tech notes do not have any
+					unsigned long lowest, newlowest;		//Will track whether the lowest fretted value in a note changes during transpose
+
+					lowest = eof_get_pro_guitar_note_lowest_fret_value(tp->note[ctr]);
+					fhp_to_transpose = ULONG_MAX;	//Init this to an invalid FHP
+					if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, tp->note[ctr]->type, tp->note[ctr]->pos, &fhp, NULL, 0))
+					{	//If there is a fret hand position in effect at this note
+						if((fhp < tp->handpositions) && (tp->handposition[fhp].end_pos == lowest) && !(tp->handposition[fhp].flags & EOF_PHRASE_FLAG_GENERIC))
+						{	//And the FHP reflects this note's lowest fretted value and hasn't been transposed yet by this function
+							fhp_to_transpose = fhp;	//Track that this FHP will need to transpose along with this note
+						}
+					}
 					for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 					{	//For each of the 6 supported strings
 						val = tuningdiff[ctr3];	//Simplify
@@ -1406,6 +1425,21 @@ int eof_track_transpose_tuning(EOF_PRO_GUITAR_TRACK* tp, char *tuningdiff)
 							}
 						}
 					}//For each of the 6 supported strings
+					if(ctr2 && !skiptranspose && (fhp_to_transpose < tp->handpositions))
+					{	//The second pass of the note and the note was allowed to transpose, and the FHP is meant to transpose with it
+						newlowest = eof_get_pro_guitar_note_lowest_fret_value(tp->note[ctr]);
+						if(newlowest > limit)
+							newlowest = limit;	//Ensure that the FHP being applied does not exceed the highest FHP allowed for the targetted game exports
+						if(lowest != newlowest)
+						{	//If the lowest fret value of the note changed when the frets were transposed
+							tp->handposition[fhp_to_transpose].end_pos = newlowest;	//Reset this FHP to the transposed note's lowest fret value
+							tp->handposition[fhp_to_transpose].flags |= EOF_PHRASE_FLAG_GENERIC;	//Track that this FHP was already transposed so it won't be altered again while the rest of the notes are transposed
+							if(!newlowest)
+							{	//If the transposed note has no fretted strings anymore
+								eof_pro_guitar_track_delete_hand_position(tp, fhp_to_transpose);	//It is no longer needed, delete it
+							}
+						}
+					}
 				}//Only check fret values for normal notes, because tech notes do not have any
 
 				//Check slide end positions
@@ -1918,10 +1952,6 @@ void eof_fret_hand_positions_list_find_selected(void)
 		return;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if((eof_fret_hand_position_list_dialog[1].d1 >= 0) && (eof_fret_hand_position_list_dialog[1].d1 < EOF_MAX_NOTES))
-	{	//If a valid FHP entry in the list is selected
-		eof_fret_hand_position_list_selection[eof_fret_hand_position_list_dialog[1].d1] = 1;	//Ensure this is reflected in the selection array
-	}
 	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
 	{	//For each fret hand position
 		eof_song->pro_guitar_track[tracknum]->handposition[i].flags &= ~EOF_PHRASE_FLAG_GENERIC;	//Clear this flag, which will be used to track which FHPs are selected in the list
@@ -2345,7 +2375,7 @@ DIALOG eof_fret_hand_position_list_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
 	{ eof_window_proc,        0,   48,  270, 277, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
-	{ d_eof_list_proc,        12,  84,  170, 188, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list, eof_fret_hand_position_list_selection, NULL },
+	{ d_agup_list_proc,        12,  84,  170, 188, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list, eof_fret_hand_position_list_selection, NULL },
 	{ d_agup_push_proc,  190, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",     NULL, (void *)eof_fret_hand_position_delete },
 	{ d_agup_push_proc,  190, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all", NULL, (void *)eof_fret_hand_position_delete_all },
 	{ d_agup_push_proc,  190, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",  NULL, (void *)eof_fret_hand_position_seek },
