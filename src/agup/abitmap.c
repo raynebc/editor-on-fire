@@ -685,8 +685,8 @@ d_abitmap_list_proc (int msg, DIALOG *d, int c)
                 x = d->x + 2;
                 y = d->y + 2 + i * text_height (font);
 
-                if (d->d2 + i == d->d1 || ((sel) && (sel[d->d2 + i])))
-                {
+                if ((!sel && (d->d2 + i == d->d1)) || ((sel) && (sel[d->d2 + i])))
+                {	//Only check d->d1 if sel is NULL (single selection list)
                     abitmap_draw_area (d, B_LIST_ITEM, 0, y - d->y,
                         bar ? d->w - 12 : d->w, text_height (font), 0, 0);
                     fg = theme->bitmaps[B_LIST_ITEM][c2].color;

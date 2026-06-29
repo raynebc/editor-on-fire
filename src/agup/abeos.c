@@ -720,8 +720,8 @@ d_abeos_list_proc (int msg, DIALOG * d, int c)
     {
       if (d->d2 + i < size)
       {
-        if (d->d2 + i == d->d1)
-        {
+        if (!sel && (d->d2 + i == d->d1))
+        {	//Only check d->d1 if sel is NULL (single selection list)
           fg = abeos_fg_color;
           bg = normal[3];
         }

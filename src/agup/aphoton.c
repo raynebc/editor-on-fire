@@ -550,7 +550,7 @@ int d_aphoton_list_proc(int msg, DIALOG *d, int c)
 	/* draw box contents */
 	for (i=0; i<height; i++) {
 	    if (d->d2+i < listsize) {
-		if (d->d2+i == d->d1) {
+		if (!sel && (d->d2+i == d->d1)) {	//Only check d->d1 if sel is NULL (single selection list)
 		    fg = list_white;
 		    bg = list_green;
 		}
