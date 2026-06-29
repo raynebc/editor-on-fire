@@ -9,7 +9,6 @@
 #include "notes.h"
 #include "control.h"
 #include "editor.h"
-#include "pathing.h"
 #include "music_pos.h"
 
 #define EOF_VERSION_STRING "EOF v1.8RC15"
@@ -525,9 +524,6 @@ extern int         eof_shift_released;
 extern int         eof_shift_used;
 extern int         eof_tab_released;
 extern int         eof_emergency_stop;
-extern int         ch_sp_path_worker;
-extern int         ch_sp_path_worker_logging;
-extern unsigned long ch_sp_path_worker_number;
 extern unsigned slide_in_from_warned;
 extern char        eof_default_ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH];
 extern unsigned short eof_default_ini_settings;
@@ -710,7 +706,6 @@ extern char        eof_fingering_view;
 extern char        eof_flat_dd_view;
 extern unsigned char eof_2d_render_top_option;
 extern char        eof_render_grid_lines;
-extern char        eof_show_ch_sp_durations;
 
 extern char eof_midi_initialized;			//Specifies whether Allegro was able to set up a MIDI device
 extern EOF_SELECTION_DATA eof_selection;

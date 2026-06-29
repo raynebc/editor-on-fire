@@ -10,7 +10,6 @@
 #include "../midi.h"
 #include "../midi_import.h"
 #include "../mix.h"
-#include "../pathing.h"
 #include "../player.h"
 #include "../rs.h"
 #include "../song.h"
@@ -167,8 +166,6 @@ MENU eof_track_menu[] =
 	{"Repair grid snap", eof_menu_track_repair_grid_snap, NULL, 0, NULL},
 	{"&Clone", NULL, eof_track_clone_menu, 0, NULL},
 	{"Enable GHL mode", eof_track_menu_enable_ghl_mode, NULL, 0, NULL},
-	{"Find optimal CH star power path", eof_menu_track_find_ch_sp_path, NULL, 0, NULL},
-	{"Evaluate CH star power path", eof_menu_track_evaluate_user_ch_sp_path, NULL, 0, NULL},
 	{"&Offset", eof_menu_track_offset, NULL, 0, NULL},
 	{"Chord snap", eof_menu_track_check_chord_snapping, NULL, 0, NULL},
 	{"&Search", NULL, eof_track_search_menu, 0, NULL},
@@ -373,18 +370,6 @@ void eof_prepare_track_menu(void)
 			eof_track_menu[14].flags = D_DISABLED | D_HIDDEN;			//Track>Enable GHL mode
 		}
 
-		/* (Clone Hero pathing functions) */
-		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS) || (eof_selected_track == EOF_TRACK_DRUM))
-		{	//If the active track is a legacy guitar/bass track or the keys track or the normal drum track
-			eof_track_menu[15].flags = 0;					//Track>Find optimal CH star power path
-			eof_track_menu[16].flags = 0;					//Track>Evaluate CH star power path
-		}
-		else
-		{	//Otherwise disable and hide these items
-			eof_track_menu[15].flags = D_DISABLED | D_HIDDEN;			//Track>Find optimal CH star power path
-			eof_track_menu[16].flags = D_DISABLED | D_HIDDEN;			//Track>Evaluate CH star power path
-		}
-
 		/* Disable expert+ bass drum */
 		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If the active track is a drum track
@@ -516,8 +501,6 @@ void eof_prepare_track_menu(void)
 		{	//If a BEATABLE track is active, several menu items are not applicable
 			eof_track_menu[3].flags = D_DISABLED | D_HIDDEN;	//Track>Phase Shift
 			eof_track_menu[14].flags = D_DISABLED | D_HIDDEN;	//Track>Enable GHL mode
-			eof_track_menu[15].flags = D_DISABLED | D_HIDDEN;	//Track>Find optimal CH star power path
-			eof_track_menu[16].flags = D_DISABLED | D_HIDDEN;	//Track>Evaluate CH star power path
 		}
 
 		if(eof_create_filtered_menu(eof_track_menu, eof_filtered_track_menu, EOF_SCRATCH_MENU_SIZE))

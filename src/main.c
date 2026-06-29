@@ -63,7 +63,6 @@
 #include "rs.h"	//for eof_pro_guitar_track_find_effective_fret_hand_position()
 #include "song.h"
 #include "utility.h"	//For eof_ucode_table[] declaration
-#include "pathing.h"
 #include "beatable.h"
 
 #ifdef USEMEMWATCH
@@ -276,7 +275,6 @@ char	       eof_fingering_view = 0;				//Specifies whether pro guitar notes will
 char        eof_flat_dd_view = 0;				//Specifies whether the piano roll and 3D view will show a flattened view of the active dynamic difficulty
 unsigned char eof_2d_render_top_option = 5;	//Specifies what item displays at the top of the 2D panel (defaults to note names)
 char        eof_render_grid_lines = 0;			//Specifies whether grid snap positions will render in the editor window
-char        eof_show_ch_sp_durations = 0;		//Specifies whether durations for defined star power deployments will render in the editor window
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
@@ -353,9 +351,6 @@ int         eof_shift_released = 1;	//Tracks the press/release of the SHIFT keys
 int         eof_shift_used = 0;	//Tracks whether the SHIFT key was used for a keyboard shortcut while SHIFT was held
 int         eof_tab_released = 1;	//Tracks the press/release of the tab key to prevent the Allegro bug of its status getting stuck from repeatedly triggering keyboard functions
 int         eof_emergency_stop = 0;	//Set to nonzero by eof_switch_out_callback() so that playback can be stopped OUTSIDE of the callback, in EOF's main loop so that a crash with time stretched playback can be avoided
-int         ch_sp_path_worker = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker parameter to have it run as a worker process for star power pathing evaluation
-int         ch_sp_path_worker_logging = 0;	//Set to nonzero if EOF is launched with the -ch_sp_path_worker_logging parameter, which will allow logging to be performed during solving
-unsigned long ch_sp_path_worker_number = 0;	//Set to the number in the job filename, for creating worker-specific logging
 unsigned slide_in_from_warned = 0;	//Tracks whether the user has been warned yet this program session that slide in from above/below notes were encountered
 
 char eof_default_ini_setting[EOF_MAX_INI_SETTINGS][EOF_INI_LENGTH] = {{0}};	//Stores the entries of the [default_ini_settings] section in the config file
@@ -1483,8 +1478,6 @@ void eof_prepare_undo(int type)
 	eof_undo_toggle = 1;
 	eof_fix_window_title();	//Redraw the window title to reflect the chart is modified
 	eof_window_title_dirty = 1;	//Indicate that the window title will need to be redrawn during the next normal render, to reflect whatever change is to follow this undo state
-	eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
-	eof_ch_sp_solution = NULL;
 	if(!eof_disable_backups && (eof_change_count % 10 == 0))
 	{	//If automatic backups are not disabled, backup the EOF project every 10 undo states
 		(void) replace_extension(fn, eof_filename, "backup.eof.bak", sizeof(fn));
@@ -4141,7 +4134,6 @@ void eof_render(void)
 			eof_log("\tRebuilding beat stats.", 3);
 			eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild them (from the perspective of the specified track)
 		}
-		eof_ch_sp_solution_wanted = 0;	//The rendering of the info and notes panels will change this to 1 if any CH SP scoring information is needed for expansion macros
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render the info window yet, it will just be overwritten by the 3D window
 //			eof_log("\tRendering Information panel.", 3);
@@ -4155,7 +4147,6 @@ void eof_render(void)
 			eof_render_editor_window_2();	//Render the secondary piano roll if applicable
 			eof_render_notes_window();		//Render the notes panel if applicable
 		}
-		eof_ch_sp_solution_rebuild();	//Build SP CH solution data if necessary
 	}
 	else
 	{	//If no project is loaded
@@ -4663,35 +4654,20 @@ int eof_initialize(int argc, char * argv[])
 		al_init_native_dialog_addon();
 	#endif
 
-	if((argc >= 3) && !ustricmp(argv[1], "-ch_sp_path_worker"))
-	{	//If this EOF instance was launched as a worker process to perform star power pathing (must be second parameter)
-		ch_sp_path_worker = 1;
-	}
-	if((argc >= 4) && !ustricmp(argv[3], "-ch_sp_path_worker_logging"))
-	{	//If this EOF instance was is being called with logging manually enabled (must be fourth parameter)
-		char * fnptr = get_filename(argv[2]);	//Get a pointer to the filename of the job file path
-		(void) replace_extension(temp_filename, fnptr, "", sizeof(temp_filename));	//Strip away the extension to get the worker number
-		ch_sp_path_worker_number = atol(temp_filename);	//Convert it to a number
-		ch_sp_path_worker_logging = 1;
-	}
-
-	if(!ch_sp_path_worker)
-	{	//Don't bother setting up the sound system if EOF is acting as a worker process
-		if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
-		{	//If Allegro failed to initialize the sound AND midi
+	if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
+	{	//If Allegro failed to initialize the sound AND midi
 //			allegro_message("Can't set up MIDI!  Error: %s\nAttempting to init audio only",allegro_error);
-			if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
-			{
-				allegro_message("Can't set up sound!  Error: %s",allegro_error);
-				return 0;
-			}
-			eof_midi_initialized = 0;	//Couldn't set up MIDI
-		}
-		else
+		if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
 		{
-			install_timer();	//Needed to use midi_out()
-			eof_midi_initialized = 1;
+			allegro_message("Can't set up sound!  Error: %s",allegro_error);
+			return 0;
 		}
+		eof_midi_initialized = 0;	//Couldn't set up MIDI
+	}
+	else
+	{
+		install_timer();	//Needed to use midi_out()
+		eof_midi_initialized = 1;
 	}
 
 	InitIdleSystem();
@@ -4747,18 +4723,14 @@ int eof_initialize(int argc, char * argv[])
 	(void) setlocale(LC_ALL, "C");
 
 	//Start the logging system (unless the user disabled it via preferences)
-	if(!ch_sp_path_worker || ch_sp_path_worker_logging)
-	{	//Don't start logging if this is a worker process (unless the separate parameter was provided to enable logging)
-		eof_start_logging();
-		seconds = time(NULL);
-		caltime = localtime(&seconds);
-		(void) strftime(eof_log_string, sizeof(eof_log_string) - 1, "Logging started during program initialization at %c", caltime);
-		eof_log(eof_log_string, 0);
-		eof_log(EOF_VERSION_STRING, 0);
-	}
+	eof_start_logging();
+	seconds = time(NULL);
+	caltime = localtime(&seconds);
+	(void) strftime(eof_log_string, sizeof(eof_log_string) - 1, "Logging started during program initialization at %c", caltime);
+	eof_log(eof_log_string, 0);
+	eof_log(EOF_VERSION_STRING, 0);
 
-	if(!ch_sp_path_worker)
-		show_mouse(NULL);
+	show_mouse(NULL);
 	eof_load_config("eof.cfg");
 	if((eof_log_level >= 0) && (eof_log_level <= 3))
 	{	//If the logging level is valid
@@ -4826,15 +4798,6 @@ int eof_initialize(int argc, char * argv[])
 	gui_ctext_proc = d_agup_ctext_proc;
 	gui_text_list_proc = d_agup_text_list_proc;
 	gui_edit_proc = d_hackish_edit_proc;
-
-	/* divert to the Clone Hero SP pathing behavior if applicable */
-	if(ch_sp_path_worker)
-	{
-		eof_log("Changing to SP path worker mode", 1);
-		eof_ch_sp_path_worker(argv[2]);
-		eof_quit = 1;	//Signal the main function to exit
-		return 1;
-	}
 
 	/* create file filters */
 	eof_filter_eof_files = ncdfs_filter_list_create();
@@ -5505,49 +5468,46 @@ void eof_exit(void)
 	//Delete the undo/redo related files
 	(void) eof_validate_temp_folder();	//Attempt to set the current working directory if it isn't EOF's executable/resource folder
 
-	if(!ch_sp_path_worker)
-	{	//None of these are applicable if this EOF instance was a worker process
-		eof_save_config("eof.cfg");
-		if(!exists("eof.cfg"))
+	eof_save_config("eof.cfg");
+	if(!exists("eof.cfg"))
+	{
+		FILE *fp;
+		fp = fopen("eof.cfg", "wt");	//Attempt to manually create the file
+		if(!fp)
 		{
-			FILE *fp;
-			fp = fopen("eof.cfg", "wt");	//Attempt to manually create the file
-			if(!fp)
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output config file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
-				eof_log(eof_log_string, 1);
-			}
-			else
-			{
-				eof_log("Allegro's config routines could not create eof.cfg, but the standard fopen() function was able to.  Please report whether subsequent EOF sessions also fail to save the configuration.", 1);
-				fclose(fp);
-			}
-			allegro_message("Error:  Could not write config file eof.cfg.  Check logging for details.");
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output config file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+			eof_log(eof_log_string, 1);
 		}
 		else
 		{
-			eof_log("\tConfiguration saved", 3);
+			eof_log("Allegro's config routines could not create eof.cfg, but the standard fopen() function was able to.  Please report whether subsequent EOF sessions also fail to save the configuration.", 1);
+			fclose(fp);
 		}
-		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
-		(void) delete_file(fn);	//And delete it if it exists
-		(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo OGG
-		(void) delete_file(fn);	//And delete it if it exists
-		if(eof_undo_states_initialized > 0)
-		{
-			for(i = 0; i < EOF_MAX_UNDO; i++)
-			{	//For each undo slot
-				if(eof_undo_filename[i])
-				{
-					(void) delete_file(eof_undo_filename[i]);	//Delete the undo file
-					(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
-					(void) delete_file(fn);	//And delete it if it exists
-				}
+		allegro_message("Error:  Could not write config file eof.cfg.  Check logging for details.");
+	}
+	else
+	{
+		eof_log("\tConfiguration saved", 3);
+	}
+	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo file
+	(void) delete_file(fn);	//And delete it if it exists
+	(void) snprintf(fn, sizeof(fn) - 1, "%seof%03u.redo.ogg", eof_temp_path_s, eof_log_id);	//Get the name of this EOF instance's redo OGG
+	(void) delete_file(fn);	//And delete it if it exists
+	if(eof_undo_states_initialized > 0)
+	{
+		for(i = 0; i < EOF_MAX_UNDO; i++)
+		{	//For each undo slot
+			if(eof_undo_filename[i])
+			{
+				(void) delete_file(eof_undo_filename[i]);	//Delete the undo file
+				(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
+				(void) delete_file(fn);	//And delete it if it exists
 			}
 		}
-		(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path_s);
-		(void) delete_file(eof_autoadjust_path);
-		eof_destroy_undo();
 	}
+	(void) snprintf(eof_autoadjust_path, sizeof(eof_autoadjust_path) - 1, "%seof.autoadjust", eof_temp_path_s);
+	(void) delete_file(eof_autoadjust_path);
+	eof_destroy_undo();
 
 	//Free the file filters (they will not have been set to a non NULL value if EOF launched via command line as a worker process
 	if(eof_filter_music_files)
@@ -5636,8 +5596,6 @@ void eof_exit(void)
 	}
 
 	eof_destroy_shape_definitions();
-
-	eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the cached Clone Hero SP solution structure if applicable
 
 	//Stop the logging system
 	seconds = time(NULL);
@@ -5946,34 +5904,24 @@ void eof_start_logging(void)
 		// coverity[dont_call]
 		eof_log_id = ((unsigned int) rand()) % 1000;	//Create a 3 digit random number to represent this EOF instance
 		get_executable_name(log_filename, sizeof(log_filename));	//Get the path of the EOF binary that is running
-		if(ch_sp_path_worker_logging)
-		{	//If this is a worker process, use the process number in the log file name
-			char tempstr[10];
+		(void) replace_filename(log_filename, log_filename, "eof_log.txt", sizeof(log_filename));
 
-			(void) snprintf(tempstr, sizeof(tempstr) - 1, "%lu.log", ch_sp_path_worker_number);
-			(void) replace_filename(log_filename, log_filename, tempstr, sizeof(log_filename));
+		#ifndef ALLEGRO_WINDOWS
+		//For non Windows builds, try to set the log's parent folder to ~/Library/Logs
+		char *homepath = getenv("HOME");
+		if(homepath)
+		{	//If the HOME environment variable was read
+			(void) snprintf(log_filename, sizeof(log_filename) - 1, "%s/Library/Logs/eof_log.txt", homepath);
 		}
 		else
-		{	//Normal EOF process
-			(void) replace_filename(log_filename, log_filename, "eof_log.txt", sizeof(log_filename));
-
-			#ifndef ALLEGRO_WINDOWS
-			//For non Windows builds, try to set the log's parent folder to ~/Library/Logs
-			char *homepath = getenv("HOME");
-			if(homepath)
-			{	//If the HOME environment variable was read
-				(void) snprintf(log_filename, sizeof(log_filename) - 1, "%s/Library/Logs/eof_log.txt", homepath);
+		{	//Otherwise try one other method to identify the user's home folder
+			struct passwd *pwd = getpwuid(getuid());
+			if(pwd)
+			{
+				(void) snprintf(log_filename, sizeof(log_filename) - 1, "%s/Library/Logs/eof_log.txt", pwd->pw_dir);
 			}
-			else
-			{	//Otherwise try one other method to identify the user's home folder
-				struct passwd *pwd = getpwuid(getuid());
-				if(pwd)
-				{
-					(void) snprintf(log_filename, sizeof(log_filename) - 1, "%s/Library/Logs/eof_log.txt", pwd->pw_dir);
-				}
-			}
-			#endif
 		}
+		#endif
 		eof_log_fp = fopen(log_filename, "w");
 
 		if(eof_log_fp == NULL)

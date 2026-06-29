@@ -2558,7 +2558,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						}
 					break;
 
-					case 10:	//SP deploy bitmasks
+					case 10:	//SP deploy bitmasks (DEPRECATED)
 						if(custom_data_size < 5)
 						{	//This data block is expected to be at least 5 bytes long
 							char *error = "Error:  Invalid custom data block size (SP deploy bitmasks).  Aborting";
@@ -2567,12 +2567,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
-						{	//Ensure this logic only runs for a legacy track
-							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
-							{	//For each note in this track
-								sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->sp_deploy = pack_getc(fp);		//Read SP deploy bitmask
-							}
+						custom_data_size -= 5;	//Subtract the size of the block ID, which was already read
+						for(ctr=0; ctr<custom_data_size; ctr++)
+						{	//For each byte in the custom data block
+							(void) pack_getc(fp);	//Read the data (ignoring it)
 						}
 					break;
 
@@ -3499,7 +3497,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_start_end_points;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_diff_count,has_sp_deploy,has_handmodechanges;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_diff_count,has_handmodechanges;
 	char has_accent, has_ghost, has_flam, has_rimshot, has_crossstick, has_bellzone, has_edgezone;	//Drum note statuses
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
@@ -4268,7 +4266,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}//Write other tracks
 
 		//Write custom track data blocks
-		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = has_sp_deploy = has_ghost = has_flam = has_rimshot = has_crossstick = has_bellzone = has_edgezone = 0;
+		fingerdefinitions = has_fingerdefinitions = has_arrangement = ignore_tuning = has_capo = has_tech_notes = has_accent = has_diff_count = has_ghost = has_flam = has_rimshot = has_crossstick = has_bellzone = has_edgezone = 0;
 		if(track_ctr && tp && (eof_track_is_pro_guitar_track(sp, track_ctr)))
 		{	//If this is a pro guitar track
 			//Count the number of notes with finger definitions
@@ -4309,15 +4307,6 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				if(eof_get_note_accent(sp, track_ctr, ctr))
 				{	//If at least one gem in the note is accented
 					has_accent = 1;
-					break;
-				}
-			}
-			//Check if any notes have SP deploy status
-			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
-			{	//For each note in the track
-				if(eof_get_note_eflags(sp, track_ctr, ctr) & EOF_NOTE_EFLAG_SP_DEPLOY)
-				{	//If at least one note has SP deploy status
-					has_sp_deploy = 1;
 					break;
 				}
 			}
@@ -4376,7 +4365,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				}
 			}
 		}
-		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent + has_diff_count + has_sp_deploy + has_ghost + has_flam + has_rimshot + has_crossstick + has_bellzone + has_edgezone;
+		track_custom_block_count = has_fingerdefinitions + has_arrangement + ignore_tuning + has_capo + has_tech_notes + has_accent + has_diff_count + has_ghost + has_flam + has_rimshot + has_crossstick + has_bellzone + has_edgezone;
 		if(track_custom_block_count)
 		{	//If writing data in a custom data block
 			(void) pack_iputl(track_custom_block_count, fp);		//Write the number of custom data blocks
@@ -4474,15 +4463,6 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
 					{	//For each note in the track
 						(void) pack_putc(eof_get_note_accent(sp, track_ctr, ctr), fp);	//Write this note's accent bitmask
-					}
-				}
-				if(has_sp_deploy)
-				{	//Write SP deploy bitmasks
-					(void) pack_iputl(sp->legacy_track[tracknum]->notes + 4, fp);	//Write the number of bytes this block will contain (SP deploy bitmask data and a 4 byte block ID)
-					(void) pack_iputl(10, fp);		//Write the sP deploy bitmask custom data block ID
-					for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
-					{	//For each note in the track
-						(void) pack_putc(sp->legacy_track[tracknum]->note[ctr]->sp_deploy, fp);	//Write this note's SP deploy bitmask
 					}
 				}
 				if(has_ghost)
@@ -6193,42 +6173,6 @@ void eof_set_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note, un
 {
 	if(track == EOF_TRACK_DANCE)
 		eof_set_note_ghost(sp, track, note, value);		//Only the dance track has roll status, other tracks store a ghost bitmask status in this variable
-}
-
-unsigned char eof_get_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note)
-{
-	unsigned long tracknum;
-
-	if((sp == NULL) || !track || (track >= sp->tracks))
-		return 0;	//Return error
-	tracknum = sp->track[track]->tracknum;
-
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
-	{
-		if(note < sp->legacy_track[tracknum]->notes)
-		{
-			return sp->legacy_track[tracknum]->note[note]->sp_deploy;
-		}
-	}
-
-	return 0;	//Return error
-}
-
-void eof_set_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value)
-{
-	unsigned long tracknum;
-
-	if((sp == NULL) || !track || (track >= sp->tracks))
-		return;
-	tracknum = sp->track[track]->tracknum;
-
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
-	{
-		if(note < sp->legacy_track[tracknum]->notes)
-		{
-			sp->legacy_track[tracknum]->note[note]->sp_deploy = value;
-		}
-	}
 }
 
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)

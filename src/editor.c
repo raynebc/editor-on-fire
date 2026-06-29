@@ -16,7 +16,6 @@
 #include "midi.h"
 #include "mix.h"
 #include "note.h"		//For EOF_LYRIC_PERCUSSION definition
-#include "pathing.h"
 #include "player.h"
 #include "rs.h"
 #include "song.h"
@@ -5324,8 +5323,6 @@ void eof_editor_logic(void)
 				eof_mix_start_helper();
 				eof_fix_window_title();
 				(void) eof_detect_difficulties(eof_song, eof_selected_track);
-				eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
-				eof_ch_sp_solution = NULL;
 			}
 		}
 	}
@@ -6938,30 +6935,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}//For each of the two phrase types (trills and tremolos)
 	}//If this track has any trill or tremolo sections
 
-	/* draw star power durations */
-	if(eof_show_ch_sp_durations && eof_ch_sp_solution)
-	{	//If the user selected to show star power durations and the solution structure was built
-		for(ctr = 0; ctr < eof_ch_sp_solution->num_deployments; ctr++)
-		{	//For each deployment in the solution
-			unsigned long notenum = eof_translate_track_diff_note_index(eof_song, eof_selected_track, eof_note_type, eof_ch_sp_solution->deployments[ctr]);	//Find the real note number for this index
-
-			if(notenum < tracksize)
-			{	//If the note was identified
-				int x1 = eof_get_note_pos(eof_song, eof_selected_track, notenum);	//The start position of the deployment
-				int x2 = eof_get_realtime_position(eof_ch_sp_solution->deployment_endings[ctr]);	//The end position of the deployment
-
-				col = makecol(0xC5, 0xD1, 0xF6);	//This is the color used to mark star power deployment on Slow Hero
-				if(!eof_ch_sp_solution->score)
-				{	//If the Clone Hero SP solution was evaluated as invalid
-					col = eof_color_yellow;	//Draw a short yellow marker instead
-					x2 = x1 + 100;
-				}
-
-				rectfill(window->screen, lpos + x1 / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 9, lpos + x2 / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 9, col);
-			}
-		}
-	}
-
 	if(window != eof_window_editor2)
 	{	//Only draw the graphs for the main piano roll
 		if(eof_display_spectrogram)
@@ -8438,8 +8411,6 @@ unsigned char eof_set_active_difficulty(unsigned char diff)
 		eof_note_type = diff;	//Make it the active difficulty
 	}
 	eof_fix_window_title();
-	eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
-	eof_ch_sp_solution = NULL;
 	return eof_note_type_max;
 }
 

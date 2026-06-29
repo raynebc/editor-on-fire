@@ -4600,7 +4600,6 @@ void eof_read_clipboard_note(PACKFILE *fp, EOF_EXTENDED_NOTE *temp_note, unsigne
 	(void) pack_fread(&temp_note->porendpos, (long)sizeof(double), fp);	//Read the percent representing the note's end position within a beat
 	temp_note->flags = pack_igetl(fp);		//Read the note's flags
 	temp_note->eflags = pack_igetl(fp);		//Read the note's extended track flags
-	temp_note->sp_deploy = pack_getc(fp);		//Read the note's SP deploy bitmask
 	temp_note->legacymask = pack_getc(fp);		//Read the note's legacy bitmask
 	(void) pack_fread(temp_note->frets, (long)sizeof(temp_note->frets), fp);	//Read the note's fret array
 	(void) pack_fread(temp_note->finger, (long)sizeof(temp_note->finger), fp);	//Read the note's finger array
@@ -4655,7 +4654,6 @@ void eof_write_clipboard_note(PACKFILE *fp, EOF_SONG *sp, unsigned long track, u
 	(void) pack_fwrite(&tfloat, (long)sizeof(double), fp);	//Write the percent representing the note's end position within a beat
 	(void) pack_iputl(eof_get_note_flags(sp, track, note), fp);		//Write the note's flags
 	(void) pack_iputl(eof_get_note_eflags(sp, track, note), fp);		//Write the extended flags
-	(void) pack_putc(eof_get_note_sp_deploy(sp, track, note), fp);	//Write the SP deploy flags
 
 	/* Write pro guitar specific data to disk */
 	if(eof_track_is_pro_guitar_track(sp, track))

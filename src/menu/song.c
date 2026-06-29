@@ -93,8 +93,6 @@ MENU eof_song_seek_menu[] =
 	{"Previous TS change", eof_menu_song_seek_previous_ts_change, NULL, 0, NULL},
 	{"Next TS change", eof_menu_song_seek_next_ts_change, NULL, 0, NULL},
 	{"Beat/&Measure\t" CTRL_NAME "+Shift+B", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
-	{"", NULL, NULL, 0, NULL},
-	{"Next CH &SP deployable note", eof_menu_song_seek_next_ch_sp_deployable_note, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -199,7 +197,6 @@ MENU eof_song_menu[] =
 	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
 	{"Spectrogra&m", NULL, eof_spectrogram_menu, 0, NULL},
 	{"Highlight non grid snapped notes", eof_menu_song_highlight_non_grid_snapped_notes, NULL, 0, NULL},
-	{"Show C&H SP durations", eof_menu_song_toggle_ch_sp_durations, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"&Catalog", NULL, eof_catalog_menu, 0, NULL},
 	{"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
@@ -479,7 +476,6 @@ void eof_prepare_song_menu(void)
 			i++;	//Check next beat
 		}
 
-		eof_song_seek_menu[23].flags = (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT) ? 0 : D_DISABLED;	//Update "Song>Seek>Next CH SP deployable note" enable status
 		eof_song_menu[4].flags = eof_display_flats ? D_SELECTED : 0;	//Update "Song>Display semitones as flat" check status
 
 		//Update Song>Catalog>Add enable status, depending on whether any notes are selected (explicitly or implicitly)
@@ -531,11 +527,11 @@ void eof_prepare_song_menu(void)
 		/* catalog */
 		if(!eof_song->catalog->entries && (eof_catalog_menu[6].flags == D_DISABLED))
 		{	//If there are no catalog entries and no notes selected (in which case Song>Catalog>Add would have been disabled earlier)
-			eof_song_menu[10].flags = D_DISABLED;	//Song>Catalog> submenu
+			eof_song_menu[9].flags = D_DISABLED;	//Song>Catalog> submenu
 		}
 		else
 		{
-			eof_song_menu[10].flags = 0;
+			eof_song_menu[9].flags = 0;
 		}
 
 		/* track */
@@ -559,21 +555,14 @@ void eof_prepare_song_menu(void)
 		}
 
 		eof_song_menu[7].flags = eof_song->tags->highlight_unsnapped_notes ? D_SELECTED : 0;	//Update "Song>Highlight non grid snapped notes" check status
-		eof_song_menu[13].flags = eof_silence_loaded ? D_DISABLED : 0;	//Update "Song>Leading silence" enable status
-		eof_song_menu[14].flags = eof_song->tags->click_drag_disabled ? D_SELECTED : 0;	//Update "Song>Disable click and drag" check status
-
-		if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-		{	//If the active track is a legacy guitar or drum track
-			eof_song_menu[8].flags = eof_show_ch_sp_durations ? D_SELECTED : 0;	//Update "Song>Show CH SP durations" check status
-		}
-		else
-			eof_song_menu[8].flags = D_DISABLED | D_HIDDEN;
+		eof_song_menu[12].flags = eof_silence_loaded ? D_DISABLED : 0;	//Update "Song>Leading silence" enable status
+		eof_song_menu[13].flags = eof_song->tags->click_drag_disabled ? D_SELECTED : 0;	//Update "Song>Disable click and drag" check status
 
 		/* enable pro guitar and rocksmith submenus */
 		if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		{	//If a pro guitar track is active
-			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[16].flags = 0;			//Song>Rocksmith> submenu
+			eof_song_menu[14].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[15].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -590,8 +579,8 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable and hide these menu items
+			eof_song_menu[14].flags = D_DISABLED | D_HIDDEN;
 			eof_song_menu[15].flags = D_DISABLED | D_HIDDEN;
-			eof_song_menu[16].flags = D_DISABLED | D_HIDDEN;
 		}
 
 		eof_song_piano_roll_menu[0].flags = eof_display_second_piano_roll ? D_SELECTED : 0;	//Update "Song>Second piano roll>Display" check status
@@ -1522,8 +1511,6 @@ int eof_menu_track_selected_track_number(unsigned long tracknum, int updatetitle
 		}
 		eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
 		eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
-		eof_destroy_sp_solution(eof_ch_sp_solution);	//Destroy the SP solution structure so it's rebuilt
-		eof_ch_sp_solution = NULL;
 	}
 	eof_set_color_set();
 	return 1;
@@ -3788,55 +3775,6 @@ int eof_menu_song_seek_beat_measure(void)
 	return 1;
 }
 
-int eof_menu_song_seek_next_ch_sp_deployable_note(void)
-{
-	eof_ch_sp_solution_wanted = 1;	//Ensure the call to eof_ch_sp_solution_rebuild() below results in the SP solution structure being built
-	eof_ch_sp_solution_rebuild();	//Rebuild the global star power solution structure if necessary
-
-	if(eof_ch_sp_solution && eof_ch_sp_solution->resulting_sp_meter)
-	{	//If the global star power solution structure is built and the star power meter array is allocated
-		unsigned long ctr, index, pos, target, tracksize;
-		double sp_meter = 0.0;
-
-		tracksize = eof_get_track_size(eof_song, eof_selected_track);
-		for(ctr = 0, index = 0, target = ULONG_MAX; ctr < tracksize; ctr++)
-		{	//For each note in the active track
-			pos = eof_get_note_pos(eof_song, eof_selected_track, ctr);
-
-			if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
-			{	//If the note is in the active difficulty
-				if(pos > eof_music_pos.value - eof_av_delay)
-				{	//If this note is after the seek position
-					if(sp_meter >= 0.50 - 0.0001)
-					{	//If the star power meter level in effect at the end of the previous note allows for star power deployment at this note
-						//Find out whether star power is already defined to be deployed by the time this note occurs (resulting_sp_meter[] tracks remaining star power level during deployment)
-						int retval;
-						unsigned long sp_start = 0;
-
-						retval = eof_pos_is_within_sp_deployment(eof_ch_sp_solution, pos, &sp_start, NULL);
-						if(!retval || (pos == sp_start))
-						{	//If star power isn't already deployed, or if it is defined to deploy at this note, it is a valid note at which to deploy
-							target = ctr;
-							break;
-						}
-					}
-				}
-				if(index < eof_ch_sp_solution->note_count)
-				{	//Bounds check
-					sp_meter = eof_ch_sp_solution->resulting_sp_meter[index];
-				}
-				index++;	//Track the number of notes in the target difficulty that have been encountered
-			}
-		}
-		if(target < tracksize)
-		{	//If a suitable note was found
-			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, target) + eof_av_delay);	//Seek to that note
-		}
-	}
-
-	return 1;
-}
-
 int eof_menu_song_disable_click_drag(void)
 {
 	if(eof_song)
@@ -5303,24 +5241,6 @@ int eof_menu_song_singly_compare_piano_rolls(void)
 int eof_menu_song_doubly_compare_piano_rolls(void)
 {
 	return eof_menu_song_compare_piano_rolls(1);
-}
-
-int eof_menu_song_toggle_ch_sp_durations(void)
-{
-	eof_show_ch_sp_durations ^= 1;	//Toggle this boolean variable
-
-	if(eof_show_ch_sp_durations)
-	{	//If it was toggled on
-		//Verify the first beat has a time signature
-		if(!eof_beat_stats_cached)
-			eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild beat statistics if necessary
-		if(!eof_song->beat[0]->has_ts)	//If the first beat marker has no time signature
-		{
-			allegro_message("The first beat marker must contain a time signature (select it and use Beat>Time Signature) before star power durations can be displayed");
-			eof_show_ch_sp_durations = 0;	//Disable this feature
-		}
-	}
-	return 1;
 }
 
 int eof_menu_song_add_floating_text_event_at_timestamp(unsigned long timestamp)

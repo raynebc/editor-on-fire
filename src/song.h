@@ -143,7 +143,6 @@
 									///Experimentally, allow tech notes to use this status to more easily define statuses on a per string basis without having to place them at different timestamps to avoid being merged by the fixup logic
 
 //The following extended flags are not specific to a track format
-#define EOF_NOTE_EFLAG_SP_DEPLOY 1073741824		//This flag specifies that star power is to be deployed at the affected note, for predicting scoring in a particular game
 #define EOF_NOTE_EFLAG_EXTENDED 2147483648UL	//The MSB will be set if an additional extended flag variable is present for the note in the project file
 												//This flag will only be used during project save/load to determine whether another flags variable is written/read
 
@@ -189,7 +188,6 @@ typedef struct
 	unsigned long flags;		//Stores various note statuses
 	unsigned long eflags;		//Stores extended note statuses
 	unsigned long tflags;		//Stores various temporary statuses
-	unsigned char sp_deploy;	//If the note's EOF_NOTE_EFLAG_SP_DEPLOY flag is set, used to track for which games the star power deployment is being predicted (ie. bit 1 for Clone Hero)
 
 } EOF_NOTE;
 
@@ -244,7 +242,6 @@ typedef struct
 	unsigned char slideend;
 	unsigned char unpitchend;
 	unsigned long phrasenum;	//The arpeggio/handshape/lyric phrase number this note is part of at the time of the copy, not necessarily at the time of paste (or 0xFFFFFFFF if not applicable)
-	unsigned char sp_deploy;	//If the note's EOF_NOTE_EFLAG_SP_DEPLOY flag is set, used to track for which games the star power deployment is being predicted (ie. bit 1 for Clone Hero)
 
 } EOF_EXTENDED_NOTE;
 
@@ -758,8 +755,6 @@ void eof_set_note_crossstick(EOF_SONG *sp, unsigned long track, unsigned long no
 void eof_set_note_bellzone(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the bell hit zone bitmask of the specified legacy note
 void eof_set_note_edgezone(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the edge hit zone bitmask of the specified legacy note
 void eof_set_note_roll(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the roll status (stored in the ghost bitmask variable) of the specified dance note (or does nothing for other tracks)
-unsigned char eof_get_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the SP deploy bitmask of the specified note, or 0 on error
-void eof_set_note_sp_deploy(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char value);	//Sets the SP deploy bitmask of the specified note
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error
 void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *name);	//Copies the string into the note's statically allocated name array, or a lyric's text array
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned char note, unsigned long pos, long length, char type, char *text);

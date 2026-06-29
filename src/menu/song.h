@@ -97,7 +97,6 @@ int eof_custom_seek_beat_measure_edit_proc(int msg, DIALOG *d, int c);
 	//If the user types the letter m, sets the "measure" radio button in eof_seek_beat_measure_dialog[]
 	//All other input is filtered through eof_verified_edit_proc()
 int eof_menu_song_seek_beat_measure(void);			//Seeks to the specified beat or measure
-int eof_menu_song_seek_next_ch_sp_deployable_note(void);	//Seeks to the next note at which the detected star power meter level is 50% or more
 int eof_menu_song_seek_catalog_entry(void);			//Seeks to the current fret catalog entry
 int eof_menu_song_seek_timestamp(void);				//Seeks to a user specified timestamp
 
@@ -272,9 +271,6 @@ int eof_menu_song_singly_compare_piano_rolls(void);
 int eof_menu_song_doubly_compare_piano_rolls(void);
 	//Calls eof_menu_song_compare_piano_rolls() comparing the secondary piano roll against the primary piano roll
 	// and then vice-versa
-
-int eof_menu_song_toggle_ch_sp_durations(void);
-	//Toggles the display of durations for defined star power deployments will render in the editor window
 
 int eof_menu_song_add_floating_text_event_at_timestamp(unsigned long timestamp);
 	//Adds a floating text event at the specified timestamp
