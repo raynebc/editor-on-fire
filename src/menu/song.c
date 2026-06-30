@@ -79,6 +79,8 @@ MENU eof_song_seek_menu[] =
 	{"&Catalog entry", eof_menu_song_seek_catalog_entry, NULL, 0, NULL},
 	{"Rewind\tR", eof_menu_song_seek_rewind, NULL, 0, NULL},
 	{"&Timestamp", eof_menu_song_seek_timestamp, NULL, 0, NULL},
+	{"&Start point", eof_menu_song_seek_start_point, NULL, 0, NULL},
+	{"&End point", eof_menu_song_seek_end_point, NULL, 0, NULL},
 	{"", NULL, NULL, 0, NULL},
 	{"Previous Screen\t" CTRL_NAME "+PGUP", eof_menu_song_seek_previous_screen, NULL, 0, NULL},
 	{"Next Screen\t" CTRL_NAME "+PGDN", eof_menu_song_seek_next_screen, NULL, 0, NULL},
@@ -345,16 +347,16 @@ void eof_prepare_song_menu(void)
 		if(eof_music_pos.value == eof_av_delay)
 		{	//If the seek position is already at the start of the chart
 			eof_song_seek_menu[2].flags = D_DISABLED;	//Seek start
-			eof_song_seek_menu[15].flags = D_DISABLED;	//Previous beat
+			eof_song_seek_menu[17].flags = D_DISABLED;	//Previous beat
 		}
 		else
 		{
 			eof_song_seek_menu[2].flags = 0;
-			eof_song_seek_menu[15].flags = 0;
+			eof_song_seek_menu[17].flags = 0;
 		}
 
 		eof_song_seek_menu[3].flags = (eof_music_pos.value >= eof_music_length - 1) ? D_DISABLED : 0;	//Update "Seek>End of audio" enable status, depending on whether the seek position is already at the end of the chart
-		eof_song_seek_menu[16].flags = (eof_music_pos.value - eof_av_delay < eof_song->beat[eof_song->beats - 1]->pos) ? 0 : D_DISABLED;	//Update "Next beat" enable status, depending on whether the seek position is before the last beat marker
+		eof_song_seek_menu[18].flags = (eof_music_pos.value - eof_av_delay < eof_song->beat[eof_song->beats - 1]->pos) ? 0 : D_DISABLED;	//Update "Next beat" enable status, depending on whether the seek position is before the last beat marker
 
 		/* Song>Catalog>Show */
 		/* Song>Catalog>Edit name */
@@ -413,19 +415,19 @@ void eof_prepare_song_menu(void)
 		eof_song_seek_note_menu[3].flags = seekn ? 0 : D_DISABLED;	//Update Song>Seek>Note>Next enable status
 		eof_song_seek_note_menu[4].flags = seekph ? 0 : D_DISABLED;	//Update "Song>Seek>Note>Previous h.l" enable status
 		eof_song_seek_note_menu[5].flags = seeknh ? 0 : D_DISABLED;	//Update "Song>Seek>Note>Next h.l" enable status
-		eof_song_seek_menu[9].flags = (eof_music_pos.value <= eof_av_delay) ? D_DISABLED : 0;	//Update "Song>Seek>Previous screen" enable status
-		eof_song_seek_menu[10].flags = (eof_music_pos.value >= eof_music_length - 1) ? D_DISABLED : 0;	//Update "Song>Seek>Next screen" enable status
+		eof_song_seek_menu[11].flags = (eof_music_pos.value <= eof_av_delay) ? D_DISABLED : 0;	//Update "Song>Seek>Previous screen" enable status
+		eof_song_seek_menu[12].flags = (eof_music_pos.value >= eof_music_length - 1) ? D_DISABLED : 0;	//Update "Song>Seek>Next screen" enable status
 
 		/* previous/next grid snap/anchor */
 		if(eof_snap_mode == EOF_SNAP_OFF)
 		{	//If grid snap is disabled
-			eof_song_seek_menu[11].flags = D_DISABLED;	//Previous grid snap
-			eof_song_seek_menu[12].flags = D_DISABLED;	//Next grid snap
+			eof_song_seek_menu[13].flags = D_DISABLED;	//Previous grid snap
+			eof_song_seek_menu[14].flags = D_DISABLED;	//Next grid snap
 		}
 		else
 		{
-			eof_song_seek_menu[11].flags = 0;			//Previous grid snap
-			eof_song_seek_menu[12].flags = 0;			//Next grid snap
+			eof_song_seek_menu[13].flags = 0;			//Previous grid snap
+			eof_song_seek_menu[14].flags = 0;			//Next grid snap
 		}
 
 		/* seek bookmark # */
@@ -446,7 +448,7 @@ void eof_prepare_song_menu(void)
 		eof_song_seek_menu[0].flags = bmcount ? 0 : D_DISABLED;	//Update Song>Seek>Bookmark menu enable status
 
 		/* Previous TS change */
-		eof_song_seek_menu[19].flags = D_DISABLED;	//Previous TS change
+		eof_song_seek_menu[21].flags = D_DISABLED;	//Previous TS change
 		i = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
 		while(eof_beat_num_valid(eof_song, i))
 		{	//For each beat at or before the current seek position
@@ -454,14 +456,18 @@ void eof_prepare_song_menu(void)
 			{	//If this beat has a time signature change
 				if(eof_song->beat[i]->pos < eof_music_pos.value - eof_av_delay)
 				{	//If this beat is before the existing seek position
-					eof_song_seek_menu[19].flags = 0;
+					eof_song_seek_menu[21].flags = 0;
 					break;	//Break from the loop
 				}
 			}
 			i--;	//Check previous beat
 		}
 
-		eof_song_seek_menu[20].flags = D_DISABLED;	//Next TS change
+		/* seek to start and end points */
+		eof_song_seek_menu[8].flags = (eof_song->tags->start_point != ULONG_MAX) ? 0: D_DISABLED;
+		eof_song_seek_menu[9].flags = (eof_song->tags->end_point != ULONG_MAX) ? 0: D_DISABLED;
+
+		eof_song_seek_menu[22].flags = D_DISABLED;	//Next TS change
 		i = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
 		while(eof_beat_num_valid(eof_song, i))
 		{	//For each beat at or before the current seek position
@@ -469,7 +475,7 @@ void eof_prepare_song_menu(void)
 			{	//If this beat has a time signature change
 				if(eof_song->beat[i]->pos > eof_music_pos.value - eof_av_delay)
 				{	//If this beat is after the existing seek position
-					eof_song_seek_menu[20].flags = 0;
+					eof_song_seek_menu[22].flags = 0;
 					break;	//Break from the loop
 				}
 			}
@@ -4006,6 +4012,22 @@ int eof_menu_song_seek_timestamp(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_menu_song_seek_start_point(void)
+{
+	if(eof_song && (eof_song->tags->start_point != ULONG_MAX))
+		eof_set_seek_position(eof_song->tags->start_point + eof_av_delay);	//If the start point is defined, seek to it
+
+	return 1;
+}
+
+int eof_menu_song_seek_end_point(void)
+{
+	if(eof_song && (eof_song->tags->end_point != ULONG_MAX))
+		eof_set_seek_position(eof_song->tags->end_point + eof_av_delay);	//If the end point is defined, seek to it
+
 	return 1;
 }
 

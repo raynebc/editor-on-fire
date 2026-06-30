@@ -99,6 +99,8 @@ int eof_custom_seek_beat_measure_edit_proc(int msg, DIALOG *d, int c);
 int eof_menu_song_seek_beat_measure(void);			//Seeks to the specified beat or measure
 int eof_menu_song_seek_catalog_entry(void);			//Seeks to the current fret catalog entry
 int eof_menu_song_seek_timestamp(void);				//Seeks to a user specified timestamp
+int eof_menu_song_seek_start_point(void);				//Seeks to the start point, if defined
+int eof_menu_song_seek_end_point(void);				//Seeks to the end point, if defined
 
 int eof_menu_song_file_info(void);
 int eof_menu_song_ini_settings(void);

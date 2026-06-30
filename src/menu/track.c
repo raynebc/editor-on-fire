@@ -4085,11 +4085,16 @@ int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 		eof_clear_input();
 		if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
 		{	//User clicked OK
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			if(eof_etext[0] != '\0')
 			{	//If a tone key name is specified
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				(void) ustrzcpy(tp->tonechange[ctr].name, sizeof(tp->tonechange[0].name), eof_etext);	//Update the tone name string
 				tp->tonechange[ctr].name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
+			}
+			else
+			{	//If the user left the input box empty
+				eof_track_pro_guitar_delete_tone_change(tp, ctr);
+				eof_track_pro_guitar_sort_tone_changes(tp);	//Re-sort the remaining tone changes
 			}
 		}
 		return 1;
@@ -4393,15 +4398,23 @@ int eof_track_rs_tone_changes_edit(DIALOG * d)
 	eof_clear_input();
 	if(eof_popup_dialog(eof_track_rs_tone_change_add_dialog, 2) == 6)
 	{	//User clicked OK
+		if(!eof_track_rs_tone_changes_dialog_undo_made)
+		{	//If an undo state hasn't been made yet since launching this dialog
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_track_rs_tone_changes_dialog_undo_made = 1;
+		}
 		if(eof_etext[0] != '\0')
 		{	//If a tone key name is specified
-			if(!eof_track_rs_tone_changes_dialog_undo_made)
-			{	//If an undo state hasn't been made yet since launching this dialog
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				eof_track_rs_tone_changes_dialog_undo_made = 1;
-			}
 			(void) ustrzcpy(ptr->name, sizeof(ptr->name), eof_etext);	//Update the tone name string
 			ptr->name[EOF_SECTION_NAME_LENGTH] = '\0';	//Guarantee NULL termination
+		}
+		else
+		{	//If the user left the input box empty
+			eof_track_pro_guitar_delete_tone_change(tp, eof_track_rs_tone_changes_dialog[1].d1);
+			if(((unsigned long)eof_track_rs_tone_changes_dialog[1].d1 >= tp->tonechanges) && (tp->tonechanges > 0))
+			{	//If the last list item was deleted and others remain
+				eof_track_rs_tone_changes_dialog[1].d1--;	//Select the one before the one that was deleted, or the last message, whichever one remains
+			}
 		}
 	}
 

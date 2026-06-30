@@ -197,7 +197,7 @@ int eof_add_silence(char * oggfn, unsigned long ms)
 	/* back up original file */
 	(void) snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
-	{
+	{	//If a backup file for the chart audio doesn't already exist
 		(void) eof_copy_file(oggfn, backupfn);
 	}
 	if(!exists(backupfn))

@@ -1,4 +1,5 @@
 #include "beat.h"
+#include "dialog.h"
 #include "ir.h"
 #include "main.h"
 #include "silence.h"
@@ -431,6 +432,35 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 
 		pack_fclose(fp);
 	}//JSON file was opened for writing
+
+	//Compress the exported files as needed by Smash Drums
+	#ifdef ALLEGRO_WINDOWS
+		if(eof_check_string(sp->tags->artist) && eof_check_string(sp->tags->title))
+		{	//If the artist name and song title are defined
+			(void) replace_filename(eof_etext2, eof_temp_filename, "", (int) sizeof(eof_etext2));										//Build the path to the export folder
+			eof_etext2[strlen(eof_etext2) - 1] = '\0';																			//Remove the final folder separator from this path
+			(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%s - %s.zip", sp->tags->artist, sp->tags->title);							//Build the relative name for the output zip file
+			(void) replace_filename(eof_temp_filename2, eof_temp_filename, eof_etext, (int) sizeof(eof_temp_filename2));				//Build the full path for the output zip file
+			(void) snprintf(temp_string, sizeof(temp_string) - 1, "tar -cavf \"%s\" -C \"%s\" meta.json audio.ogg", eof_temp_filename2, eof_etext2);	//Buld the beginning of the tar command, use -C to have it add files with just their relative path instead of recreating the full folder structure
+
+			(void) replace_filename(eof_temp_filename, eof_temp_filename, "cover.png", (int) sizeof(eof_temp_filename));
+			if(exists(eof_temp_filename))
+			{	//If album art was exported
+				eof_strncat(temp_string, " cover.png", sizeof(temp_string));		//Append the album art file name
+			}
+
+			(void) replace_filename(eof_temp_filename, eof_temp_filename, "preview.wav", (int) sizeof(eof_temp_filename));
+			if(exists(eof_temp_filename))
+			{	//If preview audio was exported
+				eof_strncat(temp_string, " preview.wav", sizeof(temp_string));	//Append the preview audio file name
+			}
+		}
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCalling tar as follows:  %s", temp_string);
+		eof_log(eof_log_string, 1);
+		(void) eof_system(temp_string);	//Call the command
+		(void) replace_extension(eof_temp_filename, eof_temp_filename2, "indies", (int) sizeof(eof_temp_filename));		//Build the path to rename the .zip file to .indies
+		(void) rename(eof_temp_filename2, eof_temp_filename);	//Rename the zip file
+	#endif
 
 	eof_log("eof_export_smashdrums() completed", 1);
 	return 1;		//Return success

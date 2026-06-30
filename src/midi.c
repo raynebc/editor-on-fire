@@ -1389,29 +1389,29 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					if(crossstick)
 					{	//If any gems of this note are marked with lane-specific cross stick status
 						eof_log("\t\tWriting lane specific cross stick marker", 2);
-						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 20);	//Write lane specific cross stick phrase markers
+						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, crossstick, type, 20);	//Write lane specific cross stick phrase markers
 					}
 					if(bellzone)
 					{	//If any gems of this note are marked with lane-specific bell zone hit status
 						eof_log("\t\tWriting lane specific bell zone marker", 2);
-						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 21);	//Write lane specific bell zone hit phrase markers
+						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, bellzone, type, 21);	//Write lane specific bell zone hit phrase markers
 					}
 					if(edgezone)
 					{	//If any gems of this note are marked with lane-specific edge zone hit status
 						eof_log("\t\tWriting lane specific edge zone marker", 2);
-						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 22);	//Write lane specific edge zone hit phrase markers
+						eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, edgezone, type, 22);	//Write lane specific edge zone hit phrase markers
 					}
 					if(flam)
 					{	//If any gems of this note are marked with lane-specific flam status
 						if(!(noteflags & EOF_DRUM_NOTE_FLAG_FLAT_FLAM))
 						{	//Normal flam
 							eof_log("\t\tWriting lane specific normal flam marker", 2);
-							eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 23);	//Write lane specific flam phrase markers
+							eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, flam, type, 23);	//Write lane specific flam phrase markers
 						}
 						else
 						{	//Flat flam
 							eof_log("\t\tWriting lane specific flat flam marker", 2);
-							eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, rimshot, type, 24);	//Write lane specific flam phrase markers
+							eof_add_phase_shift_lane_specific_sysex_phrase(deltapos, deltapos + deltalength, flam, type, 24);	//Write lane specific flam phrase markers
 						}
 					}
 				}
