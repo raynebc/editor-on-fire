@@ -8919,7 +8919,7 @@ EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, uns
 	return NULL;	//Return error
 }
 
-void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir)
+void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir, int halve)
 {
 	unsigned long i, undo_made = 0, adjustment, notepos, notelength, newnotelength, newnotelength2;
 	long next_note;
@@ -8994,6 +8994,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 			unsigned long targetpos = notepos + notelength;		//The position from which the end of the note's tail will reposition
 			unsigned long beat = eof_get_beat(sp, targetpos);	//Get the beat in which the tail currently ends
 			unsigned long newtailendpos = targetpos;
+			unsigned long closestpos;
 
 			if(eof_beat_num_valid(sp, beat) && (beat > 0) && (beat < sp->beats))
 			{	//If the beat containing the tail's current end position was located, add a redundant bounds check to avoid a false positive with Coverity
@@ -9004,10 +9005,21 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 			}
 			eof_snap_logic(&eof_tail_snap, targetpos);	//Find grid snap positions before and after the tail's current ending position
 			if(dir < 0)
-			{	//If the tail is being shortened by one grid snap
-				if(eof_tail_snap.previous_snap > notepos)
-				{	//Only allow the tail to shorten to end at the previous grid snap if it will still end after the note begins
+			{	//If the tail is being shortened by grid snap
+				if(halve)
+				{	//If the tail is being shortened by half of a grid snap
+					newtailendpos = targetpos - (eof_tail_snap.snap_length / 2.0) + 0.5;	//Find the position one half grid snap before the current position
+				}
+				else
+				{	//The tail is being shortened by a full grid snap
 					newtailendpos = eof_tail_snap.previous_snap;
+				}
+				if(newtailendpos > notepos)
+				{	//Only allow the tail to shorten to end at the previous grid snap if it will still end after the note begins
+					if(!halve)
+					{	//This only applies to adjusting by a full grid snap
+						newtailendpos = eof_tail_snap.previous_snap;
+					}
 				}
 				else
 				{	//Otherwise enforce the minimum length of 1ms
@@ -9015,17 +9027,24 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 				}
 			}
 			else
-			{	//If the tail is being lengthened by one grid snap
-				if(eof_tail_snap.next_snap > notepos + notelength)
-				{	//If the next grid snap position was able to be determined
-					if(next_note > 0)
-					{	//Check if the increase would be canceled due to being unable to overlap the next note
-						if((notepos + notelength + eof_min_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
-						{	//If this note cannot increase its length because it would overlap the next (taking the minimum note distance into account) and the note isn't "crazy"
-							continue;	//Skip adjusting this note
+			{	//If the tail is being lengthened by grid snap
+				if(halve)
+				{	//If the tail is being lengtehened by half of a grid snap
+					newtailendpos = targetpos + (eof_tail_snap.snap_length / 2.0) + 0.5;	//Find the position one half grid snap after the current position
+				}
+				else
+				{	//The tail is being lengthened by a full grid snap
+					if(eof_tail_snap.next_snap > notepos + notelength)
+					{	//If the next grid snap position was able to be determined
+						if(next_note > 0)
+						{	//Check if the increase would be canceled due to being unable to overlap the next note
+							if((notepos + notelength + eof_min_note_distance >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
+							{	//If this note cannot increase its length because it would overlap the next (taking the minimum note distance into account) and the note isn't "crazy"
+								continue;	//Skip adjusting this note
+							}
 						}
+						newtailendpos = eof_tail_snap.next_snap;
 					}
-					newtailendpos = eof_tail_snap.next_snap;
 				}
 			}
 			if(newtailendpos != notepos + notelength)
@@ -9040,8 +9059,18 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 			newnotelength = eof_get_note_length(sp, eof_selected_track, i);
 			if(newnotelength > 1)
 			{	//If the note's length, after the adjustment, is over 1
-				eof_snap_logic(&eof_tail_snap, notepos + newnotelength);
-				eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.pos);	//Clean up the grid snap increase/decrease by re-snapping the tail
+				if(!halve)
+				{	//If the note length was adjusted by a full grid snap, resnap based on current grid snap value
+					eof_snap_logic(&eof_tail_snap, notepos + newnotelength);
+					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.pos);	//Clean up the grid snap increase/decrease by re-snapping the tail
+				}
+				else
+				{	//The note was adjusted by half a grid snap, resnap based on the nearest grid snap position
+					if(!eof_is_any_beat_interval_position(newtailendpos, NULL, NULL, NULL, &closestpos, eof_prefer_midi_friendly_grid_snapping) && (closestpos != ULONG_MAX))
+					{	//If that position isn't a grid snap, but the closest grid snap of any interval was found
+						eof_note_set_tail_pos(sp, eof_selected_track, i, closestpos);
+					}
+				}
 
 				newnotelength2 = eof_get_note_length(sp, eof_selected_track, i);
 				if((dir > 0) && (notelength == newnotelength2))

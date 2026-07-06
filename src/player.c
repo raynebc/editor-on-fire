@@ -12,6 +12,7 @@
 void eof_music_play(char resumelastspeed)
 {
 	static int speed = 1000;		//1000 is 100% playback speed
+	static unsigned long counter = 0;
 	unsigned long i;
 	int ret, newspeed = 1000;
 	int ctrl_held = 0;
@@ -132,6 +133,10 @@ void eof_music_play(char resumelastspeed)
 			}
 		}while(held);
 
+		counter++;
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting chart playback #%lu at %ldms", counter, eof_music_pos.value - eof_av_delay);
+		eof_log(eof_log_string, 1);
+
 		eof_log("\t\tCalling OGG playback function", 3);
 		if(speed == 1000)
 		{	//100% speed playback
@@ -182,6 +187,8 @@ void eof_music_play(char resumelastspeed)
 
 void eof_catalog_play(void)
 {
+	static unsigned long counter = 0;
+
 	eof_log("eof_catalog_play() entered", 1);
 
 	if((eof_song->catalog->entries > 0) && !eof_silence_loaded)
@@ -213,6 +220,10 @@ void eof_catalog_play(void)
 			eof_music_catalog_playback = 1;
 			if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, pan, 1000 + eof_audio_fine_tune, 0) == ALOGG_OK)
 			{
+				counter++;
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting catalog playback #%lu at %ldms", counter, eof_music_pos.value - eof_av_delay);
+				eof_log(eof_log_string, 1);
+
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
 				eof_mix_find_claps();
 				eof_mix_start(1000);

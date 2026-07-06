@@ -2816,8 +2816,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			if(!KEY_EITHER_CTRL || (KEY_EITHER_CTRL && KEY_EITHER_SHIFT))
 			{	//If CTRL is not held or if both CTRL and SHIFT are held
 				unsigned long reductionvalue = 100;	//Default decrease length when grid snap is disabled
+				int halve = 0;	//By default, shorten by a full grid snap
+
 				if(eof_snap_mode == EOF_SNAP_OFF)
-				{
+				{	//Adjust based on milliseconds
 					if(KEY_EITHER_SHIFT)
 					{
 						eof_shift_used = 1;	//Track that the SHIFT key was used
@@ -2832,10 +2834,14 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					}
 				}
 				else
-				{
+				{	//Adjust based on grid snap
 					reductionvalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+					if(KEY_EITHER_SHIFT)
+					{
+						halve = 1;	//Lengthen by half a grid snap
+					}
 				}
-				eof_adjust_note_length(eof_song, eof_selected_track, reductionvalue, -1);	//Decrease selected notes by the appropriate length
+				eof_adjust_note_length(eof_song, eof_selected_track, reductionvalue, -1, halve);	//Decrease selected notes by the appropriate length
 				eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 			}
 			else
@@ -2876,6 +2882,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			if(!KEY_EITHER_CTRL || (KEY_EITHER_CTRL && KEY_EITHER_SHIFT))
 			{	//If CTRL is not held or if both CTRL and SHIFT are held
 				unsigned long increasevalue = 100;	//Default increase length when grid snap is disabled
+				int halve = 0;	//By default, lengthen by a full grid snap
+
 				if(eof_snap_mode == EOF_SNAP_OFF)
 				{
 					if(KEY_EITHER_SHIFT)
@@ -2894,8 +2902,12 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				else
 				{
 					increasevalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+					if(KEY_EITHER_SHIFT)
+					{
+						halve = 1;	//Lengthen by half a grid snap
+					}
 				}
-				eof_adjust_note_length(eof_song, eof_selected_track, increasevalue, 1);		//Increase selected notes by the appropriate length
+				eof_adjust_note_length(eof_song, eof_selected_track, increasevalue, 1, halve);		//Increase selected notes by the appropriate length
 				eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 			}
 			else
@@ -5219,6 +5231,7 @@ void eof_editor_logic(void)
 				else
 				{	//increase/decrease note length
 					unsigned long adjust = abs(eof_mickey_z) * 100;	//Default adjustment length when grid snap is disabled
+					int halve = 0;	//By default, lengthen by a full grid snap
 
 					if(eof_snap_mode == EOF_SNAP_OFF)
 					{
@@ -5238,15 +5251,19 @@ void eof_editor_logic(void)
 					else
 					{
 						adjust = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+						if(KEY_EITHER_SHIFT)
+						{
+							halve = 1;	//Lengthen by half a grid snap
+						}
 					}
 					if(eof_mickey_z > 0)
 					{	//Decrease note length
-						eof_adjust_note_length(eof_song, eof_selected_track, adjust, -1);	//Decrease selected notes by the appropriate length
+						eof_adjust_note_length(eof_song, eof_selected_track, adjust, -1, halve);	//Decrease selected notes by the appropriate length
 						eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 					}
 					else if(eof_mickey_z < 0)
 					{	//Increase note length
-						eof_adjust_note_length(eof_song, eof_selected_track, adjust, 1);	//Increase selected notes by the appropriate length
+						eof_adjust_note_length(eof_song, eof_selected_track, adjust, 1, halve);	//Increase selected notes by the appropriate length
 						eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 					}
 				}

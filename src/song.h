@@ -119,7 +119,6 @@
 #define EOF_NOTE_TFLAG_SPLIT_CHORD 131072	//This flag will represent a note that was created during RS2 export due to a chord that was broken up into single notes by effect of the linknext or split statuses
 #define EOF_NOTE_TFLAG_SOLO_NOTE   262144	//This flag will be set by eof_determine_phrase_status() if the note is in a solo section
 #define EOF_NOTE_TFLAG_GENERIC2    524288	//This flag is reserved for generic purposes
-#define EOF_NOTE_TFLAG_SP_END      524288	//	Such as marking which notes are the last in a star power phrase during star power pathing
 #define EOF_NOTE_TFLAG_SLIDE_IN	524288	//	Such as tracking which notes have a slide in from above/below status during GP import
 #define EOF_NOTE_TFLAG_GRACE      1048576	//This flag will indicate that the note was defined in an imported guitar pro file as a before the beat grace note, which can be converted to flam notes in the case of a percussion track
 #define EOF_NOTE_TFLAG_OPEN_STRUM 2097152	//This flag will indicate that the note was imported via MIDI as a Sysex marked open strum marker, which will need to have its note mask converted to discard the lane 1 gem (a limitation of this Sysex notation is that it can't denote an open chord of just a lane 1 gem)
@@ -856,10 +855,11 @@ void *eof_copy_note_simple(EOF_SONG *sp, unsigned long sourcetrack, unsigned lon
 	//Uses eof_copy_note() using the specified song structure as both the source and destination
 long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the note immediately before the specified one that is in the same difficulty, provided that the notes are sorted chronologically, or -1 if no such note exists
-void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir);
+void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir, int halve);
 	//If dir is >= 0, increases all selected notes in the active instrument difficulty by the specified amount
 	//If dir is < 0, decreases all selected notes in the active instrument difficulty by the specified amount
 	//If amount is 0, then the notes are adjusted by the current grid snap value
+	//If halve is nonzero, and amount is 0, notes are adjusted by HALF of the current grid snap value
 	//An undo state is only created if at least one note's length is altered
 long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note, char enforcegap);
 	//Determines the maximum valid length for the specified note by comparing its position to the next note that marks the threshold,
