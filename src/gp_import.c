@@ -4524,8 +4524,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 			if(!(vars.gp->track[ctr]->note[ctr2]->tflags & EOF_NOTE_TFLAG_SLIDE_IN))		//If this note wasn't marked as an unpitched slide in during import
 				continue;	//Skip the note
-			if(vars.gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)	//If this note was already linked to a tie note that follows it
-				continue;	//Skip the note
+///This condition would be met if it was a slide in from above/below note that is followed by a tied note
+///			if(vars.gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)	//If this note was already linked to a tie note that follows it
+///				continue;	//Skip the note
 
 			nnp = eof_pro_guitar_track_add_note(vars.gp->track[ctr]);		//Add a new note to the current track
 			if(nnp)
