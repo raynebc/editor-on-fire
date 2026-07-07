@@ -5934,7 +5934,8 @@ int eof_gp_import_guitar_track(int importvoice)
 		eof_track_sort_notes(eof_song, eof_selected_track);	//Sort notes so tech notes display with the correct status
 	}//Only perform this action if a pro guitar/bass track is active
 
-	eof_log("\t\tImport complete", 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tImport complete.  %lu guitar/bass notes created", eof_get_track_size(eof_song, eof_selected_track));
+	eof_log(eof_log_string, 1);
 	return D_CLOSE;
 }
 
@@ -5943,7 +5944,7 @@ int eof_gp_import_track(DIALOG * d)
 	unsigned long ctr, selected;
 	int voicespresent = 0, importvoice = 0, retval = 0;
 
-	if(!d || (eof_parsed_gp_file->numtracks > INT_MAX) || (d->d1 >= (int)eof_parsed_gp_file->numtracks))
+	if((eof_parsed_gp_file->numtracks > INT_MAX) || (eof_gp_import_dialog[1].d1 >= (int)eof_parsed_gp_file->numtracks))
 		return 0;
 
 	selected = eof_gp_import_dialog[1].d1;
@@ -6081,20 +6082,29 @@ int eof_gp_import_common(const char *fn)
 			eof_sort_events(eof_song);
 		}
 
-//Launch the dialog to allow the user to import a track
-		eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
-		eof_conditionally_center_dialog(eof_gp_import_dialog);
-		if(eof_popup_dialog(eof_gp_import_dialog, 0) == 3)
-		{	//If the user canceled the import instead of selecting a track
-			if(gp_import_undo_made)
-			{	//If the project had been modified by the import process
-				eof_menu_edit_undo();		//Undo the modification
-				gp_import_undo_made = 0;	//And track that no modifications remain from the import
-			}
+//Choose which track to import
+		if(eof_parsed_gp_file->numtracks == 1)
+		{	//If the chosen Guitar Pro file has only one track, automatically select it for import
+			eof_log("\tAutomatically selecting the only track in the Guitar Pro file for import", 1);
+			eof_gp_import_dialog[1].d1 = 0;	//Select what would be the first track in the dialog list
+			eof_gp_import_track(&eof_gp_import_dialog[1]);	//Call the import logic for that track
 		}
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		eof_show_mouse(NULL);
+		else
+		{	//Otherwise launch the dialog to allow the user to select a track to import
+			eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
+			eof_conditionally_center_dialog(eof_gp_import_dialog);
+			if(eof_popup_dialog(eof_gp_import_dialog, 0) == 3)
+			{	//If the user canceled the import instead of selecting a track
+				if(gp_import_undo_made)
+				{	//If the project had been modified by the import process
+					eof_menu_edit_undo();		//Undo the modification
+					gp_import_undo_made = 0;	//And track that no modifications remain from the import
+				}
+			}
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_show_mouse(NULL);
+		}
 
 //Check for dislike tech notes at the same position and apply disjointed status to ensure they are not merged by fixup logic
 		if(gp_import_undo_made)
@@ -6169,21 +6179,20 @@ int eof_gp_import_common(const char *fn)
 		return 1;	//Return failure
 	}
 
-	if(!eof_music_length)
-	{	//If eof_truncate_chart() is run before audio is loaded, eof_music_length will be 0 and imported beat timings will be lost as beats are dropped from an empty project
-		eof_log("Skipping beat cleanup while no audio is loaded, to avoid losing tempo mapping", 1);
-	}
-	else
-	{
-		eof_log("Cleaning up beats", 1);
-		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-	}
+	eof_log("Cleaning up beats", 1);
+	eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 	eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+
 	eof_log("Cleaning up imported notes", 1);
-	eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark notes that overlap others as crazy, if they don't begin at the same timestamp (ie. should become a normal chord)
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%lu guitar/bass notes exist before cleanup", eof_get_track_size(eof_song, eof_selected_track));
+	eof_log(eof_log_string, 2);
+	eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);		//Mark notes that overlap others as crazy, if they don't begin at the same timestamp (ie. should become a normal chord)
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic to clean up the track
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic again to ensure that notes that were combined into chords (on the previous call) during a multi-voice import truncate as appropriate
 	(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%lu guitar/bass notes exist after cleanup", eof_get_track_size(eof_song, eof_selected_track));
+	eof_log(eof_log_string, 2);
 
 	return 0;	//Return success
 }
@@ -6219,6 +6228,11 @@ int eof_menu_file_gp_import(void)
 	else
 	{	//Otherwise start at the project's path
 		initial = eof_last_eof_path;
+		if(eof_imports_recall_last_path)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tCouldn't find last Guitar Pro import path \"%s\", reverting to default", eof_last_gp_path);
+			eof_log(eof_log_string, 1);
+		}
 	}
 	returnedfn = ncd_file_select(0, initial, "Import Guitar Pro", eof_filter_gp_files);
 	eof_clear_input();

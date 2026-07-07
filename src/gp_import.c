@@ -1777,7 +1777,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	struct eof_guitar_pro_struct *retval;
 	unsigned long existing_time_signature_count;	//Used to determine whether the active project has any time signatures to potentially preserve, so as to prompt whether to overwrite them during import
 
-	eof_log("\tImporting Guitar Pro file", 1);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tImporting Guitar Pro file \"%s\"", fn);
+	eof_log(eof_log_string, 1);
 	eof_log("eof_load_gp() entered", 1);
 
 	if(!fn ||  !eof_song)
@@ -1927,7 +1928,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					vars.sync_points = malloc(sizeof(struct eof_gpa_sync_point) * raw_num_sync_points);
 					if(!vars.sync_points)
 					{
-						eof_log("\t\tError allocating memory (2).  Aborting", 1);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError allocating memory (2) for %lu sync points.  Aborting", raw_num_sync_points);
+						eof_log(eof_log_string, 1);
 						error = 1;
 					}
 					else
@@ -1937,8 +1939,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 
 				//Store sync points into array
-				for(ctr = 0; ctr < raw_num_sync_points; ctr++)
-				{	//For each expected sync point
+				for(ctr = 0; (ctr < raw_num_sync_points) && !error; ctr++)
+				{	//For each expected sync point, unless an error has been encountered
 					if(!eof_get_next_gpa_sync_point(&ptr, &temp_sync_point))
 					{	//If the sync point was not read
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError parsing sync point #%lu.  Aborting", ctr);
@@ -1999,6 +2001,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(buffer2);
 			return NULL;
 		}
+		eof_log("\t\tGo PlayAlong parse complete", 1);
 	}//If the input file was determined to be an XML file
 	free(buffer2);
 
@@ -5644,7 +5647,6 @@ void eof_apply_gpa_sync_points(struct eof_guitar_pro_struct *gp, struct eof_gpa_
 	eof_song->tags->ogg[0].midi_offset = eof_song->beat[0]->pos;
 	eof_song->tags->accurate_ts = 1;	//Enable the accurate TS option, since comparable logic was used to calculate sync point positions
 	eof_calculate_tempo_map(eof_song);	//Update the tempo changes of the beats to reflect the millisecond just applied, update anchor status of all beats
-	free(sync_points);
 	free(num);
 	free(den);
 	eof_log("Sync points applied", 1);
