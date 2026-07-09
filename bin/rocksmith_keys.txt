@@ -1,4 +1,5 @@
 Mouse scroll wheel = Adjust sustain length || Adjust duration length (Part_Vocals)
+Shift + scroll wheel = Adjust sustain length by half of current grid snap
 Left click = Select note || Select lyric (Part_Vocals)
 Right click = Add/remove note || Add/remove lyric (Part_Vocals) (except Rex Mundi input mode)
 Middle click = Open edit pro guitar note box || Edit lyric (Part_Vocals)
@@ -54,6 +55,8 @@ Ctrl + Shift + Page Up/ Down = Move to next/ previous grid snap line
 Alt + Page Up/ Down = Move to next/ previous anchor
 
 Shift + F11 = toggle 2D pane display (chord names/tone names/FHPs/Sections & Phrases)
++/- (Numpad) = Zoom in/out
+ALT + ./, = Zoom in/out
 
 Ctrl + numpad 0-9 = Set bookmark
 Numpad 0-9 = Go to placed bookmark

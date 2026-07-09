@@ -3090,6 +3090,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* toggle harmonic (CTRL+H in a pro guitar track) */
 	/* toggle pinch harmonic (SHIFT+H in a pro guitar track) */
 	/* mark handshape phrase (CTRL+SHIFT+H in a pro guitar track) */
+	/* toggle high density (CTRL+ALT+H in a pro guitar track) */
 		if((eof_key_char == 'h') && !KEY_EITHER_ALT)
 		{
 			if(KEY_EITHER_CTRL)
@@ -3127,6 +3128,14 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 			}
 			eof_use_key();
+		}
+		else
+		{
+			if(KEY_EITHER_CTRL && KEY_EITHER_ALT)
+			{	//CTRL and ALT are held
+				(void) eof_menu_note_toggle_rs_high_density();
+				eof_use_key();
+			}
 		}
 
 	/* toggle unpitched slide (CTRL+U in a pro guitar track) */

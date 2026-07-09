@@ -257,6 +257,8 @@ int eof_menu_note_remove_linknext(void);		//Removes the linknext status of all s
 int eof_menu_note_toggle_linknext(void);		//Toggles the linknext status of all selected pro guitar notes
 int eof_menu_note_remove_rs_fingerless(void);	//Removes the fingerless status of all selected pro guitar notes
 int eof_menu_note_toggle_rs_fingerless(void);	//Toggles the fingerless status of all selected pro guitar notes
+int eof_menu_note_remove_rs_high_density(void);	//Removes the high density status of all selected pro guitar notes
+int eof_menu_note_toggle_rs_high_density(void);	//Toggles the high density status of all selected pro guitar notes
 int eof_menu_note_highlight_on(void);			//Applies highlighting to all selected notes
 int eof_menu_note_highlight_off(void);			//Removes highlighting from all selected notes
 int eof_pro_guitar_note_slide_end_fret(char undo);

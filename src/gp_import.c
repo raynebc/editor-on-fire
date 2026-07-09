@@ -4109,13 +4109,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tTie note:  Note starting at %lums lengthened from %ldms to %ldms", tp->note[ctr4 - 1]->pos, oldlength, tp->note[ctr4 - 1]->length);
 										eof_log(eof_log_string, 1);
 #endif
-										break;
+										convertedtie &= ~tp->note[ctr4 - 1]->note;	//Clear these strings from the tie note since they've been applied
+										if(!convertedtie)
+											break;		//If there are no more strings in the tie note to attach to previous notes, stop processing this tie note
 									}
 								}
 
 								definedstrings &= ~usedtie;
 								usedstrings &= ~usedtie;	//Clear the bits used to indicate the tie notes' strings as being played, since overlapping guitar notes isn't supported in Rock Band or Rocksmith
-															//This line had to be changed to not run when a tie note creates a new note, because the note bitmask needs to be intact in that condition
+														//This line had to be changed to not run when a tie note creates a new note, because the note bitmask needs to be intact in that condition
 							}
 							else
 							{	//Otherwise create a new note, since the tie note changes the techniques in use

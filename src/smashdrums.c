@@ -325,8 +325,15 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 			(void) pack_fputs("			\"phase\": 1,\n", fp);
 			(void) pack_fputs("			\"power\": 1,\n", fp);
 			(void) pack_fputs("			\"phaseName\": \"Intro\"\n", fp);
-			(void) pack_fputs("		}\n", fp);
 			phases_written++;	//This counts as the first phase written to file
+			if(phases_written < phase_count)
+			{	//If another phase will be written, add a comma after this phase ends
+				(void) pack_fputs("		},\n", fp);
+			}
+			else
+			{	//This is the last phase
+				(void) pack_fputs("		}\n", fp);
+			}
 		}
 
 		//Write all manually defined phases

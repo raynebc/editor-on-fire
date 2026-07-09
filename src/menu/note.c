@@ -722,6 +722,7 @@ MENU eof_note_rocksmith_toggle_menu[] =
 	{"&Ignore\t" CTRL_NAME "+Shift+I", eof_menu_note_toggle_rs_ignore, NULL, 0, NULL},
 	{"&Linknext\tShift+N", eof_menu_note_toggle_linknext, NULL, 0, NULL},
 	{"&Fingerless", eof_menu_note_toggle_rs_fingerless, NULL, 0, NULL},
+	{"High &Density\t" CTRL_NAME "+ALT+H", eof_menu_note_toggle_rs_high_density, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -735,6 +736,7 @@ MENU eof_note_rocksmith_remove_menu[] =
 	{"&Ignore", eof_menu_note_remove_rs_ignore, NULL, 0, NULL},
 	{"&Linknext", eof_menu_note_remove_linknext, NULL, 0, NULL},
 	{"&Fingerless", eof_menu_note_remove_rs_fingerless, NULL, 0, NULL},
+	{"High &Density", eof_menu_note_remove_rs_high_density, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -6528,6 +6530,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	int note_selection_updated;
 	static char dont_ask = 0;	//Is set to nonzero if the user opts to suppress the prompt regarding modifying multiple selected notes
 	EOF_PRO_GUITAR_TRACK *tp;
+	int user_prompted = 0;
 
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
@@ -6623,7 +6626,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						undo_made = 1;
 					}
 					memcpy(tp->note[i]->name, eof_note_edit_name, sizeof(eof_note_edit_name));
-					(void) eof_rs_check_chord_name(eof_song, eof_selected_track, eof_selection.current, 0);	//Check if the user included lowercase "maj" in the name
+					if(!user_prompted)
+					{	//If the user wasn't prompted about handling this condition
+						user_prompted = eof_rs_check_chord_name(eof_song, eof_selected_track, eof_selection.current, 0);	//Check if the user included lowercase "maj" in the name
+					}
 				}
 
 				for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
@@ -9282,6 +9288,7 @@ int eof_menu_note_edit_name(void)
 	char *notename = NULL, undo_made = 0, auto_apply = 0;
 	DIALOG *dialog_to_use = eof_note_name_dialog;
 	int ret;
+	int user_prompted = 0;
 
 	if(!eof_music_catalog_playback)
 	{
@@ -9366,7 +9373,10 @@ int eof_menu_note_edit_name(void)
 						undo_made = 1;
 					}
 					eof_set_note_name(eof_song, eof_selected_track, i, eof_etext);	//Update the note's name
-					(void) eof_rs_check_chord_name(eof_song, eof_selected_track, eof_selection.current, 0);	//Check if the user included lowercase "maj" in the name
+					if(!user_prompted)
+					{	//If the user wasn't prompted about handling this condition
+						user_prompted = eof_rs_check_chord_name(eof_song, eof_selected_track, eof_selection.current, 0);	//Check if the user included lowercase "maj" in the name
+					}
 				}
 			}
 		}
@@ -11036,6 +11046,16 @@ int eof_menu_note_remove_rs_fingerless(void)
 int eof_menu_note_toggle_rs_fingerless(void)
 {
 	return eof_menu_note_toggle_flag(1, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_EFLAG_FINGERLESS);
+}
+
+int eof_menu_note_remove_rs_high_density(void)
+{
+	return eof_menu_note_clear_flag(0, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_FLAG_HD);
+}
+
+int eof_menu_note_toggle_rs_high_density(void)
+{
+	return eof_menu_note_toggle_flag(0, EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_NOTE_FLAG_HD);
 }
 
 int eof_menu_note_highlight_on(void)

@@ -6281,7 +6281,7 @@ int eof_command_line_gp_import(char *fn)
 		return 1;	//Return error
 
 	//Create a new project and have user select a target pro guitar/bass track
-	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Import Guitar Pro (guitar) arrangement to:");
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "Import Guitar Pro arrangement to:");
 	if(!eof_create_new_project_select_pro_guitar())
 		return 2;	//New project couldn't be created
 

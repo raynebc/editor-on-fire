@@ -304,7 +304,12 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				break;	//Escape from the menu system so the other key shortcut handling logic can process this
 			}
 			else if(!eof_keyboard_shortcut && (eof_key_code == KEY_B) && (KEY_EITHER_CTRL))
-			{	//Allow CTRL+ALT+B to break from the menu system
+			{	//Allow CTRL+ALT+B to break from the menu system to be processed as a keyboard shortcut
+				player->mouse_obj = 0;
+				break;	//Escape from the menu system so the other key shortcut handling logic can process this
+			}
+			else if(!eof_keyboard_shortcut && (eof_key_code == KEY_H) && (KEY_EITHER_CTRL))
+			{	//Allow CTRL+ALT+H to break from the menu system to be processed as a keyboard shortcut
 				player->mouse_obj = 0;
 				break;	//Escape from the menu system so the other key shortcut handling logic can process this
 			}

@@ -122,7 +122,7 @@ int eof_rs_check_chord_name(EOF_SONG *sp, unsigned long track, unsigned long not
 	//If function is nonzero, if the note has the naming flaw the seek position is changed to the note position and the window is re-rendered
 	//  also, the user is prompted to cancel the save operation, in which case the return values are:
 	//  0 the note doesn't have this naming flaw
-	//	1 if the user declines to cancel save
+	//  1 if the user declines to cancel save
 	//  2 if the user opts to cancel save
 
 #endif

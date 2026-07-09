@@ -1106,6 +1106,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	char *tuning_strings[3] = {"Lead_Tuning=", "Rhythm_Tuning=", "Bass_Tuning="};
 	char *midi_names[3] = {"GGLead.mid", "GGRhythm.mid", "GGBass.mid"};
 	char *trackname_strings[3] = {"TrackName_Lead", "TrackName_Rhythm", "TrackName_Bass"};
+	char *preview_name = "preview.ogg";
 	char *blank_name = "";
 	char numbered_diff[10] = {0};
 	char *diff_name = blank_name;
@@ -1601,6 +1602,14 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 	}
 
 	(void) pack_fclose(fp);
+
+
+	//Write preview.ogg if it doesn't exist in the export folder and it has been created for the project
+	(void) replace_filename(temp_string, eof_song_path, preview_name, sizeof(temp_string));		//Build the path to the preview.ogg filename in the project folder
+	(void) replace_filename(eof_temp_filename, eof_temp_filename, preview_name, (int) sizeof(eof_temp_filename));	//Build the path to the preview.ogg filename to write to the export folder
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tWriting \"%s\"", eof_temp_filename);
+	eof_log(eof_log_string, 2);
+	(void) eof_conditionally_copy_file(temp_string, eof_temp_filename);	//Copy preview.ogg there if a file of the same size doesn't already exist
 
 	return 1;	//Return success
 }

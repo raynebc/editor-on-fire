@@ -156,6 +156,9 @@ Note and Beat Editing:
     Mouse Wheel:
 
         Move up and down to lengthen or shorten the selected note
+
+        Holding Shift while scrolling the mouse wheel changes the note length by HALF
+        of the current grid snap value.
     
         You can also press the '[]' keys to do the same
 
