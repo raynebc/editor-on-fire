@@ -1316,7 +1316,7 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 	//Returns 1 if the fingering is explicitly defined and does not conflict with any arpeggio/handshape or FHP in effect at the note's start position
 	//Returns 0 if no fingering can be defined or derived
 	//Returns -1 if the note conflicts with the active arpeggio/handshape (ie. has defined fingering that contradicts the base chord's fingering for the string, or has no defined fingering but has a fret that contradicts the base chord's fret for the string)
-	//Returns -2 if the note conflicts with the active FHP (ie. has defined fingering that contradicts the active FHP by going below the FHP)
+	//Returns -2 if the note conflicts with the active FHP (ie. has defined fingering that contradicts the active FHP by going below the FHP or defines use of the index finger at a fret higher than the FHP)
 	//Returns -3 if the note is supposed to be played open but has a defined fingering
 	//The order of priority for the positive return values is 1, 2 and lastly 3 (ie. using an arpeggio's defined fingering is preferred over using a fret hand position)
 

@@ -776,6 +776,7 @@ int eof_menu_file_load(void)
 			eof_log("\tCouldn't load OGG, trying guitar.ogg", 1);
 			/* upon fail, fall back to "guitar.ogg" */
 			(void) append_filename(temp_filename, eof_song_path, "guitar.ogg", sizeof(temp_filename));
+			ogg_profile_name = eof_song->tags->ogg[0].filename;	//Store the pointer to the OGG profile filename to be updated by eof_load_ogg()
 			if(!eof_load_ogg(temp_filename, 2))	//If user does not provide audio, fail over to using silent audio
 			{
 				eof_log("\tCouldn't load guitar.ogg, continuing with no audio", 1);

@@ -534,7 +534,9 @@ int eof_validate_beatable_file(char *fn)
 	dword = fp_pos;	//Back up this value before reading the VLV
 	length = eof_pack_read_vlv(fp, &fp_pos);	//Read song ID string length
 	str = NULL;
-	if(length != ULONG_MAX)
+	if(length == ULONG_MAX)
+		error = 1;
+	else
 	{
 		str = (char *) malloc(length + 1);
 		if(!str)
@@ -557,18 +559,20 @@ int eof_validate_beatable_file(char *fn)
 		}
 		if(str)
 			free(str);
-		if(error)
-		{
-			(void) pack_fclose(fp);
-			return 0;	//Return failure
-		}
+	}
+	if(error)
+	{
+		(void) pack_fclose(fp);
+		return 0;	//Return failure
 	}
 	fp_pos += length;
 
 	dword = fp_pos;	//Back up this value before reading the VLV
 	length = eof_pack_read_vlv(fp, &fp_pos);	//Read song title string length
 	str = NULL;
-	if(length != ULONG_MAX)
+	if(length == ULONG_MAX)
+		error = 1;
+	else
 	{
 		str = (char *) malloc(length + 1);
 		if(!str)
@@ -591,18 +595,20 @@ int eof_validate_beatable_file(char *fn)
 		}
 		if(str)
 			free(str);
-		if(error)
-		{
-			(void) pack_fclose(fp);
-			return 0;	//Return failure
-		}
+	}
+	if(error)
+	{
+		(void) pack_fclose(fp);
+		return 0;	//Return failure
 	}
 	fp_pos += length;
 
 	dword = fp_pos;	//Back up this value before reading the VLV
 	length = eof_pack_read_vlv(fp, &fp_pos);	//Read artist name string length
 	str = NULL;
-	if(length != ULONG_MAX)
+	if(length == ULONG_MAX)
+		error = 1;
+	else
 	{
 		str = (char *) malloc(length + 1);
 		if(!str)
@@ -625,11 +631,11 @@ int eof_validate_beatable_file(char *fn)
 		}
 		if(str)
 			free(str);
-		if(error)
-		{
-			(void) pack_fclose(fp);
-			return 0;	//Return failure
-		}
+	}
+	if(error)
+	{
+		(void) pack_fclose(fp);
+		return 0;	//Return failure
 	}
 	fp_pos += length;
 
@@ -650,7 +656,9 @@ int eof_validate_beatable_file(char *fn)
 		dword = fp_pos;	//Back up this value before reading the VLV
 		length = eof_pack_read_vlv(fp, &fp_pos);	//Read song title string length
 		str = NULL;
-		if(length != ULONG_MAX)
+		if(length == ULONG_MAX)
+			error = 1;
+		else
 		{
 			str = (char *) malloc(length + 1);
 			if(!str)
@@ -673,11 +681,11 @@ int eof_validate_beatable_file(char *fn)
 			}
 			if(str)
 				free(str);
-			if(error)
-			{
-				(void) pack_fclose(fp);
-				return 0;	//Return failure
-			}
+		}
+		if(error)
+		{
+			(void) pack_fclose(fp);
+			return 0;	//Return failure
 		}
 		fp_pos += length;
 	}

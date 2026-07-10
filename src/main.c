@@ -2264,7 +2264,7 @@ int eof_load_ogg(char * filename, char function)
 				else
 				{
 					loaded = 1;
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoaded OGG file \"%s\" (%lums)", filename, eof_music_length);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tLoaded OGG file \"%s\" (%lums)", output, eof_music_length);
 					eof_log(eof_log_string, 1);
 					eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 					(void) ustrzcpy(eof_loaded_ogg_name, sizeof(eof_loaded_ogg_name), output);	//Store the loaded OGG filename
