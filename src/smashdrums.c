@@ -4,6 +4,7 @@
 #include "main.h"
 #include "silence.h"
 #include "song.h"
+#include "smashdrums.h"
 #include "utility.h"
 #include "foflc/Lyric_storage.h"
 
@@ -119,7 +120,7 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 	SAMPLE *preview = NULL;
 	PACKFILE *fp;
 	unsigned long ctr, notectr, lanectr, bitmask, phase_count, last_phase_match, phases_written, diffs_written = 0, gems_written;
-	unsigned char phase_number, json_diff_mapping[4] = {0xFF, 0xFF, 0xFF, 0xFF}, next_diff;
+	unsigned char phase_number, json_diff_mapping[4] = {0xFF, 0xFF, 0xFF, 0xFF}, next_diff, power;
 	char *phase_names[8] = {"INVALID", "intro", "verse", "prechorus", "CHORUS", "bridge", "solo", "outro"};
 	char *diff_names[4] = {"ChartEasy", "ChartNormal", "ChartHard", "ChartExtreme"};
 	double beat_pos;	//The calculated position of an item measured in beats (phases and notes)
@@ -346,6 +347,11 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 					phase_number = eof_text_event_is_smashdrums_phase(sp->text_event[ctr]->text);
 					if(phase_number)
 					{	//If this text event is a usable phase (section) type in Smash Drums
+						power = eof_find_smashdrums_phase_power_definition_at_pos(sp, track, sp->text_event[ctr]->pos, NULL);	//Find the defined power level of this phase, if any
+						if(power > 100)
+						{	//If no valid power level was found
+							power = 100;	//Default at 100%
+						}
 						phases_written++;	//Keep count
 						last_phase_match = sp->text_event[ctr]->pos;
 						(void) pack_fputs("		{\n", fp);
@@ -361,7 +367,8 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 						(void) pack_fputs(temp_string, fp);
 						(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"phase\": %u,\n", phase_number);
 						(void) pack_fputs(temp_string, fp);
-						(void) pack_fputs("			\"power\": 1,\n", fp);
+						(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"power\": %f,\n", (double)power / 100.0);
+						(void) pack_fputs(temp_string, fp);
 						(void) snprintf(temp_string, sizeof(temp_string) - 1, "			\"phaseName\": \"%s\"\n", phase_names[phase_number]);
 						(void) pack_fputs(temp_string, fp);
 						if(phases_written < phase_count)
@@ -471,4 +478,47 @@ int eof_export_smashdrums(EOF_SONG *sp, unsigned long track, char *destpath)
 
 	eof_log("eof_export_smashdrums() completed", 1);
 	return 1;		//Return success
+}
+
+unsigned char eof_find_smashdrums_phase_power_definition_at_pos(EOF_SONG *sp, unsigned long track, unsigned long pos, unsigned long *eventindex)
+{
+	unsigned long ctr;
+	char *str;
+	long power;
+
+	if(!sp || !track || (track > sp->tracks))
+		return 0xFF;	//Invalid parameters
+
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event in the project
+		if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == track))
+		{	//If the text event has no associated track or is specific to the track being examined
+			if(sp->text_event[ctr]->pos > pos)
+				break;	//If this and all remaining text events are after the target position, stop checking events
+
+			if(sp->text_event[ctr]->pos == pos)
+			{	//If the text event is at the specified position
+				str = strcasestr_spec(sp->text_event[ctr]->text, "power=");
+				if(str)
+				{	//If this text event is formatted as expected for a phase power definition
+					power = atol(str);	//Read the number expected to occur after the equal sign
+
+					if(!power && !eof_string_is_zero(str))
+					{	//If atol() returned zero and the string isn't meant to represent zero, it failed to be parsed
+						return 0xFF;	//Return failure
+					}
+					if(power > 100)
+						return 0xFF;	//Invalid power level
+
+					if(eventindex)
+					{	//If the calling function wanted the index of the matching event
+						*eventindex = ctr;
+					}
+					return power;
+				}
+			}
+		}
+	}
+
+	return 0xFF;	//No power definition found
 }

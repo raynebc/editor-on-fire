@@ -125,8 +125,10 @@ MENU eof_beat_tempo_map_menu[] =
 MENU eof_beat_push_offset_menu[] =
 {
 	{"&Back beat", eof_menu_beat_push_offset_back_menu, NULL, 0, NULL},
+	{"B&Ack several beats", eof_menu_beat_push_offset_back_several_beats, NULL, 0, NULL},
 	{"Back &Measure", eof_menu_beat_push_offset_back_measure, NULL, 0, NULL},
 	{"&Up beat", eof_menu_beat_push_offset_up, NULL, 0, NULL},
+	{"U&P several beats", eof_menu_beat_push_offset_up_several_beats, NULL, 0, NULL},
 	{"Up measur&E", eof_menu_beat_push_offset_up_measure, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
@@ -359,9 +361,11 @@ void eof_prepare_beat_menu(void)
 		eof_beat_tempo_map_menu[1].flags = 0;	//Tempo Map>Paste tempo map
 		eof_beat_menu[4].flags = 0;				//Push Offset>
 		eof_beat_push_offset_menu[0].flags = 0;	//Push Offset>Back Beat
-		eof_beat_push_offset_menu[1].flags = 0;	//Push Offset>Back Measure
-		eof_beat_push_offset_menu[2].flags = 0;	//Push Offset>Up Beat
-		eof_beat_push_offset_menu[3].flags = 0;	//Push Offset>Up Measure
+		eof_beat_push_offset_menu[1].flags = 0;	//Push Offset>Back several beats
+		eof_beat_push_offset_menu[2].flags = 0;	//Push Offset>Back Measure
+		eof_beat_push_offset_menu[3].flags = 0;	//Push Offset>Up Beat
+		eof_beat_push_offset_menu[4].flags = 0;	//Push Offset>Up several beats
+		eof_beat_push_offset_menu[5].flags = 0;	//Push Offset>Up Measure
 
 		eof_beat_bpm_menu[0].flags = 0;	//BPM>BPM change
 		eof_beat_bpm_menu[1].flags = 0;	//BPM>Reset BPM
@@ -399,18 +403,20 @@ void eof_prepare_beat_menu(void)
 //Beat>Push Offset>Up Beat and Back Beat validation
 		beat_length = eof_song->beat[1]->pos - eof_song->beat[0]->pos;	//The length of the first beat
 		if(eof_song->beat[0]->pos < beat_length)
-		{	//If the current MIDI delay is not at least as long as the first beat's length, disable Beat>Push Offset>Back Beat
+		{	//If the current MIDI delay is not at least as long as the first beat's length, disable Beat>Push Offset>Back Beat and Back several beats
 			eof_beat_push_offset_menu[0].flags = D_DISABLED;	//Push Offset>Back Beat
+			eof_beat_push_offset_menu[1].flags = D_DISABLED;	//Push Offset>Back several beats
 		}
 		(void) eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
 		if(eof_song->beat[0]->pos < (num * beat_length))
 		{	//If the current MIDI delay is not at least as long as one measure, disable Beat>Push Offset>Back Measure
-			eof_beat_push_offset_menu[1].flags = D_DISABLED;	//Push Offset>Back>Back Measure
+			eof_beat_push_offset_menu[2].flags = D_DISABLED;	//Push Offset>Back>Back Measure
 		}
 		if(eof_song->beats < 2)
-		{	//If the chart does not have at least two beat markers, disnable Beat>Push Offset>Up Beat and Up Measure
-			eof_beat_push_offset_menu[2].flags = D_DISABLED;	//Push Offset>Up Beat
-			eof_beat_push_offset_menu[3].flags = D_DISABLED;	//Push Offset>Up Measure
+		{	//If the chart does not have at least two beat markers, disable Beat>Push Offset>Up Beat, Up Measure and up several beats
+			eof_beat_push_offset_menu[3].flags = D_DISABLED;	//Push Offset>Up Beat
+			eof_beat_push_offset_menu[4].flags = D_DISABLED;	//Push Offset>Up several beats
+			eof_beat_push_offset_menu[5].flags = D_DISABLED;	//Push Offset>Up Measure
 		}
 //Beat>Reset offset to zero validation
 		if(eof_song->beat[0]->pos > 0)
@@ -1090,11 +1096,12 @@ int eof_menu_beat_push_offset_back_menu(void)
 	return eof_menu_beat_push_offset_back(&undo_made);
 }
 
-int eof_menu_beat_push_offset_back_measure(void)
+int eof_menu_beat_push_offset_back_number_beats(unsigned long number)
 {
-	unsigned num = 4, den = 4, ctr;
-	char undo_made = 0, error = 0;
-	unsigned long beat_length, selected_beat_backup;
+	unsigned ctr;
+	char undo_made = 0;
+	int success = 1;
+	unsigned long beat_length;
 
 	if(!eof_song)
 		return 0;
@@ -1104,31 +1111,91 @@ int eof_menu_beat_push_offset_back_measure(void)
 		return 0;	//Error condition
 
 	beat_length = eof_song->beat[1]->pos - eof_song->beat[0]->pos;	//The length of the first beat
-	(void) eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
 
-	if(eof_song->beat[0]->pos >= (num * beat_length))
-	{	//If there is enough time before the first beat to insert one measure
-		for(ctr = 0; ctr < num; ctr++)
+	if(eof_song->beat[0]->pos >= (number * beat_length))
+	{	//If there is enough time before the first beat to insert the specified number of beats
+		for(ctr = 0; ctr < number; ctr++)
 		{	//For each of the beats that need to be added
 			if(!eof_menu_beat_push_offset_back(&undo_made))
 			{	//If the beat was not sucessfully prepended to the beginning of the chart
 				allegro_message("Failed to add beats");
-				error = 1;
+				success = 0;
 				break;
 			}
 			eof_song->beat[1]->flags &= ~EOF_BEAT_FLAG_ANCHOR;	//Remove the anchor from the former first beat
 		}
-		if(!error)
-		{	//If all beats were added
-			selected_beat_backup = eof_selected_beat;		//Remember the original selected beat
-			eof_selected_beat = 0;						//Ensure the time signature is applied to the new first beat
-			eof_menu_beat_apply_ts_logic(num, den, 1, 0);	//Apply that time signature, don't make another undo state
-			eof_selected_beat = num;					//Ensure the time signature is removed from the original first beat
-			eof_menu_beat_ts_off_logic(0);				//Remove that time signature, don't make another undo state
-			eof_selected_beat = selected_beat_backup + num;	//Restore the original selected beat, taking the new number of beats into account
-		}
 		eof_beat_stats_cached = 0;					//Mark the cached beat stats as not current
+		return success;	//Return success or error status appropriately
 	}
+	return 0;	//Error
+}
+
+int eof_menu_beat_push_offset_back_measure(void)
+{
+	unsigned num = 4, den = 4;
+	unsigned long selected_beat_backup;
+
+	(void) eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
+
+	if(eof_menu_beat_push_offset_back_number_beats(num))
+	{	//If one measure's worth of beats were able to be added (an undo state will have been made)
+		selected_beat_backup = eof_selected_beat;			//Remember the original selected beat
+		eof_selected_beat = 0;							//Ensure the time signature is applied to the new first beat
+		eof_menu_beat_apply_ts_logic(num, den, 1, 0);		//Apply that time signature, don't make another undo state
+		eof_selected_beat = num;						//Ensure the time signature is removed from the original first beat
+		eof_menu_beat_ts_off_logic(0);					//Remove that time signature, don't make another undo state
+		eof_selected_beat = selected_beat_backup + num;	//Restore the original selected beat, taking the new number of beats into account
+	}
+	return 1;
+}
+
+char eof_push_beat_dialog_string[60] = {0};
+DIALOG eof_push_several_beat_dialog[] =
+{
+	/* (proc)                           (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2)    (dp3) */
+	{ eof_window_proc,          0,  48,  300, 106, 2,   23,  0,    0,      0,   0,   eof_push_beat_dialog_string, NULL, NULL },
+	{ d_agup_text_proc,        12,  84,    64,  8,   2,   23,  0,    0,      0,   0,   "This number of beats:",    NULL, NULL },
+	{ eof_verified_edit_proc,154, 80,    26,  20,  2,   23,  0,    0,      2,   0,   eof_etext,              "0123456789", NULL },
+	{ d_agup_button_proc,    12, 112,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
+	{ d_agup_button_proc,   111,112,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",               NULL, NULL },
+	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL },
+};
+
+int eof_menu_beat_push_offset_back_several_beats(void)
+{
+	long count = 0;
+	unsigned long beat_length, max;
+
+	if(!eof_song || !eof_song_loaded)
+		return 1;
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_push_several_beat_dialog, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_push_several_beat_dialog);
+
+	beat_length = eof_song->beat[1]->pos - eof_song->beat[0]->pos;	//The length of the first beat
+	max = eof_song->beat[0]->pos / beat_length;	//The most number of beats that can be inserted before the current first beat's position
+	snprintf(eof_push_beat_dialog_string, sizeof(eof_push_beat_dialog_string) - 1, "Push offset back (%lu max)", max);
+	eof_etext[0] = '\0';	//Empty the input field
+	if(eof_popup_dialog(eof_push_several_beat_dialog, 2) == 3)	//User hit OK
+	{
+		count = atol(eof_etext);
+
+		if((count <= 0) || (count > max))
+		{	//An invalid number was specified
+			allegro_message("Invalid number of beats");
+		}
+		else
+		{
+			(void) eof_menu_beat_push_offset_back_number_beats(count);
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
 	return 1;
 }
 
@@ -1161,11 +1228,45 @@ int eof_menu_beat_push_offset_up(void)
 	return 1;
 }
 
+int eof_menu_beat_push_offset_up_number_beats(unsigned long number)
+{
+	int success = 1;
+	unsigned long beat_count, ctr;
+
+	if(!eof_song)
+		return 1;
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
+	if(eof_song->beats < 3)
+		return 0;		//Don't allow removing any beats unless there would be at least two left
+
+	if(number <= eof_song->beats - 2)
+	{	//If there are enough beats to remove the specified number of beats
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		for(ctr = 0; ctr < number; ctr++)
+		{	//For each of the beats that need to be removed
+			beat_count = eof_song->beats;		//Remember how many beats there were before removing one
+			eof_menu_beat_push_offset_up_logic();
+			if(beat_count <= eof_song->beats)
+			{	//If eof_menu_beat_push_offset_up_logic() did not remove one beat
+				allegro_message("Failed to remove beats");
+				success = 0;
+				break;
+			}
+		}
+
+		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+		eof_fixup_notes(eof_song);
+
+		return success;	//Return success or error status appropriately
+	}
+	return 0;	//Error
+}
+
 int eof_menu_beat_push_offset_up_measure(void)
 {
-	unsigned num = 4, den = 4, ctr;
-	unsigned long selected_beat_backup, beat_count;
-	char error = 0;
+	unsigned num = 4, den = 4;
+	unsigned long selected_beat_backup;
 
 	if(!eof_song)
 		return 1;
@@ -1173,26 +1274,14 @@ int eof_menu_beat_push_offset_up_measure(void)
 		return 1;							//Return without making changes
 
 	selected_beat_backup = eof_selected_beat;		//Remember the original selected beat
-	(void) eof_get_ts(eof_song, &num, &den, 0);	//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	(void) eof_get_ts(eof_song, &num, &den, 0);		//Get the time signature in effect on the first beat, or assume 4/4 if none is defined
 
-	for(ctr = 0; ctr < num; ctr++)
-	{	//For each of the beats that need to be removed
-		beat_count = eof_song->beats;		//Remember how many beats there were before removing one
-		eof_menu_beat_push_offset_up_logic();
-		if(beat_count <= eof_song->beats)
-		{	//If eof_menu_beat_push_offset_up_logic() did not remove one beat
-			allegro_message("Failed to remove beats");
-			error = 1;
-			break;
-		}
-	}
-	if(!error)
-	{	//If all appropriate beats were removed
+	if(eof_menu_beat_push_offset_up_number_beats(num))
+	{	//If one measure's worth of beats were able to be removed (an undo state will have been made)
 		eof_selected_beat = 0;						//Ensure the time signature is applied to the new first beat
 		eof_menu_beat_apply_ts_logic(num, den, 1, 0);	//Apply that time signature, don't make another undo state
 		if(selected_beat_backup < num)
-		{	//If the beat the was selected has been removed
+		{	//If the beat that was selected has been removed
 			eof_selected_beat = 0;	//Select the now first beat
 		}
 		else
@@ -1200,8 +1289,86 @@ int eof_menu_beat_push_offset_up_measure(void)
 			eof_selected_beat = selected_beat_backup - num;	//Otherwise re-select the originally selected beat taking into account the new numbering
 		}
 	}
-	eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
-	eof_fixup_notes(eof_song);
+
+	return 1;
+}
+
+int eof_menu_beat_push_offset_up_several_beats(void)
+{
+	long count = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long max, first_note_pos = ULONG_MAX, ctr, notepos, first_populated_beat = ULONG_MAX;
+
+	if(!eof_song || !eof_song_loaded)
+		return 1;
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
+	if(eof_song->beats < 3)
+		return 0;		//Don't allow removing any beats unless there would be at least two left
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_push_several_beat_dialog, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_push_several_beat_dialog);
+
+	//Find the earliest note in the project, and which beat that is in
+	eof_sort_notes(eof_song);
+	for(ctr = 1; ctr < eof_song->tracks; ctr++)
+	{	//For each track
+		if(eof_get_track_size(eof_song, ctr))
+		{	//If there are any notes in this track
+			if(eof_track_is_pro_guitar_track(eof_song, ctr))
+			{	//If this is a pro guitar track
+				tp = eof_song->pro_guitar_track[eof_song->track[ctr]->tracknum];
+				notepos = ULONG_MAX;	//Allow for the possibility of a track with a tech note but no normal note
+				if(tp->pgnotes)
+				{	//If there are any normal notes in the track
+					notepos = tp->pgnote[0]->pos;		//Get the position of the first one
+				}
+				if(tp->technotes && (tp->technote[0]->pos < notepos))
+				{	//If there are any tech notes in the track
+					notepos = tp->technote[0]->pos;		//If the first tech note is earlier, or there are no normal notes, use its position
+				}
+			}
+			else
+			{	//This is not a pro guitar track
+				notepos = eof_get_note_pos(eof_song, ctr, 0);	//Get the position of the first note in the track
+			}
+			if(notepos < first_note_pos)
+				first_note_pos = notepos;	//Track the earliest of all the tracks' notes
+		}
+	}
+	if(first_note_pos < ULONG_MAX)
+	{	//If there is any note in the project
+		first_populated_beat = eof_get_beat(eof_song, first_note_pos);	//Find the beat containing the earliest note
+	}
+
+	max = eof_song->beats - 2;
+	if(first_populated_beat != ULONG_MAX)
+	{	//If there are notes that could get truncated from the project
+		snprintf(eof_push_beat_dialog_string, sizeof(eof_push_beat_dialog_string) - 1, "Push offset up (%lu max, %lu until losing notes)", max, first_populated_beat);
+	}
+	else
+	{
+		snprintf(eof_push_beat_dialog_string, sizeof(eof_push_beat_dialog_string) - 1, "Push offset up (%lu max)", max);
+	}
+	eof_etext[0] = '\0';	//Empty the input field
+	if(eof_popup_dialog(eof_push_several_beat_dialog, 2) == 3)	//User hit OK
+	{
+		count = atol(eof_etext);
+
+		if(count <= 0)
+		{	//An invalid number was specified
+			allegro_message("Invalid number of beats");
+		}
+		else
+		{
+			(void) eof_menu_beat_push_offset_up_number_beats(count);
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
 	return 1;
 }
 

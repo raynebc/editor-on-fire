@@ -3827,9 +3827,9 @@ int eof_menu_note_clear_flam_all(void)
 	return 1;
 }
 
-int eof_menu_note_toggle_crossstick_mask_logic(unsigned char mask)
+int eof_menu_note_toggle_crossstick_mask(unsigned char mask)
 {
-	unsigned long i, flags;
+	unsigned long i;
 	unsigned char undo_made = 0, crossstick, notemask;
 	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
 
@@ -3854,10 +3854,6 @@ int eof_menu_note_toggle_crossstick_mask_logic(unsigned char mask)
 				crossstick ^= mask;
 				crossstick &= notemask;	//Restrict the cross stick bitmask to only the lanes currently in use for this note
 				eof_set_note_crossstick(eof_song, eof_selected_track, i, crossstick);
-
-				//Update flat cross stick status accordingly
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
 		}
 	}
@@ -3867,11 +3863,6 @@ int eof_menu_note_toggle_crossstick_mask_logic(unsigned char mask)
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 	return 1;
-}
-
-int eof_menu_note_toggle_crossstick_mask(unsigned char mask)
-{
-	return eof_menu_note_toggle_crossstick_mask_logic(mask);
 }
 
 int eof_menu_note_toggle_crossstick_lane(unsigned int lanenum)
@@ -10459,7 +10450,7 @@ int eof_menu_note_remove_rimshot(void)
 
 int eof_menu_note_toggle_generic_flam(void)
 {
-	unsigned long i, flags;
+	unsigned long i;
 	long u = 0;
 	int note_selection_updated;
 
@@ -10479,9 +10470,7 @@ int eof_menu_note_toggle_generic_flam(void)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			u = 1;
 		}
-		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-		flags ^= EOF_DRUM_NOTE_FLAG_FLAM;	//Toggle the flam status
-		eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
+		eof_xor_note_flags(eof_song, eof_selected_track, i, EOF_DRUM_NOTE_FLAG_FLAM);
 	}
 	if(note_selection_updated)
 	{	//If the note selection was originally empty and was dynamically updated

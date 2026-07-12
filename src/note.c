@@ -624,6 +624,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	//Render note, tail, slide indicator, etc.
 	for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
 	{	//Render for each of the available fret lanes
+		BITMAP *gembmp = NULL;	//Used to build and render a box of text over the note gem if applicable
+
 		iscymbal = 0;
 		y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
 
@@ -790,11 +792,42 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				}
 			}//If rendering an existing pro guitar note that slides up or down or is an unpitched slide
 
+			//Generate text boxes for drum statuses if applicable
+			if(eof_song->track[effective_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If this is a drum track
+				if(eof_get_note_flam(eof_song, track, notenum) & mask)
+				{	//If this is a flam gem
+					if(noteflags & EOF_DRUM_NOTE_FLAG_FLAT_FLAM)
+						snprintf(notation, 2, "FF");	//Flat flam notation
+					else
+						snprintf(notation, 2, "F");		//Flam notation
+					gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
+				}
+				if(eof_get_note_rimshot(eof_song, track, notenum) & mask)
+				{	//If this is a rimshot gem
+					snprintf(notation, 2, "R");		//Rimshot notation
+					gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
+				}
+				if(eof_get_note_crossstick(eof_song, track, notenum) & mask)
+				{	//If this is a cross stick gem
+					snprintf(notation, 2, "C");		//Cross stick notation
+					gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
+				}
+				if(eof_get_note_bellzone(eof_song, track, notenum) & mask)
+				{	//If this is a bell zone hit gem
+					snprintf(notation, 2, "B");			//Bell zone notation
+					gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
+				}
+				if(eof_get_note_edgezone(eof_song, track, notenum) & mask)
+				{	//If this is a edge zone hit gem
+					snprintf(notation, 2, "E");			//Edge zone notation
+					gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
+				}
+			}
+
 			//Render note head
 			if(!iscymbal)
 			{	//If this note is not a cymbal, render note as a circle
-				BITMAP *gembmp = NULL;	//Used to build and render a box of text over the note gem if applicable
-
 				circlefill(window->screen, x, y, radius, ncol);
 				circlefill(window->screen, x, y, dotsize, dcol2);
 				if(p)
@@ -863,65 +896,35 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 						gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
 					}
 				}
-				else if(eof_song->track[effective_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-				{	//If this is a drum track
-					if(eof_get_note_flam(eof_song, track, notenum) & mask)
-					{	//If this is a flam gem
-						if(noteflags & EOF_DRUM_NOTE_FLAG_FLAT_FLAM)
-							snprintf(notation, 2, "FF");	//Flat flam notation
-						else
-							snprintf(notation, 2, "F");		//Flam notation
-						gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
-					}
-					if(eof_get_note_rimshot(eof_song, track, notenum) & mask)
-					{	//If this is a rimshot gem
-						snprintf(notation, 2, "R");		//Rimshot notation
-						gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
-					}
-					if(eof_get_note_crossstick(eof_song, track, notenum) & mask)
-					{	//If this is a cross stick gem
-						snprintf(notation, 2, "C");		//Cross stick notation
-						gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
-					}
-					if(eof_get_note_bellzone(eof_song, track, notenum) & mask)
-					{	//If this is a bell zone hit gem
-						snprintf(notation, 2, "B");			//Bell zone notation
-						gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
-					}
-					if(eof_get_note_edgezone(eof_song, track, notenum) & mask)
-					{	//If this is a edge zone hit gem
-						snprintf(notation, 2, "E");			//Edge zone notation
-						gembmp = eof_create_fret_number_bitmap(NULL, notation, ctr, 2, tcol, dcol, boxcol, font);
-					}
-				}
-				if(gembmp != NULL)
-				{	//Render the bitmap on top of the 2D note and then destroy the bitmap
-					draw_sprite(window->screen, gembmp, x - (gembmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
-					destroy_bitmap(gembmp);
-				}
 			}//If this note is not a cymbal, render note as a circle
 			else
 			{	//Otherwise render it as a triangle
+				int this_radius = radius;	//The triangle's size is variable
+
+				if(gembmp)
+				{	//If a text box will draw on top of this triangle, make the triangle bigger so it's not completely obscured
+					this_radius *= 1.5;
+				}
 				#ifdef ALLEGRO_MACOSX
 				{	//The triangle() function is broken in at least OS X High Sierra, call polygon() instead
 					int points[6];
 
 					points[0] = x;
-					points[1] = y-radius;
-					points[2] = x+radius;
-					points[3] = y+radius;
-					points[4] = x-radius;
-					points[5] = y+radius;
+					points[1] = y-this_radius;
+					points[2] = x+this_radius;
+					points[3] = y+this_radius;
+					points[4] = x-this_radius;
+					points[5] = y+this_radius;
 					polygon(window->screen, 3, points, ncol);
 				}
 				#else
-					triangle(window->screen, x, y-radius, x+radius, y+radius, x-radius, y+radius, ncol);
+					triangle(window->screen, x, y-this_radius, x+this_radius, y+this_radius, x-this_radius, y+this_radius, ncol);
 				#endif
 				if(p)
 				{	//Draw a non filled rectangle along the border of the filled triangle
-					line(window->screen, x, y-radius, x+radius, y+radius, pcol);
-					line(window->screen, x+radius, y+radius, x-radius, y+radius, pcol);
-					line(window->screen, x-radius, y+radius, x, y-radius, pcol);
+					line(window->screen, x, y-this_radius, x+this_radius, y+this_radius, pcol);
+					line(window->screen, x+this_radius, y+this_radius, x-this_radius, y+this_radius, pcol);
+					line(window->screen, x-this_radius, y+this_radius, x, y-this_radius, pcol);
 				}
 				if(track == EOF_TRACK_DRUM_PS)
 				{	//If rendering a note in the PS drum track
@@ -936,6 +939,11 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				{	//If the cymbal has crazy status
 					circlefill(window->screen, x, y + dotsize / 2, dotsize - 1, eof_color_black);	//Draw a dot in the center of the triangle
 				}
+			}
+			if(gembmp != NULL)
+			{	//If a text box bitmap was generated, render it now then destroy the bitmap
+				draw_sprite(window->screen, gembmp, x - (gembmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
+				destroy_bitmap(gembmp);
 			}
 		}//If this lane is populated
 		else if((eof_hover_note >= 0) && (p == 3))

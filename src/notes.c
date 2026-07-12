@@ -5468,7 +5468,6 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 					snprintf(eof_notes_macro_note_name_maj_conflict, sizeof(eof_notes_macro_note_name_maj_conflict) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 					dest_buffer[0] = '\0';
 					retval = 3;	//True
-					notectr = tp->pgnotes;	//Trigger a condition to break out of the note loop to end processing the rest of this track
 					break;	//Break from note loop
 				}
 			}

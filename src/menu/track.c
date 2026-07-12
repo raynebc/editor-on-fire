@@ -526,12 +526,10 @@ void eof_prepare_track_menu(void)
 	}//If a chart is loaded
 }
 
-#define eof_track_difficulty_menu_X 0
-#define eof_track_difficulty_menu_Y 48
 DIALOG eof_track_difficulty_menu[] =
 {
 	/* (proc)                (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2)    (dp3) */
-	{ eof_window_proc,    eof_track_difficulty_menu_X,  eof_track_difficulty_menu_Y,  232, 146, 2,   23,  0,    0,      0,   0,   "Set track difficulty", NULL, NULL },
+	{ eof_window_proc,    0,  48,  232, 146, 2,   23,  0,    0,      0,   0,   "Set track difficulty", NULL, NULL },
 	{ d_agup_text_proc,      12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Difficulty (0-6):",    NULL, NULL },
 	{ eof_verified_edit_proc,111,80,  20,  20,  2,   23,  0,    0,      1,   0,   eof_etext,              "0123456", NULL },
 	{ d_agup_button_proc,    8,  152, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
@@ -655,11 +653,6 @@ int eof_track_difficulty_dialog(void)
 	eof_track_difficulty_menu[5] = eof_track_difficulty_menu_normal[0];
 	eof_track_difficulty_menu[6] = eof_track_difficulty_menu_normal[0];
 
-	eof_cursor_visible = 0;
-	eof_render();
-	eof_color_dialog(eof_track_difficulty_menu, gui_fg_color, gui_bg_color);
-	eof_conditionally_center_dialog(eof_track_difficulty_menu);
-
 	if(eof_selected_track == EOF_TRACK_DRUM)
 	{	//Insert the pro drum dialog menu items
 		eof_track_difficulty_menu[5] = eof_track_difficulty_menu_pro_drum[0];
@@ -681,11 +674,10 @@ int eof_track_difficulty_dialog(void)
 		eof_etext2[0] = '\0';
 	}
 
-	//Manually re-center these elements, because they are not altered by eof_conditionally_center_dialog()
-	eof_track_difficulty_menu[5].x += eof_track_difficulty_menu[0].x - eof_track_difficulty_menu_X;	//Add the X amount offset by eof_conditionally_center_dialog()
-	eof_track_difficulty_menu[5].y += eof_track_difficulty_menu[0].y - eof_track_difficulty_menu_Y;	//Add the Y amount offset by eof_conditionally_center_dialog()
-	eof_track_difficulty_menu[6].x += eof_track_difficulty_menu[0].x - eof_track_difficulty_menu_X;	//Add the X amount offset by eof_conditionally_center_dialog()
-	eof_track_difficulty_menu[6].y += eof_track_difficulty_menu[0].y - eof_track_difficulty_menu_Y;	//Add the Y amount offset by eof_conditionally_center_dialog()
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_track_difficulty_menu, gui_fg_color, gui_bg_color);
+	eof_conditionally_center_dialog(eof_track_difficulty_menu);
 
 	if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
 	{	//If the track difficulty is defined, write it in text format
