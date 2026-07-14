@@ -1996,6 +1996,11 @@ int eof_menu_beat_all_events(void)
 
 int eof_menu_beat_events(void)
 {
+	unsigned long i, count = 0;
+
+	if(!eof_song)
+		return 1;	//Error
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_events_dialog, gui_fg_color, gui_bg_color);
@@ -2008,6 +2013,20 @@ int eof_menu_beat_events(void)
 	{
 		eof_events_dialog[5].dp = no_notice;	//Otherwise remove the warning
 	}
+
+	//Pre-select the first event on the selected beat that is in the active track, if any
+	for(i = 0; i < eof_song->text_events; i++)
+	{
+		if((eof_song->text_event[i]->flags & EOF_EVENT_FLAG_FLOATING_POS) || (eof_song->text_event[i]->pos != eof_selected_beat))
+			continue;	//If this text event has a floating position or isn't on the selected beat, skip it
+		if(eof_song->text_event[i]->track == eof_selected_track)
+		{	//If this event is in the active track
+			eof_events_dialog[1].d1 = count;	//Select this event in the list
+			break;
+		}
+		count++;
+	}
+
 	if(eof_popup_dialog(eof_events_dialog, 0) == 4)
 	{
 	}

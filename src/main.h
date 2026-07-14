@@ -448,6 +448,7 @@ extern int         eof_render_mid_beat_tempos_blue;
 extern int         eof_disable_ini_export;
 extern int         eof_gh_import_sustain_threshold_prompt;
 extern int         eof_rs_import_all_handshapes;
+extern int         eof_gp_import_discard_single_note_fingering;
 extern int         eof_rs2_export_version_8;
 extern int         eof_rs_export_suppress_tempo_warning;
 extern int         eof_midi_export_enhanced_open_marker;

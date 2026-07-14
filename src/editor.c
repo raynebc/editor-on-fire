@@ -743,7 +743,7 @@ unsigned long eof_get_position_minus_one_grid_snap_length(unsigned long pos, int
 		return ULONG_MAX;	//Position not found
 	}
 
-	return ((double)pos - eof_tail_snap.snap_length) + 0.5;	//Round to nearest ms
+	return eof_tail_snap.previous_snap;
 }
 
 int eof_is_any_beat_interval_position(unsigned long pos, unsigned long *beat, unsigned char *intervalvalue, unsigned char *intervalnum, unsigned long *closestintervalpos, int midi_friendly)
@@ -2224,10 +2224,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 		}
 	}
 
-	/* Edit note fingering (CTRL+F)*/
+	/* Selectively edit note fingering (CTRL+F)*/
 	if((eof_key_char == 'f') && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 	{
-		(void) eof_menu_note_edit_pro_guitar_note_fingers();
+		(void) eof_menu_note_selectively_edit_pro_guitar_note_fingers();
 		eof_use_key();
 	}
 

@@ -5121,7 +5121,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp, char undo)
 									(void) eof_song_add_text_event(sp, beatnum, buffer2, 0, flags, 0);	//Add the text event
 								}
 								found = 1;
-								break;	//Break from practice section search loop
+///								break;	//Break from practice section search loop (this is a redundant break statement)
 							}
 						}
 					}

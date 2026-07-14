@@ -746,7 +746,7 @@ MENU eof_note_rocksmith_menu[] =
 	{"&Toggle", NULL, eof_note_rocksmith_toggle_menu, 0, NULL},
 	{"&Remove", NULL, eof_note_rocksmith_remove_menu, 0, NULL},
 	{"Edit frets/fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
-	{"Edit fingering\t" CTRL_NAME "+F", eof_menu_note_edit_pro_guitar_note_fingers, NULL, 0, NULL},
+	{"S&Electively edit fingering\t" CTRL_NAME "+F", eof_menu_note_selectively_edit_pro_guitar_note_fingers, NULL, 0, NULL},
 	{"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
 	{"&Lookup fingering", eof_menu_note_lookup_fingering, NULL, 0, NULL},
 	{"Apply &Derived fingering", eof_menu_pro_guitar_apply_derived_fingering, NULL, 0, NULL},
@@ -7658,7 +7658,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	return 1;	//Return OK selected
 }
 
-int eof_menu_note_edit_pro_guitar_note_fingers(void)
+int eof_menu_note_selectively_edit_pro_guitar_note_fingers(void)
 {
 	char undo_made = 0;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;

@@ -475,6 +475,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	if(noteflags & EOF_NOTE_FLAG_CRAZY)
 	{
 		dcol = eof_color_black;	//"Crazy" notes render with a black dot in the center
+		boxcol = eof_color_white;	//Contrasts better over a black box
 		tcol = eof_color_white;	//In which case, render the fret number (pro guitar) with the opposite color
 		if(eof_fingering_view)
 			tcol = eof_color_red;	//Unless fingering view is in effect, in which case render text in red to contrast better over the blue background color
@@ -546,7 +547,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					if(!(notenote & mask))
 						continue;	//If this lane is not populated, skip it
 
-					textcol = eof_color_red;	//Unless the technote overlaps at least one normal note or is highlighted, it will render in red
+					textcol = boxcol = eof_color_red;	//Unless the technote overlaps at least one normal note or is highlighted, it will render in red
 					bgcol = eof_color_black;	//Unless the technote begins at the same timestamp as a normal note, the background will be black
 					if(p)
 					{	//If the tech note is highlighted
@@ -558,12 +559,12 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 						if(retval == 1)
 						{	//If the technote overlaps with and starts at the same timestamp as a regular note on this lane
-							textcol = eof_color_blue;
+							textcol = boxcol = eof_color_blue;
 							bgcol = eof_color_white;	//Blue on white background should be more readable
 						}
 						else if(retval == 2)
 						{	//If the technote overlaps with a regular note on this lane
-							textcol = eof_color_green;
+							textcol = boxcol = eof_color_green;
 						}
 					}
 

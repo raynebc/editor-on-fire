@@ -156,7 +156,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
 int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void);
 	//Calls eof_menu_note_edit_pro_guitar_note_frets_fingers() specifying function 0
-int eof_menu_note_edit_pro_guitar_note_fingers(void);
+int eof_menu_note_selectively_edit_pro_guitar_note_fingers(void);
 	//Allows fingering to be defined for selected notes with gems on the applicable strings
 	//Fret values and note bitmasks are not altered by this function
 long eof_previous_pro_guitar_note_needing_finger_definitions(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);

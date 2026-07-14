@@ -1606,6 +1606,9 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 		return 0;	//Return failure
 	}
 
+	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
+	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
+
 	//Count the number of populated difficulties in the track
 	original_eof_display_second_piano_roll = eof_display_second_piano_roll;	//Store the secondary piano roll status
 	eof_display_second_piano_roll = 0;										//Disable the secondary piano roll
@@ -1646,8 +1649,6 @@ int eof_export_rocksmith_2_track(EOF_SONG * sp, char * fn, unsigned long track, 
 
 	//Check for invalid fret values
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
-	restore_tech_view = eof_menu_track_get_tech_view_state(sp, track);
-	eof_menu_track_set_tech_view_state(sp, track, 0);	//Disable tech view if applicable
 	if(eof_get_highest_fret(sp, track) + tp->capo > 24)
 	{	//If the track being exported uses any frets higher than 24
 		if((*user_warned & 256) == 0)
@@ -6119,6 +6120,8 @@ int eof_rs_export_common(EOF_SONG * sp, unsigned long track, PACKFILE *fp, unsig
 		return 0;	//Invalid parameters
 
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	if(!tp->notes)
+		return 0;	//Logic error:  Empty track
 
 	//Check if an END phrase needs to be added
 	endbeat = eof_get_beat(sp, tp->note[tp->notes - 1]->pos + tp->note[tp->notes - 1]->length);	//Find the beat containing the end of the track's last note

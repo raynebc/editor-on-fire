@@ -223,6 +223,7 @@ int         eof_imports_drop_mid_beat_tempos = 0;	//If nonzero, any beats insert
 int         eof_render_mid_beat_tempos_blue = 0;	//If nonzero, any beats that were inserted during Feedback/MIDI import due to mid beat tempo changes retain the EOF_BEAT_FLAG_MIDBEAT flag and have some special 2D rendering logic
 int         eof_disable_ini_export = 0;			//If nonzero, song.ini is not written during save even if a MIDI file is exported
 int         eof_gh_import_sustain_threshold_prompt = 0;	//If nonzero, GH import will prompt whether to apply a sustain threshold determined by half of the first beat's length (as per GH3 rules)
+int         eof_gp_import_discard_single_note_fingering = 0;	//If nonzero, GP import will discard fingering for any single notes (non chords)
 int         eof_rs_import_all_handshapes = 0;	//If nonzero, RS import will load all handshapes and not just those used in specialized circumstances for authoring custom charts
 int         eof_rs2_export_version_8 = 0;		//If nonzero, high density chords will export to RS2 XML without the highDensity status and without chordnote tags, to suit compatibility differences with DLC builder versus the Rocksmith custom song toolkit
 int         eof_rs_export_suppress_tempo_warning = 0;	//If nonzero, the check/warning about tempos < 40BPM or > 300BPM is skipped

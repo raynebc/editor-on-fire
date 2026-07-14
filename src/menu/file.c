@@ -252,10 +252,10 @@ DIALOG eof_preferences_dialog[] =
 DIALOG eof_import_export_preferences_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-	{ eof_window_proc,0,   48,  500, 390, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
-	{ d_agup_button_proc,12,  395, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-	{ d_agup_button_proc,86,  395, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-	{ d_agup_button_proc,160, 395, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,  "Cancel",              NULL, NULL },
+	{ eof_window_proc,0,   48,  500, 405, 2,   23,  0,    0,      0,   0,   "Import/Export preferences",  NULL, NULL },
+	{ d_agup_button_proc,12,  410, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+	{ d_agup_button_proc,86,  410, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+	{ d_agup_button_proc,160,410, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,  "Cancel",              NULL, NULL },
 	{ d_agup_check_proc, 16,    75,  208, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rock Band files",NULL, NULL },
 	{ d_agup_check_proc, 248,  75,  224, 16,  2,   23,  0,    0,      1,   0,   "Save separate musical MIDI files",NULL, NULL },
 	{ d_agup_check_proc, 16,    90,  216, 16,  2,   23,  0,    0,      1,   0,   "Save separate Rocksmith 1 files",NULL, NULL },
@@ -293,8 +293,9 @@ DIALOG eof_import_export_preferences_dialog[] =
 	{ d_agup_check_proc, 16,   375, 207, 16,  2,   23,  0,    0,      1,   0,   "GP import ghost guitar status",NULL, NULL },
 	{ d_agup_check_proc, 248, 360, 244, 16,  2,   23,  0,    0,      1,   0,   "GH import sustain threshold prompt",NULL, NULL },
 	{ d_agup_check_proc, 248, 375, 244, 16,  2,   23,  0,    0,      1,   0,   "RS export suppress tempo warning",NULL, NULL },
-	{ d_agup_check_proc, 248, 390, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
-	{ d_agup_check_proc, 248, 405, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't import LLPLUS MIDI content",NULL, NULL },
+	{ d_agup_check_proc, 16,   390, 268, 16,  2,   23,  0,    0,      1,   0,   "GP import discard single note fingering",NULL, NULL },
+	{ d_agup_check_proc, 248, 405, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't write Rocksmith WAV file",NULL, NULL },
+	{ d_agup_check_proc, 248, 420, 220, 16,  2,   23,  0,    0,      1,   0,   "Don't import LLPLUS MIDI content",NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1906,8 +1907,9 @@ int eof_menu_file_import_export_preferences(void)
 	eof_import_export_preferences_dialog[38].flags = eof_gp_import_keep_ghost_guitar_status ? D_SELECTED : 0;	//GP import ghost guitar status
 	eof_import_export_preferences_dialog[39].flags = eof_gh_import_sustain_threshold_prompt ? D_SELECTED : 0;//GH import sustain threshold prompt
 	eof_import_export_preferences_dialog[40].flags = eof_rs_export_suppress_tempo_warning ? D_SELECTED : 0;	//RS export suppress tempo warning
-	eof_import_export_preferences_dialog[41].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
-	eof_import_export_preferences_dialog[42].flags = eof_disable_llplus_import ? D_SELECTED : 0;				//Don't import LLPLUS MIDI content
+	eof_import_export_preferences_dialog[41].flags = eof_gp_import_discard_single_note_fingering ? D_SELECTED : 0;	//GP import discard single note fingering
+	eof_import_export_preferences_dialog[42].flags = eof_disable_rs_wav ? D_SELECTED : 0;					//Don't write Rocksmith WAV file
+	eof_import_export_preferences_dialog[43].flags = eof_disable_llplus_import ? D_SELECTED : 0;				//Don't import LLPLUS MIDI content
 
 	do
 	{	//Run the dialog
@@ -1951,8 +1953,9 @@ int eof_menu_file_import_export_preferences(void)
 			eof_gp_import_keep_ghost_guitar_status = (eof_import_export_preferences_dialog[38].flags == D_SELECTED ? 1 : 0);
 			eof_gh_import_sustain_threshold_prompt = (eof_import_export_preferences_dialog[39].flags == D_SELECTED ? 1 : 0);
 			eof_rs_export_suppress_tempo_warning = (eof_import_export_preferences_dialog[40].flags == D_SELECTED ? 1 : 0);
-			eof_disable_rs_wav = (eof_import_export_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
-			eof_disable_llplus_import = (eof_import_export_preferences_dialog[42].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_discard_single_note_fingering = (eof_import_export_preferences_dialog[41].flags == D_SELECTED ? 1 : 0);
+			eof_disable_rs_wav = (eof_import_export_preferences_dialog[42].flags == D_SELECTED ? 1 : 0);
+			eof_disable_llplus_import = (eof_import_export_preferences_dialog[43].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 2)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1993,8 +1996,9 @@ int eof_menu_file_import_export_preferences(void)
 			eof_import_export_preferences_dialog[38].flags = 0;				//GP import ghost guitar status
 			eof_import_export_preferences_dialog[39].flags = 0;				//GH import sustain threshold prompt
 			eof_import_export_preferences_dialog[40].flags = 0;				//RS export suppress tempo warning
-			eof_import_export_preferences_dialog[41].flags = 0;				//Don't write Rocksmith WAV file
-			eof_import_export_preferences_dialog[42].flags = 0;				//Don't import LLPLUS MIDI content
+			eof_import_export_preferences_dialog[41].flags = 0;				//GP import discard single note fingering
+			eof_import_export_preferences_dialog[42].flags = 0;				//Don't write Rocksmith WAV file
+			eof_import_export_preferences_dialog[43].flags = 0;				//Don't import LLPLUS MIDI content
 		}//If the user clicked "Default
 	}while(retval == 2);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -3710,6 +3714,7 @@ int eof_save_helper_checks(void)
 	char newfolderpath[1024] = {0};
 	char note_length_warned = 0, note_distance_warned = 0, arpeggio_warned = 0, slide_warned = 0, bend_warned = 0, slide_error = 0, note_skew_warned = 0;
 	int pg_notes_present;
+	char restore_tech_view = 0;
 
 	/* check if there are any notes beyond the chart audio */
 	notes_after_chart_audio = eof_check_if_notes_exist_beyond_audio_end(eof_song);
@@ -3816,8 +3821,6 @@ int eof_save_helper_checks(void)
 	/* check note distances */
 	for(ctr = 1; !note_distance_warned && (ctr < eof_song->tracks); ctr++)
 	{	//For each track (and only if the user didn't already decline to cancel when an offending note was found)
-		char restore_tech_view = 0;
-
 		if((ctr == EOF_TRACK_VOCALS) && !eof_write_fof_files && !eof_write_gh_files && !eof_write_rb_files)
 			continue;	//If this is the vocal track, and neither FoF, nor GH nor RB exports are enabled (the formats for which vocals are scored), skip this track
 
@@ -3989,7 +3992,6 @@ int eof_save_helper_checks(void)
 		for(ctr = 1; (ctr < eof_song->tracks) && !arpeggio_warned; ctr++)
 		{	//For each track, or until the user is warned about an offending arpeggio
 			unsigned long notectr;
-			char restore_tech_view = 0;
 
 			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
@@ -4035,7 +4037,6 @@ int eof_save_helper_checks(void)
 		for(ctr = 1; ctr < eof_song->tracks; ctr++)
 		{	//For each track
 			unsigned long flags, noteset;
-			char restore_tech_view = 0;
 
 			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
@@ -4134,8 +4135,6 @@ int eof_save_helper_checks(void)
 			target = 2;
 		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
 		{	//For each track (until the user is warned about any offending chord names)
-			char restore_tech_view = 0;
-
 			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
@@ -4173,7 +4172,6 @@ int eof_save_helper_checks(void)
 	/* check for the use of "maj" in chord names, which will be overridden by Rocksmith to reflect that it is a minor chord instead of a major chord */
 	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files
-		char restore_tech_view = 0;
 		int user_prompted = 0;
 
 		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
@@ -4277,7 +4275,6 @@ int eof_save_helper_checks(void)
 	if(eof_write_rs_files || eof_write_rs2_files)
 	{	//If the user wants to save Rocksmith capable files
 		char user_prompted = 0;
-		char restore_tech_view = 0;
 
 		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
 		{	//For each track (until the user is warned about any offending handshape phrases)
@@ -4455,8 +4452,6 @@ int eof_save_helper_checks(void)
 
 		for(ctr = 1; !user_prompted && (ctr < eof_song->tracks); ctr++)
 		{	//For each track (until the user is warned about any offending bend notes)
-			char restore_tech_view = 0;
-
 			if(!eof_track_is_pro_guitar_track(eof_song, ctr))
 				continue;	//If this is not a pro guitar/bass track, skip it
 
@@ -4504,7 +4499,6 @@ int eof_save_helper_checks(void)
 		{	//For each track (until the user is warned about any offending notes)
 			EOF_RS_TECHNIQUES tech = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 			unsigned long bitmask;
-			char restore_tech_view = 0;
 			unsigned long start, stop;
 			int sectionchange = 0, phrasechange = 0;
 
@@ -6191,6 +6185,30 @@ int eof_gp_import_common(const char *fn)
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic to clean up the track
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);			//Run fixup logic again to ensure that notes that were combined into chords (on the previous call) during a multi-voice import truncate as appropriate
 	(void) eof_menu_track_selected_track_number(eof_selected_track, 1);	//Re-select the active track to allow for a change in string count
+
+	//Remove fingering from single notes if the import preference to do so is enabled
+	if(eof_gp_import_discard_single_note_fingering)
+	{
+		char restore_tech_view = 0;
+		char empty_array[8] = {0}, erased = 0;
+
+		restore_tech_view = eof_menu_pro_guitar_track_get_tech_view_state(tp);	//Track which note set is in use
+		eof_menu_pro_guitar_track_set_tech_view_state(tp, 0);	//Disable tech view
+		for(ctr = 0; ctr < tp->notes; ctr++)
+		{	//For each imported note
+			if(eof_note_count_colors(eof_song, eof_selected_track, ctr) == 1)
+			{	//If this note only had a single gem
+				if(memcmp(tp->note[ctr]->finger, empty_array, 8))
+				{	//If the finger array isn't completely undefined
+					memset(tp->note[ctr]->finger, 0, 8);	//Erase the fingering
+					erased = 1;	//Track that this occurred
+				}
+			}
+		}
+		eof_menu_pro_guitar_track_set_tech_view_state(tp, restore_tech_view);	//Activate whichever note set was active for the track
+		if(erased)
+			allegro_message("At least one single note's imported fingering was removed due to the \"GP import discard single note fingering\" import preference being enabled");
+	}
 
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t%lu guitar/bass notes exist after cleanup", eof_get_track_size(eof_song, eof_selected_track));
 	eof_log(eof_log_string, 2);
