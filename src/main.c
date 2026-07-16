@@ -550,10 +550,19 @@ int eof_color_highlight1;		//The color used for static highlighting
 int eof_color_highlight2;		//The color used for dynamic highlighting
 
 /* other colors*/
-int eof_tab_notation_bg_color_raw;
-int eof_tab_notation_fg_color_raw;
-int eof_tab_notation_bg_color;
-int eof_tab_notation_fg_color;
+int eof_tab_notation_bg_color, eof_tab_notation_bg_color_raw;
+int eof_tab_notation_fg_color, eof_tab_notation_fg_color_raw;
+int eof_color_fhp_marker, eof_color_fhp_marker_raw;
+int eof_color_fhp_number_fg, eof_color_fhp_number_fg_raw;
+int eof_color_fhp_number_bg, eof_color_fhp_number_bg_raw;
+int eof_color_fill, eof_color_fill_raw;
+int eof_color_fill_accent, eof_color_fill_accent_raw;
+int eof_color_piano_roll, eof_color_piano_roll_raw;
+int eof_color_beat_1, eof_color_beat_1_raw;
+int eof_color_beat_2, eof_color_beat_2_raw;
+int eof_color_beat_3, eof_color_beat_3_raw;
+int eof_color_seek_line, eof_color_seek_line_raw;
+int eof_color_lane_line, eof_color_lane_line_raw;
 
 /* GP import drum note mappings */
 unsigned char gp_drum_import_lane_1[EOF_GP_DRUM_MAPPING_COUNT] = {0};
@@ -3183,7 +3192,7 @@ void eof_render_info_window(void)
 		eof_window_info = eof_window_note_lower_left;	//Render info panel at the lower left of EOF's program window
 		if(!eof_background)
 		{	//If a background image was NOT loaded
-			clear_to_color(eof_window_info->screen, eof_color_gray);	//Clear the info panel portion of the screen
+			clear_to_color(eof_window_info->screen, eof_color_fill);	//Clear the info panel portion of the screen
 		}
 	}
 
@@ -3292,21 +3301,21 @@ void eof_render_fret_catalog_window(void)
 			{
 				lpos = 20 - (pos - 140);
 			}
+
 			// draw fretboard area
-			rectfill(eof_window_info->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_info->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
-			// draw fretboard area
+			rectfill(eof_window_info->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_info->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_piano_roll);
 			for(i = 0; i < numlanes; i++)
 			{
 				if(!i || (i + 1 >= numlanes))
 				{	//Ensure the top and bottom lines extend to the left of the piano roll
-					hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
+					hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_lane_line);
 				}
 				else if(eof_song->catalog->entry[eof_selected_catalog_entry].flags != EOF_TRACK_VOCALS)
 				{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-					hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
+					hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_lane_line);
 				}
 			}
-			vline(eof_window_info->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
+			vline(eof_window_info->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_lane_line);
 
 			// render information about the entry
 			if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].flags]->track_format != EOF_VOCAL_TRACK_FORMAT)
@@ -3339,14 +3348,14 @@ void eof_render_fret_catalog_window(void)
 				}
 				if(xcoord >= 0)
 				{	//If this beat line would render visibly, render it
-					vline(eof_window_info->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
+					vline(eof_window_info->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_beat_1);
 				}
 			}
 			if(eof_song->catalog->entry[eof_selected_catalog_entry].flags == EOF_TRACK_VOCALS)
 			{	//If drawing a vocal catalog entry
 				// clear lyric text area
-				rectfill(eof_window_info->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_info->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
-				hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_white);
+				rectfill(eof_window_info->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_info->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_piano_roll);
+				hline(eof_window_info->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_lane_line);
 
 				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 				{	//For each lyric
@@ -3381,7 +3390,7 @@ void eof_render_fret_catalog_window(void)
 			if(pos > zoom)
 			{
 				xcoord = lpos + (eof_music_catalog_pos - eof_av_delay) / eof_zoom;	//eof_music_catalog_pos is normally stored with its position skewed by the AV delay
-				vline(eof_window_info->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+				vline(eof_window_info->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_seek_line);
 			}
 		}//if(eof_song->catalog->entries > 0)
 	}//If show catalog is selected
@@ -3552,7 +3561,7 @@ void eof_render_lyric_window(void)
 	if(eof_display_second_piano_roll)	//If a second piano roll is being rendered instead of the 3D preview
 		return;							//Return immediately
 
-	clear_to_color(eof_window_3d->screen, eof_color_gray);
+	clear_to_color(eof_window_3d->screen, eof_color_fill);
 
 	/* render the 29 white keys */
 	for(i = 0; i < 29; i++)
@@ -3713,7 +3722,7 @@ void eof_render_3d_window(void)
 
 	if(!eof_background)
 	{	//If a background image was NOT loaded
-		clear_to_color(eof_window_3d->screen, eof_color_gray);	//Clear the 3D preview portion of the screen
+		clear_to_color(eof_window_3d->screen, eof_color_fill);	//Clear the 3D preview portion of the screen
 	}
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	lastlane = numlanes - 1;	//This variable begins lane numbering at 0 instead of 1
@@ -3765,7 +3774,7 @@ void eof_render_3d_window(void)
 		seek_x2_projection = ocd3d_project_x(48 + 4 * 56, 0);
 		eof_3d_fretboard_coordinates_cached = 1;
 	}
-	polygon(eof_window_3d->screen, 4, fretboardpoint, eof_color_black);
+	polygon(eof_window_3d->screen, 4, fretboardpoint, eof_color_piano_roll);
 
 	/* render solo sections */
 	numsolos = eof_get_num_solos(eof_song, eof_selected_track);
@@ -3942,7 +3951,7 @@ void eof_render_3d_window(void)
 		if((bz >= eof_3d_min_depth) && (bz <= eof_3d_max_depth))
 		{	//If the beat is visible
 			y_projection = ocd3d_project_y(200 + offset_y_3d, bz);
-			hline(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : eof_color_dark_silver);
+			hline(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_beat_1 : eof_color_beat_2);
 			if(eof_song->beat[i]->contains_tempo_change || eof_song->beat[i]->contains_ts_change)
 			{	//If this beat contains either a tempo or TS change
 				if(eof_song->beat[i]->contains_tempo_change)
@@ -3971,11 +3980,11 @@ void eof_render_3d_window(void)
 		oby = fretboardpoint[5];	//This is the front edge of the 3D piano roll
 		oey = fretboardpoint[1];	//This is the back edge of the 3D piano roll
 
-		line(eof_window_3d->screen, obx, oby, oex, oey, eof_color_white);
+		line(eof_window_3d->screen, obx, oby, oex, oey, eof_color_lane_line);
 	}
 
 	/* draw the position marker */
-	line(eof_window_3d->screen, seek_x1_projection, seek_y_projection, seek_x2_projection, seek_y_projection, eof_color_green);
+	line(eof_window_3d->screen, seek_x1_projection, seek_y_projection, seek_x2_projection, seek_y_projection, eof_color_seek_line);
 
 	if(eof_track_has_dynamic_difficulty(eof_song, eof_selected_track) && eof_flat_dd_view)
 		dd_view = 1;	//Track whether to perform the more logic intense dynamic difficulty checking
@@ -4109,13 +4118,13 @@ void eof_render(void)
 		{	//If a background image was loaded
 			if((eof_screen->h > eof_background->h + 5) || (eof_screen->w > eof_background->w + 5))
 			{	//If the program window is more than 5 pixels taller/wider than the background image
-				clear_to_color(eof_screen, eof_color_gray);	//Clear the screen to ensure that remnants of the previous frame don't get left
+				clear_to_color(eof_screen, eof_color_fill);	//Clear the screen to ensure that remnants of the previous frame don't get left
 			}
 			blit(eof_background, eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);	//Display it
 		}
 		else
 		{	//Otherwise just draw a blank screen
-			clear_to_color(eof_screen, eof_color_light_gray);
+			clear_to_color(eof_screen, eof_color_fill_accent);
 		}
 		#ifndef ALLEGRO_LEGACY
 			if(!eof_full_screen_3d && !eof_screen_zoom)
@@ -4158,7 +4167,7 @@ void eof_render(void)
 		}
 		else
 		{	//Otherwise just draw a blank screen
-			clear_to_color(eof_screen, eof_color_gray);
+			clear_to_color(eof_screen, eof_color_fill);
 		}
 		#ifndef ALLEGRO_LEGACY
 			if(eof_screen_zoom)
@@ -4206,12 +4215,12 @@ void eof_render(void)
 			}
 			else
 			{	//Otherwise just draw a blank screen
-				clear_to_color(eof_screen, eof_color_gray);
+				clear_to_color(eof_screen, eof_color_fill);
 			}
 			stretch_blit(temp_3d, eof_screen, 0, 0, EOF_SCREEN_PANEL_WIDTH, eof_screen_height, xpos, 20, EOF_SCREEN_PANEL_WIDTH * 2, eof_screen_height);
 		}
 		destroy_bitmap(temp_3d);	//Destroy the copy of the 3D preview
-		rectfill(eof_screen, EOF_SCREEN_PANEL_WIDTH * 2 + 1, 0, eof_screen->w - 1, eof_screen->h - 1, eof_color_gray);	//Erase the portion to the right of the scaled 3D preview (2 panel widths), in case the window width was increased, otherwise the normal sized 3D preview will be visible
+		rectfill(eof_screen, EOF_SCREEN_PANEL_WIDTH * 2 + 1, 0, eof_screen->w - 1, eof_screen->h - 1, eof_color_fill);	//Erase the portion to the right of the scaled 3D preview (2 panel widths), in case the window width was increased, otherwise the normal sized 3D preview will be visible
 		eof_window_info->y = 0;	//Re-position the info window to the top left corner of EOF's program window
 		eof_render_info_window();
 		#ifndef ALLEGRO_LEGACY
@@ -4557,6 +4566,17 @@ int eof_load_data(void)
 	eof_notes_panel_info_fg_color = eof_remake_color(eof_notes_panel_info_fg_color_raw);
 	eof_tab_notation_bg_color = eof_remake_color(eof_tab_notation_bg_color_raw);
 	eof_tab_notation_fg_color = eof_remake_color(eof_tab_notation_fg_color_raw);
+	eof_color_fhp_marker = eof_remake_color(eof_color_fhp_marker_raw);
+	eof_color_fhp_number_fg = eof_remake_color(eof_color_fhp_number_fg_raw);
+	eof_color_fhp_number_bg = eof_remake_color(eof_color_fhp_number_bg_raw);
+	eof_color_fill = eof_remake_color(eof_color_fill_raw);
+	eof_color_fill_accent = eof_remake_color(eof_color_fill_accent_raw);
+	eof_color_piano_roll = eof_remake_color(eof_color_piano_roll_raw);
+	eof_color_beat_1 = eof_remake_color(eof_color_beat_1_raw);
+	eof_color_beat_2 = eof_remake_color(eof_color_beat_2_raw);
+	eof_color_beat_3 = eof_remake_color(eof_color_beat_3_raw);
+	eof_color_seek_line = eof_remake_color(eof_color_seek_line_raw);
+	eof_color_lane_line = eof_remake_color(eof_color_lane_line_raw);
 
 	gui_fg_color = agup_fg_color;
 	gui_bg_color = agup_bg_color;

@@ -24,34 +24,12 @@ bridge<br>
 solo<br>
 outro<br>
 
-And each phase instances has its own "power" which is essentially how intense that part of the song is, as a number between 0.0 (not intense at all) and 1.0 (maximum intensity).  For this optional yet HIGHLY RECOMMENDED feature to work, the chart will need to have sections, which are defined in EOF as "text events".  If you imported chart content from an existing file before getting to this step, the project may already have events defined.  To see all of the events in the project, use "Beat>Events>All Events" and EOF will display a list:<br>
+And each phase instance has its own "power" which is essentially how intense that part of the song is.  For this optional yet HIGHLY RECOMMENDED feature to work, the chart will need to have sections, which are defined in EOF as "text events".  If you imported chart content from an existing file before getting to this step, the project may already have events defined.  To see all of the events in the project, use "Beat>Events>All Events" and EOF will display a list:<br>
 <center><IMG SRC="Sections_list.jpg" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><br><br></center>
 
 From this list, you can easily edit, delete or seek to any of the events in the project.  The events that will export to Smash Drums format as sections are those containing any of the words in the list above ("intro", "verse", "prechorus", "pre chorus", "pre-chorus", "chorus", "bridge", "solo", "outro").  Letter case does not matter.  If a text event is defined having multiple section names from the list, such as the "section outro chorus" example in the above picture, the list shows the order of priority that is used and it will export as "chorus" instead of "outro".  If there are no sections defined yet, or you want to add more, close the "All Events" dialog, seek to where you want the section to begin, click on the beat where the event will be placed and use the "Beat>Events>Place Section" function and give a name of your choice (the letter case of the section name is up to you, it doesn't need any particular capitalization).  Regardless of how you define sections, the game expects one will be defined beginning with the very first beat in the project.  If no sections are defined, EOF will automatically export with an intro section at the first beat.  Remember to save your project in EOF if you change any sections.<br><br>
 
-<b><font color="red">Note:  EOF does not yet support the ability to define the power/intensity of each phase, so that would require editing the power attributes of the SongPhase entries JSON manually outside of EOF using a text editor like Windows's Notepad utility.  Just make sure to follow #.# format for the number (0, 1 and .5 will not work).</font></b><br>
-For example:<br>
-<pre>
-	"SongPhases": [
-		{
-			"beat": 0.0,
-			"phase": 1,
-			"power": 0.0,
-			"phaseName": "intro"
-		},
-		{
-			"beat": 26.0,
-			"phase": 1,
-			"power": 1.0,
-			"phaseName": "intro"
-		},
-		{
-			"beat": 58.0,
-			"phase": 2,
-			"power": 0.5,
-			"phaseName": "verse"
-		},
-</pre>
+By default, each phase will export with 100% power/intensity.  To define the power of a phase, add a text event on the same beat where the phase is defined by selecting the beat, using the Beat>Events>Events function (you should see a list come up that shows the phase name), click the Add button, and enter the text as "Power=#" without quotation marks, where # is a whole number between 0 and 100 representing the intensity of the phase.  You can go back and change the power later by opening Beat>Events>Events list for a beat, selecting the Power event in the list, clicking Edit, changing the number and clicking OK. 
 
 <h1><a name="adding_metadata"></a>ADDING METADATA (Mandatory)</h1>
 The necessary metadata for the chart is the song title and artist name (which were prompted for if you created a new project from scratch) and charter (the name you as the chart creator will be credited with).  Or in case you imported a chart, this information is always expected to be defined and should be present after the import, but you can use "Song>Properties" to see various pieces of information for the chart.

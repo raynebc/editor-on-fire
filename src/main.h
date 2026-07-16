@@ -644,8 +644,19 @@ extern int eof_color_highlight2_raw;
 extern int eof_color_highlight1;
 extern int eof_color_highlight2;
 
-extern int eof_tab_notation_bg_color_raw, eof_tab_notation_fg_color_raw;
-extern int eof_tab_notation_bg_color, eof_tab_notation_fg_color;
+extern int eof_tab_notation_bg_color, eof_tab_notation_bg_color_raw;
+extern int eof_tab_notation_fg_color, eof_tab_notation_fg_color_raw;
+extern int eof_color_fhp_marker, eof_color_fhp_marker_raw;
+extern int eof_color_fhp_number_fg, eof_color_fhp_number_fg_raw;
+extern int eof_color_fhp_number_bg, eof_color_fhp_number_bg_raw;
+extern int eof_color_fill, eof_color_fill_raw;
+extern int eof_color_fill_accent, eof_color_fill_accent_raw;
+extern int eof_color_piano_roll, eof_color_piano_roll_raw;
+extern int eof_color_beat_1, eof_color_beat_1_raw;
+extern int eof_color_beat_2, eof_color_beat_2_raw;
+extern int eof_color_beat_3, eof_color_beat_3_raw;
+extern int eof_color_seek_line, eof_color_seek_line_raw;
+extern int eof_color_lane_line, eof_color_lane_line_raw;
 
 extern eof_color eof_color_green_struct;
 extern eof_color eof_color_red_struct;

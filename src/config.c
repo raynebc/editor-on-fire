@@ -416,8 +416,19 @@ void eof_load_config(char * fn)
 	eof_color_highlight2_raw = get_config_hex("colors", "eof_color_highlight2", 0x00FFFFUL);	//The RGB equivalent of makecol(0, 255, 255), AKA cyan
 
 	/* other colors */
-	eof_tab_notation_bg_color_raw = get_config_hex("colors", "eof_tab_notation_bg_color", 0x000000);			//The RGB equivalent of makecol(00, 0, 0) (black)
+	eof_tab_notation_bg_color_raw = get_config_hex("colors", "eof_tab_notation_bg_color", 0x000000);			//The RGB equivalent of makecol(0, 0, 0) (black)
 	eof_tab_notation_fg_color_raw = get_config_hex("colors", "eof_tab_notation_fg_color", 0xFF0000);			//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_color_fhp_marker_raw = get_config_hex("colors", "eof_color_fhp_marker", 0xFF0000);					//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_color_fhp_number_fg_raw = get_config_hex("colors", "eof_color_fhp_number_fg", 0xFF0000);			//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_color_fhp_number_bg_raw = get_config_hex("colors", "eof_color_fhp_number_bg", 0x000000);			//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_color_fill_raw = get_config_hex("colors", "eof_color_fill", 0x404040);								//The RGB equivalent of makecol(64, 64, 64) (gray)
+	eof_color_fill_accent_raw = get_config_hex("colors", "eof_color_fill_accent", 0xE0E0E0);					//The RGB equivalent of makecol(224, 224, 224) (light gray)
+	eof_color_piano_roll_raw = get_config_hex("colors", "eof_color_piano_roll", 0x000000);					//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_color_beat_1_raw = get_config_hex("colors", "eof_color_beat_1", 0xFFFFFF);							//The RGB equivalent of makecol(255, 255, 255) (white)
+	eof_color_beat_2_raw = get_config_hex("colors", "eof_color_beat_2", 0xA0A0A0);						//The RGB equivalent of makecol(160, 160, 160) (dark silver)
+	eof_color_beat_3_raw = get_config_hex("colors", "eof_color_beat_3", 0x404040);							//The RGB equivalent of makecol(64, 64, 64) (gray)
+	eof_color_seek_line_raw = get_config_hex("colors", "eof_color_seek_line", 0x00FF00);						//The RGB equivalent of makecol(0, 255, 0) (green)
+	eof_color_lane_line_raw = get_config_hex("colors", "eof_color_lane_line", 0xFFFFFF);						//The RGB equivalent of makecol(255, 255, 255) (white)
 
 	if(exists(fn))
 	{	//Only try to load the controller buttons if the config file exists, otherwise the defaults will be erased
@@ -859,6 +870,17 @@ void eof_save_config(char * fn)
 	/* write other colors */
 	set_config_hex("colors", "eof_tab_notation_bg_color", eof_tab_notation_bg_color_raw);
 	set_config_hex("colors", "eof_tab_notation_fg_color", eof_tab_notation_fg_color_raw);
+	set_config_hex("colors", "eof_color_fhp_marker", eof_color_fhp_marker_raw);
+	set_config_hex("colors", "eof_color_fhp_number_fg", eof_color_fhp_number_fg_raw);
+	set_config_hex("colors", "eof_color_fhp_number_bg", eof_color_fhp_number_bg_raw);
+	set_config_hex("colors", "eof_color_fill", eof_color_fill_raw);
+	set_config_hex("colors", "eof_color_fill_accent", eof_color_fill_accent_raw);
+	set_config_hex("colors", "eof_color_piano_roll", eof_color_piano_roll_raw);
+	set_config_hex("colors", "eof_color_beat_1", eof_color_beat_1_raw);
+	set_config_hex("colors", "eof_color_beat_2", eof_color_beat_2_raw);
+	set_config_hex("colors", "eof_color_beat_3", eof_color_beat_3_raw);
+	set_config_hex("colors", "eof_color_seek_line", eof_color_seek_line_raw);
+	set_config_hex("colors", "eof_color_lane_line", eof_color_lane_line_raw);
 
 	eof_log("\tSaving controller configs", 3);
 	eof_controller_save_config(&eof_guitar, "guitar");

@@ -6419,8 +6419,8 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	}
 
 	/* clear lyric text area */
-	rectfill(window->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, window->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
-	hline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_white);
+	rectfill(window->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, window->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_piano_roll);
+	hline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_lane_line);
 
 	/* draw lyric lines */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lines; i++)
@@ -6594,7 +6594,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	int pmin = 0;
 	int psec = 0;
 	int xcoord;							//Used to cache x coordinate to reduce recalculations
-	int col,col2;							//Temporary color variables
+	int col;								//Temporary color variables
 	unsigned long start;					//Will store the timestamp of the left visible edge of the piano roll
 	unsigned long stop;					//Will store the timestamp of the right visible edge of the piano roll
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
@@ -6640,7 +6640,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	/* fill in window background color */
 	if(!eof_background)
 	{	//If a background image was NOT loaded
-		rectfill(window->screen, 0, 25 + 8, window->w - 1, window->h - 1, eof_color_gray);	//Draw over the piano roll portion of the screen
+		rectfill(window->screen, 0, 25 + 8, window->w - 1, window->h - 1, eof_color_fill);	//Draw over the piano roll portion of the screen
 	}
 
 	/* draw the playback controls */
@@ -6663,7 +6663,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	}
 
 	/* draw fretboard area */
-	rectfill(window->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, window->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
+	rectfill(window->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, window->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_piano_roll);
 
 	/* draw start/end point marking */
 	if((eof_song->tags->start_point != ULONG_MAX) && (eof_song->tags->end_point != ULONG_MAX) && (eof_song->tags->start_point != eof_song->tags->end_point))
@@ -6973,7 +6973,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	/* draw fretboard strings */
 	for(i = 0; i < numlanes; i++)
 	{
-		int string_color = eof_color_white;
+		int string_color = eof_color_lane_line;
 
 		if(eof_render_2d_rs_piano_roll && !eof_vocals_selected)
 		{	//If the RS piano roll preference is enabled, draw the string color to match the gem color of that lane, but only if the vocal track isn't active
@@ -6981,14 +6981,14 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 		if(!i || (i + 1 >= numlanes))
 		{	//Ensure the top and bottom lines extend to the left of the piano roll, but are drawn in white
-			hline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
+			hline(window->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, string_color);
 		}
 		if(eof_selected_track != EOF_TRACK_VOCALS)
 		{	//If not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
 			hline(window->screen, lpos + eof_song->tags->ogg[0].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, string_color);
 		}
 	}
-	vline(window->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, bottomlane_y, eof_color_white);	//Render a line at the end of the chart
+	vline(window->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, bottomlane_y, eof_color_lane_line);	//Render a line at the end of the chart
 
 	/* draw second markers */
 	roundedstart = start / 1000;
@@ -7014,18 +7014,18 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			if(xcoord < 0)
 				continue;	//If this second marker would not be visible, skip it
 
-			vline(window->screen, xcoord, bottomlane_y + 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_gray);
+			vline(window->screen, xcoord, bottomlane_y + 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_beat_3);
 			if(j == 0)
 			{	//Each second marker is drawn taller
 				if(!capo)
 				{	//If this second marker isn't being skipped to avoid rendering on top of the capo indicator
-					vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 5, eof_color_white);
+					vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 5, eof_color_beat_1);
 				}
 				capo = 0;	//All second markers after the first will render regardless of whether the capo indicator is shown
 			}
 			else
 			{	//Each 1/10 second marker is drawn shorter
-				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 1, eof_color_white);
+				vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 1, eof_color_beat_1);
 			}
 		}
 		if((msec / 1000) % label_one_of_every == 0)
@@ -7051,8 +7051,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	bcol = makecol(128, 128, 128);
 	bscol = eof_color_white;
 	bhcol = eof_color_green;
-	col = makecol(112, 112, 112);	//Cache this color
-	col2 = eof_color_dark_silver;	//Cache this color
 
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
@@ -7099,8 +7097,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				beatlinecol = eof_color_red;	//Render the beat line in red
 			}
 			else
-			{	//Otherwise render it in gray (if it's not the start of a measure) or in white
-				beatlinecol = (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : col;
+			{	//Otherwise render it in gray (if it's not the start of a measure) or in white (default colors)
+				beatlinecol = (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_beat_1 : eof_color_beat_2;
 				if(ismeasuremarker)
 				{	//This is the first beat in a measure, and if the RS piano roll preference is enabled
 					beatlinecol = makecol(218, 165, 32);	//Draw the beat line in Goldenrod instead
@@ -7114,7 +7112,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			}
 
 			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, bottomlane_y, beatlinecol);
-			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
+			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_beat_3);
 		}//The beat would render visibly
 
 		//Render section names and event markers
@@ -7246,7 +7244,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}
 		else if(xcoord >= 0)
 		{	//Draw normal beat line if the beat line would render visibly
-			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_white : col2);
+			vline(window->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, (eof_song->beat[i]->has_ts && (eof_song->beat[i]->beat_within_measure == 0)) ? eof_color_beat_1 : eof_color_beat_2);
 		}
 		ksname = eof_get_key_signature(eof_song, i, 0, 0);
 		if(ksname)
@@ -7366,8 +7364,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				}
 				if(xcoord >= -25)
 				{	//If the hand position renders close enough to or after the left edge of the screen, consider it visible
-					vline(window->screen, xcoord, 25 + 5 + 14, bottomlane_y, eof_color_red);
-					textprintf_centre_ex(window->screen, eof_font, xcoord , 25 + 5, eof_color_red, eof_color_black, "%lu", tp->handposition[i].end_pos);	//Display it
+					vline(window->screen, xcoord, 25 + 5 + 14, bottomlane_y, eof_color_fhp_marker);
+					textprintf_centre_ex(window->screen, eof_font, xcoord , 25 + 5, eof_color_fhp_number_fg, eof_color_fhp_number_bg, "%lu", tp->handposition[i].end_pos);	//Display it
 				}
 			}
 		}
@@ -7431,7 +7429,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	/* draw the current position */
 	if(pos >= zoom)
 	{
-		vline(window->screen, lpos + (eof_music_pos.value - eof_av_delay) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+		vline(window->screen, lpos + (eof_music_pos.value - eof_av_delay) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_seek_line);
 	}
 
 	/* draw the difficulty tabs (after the section names, which otherwise render a couple pixels over the tabs) */
@@ -7631,7 +7629,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	if(window != eof_window_editor2)
 	{	//Only draw the scroll bar for the main piano roll
 		scroll_pos = ((double)(window->w - 8.0) / (double)eof_chart_length) * (double)eof_music_pos.value;
-		rectfill(window->screen, 0, eof_screen_layout.scrollbar_y, window->w - 1, window->h - 2, eof_color_light_gray);
+		rectfill(window->screen, 0, eof_screen_layout.scrollbar_y, window->w - 1, window->h - 2, eof_color_fill_accent);
 		draw_sprite(window->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
 
 		vline(window->screen, 0, 24 + 8, window->h + 4, eof_color_dark_silver);
