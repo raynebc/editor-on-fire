@@ -77,10 +77,18 @@ MENU eof_file_3d_preview_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_file_theme_menu[] =
+{
+	{"Load &Default theme", eof_load_default_theme, NULL, 0, NULL},
+	{"&Load theme", eof_menu_file_load_theme, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_file_display_menu[] =
 {
 	{"&Notes panel", NULL, eof_file_notes_panel_menu, 0, NULL},
 	{"&3D preview", NULL, eof_file_3d_preview_menu, 0, NULL},
+	{"&Theme", NULL, eof_file_theme_menu, 0, NULL},
 	{"&Display", eof_menu_file_display, NULL, 0, NULL},
 	{"Set display &Width", eof_set_display_width, NULL, 0, NULL},
 	{"x2 &Zoom", eof_toggle_display_zoom, NULL, D_USER, NULL},
@@ -491,7 +499,7 @@ void eof_prepare_file_menu(void)
 			eof_file_import_menu[6].flags = D_DISABLED;
 			eof_file_export_menu[5].flags = D_DISABLED;
 		}
-		eof_file_display_menu[5].flags = 0;	//Benchmark image sequence
+		eof_file_display_menu[6].flags = 0;	//Benchmark image sequence
 
 		if(eof_track_is_beatable_mode(eof_song, eof_selected_track) && eof_get_track_size(eof_song, eof_selected_track))
 			eof_file_export_menu[6].flags = 0;	//File>Export>BEATABLE
@@ -532,10 +540,10 @@ void eof_prepare_file_menu(void)
 		eof_file_import_menu[12].flags = D_DISABLED;	//Import>Drums Rock
 		eof_file_import_menu[14].flags = D_DISABLED;	//Import>GP style lyric text
 		eof_file_import_menu[15].flags = D_DISABLED;	//Import>Songsterr timing
-		eof_file_display_menu[5].flags = D_DISABLED;	//Benchmark image sequence
+		eof_file_display_menu[6].flags = D_DISABLED;	//Benchmark image sequence
 	}
 
-	eof_file_display_menu[4].flags = eof_screen_zoom ? D_SELECTED : 0;	//File>Display>x2 zoom
+	eof_file_display_menu[5].flags = eof_screen_zoom ? D_SELECTED : 0;	//File>Display>x2 zoom
 	eof_file_3d_preview_menu[2].flags = eof_full_height_3d_preview ? D_SELECTED : 0;	//Display>3D Preview>Full height
 
 	//Notes panel stuff
@@ -7946,14 +7954,14 @@ int eof_menu_file_notes_panel_browse(void)
 {
 	char *returnedfn = NULL, initial[1024] = {0};
 
-	eof_cursor_visible = 0;
-	eof_pen_visible = 0;
-	eof_render();
-
 	if(!eof_song || !eof_song_loaded)
 	{	//If no project is loaded
 		return 1;
 	}
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
 
 	eof_log("Browsing for Notes panel file", 1);
 	(void) replace_filename(initial, eof_last_browsed_notes_panel_path, "", sizeof(initial));	//Get the initial folder path for the browse dialog
@@ -7975,6 +7983,10 @@ int eof_menu_file_notes_panel_browse(void)
 		(void) eof_display_notes_panel();
 	}
 	eof_render();
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
 
 	return D_O_K;
 }
@@ -8578,6 +8590,38 @@ int eof_menu_file_songsterr_import(void)
 	eof_pen_visible = 1;
 	(void) eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_render();
+
+	return D_O_K;
+}
+
+int eof_menu_file_load_theme(void)
+{
+	char returnedfn_path[1024] = {0}, *returnedfn = NULL;
+	char initial[1024] = {0};
+
+	eof_log("eof_menu_file_load_theme() entered", 1);
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+
+	eof_log("Browsing for color theme file", 1);
+	(void) replace_filename(initial, eof_last_browsed_theme_path, "", sizeof(initial));	//Get the initial folder path for the browse dialog
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tInitializing browse dialog to \"%s\"", initial);
+	eof_log(eof_log_string, 1);
+
+	returnedfn = ncd_file_select(0, initial, "Load color theme file", eof_filter_theme_files);
+
+	if(returnedfn)
+	{	//If a file was selected for load
+		strncpy(returnedfn_path, returnedfn, sizeof(returnedfn_path) - 1);	//Back up this path for later use
+		eof_load_theme(returnedfn);	//Load the color definitions from the file
+		(void) replace_filename(eof_last_browsed_theme_path, returnedfn_path, "", sizeof(eof_last_browsed_theme_path));	//Set the last loaded color theme path
+	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
 
 	return D_O_K;
 }

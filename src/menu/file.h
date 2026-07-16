@@ -247,4 +247,7 @@ int eof_menu_file_songsterr_import(void);
 	//Since timing is defined per measure, a time signature must be in effect starting with beat 0
 	//Optionally allows the user to input the URL of a Songsterr transcription and launches a web browser to the URL that allows the JSON file to be downloaded
 
+int eof_menu_file_load_theme(void);
+	//Prompts the user to browse to a theme.txt file and uses eof_load_theme() to apply the colors defined within it
+
 #endif

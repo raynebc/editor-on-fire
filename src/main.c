@@ -103,6 +103,7 @@ NCDFS_FILTER_LIST * eof_filter_note_panel_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_array_txt_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_beatable_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_ffmpeg_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_theme_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -326,6 +327,7 @@ char        eof_last_rs_path[1024] = {0};				//The path to the folder containing
 char        eof_last_sonic_visualiser_path[1024] = {0};	//The path to the folder containing the last imported Sonic Visualiser file
 char        eof_last_bf_path[1024] = {0};				//The path to the folder containing the last imported Bandfuse file
 char        eof_last_browsed_notes_panel_path[1024] = {0};		//The full path of the last Notes panel text file that the user manually browsed to
+char        eof_last_browsed_theme_path[1024] = {0};	//The path to the folder containing the last imported color theme
 char        eof_current_notes_panel_path[1024] = {0};	//The path to the current text file to display in the Notes panel (any non full path is expected to be relative to EOF's program folder)
 char        eof_loaded_song_name[1024] = {0};			//The file name (minus the folder path) of the active project
 char        eof_loaded_ogg_name[1024] = {0};			//The full path of the loaded OGG file
@@ -4547,36 +4549,7 @@ int eof_load_data(void)
 	eof_color_cyan = makecol(0, 255, 255);
 	eof_color_dark_cyan = makecol(0, 160, 160);
 
-	//Recreate the colors read from the config file to ensure they are in the correct color system
-	//The original RRGGBB hex values need to be retained to write to config file upon exit
-	eof_color_waveform_trough = eof_remake_color(eof_color_waveform_trough_raw);
-	eof_color_waveform_peak = eof_remake_color(eof_color_waveform_peak_raw);
-	eof_color_waveform_rms = eof_remake_color(eof_color_waveform_rms_raw);
-	eof_color_highlight1 = eof_remake_color(eof_color_highlight1_raw);
-	eof_color_highlight2 = eof_remake_color(eof_color_highlight2_raw);
-	eof_notes_panel_error_bg_color = eof_remake_color(eof_notes_panel_error_bg_color_raw);
-	eof_notes_panel_error_fg_color = eof_remake_color(eof_notes_panel_error_fg_color_raw);
-	eof_notes_panel_warning_bg_color = eof_remake_color(eof_notes_panel_warning_bg_color_raw);
-	eof_notes_panel_warning_fg_color = eof_remake_color(eof_notes_panel_warning_fg_color_raw);
-	eof_notes_panel_success_bg_color = eof_remake_color(eof_notes_panel_success_bg_color_raw);
-	eof_notes_panel_success_fg_color = eof_remake_color(eof_notes_panel_success_fg_color_raw);
-	eof_notes_panel_alert_bg_color = eof_remake_color(eof_notes_panel_alert_bg_color_raw);
-	eof_notes_panel_alert_fg_color = eof_remake_color(eof_notes_panel_alert_fg_color_raw);
-	eof_notes_panel_info_bg_color = eof_remake_color(eof_notes_panel_info_bg_color_raw);
-	eof_notes_panel_info_fg_color = eof_remake_color(eof_notes_panel_info_fg_color_raw);
-	eof_tab_notation_bg_color = eof_remake_color(eof_tab_notation_bg_color_raw);
-	eof_tab_notation_fg_color = eof_remake_color(eof_tab_notation_fg_color_raw);
-	eof_color_fhp_marker = eof_remake_color(eof_color_fhp_marker_raw);
-	eof_color_fhp_number_fg = eof_remake_color(eof_color_fhp_number_fg_raw);
-	eof_color_fhp_number_bg = eof_remake_color(eof_color_fhp_number_bg_raw);
-	eof_color_fill = eof_remake_color(eof_color_fill_raw);
-	eof_color_fill_accent = eof_remake_color(eof_color_fill_accent_raw);
-	eof_color_piano_roll = eof_remake_color(eof_color_piano_roll_raw);
-	eof_color_beat_1 = eof_remake_color(eof_color_beat_1_raw);
-	eof_color_beat_2 = eof_remake_color(eof_color_beat_2_raw);
-	eof_color_beat_3 = eof_remake_color(eof_color_beat_3_raw);
-	eof_color_seek_line = eof_remake_color(eof_color_seek_line_raw);
-	eof_color_lane_line = eof_remake_color(eof_color_lane_line_raw);
+	eof_remake_all_colors();	//Apply all loaded colors
 
 	gui_fg_color = agup_fg_color;
 	gui_bg_color = agup_bg_color;
@@ -4956,6 +4929,14 @@ int eof_initialize(int argc, char * argv[])
 		return 0;
 	}
 	ncdfs_filter_list_add(eof_filter_ffmpeg_files, "ogg;mp3;wav;flac;ape;wma;aac;aif;alac;m4a;mka;opus", "FFMPEG Audio Files (*.ogg,*.mp3,*.wav,*.flac,*.ape,*.wma,*.aac,*.aif.*.alac,*.m4a,*.mka,*.opus)", 1);
+
+	eof_filter_theme_files = ncdfs_filter_list_create();
+	if(!eof_filter_theme_files)
+	{
+		allegro_message("Could not create file list filter (*.theme.txt");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_theme_files, "theme.txt", "Color themes (*.theme.txt)", 1);
 
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
@@ -5573,6 +5554,8 @@ void eof_exit(void)
 		free(eof_filter_beatable_files);
 	if(eof_filter_ffmpeg_files)
 		free(eof_filter_ffmpeg_files);
+	if(eof_filter_theme_files)
+		free(eof_filter_theme_files);
 	if(eof_os_clipboard)
 		free(eof_os_clipboard);
 

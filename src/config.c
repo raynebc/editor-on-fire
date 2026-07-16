@@ -359,6 +359,7 @@ void eof_load_config(char * fn)
 	(void) ustrzcpy(eof_last_sonic_visualiser_path, sizeof(eof_last_sonic_visualiser_path), get_config_string("paths", "sonic_visualiser_path", ""));
 	(void) ustrzcpy(eof_last_bf_path, sizeof(eof_last_bf_path), get_config_string("paths", "bf_path", ""));
 	(void) ustrzcpy(eof_last_browsed_notes_panel_path, sizeof(eof_last_browsed_notes_panel_path), get_config_string("paths", "eof_last_browsed_notes_panel_path", ""));
+	(void) ustrzcpy(eof_last_browsed_theme_path, sizeof(eof_last_browsed_theme_path), get_config_string("paths", "eof_last_browsed_theme_path", ""));
 	(void) ustrzcpy(eof_current_notes_panel_path, sizeof(eof_current_notes_panel_path), get_config_string("paths", "eof_current_notes_panel_path", ""));
 
 	/* read editor settings */
@@ -829,6 +830,7 @@ void eof_save_config(char * fn)
 	set_config_string("paths", "sonic_visualiser_path", eof_last_sonic_visualiser_path);
 	set_config_string("paths", "bf_path", eof_last_bf_path);
 	set_config_string("paths", "eof_last_browsed_notes_panel_path", eof_last_browsed_notes_panel_path);
+	set_config_string("paths", "eof_last_browsed_theme_path", eof_last_browsed_theme_path);
 	set_config_string("paths", "eof_current_notes_panel_path", eof_current_notes_panel_path);
 
 	/* write editor settings */
@@ -1237,4 +1239,158 @@ int eof_default_ini_add(const char *entry, int silent)
 	eof_default_ini_settings++;
 
 	return 0;	//Return success
+}
+
+void eof_remake_all_colors(void)
+{
+	//Recreate the colors read from the config file to ensure they are in the correct color system
+	//The original RRGGBB hex values need to be retained to write to config file upon exit
+	eof_color_waveform_trough = eof_remake_color(eof_color_waveform_trough_raw);
+	eof_color_waveform_peak = eof_remake_color(eof_color_waveform_peak_raw);
+	eof_color_waveform_rms = eof_remake_color(eof_color_waveform_rms_raw);
+	eof_color_highlight1 = eof_remake_color(eof_color_highlight1_raw);
+	eof_color_highlight2 = eof_remake_color(eof_color_highlight2_raw);
+	eof_notes_panel_error_bg_color = eof_remake_color(eof_notes_panel_error_bg_color_raw);
+	eof_notes_panel_error_fg_color = eof_remake_color(eof_notes_panel_error_fg_color_raw);
+	eof_notes_panel_warning_bg_color = eof_remake_color(eof_notes_panel_warning_bg_color_raw);
+	eof_notes_panel_warning_fg_color = eof_remake_color(eof_notes_panel_warning_fg_color_raw);
+	eof_notes_panel_success_bg_color = eof_remake_color(eof_notes_panel_success_bg_color_raw);
+	eof_notes_panel_success_fg_color = eof_remake_color(eof_notes_panel_success_fg_color_raw);
+	eof_notes_panel_alert_bg_color = eof_remake_color(eof_notes_panel_alert_bg_color_raw);
+	eof_notes_panel_alert_fg_color = eof_remake_color(eof_notes_panel_alert_fg_color_raw);
+	eof_notes_panel_info_bg_color = eof_remake_color(eof_notes_panel_info_bg_color_raw);
+	eof_notes_panel_info_fg_color = eof_remake_color(eof_notes_panel_info_fg_color_raw);
+	eof_tab_notation_bg_color = eof_remake_color(eof_tab_notation_bg_color_raw);
+	eof_tab_notation_fg_color = eof_remake_color(eof_tab_notation_fg_color_raw);
+	eof_color_fhp_marker = eof_remake_color(eof_color_fhp_marker_raw);
+	eof_color_fhp_number_fg = eof_remake_color(eof_color_fhp_number_fg_raw);
+	eof_color_fhp_number_bg = eof_remake_color(eof_color_fhp_number_bg_raw);
+	eof_color_fill = eof_remake_color(eof_color_fill_raw);
+	eof_color_fill_accent = eof_remake_color(eof_color_fill_accent_raw);
+	eof_color_piano_roll = eof_remake_color(eof_color_piano_roll_raw);
+	eof_color_beat_1 = eof_remake_color(eof_color_beat_1_raw);
+	eof_color_beat_2 = eof_remake_color(eof_color_beat_2_raw);
+	eof_color_beat_3 = eof_remake_color(eof_color_beat_3_raw);
+	eof_color_seek_line = eof_remake_color(eof_color_seek_line_raw);
+	eof_color_lane_line = eof_remake_color(eof_color_lane_line_raw);
+}
+
+int eof_load_default_theme(void)
+{
+	/* read waveform graph colors */
+	eof_color_waveform_trough_raw = 0x007C00;	//The RGB equivalent of makecol(0, 124, 0)
+	eof_color_waveform_peak_raw = 0x00BE00;		//The RGB equivalent of makecol(0, 190, 0)
+	eof_color_waveform_rms_raw = 0xBE0000;		//The RGB equivalent of makecol(190, 0, 0)
+
+
+	/* read notes panel colors */
+	eof_notes_panel_error_bg_color_raw = 0xFF0000;		//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_notes_panel_error_fg_color_raw = 0xFFFFFF;		//The RGB equivalent of makecol(255, 255, 255) (white)
+	eof_notes_panel_warning_bg_color_raw = 0xFFFF00;	//The RGB equivalent of makecol(255, 255, 0) (yellow)
+	eof_notes_panel_warning_fg_color_raw = 0x000000;	//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_notes_panel_success_bg_color_raw = 0x00FF00;	//The RGB equivalent of makecol(0, 255, 0) (green)
+	eof_notes_panel_success_fg_color_raw = 0x000000;	//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_notes_panel_alert_bg_color_raw = 0x0000FF;		//The RGB equivalent of makecol(0, 0, 255) (blue)
+	eof_notes_panel_alert_fg_color_raw = 0xFFFF00;		//The RGB equivalent of makecol(255, 255, 0) (yellow)
+	eof_notes_panel_info_bg_color_raw = -1;		//-1 is used by Allegro to designate transparency
+	eof_notes_panel_info_fg_color_raw = 0xFFFFFF;		//The RGB equivalent of makecol(255, 255, 255) (white)
+
+	/* read highlight colors */
+	eof_color_highlight1_raw = 0xFFFF00UL;		//The RGB equivalent of makecol(255, 255, 0), AKA yellow
+	eof_color_highlight2_raw = 0x00FFFFUL;		//The RGB equivalent of makecol(0, 255, 255), AKA cyan
+
+	/* other colors */
+	eof_tab_notation_bg_color_raw = 0x000000;	//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_tab_notation_fg_color_raw = 0xFF0000;	//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_color_fhp_marker_raw = 0xFF0000;		//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_color_fhp_number_fg_raw = 0xFF0000;		//The RGB equivalent of makecol(255, 0, 0) (red)
+	eof_color_fhp_number_bg_raw = 0x000000;		//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_color_fill_raw = 0x404040;			//The RGB equivalent of makecol(64, 64, 64) (gray)
+	eof_color_fill_accent_raw = 0xE0E0E0;		//The RGB equivalent of makecol(224, 224, 224) (light gray)
+	eof_color_piano_roll_raw = 0x000000;		//The RGB equivalent of makecol(0, 0, 0) (black)
+	eof_color_beat_1_raw = 0xFFFFFF;		//The RGB equivalent of makecol(255, 255, 255) (white)
+	eof_color_beat_2_raw = 0xA0A0A0;		//The RGB equivalent of makecol(160, 160, 160) (dark silver)
+	eof_color_beat_3_raw = 0x404040;		//The RGB equivalent of makecol(64, 64, 64) (gray)
+	eof_color_seek_line_raw = 0x00FF00;		//The RGB equivalent of makecol(0, 255, 0) (green)
+	eof_color_lane_line_raw = 0xFFFFFF;		//The RGB equivalent of makecol(255, 255, 255) (white)
+
+	eof_remake_all_colors();	//Apply all loaded colors
+	return 1;
+}
+
+void eof_load_theme(char *fn)
+{
+	int numsections, numentries;
+	const char **sections = NULL, **entries = NULL;
+	char *buffer;
+	PACKFILE *fp;
+
+	if(!fn)
+		return;	//Invalid parameter
+	if(!exists(fn))
+		return;	//Folder doesn't exist
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Loading theme from file:  %s", fn);
+	eof_log(eof_log_string, 1);
+	set_config_file(fn);
+
+	//Check if the file couldn't be parsed as a config file (which will happen if the file has a byte order mark
+	numentries = list_config_entries(NULL, &entries);	//Look for any variable definitions outside of a section
+	numsections = list_config_sections(&sections);	//Look for any sections
+	free_config_entries(&entries);
+	free_config_entries(&sections);
+	if(!numsections || !numentries)
+	{	//No data was read
+		eof_log("! Could not read config file.  Rebuilding and discarding byte order mark, if any", 1);
+		buffer = (char *)eof_buffer_file(fn, 1, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer and discarding any byte order mark
+		if(buffer)
+		{	//The file was buffered into memory
+			fp = pack_fopen(fn, "wb");	//Open the file for writing in binary, to ensure the OS doesn't just add another BOM
+			pack_fwrite(buffer, ustrlen(buffer), fp);	//Flush the entire buffer to file
+			pack_fclose(fp);
+			free(buffer);
+			set_config_file(fn);	//Prepare to parse data from the rebuilt config file
+		}
+	}
+
+	/* read waveform graph colors */
+	eof_get_config_hex_conditional("colors", "eof_color_waveform_trough", &eof_color_waveform_trough_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_waveform_peak", &eof_color_waveform_peak_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_waveform_rms", &eof_color_waveform_rms_raw);
+
+	/* read notes panel colors */
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_error_bg_color", &eof_notes_panel_error_bg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_error_fg_color", &eof_notes_panel_error_fg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_warning_bg_color", &eof_notes_panel_warning_bg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_warning_fg_color", &eof_notes_panel_warning_fg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_success_bg_color", &eof_notes_panel_success_bg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_success_fg_color", &eof_notes_panel_success_fg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_alert_bg_color", &eof_notes_panel_alert_bg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_alert_fg_color", &eof_notes_panel_alert_fg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_info_bg_color", &eof_notes_panel_info_bg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_notes_panel_info_fg_color", &eof_notes_panel_info_fg_color_raw);
+
+	/* read highlight colors */
+	eof_get_config_hex_conditional("colors", "eof_color_highlight1", &eof_color_highlight1_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_highlight2", &eof_color_highlight2_raw);
+
+	/* other colors */
+	eof_get_config_hex_conditional("colors", "eof_tab_notation_bg_color", &eof_tab_notation_bg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_tab_notation_fg_color", &eof_tab_notation_fg_color_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_fhp_marker", &eof_color_fhp_marker_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_fhp_number_fg", &eof_color_fhp_number_fg_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_fhp_number_bg", &eof_color_fhp_number_bg_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_fill", &eof_color_fill_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_fill_accent", &eof_color_fill_accent_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_piano_roll", &eof_color_piano_roll_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_beat_1", &eof_color_beat_1_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_beat_2", &eof_color_beat_2_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_beat_3", &eof_color_beat_3_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_seek_line", &eof_color_seek_line_raw);
+	eof_get_config_hex_conditional("colors", "eof_color_lane_line", &eof_color_lane_line_raw);
+
+	/* grid lines */
+	eof_get_config_hex_conditional("colors", "eof_color_grid_lines", &eof_color_grid_lines);
+
+	eof_remake_all_colors();	//Apply all loaded colors
 }

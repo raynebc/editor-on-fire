@@ -1385,3 +1385,15 @@ double eof_fpos_distance(double p1, double p2)
 
 	return p2 - p1;
 }
+
+void eof_get_config_hex_conditional(char *section, char *name, int *var)
+{
+	if(section && name && var)
+	{	//If all parameters are valid
+		int ret = get_config_hex(section, name, 0x010203);
+		if(ret != 0x010203)
+		{	//If the current config file had a value for the specified variable
+			*var = ret;	//Return it through the pointer
+		}
+	}
+}

@@ -138,4 +138,8 @@ unsigned long eof_pos_distance(unsigned long p1, unsigned long p2);
 double eof_fpos_distance(double p1, double p2);
 	//Returns the difference between the two floating point numbers as a positive value
 
+void eof_get_config_hex_conditional(char *section, char *name, int *var);
+	//Calls get_config_hex(section, name) and if the returned value is NOT 0x010203, stores that value into *var
+	//Used to only update a variable if it is defined in the config file, instead of forcing it to reset to a default value
+
 #endif
