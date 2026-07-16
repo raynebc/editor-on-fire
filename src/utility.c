@@ -172,6 +172,7 @@ void *eof_buffer_file(const char * fn, char appendnull, char discardbom)
 			eof_log("\t\tDiscarding BOM", 1);
 			cdata[0] = cdata[1] = cdata[2] = 0;	//The buffer is at least 3 bytes large if a BOM was detected, overwrite the BOM with zeroes
 			dest = data;	//The rest of the data will be read into the beginning of the data buffer
+			bytes_read = 0;
 		}
 		else
 		{	//There was no BOM, any bytes that were read will be kept in the data buffer
@@ -179,10 +180,13 @@ void *eof_buffer_file(const char * fn, char appendnull, char discardbom)
 		}
 	}
 
-	(void) pack_fread(dest, (long)filesize - bytes_read, fp);	//Read the remainder of the file, minus however many bytes were discarded for the byte order mark
+	bytes_read += pack_fread(dest, (long)filesize - bytes_read, fp);	//Read the remainder of the file, minus however many bytes were discarded for the byte order mark
 	if(appendnull)
 	{	//If adding an extra NULL byte of padding to the end of the buffer
-		((char *)data)[buffersize - 1 - bytes_read] = 0;	//Write a 0 byte at the end of the buffer, also accounting for how many bytes with discarded for the byte order mark
+		if(bytes_read < buffersize)
+		{	//Bounds check
+			((char *)data)[bytes_read] = 0;	//Write a 0 byte at the end of the buffer
+		}
 	}
 	(void) pack_fclose(fp);
 	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFile buffered to address 0x%08lX", (unsigned long)data);

@@ -1320,8 +1320,8 @@ int eof_load_default_theme(void)
 
 void eof_load_theme(char *fn)
 {
-	int numsections, numentries;
-	const char **sections = NULL, **entries = NULL;
+	int numsections;
+	const char **sections = NULL;
 	char *buffer;
 	PACKFILE *fp;
 
@@ -1335,11 +1335,9 @@ void eof_load_theme(char *fn)
 	set_config_file(fn);
 
 	//Check if the file couldn't be parsed as a config file (which will happen if the file has a byte order mark
-	numentries = list_config_entries(NULL, &entries);	//Look for any variable definitions outside of a section
 	numsections = list_config_sections(&sections);	//Look for any sections
-	free_config_entries(&entries);
 	free_config_entries(&sections);
-	if(!numsections || !numentries)
+	if(!numsections)
 	{	//No data was read
 		eof_log("! Could not read config file.  Rebuilding and discarding byte order mark, if any", 1);
 		buffer = (char *)eof_buffer_file(fn, 1, 1);	//Buffer the file into memory, adding a NULL terminator at the end of the buffer and discarding any byte order mark
