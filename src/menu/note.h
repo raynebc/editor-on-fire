@@ -140,7 +140,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 	//The function parameter is passed from eof_menu_note_edit_pro_guitar_note_frets_fingers() as
 	//	defined by its calling function to conditionally disable fret or finger input fields, such as when
 	//	the dialog is invoked for automated finger checks
-	//If dialog is 1, the dialog is prepared for the "Edit note fingering" function,
+	//If dialog is 1, the dialog is prepared for the "Selectively edit note fingering" function,
 	//	in which case the fret value input fields and disabled for editing, the mute checkboxes are hidden
 	//The dialog title bar is updated to reflect which function is being performed
 	//Returns nonzero on success, which will be the suggested initial focus object of eof_pro_guitar_note_frets_dialog[]

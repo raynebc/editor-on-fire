@@ -873,7 +873,7 @@ MENU eof_note_menu[] =
 	{"Toggle", NULL, eof_note_toggle_menu, 0, NULL},
 	{"Cle&Ar", NULL, eof_note_clear_menu, 0, NULL},
 	{"Transpose", NULL, eof_note_transpose_menu, 0, NULL},
-	{"Move", NULL, eof_note_move_menu, 0, NULL},
+	{"&Move", NULL, eof_note_move_menu, 0, NULL},
 	{"&Highlight", NULL, eof_note_highlight_menu, 0, NULL},
 	{"Gr&Id snap", NULL, eof_note_grid_snap_menu, 0, NULL},
 	{"&Solos", NULL, eof_solo_menu, 0, NULL},
@@ -7030,7 +7030,7 @@ char eof_finger_string_lane_6[4] = {0};
 char *eof_finger_strings[6] = {eof_finger_string_lane_1, eof_finger_string_lane_2, eof_finger_string_lane_3, eof_finger_string_lane_4, eof_finger_string_lane_5, eof_finger_string_lane_6};
 
 char eof_pro_guitar_note_frets_dialog_function_0_string[] = "Edit note frets / fingering";
-char eof_pro_guitar_note_frets_dialog_function_1_string[] = "Edit note fingering";
+char eof_pro_guitar_note_frets_dialog_function_1_string[] = "Selectively edit note fingering";
 DIALOG eof_pro_guitar_note_frets_dialog[] =
 {
 	/*	(proc)				(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
@@ -7244,7 +7244,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers_prepare_dialog(char dialog,
 	}//For each of the 6 supported strings
 
 	if(dialog == 1)
-	{	//In the "Edit note fingering" use of this function
+	{	//In the "Selectively edit note fingering" use of this function
 		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 		{	//For each of the 6 supported strings
 			if(ctr < stringcount)

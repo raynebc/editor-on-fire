@@ -141,5 +141,7 @@ double eof_fpos_distance(double p1, double p2);
 void eof_get_config_hex_conditional(char *section, char *name, int *var);
 	//Calls get_config_hex(section, name) and if the returned value is NOT 0x010203, stores that value into *var
 	//Used to only update a variable if it is defined in the config file, instead of forcing it to reset to a default value
+int eof_random_hex(void);
+	//Generate a random color that is NOT 0x010203
 
 #endif

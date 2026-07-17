@@ -43,5 +43,7 @@ int eof_load_default_theme(void);
 void eof_load_theme(char *fn);
 	//Uses eof_get_config_hex_conditional() to read only the color variables defined in the specified file, and leaves all other color variables as-is
 	//Then uses eof_remake_all_colors() to apply the colors
+int eof_load_random_theme(void);
+	//Uses eof_random_hex() to generate random colors for every configurable color and applies them with eof_remake_all_colors()
 
 #endif

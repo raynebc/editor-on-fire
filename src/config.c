@@ -451,7 +451,7 @@ void eof_load_config(char * fn)
 	eof_6_fret_range = get_config_int("other", "eof_6_fret_range", 0);
 
 	/* grid lines */
-	eof_color_grid_lines = get_config_hex("colors", "eof_color_grid_lines", 0xFFFF00);		//The RGB equivalent of makecol(255, 255, 0);
+	eof_color_grid_lines_raw = get_config_hex("colors", "eof_color_grid_lines", 0xFFFF00);		//The RGB equivalent of makecol(255, 255, 0);
 	eof_grid_line_opacity = get_config_int("other", "eof_grid_line_opacity", 100);
 	if((eof_grid_line_opacity < 1) || (eof_grid_line_opacity > 100))
 		eof_grid_line_opacity = 100;
@@ -895,7 +895,7 @@ void eof_save_config(char * fn)
 	set_config_int("other", "eof_6_fret_range", eof_6_fret_range);
 
 	/* Write grid line settings */
-	set_config_hex("colors", "eof_color_grid_lines", eof_color_grid_lines);
+	set_config_hex("colors", "eof_color_grid_lines", eof_color_grid_lines_raw);
 	set_config_int("other", "eof_grid_line_opacity", eof_grid_line_opacity);
 	set_config_int("other", "eof_grid_line_solid", eof_grid_line_solid);
 	set_config_int("other", "eof_grid_line_gap", eof_grid_line_gap);
@@ -1273,17 +1273,17 @@ void eof_remake_all_colors(void)
 	eof_color_beat_3 = eof_remake_color(eof_color_beat_3_raw);
 	eof_color_seek_line = eof_remake_color(eof_color_seek_line_raw);
 	eof_color_lane_line = eof_remake_color(eof_color_lane_line_raw);
+	eof_color_grid_lines = eof_remake_color(eof_color_grid_lines_raw);
 }
 
 int eof_load_default_theme(void)
 {
-	/* read waveform graph colors */
+	/* waveform graph colors */
 	eof_color_waveform_trough_raw = 0x007C00;	//The RGB equivalent of makecol(0, 124, 0)
 	eof_color_waveform_peak_raw = 0x00BE00;		//The RGB equivalent of makecol(0, 190, 0)
 	eof_color_waveform_rms_raw = 0xBE0000;		//The RGB equivalent of makecol(190, 0, 0)
 
-
-	/* read notes panel colors */
+	/* notes panel colors */
 	eof_notes_panel_error_bg_color_raw = 0xFF0000;		//The RGB equivalent of makecol(255, 0, 0) (red)
 	eof_notes_panel_error_fg_color_raw = 0xFFFFFF;		//The RGB equivalent of makecol(255, 255, 255) (white)
 	eof_notes_panel_warning_bg_color_raw = 0xFFFF00;	//The RGB equivalent of makecol(255, 255, 0) (yellow)
@@ -1295,7 +1295,7 @@ int eof_load_default_theme(void)
 	eof_notes_panel_info_bg_color_raw = -1;		//-1 is used by Allegro to designate transparency
 	eof_notes_panel_info_fg_color_raw = 0xFFFFFF;		//The RGB equivalent of makecol(255, 255, 255) (white)
 
-	/* read highlight colors */
+	/* highlight colors */
 	eof_color_highlight1_raw = 0xFFFF00UL;		//The RGB equivalent of makecol(255, 255, 0), AKA yellow
 	eof_color_highlight2_raw = 0x00FFFFUL;		//The RGB equivalent of makecol(0, 255, 255), AKA cyan
 
@@ -1313,6 +1313,50 @@ int eof_load_default_theme(void)
 	eof_color_beat_3_raw = 0x404040;		//The RGB equivalent of makecol(64, 64, 64) (gray)
 	eof_color_seek_line_raw = 0x00FF00;		//The RGB equivalent of makecol(0, 255, 0) (green)
 	eof_color_lane_line_raw = 0xFFFFFF;		//The RGB equivalent of makecol(255, 255, 255) (white)
+
+	eof_remake_all_colors();	//Apply all loaded colors
+	return 1;
+}
+
+int eof_load_random_theme(void)
+{
+	/* waveform graph colors */
+	eof_color_waveform_trough_raw = eof_random_hex();
+	eof_color_waveform_peak_raw = eof_random_hex();
+	eof_color_waveform_rms_raw = eof_random_hex();
+
+	/* notes panel colors */
+	eof_notes_panel_error_bg_color_raw = eof_random_hex();
+	eof_notes_panel_error_fg_color_raw = eof_random_hex();
+	eof_notes_panel_warning_bg_color_raw =eof_random_hex();
+	eof_notes_panel_warning_fg_color_raw = eof_random_hex();
+	eof_notes_panel_success_bg_color_raw = eof_random_hex();
+	eof_notes_panel_success_fg_color_raw = eof_random_hex();
+	eof_notes_panel_alert_bg_color_raw = eof_random_hex();
+	eof_notes_panel_alert_fg_color_raw = eof_random_hex();
+	eof_notes_panel_info_fg_color_raw = eof_random_hex();
+
+	/* read highlight colors */
+	eof_color_highlight1_raw = eof_random_hex();
+	eof_color_highlight2_raw = eof_random_hex();
+
+	/* other colors */
+	eof_tab_notation_bg_color_raw = eof_random_hex();
+	eof_tab_notation_fg_color_raw = eof_random_hex();
+	eof_color_fhp_marker_raw = eof_random_hex();
+	eof_color_fhp_number_fg_raw = eof_random_hex();
+	eof_color_fhp_number_bg_raw = eof_random_hex();
+	eof_color_fill_raw = eof_random_hex();
+	eof_color_fill_accent_raw = eof_random_hex();
+	eof_color_piano_roll_raw = eof_random_hex();
+	eof_color_beat_1_raw = eof_random_hex();
+	eof_color_beat_2_raw = eof_random_hex();
+	eof_color_beat_3_raw = eof_random_hex();
+	eof_color_seek_line_raw = eof_random_hex();
+	eof_color_lane_line_raw = eof_random_hex();
+
+	/* grid lines */
+	eof_color_grid_lines_raw = eof_random_hex();
 
 	eof_remake_all_colors();	//Apply all loaded colors
 	return 1;
@@ -1388,7 +1432,7 @@ void eof_load_theme(char *fn)
 	eof_get_config_hex_conditional("colors", "eof_color_lane_line", &eof_color_lane_line_raw);
 
 	/* grid lines */
-	eof_get_config_hex_conditional("colors", "eof_color_grid_lines", &eof_color_grid_lines);
+	eof_get_config_hex_conditional("colors", "eof_color_grid_lines", &eof_color_grid_lines_raw);
 
 	eof_remake_all_colors();	//Apply all loaded colors
 }

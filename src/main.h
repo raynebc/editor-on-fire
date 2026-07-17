@@ -768,7 +768,7 @@ extern unsigned char drums_rock_remap_lane_5;
 extern unsigned char drums_rock_remap_lane_5_cymbal;
 extern unsigned char drums_rock_remap_lane_6;
 
-extern int eof_color_grid_lines;
+extern int eof_color_grid_lines, eof_color_grid_lines_raw;
 extern unsigned eof_grid_line_opacity;
 extern unsigned eof_grid_line_solid, eof_grid_line_gap;
 

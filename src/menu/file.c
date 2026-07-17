@@ -81,6 +81,7 @@ MENU eof_file_theme_menu[] =
 {
 	{"Load &Default theme", eof_load_default_theme, NULL, 0, NULL},
 	{"&Load theme", eof_menu_file_load_theme, NULL, 0, NULL},
+	{"&Random theme", eof_load_random_theme, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

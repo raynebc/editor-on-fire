@@ -1401,3 +1401,17 @@ void eof_get_config_hex_conditional(char *section, char *name, int *var)
 		}
 	}
 }
+
+int eof_random_hex(void)
+{
+	int color, r, g, b;
+
+	do{
+		r = ((unsigned int) rand()) % 255;	//8 bit red intensity
+		g = ((unsigned int) rand()) % 255;	//8 bit green intensity
+		b = ((unsigned int) rand()) % 255;	//8 bit blue intensity
+		color = (r << 16) + (g << 8) + b;
+	}while(color == 0x010203);	//Generate random colors until one that is allowed in the theme system is made
+
+	return color;
+}
