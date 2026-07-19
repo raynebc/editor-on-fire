@@ -82,6 +82,7 @@ MENU eof_file_theme_menu[] =
 	{"Load &Default theme", eof_load_default_theme, NULL, 0, NULL},
 	{"&Load theme", eof_menu_file_load_theme, NULL, 0, NULL},
 	{"&Random theme", eof_load_random_theme, NULL, 0, NULL},
+	{"&Save theme", eof_menu_file_save_theme, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -8625,4 +8626,37 @@ int eof_menu_file_load_theme(void)
 	eof_show_mouse(NULL);
 
 	return D_O_K;
+}
+
+int eof_menu_file_save_theme(void)
+{
+	char * returnedfn = NULL, themepath[1024];
+
+	eof_log("eof_menu_file_save_theme() entered", 1);
+
+	//Have the user browse for a file to save as
+	returnedfn = ncd_file_select(1, eof_last_browsed_theme_path, "Save color theme file", eof_filter_theme_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		(void) replace_extension(themepath, returnedfn, "theme.txt", sizeof(themepath));		//Ensure the file is saved with a theme.txt extension
+		if(exists(themepath))
+		{	//If the specified file path already exists
+			eof_clear_input();
+			if(alert(NULL, "The specified theme file already exists.  Overwrite?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+			{	//If the user does not opt to overwrite the file
+				return 0;	//Cancel
+			}
+			delete_file(themepath);	//Delete the existing file because if it has a byte order mark, Allegro will fail to modify it
+		}
+
+	//Write the color definitions to the file
+		set_config_file(themepath);
+		eof_save_color_config();
+		flush_config_file();
+
+		(void) replace_filename(eof_last_browsed_theme_path, themepath, "", sizeof(eof_last_browsed_theme_path));	//Set the last loaded color theme path
+	}
+
+	return 1;
 }

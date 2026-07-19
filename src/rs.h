@@ -19,6 +19,7 @@ typedef struct
 	char bend;					//Nonzero if this note is a bend, in which case it is the bend strength rounded up to the nearest number of half steps (used in RS2 notation).
 	unsigned long bendstrength_q;	//The number of quarter steps this note bends (used in RS2 notation)
 	unsigned long bendstrength_h;	//The number of half steps this note bends (used in RS1 notation)
+	unsigned char bend_defined;	//Set to nonzero if the note's bend definition was defined at least once (directly or via tech note)
 	long slideto;					//If not negative, is the fret position the slide ends at
 	char hammeron;				//Nonzero if this note is a hammer on
 	char pulloff;					//Nonzero if this note is a pull off

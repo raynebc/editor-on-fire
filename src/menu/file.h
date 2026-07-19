@@ -249,5 +249,7 @@ int eof_menu_file_songsterr_import(void);
 
 int eof_menu_file_load_theme(void);
 	//Prompts the user to browse to a theme.txt file and uses eof_load_theme() to apply the colors defined within it
+int eof_menu_file_save_theme(void);
+	//Prmopts the user for a file name to save the current color theme to and uses eof_save_color_config() to write it to the file
 
 #endif

@@ -5487,6 +5487,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 	long fret, slidediff = 0, unpitchedslidediff = 0;
 	char techbends = 0, thistechbends, has_stop = 0;
 	char keeplength = 0;	//Set to nonzero if the note's techniques require the sustain to be kept
+	unsigned char bend_defined = 0;	//Tracks whether the bend strength was explicitly defined at least once
 
 	if((sp == NULL) || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)))
 		return 0;	//Invalid parameters
@@ -5585,6 +5586,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 					{	//The bend strength is defined in half steps
 						thistechbends = tp->technote[ctr]->bendstrength;	//Obtain the defined bend strength in half steps
 					}
+					bend_defined = 1;				//Track that the bend was defined
 				}
 				if((thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (thistechflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this tech note slides
@@ -5676,6 +5678,7 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 						ptr->bendstrength_h = tp->note[notenum]->bendstrength;	//Obtain the defined bend strength in half steps
 						ptr->bendstrength_q = ptr->bendstrength_h * 2;			//Obtain the defined bend strength in quarter steps
 					}
+					bend_defined = 1;				//Track that the bend was defined
 					ptr->bend = ptr->bendstrength_h;	//Obtain the strength of this bend rounded up to the nearest half step
 				}
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
@@ -5812,6 +5815,8 @@ unsigned long eof_get_rs_techniques(EOF_SONG *sp, unsigned long track, unsigned 
 		{	//If the note has sustain, but not at least 5ms
 			ptr->length = 0;	//This causes note detection problems in Rocksmith, drop the sustain
 		}
+
+		ptr->bend_defined = bend_defined;	//Track whether the bend strength was explicitly defined at least once
 	}//If the calling function passed a techniques structure
 
 	//Make a bitmask reflecting only the techniques this note (or any applicable tech notes) has that require a chordNote subtag to be written

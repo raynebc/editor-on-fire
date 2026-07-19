@@ -4901,8 +4901,8 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 							unsigned long retflags = eof_get_rs_techniques(eof_song, ctr, notectr, stringnum, &tech, 4, 1);
 							if(retflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 							{	//If the note uses bend technique on this string
-								if(tech.bend == 0)
-								{	//If no bend strength is actually defined
+								if((tech.bend == 0) && (tech.bend_defined == 0))
+								{	//If no bend strength is actually defined (allowing for a bend strength of zero having been defined)
 									if(ctr != eof_selected_track)
 									{	//If this isn't the active track
 										eof_notes_inactive_track_has_rs_warnings = 1;	//Track that an inactive track has a Rocksmith warning

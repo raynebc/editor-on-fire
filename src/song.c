@@ -12573,8 +12573,8 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 	{	//If the specified gem uses a fret value that is below any active (nonzero-valued) FHP at the gem's position
 		return -2;	//The specified gem defines a fret that contradicts the FHP
 	}
-	if(fhp && (np->finger[stringnum] == 1) && (np->frets[stringnum] != fhp))
-	{	//If there is a fret hand position in effect, this string is defined as being fretted with the index finger, but is also defined as using the index finger at a different fret than the FHP
+	if(fhp && (np->finger[stringnum] == 1) && ((np->frets[stringnum] & 0x7F) != fhp))
+	{	//If there is a fret hand position in effect, this string is defined as being fretted with the index finger, but is also defined as using the index finger at a different fret (masking out the mute bit) than the FHP
 		return -2;	//The specified gem defines a fingering that contradicts the FHP
 	}
 

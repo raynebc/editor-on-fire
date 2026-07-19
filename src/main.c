@@ -4933,7 +4933,7 @@ int eof_initialize(int argc, char * argv[])
 	eof_filter_theme_files = ncdfs_filter_list_create();
 	if(!eof_filter_theme_files)
 	{
-		allegro_message("Could not create file list filter (*.theme.txt");
+		allegro_message("Could not create file list filter (*.theme.txt)");
 		return 0;
 	}
 	ncdfs_filter_list_add(eof_filter_theme_files, "theme.txt", "Color themes (*.theme.txt)", 1);

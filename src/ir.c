@@ -341,6 +341,19 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[stringnum], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates slide up or down in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 20, 0, 15, index++);
 				}
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
+				{	//If this note has an unpitched slide
+					unsigned char lowestfret = eof_get_lowest_fret_value(sp, track, i);	//Determine the fret value of the lowest fretted string
+					int midinote = 21;	//By default, assume the unpitched slide goes down
+
+					if(lowestfret < tp->note[i]->unpitchend)
+					{	//If the unpitched slide goes higher than this position
+						midinote = 22;	//The unpitched slide goes up
+					}
+
+					eof_add_midi_event_indexed(deltapos, 0x90, midinote, technique_vel[stringnum], 15, index++);		//Notes 21 and 22, channel 15 with the string's dedicated velocity number indicates slide out and down or up (respectively) in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x80, midinote, 0, 15, index++);
+				}
 
 				//Write finger placement markers
 				retval = eof_pro_guitar_note_derive_string_fingering(sp, track, i, stringnum, &finger);

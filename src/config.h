@@ -36,6 +36,8 @@ int eof_default_ini_add(const char *entry, int silent);
 	//Returns nonzero on error, such as if the entry is already defined or the entry is malformed
 	//If silent is zero, dialog messages are presented to tell the user why an entry fails to be added (ie. duplicate/malformed)
 
+void eof_save_color_config(void);
+	//Writes all defineable color variables to the currently active config file (set with the set_config_file() function)
 void eof_remake_all_colors(void);
 	//Uses eof_remake_color() on all configurable color variables, to be used after loading color definitions from a config file to apply them to the active EOF session
 int eof_load_default_theme(void);

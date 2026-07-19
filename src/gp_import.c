@@ -2933,7 +2933,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					unsigned char gracefrets[7] = {0};	//Store fret values for each string (for tracking grace notes)
 					unsigned long beat_position;
 					double partial_beat_position, beat_length_ms;
-					char notebends = 0;	//Tracks whether any bend points were parsed for the note, since they may be applied as tech notes instead of toward the regular note
+					char notebends = 0;	//Tracks whether any bend points (with a height larger than 0) were parsed for the note, since they may be applied as tech notes instead of toward the regular note
 					char isquarterorlonger = 0, isaltered = 0;	//Boolean statuses used to more accurately track whether the "GP import truncates short notes" should take effect
 					char istuplet = 0;		//Set to nonzero if the note is explicitly in a tuplet (ie. triplet), which will cause any "triplet feel" notation to be ignored
 
@@ -3642,14 +3642,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									eof_guitar_pro_import_release_memory(&vars);
 									return NULL;
 								}
-								//Don't mark entire chords with bend status, Guitar Pro defines which strings are to be bent
-								if(eof_note_count_colors_bitmask(usedstrings) == 1)
-								{	//If the note being parsed is not a chord
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
-									notebends = 1;
-								}
 								if(bendstruct.summaryheight > 0)
 								{	//If the GP file defines the bend of being at least one quarter step
+									//Don't mark entire chords with bend status, Guitar Pro defines which strings are to be bent
+									if(eof_note_count_colors_bitmask(usedstrings) == 1)
+									{	//If the note being parsed is not a chord
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+										notebends = 1;
+									}
 									bendstrength = bendstruct.summaryheight;
 									bendstrength |= 0x80;	//Mark the MSB to indicate this value is measured in quarter steps
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the bend height defined
@@ -4059,6 +4059,28 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 					if(importnote)
 					{	//If this note is being imported
+						unsigned char remappednote = 0, remappedghost = 0;
+
+						//Determine the bitmasks for the note and ghost gems first so it can be determined whether a tie note used different strings than the previous note
+						if(vars.strings[ctr2] > 6)
+						{	//If this is a 7 string track
+							if(effective_drop_7)
+							{	//The user opted to drop string 7 instead of string 1
+								remappednote = definedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
+								remappedghost = ghost >> 1;		//Likewise translate the ghost bit mask
+							}
+							else
+							{	//The user opted to drop string 1
+								remappednote = definedstrings & 63;	//Mask out string 1
+								remappedghost = ghost & 63;		//Likewise mask out string 1 of the ghost bit mask
+							}
+						}
+						else
+						{	//This track has less than 7 strings
+							remappednote = definedstrings >> (7 - vars.strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
+							remappedghost = ghost >> (7 - vars.strings[ctr2]);			//Likewise translate the ghost bit mask
+						}
+
 						if(tie_note)
 						{	//If this note had one or more tie gems
 							char newtech = 0;	//Is set to nonzero if the tie note is determined to add techniques to the note it is extending
@@ -4075,8 +4097,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 								}
 							}
-							if(!newtech)
-							{	//If the tie note doesn't enable a technique not in use by the previous note, alter the previous note's length to include the tie note
+							if(remappednote != vars.np[ctr2]->note)
+							{	//If this tied note does not use the same strings as the previous note
+								new_note = 1;	//Prevent it from modifying the previous note and create a new note instead
+							}
+							if(!newtech && !new_note)
+							{	//If the tie note doesn't enable a technique not in use by the previous note, alter the previous note's length to include the tie note, and it isn't a tie note with dislike strings from the previous note
 								long oldlength;
 								unsigned int convertedtie = usedtie >> (7 - vars.strings[ctr2]);	//Re-map from GP's string numbering to EOF's
 
@@ -4166,24 +4192,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							vars.np[ctr2]->midi_length = 0;
 							vars.np[ctr2]->midi_pos = 0;
 							vars.np[ctr2]->name[0] = '\0';
-							if(vars.strings[ctr2] > 6)
-							{	//If this is a 7 string track
-								if(effective_drop_7)
-								{	//The user opted to drop string 7 instead of string 1
-									vars.np[ctr2]->note = definedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
-									vars.np[ctr2]->ghost = ghost >> 1;		//Likewise translate the ghost bit mask
-								}
-								else
-								{	//The user opted to drop string 1
-									vars.np[ctr2]->note = definedstrings & 63;	//Mask out string 1
-									vars.np[ctr2]->ghost = ghost & 63;		//Likewise mask out string 1 of the ghost bit mask
-								}
-							}
-							else
-							{	//This track has less than 7 strings
-								vars.np[ctr2]->note = definedstrings >> (7 - vars.strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
-								vars.np[ctr2]->ghost = ghost >> (7 - vars.strings[ctr2]);			//Likewise translate the ghost bit mask
-							}
+							vars.np[ctr2]->note = remappednote;
+							vars.np[ctr2]->ghost = remappedghost;
 							vars.np[ctr2]->type = voice;					//Store lead voice notes in difficulty 0, bass voice notes in difficulty 1
 							vars.np[ctr2]->bendstrength = bendstrength;	//Apply the note's bend strength if applicable
 

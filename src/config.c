@@ -841,11 +841,6 @@ void eof_save_config(char * fn)
 	set_config_int("editor", "preview_speed", eof_zoom_3d);
 	set_config_int("editor", "hopo_view", eof_hopo_view);
 
-	/* write waveform graph colors (raw format to avoid color corruption on subsequent launches of EOF) */
-	set_config_hex("colors", "eof_color_waveform_trough", eof_color_waveform_trough_raw);
-	set_config_hex("colors", "eof_color_waveform_peak", eof_color_waveform_peak_raw);
-	set_config_hex("colors", "eof_color_waveform_rms", eof_color_waveform_rms_raw);
-
 	/* write waveform graph settings */
 	set_config_int("waveform", "eof_waveform_renderlocation", eof_waveform_renderlocation);
 	set_config_int("waveform", "eof_waveform_renderleftchannel", eof_waveform_renderleftchannel);
@@ -853,37 +848,10 @@ void eof_save_config(char * fn)
 	set_config_int("waveform", "eof_waveform_renderscale_enabled", eof_waveform_renderscale_enabled);
 	set_config_int("waveform", "eof_waveform_renderscale", eof_waveform_renderscale);
 
-	/* write notes panel colors */
-	set_config_hex("colors", "eof_notes_panel_error_bg_color", eof_notes_panel_error_bg_color_raw);
-	set_config_hex("colors", "eof_notes_panel_error_fg_color", eof_notes_panel_error_fg_color_raw);
-	set_config_hex("colors", "eof_notes_panel_warning_bg_color", eof_notes_panel_warning_bg_color_raw);
-	set_config_hex("colors", "eof_notes_panel_warning_fg_color", eof_notes_panel_warning_fg_color_raw);
-	set_config_hex("colors", "eof_notes_panel_success_bg_color", eof_notes_panel_success_bg_color_raw);
-	set_config_hex("colors", "eof_notes_panel_success_fg_color", eof_notes_panel_success_fg_color_raw);
-	set_config_hex("colors", "eof_notes_panel_alert_bg_color", eof_notes_panel_alert_bg_color_raw);
-	set_config_hex("colors", "eof_notes_panel_alert_fg_color", eof_notes_panel_alert_fg_color_raw);
-	set_config_hex("colors", "eof_notes_panel_info_bg_color", eof_notes_panel_info_bg_color_raw);
-	set_config_hex("colors", "eof_notes_panel_info_fg_color", eof_notes_panel_info_fg_color_raw);
+	/* write color settings */
+	eof_save_color_config();
 
-	/* write highlight colors (raw format to avoid color corruption on subsequent launches of EOF) */
-	set_config_hex("colors", "eof_color_highlight1", eof_color_highlight1_raw);
-	set_config_hex("colors", "eof_color_highlight2", eof_color_highlight2_raw);
-
-	/* write other colors */
-	set_config_hex("colors", "eof_tab_notation_bg_color", eof_tab_notation_bg_color_raw);
-	set_config_hex("colors", "eof_tab_notation_fg_color", eof_tab_notation_fg_color_raw);
-	set_config_hex("colors", "eof_color_fhp_marker", eof_color_fhp_marker_raw);
-	set_config_hex("colors", "eof_color_fhp_number_fg", eof_color_fhp_number_fg_raw);
-	set_config_hex("colors", "eof_color_fhp_number_bg", eof_color_fhp_number_bg_raw);
-	set_config_hex("colors", "eof_color_fill", eof_color_fill_raw);
-	set_config_hex("colors", "eof_color_fill_accent", eof_color_fill_accent_raw);
-	set_config_hex("colors", "eof_color_piano_roll", eof_color_piano_roll_raw);
-	set_config_hex("colors", "eof_color_beat_1", eof_color_beat_1_raw);
-	set_config_hex("colors", "eof_color_beat_2", eof_color_beat_2_raw);
-	set_config_hex("colors", "eof_color_beat_3", eof_color_beat_3_raw);
-	set_config_hex("colors", "eof_color_seek_line", eof_color_seek_line_raw);
-	set_config_hex("colors", "eof_color_lane_line", eof_color_lane_line_raw);
-
+	/* write controller settings */
 	eof_log("\tSaving controller configs", 3);
 	eof_controller_save_config(&eof_guitar, "guitar");
 	eof_controller_save_config(&eof_drums, "drums");
@@ -1239,6 +1207,45 @@ int eof_default_ini_add(const char *entry, int silent)
 	eof_default_ini_settings++;
 
 	return 0;	//Return success
+}
+
+void eof_save_color_config(void)
+{
+	/* write waveform graph colors (raw format to avoid color corruption on subsequent launches of EOF) */
+	set_config_hex("colors", "eof_color_waveform_trough", eof_color_waveform_trough_raw);
+	set_config_hex("colors", "eof_color_waveform_peak", eof_color_waveform_peak_raw);
+	set_config_hex("colors", "eof_color_waveform_rms", eof_color_waveform_rms_raw);
+
+	/* write notes panel colors */
+	set_config_hex("colors", "eof_notes_panel_error_bg_color", eof_notes_panel_error_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_error_fg_color", eof_notes_panel_error_fg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_warning_bg_color", eof_notes_panel_warning_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_warning_fg_color", eof_notes_panel_warning_fg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_success_bg_color", eof_notes_panel_success_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_success_fg_color", eof_notes_panel_success_fg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_alert_bg_color", eof_notes_panel_alert_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_alert_fg_color", eof_notes_panel_alert_fg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_info_bg_color", eof_notes_panel_info_bg_color_raw);
+	set_config_hex("colors", "eof_notes_panel_info_fg_color", eof_notes_panel_info_fg_color_raw);
+
+	/* write highlight colors (raw format to avoid color corruption on subsequent launches of EOF) */
+	set_config_hex("colors", "eof_color_highlight1", eof_color_highlight1_raw);
+	set_config_hex("colors", "eof_color_highlight2", eof_color_highlight2_raw);
+
+	/* write other colors */
+	set_config_hex("colors", "eof_tab_notation_bg_color", eof_tab_notation_bg_color_raw);
+	set_config_hex("colors", "eof_tab_notation_fg_color", eof_tab_notation_fg_color_raw);
+	set_config_hex("colors", "eof_color_fhp_marker", eof_color_fhp_marker_raw);
+	set_config_hex("colors", "eof_color_fhp_number_fg", eof_color_fhp_number_fg_raw);
+	set_config_hex("colors", "eof_color_fhp_number_bg", eof_color_fhp_number_bg_raw);
+	set_config_hex("colors", "eof_color_fill", eof_color_fill_raw);
+	set_config_hex("colors", "eof_color_fill_accent", eof_color_fill_accent_raw);
+	set_config_hex("colors", "eof_color_piano_roll", eof_color_piano_roll_raw);
+	set_config_hex("colors", "eof_color_beat_1", eof_color_beat_1_raw);
+	set_config_hex("colors", "eof_color_beat_2", eof_color_beat_2_raw);
+	set_config_hex("colors", "eof_color_beat_3", eof_color_beat_3_raw);
+	set_config_hex("colors", "eof_color_seek_line", eof_color_seek_line_raw);
+	set_config_hex("colors", "eof_color_lane_line", eof_color_lane_line_raw);
 }
 
 void eof_remake_all_colors(void)
