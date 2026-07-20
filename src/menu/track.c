@@ -5132,8 +5132,8 @@ int eof_menu_track_clone_track_number(EOF_SONG *sp, unsigned long sourcetrack, u
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	eof_set_3D_lane_positions(eof_selected_track);	//Update xchart[] to reflect a different number of lanes being represented in the 3D preview window
 	eof_set_color_set();
-	(void) eof_detect_difficulties(sp, eof_selected_track);
 	eof_fixup_notes(sp);		//Run fixup logic (ie. to apply crazy status to notes cloned into the keys track)
+	(void) eof_detect_difficulties(sp, eof_selected_track);
 
 	return 1;
 }

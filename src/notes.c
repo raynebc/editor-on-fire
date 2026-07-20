@@ -664,8 +664,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DISPLAY_ERROR"))
 	{
 		dest_buffer[0] = '\0';
-		panel->color = eof_notes_panel_error_fg_color;
-		panel->bgcolor = eof_notes_panel_error_bg_color;
+		panel->color = eof_color_notes_panel_error_fg;
+		panel->bgcolor = eof_color_notes_panel_error_bg;
 		panel->this_notice = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		if(!panel->last_notice)
 			panel->ypos += 3;	//If the previous line rendered as normal text, lower the y coordinate further so that this notice's color background doesn't obscure the former
@@ -676,8 +676,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DISPLAY_WARNING"))
 	{
 		dest_buffer[0] = '\0';
-		panel->color = eof_notes_panel_warning_fg_color;
-		panel->bgcolor = eof_notes_panel_warning_bg_color;
+		panel->color = eof_color_notes_panel_warning_fg;
+		panel->bgcolor = eof_color_notes_panel_warning_bg;
 		panel->this_notice = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		if(!panel->last_notice)
 			panel->ypos += 3;	//If the previous line rendered as normal text, lower the y coordinate further so that this notice's color background doesn't obscure the former
@@ -688,8 +688,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DISPLAY_SUCCESS"))
 	{
 		dest_buffer[0] = '\0';
-		panel->color = eof_notes_panel_success_fg_color;
-		panel->bgcolor = eof_notes_panel_success_bg_color;
+		panel->color = eof_color_notes_panel_success_fg;
+		panel->bgcolor = eof_color_notes_panel_success_bg;
 		panel->this_notice = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		if(!panel->last_notice)
 			panel->ypos += 3;	//If the previous line rendered as normal text, lower the y coordinate further so that this notice's color background doesn't obscure the former
@@ -700,8 +700,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	if(!ustricmp(macro, "DISPLAY_ALERT"))
 	{
 		dest_buffer[0] = '\0';
-		panel->color = eof_notes_panel_alert_fg_color;
-		panel->bgcolor = eof_notes_panel_alert_bg_color;
+		panel->color = eof_color_notes_panel_alert_fg;
+		panel->bgcolor = eof_color_notes_panel_alert_bg;
 		panel->this_notice = 1;	//Ensure the next printed line is a few pixels lower to avoid obscuring text with solid background color
 		if(!panel->last_notice)
 			panel->ypos += 3;	//If the previous line rendered as normal text, lower the y coordinate further so that this notice's color background doesn't obscure the former
@@ -6145,8 +6145,8 @@ void eof_render_text_panel(EOF_TEXT_PANEL *panel, int opaque)
 		eof_log("\t\tInitializing panel variables", 3);
 	panel->ypos = 0;
 	panel->xpos = 2;
-	panel->color = panel->definedcolor = eof_notes_panel_info_fg_color;
-	panel->bgcolor = panel->definedbgcolor = eof_notes_panel_info_bg_color;
+	panel->color = panel->definedcolor = eof_color_notes_panel_info_fg;
+	panel->bgcolor = panel->definedbgcolor = eof_color_notes_panel_info_bg;
 	panel->allowempty = 0;
 	panel->timeformat = 0;
 	panel->flush = 0;

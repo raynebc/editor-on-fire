@@ -611,12 +611,12 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 			if(x - half_notation_length < 0)
 			{	//If the notation would render off-screen, render the notation in left alignment
-				textout_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_tab_notation_fg_color, eof_tab_notation_bg_color);
+				textout_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_tab_notation_fg, eof_color_tab_notation_bg);
 				lastx2 = x + half_notation_length + half_notation_length + 2;	//Store the x coordinate position of the end of this notation rendering, add an extra couple pixels of padding
 			}
 			else
 			{	//Otherwise, center the notation below the note
-				textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_tab_notation_fg_color, eof_tab_notation_bg_color);
+				textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_tab_notation_fg, eof_color_tab_notation_bg);
 				lastx2 = x + half_notation_length + 2;	//Store the x coordinate position of the end of this notation rendering, add an extra couple pixels of padding
 			}
 		}

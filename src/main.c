@@ -534,16 +534,16 @@ char eof_waveform_renderscale_enabled = 0;	//Specifies whether waveform graph he
 unsigned eof_waveform_renderscale = 100;		//Specifies a scale factor for the render height to make the graph taller and more visible
 
 /* notes panel colors */
-int eof_notes_panel_error_bg_color_raw, eof_notes_panel_error_fg_color_raw;
-int eof_notes_panel_warning_bg_color_raw, eof_notes_panel_warning_fg_color_raw;
-int eof_notes_panel_success_bg_color_raw, eof_notes_panel_success_fg_color_raw;
-int eof_notes_panel_alert_bg_color_raw, eof_notes_panel_alert_fg_color_raw;
-int eof_notes_panel_info_bg_color_raw, eof_notes_panel_info_fg_color_raw;
-int eof_notes_panel_error_bg_color, eof_notes_panel_error_fg_color;
-int eof_notes_panel_warning_bg_color, eof_notes_panel_warning_fg_color;
-int eof_notes_panel_success_bg_color, eof_notes_panel_success_fg_color;
-int eof_notes_panel_alert_bg_color, eof_notes_panel_alert_fg_color;
-int eof_notes_panel_info_bg_color, eof_notes_panel_info_fg_color;
+int eof_color_notes_panel_error_bg_raw, eof_color_notes_panel_error_fg_raw;
+int eof_color_notes_panel_warning_bg_raw, eof_color_notes_panel_warning_fg_raw;
+int eof_color_notes_panel_success_bg_raw, eof_color_notes_panel_success_fg_raw;
+int eof_color_notes_panel_alert_bg_raw, eof_color_notes_panel_alert_fg_raw;
+int eof_color_notes_panel_info_bg_raw, eof_color_notes_panel_info_fg_raw;
+int eof_color_notes_panel_error_bg, eof_color_notes_panel_error_fg;
+int eof_color_notes_panel_warning_bg, eof_color_notes_panel_warning_fg;
+int eof_color_notes_panel_success_bg, eof_color_notes_panel_success_fg;
+int eof_color_notes_panel_alert_bg, eof_color_notes_panel_alert_fg;
+int eof_color_notes_panel_info_bg, eof_color_notes_panel_info_fg;
 
 /* highlight color settings */
 int eof_color_highlight1_raw;	//The raw hex formatted RRGGBB colors that need to be converted
@@ -552,8 +552,8 @@ int eof_color_highlight1;		//The color used for static highlighting
 int eof_color_highlight2;		//The color used for dynamic highlighting
 
 /* other colors*/
-int eof_tab_notation_bg_color, eof_tab_notation_bg_color_raw;
-int eof_tab_notation_fg_color, eof_tab_notation_fg_color_raw;
+int eof_color_tab_notation_bg, eof_color_tab_notation_bg_raw;
+int eof_color_tab_notation_fg, eof_color_tab_notation_fg_raw;
 int eof_color_fhp_marker, eof_color_fhp_marker_raw;
 int eof_color_fhp_number_fg, eof_color_fhp_number_fg_raw;
 int eof_color_fhp_number_bg, eof_color_fhp_number_bg_raw;
