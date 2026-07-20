@@ -4549,12 +4549,27 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				int dir = 0;	//Tracks whether the slide in is to convert into an upward (>0) or downward (<0) slide
 				unsigned long beatnum = eof_get_beat(eof_song, vars.gp->track[ctr]->note[ctr2]->pos);
 				unsigned long beatlength = eof_get_beat_length(eof_song, beatnum);
+				unsigned char lowest_fret = 0;
 
 				nnp->flags = vars.gp->track[ctr]->note[ctr2]->flags;		//The new note will inherit all of the statuses/techniques that were defined for the original note
 				nnp->flags &= ~EOF_NOTE_FLAG_HIGHLIGHT;		//Except for the highlight status
 				vars.gp->track[ctr]->note[ctr2]->flags = EOF_NOTE_FLAG_HIGHLIGHT;	//And the original note will just become a slide note (with highlighting)
 				nnp->length = vars.gp->track[ctr]->note[ctr2]->length;	//The new note will inherit the length of the orginal note
 
+				//Find the lowest fret number used in the note, to correctly parse the end of the slide
+				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if(ctr3 < vars.gp->track[ctr]->numstrings)
+					{	//If this is a string used in the track
+						if(vars.gp->track[ctr]->note[ctr2]->note & bitmask)
+						{	//If this is a string used in the note
+							if(!lowest_fret || (vars.gp->track[ctr]->note[ctr2]->frets[ctr3] < lowest_fret))
+							{	//If the lowest fret number of this note wasn't found yet
+								lowest_fret = vars.gp->track[ctr]->note[ctr2]->frets[ctr3];	//Track it
+							}
+						}
+					}
+				}
 				//Find the direction of the slide and apply it to the note, place the newly added note 1/# beat after the slide beginning and link it
 				for(ctr3 = 0, bitmask = 1; ctr3 < 6; ctr3++, bitmask <<= 1)
 				{	//For each of the 6 supported strings
@@ -4570,7 +4585,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								vars.gp->track[ctr]->note[ctr2]->tflags &= ~EOF_NOTE_TFLAG_SLIDE_IN;					//Clear the slide in temporary flag
 								vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Denote that the slide end will be defined
 								vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;			//Link it to the newly added note
-								if(vars.gp->track[ctr]->note[ctr2]->frets[ctr3] > vars.gp->track[ctr]->note[ctr2]->unpitchend)
+								if(lowest_fret > vars.gp->track[ctr]->note[ctr2]->unpitchend)
 								{	//Downward slide
 									vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 								}
@@ -4578,7 +4593,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Upward slide
 									vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 								}
-								dir = vars.gp->track[ctr]->note[ctr2]->unpitchend - vars.gp->track[ctr]->note[ctr2]->frets[ctr3];
+								dir = vars.gp->track[ctr]->note[ctr2]->unpitchend - lowest_fret;
 							}
 							gap = ((double)beatlength / (double)eof_gp_import_slide_in_beat_interval) + 0.5;
 							nnp->pos = vars.gp->track[ctr]->note[ctr2]->pos + gap;	//Place the newly added note 1/# beat forward, based on the eof_gp_import_slide_in_beat_interval eof.cfg setting
@@ -4687,6 +4702,43 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		for(ctr2 = 0; ctr2 < vars.gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
 			eof_sanitize_note_flags(&vars.gp->track[ctr]->note[ctr2]->flags, EOF_TRACK_PRO_GUITAR, EOF_TRACK_PRO_GUITAR);	//Clean up status flags to suit a pro guitar track
+		}
+	}
+
+//Resnap the end positions of notes that end 1ms after a grid snap position due to floating point math rounding error
+	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
+	{	//For each imported track
+		unsigned long snappos = 0;
+
+		for(ctr2 = 0; ctr2 < vars.gp->track[ctr]->notes; ctr2++)
+		{	//For each note in the track
+			EOF_PRO_GUITAR_NOTE *np = vars.gp->track[ctr]->note[ctr2];	//Simplify
+			if(!eof_is_any_beat_interval_position(np->pos + np->length, NULL, NULL, NULL, &snappos, eof_prefer_midi_friendly_grid_snapping))
+			{	//If this tech note is not beat interval snapped
+				if((snappos != ULONG_MAX) && (snappos > np->pos))
+				{	//If the nearest snap position was determined and it is at least 1ms after the note's start position
+#ifdef GP_IMPORT_DEBUG
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Resnapping track #%lu, note #%lu's length to end on grid snap position (length %lu -> %lu)", ctr, ctr2, np->length, snappos - np->pos);
+					eof_log(eof_log_string, 2);
+#endif
+					if((snappos + 1 == np->pos + np->length) || (np->pos + np->length + 1 == snappos))
+					{	//If the nearest grid snap position for this note's end position is within 1ms
+						for(ctr3 = 0; ctr3 < vars.gp->track[ctr]->technotes; ctr3++)
+						{	//For each tech note in the track
+							EOF_PRO_GUITAR_NOTE *tnp = vars.gp->track[ctr]->technote[ctr3];	//Simplify
+							if(tnp->pos == np->pos + np->length)
+							{	//If the tech note is at the note's end position
+#ifdef GP_IMPORT_DEBUG
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tResnapping tech note at note's end position to match");
+								eof_log(eof_log_string, 2);
+								tnp->pos = snappos;
+#endif
+							}
+						}
+						np->length = snappos - np->pos;	//Snap the note's end position to that grid snap
+					}
+				}
+			}
 		}
 	}
 

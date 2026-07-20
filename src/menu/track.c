@@ -2253,6 +2253,8 @@ int eof_fret_hand_position_seek_prev(DIALOG * d)
 	if(eof_fret_hand_position_list_dialog[1].d1 > 0)
 	{	//If there is a previous list entry
 		eof_fret_hand_position_list_dialog[1].d1--;	//Select the previous entry in the FHP list
+		if((eof_fret_hand_position_list_dialog[1].d2 > eof_fret_hand_position_list_dialog[1].d1) && eof_fret_hand_position_list_dialog[1].d2)
+			eof_fret_hand_position_list_dialog[1].d2--;	//If the FHP at the seek position is not visible in the list, scroll the list up to reveal it
 		return eof_fret_hand_position_seek(d);		//Call the dialog function to seek to it
 	}
 
@@ -2270,6 +2272,8 @@ int eof_fret_hand_position_seek_next(DIALOG * d)
 	if(eof_fret_hand_position_list_dialog[1].d1 + 1 < eof_fret_hand_position_list_size)
 	{	//If there is a next list entry
 		eof_fret_hand_position_list_dialog[1].d1++;	//Select the next entry in the FHP list
+		if(eof_fret_hand_position_list_dialog[1].d1 >= eof_fret_hand_position_list_dialog[1].d2 + 12)
+			eof_fret_hand_position_list_dialog[1].d2 = eof_fret_hand_position_list_dialog[1].d1 - 11;	//If the FHP at the seek position is not visible in the list (tall enough to display 12 entries), scroll the list down to reveal it
 		return eof_fret_hand_position_seek(d);		//Call the dialog function to seek to it
 	}
 

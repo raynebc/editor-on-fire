@@ -1242,6 +1242,16 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	//Selected note/lyric position
+	if(!ustricmp(macro, "SELECTED_NOTE_END_POS"))
+	{
+		if(eof_selection.current < tracksize)
+			snprintf(dest_buffer, dest_buffer_size, "%ld", eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current) + eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
+		else
+			snprintf(dest_buffer, dest_buffer_size, "None");
+		return 1;
+	}
+
 	//Selected note/lyric name/text
 	if(!ustricmp(macro, "SELECTED_NOTE_NAME"))
 	{
