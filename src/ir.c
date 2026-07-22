@@ -303,55 +303,122 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 				{	//If this note is palm muted
+					eof_log("\t\t\tExporting note as palm mute", 2);
 					eof_add_midi_event_indexed(deltapos, 0x90, 12, technique_vel[stringnum], 15, index++);		//Note 12, channel 15 with the string's dedicated velocity number indicates palm mute in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 12, 0, 15, index++);
 				}
 				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (tp->note[i]->frets[stringnum] & 0x80))
 				{	//If this note is fully string muted, or this specific string is
+					eof_log("\t\t\tExporting note as string mute", 2);
 					eof_add_midi_event_indexed(deltapos, 0x90, 13, technique_vel[stringnum], 15, index++);		//Note 13, channel 15 with the string's dedicated velocity number indicates string mute in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 13, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
 				{	//If this note is a natural harmonic
+					eof_log("\t\t\tExporting note as natural harmonic", 2);
 					eof_add_midi_event_indexed(deltapos, 0x90, 14, technique_vel[stringnum], 15, index++);		//Note 14, channel 15 with the string's dedicated velocity number indicates natural harmonic in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 14, 0, 15, index++);
 				}
 				if(nextflags & (EOF_PRO_GUITAR_NOTE_FLAG_HO | EOF_PRO_GUITAR_NOTE_FLAG_PO))
 				{	//If the NEXT note is a hammer on or a pull off
+					eof_log("\t\t\tExporting note as being followed by HO/PO", 2);
 					eof_add_midi_event_indexed(deltapos, 0x90, 15, technique_vel[stringnum], 15, index++);		//Note 15, channel 15 with the string's dedicated velocity number indicates hammer on or pull off in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 15, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 				{	//If this note is tapped
+					eof_log("\t\t\tExporting note as tap", 2);
 					eof_add_midi_event_indexed(deltapos, 0x90, 17, technique_vel[stringnum], 15, index++);		//Note 17, channel 15 with the string's dedicated velocity number indicates tapping in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 17, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
 				{	//If this note is down strummed/picked
+					eof_log("\t\t\tExporting note as down strum", 2);
 					eof_add_midi_event_indexed(deltapos, 0x90, 18, technique_vel[stringnum], 15, index++);		//Note 18, channel 15 with the string's dedicated velocity number indicates down strum in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 18, 0, 15, index++);
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 				{	//If this note is up strummed/picked
+					eof_log("\t\t\tExporting note as up strum", 2);
 					eof_add_midi_event_indexed(deltapos, 0x90, 19, technique_vel[stringnum], 15, index++);		//Note 19, channel 15 with the string's dedicated velocity number indicates up strum in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, 19, 0, 15, index++);
 				}
 				if(flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides up or down
-					eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[stringnum], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates slide up or down in IMMERROCK
-					eof_add_midi_event_indexed(deltapos, 0x80, 20, 0, 15, index++);
+					if(flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT)
+					{	//If the slide note has linknext status, export as a legato slide (next note head is hidden)
+						eof_log("\t\t\tExporting note as legato slide", 2);
+						eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[stringnum], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates legato slide up or down in IMMERROCK
+						eof_add_midi_event_indexed(deltapos, 0x80, 20, 0, 15, index++);
+					}
+					else
+					{	//Determine which type of slide to export it as
+						unsigned long lowest_fret = eof_get_lowest_fret_value(sp, track, i);
+						unsigned char nextfretnum = 0xFF, slide_end, end_pitch, this_string_slide_end;
+
+						//Determine the end position and pitch of the slide for this string
+						slide_end = tp->note[i]->slideend;
+						if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+						{	//If this slide's end position is not defined
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+								slide_end = lowest_fret + 1;	//Assume a 1 fret slide up
+							else
+								slide_end = lowest_fret - 1;	//Assume a 1 fret slide down
+						}
+						if(lowest_fret < slide_end)
+						{	//Upward slide
+							this_string_slide_end = tp->note[i]->frets[stringnum] + (slide_end - lowest_fret);	//Count how many frets higher the slide ends than it starts and add that to the slide's start fret on this string
+							end_pitch = pitches[stringnum] + (slide_end - lowest_fret);						//Determine the end pitch as well
+						}
+						else
+						{	//Downward slide
+							this_string_slide_end = tp->note[i]->frets[stringnum] - (lowest_fret - slide_end);		//Count how many frets lower the slide ends than it starts and subtract that from the slide's start fret on this string
+							end_pitch = pitches[stringnum] - (lowest_fret - slide_end);						//Determine the end pitch accordingly
+						}
+
+						//Look for the next note that will export on this same string, up to 500ms after the note
+						for(j = i + 1, nextflags = 0; j < tp->notes; j++)
+						{	//For each reamining note in the track
+							if(tp->note[j]->pos > pos + length + 500)
+								break;	//If this note is 500ms or more later than the end of the slide note being examined, stop checking
+							if(eof_note_applies_to_diff(sp, track, j, diff) && (tp->note[j]->note & bitmask))
+							{	//If the note is in the target difficulty (static or dynamic as applicable) and has any notes on the same string
+								nextfretnum = tp->note[j]->frets[stringnum] & 0x7F;	//Record the fret number used on that string of the note
+								break;	//Stop checking notes
+							}
+						}
+						if(this_string_slide_end != nextfretnum)
+						{	//If the chart does not define the expected note with a matching end of slide fret that occurs within 500ms of the end of the slide note
+							//Write the note at the start of the slide as a legato slide
+							eof_log("\t\t\tConverting note to legato slide", 2);
+							eof_add_midi_event_indexed(deltapos, 0x90, 20, technique_vel[stringnum], 15, index++);		//Note 20, channel 15 with the string's dedicated velocity number indicates legato slide up or down in IMMERROCK
+							eof_add_midi_event_indexed(deltapos, 0x80, 20, 0, 15, index++);
+
+							//Export a note defining the end of the slide
+							nextdeltapos = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Calculate the tick position of a note placed at the end of the slide note
+							eof_add_midi_event(nextdeltapos, 0x90, end_pitch, 79, channel);										//Write a note of the minimum acceptable length defining the pitch at the end of the slide
+							eof_add_midi_event(nextdeltapos + pad, 0x80, end_pitch, 79, channel);
+						}
+						else
+						{	//Otherwise export it as a shift slide
+							eof_log("\t\t\tExporting note as shift slide", 2);
+							eof_add_midi_event_indexed(deltapos, 0x90, 21, technique_vel[stringnum], 15, index++);		//Note 21, channel 15 with the string's dedicated velocity number indicates shift slide up or down in IMMERROCK
+							eof_add_midi_event_indexed(deltapos, 0x80, 21, 0, 15, index++);
+						}
+					}
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 				{	//If this note has an unpitched slide
 					unsigned char lowestfret = eof_get_lowest_fret_value(sp, track, i);	//Determine the fret value of the lowest fretted string
-					int midinote = 21;	//By default, assume the unpitched slide goes down
+					int midinote = 22;	//By default, assume the unpitched slide goes down
 
+					eof_log("\t\t\tExporting note as unpitched slide", 2);
 					if(lowestfret < tp->note[i]->unpitchend)
 					{	//If the unpitched slide goes higher than this position
-						midinote = 22;	//The unpitched slide goes up
+						midinote = 23;	//The unpitched slide goes up
 					}
 
-					eof_add_midi_event_indexed(deltapos, 0x90, midinote, technique_vel[stringnum], 15, index++);		//Notes 21 and 22, channel 15 with the string's dedicated velocity number indicates slide out and down or up (respectively) in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x90, midinote, technique_vel[stringnum], 15, index++);		//Notes 22 and 23, channel 15 with the string's dedicated velocity number indicates slide out and down or up (respectively) in IMMERROCK
 					eof_add_midi_event_indexed(deltapos, 0x80, midinote, 0, 15, index++);
 				}
 
@@ -385,7 +452,6 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					unsigned long bendpoints, firstbend = 0, bendstrength_q;	//Used to parse any bend tech notes that may affect the exported note
 					unsigned long stringdeltalength;		//Will track the length of this specific string's length in delta ticks (taking the stop tech note technique into account if applicable)
 					unsigned long ctr;
-					long nextnote;
 
 					stringdeltalength = eof_ConvertToDeltaTime(pos + tech.length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
 					bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, i, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string
@@ -399,10 +465,9 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 						long pre_bend;
 						unsigned long techflags;
 
-						nextnote = eof_fixup_next_pro_guitar_note(tp, i);
-						if(nextnote > 0)
+						if(next > 0)
 						{	//If there was a next note
-							if(pos + length == tp->pgnote[nextnote]->pos)
+							if(pos + length == tp->pgnote[next]->pos)
 							{	//And this note extends all the way to it with no gap in between (this note has linkNext status)
 								length--;	//Shorten the effective note length to ensure that a tech note at the next note's position is detected as affecting that note instead of this one
 							}

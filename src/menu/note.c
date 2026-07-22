@@ -6748,7 +6748,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
 				}
 				flags |= (tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY);	//Retain the note's original crazy status
-				flags |= (tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);	//Retain the note's original unpitched slide status
+				if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				{	//If this note is not defined as a pitched slide
+					flags |= (tp->note[i]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);		//Retain the note's original unpitched slide status
+				}
 				if((flags != tp->note[i]->flags) || (eflags != tp->note[i]->eflags))
 				{	//If the flags changed
 					if(!undo_made)
@@ -6758,6 +6761,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					}
 					tp->note[i]->flags = flags;
 					tp->note[i]->eflags = eflags;
+					if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE))
+					{	//If the note is not an unpitched slide note (wasn't to begin with or was removed due to becoming a pitched slide)
+						tp->note[i]->unpitchend = 0;		//Ensure the unpitched slide end is erased
+					}
 				}
 				if(fretchanged)
 				{
@@ -8251,7 +8258,8 @@ int eof_menu_note_toggle_slide_up(void)
 		slide_change = 0;
 		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 		flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;			//Toggle the slide up flag
-		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);		//Clear the slide down flag
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);	//Clear the unpitched slide flag
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 		{	//If the note now slides up
 			slides_present = 1;	//Track that at least one selected note is an up slide
@@ -8270,6 +8278,7 @@ int eof_menu_note_toggle_slide_up(void)
 			u = 1;
 		}
 		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		eof_song->pro_guitar_track[tracknum]->note[i]->unpitchend = 0;	//Reset the unpitched slide end fret
 		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || slide_change)
 		{	//If this is not a slide note anymore, or it it just became an upward slide (ie. if it was a downward slide it may a now invalid end position)
 			eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
@@ -8309,7 +8318,8 @@ int eof_menu_note_toggle_slide_down(void)
 		slide_change = 0;
 		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 		flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Toggle the slide down flag
-		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide down flag
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);			//Clear the slide down flag
+		flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE);	//Clear the unpitched slide flag
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 		{	//If the note now slides down
 			slides_present = 1;	//Track that at least one selected note is a down slide
@@ -8328,6 +8338,7 @@ int eof_menu_note_toggle_slide_down(void)
 			u = 1;
 		}
 		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		eof_song->pro_guitar_track[tracknum]->note[i]->unpitchend = 0;	//Reset the unpitched slide end fret
 		if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || slide_change)
 		{	//If this is not a slide note anymore, or it it just became a downward slide (ie. if it was an upward slide it may a now invalid end position)
 			eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
@@ -11346,6 +11357,9 @@ int eof_pro_guitar_note_define_unpitched_slide(void)
 					}
 					eof_song->pro_guitar_track[tracknum]->note[i]->unpitchend = newend;
 					eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Enable the status flag
+					eof_song->pro_guitar_track[tracknum]->note[i]->slideend = 0;										//Erase the pitched slide end position
+					eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Clear the pitched slide up flag
+					eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the pitched slide down flag
 				}
 			}
 			else

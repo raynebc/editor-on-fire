@@ -7078,6 +7078,18 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
 			}
 
+			/* ensure that a note isn't marked as multiple slide types */
+			if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			{	//If the note is marked as sliding both up and down
+				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Remove the slide down status
+				tp->note[i-1]->slideend = 0;	//Erase the end of slide position
+			}
+			if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && (tp->note[i-1]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
+			{	//If the note is marked as an unpitched slide AND a pitched up or down slide
+				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;	//Remove the unpitched slide status
+				tp->note[i-1]->unpitchend = 0;	//Erase the end of unpitched slide position
+			}
+
 			/* ensure that a note doesn't specify that an unused string is ghosted */
 			tp->note[i-1]->ghost &= tp->note[i-1]->note;	//Clear all lanes that are specified by the note bitmask as being used
 
@@ -7088,7 +7100,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				tp->note[i-1]->eflags &= ~EOF_PRO_GUITAR_NOTE_EFLAG_PRE_BEND;
 			}
 		}//If the note is valid, perform other cleanup
-	}//For each note in the track
+	}//For each note in the track, in reverse order
 
 	//Clear the hammer on flag from notes in tremolo phrases
 	for(i = 0; i < tp->tremolos; i++)
