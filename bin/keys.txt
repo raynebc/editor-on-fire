@@ -162,8 +162,9 @@ Note and Beat Editing:
     
         You can also press the '[]' keys to do the same
 
-	Turn off Grid Snap and hold Shift while lengthening/shortening for small adjustments.
-	Hold both Ctrl and Shift while using the wheel to make even smaller adjustments.
+	Turn off Grid Snap to adjust in 100ms increments.  Hold Shift while lengthening or
+        shortening for small adjustments (10ms).  Hold both Ctrl and Shift to make even
+        smaller adjustments (1ms).
 
 	Holding Control while scrolling the mouse wheel increments/decrements the fret value
 	for selected notes (pro guitar/bass tracks only).

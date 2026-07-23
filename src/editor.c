@@ -5268,12 +5268,10 @@ void eof_editor_logic(void)
 					if(eof_mickey_z > 0)
 					{	//Decrease note length
 						eof_adjust_note_length(eof_song, eof_selected_track, adjust, -1, halve);	//Decrease selected notes by the appropriate length
-						eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 					}
 					else if(eof_mickey_z < 0)
 					{	//Increase note length
 						eof_adjust_note_length(eof_song, eof_selected_track, adjust, 1, halve);	//Increase selected notes by the appropriate length
-						eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 					}
 				}
 			}//If there was scroll wheel activity
@@ -6016,86 +6014,43 @@ void eof_vocal_editor_logic(void)
 				}
 			}
 			if((eof_mickey_z != 0) && eof_count_selected_and_unselected_notes(NULL))
-			{
-				eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-			}
-			if(eof_snap_mode == EOF_SNAP_OFF)
-			{
-				unsigned long amount = 100;	//The default amount lyric lengths will change
+			{	//If there was scroll wheel activity and at least one lyric is selected, increase/decrease lyric length
+				unsigned long adjust = abs(eof_mickey_z) * 100;	//Default adjustment length when grid snap is disabled
+				int halve = 0;	//By default, lengthen by a full grid snap
 
-				if(KEY_EITHER_CTRL)
-				{	//IF CTRL is held
-					if(KEY_EITHER_SHIFT)
-					{	//If SHIFT is also held
-						amount = 1;
-					}
-					else
-					{
-						amount = 10;
-					}
-				}
-				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+				if(eof_snap_mode == EOF_SNAP_OFF)
 				{
-					if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+					if(KEY_EITHER_SHIFT)
 					{
-						eof_song->vocal_track[tracknum]->lyric[i]->length -= eof_mickey_z * amount;
-					}
-				}
-			}
-			else
-			{
-				unsigned long b;
-				if(eof_mickey_z > 0)
-				{	//If there was scroll wheel activity
-					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-					{
-						if((eof_selection.track != EOF_TRACK_VOCALS) || !eof_selection.multi[i])
-							continue;	//If the vocal track isn't selected or this lyric isn't selected, skip this lyric
-
-						b = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - 1);
-						if(eof_beat_num_valid(eof_song, b))
-						{
-							eof_snap_logic(&eof_tail_snap, eof_song->beat[b]->pos);
+						eof_shift_used = 1;	//Track that the SHIFT key was used
+						if(KEY_EITHER_CTRL)
+						{	//CTRL+SHIFT+scroll wheel
+							adjust = abs(eof_mickey_z);	//1 ms length change
 						}
 						else
-						{
-							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - 1);
-						}
-						eof_snap_length_logic(&eof_tail_snap);
-//							allegro_message("%d, %d\n%lu, %lu", eof_tail_snap.length, eof_tail_snap.beat, eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i), eof_song->beat[eof_tail_snap.beat]->pos);	//Debugging
-						eof_song->vocal_track[tracknum]->lyric[i]->length -= eof_tail_snap.length;
-						if(eof_song->vocal_track[tracknum]->lyric[i]->length > 1)
-						{
-							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
+						{	//SHIFT+scroll wheel
+							adjust = abs(eof_mickey_z) * 10;	//10ms length change
 						}
 					}
+				}
+				else
+				{
+					adjust = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+					if(KEY_EITHER_SHIFT)
+					{
+						halve = 1;	//Lengthen by half a grid snap
+					}
+				}
+				if(eof_mickey_z > 0)
+				{	//Decrease note length
+					eof_adjust_note_length(eof_song, eof_selected_track, adjust, -1, halve);	//Decrease selected notes by the appropriate length
+					eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 				}
 				else if(eof_mickey_z < 0)
-				{	//If there was scroll wheel activity
-					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-					{
-						if((eof_selection.track != EOF_TRACK_VOCALS) || !eof_selection.multi[i])
-							continue;	//If the vocal track isn't selected or this lyric isn't selected, skip this lyric
-
-						eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1);
-						if(eof_tail_snap.pos > eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1)
-						{
-							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-						}
-						else
-						{
-							eof_snap_length_logic(&eof_tail_snap);
-							eof_song->vocal_track[tracknum]->lyric[i]->length += eof_tail_snap.length;
-							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-						}
-					}
+				{	//Increase note length
+					eof_adjust_note_length(eof_song, eof_selected_track, adjust, 1, halve);	//Increase selected notes by the appropriate length
+					eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, ULONG_MAX);	//Enforce the variable note gap for all selected lyrics if appropriate
 				}
-			}
-			if(eof_mickey_z != 0)
-			{
-				eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 			}
 			if((eof_key_char == 'p') && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && !KEY_EITHER_WIN)
 			{	//P is held, but neither CTRL nor SHIFT nor Windows key are

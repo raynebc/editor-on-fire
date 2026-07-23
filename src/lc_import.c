@@ -241,6 +241,8 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 	struct Lyric_Line *curline;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *curpiece;	//Conductor of the lyric piece linked list
 	EOF_LYRIC *temp;		//Pointer returned by eof_vocal_track_add_lyric()
+	EOF_LYRIC *lasteoflyr = NULL;
+	EOF_PHRASE_SECTION *lasteofline = NULL;
 	unsigned long start=0;	//Used to track the start position of each line
 	char startfound=0;		//Used to help skip adding vocal percussion notes to lyric lines
 	char overdrive=0;		//Used to track the overdrive status of a lyric line
@@ -292,7 +294,27 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 			{	//If this was the last lyric for this line, and at least one non vocal percussion note was found
 				unsigned long flags = overdrive ? EOF_LYRIC_LINE_FLAG_OVERDRIVE : 0;	//Determine if this line should have overdrive
 
+				//Prevent lyric lines from overlapping
+				if(lasteofline && lasteoflyr)
+				{	//If a previous lyric line has been added to the project, but it will overlap with this line and its first lyric
+					unsigned long lastend = lasteoflyr->pos + lasteoflyr->length;
+					if(lastend >= start)
+					{	//If that previous lyric line will overlap with this line's start position
+						unsigned long gap = lastend - start + 1;	//How much the previous line should be shortened to end 1ms earlier than the new line
+						if(lasteoflyr->length > gap)
+						{	//If the previous lyric can be shortened enough to resolve this and still be at least 1ms long
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tShortening prevoius lyric line to end at %lums instead of %lums to avoid overlapping this line", lasteofline->end_pos, lasteofline->end_pos - gap);
+							eof_log(eof_log_string, 1);
+
+							lasteoflyr->length -= gap;	//Shorten the last lyric in that previous line
+							lasteofline->end_pos -= gap;	//Shorten the lyric line to match
+						}
+					}
+				}
+
+				lasteoflyr = temp;		//Keep track of the last EOF lyric that was added as of when the lyric line is ended
 				(void) eof_vocal_track_add_line(tp,start,curpiece->start + curpiece->duration, flags, 0xFF);	//Add the lyric line definition to the EOF structure
+				lasteofline = &tp->line[tp->lines - 1];	//Keep track of the last EOF lyric line that was added
 			}
 
 			curpiece=curpiece->next;	//Point to next lyric in the line

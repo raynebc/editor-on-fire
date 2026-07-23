@@ -3374,6 +3374,13 @@ void eof_enforce_midi_section_endings(int silent)
 						break;	//Stop iterating notes for this section instance
 					}
 				}
+				for(ctr = 0; ctr < *sectioncount; ctr++)
+				{	//For each instance of this type of section in the track
+					if(phrase[ctr].start_pos <= endpos + 1)
+					{	//If this instance would start 1ms after the instance being considered for modification
+						cant_resize = 1;	//Don't corrupt the sections by causing them to overlap
+					}
+				}
 
 				if(need_resize)
 				{	//If this section instance should extend 1ms longer to ensure it ends after the beginning position of all encompassed notes

@@ -375,7 +375,7 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 			printf("\tProcessing lyric piece '%s':\tdur=%lu\tpit=%u\t",str,end-start,pitch);
 	}
 #ifdef EOF_BUILD
-(void) snprintf(eof_log_string, EOF_LOG_STRING_SIZE - 1, "\tProcessing lyric piece '%s':\tdur=%lu\tpit=%u\t", str, end - start, pitch);
+(void) snprintf(eof_log_string, EOF_LOG_STRING_SIZE - 1, "\tProcessing lyric piece '%s':\tpos=%lu\tdur=%lu\tpit=%u\t", str, start, end - start, pitch);
 eof_log(eof_log_string, 2);
 #endif
 

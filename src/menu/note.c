@@ -5840,7 +5840,7 @@ int eof_new_lyric_dialog(void)
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, eof_selection.current);		//Enforce the variable note gap on the lyric before the new lyric, if appropriate
-		eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, eof_selection.current + 1);	//Enforce the variable note gap on the new lyric (if placd too close before another lyric), if appropriate
+		eof_enforce_lyric_gap_multiplier(eof_song, eof_selected_track, eof_selection.current + 1);	//Enforce the variable note gap on the new lyric (if placed too close before another lyric), if appropriate
 		(void) eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_reset_lyric_preview_lines();
 
@@ -12821,29 +12821,42 @@ int eof_menu_note_split_lyric_line_after_selected(void)
 {
 	EOF_PHRASE_SECTION *thisline, *nextline;
 	long nextlyric;
-	unsigned long thispos, nextpos, i;
-	char undo_made = 0;
-	unsigned long old_lyric_count;
+	unsigned long thispos, nextpos, i, j, count;
+	char undo_made = 0, warned = 0;
+	unsigned long old_lyric_count, tracknum;
+	EOF_VOCAL_TRACK * tp;
 
 	if(!eof_song || (eof_selected_track != EOF_TRACK_VOCALS) || (eof_selection.track != EOF_TRACK_VOCALS))
 		return 0;	//Don't allow this function to run if the vocal track isn't active or there are no selected notes in the vocal track
 
-	if(eof_vocals_selected)
-	{
-		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;	//Simplify
-		EOF_VOCAL_TRACK * tp = eof_song->vocal_track[tracknum];
+	tracknum = eof_song->track[eof_selected_track]->tracknum;	//Simplify
+	tp = eof_song->vocal_track[tracknum];
 
-		old_lyric_count = tp->lines;
-		eof_log("Splitting lyric line after selected lyric", 1);
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each lyric in the active track
-			if(eof_selection.multi[i])
-			{	//If the lyric is selected
-				thispos = eof_get_note_pos(eof_song, eof_selected_track, i);
-				thisline = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, thispos);
+	old_lyric_count = tp->lines;
+	eof_log("Splitting lyric line after selected lyric", 1);
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each lyric in the active track
+		if(eof_selection.multi[i])
+		{	//If the lyric is selected
+			thispos = eof_get_note_pos(eof_song, eof_selected_track, i);
+			thisline = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_LYRIC_PHRASE_SECTION, thispos);
 
-				if(thisline)
-				{	//If the lyric line containing the selected lyric was identified
+			if(thisline)
+			{	//If a lyric line containing any selected lyric was identified
+				//Count how many lyrics are in the line
+				for(j = 0, count = 0; j < tp->lyrics; j++)
+				{	//For each lyric in the track
+					nextpos = tp->lyric[j]->pos;	//Simplify
+					if(nextpos > thisline->end_pos)
+						break;	//If this and all remaining lyrics start after the end of the lyric line, stop counting for this line
+					if(nextpos >= thisline->start_pos)
+					{	//If the lyric starts within the line
+						count++;
+					}
+				}
+
+				if(count > 1)
+				{	//If the lyric line contains at least two lyrics, allow this function to modify it
 					nextlyric = eof_track_fixup_next_note(eof_song, eof_selected_track, i);
 
 					if(!undo_made)
@@ -12875,16 +12888,24 @@ int eof_menu_note_split_lyric_line_after_selected(void)
 						}
 					}
 				}
+				else
+				{	//Alert the user this function will not modify lyric lines containing only one lyric
+					if(!warned)
+					{	//If the user wasn't already warned about this condition
+						allegro_message("Note:  This function only modifies lyric lines with multiple lyrics.");
+						warned = 1;
+					}
+				}
 			}
 		}
-		if(undo_made)
-		{	//If any lyric lines were modified
-			eof_sort_and_merge_overlapping_sections(tp->line, &tp->lines);	//Sort and remove overlapping instances
-			eof_reset_lyric_preview_lines();
+	}
+	if(undo_made)
+	{	//If any lyric lines were modified
+		eof_sort_and_merge_overlapping_sections(tp->line, &tp->lines);	//Sort and remove overlapping instances
+		eof_reset_lyric_preview_lines();
 
-			///DEBUG
-			eof_check_and_log_lyric_line_errors(eof_song, 0);
-		}
+		///DEBUG
+		eof_check_and_log_lyric_line_errors(eof_song, 0);
 	}
 
 	return 1;	//Success
