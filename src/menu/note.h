@@ -196,20 +196,24 @@ int eof_menu_arpeggio_unmark_logic(int handshape);	//Removes either the arpeggio
 int eof_menu_arpeggio_unmark(void);				//Removes arpeggio phrases that include any of the selected notes
 int eof_menu_handshape_unmark(void);			//Removes handshape phrases that include any of the selected notes
 void eof_pro_guitar_track_delete_arpeggio(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified arpeggio or handshape phrase
-int eof_menu_arpeggio_erase_all(void);			//Removes all arpeggio phrases, freeing phrase names as necessary
-int eof_menu_handshape_erase_all(void);			//Removes all handshape phrases, freeing phrase names as necessary
+int eof_menu_arpeggio_erase_all(void);			//Removes all arpeggio phrases, erasing phrase names as necessary
+int eof_menu_handshape_erase_all(void);			//Removes all handshape phrases, erasing phrase names as necessary
 int eof_menu_trill_mark(void);					//Marks/remarks a trill phrase encompassing the seleted notes
 int eof_menu_tremolo_mark(void);				//Marks/remarks a tremolo phrase encompassing the seleted notes
 int eof_menu_slider_mark(void);					//Marks/remarks a slider phrase encompassing the selected notes
+int eof_menu_kick_drum_lane_mark(void);			//Marks/remarks a kick drum lane phrase encompassing the selected notes
 int eof_menu_trill_unmark(void);				//Removes trill phrases that include any of the selected notes
-int eof_menu_tremolo_unmark(void);				//Removes tremolo phrases that include any of the selected notes
-int eof_menu_slider_unmark(void);				//Removes slider phrases that include any of the selected notes
-int eof_menu_trill_erase_all(void);				//Removes all trill phrases, freeing phrase names as necessary
-int eof_menu_tremolo_erase_all(void);			//Removes all tremolo phrases, freeing phrase names as necessary
-int eof_menu_slider_erase_all(void);			//Removes all slider phrases, freeing phrase names as necessary
+int eof_menu_tremolo_unmark(void);			//Removes tremolo phrases that include any of the selected notes
+int eof_menu_slider_unmark(void);			//Removes slider phrases that include any of the selected notes
+int eof_menu_kick_drum_lane_unmark(void);	//Removes kick drum lane phrases that include any of the selected notes
+int eof_menu_trill_erase_all(void);				//Removes all trill phrases
+int eof_menu_tremolo_erase_all(void);			//Removes all tremolo phrases
+int eof_menu_slider_erase_all(void);			//Removes all slider phrases
+int eof_menu_kick_drum_lane_erase_all(void);	//Removes all kick drum lane phrases
 int eof_menu_trill_edit_timing(void);			//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the trill phrase the last-selected note is in
 int eof_menu_tremolo_edit_timing(void);			//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the tremolo phrase the last-selected note is in
 int eof_menu_slider_edit_timing(void);			//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the slider phrase the last-selected note is in
+int eof_menu_kick_drum_lane_edit_timing(void);	//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the kick drum lane phrase the last-selected note is in
 int eof_menu_arpeggio_edit_timing(void);		//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the arpeggio phrase the last-selected note is in
 int eof_menu_handshape_edit_timing(void);		//Uses eof_phrase_edit_timing() to allow the user to edit the start/end timestamps of the handshape phrase the last-selected note is in
 int eof_menu_note_clear_legacy_values(void);	//Resets the legacy bitmasks of all selected notes
@@ -530,6 +534,23 @@ int eof_menu_copy_sliders_track_13(void);
 int eof_menu_copy_sliders_track_14(void);
 int eof_menu_copy_sliders_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 	//Copies the slider phrases from the specified source track to the destination track
+
+int eof_menu_copy_kick_drum_lane_track_1(void);
+int eof_menu_copy_kick_drum_lane_track_2(void);
+int eof_menu_copy_kick_drum_lane_track_3(void);
+int eof_menu_copy_kick_drum_lane_track_4(void);
+int eof_menu_copy_kick_drum_lane_track_5(void);
+int eof_menu_copy_kick_drum_lane_track_6(void);
+int eof_menu_copy_kick_drum_lane_track_7(void);
+int eof_menu_copy_kick_drum_lane_track_8(void);
+int eof_menu_copy_kick_drum_lane_track_9(void);
+int eof_menu_copy_kick_drum_lane_track_10(void);
+int eof_menu_copy_kick_drum_lane_track_11(void);
+int eof_menu_copy_kick_drum_lane_track_12(void);
+int eof_menu_copy_kick_drum_lane_track_13(void);
+int eof_menu_copy_kick_drum_lane_track_14(void);
+int eof_menu_copy_kick_drum_lane_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
+	//Copies the kick drum lane phrases from the specified source track to the destination track
 
 int eof_update_implied_note_selection(void);
 	//To be called if eof_selection.multi[] indicates no notes are selected in the active track difficulty, to conditionally update the selection:

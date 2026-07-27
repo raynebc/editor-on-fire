@@ -2535,6 +2535,11 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{	//If any of the lanes on this note are ghosted
 			buffer[index++] = 'G';
 		}
+		if(flags & EOF_DRUM_NOTE_FLAG_IS_KICK_LANE)
+		{	//A drum note inside a kick drum lane
+			buffer[index++] = 'K';
+			buffer[index++] = 'L';
+		}
 	}
 	else if(eof_track_is_legacy_guitar(eof_song, track) && !eof_track_is_beatable_mode(eof_song, track))
 	{	//Check legacy guitar statuses

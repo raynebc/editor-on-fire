@@ -2189,7 +2189,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							}
 						}//store forced HOPO marker
 
-						/* solos, star power, tremolos and trills */
+						/* solos, star power, kick drum lanes, tremolos and trills */
 						phraseptr = NULL;
 						if((midinote == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Legacy solos are marked with note 103
@@ -2202,6 +2202,10 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						else if((midinote == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Star power is marked with note 116
 							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+						}
+						else if((midinote == 125) && (eof_get_num_kick_drum_lanes(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Kick drum lanes are marked with note 125
+							phraseptr = eof_get_kick_drum_lane(sp, picked_track, eof_get_num_kick_drum_lanes(sp, picked_track));
 						}
 						else if((midinote == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Tremolos are marked with note 126
@@ -2563,6 +2567,14 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 						{	//End of a star power phrase
 							if(eof_lookup_track_section_type(sp, picked_track, EOF_SP_SECTION, &phrasecount, &phraseptr))
 							{	//If the star power phrase in progress was found
+								phraseptr[*phrasecount].end_pos = event_realtime;	//Update the end position of the phrase entry that was written to when the note on event was processed
+								(*phrasecount)++;	//Increment the phrase count
+							}
+						}
+						else if((midinote == 125) && (eof_get_num_kick_drum_lanes(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//End of a kick drum lane phrase
+							if(eof_lookup_track_section_type(sp, picked_track, EOF_KICK_DRUM_LANE, &phrasecount, &phraseptr))
+							{	//If the kick drum lane phrase in progress was found
 								phraseptr[*phrasecount].end_pos = event_realtime;	//Update the end position of the phrase entry that was written to when the note on event was processed
 								(*phrasecount)++;	//Increment the phrase count
 							}

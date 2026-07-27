@@ -31,7 +31,7 @@ struct dbNote
 		//This is 0-4 for a note definition, 5 for inverted HOPO notation, 6 is for slider notation,
 		// 7 is for open strum, 'S' for a start of solo section, 'E' for an end of solo section
 		// '0' for a Player 1 section, '1' for a Player 2 section or '2' for a Star Power section
-		// 69 for a drum fill, 70 for a drum roll, 71 for a special drum roll
+		// 69 for a drum fill, 70 for a drum roll, 71 for a special drum roll, 72 for a kick drum lane
 	char is_gem;	//Set to nonzero if the note is a gem instead of a status marker (is valued from 0-4, 7 or 8)
 	unsigned long duration;
 	struct dbNote *next;

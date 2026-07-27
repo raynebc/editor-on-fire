@@ -150,8 +150,8 @@ EOF_TRACK_ENTRY eof_array_txt_tracks[EOF_GHOT_ARRAY_TXT_IMPORT_TRACK_COUNT] =
 };	//These entries map the contents exported by a modified version of Queen Bee where all track data gets saved into a series of folders
 	//"beatlines", "sections" and "timesig" have less data defined because they are not associated with a specific track
 
-char *eof_section_type_names[EOF_NUM_SECTION_TYPES + 1] = {"", "Solo", "SP", "Bookmark", "Song Catalog", "Lyric line", "Yellow cymbal", "Blue cymbal", "Green cymbal", "Trill",
-"Arpeggio", "Trainer", "Custom MIDI note", "Preview", "Tremolo", "Slider", "Fret Hand Position", "RS popup message", "RS Tone Change", "Handshape", "Hand mode change"};
+char *eof_section_type_names[EOF_NUM_SECTION_TYPES + 1] = {"", "solo", "SP", "bookmark", "Song Catalog", "lyric line", "yellow cymbal", "blue cymbal", "green cymbal", "trill",
+"arpeggio", "trainer", "custom MIDI note", "preview", "tremolo", "slider", "fret hand position", "RS popup message", "RS Tone Change", "handshape", "hand mode change", "kick drum lane"};
 
 /* sort all notes according to position */
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
@@ -949,6 +949,45 @@ int eof_legacy_track_add_slider(EOF_LEGACY_TRACK * tp, unsigned long start_pos, 
 	return 0;	//Return error
 }
 
+int eof_track_add_kick_drum_lane(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos)
+{
+	unsigned long tracknum;
+
+ 	eof_log("eof_track_add_kick_drum_lane() entered", 1);
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+	if(!eof_track_is_drum(sp, track))
+		return 0;	//Only allow this phrase type to be added to drum tracks
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return eof_legacy_track_add_kick_drum_lane(sp->legacy_track[tracknum], start_pos, end_pos);
+
+		default:
+		break;
+	}
+	return 0;	//Return error
+}
+
+int eof_legacy_track_add_kick_drum_lane(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+{
+	if(tp && (tp->kickdrumlanes < EOF_MAX_PHRASES))
+	{	//If the maximum number of kick drum lane phrases for this track hasn't already been defined
+		tp->kickdrumlane[tp->kickdrumlanes].start_pos = start_pos;
+		tp->kickdrumlane[tp->kickdrumlanes].end_pos = end_pos;
+		tp->kickdrumlane[tp->kickdrumlanes].flags = 0;
+		tp->kickdrumlane[tp->kickdrumlanes].name[0] = '\0';
+		tp->kickdrumlane[tp->kickdrumlanes].difficulty = 0xFF;	//In legacy tracks, kick drum lane sections always apply to all difficulties
+		tp->kickdrumlanes++;
+		eof_sort_and_merge_overlapping_sections(tp->kickdrumlane, &tp->kickdrumlanes);	//Sort and remove overlapping instances
+		return 1;	//Return success
+	}
+	return 0;	//Return error
+}
+
 void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, unsigned long index)
 {
 	unsigned long i;
@@ -1623,6 +1662,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 			ptr->trills = 0;
 			ptr->tremolos = 0;
 			ptr->sliders = 0;
+			ptr->kickdrumlanes = 0;
 			if(trackdetails->flags & EOF_TRACK_FLAG_SIX_LANES)
 			{	//Open strum and fifth drum lane are tracked as a sixth lane
 				ptr->numlanes = 6;
@@ -2775,6 +2815,17 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			break;
 			case EOF_RS_TONE_CHANGE:	//Not applicable
 			break;
+			case EOF_HANDSHAPE_SECTION:	//Not applicable
+			break;
+			case EOF_HAND_MODE_CHANGE:	//Not applicable
+			break;
+			case EOF_KICK_DRUM_LANE:
+				if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//This section is only applicable to drum tracks
+					*count = &tp->kickdrumlanes;
+					*ptr = tp->kickdrumlane;
+				}
+			break;
 
 			default:
 			break;
@@ -2823,6 +2874,12 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			case EOF_RS_POPUP_MESSAGE:	//Not applicable
 			break;
 			case EOF_RS_TONE_CHANGE:	//Not applicable
+			break;
+			case EOF_HANDSHAPE_SECTION:	//Not applicable
+			break;
+			case EOF_HAND_MODE_CHANGE:	//Not applicable
+			break;
+			case EOF_KICK_DRUM_LANE:		//Not applicable
 			break;
 
 			default:
@@ -2891,6 +2948,8 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 			case EOF_HAND_MODE_CHANGE:
 				*count = &tp->handmodechanges;
 				*ptr = tp->handmodechange;
+			break;
+			case EOF_KICK_DRUM_LANE:		//Not applicable
 			break;
 
 			default:
@@ -3158,7 +3217,6 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				return 1;	//Return success
 			}
 		break;
-
 		case EOF_HAND_MODE_CHANGE:	//Popup message
 			if(eof_track_is_pro_guitar_track(sp, track))
 			{
@@ -3176,7 +3234,11 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				return 1;	//Return success
 			}
 		break;
-
+		case EOF_KICK_DRUM_LANE:
+			if(eof_track_is_drum(sp, track))
+			{	//Only add this section type to drum tracks
+				return eof_track_add_kick_drum_lane(sp, track, start, end);
+			}
 		default:
 		break;
 	}
@@ -3504,7 +3566,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	unsigned long count, ctr, ctr2, tracknum = 0;
 	unsigned long track_count,track_ctr,bookmark_count,track_custom_block_count,bitmask,fingerdefinitions;
 	char has_raw_midi_data, has_start_end_points;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_diff_count,has_handmodechanges;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages,has_fingerdefinitions,has_arrangement,has_tonechanges,ignore_tuning,has_capo,has_tech_notes,has_diff_count,has_handmodechanges,has_kickdrumlanes;
 	char has_accent, has_ghost, has_flam, has_rimshot, has_crossstick, has_bellzone, has_edgezone;	//Drum note statuses
 	char omit_bonus = 0;	//Set to nonzero if the bonus pro guitar track is empty and will be omitted from the exported project file
 							//This is to maintain as much backwards compatibility with older releases of EOF 1.8 as possible, since they would crash when trying to open a file with the bonus track
@@ -3923,7 +3985,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			}
 
 			tracknum = sp->track[track_ctr]->tracknum;
-			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = has_popupmesages = has_tonechanges = has_handmodechanges = 0;
+			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = has_popupmesages = has_tonechanges = has_handmodechanges = has_kickdrumlanes = 0;
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
@@ -3975,7 +4037,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					{
 						has_sliders = 1;
 					}
-					(void) pack_iputw(has_solos + has_star_power + has_trills + has_tremolos + has_sliders, fp);	//Write number of section types
+					if(sp->legacy_track[tracknum]->kickdrumlanes)
+					{
+						has_kickdrumlanes = 1;
+					}
+					(void) pack_iputw(has_solos + has_star_power + has_trills + has_tremolos + has_sliders + has_kickdrumlanes, fp);	//Write number of section types
 					if(has_solos)
 					{	//Write solo sections
 						(void) pack_iputw(EOF_SOLO_SECTION, fp);	//Write solo section type
@@ -4038,6 +4104,19 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							(void) pack_putc(0xFF, fp);						//Write an associated difficulty of "all difficulties"
 							(void) pack_iputl(sp->legacy_track[tracknum]->slider[ctr].start_pos, fp);	//Write the slider phrase's position
 							(void) pack_iputl(sp->legacy_track[tracknum]->slider[ctr].end_pos, fp);	//Write the slider phrase's end position
+							(void) pack_iputl(0, fp);						//Write section flags (not used)
+						}
+					}
+					if(has_kickdrumlanes)
+					{	//Write kick drum lane sections
+						(void) pack_iputw(EOF_KICK_DRUM_LANE, fp);			//Write kick drum lane section type
+						(void) pack_iputl(sp->legacy_track[tracknum]->kickdrumlanes, fp);	//Write number of kick drum lane sections for this track
+						for(ctr=0; ctr < sp->legacy_track[tracknum]->kickdrumlanes; ctr++)
+						{	//For each kick drum lane section in the track
+							(void) eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+							(void) pack_putc(0xFF, fp);						//Write an associated difficulty of "all difficulties"
+							(void) pack_iputl(sp->legacy_track[tracknum]->kickdrumlane[ctr].start_pos, fp);	//Write the kick drum lane phrase's position
+							(void) pack_iputl(sp->legacy_track[tracknum]->kickdrumlane[ctr].end_pos, fp);	//Write the kick drum lane phrase's end position
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}
@@ -8058,6 +8137,22 @@ unsigned long eof_get_num_sliders(EOF_SONG *sp, unsigned long track)
 	return 0;	//Return error
 }
 
+unsigned long eof_get_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{
+		return sp->legacy_track[tracknum]->kickdrumlanes;
+	}
+
+	return 0;	//Return error
+}
+
 EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
 	unsigned long tracknum;
@@ -8141,6 +8236,24 @@ EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned l
 		if(index < EOF_MAX_PHRASES)
 		{
 			return &sp->legacy_track[tracknum]->slider[index];
+		}
+	}
+	return NULL;	//Return error
+}
+
+EOF_PHRASE_SECTION *eof_get_kick_drum_lane(EOF_SONG *sp, unsigned long track, unsigned long index)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return NULL;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{
+		if(index < EOF_MAX_PHRASES)
+		{
+			return &sp->legacy_track[tracknum]->kickdrumlane[index];
 		}
 	}
 	return NULL;	//Return error
@@ -8409,6 +8522,31 @@ void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long in
 	}
 }
 
+void eof_track_delete_kick_drum_lane(EOF_SONG *sp, unsigned long track, unsigned long index)
+{
+	unsigned long ctr;
+	unsigned long tracknum;
+
+ 	eof_log("eof_track_delete_slider() entered", 1);
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{
+		if(index < sp->legacy_track[tracknum]->kickdrumlanes)
+		{
+			sp->legacy_track[tracknum]->kickdrumlane[index].name[0] = '\0';	//Empty the name string
+			for(ctr = index; ctr < sp->legacy_track[tracknum]->kickdrumlanes; ctr++)
+			{
+				memcpy(&sp->legacy_track[tracknum]->kickdrumlane[ctr], &sp->legacy_track[tracknum]->kickdrumlane[ctr + 1], sizeof(EOF_PHRASE_SECTION));
+			}
+			sp->legacy_track[tracknum]->kickdrumlanes--;
+		}
+	}
+}
+
 void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
 	unsigned long tracknum;
@@ -8480,6 +8618,22 @@ void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number
 	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{
 		sp->legacy_track[tracknum]->sliders = number;
+	}
+}
+
+void eof_set_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track, unsigned long number)
+{
+	unsigned long tracknum;
+
+ 	eof_log("eof_set_num_sliders() entered", 3);
+
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{
+		sp->legacy_track[tracknum]->kickdrumlanes = number;
 	}
 }
 
@@ -9504,6 +9658,17 @@ int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track)
 		return 0;
 
 	if((sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR))
+		return 1;
+
+	return 0;
+}
+
+int eof_track_is_drum(EOF_SONG *sp, unsigned long track)
+{
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	if((sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;
 
 	return 0;
@@ -12562,6 +12727,7 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 	EOF_PRO_GUITAR_NOTE *arpeggio_base = NULL;
 	unsigned long ctr, ctr2;
 	unsigned char fhp;
+	unsigned char fret, arpeggio_base_fret;
 
 	if(!sp || !track || (track >= sp->tracks) || (!eof_track_is_pro_guitar_track(sp, track)) || (stringnum > 7) || !result)
 		return 0;	//Invalid parameters
@@ -12578,7 +12744,8 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 		return 0;	//Otherwise the note does not use the specified string and cannot have a fingering
 
 	//If the string is an open string, the fingering must be not defined in order to be valid
-	if(np->frets[stringnum] == 0)
+	fret = np->frets[stringnum] & 0x7F;	//Store this with the mute bit masked out
+	if(fret == 0)
 	{	//This string is played open
 		if(np->finger[stringnum])
 			return -3;	//If there is a finger defined for this string, this is invalid
@@ -12588,11 +12755,11 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 
 	//Validate the specified gem against any FHP in effect at the note's starting position
 	fhp = eof_pro_guitar_track_find_effective_fret_hand_position(tp, np->type, np->pos);	//Find if there's a fret hand position in effect
-	if(np->frets[stringnum] < fhp)
+	if(fret < fhp)
 	{	//If the specified gem uses a fret value that is below any active (nonzero-valued) FHP at the gem's position
 		return -2;	//The specified gem defines a fret that contradicts the FHP
 	}
-	if(fhp && (np->finger[stringnum] == 1) && ((np->frets[stringnum] & 0x7F) != fhp))
+	if(fhp && (np->finger[stringnum] == 1) && (fret != fhp))
 	{	//If there is a fret hand position in effect, this string is defined as being fretted with the index finger, but is also defined as using the index finger at a different fret (masking out the mute bit) than the FHP
 		return -2;	//The specified gem defines a fingering that contradicts the FHP
 	}
@@ -12614,11 +12781,13 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 		}
 	}
 
-	if(arpeggio_base && (arpeggio_base->frets[stringnum] == 0))
+	if(arpeggio_base)
+		arpeggio_base_fret = arpeggio_base->frets[stringnum] & 0x7F;	//Store this with the mute bit masked out
+	if(arpeggio_base && (arpeggio_base_fret == 0))
 	{	//If this gem is within an arpeggio/handshape that does not use the specified string
 		return -1;	//The specified gem violates the arpeggio/handshape
 	}
-	if(arpeggio_base && (arpeggio_base->frets[stringnum] != np->frets[stringnum]))
+	if(arpeggio_base && (arpeggio_base_fret != fret))
 	{	//If this gem is within an arpeggio/handshape but does not use the same fret as the base chord
 		return -1;	//The specified gem violates the arpeggio/handshape
 	}
@@ -12641,9 +12810,9 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 				return 2;	//The specified gem's fingering was derived from the arpeggio/handshape
 			}
 		}
-		if(fhp && (np->frets[stringnum] >= fhp) && (np->frets[stringnum] < fhp + 4))
+		if(fhp && (fret >= fhp) && (fret < fhp + 4))
 		{	//If the specified gem's fret is within 3 frets of the active FHP
-			*result = np->frets[stringnum] - fhp + 1;	//Treat the FHP as the index finger, one fret higher as middle finger, etc.
+			*result = fret - fhp + 1;	//Treat the FHP as the index finger, one fret higher as middle finger, etc.
 			return 3;	//The specified gem's fingering was derived from the FHP
 		}
 	}

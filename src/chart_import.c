@@ -830,6 +830,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 					(void) eof_track_add_trill(sp, track, notepos, endpos);
 				}
 
+				/* kick drum lane */
+				else if(current_track->isdrums && (current_note->gemcolor == 72))
+				{
+					unsigned long endpos = eof_chartpos_to_msec(chart, current_note->chartpos + current_note->duration, NULL);
+					(void) eof_track_add_kick_drum_lane(sp, track, notepos, endpos);
+				}
+
 				/* import regular note */
 				else
 				{
@@ -2135,6 +2142,10 @@ struct FeedbackChart *ImportFeedback(const char *filename, int *error)
 					else if(B == 66)
 					{	//Special drum roll
 						curnote->gemcolor = 71;
+					}
+					else if(B == 67)
+					{	//Kick drum lane
+						curnote->gemcolor = 72;
 					}
 					else
 					{

@@ -1662,6 +1662,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 	char tremolos[EOF_MAX_PHRASES] = {0};
 	char arpeggios[EOF_MAX_PHRASES] = {0};
 	char sliders[EOF_MAX_PHRASES] = {0};
+	char kick_drum_lanes[EOF_MAX_PHRASES] = {0};
 	unsigned long notepos, flags, tflags, numphrases, numnotes;
 	unsigned char notetype;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
@@ -1710,10 +1711,11 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			notetype = eof_get_note_type(sp, track, i);
 			flags = eof_get_note_flags(sp, track, i);
 			tflags = eof_get_note_tflags(sp, track, i);
-			flags &= (~EOF_NOTE_FLAG_HOPO);
+			flags &= (~EOF_NOTE_FLAG_HOPO);		//Clear various boolean flags that will be set again if appropriate
 			flags &= (~EOF_NOTE_FLAG_SP);
 			flags &= (~EOF_NOTE_FLAG_IS_TRILL);
 			flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
+			flags &= (~EOF_DRUM_NOTE_FLAG_IS_KICK_LANE);
 			tflags &= (~EOF_NOTE_TFLAG_SOLO_NOTE);
 			if(((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (track == EOF_TRACK_KEYS))
 			{	//Only clear the is slider flag if this is a legacy guitar or keys track
@@ -1819,6 +1821,21 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 				}
 			}
 
+			/* mark and check kick drum lanes */
+			if(eof_track_is_drum(sp, track))
+			{	//Only check the is kick drum lane flag if this is a drum track
+				numphrases = eof_get_num_kick_drum_lanes(sp, track);
+				for(j = 0; j < numphrases; j++)
+				{	//For each kick drum lane section in the active track
+					sectionptr = eof_get_kick_drum_lane(sp, track, j);
+					if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+					{	//If the note is in this kick drum lane section
+						flags |= EOF_DRUM_NOTE_FLAG_IS_KICK_LANE;
+						kick_drum_lanes[j] = 1;
+					}
+				}
+			}
+
 			if(!k)
 			{	//Only update note flags on the first pass
 				eof_set_note_flags(sp, track, i, flags);	//Update the note's flags variable
@@ -1886,6 +1903,16 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 		if(!sliders[j - 1])
 		{	//If the section's note count taken above was 0
 			eof_track_delete_slider(sp, track, j - 1);
+		}
+	}
+
+	/* delete kick drum lanes with no notes */
+	numphrases = eof_get_num_kick_drum_lanes(sp, track);
+	for(j = numphrases; j > 0; j--)
+	{	//For each kick drum lane section in the active track (in reverse order)
+		if(!kick_drum_lanes[j - 1])
+		{	//If the section's note count taken above was 0
+			eof_track_delete_kick_drum_lane(sp, track, j - 1);
 		}
 	}
 

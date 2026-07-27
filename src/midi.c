@@ -1456,6 +1456,24 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 			}
 
+			/* fill in kick drum lanes */
+			for(i = 0; i < eof_get_num_kick_drum_lanes(sp, j); i++)
+			{	//For each kick drum lane in the track
+				sectionptr = eof_get_kick_drum_lane(sp, j, i);
+				if(sectionptr->difficulty == 0xFF)
+				{	//Only export a kick drum lane section to MIDI if it applies to all difficulties
+					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);	//Store the tick position of the phrase
+					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos, anchorlist, tslist, timedivision, 0, 1) - deltapos;		//Store the number of delta ticks representing the phrase's length
+					if(deltalength < 1)
+					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+						deltalength = 1;
+					}
+					eof_log("\t\tWriting kick drum lane marker", 2);
+					eof_add_midi_event(deltapos, 0x90, 125, vel, 0);	//Note 125 denotes a kick drum lane marker
+					eof_add_midi_event(deltapos + deltalength, 0x80, 125, vel, 0);
+				}
+			}
+
 			/* fill in tremolos */
 			for(i = 0; i < eof_get_num_tremolos(sp, j); i++)
 			{	//For each tremolo in the track

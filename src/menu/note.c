@@ -32,6 +32,7 @@ char eof_handshape_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_mark_text[32] = "&Mark";
 char eof_tremolo_menu_mark_text[32] = "&Mark";
 char eof_slider_menu_mark_text[32] = "&Mark";
+char eof_kick_drum_lane_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_text[32] = "&TrIll";
 char eof_tremolo_menu_text[32] = "Tre&Molo";
 int eof_menu_note_edit_pro_guitar_note_prompt_suppress = 0;
@@ -261,6 +262,35 @@ MENU eof_slider_menu[] =
 	{"&Erase All", eof_menu_slider_erase_all, NULL, 0, NULL},
 	{"Edit &Timing", eof_menu_slider_edit_timing, NULL, 0, NULL},
 	{"&Copy From", NULL, eof_menu_slider_copy_menu, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_menu_kick_drum_lane_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[0], eof_menu_copy_kick_drum_lane_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_copy_kick_drum_lane_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_copy_kick_drum_lane_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_copy_kick_drum_lane_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_copy_kick_drum_lane_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_copy_kick_drum_lane_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_copy_kick_drum_lane_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_copy_kick_drum_lane_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_kick_drum_lane_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_copy_kick_drum_lane_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_kick_drum_lane_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_kick_drum_lane_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_copy_kick_drum_lane_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_kick_drum_lane_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_kick_drum_lane_menu[] =
+{
+	{eof_kick_drum_lane_menu_mark_text, eof_menu_kick_drum_lane_mark, NULL, 0, NULL},
+	{"&Remove", eof_menu_kick_drum_lane_unmark, NULL, 0, NULL},
+	{"&Erase All", eof_menu_kick_drum_lane_erase_all, NULL, 0, NULL},
+	{"Edit &Timing", eof_menu_kick_drum_lane_edit_timing, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_kick_drum_lane_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -619,6 +649,7 @@ MENU eof_note_drum_menu[] =
 	{"Cro&ss stick", NULL, eof_note_drum_crossstick_menu, 0, NULL},
 	{"Bell z&One", NULL, eof_note_drum_bellzone_menu, 0, NULL},
 	{"E&Dge zone", NULL, eof_note_drum_edgezone_menu, 0, NULL},
+	{"&Kick drum lane", NULL, eof_kick_drum_lane_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -949,7 +980,7 @@ DIALOG eof_drum_roll_count_dialog[] =
 void eof_prepare_note_menu(void)
 {
 	int vselected;
-	unsigned long insp = 0, insolo = 0, inll = 0, inarpeggio = 0, intrill = 0, intremolo = 0, inslider = 0, inhandshape = 0;
+	unsigned long insp = 0, insolo = 0, inll = 0, inarpeggio = 0, intrill = 0, intremolo = 0, inslider = 0, inkickdrumlane = 0, inhandshape = 0;
 	unsigned long spstart = 0, ssstart = 0, llstart = 0;
 	unsigned long spend = 0, ssend = 0, llend = 0;
 	unsigned long spp = 0, ssp = 0, llp = 0;
@@ -1058,6 +1089,14 @@ void eof_prepare_note_menu(void)
 						if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
 						{
 							inslider = 1;
+						}
+					}
+					for(j = 0; j < eof_get_num_kick_drum_lanes(eof_song, eof_selected_track); j++)
+					{	//For each kick drum lane phrase in the active track
+						sectionptr = eof_get_kick_drum_lane(eof_song, eof_selected_track, j);
+						if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
+						{
+							inkickdrumlane = 1;
 						}
 					}
 				}//If a legacy/pro guitar/bass/keys/drum or the dance track is active
@@ -1289,14 +1328,35 @@ void eof_prepare_note_menu(void)
 			eof_slider_menu[2].flags = D_DISABLED;
 		}
 
+		/* kick drum lane erase all */
+		if(eof_get_num_kick_drum_lanes(eof_song, eof_selected_track) > 0)
+		{	//If there are one or more kick drum lane phrases in the active track
+			eof_kick_drum_lane_menu[2].flags = 0;	//Note>Kick drum lane>Erase All
+		}
+		else
+		{
+			eof_kick_drum_lane_menu[2].flags = D_DISABLED;
+		}
+
 		/* slider copy from */
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{	//For each track supported by EOF
 			eof_menu_slider_copy_menu[i].flags = 0;
 
 			if(!eof_get_num_sliders(eof_song, i + 1) || (i + 1 == eof_selected_track))
-			{	//If the track has no star power phrases or is the active track
+			{	//If the track has no slider phrases or is the active track
 				eof_menu_slider_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+			}
+		}
+
+		/* kick drum lane copy from */
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
+		{	//For each track supported by EOF
+			eof_menu_kick_drum_lane_copy_menu[i].flags = 0;
+
+			if(!eof_get_num_kick_drum_lanes(eof_song, i + 1) || (i + 1 == eof_selected_track))
+			{	//If the track has no kick drum lane phrases or is the active track
+				eof_menu_kick_drum_lane_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
 
@@ -1609,6 +1669,21 @@ void eof_prepare_note_menu(void)
 				eof_slider_menu[1].flags = D_DISABLED;
 				eof_slider_menu[3].flags = D_DISABLED;
 				(void) ustrzcpy(eof_slider_menu_mark_text, sizeof(eof_slider_menu_mark_text), "&Mark\tShift+S");
+			}
+
+			/* kick drum lane mark/remark */
+			/* edit timing */
+			if(inkickdrumlane)
+			{
+				eof_kick_drum_lane_menu[1].flags = 0;	//Note>Kick drum lane>Remove
+				eof_kick_drum_lane_menu[3].flags = 0;	//Note>Kick drum lane>Edit timing
+				(void) ustrzcpy(eof_kick_drum_lane_menu_mark_text, sizeof(eof_kick_drum_lane_menu_mark_text), "Re-&Mark\tShift+S");
+			}
+			else
+			{
+				eof_kick_drum_lane_menu[1].flags = D_DISABLED;
+				eof_kick_drum_lane_menu[3].flags = D_DISABLED;
+				(void) ustrzcpy(eof_kick_drum_lane_menu_mark_text, sizeof(eof_kick_drum_lane_menu_mark_text), "&Mark\tShift+S");
 			}
 
 			/* Toggle>Purple */
@@ -8878,6 +8953,11 @@ int eof_menu_slider_mark(void)
 	return eof_menu_section_mark(EOF_SLIDER_SECTION);
 }
 
+int eof_menu_kick_drum_lane_mark(void)
+{
+	return eof_menu_section_mark(EOF_KICK_DRUM_LANE);
+}
+
 int eof_menu_trill_unmark(void)
 {
 	unsigned long i, j;
@@ -9005,6 +9085,45 @@ int eof_menu_slider_unmark(void)
 	return 1;
 }
 
+int eof_menu_kick_drum_lane_unmark(void)
+{
+	unsigned long i, j;
+	EOF_PHRASE_SECTION *sectionptr;
+	int note_selection_updated;
+	char undo_made = 0;
+
+	if(!eof_track_is_drum(eof_song, eof_selected_track))
+		return 1;	//Do not allow this function to run unless a drum track is active
+
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is selected and is in the active track difficulty
+			for(j = 0; j < eof_get_num_kick_drum_lanes(eof_song, eof_selected_track); j++)
+			{	//For each kick drum lane section in the track
+				sectionptr = eof_get_kick_drum_lane(eof_song, eof_selected_track, j);
+				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
+				{	//If the note is encompassed within this kick drum lane section
+					if(!undo_made)
+					{
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eof_track_delete_kick_drum_lane(eof_song, eof_selected_track, j);	//Delete the kick drum lane section
+					break;
+				}
+			}
+		}
+	}
+	eof_determine_phrase_status(eof_song, eof_selected_track);
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
+}
+
 int eof_menu_trill_erase_all(void)
 {
 	char drum_track_prompt[] = "Erase all special drum rolls from this track?";
@@ -9059,6 +9178,18 @@ int eof_menu_slider_erase_all(void)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_set_num_sliders(eof_song, eof_selected_track, 0);
+	}
+	eof_determine_phrase_status(eof_song, eof_selected_track);
+	return 1;
+}
+
+int eof_menu_kick_drum_lane_erase_all(void)
+{
+	eof_clear_input();
+	if(alert(NULL, "Erase all kick drum lane sections from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	{
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_set_num_kick_drum_lanes(eof_song, eof_selected_track, 0);
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
 	return 1;
@@ -9172,6 +9303,41 @@ int eof_menu_slider_edit_timing(void)
 				end = phraseptr->end_pos;
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit slider");	//Set the title of the dialog
+			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+		}
+	}
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+
+	return 1;
+}
+
+int eof_menu_kick_drum_lane_edit_timing(void)
+{
+	EOF_PHRASE_SECTION *phraseptr;
+	int note_selection_updated;
+	unsigned long start, end;
+
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account)
+
+	if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
+	{	//If a note is selected
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_KICK_DRUM_LANE, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));
+		if(phraseptr)
+		{	//If the seek position is within a kick drum lane phrase
+			if(note_selection_updated)
+			{	//If notes were selected based on start/end points, use these for the section timings
+				start = eof_song->tags->start_point;
+				end = eof_song->tags->end_point;
+			}
+			else
+			{
+				start = phraseptr->start_pos;
+				end = phraseptr->end_pos;
+			}
+			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit kick drum lane");	//Set the title of the dialog
 			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
 		}
 	}
@@ -10181,6 +10347,112 @@ int eof_menu_copy_sliders_track_number(EOF_SONG *sp, unsigned long sourcetrack, 
 		if(ptr)
 		{	//If this phrase could be found
 			(void) eof_track_add_slider(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
+		}
+	}
+	eof_determine_phrase_status(sp, eof_selected_track);
+	return 1;	//Return completion
+}
+
+int eof_menu_copy_kick_drum_lane_track_1(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 1, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_2(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 2, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_3(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 3, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_4(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 4, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_5(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 5, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_6(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 6, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_7(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 7, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_8(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 8, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_9(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 9, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_10(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 10, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_11(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 11, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_12(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_13(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 13, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_14(void)
+{
+	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 14, eof_selected_track);
+}
+
+int eof_menu_copy_kick_drum_lane_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
+{
+	unsigned long ctr;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
+		return 0;	//Invalid parameters
+	if(!eof_get_num_kick_drum_lanes(sp, sourcetrack))
+		return 0;	//Source track has no kick drum lane phrases
+	if(eof_get_num_kick_drum_lanes(sp, desttrack))
+	{	//If there are already kick drum lanes in the destination track
+		eof_clear_input();
+		if(alert(NULL, "Warning:  Existing kick drum lane phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to continue
+			return 0;
+		}
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	while(eof_get_num_kick_drum_lanes(sp, desttrack))
+	{	//While there are kick drum lanes in the destination track
+		eof_track_delete_kick_drum_lane(sp, desttrack, 0);	//Delete the first one
+	}
+
+	for(ctr = 0; ctr < eof_get_num_kick_drum_lanes(sp, sourcetrack); ctr++)
+	{	//For each kick drum lane phrase in the source track
+		ptr = eof_get_kick_drum_lane(sp, sourcetrack, ctr);
+		if(ptr)
+		{	//If this phrase could be found
+			(void) eof_track_add_kick_drum_lane(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
 	eof_determine_phrase_status(sp, eof_selected_track);

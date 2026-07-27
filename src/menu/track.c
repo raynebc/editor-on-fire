@@ -2280,13 +2280,13 @@ int eof_fret_hand_position_seek_next(DIALOG * d)
 	return D_O_K;
 }
 
-char eof_fret_hand_position_list_text[EOF_MAX_NOTES][25] = {{0}};
+char eof_fret_hand_position_list_text[EOF_MAX_NOTES][30] = {{0}};
 char eof_fret_hand_position_list_selection[EOF_MAX_NOTES] = {0};
 
 char * eof_fret_hand_position_list(int index, int * size)
 {
 	unsigned long i, tracknum, ecount = 0;
-	unsigned ism, iss, isms;
+	unsigned ism, iss, isms, at_seek_pos;
 	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
@@ -2302,8 +2302,12 @@ char * eof_fret_hand_position_list(int index, int * size)
 			if(ecount < EOF_MAX_TEXT_EVENTS)
 			{
 				unsigned long width = eof_pro_guitar_find_fret_hand_position_width(tp, i);
+				if(tp->handposition[i].start_pos == eof_music_pos.value - eof_av_delay)
+					at_seek_pos = 1;	//If this fret hand position is at the current seek position, track this
+				else
+					at_seek_pos = 0;
 				eof_build_mmssms_string(tp->handposition[i].start_pos, &ism, &iss, &isms, NULL);
-				(void) snprintf(eof_fret_hand_position_list_text[ecount], sizeof(eof_fret_hand_position_list_text[ecount]) - 1, "%02u:%02u.%03u: Fret %lu (w=%lu)", ism, iss, isms, tp->handposition[i].end_pos, width);
+				(void) snprintf(eof_fret_hand_position_list_text[ecount], sizeof(eof_fret_hand_position_list_text[ecount]) - 1, "%02u:%02u.%03u: Fret %lu (w=%lu)%s", ism, iss, isms, tp->handposition[i].end_pos, width, at_seek_pos ? " <" : "");
 				ecount++;
 			}
 		}
@@ -2353,17 +2357,17 @@ char eof_fret_hand_position_list_dialog_title_string[30] = "Fret hand positions"
 DIALOG eof_fret_hand_position_list_dialog[] =
 {
 	/* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-	{ eof_window_proc,        0,   48,  270, 277, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
-	{ d_agup_list_proc,        12,  84,  170, 188, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list, eof_fret_hand_position_list_selection, NULL },
-	{ d_agup_push_proc,  190, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",     NULL, (void *)eof_fret_hand_position_delete },
-	{ d_agup_push_proc,  190, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all", NULL, (void *)eof_fret_hand_position_delete_all },
-	{ d_agup_push_proc,  190, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",  NULL, (void *)eof_fret_hand_position_seek },
-	{ d_agup_push_proc,  190, 204, 68,  28,  2,   23,  'e',    D_EXIT, 0,   0, "&Edit",       NULL, (void *)eof_fret_hand_position_edit },
-	{ d_agup_push_proc,  190, 244, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Generate", NULL, (void *)eof_generate_hand_positions_current_track_difficulty },
-	{ d_agup_push_proc,  122, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "--",     NULL, (void *)eof_fret_hand_position_decrement },
-	{ d_agup_push_proc,  156, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "++",   NULL, (void *)eof_fret_hand_position_increment },
-	{ d_agup_push_proc,  190, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "<",     NULL, (void *)eof_fret_hand_position_seek_prev },
-	{ d_agup_push_proc,  224, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   ">",     NULL, (void *)eof_fret_hand_position_seek_next },
+	{ eof_window_proc,        0,   48,  280, 277, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
+	{ d_agup_list_proc,        12,  84,  180, 188, 2,   23,  0,    0,      0,   0,   (void *)eof_fret_hand_position_list, eof_fret_hand_position_list_selection, NULL },
+	{ d_agup_push_proc,  200, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",     NULL, (void *)eof_fret_hand_position_delete },
+	{ d_agup_push_proc,  200, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all", NULL, (void *)eof_fret_hand_position_delete_all },
+	{ d_agup_push_proc,  200, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",  NULL, (void *)eof_fret_hand_position_seek },
+	{ d_agup_push_proc,  200, 204, 68,  28,  2,   23,  'e',    D_EXIT, 0,   0, "&Edit",       NULL, (void *)eof_fret_hand_position_edit },
+	{ d_agup_push_proc,  200, 244, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Generate", NULL, (void *)eof_generate_hand_positions_current_track_difficulty },
+	{ d_agup_push_proc,  132, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "--",     NULL, (void *)eof_fret_hand_position_decrement },
+	{ d_agup_push_proc,  166, 284, 34,  28,  2,   23,  0,    D_EXIT, 0,   0,   "++",   NULL, (void *)eof_fret_hand_position_increment },
+	{ d_agup_push_proc,  200, 284, 34,  28,  2,   23,  '<',    D_EXIT, 0,   0,   "<",     NULL, (void *)eof_fret_hand_position_seek_prev },
+	{ d_agup_push_proc,  234, 284, 34,  28,  2,   23,  '>',    D_EXIT, 0,   0,   ">",     NULL, (void *)eof_fret_hand_position_seek_next },
 	{ d_agup_button_proc,12,  284, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
 	{ NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };

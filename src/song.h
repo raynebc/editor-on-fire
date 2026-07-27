@@ -67,7 +67,7 @@
 #define EOF_DRUM_NOTE_FLAG_Y_CYMBAL         32		//This flag represents a yellow drum note charted as a RB3 Pro style cymbal (lane 3)
 #define EOF_DRUM_NOTE_FLAG_B_CYMBAL         64		//This flag represents a blue drum note charted as a RB3 Pro style cymbal (lane 4)
 #define EOF_DRUM_NOTE_FLAG_G_CYMBAL         128		//This flag represents a green drum note charted as a RB3 Pro style cymbal (lane 5)
-#define EOF_DRUM_NOTE_FLAG_DBASS            256		//This flag will represent Expert+ bass drum for the drum track (lane 1)
+#define EOF_DRUM_NOTE_FLAG_DBASS                 256	//This flag will represent Expert+ bass drum for the drum track (lane 1)
 #define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN	512		//This flag means the yellow cymbal will be displayed in Phase Shift as an open hi hat (lane 3)
 #define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL	1024	//This flag means the yellow cymbal will be displayed in Phase Shift as a pedal controlled hi hat (lane 3)
 #define EOF_DRUM_NOTE_FLAG_R_RIMSHOT		2048	//This flag means the red drum note will be displayed in Phase Shift as a rim shot (lane 2)
@@ -77,6 +77,7 @@
 #define EOF_DRUM_NOTE_FLAG_G_COMBO         32768	//This flag means the green drum note is treated as both a cymbal gem and a tom gem (for use in the Phase Shift drum track)
 #define EOF_DRUM_NOTE_FLAG_FLAM              262144	//This flag means the drum note is a generic flam (old flam status that applied to the entire note)
 #define EOF_DRUM_NOTE_FLAG_FLAT_FLAM     524288	//This flag means the drum note has lane-specific flam gems that are part of a flat flam instead of a normal flam
+#define EOF_DRUM_NOTE_FLAG_IS_KICK_LANE 1048576	//This flag will be set by eof_determine_phrase_status() if the note is in a slider section
 
 //The following flags pertain to legacy guitar notes
 #define EOF_GUITAR_NOTE_FLAG_IS_SLIDER	512		//This flag will be set by eof_determine_phrase_status() if the note is in a slider section
@@ -333,7 +334,8 @@ typedef struct
 #define EOF_RS_TONE_CHANGE                18
 #define EOF_HANDSHAPE_SECTION          19	//Almost the same as EOF_ARPEGGIO_SECTION, but with a status flag
 #define EOF_HAND_MODE_CHANGE         20
-#define EOF_NUM_SECTION_TYPES           20
+#define EOF_KICK_DRUM_LANE                 21
+#define EOF_NUM_SECTION_TYPES           21
 extern char *eof_section_type_names[EOF_NUM_SECTION_TYPES + 1];
 
 
@@ -419,6 +421,9 @@ typedef struct
 	EOF_PHRASE_SECTION slider[EOF_MAX_PHRASES];
 	unsigned long sliders;
 
+	/* kick drum lanes */
+	EOF_PHRASE_SECTION kickdrumlane[EOF_MAX_PHRASES];
+	unsigned long kickdrumlanes;
 } EOF_LEGACY_TRACK;
 
 #define EOF_VOCAL_TRACKS_MAX		1
@@ -833,6 +838,10 @@ unsigned long eof_get_num_sliders(EOF_SONG *sp, unsigned long track);		//Returns
 EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified slider phrase, or NULL on error
 void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of slider phrases in the specified track
 int eof_track_add_slider(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a slider phrase at the specified start and stop timestamp
+int eof_track_add_kick_drum_lane(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a kick drum lane phrase at the specified start and stop timestamp
+unsigned long eof_get_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track);	//Returnst he number of kick drum lanes in the specified track, or 0 on error
+EOF_PHRASE_SECTION *eof_get_kick_drum_lane(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified kick drum lane phrase, or NULL on error
+void eof_set_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of kick drum lane phrasese in the specifeid track
 unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Returns the number of arpeggio phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio phrase, or NULL on error
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of arpeggio phrases in the specified track
@@ -843,6 +852,7 @@ void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long ind
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified arpeggio phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified slider phrase and moves all phrases that follow back in the array one position
+void eof_track_delete_kick_drum_lane(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified kick drum lane phrase and moves all phrases that follow back in the array one position
 unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track);	//Returns the number of lyric sections in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, unsigned long sectionnum);	//Returns a pointer to the specified lyric section, or NULL on error.  This is an index into the vocal_track[] array and is not limited to the vocal track's current lyric line count
 void *eof_copy_note(EOF_SONG *ssp, unsigned long sourcetrack, unsigned long sourcenote, EOF_SONG *dsp, unsigned long desttrack, unsigned long pos, long length, char type);
@@ -905,6 +915,7 @@ void eof_legacy_track_delete_trill(EOF_LEGACY_TRACK * tp, unsigned long index);	
 int eof_legacy_track_add_tremolo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a tremolo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_legacy_track_delete_tremolo(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
 int eof_legacy_track_add_slider(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a slider phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
+int eof_legacy_track_add_kick_drum_lane(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a kick drum lane phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 
 EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp);	//Allocates, initializes and stores a new EOF_LYRIC structure into the lyrics array.  Returns the newly allocated structure or NULL upon error
 void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Removes and frees the specified lyric from the lyrics array.  All lyrics after the deleted lyric are moved back in the array one position
@@ -1078,6 +1089,8 @@ char eof_track_has_highlighting(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if any of the specified track's notes are highlighted
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a legacy guitar track
+int eof_track_is_drum(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified track is a legacy track with drum behavior
 int eof_track_is_ghl_mode(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track has GHL mode enabled
 int eof_track_is_drums_rock_mode(EOF_SONG *sp, unsigned long track);

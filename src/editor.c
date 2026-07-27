@@ -6916,6 +6916,20 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		}//For each of the two phrase types (trills and tremolos)
 	}//If this track has any trill or tremolo sections
 
+	/* draw kick drum lane sections */
+	numsections = eof_get_num_kick_drum_lanes(eof_song, eof_selected_track);
+	for(i = 0; i < numsections; i++)
+	{	//For each kick drum lane section in the track
+		sectionptr = eof_get_kick_drum_lane(eof_song, eof_selected_track, i);	//Obtain the information for this section
+		if(sectionptr != NULL)
+		{
+			int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1];
+			int y2 = EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1;
+			if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the kick drum lane section would render between the left and right edges of the piano roll
+				rectfill(window->screen, lpos + sectionptr->start_pos / eof_zoom, y1, lpos + sectionptr->end_pos / eof_zoom, y2, eof_colors[0].lightcolor);
+		}
+	}
+
 	if(window != eof_window_editor2)
 	{	//Only draw the graphs for the main piano roll
 		if(eof_display_spectrogram)
