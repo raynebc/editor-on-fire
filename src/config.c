@@ -1334,6 +1334,7 @@ int eof_load_default_theme(void)
 	eof_color_beat_3_raw = 0x404040;		//The RGB equivalent of makecol(64, 64, 64) (gray)
 	eof_color_seek_line_raw = 0x00FF00;		//The RGB equivalent of makecol(0, 255, 0) (green)
 	eof_color_lane_line_raw = 0xFFFFFF;		//The RGB equivalent of makecol(255, 255, 255) (white)
+	eof_color_grid_lines_raw = 0xFFFF00;		//The RGB equivalent of makecol(255, 255, 0) (yellow)
 
 	eof_remake_all_colors();	//Apply all loaded colors
 	return 1;

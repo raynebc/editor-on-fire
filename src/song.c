@@ -10405,6 +10405,10 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 			{	//If this note and the next have no lanes in common
 				continue;	//Compare with the next note in another loop iteration instead
 			}
+			else
+			{
+				effective_min_note_distance = 0;	//The note is allowed to extend all the way up to the next note
+			}
 		}
 
 		thispos = eof_get_note_pos(sp, track, note);	//Get the note's position
@@ -12872,6 +12876,9 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 			return 3;	//The specified gem's fingering was derived from the FHP
 		}
 	}
+
+	if(np->frets[stringnum] & 0x80)
+		return 1;	//If this gem is muted, and any fingering that may have been defined didn't violate any other rules, any defined/undefined fingering is valid
 
 	return 0;	//No fingering could be determined
 }

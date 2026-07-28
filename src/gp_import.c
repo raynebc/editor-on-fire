@@ -3968,6 +3968,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
 										}
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+										flags |= EOF_NOTE_FLAG_CRAZY;	//Allow the beginning of the shift slide to extend to the note defining the end of the shift slide, with no note gap enforced between them
 									}
 									else
 									{
