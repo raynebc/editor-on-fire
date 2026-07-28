@@ -814,6 +814,11 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 	//For applicable section types, name may point to a section name string in which case it will be copied to the section's name array, or NULL in which case it will be ignored
 	//The difficulty field is used for catalog, arpeggio and tremolo (if Rocksmith numbered difficulties are in effect) sections and fret hand positions
 	//Returns zero on error
+void eof_track_delete_section(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long index);
+	//Deletes the specified instance of the specified section type and moves all phrases that follow back in the array one position
+int eof_menu_copy_sections_from_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack, unsigned long sectiontype);
+	//Replaces all instances of the specified section type in the destination track with those from the specified source track, prompting the user before removal of any existing instances
+	//Returns zero on error or user cancellation
 int eof_menu_section_mark(unsigned long section_type);
 	//Performs the logic to mark/re-mark sections that is common among solo, star power, etc. sections
 void eof_enforce_midi_section_endings(int silent);
@@ -842,9 +847,9 @@ int eof_track_add_kick_drum_lane(EOF_SONG *sp, unsigned long track, unsigned lon
 unsigned long eof_get_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track);	//Returnst he number of kick drum lanes in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_kick_drum_lane(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified kick drum lane phrase, or NULL on error
 void eof_set_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of kick drum lane phrasese in the specifeid track
-unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Returns the number of arpeggio phrases in the specified track, or 0 on error
-EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio phrase, or NULL on error
-void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of arpeggio phrases in the specified track
+unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Returns the number of arpeggio/handshape phrases in the specified track, or 0 on error
+EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio/handshape phrase, or NULL on error
+void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of arpeggio/handshape phrases in the specified track
 unsigned long eof_get_num_popup_messages(EOF_SONG *sp, unsigned long track);			//Returns the number of popup messages in the specified track, or 0 on error
 unsigned long eof_get_num_tone_changes(EOF_SONG *sp, unsigned long track);				//Returns the number of tone changes in the specified track, or 0 on error
 unsigned long eof_get_num_fret_hand_positions(EOF_SONG *sp, unsigned long track);			//Returns the number of fret hand psoitions in the specified track, or 0 on error

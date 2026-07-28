@@ -151,7 +151,7 @@ EOF_TRACK_ENTRY eof_array_txt_tracks[EOF_GHOT_ARRAY_TXT_IMPORT_TRACK_COUNT] =
 	//"beatlines", "sections" and "timesig" have less data defined because they are not associated with a specific track
 
 char *eof_section_type_names[EOF_NUM_SECTION_TYPES + 1] = {"", "solo", "SP", "bookmark", "Song Catalog", "lyric line", "yellow cymbal", "blue cymbal", "green cymbal", "trill",
-"arpeggio", "trainer", "custom MIDI note", "preview", "tremolo", "slider", "fret hand position", "RS popup message", "RS Tone Change", "handshape", "hand mode change", "kick drum lane"};
+"arpeggio", "trainer", "custom MIDI note", "preview", "tremolo", "slider", "fret hand position", "RS popup message", "RS tone change", "handshape", "hand mode change", "kick drum lane"};
 
 /* sort all notes according to position */
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
@@ -3116,29 +3116,8 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		return eof_track_add_tremolo(sp, track, start, end, difficulty);
 
 		case EOF_SLIDER_SECTION:
-			if(((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (track == EOF_TRACK_KEYS))
-			{	//Only legacy guitar tracks and the keys track are able to use this type of section
-				count = sp->legacy_track[tracknum]->sliders;
-				if(count >= EOF_MAX_PHRASES)	//If EOF cannot store another slider section
-					return 1;
+		return eof_track_add_slider(sp, track, start, end);
 
-				sp->legacy_track[tracknum]->slider[count].start_pos = start;
-				sp->legacy_track[tracknum]->slider[count].end_pos = end;
-				sp->legacy_track[tracknum]->slider[count].difficulty = difficulty;
-				sp->legacy_track[tracknum]->slider[count].flags = 0;
-				if(name == NULL)
-				{
-					sp->legacy_track[tracknum]->slider[count].name[0] = '\0';
-				}
-				else
-				{
-					(void) ustrzcpy(sp->legacy_track[tracknum]->slider[count].name, sizeof(sp->legacy_track[0]->slider[0].name), name);
-				}
-				sp->legacy_track[tracknum]->sliders++;
-				eof_sort_and_merge_overlapping_sections(sp->legacy_track[tracknum]->slider, &sp->legacy_track[tracknum]->sliders);	//Sort and remove overlapping instances
-				return 1;	//Return success
-			}
-		break;
 		case EOF_FRET_HAND_POS_SECTION:	//Fret hand position
 			if(eof_track_is_pro_guitar_track(sp, track))
 			{
@@ -3243,6 +3222,83 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		break;
 	}
 	return 0;	//Return error
+}
+
+void eof_track_delete_section(EOF_SONG *sp, unsigned long track, unsigned long sectiontype, unsigned long index)
+{
+	unsigned long *sectioncount = NULL, ctr;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp || !track || (track >= sp->tracks) || (sectiontype > EOF_NUM_SECTION_TYPES))
+		return;	//Invalid parameters
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Copying \"%s\" sections instance %lu from track %lu", eof_section_type_names[sectiontype], index, track);
+	eof_log(eof_log_string, 1);
+
+	if(eof_lookup_track_section_type(sp, track, sectiontype, &sectioncount, &ptr) && ptr && *sectioncount && (index < *sectioncount))
+	{	//If the array of the track's section type was found and the index of the section to delete is valid
+		ptr[index].name[0] = '\0';	//Empty the name string of the instance being deleted
+		for(ctr = index; ctr < *sectioncount; ctr++)
+		{	//For each instance after the one being deleted
+			memcpy(&(ptr[ctr]), &(ptr[ctr + 1]), sizeof(EOF_PHRASE_SECTION));	//Copy it one element earlier
+		}
+		*sectioncount = *sectioncount - 1;	//Decrement the counter for that section type
+	}
+}
+
+int eof_menu_copy_sections_from_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack, unsigned long sectiontype)
+{
+	unsigned long *src_sectioncount = NULL, *dst_sectioncount = NULL, ctr, exclude_flag = 0, include_flag = 0;
+	EOF_PHRASE_SECTION *src_ptr, *dst_ptr;
+
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack) || (sectiontype > EOF_NUM_SECTION_TYPES))
+		return 0;	//Invalid parameters
+	if(sectiontype == EOF_ARPEGGIO_SECTION)
+		exclude_flag = EOF_RS_ARP_HANDSHAPE;	//Arpeggios and handshapes share a phrase array, if arpeggios are being searched, exclude instnaces having the handshape flag
+	if(sectiontype == EOF_HANDSHAPE_SECTION)
+		include_flag = EOF_RS_ARP_HANDSHAPE;	//If handshapes are being searched, mandate instances having the handshape flag
+
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Copying \"%s\" sections from track %lu to track %lu", eof_section_type_names[sectiontype], sourcetrack, desttrack);
+	eof_log(eof_log_string, 1);
+	if(eof_lookup_track_section_type(sp, sourcetrack, sectiontype, &src_sectioncount, &src_ptr) && src_ptr && *src_sectioncount)
+	{	//If the array of the source track's section type was found and there is at least one instance of the section
+		if(eof_lookup_track_section_type(sp, desttrack, sectiontype, &dst_sectioncount, &dst_ptr) && dst_ptr)
+		{	//If the array of the destination track's section type was found
+			if(*dst_sectioncount)
+			{	//If there are any instances of the section in the destination track
+				eof_clear_input();
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Existing %s sections in this track will be lost.", eof_section_type_names[sectiontype]);
+				if(alert(NULL, eof_log_string, "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+				{	//If the user does not opt to continue
+					return 0;
+				}
+			}
+
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			for(ctr = *dst_sectioncount; ctr > 0; ctr--)
+			{	//For each instance of the section in the destination track, in reverse order
+				if(exclude_flag && (dst_ptr[ctr - 1].flags & exclude_flag))
+					continue;	//If this instance is a handshape and arpeggios are being searched for, skip it
+				if(include_flag && !(dst_ptr[ctr - 1].flags & include_flag))
+					continue;	//If this instance is an arpeggio and handshapes are being searched for, skip it
+				eof_track_delete_section(sp, desttrack, sectiontype, ctr - 1);	//Delete the instance from the destination track
+			}
+
+			for(ctr = 0; ctr < *src_sectioncount; ctr++)
+			{	//For each instance of the phrase in the source track
+				if(exclude_flag && (src_ptr[ctr].flags & exclude_flag))
+					continue;	//If this instance is a handshape and arpeggios are being searched for, skip it
+				if(include_flag && !(src_ptr[ctr].flags & include_flag))
+					continue;	//If this instance is an arpeggio and handshapes are being searched for, skip it
+				(void) eof_track_add_section(sp, desttrack, sectiontype, src_ptr[ctr].difficulty, src_ptr[ctr].start_pos, src_ptr[ctr].end_pos, src_ptr[ctr].flags, src_ptr[ctr].name);	//Create a copy of it in the destination track
+			}
+
+			eof_determine_phrase_status(sp, eof_selected_track);
+			return 1;	//Return completion
+		}
+	}
+
+	return 0;	//Return failure
 }
 
 int eof_menu_section_mark(unsigned long section_type)

@@ -37,6 +37,7 @@ char eof_trill_menu_text[32] = "&TrIll";
 char eof_tremolo_menu_text[32] = "Tre&Molo";
 int eof_menu_note_edit_pro_guitar_note_prompt_suppress = 0;
 int eof_menu_note_edit_pro_guitar_note_prompt_2_suppress = 0;
+char *eof_shared_drum_phrasing_string = "SHARED DRUM PHRASING";
 
 int eof_suppress_pitched_transpose_warning = 0;		//Set to nonzero if user opts to suppress the warning that selected notes could not pitch transpose
 
@@ -148,12 +149,32 @@ MENU eof_arpeggio_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_menu_handshape_copy_menu[EOF_TRACKS_MAX] =
+{
+	{eof_menu_track_names[0], eof_menu_copy_handshape_track_1, NULL, D_SELECTED, NULL},
+	{eof_menu_track_names[1], eof_menu_copy_handshape_track_2, NULL, 0, NULL},
+	{eof_menu_track_names[2], eof_menu_copy_handshape_track_3, NULL, 0, NULL},
+	{eof_menu_track_names[3], eof_menu_copy_handshape_track_4, NULL, 0, NULL},
+	{eof_menu_track_names[4], eof_menu_copy_handshape_track_5, NULL, 0, NULL},
+	{eof_menu_track_names[5], eof_menu_copy_handshape_track_6, NULL, 0, NULL},
+	{eof_menu_track_names[6], eof_menu_copy_handshape_track_7, NULL, 0, NULL},
+	{eof_menu_track_names[7], eof_menu_copy_handshape_track_8, NULL, 0, NULL},
+	{eof_menu_track_names[8], eof_menu_copy_handshape_track_9, NULL, 0, NULL},
+	{eof_menu_track_names[9], eof_menu_copy_handshape_track_10, NULL, 0, NULL},
+	{eof_menu_track_names[10], eof_menu_copy_handshape_track_11, NULL, 0, NULL},
+	{eof_menu_track_names[11], eof_menu_copy_handshape_track_12, NULL, 0, NULL},
+	{eof_menu_track_names[12], eof_menu_copy_handshape_track_13, NULL, 0, NULL},
+	{eof_menu_track_names[13], eof_menu_copy_handshape_track_14, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_handshape_menu[] =
 {
 	{eof_handshape_menu_mark_text, eof_menu_handshape_mark, NULL, 0, NULL},
 	{"&Remove", eof_menu_handshape_unmark, NULL, 0, NULL},
 	{"&Erase All", eof_menu_handshape_erase_all, NULL, 0, NULL},
 	{"Edit &Timing", eof_menu_handshape_edit_timing, NULL, 0, NULL},
+	{"&Copy From", NULL, eof_menu_handshape_copy_menu, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -904,7 +925,7 @@ MENU eof_note_menu[] =
 	{"Toggle", NULL, eof_note_toggle_menu, 0, NULL},
 	{"Cle&Ar", NULL, eof_note_clear_menu, 0, NULL},
 	{"Transpose", NULL, eof_note_transpose_menu, 0, NULL},
-	{"&Move", NULL, eof_note_move_menu, 0, NULL},
+	{"Mo&Ve", NULL, eof_note_move_menu, 0, NULL},
 	{"&Highlight", NULL, eof_note_highlight_menu, 0, NULL},
 	{"Gr&Id snap", NULL, eof_note_grid_snap_menu, 0, NULL},
 	{"&Solos", NULL, eof_solo_menu, 0, NULL},
@@ -985,7 +1006,7 @@ void eof_prepare_note_menu(void)
 	unsigned long spend = 0, ssend = 0, llend = 0;
 	unsigned long spp = 0, ssp = 0, llp = 0;
 	unsigned long i, j;
-	unsigned long tracknum;
+	unsigned long tracknum, selected_startpos, selected_endpos;
 	unsigned long sel_start = eof_chart_length, sel_end = 0;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long track_behavior = 0;
@@ -1156,6 +1177,26 @@ void eof_prepare_note_menu(void)
 				eof_note_reflect_menu[1].flags = D_DISABLED;	//Note>Reflect>Horizontal
 				eof_note_reflect_menu[2].flags = D_DISABLED;	//Note>Reflect>Both
 			}
+
+			/* Note>Move */
+			selected_startpos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
+			selected_endpos = selected_startpos + eof_get_note_length(eof_song, eof_selected_track, eof_selection.current);
+			if(eof_music_pos.value - eof_av_delay < selected_endpos)
+			{	//If the seek position is before the selected note's current end position
+				eof_note_move_menu[0].flags = 0;		//Note>Move>Start pos to seek pos
+			}
+			else
+			{
+				eof_note_move_menu[0].flags = D_DISABLED;
+			}
+			if(eof_music_pos.value - eof_av_delay > selected_startpos)
+			{	//If the seek position is after the selected note's current start position
+				eof_note_move_menu[1].flags = 0;		//Note>Move>End pos to seek pos
+			}
+			else
+			{
+				eof_note_move_menu[1].flags = D_DISABLED;
+			}
 		}//ONE OR MORE NOTES/LYRICS SELECTED
 		else
 		{	//NO NOTES/LYRICS SELECTED
@@ -1192,6 +1233,10 @@ void eof_prepare_note_menu(void)
 				eof_menu_sp_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
+		if(eof_track_is_drum(eof_song, eof_selected_track) && !eof_song->tags->unshare_drum_phrasing)
+		{	//If either drum track is active and their phrases are shared
+			eof_menu_sp_copy_menu[4].flags = eof_menu_sp_copy_menu[12].flags = D_DISABLED;	//Don't allow copying star power from one to the other
+		}
 
 		/* solo mark/remark */
 		/* edit timing */
@@ -1217,6 +1262,10 @@ void eof_prepare_note_menu(void)
 			{	//If the track has no solos or is the active track
 				eof_menu_solo_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
+		}
+		if(eof_track_is_drum(eof_song, eof_selected_track) && !eof_song->tags->unshare_drum_phrasing)
+		{	//If either drum track is active and their phrases are shared
+			eof_menu_solo_copy_menu[4].flags = eof_menu_solo_copy_menu[12].flags = D_DISABLED;	//Don't allow copying solos from one to the other
 		}
 
 		/* lyric line */
@@ -1275,6 +1324,17 @@ void eof_prepare_note_menu(void)
 			if((i + 1 < EOF_TRACKS_MAX) && (!eof_get_num_arpeggios(eof_song, i + 1) || (i + 1 == eof_selected_track) || (!eof_track_is_pro_guitar_track(eof_song, i + 1))))
 			{	//If the track has no arpeggios, is the active track or is not a pro guitar/bass track
 				eof_menu_arpeggio_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+			}
+		}
+
+		/* handshape copy from */
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
+		{	//For each track supported by EOF
+			eof_menu_handshape_copy_menu[i].flags = 0;
+
+			if((i + 1 < EOF_TRACKS_MAX) && (!eof_get_num_arpeggios(eof_song, i + 1) || (i + 1 == eof_selected_track) || (!eof_track_is_pro_guitar_track(eof_song, i + 1))))
+			{	//If the track has no arpeggios, is the active track or is not a pro guitar/bass track
+				eof_menu_handshape_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
 		}
 
@@ -1358,6 +1418,10 @@ void eof_prepare_note_menu(void)
 			{	//If the track has no kick drum lane phrases or is the active track
 				eof_menu_kick_drum_lane_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 			}
+		}
+		if(eof_track_is_drum(eof_song, eof_selected_track) && !eof_song->tags->unshare_drum_phrasing)
+		{	//If either drum track is active and their phrases are shared
+			eof_menu_kick_drum_lane_copy_menu[4].flags = eof_menu_kick_drum_lane_copy_menu[12].flags = D_DISABLED;	//Don't allow copying kick power lanes from one to the other
 		}
 
 		/* resnap */
@@ -1464,7 +1528,25 @@ void eof_prepare_note_menu(void)
 				eof_note_simplify_menu[5].flags = D_DISABLED | D_HIDDEN;	//Note>Simplify>Expert+ bass
 			}
 			else
-			{
+			{	//A drum track is active
+				if(!eof_song->tags->unshare_drum_phrasing)
+				{	//If the two drum tracks' phrasing is shared, change the track names in the copy from menus to reflect this by showing "SHARED DRUM PHRASING" instead of the drum tracks' names
+					eof_menu_sp_copy_menu[4].text = eof_menu_sp_copy_menu[12].text = eof_menu_solo_copy_menu[4].text = eof_menu_solo_copy_menu[12].text = eof_menu_kick_drum_lane_copy_menu[4].text = eof_menu_kick_drum_lane_copy_menu[12].text = eof_menu_trill_copy_menu[4].text = eof_menu_trill_copy_menu[12].text = eof_menu_tremolo_copy_menu[4].text = eof_menu_tremolo_copy_menu[12].text = eof_shared_drum_phrasing_string;
+				}
+				else
+				{	//Otherwise show the tracks' normal names
+					eof_menu_sp_copy_menu[4].text = eof_menu_track_names[4];
+					eof_menu_sp_copy_menu[12].text = eof_menu_track_names[12];
+					eof_menu_solo_copy_menu[4].text = eof_menu_track_names[4];
+					eof_menu_solo_copy_menu[12].text = eof_menu_track_names[12];
+					eof_menu_kick_drum_lane_copy_menu[4].text = eof_menu_track_names[4];
+					eof_menu_kick_drum_lane_copy_menu[12].text = eof_menu_track_names[12];
+					eof_menu_trill_copy_menu[4].text = eof_menu_track_names[4];
+					eof_menu_trill_copy_menu[12].text = eof_menu_track_names[12];
+					eof_menu_tremolo_copy_menu[4].text = eof_menu_track_names[4];
+					eof_menu_tremolo_copy_menu[12].text = eof_menu_track_names[12];
+				}
+
 				eof_note_menu[16].flags = 0;
 				eof_note_simplify_menu[2].flags = 0;
 				eof_note_simplify_menu[3].flags = 0;
@@ -1608,6 +1690,10 @@ void eof_prepare_note_menu(void)
 					eof_menu_trill_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 				}
 			}
+			if(eof_track_is_drum(eof_song, eof_selected_track) && !eof_song->tags->unshare_drum_phrasing)
+			{	//If either drum track is active and their phrases are shared
+				eof_menu_trill_copy_menu[4].flags = eof_menu_trill_copy_menu[12].flags = D_DISABLED;	//Don't allow copying trills from one to the other
+			}
 
 			/* Tremolo mark/remark */
 			/* edit timing */
@@ -1634,12 +1720,16 @@ void eof_prepare_note_menu(void)
 					eof_menu_tremolo_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
 				}
 			}
+			if(eof_track_is_drum(eof_song, eof_selected_track) && !eof_song->tags->unshare_drum_phrasing)
+			{	//If either drum track is active and their phrases are shared
+				eof_menu_tremolo_copy_menu[4].flags = eof_menu_tremolo_copy_menu[12].flags = D_DISABLED;	//Don't allow copying tremolos from one to the other
+			}
 
 			/* Rename Trill and Tremolo menus as necessary for the drum track */
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
 			{	//If a legacy/pro guitar/bass/keys track is active, set the guitar terminology for trill and tremolo sections
 				(void) ustrzcpy(eof_trill_menu_text, sizeof(eof_trill_menu_text), "&Trill");
-				(void) ustrzcpy(eof_tremolo_menu_text, sizeof(eof_tremolo_menu_text), "Tre&molo");
+				(void) ustrzcpy(eof_tremolo_menu_text, sizeof(eof_tremolo_menu_text), "Tre&Molo");
 			}
 			else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a legacy drum track is active, set the drum terminology for trill and tremolo sections
@@ -9719,744 +9809,562 @@ int eof_menu_note_remove_strum_direction(void)
 
 int eof_menu_copy_solos_track_1(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 1, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 1, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_2(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 2, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 2, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_3(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 3, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 3, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_4(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 4, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 4, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_5(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 5, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 5, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_6(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 6, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 6, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_7(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 7, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 7, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_8(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 8, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 8, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_9(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 9, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 9, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_10(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 10, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 10, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_11(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 11, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 11, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_12(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 12, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 12, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_13(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 13, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 13, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_solos_track_14(void)
 {
-	return eof_menu_copy_solos_track_number(eof_song, 14, eof_selected_track);
-}
-
-int eof_menu_copy_solos_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
-{
-	unsigned long ctr;
-	EOF_PHRASE_SECTION *ptr;
-
-	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
-		return 0;	//Invalid parameters
-	if(!eof_get_num_solos(sp, sourcetrack))
-		return 0;	//Source track has no solo phrases
-	if(eof_get_num_solos(sp, desttrack))
-	{	//If there are already solos in the destination track
-		eof_clear_input();
-		if(alert(NULL, "Warning:  Existing solo phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the user does not opt to continue
-			return 0;
-		}
-	}
-
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	while(eof_get_num_solos(sp, desttrack))
-	{	//While there are solos in the destination track
-		eof_track_delete_solo(sp, desttrack, 0);	//Delete the first one
-	}
-
-	for(ctr = 0; ctr < eof_get_num_solos(sp, sourcetrack); ctr++)
-	{	//For each solo phrase in the source track
-		ptr = eof_get_solo(sp, sourcetrack, ctr);
-		if(ptr)
-		{	//If this phrase could be found
-			(void) eof_track_add_solo(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
-		}
-	}
-	eof_determine_phrase_status(sp, eof_selected_track);
-	return 1;	//Return completion
+	return eof_menu_copy_sections_from_track_number(eof_song, 14, eof_selected_track, EOF_SOLO_SECTION);
 }
 
 int eof_menu_copy_sp_track_1(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 1, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 1, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_2(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 2, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 2, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_3(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 3, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 3, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_4(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 4, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 4, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_5(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 5, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 5, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_6(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 6, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 6, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_7(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 7, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 7, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_8(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 8, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 8, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_9(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 9, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 9, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_10(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 10, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 10, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_11(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 11, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 11, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_12(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 12, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 12, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_13(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 13, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 13, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_sp_track_14(void)
 {
-	return eof_menu_copy_sp_track_number(eof_song, 14, eof_selected_track);
-}
-
-int eof_menu_copy_sp_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
-{
-	unsigned long ctr;
-	EOF_PHRASE_SECTION *ptr;
-
-	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
-		return 0;	//Invalid parameters
-	if(!eof_get_num_star_power_paths(sp, sourcetrack))
-		return 0;	//Source track has no star power phrases
-	if(eof_get_num_star_power_paths(sp, desttrack))
-	{	//If there are already star power phrases in the destination track
-		eof_clear_input();
-		if(alert(NULL, "Warning:  Existing star power phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the user does not opt to continue
-			return 0;
-		}
-	}
-
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	while(eof_get_num_star_power_paths(sp, desttrack))
-	{	//While there are star  power phrases in the destination track
-		eof_track_delete_star_power_path(sp, desttrack, 0);	//Delete the first one
-	}
-
-	for(ctr = 0; ctr < eof_get_num_star_power_paths(sp, sourcetrack); ctr++)
-	{	//For each star power phrase in the source track
-		ptr = eof_get_star_power_path(sp, sourcetrack, ctr);
-		if(ptr)
-		{	//If this phrase could be found
-			(void) eof_track_add_star_power_path(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
-		}
-	}
-	eof_determine_phrase_status(sp, eof_selected_track);
-	return 1;	//Return completion
+	return eof_menu_copy_sections_from_track_number(eof_song, 14, eof_selected_track, EOF_SP_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_1(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 1, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 1, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_2(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 2, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 2, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_3(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 3, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 3, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_4(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 4, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 4, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_5(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 5, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 5, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_6(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 6, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 6, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_7(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 7, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 7, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_8(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 8, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 8, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_9(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 9, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 9, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_10(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 10, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 10, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_11(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 11, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 11, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_12(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 12, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 12, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_13(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 13, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 13, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
 int eof_menu_copy_arpeggio_track_14(void)
 {
-	return eof_menu_copy_arpeggio_track_number(eof_song, 14, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 14, eof_selected_track, EOF_ARPEGGIO_SECTION);
 }
 
-int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
+int eof_menu_copy_handshape_track_1(void)
 {
-	unsigned long ctr;
-	EOF_PHRASE_SECTION *ptr;
+	return eof_menu_copy_sections_from_track_number(eof_song, 1, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
 
-	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
-		return 0;	//Invalid parameters
-	if(!eof_get_num_arpeggios(sp, sourcetrack))
-		return 0;	//Source track has no arpeggio phrases
-	if(eof_get_num_arpeggios(sp, desttrack))
-	{	//If there are already arpeggio phrases in the destination track
-		eof_clear_input();
-		if(alert(NULL, "Warning:  Existing arpeggio phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the user does not opt to continue
-			return 0;
-		}
-	}
+int eof_menu_copy_handshape_track_2(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 2, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	while(eof_get_num_arpeggios(sp, desttrack))
-	{	//While there are arpeggio phrases in the destination track
-		eof_track_delete_arpeggio(sp, desttrack, 0);	//Delete the first one
-	}
+int eof_menu_copy_handshape_track_3(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 3, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
 
-	for(ctr = 0; ctr < eof_get_num_arpeggios(sp, sourcetrack); ctr++)
-	{	//For each arpeggio phrase in the source track
-		ptr = eof_get_arpeggio(sp, sourcetrack, ctr);
-		if(ptr && (!(ptr->flags & EOF_RS_ARP_HANDSHAPE)))
-		{	//If this phrase could be found and it is an arpeggio and not a handshape phrase
-			(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
-		}
-	}
-	eof_determine_phrase_status(sp, eof_selected_track);
-	return 1;	//Return completion
+int eof_menu_copy_handshape_track_4(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 4, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_5(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 5, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_6(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 6, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_7(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 7, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_8(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 8, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_9(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 9, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_10(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 10, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_11(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 11, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_12(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 12, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_13(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 13, eof_selected_track, EOF_HANDSHAPE_SECTION);
+}
+
+int eof_menu_copy_handshape_track_14(void)
+{
+	return eof_menu_copy_sections_from_track_number(eof_song, 14, eof_selected_track, EOF_HANDSHAPE_SECTION);
 }
 
 int eof_menu_copy_trill_track_1(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 1, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 1, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_2(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 2, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 2, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_3(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 3, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 3, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_4(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 4, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 4, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_5(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 5, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 5, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_6(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 6, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 6, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_7(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 7, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 7, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_8(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 8, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 8, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_9(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 9, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 9, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_10(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 10, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 10, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_11(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 11, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 11, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_12(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 12, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 12, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_13(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 13, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 13, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_trill_track_14(void)
 {
-	return eof_menu_copy_trill_track_number(eof_song, 14, eof_selected_track);
-}
-
-int eof_menu_copy_trill_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
-{
-	unsigned long ctr;
-	EOF_PHRASE_SECTION *ptr;
-
-	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
-		return 0;	//Invalid parameters
-	if(!eof_get_num_trills(sp, sourcetrack))
-		return 0;	//Source track has no trill phrases
-	if(eof_get_num_trills(sp, desttrack))
-	{	//If there are already trill phrases in the destination track
-		eof_clear_input();
-		if(alert(NULL, "Warning:  Existing trill phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the user does not opt to continue
-			return 0;
-		}
-	}
-
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	while(eof_get_num_trills(sp, desttrack))
-	{	//While there are trill phrases in the destination track
-		eof_track_delete_trill(sp, desttrack, 0);	//Delete the first one
-	}
-
-	for(ctr = 0; ctr < eof_get_num_trills(sp, sourcetrack); ctr++)
-	{	//For each trill phrase in the source track
-		ptr = eof_get_trill(sp, sourcetrack, ctr);
-		if(ptr)
-		{	//If this phrase could be found
-			(void) eof_track_add_trill(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
-		}
-	}
-	eof_determine_phrase_status(sp, eof_selected_track);
-	return 1;	//Return completion
+	return eof_menu_copy_sections_from_track_number(eof_song, 14, eof_selected_track, EOF_TRILL_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_1(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 1, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 1, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_2(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 2, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 2, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_3(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 3, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 3, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_4(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 4, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 4, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_5(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 5, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 5, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_6(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 6, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 6, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_7(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 7, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 7, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_8(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 8, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 8, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_9(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 9, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 9, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_10(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 10, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 10, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_11(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 11, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 11, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_12(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 12, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 12, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_13(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 13, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 13, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_tremolo_track_14(void)
 {
-	return eof_menu_copy_tremolo_track_number(eof_song, 14, eof_selected_track);
-}
-
-int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
-{
-	unsigned long ctr;
-	EOF_PHRASE_SECTION *ptr;
-
-	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
-		return 0;	//Invalid parameters
-	if(!eof_get_num_tremolos(sp, sourcetrack))
-		return 0;	//Source track has no tremolo phrases
-	if(eof_get_num_tremolos(sp, desttrack))
-	{	//If there are already tremolo phrases in the destination track
-		eof_clear_input();
-		if(alert(NULL, "Warning:  Existing tremolo phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the user does not opt to continue
-			return 0;
-		}
-	}
-
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	while(eof_get_num_tremolos(sp, desttrack))
-	{	//While there are tremolo phrases in the destination track
-		eof_track_delete_tremolo(sp, desttrack, 0);	//Delete the first one
-	}
-
-	for(ctr = 0; ctr < eof_get_num_tremolos(sp, sourcetrack); ctr++)
-	{	//For each tremolo phrase in the source track
-		ptr = eof_get_tremolo(sp, sourcetrack, ctr);
-		if(ptr)
-		{	//If this phrase could be found
-			(void) eof_track_add_tremolo(sp, desttrack, ptr->start_pos, ptr->end_pos, ptr->difficulty);	//Copy it to the destination track
-		}
-	}
-	eof_determine_phrase_status(sp, eof_selected_track);
-	return 1;	//Return completion
+	return eof_menu_copy_sections_from_track_number(eof_song, 14, eof_selected_track, EOF_TREMOLO_SECTION);
 }
 
 int eof_menu_copy_sliders_track_1(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 1, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 1, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_2(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 2, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 2, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_3(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 3, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 3, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_4(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 4, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 4, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_5(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 5, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 5, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_6(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 6, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 6, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_7(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 7, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 7, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_8(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 8, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 8, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_9(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 9, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 9, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_10(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 10, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 10, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_11(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 11, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 11, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_12(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 12, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 12, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_13(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 13, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 13, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_sliders_track_14(void)
 {
-	return eof_menu_copy_sliders_track_number(eof_song, 14, eof_selected_track);
-}
-
-int eof_menu_copy_sliders_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
-{
-	unsigned long ctr;
-	EOF_PHRASE_SECTION *ptr;
-
-	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
-		return 0;	//Invalid parameters
-	if(!eof_get_num_sliders(sp, sourcetrack))
-		return 0;	//Source track has no slider phrases
-	if(eof_get_num_sliders(sp, desttrack))
-	{	//If there are already sliders in the destination track
-		eof_clear_input();
-		if(alert(NULL, "Warning:  Existing slider phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the user does not opt to continue
-			return 0;
-		}
-	}
-
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	while(eof_get_num_sliders(sp, desttrack))
-	{	//While there are sliders in the destination track
-		eof_track_delete_slider(sp, desttrack, 0);	//Delete the first one
-	}
-
-	for(ctr = 0; ctr < eof_get_num_sliders(sp, sourcetrack); ctr++)
-	{	//For each slider phrase in the source track
-		ptr = eof_get_slider(sp, sourcetrack, ctr);
-		if(ptr)
-		{	//If this phrase could be found
-			(void) eof_track_add_slider(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
-		}
-	}
-	eof_determine_phrase_status(sp, eof_selected_track);
-	return 1;	//Return completion
+	return eof_menu_copy_sections_from_track_number(eof_song, 14, eof_selected_track, EOF_SLIDER_SECTION);
 }
 
 int eof_menu_copy_kick_drum_lane_track_1(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 1, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 1, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_2(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 2, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 2, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_3(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 3, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 3, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_4(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 4, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 4, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_5(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 5, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 5, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_6(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 6, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 6, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_7(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 7, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 7, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_8(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 8, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 8, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_9(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 9, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 9, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_10(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 10, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 10, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_11(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 11, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 11, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_12(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 12, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 12, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_13(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 13, eof_selected_track);
+	return eof_menu_copy_sections_from_track_number(eof_song, 13, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_copy_kick_drum_lane_track_14(void)
 {
-	return eof_menu_copy_kick_drum_lane_track_number(eof_song, 14, eof_selected_track);
-}
-
-int eof_menu_copy_kick_drum_lane_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack)
-{
-	unsigned long ctr;
-	EOF_PHRASE_SECTION *ptr;
-
-	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
-		return 0;	//Invalid parameters
-	if(!eof_get_num_kick_drum_lanes(sp, sourcetrack))
-		return 0;	//Source track has no kick drum lane phrases
-	if(eof_get_num_kick_drum_lanes(sp, desttrack))
-	{	//If there are already kick drum lanes in the destination track
-		eof_clear_input();
-		if(alert(NULL, "Warning:  Existing kick drum lane phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the user does not opt to continue
-			return 0;
-		}
-	}
-
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	while(eof_get_num_kick_drum_lanes(sp, desttrack))
-	{	//While there are kick drum lanes in the destination track
-		eof_track_delete_kick_drum_lane(sp, desttrack, 0);	//Delete the first one
-	}
-
-	for(ctr = 0; ctr < eof_get_num_kick_drum_lanes(sp, sourcetrack); ctr++)
-	{	//For each kick drum lane phrase in the source track
-		ptr = eof_get_kick_drum_lane(sp, sourcetrack, ctr);
-		if(ptr)
-		{	//If this phrase could be found
-			(void) eof_track_add_kick_drum_lane(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
-		}
-	}
-	eof_determine_phrase_status(sp, eof_selected_track);
-	return 1;	//Return completion
+	return eof_menu_copy_sections_from_track_number(eof_song, 14, eof_selected_track, EOF_KICK_DRUM_LANE);
 }
 
 int eof_menu_note_toggle_hi_hat_open(void)
@@ -13207,6 +13115,7 @@ int eof_menu_note_move_note_start(void)
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 
+	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 	return D_O_K;
 }
 
@@ -13231,6 +13140,7 @@ int eof_menu_note_move_note_end(void)
 		(void) eof_menu_edit_deselect_all();	//Clear the note selection
 	}
 
+	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard
 	return D_O_K;
 }
 

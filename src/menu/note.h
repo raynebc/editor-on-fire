@@ -447,8 +447,8 @@ int eof_menu_copy_solos_track_11(void);
 int eof_menu_copy_solos_track_12(void);
 int eof_menu_copy_solos_track_13(void);
 int eof_menu_copy_solos_track_14(void);
-int eof_menu_copy_solos_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
-	//Copies the solo phrases from the specified source track to the destination track
+	//Uses eof_menu_copy_sections_from_track_number() to copy the solo phrases from the specified source track to the destination track
+///int eof_menu_copy_solos_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
 
 int eof_menu_copy_sp_track_1(void);
 int eof_menu_copy_sp_track_2(void);
@@ -481,8 +481,25 @@ int eof_menu_copy_arpeggio_track_11(void);
 int eof_menu_copy_arpeggio_track_12(void);
 int eof_menu_copy_arpeggio_track_13(void);
 int eof_menu_copy_arpeggio_track_14(void);
+///int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
+	//Uses eof_menu_copy_sections_from_track_number() to copy the arpeggio phrases from the specified source track to the destination track
+
+int eof_menu_copy_handshape_track_1(void);
+int eof_menu_copy_handshape_track_2(void);
+int eof_menu_copy_handshape_track_3(void);
+int eof_menu_copy_handshape_track_4(void);
+int eof_menu_copy_handshape_track_5(void);
+int eof_menu_copy_handshape_track_6(void);
+int eof_menu_copy_handshape_track_7(void);
+int eof_menu_copy_handshape_track_8(void);
+int eof_menu_copy_handshape_track_9(void);
+int eof_menu_copy_handshape_track_10(void);
+int eof_menu_copy_handshape_track_11(void);
+int eof_menu_copy_handshape_track_12(void);
+int eof_menu_copy_handshape_track_13(void);
+int eof_menu_copy_handshape_track_14(void);
 int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, unsigned long sourcetrack, unsigned long desttrack);
-	//Copies the arpeggio phrases from the specified source track to the destination track
+	//Uses eof_menu_copy_sections_from_track_number() to copy the handshape phrases from the specified source track to the destination track
 
 int eof_menu_copy_trill_track_1(void);
 int eof_menu_copy_trill_track_2(void);
