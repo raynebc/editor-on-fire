@@ -865,7 +865,7 @@ int eof_menu_edit_paste_vocal_logic(int function)
 	unsigned long source_id = 0;
 	unsigned long lastlinenum = 0xFFFFFFFF, linestart = 0, lineend = 0, lineflags;	//Used to create lyric lines
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
-	unsigned long targetpos = eof_music_pos.value - eof_av_delay;	//By default, assume the paste will occur at the seek position
+	unsigned long targetpos = EOF_SEEK_POS;	//By default, assume the paste will occur at the seek position
 
 	//Beat interval variables used to automatically re-snap auto-adjusted timestamps
 	unsigned long intervalbeat = 0;
@@ -1638,7 +1638,7 @@ int eof_menu_edit_paste_logic(int function)
 	char technotesadded = 0;	//Tracks whether tech notes were created when pasting pro guitar notes into normal view
 	unsigned long source_id = 0;
 	int oldpaste = 0;	//By default, assume the new paste logic is being used
-	unsigned long targetpos = eof_music_pos.value - eof_av_delay;	//By default, assume the paste will occur at the seek position
+	unsigned long targetpos = EOF_SEEK_POS;	//By default, assume the paste will occur at the seek position
 	EOF_PRO_GUITAR_TRACK *stp = NULL;	//eof_song->pro_guitar_track[srctracknum];	//Simplify
 	EOF_PRO_GUITAR_TRACK *dtp = NULL;	//eof_song->pro_guitar_track[tracknum];		//Simplify
 	unsigned long firstpastepos = 0;	//Will store the timestamp of the first pasted note
@@ -2881,9 +2881,9 @@ int eof_menu_edit_bookmark_helper(int b)
 		return 1;	//Do not place a bookmark at a negative or zero chart position
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(eof_song->bookmark_pos[b] != eof_music_pos.value - eof_av_delay)
+	if(eof_song->bookmark_pos[b] != EOF_SEEK_POS)
 	{
-		eof_song->bookmark_pos[b] = eof_music_pos.value - eof_av_delay;
+		eof_song->bookmark_pos[b] = EOF_SEEK_POS;
 	}
 	else
 	{
@@ -5086,7 +5086,7 @@ int eof_menu_edit_set_start_point_at_timestamp(unsigned long timestamp)
 
 int eof_menu_edit_set_start_point(void)
 {
-	return eof_menu_edit_set_start_point_at_timestamp(eof_music_pos.value - eof_av_delay);
+	return eof_menu_edit_set_start_point_at_timestamp(EOF_SEEK_POS);
 }
 
 int eof_menu_edit_set_start_point_at_mouse(void)
@@ -5121,7 +5121,7 @@ int eof_menu_edit_set_end_point_at_timestamp(unsigned long timestamp)
 
 int eof_menu_edit_set_end_point(void)
 {
-	return eof_menu_edit_set_end_point_at_timestamp(eof_music_pos.value - eof_av_delay);
+	return eof_menu_edit_set_end_point_at_timestamp(EOF_SEEK_POS);
 }
 
 int eof_menu_edit_set_end_point_at_mouse(void)

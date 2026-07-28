@@ -307,7 +307,7 @@ void eof_prepare_song_menu(void)
 				}
 				lastnote = i;
 			}
-			if((type == eof_note_type) && (pos < ((eof_music_pos.value >= eof_av_delay) ? eof_music_pos.value - eof_av_delay : 0)))
+			if((type == eof_note_type) && (pos < ((eof_music_pos.value >= eof_av_delay) ? EOF_SEEK_POS : 0)))
 			{	//If the note is earlier than the seek position
 				seekp = 1;
 				if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
@@ -315,7 +315,7 @@ void eof_prepare_song_menu(void)
 					seekph = 1;
 				}
 			}
-			if((type == eof_note_type) && (pos > ((eof_music_pos.value >= eof_av_delay) ? eof_music_pos.value - eof_av_delay : 0)))
+			if((type == eof_note_type) && (pos > ((eof_music_pos.value >= eof_av_delay) ? EOF_SEEK_POS : 0)))
 			{	//If the note is later than the seek position
 				seekn = 1;
 				if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
@@ -356,7 +356,7 @@ void eof_prepare_song_menu(void)
 		}
 
 		eof_song_seek_menu[3].flags = (eof_music_pos.value >= eof_music_length - 1) ? D_DISABLED : 0;	//Update "Seek>End of audio" enable status, depending on whether the seek position is already at the end of the chart
-		eof_song_seek_menu[18].flags = (eof_music_pos.value - eof_av_delay < eof_song->beat[eof_song->beats - 1]->pos) ? 0 : D_DISABLED;	//Update "Next beat" enable status, depending on whether the seek position is before the last beat marker
+		eof_song_seek_menu[18].flags = (EOF_SEEK_POS < eof_song->beat[eof_song->beats - 1]->pos) ? 0 : D_DISABLED;	//Update "Next beat" enable status, depending on whether the seek position is before the last beat marker
 
 		/* Song>Catalog>Show */
 		/* Song>Catalog>Edit name */
@@ -386,7 +386,7 @@ void eof_prepare_song_menu(void)
 		if(totalnotecount)
 		{	//If there are any notes in the active track difficulty
 			/* seek first note */
-			if((firstnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, firstnote) == eof_music_pos.value - eof_av_delay))
+			if((firstnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, firstnote) == EOF_SEEK_POS))
 			{	//If the seek position is already at the first note
 				eof_song_seek_note_menu[0].flags = D_DISABLED;	//Note>First note
 			}
@@ -396,7 +396,7 @@ void eof_prepare_song_menu(void)
 			}
 
 			/* seek last note */
-			if((lastnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, lastnote) == eof_music_pos.value - eof_av_delay))
+			if((lastnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, lastnote) == EOF_SEEK_POS))
 			{
 				eof_song_seek_note_menu[1].flags = D_DISABLED;	//Note>Last note
 			}
@@ -449,12 +449,12 @@ void eof_prepare_song_menu(void)
 
 		/* Previous TS change */
 		eof_song_seek_menu[21].flags = D_DISABLED;	//Previous TS change
-		i = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+		i = eof_get_beat(eof_song, EOF_SEEK_POS);
 		while(eof_beat_num_valid(eof_song, i))
 		{	//For each beat at or before the current seek position
 			if(eof_get_ts(eof_song, NULL, NULL, i) == 1)
 			{	//If this beat has a time signature change
-				if(eof_song->beat[i]->pos < eof_music_pos.value - eof_av_delay)
+				if(eof_song->beat[i]->pos < EOF_SEEK_POS)
 				{	//If this beat is before the existing seek position
 					eof_song_seek_menu[21].flags = 0;
 					break;	//Break from the loop
@@ -468,12 +468,12 @@ void eof_prepare_song_menu(void)
 		eof_song_seek_menu[9].flags = (eof_song->tags->end_point != ULONG_MAX) ? 0: D_DISABLED;
 
 		eof_song_seek_menu[22].flags = D_DISABLED;	//Next TS change
-		i = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+		i = eof_get_beat(eof_song, EOF_SEEK_POS);
 		while(eof_beat_num_valid(eof_song, i))
 		{	//For each beat at or before the current seek position
 			if(eof_get_ts(eof_song, NULL, NULL, i) == 1)
 			{	//If this beat has a time signature change
-				if(eof_song->beat[i]->pos > eof_music_pos.value - eof_av_delay)
+				if(eof_song->beat[i]->pos > EOF_SEEK_POS)
 				{	//If this beat is after the existing seek position
 					eof_song_seek_menu[22].flags = 0;
 					break;	//Break from the loop
@@ -751,7 +751,7 @@ int eof_menu_song_seek_previous_note(void)
 
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track, in reverse order
-		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos.value >= eof_av_delay) ? eof_music_pos.value - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos.value >= eof_av_delay) ? EOF_SEEK_POS : 0)))
 		{	//If this is the first note before the current seek position
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i - 1) + eof_av_delay);
 			break;
@@ -766,7 +766,7 @@ int eof_menu_song_seek_previous_highlighted_note(void)
 
 	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos.value >= eof_av_delay) ? eof_music_pos.value - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i - 1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i - 1) < ((eof_music_pos.value >= eof_av_delay) ? EOF_SEEK_POS : 0)))
 		{
 			if(eof_note_is_highlighted(eof_song, eof_selected_track, i - 1))
 			{	//If either the static or dynamic highlight flag of this note is set
@@ -784,7 +784,7 @@ int eof_menu_song_seek_next_note(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos.value >= eof_av_delay) ? eof_music_pos.value - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos.value >= eof_av_delay) ? EOF_SEEK_POS : 0)))
 		{	//If this is the first note after the current seek position
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
 			break;
@@ -799,7 +799,7 @@ int eof_menu_song_seek_next_highlighted_note(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos.value >= eof_av_delay) ? eof_music_pos.value - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos.value >= eof_av_delay) ? EOF_SEEK_POS : 0)))
 		{
 			if(eof_note_is_highlighted(eof_song, eof_selected_track, i))
 			{	//If either the static or dynamic highlight flag of this note is set
@@ -918,7 +918,7 @@ void eof_song_seek_partial_screen(int direction)
 	amount *= labs(direction);	//Scale the seek by the number of ticks the scroll wheel was moved
 	if(direction < 0)
 	{	//Seek backward
-		if(eof_music_pos.value - eof_av_delay < amount)
+		if(EOF_SEEK_POS < amount)
 		{	//Cannot seek back by this amount
 			(void) eof_menu_song_seek_start();
 		}
@@ -2936,7 +2936,7 @@ void eof_set_percussion_cue(int cue_number)
 
 void eof_seek_by_grid_snap(int dir)
 {
-	unsigned long adjustedpos = eof_music_pos.value - eof_av_delay;	//Find the actual chart position
+	unsigned long adjustedpos = EOF_SEEK_POS;	//Find the actual chart position
 	unsigned long originalpos = adjustedpos;
 	unsigned long target = 0;
 
@@ -2951,11 +2951,11 @@ void eof_seek_by_grid_snap(int dir)
 		eof_shift_used = 1;	//Track that the SHIFT key was used
 		if(eof_seek_selection_start == eof_seek_selection_end)
 		{	//If this begins a seek selection
-			eof_update_seek_selection(originalpos, eof_music_pos.value - eof_av_delay, 0);
+			eof_update_seek_selection(originalpos, EOF_SEEK_POS, 0);
 		}
 		else
 		{
-			eof_update_seek_selection(eof_seek_selection_start, eof_music_pos.value - eof_av_delay, 0);
+			eof_update_seek_selection(eof_seek_selection_start, EOF_SEEK_POS, 0);
 		}
 	}
 	eof_feedback_input_mode_update_selected_beat();	//Update the selected beat and measure if Feedback input mode is in use
@@ -2980,11 +2980,11 @@ int eof_menu_song_seek_previous_anchor(void)
 	if(!eof_song)
 		return 1;
 
-	b = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+	b = eof_get_beat(eof_song, EOF_SEEK_POS);
 	if(!eof_beat_num_valid(eof_song, b))
 		return 1;	//If the beta containing the seek position was not identified, return immediately
 
-	if((eof_song->beat[b]->pos < eof_music_pos.value - eof_av_delay) && (eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR))
+	if((eof_song->beat[b]->pos < EOF_SEEK_POS) && (eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR))
 	{	//If the seek position is within (but not at the start of) a beat that is an anchor
 		eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to that beat
 	}
@@ -3011,13 +3011,13 @@ int eof_menu_song_seek_next_anchor(void)
 	if(!eof_song)
 		return 1;
 
-	if(eof_music_pos.value - eof_av_delay < eof_song->beat[0]->pos)
+	if(EOF_SEEK_POS < eof_song->beat[0]->pos)
 	{	//If the seek position is before the first beat
 		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat
 	}
 	else
 	{
-		b = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+		b = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 		if(eof_beat_num_valid(eof_song, b))
 		{	//If the beat containing the seek position was identified
@@ -3049,14 +3049,14 @@ int eof_menu_song_seek_first_beat(void)
 
 int eof_menu_song_seek_previous_beat(void)
 {
-	unsigned long b = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 	if(!eof_song)
 		return 1;
 
 	if(eof_beat_num_valid(eof_song, b) && (b > 0))
 	{
-		if(eof_song->beat[b]->pos == eof_music_pos.value - eof_av_delay)
+		if(eof_song->beat[b]->pos == EOF_SEEK_POS)
 		{
 			eof_set_seek_position(eof_song->beat[b - 1]->pos + eof_av_delay);
 		}
@@ -3075,12 +3075,12 @@ int eof_menu_song_seek_previous_beat(void)
 
 int eof_menu_song_seek_next_beat(void)
 {
-	unsigned long b = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 	if(!eof_song)
 		return 1;
 
-	if(eof_music_pos.value - eof_av_delay < eof_song->beat[0]->pos)
+	if(EOF_SEEK_POS < eof_song->beat[0]->pos)
 	{	//If the seek position is before the first beat marker
 		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat's position
 	}
@@ -3094,9 +3094,9 @@ int eof_menu_song_seek_next_beat(void)
 
 int eof_menu_song_seek_previous_measure(void)
 {
-	unsigned long b = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, EOF_SEEK_POS);
 	unsigned num = 0, ctr;
-	unsigned long originalpos = eof_music_pos.value - eof_av_delay;
+	unsigned long originalpos = EOF_SEEK_POS;
 
 	if(!eof_song)
 		return 1;
@@ -3126,11 +3126,11 @@ int eof_menu_song_seek_previous_measure(void)
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(eof_seek_selection_start == eof_seek_selection_end)
 			{	//If this begins a seek selection
-				eof_update_seek_selection(originalpos, eof_music_pos.value - eof_av_delay, 0);
+				eof_update_seek_selection(originalpos, EOF_SEEK_POS, 0);
 			}
 			else
 			{
-				eof_update_seek_selection(eof_seek_selection_start, eof_music_pos.value - eof_av_delay, 0);
+				eof_update_seek_selection(eof_seek_selection_start, EOF_SEEK_POS, 0);
 			}
 		}
 	}
@@ -3140,9 +3140,9 @@ int eof_menu_song_seek_previous_measure(void)
 
 int eof_menu_song_seek_next_measure(void)
 {
-	unsigned long b = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, EOF_SEEK_POS);
 	unsigned num = 0, ctr;
-	unsigned long originalpos = eof_music_pos.value - eof_av_delay;
+	unsigned long originalpos = EOF_SEEK_POS;
 
 	if(!eof_song)
 		return 1;
@@ -3172,11 +3172,11 @@ int eof_menu_song_seek_next_measure(void)
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(eof_seek_selection_start == eof_seek_selection_end)
 			{	//If this begins a seek selection
-				eof_update_seek_selection(originalpos, eof_music_pos.value - eof_av_delay, 0);
+				eof_update_seek_selection(originalpos, EOF_SEEK_POS, 0);
 			}
 			else
 			{
-				eof_update_seek_selection(eof_seek_selection_start, eof_music_pos.value - eof_av_delay, 0);
+				eof_update_seek_selection(eof_seek_selection_start, EOF_SEEK_POS, 0);
 			}
 		}
 	}
@@ -3186,7 +3186,7 @@ int eof_menu_song_seek_next_measure(void)
 
 int eof_menu_song_seek_previous_ts_change(void)
 {
-	unsigned long b = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 	if(!eof_song)
 		return 1;
@@ -3195,7 +3195,7 @@ int eof_menu_song_seek_previous_ts_change(void)
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, NULL, NULL, b) == 1)
 		{	//If this beat has a time signature change
-			if(eof_song->beat[b]->pos < eof_music_pos.value - eof_av_delay)
+			if(eof_song->beat[b]->pos < EOF_SEEK_POS)
 			{	//If this beat is before the existing seek position
 				break;	//Break from the loop
 			}
@@ -3216,7 +3216,7 @@ int eof_menu_song_seek_previous_ts_change(void)
 
 int eof_menu_song_seek_next_ts_change(void)
 {
-	unsigned long b = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+	unsigned long b = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 	if(!eof_song)
 		return 1;
@@ -3225,7 +3225,7 @@ int eof_menu_song_seek_next_ts_change(void)
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, NULL, NULL, b) == 1)
 		{	//If this beat has a time signature change
-			if(eof_song->beat[b]->pos > eof_music_pos.value - eof_av_delay)
+			if(eof_song->beat[b]->pos > EOF_SEEK_POS)
 			{	//If this beat is after the existing seek position
 				break;	//Break from the loop
 			}
@@ -4159,7 +4159,7 @@ int eof_menu_catalog_find(char direction)
 		return 1;
 
 	entry = &eof_song->catalog->entry[eof_selected_catalog_entry];	//Simplify the code below
-	if(eof_find_note_sequence_time_range(eof_song, entry->flags, entry->difficulty, entry->start_pos, entry->end_pos, eof_selected_track, eof_note_type, eof_music_pos.value - eof_av_delay, direction, &hit_pos))
+	if(eof_find_note_sequence_time_range(eof_song, entry->flags, entry->difficulty, entry->start_pos, entry->end_pos, eof_selected_track, eof_note_type, EOF_SEEK_POS, direction, &hit_pos))
 	{	//If a match was found
 		eof_set_seek_position(hit_pos + eof_av_delay);	//Seek to the match position
 	}
@@ -4256,7 +4256,7 @@ int eof_phrase_edit_timing_radio_proc(int msg, DIALOG *d, int c)
 	if(selected_option == 6)
 	{	//Start radio button
 		eof_phrase_edit_timing_dialog[2].flags = D_DISABLED;	//Start position input field
-		snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", eof_music_pos.value - eof_av_delay);	//Populate the start field with the current seek position
+		snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", EOF_SEEK_POS);	//Populate the start field with the current seek position
 		eof_phrase_edit_timing_dialog[4].flags = 0;			//End position input field
 		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_phrase_edit_timing_original_end);	//Populate the end field with the phrase's original end time
 	}
@@ -4265,7 +4265,7 @@ int eof_phrase_edit_timing_radio_proc(int msg, DIALOG *d, int c)
 		eof_phrase_edit_timing_dialog[2].flags = 0;			//Start position input field
 		snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", eof_phrase_edit_timing_original_start);	//Populate the start field with the phrase's original start time
 		eof_phrase_edit_timing_dialog[4].flags = D_DISABLED;	//End position input field
-		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_music_pos.value - eof_av_delay);	//Populate the end field with the current seek position
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", EOF_SEEK_POS);	//Populate the end field with the current seek position
 	}
 	else
 	{	//Neither
@@ -4295,8 +4295,8 @@ int eof_phrase_edit_timing(unsigned long *start, unsigned long *end, unsigned lo
 	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", startval);
 	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", endval);
 
-	eof_phrase_edit_timing_dialog[6].flags = (eof_music_pos.value - eof_av_delay >= *end) ? D_DISABLED : 0;	//If the seek position is at/after the end timestamp, disable the Start radio button
-	eof_phrase_edit_timing_dialog[7].flags = (eof_music_pos.value - eof_av_delay <= *start) ? D_DISABLED : 0;	//If the seek position is at/before the start timestamp, disable the End radio button
+	eof_phrase_edit_timing_dialog[6].flags = (EOF_SEEK_POS >= *end) ? D_DISABLED : 0;	//If the seek position is at/after the end timestamp, disable the Start radio button
+	eof_phrase_edit_timing_dialog[7].flags = (EOF_SEEK_POS <= *start) ? D_DISABLED : 0;	//If the seek position is at/before the start timestamp, disable the End radio button
 	eof_phrase_edit_timing_dialog[8].flags = D_SELECTED;	//Always select the "Neither" radio option by default
 	eof_phrase_edit_timing_dialog[2].flags = 0;			//Enable Start position input field
 	eof_phrase_edit_timing_dialog[4].flags = 0;			//Enable End position input field
@@ -5303,7 +5303,7 @@ int eof_menu_song_add_floating_text_event_at_timestamp(unsigned long timestamp)
 
 int eof_menu_song_add_floating_text_event(void)
 {
-	return eof_menu_song_add_floating_text_event_at_timestamp(eof_music_pos.value - eof_av_delay);
+	return eof_menu_song_add_floating_text_event_at_timestamp(EOF_SEEK_POS);
 }
 
 int eof_menu_song_add_floating_text_event_at_mouse(void)

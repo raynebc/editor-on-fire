@@ -2397,7 +2397,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 	if((eof_input_mode == EOF_INPUT_CLASSIC) || (eof_input_mode == EOF_INPUT_HOLD))
 	{	//If the input method is classic or hold
-		if((eof_key_code == KEY_ENTER) && (eof_music_pos.value - eof_av_delay >= eof_song->beat[0]->pos) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+		if((eof_key_code == KEY_ENTER) && (EOF_SEEK_POS >= eof_song->beat[0]->pos) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 		{	//If the user pressed enter and the current seek position is not left of the first beat marker, and neither SHIFT nor CTRL are held
 			/* place note with default length if song is paused */
 			if(eof_music_paused)
@@ -2408,7 +2408,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					notelen = 1;
 				}
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos.value - eof_av_delay, notelen, eof_note_type, NULL);
+				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, EOF_SEEK_POS, notelen, eof_note_type, NULL);
 				eof_use_key();
 			}
 
@@ -2417,7 +2417,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			{
 				if(!eof_entering_note_note)
 				{
-					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos.value - eof_av_delay, eof_snap.length, eof_note_type, NULL);
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, EOF_SEEK_POS, eof_snap.length, eof_note_type, NULL);
 					if(new_note)
 					{
 						eof_entering_note_note = new_note;
@@ -2426,7 +2426,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				else
 				{
-					eof_entering_note_note->length = (eof_music_pos.value - eof_av_delay) - eof_entering_note_note->pos - 10;
+					eof_entering_note_note->length = (EOF_SEEK_POS) - eof_entering_note_note->pos - 10;
 				}
 			}
 			if(new_note)
@@ -2619,11 +2619,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, 0, "");
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, EOF_SEEK_POS - eof_guitar.delay, 1, 0, "");
 				}
 				else
 				{
-					new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, EOF_SEEK_POS - eof_guitar.delay, 1, eof_note_type, NULL);
 					if(new_note)
 					{	///Don't bother processing auto drum statuses such as eof_mark_drums_as_cymbal, since this logic is explicitly not for drum tracks
 						eof_entering_note_note = new_note;
@@ -2652,10 +2652,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				{	//Strum button is pressed while a fret is held
 					if(eof_entering_note && eof_entering_note_lyric)
 					{
-						eof_entering_note_lyric->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
+						eof_entering_note_lyric->length = (EOF_SEEK_POS - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, 0, "");
+					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, EOF_SEEK_POS - eof_guitar.delay, 1, 0, "");
 					if(new_lyric)
 					{
 						eof_entering_note_lyric = new_lyric;
@@ -2669,11 +2669,11 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					if(eof_snote != eof_last_snote)
 					{
 						eof_entering_note = 0;
-						eof_entering_note_lyric->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
+						eof_entering_note_lyric->length = (EOF_SEEK_POS - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					else
 					{
-						eof_entering_note_lyric->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
+						eof_entering_note_lyric->length = (EOF_SEEK_POS - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 				}
@@ -2726,10 +2726,10 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 					{	//If a note is being added from this strum
 						if(eof_entering_note && eof_entering_note_note)
 						{
-							eof_entering_note_note->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
+							eof_entering_note_note->length = (EOF_SEEK_POS - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 						}
 						eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_snote, eof_music_pos.value - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
+						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_snote, EOF_SEEK_POS - eof_guitar.delay, 1, eof_note_type, NULL);
 						if(new_note)
 						{	///Don't bother processing auto drum statuses such as eof_mark_drums_as_cymbal, since this logic is explicitly not for drum tracks
 							unsigned long notenum = eof_get_track_size(eof_song, eof_selected_track) - 1;	//The index of the new note
@@ -2747,7 +2747,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}//If the user strummed
 				if(eof_entering_note && eof_entering_note_note)
 				{
-					eof_entering_note_note->length = (eof_music_pos.value - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
+					eof_entering_note_note->length = (EOF_SEEK_POS - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 					if(eof_snote != eof_last_snote)
 					{
 						eof_entering_note = 0;
@@ -4068,7 +4068,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 							}
 							if(eof_input_mode == EOF_INPUT_FEEDBACK)
 							{	//If Feedback input mode is in use, insert a single gem at the seek position
-								targetpos = eof_music_pos.value - eof_av_delay;
+								targetpos = EOF_SEEK_POS;
 								eof_pen_note.note = bitmask;
 							}
 							else
@@ -4427,7 +4427,7 @@ void eof_editor_drum_logic(void)
 	{
 		eof_held_5 = 0;
 	}
-	if(eof_entering_note_note && (eof_music_pos.value - eof_av_delay - eof_drums.delay >= eof_entering_note_note->pos + 50))
+	if(eof_entering_note_note && (EOF_SEEK_POS - eof_drums.delay >= eof_entering_note_note->pos + 50))
 	{
 		eof_entering_note_note = NULL;
 	}
@@ -4456,13 +4456,13 @@ void eof_editor_drum_logic(void)
 	if(bitmask)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && (eof_music_pos.value - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50))
+		if(eof_entering_note_note && (EOF_SEEK_POS - eof_drums.delay < eof_entering_note_note->pos + 50))
 		{	//If altering an existing note
 			eof_entering_note_note->note |= bitmask;
 		}
 		else
 		{	//If creating a new note
-			new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos.value - eof_av_delay - eof_drums.delay, 1, eof_note_type, NULL);
+			new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, EOF_SEEK_POS - eof_drums.delay, 1, eof_note_type, NULL);
 			if(new_note)
 			{
 				if(eof_mark_drums_as_cymbal)
@@ -4565,7 +4565,7 @@ void eof_editor_logic(void)
 			if(eof_input_mode == EOF_INPUT_FEEDBACK)
 			{	//If Feedback input method is in effect
 				x_tolerance = 2;	//The hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
-				eof_seek_hover_note = eof_find_hover_note(eof_music_pos.value - eof_av_delay, x_tolerance, 0);	//Find the seek hover note
+				eof_seek_hover_note = eof_find_hover_note(EOF_SEEK_POS, x_tolerance, 0);	//Find the seek hover note
 			}
 
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK))
@@ -5535,7 +5535,7 @@ void eof_vocal_editor_logic(void)
 			if(eof_input_mode == EOF_INPUT_FEEDBACK)
 			{	//If Feedback input method is in effect
 				x_tolerance = 2;	//The hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
-				eof_seek_hover_note = eof_find_hover_note(eof_music_pos.value - eof_av_delay, x_tolerance, 0);	//Find the seek hover note
+				eof_seek_hover_note = eof_find_hover_note(EOF_SEEK_POS, x_tolerance, 0);	//Find the seek hover note
 			}
 
 			if((eof_hover_note >= 0) && !(mouse_b & 1))
@@ -6612,7 +6612,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			{
 				draw_sprite(eof_screen, eof_image[EOF_IMAGE_CONTROLS_0 + eof_selected_control], eof_screen_layout.controls_x, 22 + 8);
 			}
-			eof_build_mmssms_string(eof_music_pos.value - eof_av_delay, &min, &sec, NULL, NULL);
+			eof_build_mmssms_string(EOF_SEEK_POS, &min, &sec, NULL, NULL);
 			textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02u:%02u", min, sec);
 		}
 	}
@@ -7398,7 +7398,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 	/* draw the current position */
 	if(pos >= zoom)
 	{
-		vline(window->screen, lpos + (eof_music_pos.value - eof_av_delay) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_seek_line);
+		vline(window->screen, lpos + (EOF_SEEK_POS) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_seek_line);
 	}
 
 	/* draw the difficulty tabs (after the section names, which otherwise render a couple pixels over the tabs) */
@@ -8201,7 +8201,7 @@ void eof_seek_to_nearest_grid_snap(void)
 		return;	//If the current position is on a beat marker, do not seek anywhere
 
 	//Find the distance to the previous grid snap
-	eof_snap_logic(&eof_tail_snap, eof_music_pos.value - eof_av_delay);
+	eof_snap_logic(&eof_tail_snap, EOF_SEEK_POS);
 	eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the nearest grid snap
 }
 
@@ -8369,7 +8369,7 @@ void eof_feedback_input_mode_update_selected_beat(void)
 	if(eof_input_mode == EOF_INPUT_FEEDBACK)
 	{	//If feedback input mode is in use
 		unsigned long beat;
-		unsigned long adjustedpos = eof_music_pos.value - eof_av_delay;	//Find the actual chart position
+		unsigned long adjustedpos = EOF_SEEK_POS;	//Find the actual chart position
 		beat = eof_get_beat(eof_song, adjustedpos);
 		if(beat != lastbeat)
 		{	//If the seek position is at a different beat than the last call

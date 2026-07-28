@@ -78,7 +78,7 @@ void eof_music_play(char resumelastspeed)
 			eof_set_music_pos(&eof_music_pos, eof_music_actual_pos);
 		}
 	}
-	else if(eof_music_pos.value - eof_av_delay < eof_music_length)
+	else if(EOF_SEEK_POS < eof_music_length)
 	{	//Otherwise if the seek position is before the end of the audio, begin playback
 		unsigned long x;
 		int held;	//Tracks whether the user is holding down one of the defined controller buttons
@@ -134,7 +134,7 @@ void eof_music_play(char resumelastspeed)
 		}while(held);
 
 		counter++;
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting chart playback #%lu at %ldms", counter, eof_music_pos.value - eof_av_delay);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting chart playback #%lu at %ldms", counter, EOF_SEEK_POS);
 		eof_log(eof_log_string, 1);
 
 		eof_log("\t\tCalling OGG playback function", 3);
@@ -221,7 +221,7 @@ void eof_catalog_play(void)
 			if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, pan, 1000 + eof_audio_fine_tune, 0) == ALOGG_OK)
 			{
 				counter++;
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting catalog playback #%lu at %ldms", counter, eof_music_pos.value - eof_av_delay);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStarting catalog playback #%lu at %ldms", counter, EOF_SEEK_POS);
 				eof_log(eof_log_string, 1);
 
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg_ul(eof_music_track);
@@ -275,7 +275,7 @@ void eof_music_rewind(void)
 		{
 			amount = 100;
 		}
-		if(eof_music_pos.value - eof_av_delay < amount)
+		if(EOF_SEEK_POS < amount)
 		{
 			(void) eof_menu_song_seek_start();
 		}

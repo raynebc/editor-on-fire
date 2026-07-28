@@ -938,7 +938,7 @@ int eof_menu_file_load_ogg(void)
 	{
 		(void) eof_menu_song_seek_end();
 	}
-	eof_music_seek(eof_music_pos.value - eof_av_delay);
+	eof_music_seek(EOF_SEEK_POS);
 	(void) replace_filename(eof_last_ogg_path, returnedfn, "", sizeof(eof_last_ogg_path));
 	eof_log("\t\t\tOGG loaded", 1);
 
@@ -4656,7 +4656,7 @@ int eof_save_helper(char *destfilename, char silent)
 	{	//If warning messages aren't suppressed
 		unsigned long seektrack = eof_selected_track;	//Used to store the active track difficulty and seek position to be restored after prompts to cancel save are declined
 		unsigned long seekdiff = eof_note_type;
-		unsigned long seekpos = eof_music_pos.value - eof_av_delay;
+		unsigned long seekpos = EOF_SEEK_POS;
 
 		eof_skip_mid_beats_in_measure_numbering = 0;	//Disable this measure numbering alteration so that any relevant warnings can be given by eof_save_helper_checks() below
 		eof_beat_stats_cached = 0;
@@ -7373,7 +7373,7 @@ int eof_menu_file_export_song_preview(void)
 		else
 		{	//Default the start time to the current seek position and the stop time 30 seconds later
 			strncpy(eof_etext4, "Using current seek position", sizeof(eof_etext4) - 1);
-			start = eof_music_pos.value - eof_av_delay;
+			start = EOF_SEEK_POS;
 			stop = start + 30000; //30,000 ms later
 		}
 	}

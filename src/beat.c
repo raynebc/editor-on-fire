@@ -1240,7 +1240,7 @@ int eof_check_for_anchors_between_selected_beat_and_seek_pos(void)
 		return 1;							//Logic error
 
 	//Determine which beat the seek position is in
-	seek_pos = eof_music_pos.value - eof_av_delay;	//Simplify
+	seek_pos = EOF_SEEK_POS;	//Simplify
 	seek_beat = eof_get_beat(eof_song, seek_pos);
 	if(!eof_beat_num_valid(eof_song, seek_beat))
 		return 1;	//Logic error (seek position may be after the project's last beat)

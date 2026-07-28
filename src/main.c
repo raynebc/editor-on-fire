@@ -778,7 +778,7 @@ void eof_find_lyric_preview_lines(void)
 	int next_line = -1;
 	unsigned long dist = 0;
 	int beyond = 1;
-	int adj_eof_music_pos = eof_music_pos.value - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
+	int adj_eof_music_pos = EOF_SEEK_POS;	//The current seek position of the chart, adjusted for AV delay
 
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
@@ -3115,7 +3115,7 @@ void eof_logic(void)
 		{
 			eof_set_music_pos(&eof_music_pos, eof_music_actual_pos);
 		}
-		if(eof_play_selection && (eof_music_pos.value - eof_av_delay > eof_music_end_pos))
+		if(eof_play_selection && (EOF_SEEK_POS > eof_music_end_pos))
 		{
 			eof_music_paused = 1;
 			eof_set_music_pos(&eof_music_pos, eof_music_rewind_pos);
@@ -4066,7 +4066,7 @@ void eof_render_3d_window(void)
 	if(eof_track_is_pro_guitar_track(eof_song, eof_selected_track))
 	{	//If a pro guitar/bass track is active
 		unsigned long popupmessage;
-		if(eof_find_effective_rs_popup_message(eof_music_pos.value - eof_av_delay, &popupmessage))
+		if(eof_find_effective_rs_popup_message(EOF_SEEK_POS, &popupmessage))
 		{	//If there is a popup message in effect at the current position
 			textout_centre_ex(eof_window_3d->screen, font, eof_song->pro_guitar_track[tracknum]->popupmessage[popupmessage].name, eof_window_3d->screen->w / 2, 4, eof_color_white, eof_color_black);
 		}

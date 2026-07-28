@@ -1863,7 +1863,7 @@ int eof_track_pro_guitar_set_fret_hand_position_at_timestamp(unsigned long times
 
 int eof_track_pro_guitar_set_fret_hand_position(void)
 {
-	return eof_track_pro_guitar_set_fret_hand_position_at_timestamp(eof_music_pos.value - eof_av_delay);
+	return eof_track_pro_guitar_set_fret_hand_position_at_timestamp(EOF_SEEK_POS);
 }
 
 int eof_track_pro_guitar_set_fret_hand_position_at_mouse(void)
@@ -2050,7 +2050,7 @@ int eof_track_delete_effective_fret_hand_position(void)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-	if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos.value - eof_av_delay, &index, NULL, 0))
+	if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, EOF_SEEK_POS, &index, NULL, 0))
 	{	//If there is a fret hand position in effect at the current seek position in the active track difficulty
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_pro_guitar_track_delete_hand_position(tp, index);	//Delete the hand position
@@ -2302,7 +2302,7 @@ char * eof_fret_hand_position_list(int index, int * size)
 			if(ecount < EOF_MAX_TEXT_EVENTS)
 			{
 				unsigned long width = eof_pro_guitar_find_fret_hand_position_width(tp, i);
-				if(tp->handposition[i].start_pos == eof_music_pos.value - eof_av_delay)
+				if(tp->handposition[i].start_pos == EOF_SEEK_POS)
 					at_seek_pos = 1;	//If this fret hand position is at the current seek position, track this
 				else
 					at_seek_pos = 0;
@@ -2388,7 +2388,7 @@ int eof_track_fret_hand_positions(void)
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	memset(eof_fret_hand_position_list_selection, 0, EOF_MAX_NOTES);	//Deselect all FHPs in the list
-	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos.value - eof_av_delay, NULL, &diffindex, 0);	//Determine if a hand position exists at the current seek position
+	(void) eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, EOF_SEEK_POS, NULL, &diffindex, 0);	//Determine if a hand position exists at the current seek position
 	eof_fret_hand_position_list_dialog[1].d1 = diffindex;	//Pre-select the hand position in effect (if one exists) at the current seek position
 	eof_fret_hand_position_list_selection[diffindex] = 1;	//And ensure the selection list reflects that
 	eof_fret_hand_position_list_dialog[0].dp = eof_fret_hand_position_list_dialog_title_string;	//Replace the string used for the title bar with a dynamic one
@@ -2446,7 +2446,7 @@ int eof_track_rs_popup_add(void)
 	}
 	else
 	{
-		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", eof_music_pos.value - eof_av_delay);	//Otherwise initialize the start time with the current seek position
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", EOF_SEEK_POS);	//Otherwise initialize the start time with the current seek position
 		(void) ustrzcpy(eof_etext3, sizeof(eof_etext3), "");
 	}
 	if(eof_popup_dialog(eof_song_rs_popup_add_dialog, 1) == 6)
@@ -2594,7 +2594,7 @@ int eof_track_rs_popup_messages(void)
 
 	//Allocate and build the strings for the phrases
 	eof_rebuild_rs_popup_messages_list_strings();
-	if(eof_find_effective_rs_popup_message(eof_music_pos.value - eof_av_delay, &popupmessage))
+	if(eof_find_effective_rs_popup_message(EOF_SEEK_POS, &popupmessage))
 	{	//If a popup message is in effect at the current seek position
 		eof_rs_popup_messages_dialog[1].d1 = popupmessage;	//Pre-select the popup message from the list
 	}
@@ -3519,7 +3519,7 @@ int eof_track_manage_rs_phrases(void)
 
 	//Allocate and build the strings for the phrases
 	eof_rebuild_manage_rs_phrases_strings();
-	eof_track_manage_rs_phrases_dialog[1].d1 = eof_find_effective_rs_phrase(eof_music_pos.value - eof_av_delay);	//Pre-select the phrase in effect at the current position
+	eof_track_manage_rs_phrases_dialog[1].d1 = eof_find_effective_rs_phrase(EOF_SEEK_POS);	//Pre-select the phrase in effect at the current position
 
 	//Call the dialog
 	eof_color_dialog(eof_track_manage_rs_phrases_dialog, gui_fg_color, gui_bg_color);
@@ -4123,7 +4123,7 @@ int eof_track_rs_tone_change_add_at_timestamp(unsigned long timestamp)
 
 int eof_track_rs_tone_change_add(void)
 {
-	return eof_track_rs_tone_change_add_at_timestamp(eof_music_pos.value - eof_av_delay);
+	return eof_track_rs_tone_change_add_at_timestamp(EOF_SEEK_POS);
 }
 
 int eof_track_rs_tone_change_add_at_mouse(void)
@@ -4260,7 +4260,7 @@ int eof_track_rs_tone_changes(void)
 
 	//Allocate and build the strings for the tone changes
 	eof_track_rebuild_rs_tone_changes_list_strings();
-	if(eof_track_find_effective_rs_tone_change(eof_music_pos.value - eof_av_delay, &tonechange))
+	if(eof_track_find_effective_rs_tone_change(EOF_SEEK_POS, &tonechange))
 	{	//If a tone change had been placed at or before the current seek position
 		eof_track_rs_tone_changes_dialog[1].d1 = tonechange;	//Pre-select the tone change from the list
 	}
@@ -6530,12 +6530,12 @@ int eof_track_immerrock_bass_comment(void)
 
 int eof_track_set_chord_hand_mode_change(void)
 {
-	return eof_pro_guitar_track_set_hand_mode_change_at_timestamp(eof_music_pos.value - eof_av_delay, 0);
+	return eof_pro_guitar_track_set_hand_mode_change_at_timestamp(EOF_SEEK_POS, 0);
 }
 
 int eof_track_set_string_hand_mode_change(void)
 {
-	return eof_pro_guitar_track_set_hand_mode_change_at_timestamp(eof_music_pos.value - eof_av_delay, 1);
+	return eof_pro_guitar_track_set_hand_mode_change_at_timestamp(EOF_SEEK_POS, 1);
 }
 
 int eof_track_delete_effective_hand_mode_change(void)
@@ -6549,7 +6549,7 @@ int eof_track_delete_effective_hand_mode_change(void)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
-	(void) eof_pro_guitar_track_find_effective_hand_mode_change(tp, eof_music_pos.value - eof_av_delay, NULL, &index);
+	(void) eof_pro_guitar_track_find_effective_hand_mode_change(tp, EOF_SEEK_POS, NULL, &index);
 	if(index <= tp->handmodechanges)
 	{	//If there is a hand mode change in effect at the current seek position in the active track difficulty
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -6593,7 +6593,7 @@ int eof_note_name_find_next(void)
 	{
 		for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 		{	//For each note in this track
-			if(eof_get_note_pos(eof_song, eof_selected_track, ctr) <= eof_music_pos.value - eof_av_delay)
+			if(eof_get_note_pos(eof_song, eof_selected_track, ctr) <= EOF_SEEK_POS)
 				continue;	//If this note isn't after the current seek position, skip it
 
 			if(strcasestr_spec(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_name_search_string))

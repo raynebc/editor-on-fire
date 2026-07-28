@@ -16,6 +16,7 @@
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #define KEY_EITHER_WIN (key[KEY_LWIN] || key[KEY_RWIN])
+#define EOF_SEEK_POS (eof_music_pos.value - eof_av_delay)
 #ifdef ALLEGRO_MACOSX
 		#define KEY_EITHER_CTRL (key[KEY_COMMAND])
 #else

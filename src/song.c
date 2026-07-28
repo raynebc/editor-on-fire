@@ -12952,9 +12952,9 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 	unsigned long note_count = 0;
 	unsigned long first = ULONG_MAX;
 	unsigned long first_beat = ULONG_MAX;
-	unsigned long start_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+	unsigned long start_beat = eof_get_beat(eof_song, EOF_SEEK_POS);
 	unsigned long this_beat = ULONG_MAX;
-	unsigned long current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+	unsigned long current_beat = eof_get_beat(eof_song, EOF_SEEK_POS);
 	unsigned long last_current_beat = current_beat;
 	unsigned long end_beat = ULONG_MAX;
 	double nporpos, nporendpos;
@@ -12970,7 +12970,7 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 	entry = &eof_song->catalog->entry[entrynum];
 
 	/* make sure we can paste */
-	if(eof_music_pos.value - eof_av_delay < eof_song->beat[0]->pos)
+	if(EOF_SEEK_POS < eof_song->beat[0]->pos)
 	{
 		return D_O_K;
 	}
@@ -12978,7 +12978,7 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 	sourcetrack = entry->flags;
 
 	/* make sure we can't paste inside of the catalog entry */
-	if((sourcetrack == eof_selected_track) && (entry->difficulty == eof_note_type) && (eof_music_pos.value - eof_av_delay >= entry->start_pos) && (eof_music_pos.value - eof_av_delay <= entry->end_pos))
+	if((sourcetrack == eof_selected_track) && (entry->difficulty == eof_note_type) && (EOF_SEEK_POS >= entry->start_pos) && (EOF_SEEK_POS <= entry->end_pos))
 	{
 		return D_O_K;
 	}
@@ -13038,7 +13038,7 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 		}
 	}
 
-	newpasteoffset = eof_get_porpos(eof_music_pos.value - eof_av_delay);	//Find the seek position's percentage within the current beat
+	newpasteoffset = eof_get_porpos(EOF_SEEK_POS);	//Find the seek position's percentage within the current beat
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	if(eof_paste_erase_overlap)
 	{	//If the user decided to delete existing notes that are between the start and end of the pasted notes
@@ -13060,7 +13060,7 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 			{
 				break;
 			}
-			current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay) + (this_beat - first_beat);
+			current_beat = eof_get_beat(eof_song, EOF_SEEK_POS) + (this_beat - first_beat);
 			if(!eof_beat_num_valid(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
 			{
 				break;
@@ -13086,11 +13086,11 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 
 		//Re-initialize some variables for the regular paste from catalog logic
 		first = first_beat = this_beat = end_beat = ULONG_MAX;
-		current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+		current_beat = eof_get_beat(eof_song, EOF_SEEK_POS);
 		last_current_beat = current_beat;
 	}
 
-	newpasteoffset = eof_get_porpos(eof_music_pos.value - eof_av_delay);	//Find the seek position's percentage within the current beat
+	newpasteoffset = eof_get_porpos(EOF_SEEK_POS);	//Find the seek position's percentage within the current beat
 	for(i = 0; i < eof_get_track_size(eof_song, sourcetrack); i++)
 	{	//For each note in the active catalog entry's track
 		unsigned long pos = eof_get_note_pos(eof_song, sourcetrack, i);
@@ -13111,7 +13111,7 @@ int eof_paste_from_catalog_entry_number(unsigned long entrynum)
 			break;
 		}
 		last_current_beat = current_beat;
-		current_beat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay) + (this_beat - first_beat);
+		current_beat = eof_get_beat(eof_song, EOF_SEEK_POS) + (this_beat - first_beat);
 		if(!eof_beat_num_valid(eof_song, current_beat) || (current_beat >= eof_song->beats - 1))
 		{	//If the beat is at or after the last beat or otherwise not valid
 			break;

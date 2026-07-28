@@ -620,7 +620,7 @@ void eof_prepare_beat_menu(void)
 			eof_beat_halve_bpm_menu[0].flags = 0;
 		}
 
-		if(eof_check_for_anchors_between_selected_beat_and_seek_pos() || (eof_song->beat[eof_selected_beat]->pos == eof_music_pos.value - eof_av_delay))
+		if(eof_check_for_anchors_between_selected_beat_and_seek_pos() || (eof_song->beat[eof_selected_beat]->pos == EOF_SEEK_POS))
 		{	//If there are anchors between the selected beat and seek position, or the selected beat is at the seek position already
 			eof_beat_menu[15].flags = D_DISABLED;	//Move to seek pos
 		}
@@ -1556,7 +1556,7 @@ int eof_menu_beat_move_to_seek_pos(void)
 		return 1;							//Return without making changes
 	if(!eof_beat_num_valid(eof_song, eof_selected_beat))
 		return 1;							//Logic error
-	if(eof_song->beat[eof_selected_beat]->pos == eof_music_pos.value - eof_av_delay)
+	if(eof_song->beat[eof_selected_beat]->pos == EOF_SEEK_POS)
 		return 1;							//The seek position is at the selected beat's position already
 	if(eof_check_for_anchors_between_selected_beat_and_seek_pos())
 		return 1;							//Don't allow this function to move the selected beat through an anchor
@@ -1564,12 +1564,12 @@ int eof_menu_beat_move_to_seek_pos(void)
 	if(eof_note_auto_adjust)
 		(void) eof_menu_edit_cut(0, 1);	//Save auto-adjust data for the entire chart
 
-	diff = eof_music_pos.value - eof_av_delay - eof_song->beat[eof_selected_beat]->fpos;	//The additive time differential between the beat's original and new positions
+	diff = EOF_SEEK_POS - eof_song->beat[eof_selected_beat]->fpos;	//The additive time differential between the beat's original and new positions
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos = eof_music_pos.value - eof_av_delay;	//Update the selected beat's position
+	eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos = EOF_SEEK_POS;	//Update the selected beat's position
 	if(eof_selected_beat == 0)
 	{	//If it was the first beat marker that was altered
-		eof_song->tags->ogg[0].midi_offset = eof_music_pos.value - eof_av_delay;	//Update the chart delay
+		eof_song->tags->ogg[0].midi_offset = EOF_SEEK_POS;	//Update the chart delay
 		for(i = 1; i < eof_song->beats; i++)
 		{	//For each of the remaining beats
 			eof_song->beat[i]->fpos += diff;	//Move them by the same amount the first beat was moved
@@ -1892,7 +1892,7 @@ int eof_menu_beat_all_events(void)
 	eof_all_events_dialog[1].d1 = 0;
 	for(ctr = 0, count = 0; ctr < eof_song->text_events; ctr++)
 	{	//For each text event in the project
-		if(eof_get_text_event_pos(eof_song, ctr) > eof_music_pos.value - eof_av_delay)
+		if(eof_get_text_event_pos(eof_song, ctr) > EOF_SEEK_POS)
 			break;	//If this text event and all subsequent ones occur after the seek position, stop processing text events
 
 		if(eof_event_is_not_filtered_from_listing(ctr))
@@ -2744,7 +2744,7 @@ void eof_add_or_edit_floating_text_event_at_timestamp(EOF_TEXT_EVENT *ptr, unsig
 
 void eof_add_or_edit_floating_text_event(EOF_TEXT_EVENT *ptr, unsigned long flags, char *undo_made)
 {
-	eof_add_or_edit_floating_text_event_at_timestamp(ptr, eof_music_pos.value - eof_av_delay, flags, undo_made);
+	eof_add_or_edit_floating_text_event_at_timestamp(ptr, EOF_SEEK_POS, flags, undo_made);
 }
 
 unsigned long eof_events_dialog_delete_events_count(void)
@@ -3224,7 +3224,7 @@ int eof_menu_beat_adjust_bpm(double amount)
 	if(eof_song->tags->tempo_map_locked)
 		return 1;	//Return without changing anything if the chart's tempo map is locked
 
-	targetbeat = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);	//Identify the beat at or before the seek position
+	targetbeat = eof_get_beat(eof_song, EOF_SEEK_POS);	//Identify the beat at or before the seek position
 	if(!eof_beat_num_valid(eof_song, targetbeat))
 	{	//If the seek position is outside the scope of the chart
 		targetbeat = 0;	//Identify the first beat as the target

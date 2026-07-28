@@ -1168,7 +1168,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position's beat number
 	if(!ustricmp(macro, "SEEK_POS_BEAT"))
 	{
-		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+		unsigned long beatnum = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 		if(beatnum < eof_song->beats)
 		{	//The seek position is between the first and last beats
@@ -1184,7 +1184,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position's measure number
 	if(!ustricmp(macro, "SEEK_POS_BEAT_MEASURE"))
 	{
-		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+		unsigned long beatnum = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 		if(beatnum < eof_song->beats)
 		{	//The seek position is between the first and last beats
@@ -1200,7 +1200,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position's beat's position in measure
 	if(!ustricmp(macro, "SEEK_POS_BEAT_POSITION_IN_MEASURE"))
 	{
-		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+		unsigned long beatnum = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 		if(beatnum < eof_song->beats)
 		{	//The seek position is between the first and last beats
@@ -1496,7 +1496,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If a pro guitar track is active
 			unsigned long index = 0;
 
-			if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, eof_music_pos.value - eof_av_delay, &index, NULL, 0))
+			if(eof_pro_guitar_track_find_effective_fret_hand_position_definition(tp, eof_note_type, EOF_SEEK_POS, &index, NULL, 0))
 			{	//If a fret hand position is in effect
 				unsigned long position, width;
 
@@ -1520,7 +1520,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If a pro guitar track is active
 			unsigned long tone;
 
-			tone = eof_pro_guitar_track_find_effective_tone(tp, eof_music_pos.value - eof_av_delay);	//Find if there's a tone change in effect
+			tone = eof_pro_guitar_track_find_effective_tone(tp, EOF_SEEK_POS);	//Find if there's a tone change in effect
 			if(tone < EOF_MAX_PHRASES)
 			{	//If a tone change is in effect
 				snprintf(dest_buffer, dest_buffer_size, "%s", tp->tonechange[tone].name);
@@ -1544,12 +1544,12 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(!eof_display_seek_pos_in_seconds)
 		{	//If the seek position is to be displayed as minutes:seconds.milliseconds
-			eof_build_mmssms_string(eof_music_pos.value - eof_av_delay, NULL, NULL, NULL, dest_buffer);
+			eof_build_mmssms_string(EOF_SEEK_POS, NULL, NULL, NULL, dest_buffer);
 		}
 		else
 		{	//If the seek position is to be displayed as seconds
-			ms = (eof_music_pos.value - eof_av_delay) % 1000;
-			sec = (eof_music_pos.value - eof_av_delay) / 1000;
+			ms = (EOF_SEEK_POS) % 1000;
+			sec = (EOF_SEEK_POS) / 1000;
 			snprintf(dest_buffer, dest_buffer_size, "%lu.%03lus", sec, ms);
 		}
 		return 1;
@@ -1558,8 +1558,8 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position in seconds.milliseconds format
 	if(!ustricmp(macro, "SEEK_POSITION_SEC"))
 	{
-		sec = (eof_music_pos.value - eof_av_delay) / 1000;
-		ms = (eof_music_pos.value - eof_av_delay) % 1000;
+		sec = (EOF_SEEK_POS) / 1000;
+		ms = (EOF_SEEK_POS) % 1000;
 		snprintf(dest_buffer, dest_buffer_size, "%lu.%03lus", sec, ms);
 
 		return 1;
@@ -1568,7 +1568,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position in minutes:seconds.milliseconds format
 	if(!ustricmp(macro, "SEEK_POSITION_MIN_SEC"))
 	{
-		eof_notes_panel_print_time(eof_music_pos.value - eof_av_delay, dest_buffer, 0);	//Print in mm:ss.ms format
+		eof_notes_panel_print_time(EOF_SEEK_POS, dest_buffer, 0);	//Print in mm:ss.ms format
 
 		return 1;
 	}
@@ -1576,7 +1576,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//Seek position as a percentage of the chart's total length
 	if(!ustricmp(macro, "SEEK_POSITION_PERCENT"))
 	{
-		percent = (double)(eof_music_pos.value - eof_av_delay) * 100.0 / eof_chart_length;
+		percent = (double)(EOF_SEEK_POS) * 100.0 / eof_chart_length;
 		snprintf(dest_buffer, dest_buffer_size, "%.2f", percent);
 
 		return 1;
@@ -2391,7 +2391,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The effective note per second rate of the current grid snap at the current seek position
 	if(!ustricmp(macro, "GRID_SNAP_SEEK_POS_LENGTH_NPS"))
 	{
-		unsigned long pos = eof_music_pos.value - eof_av_delay;
+		unsigned long pos = EOF_SEEK_POS;
 
 		if((eof_snap_mode != EOF_SNAP_OFF) && (pos < eof_song->beat[eof_song->beats - 1]->pos))
 		{	//If grid snap is enabled and the seek position is before the last beat marker
@@ -2440,7 +2440,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined star power phrase
 	if(!ustricmp(macro, "SEEK_SP_STATUS") || !ustricmp(macro, "SEEK_SP_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SP_SECTION, eof_music_pos.value - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SP_SECTION, EOF_SEEK_POS);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a star power phrase
@@ -2456,7 +2456,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined lyric line
 	if(!ustricmp(macro, "SEEK_LYRIC_LINE_STATUS") || !ustricmp(macro, "SEEK_LYRIC_LINE_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, EOF_TRACK_VOCALS, EOF_LYRIC_PHRASE_SECTION, eof_music_pos.value - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, EOF_TRACK_VOCALS, EOF_LYRIC_PHRASE_SECTION, EOF_SEEK_POS);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a lyric line
@@ -2472,7 +2472,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined slider phrase
 	if(!ustricmp(macro, "SEEK_SLIDER_STATUS") || !ustricmp(macro, "SEEK_SLIDER_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SLIDER_SECTION, eof_music_pos.value - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SLIDER_SECTION, EOF_SEEK_POS);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a slider phrase
@@ -2488,7 +2488,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined solo phrase
 	if(!ustricmp(macro, "SEEK_SOLO_STATUS") || !ustricmp(macro, "SEEK_SOLO_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SOLO_SECTION, eof_music_pos.value - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_SOLO_SECTION, EOF_SEEK_POS);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a solo phrase
@@ -2512,7 +2512,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the active track is a drum track
 			effectivephrasename = phrasename2;
 		}
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TRILL_SECTION, eof_music_pos.value - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TRILL_SECTION, EOF_SEEK_POS);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a trill phrase
@@ -2536,7 +2536,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		{	//If the active track is a drum track
 			effectivephrasename = phrasename2;
 		}
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, eof_music_pos.value - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, EOF_SEEK_POS);
 		dest_buffer[0] = '\0';
 		if(phraseptr)
 		{	//If the seek position is within a trill phrase
@@ -2552,7 +2552,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined arpeggio phrase
 	if(!ustricmp(macro, "SEEK_ARPEGGIO_STATUS") || !ustricmp(macro, "SEEK_ARPEGGIO_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_music_pos.value - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, EOF_SEEK_POS);
 		dest_buffer[0] = '\0';
 		if(phraseptr && !(phraseptr->flags & EOF_RS_ARP_HANDSHAPE))
 		{	//If the seek position is within a arpeggio phrase and is NOT marked as a handshape
@@ -2568,7 +2568,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	//The status of whether the seek position is within a defined handshape phrase
 	if(!ustricmp(macro, "SEEK_HANDSHAPE_STATUS") || !ustricmp(macro, "SEEK_HANDSHAPE_STATUS_CONDITIONAL"))
 	{
-		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_music_pos.value - eof_av_delay);
+		phraseptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, EOF_SEEK_POS);
 		dest_buffer[0] = '\0';
 		if(phraseptr && (phraseptr->flags & EOF_RS_ARP_HANDSHAPE))
 		{	//If the seek position is within a arpeggio phrase and that phrase has the flag to indicate it is a handshape
@@ -2707,7 +2707,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		unsigned long index = 0;
 
-		if(eof_lookup_effective_rockband_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, eof_selected_track, 0, 0, &index))
+		if(eof_lookup_effective_rockband_section_at_pos(eof_song, EOF_SEEK_POS, eof_selected_track, 0, 0, &index))
 		{	//if a section name was found to be in effect at the seek position
 			snprintf(dest_buffer, dest_buffer_size, "%s", eof_song->text_event[index]->text);
 		}
@@ -2719,7 +2719,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		char section[50];
 
-		if(eof_lookup_immerrock_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
+		if(eof_lookup_immerrock_effective_section_at_pos(eof_song, EOF_SEEK_POS, section, sizeof(section)))
 		{	//If a section name was found to be in effect at the seek position
 			snprintf(dest_buffer, dest_buffer_size, "%s", section);
 		}
@@ -2731,7 +2731,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		char section[50];
 
-		if(eof_lookup_rocksmith_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
+		if(eof_lookup_rocksmith_effective_section_at_pos(eof_song, EOF_SEEK_POS, section, sizeof(section)))
 		{	//If a section name was found to be in effect at the seek position
 			snprintf(dest_buffer, dest_buffer_size, "%s", section);
 		}
@@ -2897,7 +2897,7 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 	{
 		if(tp)
 		{	//If a pro guitar track is active
-			snprintf(dest_buffer, dest_buffer_size, "%s", eof_pro_guitar_track_find_effective_hand_mode_change(tp, eof_music_pos.value - eof_av_delay, NULL, NULL) ? "String" : "Chord");
+			snprintf(dest_buffer, dest_buffer_size, "%s", eof_pro_guitar_track_find_effective_hand_mode_change(tp, EOF_SEEK_POS, NULL, NULL) ? "String" : "Chord");
 		}
 
 		return 1;
@@ -3148,7 +3148,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	//The seek position is within the scope of a beat
 	if(!ustricmp(macro, "IF_SEEK_POS_BEAT"))
 	{
-		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+		unsigned long beatnum = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 		if(beatnum < eof_song->beats)
 		{	//The seek position is between the first and last beats
@@ -3162,7 +3162,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	//The seek position is within the scope of a beat that has a time signature in effect
 	if(!ustricmp(macro, "IF_SEEK_POS_BEAT_HAS_TS"))
 	{
-		unsigned long beatnum = eof_get_beat(eof_song, eof_music_pos.value - eof_av_delay);
+		unsigned long beatnum = eof_get_beat(eof_song, EOF_SEEK_POS);
 
 		if(beatnum < eof_song->beats)
 		{	//The seek position is between the first and last beats
@@ -4266,7 +4266,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	{
 		unsigned long index = 0;
 
-		if(eof_lookup_effective_rockband_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, eof_selected_track, 0, 0, &index))
+		if(eof_lookup_effective_rockband_section_at_pos(eof_song, EOF_SEEK_POS, eof_selected_track, 0, 0, &index))
 		{	//if a section name was found to be in effect at the seek position
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -4279,7 +4279,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	{
 		char section[50];
 
-		if(eof_lookup_immerrock_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
+		if(eof_lookup_immerrock_effective_section_at_pos(eof_song, EOF_SEEK_POS, section, sizeof(section)))
 		{	//If a section name was found to be in effect at the seek position
 			dest_buffer[0] = '\0';
 			return 3;	//True
@@ -4292,7 +4292,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 	{
 		char section[50];
 
-		if(eof_lookup_rocksmith_effective_section_at_pos(eof_song, eof_music_pos.value - eof_av_delay, section, sizeof(section)))
+		if(eof_lookup_rocksmith_effective_section_at_pos(eof_song, EOF_SEEK_POS, section, sizeof(section)))
 		{	//If a section name was found to be in effect at the seek position
 			dest_buffer[0] = '\0';
 			return 3;	//True

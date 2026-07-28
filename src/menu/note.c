@@ -1181,7 +1181,7 @@ void eof_prepare_note_menu(void)
 			/* Note>Move */
 			selected_startpos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
 			selected_endpos = selected_startpos + eof_get_note_length(eof_song, eof_selected_track, eof_selection.current);
-			if(eof_music_pos.value - eof_av_delay < selected_endpos)
+			if(EOF_SEEK_POS < selected_endpos)
 			{	//If the seek position is before the selected note's current end position
 				eof_note_move_menu[0].flags = 0;		//Note>Move>Start pos to seek pos
 			}
@@ -1189,7 +1189,7 @@ void eof_prepare_note_menu(void)
 			{
 				eof_note_move_menu[0].flags = D_DISABLED;
 			}
-			if(eof_music_pos.value - eof_av_delay > selected_startpos)
+			if(EOF_SEEK_POS > selected_startpos)
 			{	//If the seek position is after the selected note's current start position
 				eof_note_move_menu[1].flags = 0;		//Note>Move>End pos to seek pos
 			}
@@ -13103,11 +13103,11 @@ int eof_menu_note_move_note_start(void)
 	}
 
 	endpos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current) + eof_get_note_length(eof_song, eof_selected_track, eof_selection.current);
-	if(eof_music_pos.value - eof_av_delay < endpos)
+	if(EOF_SEEK_POS < endpos)
 	{	//If the seek position is before the selected note's current end position
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_set_note_pos(eof_song, eof_selected_track, eof_selection.current, eof_music_pos.value - eof_av_delay);	//Change the note's start position to the seek position
-		eof_set_note_length(eof_song, eof_selected_track, eof_selection.current, endpos - (eof_music_pos.value - eof_av_delay));	//Change the note's length to end at the same position it originally did
+		eof_set_note_pos(eof_song, eof_selected_track, eof_selection.current, EOF_SEEK_POS);	//Change the note's start position to the seek position
+		eof_set_note_length(eof_song, eof_selected_track, eof_selection.current, endpos - (EOF_SEEK_POS));	//Change the note's length to end at the same position it originally did
 	}
 
 	if(note_selection_updated)
@@ -13129,10 +13129,10 @@ int eof_menu_note_move_note_end(void)
 		return 1;
 	}
 
-	if(eof_music_pos.value - eof_av_delay > eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current))
+	if(EOF_SEEK_POS > eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current))
 	{	//If the seek position is after the selected note's current start position
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_set_note_length(eof_song, eof_selected_track, eof_selection.current, eof_music_pos.value - eof_av_delay - eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));	//Change the note's curent length so it ends at the seek position
+		eof_set_note_length(eof_song, eof_selected_track, eof_selection.current, EOF_SEEK_POS - eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current));	//Change the note's curent length so it ends at the seek position
 	}
 
 	if(note_selection_updated)
