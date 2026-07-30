@@ -123,6 +123,7 @@
 #define EOF_NOTE_TFLAG_SLIDE_IN	524288	//	Such as tracking which notes have a slide in from above/below status during GP import
 #define EOF_NOTE_TFLAG_GRACE      1048576	//This flag will indicate that the note was defined in an imported guitar pro file as a before the beat grace note, which can be converted to flam notes in the case of a percussion track
 #define EOF_NOTE_TFLAG_OPEN_STRUM 2097152	//This flag will indicate that the note was imported via MIDI as a Sysex marked open strum marker, which will need to have its note mask converted to discard the lane 1 gem (a limitation of this Sysex notation is that it can't denote an open chord of just a lane 1 gem)
+#define EOF_NOTE_TFLAG_DONT_TRUNCATE 4194304	//This flag will indicate that the note was not targeted to be truncated due to the "GP import truncates short notes/chords" preferences, since the handling for tied notes requires this preference handling to be performed at the end of import
 
 
 ///Extended note flags

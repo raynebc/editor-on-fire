@@ -10405,10 +10405,6 @@ long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long no
 			{	//If this note and the next have no lanes in common
 				continue;	//Compare with the next note in another loop iteration instead
 			}
-			else
-			{
-				effective_min_note_distance = 0;	//The note is allowed to extend all the way up to the next note
-			}
 		}
 
 		thispos = eof_get_note_pos(sp, track, note);	//Get the note's position

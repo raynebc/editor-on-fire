@@ -1583,7 +1583,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 
 	/* rewind (Left arrow, non Feedback input methods) */
 	/* Decrease grid snap (Left arrow, Feedback input method)*/
-	/* move note start position (ALT+Right arrow) */
+	/* move note start position (ALT+Left arrow) */
 	if(key[KEY_LEFT])
 	{
 		if(KEY_EITHER_ALT)

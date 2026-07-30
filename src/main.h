@@ -825,7 +825,7 @@ int eof_set_display_mode(unsigned long width, unsigned long height);
 	//Returns 0 on error, 1 on success or 2 if a display alteration (enabling x2 zoom or setting a custom window width) fails
 void eof_set_3d_projection(void);	//Sets the 3d projection by calling ocd3d_set_projection() with the screen dimensions and vanishing coordinate
 void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
-	//Re-applies the HOPO, SP, trill and tremolo status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
+	//Re-applies the HOPO, SP, solo, trill, tremolo, slider and kick drum lane status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo, arpeggio, slider and kick drum lane phrases
 void eof_cat_track_difficulty_string(char *str, unsigned long buffersize);	//Concatenates the current track name and difficulty name/number to the specified string, which is an array of the specified number of bytes in size
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);

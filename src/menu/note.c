@@ -5241,7 +5241,8 @@ int eof_menu_solo_edit_timing(void)
 				end = phraseptr->end_pos;
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit solo");	//Set the title of the dialog
-			return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_determine_phrase_status(eof_song, eof_selected_track);		//Update status for notes regarding this change
 		}
 	}
 	if(note_selection_updated)
@@ -5323,7 +5324,8 @@ int eof_menu_sp_edit_timing(void)
 				end = phraseptr->end_pos;
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit star power");	//Set the title of the dialog
-			return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_determine_phrase_status(eof_song, eof_selected_track);		//Update status for notes regarding this change
 		}
 	}
 	if(note_selection_updated)
@@ -5428,7 +5430,8 @@ int eof_menu_note_lyric_line_edit_timing(void)
 				end = phraseptr->end_pos;
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit lyric line");	//Set the title of the dialog
-			return eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_determine_phrase_status(eof_song, eof_selected_track);		//Update status for notes regarding this change
 		}
 	}
 	if(note_selection_updated)
@@ -9317,6 +9320,7 @@ int eof_menu_trill_edit_timing(void)
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit %s", effectivephrasename);	//Set the title of the dialog
 			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_determine_phrase_status(eof_song, eof_selected_track);		//Update status for notes regarding this change
 		}
 	}
 	if(note_selection_updated)
@@ -9359,6 +9363,7 @@ int eof_menu_tremolo_edit_timing(void)
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit %s", effectivephrasename);	//Set the title of the dialog
 			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_determine_phrase_status(eof_song, eof_selected_track);		//Update status for notes regarding this change
 		}
 	}
 	if(note_selection_updated)
@@ -9394,6 +9399,7 @@ int eof_menu_slider_edit_timing(void)
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit slider");	//Set the title of the dialog
 			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_determine_phrase_status(eof_song, eof_selected_track);		//Update status for notes regarding this change
 		}
 	}
 	if(note_selection_updated)
@@ -9429,6 +9435,7 @@ int eof_menu_kick_drum_lane_edit_timing(void)
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit kick drum lane");	//Set the title of the dialog
 			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_determine_phrase_status(eof_song, eof_selected_track);		//Update status for notes regarding this change
 		}
 	}
 	if(note_selection_updated)
@@ -9464,6 +9471,7 @@ int eof_menu_arpeggio_edit_timing(void)
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit arpeggio");	//Set the title of the dialog
 			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_determine_phrase_status(eof_song, eof_selected_track);		//Update status for notes regarding this change
 		}
 	}
 	if(note_selection_updated)
@@ -9499,6 +9507,7 @@ int eof_menu_handshape_edit_timing(void)
 			}
 			snprintf(eof_etext3, sizeof(eof_etext3) - 1, "Edit handshape");	//Set the title of the dialog
 			eof_phrase_edit_timing(&phraseptr->start_pos, &phraseptr->end_pos, start, end);
+			eof_determine_phrase_status(eof_song, eof_selected_track);		//Update status for notes regarding this change
 		}
 	}
 	if(note_selection_updated)

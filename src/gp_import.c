@@ -3968,7 +3968,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											flags |= EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT;	//Mark the current note with linknext status to accurately describe how to play it in Rocksmith
 										}
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
-										flags |= EOF_NOTE_FLAG_CRAZY;	//Allow the beginning of the shift slide to extend to the note defining the end of the shift slide, with no note gap enforced between them
 									}
 									else
 									{
@@ -4223,11 +4222,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									truncate = 1;
 								}
 							}
-							if(truncate)
-							{	//If the above conditions were triggered
-								if(!(notebends) && !(vars.np[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)) && !(vars.np[ctr2]->tflags & EOF_NOTE_TFLAG_SLIDE_IN))
-								{	//If this note doesn't have bend, slide, vibrato or unpitched slide (in or out) status
-									vars.np[ctr2]->length = 1;	//Remove the note's sustain
+							if(eof_gp_import_truncate_short_notes || eof_gp_import_truncate_short_chords)
+							{	//If either of the GP import preferences for truncating short notes are enabled
+								if(!truncate)
+								{	//If the normal conditions to truncate the note due to the import preferences were not triggered
+									vars.np[ctr2]->tflags |= EOF_NOTE_TFLAG_DONT_TRUNCATE;	//Note this for the truncation logic at the end of import
+								}
+								if((notebends) || (vars.np[ctr2]->flags & (EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO | EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)) || (vars.np[ctr2]->tflags & EOF_NOTE_TFLAG_SLIDE_IN))
+								{	//If this note has bend, slide, vibrato or unpitched slide (in or out) status, it is exempted from being truncated by the import preferences
+									vars.np[ctr2]->tflags |= EOF_NOTE_TFLAG_DONT_TRUNCATE;
 								}
 							}
 
@@ -4445,6 +4448,53 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		curbeat += curnum;	//Add this measure's number of beats to the beat counter
 	}//For each measure
 
+//Truncate notes if applicable to the GP import truncates short notes/chords preferences
+	if(eof_gp_import_truncate_short_notes || eof_gp_import_truncate_short_chords)
+	{	//If either of those preferences are enabled
+		eof_log("\tPerforming note truncation logic as enabled by GP import preferences", 1);
+		for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
+		{	//For each imported track
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tProcessing track %lu", ctr);
+			eof_log(eof_log_string, 2);
+			for(ctr2 = 0; ctr2 < vars.gp->track[ctr]->notes; ctr2++)
+			{	//For each note in the track
+				double start, end, beatlength, measurelength;
+				unsigned num, den;
+
+				if(vars.gp->track[ctr]->note[ctr2]->tflags & EOF_NOTE_TFLAG_DONT_TRUNCATE)
+				{	//If the note was exempted from truncation during import (too long or has a technique requiring the length to be kept)
+					vars.gp->track[ctr]->note[ctr2]->tflags &= ~ EOF_NOTE_TFLAG_DONT_TRUNCATE;	//Clear that flag
+					continue;	//Skip processing the note any further
+				}
+
+				if(eof_note_count_colors_bitmask(vars.gp->track[ctr]->note[ctr2]->note) == 1)
+				{	//If the note is a single note
+					if(!eof_gp_import_truncate_short_notes)
+						continue;	//If the preference to truncate short notes is not enabled, skip it
+				}
+				else
+				{	//If the note is a chord
+					if(!eof_gp_import_truncate_short_chords)
+						continue;	//If the preference to truncate short chords is not enabled, skip it
+				}
+
+				start = eof_get_beatpos_abs(eof_song, vars.gp->track[ctr]->note[ctr2]->pos);	//Get the beat position of the note's start
+				if(eof_get_effective_ts(eof_song, &num, &den, eof_get_beat(eof_song, start), 0))
+				{	//If the time signature in effect at the start of the note was determined
+					end = eof_get_beatpos_abs(eof_song, vars.gp->track[ctr]->note[ctr2]->pos + vars.gp->track[ctr]->note[ctr2]->length);	//Get the beat position of the note's length
+					beatlength = eof_fpos_distance(start, end);	//Get the length of the note in beats
+					measurelength = beatlength / (double)den;	//Calculate this length in terms of measures (beat length divided by beat unit)
+					if((unsigned long)(measurelength * 100.0 + 0.5) < 25)
+					{	//If the note (rounded up to allow for floating point math error) is shorter than a quarter note
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTruncating short note pos = %lums, len = %lums, measure length = %f", vars.gp->track[ctr]->note[ctr2]->pos, vars.gp->track[ctr]->note[ctr2]->length, measurelength);
+						eof_log(eof_log_string, 2);
+						vars.gp->track[ctr]->note[ctr2]->length = 1;
+					}
+				}
+			}
+		}
+	}
+
 //Correct slide directions
 	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
@@ -4502,7 +4552,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 				else
 				{	//Notate this as a normal pitched slide
-					vars.gp->track[ctr]->note[ctr2]->slideend = endfret;
+					if(!(vars.gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_LINKNEXT))
+					{	//If this note was not applied linknext (not notated as a legato slide)
+						vars.gp->track[ctr]->note[ctr2]->unpitchend = endfret;	//Convert it to an unpitched slide (the preferred way to denote shift slides in Rocksmith authoring)
+						vars.gp->track[ctr]->note[ctr2]->slideend = 0;
+						vars.gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+						vars.gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+						vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE;
+					}
+					else
+					{
+						vars.gp->track[ctr]->note[ctr2]->slideend = endfret;
+					}
 				}
 				vars.gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
 			}

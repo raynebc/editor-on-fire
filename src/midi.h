@@ -154,7 +154,7 @@ int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned lo
 	//If function is zero, a time signature of 4/4 is assumed if no time signature is explicitly defined
 	//If function is nonzero, and no time signature is explicitly defined at/before the specified beat, *num and *den are set to 0 if they are not NULL
 	//Returns 1 on success or 0 on error
-	//If 1 is not returned, the values referenced by numerator and denominator are not altered
+	//If 1 is not returned, the values referenced by num and den are not altered
 int eof_apply_ts(unsigned num, unsigned den, unsigned long beatnum, EOF_SONG *sp, char undo);
 	//Validates and applies the specified time signature to the specified beat
 	//If undo is nonzero, then an undo state is made before any changes are made
