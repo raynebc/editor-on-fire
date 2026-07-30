@@ -769,7 +769,7 @@ int eof_menu_edit_copy_vocal(void)
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_song->vocal_track[tracknum]->lyric[i]->type == eof_note_type))
 		{
 			copy_notes++;
 			if(!first_pos_read || (eof_song->vocal_track[tracknum]->lyric[i]->pos < first_pos))
@@ -810,7 +810,7 @@ int eof_menu_edit_copy_vocal(void)
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{	//For each lyric
-		if((eof_selection.track != EOF_TRACK_VOCALS) || !eof_selection.multi[i])
+		if((eof_selection.track != EOF_TRACK_VOCALS) || !eof_selection.multi[i] || (eof_song->vocal_track[tracknum]->lyric[i]->type != eof_note_type))
 			continue;	//If the lyric isn't selected, skip it
 
 		/* check for accidentally moved lyric */
@@ -5261,4 +5261,5 @@ int eof_menu_edit_benchmark_rubberband(void)
 
 	return 1;
 }
+
 
