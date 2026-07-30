@@ -5399,6 +5399,17 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		return 2;	//False
 	}
 
+	if(!ustricmp(macro, "IF_CLICK_AND_DRAG_DISABLED"))
+	{
+		if(eof_song->tags->click_drag_disabled)
+		{	//If click and drag is disabled
+			dest_buffer[0] = '\0';
+			return 3;	//True
+		}
+
+		return 2;	//False
+	}
+
 	if(!ustricmp(macro, "IF_ACTIVE_TRACK_RS_ANY_TECHNIQUES_MISSING_SUSTAIN"))
 	{	//If the macro is this string
 		eof_notes_macro_technique_missing_sustain[0] = '\0';	//Erase this string

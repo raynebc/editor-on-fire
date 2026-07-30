@@ -224,7 +224,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 
 		//Look for the next note that will export
 		for(j = i + 1, nextflags = 0; j < eof_get_track_size(sp, track); j++)
-		{	//For each reamining note in the track
+		{	//For each remaining note in the track
 			if(eof_note_applies_to_diff(sp, track, j, diff))
 			{	//If the note is in the target difficulty (static or dynamic as applicable)
 				nextflags = eof_get_note_flags(sp, track, j);	//Get that note's flags
@@ -377,8 +377,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 						}
 
 						//Look for the next note that will export on this same string, up to 500ms after the note
-						for(j = i + 1, nextflags = 0; j < tp->notes; j++)
-						{	//For each reamining note in the track
+						for(j = i + 1; j < tp->notes; j++)
+						{	//For each remaining note in the track
 							if(tp->note[j]->pos > pos + length + 500)
 								break;	//If this note is 500ms or more later than the end of the slide note being examined, stop checking
 							if(eof_note_applies_to_diff(sp, track, j, diff) && (tp->note[j]->note & bitmask))
@@ -410,16 +410,38 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 				{	//If this note has an unpitched slide
 					unsigned char lowestfret = eof_get_lowest_fret_value(sp, track, i);	//Determine the fret value of the lowest fretted string
+					unsigned char nextfretnum = 0xFF;
 					int midinote = 22;	//By default, assume the unpitched slide goes down
 
-					eof_log("\t\t\tExporting note as unpitched slide", 2);
-					if(lowestfret < tp->note[i]->unpitchend)
-					{	//If the unpitched slide goes higher than this position
-						midinote = 23;	//The unpitched slide goes up
+					//Look for the next note that will export on this same string, up to 500ms after the note
+					for(j = i + 1; j < tp->notes; j++)
+					{	//For each remaining note in the track
+						if(tp->note[j]->pos > pos + length + 500)
+							break;	//If this note is 500ms or more later than the end of the slide note being examined, stop checking
+						if(eof_note_applies_to_diff(sp, track, j, diff) && (tp->note[j]->note & bitmask))
+						{	//If the note is in the target difficulty (static or dynamic as applicable) and has any notes on the same string
+							nextfretnum = tp->note[j]->frets[stringnum] & 0x7F;	//Record the fret number used on that string of the note
+							break;	//Stop checking notes
+						}
 					}
 
-					eof_add_midi_event_indexed(deltapos, 0x90, midinote, technique_vel[stringnum], 15, index++);		//Notes 22 and 23, channel 15 with the string's dedicated velocity number indicates slide out and down or up (respectively) in IMMERROCK
-					eof_add_midi_event_indexed(deltapos, 0x80, midinote, 0, 15, index++);
+					if(tp->note[i]->unpitchend == nextfretnum)
+					{	//If the chart defines the expected note with a matching end of slide fret that occurs within 500ms of the end of the unpitched slide note
+						eof_log("\t\t\tExporting note as shift slide", 2);
+						eof_add_midi_event_indexed(deltapos, 0x90, 21, technique_vel[stringnum], 15, index++);		//Note 21, channel 15 with the string's dedicated velocity number indicates shift slide up or down in IMMERROCK
+						eof_add_midi_event_indexed(deltapos, 0x80, 21, 0, 15, index++);
+					}
+					else
+					{	//Otherwise export it as an unpitched slide
+						eof_log("\t\t\tExporting note as unpitched slide", 2);
+						if(lowestfret < tp->note[i]->unpitchend)
+						{	//If the unpitched slide goes higher than this position
+							midinote = 23;	//The unpitched slide goes up
+						}
+
+						eof_add_midi_event_indexed(deltapos, 0x90, midinote, technique_vel[stringnum], 15, index++);		//Notes 22 and 23, channel 15 with the string's dedicated velocity number indicates slide out and down or up (respectively) in IMMERROCK
+						eof_add_midi_event_indexed(deltapos, 0x80, midinote, 0, 15, index++);
+					}
 				}
 
 				//Write finger placement markers
@@ -495,6 +517,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 							}
 
 							//Write the bend point explicitly at the note's start position regardless of the tech note's actual position
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tExporting pre-bend strength of %lu quarter steps at pos %lums", bendstrength_q, pos);
+							eof_log(eof_log_string, 2);
 							eof_add_midi_pitch_bend_event_qsteps(deltapos, bendstrength_q, channel, index++);
 						}
 
@@ -527,10 +551,14 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 									bendstrength_q = tp->technote[ctr]->bendstrength * 2;		//Obtain the defined bend strength in quarter steps
 								}
 								deltatechpos = eof_ConvertToDeltaTime(tp->technote[ctr]->pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tExporting bend strength of %lu quarter steps at pos %lums", bendstrength_q, tp->technote[ctr]->pos);
+								eof_log(eof_log_string, 2);
 								eof_add_midi_pitch_bend_event_qsteps(deltatechpos, bendstrength_q, channel, index++);
 							}
 						}
 						eof_add_midi_pitch_bend_event_qsteps(deltapos + deltalength, bendstrength_q, channel, index++);	//Enforce the last-defined bend point at the end position of the note so the game reflects it is still in effect up to then
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tExporting bend strength of %lu quarter steps at end of note pos %lums", bendstrength_q, pos + length);
+						eof_log(eof_log_string, 2);
 					}//If there's at least one bend tech note that overlaps the note being exported
 				}//If the note is a bend, write all applicable bend points
 				eof_add_midi_pitch_bend_event(deltapos + deltalength + 1, 8192, channel, index++);	//Set the pitch bend back to neutral 1 delta tick after the end of the note

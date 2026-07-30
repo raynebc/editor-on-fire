@@ -1133,7 +1133,10 @@ unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata
 		unsigned long listchunkpos = 0;				//Used to keep track of the file position within the LIST chunk
 
 		if(pack_ferror(fp))
+		{
+			(void) pack_fclose(fp);
 			return 0;		//If the LIST chunk size was not read, return error
+		}
 
 		while(listchunkpos < listchunksize)
 		{	//Until all content in this LIST chunk has been parsed
@@ -1174,8 +1177,13 @@ unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata
 						break;
 					}
 					text_size = pack_igetl(fp);	//Read the number of bytes this metadata item contains, including NULL terminator
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFound metadata:  %s (%lu bytes)", text_id, text_size);
+					eof_log(eof_log_string, 1);
 					if(text_size < 2)
+					{
+						(void) pack_fclose(fp);
 						return 0;	//The string must be long enough for at least one character and a NULL terminator, otherwise it's invalid
+					}
 					listchunkpos += 4;	//Update this position
 
 					//Read metadata value
@@ -1186,13 +1194,19 @@ unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata
 						pack_fseek(fp, text_size);
 						listchunkpos += text_size;	//Update this position
 						if(pack_ferror(fp))
+						{
+							(void) pack_fclose(fp);
 							return 0;			//Return error if there was an I/O error
+						}
 					}
 					else
 					{
 						text = malloc(text_size);
 						if(!text)
+						{
+							(void) pack_fclose(fp);
 							return 0;	//If memory couldn't be allocated, return error
+						}
 						if(pack_fread(text, text_size, fp) != text_size)
 						{	//If the text was not read
 							listchunkpos = ULONG_MAX;		//Set a condition to end file parsing
@@ -1200,7 +1214,7 @@ unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata
 						}
 						listchunkpos += text_size;	//Update this position
 						text[text_size - 1] = '\0';	//Guarantee this string is terminated
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tFound metadata:  %s = \"%s\"", text_id, text);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tRead metadata:  %s = \"%s\"", text_id, text);
 						eof_log(eof_log_string, 1);
 
 						//Store metadata value if it's wanted by the calling function
@@ -1211,6 +1225,7 @@ unsigned long eof_find_wav_metadata(char *filename, EOF_AUDIO_METADATA *metadata
 								if(metadata[ctr].value_array_size < 2)
 								{	//The buffer isn't large enough to store any valid data
 									free(text);
+									(void) pack_fclose(fp);
 									return 0;	//Return error
 								}
 								strncpy(metadata[ctr].value, text, metadata[ctr].value_array_size - 1);	//Copy the metadata text, truncate if necessary
