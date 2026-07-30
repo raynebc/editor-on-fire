@@ -5480,8 +5480,8 @@ int eof_initialize(int argc, char * argv[])
 		}
 	#endif
 
-		//Load FFTW wisdom from disk
-		(void) fftw_import_wisdom_from_filename("FFTW.wisdom");
+	//Load FFTW wisdom from disk
+	(void) fftw_import_wisdom_from_filename("FFTW.wisdom");
 
 	//Initialize the Information panel if it is enabled
 	if(!eof_disable_info_panel)
@@ -5664,8 +5664,8 @@ void eof_exit(void)
 		(void) delete_file(eof_recover_on_path);
 	}
 
-		//Save FFTW wisdom to disk
-		(void) fftw_export_wisdom_to_filename("FFTW.wisdom");
+	//Save FFTW wisdom to disk
+	(void) fftw_export_wisdom_to_filename("FFTW.wisdom");
 }
 
 void eof_all_midi_notes_off(void)
@@ -5807,15 +5807,15 @@ void eof_init_after_load(char initaftersavestate)
 				}
 
 				if(tp->lyric[i]->pos > last_end + gap)
-				{
+		{
 					if(tp->lines >= EOF_MAX_LYRIC_LINES)
-					{
+			{
 						eof_log("\t\tUnable to add more lyric lines (limit reached)", 1);
-						break;
-					}
+				break;
+			}
 					(void) eof_vocal_track_add_line(tp, line_start, last_end, 0xFF);
 					line_start = tp->lyric[i]->pos;
-				}
+		}
 
 				last_end = tp->lyric[i]->pos + tp->lyric[i]->length;
 			}

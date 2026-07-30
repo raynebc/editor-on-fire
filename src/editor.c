@@ -911,38 +911,38 @@ if(eof_key_code == KEY_PAUSE)
 	}
 }
 
-	///ALT handling testing
-	/*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
-	{
-		if(KEY_EITHER_SHIFT)
-		{	//SHIFT is held
-			if(KEY_EITHER_CTRL)
-			{	//CTRL and SHIFT are held
-				allegro_message("CTRL+ALT+SHIFT+M captured!");
-			}
-			else
-			{	//Only SHIFT is held
-				allegro_message("ALT+SHIFT+M captured!");
-			}
-			eof_shift_used = 1;	//Track that the SHIFT key was used
+///ALT handling testing
+/*if(KEY_EITHER_ALT && (eof_key_code == KEY_M))
+{
+	if(KEY_EITHER_SHIFT)
+	{	//SHIFT is held
+		if(KEY_EITHER_CTRL)
+		{	//CTRL and SHIFT are held
+			allegro_message("CTRL+ALT+SHIFT+M captured!");
 		}
 		else
-		{	//SHIFT is not held
-			if(KEY_EITHER_CTRL)
-			{	//CTRL is held
-				allegro_message("CTRL+ALT+M captured!");
-			}
-			else
-			{	//Neither CTRL nor SHIFT are held
-				allegro_message("ALT+M captured!");
-			}
+		{	//Only SHIFT is held
+			allegro_message("ALT+SHIFT+M captured!");
+		}
+		eof_shift_used = 1;	//Track that the SHIFT key was used
+	}
+	else
+	{	//SHIFT is not held
+		if(KEY_EITHER_CTRL)
+		{	//CTRL is held
+			allegro_message("CTRL+ALT+M captured!");
+		}
+		else
+		{	//Neither CTRL nor SHIFT are held
+			allegro_message("ALT+M captured!");
 		}
 	}
-	if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
-	{
-		allegro_message("ALT+V captured!");
-	}
-	*/
+}
+if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
+{
+	allegro_message("ALT+V captured!");
+}
+*/
 
 
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */
@@ -4490,7 +4490,7 @@ void eof_editor_drum_logic(void)
 
 void eof_editor_logic(void)
 {
-	//	eof_log("eof_editor_logic() entered");
+//	eof_log("eof_editor_logic() entered");
 
 	unsigned long i, note, notepos;
 	unsigned long tracknum;
@@ -5431,7 +5431,7 @@ void eof_editor_logic(void)
 
 void eof_vocal_editor_logic(void)
 {
-	//	eof_log("eof_vocal_editor_logic() entered");
+//	eof_log("eof_vocal_editor_logic() entered");
 
 	unsigned long i, notepos;
 	unsigned long tracknum;
@@ -6162,7 +6162,7 @@ void eof_vocal_editor_logic(void)
 
 int eof_get_ts_text(unsigned long beat, char * buffer)
 {
-	//	eof_log("eof_get_ts_text() entered");
+//	eof_log("eof_get_ts_text() entered");
 	int ret = 0;
 
 	if(!buffer || !eof_song || (beat >= eof_song->beats))
@@ -7571,7 +7571,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 				textout_ex(window->screen, font, "(*)", xcoord + text_length(font, tab_text) / 2 - text_length(font, "(*)"), ycoord, fgcol, bgcol);
 			}
 			if((eof_selected_track == EOF_TRACK_VOCALS) && (numtabs == 1) && (i == eof_vocals_tab))
-			{	//Break after rendering the one difficulty tab name for the vocal track
+			{	//Break after  rendering the one difficulty tab name for the vocal track
 				break;
 			}
 		}//For each difficulty tab rendered
@@ -8051,19 +8051,19 @@ void eof_editor_logic_common(void)
 			}
 		}
 
-	/* handle scroll bar click */
-	if((eof_scaled_mouse_y >= eof_window_editor->y + eof_window_editor->h - 17) && (eof_scaled_mouse_y < eof_window_editor->y + eof_window_editor->h))
-	{
-		if(!eof_full_screen_3d && (mouse_b & 1))
+		/* handle scroll bar click */
+		if((eof_scaled_mouse_y >= eof_window_editor->y + eof_window_editor->h - 17) && (eof_scaled_mouse_y < eof_window_editor->y + eof_window_editor->h))
 		{
-			eof_music_actual_pos = ((double)eof_chart_length / (double)(eof_window_editor->w - 8.0)) * (double)(eof_scaled_mouse_x - 4.0);
-			if(eof_music_actual_pos > eof_chart_length)
+			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
-				eof_music_actual_pos = eof_chart_length;
+				eof_music_actual_pos = ((double)eof_chart_length / (double)(eof_window_editor->w - 8.0)) * (double)(eof_scaled_mouse_x - 4.0);
+				if(eof_music_actual_pos > eof_chart_length)
+				{
+					eof_music_actual_pos = eof_chart_length;
+				}
+				eof_set_seek_position(eof_music_actual_pos + eof_av_delay);
 			}
-			eof_set_seek_position(eof_music_actual_pos + eof_av_delay);
 		}
-	}
 
 	/* select difficulty */
 	{

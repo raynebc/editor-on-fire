@@ -3850,7 +3850,7 @@ int eof_save_helper_checks(void)
 			}
 			else
 			{
-				next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
+			next = eof_track_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
 			}
 			if(next <= 0)
 				continue;	//If this note doesn't have a note that follows, skip it

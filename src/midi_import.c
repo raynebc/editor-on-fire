@@ -1717,9 +1717,9 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					if(midinote == 105)
 					{
 						if(lyric_set == 0)
-						{
-							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
-							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
+					{
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
 							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].difficulty = 0xFF;
 							last_105[lyric_set] = sp->vocal_track[0]->lines;
 						}
@@ -1727,9 +1727,9 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 					else if(midinote == 106)
 					{
 						if(lyric_set == 0)
-						{
-							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
-							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
+					{
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = event_realtime;
+						sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags=0;	//Init flags for this line as 0
 							sp->vocal_track[0]->line[sp->vocal_track[0]->lines].difficulty = 0xFF;
 							last_106[lyric_set] = sp->vocal_track[0]->lines;
 						}
@@ -1873,14 +1873,14 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 								if(lyric_set == 0)
 								{
 									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos = linestart[lyric_set];
-									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
-									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos = event_realtime;
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags = 0;	//Init flags for this line as 0
 									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].difficulty = 0xFF;
 //#ifdef EOF_DEBUG_MIDI_IMPORT
-									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos, sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos);
-									eof_log(eof_log_string, 3);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric line from %lums to %lums", sp->vocal_track[0]->line[sp->vocal_track[0]->lines].start_pos, sp->vocal_track[0]->line[sp->vocal_track[0]->lines].end_pos);
+								eof_log(eof_log_string, 3);
 //#endif
-									sp->vocal_track[0]->lines++;
+								sp->vocal_track[0]->lines++;
 								}
 								linetrack[lyric_set] = 0;
 							}
@@ -1939,7 +1939,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 							{	//This starts the phrase
 								powergig_sp_vocal[lyric_set] = 1;
 								if(lyric_set == 0)
-									sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Any lyric line in progress gets marked with star power status
+								sp->vocal_track[0]->line[sp->vocal_track[0]->lines].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Any lyric line in progress gets marked with star power status
 							}
 							else
 							{	//This ends the phrase
@@ -4019,9 +4019,9 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 				}
 				else
 				{
-					used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
-				}
+				used_track[picked_track] = 1;	//Note that this track has been imported, duplicate instances of the track will be ignored
 			}
+		}
 		}
 	}//For each imported track
 
@@ -4078,9 +4078,9 @@ eof_midi_import_dump_lyric_counts(sp, "post import (pre-clean)");
 			{
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDeleting empty lyric line: diff %u, %lums-%lums", ldiff, sp->vocal_track[0]->line[i-1].start_pos, sp->vocal_track[0]->line[i-1].end_pos);
 				eof_log(eof_log_string, 1);
-				eof_vocal_track_delete_line(sp->vocal_track[0], i-1);
-			}
+			eof_vocal_track_delete_line(sp->vocal_track[0], i-1);
 		}
+	}
 	}
 	}
 	eof_midi_import_autogen_lyric_lines(sp, 0);

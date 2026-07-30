@@ -829,10 +829,10 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 		if(line_type == 0xFF)
 		{
 			if(have_lastend_all && (tp->line[ctr].start_pos <= lastend_all))
-			{
-				error = 2;
-				break;
-			}
+		{
+			error = 2;
+			break;
+		}
 		}
 		else if(line_type <= 3)
 		{
@@ -923,8 +923,8 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			if(line_type == 0xFF)
 			{
 				if(have_lastend_all && (tp->line[ctr].start_pos <= lastend_all))
-				{
-					eof_log("\t\t!Lyric line overlaps previous line.  Repairing", 1);
+			{
+				eof_log("\t\t!Lyric line overlaps previous line.  Repairing", 1);
 					tp->line[ctr].start_pos = lastend_all + 1;	//Make the lyric line begin 1ms after the end of the previous line
 				}
 			}
@@ -971,7 +971,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 					lastlyricpos = tp->lyric[ctr2]->pos;
 					have_lastpos = 1;
 				}
-			}
+				}
 			if((tp->line[ctr].difficulty != 0xFF) && !matches && anymatches && have_first_type)
 			{
 				if(multiple_sets)
@@ -982,7 +982,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 				{
 					eof_log("\t\t!Lyric line is the wrong difficulty.  Repairing", 1);
 					tp->line[ctr].difficulty = first_match_type;
-				}
+			}
 
 				if(!multiple_sets)
 				{
@@ -1050,11 +1050,11 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 					}
 					else
 					{
-						eof_log("\t\t!Lyric line is empty.  Repairing", 1);
-						eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
-					}
+				eof_log("\t\t!Lyric line is empty.  Repairing", 1);
+				eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
+			}
 				}
-				else
+			else
 				{
 					eof_log("\t\t!Lyric line is empty.  Repairing", 1);
 					eof_vocal_track_delete_line(tp, ctr);		//Delete the empty line
@@ -1063,7 +1063,7 @@ void eof_check_and_log_lyric_line_errors(EOF_SONG *sp, char force)
 			else
 			{
 				ctr++;	//Process the next lyric line on the next loop
-			}
+		}
 		}
 
 		if(unsorted)

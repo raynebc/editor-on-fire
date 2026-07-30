@@ -1098,12 +1098,12 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 			}
 			if(nextnp)
 			{
-				if(pos < leftcoord)
-					X2 = 20 + (nextnp->pos) / eof_zoom;
-				else
-					X2 = 20 - ((pos - leftcoord)) + nextnp->pos / eof_zoom;
-			}
+			if(pos < leftcoord)
+				X2 = 20 + (nextnp->pos) / eof_zoom;
+			else
+				X2 = 20 - ((pos - leftcoord)) + nextnp->pos / eof_zoom;
 		}
+	}
 	}
 
 //Determine if the entire note would clip left of the viewable area.  If so, return without attempting to render
