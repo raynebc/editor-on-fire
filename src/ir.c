@@ -409,38 +409,52 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				}
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE)
 				{	//If this note has an unpitched slide
-					unsigned char lowestfret = eof_get_lowest_fret_value(sp, track, i);	//Determine the fret value of the lowest fretted string
-					unsigned char nextfretnum = 0xFF;
+					unsigned char lowest_fret = eof_get_lowest_fret_value(sp, track, i);	//Determine the fret value of the lowest fretted string
+					unsigned char nextfretnum = 0xFF, slide_end, this_string_slide_end;
 					int midinote = 22;	//By default, assume the unpitched slide goes down
 
-					//Look for the next note that will export on this same string, up to 500ms after the note
-					for(j = i + 1; j < tp->notes; j++)
-					{	//For each remaining note in the track
-						if(tp->note[j]->pos > pos + length + 500)
-							break;	//If this note is 500ms or more later than the end of the slide note being examined, stop checking
-						if(eof_note_applies_to_diff(sp, track, j, diff) && (tp->note[j]->note & bitmask))
-						{	//If the note is in the target difficulty (static or dynamic as applicable) and has any notes on the same string
-							nextfretnum = tp->note[j]->frets[stringnum] & 0x7F;	//Record the fret number used on that string of the note
-							break;	//Stop checking notes
+					//Determine the end position and pitch of the slide for this string
+					slide_end = tp->note[i]->unpitchend;
+					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && slide_end)
+					{	//If this unpitched slide's end position is defined
+						if(lowest_fret < slide_end)
+						{	//Upward slide
+							this_string_slide_end = tp->note[i]->frets[stringnum] + (slide_end - lowest_fret);	//Count how many frets higher the slide ends than it starts and add that to the slide's start fret on this string
 						}
-					}
-
-					if(tp->note[i]->unpitchend == nextfretnum)
-					{	//If the chart defines the expected note with a matching end of slide fret that occurs within 500ms of the end of the unpitched slide note
-						eof_log("\t\t\tExporting note as shift slide", 2);
-						eof_add_midi_event_indexed(deltapos, 0x90, 21, technique_vel[stringnum], 15, index++);		//Note 21, channel 15 with the string's dedicated velocity number indicates shift slide up or down in IMMERROCK
-						eof_add_midi_event_indexed(deltapos, 0x80, 21, 0, 15, index++);
-					}
-					else
-					{	//Otherwise export it as an unpitched slide
-						eof_log("\t\t\tExporting note as unpitched slide", 2);
-						if(lowestfret < tp->note[i]->unpitchend)
-						{	//If the unpitched slide goes higher than this position
-							midinote = 23;	//The unpitched slide goes up
+						else
+						{	//Downward slide
+							this_string_slide_end = tp->note[i]->frets[stringnum] - (lowest_fret - slide_end);		//Count how many frets lower the slide ends than it starts and subtract that from the slide's start fret on this string
 						}
 
-						eof_add_midi_event_indexed(deltapos, 0x90, midinote, technique_vel[stringnum], 15, index++);		//Notes 22 and 23, channel 15 with the string's dedicated velocity number indicates slide out and down or up (respectively) in IMMERROCK
-						eof_add_midi_event_indexed(deltapos, 0x80, midinote, 0, 15, index++);
+						//Look for the next note that will export on this same string, up to 500ms after the note
+						for(j = i + 1; j < tp->notes; j++)
+						{	//For each remaining note in the track
+							if(tp->note[j]->pos > pos + length + 500)
+								break;	//If this note is 500ms or more later than the end of the slide note being examined, stop checking
+							if(eof_note_applies_to_diff(sp, track, j, diff) && (tp->note[j]->note & bitmask))
+							{	//If the note is in the target difficulty (static or dynamic as applicable) and has any notes on the same string
+								nextfretnum = tp->note[j]->frets[stringnum] & 0x7F;	//Record the fret number used on that string of the note
+								break;	//Stop checking notes
+							}
+						}
+
+						if(this_string_slide_end == nextfretnum)
+						{	//If the chart defines the expected note with a matching end of slide fret that occurs within 500ms of the end of the unpitched slide note
+							eof_log("\t\t\tExporting note as shift slide", 2);
+							eof_add_midi_event_indexed(deltapos, 0x90, 21, technique_vel[stringnum], 15, index++);		//Note 21, channel 15 with the string's dedicated velocity number indicates shift slide up or down in IMMERROCK
+							eof_add_midi_event_indexed(deltapos, 0x80, 21, 0, 15, index++);
+						}
+						else
+						{	//Otherwise export it as an unpitched slide
+							eof_log("\t\t\tExporting note as unpitched slide", 2);
+							if(lowest_fret < tp->note[i]->unpitchend)
+							{	//If the unpitched slide goes higher than this position
+								midinote = 23;	//The unpitched slide goes up
+							}
+
+							eof_add_midi_event_indexed(deltapos, 0x90, midinote, technique_vel[stringnum], 15, index++);		//Notes 22 and 23, channel 15 with the string's dedicated velocity number indicates slide out and down or up (respectively) in IMMERROCK
+							eof_add_midi_event_indexed(deltapos, 0x80, midinote, 0, 15, index++);
+						}
 					}
 				}
 
