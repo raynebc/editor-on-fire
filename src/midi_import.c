@@ -226,7 +226,7 @@ static void eof_midi_import_autogen_lyric_lines(EOF_SONG *sp, unsigned char lyri
 				eof_log("\t\tUnable to add more lyric lines (limit reached)", 1);
 				break;
 			}
-			(void) eof_vocal_track_add_line(tp, line_start, last_end, 0xFF);
+			(void) eof_vocal_track_add_line(tp, line_start, last_end, 0, 0xFF);
 			line_start = tp->lyric[i]->pos;
 		}
 
@@ -236,7 +236,7 @@ static void eof_midi_import_autogen_lyric_lines(EOF_SONG *sp, unsigned char lyri
 
 	if(have_line && (tp->lines < EOF_MAX_LYRIC_LINES))
 	{
-		(void) eof_vocal_track_add_line(tp, line_start, last_end, 0xFF);
+		(void) eof_vocal_track_add_line(tp, line_start, last_end, 0, 0xFF);
 	}
 }
 
