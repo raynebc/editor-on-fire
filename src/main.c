@@ -328,6 +328,13 @@ char        eof_last_sonic_visualiser_path[1024] = {0};	//The path to the folder
 char        eof_last_bf_path[1024] = {0};				//The path to the folder containing the last imported Bandfuse file
 char        eof_last_browsed_notes_panel_path[1024] = {0};		//The full path of the last Notes panel text file that the user manually browsed to
 char        eof_last_browsed_theme_path[1024] = {0};	//The path to the folder containing the last imported color theme
+
+char        eof_last_part_real_bass_arr_type[EOF_ARR_CONFIG_STR_SIZE] = {0};	//The last arrangement type this track was set to
+char        eof_last_part_real_guitar_arr_type[EOF_ARR_CONFIG_STR_SIZE] = {0};
+char        eof_last_part_real_bass_22_arr_type[EOF_ARR_CONFIG_STR_SIZE] = {0};
+char        eof_last_part_real_guitar_22_arr_type[EOF_ARR_CONFIG_STR_SIZE] = {0};
+char        eof_last_part_real_guitar_bonus_arr_type[EOF_ARR_CONFIG_STR_SIZE] = {0};
+
 char        eof_current_notes_panel_path[1024] = {0};	//The path to the current text file to display in the Notes panel (any non full path is expected to be relative to EOF's program folder)
 char        eof_loaded_song_name[1024] = {0};			//The file name (minus the folder path) of the active project
 char        eof_loaded_ogg_name[1024] = {0};			//The full path of the loaded OGG file

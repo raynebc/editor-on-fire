@@ -199,6 +199,8 @@
 #define EOF_INPUT_NAME_NUM			7
 	//The number of defined input methods
 
+#define EOF_ARR_CONFIG_STR_SIZE 25
+
 typedef struct
 {
 
@@ -351,6 +353,11 @@ extern char        eof_last_sonic_visualiser_path[1024];
 extern char        eof_last_bf_path[1024];
 extern char        eof_last_browsed_notes_panel_path[1024];
 extern char        eof_last_browsed_theme_path[1024];
+extern char        eof_last_part_real_bass_arr_type[EOF_ARR_CONFIG_STR_SIZE];
+extern char        eof_last_part_real_guitar_arr_type[EOF_ARR_CONFIG_STR_SIZE];
+extern char        eof_last_part_real_bass_22_arr_type[EOF_ARR_CONFIG_STR_SIZE];
+extern char        eof_last_part_real_guitar_22_arr_type[EOF_ARR_CONFIG_STR_SIZE];
+extern char        eof_last_part_real_guitar_bonus_arr_type[EOF_ARR_CONFIG_STR_SIZE];
 extern char        eof_current_notes_panel_path[1024];
 extern char        eof_loaded_song_name[1024];
 extern char        eof_loaded_ogg_name[1024];

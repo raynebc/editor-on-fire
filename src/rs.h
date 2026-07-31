@@ -374,4 +374,11 @@ int eof_lookup_rocksmith_effective_section_at_pos(EOF_SONG *sp, unsigned long po
 unsigned long eof_pro_guitar_track_count_unique_tone_changes(EOF_PRO_GUITAR_TRACK *tp);
 	//Returns the count of how many unique tone names exist among the specified track's tone changes
 
+int eof_apply_arrangement_string(EOF_SONG *sp, unsigned long track);
+	//Applies the primary (ie. lead), secondary (ie. bonus) and tertiary (ie. picked) arrangement type currently designated by the specified track's dedicated config string (ie. eof_last_part_real_bass_arr_type[] for EOF_TRACK_PRO_BASS)
+	//Returns nonzero if the arrangement type(s) were parsed and applied to the track, otherwise returns zero
+int eof_build_arrangement_string(EOF_SONG *sp, unsigned long track);
+	//Examines the primary, secondary and tertiary arrangement type of the specified track and writes the config string to that track's dedicated config string (ie. eof_last_part_real_bass_arr_type[] for EOF_TRACK_PRO_BASS)
+	//Returns nonzero if a suitable string was built (even if it is a blank string because the track's arrangement types are undefined), otherwise returns zero
+
 #endif

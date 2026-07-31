@@ -642,6 +642,13 @@ void eof_load_config(char * fn)
 	(void) ustrncpy(velocity_string, get_config_string("other", "eof_drum_accent_velocities", "127,127,127,127,127,127"), sizeof(velocity_string) - 1);
 	eof_parse_number_list(eof_drum_accent_velocities, velocity_string, 6);
 
+	//Read last set arrangement types
+	(void) ustrzcpy(eof_last_part_real_bass_arr_type, sizeof(eof_last_part_real_bass_arr_type), get_config_string("other", "eof_last_part_real_bass_arr_type", ""));
+	(void) ustrzcpy(eof_last_part_real_guitar_arr_type, sizeof(eof_last_part_real_guitar_arr_type), get_config_string("other", "eof_last_part_real_guitar_arr_type", ""));
+	(void) ustrzcpy(eof_last_part_real_bass_22_arr_type, sizeof(eof_last_part_real_bass_22_arr_type), get_config_string("other", "eof_last_part_real_bass_22_arr_type", ""));
+	(void) ustrzcpy(eof_last_part_real_guitar_22_arr_type, sizeof(eof_last_part_real_guitar_22_arr_type), get_config_string("other", "eof_last_part_real_guitar_22_arr_type", ""));
+	(void) ustrzcpy(eof_last_part_real_guitar_bonus_arr_type, sizeof(eof_last_part_real_guitar_bonus_arr_type), get_config_string("other", "eof_last_part_real_guitar_bonus_arr_type", ""));
+
 	//Read default INI settings
 	num_default_settings = list_config_entries("default_ini_settings", &default_settings);
 	for(ctr = 0; ctr < num_default_settings; ctr++)
@@ -927,6 +934,13 @@ void eof_save_config(char * fn)
 	set_config_string("other", "eof_drum_ghost_velocities", velocity_string);
 	snprintf(velocity_string, sizeof(velocity_string) - 1, "%u,%u,%u,%u,%u,%u", eof_drum_accent_velocities[0], eof_drum_accent_velocities[1], eof_drum_accent_velocities[2], eof_drum_accent_velocities[3], eof_drum_accent_velocities[4], eof_drum_accent_velocities[5]);
 	set_config_string("other", "eof_drum_accent_velocities", velocity_string);
+
+	//Write last set arrangement types
+	set_config_string("other", "eof_last_part_real_bass_arr_type", eof_last_part_real_bass_arr_type);
+	set_config_string("other", "eof_last_part_real_guitar_arr_type", eof_last_part_real_guitar_arr_type);
+	set_config_string("other", "eof_last_part_real_bass_22_arr_type", eof_last_part_real_bass_22_arr_type);
+	set_config_string("other", "eof_last_part_real_guitar_22_arr_type", eof_last_part_real_guitar_22_arr_type);
+	set_config_string("other", "eof_last_part_real_guitar_bonus_arr_type", eof_last_part_real_guitar_bonus_arr_type);
 
 	//Delete existing default INI settings from config file
 	eof_log("\tRewriting default INI settings", 3);

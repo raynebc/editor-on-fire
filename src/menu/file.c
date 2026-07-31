@@ -3701,6 +3701,14 @@ int eof_new_chart(char * filename)
 	}
 
 
+	//Apply the last-set arrangement types for each pro guitar track
+	eof_apply_arrangement_string(eof_song, EOF_TRACK_PRO_BASS);
+	eof_apply_arrangement_string(eof_song, EOF_TRACK_PRO_GUITAR);
+	eof_apply_arrangement_string(eof_song, EOF_TRACK_PRO_BASS_22);
+	eof_apply_arrangement_string(eof_song, EOF_TRACK_PRO_GUITAR_22);
+	eof_apply_arrangement_string(eof_song, EOF_TRACK_PRO_GUITAR_B);
+
+
 	//Cleanup
 	(void) eof_menu_file_quick_save();
 	delete_file(tempfilename);

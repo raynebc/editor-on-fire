@@ -2944,6 +2944,7 @@ int eof_track_rocksmith_arrangement_set(unsigned char num)
 	{	//If the arrangement type was changed to anything other than bass
 		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_PICKED_BASS;	//Clear the picked bass flag
 	}
+	eof_build_arrangement_string(eof_song, eof_selected_track);	//Track the last-set arrangement type for this track to store in the config file
 	return 1;
 }
 
@@ -6239,6 +6240,7 @@ int eof_menu_track_rs_bonus_arrangement(void)
 		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_ALT_ARR;	//And clear the alternate flag
 	}
 
+	eof_build_arrangement_string(eof_song, eof_selected_track);	//Track the last-set arrangement type for this track to store in the config file
 	return 1;
 }
 
@@ -6256,6 +6258,7 @@ int eof_menu_track_rs_alternate_arrangement(void)
 		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_BONUS_ARR;	//And clear the bonus flag
 	}
 
+	eof_build_arrangement_string(eof_song, eof_selected_track);	//Track the last-set arrangement type for this track to store in the config file
 	return 1;
 }
 
@@ -6273,6 +6276,7 @@ int eof_menu_track_rs_normal_arrangement(void)
 		eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_RS_BONUS_ARR;	//And clear the bonus flag
 	}
 
+	eof_build_arrangement_string(eof_song, eof_selected_track);	//Track the last-set arrangement type for this track to store in the config file
 	return 1;
 }
 
@@ -6293,6 +6297,7 @@ int eof_menu_track_rs_picked_bass_arrangement(void)
 		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_RS_PICKED_BASS;	//Otherwise set the flag
 	}
 
+	eof_build_arrangement_string(eof_song, eof_selected_track);	//Track the last-set arrangement type for this track to store in the config file
 	return 1;
 }
 

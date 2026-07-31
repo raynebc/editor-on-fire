@@ -6549,3 +6549,90 @@ unsigned long eof_pro_guitar_track_count_unique_tone_changes(EOF_PRO_GUITAR_TRAC
 
 	return count;
 }
+
+int eof_apply_arrangement_string(EOF_SONG *sp, unsigned long track)
+{
+	unsigned char arr = 0;
+	unsigned long flags = 0, tracknum;
+	EOF_PRO_GUITAR_TRACK * tp;
+	char *str;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || !eof_track_is_pro_guitar_track(sp, track))
+		return 0;	//Return error
+
+	if(track == EOF_TRACK_PRO_BASS)
+		str = eof_last_part_real_bass_arr_type;
+	else if(track == EOF_TRACK_PRO_GUITAR)
+		str = eof_last_part_real_guitar_arr_type;
+	else if(track == EOF_TRACK_PRO_BASS_22)
+		str = eof_last_part_real_bass_22_arr_type;
+	else if(track == EOF_TRACK_PRO_GUITAR_22)
+		str = eof_last_part_real_guitar_22_arr_type;
+	else if(track == EOF_TRACK_PRO_GUITAR_B)
+		str = eof_last_part_real_guitar_bonus_arr_type;
+
+	if(strcasestr_normal(str, "combo"))
+		arr = 1;
+	else if(strcasestr_normal(str, "rhythm"))
+		arr = 2;
+	else if(strcasestr_normal(str, "lead"))
+		arr = 3;
+	else if(strcasestr_normal(str, "bass"))
+		arr = 4;
+
+	if(strcasestr_normal(str, "bonus"))
+		flags = EOF_TRACK_FLAG_RS_BONUS_ARR;
+	else if(strcasestr_normal(str, "alternate"))
+		flags = EOF_TRACK_FLAG_RS_ALT_ARR;
+
+	if(strcasestr_normal(str, "picked") && (arr == 4))
+		flags |= EOF_TRACK_FLAG_RS_PICKED_BASS;	//Picked bass is only a valid sub type if it is a bass arrangement
+
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];
+	tp->arrangement = arr;
+	sp->track[track]->flags |= flags;
+
+	return (arr || flags ? 1 : 0);	//Return nonzero if an arrangement type was applied
+}
+
+int eof_build_arrangement_string(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_TRACK * tp;
+	char *str;
+	char *type1str[5] = {"", "combo", "rhythm", "lead", "bass"};
+	char *type2str[3] = {"", "bonus", "alternate"};
+	char *type3str[2] = {"", "picked"};
+	unsigned char type1, type2 = 0, type3 = 0;
+
+	if((sp == NULL) || !track || (track >= sp->tracks) || !eof_track_is_pro_guitar_track(sp, track))
+		return 0;	//Return error
+
+	if(track == EOF_TRACK_PRO_BASS)
+		str = eof_last_part_real_bass_arr_type;
+	else if(track == EOF_TRACK_PRO_GUITAR)
+		str = eof_last_part_real_guitar_arr_type;
+	else if(track == EOF_TRACK_PRO_BASS_22)
+		str = eof_last_part_real_bass_22_arr_type;
+	else if(track == EOF_TRACK_PRO_GUITAR_22)
+		str = eof_last_part_real_guitar_22_arr_type;
+	else if(track == EOF_TRACK_PRO_GUITAR_B)
+		str = eof_last_part_real_guitar_bonus_arr_type;
+
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];
+	type1 = tp->arrangement;
+	if(type1 > 4)
+		type1 = 0;	//Invalid arrangement
+	if(sp->track[track]->flags & EOF_TRACK_FLAG_RS_BONUS_ARR)
+		type2 = 1;
+	else if(sp->track[track]->flags & EOF_TRACK_FLAG_RS_ALT_ARR)
+		type2 = 2;
+
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_RS_PICKED_BASS) && (type1 == 4))
+		type3 = 1;	//Picked bass is only a valid sub type if it is a bass arrangement
+
+	snprintf(str, EOF_ARR_CONFIG_STR_SIZE, "%s%s%s%s%s", type1str[type1], (type1 && type2 ? "," : ""), type2str[type2], ((type1 || type2) && type3 ? "," : ""), type3str[type3]);
+	return 1;
+}
