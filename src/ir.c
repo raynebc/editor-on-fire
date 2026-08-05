@@ -574,8 +574,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tExporting bend strength of %lu quarter steps at end of note pos %lums", bendstrength_q, pos + length);
 						eof_log(eof_log_string, 2);
 					}//If there's at least one bend tech note that overlaps the note being exported
+					eof_add_midi_pitch_bend_event(deltapos + deltalength + 1, 8192, channel, index++);	//Set the pitch bend back to neutral 1 delta tick after the end of the note
 				}//If the note is a bend, write all applicable bend points
-				eof_add_midi_pitch_bend_event(deltapos + deltalength + 1, 8192, channel, index++);	//Set the pitch bend back to neutral 1 delta tick after the end of the note
 
 				//Write vibrato
 				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
@@ -1157,7 +1157,7 @@ int eof_pro_guitar_track_set_hand_mode_change_at_timestamp(unsigned long timesta
 	else
 	{	//A new hand mode change is to be added
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_HAND_MODE_CHANGE, 0xFF, timestamp, mode, 0, "");
+		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_HAND_MODE_CHANGE, 0xFF, timestamp, mode, 0, NULL);
 	}
 
 	eof_close_menu = 1;				//Force the main menu to close, as this function had a tendency to get hung in the menu logic when activated by keyboard

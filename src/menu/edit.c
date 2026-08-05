@@ -1961,7 +1961,7 @@ int eof_menu_edit_paste_logic(int function)
 						unsigned char diff = 0xFF;	//By default, assume the tremolo is not specific to any difficulty
 						if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 							diff = eof_note_type;	//When dynamic difficulty is in effect, tremolo phrases apply to the active track difficulty
-						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, diff, newnotepos, newnotepos + newnotelength, 0, "");	//Add a new tremolo phrase
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, diff, newnotepos, newnotepos + newnotelength, 0, NULL);	//Add a new tremolo phrase
 						tremoloptr = eof_get_section_instance_at_pos(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, newnotepos);		//Track the pointer of the new tremolo phrase
 					}
 				}

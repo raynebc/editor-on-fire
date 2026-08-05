@@ -6570,6 +6570,8 @@ int eof_apply_arrangement_string(EOF_SONG *sp, unsigned long track)
 		str = eof_last_part_real_guitar_22_arr_type;
 	else if(track == EOF_TRACK_PRO_GUITAR_B)
 		str = eof_last_part_real_guitar_bonus_arr_type;
+	else
+		return 0;	//Return error
 
 	if(strcasestr_normal(str, "combo"))
 		arr = 1;
@@ -6619,6 +6621,8 @@ int eof_build_arrangement_string(EOF_SONG *sp, unsigned long track)
 		str = eof_last_part_real_guitar_22_arr_type;
 	else if(track == EOF_TRACK_PRO_GUITAR_B)
 		str = eof_last_part_real_guitar_bonus_arr_type;
+	else
+		return 0;	//Return error
 
 	tracknum = sp->track[track]->tracknum;
 	tp = sp->pro_guitar_track[tracknum];

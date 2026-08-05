@@ -10,7 +10,7 @@
 #define EOF_NAME_LENGTH             30
 #define EOF_SECTION_NAME_LENGTH     50
 #define EOF_MAX_BEATS            32768
-#define EOF_MAX_PHRASES           1000
+#define EOF_MAX_PHRASES           2000
 #define EOF_MAX_OGGS                 8
 #define EOF_OLD_MAX_NOTES        65536
 

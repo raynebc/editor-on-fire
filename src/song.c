@@ -3363,7 +3363,7 @@ int eof_menu_section_mark(unsigned long section_type)
 		{	//If selected notes are not within an existing section, add one
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding section of type %lu", section_type);
 			eof_log(eof_log_string, 1);
-			(void) eof_track_add_section(eof_song, track, section_type, diff, sel_start, sel_end, flags, "");	//Add a section of the specified type
+			(void) eof_track_add_section(eof_song, track, section_type, diff, sel_start, sel_end, flags, NULL);	//Add a section of the specified type
 			instanceptr = eof_get_section_instance_at_pos(eof_song, track, section_type, sel_start);		//Get the pointer to the new section
 		}
 		else
