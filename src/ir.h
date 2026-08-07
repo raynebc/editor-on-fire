@@ -74,6 +74,7 @@ unsigned long eof_ir_get_rs_section_instance_number(EOF_SONG *sp, unsigned long 
 int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long ggrhythm, unsigned long ggbass, unsigned char diff, char *destpath, char option, char silent);
 	//Exports IMMERROCK files for the specified pro guitar tracks, for the specified difficulty in a folder with multiple files
 	//gglead, ggrhythm and ggbass are the track numbers to export as these arrangements, or 0 if that arrangement is not specified for export
+	//If diff is 0xFF, all dynamic difficulties are flattened and exported, otherwise only the specified difficulty level is exporte
 	//destpath will be the folder level at which the folder of IMMERROCK files will be written
 	//If option is 1 (manual export of single arrangement), the created subfolder will include the name of the exported track
 	//If the specified tracks are not pro guitar tracks, or have no notes in the specified difficulty, no files or folders are created

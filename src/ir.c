@@ -133,7 +133,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
 	PACKFILE * fp;
-	unsigned long i, j, stringnum, bitmask, deltapos, deltalength, channelctr;
+	unsigned long i, j, stringnum, bitmask, deltapos, deltalength, channelctr, arpeg_pos, arpeg_length;
 	unsigned long delta = 0, nextdeltapos;
 	int channel;
 	int technique_vel[6] = {1, 6, 11, 16, 21, 26};	//Technique markers denote the affected string based on the velocity (ie. low E techniques are written with velocity 1)
@@ -144,7 +144,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	EOF_MIDI_KS_LIST *kslist;
 	char notetempname[25] = {0};	//The temporary file created to store the binary content for the note MIDI track
 	char tempotempname[30];
-	unsigned char pitchmask, pitches[6] = {0};
+	unsigned char pitchmask, pitches[6] = {0}, arpeg_pitches[6] = {0};
 	char notename[EOF_NAME_LENGTH+1] = {0};
 	char *arrangement_name;
 	char has_stored_tempo;		//Will be set to nonzero if the project contains a stored tempo track, which will affect timing conversion
@@ -264,7 +264,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		{	//If the note being exported is shorter than 1/64
 			if(!nextdeltapos || (nextdeltapos > deltapos + pad))
 			{	//If there is no next note or there is one and it is far away enough
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPadding note #%lu (pos = %lu, deltapos = %lu, length = %lu, delta length = %lu) to %lu delta ticks", i, pos, deltapos, length, deltalength, pad);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tPadding note #%lu (pos = %lu, deltapos = %lu, length = %lu, delta length = %lu) to %lu delta ticks", i, pos, deltapos, length, deltalength, pad);
 				eof_log(eof_log_string, 2);
 				deltalength = pad;
 			}
@@ -284,9 +284,37 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 		{	//For each of the 6 usable strings
 			if((note & bitmask) && !(eof_get_note_ghost(sp, track, i) & bitmask))
 			{	//If this string is used and is not a ghost note
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tExporting string %lu fret %u (pitch %u)", stringnum, tp->note[i]->frets[stringnum], pitches[stringnum]);
+				eof_log(eof_log_string, 2);
 				channel = stringnum;	//IMMERROCK uses channel 0 for the thickest string
-				eof_add_midi_event(deltapos, 0x90, pitches[stringnum], 79, channel);				//Velocity 79 indicates a note pitch definition
+				eof_add_midi_event(deltapos, 0x90, pitches[stringnum], 79, channel);				//Channel 0, channel 1, channel 2, channel 3, channel 4 or channel 5 with velocity 79 indicates a note pitch definition
 				eof_add_midi_event(deltapos + deltalength, 0x80, pitches[stringnum], 79, channel);
+			}
+		}
+
+		//Write arpeggio markers
+		for(j = 0; j < tp->arpeggios; j++)
+		{	//For each arpeggio/handshape phrase in the track
+			if((diff == 0xFF) || (tp->arpeggio[j].difficulty == diff))
+			{	//If all dynamic difficulties are being exported or if the arpeggio is applicable to the track difficulty being exported
+				if(tp->arpeggio[j].start_pos == pos)
+				{	//If the arpeggio begins at the same position as the note being exported
+					arpeg_pos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+					arpeg_length = eof_ConvertToDeltaTime(tp->arpeggio[j].end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - arpeg_pos;	//Get the MIDI timings for this arpeggio
+					pitchmask = eof_get_midi_pitches(sp, track, i, arpeg_pitches, 1);	//Re-detect the pitches for the gems in the note, including those for ghosted gems
+					for(stringnum = 0, bitmask = 1; stringnum < 6; stringnum++, bitmask <<= 1)
+					{	//For each of the 6 usable strings
+						if(note & bitmask)
+						{	//If this string is used (ghost gems included, as is typical for the chord at the base of an arpeggio/handshape marker)
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tExporting arpeggio marker for string %lu fret %u (pitch %u)", stringnum, tp->note[i]->frets[stringnum], arpeg_pitches[stringnum]);
+							eof_log(eof_log_string, 2);
+							channel = stringnum + tp->numstrings;	//IMMERROCK uses channel # (string count + 0) for the thickest string to indicate a note is part of an arpeggio
+							eof_add_midi_event(arpeg_pos, 0x90, arpeg_pitches[stringnum], 79, channel);				//Channel 0, channel 1, channel 2, channel 3, channel 4 or channel 5 with velocity 79 indicates a note pitch definition
+							eof_add_midi_event(arpeg_pos + arpeg_length, 0x80, arpeg_pitches[stringnum], 79, channel);
+						}
+					}
+					break;	//Stop processing arpeggios for this note
+				}
 			}
 		}
 
@@ -475,6 +503,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					}
 					if((finger > 0) && (finger < 6))
 					{	//If this fingering is valid
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tExporting string %lu fingering %u", stringnum, finger);
+						eof_log(eof_log_string, 2);
 						eof_add_midi_event_indexed(deltapos, 0x90, finger_marker[finger], technique_vel[stringnum], 15, index++);		//The finger's allocated MIDI note, channel 15 with the string's dedicated velocity number indicates which finger is playing the string in IMMERROCK
 						eof_add_midi_event_indexed(deltapos, 0x80, finger_marker[finger], 0, 15, index++);
 						eof_ir_export_midi_wrote_finger_placements = 1;	//Track that at least one finger placement marker was written for this MIDI
@@ -493,6 +523,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 					bendpoints = eof_pro_guitar_note_bitmask_has_bend_tech_note(tp, i, bitmask, &firstbend);	//Count how many bend tech notes overlap this note on the specified string
 					if(!bendpoints)
 					{	//If there are no bend points, write a bend point 1/3 into the note, and one at the note's end position to enforce the bend strength extending all the way to the end
+						eof_log("\t\t\tExporting default bend point", 2);
 						eof_add_midi_pitch_bend_event_qsteps(deltapos + (stringdeltalength / 3), tech.bendstrength_q, channel, index++);
 						eof_add_midi_pitch_bend_event_qsteps(deltapos + stringdeltalength, tech.bendstrength_q, channel, index++);
 					}
@@ -574,6 +605,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tExporting bend strength of %lu quarter steps at end of note pos %lums", bendstrength_q, pos + length);
 						eof_log(eof_log_string, 2);
 					}//If there's at least one bend tech note that overlaps the note being exported
+					eof_log("\t\t\tResetting pitch bend to neutral", 2);
 					eof_add_midi_pitch_bend_event(deltapos + deltalength + 1, 8192, channel, index++);	//Set the pitch bend back to neutral 1 delta tick after the end of the note
 				}//If the note is a bend, write all applicable bend points
 
@@ -604,6 +636,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height, channel, index++);	//Add a pitch bend that is the given value above or below neutral
 */
 
+					eof_log("\t\t\tWriting pitch bend events for vibrato technique", 2);
 					for(timestamp = 0; timestamp < length; timestamp += pitch_bend_spacing)
 					{	//For each time interval of the note being exported
 						x = ((double)timestamp * (double)deltalength) / (double)length;	//Get the delta tick amount into the note that this realtime position is
@@ -627,6 +660,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 							height = (wave_amplitude * y) + 0.5;	//Scale this so that the amplitude of the vibrato bend wave pattern is the specified number of pitch bend units.  Round up to nearest positive integer
 						eof_add_midi_pitch_bend_event(deltapos + x, 8192 + height + bend_amount, channel, index++);	//Add a pitch bend that is the given value above or below neutral
 					}
+					eof_log("\t\t\tResetting pitch bend to neutral", 2);
 					eof_add_midi_pitch_bend_event(deltapos + deltalength + 1, 8192, channel, index++);	//Set the pitch bend back to neutral 1 delta tick after the end of the note
 				}
 			}//If this string is used
@@ -638,6 +672,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 			char * tempstring = malloc((size_t)ustrsizez(notename));	//Allocate memory to store a copy of the note name, because chord detection will overwrite notename[] each time it is used
 			if(tempstring != NULL)
 			{	//If allocation was successful
+				eof_log("\t\t\tExporting note name", 2);
 				memcpy(tempstring, notename, (size_t)ustrsizez(notename));	//Copy the string to the newly allocated memory
 				eof_add_midi_text_event(deltapos, tempstring, 1, 0xFFFFFFFF);	//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory (provide a high index to ensure it doesn't influence sort order)
 			}
@@ -658,6 +693,8 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 	{	//For each hand mode change in the track
 		int mode_marker = tp->handmodechange[i].end_pos ? 29 : 30;	//String mode is marked with note 29, chord mode with note 30
 
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tExporting hand mode change marker %lu (%s)", tp->handmodechange[i].end_pos, (tp->handmodechange[i].end_pos == 29 ? "string mode" : "chord mode"));
+		eof_log(eof_log_string, 2);
 		deltapos = eof_ConvertToDeltaTime( tp->handmodechange[i].start_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo);
 		eof_add_midi_event_indexed(deltapos, 0x90, mode_marker, 100, 15, index++);		//Note 29 or 30, channel 15 indicate string hand mode or chord hand mode respectively
 		eof_add_midi_event_indexed(deltapos, 0x80, mode_marker, 0, 15, index++);

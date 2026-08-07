@@ -143,13 +143,15 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text, char allocation)
 
 void eof_add_midi_text_event(unsigned long pos, char * text, char allocation, unsigned long index)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
-	eof_log("eof_add_midi_text_event() entered", 2);	//Only log this if verbose logging is on
+///	eof_log("eof_add_midi_text_event() entered", 2);	//Only log this if verbose logging is on
 
 	if(eof_midi_enddelta && (pos > eof_midi_enddelta))
 		return;	//If attempting to write an event that exceeds a user-defined end event, don't do it
 
 	if(text)
 	{
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAdding MIDI text event:  Pos = %lu, type = 0x%X, text = \"%s\", index = %lu", pos, 0x01, text, index);
+		eof_log(eof_log_string, 2);
 		if(eof_midi_events < EOF_MAX_MIDI_EVENTS)
 		{	//If eof_midi_event[] is able to store more events
 			eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
