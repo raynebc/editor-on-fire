@@ -71,7 +71,7 @@
 
 char        eof_note_type_name_fof[EOF_MAX_DIFFICULTIES][10] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_note_type_name_rb[EOF_MAX_DIFFICULTIES][10] = {" Easy", " Medium", " Hard", " Expert", " BRE"};
-char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][10] = {" Lyrics", " ", " ", " ", " "};
+char        eof_vocal_tab_name[EOF_MAX_DIFFICULTIES][16] = {" VOCALS", " HARM1", " HARM2", " HARM3", " "};
 char        eof_dance_tab_name[EOF_MAX_DIFFICULTIES][15] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
 char        eof_beatable_tab_name[EOF_MAX_DIFFICULTIES][15] = {" Easy", " Medium", " Hard", " Unbeatable", " "};
 char        (*eof_note_type_name)[10] = eof_note_type_name_rb;	//By default, use Rock Band difficulty names
@@ -786,9 +786,12 @@ void eof_find_lyric_preview_lines(void)
 	unsigned long dist = 0;
 	int beyond = 1;
 	int adj_eof_music_pos = EOF_SEEK_POS;	//The current seek position of the chart, adjusted for AV delay
+	unsigned char lyric_type = eof_note_type;
 
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
+		if(!eof_lyric_line_applies_to_type(&eof_song->vocal_track[0]->line[i], lyric_type))
+			continue;	//If this lyric line doesn't apply to the active lyric set, skip it
 		if((adj_eof_music_pos >= eof_song->vocal_track[0]->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos))
 		{
 			current_line = i;
@@ -797,6 +800,8 @@ void eof_find_lyric_preview_lines(void)
 	}
 	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
+		if(!eof_lyric_line_applies_to_type(&eof_song->vocal_track[0]->line[i], lyric_type))
+			continue;	//If this lyric line doesn't apply to the active lyric set, skip it
 		if(adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos)
 		{
 			beyond = 0;
@@ -813,8 +818,12 @@ void eof_find_lyric_preview_lines(void)
 	if(current_line >= 0)
 	{
 		eof_preview_line[0] = current_line;
+		eof_preview_line_lyric[0] = eof_song->vocal_track[0]->lyrics;
+		eof_preview_line_end_lyric[0] = eof_song->vocal_track[0]->lyrics;
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{
+			if(eof_song->vocal_track[0]->lyric[i]->type != lyric_type)
+				continue;	//If this lyric doesn't apply to the active lyric set, skip it
 			if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[0]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[0]].end_pos))
 			{
 				eof_preview_line_lyric[0] = i;
@@ -831,6 +840,8 @@ void eof_find_lyric_preview_lines(void)
 		}
 		for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 		{
+			if(!eof_lyric_line_applies_to_type(&eof_song->vocal_track[0]->line[i], lyric_type))
+				continue;	//If this lyric line doesn't apply to the active lyric set, skip it
 			if((eof_song->vocal_track[0]->line[current_line].start_pos < eof_song->vocal_track[0]->line[i].start_pos) && (!dist || (eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist)))
 			{
 				next_line = i;
@@ -840,8 +851,12 @@ void eof_find_lyric_preview_lines(void)
 		if(next_line >= 0)
 		{
 			eof_preview_line[1] = next_line;
+			eof_preview_line_lyric[1] = eof_song->vocal_track[0]->lyrics;
+			eof_preview_line_end_lyric[1] = eof_song->vocal_track[0]->lyrics;
 			for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 			{
+				if(eof_song->vocal_track[0]->lyric[i]->type != lyric_type)
+					continue;	//If this lyric doesn't apply to the active lyric set, skip it
 				if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos))
 				{
 					eof_preview_line_lyric[1] = i;
@@ -3480,6 +3495,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 	unsigned long i, x;
 	int offset = -1;
 	int space;	//Track the spacing for lyric preview, taking pitch shift and grouping logic into account
+	unsigned char lyric_type = eof_note_type;
 
 	if(!bp)
 	{
@@ -3511,6 +3527,8 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{	//For each lyric in the preview line
+			if(eof_song->vocal_track[0]->lyric[i]->type != lyric_type)
+				continue;	//If this lyric doesn't apply to the active lyric set, skip it
 			lyriclength = ustrlen(eof_song->vocal_track[0]->lyric[i]->text);	//This value will be used multiple times
 
 		//Perform grouping logic
@@ -3563,6 +3581,8 @@ void eof_render_lyric_preview(BITMAP * bp)
 	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, eof_color_white, bgcol2);
 	if((offset >= 0) && (eof_hover_lyric >= 0))
 	{
+		if(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->type != lyric_type)
+			return;	//If the hover lyric doesn't apply to the active lyric set, skip highlighting
 		if(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text)-1] == '/')
 		{	//If the at-playback position lyric ends in a forward slash, make a copy with the slash removed and display it instead
 			tempstring = malloc(ustrlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text) + 1);
@@ -5750,23 +5770,66 @@ void eof_init_after_load(char initaftersavestate)
 	///Lyric line fixes
 	/* correct lyric line difficulties if necessary */
 	if(eof_song->vocal_track[0]->lines)
-	{	//If there are any lyric lines
-		int multiple_diffs = 0;	//Set to nonzero if any lyrics outside difficulty 0 are encountered
+	{	//If there are any lyric lines, make them shared across lyric sets
 		unsigned long ctr;
 
-		for(ctr = 0; ctr < eof_get_track_size(eof_song, EOF_TRACK_VOCALS); ctr++)
+		for(ctr = 0; ctr < eof_song->vocal_track[0]->lines; ctr++)
+		{	//For each lyric line
+			eof_song->vocal_track[0]->line[ctr].difficulty = 0xFF;	//Initialize the line's difficulty to 0xFF (all difficulties)
+		}
+	}
+	else
+	{	//If there are no lyric lines at all, check whether PART VOCALS needs auto-generated lines
+		EOF_VOCAL_TRACK *tp = eof_song->vocal_track[0];
+		unsigned long i;
+		unsigned long lyric_count = 0;
+		unsigned long line_start = 0, last_end = 0;
+		unsigned long gap = 1000;	//Split lines when lyrics are at least 1s apart
+		char have_line = 0;
+
+		for(i = 0; i < tp->lyrics; i++)
 		{
-			if(eof_get_note_type(eof_song, EOF_TRACK_VOCALS, ctr) != 0)
+			if(tp->lyric[i]->type == 0)
 			{
-				multiple_diffs = 1;
-				break;
+				lyric_count++;
 			}
 		}
-		if(!multiple_diffs)
-		{	//If all defined lyrics were in difficulty 0
-			for(ctr = 0; ctr < eof_song->vocal_track[0]->lines; ctr++)
-			{	//For each lyric line
-				eof_song->vocal_track[0]->line[ctr].difficulty = 0xFF;	//Initialize the line's difficulty to 0xFF (all difficulties)
+
+		if(lyric_count)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAuto-generating lyric lines for PART VOCALS (lyrics=%lu)", lyric_count);
+			eof_log(eof_log_string, 1);
+
+			for(i = 0; i < tp->lyrics; i++)
+			{
+				if(tp->lyric[i]->type != 0)
+					continue;
+
+				if(!have_line)
+				{
+					line_start = tp->lyric[i]->pos;
+					last_end = tp->lyric[i]->pos + tp->lyric[i]->length;
+					have_line = 1;
+					continue;
+				}
+
+				if(tp->lyric[i]->pos > last_end + gap)
+		{
+					if(tp->lines >= EOF_MAX_LYRIC_LINES)
+			{
+						eof_log("\t\tUnable to add more lyric lines (limit reached)", 1);
+				break;
+			}
+					(void) eof_vocal_track_add_line(tp, line_start, last_end, 0, 0xFF);
+					line_start = tp->lyric[i]->pos;
+		}
+
+				last_end = tp->lyric[i]->pos + tp->lyric[i]->length;
+			}
+
+			if(have_line && (tp->lines < EOF_MAX_LYRIC_LINES))
+			{
+				(void) eof_vocal_track_add_line(tp, line_start, last_end, 0, 0xFF);
 			}
 		}
 	}
@@ -7257,3 +7320,5 @@ void eof_draw_dashed_line(BITMAP *bmp, int x1, int y1, int x2, int y2, int color
 }
 
 END_OF_MAIN()
+
+

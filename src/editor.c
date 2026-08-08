@@ -2619,7 +2619,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, EOF_SEEK_POS - eof_guitar.delay, 1, 0, "");
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, EOF_SEEK_POS - eof_guitar.delay, 1, eof_note_type, "");
 				}
 				else
 				{
@@ -2655,7 +2655,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 						eof_entering_note_lyric->length = (EOF_SEEK_POS - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, EOF_SEEK_POS - eof_guitar.delay, 1, 0, "");
+					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, EOF_SEEK_POS - eof_guitar.delay, 1, eof_note_type, "");
 					if(new_lyric)
 					{
 						eof_entering_note_lyric = new_lyric;
@@ -4492,7 +4492,7 @@ void eof_editor_logic(void)
 {
 //	eof_log("eof_editor_logic() entered");
 
-	unsigned long i, note, notepos, numtabs;
+	unsigned long i, note, notepos;
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
 	EOF_NOTE * new_note = NULL;
@@ -5297,64 +5297,6 @@ void eof_editor_logic(void)
 		}
 	}//If the chart is not paused
 
-	/* select difficulty */
-	numtabs = eof_get_number_displayed_tabs();
-	eof_difficulty_tab_boundary_x1 = 13;
-	eof_difficulty_tab_boundary_x2 = 12 + numtabs * 80 + 12 - 1 - 1;
-	eof_difficulty_tab_boundary_y1 = eof_window_editor->y + 7;
-	eof_difficulty_tab_boundary_y2 = eof_window_editor->y + 20 + 8 - 1;
-	if((eof_scaled_mouse_x >= eof_difficulty_tab_boundary_x1) && (eof_scaled_mouse_x <= eof_difficulty_tab_boundary_x2) && (eof_scaled_mouse_y >= eof_difficulty_tab_boundary_y1) && (eof_scaled_mouse_y <= eof_difficulty_tab_boundary_y2))
-	{	//If the left mouse button is held down and the mouse is over one of the difficulty tabs, and full screen 3d mode isn't in effect
-		eof_mouse_area = 1;
-		if((mouse_b & 1) && !eof_full_screen_3d)
-		{	//If the left mouse button is held down, and full screen 3d mode isn't in effect
-			eof_hover_type = (eof_scaled_mouse_x - 12) / 80;	//Determine which tab number was clicked
-			if(eof_hover_type < 0)
-			{	//Bounds check
-				eof_hover_type = 0;
-			}
-			else if(eof_hover_type >= numtabs)
-			{
-				eof_hover_type = numtabs - 1;
-			}
-			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
-			{	//If this track is not limited to 5 difficulties
-				if(eof_hover_type == numtabs - 1)
-				{	//If the last tab was clicked
-					eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - 1;	//Change to the highest difficulty in the track
-				}
-				else if(eof_hover_type > 0)
-				{	//If the first tab (which will already change to the track's lowest difficulty) wasn't clicked
-					if(eof_note_type < numtabs / 2)
-					{	//If the tabs represent the lowest difficulties
-						eof_hover_type = eof_hover_type - 1;
-					}
-					else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - (numtabs / 2))
-					{	//If the tabs represent the highest difficulties
-						eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - numtabs + 1 + eof_hover_type;
-					}
-					else
-					{	//If the center tab represents the active difficulty
-						eof_hover_type = eof_hover_type + eof_note_type - (numtabs / 2);
-					}
-				}
-				mouse_b &= ~1;	//Clear the left mouse button status or else the tab logic will run during next loop and cause the highest difficulty to be accepted
-			}
-			if(eof_note_type != eof_hover_type)
-			{
-				eof_note_type = eof_hover_type;
-				eof_mix_find_claps();
-				eof_mix_start_helper();
-				eof_fix_window_title();
-				(void) eof_detect_difficulties(eof_song, eof_selected_track);
-			}
-		}
-	}
-	else
-	{
-		eof_hover_type = -1;
-	}
-
 	if(((mouse_b & 2) || (eof_key_code == KEY_INSERT)) && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
 	{	//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 		eof_emergency_stop_music();
@@ -5427,10 +5369,6 @@ void eof_editor_logic(void)
 		eof_show_mouse(NULL);
 	}//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 
-	if(!(mouse_b & 1))
-	{	//If the left mouse button is not being held at this point
-		eof_mouse_bound = eof_mouse_boundary_x1 = eof_mouse_boundary_x2 = eof_mouse_boundary_y1 = eof_mouse_boundary_y2 = 0;	//Release the mouse from its boundary
-	}
 }
 
 void eof_vocal_editor_logic(void)
@@ -6157,6 +6095,11 @@ void eof_vocal_editor_logic(void)
 		}//Full screen 3D view is not in effect
 		eof_show_mouse(NULL);
 	}//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
+
+	if(!(mouse_b & 1))
+	{	//If the left mouse button is not being held at this point
+		eof_mouse_bound = eof_mouse_boundary_x1 = eof_mouse_boundary_x2 = eof_mouse_boundary_y1 = eof_mouse_boundary_y2 = 0;	//Release the mouse from its boundary
+	}
 }
 
 int eof_get_ts_text(unsigned long beat, char * buffer)
@@ -6355,6 +6298,7 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	int n;
 	int ny;
 	int red = 0;
+	unsigned char lyric_type = eof_note_type;
 
 	if(!eof_song_loaded || (eof_song->track[eof_selected_track]->track_format != EOF_VOCAL_TRACK_FORMAT) || !window)
 		return;
@@ -6380,12 +6324,16 @@ void eof_render_vocal_editor_window(EOF_WINDOW *window)
 	/* draw lyric lines */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lines; i++)
 	{ 	//The -5 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
+		if(!eof_lyric_line_applies_to_type(&eof_song->vocal_track[tracknum]->line[i], lyric_type))
+			continue;	//If this lyric line doesn't apply to the active lyric set, skip it
 		rectfill(window->screen, lpos + eof_song->vocal_track[tracknum]->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, lpos + eof_song->vocal_track[tracknum]->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track[tracknum]->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
 	}
 
 	start = eof_determine_piano_roll_left_edge();
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{	//For each lyric
+		if(eof_song->vocal_track[tracknum]->lyric[i]->type != lyric_type)
+			continue;	//If this lyric doesn't apply to the active lyric set, skip it
 		if(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length >= start)
 		{	//If the lyric would render at or after the left edge of the piano roll
 			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused && (eof_hover_note == i))
@@ -7564,7 +7512,7 @@ void eof_render_editor_window_common2(EOF_WINDOW *window)
 				}
 				textout_ex(window->screen, font, "(*)", xcoord + text_length(font, tab_text) / 2 - text_length(font, "(*)"), ycoord, fgcol, bgcol);
 			}
-			if((eof_selected_track == EOF_TRACK_VOCALS) && (i == eof_vocals_tab))
+			if((eof_selected_track == EOF_TRACK_VOCALS) && (numtabs == 1) && (i == eof_vocals_tab))
 			{	//Break after  rendering the one difficulty tab name for the vocal track
 				break;
 			}
@@ -8059,6 +8007,69 @@ void eof_editor_logic_common(void)
 			}
 		}
 
+	/* select difficulty */
+	{
+		unsigned long numtabs = eof_get_number_displayed_tabs();
+		eof_difficulty_tab_boundary_x1 = 13;
+		eof_difficulty_tab_boundary_x2 = 12 + numtabs * 80 + 12 - 1 - 1;
+		eof_difficulty_tab_boundary_y1 = eof_window_editor->y + 7;
+		eof_difficulty_tab_boundary_y2 = eof_window_editor->y + 20 + 8 - 1;
+		if((eof_scaled_mouse_x >= eof_difficulty_tab_boundary_x1) && (eof_scaled_mouse_x <= eof_difficulty_tab_boundary_x2) && (eof_scaled_mouse_y >= eof_difficulty_tab_boundary_y1) && (eof_scaled_mouse_y <= eof_difficulty_tab_boundary_y2))
+		{	//If the left mouse button is held down and the mouse is over one of the difficulty tabs, and full screen 3d mode isn't in effect
+			eof_mouse_area = 1;
+			if((mouse_b & 1) && !eof_full_screen_3d)
+			{	//If the left mouse button is held down, and full screen 3d mode isn't in effect
+				eof_hover_type = (eof_scaled_mouse_x - 12) / 80;	//Determine which tab number was clicked
+				if(eof_hover_type < 0)
+				{	//Bounds check
+					eof_hover_type = 0;
+				}
+				else if(eof_hover_type >= (long)numtabs)
+				{
+					eof_hover_type = numtabs - 1;
+				}
+				if((eof_selected_track != EOF_TRACK_VOCALS) && (eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS))
+				{	//If this track is not limited to 5 difficulties
+					if(eof_hover_type == (long)numtabs - 1)
+					{	//If the last tab was clicked
+						eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - 1;	//Change to the highest difficulty in the track
+					}
+					else if(eof_hover_type > 0)
+					{	//If the first tab (which will already change to the track's lowest difficulty) wasn't clicked
+						if(eof_note_type < numtabs / 2)
+						{	//If the tabs represent the lowest difficulties
+							eof_hover_type = eof_hover_type - 1;
+						}
+						else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - (numtabs / 2))
+						{	//If the tabs represent the highest difficulties
+							eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - numtabs + 1 + eof_hover_type;
+						}
+						else
+						{	//If the center tab represents the active difficulty
+							eof_hover_type = eof_hover_type + eof_note_type - (numtabs / 2);
+						}
+					}
+					mouse_b &= ~1;	//Clear the left mouse button status or else the tab logic will run during next loop and cause the highest difficulty to be accepted
+				}
+				if(eof_note_type != (unsigned long)eof_hover_type)
+				{
+					(void) eof_set_active_difficulty(eof_hover_type);
+					if(eof_selected_track == EOF_TRACK_VOCALS)
+					{	//Keep the vocal difficulty cache in sync when clicking tabs
+						eof_note_type_v = eof_note_type;
+					}
+					eof_mix_find_claps();
+					eof_mix_start_helper();
+					(void) eof_detect_difficulties(eof_song, eof_selected_track);
+				}
+			}
+		}
+		else
+		{
+			eof_hover_type = -1;
+		}
+	}
+
 		/* handle initial SHIFT key press */
 		if(KEY_EITHER_SHIFT && eof_shift_released)
 		{	//If this is a new SHIFT keypress
@@ -8127,6 +8138,8 @@ void eof_editor_logic_common(void)
 		//Find the hover lyric, if there is one
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{	//Find the hover lyric if there is one
+			if(eof_song->vocal_track[0]->lyric[i]->type != eof_note_type)
+				continue;	//If this lyric doesn't apply to the active lyric set, skip it
 			npos = eof_song->vocal_track[0]->lyric[i]->pos;
 			if((examined_music_pos - eof_av_delay > npos) && (examined_music_pos - eof_av_delay < npos + (eof_song->vocal_track[0]->lyric[i]->length > 100 ? eof_song->vocal_track[0]->lyric[i]->length : 100)))
 			{
@@ -8395,8 +8408,8 @@ unsigned char eof_set_active_difficulty(unsigned char diff)
 		eof_note_type_max = EOF_NOTE_CHALLENGE;	//However, the dance track has 5 usable difficulties
 	}
 	else if(eof_selected_track == EOF_TRACK_VOCALS)
-	{	//The vocal track only has 1 usable difficulty
-		eof_note_type_max = EOF_NOTE_SUPAEASY;
+	{	//The vocal track has 4 usable tabs: Lyrics + HARM1/2/3
+		eof_note_type_max = 3;
 	}
 
 	if(diff <= eof_note_type_max)
@@ -8417,7 +8430,7 @@ unsigned long eof_get_number_displayed_tabs(void)
 	//Determine how many tabs to draw
 	if(eof_selected_track == EOF_TRACK_VOCALS)
 	{	//If a vocal track is active
-		numtabs = 1;
+		numtabs = 4;
 	}
 	else if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 	{	//If the track's difficulty limit has been removed
@@ -8476,3 +8489,5 @@ void eof_constrain_mouse(void)
 		}
 	}
 }
+
+
