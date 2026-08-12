@@ -4479,14 +4479,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				}
 
 				start = eof_get_beatpos_abs(eof_song, vars.gp->track[ctr]->note[ctr2]->pos);	//Get the beat position of the note's start
-				if(eof_get_effective_ts(eof_song, &num, &den, eof_get_beat(eof_song, start), 0))
+				if(eof_get_effective_ts(eof_song, &num, &den, eof_get_beat(eof_song, vars.gp->track[ctr]->note[ctr2]->pos), 0))
 				{	//If the time signature in effect at the start of the note was determined
 					end = eof_get_beatpos_abs(eof_song, vars.gp->track[ctr]->note[ctr2]->pos + vars.gp->track[ctr]->note[ctr2]->length);	//Get the beat position of the note's length
 					beatlength = eof_fpos_distance(start, end);	//Get the length of the note in beats
 					measurelength = beatlength / (double)den;	//Calculate this length in terms of measures (beat length divided by beat unit)
 					if((unsigned long)(measurelength * 100.0 + 0.5) < 25)
 					{	//If the note (rounded up to allow for floating point math error) is shorter than a quarter note
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTruncating short note pos = %lums, len = %lums, measure length = %f", vars.gp->track[ctr]->note[ctr2]->pos, vars.gp->track[ctr]->note[ctr2]->length, measurelength);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu pos = %lums, len = %lums, measure length = %f", ctr2, vars.gp->track[ctr]->note[ctr2]->pos, vars.gp->track[ctr]->note[ctr2]->length, measurelength);
 						eof_log(eof_log_string, 2);
 						vars.gp->track[ctr]->note[ctr2]->length = 1;
 					}
@@ -4771,6 +4771,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	for(ctr = 0; ctr < vars.gp->numtracks; ctr++)
 	{	//For each imported track
 		unsigned long snappos = 0;
+		char firstlogged = 0;
 
 		for(ctr2 = 0; ctr2 < vars.gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
@@ -4780,7 +4781,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				if((snappos != ULONG_MAX) && (snappos > np->pos))
 				{	//If the nearest snap position was determined and it is at least 1ms after the note's start position
 #ifdef GP_IMPORT_DEBUG
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Resnapping track #%lu, note #%lu's length to end on grid snap position (length %lu -> %lu)", ctr, ctr2, np->length, snappos - np->pos);
+					if(!firstlogged)
+					{
+						eof_log("\tResnapping note tails", 1);
+						firstlogged = 1;
+					}
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack #%lu, note #%lu (length %lu -> %lu)", ctr, ctr2, np->length, snappos - np->pos);
 					eof_log(eof_log_string, 2);
 #endif
 					if((snappos + 1 == np->pos + np->length) || (np->pos + np->length + 1 == snappos))
@@ -4791,7 +4797,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(tnp->pos == np->pos + np->length)
 							{	//If the tech note is at the note's end position
 #ifdef GP_IMPORT_DEBUG
-								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tResnapping tech note at note's end position to match");
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tResnapping tech note at note's end position to match");
 								eof_log(eof_log_string, 2);
 								tnp->pos = snappos;
 #endif

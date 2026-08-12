@@ -95,8 +95,9 @@ int eof_track_pro_guitar_move_fret_hand_position_next_note(DIALOG * d);
 	//Alters the fret hand position set/edit dialog's target timestamp to the next note in the active track difficulty, if applicable
 int eof_track_fret_hand_positions(void);
 	//Displays the fret hand positions defined for the active track difficulty, allowing them to be altered
-void eof_fret_hand_positions_list_find_selected(void);
-	//Examines eof_fret_hand_position_list() function's selection list and updates the EOF_PHRASE_FLAG_GENERIC on every FHP in the active track to reflect whether the FHP was selected in the list
+unsigned long eof_fret_hand_positions_list_find_selected(void);
+	//Examines eof_fret_hand_position_list_dialog[]'s selection list and updates the EOF_PHRASE_FLAG_GENERIC flag on every FHP in the active track difficulty so that only those that are selected have this flag
+	//Returns the number of FHPs that were found to be selected, or 0 upon error
 int eof_track_fret_hand_positions_copy_from(void);
 	//Allows the user to copy fret hand positions defined in another difficulty into the current track difficulty
 char * eof_track_fret_hand_positions_copy_from_list(int index, int * size);
