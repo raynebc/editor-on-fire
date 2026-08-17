@@ -108,7 +108,7 @@ int eof_ini_dialog_add(DIALOG * d);		//Performs the INI setting add action prese
 int eof_ini_dialog_edit(DIALOG * d);		//Performs the INI setting edit action presented in the INI settings dialog
 int eof_ini_dialog_delete(DIALOG * d);		//Performs the INI setting delete action presented in the INI settings dialog
 void eof_ini_dialog_delete_helper(unsigned long index);	//Used by eof_ini_dialog_delete() to remove the specified INI setting from the active project in the active INI setting dialog
-void eof_ini_delete(unsigned long index);	//Delete the specified INI setting from the active project outside of INI setting dialogs
+void eof_ini_delete(EOF_SONG * sp, unsigned long index);	//Delete the specified INI setting from the specified project, outside of INI setting dialogs
 int eof_menu_song_properties(void);
 int eof_menu_song_test(char application);	//Launches the current chart in FoF if application is 1, otherwise launches the chart in Phase Shift
 int eof_menu_song_test_fof(void);	//Calls eof_menu_song_test() to launch the chart with FoF

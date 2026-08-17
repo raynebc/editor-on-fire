@@ -7398,10 +7398,10 @@ int eof_menu_file_export_song_preview(void)
 	{	//If the project didn't already have the start/stop preview tags stored, or if the times just entered are different from those already stored
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(oldstartstring)
-			eof_ini_delete(oldstarttag);	//Remove any existing preview start tag
+			eof_ini_delete(eof_song, oldstarttag);	//Remove any existing preview start tag
 		oldendstring = eof_find_ini_setting_tag(eof_song, &oldendtag, "preview_end_time");	//Re-lookup the index for the end tag, since the index may have just changed due to the above deletion
 		if(oldendstring)
-			eof_ini_delete(oldendtag);	//Remove any existing preview start tag
+			eof_ini_delete(eof_song, oldendtag);	//Remove any existing preview start tag
 		if(eof_song->tags->ini_settings + 2 < EOF_MAX_INI_SETTINGS)
 		{	//If the start and end INI tags can be stored into the project
 			(void) snprintf(eof_song->tags->ini_setting[eof_song->tags->ini_settings], EOF_INI_LENGTH - 1, "preview_start_time = %lu", start);

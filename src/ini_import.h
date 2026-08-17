@@ -65,8 +65,12 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 	//tag is the display name of the tag being checked, used for logging
 
 char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag);
-	//Searches (case insensitive) the specified project for the specified INI setting containing the specified tag, any amount of whitespace, an equal sign, any amount of whitespace and then a non whitespace character
+	//Searches (case insensitive) the specified project for the first instance of the specified INI setting containing the specified tag, any amount of whitespace, an equal sign, any amount of whitespace and then a non whitespace character
 	//If found, the setting number is returned through index and the pointer to the first non whitespace character after the equal sign in the INI setting's string is returned
 	//If no such setting was found in the project, NULL is returned
+
+unsigned long eof_cleanup_ini_settings(EOF_SONG *sp);
+	//Removes all reserved INI tags (defined in eof_reserved_ini_tags[] and eof_difficulty_ini_tags[]) from the specified project's INI settings
+	//Returns the number of offending INI settings that were removed from the project
 
 #endif

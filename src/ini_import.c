@@ -33,6 +33,10 @@ char eof_ini_pro_drum_tag_present;		//Is set to nonzero if eof_import_ini() find
 char eof_ini_star_power_tag_present;	//Is set to nonzero if eof_import_ini() finds the "multiplier_note = 116" tag (to influence MIDI import)
 char eof_ini_sysex_open_bass_present;	//Is set to nonzero if eof_import_ini() finds the "sysex_open_bass = True" tag (to influence MIDI import)
 
+//The following INI tags are not allowed to be stored in the custom INI tags because they are written using values defined properly in the project
+#define EOF_NUM_RESERVED_INI_TAGS 35
+char *eof_reserved_ini_tags[EOF_NUM_RESERVED_INI_TAGS] = {"artist", "name", "charter", "album", "genre", "track", "year", "loading_phrase", "lyrics", "eighthnote_hopo", "delay", "score", "scores", "scores_ext", "real_guitar_tuning", "real_guitar_22_tuning", "real_bass_tuning", "real_bass_22_tuning", "pro_drums", "five_lane_drums", "multiplier_note", "sysex_open_bass", "eof_midi_import_drum_accent_velocity", "eof_midi_import_drum_ghost_velocity", "sysex_pro_slide", "sysex_high_hat_ctrl", "sysex_rimshot", "sysex_slider", "star_power_note", "song_length", "diff_guitarghl", "diff_bassghl", "diff_drums_real", "diff_vocals_harm", "diff_band"};
+
 /* it would probably be easier to use Allegro's configuration routines to read
  * the ini files since it looks like they are formatted correctly */
 int eof_import_ini(EOF_SONG * sp, char * fn, int function)
@@ -530,6 +534,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 	}//For each imported INI setting
 	eof_log("\tFreeing INI buffer", 1);
 	free(textbuffer);	//Free buffered INI file from memory
+
+	eof_cleanup_ini_settings(sp);	//Delete any INI settings not allowed to be stored into the project
+
 	return 1;
 }
 
@@ -765,4 +772,38 @@ char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag)
 	}
 
 	return NULL;	//No match found
+}
+
+unsigned long eof_cleanup_ini_settings(EOF_SONG *sp)
+{
+	unsigned long ctr, index, delete_count = 0;
+
+	if(!sp)
+		return 0;	//Return error
+
+	eof_log("eof_cleanup_ini_settings() entered", 1);
+
+	for(ctr = 0; ctr < EOF_NUM_RESERVED_INI_TAGS; ctr++)
+	{	//For each of the INI tags in the pre-defined list that aren't allowed to be stored as INI tags
+		while(eof_find_ini_setting_tag(sp, &index, eof_reserved_ini_tags[ctr]) && (index < sp->tags->ini_settings))
+		{	//If there is another instance of this tag in the project's INI settings
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDeleting reserved INI tag \"%s\"", eof_reserved_ini_tags[ctr]);
+			eof_log(eof_log_string, 1);
+			eof_ini_delete(sp, index);	//Delete it
+			delete_count++;
+		}
+	}
+
+	for(ctr = 0; ctr < EOF_TRACKS_MAX; ctr++)
+	{	//For each of the track difficulty tags in the pre-defined list that aren't allowed to be stored as INI tags
+		while(eof_find_ini_setting_tag(sp, &index, eof_difficulty_ini_tags[ctr]) && (index < sp->tags->ini_settings))
+		{	//If there is another instance of this tag in the project's INI settings
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDeleting reserved INI tag \"%s\"", eof_difficulty_ini_tags[ctr]);
+			eof_log(eof_log_string, 1);
+			eof_ini_delete(sp, index);	//Delete it
+			delete_count++;
+		}
+	}
+
+	return delete_count;
 }

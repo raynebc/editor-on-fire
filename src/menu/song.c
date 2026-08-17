@@ -1834,20 +1834,18 @@ void eof_ini_dialog_delete_helper(unsigned long index)
 	(*eof_ini_dialog_count)--;
 }
 
-void eof_ini_delete(unsigned long index)
+void eof_ini_delete(EOF_SONG * sp, unsigned long index)
 {
 	unsigned short i;
 
-	if(!eof_ini_dialog_array || !eof_ini_dialog_count)
-		return;	//Target setting array not set
-	if(index >= *eof_ini_dialog_count)
-		return;	//Invalid parameter
+	if(!sp || (index >= sp->tags->ini_settings))
+		return;	//Invalid parameters
 
-	for(i = index; i < eof_song->tags->ini_settings - 1; i++)
+	for(i = index; i < sp->tags->ini_settings - 1; i++)
 	{	//For each event starting at the one being removed
-		memcpy(eof_song->tags->ini_setting[i], eof_song->tags->ini_setting[i + 1], EOF_INI_LENGTH);	//Overwrite it with the next setting, if there is one
+		memcpy(sp->tags->ini_setting[i], sp->tags->ini_setting[i + 1], EOF_INI_LENGTH);	//Overwrite it with the next setting, if there is one
 	}
-	eof_song->tags->ini_settings--;
+	sp->tags->ini_settings--;
 }
 
 int eof_ini_dialog_delete(DIALOG * d)

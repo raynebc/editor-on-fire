@@ -443,7 +443,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 
 					//Determine the end position and pitch of the slide for this string
 					slide_end = tp->note[i]->unpitchend;
-					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) && slide_end)
+					if((flags & EOF_PRO_GUITAR_NOTE_FLAG_UNPITCH_SLIDE) && slide_end)
 					{	//If this unpitched slide's end position is defined
 						if(lowest_fret < slide_end)
 						{	//Upward slide
@@ -1500,7 +1500,7 @@ int eof_export_immerrock_diff(EOF_SONG *sp, unsigned long gglead, unsigned long 
 					}
 				}
 				eof_build_mmssms_string(eventpos, &min, &sec, &ms, NULL);
-				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%u \"\%s\"\n", min, sec, ms, section);	//Use this if IMMERROCK can display section names
+				(void) snprintf(temp_string, sizeof(temp_string) - 1, "%u:%u.%03u \"\%s\"\n", min, sec, ms, section);	//Use this if IMMERROCK can display section names
 				(void) pack_fputs(temp_string, fp);	//Write section entry
 				lasteventpos = eventpos;	//Track the position of the last event that was exported
 				eventswritten++;			//Track how many events were exported
