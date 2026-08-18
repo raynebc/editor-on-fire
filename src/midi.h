@@ -158,6 +158,10 @@ int eof_get_effective_ts(EOF_SONG *sp, unsigned *num, unsigned *den, unsigned lo
 int eof_apply_ts(unsigned num, unsigned den, unsigned long beatnum, EOF_SONG *sp, char undo);
 	//Validates and applies the specified time signature to the specified beat
 	//If undo is nonzero, then an undo state is made before any changes are made
+int eof_get_effective_ks(EOF_SONG *sp, char *key, unsigned long pos);
+	//Determines the key signature in effect (if any) at the specified timestamp
+	//If a key signature is defined at/before the timestamp, it is stored into *key and nonzero is returned
+	//Zero is returned if there is no such key signature defined, or upon error
 
 EOF_MIDI_KS_LIST * eof_create_ks_list(void);
 	//Allocates and returns a KS change list

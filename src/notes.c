@@ -1354,6 +1354,9 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 				unsigned long matchcount;
 				char chord_match_string[30] = {0};
 				int scale = 0, chord = 0, isslash = 0, bassnote = 0;
+				char **effective_note_names = eof_note_names;	//By default, use whichever sharp/flat preference the user has in effect
+				char **effective_slash_note_names = eof_slash_note_names;
+				char key;	//Stores the key signature in effect at the note's position
 
 				matchcount = eof_count_chord_lookup_matches(tp, eof_selected_track, eof_selection.current);
 				if(matchcount)
@@ -1365,13 +1368,26 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 					{	//If there's more than one match
 						(void) snprintf(chord_match_string, sizeof(chord_match_string) - 1, " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
 					}
+					if(eof_get_effective_ks(eof_song, &key, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current)))
+					{	//If there is a key signature in effect at the selected note's position, use the sharp/flat accidentals corresponding to that scale
+						if(key < 0)
+						{
+							effective_note_names = eof_note_names_flat;	//A key using flat note names is in use
+							effective_slash_note_names = eof_slash_note_names_flat;
+						}
+						else if(key > 0)
+						{
+							effective_note_names = eof_note_names_sharp;	//A key using sharp note names is in use
+							effective_slash_note_names = eof_slash_note_names_sharp;
+						}
+					}
 					if(!isslash)
 					{	//If it's a normal chord
-						snprintf(dest_buffer, dest_buffer_size, "[%s%s]%s", eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string);
+						snprintf(dest_buffer, dest_buffer_size, "[%s%s]%s", effective_note_names[scale], eof_chord_names[chord].chordname, chord_match_string);
 					}
 					else
 					{	//If it's a slash chord
-						snprintf(dest_buffer, dest_buffer_size, "[%s%s%s]%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string);
+						snprintf(dest_buffer, dest_buffer_size, "[%s%s%s]%s", effective_note_names[scale], eof_chord_names[chord].chordname, effective_slash_note_names[bassnote], chord_match_string);
 					}
 
 					return 1;

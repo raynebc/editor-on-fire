@@ -4292,6 +4292,35 @@ int eof_apply_ts(unsigned num, unsigned den, unsigned long beatnum, EOF_SONG *sp
 	return 1;
 }
 
+int eof_get_effective_ks(EOF_SONG *sp, char *key, unsigned long pos)
+{
+	char current_key = 0, key_defined = 0;
+	unsigned long beat;
+
+	if((sp == NULL) || !key)
+		return 0;	//Return error
+
+	for(beat = 0; beat < sp->beats; beat++)
+	{	//For each beat in the project
+		if(sp->beat[beat]->pos > pos)
+			break;	//If this beat is after the target position, stop checking beats
+
+		if(sp->beat[beat]->flags & EOF_BEAT_FLAG_KEY_SIG)
+		{	//If this beat defines a key signature change, remember the key
+			key_defined = 1;
+			current_key = sp->beat[beat]->key;
+		}
+	}
+
+	if(key_defined)
+	{	//If a key signature was in effect at the target position
+		*key = current_key;	//Return it to the calling function by reference
+		return 1;	//Return key signature found
+	}
+
+	return 0;	//Return no key signature found
+}
+
 int eof_dump_midi_track(const char *inputfile, PACKFILE *outf)
 {
 	unsigned long track_length;

@@ -15,8 +15,8 @@ char *eof_slash_note_names_flat[12] =	{"/A","/Bb","/B","/C","/Db","/D","/Eb","/E
 char *eof_slash_note_names_sharp[12] =	{"/A","/A#","/B","/C","/C#","/D","/D#","/E","/F","/F#","/G","/G#"};
 char **eof_slash_note_names = eof_slash_note_names_sharp;	//By default, display slash chords with sharp accidentals
 char eof_tuning_unknown[] = {"Unknown"};
-char *eof_key_names_major[15] = {"B", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "Gb", "Db"};	//In MIDI, -7 represents 7 flats, 7 represents 7 sharps.  This array is that system transposed up by 7 to avoid using negative indexes
-char *eof_key_names_minor[15] = {"g#", "eb", "bb", "f", "c", "g", "d", "a", "e", "b", "f#", "c#", "g#", "eb", "bb"};
+char *eof_key_names_major[15] = {"Cb", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#", "C#"};	//In MIDI, -7 represents 7 flats, 7 represents 7 sharps.  This array is that system transposed up by 7 to avoid using negative indexes
+char *eof_key_names_minor[15] = {"ab", "eb", "bb", "f", "c", "g", "d", "a", "e", "b", "f#", "c#", "g#", "d#", "a#"};
 char **eof_key_names = eof_key_names_major;
 char *eof_none_string = "None";
 
@@ -388,7 +388,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 		{
 			for(ctr = 0; ctr < 12; ctr++)
 			{	//For each note in the musical scale from 0 (A) to 11 (G#)
-				major_scales[ctr][0] = ctr;	//The first interval in any major scale is that scale's namesake
+				major_scales[ctr][0] = ctr;			//The first interval in any major scale is that scale's namesake
 				major_scales[ctr][1] = (ctr + 2) % 12;	//The second interval is two half steps higher
 				major_scales[ctr][2] = (ctr + 4) % 12;	//The third interval is two half steps higher
 				major_scales[ctr][3] = (ctr + 5) % 12;	//The fourth interval is one half step higher

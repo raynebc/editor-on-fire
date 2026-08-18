@@ -43,7 +43,7 @@ MENU eof_beat_time_signature_menu[] =
 MENU eof_beat_key_signature_menu[] =
 {
 	{eof_ks_menu_off_text, eof_menu_beat_ks_off, NULL, D_USER, NULL},
-	{"B , g# (7 flats)", eof_menu_beat_ks_7_flats, NULL, D_USER, NULL},
+	{"Cb , ab (7 flats)", eof_menu_beat_ks_7_flats, NULL, D_USER, NULL},
 	{"Gb , eb (6 flats)", eof_menu_beat_ks_6_flats, NULL, D_USER, NULL},
 	{"Db , bb (5 flats)", eof_menu_beat_ks_5_flats, NULL, D_USER, NULL},
 	{"Ab , f (4 flats)", eof_menu_beat_ks_4_flats, NULL, D_USER, NULL},
@@ -56,8 +56,8 @@ MENU eof_beat_key_signature_menu[] =
 	{"A , f# (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, D_USER, NULL},
 	{"E , c# (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, D_USER, NULL},
 	{"B , g# (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, D_USER, NULL},
-	{"Gb , eb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, D_USER, NULL},
-	{"Db , bb (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, D_USER, NULL},
+	{"F# , d# (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, D_USER, NULL},
+	{"C# , a# (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, D_USER, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 

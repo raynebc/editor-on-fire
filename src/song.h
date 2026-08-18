@@ -517,7 +517,7 @@ typedef struct
 	unsigned long midi_pos;
 	unsigned long pos;
 	unsigned long flags;	//If the EOF_BEAT_FLAG_CUSTOM_TS flag is set, this variable's MSB is the TS's numerator (value 1 is stored as all bits 0), the 2nd MSB is the TS's denominator (value 1 is stored as all bits 0)
-	char key;	//If negative, the value defines the number of flats present, ie. -2 is Bb.  If positive, the value defines the number of sharps present, ie. 4 is E
+	char key;				//If the beat's EOF_BEAT_FLAG_KEY_SIG flag is set, this defines a change in key signature:  If negative, the value defines the number of flats present, ie. -2 is Bb.  If positive, the value defines the number of sharps present, ie. 4 is E
 	double fpos;
 
 	//These variables, set with eof_process_beat_statistics(), track various properties of the beat to relieve various functions of related processing

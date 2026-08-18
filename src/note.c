@@ -3,6 +3,7 @@
 #include <float.h>
 #include "modules/ocd3d.h"
 #include "main.h"
+#include "midi.h"
 #include "beatable.h"
 #include "bf.h"	//For eof_pro_guitar_note_lookup_string_fingering() to display finger-specific gem colors in the Bandfuse color set
 #include "dr.h"
@@ -3073,6 +3074,9 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	char *name;
 	int scale = 0, chord = 0, isslash = 0, bassnote = 0;
 	unsigned long tracknum;
+	char **effective_note_names = eof_note_names;	//By default, use whichever sharp/flat preference the user has in effect
+	char **effective_slash_note_names = eof_slash_note_names;
+	char key;	//Stores the key signature in effect at the note's position
 
 	if((sp == NULL) || !track || (track >= sp->tracks) || (buffer == NULL) || (note >= eof_get_track_size(sp, track)))
 		return 0;	//Invalid parameters
@@ -3090,13 +3094,26 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	tracknum = sp->track[track]->tracknum;
 	if(eof_lookup_chord(sp->pro_guitar_track[tracknum], track, note, &scale, &chord, &isslash, &bassnote, 0, 0))
 	{	//If the chord lookup found a match
+		if(eof_get_effective_ks(sp, &key, eof_get_note_pos(sp, track, note)))
+		{	//If there is a key signature in effect at the note's position, use the sharp/flat accidentals corresponding to that scale
+			if(key < 0)
+			{
+				effective_note_names = eof_note_names_flat;	//A key using flat note names is in use
+				effective_slash_note_names = eof_slash_note_names_flat;
+			}
+			else if(key > 0)
+			{
+				effective_note_names = eof_note_names_sharp;	//A key using sharp note names is in use
+				effective_slash_note_names = eof_slash_note_names_sharp;
+			}
+		}
 		if(!isslash)
 		{	//If it's a normal chord
-			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s", eof_note_names[scale], eof_chord_names[chord].chordname);
+			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s", effective_note_names[scale], eof_chord_names[chord].chordname);
 		}
 		else
 		{	//If it's a slash chord
-			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s%s", effective_note_names[scale], eof_chord_names[chord].chordname, effective_slash_note_names[bassnote]);
 		}
 		buffer[EOF_NAME_LENGTH] = '\0';	//Ensure this buffer is truncated
 		return 2;
@@ -3111,6 +3128,9 @@ char eof_build_note_name_ignoring_ghosts(EOF_SONG *sp, unsigned long track, unsi
 	int scale = 0, chord = 0, isslash = 0, bassnote = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	unsigned char backup;
+	char **effective_note_names = eof_note_names;	//By default, use whichever sharp/flat preference the user has in effect
+	char **effective_slash_note_names = eof_slash_note_names;
+	char key;	//Stores the key signature in effect at the note's position
 
 	if((sp == NULL) || !track || (track >= sp->tracks) || (buffer == NULL) || (note >= eof_get_track_size(sp, track)))
 		return 0;	//Invalid parameters
@@ -3130,13 +3150,26 @@ char eof_build_note_name_ignoring_ghosts(EOF_SONG *sp, unsigned long track, unsi
 	tp->note[note]->note &= ~tp->note[note]->ghost;	//Clear all of the ghosted gems from the note bitmask
 	if(eof_lookup_chord(tp, track, note, &scale, &chord, &isslash, &bassnote, 0, 0))
 	{	//If the chord lookup found a match
+		if(eof_get_effective_ks(sp, &key, eof_get_note_pos(sp, track, note)))
+		{	//If there is a key signature in effect at the note's position, use the sharp/flat accidentals corresponding to that scale
+			if(key < 0)
+			{
+				effective_note_names = eof_note_names_flat;	//A key using flat note names is in use
+				effective_slash_note_names = eof_slash_note_names_flat;
+			}
+			else if(key > 0)
+			{
+				effective_note_names = eof_note_names_sharp;	//A key using sharp note names is in use
+				effective_slash_note_names = eof_slash_note_names_sharp;
+			}
+		}
 		if(!isslash)
 		{	//If it's a normal chord
-			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s", eof_note_names[scale], eof_chord_names[chord].chordname);
+			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s", effective_note_names[scale], eof_chord_names[chord].chordname);
 		}
 		else
 		{	//If it's a slash chord
-			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+			(void) snprintf(buffer, EOF_NAME_LENGTH, "%s%s%s", effective_note_names[scale], eof_chord_names[chord].chordname, effective_slash_note_names[bassnote]);
 		}
 		buffer[EOF_NAME_LENGTH] = '\0';	//Ensure this buffer is truncated
 		tp->note[note]->note = backup;	//Restore the note's original bitmask
