@@ -2953,7 +2953,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					if(bytemask & 64)
 					{	//Beat is a rest
 						(void) pack_getc(vars.inf);	//Rest beat type (empty/rest)
-						new_note = 0;
 					}
 					byte = pack_getc(vars.inf);		//Read beat duration
 					if((byte < -2) || (byte > 4))
@@ -4061,26 +4060,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//If this note is being imported
 						unsigned char remappednote = 0, remappedghost = 0;
 
-						//Determine the bitmasks for the note and ghost gems first so it can be determined whether a tie note used different strings than the previous note
-						if(vars.strings[ctr2] > 6)
-						{	//If this is a 7 string track
-							if(effective_drop_7)
-							{	//The user opted to drop string 7 instead of string 1
-								remappednote = definedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
-								remappedghost = ghost >> 1;		//Likewise translate the ghost bit mask
-							}
-							else
-							{	//The user opted to drop string 1
-								remappednote = definedstrings & 63;	//Mask out string 1
-								remappedghost = ghost & 63;		//Likewise mask out string 1 of the ghost bit mask
-							}
-						}
-						else
-						{	//This track has less than 7 strings
-							remappednote = definedstrings >> (7 - vars.strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
-							remappedghost = ghost >> (7 - vars.strings[ctr2]);			//Likewise translate the ghost bit mask
-						}
-
 						if(tie_note)
 						{	//If this note had one or more tie gems
 							char newtech = 0;	//Is set to nonzero if the tie note is determined to add techniques to the note it is extending
@@ -4097,11 +4076,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 								}
 							}
-							if(remappednote != vars.np[ctr2]->note)
-							{	//If this tied note does not use the same strings as the previous note
-								new_note = 1;	//Prevent it from modifying the previous note and create a new note instead
-							}
-							if(!newtech && !new_note)
+							if(!newtech)
 							{	//If the tie note doesn't enable a technique not in use by the previous note, alter the previous note's length to include the tie note, and it isn't a tie note with dislike strings from the previous note
 								long oldlength;
 								unsigned int convertedtie = usedtie >> (7 - vars.strings[ctr2]);	//Re-map from GP's string numbering to EOF's
@@ -4156,6 +4131,26 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						if(new_note)
 						{	//If a new note is to be created
 							char truncate = 0;	//Is set to nonzero if any conditions are met that should cause the note's sustain to be removed
+
+							//Determine the bitmasks for the note and ghost gems first so it can be determined whether a tie note used different strings than the previous note
+							if(vars.strings[ctr2] > 6)
+							{	//If this is a 7 string track
+								if(effective_drop_7)
+								{	//The user opted to drop string 7 instead of string 1
+									remappednote = definedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
+									remappedghost = ghost >> 1;		//Likewise translate the ghost bit mask
+								}
+								else
+								{	//The user opted to drop string 1
+									remappednote = definedstrings & 63;	//Mask out string 1
+									remappedghost = ghost & 63;		//Likewise mask out string 1 of the ghost bit mask
+								}
+							}
+							else
+							{	//This track has less than 7 strings
+								remappednote = definedstrings >> (7 - vars.strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
+								remappedghost = ghost >> (7 - vars.strings[ctr2]);			//Likewise translate the ghost bit mask
+							}
 
 							vars.np[ctr2] = eof_pro_guitar_track_add_note(tp);	//Add a new note to the current track
 							if(!vars.np[ctr2])
