@@ -141,6 +141,21 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text, char allocation)
 	}
 }
 
+static int eof_vocal_track_has_lyric_set(EOF_VOCAL_TRACK *tp, unsigned char lyric_set)
+{
+	unsigned long ctr;
+	if(!tp)
+	{
+		return 0;
+	}
+	for(ctr = 0; ctr < tp->lyrics; ctr++)
+	{
+		if(tp->lyric[ctr]->type == lyric_set)
+			return 1;
+	}
+	return 0;
+}
+
 void eof_add_midi_text_event(unsigned long pos, char * text, char allocation, unsigned long index)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 ///	eof_log("eof_add_midi_text_event() entered", 2);	//Only log this if verbose logging is on
@@ -469,6 +484,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
 	char notetempname[EOF_TRACKS_MAX+1][25];
+	char harmonytempname[3][25];
+	char harmonytrackwritten[3] = {0};
 	char notetrackspopulated[EOF_TRACKS_MAX+1] = {0};
 	char expertplustempname[30];	//Stores the temporary filename for the Expert+ track data
 	char tempotempname[30];
@@ -572,6 +589,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
 	{
 		(void) snprintf(notetempname[i], sizeof(notetempname[i]) - 1, "%seof%lu.tmp", eof_temp_path_s, i);
+	}
+	for(i = 0; i < 3; i++)
+	{
+		(void) snprintf(harmonytempname[i], sizeof(harmonytempname[i]) - 1, "%seof_harm%lu.tmp", eof_temp_path_s, i + 1);
 	}
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
@@ -1712,14 +1733,34 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		{	//If this is a vocal track
 			#define EOF_LYRIC_PHRASE_PADDING 0
 			///EOF_LYRIC_PHRASE_PADDING was originally implemented with a value of 5 for the sake of working around bugs in FoFiX, but unless modern rhythm games are found to have similar needs, it isn't worth maintaining this legacy workaround
-			unsigned long last_phrase = 0;	//Stores the absolute delta time of the last Note 105 On
-			int lastevent = 0;	//Track the last event written so running status can be utilized
-			char *exportname = sp->track[j]->name;	//By default, the track's regular name is used for export
+			unsigned char lyric_set;
+			const char *harmony_names[4] = {"PART VOCALS", "HARM1", "HARM2", "HARM3"};
+			char *base_exportname = sp->track[j]->name;	//By default, the track's regular name is used for export
 
 			if((sp->track[j]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[j]->altname[0] != '\0'))
 			{	//If the track has been renamed
-				exportname = sp->track[j]->altname;	//Allow that name to export to the MIDI track
+				base_exportname = sp->track[j]->altname;	//Allow that name to export to the MIDI track
 			}
+
+			for(lyric_set = 0; lyric_set < 4; lyric_set++)
+			{
+				unsigned long last_phrase = 0;	//Stores the absolute delta time of the last Note 105 On
+				int lastevent = 0;	//Track the last event written so running status can be utilized
+				char *exportname = base_exportname;
+				char *tempname = notetempname[j];
+
+				if(lyric_set > 0)
+				{
+					if(!eof_vocal_track_has_lyric_set(sp->vocal_track[tracknum], lyric_set))
+						continue;	//Skip empty harmony tracks
+					exportname = (char *)harmony_names[lyric_set];
+					tempname = harmonytempname[lyric_set - 1];
+					harmonytrackwritten[lyric_set - 1] = 1;
+					trackcounter++;	//Count the extra harmony track
+					eof_clear_midi_events();	//Don't inherit track-specific text events
+				}
+
+				memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Reset note status for each vocal subtrack
 
 			/* make vocals track */
 			/* insert the missing lyric phrases if the user opted to do so */
@@ -1729,6 +1770,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				unsigned long phrase_start = 0;	//This will store the delta time of the last opened lyric phrase
 				for(ctr = 0; ctr < sp->vocal_track[tracknum]->lyrics; ctr++)
 				{
+						if(sp->vocal_track[tracknum]->lyric[ctr]->type != lyric_set)
+							continue;	//Skip lyrics from other sets
 					if(eof_find_lyric_line(ctr) != NULL)
 						continue;	//If this lyric is in a line or is a vocal percussion note, skip it
 
@@ -1739,8 +1782,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_add_midi_event(phrase_start, 0x90, 105, vel, 0);
 						phrase_in_progress = 1;
 					}
-					if(!((ctr + 1 < sp->vocal_track[tracknum]->lyrics) && (eof_find_lyric_line(ctr + 1) == NULL)))
-					{	//Only if there isn't a next lyric that is also missing a vocal phrase, write the note off for the phrase
+						{
+							unsigned long next = ctr + 1;
+							char next_missing = 0;
+							for(; next < sp->vocal_track[tracknum]->lyrics; next++)
+							{
+								if(sp->vocal_track[tracknum]->lyric[next]->type != lyric_set)
+									continue;	//Skip lyrics from other sets
+								if(eof_find_lyric_line(next) == NULL)
+									next_missing = 1;	//Next lyric of this type also lacks a line
+								break;
+							}
+							if(!next_missing)
+							{	//Only if there isn't a next lyric of this type that is also missing a vocal phrase, write the note off for the phrase
 						deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos + sp->vocal_track[tracknum]->lyric[ctr]->length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - phrase_start;	//Store the number of delta ticks representing the phrase's length
 						if(deltalength < 1)
 						{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
@@ -1751,11 +1805,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 				}
 			}
+				}
 
 			/* write the MTrk MIDI data to a temp file
 			use size of the file as the MTrk header length */
 			for(i = 0; i < sp->vocal_track[tracknum]->lyrics; i++)
 			{	//For each lyric
+					if(sp->vocal_track[tracknum]->lyric[i]->type != lyric_set)
+						continue;	//Skip lyrics from other sets
 				//Copy each lyric string into a new array, perform correction on it if necessary
 				tempstring = malloc(sizeof(sp->vocal_track[tracknum]->lyric[i]->text));
 				if(tempstring == NULL)	//If allocation failed
@@ -1805,6 +1862,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			/* fill in lyric lines */
 			for(i = 0; i < sp->vocal_track[tracknum]->lines; i++)
 			{
+					if(!eof_lyric_line_applies_to_type(&sp->vocal_track[tracknum]->line[i], lyric_set))
+						continue;	//Skip lyric lines that don't apply to this lyric set
 				deltapos = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].start_pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
 				deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
 				if(deltalength < 1)
@@ -1895,7 +1954,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 			/* open the file */
-			fp = pack_fopen(notetempname[j], "w");
+				fp = pack_fopen(tempname, "w");
 			if(!fp)
 			{
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
@@ -1958,6 +2017,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			(void) pack_putc(0x2F, fp);
 			(void) pack_putc(0x00, fp);
 			(void) pack_fclose(fp);
+			}
 		}//If this is a vocal track
 
 		else if(eof_track_is_pro_guitar_track(sp, j))
@@ -2886,6 +2946,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//Otherwise write the regular track
 					(void) eof_dump_midi_track(notetempname[j],fp);
 				}
+				if(j == EOF_TRACK_VOCALS)
+				{	//Write any harmony vocal tracks immediately after the main vocal track
+					unsigned long harmctr;
+					for(harmctr = 0; harmctr < 3; harmctr++)
+					{
+						if(harmonytrackwritten[harmctr])
+						{
+							(void) eof_dump_midi_track(harmonytempname[harmctr],fp);
+						}
+					}
+				}
 			}
 		}
 		if(featurerestriction != 2)
@@ -2900,6 +2971,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
 	{
 		(void) delete_file(notetempname[i]);
+	}
+	for(i = 0; i < 3; i++)
+	{
+		(void) delete_file(harmonytempname[i]);
 	}
 	(void) delete_file(expertplustempname);
 	(void) delete_file(tempotempname);
