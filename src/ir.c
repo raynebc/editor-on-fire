@@ -301,7 +301,7 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 				{	//If the arpeggio begins at the same position as the note being exported
 					arpeg_pos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
 					arpeg_length = eof_ConvertToDeltaTime(tp->arpeggio[j].end_pos, anchorlist, tslist, timedivision, 0, has_stored_tempo) - arpeg_pos;	//Get the MIDI timings for this arpeggio
-					pitchmask = eof_get_midi_pitches(sp, track, i, arpeg_pitches, 1);	//Re-detect the pitches for the gems in the note, including those for ghosted gems
+					(void) eof_get_midi_pitches(sp, track, i, arpeg_pitches, 1);	//Re-detect the pitches for the gems in the note, including those for ghosted gems
 					for(stringnum = 0, bitmask = 1; stringnum < 6; stringnum++, bitmask <<= 1)
 					{	//For each of the 6 usable strings
 						if(note & bitmask)

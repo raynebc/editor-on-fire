@@ -4027,19 +4027,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}//Note effects
 						if(bytemask & 64)
 						{	//Heavy accented or accented note
-							if(!eof_gp_import_remove_accent_from_staccato || !note_is_staccato)
-							{	//As long as the import preference to remove accent from staccato notes isn't applicable
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;	//Apply accent status as defined
-								eof_log("\t\t\tAccent suppressed on staccato note", 2);
-							}
+							flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;	//Apply accent status as defined
 						}
 						if((fileversion >= 500) && (bytemask & 2))
 						{	//Heavy accented note (GP5 or higher only)
-							if(!eof_gp_import_remove_accent_from_staccato || !note_is_staccato)
-							{	//As long as the import preference to remove accent from staccato notes isn't applicable
-								flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;
-								eof_log("\t\t\tAccent suppressed on staccato note", 2);
-							}
+							flags |= EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;	//Apply accent status as defined
 						}
 						if((thisgemtype == 2) || tie_note)
 						{	//If the note on this string was a tie note or the entire note itself was a tie
@@ -4263,6 +4255,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								(void) strncat(eof_log_string, temp, sizeof(eof_log_string) - strlen(eof_log_string) - 1);
 							}
 							eof_log(eof_log_string, 1);
+							if(note_is_staccato)
+							{	//If the note is staccato, apply some additional rules
+								if((vars.np[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT) && eof_gp_import_remove_accent_from_staccato)
+								{	//If this staccato note had accent status, and the user preference is to remove accent status in this scenario
+									eof_log("\t\t\t\tAccent suppressed on staccato note", 2);
+									vars.np[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_ACCENT;	//Remove this flag
+								}
+								if(truncate)
+								{	//If the staccato note would be truncated due to user preference for short notes
+									eof_log("\t\t\t\tSustain suppressed on staccato note", 2);
+									vars.np[ctr2]->length = 1;	//Truncate now instead of at the end of the import because there is no tracking to remember this was a staccato note
+								}
+							}
 							if(isdownbeat)
 								eof_log("\t\t\t\tLengthened as a triplet feel down beat", 1);
 							else if(isupbeat)
@@ -4481,7 +4486,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					measurelength = beatlength / (double)den;	//Calculate this length in terms of measures (beat length divided by beat unit)
 					if((unsigned long)(measurelength * 100.0 + 0.5) < 25)
 					{	//If the note (rounded up to allow for floating point math error) is shorter than a quarter note
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu pos = %lums, len = %lums, measure length = %f", ctr2, vars.gp->track[ctr]->note[ctr2]->pos, vars.gp->track[ctr]->note[ctr2]->length, measurelength);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu pos = %lums, len = %lums, measure length = %f -> 1ms long", ctr2, vars.gp->track[ctr]->note[ctr2]->pos, vars.gp->track[ctr]->note[ctr2]->length, measurelength);
 						eof_log(eof_log_string, 2);
 						vars.gp->track[ctr]->note[ctr2]->length = 1;
 					}
