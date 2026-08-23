@@ -12804,7 +12804,7 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 	if(fret == 0)
 	{	//This string is played open
 		if(np->finger[stringnum])
-			return -3;	//If there is a finger defined for this string, this is invalid
+			return -1;	//If there is a finger defined for this string, this is invalid
 
 		return 1;	//Otherwise having no fingering is correct for an open string
 	}
@@ -12841,18 +12841,18 @@ int eof_pro_guitar_note_derive_string_fingering(EOF_SONG *sp, unsigned long trac
 		arpeggio_base_fret = arpeggio_base->frets[stringnum] & 0x7F;	//Store this with the mute bit masked out
 	if(arpeggio_base && (arpeggio_base_fret == 0))
 	{	//If this gem is within an arpeggio/handshape that does not use the specified string
-		return -1;	//The specified gem violates the arpeggio/handshape
+		return -3;	//The specified gem violates the arpeggio/handshape
 	}
 	if(arpeggio_base && (arpeggio_base_fret != fret))
 	{	//If this gem is within an arpeggio/handshape but does not use the same fret as the base chord
-		return -1;	//The specified gem violates the arpeggio/handshape
+		return -4;	//The specified fret violates the arpeggio/handshape
 	}
 	if(*result)
 	{	//If the string has a fingering defined
 		if(arpeggio_base && (np->pos != arpeggio_base->pos))
 		{	//If the specified note is in the scope of an arpeggio/handshape phrase, and it isn't itself the first note in the phrase (which would define the phrase's collective notes)
 			if(*result != arpeggio_base->finger[stringnum])
-				return -1;	//The specified gem defines a fingering that contradicts the string's fingering defined by the arpeggio/handshape
+				return -5;	//The specified gem defines a fingering that contradicts the string's fingering defined by the arpeggio/handshape
 		}
 		return 1;	//Defined fret and fingering is valid
 	}

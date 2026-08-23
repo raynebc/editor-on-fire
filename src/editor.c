@@ -6677,6 +6677,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	/* draw arpeggio sections */
 			for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 			{	//For each arpeggio section in the track
+				int x1, y1, x2, y2;
 				sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
 				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop) && ((sectionptr->difficulty == eof_note_type) || (sectionptr->difficulty == 0xFF)))
 				{	//If the arpeggio section would render between the left and right edges of the piano roll, and the section applies to the active difficulty, fill the bottom lane with turquoise
@@ -6686,7 +6687,12 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 					{	//If this arpeggio is configured to export as a normal handshape
 						arpeggiocolor = eof_color_lighter_blue;
 					}
-					rectfill(window->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], arpeggiocolor);
+					x1 = lpos + sectionptr->start_pos / eof_zoom;
+					y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2];
+					x2 = lpos + sectionptr->end_pos / eof_zoom;
+					y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1];
+					rectfill(window->screen, x1, y1, x2, y2, arpeggiocolor);
+					rectfill(window->screen, x1, y1, x1+2, y2, eof_color_blue);	//Draw a dark blue three pixel wide rectangle to mark the beginning of the handshape/arpeggio to make it easier to tell when handshapes are immediately adjacent to each other
 				}
 			}
 

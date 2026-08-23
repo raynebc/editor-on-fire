@@ -46,6 +46,7 @@ char eof_notes_macro_lyric_extending_outside_line[50];
 char eof_notes_macro_technique_missing_sustain[50];
 char eof_notes_macro_note_name_maj_conflict[50];
 char eof_notes_macro_finger_violations[50];
+char eof_notes_macro_finger_violations_reason[60];
 char eof_notes_macro_lyric_with_non_ascii[50];
 char eof_notes_macro_lyric_outside_line[50];
 char eof_notes_macro_lyric_line_beginning_with_lowercase[50];
@@ -2895,6 +2896,13 @@ int eof_expand_notes_window_macro(char *macro, char *dest_buffer, unsigned long 
 		return 1;
 	}
 
+	if(!ustricmp(macro, "RS_FIRST_FINGER_VIOLATION_REASON"))
+	{
+		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_finger_violations_reason);
+
+		return 1;
+	}
+
 	if(!ustricmp(macro, "FIRST_LYRIC_WITH_NON_ASCII"))
 	{
 		snprintf(dest_buffer, dest_buffer_size, "%s", eof_notes_macro_lyric_with_non_ascii);
@@ -5537,7 +5545,9 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 				{	//For each string used in this track
 					if(tp->pgnote[notectr]->note & bitmask)
 					{	//If this string is used by the note
-						if(eof_pro_guitar_note_derive_string_fingering(eof_song, ctr, notectr, stringnum, &unused) < 0)
+						int status = eof_pro_guitar_note_derive_string_fingering(eof_song, ctr, notectr, stringnum, &unused);
+
+						if(status < 0)
 						{	//If this string of this note was determined to have a finger or handshape violation
 							if(ctr != eof_selected_track)
 							{	//If this isn't the active track
@@ -5548,6 +5558,24 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 							eof_notes_panel_print_time(tp->pgnote[notectr]->pos, time_string, panel->timeformat);	//Build the timestamp in the current time format
 							snprintf(eof_notes_macro_finger_violations, sizeof(eof_notes_macro_finger_violations) - 1, "%s - diff %u : pos %s", eof_song->track[ctr]->name, tp->pgnote[notectr]->type, time_string);	//Write a string identifying the offending note
 							dest_buffer[0] = '\0';
+							switch(status)
+							{
+								case -1:
+									snprintf(eof_notes_macro_finger_violations_reason, sizeof(eof_notes_macro_finger_violations_reason) - 1, "Open note has defined fingering");
+									break;
+								case -2:
+									snprintf(eof_notes_macro_finger_violations_reason, sizeof(eof_notes_macro_finger_violations_reason) - 1, "Defined fingering contradicts FHP");
+									break;
+								case -3:
+									snprintf(eof_notes_macro_finger_violations_reason, sizeof(eof_notes_macro_finger_violations_reason) - 1, "Contradicts handshape (uses string outside base)");
+									break;
+								case -4:
+									snprintf(eof_notes_macro_finger_violations_reason, sizeof(eof_notes_macro_finger_violations_reason) - 1, "Contradicts handshape (fret differs from base)");
+									break;
+								case -5:
+									snprintf(eof_notes_macro_finger_violations_reason, sizeof(eof_notes_macro_finger_violations_reason) - 1, "Contradicts handshape (fingering differs from base)");
+									break;
+							}
 							retval = 3;	//True
 							notectr = tp->pgnotes;	//Trigger a condition to break out of the note loop to end processing the rest of this track
 							break;	//Break from string loop

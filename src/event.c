@@ -103,6 +103,7 @@ void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event)
 		}
 		sp->text_events--;
 		eof_cleanup_beat_flags(sp);	//Rebuild event flags for all beats to ensure they're valid
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	}
 }
 
