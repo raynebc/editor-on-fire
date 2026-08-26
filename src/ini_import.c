@@ -8,6 +8,7 @@
 #include "midi_import.h"	//For declaration of eof_midi_import_drum_accent_velocity and eof_midi_import_drum_ghost_velocity
 #include "ini_import.h"
 #include "undo.h"
+#include "config.h"
 #include "foflc/Lyric_storage.h"	//For strcasestr_spec()
 #include "menu/song.h"	//For eof_is_number()
 
@@ -777,12 +778,14 @@ char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag)
 unsigned long eof_cleanup_ini_settings(EOF_SONG *sp)
 {
 	unsigned long ctr, index, delete_count = 0;
+	char tag[EOF_INI_LENGTH], value[EOF_INI_LENGTH];
 
 	if(!sp)
 		return 0;	//Return error
 
 	eof_log("eof_cleanup_ini_settings() entered", 1);
 
+	//Delete INI tags that are reserved
 	for(ctr = 0; ctr < EOF_NUM_RESERVED_INI_TAGS; ctr++)
 	{	//For each of the INI tags in the pre-defined list that aren't allowed to be stored as INI tags
 		while(eof_find_ini_setting_tag(sp, &index, eof_reserved_ini_tags[ctr]) && (index < sp->tags->ini_settings))
@@ -794,6 +797,7 @@ unsigned long eof_cleanup_ini_settings(EOF_SONG *sp)
 		}
 	}
 
+	//Delete difficulty tags that are reserved
 	for(ctr = 0; ctr < EOF_TRACKS_MAX; ctr++)
 	{	//For each of the track difficulty tags in the pre-defined list that aren't allowed to be stored as INI tags
 		while(eof_find_ini_setting_tag(sp, &index, eof_difficulty_ini_tags[ctr]) && (index < sp->tags->ini_settings))
@@ -802,6 +806,29 @@ unsigned long eof_cleanup_ini_settings(EOF_SONG *sp)
 			eof_log(eof_log_string, 1);
 			eof_ini_delete(sp, index);	//Delete it
 			delete_count++;
+		}
+	}
+
+	//Delete duplicate INI tags
+	for(ctr = sp->tags->ini_settings; ctr > 0; ctr--)
+	{	//For each INI tag in the project, in reverse order
+		if(!eof_parse_config_entry_name(tag, sizeof(tag), value, sizeof(value), sp->tags->ini_setting[ctr -1]))
+		{	//If there was no error identifying the tag name and value
+			if(eof_find_ini_setting_tag(sp, &index, tag))
+			{	//If the first instance of this INI tag was found
+				if(index != ctr - 1)
+				{	//And it isn't the instance being examined, the latter is a duplicate
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tDeleting duplicate INI tag \"%s\"", tag);
+					eof_log(eof_log_string, 1);
+					eof_ini_delete(sp, ctr - 1);	//Delete it
+					delete_count++;
+				}
+			}
+			else
+			{	//Logic error:  No instances of the INI tag being examined were found
+				eof_log("! Logic error in eof_cleanup_ini_settings()", 1);
+				break;	//Stop looking for duplicate INI tags
+			}
 		}
 	}
 

@@ -1730,7 +1730,9 @@ int eof_menu_catalog_next(void)
 
 int eof_ini_dialog_add(DIALOG * d)
 {
-	int i;
+	int i, overwritten = 0;
+	unsigned long index;
+	char tag[EOF_INI_LENGTH], value[EOF_INI_LENGTH];
 
 	if(!d)
 	{	//Satisfy Splint by checking value of d
@@ -1758,8 +1760,21 @@ int eof_ini_dialog_add(DIALOG * d)
 			if(eof_song && (eof_ini_dialog_array == eof_song->tags->ini_setting))
 			{	//If it is the active project's INI settings that are being altered
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				(void) ustrncpy(eof_ini_dialog_array[*eof_ini_dialog_count], eof_etext, EOF_INI_LENGTH - 1);
-				(*eof_ini_dialog_count)++;
+
+				if(!eof_parse_config_entry_name(tag, sizeof(tag), value, sizeof(value), eof_etext))
+				{	//If there was no error identifying the tag name and value
+					if(eof_find_ini_setting_tag(eof_song, &index, tag))
+					{	//If an instance of this INI tag already exists
+						(void) ustrncpy(eof_song->tags->ini_setting[index], eof_etext, EOF_INI_LENGTH - 1);		//Overwrite the existing INI tag
+						overwritten = 1;	//Track that this occurred
+					}
+				}
+
+				if(!overwritten)
+				{	//If an existing INI tag was not just edited, add a new tag
+					(void) ustrncpy(eof_ini_dialog_array[*eof_ini_dialog_count], eof_etext, EOF_INI_LENGTH - 1);
+					(*eof_ini_dialog_count)++;
+				}
 			}
 			else
 			{

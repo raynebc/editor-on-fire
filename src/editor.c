@@ -6566,6 +6566,7 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	int ismeasuremarker;	//Tracks whether the beat marker being rendered is the first beat in a measure and is to be rendered thicker due to the "2D render RS piano roll" preference
 	int bottomlane_y;		//Used to store the y coordinate of the bottom-most fret lane
 	unsigned label_one_of_every;	//Used to determine which second marker timestamps to draw, for the sake of custom zoom levels
+	int x1, y1, x2, y2;
 
 	if(!eof_song_loaded || !window)
 		return;
@@ -6637,7 +6638,14 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			if(sectionptr != NULL)
 			{
 				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the solo section would render between the left and right edges of the piano roll
-					rectfill(window->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_dark_blue);
+				{
+					x1 = lpos + sectionptr->start_pos / eof_zoom;
+					y1 = EOF_EDITOR_RENDER_OFFSET + 25;
+					x2 = lpos + sectionptr->end_pos / eof_zoom;
+					y2 = EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1;
+					rectfill(window->screen, x1, y1, x2, y2, eof_color_dark_blue);
+					rectfill(window->screen, x1, y1, x1+2, y2, eof_color_light_blue);	//Draw a light blue three pixel wide rectangle to mark the beginning of the solo section to make it easier to tell when solo sections are immediately adjacent to each other
+				}
 			}
 		}
 
@@ -6649,7 +6657,14 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 			if(sectionptr != NULL)
 			{
 				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the star power section would render between the left and right edges of the piano roll, render a silver rectangle from the top most lane to the top of the fretboard area
-					rectfill(window->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0], eof_color_silver);
+				{
+					x1 = lpos + sectionptr->start_pos / eof_zoom;
+					y1 = EOF_EDITOR_RENDER_OFFSET + 25;
+					x2 = lpos + sectionptr->end_pos / eof_zoom;
+					y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];
+					rectfill(window->screen, x1, y1, x2, y2, eof_color_silver);
+					rectfill(window->screen, x1, y1, x1+2, y2, eof_color_gray);	//Draw a dark gray three pixel wide rectangle to mark the beginning of the SP section to make it easier to tell when SP sections are immediately adjacent to each other
+				}
 			}
 		}
 
@@ -6677,7 +6692,6 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 	/* draw arpeggio sections */
 			for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 			{	//For each arpeggio section in the track
-				int x1, y1, x2, y2;
 				sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
 				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop) && ((sectionptr->difficulty == eof_note_type) || (sectionptr->difficulty == 0xFF)))
 				{	//If the arpeggio section would render between the left and right edges of the piano roll, and the section applies to the active difficulty, fill the bottom lane with turquoise
@@ -6906,10 +6920,10 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 				{	//For each of the track's usable lanes
 					if(usedlanes & bitmask)
 					{	//If this lane is used in the phrase
-						int x1 = lpos + sectionptr->start_pos / eof_zoom;
-						int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
-						int x2 = lpos + sectionptr->end_pos / eof_zoom;
-						int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;
+						x1 = lpos + sectionptr->start_pos / eof_zoom;
+						y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
+						x2 = lpos + sectionptr->end_pos / eof_zoom;
+						y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;
 
 						if(y1 < EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0])
 							y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
@@ -6929,8 +6943,8 @@ void eof_render_editor_window_common(EOF_WINDOW *window)
 		sectionptr = eof_get_kick_drum_lane(eof_song, eof_selected_track, i);	//Obtain the information for this section
 		if(sectionptr != NULL)
 		{
-			int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1];
-			int y2 = EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1;
+			y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1];
+			y2 = EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1;
 			if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the kick drum lane section would render between the left and right edges of the piano roll
 				rectfill(window->screen, lpos + sectionptr->start_pos / eof_zoom, y1, lpos + sectionptr->end_pos / eof_zoom, y2, eof_colors[0].lightcolor);
 		}
