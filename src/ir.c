@@ -485,6 +485,18 @@ int eof_export_immerrock_midi(EOF_SONG *sp, unsigned long track, unsigned char d
 						}
 					}
 				}
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
+				{	//If this note is slapped
+					eof_log("\t\t\tExporting note as slap", 2);
+					eof_add_midi_event_indexed(deltapos, 0x90, 24, technique_vel[stringnum], 15, index++);		//Note 24, channel 15 with the string's dedicated velocity number indicates slap in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x80, 24, 0, 15, index++);
+				}
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_POP)
+				{	//If this note is popped
+					eof_log("\t\t\tExporting note as pop", 2);
+					eof_add_midi_event_indexed(deltapos, 0x90, 25, technique_vel[stringnum], 15, index++);		//Note 25, channel 15 with the string's dedicated velocity number indicates pop in IMMERROCK
+					eof_add_midi_event_indexed(deltapos, 0x80, 25, 0, 15, index++);
+				}
 
 				//Write finger placement markers
 				retval = eof_pro_guitar_note_derive_string_fingering(sp, track, i, stringnum, &finger);

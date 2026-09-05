@@ -3426,8 +3426,8 @@ void eof_enforce_midi_section_endings(int silent)
 	char resize_conflict = 0;	//Set to 1 if a section couldn't be extended by 1ms as needed because it would cause it to include a note that wasn't already in the section
 	char corrections_made = 0;
 
-	if(!eof_song)
-		return;
+	if(!eof_song || !eof_write_fof_files)
+		return;	//Don't run this function if a project isn't open or if a relevant export format isn't enabled
 
 	eof_log("eof_enforce_midi_section_endings() entered", 1);
 	eof_sort_notes(eof_song);	//The notes must be sorted
@@ -3534,7 +3534,7 @@ void eof_enforce_midi_section_endings(int silent)
 		line2 = resize_conflict ? string2 : string4;
 		line3 = resize_conflict ? string3 : string4;
 
-		allegro_message("%s\n%s\n%s\n", line1, line2, line3);
+		allegro_message("Clone Hero:  %s\n%s\n%s\n", line1, line2, line3);
 	}
 }
 
