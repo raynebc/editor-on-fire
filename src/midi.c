@@ -28,6 +28,10 @@ char eof_midi_event_full = 0;					//Is set to nonzero when an overflow of the eo
 char eof_midi_note_status[16][128] = {0};		//Used by some functions to track the on/off status of notes 0 through 127 on each of the 16 usable MIDI channels
 unsigned long eof_midi_enddelta = 0, eof_midi_endbeatnum = 0;	//If these becomes nonzero, they define the position of a user-defined end event
 
+unsigned char eof_drum_velocities[6] = {100, 100, 100, 100, 100, 100};		//The velocity written for each normal gem.  For Phase Shift, musical MIDI export
+unsigned char eof_drum_ghost_velocities[6] = {1, 1, 1, 1, 1, 1};				//The velocity written for each ghost gem.  For Phase Shift, musical MIDI export
+unsigned char eof_drum_accent_velocities[6] = {127, 127, 127, 127, 127, 127};	//The velocity written for each accent gem.  For Phase Shift, musical MIDI export
+
 void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel)
 {
 	eof_add_midi_event_indexed(pos, type, note, velocity, channel, 0);	//Add the event with an index value of 0
@@ -3044,7 +3048,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 
 	//Write tracks
 	for(passnum = 0; passnum < numpasses; passnum++)
-	{	//Parse each track twice, on first pass write the tracks in Synthesia style, on second pass write the tracks in Fretlight style
+	{	//Parse each track twice, on first pass write the tracks in Synthesia/Songs2See/MuseScore style, on second pass write the pro guitar tracks in Fretlight style
 		for(j = 1; j < sp->tracks; j++)
 		{	//For each track in the project
 			int lastevent = 0;	//Track the last event written so running status can be utilized
@@ -3052,15 +3056,18 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 
 			if(eof_get_track_size_normal(sp, j) == 0)	//If this track has no notes (in the normal note set)
 				continue;	//Skip the track
-
-			if((!eof_track_is_pro_guitar_track(sp, j)) && (sp->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT))	//If this isn't a vocal or pro guitar track
+			if((!eof_track_is_pro_guitar_track(sp, j)) && (sp->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT) && !eof_track_is_drum(sp, j))	//If this isn't a vocal, pro guitar or drum track
+				continue;	//Skip the track
+			if(eof_track_overridden_by_stored_MIDI_track(sp, j))	//If this track is overridden by a stored MIDI track
 				continue;	//Skip the track
 
 			if(passnum && (sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT))
-				continue;	//Only write the vocal track once
+				continue;	//Don't write the vocal track during the Fretlight pass
+			if(passnum && eof_track_is_drum(sp, j))
+				continue;	//Don't write the drum track during the Fretlight pass
 
-			if(eof_track_overridden_by_stored_MIDI_track(sp, j))	//If this track is overridden by a stored MIDI track
-				continue;	//Skip the track
+			if((j == EOF_TRACK_DRUM) && eof_get_track_size(sp, EOF_TRACK_DRUM_PS))
+				continue;	//If this is the normal drum track but the Phase Shift drum track has content, skip this track in favor of the latter
 
 			eof_clear_midi_events();
 			memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
@@ -3125,63 +3132,178 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 					}
 				}
 
-				pitchmask = eof_get_midi_pitches(sp, j, i, pitches, 0);	//Determine how many exportable pitches this note/lyric has, treating string mutes as open notes
-				if(!pitchmask)
-					continue;	//If no pitches would be exported for this note/lyric, skip it
+				if(eof_track_is_drum(sp, j))
+				{	//Write drum note
+					unsigned char note = eof_get_note_note(sp, j, i);
+					unsigned long flags = eof_get_note_flags(sp, j, i);
+					unsigned char notes[10] = {0};		//The MIDI notes to write for this drum note
+					unsigned char velocities[10] = {0};		//The MIDI velocities to write for this drum note
+					unsigned char ctr = 0;
+					unsigned char accent = eof_get_note_accent(sp, j, i);
+					unsigned char ghost = eof_get_note_ghost(sp, j, i);
 
-				//Write note/lyric pitches
-				deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
-				deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
-				if(deltalength < 1)
-				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
-					deltalength = 1;
+					//Convert applicable gems to cross stick
+					for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
+					{	//For each of the drum lanes
+						if((note & bitmask) && (eof_get_note_crossstick(sp, j, i) & bitmask))
+						{	//If there is a gem on this lane and it is defined as having cross stick technique
+							if(!ctr)
+							{	//If a cross stick gem wasn't seen for this note yet, add it to the MIDI note list
+								notes[ctr] = mm_drum_export_cross_stick;
+								velocities[ctr++] = ((accent & bitmask) ? eof_drum_accent_velocities[k] : ((ghost & bitmask) ? eof_drum_ghost_velocities[k] : eof_drum_velocities[k]));
+							}
+							note &= ~bitmask;	//Clear this gem so it won't also export as another note with the logic below
+						}
+					}
+
+					//Determine MIDI notes and velocities to use
+					if(note & 1)
+					{	//Bass drum
+						notes[ctr] = mm_drum_export_bass;
+						velocities[ctr++] = ((accent & 1) ? eof_drum_accent_velocities[0] : ((ghost & 1) ? eof_drum_ghost_velocities[0] : eof_drum_velocities[0]));
+					}
+					if(note & 2)
+					{	//Snare
+						if(flags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
+						{	//Rim shot
+							notes[ctr] = mm_drum_export_snare_rim_shot;
+						}
+						else
+						{	//Normal snare
+							notes[ctr] = mm_drum_export_snare;
+						}
+						velocities[ctr++] = ((accent & 2) ? eof_drum_accent_velocities[1] : ((ghost & 2) ? eof_drum_ghost_velocities[1] : eof_drum_velocities[1]));
+					}
+					if(note & 4)
+					{	//Lane 3
+						if(flags & (EOF_DRUM_NOTE_FLAG_Y_CYMBAL | EOF_DRUM_NOTE_FLAG_Y_COMBO))
+						{	//Hi hat
+							if(flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN)
+							{	//Open hi hat
+								notes[ctr] = mm_drum_export_hi_hat_open;
+							}
+							else if(flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
+							{	//Pedal controlled hi hat
+								notes[ctr] = mm_drum_export_hi_hat_pedal;
+							}
+							else
+							{	//Normal hi hat
+								notes[ctr] = mm_drum_export_hi_hat;
+							}
+							velocities[ctr++] = ((accent & 4) ? eof_drum_accent_velocities[2] : ((ghost & 4) ? eof_drum_ghost_velocities[2] : eof_drum_velocities[2]));
+						}
+						if(!(flags & EOF_DRUM_NOTE_FLAG_Y_CYMBAL))
+						{	//Yellow tom
+							notes[ctr] = mm_drum_export_yellow_tom;
+							velocities[ctr++] = ((accent & 4) ? eof_drum_accent_velocities[2] : ((ghost & 4) ? eof_drum_ghost_velocities[2] : eof_drum_velocities[2]));
+						}
+					}
+					if(note & 8)
+					{	//Lane 4
+						if(flags & (EOF_DRUM_NOTE_FLAG_B_CYMBAL | EOF_DRUM_NOTE_FLAG_B_COMBO))
+						{	//Blue cymbal
+							notes[ctr] = mm_drum_export_blue_cymbal;
+							velocities[ctr++] = ((accent & 8) ? eof_drum_accent_velocities[3] : ((ghost & 8) ? eof_drum_ghost_velocities[3] : eof_drum_velocities[3]));
+						}
+						if(!(flags & EOF_DRUM_NOTE_FLAG_B_CYMBAL))
+						{	//Blue tom
+							notes[ctr] = mm_drum_export_blue_tom;
+							velocities[ctr++] = ((accent & 8) ? eof_drum_accent_velocities[3] : ((ghost & 8) ? eof_drum_ghost_velocities[3] : eof_drum_velocities[3]));
+						}
+					}
+					if(note & 16)
+					{	//Lane 5
+						if(flags & (EOF_DRUM_NOTE_FLAG_G_CYMBAL | EOF_DRUM_NOTE_FLAG_G_COMBO))
+						{	//Green cymbal
+							notes[ctr] = mm_drum_export_green_cymbal;
+							velocities[ctr++] = ((accent & 16) ? eof_drum_accent_velocities[4] : ((ghost & 16) ? eof_drum_ghost_velocities[4] : eof_drum_velocities[4]));
+						}
+						if(!(flags & EOF_DRUM_NOTE_FLAG_G_CYMBAL))
+						{	//Green tom
+							notes[ctr] = mm_drum_export_green_tom;
+							velocities[ctr++] = ((accent & 16) ? eof_drum_accent_velocities[4] : ((ghost & 16) ? eof_drum_ghost_velocities[4] : eof_drum_velocities[4]));
+						}
+					}
+					if(note & 32)
+					{	//Lane 6
+						notes[ctr] = mm_drum_export_purple_tom;
+						velocities[ctr++] = ((accent & 32) ? eof_drum_accent_velocities[5] : ((ghost & 32) ? eof_drum_ghost_velocities[5] : eof_drum_velocities[5]));
+					}
+
+					//Write MIDI notes
+					deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+					deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
+					if(deltalength < 1)
+					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+						deltalength = 1;
+					}
+					for(k = 0; k < ctr; k++)
+					{	//For each of the MIDI notes that were added to the list for this drum note
+						eof_add_midi_event(deltapos, 0x90, notes[k], velocities[k], 9);	//Write the MIDI note with the appropriate velocity on channel 9
+						eof_add_midi_event(deltapos + deltalength, 0x80, notes[k], velocities[k], 9);
+					}
 				}
-				if(!passnum)
-				{	//Writing a Synthesia style MIDI
-					if((eof_track_is_pro_guitar_track(sp, j)) && (eof_get_note_flags(sp, j, i) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT))
-					{	//If this is a pro guitar note played as an accent
-						vel = 127;	//Use the maximum velocity possible
+				else
+				{	//Write pro guitar or vocal note
+					//Determine pitches and velocities to use
+					pitchmask = eof_get_midi_pitches(sp, j, i, pitches, 0);	//Determine how many exportable pitches this note/lyric has, treating string mutes as open notes
+					if(!pitchmask)
+						continue;	//If no pitches would be exported for this note/lyric, skip it
+					if(!passnum)
+					{	//Writing a Synthesia/Songs2See/MuseScore style MIDI
+						if((eof_track_is_pro_guitar_track(sp, j)) && (eof_get_note_flags(sp, j, i) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT))
+						{	//If this is a pro guitar note played as an accent
+							vel = 127;	//Use the maximum velocity possible
+						}
+						else
+						{
+							vel = 64;	//Otherwise use half the maximum
+						}
 					}
 					else
-					{
-						vel = 64;	//Otherwise use half the maximum
+					{	//Writing a Fretlight style MIDI
+						vel = 127;
 					}
-				}
-				else
-				{	//Writing a Fretlight style MIDI
-					vel = 127;
-				}
-				for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
-				{	//For each of the 6 possible values in the pitch array
-					if(pitchmask & bitmask)
-					{	//If this pitch is defined in the array
-						if(passnum)
-						{	//Writing a Fretlight style MIDI
-							channel = 15 - k;	//Fretlight's channel numbering is such that low E uses channel 15 and high E uses channel 10
-						}
-						eof_add_midi_event(deltapos, 0x90, pitches[k], vel, channel);
-						eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], vel, channel);
-					}
-				}
 
-				//Write note name or lyric text if applicable
-				if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
-				{	//If a lyric is being exported
-					name = eof_get_note_name(sp, j, i);
-					if(name && (name[0] != '\0'))
-					{	//If the lyric has defined text
-						eof_add_midi_lyric_event(deltapos, name, 0);	//Track that the lyric text was NOT dynamically allocated
+					//Write note/lyric pitches
+					deltapos = eof_ConvertToDeltaTime(pos, anchorlist, tslist, timedivision, 1, has_stored_tempo);
+					deltalength = eof_ConvertToDeltaTime(pos + length, anchorlist, tslist, timedivision, 0, has_stored_tempo) - deltapos;
+					if(deltalength < 1)
+					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+						deltalength = 1;
 					}
-				}
-				else
-				{	//A pro guitar note is being exported
-					if(eof_build_note_name(sp, j, i, notename))
-					{	//If the note's name was manually defined or could be detected automatically
-						char * tempstring = malloc((size_t)ustrsizez(notename));	//Allocate memory to store a copy of the note name, because chord detection will overwrite notename[] each time it is used
-						if(tempstring != NULL)
-						{	//If allocation was successful
-							memcpy(tempstring, notename, (size_t)ustrsizez(notename));	//Copy the string to the newly allocated memory
-							eof_add_midi_text_event(deltapos, tempstring, 1, 0xFFFFFFFF);	//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory (provide a high index to ensure it doesn't influence sort order)
+					for(k = 0, bitmask = 1; k < 6; k++, bitmask <<= 1)
+					{	//For each of the 6 possible values in the pitch array
+						if(pitchmask & bitmask)
+						{	//If this pitch is defined in the array
+							if(passnum)
+							{	//Writing a Fretlight style MIDI
+								channel = 15 - k;	//Fretlight's channel numbering is such that low E uses channel 15 and high E uses channel 10
+							}
+							eof_add_midi_event(deltapos, 0x90, pitches[k], vel, channel);
+							eof_add_midi_event(deltapos + deltalength, 0x80, pitches[k], vel, channel);
+						}
+					}
+
+					//Write note name or lyric text if applicable
+					if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
+					{	//If a lyric is being exported
+						name = eof_get_note_name(sp, j, i);
+						if(name && (name[0] != '\0'))
+						{	//If the lyric has defined text
+							eof_add_midi_lyric_event(deltapos, name, 0);	//Track that the lyric text was NOT dynamically allocated
+						}
+					}
+					else
+					{	//A pro guitar note is being exported
+						if(eof_build_note_name(sp, j, i, notename))
+						{	//If the note's name was manually defined or could be detected automatically
+							char * tempstring = malloc((size_t)ustrsizez(notename));	//Allocate memory to store a copy of the note name, because chord detection will overwrite notename[] each time it is used
+							if(tempstring != NULL)
+							{	//If allocation was successful
+								memcpy(tempstring, notename, (size_t)ustrsizez(notename));	//Copy the string to the newly allocated memory
+								eof_add_midi_text_event(deltapos, tempstring, 1, 0xFFFFFFFF);	//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory (provide a high index to ensure it doesn't influence sort order)
+							}
 						}
 					}
 				}
@@ -3268,11 +3390,11 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 			(void) pack_putc(0xFF, fp);
 			(void) pack_putc(0x03, fp);
 			if(!passnum)
-			{	//If writing a Synthesia style MIDI
+			{	//If writing a Synthesia/Songs2See/MuseScore style MIDI
 				WriteVarLen(ustrsize(arrangement_name), fp);
 				(void) pack_fwrite(arrangement_name, ustrsize(arrangement_name), fp);
 
-				/* set the guitar/bass MIDI instrument as appropriate */
+				/* set the guitar/bass/drum MIDI instrument as appropriate */
 				if(eof_track_is_pro_guitar_track(sp, j))
 				{	//If this is a pro guitar/bass track
 					int tone = eof_midi_synth_instrument_guitar;	//By default, assume a guitar arrangement
@@ -3282,7 +3404,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format)
 						tone = eof_midi_synth_instrument_bass;	//Use the configured bass MIDI tone instead
 					}
 					WriteVarLen(0, fp);
-					(void) pack_putc(0xC0 + channel, fp);	//Write MIDI event 0xC (Program change)
+					(void) pack_putc(0xC0 + channel, fp);		//Write MIDI event 0xC (Program change)
 					(void) pack_putc(tone, fp);				//Write instrument number
 				}
 			}

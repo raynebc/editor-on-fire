@@ -4,7 +4,7 @@
 #include "config.h"
 #include "main.h"
 #include "mix.h"
-#include "menu/file.h"	//For drum velocity definitions
+#include "midi.h"	//For drum velocity definitions
 #include "menu/song.h"	//For eof_set_percussion_cue()
 #include "tuning.h"
 #include "utility.h"
@@ -596,6 +596,7 @@ void eof_load_config(char * fn)
 
 	eof_song_folder_prompt = get_config_int("other", "eof_song_folder_prompt", 0);
 
+	//Drums Rock lane remapping
 	drums_rock_remap_lane_1 = get_config_int("other", "drums_rock_remap_lane_1", 4);
 	if(drums_rock_remap_lane_1 > 6)
 		drums_rock_remap_lane_1 = 4;	//If the defined value is invalid, reset to default
@@ -623,6 +624,56 @@ void eof_load_config(char * fn)
 	drums_rock_remap_lane_6 = get_config_int("other", "drums_rock_remap_lane_6", 2);
 	if(drums_rock_remap_lane_6 > 6)
 		drums_rock_remap_lane_6 = 2;	//If the defined value is invalid, reset to default
+
+	//Musical MIDI drum mappings
+	mm_drum_export_bass = get_config_int("other", "mm_drum_export_bass", 36);
+	if(mm_drum_export_bass > 127)
+		mm_drum_export_bass = 36;	//If the defined value is invalid, reset to default
+	mm_drum_export_snare = get_config_int("other", "mm_drum_export_snare", 38);
+	if(mm_drum_export_snare > 127)
+		mm_drum_export_snare = 38;	//If the defined value is invalid, reset to default
+	mm_drum_export_snare_rim_shot = get_config_int("other", "mm_drum_export_snare_rim_shot", 40);
+	if(mm_drum_export_snare_rim_shot > 127)
+		mm_drum_export_snare_rim_shot = 40;	//If the defined value is invalid, reset to default
+	mm_drum_export_yellow_tom = get_config_int("other", "mm_drum_export_yellow_tom", 41);
+	if(mm_drum_export_yellow_tom > 127)
+		mm_drum_export_yellow_tom = 41;	//If the defined value is invalid, reset to default
+	mm_drum_export_hi_hat = get_config_int("other", "mm_drum_export_hi_hat", 42);
+	if(mm_drum_export_hi_hat > 127)
+		mm_drum_export_hi_hat = 42;	//If the defined value is invalid, reset to default
+	mm_drum_export_hi_hat_pedal = get_config_int("other", "mm_drum_export_hi_hat_pedal", 44);
+	if(mm_drum_export_hi_hat_pedal > 127)
+		mm_drum_export_hi_hat_pedal = 44;	//If the defined value is invalid, reset to default
+	mm_drum_export_hi_hat_open = get_config_int("other", "mm_drum_export_hi_hat_open", 46);
+	if(mm_drum_export_hi_hat_open > 127)
+		mm_drum_export_hi_hat_open = 46;	//If the defined value is invalid, reset to default
+	mm_drum_export_blue_tom = get_config_int("other", "mm_drum_export_blue_tom", 47);
+	if(mm_drum_export_blue_tom > 127)
+		mm_drum_export_blue_tom = 47;	//If the defined value is invalid, reset to default
+	mm_drum_export_blue_cymbal = get_config_int("other", "mm_drum_export_blue_cymbal", 55);
+	if(mm_drum_export_blue_cymbal > 127)
+		mm_drum_export_blue_cymbal = 55;	//If the defined value is invalid, reset to default
+	mm_drum_export_green_tom = get_config_int("other", "mm_drum_export_green_tom", 50);
+	if(mm_drum_export_green_tom > 127)
+		mm_drum_export_green_tom = 50;	//If the defined value is invalid, reset to default
+	mm_drum_export_green_cymbal = get_config_int("other", "mm_drum_export_green_cymbal", 49);
+	if(mm_drum_export_green_cymbal > 127)
+		mm_drum_export_green_cymbal = 49;	//If the defined value is invalid, reset to default
+	mm_drum_export_purple_tom = get_config_int("other", "mm_drum_export_purple_tom", 48);
+	if(mm_drum_export_purple_tom > 127)
+		mm_drum_export_purple_tom = 48;	//If the defined value is invalid, reset to default
+	mm_drum_export_cross_stick = get_config_int("other", "mm_drum_export_cross_stick", 37);
+	if(mm_drum_export_cross_stick > 127)
+		mm_drum_export_cross_stick = 37;	//If the defined value is invalid, reset to default
+	mm_drum_export_ride_cymbal = get_config_int("other", "mm_drum_export_ride_cymbal", 0);	///These last three are currently unused
+	if(mm_drum_export_ride_cymbal > 127)
+		mm_drum_export_ride_cymbal = 0;	//If the defined value is invalid, reset to default
+	mm_drum_export_china_cymbal = get_config_int("other", "mm_drum_export_china_cymbal", 0);
+	if(mm_drum_export_china_cymbal > 127)
+		mm_drum_export_china_cymbal = 0;	//If the defined value is invalid, reset to default
+	mm_drum_export_ride_bell = get_config_int("other", "mm_drum_export_ride_bell", 0);
+	if(mm_drum_export_ride_bell > 127)
+		mm_drum_export_ride_bell = 0;	//If the defined value is invalid, reset to default
 
 	//Convert MIDI tones to zero numbering
 	if(eof_midi_synth_instrument_guitar > 0)
@@ -914,6 +965,23 @@ void eof_save_config(char * fn)
 	set_config_string("other", "gp_drum_import_lane_5_cymbal", gp_drum_mappings);
 	eof_build_gp_drum_mapping_string(gp_drum_mappings, sizeof(gp_drum_mappings) - 1, gp_drum_import_lane_6);
 	set_config_string("other", "gp_drum_import_lane_6", gp_drum_mappings);
+
+	set_config_int("other", "mm_drum_export_bass", mm_drum_export_bass);
+	set_config_int("other", "mm_drum_export_snare", mm_drum_export_snare);
+	set_config_int("other", "mm_drum_export_snare_rim_shot", mm_drum_export_snare_rim_shot);
+	set_config_int("other", "mm_drum_export_yellow_tom", mm_drum_export_yellow_tom);
+	set_config_int("other", "mm_drum_export_hi_hat", mm_drum_export_hi_hat);
+	set_config_int("other", "mm_drum_export_hi_hat_pedal", mm_drum_export_hi_hat_pedal);
+	set_config_int("other", "mm_drum_export_hi_hat_open", mm_drum_export_hi_hat_open);
+	set_config_int("other", "mm_drum_export_blue_tom", mm_drum_export_blue_tom);
+	set_config_int("other", "mm_drum_export_blue_cymbal", mm_drum_export_blue_cymbal);
+	set_config_int("other", "mm_drum_export_green_tom", mm_drum_export_green_tom);
+	set_config_int("other", "mm_drum_export_green_cymbal", mm_drum_export_green_cymbal);
+	set_config_int("other", "mm_drum_export_purple_tom", mm_drum_export_purple_tom);
+	set_config_int("other", "mm_drum_export_cross_stick", mm_drum_export_cross_stick);
+	set_config_int("other", "mm_drum_export_ride_cymbal", mm_drum_export_ride_cymbal);
+	set_config_int("other", "mm_drum_export_china_cymbal", mm_drum_export_china_cymbal);
+	set_config_int("other", "mm_drum_export_ride_bell", mm_drum_export_ride_bell);
 
 	set_config_string("other", "eof_lyric_gap_multiplier", eof_lyric_gap_multiplier_string);
 	set_config_int("other", "eof_song_folder_prompt", eof_song_folder_prompt);

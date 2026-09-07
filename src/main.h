@@ -766,6 +766,23 @@ extern unsigned char gp_drum_import_lane_5[EOF_GP_DRUM_MAPPING_COUNT];
 extern unsigned char gp_drum_import_lane_5_cymbal[EOF_GP_DRUM_MAPPING_COUNT];
 extern unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT];
 
+extern unsigned char mm_drum_export_bass;
+extern unsigned char mm_drum_export_snare;
+extern unsigned char mm_drum_export_snare_rim_shot;
+extern unsigned char mm_drum_export_yellow_tom;
+extern unsigned char mm_drum_export_hi_hat;
+extern unsigned char mm_drum_export_hi_hat_pedal;
+extern unsigned char mm_drum_export_hi_hat_open;
+extern unsigned char mm_drum_export_blue_tom;
+extern unsigned char mm_drum_export_blue_cymbal;
+extern unsigned char mm_drum_export_green_tom;
+extern unsigned char mm_drum_export_green_cymbal;
+extern unsigned char mm_drum_export_purple_tom;
+extern unsigned char mm_drum_export_cross_stick;
+extern unsigned char mm_drum_export_ride_cymbal;
+extern unsigned char mm_drum_export_china_cymbal;
+extern unsigned char mm_drum_export_ride_bell;
+
 extern unsigned char drums_rock_remap_lane_1;
 extern unsigned char drums_rock_remap_lane_2;
 extern unsigned char drums_rock_remap_lane_3;

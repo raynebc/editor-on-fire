@@ -8201,7 +8201,6 @@ char eof_drum_lane_4_velocity[5] = {0};
 char eof_drum_lane_5_velocity[5] = {0};
 char eof_drum_lane_6_velocity[5] = {0};
 char *eof_drum_velocity_strings[6] = {eof_drum_lane_1_velocity, eof_drum_lane_2_velocity, eof_drum_lane_3_velocity, eof_drum_lane_4_velocity, eof_drum_lane_5_velocity, eof_drum_lane_6_velocity};
-unsigned char eof_drum_velocities[6] = {100, 100, 100, 100, 100, 100};	//The velocity written for each normal gem, for Phase Shift
 char eof_drum_lane_1_ghost_velocity[5] = {0};	//Use a fifth byte to guarantee proper truncation
 char eof_drum_lane_2_ghost_velocity[5] = {0};
 char eof_drum_lane_3_ghost_velocity[5] = {0};
@@ -8209,7 +8208,6 @@ char eof_drum_lane_4_ghost_velocity[5] = {0};
 char eof_drum_lane_5_ghost_velocity[5] = {0};
 char eof_drum_lane_6_ghost_velocity[5] = {0};
 char *eof_drum_ghost_velocity_strings[6] = {eof_drum_lane_1_ghost_velocity, eof_drum_lane_2_ghost_velocity, eof_drum_lane_3_ghost_velocity, eof_drum_lane_4_ghost_velocity, eof_drum_lane_5_ghost_velocity, eof_drum_lane_6_ghost_velocity};
-unsigned char eof_drum_ghost_velocities[6] = {1, 1, 1, 1, 1, 1};	//The velocity written for each ghost gem, for Phase Shift
 char eof_drum_lane_1_accent_velocity[5] = {0};	//Use a fifth byte to guarantee proper truncation
 char eof_drum_lane_2_accent_velocity[5] = {0};
 char eof_drum_lane_3_accent_velocity[5] = {0};
@@ -8217,7 +8215,6 @@ char eof_drum_lane_4_accent_velocity[5] = {0};
 char eof_drum_lane_5_accent_velocity[5] = {0};
 char eof_drum_lane_6_accent_velocity[5] = {0};
 char *eof_drum_accent_velocity_strings[6] = {eof_drum_lane_1_accent_velocity, eof_drum_lane_2_accent_velocity, eof_drum_lane_3_accent_velocity, eof_drum_lane_4_accent_velocity, eof_drum_lane_5_accent_velocity, eof_drum_lane_6_accent_velocity};
-unsigned char eof_drum_accent_velocities[6] = {127, 127, 127, 127, 127, 127};	//The velocity written for each accent gem, for Phase Shift
 
 DIALOG eof_menu_file_drum_midi_velocities_dialog[] =
 {

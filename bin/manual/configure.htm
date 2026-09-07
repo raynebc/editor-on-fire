@@ -198,18 +198,32 @@ drums_rock_remap_lane_6 :  Define the way that drum notes are remapped when the 
 
 eof_scroll_seek_percent :  The amount of one screen width that ALT+scroll wheel seek moves.<br><br>
 
-gp_drum_import_lane_1
-gp_drum_import_lane_2
-gp_drum_import_lane_2_rimshot
-gp_drum_import_lane_3
-gp_drum_import_lane_3_cymbal
-gp_drum_import_lane_3_hi_hat_pedal
-gp_drum_import_lane_3_hi_hat_open
-gp_drum_import_lane_4
-gp_drum_import_lane_4_cymbal
-gp_drum_import_lane_5
-gp_drum_import_lane_5_cymbal
+gp_drum_import_lane_1<br>
+gp_drum_import_lane_2<br>
+gp_drum_import_lane_2_rimshot<br>
+gp_drum_import_lane_3<br>
+gp_drum_import_lane_3_cymbal<br>
+gp_drum_import_lane_3_hi_hat_pedal<br>
+gp_drum_import_lane_3_hi_hat_open<br>
+gp_drum_import_lane_4<br>
+gp_drum_import_lane_4_cymbal<br>
+gp_drum_import_lane_5<br>
+gp_drum_import_lane_5_cymbal<br>
 gp_drum_import_lane_6 :  Define to which lane and note type (tom or cymbal) each of the Guitar Pro drum note values (ranging from 27 "High Q" through 87 "Open Surdo") are added during Guitar Pro import of a percussion track.  For example, you can change a drum note 55 (splash cymbal) to import as a lane 4 cymbal instead of a lane 5 cymbal as is default.  You can also define which notes, if any, will import into lane 6 and automatically activate the "Enable five lane drums" option for the destination drum track.<br><br>
+
+mm_drum_export_bass<br>
+mm_drum_export_snare<br>
+mm_drum_export_snare_rim_shot<br>
+mm_drum_export_yellow_tom<br>
+mm_drum_export_hi_hat<br>
+mm_drum_export_hi_hat_pedal<br>
+mm_drum_export_hi_hat_open<br>
+mm_drum_export_blue_tom<br>
+mm_drum_export_blue_cymbal<br>
+mm_drum_export_green_tom<br>
+mm_drum_export_green_cymbal<br>
+mm_drum_export_purple_tom<br>
+mm_drum_export_cross_stick : Define to which MIDI note number each drum of the exported drum track is written during musical MIDI export.  Rock Band 3 style lane ordering is observed for these variables, where bass drum is always lane 1, snare is always lane 2, yellow tom is always lane 3, hi hat is always a cymbal on lane 3, blue tom is always lane 4, blue cymbal is always a cymbal on lane 4, green tom is always lane 5, green cymbal is always a cymbal on lane 5.  Additionally, the purple tom used in Phase Shift is always on lane 6.  The cross stick notation is exported as a single MIDI note up to one time per gem, even if there are multiple gems in a drum note marked with cross stick technique.<br><br>
 
 eof_color_highlight1 :  The color for static highlighting that is manually applied with "Note>Highlight>On" or during various prompts.<br>
 eof_color_highlight2 :  The color for dynamic highlighting that updates automatically, such as "Song>Highlight non grid snapped notes.<br><br>

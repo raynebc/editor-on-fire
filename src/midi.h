@@ -68,6 +68,10 @@ extern char eof_midi_note_status[16][128];
 extern unsigned long eof_midi_enddelta;
 extern unsigned long eof_midi_endbeatnum;
 
+extern unsigned char eof_drum_velocities[6];		//MIDI velocity values to use for normal, ghost and accent drum notes (for use in Phase Shift and musical MIDI export)
+extern unsigned char eof_drum_ghost_velocities[6];
+extern unsigned char eof_drum_accent_velocities[6];
+
 int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases, char format);
 	//Writes the specified chart's contents to the specified file
 	//If featurerestriction is 0, all chart features are written to MIDI, and expert+.mid is written if double bass drum is charted
@@ -97,6 +101,7 @@ int eof_export_music_midi(EOF_SONG *sp, char *fn, char format);
 	//For lyrics, each pitched lyric (vocal percussion notes are excluded) is written as a MIDI note on channel 0
 	//For pro guitar notes, each non muted note of each used string is written as a MIDI note
 	//If format is zero, a format suitable for Synthesia or Songs2See is written, where each note within a track uses the same channel, all notes from the subsequent track uses 1 channel higher, etc.
+	//  Also when format is zero, one drum track (Phase Shift drum track takes priority) is exported using channel 10 as is traditional for MIDI, allowing it to be imported by programs like MuseScore
 	//If format is nonzero, a format suitable for Fretlight M-Player is written, where low E uses channel 15 and high E uses channel 10 (16 - lane number),
 	//  all velocities are written as 127 and track names are prefixed with "FMP - " as required by the Fretlight M-Player program.
 	//  In this format, each pro guitar/bass track is written twice (once each in Synthesia and Fretlight formats) to allow synth playback of arrangements in Fretlight M-Player

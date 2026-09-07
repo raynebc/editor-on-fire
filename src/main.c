@@ -587,6 +587,24 @@ unsigned char gp_drum_import_lane_5[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 unsigned char gp_drum_import_lane_5_cymbal[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 unsigned char gp_drum_import_lane_6[EOF_GP_DRUM_MAPPING_COUNT] = {0};
 
+/* Musical MIDI export drum note mappings */
+unsigned char mm_drum_export_bass = 36;
+unsigned char mm_drum_export_snare = 38;
+unsigned char mm_drum_export_snare_rim_shot = 40;
+unsigned char mm_drum_export_yellow_tom = 41;
+unsigned char mm_drum_export_hi_hat = 42;
+unsigned char mm_drum_export_hi_hat_pedal = 44;
+unsigned char mm_drum_export_hi_hat_open = 46;
+unsigned char mm_drum_export_blue_tom = 47;
+unsigned char mm_drum_export_blue_cymbal = 55;
+unsigned char mm_drum_export_green_tom = 50;
+unsigned char mm_drum_export_green_cymbal = 49;
+unsigned char mm_drum_export_purple_tom = 48;
+unsigned char mm_drum_export_cross_stick = 37;
+unsigned char mm_drum_export_ride_cymbal = 0;
+unsigned char mm_drum_export_china_cymbal = 0;
+unsigned char mm_drum_export_ride_bell = 0;
+
 /* Drums Rock note mappings */
 unsigned char drums_rock_remap_lane_1 = 4;			//Lane 4 is kick drum in Drums Rock
 unsigned char drums_rock_remap_lane_2 = 3;			//Lane 3 is snare
