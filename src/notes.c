@@ -5862,6 +5862,32 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 		return 2;	//False
 	}
 
+	//Dislike notes selected
+	if(!ustricmp(macro, "IF_DISLIKE_NOTES_SELECTED"))
+	{
+		if(eof_selection.track == eof_selected_track)
+		{	//If any existing note selection reflects the active track
+			for(ctr = 0; ctr < tracksize; ctr++)
+			{	//For each note in the active track
+				if(eof_selection.multi[ctr] && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type))
+				{	//If the note is selected and in the active track difficulty
+					for(ctr2 = ctr + 1; ctr2 < tracksize; ctr2++)
+					{	//For each remaining note in the active track
+						if(eof_selection.multi[ctr2] && (eof_get_note_type(eof_song, eof_selected_track, ctr2) == eof_note_type))
+						{	//If this remaining note is selected and in the active track difficulty
+							if(eof_note_compare(eof_song, eof_selected_track, ctr, eof_selected_track, ctr2, 4) != 0)
+							{	//If a thorough comparison of the notes find that they do not match
+								return 3;	//True
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return 2;	//False
+	}
+
 	return 0;	//Macro not supported
 }
 

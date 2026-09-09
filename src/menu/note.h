@@ -678,4 +678,7 @@ int eof_menu_set_beatable_slide_lane_4(void);		//Calls eof_menu_set_beatable_sli
 unsigned long eof_find_first_selected_note(void);
 	//Returns the index of the first note in the active track that is selected, otherwise returns EOF_MAX_NOTES - 1
 
+int eof_menu_note_rename_as_lane_makeup(void);
+	//Renames each selected legacy note based on which lanes it uses (ie. "L12" for a chord using lanes 1 and 2
+
 #endif

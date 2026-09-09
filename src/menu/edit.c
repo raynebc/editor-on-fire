@@ -209,6 +209,7 @@ MENU eof_edit_selection_menu[] =
 	{"&Conditional select\tALT+C", eof_menu_edit_select_conditional, NULL, 0, NULL},
 	{"St&Atus select", eof_menu_edit_select_status, NULL, 0, NULL},
 	{"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
+	{"Select like-named", eof_menu_edit_select_like_named, NULL, 0, NULL},
 	{"&Precise select like\tShift+L", eof_menu_edit_precise_select_like, NULL, 0, NULL},
 	{"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
 	{"Select previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
@@ -329,32 +330,33 @@ void eof_prepare_edit_menu(void)
 		{	//If any notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = 0;		//copy
 			eof_edit_selection_menu[4].flags = 0;	//select like
-			eof_edit_selection_menu[5].flags = 0;	//precise select like
+			eof_edit_selection_menu[5].flags = 0;	//select like-named
+			eof_edit_selection_menu[6].flags = 0;	//precise select like
 
 			/* select rest */
 			if(eof_selection.current != (eof_get_track_size(eof_song, eof_selected_track) - 1))
 			{	//If the selected note isn't the last in the track
-				eof_edit_selection_menu[6].flags = 0;
+				eof_edit_selection_menu[7].flags = 0;
 			}
 			else
 			{
-				eof_edit_selection_menu[6].flags = D_DISABLED;
+				eof_edit_selection_menu[7].flags = D_DISABLED;
 			}
 
 			if(eof_selection.current != 0)
 			{
-				eof_edit_selection_menu[7].flags = 0;	//select previous
+				eof_edit_selection_menu[8].flags = 0;	//select previous
 			}
 			else
 			{
-				eof_edit_selection_menu[7].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
+				eof_edit_selection_menu[8].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
 			}
 
-			eof_edit_selection_menu[9].flags = 0;	//deselect>
-			eof_edit_selection_menu[10].flags = 0;	//deselect all
-			eof_edit_selection_menu[11].flags = 0;	//conditional deselect
-			eof_edit_selection_menu[12].flags = 0;	//status deselect
-			eof_edit_selection_menu[13].flags = 0;	//invert selection
+			eof_edit_selection_menu[10].flags = 0;	//deselect>
+			eof_edit_selection_menu[11].flags = 0;	//deselect all
+			eof_edit_selection_menu[12].flags = 0;	//conditional deselect
+			eof_edit_selection_menu[13].flags = 0;	//status deselect
+			eof_edit_selection_menu[14].flags = 0;	//invert selection
 			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a drum track is active
 				eof_edit_selection_deselect_menu[2].flags = 0;	//deselect>Toms
@@ -370,14 +372,15 @@ void eof_prepare_edit_menu(void)
 		{	//If no notes in the active track difficulty are selected
 			eof_edit_menu[3].flags = D_DISABLED;			//copy
 			eof_edit_selection_menu[4].flags = D_DISABLED;	//select like
-			eof_edit_selection_menu[5].flags = D_DISABLED;	//precise select like
-			eof_edit_selection_menu[6].flags = D_DISABLED;	//select rest
-			eof_edit_selection_menu[7].flags = D_DISABLED;	//select previous
-			eof_edit_selection_menu[9].flags = D_DISABLED;	//deselect>
-			eof_edit_selection_menu[10].flags = D_DISABLED;	//deselect all
-			eof_edit_selection_menu[11].flags = D_DISABLED;	//conditional deselect
-			eof_edit_selection_menu[12].flags = D_DISABLED;	//status deselect
-			eof_edit_selection_menu[13].flags = D_DISABLED;	//invert selection
+			eof_edit_selection_menu[5].flags = D_DISABLED;	//select like-named
+			eof_edit_selection_menu[6].flags = D_DISABLED;	//precise select like
+			eof_edit_selection_menu[7].flags = D_DISABLED;	//select rest
+			eof_edit_selection_menu[8].flags = D_DISABLED;	//select previous
+			eof_edit_selection_menu[10].flags = D_DISABLED;	//deselect>
+			eof_edit_selection_menu[11].flags = D_DISABLED;	//deselect all
+			eof_edit_selection_menu[12].flags = D_DISABLED;	//conditional deselect
+			eof_edit_selection_menu[13].flags = D_DISABLED;	//status deselect
+			eof_edit_selection_menu[14].flags = D_DISABLED;	//invert selection
 		}
 
 		/* paste, old paste */
@@ -455,7 +458,7 @@ void eof_prepare_edit_menu(void)
 		{
 			eof_edit_selection_select_menu[19].flags = D_DISABLED;
 			eof_edit_selection_menu[3].flags = D_DISABLED;
-			eof_edit_selection_menu[12].flags = D_DISABLED;
+			eof_edit_selection_menu[13].flags = D_DISABLED;
 		}
 
 		/* zoom */
@@ -2978,14 +2981,14 @@ int eof_menu_edit_select_like_function(char thorough)
 	//Make a list of all the unique selected notes
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track != eof_selected_track) || !eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+		if(!eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
 			continue;	//If the note isn't selected or in the active track difficulty, skip it
 
 		for(j = 0; j < ntypes; j++)
 		{	//For each unique note number in the ntype array
 			if(eof_note_compare(eof_song, eof_selected_track, ntype[j], eof_selected_track, i, thorough) == 0)
 			{	//If the notes are a match, (taking the calling function's specified level of thoroughness, ie. whether to require match of ghost and string mute statuses)
-				break;	//Break loop to reject this notes from the unique note list
+				break;	//Break loop to reject this note from the unique note list
 			}
 		}
 		if(j == ntypes)
@@ -3004,8 +3007,7 @@ int eof_menu_edit_select_like_function(char thorough)
 		{	//For each note bitmask in the ntype array (each of the unique notes that are selected)
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_compare(eof_song, eof_selected_track, ntype[j], eof_selected_track, i, thorough) == 0))
 			{	//If the note is in the active difficulty and matches one of the unique notes that are selected (taking the calling function's specified level of thoroughness, ie. whether to require match of ghost and string mute statuses)
-				eof_selection.track = eof_selected_track;	//Change the selection's track to the active track
-				eof_selection.multi[i] = 1;					//Mark the note as selected
+				eof_selection.multi[i] = 1;		//Mark the note as selected
 			}
 		}
 	}
@@ -3024,6 +3026,68 @@ int eof_menu_edit_select_like(void)
 int eof_menu_edit_precise_select_like(void)
 {
 	return eof_menu_edit_select_like_function(3);	//Perform select like logic, comparing note flags, ghost status, mute status, bend strength, slide end position
+}
+
+int eof_menu_edit_select_like_named(void)
+{
+	unsigned long i, j, ntypes = 0;
+	unsigned long ntype[100] = {0};	//This tracks each unique selected note to allow multiple dislike notes to be selected during a "select like" operation
+	int note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	char *name1 = NULL, *name2 = NULL;
+
+	if(eof_selection.track != eof_selected_track)
+	{
+		return 1;
+	}
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+	{
+		return 1;
+	}
+	//Make a list of all the uniquely named selected notes
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if(!eof_selection.multi[i] || (eof_get_note_type(eof_song, eof_selected_track, i) != eof_note_type))
+			continue;	//If the note isn't selected or in the active track difficulty, skip it
+
+		name1 = eof_get_note_name(eof_song, eof_selected_track, i);
+		for(j = 0; j < ntypes; j++)
+		{	//For each unique note number in the ntype array
+			name2 = eof_get_note_name(eof_song, eof_selected_track, ntype[j]);
+			if(name1 && name2 && !strcasecmp(name1, name2))
+			{	//If both notes' names are identical (disregarding letter case)
+				break;	//Break loop to reject this note from the unique note list
+			}
+		}
+		if(j == ntypes)
+		{	//If no match was found
+			if(ntypes < 100)
+			{	//If the limit hasn't been reached
+				if(eof_check_string(name1))
+				{	//If the note name has at least one non-space character
+					ntype[ntypes] = i;	//Append this note's number to the ntype array
+					ntypes++;
+				}
+			}
+		}
+	}
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		name1 = eof_get_note_name(eof_song, eof_selected_track, i);
+		for(j = 0; j < ntypes; j++)
+		{	//For each uniquely named note in the ntype array
+			name2 = eof_get_note_name(eof_song, eof_selected_track, ntype[j]);
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && !strcasecmp(name1, name2))
+			{	//If the note is in the active difficulty and its name matches one of the unique notes that are selected
+				eof_selection.multi[i] = 1;		//Mark the note as selected
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+	return 1;
 }
 
 int eof_menu_edit_deselect_all(void)

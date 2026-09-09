@@ -68,6 +68,9 @@ int eof_menu_edit_select_rest(void);
 int eof_menu_edit_select_previous(void);			//Selects all notes before the last selected note
 int eof_menu_edit_invert_selection(void);			//Inverts the note selection (notes that aren't selected become selected and vice versa)
 
+int eof_menu_edit_select_like_named(void);
+	//Makes a list of all uniquely named notes in the active track difficulty (those that contain at least one non space character) and selects all notes in the active track difficulty having a matching name (disregarding letter case)
+
 int eof_check_note_conditional_selection(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long match_bitmask, unsigned long cymbal_match_bitmask);
 	//Examines the specified note and returns nonzero if it matches the conditions selected in eof_menu_edit_conditional_selection_dialog[]
 	//match_bitmask is a bitmask reflecting the checked lane numbers in the dialog

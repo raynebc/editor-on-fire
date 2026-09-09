@@ -845,6 +845,7 @@ MENU eof_note_reflect_menu[] =
 MENU eof_note_name_menu[] =
 {
 	{"&Edit", eof_menu_note_edit_name, NULL, 0, NULL},
+	{"Rename based on lane makeup", eof_menu_note_rename_as_lane_makeup, NULL, 0, NULL},
 	{NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1889,6 +1890,16 @@ void eof_prepare_note_menu(void)
 		else
 		{	//Otherwise use the unabridged Note>Simplify menu
 			eof_note_menu[24].child = eof_note_simplify_menu;
+		}
+
+		/* Note>Name>Rename based on lane makeup */
+		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		{	//If a legacy track is active
+			eof_note_name_menu[1].flags = 0;
+		}
+		else
+		{
+			eof_note_name_menu[1].flags = D_DISABLED;
 		}
 	}//if(eof_song && eof_song_loaded)
 }
@@ -13399,4 +13410,54 @@ unsigned long eof_find_first_selected_note(void)
 	}
 
 	return EOF_MAX_NOTES - 1;	//No notes in the active track are selected
+}
+
+int eof_menu_note_rename_as_lane_makeup(void)
+{
+	unsigned long i, ctr, bitmask, index, note;
+	char str[10];
+	long u = 0;
+	int note_selection_updated;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a legacy format track is not active
+
+	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
+			note = eof_get_note_note(eof_song, eof_selected_track, i);
+
+			//Build the string for the note
+			str[0] = 'L';	//Initialize the string to "L"
+			index = 1;
+			for(ctr = 0, bitmask = 1; ctr < 8; ctr++, bitmask <<= 1)
+			{	//For each of the bits in the note bitmask
+				if(note & bitmask)
+				{	//If this lane has a gem
+					str[index] = '1' + ctr;	//Convert the lane number to ASCII, with the first lane being numbered 1
+					index++;
+				}
+			}
+			str[index] = '\0';	//Terminate the string
+
+			if(index < 2)
+				continue;	//If no gems were found, skip writing a name for this note
+
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+
+			eof_set_note_name(eof_song, eof_selected_track, i, str);
+		}
+	}
+	if(note_selection_updated)
+	{	//If the note selection was originally empty and was dynamically updated
+		(void) eof_menu_edit_deselect_all();	//Clear the note selection
+	}
+
+	return 1;
 }

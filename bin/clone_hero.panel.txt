@@ -52,3 +52,4 @@ Clone Hero Panel (%TEXT_FILE%)
 ;Track difficulty level definition check
 %IF_TRACK_IS_POPULATED%%IF_TRACK_DIFFICULTY_UNDEFINED%%DISPLAY_WARNING%This track has no defined difficulty level
 %IF_ANY_TRACK_DIFFICULTY_UNDEFINED%%DISPLAY_WARNING%Another track has no defined difficulty level
+%IF_DISLIKE_NOTES_SELECTED%%DISPLAY_ALERT%Dislike notes are selected
