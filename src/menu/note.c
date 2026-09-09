@@ -5112,7 +5112,7 @@ static void eof_split_lyric(unsigned long lyric, char undo_made)
 		token = strtok(NULL, " ");
 		if(token)
 		{
-			newptr = (EOF_LYRIC *)eof_track_add_create_note(eof_song, eof_selected_track, lyricptr->note, nextpos, splitlength, 0, token);
+			newptr = (EOF_LYRIC *)eof_track_add_create_note(eof_song, eof_selected_track, lyricptr->note, nextpos, splitlength, lyricptr->type, token);
 			nextpos += splitlength + 20;	//The position of the next lyric piece
 		}
 	} while(token != NULL);
@@ -5998,7 +5998,7 @@ int eof_new_lyric_dialog(void)
 	if((ret == 3) || (eof_pen_lyric.note == EOF_LYRIC_PERCUSSION) || eof_dont_auto_edit_new_lyrics)
 	{	//If the user clicked OK on the edit lyric prompt, a vocal percussion note is being added or the user suppressed the prompt to add lyric text
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_lyric.note, eof_pen_lyric.pos, eof_pen_lyric.length, 0, NULL);
+		new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_lyric.note, eof_pen_lyric.pos, eof_pen_lyric.length, eof_note_type, NULL);
 		(void) ustrzcpy(new_lyric->text, sizeof(new_lyric->text), eof_etext);
 		eof_selection.track = EOF_TRACK_VOCALS;
 		eof_selection.current_pos = new_lyric->pos;
@@ -13400,3 +13400,4 @@ unsigned long eof_find_first_selected_note(void)
 
 	return EOF_MAX_NOTES - 1;	//No notes in the active track are selected
 }
+
