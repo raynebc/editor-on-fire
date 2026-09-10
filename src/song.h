@@ -1093,6 +1093,8 @@ char eof_track_has_ghost(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified legacy track has any gems that are ghosted
 char eof_track_has_highlighting(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if any of the specified track's notes are highlighted
+int eof_track_is_legacy_track(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified track is a legacy track
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track);
 	//Returns nonzero if the specified track is a legacy guitar track
 int eof_track_is_drum(EOF_SONG *sp, unsigned long track);

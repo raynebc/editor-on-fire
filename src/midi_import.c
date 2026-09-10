@@ -2753,7 +2753,7 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 										}
 									break;
 									case 4:	//Slider
-										if((sp->track[picked_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[picked_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+										if(eof_track_is_legacy_guitar(sp, picked_track))
 										{	//Only parse slider phrases for legacy guitar tracks
 											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSysex marker:  Slider (deltapos=%lu, pos=%lu, status=%d)", event_miditime, event_realtime, eof_import_events[i]->event[j]->dp[6]);
 											eof_log(eof_log_string, 2);
@@ -4035,7 +4035,7 @@ eof_log("\tThird pass complete", 1);
 	/* convert solos to star power for GH charts using FoFiX's method */
 	for(i = 1; i < sp->tracks; i++)
 	{	//For each track
-		if(sp->track[i]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		if(eof_track_is_legacy_track(sp, i))
 		{	//Only perform this conversion for legacy tracks
 			if(!eof_ini_star_power_tag_present && (eof_get_num_star_power_paths(sp, i) < 2))
 			{	//If EOF's star power INI tag wasn't read, and this track has less than two star power sections

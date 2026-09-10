@@ -2573,7 +2573,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						if(eof_track_is_legacy_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a legacy track
 							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 							{	//For each note in this track
@@ -2623,7 +2623,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						if(eof_track_is_legacy_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a legacy track
 							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 							{	//For each note in this track
@@ -2641,7 +2641,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						if(eof_track_is_legacy_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a legacy track
 							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 							{	//For each note in this track
@@ -2659,7 +2659,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						if(eof_track_is_legacy_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a legacy track
 							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 							{	//For each note in this track
@@ -2677,7 +2677,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						if(eof_track_is_legacy_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a legacy track
 							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 							{	//For each note in this track
@@ -2695,7 +2695,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						if(eof_track_is_legacy_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a legacy track
 							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 							{	//For each note in this track
@@ -2713,7 +2713,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							eof_log(error, 1);
 							return 0;
 						}
-						if(sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+						if(eof_track_is_legacy_track(sp, track_ctr))
 						{	//Ensure this logic only runs for a legacy track
 							for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
 							{	//For each note in this track
@@ -2763,7 +2763,7 @@ EOF_PHRASE_SECTION *eof_lookup_track_section_type(EOF_SONG *sp, unsigned long tr
 		*count = &sp->catalog->entries;
 		*ptr = sp->catalog->entry;
 	}
-	else if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	else if(eof_track_is_legacy_track(sp, track))
 	{	//Legacy track format
 		EOF_LEGACY_TRACK *tp = sp->legacy_track[tracknum];;
 
@@ -4441,7 +4441,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				has_diff_count = 1;
 			}
 		}//If this is a pro guitar track
-		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
+		if(track_ctr && eof_track_is_legacy_track(sp, track_ctr))
 		{	//If this is a legacy track
 			//Check if any notes use accent status
 			for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
@@ -4596,7 +4596,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					(void) pack_putc(tp->parent->numdiffs, fp);	//Write the track's difficulty count
 				}
 			}//If this is a pro guitar track
-			if(track_ctr && (sp->track[track_ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
+			if(track_ctr && eof_track_is_legacy_track(sp, track_ctr))
 			{	//If this is a legacy track
 				if(has_accent)
 				{	//Write accent note bitmasks
@@ -4726,7 +4726,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 5;	//Return default value if the specified track doesn't exist
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{	//If this is a legacy track, return the number of lanes it uses
 		if(sp->legacy_track[sp->track[track]->tracknum]->numlanes <= EOF_MAX_FRETS)
 		{	//If the lane count is valid
@@ -4771,7 +4771,7 @@ int eof_lane_six_enabled(unsigned long track)
 	{	//If this is a pro guitar track
 		return (eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->numstrings == 6);
 	}
-	else if(eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	else if(eof_track_is_legacy_track(eof_song, track))
 	{	//If this is a five lane style track
 		if(eof_song->track[track]->flags & EOF_TRACK_FLAG_SIX_LANES)
 			return 1;
@@ -5750,7 +5750,7 @@ unsigned char eof_get_note_accent(EOF_SONG *sp, unsigned long track, unsigned lo
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		if(note < sp->legacy_track[tracknum]->notes)
 		{
@@ -6157,7 +6157,7 @@ void eof_set_note_accent(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		if(note < sp->legacy_track[tracknum]->notes)
 		{
@@ -8185,7 +8185,7 @@ unsigned long eof_get_num_sliders(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		return sp->legacy_track[tracknum]->sliders;
 	}
@@ -8201,7 +8201,7 @@ unsigned long eof_get_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track)
 		return 0;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		return sp->legacy_track[tracknum]->kickdrumlanes;
 	}
@@ -8287,7 +8287,7 @@ EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned l
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		if(index < EOF_MAX_PHRASES)
 		{
@@ -8305,7 +8305,7 @@ EOF_PHRASE_SECTION *eof_get_kick_drum_lane(EOF_SONG *sp, unsigned long track, un
 		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		if(index < EOF_MAX_PHRASES)
 		{
@@ -8564,7 +8564,7 @@ void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long in
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		if(index < sp->legacy_track[tracknum]->sliders)
 		{
@@ -8589,7 +8589,7 @@ void eof_track_delete_kick_drum_lane(EOF_SONG *sp, unsigned long track, unsigned
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		if(index < sp->legacy_track[tracknum]->kickdrumlanes)
 		{
@@ -8671,7 +8671,7 @@ void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		sp->legacy_track[tracknum]->sliders = number;
 	}
@@ -8687,7 +8687,7 @@ void eof_set_num_kick_drum_lanes(EOF_SONG *sp, unsigned long track, unsigned lon
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(sp, track))
 	{
 		sp->legacy_track[tracknum]->kickdrumlanes = number;
 	}
@@ -9708,6 +9708,17 @@ char eof_track_has_highlighting(EOF_SONG *sp, unsigned long track)
 	return 0;	//Track has no highlighted notes
 }
 
+int eof_track_is_legacy_track(EOF_SONG *sp, unsigned long track)
+{
+	if((sp == NULL) || !track || (track >= sp->tracks))
+		return 0;
+
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		return 1;
+
+	return 0;
+}
+
 int eof_track_is_legacy_guitar(EOF_SONG *sp, unsigned long track)
 {
 	if((sp == NULL) || !track || (track >= sp->tracks))
@@ -9761,7 +9772,7 @@ int eof_track_is_beatable_mode(EOF_SONG *sp, unsigned long track)
 {
 	if((sp == NULL) || !track || (track >= sp->tracks))
 		return 0;
-	if(sp->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+	if(!eof_track_is_legacy_track(sp, track))
 		return 0;
 	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		return 0;
@@ -10569,7 +10580,7 @@ int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp)
 
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track in the chart
-		if(sp->track[ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		if(eof_track_is_legacy_track(sp, ctr))
 		{	//If this is a legacy track
 			if(!eof_write_rb_files && !eof_write_fof_files && !eof_write_gh_files)
 			{	//If none of the relevant game format exports are enabled
@@ -11841,7 +11852,7 @@ EOF_SONG *eof_clone_chart_time_range(EOF_SONG *sp, unsigned long start, unsigned
 		{
 			loopcount = 1;
 
-			if(sp->track[ctr]->track_format == EOF_LEGACY_TRACK_FORMAT)
+			if(eof_track_is_legacy_track(sp, ctr))
 			{	//If this is a legacy track
 				csp->legacy_track[csp->track[ctr]->tracknum]->numlanes = sp->legacy_track[sp->track[ctr]->tracknum]->numlanes;	//Copy the lane count
 			}
@@ -12098,7 +12109,7 @@ int eof_note_has_accent(EOF_SONG *sp, unsigned long track, unsigned long notenum
 			if(eof_get_note_flags(sp, track, notenum) & EOF_PRO_GUITAR_NOTE_FLAG_ACCENT)
 				return 1;	//This note has the pro guitar accent status
 		}
-		else if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		else if(eof_track_is_legacy_track(sp, track))
 		{	//Legacy tracks use an accent bitmask
 			if(eof_get_note_accent(sp, track, notenum) & eof_get_note_note(sp, track, notenum))
 				return 1;	//This note has at least one accented gem

@@ -1742,7 +1742,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
 			flags &= (~EOF_DRUM_NOTE_FLAG_IS_KICK_LANE);
 			tflags &= (~EOF_NOTE_TFLAG_SOLO_NOTE);
-			if(((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (track == EOF_TRACK_KEYS))
+			if(eof_track_is_legacy_guitar(sp, track) || (track == EOF_TRACK_KEYS))
 			{	//Only clear the is slider flag if this is a legacy guitar or keys track
 				if(!eof_track_is_beatable_mode(sp, track))
 				{	//And this isn't a BEATABLE track
@@ -1832,7 +1832,7 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 			}
 
 			/* mark and check sliders */
-			if(((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (track == EOF_TRACK_KEYS))
+			if(eof_track_is_legacy_guitar(sp, track) || (track == EOF_TRACK_KEYS))
 			{	//Only check the is slider flag if this is a legacy guitar or keys track
 				numphrases = eof_get_num_sliders(sp, track);
 				for(j = 0; j < numphrases; j++)

@@ -1216,7 +1216,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	{	//If the user did not suppress converting these types of chords into open notes
 		for(ctr = 1; ctr < sp->tracks; ctr++)
 		{	//For each track
-			if(sp->track[ctr]->track_format != EOF_LEGACY_TRACK_FORMAT)
+			if(!eof_track_is_legacy_track(sp, ctr))
 			{	//If this isn't a legacy track
 				continue;	//Skip it
 			}
@@ -1236,7 +1236,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	/* check if Clone Hero's open strum notation ("N 7 #" lane 8 note) was found */
 	for(ctr = 1; ctr < sp->tracks; ctr++)
 	{	//For each track
-		if(sp->track[ctr]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		if(!eof_track_is_legacy_track(sp, ctr))
 		{	//If this isn't a legacy track
 			continue;	//Skip it
 		}

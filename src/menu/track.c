@@ -286,7 +286,7 @@ void eof_prepare_track_menu(void)
 			eof_track_menu[2].flags = D_DISABLED | D_HIDDEN;
 		}
 
-		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		if(eof_track_is_legacy_track(eof_song, eof_selected_track))
 		{	//If a legacy track is active
 			eof_track_menu[5].flags = 0;	//Track>BEATABLE>
 			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -3964,7 +3964,7 @@ int eof_menu_track_beatable_enable_beatable_export(void)
 {
 	if(!eof_song || (eof_selected_track >= eof_song->tracks))
 		return 1;	//Invalid parameters
-	if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+	if(!eof_track_is_legacy_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a legacy track is not active
 	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		return 1;	//Do not allow this function to run when a drum track is active
@@ -5662,7 +5662,7 @@ int eof_menu_track_clone_track_to_clipboard(void)
 			(void) pack_putc(tp->tuning[ctr], fp);		//Write the tuning of each string
 		(void) eof_save_song_string_pf(tp->defaulttone, fp);	//Write the default tone name
 	}
-	else if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	else if(eof_track_is_legacy_track(eof_song, eof_selected_track))
 		(void) pack_putc(eof_song->legacy_track[tracknum]->numlanes, fp);	//Write the track lane count
 
 	//Process notes

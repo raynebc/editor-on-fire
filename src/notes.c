@@ -5875,7 +5875,7 @@ int eof_expand_notes_window_conditional_macro(char *macro, char *dest_buffer, un
 					{	//For each remaining note in the active track
 						if(eof_selection.multi[ctr2] && (eof_get_note_type(eof_song, eof_selected_track, ctr2) == eof_note_type))
 						{	//If this remaining note is selected and in the active track difficulty
-							if(eof_note_compare(eof_song, eof_selected_track, ctr, eof_selected_track, ctr2, 4) != 0)
+							if(eof_note_compare(eof_song, eof_selected_track, ctr, eof_selected_track, ctr2, 1) != 0)
 							{	//If a thorough comparison of the notes find that they do not match
 								return 3;	//True
 							}

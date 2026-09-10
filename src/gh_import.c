@@ -3407,7 +3407,7 @@ int eof_ghl_import_common(const char *fn)
 
 //Configure the active instrument track as a GHL track as appropriate
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_track_is_legacy_track(eof_song, eof_selected_track))
 	{
 		tp = eof_song->legacy_track[tracknum];
 		eof_song->track[eof_selected_track]->flags = EOF_TRACK_FLAG_GHL_MODE | EOF_TRACK_FLAG_SIX_LANES;	//Configure the track as a GHL track
@@ -4037,7 +4037,7 @@ int eof_ghl_import_common(const char *fn)
 	}
 
 //Apply disjointed and crazy status where appropriate
-	if(note_imported && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+	if(note_imported && eof_track_is_legacy_track(eof_song, eof_selected_track))
 	{	//If instrument notes were imported
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_find_crazy_notes(eof_song, eof_selected_track, 1);	//Mark overlapping notes with crazy status, but not notes that start at the exact same timestamp (will be given disjointed status below where appropriate)
@@ -5547,7 +5547,7 @@ int eof_import_array_txt(const char *filename, char *undo_made, int *prompt1, in
 	}
 	else if(format == 1)
 	{	//Import notes
-		if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+		if(!eof_track_is_legacy_track(eof_song, eof_selected_track))
 		{	//If a legacy track isn't active
 			allegro_message("Cannot import GH instrument notes in a pro guitar or vocal track.");
 			failed = 11;	//Invalid destination track

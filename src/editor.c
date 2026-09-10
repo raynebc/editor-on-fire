@@ -3117,7 +3117,7 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 				}
 				else
 				{	//SHIFT is not held
-					if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+					if(eof_track_is_legacy_track(eof_song, eof_selected_track))
 					{	//Cycle HO/PO
 						(void) eof_menu_hopo_cycle();
 					}
@@ -3231,8 +3231,8 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 	/* split lyric (SHIFT+S in PART VOCALS) */
 		if((eof_key_char == 's') && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//S and SHIFT are held, but CTRL is not
-			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
-			{	//If this is a 5 lane guitar/bass track
+			if(eof_track_is_legacy_guitar(eof_song, eof_selected_track))
+			{	//If this is a legacy guitar/bass track
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_menu_slider_mark();
 				eof_use_key();

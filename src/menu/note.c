@@ -1164,7 +1164,7 @@ void eof_prepare_note_menu(void)
 
 			eof_note_menu[6].flags = 0;	//Note>Solos> submenu
 			eof_note_menu[7].flags = 0; //Note>Star Power> submenu
-			if(((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)) || (eof_selected_track == EOF_TRACK_KEYS))
+			if(eof_track_is_legacy_guitar(eof_song, eof_selected_track) || (eof_selected_track == EOF_TRACK_KEYS))
 			{	//If a legacy guitar or keys note is selected
 				eof_note_menu[14].flags = 0;		//Note>Slider> submenu
 			}
@@ -1893,7 +1893,7 @@ void eof_prepare_note_menu(void)
 		}
 
 		/* Note>Name>Rename based on lane makeup */
-		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		if(eof_track_is_legacy_track(eof_song, eof_selected_track))
 		{	//If a legacy track is active
 			eof_note_name_menu[1].flags = 0;
 		}
@@ -13419,7 +13419,7 @@ int eof_menu_note_rename_as_lane_makeup(void)
 	long u = 0;
 	int note_selection_updated;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT)
+	if(!eof_track_is_legacy_track(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run when a legacy format track is not active
 
 	note_selection_updated = eof_update_implied_note_selection();	//If no notes are selected, take start/end selection and Feedback input mode into account

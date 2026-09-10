@@ -405,7 +405,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			return 1;	//Invalid note number, signal to stop rendering
 
 		tracknum = eof_song->track[track]->tracknum;
-		if((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (!eof_track_is_pro_guitar_track(eof_song, track)))
+		if(!eof_track_is_legacy_track(eof_song, track) && (!eof_track_is_pro_guitar_track(eof_song, track)))
 			return 1;	//Invalid track format, signal to stop rendering
 		notepos = eof_get_note_pos(eof_song, track, notenum);
 		notelength = eof_get_note_length(eof_song, track, notenum);
@@ -1302,7 +1302,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	long bmpxpos1, bmpxpos2, bmpxpos, bmpypos, bmpzpos = 0;
 
 	//Validate parameters
-	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (!eof_track_is_pro_guitar_track(eof_song, track))) || (notenum >= eof_get_track_size(eof_song, track)))
+	if((track == 0) || (track >= eof_song->tracks) || (!eof_track_is_legacy_track(eof_song, track) && (!eof_track_is_pro_guitar_track(eof_song, track))) || (notenum >= eof_get_track_size(eof_song, track)))
 	{	//If an invalid track or note number was passed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
@@ -1889,7 +1889,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned long notenote = 0;
 
 //Validate parameters
-	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (!eof_track_is_pro_guitar_track(eof_song, track))) || (notenum >= eof_get_track_size(eof_song, track)))
+	if((track == 0) || (track >= eof_song->tracks) || (!eof_track_is_legacy_track(eof_song, track) && (!eof_track_is_pro_guitar_track(eof_song, track))) || (notenum >= eof_get_track_size(eof_song, track)))
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
@@ -2289,7 +2289,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	char buffer2[5] = {0};
 	int ret;
 
-	if(!track || (track >= eof_song->tracks) || (buffer == NULL) || ((!eof_track_is_pro_guitar_track(eof_song, track)) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
+	if(!track || (track >= eof_song->tracks) || (buffer == NULL) || ((!eof_track_is_pro_guitar_track(eof_song, track)) && !eof_track_is_legacy_track(eof_song, track)))
 	{
 		return;	//If this is an invalid track number, the buffer is NULL or the specified track isn't a pro guitar or legacy track, return
 	}

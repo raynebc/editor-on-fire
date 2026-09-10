@@ -752,7 +752,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			eof_log("\t! A note or lyric appears before 2450ms, Magma will probably not accept this MIDI file", 1);
 		}
 
-		if(sp->track[j]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		if(eof_track_is_legacy_track(sp, j))
 		{	//If this is a legacy track
 			/* fill in notes */
 //Detect whether Pro drum notation is being used
