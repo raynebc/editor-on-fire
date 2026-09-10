@@ -1430,3 +1430,36 @@ int eof_random_hex(void)
 
 	return color;
 }
+
+int eof_parse_four_digit_year(char *input, char *output)
+{
+	char buffer[5] = {0};
+	unsigned buff_index = 0, ctr;
+
+	if(!input || !output)
+		return 0;		//Invalid parameters
+
+	for(ctr = 0; input[ctr] != '\0'; ctr++)
+	{	//For each character in the input string
+		if(isdigit(input[ctr]))
+		{	//If it's a number
+			buffer[buff_index++] = input[ctr];	//Append it to the working buffer
+			if(buff_index == 4)
+			{	//If four consecutive digits have been read, copy them to the output string
+				output[0] = buffer[0];
+				output[1] = buffer[1];
+				output[2] = buffer[2];
+				output[3] = buffer[3];
+				output[4] = '\0';
+
+				return 1;	//Match found
+			}
+		}
+		else
+		{	//It's not a number, reset the working buffer
+			buff_index = 0;
+		}
+	}
+
+	return 0;	//No match found
+}

@@ -826,7 +826,7 @@ MENU eof_note_beatable_menu[] =
 
 MENU eof_note_lyrics_menu[] =
 {
-	{"&Edit Lyric\tL", eof_edit_lyric_dialog, NULL, 0, NULL},
+	{"&Edit Lyric\tL / N", eof_edit_lyric_dialog, NULL, 0, NULL},
 	{"Split Lyric\tShift+S", eof_menu_split_lyric, NULL, 0, NULL},
 	{"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
 	{"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},

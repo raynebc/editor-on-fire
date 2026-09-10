@@ -3537,6 +3537,16 @@ if(KEY_EITHER_ALT && (eof_key_code == KEY_V))
 			}//If SHIFT is held, but CTRL is not
 		}//If the active track is a pro guitar track
 
+	/* edit lyric (N in PART VOCALS) */
+		if((eof_key_char == 'n') && eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics))
+		{	//If N is pressed, PART VOCALS is active, and one of its lyrics is the current selected lyric
+			if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && !KEY_EITHER_WIN)
+			{	//Neither SHIFT nor CTRL nor Windows key are held
+				(void) eof_edit_lyric_dialog();
+				eof_use_key();
+			}
+		}
+
 	/* set BEATABLE slide to lane (CTRL+~, CTRL+# in a BEATABLE track) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 		{	//If CTRL is held but SHIFT is not

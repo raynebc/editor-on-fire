@@ -2717,7 +2717,7 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 	unsigned long tracknum, tracknum2;
 	unsigned long note1note, note2note;
 	unsigned long flags, flags2, eflags, eflags2;
-	unsigned char accent1, accent2, ghost1, ghost2;
+	unsigned char accent1, accent2, ghost1, ghost2, flam1, flam2, rimshot1, rimshot2, crossstick1, crossstick2, bellzone1, bellzone2, edgezone1, edgezone2;
 	long length, length2;
 
 	//Validate parameters
@@ -2744,6 +2744,16 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		accent2 = eof_get_note_accent(sp, track2, note2);
 		ghost1 = eof_get_note_ghost(sp, track1, note1);
 		ghost2 = eof_get_note_ghost(sp, track2, note2);
+		flam1 = eof_get_note_flam(sp, track1, note1);
+		flam2 = eof_get_note_flam(sp, track2, note2);
+		rimshot1 = eof_get_note_rimshot(sp, track1, note1);
+		rimshot2 = eof_get_note_rimshot(sp, track2, note2);
+		crossstick1 = eof_get_note_crossstick(sp, track1, note1);
+		crossstick2 = eof_get_note_crossstick(sp, track2, note2);
+		bellzone1 = eof_get_note_bellzone(sp, track1, note1);
+		bellzone2 = eof_get_note_bellzone(sp, track2, note2);
+		edgezone1 = eof_get_note_edgezone(sp, track1, note1);
+		edgezone2 = eof_get_note_edgezone(sp, track2, note2);
 		if(flags != flags2)
 		{	//If the flags don't match
 			return 1;	//Return not equal
@@ -2758,6 +2768,26 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		}
 		if(ghost1 != ghost2)
 		{	//If the ghost bitmasks don't match
+			return 1;	//Return not equal
+		}
+		if(flam1 != flam2)
+		{	//If the flam bitmasks don't match
+			return 1;	//Return not equal
+		}
+		if(rimshot1 != rimshot2)
+		{	//If the rimshot bitmasks don't match
+			return 1;	//Return not equal
+		}
+		if(crossstick1 != crossstick2)
+		{	//If the cross stick bitmasks don't match
+			return 1;	//Return not equal
+		}
+		if(bellzone1 != bellzone2)
+		{	//If the bellzone bitmasks don't match
+			return 1;	//Return not equal
+		}
+		if(edgezone1 != edgezone2)
+		{	//If the edgezone bitmasks don't match
 			return 1;	//Return not equal
 		}
 		length = eof_get_note_length(sp, track1, note1);

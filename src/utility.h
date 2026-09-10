@@ -144,4 +144,9 @@ void eof_get_config_hex_conditional(char *section, char *name, int *var);
 int eof_random_hex(void);
 	//Generate a random color that is NOT 0x010203
 
+int eof_parse_four_digit_year(char *input, char *output);
+	//Parses the input string and the first four consecutive digits that are read (if they exist) from the input string are written to the output string and the latter is NULL terminated
+	//output is required to be a buffer at least 5 bytes long
+	//Returns nonzero if a matching character pattern is found, otherwise 0
+
 #endif
